@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.22] - 2026-07-13
+
+### Added
+
+- Added `xnix-recipe-install-gate`, an install gate that evaluates a recipe registry, target application id, and production or development mode before activation.
+- Added focused coverage for production blocking of development-only registries, development staging allowance, verified production registries, unknown recipe blocking, and desktop-safe output.
+
+### Changed
+
+- Documented recipe install gates as the enforcement layer above recipe trust policy decisions.
+
 ## [0.2.21] - 2026-07-13
 
 ### Added

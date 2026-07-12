@@ -60,7 +60,7 @@ Runtime probes report recipe trust status. KDE surfaces and diagnostics can tell
 
 Recipe trust policy delegates to `xnix-recipe-trust-policy`. The policy converts raw registry trust signals into desktop-safe decisions: production-trusted, development-only, or untrusted. Development registries remain blocked from production trust until signed recipe validation is enabled.
 
-Recipe installation must later require a production signed source and a schema version. The current model establishes validation, digest, and output invariants before adding production trust roots.
+Recipe install gates delegate to `xnix-recipe-install-gate`. The gate evaluates a registry report, application id, and production or development mode before activation. Production installation blocks development-only registries until a production signed source and verified recipe signatures are available; development staging remains available for digest-verified local recipes.
 
 ## Permissions and Asynchronous Requests
 
@@ -83,6 +83,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Runtime application listing must use registry-backed loading when a registry is available.
 - Runtime probes must expose recipe trust status for desktop diagnostics.
 - Recipe trust policy must explain why recipes are production-trusted, development-only, or untrusted.
+- Recipe install gates must block production activation of development-only registries while preserving digest-verified development staging.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

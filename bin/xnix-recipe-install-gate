@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/recipe_install_gate"
+
+exit Xnix::Compatibility::RecipeInstallGate::CLI.new(ARGV).run

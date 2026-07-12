@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.21"
+EXPECTED_VERSION = "0.2.22"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -35,6 +35,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
   lib/xnix/compatibility/registry_backed_recipe_store.rb
+  lib/xnix/compatibility/recipe_install_gate.rb
   lib/xnix/compatibility/recipe_registry.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/recipe_trust_policy.rb
@@ -54,6 +55,7 @@ REQUIRED_FILES = %w[
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
+  bin/xnix-recipe-install-gate
   bin/xnix-recipe-registry
   bin/xnix-recipe-trust-policy
   bin/xnix-rollback-desktop-integration
@@ -86,6 +88,7 @@ REQUIRED_FILES = %w[
   test/test_application_recipe.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
+  test/test_recipe_install_gate.rb
   test/test_recipe_trust_policy.rb
   test/test_registry_backed_recipe_store.rb
   test/test_desktop_entry.rb
@@ -238,5 +241,11 @@ recipe_trust_policy_source = read_project_file("lib/xnix/compatibility/recipe_tr
 assert(recipe_trust_policy_source.include?("xnix-recipe-trust-policy"), "Recipe trust policy must expose a CLI command")
 assert(recipe_trust_policy_source.include?("production-trusted"), "Recipe trust policy must model production trust")
 assert(recipe_trust_policy_source.include?("development-only"), "Recipe trust policy must model development-only trust")
+
+recipe_install_gate_source = read_project_file("lib/xnix/compatibility/recipe_install_gate.rb")
+assert(recipe_install_gate_source.include?("xnix-recipe-install-gate"), "Recipe install gate must expose a CLI command")
+assert(recipe_install_gate_source.include?("\"recipe-install\""), "Recipe install gate must identify install decisions")
+assert(recipe_install_gate_source.include?("production signed source"), "Recipe install gate must require production signed sources")
+assert(recipe_install_gate_source.include?("development"), "Recipe install gate must preserve development staging")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"
