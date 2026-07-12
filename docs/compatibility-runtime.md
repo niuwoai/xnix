@@ -62,6 +62,8 @@ Recipe trust policy delegates to `xnix-recipe-trust-policy`. The policy converts
 
 Recipe install gates delegate to `xnix-recipe-install-gate`. The gate evaluates a registry report, application id, and production or development mode before activation. Production installation blocks development-only registries until a production signed source and verified recipe signatures are available; development staging remains available for digest-verified local recipes.
 
+Compatibility engine cataloging delegates to `xnix-compat-engine-catalog`. The catalog keeps engine selection in the Runtime, exposes automatic, local, and isolated choices, and reports pending readiness without revealing backend implementation details to KDE.
+
 Compatibility run planning delegates to `xnix-compat-run-plan`. The plan maps recipe intent to automatic, local, or isolated execution strategies, adds Portal and snapshot preflight requirements, and keeps desktop-facing output free of backend implementation details. Backend binding remains pending until the Runtime can safely launch real compatibility engines.
 
 Compatibility repair planning delegates to `xnix-compat-repair-plan`. Diagnostics can attach repair summaries for the Compatibility Center, including approval requirements, snapshot requirements, rollback availability, and notification mapping. The plan is advisory until the Runtime has production repair execution.
@@ -93,6 +95,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - Runtime probes must expose recipe trust status for desktop diagnostics.
 - Recipe trust policy must explain why recipes are production-trusted, development-only, or untrusted.
 - Recipe install gates must block production activation of development-only registries while preserving digest-verified development staging.
+- Compatibility engine catalogs must keep engine selection inside the Runtime and must not claim backend readiness before implementation.
 - Compatibility run plans must keep backend details out of desktop-facing output and must not claim launch backends are ready before implementation.
 - Compatibility repair plans must expose approval, snapshot, rollback, and notification requirements before a repair is executed.
 - Compatibility snapshot plans must preserve user documents, avoid host-system snapshots, and provide bounded restore-point retention.

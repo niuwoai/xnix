@@ -37,10 +37,12 @@ store = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/re
 sample_recipe = store.find("org.xnix.sample.notepad")
 sample_plan = Xnix::Compatibility::CompatibilityRunPlan.new(recipe: sample_recipe).to_h
 
-assert(sample_plan["version"] == "0.2.27", "compatibility run plan must expose the current version")
+assert(sample_plan["version"] == "0.2.28", "compatibility run plan must expose the current version")
 assert(sample_plan["plan_type"] == "compatibility-run", "compatibility run plan must identify the model type")
 assert(sample_plan["application"]["id"] == "org.xnix.sample.notepad", "compatibility run plan must identify the application")
 assert(sample_plan["execution"]["strategy"] == "automatic-managed", "automatic recipes must use managed automatic strategy")
+assert(sample_plan["execution"]["engine"]["engine_id"] == "automatic-managed", "automatic recipes must include selected engine summary")
+assert(!sample_plan["execution"]["engine"]["ready"], "selected engines must not claim readiness yet")
 assert(!sample_plan["execution"]["backend_details_exposed"], "compatibility run plan must hide backend details")
 assert(!sample_plan["execution"]["backend_binding"]["ready"], "compatibility run plan must not claim backend readiness yet")
 assert(!sample_plan["execution"]["backend_binding"]["launch_enabled"], "compatibility run plan must not claim launch enablement yet")

@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-13 | Current version: v0.2.27
+> Last updated: 2026-07-13 | Current version: v0.2.28
 
 ## Summary
 
@@ -40,6 +40,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. The local daemon core is executable and can probe itself, list managed recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, and emit a KDE-safe read model for the Compatibility Center. The D-Bus session smoke adapter owns the Runtime bus name and answers read-only calls in the constrained Linux container; the KDE read model can now consume that session-bus source. The production daemon binding is the next implementation step.
 - Recipe registry verification delegates to `xnix-recipe-registry`, which validates registry schema version, recipe identifiers, relative recipe paths, SHA-256 digests, and signature status without claiming production signed-recipe validation yet. The Runtime daemon uses registry-backed recipe loading when `registry.json` is present, so the default application list is digest-verified before exposure. The Runtime probe reports recipe trust status for KDE surfaces and diagnostics, while `xnix-recipe-trust-policy` evaluates whether the registry is production-trusted, development-only, or untrusted. Recipe install gates delegate to `xnix-recipe-install-gate`, which blocks production activation of development-only registries while still allowing digest-verified development staging.
 - KDE packages consume Runtime state and submit user actions over D-Bus. They do not invoke Wine or a VM directly.
+- Compatibility engine cataloging delegates to `xnix-compat-engine-catalog`, which keeps automatic, local, and isolated engine selection in the Runtime and reports that backend launch bindings are still pending.
 - Compatibility run planning delegates to `xnix-compat-run-plan`, which maps recipe intent to automatic, local, or isolated execution strategies, keeps backend details out of desktop-facing JSON, and reports that launch backend binding is still pending.
 - Compatibility repair planning delegates to `xnix-compat-repair-plan`, which turns diagnostics issues into approval, snapshot, rollback, and notification-ready repair actions for the Compatibility Center.
 - Compatibility snapshot planning delegates to `xnix-compat-snapshot-plan`, which scopes restore points to application state, Runtime metadata, and desktop activation receipts while excluding user documents and the host system.
@@ -76,6 +77,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | Recipe trust policy | Policy model turns registry trust signals into production, development-only, or untrusted decisions |
 | Recipe install gate | Install gate blocks production activation until recipe trust requirements are satisfied |
 | Portal access policy | Runtime policy requires user-mediated XDG Desktop Portal requests for sensitive desktop operations |
+| Compatibility engine catalog | Runtime owns automatic, local, and isolated engine choices without exposing backend details |
 | Compatibility run plan | Runtime maps recipe intent to a desktop-safe execution strategy and marks backend binding as pending |
 | Compatibility repair plan | Runtime maps diagnostic issues to approval, snapshot, rollback, and notification-ready repair actions |
 | Compatibility snapshot plan | Runtime scopes restore points before repairs without touching user documents or the host system |
@@ -108,7 +110,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, registry-backed recipe-store loader, recipe registry verifier, recipe trust probe, recipe trust policy, recipe install gate, Portal access policy, compatibility run plan, compatibility repair plan, compatibility snapshot plan, install-gated desktop activation, read-only method dispatcher, packaged activation wrapper, activation-file installer, desktop activation installer, activation rollback receipt, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and production signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, registry-backed recipe-store loader, recipe registry verifier, recipe trust probe, recipe trust policy, recipe install gate, Portal access policy, compatibility engine catalog, compatibility run plan, compatibility repair plan, compatibility snapshot plan, install-gated desktop activation, read-only method dispatcher, packaged activation wrapper, activation-file installer, desktop activation installer, activation rollback receipt, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and production signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

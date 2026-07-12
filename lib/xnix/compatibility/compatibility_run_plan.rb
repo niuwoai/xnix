@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require_relative "application_recipe"
+require_relative "compatibility_engine_catalog"
 require_relative "recipe_store"
 require_relative "runtime_daemon"
 
@@ -56,13 +57,16 @@ module Xnix
       end
 
       def execution
+        engine = CompatibilityEngineCatalog.new.select_for_mode(recipe.mode)
+
         {
-          "strategy" => strategy.fetch("strategy"),
+          "strategy" => engine.fetch("engine_id"),
           "selection_source" => "recipe",
+          "engine" => engine,
           "backend_details_exposed" => false,
           "backend_binding" => {
-            "ready" => false,
-            "launch_enabled" => false,
+            "ready" => engine.fetch("ready"),
+            "launch_enabled" => engine.fetch("launch_enabled"),
             "reason" => "Compatibility backend binding is pending."
           }
         }

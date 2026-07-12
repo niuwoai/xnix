@@ -35,6 +35,7 @@ module Xnix
             "recipe_store" => true,
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
+            "compatibility_engine_catalog" => true,
             "compatibility_run_planning" => true,
             "compatibility_repair_planning" => true,
             "diagnostics" => true,

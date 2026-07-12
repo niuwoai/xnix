@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.28] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-engine-catalog`, a Runtime-owned catalog for automatic, local, and isolated compatibility engine choices.
+- Added focused coverage for engine selection, Runtime ownership, pending backend readiness, CLI output, and backend-term filtering.
+
+### Changed
+
+- Made compatibility run plans select their engine summary through the engine catalog.
+- Added Runtime probe capability reporting for the compatibility engine catalog.
+
 ## [0.2.27] - 2026-07-13
 
 ### Added

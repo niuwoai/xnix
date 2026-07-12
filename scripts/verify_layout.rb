@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.27"
+EXPECTED_VERSION = "0.2.28"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -22,6 +22,7 @@ REQUIRED_FILES = %w[
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
+  lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/compatibility_snapshot_plan.rb
@@ -49,6 +50,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/tray_status_model.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
+  bin/xnix-compat-engine-catalog
   bin/xnix-compat-launch
   bin/xnix-compat-notify
   bin/xnix-compat-open
@@ -93,6 +95,7 @@ REQUIRED_FILES = %w[
   test/test_sshd.rb
   test/test_ssh_probe.rb
   test/test_milestone.rb
+  test/test_compatibility_engine_catalog.rb
   test/test_application_recipe.rb
   test/test_compatibility_repair_plan.rb
   test/test_compatibility_snapshot_plan.rb
@@ -193,12 +196,21 @@ assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin servi
 desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
 assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
 
+engine_catalog_source = read_project_file("lib/xnix/compatibility/compatibility_engine_catalog.rb")
+assert(engine_catalog_source.include?("xnix-compat-engine-catalog"), "Compatibility engine catalog must expose a CLI command")
+%w[automatic-managed local-compatibility-engine isolated-compatibility-engine].each do |engine_id|
+  assert(engine_catalog_source.include?("\"#{engine_id}\""), "Compatibility engine catalog must include #{engine_id}")
+end
+assert(engine_catalog_source.include?("\"backend_details_exposed\" => false"), "Compatibility engine catalog must hide backend details")
+assert(engine_catalog_source.include?("\"launch_enabled\" => false"), "Compatibility engine catalog must not claim launch enablement yet")
+
 run_plan_source = read_project_file("lib/xnix/compatibility/compatibility_run_plan.rb")
 assert(run_plan_source.include?("xnix-compat-run-plan"), "Compatibility run plan must expose a CLI command")
 assert(run_plan_source.include?("automatic-managed"), "Compatibility run plan must include automatic strategy")
 assert(run_plan_source.include?("local-compatibility-engine"), "Compatibility run plan must include local compatibility strategy")
 assert(run_plan_source.include?("isolated-compatibility-engine"), "Compatibility run plan must include isolated compatibility strategy")
 assert(run_plan_source.include?("\"backend_details_exposed\" => false"), "Compatibility run plan must hide backend details")
+assert(run_plan_source.include?("CompatibilityEngineCatalog"), "Compatibility run plan must select engines through the catalog")
 
 launch_request_source = read_project_file("lib/xnix/compatibility/launch_request.rb")
 assert(launch_request_source.include?("CompatibilityRunPlan"), "Launch requests must include compatibility run planning")
