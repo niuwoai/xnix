@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.8`
+- Version: `0.1.9`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
@@ -27,6 +27,7 @@ ruby scripts/container.rb fetch-sources
 ruby -Ilib test/test_buildroot.rb
 ruby -Ilib test/test_qemu.rb
 ruby -Ilib test/test_serial_log.rb
+ruby -Ilib test/test_milestone.rb
 ```
 
 Buildroot configuration and full-build commands are implemented but intentionally deferred until the v0.1.10 complete-build milestone.

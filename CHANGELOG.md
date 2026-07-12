@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.9] - 2026-07-12
+
+### Added
+
+- Version gate that permits full-build and smoke-test execution only at every tenth formal code version.
+- Focused unit coverage for milestone and pre-release version handling.
+
 ## [0.1.8] - 2026-07-12
 
 ### Added
