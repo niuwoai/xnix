@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.8] - 2026-07-12
+
+### Added
+
+- Optional loopback-only QEMU SSH forwarding command and focused port-exposure unit coverage.
+
 ## [0.1.7] - 2026-07-12
 
 ### Added

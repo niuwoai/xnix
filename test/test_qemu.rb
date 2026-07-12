@@ -20,4 +20,9 @@ assert(command.include?("-no-reboot"), "QEMU command must not reboot indefinitel
 assert(command.include?("user,id=net0,restrict=on"), "QEMU network must remain restricted")
 assert(!command.any? { |argument| argument.include?("hostfwd") }, "initial boot command must not expose host ports")
 
+ssh_command = Xnix::Qemu.new.boot_command(ssh: true)
+ssh_network = ssh_command.fetch(ssh_command.index("-netdev") + 1)
+assert(ssh_network.include?("hostfwd=tcp:127.0.0.1:2222-:22"), "SSH forwarding must bind only the loopback address")
+assert(!ssh_network.include?("0.0.0.0"), "SSH forwarding must never bind all interfaces")
+
 puts "PASS: QEMU command unit tests"

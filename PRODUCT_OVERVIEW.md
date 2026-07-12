@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.7
+> Last updated: 2026-07-12 | Current version: v0.1.8
 
 ## Summary
 
@@ -44,6 +44,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - If the full milestone test exposes a defect, it must be fixed and the full test rerun before later work starts.
 - Colima is limited to 1 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
 - Xnix runtime containers are limited to 800 MiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval command requires it. The source-retrieval command receives bridge networking and a Docker-managed named volume only; it never mounts a host directory. Docker Buildx does not expose per-build CPU or memory flags, so image builds are bounded by the 1 GiB and 1 CPU Colima VM limit.
+- Future SSH verification uses QEMU user networking with a forward only from container loopback `127.0.0.1:2222` to guest port 22.
 
 ## Milestones
 
