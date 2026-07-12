@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.14"
+EXPECTED_VERSION = "0.2.15"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,6 +24,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/dbus_runtime_client.rb
+  lib/xnix/compatibility/desktop_integration_manifest.rb
   lib/xnix/compatibility/desktop_entry.rb
   lib/xnix/compatibility/dolphin_service_menu.rb
   lib/xnix/compatibility/file_open_request.rb
@@ -44,6 +45,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
+  bin/xnix-desktop-integration-manifest
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
   libexec/xnix/compatd
@@ -74,6 +76,7 @@ REQUIRED_FILES = %w[
   test/test_application_recipe.rb
   test/test_recipe_store.rb
   test/test_desktop_entry.rb
+  test/test_desktop_integration_manifest.rb
   test/test_dbus_runtime_client.rb
   test/test_dolphin_service_menu.rb
   test/test_file_open_request.rb
@@ -184,5 +187,11 @@ kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_st
 %w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |entry_point|
   assert(kde_status_source.include?("\"id\" => \"#{entry_point}\""), "KDE integration status must include #{entry_point}")
 end
+
+desktop_manifest_source = read_project_file("lib/xnix/compatibility/desktop_integration_manifest.rb")
+%w[xnix-compat-launch xnix-compat-window-identity xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings].each do |command|
+  assert(desktop_manifest_source.include?(command), "Desktop integration manifest must include #{command}")
+end
+assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

@@ -32,7 +32,7 @@ Generated application launchers delegate to `xnix-compat-launch --app <id>`. Tha
 
 The Dolphin service menu delegates selected files to `xnix-compat-open`. That entry point accepts only `file://` URIs, resolves a Runtime recipe by extension unless an explicit application id is supplied, and emits a portal-required Runtime `Launch` request model. It does not start Wine, a virtual machine, or a backend-specific executable.
 
-`xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, file manager, notifications, and Compatibility Center are marked as initial because they have Runtime-backed request or read-model paths. Task manager, system tray, and settings remain planned until their KDE adapters exist.
+`xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, task manager, file manager, system tray, notifications, Compatibility Center, and settings are marked as initial because each entry point now has a Runtime-backed request, read-model, or identity model.
 
 Runtime events delegate to `xnix-compat-notify`. That entry point models KDE notification payloads for install failures, automatic repairs, compatibility mode changes, and approval-required events. It chooses urgency and actions for the desktop shell, but it does not inspect backend logs or expose backend implementation terms.
 
@@ -41,6 +41,8 @@ Compatibility settings delegate to `xnix-compat-settings`. That model exposes us
 System tray status delegates to `xnix-compat-tray-status`. That model exposes Runtime activity, attention state, and bridged tray application counts for the KDE shell. It does not own backend policy or create backend tray bridges.
 
 Task manager identity delegates to `xnix-compat-window-identity`. That model exposes desktop file mapping, Runtime application grouping, pinning, restore behavior, and KWin identity-only matching metadata. It does not decide backend policy or manage windows directly.
+
+Desktop activation delegates to `xnix-desktop-integration-manifest`. That manifest groups a recipe's launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts into one KDE activation plan. It is ordered, portal-aware, does not require host privilege, and does not expose backend commands.
 
 ## Application Recipes
 
@@ -62,6 +64,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Settings models must expose user concepts and must not mention backend implementation names or storage details.
 - Tray status models must summarize Runtime activity and compatible tray bridge state without owning backend policy.
 - Task manager identity models must map windows to Runtime application identities without owning KWin policy decisions.
+- Desktop integration manifests must group all seven first-release KDE artifacts for a recipe activation without exposing backend commands.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

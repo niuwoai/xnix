@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.15] - 2026-07-12
+
+### Added
+
+- Added `xnix-desktop-integration-manifest`, a KDE recipe activation manifest that groups launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts.
+- Added focused coverage to keep the manifest ordered, portal-aware, privilege-free, and free of backend implementation terminology.
+
+### Changed
+
+- Documented the desktop activation path as a single Runtime-owned manifest over the seven KDE entry-point models.
+
 ## [0.2.14] - 2026-07-12
 
 ### Added
