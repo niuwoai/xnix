@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.11"
+EXPECTED_VERSION = "0.2.12"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -33,11 +33,13 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/notification_request.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
+  lib/xnix/compatibility/settings_model.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
   bin/xnix-compat-launch
   bin/xnix-compat-notify
   bin/xnix-compat-open
+  bin/xnix-compat-settings
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
   libexec/xnix/compatd
@@ -81,6 +83,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_integration_status.rb
+  test/test_settings_model.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -154,6 +157,11 @@ assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries mus
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
+end
+
+settings_source = read_project_file("lib/xnix/compatibility/settings_model.rb")
+%w[run-mode resource-access devices network snapshots].each do |section_id|
+  assert(settings_source.include?("\"id\" => \"#{section_id}\""), "Settings model must include #{section_id}")
 end
 
 kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_status.rb")

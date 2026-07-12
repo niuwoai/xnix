@@ -36,6 +36,8 @@ The Dolphin service menu delegates selected files to `xnix-compat-open`. That en
 
 Runtime events delegate to `xnix-compat-notify`. That entry point models KDE notification payloads for install failures, automatic repairs, compatibility mode changes, and approval-required events. It chooses urgency and actions for the desktop shell, but it does not inspect backend logs or expose backend implementation terms.
 
+Compatibility settings delegate to `xnix-compat-settings`. That model exposes user-facing controls for run mode, performance or compatibility priority, documents and downloads access, camera access, network access, and snapshots. It intentionally avoids backend implementation terminology.
+
 ## Application Recipes
 
 A recipe has a stable reverse-DNS application identifier, display name, icon, requested run mode, and supported file extensions. The Runtime generates an ordinary `.desktop` file that calls `xnix-compat-launch --app <id>`. The desktop file intentionally omits backend commands, prefix paths, and Windows executable paths.
@@ -53,6 +55,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - The first-release KDE integration status must include exactly the seven agreed entry points.
 - Notification requests must come from Runtime events and must keep backend details out of KDE-facing payloads.
+- Settings models must expose user concepts and must not mention backend implementation names or storage details.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

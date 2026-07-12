@@ -64,9 +64,12 @@ module Xnix
         {
           "id" => "settings",
           "name" => "Settings",
-          "state" => "planned",
-          "evidence" => [],
-          "next_step" => "Add a user-facing settings model for mode, resources, network, devices, and snapshots."
+          "state" => "initial",
+          "evidence" => [
+            "Compatibility settings can be modeled through xnix-compat-settings.",
+            "Settings expose run mode, file access, camera, network, and snapshots without backend terminology."
+          ],
+          "next_step" => "Connect settings models to a production KDE settings module and persisted Runtime policy."
         }
       ].freeze
 

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.12] - 2026-07-12
+
+### Added
+
+- Added `xnix-compat-settings`, a KDE-facing compatibility settings model for run mode, file access, device access, network access, and snapshots.
+- Added focused coverage to keep settings user-facing and free of backend implementation terminology.
+
+### Changed
+
+- Marked the Settings KDE entry point as an initial integration in the seven-entry-point status model.
+
 ## [0.2.11] - 2026-07-12
 
 ### Added
