@@ -2,7 +2,7 @@
 
 module Xnix
   class Container
-    BUILD_MEMORY_LIMIT = "800m"
+    BUILD_MEMORY_LIMIT = "4g"
     CPU_LIMIT = "1.0"
     PROCESS_LIMIT = "256"
     TEMPORARY_FILESYSTEM_SIZE = "64m"

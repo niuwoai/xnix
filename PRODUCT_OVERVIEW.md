@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.15-rc1
+> Last updated: 2026-07-12 | Current version: v0.1.15-rc2
 
 ## Summary
 
@@ -42,8 +42,8 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - Each small code version receives focused unit tests and a Git commit.
 - Every tenth code version requires a complete build and QEMU smoke test.
 - If the full milestone test exposes a defect, it must be fixed and the full test rerun before later work starts.
-- Colima is limited to 1 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
-- Buildroot is configured with a single job to prevent toolchain build memory spikes in the 800 MiB container limit.
+- Colima is limited to 6 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
+- Buildroot is configured with a single job to prevent toolchain build memory spikes in the 4 GiB container limit.
 - Xnix runtime containers are limited to 800 MiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval or Buildroot dependency-download command requires it. These commands receive bridge networking and a Docker-managed named volume only; they never mount a host directory. Docker Buildx does not expose per-build CPU or memory flags, so image builds are bounded by the 1 GiB and 1 CPU Colima VM limit.
 - Future SSH verification uses QEMU user networking with a forward only from container loopback `127.0.0.1:2222` to guest port 22.
 

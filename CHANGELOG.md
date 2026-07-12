@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.15-rc2] - 2026-07-12
+
+### Fixed
+
+- Raised the constrained build-container memory budget to 4 GiB after Colima was explicitly authorized to use up to 6 GiB, while retaining single-job compilation and a 2 GiB VM safety reserve.
+
 ## [0.1.15-rc1] - 2026-07-12
 
 ### Fixed
