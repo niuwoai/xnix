@@ -40,10 +40,14 @@ when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command))
+when "download-system"
+  abort "Usage: ruby scripts/container.rb download-system" unless ARGV.empty?
+
+  exec(*container.networked_cache_run_command(buildroot.source_command))
 when "boot-system"
   abort "Usage: ruby scripts/container.rb boot-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
 end

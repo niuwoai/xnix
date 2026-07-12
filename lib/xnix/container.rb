@@ -39,6 +39,10 @@ module Xnix
       runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command)
     end
 
+    def networked_cache_run_command(command)
+      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
+    end
+
     private
 
     def runtime_command(network:, extra_mounts:, command:)

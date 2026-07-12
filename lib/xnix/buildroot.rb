@@ -15,6 +15,10 @@ module Xnix
       make_command
     end
 
+    def source_command
+      make_command("source")
+    end
+
     private
 
     def make_command(*arguments)

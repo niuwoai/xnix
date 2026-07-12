@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.10-rc1] - 2026-07-12
+
+### Fixed
+
+- Added a constrained Buildroot dependency-download phase before the offline full build, allowing the v0.1.10 verification to obtain its declared sources without granting network access to compilation or QEMU.
+
 ## [0.1.10] - 2026-07-12
 
 ### Added
