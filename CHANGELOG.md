@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.4] - 2026-07-12
+
+### Fixed
+
+- Made the Runtime activation installer test compatible with the constrained container's `noexec` temporary filesystem by checking executable mode bits instead of attempting an executable-path predicate.
+
+### Verified
+
+- Rebuilt the constrained Docker image with D-Bus tooling and ran the Runtime activation smoke path in a no-network, read-only-root container.
+
 ## [0.2.3] - 2026-07-12
 
 ### Added

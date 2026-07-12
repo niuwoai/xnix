@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 
 def assert(condition, message)
   return if condition

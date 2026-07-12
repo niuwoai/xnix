@@ -26,7 +26,7 @@ Dir.mktmpdir("xnix-runtime-root") do |root|
   systemd_unit = root_path.join("usr/lib/systemd/system/xnix-compatd.service")
 
   assert(libexec.file?, "activation installer must install libexec wrapper")
-  assert(libexec.executable?, "activation installer must keep libexec wrapper executable")
+  assert((libexec.stat.mode & 0o111) != 0, "activation installer must keep libexec wrapper executable mode bits")
   assert(dbus_service.file?, "activation installer must install D-Bus system service")
   assert(systemd_unit.file?, "activation installer must install systemd unit")
   assert(dbus_service.read.include?("SystemdService=xnix-compatd.service"), "D-Bus service must delegate to systemd")
