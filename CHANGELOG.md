@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.26] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-repair-plan`, a Runtime-owned repair planning model for pending engine setup, Portal approval, recipe trust blocking, and applied repair records.
+- Added focused coverage for user approval requirements, snapshot requirements, rollback availability, notification mapping, CLI validation, and backend-term filtering.
+
+### Changed
+
+- Extended Runtime diagnostics and KDE Compatibility Center models with desktop-safe repair summaries.
+- Reworded pending engine diagnostics so desktop-facing diagnostics do not expose implementation-specific backend terms.
+
 ## [0.2.25] - 2026-07-13
 
 ### Added

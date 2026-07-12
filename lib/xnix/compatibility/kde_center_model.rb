@@ -67,6 +67,7 @@ module Xnix
           "compatibility_status" => diagnostics.fetch("status"),
           "compatibility_label" => STATUS_LABELS.fetch(diagnostics.fetch("status"), "Needs review"),
           "pending_action_count" => pending_checks,
+          "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -76,6 +77,19 @@ module Xnix
         return "Ready for desktop integration" if pending_checks.zero?
 
         "#{pending_checks} compatibility task pending"
+      end
+
+      def repair_summary(repair_plan)
+        return nil unless repair_plan
+
+        {
+          "issue" => repair_plan.fetch("issue"),
+          "severity" => repair_plan.fetch("severity"),
+          "user_approval_required" => repair_plan.fetch("user_approval_required"),
+          "snapshot_required" => repair_plan.fetch("snapshot_required"),
+          "notification_event" => repair_plan.fetch("notification_event"),
+          "summary" => repair_plan.fetch("summary")
+        }
       end
 
       def summary(applications)

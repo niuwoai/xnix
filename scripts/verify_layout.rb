@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.25"
+EXPECTED_VERSION = "0.2.26"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -22,6 +22,7 @@ REQUIRED_FILES = %w[
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
+  lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/compatibility_run_plan.rb
   lib/xnix/compatibility/dbus_runtime_client.rb
@@ -50,6 +51,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-launch
   bin/xnix-compat-notify
   bin/xnix-compat-open
+  bin/xnix-compat-repair-plan
   bin/xnix-compat-run-plan
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
@@ -90,6 +92,7 @@ REQUIRED_FILES = %w[
   test/test_ssh_probe.rb
   test/test_milestone.rb
   test/test_application_recipe.rb
+  test/test_compatibility_repair_plan.rb
   test/test_compatibility_run_plan.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
@@ -197,6 +200,14 @@ assert(run_plan_source.include?("\"backend_details_exposed\" => false"), "Compat
 launch_request_source = read_project_file("lib/xnix/compatibility/launch_request.rb")
 assert(launch_request_source.include?("CompatibilityRunPlan"), "Launch requests must include compatibility run planning")
 assert(launch_request_source.include?("\"run_plan\""), "Launch requests must expose a run plan summary")
+
+repair_plan_source = read_project_file("lib/xnix/compatibility/compatibility_repair_plan.rb")
+assert(repair_plan_source.include?("xnix-compat-repair-plan"), "Compatibility repair plan must expose a CLI command")
+%w[engine-binding-pending portal-approval-required recipe-trust-blocked runtime-repair-applied].each do |issue|
+  assert(repair_plan_source.include?("\"#{issue}\""), "Compatibility repair plan must include #{issue}")
+end
+assert(repair_plan_source.include?("\"snapshot_required\""), "Compatibility repair plan must expose snapshot requirements")
+assert(repair_plan_source.include?("\"rollback_available\" => true"), "Compatibility repair plan must keep rollback available")
 
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|

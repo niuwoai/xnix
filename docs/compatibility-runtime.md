@@ -64,6 +64,8 @@ Recipe install gates delegate to `xnix-recipe-install-gate`. The gate evaluates 
 
 Compatibility run planning delegates to `xnix-compat-run-plan`. The plan maps recipe intent to automatic, local, or isolated execution strategies, adds Portal and snapshot preflight requirements, and keeps desktop-facing output free of backend implementation details. Backend binding remains pending until the Runtime can safely launch real compatibility engines.
 
+Compatibility repair planning delegates to `xnix-compat-repair-plan`. Diagnostics can attach repair summaries for the Compatibility Center, including approval requirements, snapshot requirements, rollback availability, and notification mapping. The plan is advisory until the Runtime has production repair execution.
+
 ## Permissions and Asynchronous Requests
 
 Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return request objects and complete with signals, so Runtime methods that need user approval return an object path and complete through `RequestCompleted`. The Runtime must not promise direct access to a user's files, clipboard, camera, printer, display, or screen capture.
@@ -90,6 +92,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - Recipe trust policy must explain why recipes are production-trusted, development-only, or untrusted.
 - Recipe install gates must block production activation of development-only registries while preserving digest-verified development staging.
 - Compatibility run plans must keep backend details out of desktop-facing output and must not claim launch backends are ready before implementation.
+- Compatibility repair plans must expose approval, snapshot, rollback, and notification requirements before a repair is executed.
 - Portal access policy must require user-mediated XDG Desktop Portal requests and must deny direct desktop access for sensitive operations.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.

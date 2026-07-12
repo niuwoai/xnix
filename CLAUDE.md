@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.25`
+- Version: `0.2.26`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -34,6 +34,7 @@ ruby scripts/container.rb prepare-ssh-test-key
 ruby scripts/container.rb build-ssh-test-system
 ruby scripts/container.rb ssh-smoke
 ruby -Ilib test/test_application_recipe.rb
+ruby -Ilib test/test_compatibility_repair_plan.rb
 ruby -Ilib test/test_compatibility_run_plan.rb
 ruby -Ilib test/test_recipe_store.rb
 ruby -Ilib test/test_recipe_registry.rb
@@ -65,7 +66,7 @@ ruby scripts/container.rb runtime-dbus-smoke
 ruby scripts/container.rb kde-center-dbus-smoke
 ```
 
-Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list registry-verified recipes, plan compatibility runs, report recipe trust status, evaluate recipe trust policy, evaluate recipe install gates, evaluate Portal access policy, report diagnostics, dispatch read-only Runtime methods, verify recipe registry digests and development signature status, stage activation files under an unprivileged root after install-gate preflight, provide a KDE-safe read model for the Compatibility Center, verify that model over a session-bus Runtime smoke adapter, model Dolphin file-open requests, model managed launcher requests with run-plan summaries, model Runtime notification requests, model user-facing compatibility settings, model system tray status, model task manager window identity, build a desktop integration manifest for the seven KDE entry points, stage desktop activation files from that manifest under a target root, write rollback receipts, rollback unchanged staged files with checksum verification, and report KDE seven-entry-point integration status. The production daemon binding is still pending.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list registry-verified recipes, plan compatibility runs, plan compatibility repairs, report recipe trust status, evaluate recipe trust policy, evaluate recipe install gates, evaluate Portal access policy, report diagnostics with repair summaries, dispatch read-only Runtime methods, verify recipe registry digests and development signature status, stage activation files under an unprivileged root after install-gate preflight, provide a KDE-safe read model for the Compatibility Center, verify that model over a session-bus Runtime smoke adapter, model Dolphin file-open requests, model managed launcher requests with run-plan summaries, model Runtime notification requests, model user-facing compatibility settings, model system tray status, model task manager window identity, build a desktop integration manifest for the seven KDE entry points, stage desktop activation files from that manifest under a target root, write rollback receipts, rollback unchanged staged files with checksum verification, and report KDE seven-entry-point integration status. The production daemon binding is still pending.
 
 ## Delivery Sequence
 

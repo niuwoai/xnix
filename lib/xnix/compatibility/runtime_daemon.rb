@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "pathname"
+require_relative "compatibility_repair_plan"
 require_relative "registry_backed_recipe_store"
 
 module Xnix
@@ -35,6 +36,7 @@ module Xnix
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
             "compatibility_run_planning" => true,
+            "compatibility_repair_planning" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -66,11 +68,12 @@ module Xnix
               "message" => "Recipe is valid and can be exposed through desktop integration."
             },
             {
-              "id" => "backend.binding",
+              "id" => "engine.binding",
               "status" => "pending",
-              "message" => "Wine and VM launch backends are not enabled in this version."
+              "message" => "Compatibility engine launch binding is not enabled in this version."
             }
-          ]
+          ],
+          "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
 
@@ -115,6 +118,19 @@ module Xnix
           "mode" => recipe.mode,
           "supported_extensions" => recipe.supported_extensions,
           "mime_types" => recipe.mime_types
+        }
+      end
+
+      def repair_plan_summary(application_id, issue)
+        plan = CompatibilityRepairPlan.new(application_id: application_id, issue: issue).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "issue" => plan.fetch("issue"),
+          "severity" => plan.fetch("severity"),
+          "user_approval_required" => plan.fetch("user_approval_required"),
+          "snapshot_required" => plan.fetch("snapshot_required"),
+          "notification_event" => plan.fetch("notification_event"),
+          "summary" => plan.fetch("desktop_safe_summary")
         }
       end
 

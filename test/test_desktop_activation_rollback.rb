@@ -37,7 +37,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
     application_id: "org.xnix.sample.notepad"
   ).rollback
 
-  assert(result["version"] == "0.2.25", "desktop activation rollback must expose the current version")
+  assert(result["version"] == "0.2.26", "desktop activation rollback must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation rollback must identify the application")
   assert(result["removed"].length == 3, "desktop activation rollback must remove installed files")
   assert(result["removed"].all? { |entry| entry["status"] == "removed" }, "desktop activation rollback must report removed files")
