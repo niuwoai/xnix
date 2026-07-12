@@ -33,6 +33,10 @@ when "runtime-activation-smoke"
   abort "Usage: ruby scripts/container.rb runtime-activation-smoke" unless ARGV.empty?
 
   exec(*container.runtime_activation_smoke_command)
+when "runtime-dbus-smoke"
+  abort "Usage: ruby scripts/container.rb runtime-dbus-smoke" unless ARGV.empty?
+
+  exec(*container.runtime_dbus_smoke_command)
 when "fetch-sources"
   abort "Usage: ruby scripts/container.rb fetch-sources" unless ARGV.empty?
 
@@ -71,5 +75,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|ssh-smoke|start-build-system}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|ssh-smoke|start-build-system}"
 end

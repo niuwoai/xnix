@@ -2,6 +2,22 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.5] - 2026-07-12
+
+### Added
+
+- Added a Linux-only D-Bus session smoke adapter that owns `org.xnix.Compatibility1`, exposes `/org/xnix/Compatibility1`, and answers read-only Runtime calls over `gdbus`.
+- Added a constrained container command for the Runtime D-Bus session smoke path.
+- Added focused coverage for the D-Bus smoke script, adapter source, and container command.
+
+### Changed
+
+- Made the container image build prefer the local base-image cache with `--pull=false` so repeated verification is less sensitive to registry metadata failures.
+
+### Verified
+
+- Built `xnix-builder:0.2.5` and ran the Runtime D-Bus session smoke path in the constrained no-network, read-only-root container.
+
 ## [0.2.4] - 2026-07-12
 
 ### Fixed

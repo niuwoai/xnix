@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.4"
+EXPECTED_VERSION = "0.2.5"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -30,6 +30,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compatd
   libexec/xnix/compatd
   scripts/container.rb
+  scripts/dbus_session_smoke.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
   scripts/install_runtime_activation.rb
@@ -37,6 +38,7 @@ REQUIRED_FILES = %w[
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
+  runtime/dbus/xnix_compatd_smoke.c
   runtime/recipes/org.xnix.sample.notepad.json
   runtime/systemd/xnix-compatd.service
   kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
@@ -57,6 +59,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_dispatch.rb
   test/test_runtime_activation.rb
   test/test_runtime_activation_install.rb
+  test/test_runtime_dbus_smoke_script.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -109,6 +112,8 @@ assert(dockerfile.include?("qemu-system-x86"), "Dockerfile must install QEMU sys
 assert(dockerfile.include?("ruby"), "Dockerfile must install Ruby for build utilities")
 assert(dockerfile.include?("dbus"), "Dockerfile must install D-Bus tooling for runtime smoke tests")
 assert(dockerfile.include?("libglib2.0-bin"), "Dockerfile must install gdbus for runtime smoke tests")
+assert(dockerfile.include?("libglib2.0-dev"), "Dockerfile must install GIO headers for runtime smoke tests")
+assert(dockerfile.include?("pkg-config"), "Dockerfile must install pkg-config for runtime smoke tests")
 assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")

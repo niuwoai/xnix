@@ -1,0 +1,209 @@
+#include <gio/gio.h>
+#include <string.h>
+
+static const gchar introspection_xml[] =
+  "<node>"
+  "  <interface name='org.xnix.Compatibility1'>"
+  "    <method name='ListApplications'>"
+  "      <arg name='applications' type='aa{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='GetApplication'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='application' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='InstallRecipe'>"
+  "      <arg name='recipe_uri' type='s' direction='in'/>"
+  "      <arg name='request' type='o' direction='out'/>"
+  "    </method>"
+  "    <method name='Launch'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='options' type='a{sv}' direction='in'/>"
+  "      <arg name='request' type='o' direction='out'/>"
+  "    </method>"
+  "    <method name='CreateSnapshot'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='label' type='s' direction='in'/>"
+  "      <arg name='request' type='o' direction='out'/>"
+  "    </method>"
+  "    <method name='RestoreSnapshot'>"
+  "      <arg name='snapshot_id' type='s' direction='in'/>"
+  "      <arg name='request' type='o' direction='out'/>"
+  "    </method>"
+  "    <method name='GetDiagnostics'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='diagnostics' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <signal name='ApplicationChanged'>"
+  "      <arg name='application_id' type='s'/>"
+  "    </signal>"
+  "    <signal name='RequestCompleted'>"
+  "      <arg name='request' type='o'/>"
+  "      <arg name='result' type='a{sv}'/>"
+  "    </signal>"
+  "  </interface>"
+  "</node>";
+
+static GDBusNodeInfo *introspection_data = NULL;
+
+static GVariant *
+build_application(void)
+{
+  GVariantBuilder builder;
+
+  g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&builder, "{sv}", "id", g_variant_new_string("org.xnix.sample.notepad"));
+  g_variant_builder_add(&builder, "{sv}", "name", g_variant_new_string("Sample Notepad"));
+  g_variant_builder_add(&builder, "{sv}", "icon", g_variant_new_string("accessories-text-editor"));
+  g_variant_builder_add(&builder, "{sv}", "mode", g_variant_new_string("automatic"));
+
+  return g_variant_builder_end(&builder);
+}
+
+static gboolean
+known_application(const gchar *application_id)
+{
+  return g_strcmp0(application_id, "org.xnix.sample.notepad") == 0;
+}
+
+static void
+return_unknown_application(GDBusMethodInvocation *invocation, const gchar *application_id)
+{
+  g_dbus_method_invocation_return_error(invocation,
+                                        G_IO_ERROR,
+                                        G_IO_ERROR_NOT_FOUND,
+                                        "unknown application: %s",
+                                        application_id);
+}
+
+static void
+handle_method_call(GDBusConnection *connection,
+                   const gchar *sender,
+                   const gchar *object_path,
+                   const gchar *interface_name,
+                   const gchar *method_name,
+                   GVariant *parameters,
+                   GDBusMethodInvocation *invocation,
+                   gpointer user_data)
+{
+  (void) connection;
+  (void) sender;
+  (void) object_path;
+  (void) interface_name;
+  (void) user_data;
+
+  if (g_strcmp0(method_name, "ListApplications") == 0) {
+    GVariantBuilder applications;
+
+    g_variant_builder_init(&applications, G_VARIANT_TYPE("aa{sv}"));
+    g_variant_builder_add_value(&applications, build_application());
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(aa{sv})", &applications));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetApplication") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_application()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDiagnostics") == 0) {
+    const gchar *application_id = NULL;
+    GVariantBuilder diagnostics;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_variant_builder_init(&diagnostics, G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(&diagnostics, "{sv}", "application_id", g_variant_new_string(application_id));
+    g_variant_builder_add(&diagnostics, "{sv}", "status", g_variant_new_string("known"));
+    g_variant_builder_add(&diagnostics, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(a{sv})", &diagnostics));
+    return;
+  }
+
+  g_dbus_method_invocation_return_error(invocation,
+                                        G_IO_ERROR,
+                                        G_IO_ERROR_NOT_SUPPORTED,
+                                        "unsupported runtime method: %s",
+                                        method_name);
+}
+
+static const GDBusInterfaceVTable interface_vtable = {
+  handle_method_call,
+  NULL,
+  NULL
+};
+
+static void
+on_bus_acquired(GDBusConnection *connection, const gchar *name, gpointer user_data)
+{
+  GError *error = NULL;
+  guint registration_id;
+
+  (void) name;
+  (void) user_data;
+
+  registration_id = g_dbus_connection_register_object(connection,
+                                                      "/org/xnix/Compatibility1",
+                                                      introspection_data->interfaces[0],
+                                                      &interface_vtable,
+                                                      NULL,
+                                                      NULL,
+                                                      &error);
+  if (registration_id == 0) {
+    g_printerr("failed to register object: %s\n", error->message);
+    g_clear_error(&error);
+    g_main_loop_quit((GMainLoop *) user_data);
+  }
+}
+
+static void
+on_name_lost(GDBusConnection *connection, const gchar *name, gpointer user_data)
+{
+  (void) connection;
+  (void) name;
+
+  g_main_loop_quit((GMainLoop *) user_data);
+}
+
+int
+main(void)
+{
+  GError *error = NULL;
+  GMainLoop *loop;
+  guint owner_id;
+
+  introspection_data = g_dbus_node_info_new_for_xml(introspection_xml, &error);
+  if (introspection_data == NULL) {
+    g_printerr("failed to parse introspection XML: %s\n", error->message);
+    g_clear_error(&error);
+    return 1;
+  }
+
+  loop = g_main_loop_new(NULL, FALSE);
+  owner_id = g_bus_own_name(G_BUS_TYPE_SESSION,
+                            "org.xnix.Compatibility1",
+                            G_BUS_NAME_OWNER_FLAGS_NONE,
+                            on_bus_acquired,
+                            NULL,
+                            on_name_lost,
+                            loop,
+                            NULL);
+
+  g_main_loop_run(loop);
+
+  g_bus_unown_name(owner_id);
+  g_main_loop_unref(loop);
+  g_dbus_node_info_unref(introspection_data);
+  return 0;
+}

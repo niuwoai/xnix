@@ -21,6 +21,7 @@ module Xnix
     def build_command
       [
         "docker", "build",
+        "--pull=false",
         "--tag", image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
         @project_root
@@ -33,6 +34,10 @@ module Xnix
 
     def runtime_activation_smoke_command
       offline_run_command(["ruby", "test/test_runtime_activation_install.rb"])
+    end
+
+    def runtime_dbus_smoke_command
+      offline_run_command(["ruby", "scripts/dbus_session_smoke.rb"])
     end
 
     def source_retrieval_command(command)

@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.4"
+VERSION = "0.2.5"
 
 def assert(condition, message)
   return if condition
@@ -18,9 +18,11 @@ container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION)
 build_command = container.build_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 runtime_activation_command = container.runtime_activation_smoke_command
+runtime_dbus_command = container.runtime_dbus_smoke_command
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
+assert(build_command.include?("--pull=false"), "build command must prefer the local base image cache")
 assert(!build_command.include?("--memory"), "Buildx must not receive an unsupported memory argument")
 assert(!build_command.include?("--cpus"), "Buildx must not receive an unsupported CPU argument")
 
@@ -42,6 +44,10 @@ assert(!offline_command.include?("--mount"), "offline container must not mount h
 assert(runtime_activation_command.fetch(runtime_activation_command.index("--network") + 1) == "none", "runtime activation smoke must run without networking")
 assert(runtime_activation_command.include?("--read-only"), "runtime activation smoke must keep the container root read-only")
 assert(runtime_activation_command.last(2) == ["ruby", "test/test_runtime_activation_install.rb"], "runtime activation smoke must run the activation installer test")
+
+assert(runtime_dbus_command.fetch(runtime_dbus_command.index("--network") + 1) == "none", "runtime D-Bus smoke must run without networking")
+assert(runtime_dbus_command.include?("--read-only"), "runtime D-Bus smoke must keep the container root read-only")
+assert(runtime_dbus_command.last(2) == ["ruby", "scripts/dbus_session_smoke.rb"], "runtime D-Bus smoke must run the session bus smoke")
 
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")
