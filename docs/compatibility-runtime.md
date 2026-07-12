@@ -28,6 +28,8 @@ KDE packages display status and submit user decisions. They do not create a Wine
 
 The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model prefers the Runtime D-Bus service when a session source is available and falls back to the local Runtime read model for offline development. In both cases, it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
 
+The Dolphin service menu delegates selected files to `xnix-compat-open`. That entry point accepts only `file://` URIs, resolves a Runtime recipe by extension unless an explicit application id is supplied, and emits a portal-required Runtime `Launch` request model. It does not start Wine, a virtual machine, or a backend-specific executable.
+
 ## Application Recipes
 
 A recipe has a stable reverse-DNS application identifier, display name, icon, requested run mode, and supported file extensions. The Runtime generates an ordinary `.desktop` file that calls `xnix-compat-launch --app <id>`. The desktop file intentionally omits backend commands, prefix paths, and Windows executable paths.
@@ -45,6 +47,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.
+- Dolphin service menus must call `xnix-compat-open %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - The tray and notification integrations report Runtime events without exposing backend storage terminology.
 
 ## References

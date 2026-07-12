@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.8] - 2026-07-12
+
+### Added
+
+- Added a Dolphin service menu entry for opening selected files through Xnix Compatibility without exposing backend commands.
+- Added `xnix-compat-open`, a file-open request entry point that validates `file://` URIs, resolves a Runtime application recipe by file extension, and emits a portal-required Runtime launch request model.
+- Added focused coverage for Dolphin service menu packaging and file-open request validation.
+
+### Changed
+
+- Documented the file manager integration as a Runtime request path rather than a direct Wine or VM launcher.
+
 ## [0.2.7] - 2026-07-12
 
 ### Added

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Service
+MimeType=application/octet-stream;text/plain;
+Actions=openWithXnixCompatibility;
+X-KDE-ServiceTypes=KonqPopupMenu/Plugin
+X-KDE-Priority=TopLevel
+
+[Desktop Action openWithXnixCompatibility]
+Name=Open with Xnix Compatibility
+Icon=preferences-desktop
+Exec=xnix-compat-open %U
