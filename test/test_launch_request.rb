@@ -25,6 +25,12 @@ assert(request["source"] == "desktop-launcher", "launch request must identify th
 assert(request["application_id"] == "org.xnix.sample.notepad", "launch request must keep the Runtime application id")
 assert(request["runtime_method"] == "Launch", "launch request must target the Runtime launch method")
 assert(!request["portal_required"], "plain launcher requests must not require file portal access")
+assert(request["run_plan"]["plan_type"] == "compatibility-run", "launch request must include the compatibility run plan")
+assert(request["run_plan"]["strategy"] == "automatic-managed", "launch request must expose a desktop-safe run strategy")
+assert(!request["run_plan"]["backend_details_exposed"], "launch request must not expose backend details")
+assert(!request["run_plan"]["backend_ready"], "launch request must not claim backend readiness")
+assert(request["run_plan"]["portal_policy_required"], "launch request must require Portal policy preflight")
+assert(request["run_plan"]["snapshot_before_risky_change"], "launch request must require snapshot preflight")
 assert(request["file_count"] == 0, "plain launcher requests must not include files")
 
 file_request = Xnix::Compatibility::LaunchRequest.new(recipe_store: store).build(

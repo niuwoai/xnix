@@ -34,6 +34,7 @@ module Xnix
             "recipe_store" => true,
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
+            "compatibility_run_planning" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,

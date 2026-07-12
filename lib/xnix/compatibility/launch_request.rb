@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "uri"
+require_relative "compatibility_run_plan"
 require_relative "recipe_store"
 require_relative "runtime_daemon"
 
@@ -28,6 +29,7 @@ module Xnix
           "application_name" => recipe.name,
           "runtime_method" => "Launch",
           "portal_required" => !uris.empty?,
+          "run_plan" => run_plan_summary(recipe),
           "file_count" => uris.length,
           "file_uris" => uris
         }
@@ -54,6 +56,18 @@ module Xnix
         return recipe if recipe
 
         raise ArgumentError, "unknown application: #{application_id}"
+      end
+
+      def run_plan_summary(recipe)
+        plan = CompatibilityRunPlan.new(recipe: recipe).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "strategy" => plan.fetch("execution").fetch("strategy"),
+          "backend_details_exposed" => plan.fetch("execution").fetch("backend_details_exposed"),
+          "backend_ready" => plan.fetch("execution").fetch("backend_binding").fetch("ready"),
+          "portal_policy_required" => plan.fetch("preflight").fetch("portal_policy_required"),
+          "snapshot_before_risky_change" => plan.fetch("preflight").fetch("snapshot_before_risky_change")
+        }
       end
 
       class CLI

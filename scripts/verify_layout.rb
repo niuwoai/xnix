@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.24"
+EXPECTED_VERSION = "0.2.25"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -23,6 +23,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/application_recipe.rb
+  lib/xnix/compatibility/compatibility_run_plan.rb
   lib/xnix/compatibility/dbus_runtime_client.rb
   lib/xnix/compatibility/desktop_activation_installer.rb
   lib/xnix/compatibility/desktop_activation_rollback.rb
@@ -49,6 +50,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-launch
   bin/xnix-compat-notify
   bin/xnix-compat-open
+  bin/xnix-compat-run-plan
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
@@ -88,6 +90,7 @@ REQUIRED_FILES = %w[
   test/test_ssh_probe.rb
   test/test_milestone.rb
   test/test_application_recipe.rb
+  test/test_compatibility_run_plan.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
   test/test_recipe_install_gate.rb
@@ -183,6 +186,17 @@ assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin servi
 
 desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
 assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
+
+run_plan_source = read_project_file("lib/xnix/compatibility/compatibility_run_plan.rb")
+assert(run_plan_source.include?("xnix-compat-run-plan"), "Compatibility run plan must expose a CLI command")
+assert(run_plan_source.include?("automatic-managed"), "Compatibility run plan must include automatic strategy")
+assert(run_plan_source.include?("local-compatibility-engine"), "Compatibility run plan must include local compatibility strategy")
+assert(run_plan_source.include?("isolated-compatibility-engine"), "Compatibility run plan must include isolated compatibility strategy")
+assert(run_plan_source.include?("\"backend_details_exposed\" => false"), "Compatibility run plan must hide backend details")
+
+launch_request_source = read_project_file("lib/xnix/compatibility/launch_request.rb")
+assert(launch_request_source.include?("CompatibilityRunPlan"), "Launch requests must include compatibility run planning")
+assert(launch_request_source.include?("\"run_plan\""), "Launch requests must expose a run plan summary")
 
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|

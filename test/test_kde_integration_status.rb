@@ -28,7 +28,7 @@ expected_ids = %w[
   settings
 ]
 
-assert(status["version"] == "0.2.24", "KDE integration status must expose the current version")
+assert(status["version"] == "0.2.25", "KDE integration status must expose the current version")
 assert(status["desktop"] == "KDE Plasma", "KDE integration status must keep KDE as the official desktop")
 assert(status["official_desktop_only"], "KDE integration status must reject first-release multi-desktop scope")
 assert(ids == expected_ids, "KDE integration status must track the seven first-release entry points")

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.25] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-run-plan`, a Runtime-owned compatibility run plan model for automatic, local, and isolated execution strategies.
+- Added focused coverage for desktop-safe run strategy mapping, pending backend binding, Portal preflight, snapshot preflight, and backend-term filtering.
+
+### Changed
+
+- Extended launch request models with a desktop-safe run plan summary so KDE launchers can show Runtime planning status without exposing backend implementation details.
+- Added Runtime probe capability reporting for compatibility run planning.
+
 ## [0.2.24] - 2026-07-13
 
 ### Added
