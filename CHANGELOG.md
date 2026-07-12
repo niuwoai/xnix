@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.2] - 2026-07-12
+
+### Added
+
+- Pinned Buildroot 2025.02.15 source URL and SHA-256 lock data.
+- Container-only Buildroot source retrieval utility with offline lock verification.
+
 ## [0.1.1] - 2026-07-12
 
 ### Added

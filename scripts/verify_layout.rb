@@ -4,14 +4,16 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.1"
+EXPECTED_VERSION = "0.1.2"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
   buildroot/Config.in
   buildroot/external.desc
   buildroot/external.mk
+  buildroot/sources.lock
   buildroot/configs/xnix_x86_64_defconfig
+  scripts/fetch_buildroot.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -50,6 +52,10 @@ REQUIRED_VERSION_MARKERS.each do |relative_path, marker|
   assert(read_project_file(relative_path).include?(marker), "#{relative_path} must reference #{EXPECTED_VERSION}")
 end
 
+source_lock = read_project_file("buildroot/sources.lock")
+assert(source_lock.include?("buildroot.version=2025.02.15"), "source lock must pin Buildroot 2025.02.15")
+assert(source_lock.match?(/^buildroot.sha256=[0-9a-f]{64}$/), "source lock must contain a SHA-256")
+
 config = read_project_file("buildroot/configs/xnix_x86_64_defconfig")
 REQUIRED_CONFIG_LINES.each do |line|
   assert(config.include?(line), "defconfig must include #{line}")
@@ -57,6 +63,7 @@ end
 
 dockerfile = read_project_file("Dockerfile")
 assert(dockerfile.include?("qemu-system-x86"), "Dockerfile must install QEMU system emulation")
+assert(dockerfile.include?("ruby"), "Dockerfile must install Ruby for build utilities")
 assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")

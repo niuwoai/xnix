@@ -16,6 +16,7 @@ RUN apt-get update \
         libssl-dev \
         qemu-system-x86 \
         qemu-utils \
+        ruby \
         rsync \
         unzip \
         wget \

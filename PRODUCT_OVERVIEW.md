@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.1
+> Last updated: 2026-07-12 | Current version: v0.1.2
 
 ## Summary
 
@@ -34,7 +34,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 ## Buildroot Baseline
 
 - Buildroot version: `2025.02.15` LTS.
-- Buildroot source is intentionally not committed. A later build command will retrieve the pinned release into an ignored cache directory.
+- Buildroot source is intentionally not committed. `buildroot/sources.lock` pins its upstream URL and SHA-256; a later build command will retrieve it into an ignored cache directory.
 - The external tree lives in `buildroot/` and provides the `xnix_x86_64_defconfig` configuration.
 
 ## Test and Release Policy
