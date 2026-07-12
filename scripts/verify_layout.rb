@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.9"
+EXPECTED_VERSION = "0.2.10"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -28,6 +28,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/dolphin_service_menu.rb
   lib/xnix/compatibility/file_open_request.rb
   lib/xnix/compatibility/kde_center_model.rb
+  lib/xnix/compatibility/kde_integration_status.rb
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
@@ -36,6 +37,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-launch
   bin/xnix-compat-open
   bin/xnix-kde-center-model
+  bin/xnix-kde-integration-status
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -75,6 +77,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_activation_install.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
+  test/test_kde_integration_status.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -144,5 +147,10 @@ assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin servi
 
 desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
 assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
+
+kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_status.rb")
+%w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |entry_point|
+  assert(kde_status_source.include?("\"id\" => \"#{entry_point}\""), "KDE integration status must include #{entry_point}")
+end
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

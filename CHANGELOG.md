@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.10] - 2026-07-12
+
+### Added
+
+- Added a KDE seven-entry-point integration status model covering launcher, task manager, file manager, system tray, notifications, Compatibility Center, and settings.
+- Added `xnix-kde-integration-status` for reporting which KDE entry points have an initial Runtime-backed integration and which remain planned.
+- Added focused coverage for the first-release KDE scope and entry-point evidence.
+
+### Verified
+
+- Completed the tenth-version full Buildroot build and QEMU serial smoke test.
+
 ## [0.2.9] - 2026-07-12
 
 ### Added

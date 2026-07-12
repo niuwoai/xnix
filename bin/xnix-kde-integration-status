@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/kde_integration_status"
+
+exit Xnix::Compatibility::KdeIntegrationStatus::CLI.new.run
