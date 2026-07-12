@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.4] - 2026-07-12
+
+### Added
+
+- Docker-managed Buildroot source cache volume for constrained source retrieval without a host-directory mount.
+- Networked source-retrieval container command with targeted isolation unit coverage.
+
 ## [0.1.3-rc3] - 2026-07-12
 
 ### Fixed

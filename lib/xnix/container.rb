@@ -7,6 +7,7 @@ module Xnix
     PROCESS_LIMIT = "256"
     TEMPORARY_FILESYSTEM_SIZE = "64m"
     IMAGE_NAME = "xnix-builder"
+    SOURCE_CACHE_VOLUME = "xnix-buildroot-cache"
 
     def initialize(project_root:, version:)
       @project_root = project_root
@@ -27,6 +28,16 @@ module Xnix
     end
 
     def offline_run_command(command)
+      runtime_command(network: "none", extra_mounts: [], command: command)
+    end
+
+    def source_retrieval_command(command)
+      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
+    end
+
+    private
+
+    def runtime_command(network:, extra_mounts:, command:)
       [
         "docker", "run", "--rm", "--init",
         "--memory", BUILD_MEMORY_LIMIT,
@@ -34,12 +45,17 @@ module Xnix
         "--pids-limit", PROCESS_LIMIT,
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
-        "--network", "none",
+        "--network", network,
         "--read-only",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=#{TEMPORARY_FILESYSTEM_SIZE}",
+        *extra_mounts.flat_map { |mount| ["--mount", mount] },
         image_tag,
         *command
       ]
+    end
+
+    def source_cache_mount
+      "type=volume,source=#{SOURCE_CACHE_VOLUME},target=/workspace/.cache"
     end
   end
 end

@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.1.3-rc3"
+VERSION = "0.1.4"
 
 def assert(condition, message)
   return if condition
@@ -37,5 +37,14 @@ assert(!offline_command.include?("--network=host"), "offline container must not 
 assert(!offline_command.any? { |argument| argument.include?("docker.sock") }, "offline container must not mount the Docker socket")
 
 assert(!offline_command.include?("--mount"), "offline container must not mount host directories")
+
+source_command = container.source_retrieval_command(["ruby", "scripts/fetch_buildroot.rb"])
+assert(source_command.include?("--network"), "source retrieval must configure networking")
+assert(source_command.fetch(source_command.index("--network") + 1) == "bridge", "source retrieval must use bridge networking")
+assert(source_command.include?("--mount"), "source retrieval must mount its internal source cache")
+source_mount = source_command.fetch(source_command.index("--mount") + 1)
+expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
+assert(source_mount == expected_source_mount, "source retrieval must use the managed source cache volume")
+assert(!source_mount.include?("type=bind"), "source retrieval must not bind mount a host directory")
 
 puts "PASS: constrained container command unit tests"

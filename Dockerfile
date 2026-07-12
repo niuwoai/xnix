@@ -26,6 +26,8 @@ RUN apt-get update \
 RUN useradd --create-home --shell /bin/bash xnix
 
 COPY --chown=xnix:xnix . /workspace
+RUN mkdir --parents /workspace/.cache/buildroot \
+    && chown --recursive xnix:xnix /workspace/.cache
 
 USER xnix
 WORKDIR /workspace

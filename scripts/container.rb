@@ -24,6 +24,10 @@ when "offline-run"
   abort "Usage: ruby scripts/container.rb offline-run COMMAND [ARGUMENT ...]" if ARGV.empty?
 
   exec(*container.offline_run_command(ARGV))
+when "fetch-sources"
+  abort "Usage: ruby scripts/container.rb fetch-sources" unless ARGV.empty?
+
+  exec(*container.source_retrieval_command(["ruby", "scripts/fetch_buildroot.rb"]))
 else
-  abort "Usage: ruby scripts/container.rb {build|offline-run COMMAND [ARGUMENT ...]}"
+  abort "Usage: ruby scripts/container.rb {build|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
 end
