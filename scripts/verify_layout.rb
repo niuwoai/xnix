@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.19"
+EXPECTED_VERSION = "0.2.20"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -228,5 +228,7 @@ assert(registry_backed_store_source.include?("RecipeStore.new"), "Registry-backe
 
 runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon.rb")
 assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
+assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
+assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

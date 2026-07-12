@@ -29,8 +29,10 @@ module Xnix
           "object_path" => OBJECT_PATH,
           "interface" => INTERFACE,
           "recipe_count" => list_applications.length,
+          "recipe_trust" => recipe_trust,
           "capabilities" => {
             "recipe_store" => true,
+            "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
@@ -112,6 +114,29 @@ module Xnix
           "mode" => recipe.mode,
           "supported_extensions" => recipe.supported_extensions,
           "mime_types" => recipe.mime_types
+        }
+      end
+
+      def registry_backed_recipe_store?
+        recipe_store.respond_to?(:registry_report)
+      end
+
+      def recipe_trust
+        unless registry_backed_recipe_store?
+          return {
+            "registry_backed" => false,
+            "digest_verified" => false,
+            "signed_recipe_validation" => false,
+            "development_fallback" => true
+          }
+        end
+
+        trust = recipe_store.registry_report.fetch("trust")
+        {
+          "registry_backed" => true,
+          "digest_verified" => trust.fetch("digest_verified"),
+          "signed_recipe_validation" => trust.fetch("signed_recipe_validation"),
+          "development_registry" => trust.fetch("development_registry")
         }
       end
 

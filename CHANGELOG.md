@@ -2,6 +2,21 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.20] - 2026-07-13
+
+### Added
+
+- Added Runtime probe reporting for recipe trust status, including registry-backed loading, digest verification, development registry state, and signed-recipe validation status.
+- Added focused coverage for recipe trust capability reporting.
+
+### Changed
+
+- Documented the Runtime probe as the observable trust boundary for KDE surfaces and diagnostics.
+
+### Verified
+
+- Completed the twentieth-version full Buildroot build and QEMU serial smoke test.
+
 ## [0.2.19] - 2026-07-13
 
 ### Added

@@ -56,6 +56,8 @@ Recipe registry verification delegates to `xnix-recipe-registry`. The registry r
 
 Runtime recipe loading uses `RegistryBackedRecipeStore` when `registry.json` is present. That store verifies the registry before loading recipe files, so default application discovery is digest-checked. A no-registry fallback remains only for isolated development fixtures.
 
+Runtime probes report recipe trust status. KDE surfaces and diagnostics can tell whether the application list came from registry-backed loading, whether digests were verified, and whether production signed-recipe validation is enabled.
+
 Recipe installation must later require a production signed source and a schema version. The current model establishes validation, digest, and output invariants before adding production trust roots.
 
 ## Permissions and Asynchronous Requests
@@ -77,6 +79,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Desktop activation rollback must use activation receipts, verify SHA-256 digests before removal, and preserve changed files.
 - Recipe registries must verify schema version, safe relative paths, SHA-256 digests, and signature status before recipes are treated as managed inputs.
 - Runtime application listing must use registry-backed loading when a registry is available.
+- Runtime probes must expose recipe trust status for desktop diagnostics.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.
