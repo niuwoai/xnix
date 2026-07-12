@@ -5,6 +5,7 @@ require "optparse"
 require_relative "desktop_entry"
 require_relative "dolphin_service_menu"
 require_relative "kde_integration_status"
+require_relative "portal_access_policy"
 require_relative "recipe_store"
 require_relative "runtime_daemon"
 
@@ -20,6 +21,7 @@ module Xnix
       NOTIFICATION_COMMAND = "xnix-compat-notify"
       CENTER_MODEL_COMMAND = "xnix-kde-center-model"
       SETTINGS_COMMAND = "xnix-compat-settings"
+      PORTAL_POLICY_COMMAND = "xnix-portal-access-policy"
 
       def initialize(recipe:)
         @recipe = recipe
@@ -143,6 +145,10 @@ module Xnix
           "entry_point" => "settings",
           "kind" => "settings-model",
           "argv" => [SETTINGS_COMMAND, recipe.id],
+          "portal_policy" => {
+            "argv" => [PORTAL_POLICY_COMMAND, "--app", recipe.id, "--operation", "file-open"],
+            "operations" => PortalAccessPolicy::OPERATIONS.keys
+          },
           "sections" => %w[run-mode resource-access devices network snapshots]
         }
       end

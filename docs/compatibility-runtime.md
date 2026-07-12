@@ -66,6 +66,8 @@ Recipe install gates delegate to `xnix-recipe-install-gate`. The gate evaluates 
 
 Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return request objects and complete with signals, so Runtime methods that need user approval return an object path and complete through `RequestCompleted`. The Runtime must not promise direct access to a user's files, clipboard, camera, printer, display, or screen capture.
 
+Portal access policy delegates to `xnix-portal-access-policy`. The policy covers file open, URI open, print, screenshot, clipboard, camera, and remote-desktop operations. KDE settings may display the decision, but the Runtime owns the policy; the desktop shell requests authorization and receives only the resulting user-mediated grant.
+
 ## KDE Integration Rules
 
 - The Compatibility Center Plasmoid is a Runtime client, not an alternative Runtime.
@@ -85,6 +87,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Runtime probes must expose recipe trust status for desktop diagnostics.
 - Recipe trust policy must explain why recipes are production-trusted, development-only, or untrusted.
 - Recipe install gates must block production activation of development-only registries while preserving digest-verified development staging.
+- Portal access policy must require user-mediated XDG Desktop Portal requests and must deny direct desktop access for sensitive operations.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

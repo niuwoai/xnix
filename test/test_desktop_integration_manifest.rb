@@ -30,7 +30,7 @@ expected_entry_points = %w[
   settings
 ]
 
-assert(manifest["version"] == "0.2.23", "desktop integration manifest must expose the current version")
+assert(manifest["version"] == "0.2.24", "desktop integration manifest must expose the current version")
 assert(manifest["manifest_type"] == "desktop-integration", "manifest must identify its type")
 assert(manifest["desktop"] == "KDE Plasma", "manifest must target the official KDE desktop")
 assert(manifest["official_desktop_only"], "manifest must not expand first-release desktop scope")
@@ -64,6 +64,9 @@ assert(compatibility_center["argv"] == ["xnix-kde-center-model"], "Compatibility
 
 settings = artifacts.find { |artifact| artifact["entry_point"] == "settings" }
 assert(settings["argv"] == ["xnix-compat-settings", "org.xnix.sample.notepad"], "settings artifact must expose user-facing settings")
+assert(settings["portal_policy"]["argv"] == ["xnix-portal-access-policy", "--app", "org.xnix.sample.notepad", "--operation", "file-open"], "settings artifact must expose the portal policy command")
+assert(settings["portal_policy"]["operations"].include?("camera"), "settings artifact must include sensitive device portal operations")
+assert(settings["portal_policy"]["operations"].include?("remote-desktop"), "settings artifact must include remote desktop portal operations")
 assert(settings["sections"].include?("snapshots"), "settings artifact must include snapshot policy")
 
 safety = manifest.fetch("safety")

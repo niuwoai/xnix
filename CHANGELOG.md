@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.24] - 2026-07-13
+
+### Added
+
+- Added `xnix-portal-access-policy`, a Runtime-owned policy model for file, URI, print, screenshot, clipboard, camera, and remote-desktop Portal access decisions.
+- Added focused coverage for Portal mediation, direct-access denial, default ask or deny decisions, CLI validation, and backend-term filtering.
+
+### Changed
+
+- Connected the desktop integration manifest settings artifact to the Portal access policy command so KDE settings can discover Runtime-owned sensitive desktop operation policy.
+
 ## [0.2.23] - 2026-07-13
 
 ### Changed

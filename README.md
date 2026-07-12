@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.23`. KDE Plasma is the only supported flagship desktop. An independent Compatibility Runtime manages application recipes, Wine/VM backends, diagnostics, snapshots, and rollback without exposing implementation details in normal desktop entry points.
+The project is currently at `v0.2.24`. KDE Plasma is the only supported flagship desktop. An independent Compatibility Runtime manages application recipes, Wine/VM backends, diagnostics, snapshots, and rollback without exposing implementation details in normal desktop entry points.
 
 See [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) for the roadmap and technical choices. See [AGENTS.md](AGENTS.md) for contribution and safety rules.
 
@@ -10,7 +10,7 @@ See [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) for the roadmap and technical cho
 
 The first end-to-end Buildroot run has completed successfully: Xnix boots its Linux kernel and initramfs in constrained QEMU, acquires `10.0.2.15` through user-mode DHCP, and accepts a loopback-only key-authenticated SSH probe.
 
-The v0.2.23 Runtime foundation defines application recipes, recipe registry verification, registry-backed Runtime recipe loading, recipe trust probe reporting, recipe trust policy evaluation, recipe install gate evaluation, preflight-gated desktop activation, standard desktop entries, managed launcher, Dolphin file-open, notification, settings, tray status, task-manager identity, desktop integration manifest models, a staged desktop activation installer, and activation receipt rollback, a D-Bus service contract, a hardened systemd unit, a Plasma 6 Compatibility Center package skeleton, a Dolphin service menu, a local daemon core, read-only Runtime method dispatch, a packaged libexec activation wrapper, an unprivileged activation-file installer, a Linux session-bus smoke adapter for read-only calls, a KDE-safe Compatibility Center read model that can read through D-Bus, and a seven-entry-point KDE integration status model. It does not yet ship a full KDE image, production D-Bus daemon binding, Wine backend, VM backend, or AI service.
+The v0.2.24 Runtime foundation defines application recipes, recipe registry verification, registry-backed Runtime recipe loading, recipe trust probe reporting, recipe trust policy evaluation, recipe install gate evaluation, preflight-gated desktop activation, Portal access policy evaluation, standard desktop entries, managed launcher, Dolphin file-open, notification, settings, tray status, task-manager identity, desktop integration manifest models, a staged desktop activation installer, and activation receipt rollback, a D-Bus service contract, a hardened systemd unit, a Plasma 6 Compatibility Center package skeleton, a Dolphin service menu, a local daemon core, read-only Runtime method dispatch, a packaged libexec activation wrapper, an unprivileged activation-file installer, a Linux session-bus smoke adapter for read-only calls, a KDE-safe Compatibility Center read model that can read through D-Bus, and a seven-entry-point KDE integration status model. It does not yet ship a full KDE image, production D-Bus daemon binding, Wine backend, VM backend, or AI service.
 
 Run the focused scaffold test:
 
@@ -39,6 +39,7 @@ ruby -Ilib test/test_dolphin_service_menu.rb
 ruby -Ilib test/test_file_open_request.rb
 ruby -Ilib test/test_launch_request.rb
 ruby -Ilib test/test_notification_request.rb
+ruby -Ilib test/test_portal_access_policy.rb
 ruby -Ilib test/test_settings_model.rb
 ruby -Ilib test/test_tray_status_model.rb
 ruby -Ilib test/test_task_manager_identity.rb
