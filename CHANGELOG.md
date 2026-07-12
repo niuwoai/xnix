@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.5] - 2026-07-12
+
+### Added
+
+- Buildroot configuration and full-build command generation against the Docker-managed source cache.
+- Focused unit coverage for the x86_64 defconfig, external tree, output directory, and offline build isolation.
+
 ## [0.1.4] - 2026-07-12
 
 ### Added

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.4"
+EXPECTED_VERSION = "0.1.5"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -14,9 +14,11 @@ REQUIRED_FILES = %w[
   buildroot/sources.lock
   buildroot/configs/xnix_x86_64_defconfig
   lib/xnix/container.rb
+  lib/xnix/buildroot.rb
   scripts/container.rb
   scripts/fetch_buildroot.rb
   test/test_container.rb
+  test/test_buildroot.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
