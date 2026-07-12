@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.19] - 2026-07-13
+
+### Added
+
+- Added a registry-backed recipe store that verifies `registry.json` before loading Runtime-managed recipes.
+- Added focused coverage for registered recipe loading, digest mismatch rejection, and no-registry development fallback.
+
+### Changed
+
+- Made `xnix-compatd` use registry-backed recipe loading by default when a recipe registry is present.
+
 ## [0.2.18] - 2026-07-13
 
 ### Added

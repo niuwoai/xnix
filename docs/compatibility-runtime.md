@@ -54,6 +54,8 @@ A recipe has a stable reverse-DNS application identifier, display name, icon, re
 
 Recipe registry verification delegates to `xnix-recipe-registry`. The registry records schema version, recipe id, safe relative path, SHA-256 digest, and signature status for each recipe. The current development registry verifies digests and reports that production signed-recipe validation is still disabled; it does not yet trust or execute external recipe files.
 
+Runtime recipe loading uses `RegistryBackedRecipeStore` when `registry.json` is present. That store verifies the registry before loading recipe files, so default application discovery is digest-checked. A no-registry fallback remains only for isolated development fixtures.
+
 Recipe installation must later require a production signed source and a schema version. The current model establishes validation, digest, and output invariants before adding production trust roots.
 
 ## Permissions and Asynchronous Requests
@@ -74,6 +76,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Desktop activation installers must write only under an explicit staging root and must reject direct host-root installation.
 - Desktop activation rollback must use activation receipts, verify SHA-256 digests before removal, and preserve changed files.
 - Recipe registries must verify schema version, safe relative paths, SHA-256 digests, and signature status before recipes are treated as managed inputs.
+- Runtime application listing must use registry-backed loading when a registry is available.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

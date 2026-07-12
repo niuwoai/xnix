@@ -5,11 +5,12 @@ require "json"
 require "optparse"
 require "pathname"
 require_relative "application_recipe"
-require_relative "runtime_daemon"
 
 module Xnix
   module Compatibility
     class RecipeRegistry
+      PROJECT_ROOT = Pathname.new(__dir__).join("../../..").realpath
+      VERSION = PROJECT_ROOT.join("VERSION").read.strip
       SCHEMA_VERSION = 1
       DIGEST_PATTERN = /\A[0-9a-f]{64}\z/
       SIGNATURE_STATUSES = %w[development-only verified].freeze
@@ -26,7 +27,7 @@ module Xnix
         entries = recipes.map { |entry| verify_entry(entry) }
 
         {
-          "version" => RuntimeDaemon::VERSION,
+          "version" => VERSION,
           "schema_version" => SCHEMA_VERSION,
           "registry_name" => manifest.fetch("registry_name"),
           "registry_path" => path.to_s,
@@ -125,7 +126,7 @@ module Xnix
       end
 
       class CLI
-        DEFAULT_REGISTRY = RuntimeDaemon::PROJECT_ROOT.join("runtime/recipes/registry.json").to_s
+        DEFAULT_REGISTRY = PROJECT_ROOT.join("runtime/recipes/registry.json").to_s
 
         def initialize(argv)
           @argv = argv.dup

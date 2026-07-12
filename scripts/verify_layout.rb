@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.18"
+EXPECTED_VERSION = "0.2.19"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -34,6 +34,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/kde_integration_status.rb
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
+  lib/xnix/compatibility/registry_backed_recipe_store.rb
   lib/xnix/compatibility/recipe_registry.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
@@ -83,6 +84,7 @@ REQUIRED_FILES = %w[
   test/test_application_recipe.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
+  test/test_registry_backed_recipe_store.rb
   test/test_desktop_entry.rb
   test/test_desktop_activation_installer.rb
   test/test_desktop_activation_rollback.rb
@@ -219,5 +221,12 @@ recipe_registry_source = read_project_file("lib/xnix/compatibility/recipe_regist
 assert(recipe_registry_source.include?("xnix-recipe-registry"), "Recipe registry must expose a CLI command")
 assert(recipe_registry_source.include?("DIGEST_PATTERN"), "Recipe registry must validate SHA-256 digests")
 assert(recipe_registry_source.include?("signed_recipe_validation"), "Recipe registry must report signed recipe validation status")
+
+registry_backed_store_source = read_project_file("lib/xnix/compatibility/registry_backed_recipe_store.rb")
+assert(registry_backed_store_source.include?("RecipeRegistry"), "Registry-backed recipe store must verify the registry")
+assert(registry_backed_store_source.include?("RecipeStore.new"), "Registry-backed recipe store must keep a no-registry development fallback")
+
+runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon.rb")
+assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

@@ -3,7 +3,7 @@
 require "json"
 require "optparse"
 require "pathname"
-require_relative "recipe_store"
+require_relative "registry_backed_recipe_store"
 
 module Xnix
   module Compatibility
@@ -124,7 +124,7 @@ module Xnix
         def run
           parser.order!(@argv)
           command = @argv.shift || "probe"
-          runtime = RuntimeDaemon.new(recipe_store: RecipeStore.new(path: @recipe_dir))
+          runtime = RuntimeDaemon.new(recipe_store: RegistryBackedRecipeStore.for_path(@recipe_dir))
 
           case command
           when "probe"
