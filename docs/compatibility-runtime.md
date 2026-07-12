@@ -44,7 +44,7 @@ Task manager identity delegates to `xnix-compat-window-identity`. That model exp
 
 Desktop activation planning delegates to `xnix-desktop-integration-manifest`. That manifest groups a recipe's launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts into one KDE activation plan. It is ordered, portal-aware, does not require host privilege, and does not expose backend commands.
 
-Desktop activation staging delegates to `xnix-install-desktop-integration`. That installer writes the generated application launcher, Dolphin service menu, and persisted desktop integration manifest under a supplied root. It rejects host-root installation and gives tests a safe way to verify KDE desktop artifacts without modifying a developer workstation.
+Desktop activation staging delegates to `xnix-install-desktop-integration`. That installer writes the generated application launcher, Dolphin service menu, and persisted desktop integration manifest under a supplied root after recipe install-gate preflight. It rejects host-root installation, blocks production activation of development-only registries, and gives tests an explicit development mode for verifying KDE desktop artifacts without modifying a developer workstation.
 
 Desktop activation rollback delegates to `xnix-rollback-desktop-integration`. The installer writes a SHA-256 activation receipt, and rollback removes only receipt-tracked files whose current digest still matches the receipt. Changed files are preserved for diagnosis instead of being deleted.
 
@@ -78,6 +78,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Task manager identity models must map windows to Runtime application identities without owning KWin policy decisions.
 - Desktop integration manifests must group all seven first-release KDE artifacts for a recipe activation without exposing backend commands.
 - Desktop activation installers must write only under an explicit staging root and must reject direct host-root installation.
+- Desktop activation installers must enforce recipe install-gate preflight before writing staged files.
 - Desktop activation rollback must use activation receipts, verify SHA-256 digests before removal, and preserve changed files.
 - Recipe registries must verify schema version, safe relative paths, SHA-256 digests, and signature status before recipes are treated as managed inputs.
 - Runtime application listing must use registry-backed loading when a registry is available.

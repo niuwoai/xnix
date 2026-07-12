@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.23] - 2026-07-13
+
+### Changed
+
+- Enforced recipe install gate preflight in `xnix-install-desktop-integration` before staged desktop activation.
+- Made the desktop activation CLI use registry-backed recipe loading and block development-only registries in production mode by default.
+- Added an explicit development install mode for safe local staging after digest verification.
+
+### Added
+
+- Added focused coverage that blocked production activation writes no desktop files and development staging still succeeds under the verified development registry.
+
 ## [0.2.22] - 2026-07-13
 
 ### Added

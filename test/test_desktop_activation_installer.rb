@@ -6,6 +6,7 @@ require "open3"
 require "pathname"
 require "tmpdir"
 require_relative "../lib/xnix/compatibility/desktop_activation_installer"
+require_relative "../lib/xnix/compatibility/recipe_install_gate"
 
 def assert(condition, message)
   return if condition
@@ -17,17 +18,31 @@ end
 project_root = Pathname.new(__dir__).join("..").realpath
 recipe_store = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/recipes"))
 recipe = recipe_store.find("org.xnix.sample.notepad")
+registry_report = Xnix::Compatibility::RecipeRegistry.new(
+  path: project_root.join("runtime/recipes/registry.json")
+).verify
+development_gate = Xnix::Compatibility::RecipeInstallGate.new(
+  registry_report: registry_report,
+  application_id: "org.xnix.sample.notepad",
+  mode: "development"
+)
 
 Dir.mktmpdir("xnix-desktop-root") do |root|
-  result = Xnix::Compatibility::DesktopActivationInstaller.new(root: root, recipe: recipe).install
+  result = Xnix::Compatibility::DesktopActivationInstaller.new(
+    root: root,
+    recipe: recipe,
+    install_gate: development_gate
+  ).install
   root_path = Pathname.new(root)
   desktop_entry = root_path.join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
   service_menu = root_path.join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = root_path.join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
-  assert(result["version"] == "0.2.22", "desktop activation installer must expose the current version")
+  assert(result["version"] == "0.2.23", "desktop activation installer must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer must identify the application")
   assert(result["root"] == root, "desktop activation installer must report the staging root")
+  assert(result["preflight"]["decision"] == "allow", "desktop activation installer must report allowed preflight")
+  assert(result["preflight"]["mode"] == "development", "desktop activation installer must preserve install gate mode")
   assert(result["installed"].length == 3, "desktop activation installer must install three staged files")
   assert(result["receipt"]["kind"] == "desktop-activation-receipt", "desktop activation installer must write a rollback receipt")
   assert(result["receipt"]["sha256"].match?(/\A[0-9a-f]{64}\z/), "desktop activation receipt must include a SHA-256 digest")
@@ -35,6 +50,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["safety"]["staging_root_required"], "desktop activation installer must require a staging root")
   assert(!result["safety"]["host_root_modified"], "desktop activation installer must not modify the host root")
   assert(!result["safety"]["backend_commands_exposed"], "desktop activation installer must not expose backend commands")
+  assert(result["safety"]["recipe_install_gate_enforced"], "desktop activation installer must enforce the recipe install gate when supplied")
   assert(result["safety"]["rollback_receipt_written"], "desktop activation installer must report rollback receipt writing")
 
   assert(desktop_entry.file?, "desktop activation installer must install the generated desktop entry")
@@ -59,12 +75,29 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
     "--root",
     root,
     "--app",
-    "org.xnix.sample.notepad"
+    "org.xnix.sample.notepad",
+    "--mode",
+    "development"
   )
   assert(status.success?, "desktop activation installer CLI must exit successfully: #{stderr}")
   result = JSON.parse(stdout)
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer CLI must emit install result")
+  assert(result["preflight"]["decision"] == "allow", "desktop activation installer CLI must enforce an allowed preflight")
   assert(Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop").file?, "desktop activation installer CLI must install the desktop entry")
+end
+
+Dir.mktmpdir("xnix-desktop-root") do |root|
+  _stdout, stderr, status = Open3.capture3(
+    "ruby",
+    project_root.join("bin/xnix-install-desktop-integration").to_s,
+    "--root",
+    root,
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(!status.success?, "desktop activation installer CLI must block development-only registries in production mode")
+  assert(stderr.include?("recipe install gate blocked activation"), "desktop activation installer CLI must explain preflight blocking")
+  assert(!Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop").exist?, "blocked desktop activation must not install files")
 end
 
 _stdout, stderr, status = Open3.capture3(

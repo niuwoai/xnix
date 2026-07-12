@@ -8,7 +8,9 @@ require "pathname"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "dolphin_service_menu"
+require_relative "recipe_install_gate"
 require_relative "recipe_store"
+require_relative "registry_backed_recipe_store"
 require_relative "runtime_daemon"
 
 module Xnix
@@ -19,13 +21,15 @@ module Xnix
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
       RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
 
-      def initialize(root:, recipe:)
+      def initialize(root:, recipe:, install_gate: nil)
         @root = Pathname.new(root)
         @recipe = recipe
+        @install_gate = install_gate
       end
 
       def install
         validate_root!
+        validate_preflight!
 
         installed = [
           install_desktop_entry,
@@ -39,6 +43,7 @@ module Xnix
           "version" => RuntimeDaemon::VERSION,
           "application_id" => recipe.id,
           "root" => root.to_s,
+          "preflight" => preflight_report,
           "installed" => installed,
           "receipt" => receipt,
           "activated_entry_points" => manifest.to_h.fetch("entry_points"),
@@ -46,6 +51,7 @@ module Xnix
             "staging_root_required" => true,
             "host_root_modified" => false,
             "backend_commands_exposed" => false,
+            "recipe_install_gate_enforced" => !install_gate.nil?,
             "rollback_receipt_written" => true
           }
         }
@@ -53,10 +59,19 @@ module Xnix
 
       private
 
-      attr_reader :root, :recipe
+      attr_reader :root, :recipe, :install_gate
 
       def validate_root!
         raise ArgumentError, "root must not be /" if root.cleanpath.to_s == "/"
+      end
+
+      def validate_preflight!
+        return unless install_gate
+
+        return if preflight_report.fetch("decision") == "allow"
+
+        reason = preflight_report.fetch("blocking_reasons").join("; ")
+        raise ArgumentError, "recipe install gate blocked activation: #{reason}"
       end
 
       def install_desktop_entry
@@ -137,12 +152,25 @@ module Xnix
         @manifest ||= DesktopIntegrationManifest.new(recipe: recipe)
       end
 
+      def preflight_report
+        @preflight_report ||= if install_gate
+                                install_gate.to_h
+                              else
+                                {
+                                  "gate_type" => "recipe-install",
+                                  "decision" => "not-enforced",
+                                  "blocking_reasons" => []
+                                }
+                              end
+      end
+
       class CLI
         def initialize(argv)
           @argv = argv.dup
           @application_id = nil
           @recipe_dir = RuntimeDaemon::DEFAULT_RECIPE_DIR
           @root = nil
+          @mode = "production"
         end
 
         def run
@@ -150,10 +178,12 @@ module Xnix
           raise ArgumentError, "--root is required" unless @root
           raise ArgumentError, "--app is required" unless @application_id
 
-          recipe = RecipeStore.new(path: @recipe_dir).find(@application_id)
+          recipe_store = RegistryBackedRecipeStore.for_path(@recipe_dir)
+          recipe = recipe_store.find(@application_id)
           raise ArgumentError, "unknown application: #{@application_id}" unless recipe
 
-          result = DesktopActivationInstaller.new(root: @root, recipe: recipe).install
+          install_gate = build_install_gate(recipe_store)
+          result = DesktopActivationInstaller.new(root: @root, recipe: recipe, install_gate: install_gate).install
           puts JSON.pretty_generate(result)
           0
         rescue OptionParser::ParseError, ArgumentError => e
@@ -165,7 +195,7 @@ module Xnix
 
         def parser
           OptionParser.new do |options|
-            options.banner = "Usage: xnix-install-desktop-integration --root PATH --app APP_ID [--recipe-dir PATH]"
+            options.banner = "Usage: xnix-install-desktop-integration --root PATH --app APP_ID [--recipe-dir PATH] [--mode MODE]"
             options.on("--root PATH", "Install desktop activation files under PATH") do |value|
               @root = value
             end
@@ -175,7 +205,22 @@ module Xnix
             options.on("--recipe-dir PATH", "Read application recipes from PATH") do |value|
               @recipe_dir = value
             end
+            options.on("--mode MODE", RecipeInstallGate::MODES, "Evaluate production or development install policy") do |value|
+              @mode = value
+            end
           end
+        end
+
+        def build_install_gate(recipe_store)
+          unless recipe_store.respond_to?(:registry_report)
+            raise ArgumentError, "recipe install gate requires a verified recipe registry"
+          end
+
+          RecipeInstallGate.new(
+            registry_report: recipe_store.registry_report,
+            application_id: @application_id,
+            mode: @mode
+          )
         end
       end
     end

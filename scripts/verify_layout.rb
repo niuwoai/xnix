@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.22"
+EXPECTED_VERSION = "0.2.23"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -217,6 +217,8 @@ desktop_activation_source = read_project_file("lib/xnix/compatibility/desktop_ac
   assert(desktop_activation_source.include?(target), "Desktop activation installer must stage #{target}")
 end
 assert(desktop_activation_source.include?("\"host_root_modified\" => false"), "Desktop activation installer must not claim host root changes")
+assert(desktop_activation_source.include?("RecipeInstallGate"), "Desktop activation installer must enforce recipe install gate preflight")
+assert(desktop_activation_source.include?("recipe_install_gate_enforced"), "Desktop activation installer must report install gate enforcement")
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")
 assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")
