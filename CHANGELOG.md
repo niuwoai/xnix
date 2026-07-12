@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.6] - 2026-07-12
+
+### Added
+
+- Restricted x86_64 QEMU TCG command generation for the future Xnix boot smoke test.
+- Focused unit coverage for QEMU memory, CPU, console, and network restrictions.
+
 ## [0.1.5] - 2026-07-12
 
 ### Added
