@@ -8,6 +8,7 @@ require "pathname"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "dolphin_service_menu"
+require_relative "file_association_model"
 require_relative "recipe_install_gate"
 require_relative "recipe_store"
 require_relative "registry_backed_recipe_store"
@@ -30,10 +31,12 @@ module Xnix
       def install
         validate_root!
         validate_preflight!
+        validate_file_association_target!
 
         installed = [
           install_desktop_entry,
           install_dolphin_service_menu,
+          install_file_associations,
           install_manifest
         ]
 
@@ -74,6 +77,11 @@ module Xnix
         raise ArgumentError, "recipe install gate blocked activation: #{reason}"
       end
 
+      def validate_file_association_target!
+        destination = safe_destination(FileAssociationModel::MIMEAPPS_RELATIVE_PATH)
+        raise ArgumentError, "refusing to overwrite existing mimeapps list" if destination.exist?
+      end
+
       def install_desktop_entry
         desktop_entry = DesktopEntry.new(recipe)
         install_file(
@@ -92,6 +100,17 @@ module Xnix
           contents: service_menu.render,
           mode: 0o644,
           kind: "dolphin-service-menu",
+          entry_point: "file-manager"
+        )
+      end
+
+      def install_file_associations
+        model = FileAssociationModel.new(recipe: recipe)
+        install_file(
+          relative_path: FileAssociationModel::MIMEAPPS_RELATIVE_PATH,
+          contents: model.render_mimeapps,
+          mode: 0o644,
+          kind: "mimeapps-list",
           entry_point: "file-manager"
         )
       end

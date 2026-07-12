@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.32"
+EXPECTED_VERSION = "0.2.33"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -33,6 +33,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/desktop_integration_manifest.rb
   lib/xnix/compatibility/desktop_entry.rb
   lib/xnix/compatibility/dolphin_service_menu.rb
+  lib/xnix/compatibility/file_association_model.rb
   lib/xnix/compatibility/file_open_request.rb
   lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/kde_integration_status.rb
@@ -63,6 +64,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
   bin/xnix-desktop-integration-manifest
+  bin/xnix-file-association-model
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
@@ -115,6 +117,7 @@ REQUIRED_FILES = %w[
   test/test_desktop_integration_manifest.rb
   test/test_dbus_runtime_client.rb
   test/test_dolphin_service_menu.rb
+  test/test_file_association_model.rb
   test/test_file_open_request.rb
   test/test_launch_request.rb
   test/test_notification_request.rb
@@ -202,6 +205,12 @@ assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin servi
 desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
 assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
 
+file_association_source = read_project_file("lib/xnix/compatibility/file_association_model.rb")
+assert(file_association_source.include?("mimeapps.list"), "File association model must write mimeapps.list")
+assert(file_association_source.include?("xnix-compat-open"), "File association model must keep file opens Runtime-mediated")
+assert(file_association_source.include?("\"overwrite_existing_mimeapps\" => false"), "File association model must not permit blind mimeapps overwrite")
+assert(file_association_source.include?("\"backend_details_exposed\" => false"), "File association model must hide backend details")
+
 engine_catalog_source = read_project_file("lib/xnix/compatibility/compatibility_engine_catalog.rb")
 assert(engine_catalog_source.include?("xnix-compat-engine-catalog"), "Compatibility engine catalog must expose a CLI command")
 %w[automatic-managed local-compatibility-engine isolated-compatibility-engine].each do |engine_id|
@@ -279,7 +288,7 @@ kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_st
 end
 
 desktop_manifest_source = read_project_file("lib/xnix/compatibility/desktop_integration_manifest.rb")
-%w[xnix-compat-launch xnix-compat-window-identity xnix-kwin-window-rule xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy].each do |command|
+%w[xnix-compat-launch xnix-compat-window-identity xnix-kwin-window-rule xnix-file-association-model xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy].each do |command|
   assert(desktop_manifest_source.include?(command), "Desktop integration manifest must include #{command}")
 end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
@@ -288,6 +297,7 @@ desktop_activation_source = read_project_file("lib/xnix/compatibility/desktop_ac
 %w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts].each do |target|
   assert(desktop_activation_source.include?(target), "Desktop activation installer must stage #{target}")
 end
+assert(desktop_activation_source.include?("refusing to overwrite existing mimeapps list"), "Desktop activation installer must preserve existing mimeapps lists")
 assert(desktop_activation_source.include?("\"host_root_modified\" => false"), "Desktop activation installer must not claim host root changes")
 assert(desktop_activation_source.include?("RecipeInstallGate"), "Desktop activation installer must enforce recipe install gate preflight")
 assert(desktop_activation_source.include?("recipe_install_gate_enforced"), "Desktop activation installer must report install gate enforcement")

@@ -4,6 +4,7 @@ require "json"
 require "optparse"
 require_relative "desktop_entry"
 require_relative "dolphin_service_menu"
+require_relative "file_association_model"
 require_relative "kde_integration_status"
 require_relative "portal_access_policy"
 require_relative "recipe_store"
@@ -17,6 +18,7 @@ module Xnix
       LAUNCHER_COMMAND = "xnix-compat-launch"
       WINDOW_IDENTITY_COMMAND = "xnix-compat-window-identity"
       KWIN_WINDOW_RULE_COMMAND = "xnix-kwin-window-rule"
+      FILE_ASSOCIATION_COMMAND = "xnix-file-association-model"
       FILE_OPEN_COMMAND = "xnix-compat-open"
       TRAY_STATUS_COMMAND = "xnix-compat-tray-status"
       NOTIFICATION_COMMAND = "xnix-compat-notify"
@@ -114,12 +116,19 @@ module Xnix
 
       def file_manager_artifact
         service_menu = DolphinServiceMenu.new
+        file_association = FileAssociationModel.new(recipe: recipe)
 
         {
           "entry_point" => "file-manager",
           "kind" => "dolphin-service-menu",
           "path" => File.join("servicemenus", service_menu.file_name),
           "argv" => [FILE_OPEN_COMMAND, "%U"],
+          "file_association" => {
+            "kind" => "mimeapps-list",
+            "path" => FileAssociationModel::MIMEAPPS_RELATIVE_PATH,
+            "argv" => [FILE_ASSOCIATION_COMMAND, "--app", recipe.id],
+            "mime_types" => file_association.to_h.fetch("application").fetch("mime_types")
+          },
           "portal_required" => true
         }
       end

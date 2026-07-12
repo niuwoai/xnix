@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.33] - 2026-07-13
+
+### Added
+
+- Added `xnix-file-association-model`, a Runtime-owned file association model that maps recipe MIME types to generated desktop files and standard `mimeapps.list` content.
+- Added activation staging for `usr/share/applications/mimeapps.list` so managed applications can become default handlers for their recipe file types inside a staging root.
+- Added focused coverage for MIME defaults, portal-mediated file-open metadata, rollback tracking, and refusal to overwrite an existing `mimeapps.list`.
+
+### Changed
+
+- Extended desktop integration manifests so the file-manager artifact exposes file association generation alongside the Dolphin service menu.
+
 ## [0.2.32] - 2026-07-13
 
 ### Added

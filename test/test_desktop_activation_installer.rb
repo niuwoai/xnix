@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "open3"
 require "pathname"
 require "tmpdir"
@@ -35,15 +36,16 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   ).install
   root_path = Pathname.new(root)
   desktop_entry = root_path.join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
+  mimeapps_list = root_path.join("usr/share/applications/mimeapps.list")
   service_menu = root_path.join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = root_path.join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
-  assert(result["version"] == "0.2.32", "desktop activation installer must expose the current version")
+  assert(result["version"] == "0.2.33", "desktop activation installer must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer must identify the application")
   assert(result["root"] == root, "desktop activation installer must report the staging root")
   assert(result["preflight"]["decision"] == "allow", "desktop activation installer must report allowed preflight")
   assert(result["preflight"]["mode"] == "development", "desktop activation installer must preserve install gate mode")
-  assert(result["installed"].length == 3, "desktop activation installer must install three staged files")
+  assert(result["installed"].length == 4, "desktop activation installer must install four staged files")
   assert(result["receipt"]["kind"] == "desktop-activation-receipt", "desktop activation installer must write a rollback receipt")
   assert(result["receipt"]["sha256"].match?(/\A[0-9a-f]{64}\z/), "desktop activation receipt must include a SHA-256 digest")
   assert(result["activated_entry_points"].length == 7, "desktop activation installer must activate all manifest entry points")
@@ -56,6 +58,11 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(desktop_entry.file?, "desktop activation installer must install the generated desktop entry")
   assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad %U"), "installed desktop entry must call the managed launcher")
   assert((desktop_entry.stat.mode & 0o777) == 0o644, "installed desktop entry must be non-executable")
+
+  assert(mimeapps_list.file?, "desktop activation installer must install the MIME association list")
+  assert(mimeapps_list.read.include?("application/x-xnix-txt=xnix-org.xnix.sample.notepad.desktop"), "installed MIME list must map text files to the generated desktop entry")
+  assert(mimeapps_list.read.include?("application/x-xnix-log=xnix-org.xnix.sample.notepad.desktop;"), "installed MIME list must add log file associations")
+  assert((mimeapps_list.stat.mode & 0o777) == 0o644, "installed MIME list must be non-executable")
 
   assert(service_menu.file?, "desktop activation installer must install the Dolphin service menu")
   assert(service_menu.read.include?("Exec=xnix-compat-open %U"), "installed Dolphin service menu must call the managed file-open command")
@@ -84,6 +91,29 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer CLI must emit install result")
   assert(result["preflight"]["decision"] == "allow", "desktop activation installer CLI must enforce an allowed preflight")
   assert(Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop").file?, "desktop activation installer CLI must install the desktop entry")
+  assert(Pathname.new(root).join("usr/share/applications/mimeapps.list").file?, "desktop activation installer CLI must install file associations")
+end
+
+Dir.mktmpdir("xnix-desktop-root") do |root|
+  mimeapps_list = Pathname.new(root).join("usr/share/applications/mimeapps.list")
+  FileUtils.mkdir_p(mimeapps_list.dirname)
+  File.write(mimeapps_list, "[Default Applications]\ntext/plain=existing.desktop\n")
+
+  _stdout, stderr, status = Open3.capture3(
+    "ruby",
+    project_root.join("bin/xnix-install-desktop-integration").to_s,
+    "--root",
+    root,
+    "--app",
+    "org.xnix.sample.notepad",
+    "--mode",
+    "development"
+  )
+
+  assert(!status.success?, "desktop activation installer CLI must reject existing mimeapps overwrite")
+  assert(stderr.include?("refusing to overwrite existing mimeapps list"), "desktop activation installer CLI must explain mimeapps overwrite refusal")
+  assert(mimeapps_list.read.include?("existing.desktop"), "desktop activation installer must preserve existing mimeapps files")
+  assert(!Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop").exist?, "mimeapps overwrite refusal must not leave partial desktop entries")
 end
 
 Dir.mktmpdir("xnix-desktop-root") do |root|

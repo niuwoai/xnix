@@ -23,6 +23,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   install_result = Xnix::Compatibility::DesktopActivationInstaller.new(root: root, recipe: recipe).install
   receipt_path = Pathname.new(root).join(install_result.fetch("receipt").fetch("path"))
   desktop_entry = Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
+  mimeapps_list = Pathname.new(root).join("usr/share/applications/mimeapps.list")
   service_menu = Pathname.new(root).join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = Pathname.new(root).join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
@@ -37,13 +38,14 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
     application_id: "org.xnix.sample.notepad"
   ).rollback
 
-  assert(result["version"] == "0.2.32", "desktop activation rollback must expose the current version")
+  assert(result["version"] == "0.2.33", "desktop activation rollback must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation rollback must identify the application")
-  assert(result["removed"].length == 3, "desktop activation rollback must remove installed files")
+  assert(result["removed"].length == 4, "desktop activation rollback must remove installed files")
   assert(result["removed"].all? { |entry| entry["status"] == "removed" }, "desktop activation rollback must report removed files")
   assert(result["receipt_removed"]["status"] == "removed", "desktop activation rollback must remove the receipt")
   assert(result["safety"]["sha256_verified_before_remove"], "desktop activation rollback must verify checksums before removal")
   assert(!desktop_entry.exist?, "desktop activation rollback must remove the desktop entry")
+  assert(!mimeapps_list.exist?, "desktop activation rollback must remove the MIME association list")
   assert(!service_menu.exist?, "desktop activation rollback must remove the Dolphin service menu")
   assert(!manifest_path.exist?, "desktop activation rollback must remove the manifest")
   assert(!receipt_path.exist?, "desktop activation rollback must remove the receipt")
@@ -81,7 +83,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
 
   assert(status.success?, "desktop activation rollback CLI must exit successfully: #{stderr}")
   result = JSON.parse(stdout)
-  assert(result["removed"].length == 3, "desktop activation rollback CLI must emit removed files")
+  assert(result["removed"].length == 4, "desktop activation rollback CLI must emit removed files")
 end
 
 _stdout, stderr, status = Open3.capture3(

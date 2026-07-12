@@ -32,6 +32,8 @@ The Runtime D-Bus contract exposes read-only planning methods for engine catalog
 
 Generated application launchers delegate to `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, accepts optional `file://` URIs from desktop file associations, and emits a Runtime `Launch` request model. Plain application launches do not need file portal access; file launches are marked as portal-mediated.
 
+File association generation delegates to `xnix-file-association-model`. The model maps recipe MIME types to the generated desktop file and emits standard `mimeapps.list` content for a staging root. Activation refuses to overwrite an existing `mimeapps.list` until merge support exists, so local tests and future installers do not destroy user defaults.
+
 The Dolphin service menu delegates selected files to `xnix-compat-open`. That entry point accepts only `file://` URIs, resolves a Runtime recipe by extension unless an explicit application id is supplied, and emits a portal-required Runtime `Launch` request model. It does not start Wine, a virtual machine, or a backend-specific executable.
 
 `xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, task manager, file manager, system tray, notifications, Compatibility Center, and settings are marked as initial because each entry point now has a Runtime-backed request, read-model, or identity model.
@@ -90,6 +92,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
 - KRunner query models must resolve to Runtime application identities and managed launcher actions, not backend commands.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
+- File association models must use generated desktop files, standard `mimeapps.list` syntax, and Portal-mediated file-open requests.
 - The first-release KDE integration status must include exactly the seven agreed entry points.
 - Notification requests must come from Runtime events and must keep backend details out of KDE-facing payloads.
 - Settings models must expose user concepts and must not mention backend implementation names or storage details.

@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-13 | Current version: v0.2.32
+> Last updated: 2026-07-13 | Current version: v0.2.33
 
 ## Summary
 
@@ -46,6 +46,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Compatibility repair planning delegates to `xnix-compat-repair-plan`, which turns diagnostics issues into approval, snapshot, rollback, and notification-ready repair actions for the Compatibility Center.
 - Compatibility snapshot planning delegates to `xnix-compat-snapshot-plan`, which scopes restore points to application state, Runtime metadata, and desktop activation receipts while excluding user documents and the host system.
 - Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, preserves optional file URIs, and models a `Launch` request without displaying a prefix path, a backend command, or a raw Windows executable command.
+- File association generation delegates to `xnix-file-association-model`, which maps recipe MIME types to generated desktop files and standard `mimeapps.list` defaults inside a staging root without overwriting existing associations.
 - Dolphin service menus delegate selected files to `xnix-compat-open`, which validates file URIs, resolves a Runtime application recipe by file extension, and models a portal-required `Launch` request without directly invoking Wine or a VM.
 - Runtime events delegate to `xnix-compat-notify`, which models KDE notification payloads for install failures, automatic repairs, mode changes, and approval requests without exposing backend implementation terms.
 - Compatibility settings delegate to `xnix-compat-settings`, which models user-facing controls for automatic mode, performance or compatibility priority, documents and downloads access, camera access, network access, and snapshots without backend terminology.
@@ -66,14 +67,14 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | --- | --- |
 | Launcher | Generated standard desktop files call the managed Runtime launch request path |
 | Task manager | Window identity and KWin rule models map compatibility windows to Runtime application identities for grouping, pinning, taskbar visibility, switcher visibility, and restore |
-| File manager | Dolphin action delegates file URIs to the Runtime file-open request path and requires Portal-mediated access |
+| File manager | Dolphin action and MIME association model map file types to Runtime-managed applications and require Portal-mediated access |
 | System tray | Tray status model presents Runtime activity, attention state, and bridged tray applications |
 | Notifications | Runtime events produce KDE notification request models for install, repair, mode-change, and approval events |
 | Compatibility Center | Plasma package displays the Runtime-backed read model for compatibility, diagnostics, snapshots, and actions; the read path is smoke-tested over D-Bus |
 | Settings | KDE settings model presents user concepts such as automatic mode, performance, compatibility, allowed resources, devices, network, and snapshots |
 | KRunner query | KDE natural-language entry maps queries to Runtime application identities and managed launcher actions |
 | Activation manifest | Runtime manifest groups all seven KDE artifacts for a recipe activation without exposing backend commands |
-| Activation staging | Runtime installer writes desktop entry, Dolphin service menu, and manifest files under a staging root after recipe install-gate preflight |
+| Activation staging | Runtime installer writes desktop entry, MIME association, Dolphin service menu, and manifest files under a staging root after recipe install-gate preflight |
 | Activation rollback | Runtime rollback removes only receipt-tracked, checksum-matching staged files |
 | Recipe registry | Registry verifier checks recipe metadata, paths, digests, and development signature status |
 | Registry-backed loading | Runtime loads registered recipes after digest verification and keeps no-registry fallback only for development fixtures |
@@ -114,7 +115,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, registry-backed recipe-store loader, recipe registry verifier, recipe trust probe, recipe trust policy, recipe install gate, Portal access policy, compatibility engine catalog, compatibility run plan, compatibility repair plan, compatibility snapshot plan, read-only planning D-Bus methods, D-Bus planning client reads, install-gated desktop activation, read-only method dispatcher, packaged activation wrapper, activation-file installer, desktop activation installer, activation rollback receipt, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, KRunner query model, KWin window rule model, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and production signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, registry-backed recipe-store loader, recipe registry verifier, recipe trust probe, recipe trust policy, recipe install gate, Portal access policy, compatibility engine catalog, compatibility run plan, compatibility repair plan, compatibility snapshot plan, read-only planning D-Bus methods, D-Bus planning client reads, install-gated desktop activation, read-only method dispatcher, packaged activation wrapper, activation-file installer, desktop activation installer, activation rollback receipt, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, KRunner query model, KWin window rule model, file association model, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and production signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

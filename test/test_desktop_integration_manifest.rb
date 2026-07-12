@@ -30,7 +30,7 @@ expected_entry_points = %w[
   settings
 ]
 
-assert(manifest["version"] == "0.2.32", "desktop integration manifest must expose the current version")
+assert(manifest["version"] == "0.2.33", "desktop integration manifest must expose the current version")
 assert(manifest["manifest_type"] == "desktop-integration", "manifest must identify its type")
 assert(manifest["desktop"] == "KDE Plasma", "manifest must target the official KDE desktop")
 assert(manifest["official_desktop_only"], "manifest must not expand first-release desktop scope")
@@ -52,6 +52,9 @@ assert(task_manager["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "
 file_manager = artifacts.find { |artifact| artifact["entry_point"] == "file-manager" }
 assert(file_manager["path"] == "servicemenus/xnix-open-with-compatibility.desktop", "file manager artifact must name the Dolphin service menu")
 assert(file_manager["argv"] == ["xnix-compat-open", "%U"], "file manager artifact must delegate to the managed file-open command")
+assert(file_manager["file_association"]["argv"] == ["xnix-file-association-model", "--app", "org.xnix.sample.notepad"], "file manager artifact must expose file association generation")
+assert(file_manager["file_association"]["path"] == "usr/share/applications/mimeapps.list", "file manager artifact must target the standard mimeapps list")
+assert(file_manager["file_association"]["mime_types"].include?("application/x-xnix-txt"), "file manager artifact must include recipe MIME types")
 assert(file_manager["portal_required"], "file manager artifact must require portal-mediated file access")
 
 system_tray = artifacts.find { |artifact| artifact["entry_point"] == "system-tray" }
