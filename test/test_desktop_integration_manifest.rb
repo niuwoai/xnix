@@ -30,7 +30,7 @@ expected_entry_points = %w[
   settings
 ]
 
-assert(manifest["version"] == "0.2.31", "desktop integration manifest must expose the current version")
+assert(manifest["version"] == "0.2.32", "desktop integration manifest must expose the current version")
 assert(manifest["manifest_type"] == "desktop-integration", "manifest must identify its type")
 assert(manifest["desktop"] == "KDE Plasma", "manifest must target the official KDE desktop")
 assert(manifest["official_desktop_only"], "manifest must not expand first-release desktop scope")
@@ -45,6 +45,8 @@ assert(launcher["argv"] == ["xnix-compat-launch", "--app", "org.xnix.sample.note
 
 task_manager = artifacts.find { |artifact| artifact["entry_point"] == "task-manager" }
 assert(task_manager["argv"].include?("xnix-compat-window-identity"), "task manager artifact must use the window identity model")
+assert(task_manager["kwin_rule"]["argv"].include?("xnix-kwin-window-rule"), "task manager artifact must expose the KWin window rule model")
+assert(task_manager["kwin_rule"]["script_role"] == "identity-and-layout", "task manager artifact must keep KWin rule scope bounded")
 assert(task_manager["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "task manager artifact must share the generated desktop file")
 
 file_manager = artifacts.find { |artifact| artifact["entry_point"] == "file-manager" }

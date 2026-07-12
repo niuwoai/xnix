@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.31"
+EXPECTED_VERSION = "0.2.32"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -36,6 +36,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/file_open_request.rb
   lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/kde_integration_status.rb
+  lib/xnix/compatibility/kwin_window_rule.rb
   lib/xnix/compatibility/krunner_model.rb
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
@@ -65,6 +66,7 @@ REQUIRED_FILES = %w[
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
+  bin/xnix-kwin-window-rule
   bin/xnix-krunner-model
   bin/xnix-portal-access-policy
   bin/xnix-recipe-install-gate
@@ -125,6 +127,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_integration_status.rb
+  test/test_kwin_window_rule.rb
   test/test_krunner_model.rb
   test/test_settings_model.rb
   test/test_task_manager_identity.rb
@@ -264,13 +267,19 @@ task_manager_source = read_project_file("lib/xnix/compatibility/task_manager_ide
   assert(task_manager_source.include?(token), "Task manager identity must include #{token}")
 end
 
+kwin_rule_source = read_project_file("lib/xnix/compatibility/kwin_window_rule.rb")
+%w[identity-and-layout skip_taskbar show_in_switcher runtime_owns_backend_policy].each do |token|
+  assert(kwin_rule_source.include?(token), "KWin window rule must include #{token}")
+end
+assert(kwin_rule_source.include?("\"backend_details_exposed\" => false"), "KWin window rule must hide backend details")
+
 kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_status.rb")
 %w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |entry_point|
   assert(kde_status_source.include?("\"id\" => \"#{entry_point}\""), "KDE integration status must include #{entry_point}")
 end
 
 desktop_manifest_source = read_project_file("lib/xnix/compatibility/desktop_integration_manifest.rb")
-%w[xnix-compat-launch xnix-compat-window-identity xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy].each do |command|
+%w[xnix-compat-launch xnix-compat-window-identity xnix-kwin-window-rule xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy].each do |command|
   assert(desktop_manifest_source.include?(command), "Desktop integration manifest must include #{command}")
 end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")

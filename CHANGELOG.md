@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.32] - 2026-07-13
+
+### Added
+
+- Added `xnix-kwin-window-rule`, a KDE KWin window rule model that binds Runtime application identity to generated desktop files, task grouping, taskbar visibility, switcher visibility, and restore behavior.
+- Added focused coverage for KWin rule identity matching, task-manager preservation, bounded window-manager scope, CLI validation, and backend-detail filtering.
+
+### Changed
+
+- Extended desktop integration manifests so the task-manager artifact exposes both the window identity model and the KWin window rule model.
+
 ## [0.2.31] - 2026-07-13
 
 ### Added

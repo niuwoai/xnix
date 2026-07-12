@@ -46,6 +46,8 @@ System tray status delegates to `xnix-compat-tray-status`. That model exposes Ru
 
 Task manager identity delegates to `xnix-compat-window-identity`. That model exposes desktop file mapping, Runtime application grouping, pinning, restore behavior, and KWin identity-only matching metadata. It does not decide backend policy or manage windows directly.
 
+KWin window rules delegate to `xnix-kwin-window-rule`. The rule model gives a future KWin script enough information to match compatibility windows, attach generated desktop files, keep windows visible in the taskbar and switcher, and restore an existing window by Runtime application id. It is explicitly window-manager policy only; backend selection remains in the Runtime.
+
 Desktop activation planning delegates to `xnix-desktop-integration-manifest`. That manifest groups a recipe's launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts into one KDE activation plan. It is ordered, portal-aware, does not require host privilege, and does not expose backend commands.
 
 Desktop activation staging delegates to `xnix-install-desktop-integration`. That installer writes the generated application launcher, Dolphin service menu, and persisted desktop integration manifest under a supplied root after recipe install-gate preflight. It rejects host-root installation, blocks production activation of development-only registries, and gives tests an explicit development mode for verifying KDE desktop artifacts without modifying a developer workstation.
@@ -93,6 +95,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - Settings models must expose user concepts and must not mention backend implementation names or storage details.
 - Tray status models must summarize Runtime activity and compatible tray bridge state without owning backend policy.
 - Task manager identity models must map windows to Runtime application identities without owning KWin policy decisions.
+- KWin window rule models must stay limited to identity and layout hints and must not own backend policy.
 - Desktop integration manifests must group all seven first-release KDE artifacts for a recipe activation without exposing backend commands.
 - Desktop activation installers must write only under an explicit staging root and must reject direct host-root installation.
 - Desktop activation installers must enforce recipe install-gate preflight before writing staged files.

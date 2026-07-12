@@ -16,6 +16,7 @@ module Xnix
       DESKTOP = "KDE Plasma"
       LAUNCHER_COMMAND = "xnix-compat-launch"
       WINDOW_IDENTITY_COMMAND = "xnix-compat-window-identity"
+      KWIN_WINDOW_RULE_COMMAND = "xnix-kwin-window-rule"
       FILE_OPEN_COMMAND = "xnix-compat-open"
       TRAY_STATUS_COMMAND = "xnix-compat-tray-status"
       NOTIFICATION_COMMAND = "xnix-compat-notify"
@@ -97,6 +98,16 @@ module Xnix
             "--name",
             recipe.name
           ],
+          "kwin_rule" => {
+            "argv" => [
+              KWIN_WINDOW_RULE_COMMAND,
+              "--app",
+              recipe.id,
+              "--name",
+              recipe.name
+            ],
+            "script_role" => "identity-and-layout"
+          },
           "desktop_file" => DesktopEntry.new(recipe).file_name
         }
       end
