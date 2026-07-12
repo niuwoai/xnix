@@ -1,0 +1,24 @@
+# Build outputs
+/output/
+/build/
+/dist/
+/downloads/
+
+# Local runtime artifacts
+/*.img
+/*.qcow2
+/*.iso
+/*.log
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+id_*
+*.pem
+*.key
+
+# Editor and operating system files
+.DS_Store
+.idea/
+.vscode/
