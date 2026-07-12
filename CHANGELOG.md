@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.18] - 2026-07-13
+
+### Added
+
+- Added `xnix-recipe-registry`, a recipe registry verifier for schema version, recipe identifiers, safe relative paths, SHA-256 digests, and signature status.
+- Added a development recipe registry for the bundled sample application recipe.
+- Added focused coverage for digest verification, digest mismatch rejection, unsafe path rejection, and explicit reporting that production signed-recipe validation is not yet enabled.
+
+### Changed
+
+- Documented recipe registry verification as the next application-library trust layer before production signed recipe storage.
+
 ## [0.2.17] - 2026-07-12
 
 ### Added

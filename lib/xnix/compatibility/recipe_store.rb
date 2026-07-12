@@ -8,6 +8,7 @@ module Xnix
   module Compatibility
     class RecipeStore
       RECIPE_EXTENSION = ".json"
+      REGISTRY_FILE = "registry.json"
 
       attr_reader :path
 
@@ -19,7 +20,7 @@ module Xnix
         return [] unless path.directory?
 
         path.children
-            .select { |entry| entry.file? && entry.extname == RECIPE_EXTENSION }
+            .select { |entry| recipe_file?(entry) }
             .sort_by(&:basename)
             .map { |entry| load_recipe(entry) }
       end
@@ -29,6 +30,10 @@ module Xnix
       end
 
       private
+
+      def recipe_file?(entry)
+        entry.file? && entry.extname == RECIPE_EXTENSION && entry.basename.to_s != REGISTRY_FILE
+      end
 
       def load_recipe(entry)
         data = JSON.parse(entry.read)

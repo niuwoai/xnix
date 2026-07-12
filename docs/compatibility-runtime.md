@@ -52,7 +52,9 @@ Desktop activation rollback delegates to `xnix-rollback-desktop-integration`. Th
 
 A recipe has a stable reverse-DNS application identifier, display name, icon, requested run mode, and supported file extensions. The Runtime generates an ordinary `.desktop` file that calls `xnix-compat-launch --app <id>`. The desktop file intentionally omits backend commands, prefix paths, and Windows executable paths.
 
-Recipe installation must later require a signed source and a schema version. The current model only establishes validation and output invariants; it does not yet trust or execute external recipe files.
+Recipe registry verification delegates to `xnix-recipe-registry`. The registry records schema version, recipe id, safe relative path, SHA-256 digest, and signature status for each recipe. The current development registry verifies digests and reports that production signed-recipe validation is still disabled; it does not yet trust or execute external recipe files.
+
+Recipe installation must later require a production signed source and a schema version. The current model establishes validation, digest, and output invariants before adding production trust roots.
 
 ## Permissions and Asynchronous Requests
 
@@ -71,6 +73,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Desktop integration manifests must group all seven first-release KDE artifacts for a recipe activation without exposing backend commands.
 - Desktop activation installers must write only under an explicit staging root and must reject direct host-root installation.
 - Desktop activation rollback must use activation receipts, verify SHA-256 digests before removal, and preserve changed files.
+- Recipe registries must verify schema version, safe relative paths, SHA-256 digests, and signature status before recipes are treated as managed inputs.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

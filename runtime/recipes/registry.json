@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "registry_name": "xnix-local-development",
+  "recipes": [
+    {
+      "id": "org.xnix.sample.notepad",
+      "path": "org.xnix.sample.notepad.json",
+      "sha256": "bb6ca6940117c2890a8d259810d4f257e1f9210b834435949cd2f1fd27ff2e0f",
+      "signature_status": "development-only"
+    }
+  ]
+}

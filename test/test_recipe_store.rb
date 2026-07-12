@@ -14,6 +14,7 @@ end
 
 Dir.mktmpdir("xnix-recipes") do |dir|
   recipe_path = File.join(dir, "org.example.ledger.json")
+  registry_path = File.join(dir, "registry.json")
   File.write(
     recipe_path,
     JSON.pretty_generate(
@@ -22,6 +23,14 @@ Dir.mktmpdir("xnix-recipes") do |dir|
       "icon" => "office-chart-area",
       "mode" => "automatic",
       "supported_extensions" => [".abc"]
+    )
+  )
+  File.write(
+    registry_path,
+    JSON.pretty_generate(
+      "schema_version" => 1,
+      "registry_name" => "test",
+      "recipes" => []
     )
   )
 

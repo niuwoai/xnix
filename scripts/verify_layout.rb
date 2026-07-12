@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.17"
+EXPECTED_VERSION = "0.2.18"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -34,6 +34,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/kde_integration_status.rb
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
+  lib/xnix/compatibility/recipe_registry.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/compatibility/settings_model.rb
@@ -51,6 +52,7 @@ REQUIRED_FILES = %w[
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
+  bin/xnix-recipe-registry
   bin/xnix-rollback-desktop-integration
   libexec/xnix/compatd
   scripts/container.rb
@@ -64,6 +66,7 @@ REQUIRED_FILES = %w[
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
   runtime/dbus/xnix_compatd_smoke.c
+  runtime/recipes/registry.json
   runtime/recipes/org.xnix.sample.notepad.json
   runtime/systemd/xnix-compatd.service
   kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
@@ -79,6 +82,7 @@ REQUIRED_FILES = %w[
   test/test_milestone.rb
   test/test_application_recipe.rb
   test/test_recipe_store.rb
+  test/test_recipe_registry.rb
   test/test_desktop_entry.rb
   test/test_desktop_activation_installer.rb
   test/test_desktop_activation_rollback.rb
@@ -210,5 +214,10 @@ desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_acti
 assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")
 assert(desktop_rollback_source.include?("sha256_verified_before_remove"), "Desktop activation rollback must verify checksums before removal")
 assert(desktop_rollback_source.include?("refusing to remove changed file"), "Desktop activation rollback must preserve changed files")
+
+recipe_registry_source = read_project_file("lib/xnix/compatibility/recipe_registry.rb")
+assert(recipe_registry_source.include?("xnix-recipe-registry"), "Recipe registry must expose a CLI command")
+assert(recipe_registry_source.include?("DIGEST_PATTERN"), "Recipe registry must validate SHA-256 digests")
+assert(recipe_registry_source.include?("signed_recipe_validation"), "Recipe registry must report signed recipe validation status")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"
