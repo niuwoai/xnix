@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.0`
+- Version: `0.2.1`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -34,11 +34,13 @@ ruby scripts/container.rb prepare-ssh-test-key
 ruby scripts/container.rb build-ssh-test-system
 ruby scripts/container.rb ssh-smoke
 ruby -Ilib test/test_application_recipe.rb
+ruby -Ilib test/test_recipe_store.rb
 ruby -Ilib test/test_desktop_entry.rb
 ruby -Ilib test/test_runtime_contract.rb
+ruby -Ilib test/test_runtime_daemon.rb
 ```
 
-Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list recipes, and report diagnostics; it does not yet own the D-Bus name.
 
 ## Delivery Sequence
 

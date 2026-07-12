@@ -1,0 +1,7 @@
+{
+  "id": "org.xnix.sample.notepad",
+  "name": "Sample Notepad",
+  "icon": "accessories-text-editor",
+  "mode": "automatic",
+  "supported_extensions": [".txt", ".log"]
+}

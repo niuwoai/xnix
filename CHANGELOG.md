@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.1] - 2026-07-12
+
+### Added
+
+- Added a runnable Compatibility Runtime daemon core with JSON probe, application listing, per-application diagnostics, introspection output, and managed recipe-store loading.
+- Added a bundled sample recipe and focused tests for recipe loading and runtime daemon behavior.
+
+### Changed
+
+- Documented that the Runtime core is executable while the real D-Bus binding, Wine backend, VM backend, and signed recipe trust policy remain pending.
+
 ## [0.2.0] - 2026-07-12
 
 ### Added

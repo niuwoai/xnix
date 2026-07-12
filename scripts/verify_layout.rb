@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.0"
+EXPECTED_VERSION = "0.2.1"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,7 +24,10 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/desktop_entry.rb
+  lib/xnix/compatibility/recipe_store.rb
+  lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/milestone.rb
+  bin/xnix-compatd
   scripts/container.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
@@ -32,6 +35,7 @@ REQUIRED_FILES = %w[
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
+  runtime/recipes/org.xnix.sample.notepad.json
   runtime/systemd/xnix-compatd.service
   kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
   kde/plasmoids/org.xnix.compatibilitycenter/contents/ui/main.qml
@@ -44,8 +48,10 @@ REQUIRED_FILES = %w[
   test/test_ssh_probe.rb
   test/test_milestone.rb
   test/test_application_recipe.rb
+  test/test_recipe_store.rb
   test/test_desktop_entry.rb
   test/test_runtime_contract.rb
+  test/test_runtime_daemon.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [

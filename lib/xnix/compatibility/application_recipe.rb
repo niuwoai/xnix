@@ -9,6 +9,18 @@ module Xnix
 
       attr_reader :id, :name, :icon, :mode, :supported_extensions
 
+      def self.from_hash(data)
+        raise ArgumentError, "recipe must be an object" unless data.is_a?(Hash)
+
+        new(
+          id: data.fetch("id"),
+          name: data.fetch("name"),
+          icon: data.fetch("icon"),
+          mode: data.fetch("mode"),
+          supported_extensions: data.fetch("supported_extensions", [])
+        )
+      end
+
       def initialize(id:, name:, icon:, mode:, supported_extensions: [])
         @id = id
         @name = name
