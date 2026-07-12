@@ -5,6 +5,7 @@ require "open3"
 require "pathname"
 require_relative "../lib/xnix/container"
 require_relative "../lib/xnix/buildroot"
+require_relative "../lib/xnix/qemu"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -18,6 +19,7 @@ abort "Xnix commands require the Colima Docker context" unless colima_context?
 
 container = Xnix::Container.new(project_root: PROJECT_ROOT.to_s, version: VERSION)
 buildroot = Xnix::Buildroot.new
+qemu = Xnix::Qemu.new
 
 case ARGV.shift
 when "build"
@@ -38,6 +40,10 @@ when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command))
+when "boot-system"
+  abort "Usage: ruby scripts/container.rb boot-system" unless ARGV.empty?
+
+  exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {build|build-system|configure-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
 end

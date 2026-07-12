@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.9"
+EXPECTED_VERSION = "0.1.10"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -20,6 +20,7 @@ REQUIRED_FILES = %w[
   lib/xnix/milestone.rb
   scripts/container.rb
   scripts/fetch_buildroot.rb
+  scripts/full_smoke.rb
   test/test_container.rb
   test/test_buildroot.rb
   test/test_qemu.rb

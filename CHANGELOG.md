@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.10] - 2026-07-12
+
+### Added
+
+- Full-build and QEMU serial-smoke runner protected by the tenth-version milestone gate.
+
 ## [0.1.9] - 2026-07-12
 
 ### Added

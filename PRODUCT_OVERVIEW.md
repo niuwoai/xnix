@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.9
+> Last updated: 2026-07-12 | Current version: v0.1.10
 
 ## Summary
 
@@ -49,7 +49,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 ## Milestones
 
 - [x] M0: Reproducible source layout, constrained container definition, and test policy.
-- [ ] M1: Linux kernel boot in QEMU with serial output.
+- [ ] M1: Linux kernel boot in QEMU with serial output (v0.1.10 verification in progress).
 - [ ] M2: BusyBox shell and initramfs.
 - [ ] M3: User-mode virtual NIC and network reachability.
 - [ ] M4: Init-managed OpenSSH `sshd` and loopback-only host SSH verification.
@@ -57,6 +57,6 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 
 ## Current Decisions
 
-- “ssdh” is interpreted as OpenSSH `sshd` unless clarified otherwise.
+- The remote service is OpenSSH `sshd`.
 - BusyBox init is used before evaluating systemd.
 - initramfs is used before introducing a persistent disk image.
