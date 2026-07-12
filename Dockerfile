@@ -9,9 +9,11 @@ RUN apt-get update \
         build-essential \
         ca-certificates \
         cpio \
+        dbus \
         file \
         flex \
         git \
+        libglib2.0-bin \
         libelf-dev \
         libssl-dev \
         openssh-client \

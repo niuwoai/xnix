@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.3] - 2026-07-12
+
+### Added
+
+- Added a root-staging installer for Runtime activation files, covering the packaged libexec wrapper, D-Bus system service, and systemd unit.
+- Added container image dependencies for future Linux D-Bus smoke tests: `dbus` and `libglib2.0-bin`.
+- Added focused coverage for activation-file installation into an unprivileged temporary root.
+
 ## [0.2.2] - 2026-07-12
 
 ### Added

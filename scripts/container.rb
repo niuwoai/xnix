@@ -29,6 +29,10 @@ when "offline-run"
   abort "Usage: ruby scripts/container.rb offline-run COMMAND [ARGUMENT ...]" if ARGV.empty?
 
   exec(*container.offline_run_command(ARGV))
+when "runtime-activation-smoke"
+  abort "Usage: ruby scripts/container.rb runtime-activation-smoke" unless ARGV.empty?
+
+  exec(*container.runtime_activation_smoke_command)
 when "fetch-sources"
   abort "Usage: ruby scripts/container.rb fetch-sources" unless ARGV.empty?
 
@@ -67,5 +71,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|ssh-smoke|start-build-system}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|ssh-smoke|start-build-system}"
 end

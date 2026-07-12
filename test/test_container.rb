@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.0"
+VERSION = "0.2.3"
 
 def assert(condition, message)
   return if condition
@@ -17,6 +17,7 @@ end
 container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION)
 build_command = container.build_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
+runtime_activation_command = container.runtime_activation_smoke_command
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
@@ -37,6 +38,10 @@ assert(!offline_command.include?("--network=host"), "offline container must not 
 assert(!offline_command.any? { |argument| argument.include?("docker.sock") }, "offline container must not mount the Docker socket")
 
 assert(!offline_command.include?("--mount"), "offline container must not mount host directories")
+
+assert(runtime_activation_command.fetch(runtime_activation_command.index("--network") + 1) == "none", "runtime activation smoke must run without networking")
+assert(runtime_activation_command.include?("--read-only"), "runtime activation smoke must keep the container root read-only")
+assert(runtime_activation_command.last(2) == ["ruby", "test/test_runtime_activation_install.rb"], "runtime activation smoke must run the activation installer test")
 
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")

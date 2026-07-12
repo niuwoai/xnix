@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.2"
+EXPECTED_VERSION = "0.2.3"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -32,6 +32,7 @@ REQUIRED_FILES = %w[
   scripts/container.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
+  scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
@@ -55,6 +56,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_activation.rb
+  test/test_runtime_activation_install.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -105,6 +107,8 @@ end
 dockerfile = read_project_file("Dockerfile")
 assert(dockerfile.include?("qemu-system-x86"), "Dockerfile must install QEMU system emulation")
 assert(dockerfile.include?("ruby"), "Dockerfile must install Ruby for build utilities")
+assert(dockerfile.include?("dbus"), "Dockerfile must install D-Bus tooling for runtime smoke tests")
+assert(dockerfile.include?("libglib2.0-bin"), "Dockerfile must install gdbus for runtime smoke tests")
 assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")

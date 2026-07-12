@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.2.2
+> Last updated: 2026-07-12 | Current version: v0.2.3
 
 ## Summary
 
@@ -37,7 +37,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 
 ## Compatibility Runtime Boundary
 
-- The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. The local daemon core is executable and can probe itself, list managed recipes, report diagnostics, and dispatch read-only Runtime methods; real D-Bus bus ownership is the next implementation step.
+- The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. The local daemon core is executable and can probe itself, list managed recipes, report diagnostics, dispatch read-only Runtime methods, and stage activation files under an unprivileged root; real D-Bus bus ownership is the next implementation step.
 - KDE packages consume Runtime state and submit user actions over D-Bus. They do not invoke Wine or a VM directly.
 - Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. They never display a prefix path or a raw Windows executable command.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
@@ -82,7 +82,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, and packaged activation wrapper are in place; D-Bus ownership and signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, and activation-file installer are in place; D-Bus ownership and signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.2`. KDE Plasma is the only supported flagship desktop. An independent Compatibility Runtime manages application recipes, Wine/VM backends, diagnostics, snapshots, and rollback without exposing implementation details in normal desktop entry points.
+The project is currently at `v0.2.3`. KDE Plasma is the only supported flagship desktop. An independent Compatibility Runtime manages application recipes, Wine/VM backends, diagnostics, snapshots, and rollback without exposing implementation details in normal desktop entry points.
 
 See [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) for the roadmap and technical choices. See [AGENTS.md](AGENTS.md) for contribution and safety rules.
 
@@ -10,7 +10,7 @@ See [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) for the roadmap and technical cho
 
 The first end-to-end Buildroot run has completed successfully: Xnix boots its Linux kernel and initramfs in constrained QEMU, acquires `10.0.2.15` through user-mode DHCP, and accepts a loopback-only key-authenticated SSH probe.
 
-The v0.2.2 Runtime foundation defines application recipes, standard desktop entries, a D-Bus service contract, a hardened systemd unit, a Plasma 6 Compatibility Center package skeleton, a local daemon core, read-only Runtime method dispatch, and a packaged libexec activation wrapper. It does not yet ship a full KDE image, real D-Bus bus ownership, Wine backend, VM backend, or AI service.
+The v0.2.3 Runtime foundation defines application recipes, standard desktop entries, a D-Bus service contract, a hardened systemd unit, a Plasma 6 Compatibility Center package skeleton, a local daemon core, read-only Runtime method dispatch, a packaged libexec activation wrapper, and an unprivileged activation-file installer. It does not yet ship a full KDE image, real D-Bus bus ownership, Wine backend, VM backend, or AI service.
 
 Run the focused scaffold test:
 
@@ -34,4 +34,5 @@ ruby -Ilib test/test_runtime_contract.rb
 ruby -Ilib test/test_runtime_daemon.rb
 ruby -Ilib test/test_runtime_dispatch.rb
 ruby -Ilib test/test_runtime_activation.rb
+ruby -Ilib test/test_runtime_activation_install.rb
 ```

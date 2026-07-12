@@ -31,6 +31,10 @@ module Xnix
       runtime_command(network: "none", extra_mounts: [], command: command)
     end
 
+    def runtime_activation_smoke_command
+      offline_run_command(["ruby", "test/test_runtime_activation_install.rb"])
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
     end
