@@ -27,7 +27,7 @@ class FakeCapture
     case method
     when "org.xnix.Compatibility1.ListApplications"
       [
-        "([{'id': <'org.xnix.sample.notepad'>, 'name': <'Sample Notepad'>, 'icon': <'accessories-text-editor'>, 'mode': <'automatic'>}],)\n",
+        "([{'id': <'org.xnix.sample.notepad'>, 'name': <'Sample Notepad'>, 'icon': <'accessories-text-editor'>, 'mode': <'automatic'>, 'supported_extensions': <['.txt', '.log']>}],)\n",
         "",
         Status.new(true)
       ]
@@ -84,6 +84,7 @@ applications = client.list_applications
 assert(applications.length == 1, "D-Bus client must parse the application list")
 assert(applications.first["id"] == "org.xnix.sample.notepad", "D-Bus client must parse string fields")
 assert(applications.first["mode"] == "automatic", "D-Bus client must parse application mode")
+assert(applications.first["supported_extensions"] == [".txt", ".log"], "D-Bus client must parse string array fields")
 
 diagnostics = client.diagnostics("org.xnix.sample.notepad")
 assert(diagnostics["status"] == "known", "D-Bus client must parse diagnostics status")

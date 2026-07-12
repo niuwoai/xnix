@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/krunner_model"
+
+exit Xnix::Compatibility::KRunnerModel::CLI.new(ARGV).run

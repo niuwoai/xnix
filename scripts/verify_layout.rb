@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.30"
+EXPECTED_VERSION = "0.2.31"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -36,6 +36,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/file_open_request.rb
   lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/kde_integration_status.rb
+  lib/xnix/compatibility/krunner_model.rb
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
   lib/xnix/compatibility/portal_access_policy.rb
@@ -64,6 +65,7 @@ REQUIRED_FILES = %w[
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
+  bin/xnix-krunner-model
   bin/xnix-portal-access-policy
   bin/xnix-recipe-install-gate
   bin/xnix-recipe-registry
@@ -123,6 +125,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_integration_status.rb
+  test/test_krunner_model.rb
   test/test_settings_model.rb
   test/test_task_manager_identity.rb
   test/test_tray_status_model.rb
@@ -311,6 +314,12 @@ dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_clie
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")
 assert(dbus_client_source.include?("return false if value == \"false\""), "D-Bus Runtime client must parse boolean false values")
+assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime client must parse string arrays")
+
+krunner_source = read_project_file("lib/xnix/compatibility/krunner_model.rb")
+assert(krunner_source.include?("xnix-compat-launch"), "KRunner model must delegate launches to the managed launcher")
+assert(krunner_source.include?("\"backend_details_exposed\" => false"), "KRunner model must hide backend details")
+assert(krunner_source.include?("extension_launch_query?"), "KRunner model must support file-oriented natural queries")
 
 recipe_trust_policy_source = read_project_file("lib/xnix/compatibility/recipe_trust_policy.rb")
 assert(recipe_trust_policy_source.include?("xnix-recipe-trust-policy"), "Recipe trust policy must expose a CLI command")

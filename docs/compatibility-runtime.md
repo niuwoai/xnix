@@ -36,6 +36,8 @@ The Dolphin service menu delegates selected files to `xnix-compat-open`. That en
 
 `xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, task manager, file manager, system tray, notifications, Compatibility Center, and settings are marked as initial because each entry point now has a Runtime-backed request, read-model, or identity model.
 
+KRunner query integration delegates to `xnix-krunner-model`. The model resolves application names and file-oriented natural queries to Runtime application identities, standard desktop entry ids, and `xnix-compat-launch` actions. It is a presentation model only; matching results do not expose backend details and do not launch compatibility engines directly.
+
 Runtime events delegate to `xnix-compat-notify`. That entry point models KDE notification payloads for install failures, automatic repairs, compatibility mode changes, and approval-required events. It chooses urgency and actions for the desktop shell, but it does not inspect backend logs or expose backend implementation terms.
 
 Compatibility settings delegate to `xnix-compat-settings`. That model exposes user-facing controls for run mode, performance or compatibility priority, documents and downloads access, camera access, network access, and snapshots. It intentionally avoids backend implementation terminology.
@@ -84,6 +86,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - Runtime planning methods must be available through the D-Bus contract as read-only calls.
 - Runtime D-Bus clients must wrap planning reads directly and parse boolean variants as booleans.
 - The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
+- KRunner query models must resolve to Runtime application identities and managed launcher actions, not backend commands.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - The first-release KDE integration status must include exactly the seven agreed entry points.
 - Notification requests must come from Runtime events and must keep backend details out of KDE-facing payloads.

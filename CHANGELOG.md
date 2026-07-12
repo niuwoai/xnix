@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.31] - 2026-07-13
+
+### Added
+
+- Added `xnix-krunner-model`, a KDE KRunner query model that resolves Runtime-managed applications from names and file-oriented natural queries.
+- Added focused coverage for KRunner launch delegation, desktop entry mapping, blank query behavior, extension hints, and backend-detail filtering.
+
+### Changed
+
+- Made `DBusRuntimeClient` parse D-Bus string arrays so KDE-facing read paths preserve list fields such as supported file extensions.
+
 ## [0.2.30] - 2026-07-13
 
 ### Added

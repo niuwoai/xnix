@@ -113,6 +113,7 @@ module Xnix
         return string_match[1] if string_match
         return true if value == "true"
         return false if value == "false"
+        return value.scan(/'([^']*)'/).flatten if value.start_with?("[") && value.end_with?("]")
 
         value
       end
