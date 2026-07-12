@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.14] - 2026-07-12
+
+### Added
+
+- Added `xnix-compat-window-identity`, a KDE Task Manager and KWin-facing identity model for compatibility application windows.
+- Added focused coverage for desktop file mapping, grouping, pinning, restore behavior, and KWin identity-only metadata.
+
+### Changed
+
+- Marked the Task Manager KDE entry point as an initial integration, completing initial coverage for all seven first-release KDE entry points.
+
 ## [0.2.13] - 2026-07-12
 
 ### Added

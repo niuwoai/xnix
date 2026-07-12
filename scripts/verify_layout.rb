@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.13"
+EXPECTED_VERSION = "0.2.14"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -34,6 +34,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/compatibility/settings_model.rb
+  lib/xnix/compatibility/task_manager_identity.rb
   lib/xnix/compatibility/tray_status_model.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
@@ -42,6 +43,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-open
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
+  bin/xnix-compat-window-identity
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
   libexec/xnix/compatd
@@ -86,6 +88,7 @@ REQUIRED_FILES = %w[
   test/test_kde_center_model.rb
   test/test_kde_integration_status.rb
   test/test_settings_model.rb
+  test/test_task_manager_identity.rb
   test/test_tray_status_model.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
@@ -170,6 +173,11 @@ end
 tray_status_source = read_project_file("lib/xnix/compatibility/tray_status_model.rb")
 %w[runtime_activity compatibility_status tray_bridge].each do |method_name|
   assert(tray_status_source.include?(method_name), "Tray status model must include #{method_name}")
+end
+
+task_manager_source = read_project_file("lib/xnix/compatibility/task_manager_identity.rb")
+%w[task_manager kwin grouping_key launcher_url].each do |token|
+  assert(task_manager_source.include?(token), "Task manager identity must include #{token}")
 end
 
 kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_status.rb")

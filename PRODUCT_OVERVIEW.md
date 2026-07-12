@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.2.13
+> Last updated: 2026-07-12 | Current version: v0.2.14
 
 ## Summary
 
@@ -44,6 +44,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Runtime events delegate to `xnix-compat-notify`, which models KDE notification payloads for install failures, automatic repairs, mode changes, and approval requests without exposing backend implementation terms.
 - Compatibility settings delegate to `xnix-compat-settings`, which models user-facing controls for automatic mode, performance or compatibility priority, documents and downloads access, camera access, network access, and snapshots without backend terminology.
 - System tray status delegates to `xnix-compat-tray-status`, which models Runtime activity, attention state, and bridged tray application counts for a KDE tray surface.
+- Task manager identity delegates to `xnix-compat-window-identity`, which models desktop file mapping, grouping, pinning, restore behavior, and KWin identity-only metadata for compatibility windows.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
 - `xnix-kde-integration-status` tracks the seven first-release KDE entry points and records which have an initial Runtime-backed integration versus planned work.
 
@@ -52,7 +53,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | Entry point | First implementation responsibility |
 | --- | --- |
 | Launcher | Generated standard desktop files call the managed Runtime launch request path |
-| Task manager | KWin rules map Wine and VM windows to Runtime application identities |
+| Task manager | Window identity model maps compatibility windows to Runtime application identities for grouping, pinning, and restore |
 | File manager | Dolphin action delegates file URIs to the Runtime file-open request path and requires Portal-mediated access |
 | System tray | Tray status model presents Runtime activity, attention state, and bridged tray applications |
 | Notifications | Runtime events produce KDE notification request models for install, repair, mode-change, and approval events |
@@ -87,7 +88,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

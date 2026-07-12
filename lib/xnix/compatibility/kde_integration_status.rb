@@ -20,9 +20,12 @@ module Xnix
         {
           "id" => "task-manager",
           "name" => "Task Manager",
-          "state" => "planned",
-          "evidence" => [],
-          "next_step" => "Add KWin window identity rules for Runtime applications."
+          "state" => "initial",
+          "evidence" => [
+            "Compatibility windows can be modeled for KDE Task Manager through xnix-compat-window-identity.",
+            "Window identity metadata covers desktop files, grouping, pinning, restore behavior, and KWin identity-only matching."
+          ],
+          "next_step" => "Connect window identity models to a production KWin script and task manager bridge."
         },
         {
           "id" => "file-manager",
