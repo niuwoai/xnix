@@ -40,6 +40,11 @@ when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command))
+when "start-build-system"
+  abort "Usage: ruby scripts/container.rb start-build-system" unless ARGV.empty?
+
+  name = "xnix-full-build-#{VERSION.gsub(/[^a-zA-Z0-9]+/, "-")}"
+  exec(*container.observed_cache_run_command(name: name, command: buildroot.build_command))
 when "download-system"
   abort "Usage: ruby scripts/container.rb download-system" unless ARGV.empty?
 
@@ -49,5 +54,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|start-build-system}"
 end

@@ -43,11 +43,15 @@ module Xnix
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
     end
 
+    def observed_cache_run_command(name:, command:)
+      runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command, remove: false, name: name, detach: true)
+    end
+
     private
 
-    def runtime_command(network:, extra_mounts:, command:)
+    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false)
       [
-        "docker", "run", "--rm", "--init",
+        "docker", "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
         "--memory", BUILD_MEMORY_LIMIT,
         "--cpus", CPU_LIMIT,
         "--pids-limit", PROCESS_LIMIT,

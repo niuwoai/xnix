@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.1.4"
+VERSION = "0.1.14"
 
 def assert(condition, message)
   return if condition
@@ -37,6 +37,11 @@ assert(!offline_command.include?("--network=host"), "offline container must not 
 assert(!offline_command.any? { |argument| argument.include?("docker.sock") }, "offline container must not mount the Docker socket")
 
 assert(!offline_command.include?("--mount"), "offline container must not mount host directories")
+
+observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
+assert(observed.include?("--detach"), "observed build must run detached")
+assert(observed.include?("--name"), "observed build must have a stable name")
+assert(!observed.include?("--rm"), "observed build must retain its logs after exit")
 
 source_command = container.source_retrieval_command(["ruby", "scripts/fetch_buildroot.rb"])
 assert(source_command.include?("--network"), "source retrieval must configure networking")

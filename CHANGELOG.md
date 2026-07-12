@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.14] - 2026-07-12
+
+### Added
+
+- Named persistent full-build container command so Buildroot logs remain available after a failed build.
+
 ## [0.1.13] - 2026-07-12
 
 ### Added
