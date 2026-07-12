@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.21] - 2026-07-13
+
+### Added
+
+- Added `xnix-recipe-trust-policy`, a policy model that evaluates recipe registry trust as production-trusted, development-only, or untrusted.
+- Added focused coverage for development-only blocking reasons, production-trusted decisions, and desktop-safe summaries.
+
+### Changed
+
+- Documented recipe trust policy as the desktop-facing explanation layer above raw recipe trust probe signals.
+
 ## [0.2.20] - 2026-07-13
 
 ### Added

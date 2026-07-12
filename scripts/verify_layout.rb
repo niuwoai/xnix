@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.20"
+EXPECTED_VERSION = "0.2.21"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -37,6 +37,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/registry_backed_recipe_store.rb
   lib/xnix/compatibility/recipe_registry.rb
   lib/xnix/compatibility/recipe_store.rb
+  lib/xnix/compatibility/recipe_trust_policy.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/compatibility/settings_model.rb
   lib/xnix/compatibility/task_manager_identity.rb
@@ -54,6 +55,7 @@ REQUIRED_FILES = %w[
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
   bin/xnix-recipe-registry
+  bin/xnix-recipe-trust-policy
   bin/xnix-rollback-desktop-integration
   libexec/xnix/compatd
   scripts/container.rb
@@ -84,6 +86,7 @@ REQUIRED_FILES = %w[
   test/test_application_recipe.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
+  test/test_recipe_trust_policy.rb
   test/test_registry_backed_recipe_store.rb
   test/test_desktop_entry.rb
   test/test_desktop_activation_installer.rb
@@ -230,5 +233,10 @@ runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon
 assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
 assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
+
+recipe_trust_policy_source = read_project_file("lib/xnix/compatibility/recipe_trust_policy.rb")
+assert(recipe_trust_policy_source.include?("xnix-recipe-trust-policy"), "Recipe trust policy must expose a CLI command")
+assert(recipe_trust_policy_source.include?("production-trusted"), "Recipe trust policy must model production trust")
+assert(recipe_trust_policy_source.include?("development-only"), "Recipe trust policy must model development-only trust")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"
