@@ -26,5 +26,10 @@ assert(contents.include?("dbus-run-session"), "D-Bus smoke script must start a s
 assert(contents.include?("gdbus"), "D-Bus smoke script must use gdbus for runtime calls")
 assert(contents.include?("ListApplications"), "D-Bus smoke script must call ListApplications")
 assert(contents.include?("GetDiagnostics"), "D-Bus smoke script must call GetDiagnostics")
+assert(contents.include?("GetEngineCatalog"), "D-Bus smoke script must call GetEngineCatalog")
+assert(contents.include?("GetRunPlan"), "D-Bus smoke script must call GetRunPlan")
+assert(contents.include?("GetRepairPlan"), "D-Bus smoke script must call GetRepairPlan")
+assert(contents.include?("GetSnapshotPlan"), "D-Bus smoke script must call GetSnapshotPlan")
+assert(contents.include?("GetPortalAccessPolicy"), "D-Bus smoke script must call GetPortalAccessPolicy")
 
 puts "PASS: compatibility runtime D-Bus smoke script unit tests"

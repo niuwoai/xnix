@@ -33,6 +33,28 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='diagnostics' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetEngineCatalog'>"
+  "      <arg name='catalog' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='GetRunPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='GetRepairPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='issue' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='GetSnapshotPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='reason' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
+  "    <method name='GetPortalAccessPolicy'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='operation' type='s' direction='in'/>"
+  "      <arg name='policy' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -73,6 +95,75 @@ return_unknown_application(GDBusMethodInvocation *invocation, const gchar *appli
                                         G_IO_ERROR_NOT_FOUND,
                                         "unknown application: %s",
                                         application_id);
+}
+
+static GVariant *
+build_engine_catalog(void)
+{
+  GVariantBuilder catalog;
+
+  g_variant_builder_init(&catalog, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&catalog, "{sv}", "catalog_type", g_variant_new_string("compatibility-engine"));
+  g_variant_builder_add(&catalog, "{sv}", "runtime_policy_owner", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&catalog, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&catalog);
+}
+
+static GVariant *
+build_run_plan(const gchar *application_id)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-run"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_repair_plan(const gchar *application_id, const gchar *issue)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-repair"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "issue", g_variant_new_string(issue));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_required", g_variant_new_boolean(TRUE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_snapshot_plan(const gchar *application_id, const gchar *reason)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-snapshot"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "reason", g_variant_new_string(reason));
+  g_variant_builder_add(&plan, "{sv}", "enabled_by_default", g_variant_new_boolean(TRUE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_portal_policy(const gchar *application_id, const gchar *operation)
+{
+  GVariantBuilder policy;
+
+  g_variant_builder_init(&policy, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&policy, "{sv}", "policy_type", g_variant_new_string("portal-access"));
+  g_variant_builder_add(&policy, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&policy, "{sv}", "operation", g_variant_new_string(operation));
+  g_variant_builder_add(&policy, "{sv}", "portal_required", g_variant_new_boolean(TRUE));
+
+  return g_variant_builder_end(&policy);
 }
 
 static void
@@ -128,6 +219,66 @@ handle_method_call(GDBusConnection *connection,
     g_variant_builder_add(&diagnostics, "{sv}", "status", g_variant_new_string("known"));
     g_variant_builder_add(&diagnostics, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(a{sv})", &diagnostics));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetEngineCatalog") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_engine_catalog()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRunPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_run_plan(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRepairPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *issue = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &issue);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_repair_plan(application_id, issue)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetSnapshotPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *reason = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &reason);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_snapshot_plan(application_id, reason)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetPortalAccessPolicy") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *operation = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &operation);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_portal_policy(application_id, operation)));
     return;
   }
 

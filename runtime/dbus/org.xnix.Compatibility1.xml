@@ -30,6 +30,28 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="diagnostics" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetEngineCatalog">
+      <arg name="catalog" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetRunPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetRepairPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="issue" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetSnapshotPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="reason" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetPortalAccessPolicy">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="operation" type="s" direction="in"/>
+      <arg name="policy" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

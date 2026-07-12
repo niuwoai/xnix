@@ -3,7 +3,11 @@
 require "json"
 require "optparse"
 require "pathname"
+require_relative "compatibility_engine_catalog"
+require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
+require_relative "compatibility_snapshot_plan"
+require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 
 module Xnix
@@ -78,6 +82,30 @@ module Xnix
         }
       end
 
+      def engine_catalog
+        CompatibilityEngineCatalog.new.to_h
+      end
+
+      def run_plan(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityRunPlan.new(recipe: recipe).to_h
+      end
+
+      def repair_plan(application_id, issue)
+        require_recipe(application_id)
+        CompatibilityRepairPlan.new(application_id: application_id, issue: issue).to_h
+      end
+
+      def snapshot_plan(application_id, reason)
+        require_recipe(application_id)
+        CompatibilitySnapshotPlan.new(application_id: application_id, reason: reason).to_h
+      end
+
+      def portal_access_policy(application_id, operation)
+        require_recipe(application_id)
+        PortalAccessPolicy.new(application_id: application_id, operation: operation).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -86,6 +114,25 @@ module Xnix
           get_application(required_parameter(method_name, parameters, 0))
         when "GetDiagnostics"
           diagnostics(required_parameter(method_name, parameters, 0))
+        when "GetEngineCatalog"
+          engine_catalog
+        when "GetRunPlan"
+          run_plan(required_parameter(method_name, parameters, 0))
+        when "GetRepairPlan"
+          repair_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
+        when "GetSnapshotPlan"
+          snapshot_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
+        when "GetPortalAccessPolicy"
+          portal_access_policy(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
         else
           raise ArgumentError, "unsupported runtime method: #{method_name}"
         end

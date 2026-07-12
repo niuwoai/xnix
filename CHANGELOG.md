@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.29] - 2026-07-13
+
+### Changed
+
+- Extended the Runtime D-Bus contract with read-only planning methods for engine catalog, run plans, repair plans, snapshot plans, and Portal access policy.
+- Routed the new read-only planning methods through `xnix-compatd dispatch`.
+- Updated the Linux session-bus smoke adapter and smoke script to expose and call the new read-only planning methods.
+
+### Added
+
+- Added focused contract and dispatch coverage for the new planning methods while keeping write operations unsupported until backends exist.
+
 ## [0.2.28] - 2026-07-13
 
 ### Added

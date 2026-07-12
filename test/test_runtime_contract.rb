@@ -16,7 +16,20 @@ service = project_root.join("runtime/dbus/org.xnix.Compatibility1.service").read
 systemd_unit = project_root.join("runtime/systemd/xnix-compatd.service").read
 plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadata.json").read
 
-%w[ListApplications GetApplication InstallRecipe Launch CreateSnapshot RestoreSnapshot GetDiagnostics].each do |method|
+%w[
+  ListApplications
+  GetApplication
+  InstallRecipe
+  Launch
+  CreateSnapshot
+  RestoreSnapshot
+  GetDiagnostics
+  GetEngineCatalog
+  GetRunPlan
+  GetRepairPlan
+  GetSnapshotPlan
+  GetPortalAccessPolicy
+].each do |method|
   assert(contract.include?("name=\"#{method}\""), "D-Bus contract must expose #{method}")
 end
 assert(contract.include?("name=\"RequestCompleted\""), "D-Bus contract must emit async completion signals")

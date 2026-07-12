@@ -59,6 +59,63 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetDiagnostics: #{stderr}")
   assert(stdout.include?("known"), "runtime smoke adapter diagnostics must identify known applications")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetEngineCatalog"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetEngineCatalog: #{stderr}")
+  assert(stdout.include?("compatibility-engine"), "runtime smoke adapter must expose engine catalog over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRunPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRunPlan: #{stderr}")
+  assert(stdout.include?("compatibility-run"), "runtime smoke adapter must expose run plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRepairPlan",
+    "org.xnix.sample.notepad",
+    "engine-binding-pending"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRepairPlan: #{stderr}")
+  assert(stdout.include?("compatibility-repair"), "runtime smoke adapter must expose repair plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetSnapshotPlan",
+    "org.xnix.sample.notepad",
+    "before-repair"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetSnapshotPlan: #{stderr}")
+  assert(stdout.include?("compatibility-snapshot"), "runtime smoke adapter must expose snapshot plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetPortalAccessPolicy",
+    "org.xnix.sample.notepad",
+    "file-open"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetPortalAccessPolicy: #{stderr}")
+  assert(stdout.include?("portal-access"), "runtime smoke adapter must expose Portal policy over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin
