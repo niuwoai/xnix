@@ -20,8 +20,6 @@ module Xnix
     def build_command
       [
         "docker", "build",
-        "--memory", BUILD_MEMORY_LIMIT,
-        "--cpus", CPU_LIMIT,
         "--tag", image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
         @project_root
@@ -39,16 +37,9 @@ module Xnix
         "--network", "none",
         "--read-only",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=#{TEMPORARY_FILESYSTEM_SIZE}",
-        "--mount", workspace_mount,
         image_tag,
         *command
       ]
-    end
-
-    private
-
-    def workspace_mount
-      "type=bind,source=#{@project_root},target=/workspace,rw"
     end
   end
 end

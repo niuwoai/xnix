@@ -25,7 +25,8 @@ RUN apt-get update \
 
 RUN useradd --create-home --shell /bin/bash xnix
 
+COPY --chown=xnix:xnix . /workspace
+
 USER xnix
 WORKDIR /workspace
-
 ENV BR2_DL_DIR=/workspace/.cache/buildroot-dl

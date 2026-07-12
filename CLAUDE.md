@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.3`
+- Version: `0.1.3-rc3`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
@@ -13,7 +13,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Safety Constraints
 
-- Do not use `--privileged`, `--network host`, a Docker socket mount, or writable mounts outside the repository.
+- Do not use `--privileged`, `--network host`, a Docker socket mount, or host-directory mounts at runtime.
 - Bind test ports only to `127.0.0.1`.
 - Do not install QEMU or build dependencies on the macOS host; keep them in the build container.
 

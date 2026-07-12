@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.1.3"
+VERSION = "0.1.3-rc3"
 
 def assert(condition, message)
   return if condition
@@ -19,11 +19,9 @@ build_command = container.build_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
-assert(build_command.include?("--memory"), "build command must set a memory limit")
-assert(build_command.include?(Xnix::Container::BUILD_MEMORY_LIMIT), "build command must use the configured memory limit")
-assert(build_command.include?("--cpus"), "build command must set a CPU limit")
-assert(build_command.include?(Xnix::Container::CPU_LIMIT), "build command must use the configured CPU limit")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
+assert(!build_command.include?("--memory"), "Buildx must not receive an unsupported memory argument")
+assert(!build_command.include?("--cpus"), "Buildx must not receive an unsupported CPU argument")
 
 assert(offline_command.include?("--cap-drop"), "offline container must drop capabilities")
 assert(offline_command.include?("ALL"), "offline container must drop all capabilities")
@@ -38,8 +36,6 @@ assert(!offline_command.include?("--privileged"), "offline container must not be
 assert(!offline_command.include?("--network=host"), "offline container must not use host networking")
 assert(!offline_command.any? { |argument| argument.include?("docker.sock") }, "offline container must not mount the Docker socket")
 
-workspace_mount = offline_command.fetch(offline_command.index("--mount") + 1)
-expected_mount = "type=bind,source=#{PROJECT_ROOT},target=/workspace,rw"
-assert(workspace_mount == expected_mount, "offline container must mount only the project workspace")
+assert(!offline_command.include?("--mount"), "offline container must not mount host directories")
 
 puts "PASS: constrained container command unit tests"

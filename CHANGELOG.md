@@ -2,6 +2,24 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.3-rc3] - 2026-07-12
+
+### Fixed
+
+- Removed the runtime bind mount that is unavailable when Colima host-directory mounts are disabled; project files are now copied into the tool image during its build.
+
+## [0.1.3-rc2] - 2026-07-12
+
+### Fixed
+
+- Replaced the invalid `rw` field in the Docker bind-mount specification with Docker's compatible default writable bind mount.
+
+## [0.1.3-rc1] - 2026-07-12
+
+### Fixed
+
+- Removed unsupported Docker Buildx CPU and memory arguments from the image-build command; resource isolation remains enforced by the 1 GiB, one-CPU Colima VM.
+
 ## [0.1.3] - 2026-07-12
 
 ### Added
