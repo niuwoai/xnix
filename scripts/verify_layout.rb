@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.11"
+EXPECTED_VERSION = "0.1.12"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -18,6 +18,7 @@ REQUIRED_FILES = %w[
   lib/xnix/qemu.rb
   lib/xnix/serial_log.rb
   lib/xnix/sshd.rb
+  lib/xnix/ssh_probe.rb
   lib/xnix/milestone.rb
   scripts/container.rb
   scripts/fetch_buildroot.rb
@@ -27,6 +28,7 @@ REQUIRED_FILES = %w[
   test/test_qemu.rb
   test/test_serial_log.rb
   test/test_sshd.rb
+  test/test_ssh_probe.rb
   test/test_milestone.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze

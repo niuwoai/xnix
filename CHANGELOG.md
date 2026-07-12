@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.12] - 2026-07-12
+
+### Added
+
+- Loopback-only non-interactive SSH probe command and focused unit coverage.
+
 ## [0.1.11] - 2026-07-12
 
 ### Added
