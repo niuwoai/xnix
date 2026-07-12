@@ -28,7 +28,7 @@ KDE packages display status and submit user decisions. They do not create a Wine
 
 The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model prefers the Runtime D-Bus service when a session source is available and falls back to the local Runtime read model for offline development. In both cases, it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
 
-The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, snapshot plans, and Portal access policy. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
+The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, snapshot plans, and Portal access policy. `DBusRuntimeClient` wraps these methods for KDE-facing code and parses D-Bus boolean variants into native booleans. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
 
 Generated application launchers delegate to `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, accepts optional `file://` URIs from desktop file associations, and emits a Runtime `Launch` request model. Plain application launches do not need file portal access; file launches are marked as portal-mediated.
 
@@ -82,6 +82,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 
 - The Compatibility Center Plasmoid is a Runtime client, not an alternative Runtime.
 - Runtime planning methods must be available through the D-Bus contract as read-only calls.
+- Runtime D-Bus clients must wrap planning reads directly and parse boolean variants as booleans.
 - The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - The first-release KDE integration status must include exactly the seven agreed entry points.

@@ -49,6 +49,26 @@ module Xnix
         parse_dictionary(call("GetDiagnostics", application_id))
       end
 
+      def engine_catalog
+        parse_dictionary(call("GetEngineCatalog"))
+      end
+
+      def run_plan(application_id)
+        parse_dictionary(call("GetRunPlan", application_id))
+      end
+
+      def repair_plan(application_id, issue)
+        parse_dictionary(call("GetRepairPlan", application_id, issue))
+      end
+
+      def snapshot_plan(application_id, reason)
+        parse_dictionary(call("GetSnapshotPlan", application_id, reason))
+      end
+
+      def portal_access_policy(application_id, operation)
+        parse_dictionary(call("GetPortalAccessPolicy", application_id, operation))
+      end
+
       private
 
       def call(method_name, *arguments)
@@ -91,6 +111,8 @@ module Xnix
         value = raw_value.strip
         string_match = value.match(/\A'(.*)'\z/m)
         return string_match[1] if string_match
+        return true if value == "true"
+        return false if value == "false"
 
         value
       end

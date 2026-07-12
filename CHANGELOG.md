@@ -2,6 +2,21 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.30] - 2026-07-13
+
+### Added
+
+- Added `DBusRuntimeClient` wrappers for Runtime planning reads covering engine catalog, run plans, repair plans, snapshot plans, and Portal access policy.
+- Added focused D-Bus client coverage for planning reads and D-Bus boolean variant parsing.
+
+### Changed
+
+- Made the KDE-facing D-Bus client parse boolean `true` and `false` values into native booleans instead of strings.
+
+### Verified
+
+- Ran the full Buildroot and QEMU serial smoke test required for the 0.2.30 milestone.
+
 ## [0.2.29] - 2026-07-13
 
 ### Changed

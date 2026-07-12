@@ -37,6 +37,36 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetEngineCatalog"
+      [
+        "({'catalog_type': <'compatibility-engine'>, 'runtime_policy_owner': <true>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRunPlan"
+      [
+        "({'plan_type': <'compatibility-run'>, 'strategy': <'automatic-managed'>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRepairPlan"
+      [
+        "({'plan_type': <'compatibility-repair'>, 'issue': <'engine-binding-pending'>, 'snapshot_required': <true>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetSnapshotPlan"
+      [
+        "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'enabled_by_default': <true>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetPortalAccessPolicy"
+      [
+        "({'policy_type': <'portal-access'>, 'operation': <'file-open'>, 'portal_required': <true>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -57,6 +87,28 @@ assert(applications.first["mode"] == "automatic", "D-Bus client must parse appli
 
 diagnostics = client.diagnostics("org.xnix.sample.notepad")
 assert(diagnostics["status"] == "known", "D-Bus client must parse diagnostics status")
+
+engine_catalog = client.engine_catalog
+assert(engine_catalog["catalog_type"] == "compatibility-engine", "D-Bus client must parse engine catalog")
+assert(engine_catalog["runtime_policy_owner"], "D-Bus client must parse boolean true values")
+assert(!engine_catalog["backend_details_exposed"], "D-Bus client must parse boolean false values")
+
+run_plan = client.run_plan("org.xnix.sample.notepad")
+assert(run_plan["plan_type"] == "compatibility-run", "D-Bus client must parse run plans")
+assert(!run_plan["backend_details_exposed"], "D-Bus client must parse run plan booleans")
+
+repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
+assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
+assert(repair_plan["snapshot_required"], "D-Bus client must parse repair plan booleans")
+
+snapshot_plan = client.snapshot_plan("org.xnix.sample.notepad", "before-repair")
+assert(snapshot_plan["plan_type"] == "compatibility-snapshot", "D-Bus client must parse snapshot plans")
+assert(snapshot_plan["enabled_by_default"], "D-Bus client must parse snapshot plan booleans")
+
+portal_policy = client.portal_access_policy("org.xnix.sample.notepad", "file-open")
+assert(portal_policy["policy_type"] == "portal-access", "D-Bus client must parse Portal access policies")
+assert(portal_policy["portal_required"], "D-Bus client must parse Portal policy booleans")
+
 assert(
   capture.commands.all? { |command| command.include?("--session") },
   "D-Bus client must use the session bus for KDE-facing reads"

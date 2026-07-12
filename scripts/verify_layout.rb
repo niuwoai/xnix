@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.29"
+EXPECTED_VERSION = "0.2.30"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -304,6 +304,13 @@ assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runt
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
   assert(read_project_file("scripts/dbus_session_smoke.rb").include?(method_name), "D-Bus session smoke must call #{method_name}")
 end
+
+dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
+%w[engine_catalog run_plan repair_plan snapshot_plan portal_access_policy].each do |method_name|
+  assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
+end
+assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")
+assert(dbus_client_source.include?("return false if value == \"false\""), "D-Bus Runtime client must parse boolean false values")
 
 recipe_trust_policy_source = read_project_file("lib/xnix/compatibility/recipe_trust_policy.rb")
 assert(recipe_trust_policy_source.include?("xnix-recipe-trust-policy"), "Recipe trust policy must expose a CLI command")
