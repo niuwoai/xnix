@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.7] - 2026-07-12
+
+### Added
+
+- Added a thin Runtime D-Bus client for KDE-facing read models, using the session bus and the stable `org.xnix.Compatibility1` contract.
+- Added `--source auto|local|dbus` to `xnix-kde-center-model`, preferring D-Bus when a Runtime session service is available and falling back to the local read model otherwise.
+- Added a constrained KDE Compatibility Center D-Bus smoke path that verifies Plasma-facing model data can be read from the Runtime session bus.
+
+### Changed
+
+- Kept the KDE read model desktop-facing while making the Runtime source explicit as either local fallback data or D-Bus session data.
+
 ## [0.2.6] - 2026-07-12
 
 ### Added

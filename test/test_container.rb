@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.6"
+VERSION = "0.2.7"
 
 def assert(condition, message)
   return if condition
@@ -19,6 +19,7 @@ build_command = container.build_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
+kde_center_dbus_command = container.kde_center_dbus_smoke_command
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
@@ -48,6 +49,10 @@ assert(runtime_activation_command.last(2) == ["ruby", "test/test_runtime_activat
 assert(runtime_dbus_command.fetch(runtime_dbus_command.index("--network") + 1) == "none", "runtime D-Bus smoke must run without networking")
 assert(runtime_dbus_command.include?("--read-only"), "runtime D-Bus smoke must keep the container root read-only")
 assert(runtime_dbus_command.last(2) == ["ruby", "scripts/dbus_session_smoke.rb"], "runtime D-Bus smoke must run the session bus smoke")
+
+assert(kde_center_dbus_command.fetch(kde_center_dbus_command.index("--network") + 1) == "none", "KDE center D-Bus smoke must run without networking")
+assert(kde_center_dbus_command.include?("--read-only"), "KDE center D-Bus smoke must keep the container root read-only")
+assert(kde_center_dbus_command.last(2) == ["ruby", "scripts/kde_center_dbus_smoke.rb"], "KDE center D-Bus smoke must run the model session bus smoke")
 
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")

@@ -2,6 +2,7 @@
 
 require "json"
 require "optparse"
+require_relative "dbus_runtime_client"
 require_relative "recipe_store"
 require_relative "runtime_daemon"
 
@@ -31,12 +32,7 @@ module Xnix
         {
           "version" => RuntimeDaemon::VERSION,
           "title" => "Xnix Compatibility Center",
-          "source" => {
-            "kind" => "runtime-read-model",
-            "bus_name" => RuntimeDaemon::BUS_NAME,
-            "object_path" => RuntimeDaemon::OBJECT_PATH,
-            "interface" => RuntimeDaemon::INTERFACE
-          },
+          "source" => source_metadata,
           "summary" => summary(applications),
           "applications" => applications
         }
@@ -47,6 +43,17 @@ module Xnix
       end
 
       private
+
+      def source_metadata
+        return runtime.source_metadata if runtime.respond_to?(:source_metadata)
+
+        {
+          "kind" => "runtime-local-read-model",
+          "bus_name" => RuntimeDaemon::BUS_NAME,
+          "object_path" => RuntimeDaemon::OBJECT_PATH,
+          "interface" => RuntimeDaemon::INTERFACE
+        }
+      end
 
       def application_summary(application)
         diagnostics = runtime.diagnostics(application.fetch("id"))
@@ -80,17 +87,20 @@ module Xnix
       end
 
       class CLI
+        SOURCES = %w[auto local dbus].freeze
+
         def initialize(argv)
           @argv = argv.dup
           @recipe_dir = RuntimeDaemon::DEFAULT_RECIPE_DIR
+          @source = "auto"
         end
 
         def run
           parser.parse!(@argv)
-          runtime = RuntimeDaemon.new(recipe_store: RecipeStore.new(path: @recipe_dir))
+          runtime = runtime_source
           puts KdeCenterModel.new(runtime: runtime).to_json
           0
-        rescue OptionParser::ParseError, KeyError, ArgumentError => e
+        rescue OptionParser::ParseError, KeyError, ArgumentError, DBusRuntimeClient::Error => e
           warn "xnix-kde-center-model: #{e.message}"
           64
         end
@@ -103,7 +113,27 @@ module Xnix
             options.on("--recipe-dir PATH", "Read application recipes from PATH") do |value|
               @recipe_dir = value
             end
+            options.on("--source SOURCE", "Read from auto, local, or dbus") do |value|
+              raise OptionParser::InvalidArgument, "source must be one of: #{SOURCES.join(", ")}" unless SOURCES.include?(value)
+
+              @source = value
+            end
           end
+        end
+
+        def runtime_source
+          case @source
+          when "local"
+            local_runtime
+          when "dbus"
+            DBusRuntimeClient.new
+          when "auto"
+            DBusRuntimeClient.available? ? DBusRuntimeClient.new : local_runtime
+          end
+        end
+
+        def local_runtime
+          RuntimeDaemon.new(recipe_store: RecipeStore.new(path: @recipe_dir))
         end
       end
     end

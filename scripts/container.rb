@@ -37,6 +37,10 @@ when "runtime-dbus-smoke"
   abort "Usage: ruby scripts/container.rb runtime-dbus-smoke" unless ARGV.empty?
 
   exec(*container.runtime_dbus_smoke_command)
+when "kde-center-dbus-smoke"
+  abort "Usage: ruby scripts/container.rb kde-center-dbus-smoke" unless ARGV.empty?
+
+  exec(*container.kde_center_dbus_smoke_command)
 when "fetch-sources"
   abort "Usage: ruby scripts/container.rb fetch-sources" unless ARGV.empty?
 
@@ -75,5 +79,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|ssh-smoke|start-build-system}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|ssh-smoke|start-build-system}"
 end

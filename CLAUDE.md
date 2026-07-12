@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.6`
+- Version: `0.2.7`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -36,6 +36,7 @@ ruby scripts/container.rb ssh-smoke
 ruby -Ilib test/test_application_recipe.rb
 ruby -Ilib test/test_recipe_store.rb
 ruby -Ilib test/test_desktop_entry.rb
+ruby -Ilib test/test_dbus_runtime_client.rb
 ruby -Ilib test/test_runtime_contract.rb
 ruby -Ilib test/test_runtime_daemon.rb
 ruby -Ilib test/test_runtime_dispatch.rb
@@ -44,9 +45,10 @@ ruby -Ilib test/test_runtime_activation_install.rb
 ruby -Ilib test/test_runtime_dbus_smoke_script.rb
 ruby -Ilib test/test_kde_center_model.rb
 ruby scripts/container.rb runtime-dbus-smoke
+ruby scripts/container.rb kde-center-dbus-smoke
 ```
 
-Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, and provide a KDE-safe read model for the Compatibility Center. The D-Bus session smoke adapter owns the Runtime bus name in a constrained Linux container; the production daemon binding is still pending.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, provide a KDE-safe read model for the Compatibility Center, and verify that model over a session-bus Runtime smoke adapter. The production daemon binding is still pending.
 
 ## Delivery Sequence
 

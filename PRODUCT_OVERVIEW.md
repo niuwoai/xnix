@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.2.6
+> Last updated: 2026-07-12 | Current version: v0.2.7
 
 ## Summary
 
@@ -37,7 +37,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 
 ## Compatibility Runtime Boundary
 
-- The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. The local daemon core is executable and can probe itself, list managed recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, and emit a KDE-safe read model for the Compatibility Center. The D-Bus session smoke adapter owns the Runtime bus name and answers read-only calls in the constrained Linux container; the production daemon binding is the next implementation step.
+- The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. The local daemon core is executable and can probe itself, list managed recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, and emit a KDE-safe read model for the Compatibility Center. The D-Bus session smoke adapter owns the Runtime bus name and answers read-only calls in the constrained Linux container; the KDE read model can now consume that session-bus source. The production daemon binding is the next implementation step.
 - KDE packages consume Runtime state and submit user actions over D-Bus. They do not invoke Wine or a VM directly.
 - Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. They never display a prefix path or a raw Windows executable command.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
@@ -51,7 +51,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | File manager | Dolphin action resolves a Runtime application recipe and asks for Portal-granted files |
 | System tray | Plasma applet presents Runtime activity and compatible tray applications |
 | Notifications | Runtime requests KDE notifications for install, repair, backend, and approval events |
-| Compatibility Center | Plasma package displays the Runtime-backed read model for compatibility, diagnostics, snapshots, and actions |
+| Compatibility Center | Plasma package displays the Runtime-backed read model for compatibility, diagnostics, snapshots, and actions; the read path is smoke-tested over D-Bus |
 | Settings | KDE settings module presents user concepts such as automatic mode, performance, compatibility, and allowed resources |
 
 ## Learning Baseline
@@ -82,7 +82,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, and KDE-safe Compatibility Center model are in place; production daemon binding and signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, and KDE D-Bus read smoke are in place; production daemon binding and signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

@@ -26,7 +26,7 @@ Xnix Compatibility Runtime
 
 KDE packages display status and submit user decisions. They do not create a Wine environment, start a virtual machine, parse backend logs, or select a backend. The Runtime owns those decisions and will implement the stable interface defined in `runtime/dbus/org.xnix.Compatibility1.xml`.
 
-The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model is derived from Runtime application and diagnostics data, but it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
+The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model prefers the Runtime D-Bus service when a session source is available and falls back to the local Runtime read model for offline development. In both cases, it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
 
 ## Application Recipes
 

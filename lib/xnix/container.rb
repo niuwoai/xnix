@@ -40,6 +40,10 @@ module Xnix
       offline_run_command(["ruby", "scripts/dbus_session_smoke.rb"])
     end
 
+    def kde_center_dbus_smoke_command
+      offline_run_command(["ruby", "scripts/kde_center_dbus_smoke.rb"])
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
     end

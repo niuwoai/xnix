@@ -21,8 +21,8 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.6", "KDE center model must expose the current version")
-assert(model["source"]["kind"] == "runtime-read-model", "KDE center model must be sourced from the Runtime read model")
+assert(model["version"] == "0.2.7", "KDE center model must expose the current version")
+assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
 assert(model["summary"]["known_application_count"] == 1, "KDE center model must summarize known applications")
@@ -38,7 +38,7 @@ assert(application["supported_extensions"].include?(".txt"), "KDE center model m
 json = JSON.pretty_generate(model)
 assert(!json.match?(/prefix|\.wine|proton|virtual machine/i), "KDE center model must not expose backend storage or implementation terms")
 
-stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s)
+stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")
 assert(status.success?, "KDE center model CLI must exit successfully: #{stderr}")
 cli_model = JSON.parse(stdout)
 assert(cli_model == model, "KDE center model CLI must emit the same model")

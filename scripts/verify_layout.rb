@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.6"
+EXPECTED_VERSION = "0.2.7"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -23,6 +23,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/application_recipe.rb
+  lib/xnix/compatibility/dbus_runtime_client.rb
   lib/xnix/compatibility/desktop_entry.rb
   lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/recipe_store.rb
@@ -33,6 +34,7 @@ REQUIRED_FILES = %w[
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
+  scripts/kde_center_dbus_smoke.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
   scripts/install_runtime_activation.rb
@@ -56,6 +58,7 @@ REQUIRED_FILES = %w[
   test/test_application_recipe.rb
   test/test_recipe_store.rb
   test/test_desktop_entry.rb
+  test/test_dbus_runtime_client.rb
   test/test_runtime_contract.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
