@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.15] - 2026-07-12
+
+### Added
+
+- Human-readable serial boot failure summaries for QEMU smoke-test diagnostics.
+
 ## [0.1.14] - 2026-07-12
 
 ### Added
