@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.15-rc2
+> Last updated: 2026-07-12 | Current version: v0.1.16
 
 ## Summary
 
@@ -44,8 +44,8 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - If the full milestone test exposes a defect, it must be fixed and the full test rerun before later work starts.
 - Colima is limited to 6 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
 - Buildroot is configured with a single job to prevent toolchain build memory spikes in the 4 GiB container limit.
-- Xnix runtime containers are limited to 800 MiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval or Buildroot dependency-download command requires it. These commands receive bridge networking and a Docker-managed named volume only; they never mount a host directory. Docker Buildx does not expose per-build CPU or memory flags, so image builds are bounded by the 1 GiB and 1 CPU Colima VM limit.
-- Future SSH verification uses QEMU user networking with a forward only from container loopback `127.0.0.1:2222` to guest port 22.
+- Xnix runtime containers are limited to 4 GiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval or Buildroot dependency-download command requires it. These commands receive bridge networking and a Docker-managed named volume only; they never mount a host directory. Image builds run inside the 6 GiB and one-CPU Colima VM limit.
+- SSH verification creates an ephemeral Ed25519 keypair only in the Docker-managed cache volume, installs its public key during image assembly, forwards only container loopback `127.0.0.1:2222` to guest port 22, and deletes the private key after the test.
 
 ## Milestones
 
@@ -53,7 +53,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - [ ] M1: Linux kernel boot in QEMU with serial output (v0.1.10 verification in progress).
 - [ ] M2: BusyBox shell and initramfs.
 - [ ] M3: User-mode virtual NIC and network reachability.
-- [ ] M4: Init-managed OpenSSH `sshd` and loopback-only host SSH verification.
+- [ ] M4: Init-managed OpenSSH `sshd` and container-loopback SSH verification.
 - [ ] M5: Service logs, user management, key authentication, and baseline hardening.
 
 ## Current Decisions

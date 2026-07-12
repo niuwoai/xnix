@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.15-rc2"
+EXPECTED_VERSION = "0.1.16"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -14,16 +14,20 @@ REQUIRED_FILES = %w[
   buildroot/sources.lock
   buildroot/configs/xnix_x86_64_defconfig
   buildroot/board/xnix/rootfs-overlay/etc/ssh/sshd_config
+  buildroot/board/xnix/post-build.sh
   lib/xnix/container.rb
   lib/xnix/buildroot.rb
   lib/xnix/qemu.rb
   lib/xnix/serial_log.rb
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
+  lib/xnix/ssh_test_key.rb
   lib/xnix/milestone.rb
   scripts/container.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
+  scripts/prepare_ssh_test_key.rb
+  scripts/ssh_smoke.rb
   test/test_container.rb
   test/test_buildroot.rb
   test/test_qemu.rb

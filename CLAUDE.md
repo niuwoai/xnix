@@ -4,12 +4,12 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.15-rc2`
+- Version: `0.1.16`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
 - Service target: OpenSSH `sshd`
-- Container host: Colima Docker, limited to 1 GiB RAM and 1 CPU
+- Container host: Colima Docker, limited to 6 GiB RAM and 1 CPU
 
 ## Safety Constraints
 
@@ -30,9 +30,12 @@ ruby -Ilib test/test_serial_log.rb
 ruby -Ilib test/test_milestone.rb
 ruby scripts/full_smoke.rb
 ruby -Ilib test/test_ssh_probe.rb
+ruby scripts/container.rb prepare-ssh-test-key
+ruby scripts/container.rb build-ssh-test-system
+ruby scripts/container.rb ssh-smoke
 ```
 
-Buildroot configuration and full-build commands are implemented but intentionally deferred until the v0.1.10 complete-build milestone.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward.
 
 ## Delivery Sequence
 

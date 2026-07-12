@@ -14,6 +14,7 @@ RUN apt-get update \
         git \
         libelf-dev \
         libssl-dev \
+        openssh-client \
         qemu-system-x86 \
         qemu-utils \
         ruby \

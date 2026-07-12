@@ -18,5 +18,6 @@ project_root = Pathname.new(__dir__).join("..").realpath
 config = project_root.join("buildroot/board/xnix/rootfs-overlay/etc/ssh/sshd_config").read
 assert(config.include?("PasswordAuthentication no"), "sshd must disable password authentication")
 assert(config.include?("PermitRootLogin prohibit-password"), "sshd must forbid root password login")
+assert(config.include?("PubkeyAuthentication yes"), "sshd must explicitly permit key authentication")
 
 puts "PASS: sshd service unit tests"

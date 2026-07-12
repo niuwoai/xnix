@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.16] - 2026-07-12
+
+### Added
+
+- Added an isolated QEMU SSH smoke-test path using a disposable test key stored only in the Docker-managed cache volume and a container-loopback-only forwarding rule.
+
+### Changed
+
+- Updated the documented constrained runtime limit to 4 GiB inside the user-authorized 6 GiB Colima VM.
+
 ## [0.1.15-rc2] - 2026-07-12
 
 ### Fixed

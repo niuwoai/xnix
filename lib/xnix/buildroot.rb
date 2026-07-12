@@ -6,13 +6,14 @@ module Xnix
     OUTPUT_DIRECTORY = "/workspace/.cache/xnix-output"
     EXTERNAL_DIRECTORY = "/workspace/buildroot"
     DEFCONFIG = "xnix_x86_64_defconfig"
+    SSH_TEST_PUBLIC_KEY = "/workspace/.cache/xnix-ssh-test/id_ed25519.pub"
 
     def configure_command
       make_command("BR2_EXTERNAL=#{EXTERNAL_DIRECTORY}", DEFCONFIG)
     end
 
-    def build_command
-      make_command
+    def build_command(ssh_test_key: false)
+      make_command(*(ssh_test_key ? ["XNIX_TEST_SSH_PUBLIC_KEY=#{SSH_TEST_PUBLIC_KEY}"] : []))
     end
 
     def source_command

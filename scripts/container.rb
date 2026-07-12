@@ -6,6 +6,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 require_relative "../lib/xnix/buildroot"
 require_relative "../lib/xnix/qemu"
+require_relative "../lib/xnix/ssh_test_key"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -40,6 +41,18 @@ when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command))
+when "prepare-ssh-test-key"
+  abort "Usage: ruby scripts/container.rb prepare-ssh-test-key" unless ARGV.empty?
+
+  exec(*container.cache_run_command(["ruby", "scripts/prepare_ssh_test_key.rb"]))
+when "build-ssh-test-system"
+  abort "Usage: ruby scripts/container.rb build-ssh-test-system" unless ARGV.empty?
+
+  exec(*container.cache_run_command(buildroot.build_command(ssh_test_key: true)))
+when "ssh-smoke"
+  abort "Usage: ruby scripts/container.rb ssh-smoke" unless ARGV.empty?
+
+  exec(*container.cache_run_command(["ruby", "scripts/ssh_smoke.rb"]))
 when "start-build-system"
   abort "Usage: ruby scripts/container.rb start-build-system" unless ARGV.empty?
 
@@ -54,5 +67,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "45s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|start-build-system}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|ssh-smoke|start-build-system}"
 end
