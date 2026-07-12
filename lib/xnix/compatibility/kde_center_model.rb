@@ -87,6 +87,7 @@ module Xnix
           "severity" => repair_plan.fetch("severity"),
           "user_approval_required" => repair_plan.fetch("user_approval_required"),
           "snapshot_required" => repair_plan.fetch("snapshot_required"),
+          "snapshot" => repair_plan.fetch("snapshot_plan", nil),
           "notification_event" => repair_plan.fetch("notification_event"),
           "summary" => repair_plan.fetch("summary")
         }

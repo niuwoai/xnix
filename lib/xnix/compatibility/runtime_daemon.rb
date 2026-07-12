@@ -129,6 +129,7 @@ module Xnix
           "severity" => plan.fetch("severity"),
           "user_approval_required" => plan.fetch("user_approval_required"),
           "snapshot_required" => plan.fetch("snapshot_required"),
+          "snapshot_plan" => plan.fetch("snapshot_plan"),
           "notification_event" => plan.fetch("notification_event"),
           "summary" => plan.fetch("desktop_safe_summary")
         }

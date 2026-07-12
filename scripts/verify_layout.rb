@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.26"
+EXPECTED_VERSION = "0.2.27"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,6 +24,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/application_recipe.rb
+  lib/xnix/compatibility/compatibility_snapshot_plan.rb
   lib/xnix/compatibility/compatibility_run_plan.rb
   lib/xnix/compatibility/dbus_runtime_client.rb
   lib/xnix/compatibility/desktop_activation_installer.rb
@@ -53,6 +54,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-open
   bin/xnix-compat-repair-plan
   bin/xnix-compat-run-plan
+  bin/xnix-compat-snapshot-plan
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
@@ -93,6 +95,7 @@ REQUIRED_FILES = %w[
   test/test_milestone.rb
   test/test_application_recipe.rb
   test/test_compatibility_repair_plan.rb
+  test/test_compatibility_snapshot_plan.rb
   test/test_compatibility_run_plan.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
@@ -208,6 +211,16 @@ assert(repair_plan_source.include?("xnix-compat-repair-plan"), "Compatibility re
 end
 assert(repair_plan_source.include?("\"snapshot_required\""), "Compatibility repair plan must expose snapshot requirements")
 assert(repair_plan_source.include?("\"rollback_available\" => true"), "Compatibility repair plan must keep rollback available")
+assert(repair_plan_source.include?("CompatibilitySnapshotPlan"), "Compatibility repair plan must include snapshot planning")
+
+snapshot_plan_source = read_project_file("lib/xnix/compatibility/compatibility_snapshot_plan.rb")
+assert(snapshot_plan_source.include?("xnix-compat-snapshot-plan"), "Compatibility snapshot plan must expose a CLI command")
+%w[before-repair before-engine-change manual].each do |reason|
+  assert(snapshot_plan_source.include?("\"#{reason}\""), "Compatibility snapshot plan must include #{reason}")
+end
+assert(snapshot_plan_source.include?("\"host_system\" => false"), "Compatibility snapshot plan must not snapshot the host system")
+assert(snapshot_plan_source.include?("\"user_documents\" => false"), "Compatibility snapshot plan must not snapshot user documents")
+assert(snapshot_plan_source.include?("\"preserve_user_documents\" => true"), "Compatibility snapshot restore must preserve user documents")
 
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|

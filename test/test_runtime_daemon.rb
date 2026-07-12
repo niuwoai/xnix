@@ -18,7 +18,7 @@ command = ["ruby", project_root.join("bin/xnix-compatd").to_s]
 stdout, stderr, status = Open3.capture3(*command, "probe")
 assert(status.success?, "runtime daemon probe must exit successfully: #{stderr}")
 probe = JSON.parse(stdout)
-assert(probe["version"] == "0.2.26", "runtime daemon probe must report the current version")
+assert(probe["version"] == "0.2.27", "runtime daemon probe must report the current version")
 assert(probe["bus_name"] == "org.xnix.Compatibility1", "runtime daemon probe must keep the stable bus name")
 assert(probe["capabilities"]["recipe_store"], "runtime daemon probe must expose recipe store capability")
 assert(probe["capabilities"]["registry_backed_recipe_store"], "runtime daemon probe must expose registry-backed recipe loading")
@@ -45,6 +45,8 @@ assert(diagnostics["checks"].any? { |check| check["status"] == "pending" }, "run
 assert(diagnostics["repair_plan"]["plan_type"] == "compatibility-repair", "runtime daemon diagnostics must include repair planning")
 assert(diagnostics["repair_plan"]["issue"] == "engine-binding-pending", "runtime daemon diagnostics must identify the pending repair issue")
 assert(diagnostics["repair_plan"]["snapshot_required"], "runtime daemon diagnostics repair plan must require snapshots")
+assert(diagnostics["repair_plan"]["snapshot_plan"]["plan_type"] == "compatibility-snapshot", "runtime daemon diagnostics must include snapshot planning")
+assert(diagnostics["repair_plan"]["snapshot_plan"]["restore_available"], "runtime daemon diagnostics snapshot plan must expose restore availability")
 
 diagnostics_json = JSON.pretty_generate(diagnostics)
 assert(!diagnostics_json.match?(/wine|prefix|\.wine|proton|virtual machine/i), "runtime diagnostics must not expose backend implementation terms")

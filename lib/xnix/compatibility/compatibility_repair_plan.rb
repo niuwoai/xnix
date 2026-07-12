@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require_relative "application_recipe"
+require_relative "compatibility_snapshot_plan"
 require_relative "runtime_daemon"
 
 module Xnix
@@ -86,6 +87,7 @@ module Xnix
           "automatic_allowed" => rule.fetch("automatic_allowed"),
           "user_approval_required" => rule.fetch("user_approval_required"),
           "snapshot_required" => snapshot_required?,
+          "snapshot_plan" => snapshot_plan_summary,
           "rollback_available" => true,
           "actions" => rule.fetch("actions"),
           "notification_event" => notification_event,
@@ -115,6 +117,20 @@ module Xnix
 
       def snapshot_required?
         %w[engine-binding-pending runtime-repair-applied].include?(issue)
+      end
+
+      def snapshot_plan_summary
+        return nil unless snapshot_required?
+
+        plan = CompatibilitySnapshotPlan.new(application_id: application_id, reason: "before-repair").to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "reason" => plan.fetch("reason"),
+          "enabled_by_default" => plan.fetch("enabled_by_default"),
+          "restore_available" => plan.fetch("restore").fetch("available"),
+          "preserve_user_documents" => plan.fetch("restore").fetch("preserve_user_documents"),
+          "retention" => plan.fetch("retention")
+        }
       end
 
       def notification_event

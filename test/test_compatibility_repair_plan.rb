@@ -22,7 +22,7 @@ issues.each do |issue|
     issue: issue
   ).to_h
 
-  assert(plan["version"] == "0.2.26", "compatibility repair plan must expose the current version")
+  assert(plan["version"] == "0.2.27", "compatibility repair plan must expose the current version")
   assert(plan["plan_type"] == "compatibility-repair", "compatibility repair plan must identify the model type")
   assert(plan["application_id"] == "org.xnix.sample.notepad", "compatibility repair plan must preserve the application id")
   assert(plan["issue"] == issue, "compatibility repair plan must preserve the issue")
@@ -30,6 +30,13 @@ issues.each do |issue|
   assert([true, false].include?(plan["automatic_allowed"]), "compatibility repair plan must expose automatic allowance")
   assert([true, false].include?(plan["user_approval_required"]), "compatibility repair plan must expose approval requirements")
   assert([true, false].include?(plan["snapshot_required"]), "compatibility repair plan must expose snapshot requirement")
+  if plan["snapshot_required"]
+    assert(plan["snapshot_plan"]["plan_type"] == "compatibility-snapshot", "snapshot-required repairs must include a snapshot plan")
+    assert(plan["snapshot_plan"]["restore_available"], "snapshot-required repairs must expose restore availability")
+    assert(plan["snapshot_plan"]["preserve_user_documents"], "snapshot-required repairs must preserve user documents")
+  else
+    assert(plan["snapshot_plan"].nil?, "repairs without snapshot requirements must not include a snapshot plan")
+  end
   assert(plan["rollback_available"], "compatibility repair plan must keep rollback available")
   assert(!plan["actions"].empty?, "compatibility repair plan must include actions")
   assert(%w[approval-required repair-applied install-failed].include?(plan["notification_event"]), "compatibility repair plan must map to notification events")
@@ -41,6 +48,7 @@ pending_plan = Xnix::Compatibility::CompatibilityRepairPlan.new(
 ).to_h
 assert(pending_plan["user_approval_required"], "pending engine setup must require approval")
 assert(pending_plan["snapshot_required"], "pending engine setup must require a snapshot")
+assert(pending_plan["snapshot_plan"]["reason"] == "before-repair", "pending engine setup must plan a repair snapshot")
 assert(pending_plan["notification_event"] == "approval-required", "pending engine setup must request approval notification")
 
 applied_plan = Xnix::Compatibility::CompatibilityRepairPlan.new(

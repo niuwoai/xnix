@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.27] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-snapshot-plan`, a Runtime-owned snapshot planning model for repair, compatibility-engine changes, and manual restore points.
+- Added focused coverage for snapshot scope, restore availability, bounded retention, user-document preservation, CLI validation, and backend-term filtering.
+
+### Changed
+
+- Attached snapshot plan summaries to repair plans, Runtime diagnostics, and the KDE Compatibility Center model when a repair requires a restore point.
+
 ## [0.2.26] - 2026-07-13
 
 ### Added
