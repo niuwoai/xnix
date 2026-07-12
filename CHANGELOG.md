@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.6] - 2026-07-12
+
+### Added
+
+- Added a read-only KDE Compatibility Center model that converts Runtime applications and diagnostics into a safe desktop presentation model.
+- Added a `xnix-kde-center-model` CLI for Plasma-facing model smoke tests.
+- Added focused coverage to prevent the KDE presentation model from exposing backend storage or implementation terms.
+
+### Changed
+
+- Updated the Plasma package metadata to the current project version and documented the Runtime-backed Compatibility Center model boundary.
+
 ## [0.2.5] - 2026-07-12
 
 ### Added

@@ -5,7 +5,8 @@
     "Icon": "preferences-desktop",
     "Id": "org.xnix.compatibilitycenter",
     "Name": "Xnix Compatibility Center",
-    "Version": "0.2.0"
+    "Version": "0.2.6",
+    "X-Xnix-RuntimeModelCommand": "xnix-kde-center-model"
   },
   "KPackageStructure": "Plasma/Applet",
   "X-Plasma-API-Minimum-Version": "6.0"

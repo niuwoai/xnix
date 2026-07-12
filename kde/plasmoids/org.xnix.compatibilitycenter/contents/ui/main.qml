@@ -5,6 +5,7 @@ import org.kde.plasma.plasmoid
 
 PlasmoidItem {
     Plasmoid.icon: "preferences-desktop"
+    property string runtimeModelCommand: "xnix-kde-center-model"
     compactRepresentation: PlasmaComponents.ToolButton {
         icon.name: "preferences-desktop"
         text: "Compatibility"
@@ -19,7 +20,12 @@ PlasmoidItem {
             font.bold: true
         }
         PlasmaComponents.Label {
-            text: "Runtime status will be provided by org.xnix.Compatibility1."
+            text: "Runtime-backed summary is provided by xnix-kde-center-model."
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+        PlasmaComponents.Label {
+            text: "Desktop integration stays read-only here; install, launch, repair, snapshot, and restore actions remain Runtime requests."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

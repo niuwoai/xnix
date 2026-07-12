@@ -26,11 +26,13 @@ Xnix Compatibility Runtime
 
 KDE packages display status and submit user decisions. They do not create a Wine environment, start a virtual machine, parse backend logs, or select a backend. The Runtime owns those decisions and will implement the stable interface defined in `runtime/dbus/org.xnix.Compatibility1.xml`.
 
+The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model is derived from Runtime application and diagnostics data, but it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
+
 ## Application Recipes
 
 A recipe has a stable reverse-DNS application identifier, display name, icon, requested run mode, and supported file extensions. The Runtime generates an ordinary `.desktop` file that calls `xnix-compat-launch --app <id>`. The desktop file intentionally omits backend commands, prefix paths, and Windows executable paths.
 
-Recipe installation must later require a signed source and a schema version. The v0.2.0 model only establishes validation and output invariants; it does not yet trust or execute external recipe files.
+Recipe installation must later require a signed source and a schema version. The current model only establishes validation and output invariants; it does not yet trust or execute external recipe files.
 
 ## Permissions and Asynchronous Requests
 
@@ -39,6 +41,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 ## KDE Integration Rules
 
 - The Compatibility Center Plasmoid is a Runtime client, not an alternative Runtime.
+- The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.5"
+EXPECTED_VERSION = "0.2.6"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,10 +24,12 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/desktop_entry.rb
+  lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
+  bin/xnix-kde-center-model
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -60,6 +62,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_activation.rb
   test/test_runtime_activation_install.rb
   test/test_runtime_dbus_smoke_script.rb
+  test/test_kde_center_model.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -118,5 +121,9 @@ assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xn
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")
 end
+
+plasmoid_metadata = read_project_file("kde/plasmoids/org.xnix.compatibilitycenter/metadata.json")
+assert(plasmoid_metadata.include?("\"Version\": \"#{EXPECTED_VERSION}\""), "Plasma metadata must reference #{EXPECTED_VERSION}")
+assert(plasmoid_metadata.include?("xnix-kde-center-model"), "Plasma metadata must declare the Runtime read-model command")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"
