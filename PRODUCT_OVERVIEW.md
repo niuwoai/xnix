@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.0
+> Last updated: 2026-07-12 | Current version: v0.1.1
 
 ## Summary
 
@@ -31,6 +31,12 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 | Virtualization | QEMU x86_64 with TCG | Safe, portable software-emulated test environment |
 | Container host | Colima Docker | Constrained build and test isolation |
 
+## Buildroot Baseline
+
+- Buildroot version: `2025.02.15` LTS.
+- Buildroot source is intentionally not committed. A later build command will retrieve the pinned release into an ignored cache directory.
+- The external tree lives in `buildroot/` and provides the `xnix_x86_64_defconfig` configuration.
+
 ## Test and Release Policy
 
 - Each small code version receives focused unit tests and a Git commit.
@@ -40,7 +46,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 
 ## Milestones
 
-- [ ] M0: Reproducible source layout, constrained container definition, and test policy.
+- [x] M0: Reproducible source layout, constrained container definition, and test policy.
 - [ ] M1: Linux kernel boot in QEMU with serial output.
 - [ ] M2: BusyBox shell and initramfs.
 - [ ] M3: User-mode virtual NIC and network reachability.

@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.0`
+- Version: `0.1.1`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
@@ -17,15 +17,13 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 - Bind test ports only to `127.0.0.1`.
 - Do not install QEMU or build dependencies on the macOS host; keep them in the build container.
 
-## Planned Commands
+## Commands
 
 ```text
-yarn system:build
-yarn qemu:run
-yarn ssh:verify
+ruby scripts/verify_layout.rb
 ```
 
-These commands are planned, not implemented. Update this file and `README.md` when an executable command is added.
+Only the layout verification command is implemented in this version. Build, QEMU, and SSH commands are introduced with their corresponding milestones.
 
 ## Delivery Sequence
 

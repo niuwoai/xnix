@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.1] - 2026-07-12
+
+### Added
+
+- Buildroot external-tree skeleton and x86_64 system configuration.
+- Restricted Docker build definition with QEMU software emulation tooling.
+- Focused Ruby layout verification for the initial system scaffold.
+
 ## [0.1.0] - 2026-07-12
 
 ### Added

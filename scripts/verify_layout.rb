@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "pathname"
+
+PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
+EXPECTED_VERSION = "0.1.1"
+REQUIRED_FILES = %w[
+  Dockerfile
+  VERSION
+  buildroot/Config.in
+  buildroot/external.desc
+  buildroot/external.mk
+  buildroot/configs/xnix_x86_64_defconfig
+].freeze
+FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
+REQUIRED_CONFIG_LINES = [
+  "BR2_x86_64=y",
+  "BR2_SYSTEM_DHCP=\"eth0\"",
+  "BR2_TARGET_GENERIC_GETTY_PORT=\"ttyS0\"",
+  "BR2_LINUX_KERNEL=y",
+  "BR2_TARGET_ROOTFS_INITRAMFS=y",
+  "BR2_PACKAGE_OPENSSH_SERVER=y"
+].freeze
+REQUIRED_VERSION_MARKERS = {
+  "CLAUDE.md" => "Version: `#{EXPECTED_VERSION}`",
+  "PRODUCT_OVERVIEW.md" => "Current version: v#{EXPECTED_VERSION}",
+  "CHANGELOG.md" => "## [#{EXPECTED_VERSION}]",
+  "README.md" => "`v#{EXPECTED_VERSION}`"
+}.freeze
+
+def read_project_file(relative_path)
+  PROJECT_ROOT.join(relative_path).read
+end
+
+def assert(condition, message)
+  return if condition
+
+  warn "FAIL: #{message}"
+  exit 1
+end
+
+REQUIRED_FILES.each do |relative_path|
+  assert(PROJECT_ROOT.join(relative_path).file?, "missing required file: #{relative_path}")
+end
+
+assert(read_project_file("VERSION").strip == EXPECTED_VERSION, "VERSION must be #{EXPECTED_VERSION}")
+
+REQUIRED_VERSION_MARKERS.each do |relative_path, marker|
+  assert(read_project_file(relative_path).include?(marker), "#{relative_path} must reference #{EXPECTED_VERSION}")
+end
+
+config = read_project_file("buildroot/configs/xnix_x86_64_defconfig")
+REQUIRED_CONFIG_LINES.each do |line|
+  assert(config.include?(line), "defconfig must include #{line}")
+end
+
+dockerfile = read_project_file("Dockerfile")
+assert(dockerfile.include?("qemu-system-x86"), "Dockerfile must install QEMU system emulation")
+assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
+FORBIDDEN_CONTAINER_TOKENS.each do |token|
+  assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")
+end
+
+puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

@@ -3,6 +3,7 @@
 /build/
 /dist/
 /downloads/
+/.cache/
 
 # Local runtime artifacts
 /*.img
