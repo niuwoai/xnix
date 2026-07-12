@@ -37,9 +37,12 @@ module Xnix
         {
           "id" => "system-tray",
           "name" => "System Tray",
-          "state" => "planned",
-          "evidence" => [],
-          "next_step" => "Expose Runtime activity and compatible tray status through a Plasma tray surface."
+          "state" => "initial",
+          "evidence" => [
+            "Runtime activity can be modeled for the KDE system tray through xnix-compat-tray-status.",
+            "Tray status exposes compatibility attention state and bridged tray application counts."
+          ],
+          "next_step" => "Connect tray status models to a production Plasma tray surface."
         },
         {
           "id" => "notifications",

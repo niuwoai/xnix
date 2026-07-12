@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.13] - 2026-07-12
+
+### Added
+
+- Added `xnix-compat-tray-status`, a KDE-facing system tray status model for Runtime activity, compatibility attention state, and bridged tray applications.
+- Added focused coverage to keep tray status user-facing and free of backend implementation terminology.
+
+### Changed
+
+- Marked the System Tray KDE entry point as an initial integration in the seven-entry-point status model.
+
 ## [0.2.12] - 2026-07-12
 
 ### Added

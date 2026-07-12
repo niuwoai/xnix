@@ -18,7 +18,7 @@ model = Xnix::Compatibility::SettingsModel.new(application_id: "org.xnix.sample.
 sections = model.fetch("sections")
 section_ids = sections.map { |section| section.fetch("id") }
 
-assert(model["version"] == "0.2.12", "settings model must expose the current version")
+assert(model["version"] == "0.2.13", "settings model must expose the current version")
 assert(model["request_type"] == "settings-model", "settings model must identify the model type")
 assert(model["desktop"] == "KDE Plasma", "settings model must target KDE Plasma")
 assert(section_ids == %w[run-mode resource-access devices network snapshots], "settings model must expose the required sections")
