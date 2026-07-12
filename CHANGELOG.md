@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.11] - 2026-07-12
+
+### Added
+
+- OpenSSH `sshd` serial-service evidence verifier and focused unit coverage.
+
 ## [0.1.10-rc1] - 2026-07-12
 
 ### Fixed
