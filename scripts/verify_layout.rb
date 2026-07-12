@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.8"
+EXPECTED_VERSION = "0.2.9"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -28,10 +28,12 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/dolphin_service_menu.rb
   lib/xnix/compatibility/file_open_request.rb
   lib/xnix/compatibility/kde_center_model.rb
+  lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
+  bin/xnix-compat-launch
   bin/xnix-compat-open
   bin/xnix-kde-center-model
   libexec/xnix/compatd
@@ -65,6 +67,7 @@ REQUIRED_FILES = %w[
   test/test_dbus_runtime_client.rb
   test/test_dolphin_service_menu.rb
   test/test_file_open_request.rb
+  test/test_launch_request.rb
   test/test_runtime_contract.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
@@ -138,5 +141,8 @@ assert(plasmoid_metadata.include?("xnix-kde-center-model"), "Plasma metadata mus
 dolphin_service_menu = read_project_file("kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop")
 assert(dolphin_service_menu.include?("X-KDE-ServiceTypes=KonqPopupMenu/Plugin"), "Dolphin service menu must target Dolphin popup integration")
 assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin service menu must delegate to the Runtime file-open command")
+
+desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
+assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"

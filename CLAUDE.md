@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.8`
+- Version: `0.2.9`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -39,6 +39,7 @@ ruby -Ilib test/test_desktop_entry.rb
 ruby -Ilib test/test_dbus_runtime_client.rb
 ruby -Ilib test/test_dolphin_service_menu.rb
 ruby -Ilib test/test_file_open_request.rb
+ruby -Ilib test/test_launch_request.rb
 ruby -Ilib test/test_runtime_contract.rb
 ruby -Ilib test/test_runtime_daemon.rb
 ruby -Ilib test/test_runtime_dispatch.rb
@@ -50,7 +51,7 @@ ruby scripts/container.rb runtime-dbus-smoke
 ruby scripts/container.rb kde-center-dbus-smoke
 ```
 
-Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, provide a KDE-safe read model for the Compatibility Center, verify that model over a session-bus Runtime smoke adapter, and model Dolphin file-open requests. The production daemon binding is still pending.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic. The current daemon core can probe itself, list recipes, report diagnostics, dispatch read-only Runtime methods, stage activation files under an unprivileged root, provide a KDE-safe read model for the Compatibility Center, verify that model over a session-bus Runtime smoke adapter, model Dolphin file-open requests, and model managed launcher requests. The production daemon binding is still pending.
 
 ## Delivery Sequence
 

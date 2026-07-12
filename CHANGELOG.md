@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.9] - 2026-07-12
+
+### Added
+
+- Added `xnix-compat-launch`, the managed desktop launcher entry point used by generated application `.desktop` files.
+- Added a launch request model that validates Runtime application ids, preserves optional file URIs, marks file launches as portal-mediated, and targets the Runtime `Launch` method without invoking a backend directly.
+- Added focused coverage for launcher request validation and desktop-facing output safety.
+
+### Changed
+
+- Documented the KDE launcher path as a Runtime request model rather than a direct Wine or VM command path.
+
 ## [0.2.8] - 2026-07-12
 
 ### Added
