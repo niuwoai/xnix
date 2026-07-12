@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.1.12"
+EXPECTED_VERSION = "0.1.13"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -13,6 +13,7 @@ REQUIRED_FILES = %w[
   buildroot/external.mk
   buildroot/sources.lock
   buildroot/configs/xnix_x86_64_defconfig
+  buildroot/board/xnix/rootfs-overlay/etc/ssh/sshd_config
   lib/xnix/container.rb
   lib/xnix/buildroot.rb
   lib/xnix/qemu.rb

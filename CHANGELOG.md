@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.13] - 2026-07-12
+
+### Added
+
+- OpenSSH server hardening overlay that disables password authentication and root password login.
+
 ## [0.1.12] - 2026-07-12
 
 ### Added
