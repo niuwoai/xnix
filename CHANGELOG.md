@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.7] - 2026-07-12
+
+### Added
+
+- Xnix hostname configuration and serial-log boot evidence verifier.
+- Focused unit coverage for successful and incomplete boot logs.
+
 ## [0.1.6] - 2026-07-12
 
 ### Added
