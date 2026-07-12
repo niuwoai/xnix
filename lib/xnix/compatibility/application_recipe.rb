@@ -1,0 +1,56 @@
+# frozen_string_literal: true
+
+module Xnix
+  module Compatibility
+    class ApplicationRecipe
+      MODES = %w[automatic wine vm].freeze
+      ID_PATTERN = /\A[a-z][a-z0-9-]*(?:\.[a-z0-9-]+)+\z/
+      EXTENSION_PATTERN = /\A\.[a-z0-9]{1,16}\z/i
+
+      attr_reader :id, :name, :icon, :mode, :supported_extensions
+
+      def initialize(id:, name:, icon:, mode:, supported_extensions: [])
+        @id = id
+        @name = name
+        @icon = icon
+        @mode = mode
+        @supported_extensions = supported_extensions
+        validate!
+      end
+
+      def mime_types
+        supported_extensions.map do |extension|
+          "application/x-xnix-#{extension.delete_prefix(".").downcase}"
+        end
+      end
+
+      private
+
+      def validate!
+        validate_identifier!
+        validate_display_value!(name, "name")
+        validate_display_value!(icon, "icon")
+        raise ArgumentError, "mode must be one of: #{MODES.join(", ")}" unless MODES.include?(mode)
+        raise ArgumentError, "supported_extensions must be an array" unless supported_extensions.is_a?(Array)
+
+        supported_extensions.each do |extension|
+          unless extension.is_a?(String) && extension.match?(EXTENSION_PATTERN)
+            raise ArgumentError, "invalid file extension: #{extension.inspect}"
+          end
+        end
+      end
+
+      def validate_identifier!
+        return if id.is_a?(String) && id.match?(ID_PATTERN)
+
+        raise ArgumentError, "id must be a reverse-DNS identifier"
+      end
+
+      def validate_display_value!(value, label)
+        return if value.is_a?(String) && !value.empty? && !value.match?(/[\r\n]/)
+
+        raise ArgumentError, "#{label} must be a non-empty single-line string"
+      end
+    end
+  end
+end

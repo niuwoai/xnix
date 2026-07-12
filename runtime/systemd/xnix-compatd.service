@@ -1,0 +1,16 @@
+[Unit]
+Description=Xnix Compatibility Runtime
+After=network-online.target
+
+[Service]
+Type=dbus
+BusName=org.xnix.Compatibility1
+ExecStart=/usr/libexec/xnix/compatd
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/xnix /var/cache/xnix
+
+[Install]
+WantedBy=multi-user.target

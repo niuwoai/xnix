@@ -1,0 +1,12 @@
+{
+  "KPlugin": {
+    "Category": "System Information",
+    "Description": "Status and actions for Windows application compatibility",
+    "Icon": "preferences-desktop",
+    "Id": "org.xnix.compatibilitycenter",
+    "Name": "Xnix Compatibility Center",
+    "Version": "0.2.0"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}

@@ -1,40 +1,63 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.16-rc1
+> Last updated: 2026-07-12 | Current version: v0.2.0
 
 ## Summary
 
-Xnix is a Linux-compatible system for learning operating-system principles. It reuses the Linux kernel for reliable hardware, network, and user-space ABI support while keeping the surrounding system small and observable. The first runnable target is a QEMU x86_64 image that starts and manages OpenSSH `sshd`.
+Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns backend selection, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
 ## Core Goals
 
-- Produce an x86_64 image that boots in QEMU with persistent serial logs.
-- Provide Linux user-space compatibility through an LTS Linux kernel.
-- Start a small root filesystem with a shell, networking, and a remote-maintenance service.
-- Start, stop, restart, and inspect OpenSSH `sshd` through the init system.
-- Run builds and tests inside constrained Colima Docker infrastructure.
+- Ship one official flagship desktop: KDE Plasma 6.
+- Make Windows applications appear as ordinary Linux applications in the launcher, task manager, file associations, notifications, and settings.
+- Keep Wine/Proton and Windows VM management behind an independent D-Bus Runtime.
+- Use application recipes for backend selection, dependencies, diagnostics, permissions, snapshots, and rollback.
+- Use XDG Desktop Portal for user-controlled file, URI, print, clipboard, screen, camera, and remote-desktop access.
+- Preserve reproducible low-level QEMU verification and constrained Colima development infrastructure.
 
 ## Non-Goals for This Phase
 
-- Reimplementing the Linux kernel, its syscall ABI, or driver ecosystem.
-- Supporting physical hardware, graphical desktops, public network exposure, or package repositories.
-- Adding localization or non-English project-facing content.
+- Forking KDE Plasma, KWin, Wine, Proton, or a Linux distribution.
+- Supporting GNOME or XFCE as an officially integrated desktop in the first product release.
+- Exposing Wine prefixes, raw executable paths, or backend implementation terminology in normal user entry points.
+- Adding localization or non-English project-facing content during the current phase.
 
 ## Technology Choices
 
 | Layer | Initial choice | Purpose |
 | --- | --- | --- |
-| Kernel | Linux LTS | Stable hardware, networking, and Linux ABI support |
-| System builder | Buildroot | Reproducible toolchain, kernel, root filesystem, and image generation |
-| User space | BusyBox with initramfs | Small, understandable boot path |
-| Service | OpenSSH `sshd` | Validate networking and service management |
-| Virtualization | QEMU x86_64 with TCG | Safe, portable software-emulated test environment |
-| Container host | Colima Docker | Constrained build and test isolation |
+| Atomic base | Fedora Kinoite-compatible image | KDE Plasma desktop and transactional operating-system rollback |
+| Desktop shell | KDE Plasma 6 | Familiar launcher, task manager, tray, desktop icons, file manager, and multi-window behavior |
+| Runtime | Xnix Compatibility Runtime | Independent D-Bus service for recipes, Wine/VM backends, permissions, diagnostics, snapshots, and rollback |
+| Compatibility backends | Wine/Proton and Windows VM | Selectable implementation behind a stable Runtime API |
+| Permissions | XDG Desktop Portal | User-mediated file, URI, print, clipboard, screen, and remote-desktop access |
+| Desktop integration | Plasmoid, KRunner, KWin, Dolphin, and system services | Presentation and interaction only; no backend policy in KDE code |
+| Learning baseline | Buildroot plus QEMU | Reproducible boot, initramfs, networking, and SSH verification |
+| Container host | Colima Docker | Constrained developer build and test isolation |
 
-## Buildroot Baseline
+## Compatibility Runtime Boundary
+
+- The Runtime contract reserves `org.xnix.Compatibility1` for application discovery, recipe installation, launch, diagnostics, snapshot, and restore operations. An activated implementation is the next milestone.
+- KDE packages consume Runtime state and submit user actions over D-Bus. They do not invoke Wine or a VM directly.
+- Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. They never display a prefix path or a raw Windows executable command.
+- Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
+
+## Desktop Integration Scope
+
+| Entry point | First implementation responsibility |
+| --- | --- |
+| Launcher | Generated standard desktop files unify Windows and Linux applications |
+| Task manager | KWin rules map Wine and VM windows to Runtime application identities |
+| File manager | Dolphin action resolves a Runtime application recipe and asks for Portal-granted files |
+| System tray | Plasma applet presents Runtime activity and compatible tray applications |
+| Notifications | Runtime requests KDE notifications for install, repair, backend, and approval events |
+| Compatibility Center | Plasma package displays compatibility, diagnostics, snapshots, and actions |
+| Settings | KDE settings module presents user concepts such as automatic mode, performance, compatibility, and allowed resources |
+
+## Learning Baseline
 
 - Buildroot version: `2025.02.15` LTS.
-- Buildroot source is intentionally not committed. `buildroot/sources.lock` pins its upstream URL and SHA-256; a later build command will retrieve it into an ignored cache directory.
+- Buildroot source is intentionally not committed. `buildroot/sources.lock` pins its upstream URL and SHA-256; a build command retrieves it into an ignored cache directory.
 - The external tree lives in `buildroot/` and provides the `xnix_x86_64_defconfig` configuration.
 
 ## Verified Runtime Baseline
@@ -56,15 +79,18 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 
 ## Milestones
 
-- [x] M0: Reproducible source layout, constrained container definition, and test policy.
-- [x] M1: Linux kernel boot in QEMU with serial output.
-- [x] M2: BusyBox shell and initramfs.
-- [x] M3: User-mode virtual NIC and network reachability.
-- [x] M4: Init-managed OpenSSH `sshd` and container-loopback SSH verification.
-- [ ] M5: Service logs, user management, key authentication, and baseline hardening.
+- [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
+- [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
+- [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
+- [ ] C1: Activated Runtime implementation and signed recipe storage.
+- [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
+- [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
+- [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.
+- [ ] C5: Reproducible atomic KDE desktop image and graphical QEMU smoke test.
 
 ## Current Decisions
 
-- The remote service is OpenSSH `sshd`.
-- BusyBox init is used before evaluating systemd.
-- initramfs is used before introducing a persistent disk image.
+- KDE Plasma is the only official desktop for the first product release; GNOME and XFCE remain future optional shells.
+- The flagship base is Fedora Kinoite-compatible because an atomic deployment model matches system and application rollback requirements.
+- Buildroot is retained for kernel, boot, initramfs, and QEMU learning experiments, not for packaging the flagship desktop.
+- The Runtime is the product core; desktop packages remain replaceable adapters.

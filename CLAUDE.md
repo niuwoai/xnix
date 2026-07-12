@@ -4,11 +4,11 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.16-rc1`
+- Version: `0.2.0`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
-- System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
-- Service target: OpenSSH `sshd`
+- Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
+- Learning baseline: Linux LTS kernel, Buildroot, BusyBox, initramfs, and OpenSSH `sshd`
 - Container host: Colima Docker, limited to 6 GiB RAM and 1 CPU
 
 ## Safety Constraints
@@ -33,14 +33,17 @@ ruby -Ilib test/test_ssh_probe.rb
 ruby scripts/container.rb prepare-ssh-test-key
 ruby scripts/container.rb build-ssh-test-system
 ruby scripts/container.rb ssh-smoke
+ruby -Ilib test/test_application_recipe.rb
+ruby -Ilib test/test_desktop_entry.rb
+ruby -Ilib test/test_runtime_contract.rb
 ```
 
-Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward.
+Buildroot commands are restricted to the managed Docker volume. The SSH smoke command creates a disposable test key there, forwards only container loopback to the guest, and removes the private key afterward. The Compatibility Runtime owns Wine/VM policy and state; KDE packages must use its D-Bus contract rather than embedding compatibility logic.
 
 ## Delivery Sequence
 
-1. Reproducible build environment and source layout.
-2. Minimal bootable image and serial logging.
-3. BusyBox shell and user-mode networking.
-4. Init-managed OpenSSH `sshd` with loopback-only port forwarding.
-5. Logging, users, key authentication, and hardening.
+1. Atomic KDE Plasma desktop image and standard desktop services.
+2. Independent Compatibility Runtime with D-Bus service activation and signed recipe registry.
+3. Wine/Proton backend, snapshots, diagnostics, and managed desktop entry generation.
+4. VM backend with file, clipboard, print, and application-window bridging.
+5. KDE Compatibility Center, KRunner, KWin, Dolphin, tray, notification, and settings integration.

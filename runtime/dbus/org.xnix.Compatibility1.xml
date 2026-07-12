@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<node>
+  <interface name="org.xnix.Compatibility1">
+    <method name="ListApplications">
+      <arg name="applications" type="aa{sv}" direction="out"/>
+    </method>
+    <method name="GetApplication">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="application" type="a{sv}" direction="out"/>
+    </method>
+    <method name="InstallRecipe">
+      <arg name="recipe_uri" type="s" direction="in"/>
+      <arg name="request" type="o" direction="out"/>
+    </method>
+    <method name="Launch">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="options" type="a{sv}" direction="in"/>
+      <arg name="request" type="o" direction="out"/>
+    </method>
+    <method name="CreateSnapshot">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="label" type="s" direction="in"/>
+      <arg name="request" type="o" direction="out"/>
+    </method>
+    <method name="RestoreSnapshot">
+      <arg name="snapshot_id" type="s" direction="in"/>
+      <arg name="request" type="o" direction="out"/>
+    </method>
+    <method name="GetDiagnostics">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="diagnostics" type="a{sv}" direction="out"/>
+    </method>
+    <signal name="ApplicationChanged">
+      <arg name="application_id" type="s"/>
+    </signal>
+    <signal name="RequestCompleted">
+      <arg name="request" type="o"/>
+      <arg name="result" type="a{sv}"/>
+    </signal>
+  </interface>
+</node>

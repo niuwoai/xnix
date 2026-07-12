@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.xnix.Compatibility1
+SystemdService=xnix-compatd.service
+Exec=/usr/libexec/xnix/compatd
