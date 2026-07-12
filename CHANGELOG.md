@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.16-rc1] - 2026-07-12
+
+### Fixed
+
+- Removed the unsupported `UsePAM` directive after the QEMU serial boot showed that Buildroot OpenSSH rejected it during `sshd` startup.
+
 ## [0.1.16] - 2026-07-12
 
 ### Added

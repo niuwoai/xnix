@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.16
+> Last updated: 2026-07-12 | Current version: v0.1.16-rc1
 
 ## Summary
 

@@ -4,7 +4,6 @@ PasswordAuthentication no
 PubkeyAuthentication yes
 KbdInteractiveAuthentication no
 ChallengeResponseAuthentication no
-UsePAM no
 X11Forwarding no
 AllowTcpForwarding no
 Subsystem sftp /usr/libexec/sftp-server

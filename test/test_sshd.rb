@@ -19,5 +19,6 @@ config = project_root.join("buildroot/board/xnix/rootfs-overlay/etc/ssh/sshd_con
 assert(config.include?("PasswordAuthentication no"), "sshd must disable password authentication")
 assert(config.include?("PermitRootLogin prohibit-password"), "sshd must forbid root password login")
 assert(config.include?("PubkeyAuthentication yes"), "sshd must explicitly permit key authentication")
+assert(!config.include?("UsePAM"), "sshd config must omit unsupported PAM directives")
 
 puts "PASS: sshd service unit tests"
