@@ -2,6 +2,12 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.15-rc1] - 2026-07-12
+
+### Fixed
+
+- Limited Buildroot to one job after the initial cross-GCC automata generator was killed by the constrained container memory limit.
+
 ## [0.1.15] - 2026-07-12
 
 ### Added

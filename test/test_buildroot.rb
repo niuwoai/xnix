@@ -3,6 +3,7 @@
 
 require_relative "../lib/xnix/buildroot"
 require_relative "../lib/xnix/container"
+require "pathname"
 
 def assert(condition, message)
   return if condition
@@ -31,5 +32,9 @@ assert(offline_build.include?("--mount"), "full build must mount the managed cac
 assert(offline_build.none? { |argument| argument.include?("type=bind") }, "full build must not mount a host directory")
 networked_download = container.networked_cache_run_command(source_command)
 assert(networked_download.fetch(networked_download.index("--network") + 1) == "bridge", "dependency download requires only bridge networking")
+
+project_root = Pathname.new(__dir__).join("..").realpath
+defconfig = project_root.join("buildroot/configs/xnix_x86_64_defconfig").read
+assert(defconfig.include?("BR2_JLEVEL=1"), "Buildroot must use a single job within the memory limit")
 
 puts "PASS: Buildroot command unit tests"
