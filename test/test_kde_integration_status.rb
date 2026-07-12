@@ -28,13 +28,13 @@ expected_ids = %w[
   settings
 ]
 
-assert(status["version"] == "0.2.10", "KDE integration status must expose the current version")
+assert(status["version"] == "0.2.11", "KDE integration status must expose the current version")
 assert(status["desktop"] == "KDE Plasma", "KDE integration status must keep KDE as the official desktop")
 assert(status["official_desktop_only"], "KDE integration status must reject first-release multi-desktop scope")
 assert(ids == expected_ids, "KDE integration status must track the seven first-release entry points")
 assert(status["summary"]["total"] == 7, "KDE integration status must summarize all entry points")
-assert(status["summary"]["initial"] == 3, "KDE integration status must count initial entry points")
-assert(status["summary"]["planned"] == 4, "KDE integration status must count planned entry points")
+assert(status["summary"]["initial"] == 4, "KDE integration status must count initial entry points")
+assert(status["summary"]["planned"] == 3, "KDE integration status must count planned entry points")
 
 launcher = entry_points.find { |entry| entry["id"] == "launcher" }
 assert(launcher["evidence"].any? { |item| item.include?("xnix-compat-launch") }, "launcher status must reference the managed launcher")
@@ -44,6 +44,10 @@ assert(file_manager["evidence"].any? { |item| item.include?("xnix-compat-open") 
 
 compatibility_center = entry_points.find { |entry| entry["id"] == "compatibility-center" }
 assert(compatibility_center["evidence"].any? { |item| item.include?("session bus") }, "Compatibility Center status must reference Runtime D-Bus consumption")
+
+notifications = entry_points.find { |entry| entry["id"] == "notifications" }
+assert(notifications["state"] == "initial", "Notifications must have an initial integration")
+assert(notifications["evidence"].any? { |item| item.include?("xnix-compat-notify") }, "Notifications status must reference the Runtime notification entry point")
 
 stdout, stderr, result = Open3.capture3("ruby", project_root.join("bin/xnix-kde-integration-status").to_s)
 assert(result.success?, "KDE integration status CLI must exit successfully: #{stderr}")

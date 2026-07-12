@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.11] - 2026-07-12
+
+### Added
+
+- Added `xnix-compat-notify`, a Runtime event notification request entry point for KDE-facing desktop notifications.
+- Added a notification request model for install failures, automatic repairs, compatibility mode changes, and approval-required events.
+- Added focused coverage for notification urgency, actions, event validation, and desktop-facing output safety.
+
+### Changed
+
+- Marked the Notifications KDE entry point as an initial integration in the seven-entry-point status model.
+
 ## [0.2.10] - 2026-07-12
 
 ### Added

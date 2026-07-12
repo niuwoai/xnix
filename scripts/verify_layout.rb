@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.10"
+EXPECTED_VERSION = "0.2.11"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -30,11 +30,13 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/kde_center_model.rb
   lib/xnix/compatibility/kde_integration_status.rb
   lib/xnix/compatibility/launch_request.rb
+  lib/xnix/compatibility/notification_request.rb
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
   bin/xnix-compat-launch
+  bin/xnix-compat-notify
   bin/xnix-compat-open
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
@@ -70,6 +72,7 @@ REQUIRED_FILES = %w[
   test/test_dolphin_service_menu.rb
   test/test_file_open_request.rb
   test/test_launch_request.rb
+  test/test_notification_request.rb
   test/test_runtime_contract.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
@@ -147,6 +150,11 @@ assert(dolphin_service_menu.include?("Exec=xnix-compat-open %U"), "Dolphin servi
 
 desktop_entry_source = read_project_file("lib/xnix/compatibility/desktop_entry.rb")
 assert(desktop_entry_source.include?("xnix-compat-launch"), "Desktop entries must delegate to the Runtime launcher command")
+
+notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
+%w[install-failed repair-applied mode-changed approval-required].each do |event_type|
+  assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
+end
 
 kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_status.rb")
 %w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |entry_point|

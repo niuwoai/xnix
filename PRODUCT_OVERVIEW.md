@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.2.10
+> Last updated: 2026-07-12 | Current version: v0.2.11
 
 ## Summary
 
@@ -41,6 +41,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - KDE packages consume Runtime state and submit user actions over D-Bus. They do not invoke Wine or a VM directly.
 - Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, preserves optional file URIs, and models a `Launch` request without displaying a prefix path, a backend command, or a raw Windows executable command.
 - Dolphin service menus delegate selected files to `xnix-compat-open`, which validates file URIs, resolves a Runtime application recipe by file extension, and models a portal-required `Launch` request without directly invoking Wine or a VM.
+- Runtime events delegate to `xnix-compat-notify`, which models KDE notification payloads for install failures, automatic repairs, mode changes, and approval requests without exposing backend implementation terms.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
 - `xnix-kde-integration-status` tracks the seven first-release KDE entry points and records which have an initial Runtime-backed integration versus planned work.
 
@@ -52,7 +53,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | Task manager | KWin rules map Wine and VM windows to Runtime application identities |
 | File manager | Dolphin action delegates file URIs to the Runtime file-open request path and requires Portal-mediated access |
 | System tray | Plasma applet presents Runtime activity and compatible tray applications |
-| Notifications | Runtime requests KDE notifications for install, repair, backend, and approval events |
+| Notifications | Runtime events produce KDE notification request models for install, repair, mode-change, and approval events |
 | Compatibility Center | Plasma package displays the Runtime-backed read model for compatibility, diagnostics, snapshots, and actions; the read path is smoke-tested over D-Bus |
 | Settings | KDE settings module presents user concepts such as automatic mode, performance, compatibility, and allowed resources |
 
@@ -84,7 +85,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.

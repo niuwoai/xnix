@@ -32,7 +32,9 @@ Generated application launchers delegate to `xnix-compat-launch --app <id>`. Tha
 
 The Dolphin service menu delegates selected files to `xnix-compat-open`. That entry point accepts only `file://` URIs, resolves a Runtime recipe by extension unless an explicit application id is supplied, and emits a portal-required Runtime `Launch` request model. It does not start Wine, a virtual machine, or a backend-specific executable.
 
-`xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, file manager, and Compatibility Center are marked as initial because they have Runtime-backed request or read-model paths. Task manager, system tray, notifications, and settings remain planned until their KDE adapters exist.
+`xnix-kde-integration-status` records the first-release KDE entry-point scope. Launcher, file manager, notifications, and Compatibility Center are marked as initial because they have Runtime-backed request or read-model paths. Task manager, system tray, and settings remain planned until their KDE adapters exist.
+
+Runtime events delegate to `xnix-compat-notify`. That entry point models KDE notification payloads for install failures, automatic repairs, compatibility mode changes, and approval-required events. It chooses urgency and actions for the desktop shell, but it does not inspect backend logs or expose backend implementation terms.
 
 ## Application Recipes
 
@@ -50,6 +52,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - The first-release KDE integration status must include exactly the seven agreed entry points.
+- Notification requests must come from Runtime events and must keep backend details out of KDE-facing payloads.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

@@ -44,9 +44,12 @@ module Xnix
         {
           "id" => "notifications",
           "name" => "Notifications",
-          "state" => "planned",
-          "evidence" => [],
-          "next_step" => "Route Runtime install, repair, approval, and mode-change events to KDE notifications."
+          "state" => "initial",
+          "evidence" => [
+            "Runtime events can be modeled as KDE notification payloads through xnix-compat-notify.",
+            "Notification requests cover install failure, repair, mode-change, and approval events."
+          ],
+          "next_step" => "Connect notification request models to the production KDE notification D-Bus path."
         },
         {
           "id" => "compatibility-center",
