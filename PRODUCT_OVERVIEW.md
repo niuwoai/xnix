@@ -37,6 +37,13 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - Buildroot source is intentionally not committed. `buildroot/sources.lock` pins its upstream URL and SHA-256; a later build command will retrieve it into an ignored cache directory.
 - The external tree lives in `buildroot/` and provides the `xnix_x86_64_defconfig` configuration.
 
+## Verified Runtime Baseline
+
+- A complete constrained Buildroot build exits successfully and produces the x86_64 kernel and initramfs.
+- The QEMU serial console shows Linux booting, running `/init`, and reaching the `xnix login:` prompt.
+- The QEMU user-mode NIC obtains `10.0.2.15` through DHCP.
+- OpenSSH `sshd` accepts a non-interactive key-authenticated connection through the container-only loopback forwarding rule.
+
 ## Test and Release Policy
 
 - Each small code version receives focused unit tests and a Git commit.
@@ -50,10 +57,10 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 ## Milestones
 
 - [x] M0: Reproducible source layout, constrained container definition, and test policy.
-- [ ] M1: Linux kernel boot in QEMU with serial output (v0.1.10 verification in progress).
-- [ ] M2: BusyBox shell and initramfs.
-- [ ] M3: User-mode virtual NIC and network reachability.
-- [ ] M4: Init-managed OpenSSH `sshd` and container-loopback SSH verification.
+- [x] M1: Linux kernel boot in QEMU with serial output.
+- [x] M2: BusyBox shell and initramfs.
+- [x] M3: User-mode virtual NIC and network reachability.
+- [x] M4: Init-managed OpenSSH `sshd` and container-loopback SSH verification.
 - [ ] M5: Service logs, user management, key authentication, and baseline hardening.
 
 ## Current Decisions

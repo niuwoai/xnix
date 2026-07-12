@@ -8,6 +8,10 @@ Xnix follows Semantic Versioning.
 
 - Removed the unsupported `UsePAM` directive after the QEMU serial boot showed that Buildroot OpenSSH rejected it during `sshd` startup.
 
+### Verified
+
+- Completed the constrained Buildroot, QEMU serial, DHCP, and loopback key-authenticated `sshd` smoke path.
+
 ## [0.1.16] - 2026-07-12
 
 ### Added
