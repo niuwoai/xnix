@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../../lib/xnix/compatibility/runtime_daemon"
+
+exit Xnix::Compatibility::RuntimeDaemon::CLI.new(ARGV).run

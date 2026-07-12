@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.1"
+EXPECTED_VERSION = "0.2.2"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -28,6 +28,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/milestone.rb
   bin/xnix-compatd
+  libexec/xnix/compatd
   scripts/container.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
@@ -52,6 +53,8 @@ REQUIRED_FILES = %w[
   test/test_desktop_entry.rb
   test/test_runtime_contract.rb
   test/test_runtime_daemon.rb
+  test/test_runtime_dispatch.rb
+  test/test_runtime_activation.rb
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [

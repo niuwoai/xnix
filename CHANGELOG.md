@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.2] - 2026-07-12
+
+### Added
+
+- Added a Runtime method-dispatch layer for read-only D-Bus contract methods: `ListApplications`, `GetApplication`, and `GetDiagnostics`.
+- Added a packaged libexec wrapper that matches the D-Bus and systemd activation path.
+- Added focused tests for Runtime method dispatch and activation-path consistency.
+
+### Changed
+
+- Kept launch, install, snapshot, and restore methods rejected until Wine/VM backends and request signaling exist.
+
 ## [0.2.1] - 2026-07-12
 
 ### Added

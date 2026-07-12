@@ -33,6 +33,7 @@ module Xnix
             "recipe_store" => true,
             "application_listing" => true,
             "diagnostics" => true,
+            "dbus_method_dispatch" => true,
             "dbus_binding" => false,
             "wine_backend" => false,
             "vm_backend" => false
@@ -70,11 +71,31 @@ module Xnix
         }
       end
 
+      def dispatch(method_name, parameters = [])
+        case method_name
+        when "ListApplications"
+          list_applications
+        when "GetApplication"
+          get_application(required_parameter(method_name, parameters, 0))
+        when "GetDiagnostics"
+          diagnostics(required_parameter(method_name, parameters, 0))
+        else
+          raise ArgumentError, "unsupported runtime method: #{method_name}"
+        end
+      end
+
       def introspection_xml
         CONTRACT_PATH.read
       end
 
       private
+
+      def required_parameter(method_name, parameters, index)
+        value = parameters[index]
+        raise ArgumentError, "#{method_name} requires parameter #{index + 1}" if value.nil?
+
+        value
+      end
 
       def require_recipe(application_id)
         recipe = recipe_store.find(application_id)
@@ -114,6 +135,12 @@ module Xnix
             write_json(runtime.get_application(require_argument(command)))
           when "diagnostics"
             write_json(runtime.diagnostics(require_argument(command)))
+          when "dispatch"
+            method_name = require_argument(command)
+            parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)
+            raise ArgumentError, "dispatch parameters must be an array" unless parameters.is_a?(Array)
+
+            write_json(runtime.dispatch(method_name, parameters))
           when "introspect"
             puts runtime.introspection_xml
           else
