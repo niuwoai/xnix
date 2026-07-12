@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.16] - 2026-07-12
+
+### Added
+
+- Added `xnix-install-desktop-integration`, a staged desktop activation installer that writes generated application launchers, Dolphin service menus, and desktop integration manifests under a target root.
+- Added focused coverage for staging-root safety, installed file paths, file modes, manifest persistence, and backend-term filtering.
+
+### Changed
+
+- Documented desktop activation as a staging-root operation so tests can verify KDE integration output without modifying the host desktop.
+
 ## [0.2.15] - 2026-07-12
 
 ### Added

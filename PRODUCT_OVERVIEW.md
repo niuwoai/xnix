@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.2.15
+> Last updated: 2026-07-12 | Current version: v0.2.16
 
 ## Summary
 
@@ -46,6 +46,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - System tray status delegates to `xnix-compat-tray-status`, which models Runtime activity, attention state, and bridged tray application counts for a KDE tray surface.
 - Task manager identity delegates to `xnix-compat-window-identity`, which models desktop file mapping, grouping, pinning, restore behavior, and KWin identity-only metadata for compatibility windows.
 - Desktop integration manifests delegate to `xnix-desktop-integration-manifest`, which bundles a recipe's launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts into one activation plan without exposing backend commands.
+- Desktop activation delegates to `xnix-install-desktop-integration`, which stages generated application launchers, Dolphin service menus, and the desktop integration manifest under a target root without modifying the host root.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.
 - `xnix-kde-integration-status` tracks the seven first-release KDE entry points and records which have an initial Runtime-backed integration versus planned work.
 
@@ -61,6 +62,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | Compatibility Center | Plasma package displays the Runtime-backed read model for compatibility, diagnostics, snapshots, and actions; the read path is smoke-tested over D-Bus |
 | Settings | KDE settings model presents user concepts such as automatic mode, performance, compatibility, allowed resources, devices, network, and snapshots |
 | Activation manifest | Runtime manifest groups all seven KDE artifacts for a recipe activation without exposing backend commands |
+| Activation staging | Runtime installer writes desktop entry, Dolphin service menu, and manifest files under a staging root |
 
 ## Learning Baseline
 
@@ -90,7 +92,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - [x] B0: Reproducible constrained Buildroot/QEMU learning baseline.
 - [x] B1: Kernel boot, initramfs, DHCP, and loopback `sshd` verification.
 - [x] C0: Compatibility Runtime D-Bus contract, safe recipe model, desktop launcher generator, and Plasma package skeleton.
-- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
+- [ ] C1: Activated Runtime implementation and signed recipe storage. The local daemon core, managed recipe-store loader, read-only method dispatcher, packaged activation wrapper, activation-file installer, desktop activation installer, Linux D-Bus session smoke adapter, KDE-safe Compatibility Center model, KDE D-Bus read smoke, launcher request model, Dolphin file-open request model, notification request model, settings model, tray status model, task manager identity model, desktop integration manifest, and seven-entry-point KDE integration status are in place; production daemon binding and signature validation are still pending.
 - [ ] C2: Wine/Proton backend with snapshots, diagnostics, and Portal-mediated permissions.
 - [ ] C3: Windows VM backend with file, clipboard, print, and window bridging.
 - [ ] C4: KDE launcher, task manager, Dolphin, tray, notification, KRunner, KWin, Compatibility Center, and settings integrations.
