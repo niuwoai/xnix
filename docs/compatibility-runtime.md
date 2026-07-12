@@ -46,6 +46,8 @@ Desktop activation planning delegates to `xnix-desktop-integration-manifest`. Th
 
 Desktop activation staging delegates to `xnix-install-desktop-integration`. That installer writes the generated application launcher, Dolphin service menu, and persisted desktop integration manifest under a supplied root. It rejects host-root installation and gives tests a safe way to verify KDE desktop artifacts without modifying a developer workstation.
 
+Desktop activation rollback delegates to `xnix-rollback-desktop-integration`. The installer writes a SHA-256 activation receipt, and rollback removes only receipt-tracked files whose current digest still matches the receipt. Changed files are preserved for diagnosis instead of being deleted.
+
 ## Application Recipes
 
 A recipe has a stable reverse-DNS application identifier, display name, icon, requested run mode, and supported file extensions. The Runtime generates an ordinary `.desktop` file that calls `xnix-compat-launch --app <id>`. The desktop file intentionally omits backend commands, prefix paths, and Windows executable paths.
@@ -68,6 +70,7 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 - Task manager identity models must map windows to Runtime application identities without owning KWin policy decisions.
 - Desktop integration manifests must group all seven first-release KDE artifacts for a recipe activation without exposing backend commands.
 - Desktop activation installers must write only under an explicit staging root and must reject direct host-root installation.
+- Desktop activation rollback must use activation receipts, verify SHA-256 digests before removal, and preserve changed files.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

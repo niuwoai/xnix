@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "digest"
 require "json"
 require "optparse"
 require "pathname"
@@ -16,6 +17,7 @@ module Xnix
       APPLICATIONS_DIR = "usr/share/applications"
       SERVICE_MENUS_DIR = "usr/share/kio/servicemenus"
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
+      RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
 
       def initialize(root:, recipe:)
         @root = Pathname.new(root)
@@ -31,16 +33,20 @@ module Xnix
           install_manifest
         ]
 
+        receipt = install_receipt(installed)
+
         {
           "version" => RuntimeDaemon::VERSION,
           "application_id" => recipe.id,
           "root" => root.to_s,
           "installed" => installed,
+          "receipt" => receipt,
           "activated_entry_points" => manifest.to_h.fetch("entry_points"),
           "safety" => {
             "staging_root_required" => true,
             "host_root_modified" => false,
-            "backend_commands_exposed" => false
+            "backend_commands_exposed" => false,
+            "rollback_receipt_written" => true
           }
         }
       end
@@ -85,6 +91,26 @@ module Xnix
         )
       end
 
+      def install_receipt(installed)
+        receipt = {
+          "version" => RuntimeDaemon::VERSION,
+          "application_id" => recipe.id,
+          "installed" => installed,
+          "rollback" => {
+            "command" => "xnix-rollback-desktop-integration",
+            "requires_matching_sha256" => true
+          }
+        }
+
+        install_file(
+          relative_path: File.join(RECEIPTS_DIR, "#{recipe.id}.json"),
+          contents: "#{JSON.pretty_generate(receipt)}\n",
+          mode: 0o644,
+          kind: "desktop-activation-receipt",
+          entry_point: "rollback"
+        )
+      end
+
       def install_file(relative_path:, contents:, mode:, kind:, entry_point:)
         destination = safe_destination(relative_path)
         FileUtils.mkdir_p(destination.dirname)
@@ -95,7 +121,8 @@ module Xnix
           "entry_point" => entry_point,
           "kind" => kind,
           "path" => relative_path,
-          "mode" => format("%04o", mode)
+          "mode" => format("%04o", mode),
+          "sha256" => Digest::SHA256.file(destination).hexdigest
         }
       end
 

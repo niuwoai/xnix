@@ -25,14 +25,17 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   service_menu = root_path.join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = root_path.join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
-  assert(result["version"] == "0.2.16", "desktop activation installer must expose the current version")
+  assert(result["version"] == "0.2.17", "desktop activation installer must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer must identify the application")
   assert(result["root"] == root, "desktop activation installer must report the staging root")
   assert(result["installed"].length == 3, "desktop activation installer must install three staged files")
+  assert(result["receipt"]["kind"] == "desktop-activation-receipt", "desktop activation installer must write a rollback receipt")
+  assert(result["receipt"]["sha256"].match?(/\A[0-9a-f]{64}\z/), "desktop activation receipt must include a SHA-256 digest")
   assert(result["activated_entry_points"].length == 7, "desktop activation installer must activate all manifest entry points")
   assert(result["safety"]["staging_root_required"], "desktop activation installer must require a staging root")
   assert(!result["safety"]["host_root_modified"], "desktop activation installer must not modify the host root")
   assert(!result["safety"]["backend_commands_exposed"], "desktop activation installer must not expose backend commands")
+  assert(result["safety"]["rollback_receipt_written"], "desktop activation installer must report rollback receipt writing")
 
   assert(desktop_entry.file?, "desktop activation installer must install the generated desktop entry")
   assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad %U"), "installed desktop entry must call the managed launcher")

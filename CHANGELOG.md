@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.17] - 2026-07-12
+
+### Added
+
+- Added `xnix-rollback-desktop-integration`, a receipt-based rollback command for staged KDE desktop activation files.
+- Added SHA-256 activation receipts for generated launchers, Dolphin service menus, and persisted desktop integration manifests.
+- Added focused coverage for checksum-verified removal, changed-file preservation, receipt cleanup, and host-root rejection.
+
+### Changed
+
+- Extended staged desktop activation results with rollback receipt metadata so Runtime-managed desktop integration can be audited and reverted.
+
 ## [0.2.16] - 2026-07-12
 
 ### Added

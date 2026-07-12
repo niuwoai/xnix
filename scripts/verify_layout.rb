@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.16"
+EXPECTED_VERSION = "0.2.17"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -25,6 +25,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/dbus_runtime_client.rb
   lib/xnix/compatibility/desktop_activation_installer.rb
+  lib/xnix/compatibility/desktop_activation_rollback.rb
   lib/xnix/compatibility/desktop_integration_manifest.rb
   lib/xnix/compatibility/desktop_entry.rb
   lib/xnix/compatibility/dolphin_service_menu.rb
@@ -50,6 +51,7 @@ REQUIRED_FILES = %w[
   bin/xnix-install-desktop-integration
   bin/xnix-kde-center-model
   bin/xnix-kde-integration-status
+  bin/xnix-rollback-desktop-integration
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -79,6 +81,7 @@ REQUIRED_FILES = %w[
   test/test_recipe_store.rb
   test/test_desktop_entry.rb
   test/test_desktop_activation_installer.rb
+  test/test_desktop_activation_rollback.rb
   test/test_desktop_integration_manifest.rb
   test/test_dbus_runtime_client.rb
   test/test_dolphin_service_menu.rb
@@ -198,9 +201,14 @@ end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
 
 desktop_activation_source = read_project_file("lib/xnix/compatibility/desktop_activation_installer.rb")
-%w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests].each do |target|
+%w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts].each do |target|
   assert(desktop_activation_source.include?(target), "Desktop activation installer must stage #{target}")
 end
 assert(desktop_activation_source.include?("\"host_root_modified\" => false"), "Desktop activation installer must not claim host root changes")
+
+desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")
+assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")
+assert(desktop_rollback_source.include?("sha256_verified_before_remove"), "Desktop activation rollback must verify checksums before removal")
+assert(desktop_rollback_source.include?("refusing to remove changed file"), "Desktop activation rollback must preserve changed files")
 
 puts "PASS: Xnix #{EXPECTED_VERSION} scaffold is consistent"
