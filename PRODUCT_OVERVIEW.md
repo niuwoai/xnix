@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-12 | Current version: v0.1.2
+> Last updated: 2026-07-12 | Current version: v0.1.3
 
 ## Summary
 
@@ -43,6 +43,7 @@ Xnix is a Linux-compatible system for learning operating-system principles. It r
 - Every tenth code version requires a complete build and QEMU smoke test.
 - If the full milestone test exposes a defect, it must be fixed and the full test rerun before later work starts.
 - Colima is limited to 1 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
+- Xnix containers are limited to 800 MiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, and no network unless a dedicated source-retrieval command requires it.
 
 ## Milestones
 

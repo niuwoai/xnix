@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.1.2`
+- Version: `0.1.3`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - System stack: Linux LTS kernel, Buildroot, BusyBox, and initramfs
@@ -22,6 +22,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 ```text
 ruby scripts/verify_layout.rb
 ruby scripts/fetch_buildroot.rb --verify-lock
+ruby -Ilib test/test_container.rb
 ```
 
 Only the layout and source-lock verification commands are implemented in this version. Build, QEMU, and SSH commands are introduced with their corresponding milestones.

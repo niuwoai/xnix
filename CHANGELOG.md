@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.1.3] - 2026-07-12
+
+### Added
+
+- Resource-constrained Docker command builder for Xnix build and offline runtime containers.
+- Unit tests that enforce container isolation and resource-limit arguments without invoking Docker.
+
 ## [0.1.2] - 2026-07-12
 
 ### Added

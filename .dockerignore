@@ -1,0 +1,6 @@
+.cache/
+.git/
+output/
+*.img
+*.iso
+*.log
