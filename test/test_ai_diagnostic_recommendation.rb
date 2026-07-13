@@ -19,15 +19,18 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 model = Xnix::Compatibility::AIDiagnosticRecommendation.new(recipe: recipe).to_h
 recommendation_ids = model.fetch("recommendations").map { |recommendation| recommendation.fetch("id") }
 
-assert(model["version"] == "0.2.91", "AI diagnostic recommendation must expose the current version")
+assert(model["version"] == "0.2.92", "AI diagnostic recommendation must expose the current version")
 assert(model["recommendation_type"] == "ai-diagnostic-recommendation", "AI diagnostic recommendation must identify the recommendation type")
 assert(model["input_type"] == "ai-diagnostic-input", "AI diagnostic recommendation must reference the input type")
 assert(model["application"]["id"] == "org.xnix.sample.notepad", "AI diagnostic recommendation must preserve the application id")
 assert(model["runtime_owned"], "Runtime must own AI diagnostic recommendations")
+assert(model["runtime_method"] == "GetAIDiagnosticRecommendation", "AI diagnostic recommendation must expose the Runtime method")
+assert(model["c_runtime_backed"], "AI diagnostic recommendation must be backed by the C Runtime contract")
 assert(!model["kde_policy_owner"], "KDE must not own AI diagnostic recommendation policy")
 assert(!model["ai_provider_called"], "AI diagnostic recommendation must not call an AI provider")
 assert(!model["network_required"], "AI diagnostic recommendation must not require network access")
 assert(model["safe_for_ai_diagnostics"], "AI diagnostic recommendation must be safe for AI diagnostics")
+assert(!model["auto_execution_allowed"], "AI diagnostic recommendation must not allow automatic execution")
 assert(recommendation_ids == %w[explain-pending-runtime-work prepare-safe-restore-point surface-test-progress], "AI diagnostic recommendation must include expected recommendations")
 assert(model["recommendations"].all? { |recommendation| recommendation["user_visible"] }, "AI diagnostic recommendations must be user-visible")
 assert(model["recommendations"].none? { |recommendation| recommendation["auto_execute"] }, "AI diagnostic recommendations must not auto-execute")

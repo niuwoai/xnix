@@ -1994,3 +1994,4 @@ xnix_runtime_compatibility_action_queue(
 #include "xnix_runtime_core_krunner_query.inc"
 #include "xnix_runtime_core_portal_request.inc"
 #include "xnix_runtime_core_ai_diagnostic_input.inc"
+#include "xnix_runtime_core_ai_diagnostic_recommendation.inc"

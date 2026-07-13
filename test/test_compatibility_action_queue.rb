@@ -18,7 +18,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/recipes")).find("org.xnix.sample.notepad")
 queue = Xnix::Compatibility::CompatibilityActionQueue.new(recipe: recipe).to_h
 
-assert(queue["version"] == "0.2.91", "Compatibility action queue must expose the current version")
+assert(queue["version"] == "0.2.92", "Compatibility action queue must expose the current version")
 assert(queue["queue_type"] == "compatibility-center-action-queue", "Compatibility action queue must identify its type")
 assert(queue["application"]["id"] == "org.xnix.sample.notepad", "Compatibility action queue must preserve the application id")
 assert(queue["runtime_owned"], "Runtime must own Compatibility Center action queues")

@@ -750,9 +750,14 @@ build_ai_diagnostic_recommendation(const gchar *application_id, const gchar *iss
   g_variant_builder_add(&recommendation, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&recommendation, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&recommendation, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&recommendation, "{sv}", "runtime_method", g_variant_new_string("GetAIDiagnosticRecommendation"));
+  g_variant_builder_add(&recommendation, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&recommendation, "{sv}", "recommendation_count", g_variant_new_int32(3));
+  g_variant_builder_add(&recommendation, "{sv}", "approval_required_count", g_variant_new_int32(1));
   g_variant_builder_add(&recommendation, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&recommendation, "{sv}", "ai_provider_called", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&recommendation, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&recommendation, "{sv}", "auto_execution_allowed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&recommendation, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&recommendation);

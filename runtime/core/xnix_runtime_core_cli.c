@@ -2840,6 +2840,8 @@ print_probe(void)
   fputs("\"portal_request_plan_count\":7,", stdout);
   fputs("\"ai_diagnostic_input_owner\":\"c\",", stdout);
   fputs("\"ai_diagnostic_signal_count\":3,", stdout);
+  fputs("\"ai_diagnostic_recommendation_owner\":\"c\",", stdout);
+  fputs("\"ai_diagnostic_recommendation_count\":3,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2905,4 +2907,5 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_krunner_query.inc"
 #include "xnix_runtime_core_cli_portal_request.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_input.inc"
+#include "xnix_runtime_core_cli_ai_diagnostic_recommendation.inc"
 #include "xnix_runtime_core_cli_dispatch.inc"

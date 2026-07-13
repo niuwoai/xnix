@@ -171,7 +171,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetAIDiagnosticRecommendation"
       [
-        "({'recommendation_type': <'ai-diagnostic-recommendation'>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'recommendation_type': <'ai-diagnostic-recommendation'>, 'runtime_method': <'GetAIDiagnosticRecommendation'>, 'c_runtime_backed': <true>, 'recommendation_count': <3>, 'approval_required_count': <1>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'auto_execution_allowed': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -485,9 +485,14 @@ assert(!ai_input["network_required"], "D-Bus client must parse network false boo
 
 ai_recommendation = client.ai_diagnostic_recommendation("org.xnix.sample.notepad")
 assert(ai_recommendation["recommendation_type"] == "ai-diagnostic-recommendation", "D-Bus client must parse AI diagnostic recommendations")
+assert(ai_recommendation["runtime_method"] == "GetAIDiagnosticRecommendation", "D-Bus client must parse AI recommendation Runtime method")
+assert(ai_recommendation["c_runtime_backed"], "D-Bus client must parse AI recommendation C ownership")
+assert(ai_recommendation["recommendation_count"] == 3, "D-Bus client must parse AI recommendation count")
+assert(ai_recommendation["approval_required_count"] == 1, "D-Bus client must parse AI recommendation approval count")
 assert(ai_recommendation["safe_for_ai_diagnostics"], "D-Bus client must parse AI diagnostic recommendation booleans")
 assert(!ai_recommendation["ai_provider_called"], "D-Bus client must parse recommendation AI provider false booleans")
 assert(!ai_recommendation["network_required"], "D-Bus client must parse recommendation network false booleans")
+assert(!ai_recommendation["auto_execution_allowed"], "D-Bus client must parse recommendation execution gates")
 
 ai_gate = client.ai_repair_approval_gate("org.xnix.sample.notepad")
 assert(ai_gate["gate_type"] == "ai-repair-approval-gate", "D-Bus client must parse AI repair approval gates")

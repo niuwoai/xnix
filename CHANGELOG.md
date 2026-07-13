@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.92] - 2026-07-14
+
+### Added
+
+- Added C Runtime AI diagnostic recommendation records and a CLI read method for review-first recommendations, approval-required actions, and blocked AI actions.
+- Added C Runtime probe ownership for AI diagnostic recommendations so KDE can verify recommendation counts and execution gates without owning AI policy.
+
+### Changed
+
+- Marked AI diagnostic recommendations as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping provider calls, network access, automatic execution, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.91] - 2026-07-14
 
 ### Added
