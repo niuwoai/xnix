@@ -108,6 +108,16 @@ assert(ai_recommendation["recommendation_type"] == "ai-diagnostic-recommendation
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetAIRepairApprovalGate",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetAIRepairApprovalGate must exit successfully: #{stderr}")
+ai_gate = JSON.parse(stdout)
+assert(ai_gate["gate_type"] == "ai-repair-approval-gate", "dispatch must route GetAIRepairApprovalGate")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetSnapshotPlan",
   JSON.generate(["org.xnix.sample.notepad", "before-repair"])
 )

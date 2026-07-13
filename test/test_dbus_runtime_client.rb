@@ -79,6 +79,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetAIRepairApprovalGate"
+      [
+        "({'gate_type': <'ai-repair-approval-gate'>, 'gate_decision': <'blocked-until-approval'>, 'auto_execution_allowed': <false>, 'repair_executed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetSnapshotPlan"
       [
         "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'enabled_by_default': <true>},)\n",
@@ -147,6 +153,12 @@ assert(ai_recommendation["recommendation_type"] == "ai-diagnostic-recommendation
 assert(ai_recommendation["safe_for_ai_diagnostics"], "D-Bus client must parse AI diagnostic recommendation booleans")
 assert(!ai_recommendation["ai_provider_called"], "D-Bus client must parse recommendation AI provider false booleans")
 assert(!ai_recommendation["network_required"], "D-Bus client must parse recommendation network false booleans")
+
+ai_gate = client.ai_repair_approval_gate("org.xnix.sample.notepad")
+assert(ai_gate["gate_type"] == "ai-repair-approval-gate", "D-Bus client must parse AI repair approval gates")
+assert(ai_gate["gate_decision"] == "blocked-until-approval", "D-Bus client must parse AI repair approval gate decisions")
+assert(!ai_gate["auto_execution_allowed"], "D-Bus client must parse AI repair gate execution booleans")
+assert(!ai_gate["repair_executed"], "D-Bus client must parse AI repair execution false booleans")
 
 snapshot_plan = client.snapshot_plan("org.xnix.sample.notepad", "before-repair")
 assert(snapshot_plan["plan_type"] == "compatibility-snapshot", "D-Bus client must parse snapshot plans")

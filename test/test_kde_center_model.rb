@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.38", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.39", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -31,6 +31,7 @@ assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must 
 assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
 assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
 assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
+assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -51,6 +52,9 @@ assert(!application["ai_diagnostic_input"]["ai_provider_called"], "KDE center mo
 assert(application["ai_diagnostic_recommendation"]["recommendation_type"] == "ai-diagnostic-recommendation", "KDE center model must expose AI diagnostic recommendation summaries")
 assert(application["ai_diagnostic_recommendation"]["recommendation_count"] == 3, "KDE center model must expose AI recommendation counts")
 assert(!application["ai_diagnostic_recommendation"]["ai_provider_called"], "KDE center model must not claim recommendation AI provider calls")
+assert(application["ai_repair_approval_gate"]["gate_type"] == "ai-repair-approval-gate", "KDE center model must expose AI repair approval gates")
+assert(application["ai_repair_approval_gate"]["gate_decision"] == "blocked-until-approval", "KDE center model must expose AI repair gate decisions")
+assert(!application["ai_repair_approval_gate"]["auto_execution_allowed"], "KDE center model must not allow automatic AI repair execution")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

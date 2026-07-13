@@ -33,6 +33,7 @@ assert(contents.include?("GetTestPlan"), "D-Bus smoke script must call GetTestPl
 assert(contents.include?("GetTestResult"), "D-Bus smoke script must call GetTestResult")
 assert(contents.include?("GetAIDiagnosticInput"), "D-Bus smoke script must call GetAIDiagnosticInput")
 assert(contents.include?("GetAIDiagnosticRecommendation"), "D-Bus smoke script must call GetAIDiagnosticRecommendation")
+assert(contents.include?("GetAIRepairApprovalGate"), "D-Bus smoke script must call GetAIRepairApprovalGate")
 assert(contents.include?("GetSnapshotPlan"), "D-Bus smoke script must call GetSnapshotPlan")
 assert(contents.include?("GetPortalAccessPolicy"), "D-Bus smoke script must call GetPortalAccessPolicy")
 

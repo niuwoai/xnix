@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.38"
+EXPECTED_VERSION = "0.2.39"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,6 +24,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/ai_diagnostic_input.rb
   lib/xnix/compatibility/ai_diagnostic_recommendation.rb
+  lib/xnix/compatibility/ai_repair_approval_gate.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/compatibility_test_plan.rb
@@ -59,6 +60,7 @@ REQUIRED_FILES = %w[
   lib/xnix/milestone.rb
   bin/xnix-ai-diagnostic-input
   bin/xnix-ai-diagnostic-recommendation
+  bin/xnix-ai-repair-approval-gate
   bin/xnix-compatd
   bin/xnix-compat-engine-catalog
   bin/xnix-compat-launch
@@ -106,6 +108,7 @@ REQUIRED_FILES = %w[
   docs/compatibility-runtime.md
   test/test_ai_diagnostic_input.rb
   test/test_ai_diagnostic_recommendation.rb
+  test/test_ai_repair_approval_gate.rb
   test/test_container.rb
   test/test_buildroot.rb
   test/test_qemu.rb
@@ -297,6 +300,15 @@ assert(ai_recommendation_source.include?("\"network_required\" => false"), "AI d
 assert(ai_recommendation_source.include?("\"auto_execute\" => false"), "AI diagnostic recommendation must not auto-execute recommendations")
 assert(ai_recommendation_source.include?("\"backend_details_exposed\" => false"), "AI diagnostic recommendation must hide backend details")
 
+ai_repair_gate_source = read_project_file("lib/xnix/compatibility/ai_repair_approval_gate.rb")
+assert(ai_repair_gate_source.include?("xnix-ai-repair-approval-gate"), "AI repair approval gate must expose a CLI command")
+%w[ai-repair-approval-gate blocked-until-approval required_gates approval_required_actions].each do |token|
+  assert(ai_repair_gate_source.include?(token), "AI repair approval gate must include #{token}")
+end
+assert(ai_repair_gate_source.include?("\"repair_executed\" => false"), "AI repair approval gate must not execute repairs")
+assert(ai_repair_gate_source.include?("\"auto_execution_allowed\" => false"), "AI repair approval gate must not permit automatic repair execution")
+assert(ai_repair_gate_source.include?("\"backend_details_exposed\" => false"), "AI repair approval gate must hide backend details")
+
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
@@ -378,7 +390,8 @@ assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runti
 assert(runtime_daemon_source.include?("\"compatibility_test_results\""), "Runtime daemon must expose compatibility test result capability")
 assert(runtime_daemon_source.include?("\"ai_diagnostic_inputs\""), "Runtime daemon must expose AI diagnostic input capability")
 assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Runtime daemon must expose AI diagnostic recommendation capability")
-%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
+assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime daemon must expose AI repair approval gate capability")
+%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -386,7 +399,7 @@ assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Run
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation snapshot_plan portal_access_policy].each do |method_name|
+%w[engine_catalog run_plan repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

@@ -72,6 +72,7 @@ module Xnix
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
+          "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -151,6 +152,20 @@ module Xnix
         }
       end
 
+      def ai_repair_approval_gate_summary(gate)
+        return nil unless gate
+
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "gate_decision" => gate.fetch("gate_decision"),
+          "required_gate_count" => gate.fetch("required_gate_count"),
+          "approval_required_count" => gate.fetch("approval_required_count"),
+          "auto_execution_allowed" => gate.fetch("auto_execution_allowed"),
+          "repair_executed" => gate.fetch("repair_executed"),
+          "summary" => gate.fetch("summary")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
@@ -159,7 +174,8 @@ module Xnix
           "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" },
           "ai_diagnostic_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_input", {}).fetch("safe_for_ai_diagnostics", false) },
-          "ai_recommendation_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_recommendation", {}).fetch("safe_for_ai_diagnostics", false) }
+          "ai_recommendation_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_recommendation", {}).fetch("safe_for_ai_diagnostics", false) },
+          "blocked_ai_repair_gate_count" => applications.count { |application| application.fetch("ai_repair_approval_gate", {}).fetch("gate_decision", nil) == "blocked-until-approval" }
         }
       end
 

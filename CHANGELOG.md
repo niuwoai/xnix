@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.39] - 2026-07-13
+
+### Added
+
+- Added `xnix-ai-repair-approval-gate`, a Runtime-owned approval gate model that blocks AI repair execution until Compatibility Center review, Runtime approval, and restore-point preflight gates pass.
+- Added focused coverage for blocked gate decisions, required gates, approval-required actions, Runtime diagnostics, dispatch, D-Bus client reads, Compatibility Center summaries, and session-bus smoke exposure.
+
+### Changed
+
+- Extended Runtime diagnostics, read-only Runtime dispatch, D-Bus planning reads, and the KDE Compatibility Center model with AI repair approval gate summaries.
+
 ## [0.2.38] - 2026-07-13
 
 ### Added

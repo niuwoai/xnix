@@ -5,6 +5,7 @@ require "optparse"
 require "pathname"
 require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
+require_relative "ai_repair_approval_gate"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -50,6 +51,7 @@ module Xnix
             "compatibility_test_results" => true,
             "ai_diagnostic_inputs" => true,
             "ai_diagnostic_recommendations" => true,
+            "ai_repair_approval_gates" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -90,6 +92,7 @@ module Xnix
           "test_result" => test_result_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
+          "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -126,6 +129,11 @@ module Xnix
       def ai_diagnostic_recommendation(application_id, issue = AIDiagnosticInput::DEFAULT_ISSUE, test_type = "preflight")
         recipe = require_recipe(application_id)
         AIDiagnosticRecommendation.new(recipe: recipe, issue: issue, test_type: test_type).to_h
+      end
+
+      def ai_repair_approval_gate(application_id, issue = AIDiagnosticInput::DEFAULT_ISSUE, test_type = "preflight")
+        recipe = require_recipe(application_id)
+        AIRepairApprovalGate.new(recipe: recipe, issue: issue, test_type: test_type).to_h
       end
 
       def snapshot_plan(application_id, reason)
@@ -173,6 +181,12 @@ module Xnix
           )
         when "GetAIDiagnosticRecommendation"
           ai_diagnostic_recommendation(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || AIDiagnosticInput::DEFAULT_ISSUE,
+            parameters[2] || "preflight"
+          )
+        when "GetAIRepairApprovalGate"
+          ai_repair_approval_gate(
             required_parameter(method_name, parameters, 0),
             parameters[1] || AIDiagnosticInput::DEFAULT_ISSUE,
             parameters[2] || "preflight"
@@ -287,6 +301,19 @@ module Xnix
         }
       end
 
+      def ai_repair_approval_gate_summary(recipe)
+        gate = AIRepairApprovalGate.new(recipe: recipe).to_h
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "gate_decision" => gate.fetch("gate_decision"),
+          "required_gate_count" => gate.fetch("required_gates").length,
+          "approval_required_count" => gate.fetch("approval_required_actions").length,
+          "auto_execution_allowed" => gate.fetch("auto_execution_allowed"),
+          "repair_executed" => gate.fetch("repair_executed"),
+          "summary" => gate.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -348,6 +375,11 @@ module Xnix
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE
             test_type = @argv.shift || "preflight"
             write_json(runtime.ai_diagnostic_recommendation(application_id, issue, test_type))
+          when "ai-repair-approval-gate"
+            application_id = require_argument(command)
+            issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE
+            test_type = @argv.shift || "preflight"
+            write_json(runtime.ai_repair_approval_gate(application_id, issue, test_type))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

@@ -28,8 +28,8 @@ KDE packages display status and submit user decisions. They do not create a Wine
 
 The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model prefers the Runtime D-Bus service when a session source is available and falls back to the local Runtime read model for offline development. In both cases, it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
 
-The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, test plans, test results, AI diagnostic inputs, AI diagnostic recommendations, snapshot plans, and Portal access policy. `DBusRuntimeClient` wraps these methods for KDE-facing code and parses D-Bus boolean variants into native booleans. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
-The Runtime D-Bus contract also exposes compatibility test plans, test results, AI diagnostic inputs, and AI diagnostic recommendations as read-only planning data. KDE can show preflight, smoke, repair-readiness, AI-ready diagnostic summaries, and review-first recommendations in the Compatibility Center, but the Runtime owns recipe validation, Portal preflight, snapshot preflight, managed launch-binding checks, result status, AI diagnostic boundaries, and recommendation safety policy.
+The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, test plans, test results, AI diagnostic inputs, AI diagnostic recommendations, AI repair approval gates, snapshot plans, and Portal access policy. `DBusRuntimeClient` wraps these methods for KDE-facing code and parses D-Bus boolean variants into native booleans. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
+The Runtime D-Bus contract also exposes compatibility test plans, test results, AI diagnostic inputs, AI diagnostic recommendations, and AI repair approval gates as read-only planning data. KDE can show preflight, smoke, repair-readiness, AI-ready diagnostic summaries, review-first recommendations, and blocked repair-gate summaries in the Compatibility Center, but the Runtime owns recipe validation, Portal preflight, snapshot preflight, managed launch-binding checks, result status, AI diagnostic boundaries, recommendation safety policy, and repair execution approval.
 
 Generated application launchers delegate to `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, accepts optional `file://` URIs from desktop file associations, and emits a Runtime `Launch` request model. Plain application launches do not need file portal access; file launches are marked as portal-mediated.
 
@@ -87,6 +87,8 @@ AI diagnostic inputs delegate to `xnix-ai-diagnostic-input`. The input model pac
 
 AI diagnostic recommendations delegate to `xnix-ai-diagnostic-recommendation`. The recommendation model converts Runtime-safe diagnostic input into user-visible recommendations for explanation, restore-point preparation, and test-progress presentation. Recommendations are review-first, do not auto-execute repair actions, do not call an AI provider, and do not require network access.
 
+AI repair approval gates delegate to `xnix-ai-repair-approval-gate`. The gate model converts review-first recommendations into an explicit Runtime approval decision, blocks repair execution until Compatibility Center review, Runtime approval, and restore-point preflight gates pass, and keeps AI diagnostics non-executing. It does not create restore points, change compatibility modes, call an AI provider, or require network access.
+
 ## Permissions and Asynchronous Requests
 
 Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return request objects and complete with signals, so Runtime methods that need user approval return an object path and complete through `RequestCompleted`. The Runtime must not promise direct access to a user's files, clipboard, camera, printer, display, or screen capture.
@@ -105,6 +107,7 @@ Portal request modeling delegates to `xnix-portal-request-model`. The model desc
 - The Compatibility Center may show compatibility test result summaries, but Runtime code must own result status and diagnostic evidence.
 - The Compatibility Center may show AI diagnostic readiness, but Runtime code must own AI input construction, privacy boundaries, and allowed task scope.
 - The Compatibility Center may show AI diagnostic recommendations, but Runtime code must own recommendation policy and must not auto-execute repair actions.
+- The Compatibility Center may show AI repair approval gates, but Runtime code must own approval tokens, restore-point preflight, and repair execution decisions.
 - KRunner query models must resolve to Runtime application identities and managed launcher actions, not backend commands.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - File association models must use generated desktop files, standard `mimeapps.list` syntax, and Portal-mediated file-open requests.
@@ -131,6 +134,7 @@ Portal request modeling delegates to `xnix-portal-request-model`. The model desc
 - Compatibility test results must distinguish passed, pending, and blocked checks without exposing backend implementation details.
 - AI diagnostic inputs must not call an AI provider, require network access, include user documents, include host paths, include raw backend logs, include secrets, or expose backend implementation details.
 - AI diagnostic recommendations must be user-visible, review-first, non-executing, and approval-aware before any Runtime repair action occurs.
+- AI repair approval gates must be review-first, non-executing, and blocked until Compatibility Center review, Runtime approval, and restore-point preflight pass.
 - Portal access policy must require user-mediated XDG Desktop Portal requests and must deny direct desktop access for sensitive operations.
 - Portal request models must describe XDG Desktop Portal requests and completion handling without mutating host permissions.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.

@@ -147,6 +147,19 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetAIRepairApprovalGate",
+    "org.xnix.sample.notepad",
+    "engine-binding-pending",
+    "preflight"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetAIRepairApprovalGate: #{stderr}")
+  assert(stdout.include?("ai-repair-approval-gate"), "runtime smoke adapter must expose AI repair approval gates over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetSnapshotPlan",
     "org.xnix.sample.notepad",
     "before-repair"

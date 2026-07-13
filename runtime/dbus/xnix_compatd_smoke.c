@@ -67,6 +67,12 @@ static const gchar introspection_xml[] =
   "      <arg name='test_type' type='s' direction='in'/>"
   "      <arg name='recommendation' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetAIRepairApprovalGate'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='issue' type='s' direction='in'/>"
+  "      <arg name='test_type' type='s' direction='in'/>"
+  "      <arg name='gate' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetSnapshotPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='reason' type='s' direction='in'/>"
@@ -225,6 +231,24 @@ build_ai_diagnostic_recommendation(const gchar *application_id, const gchar *iss
   g_variant_builder_add(&recommendation, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&recommendation);
+}
+
+static GVariant *
+build_ai_repair_approval_gate(const gchar *application_id, const gchar *issue, const gchar *test_type)
+{
+  GVariantBuilder gate;
+
+  g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("ai-repair-approval-gate"));
+  g_variant_builder_add(&gate, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&gate, "{sv}", "issue", g_variant_new_string(issue));
+  g_variant_builder_add(&gate, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&gate, "{sv}", "gate_decision", g_variant_new_string("blocked-until-approval"));
+  g_variant_builder_add(&gate, "{sv}", "auto_execution_allowed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "repair_executed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&gate);
 }
 
 static GVariant *
@@ -403,6 +427,24 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_ai_diagnostic_recommendation(application_id, issue, test_type))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetAIRepairApprovalGate") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *issue = NULL;
+    const gchar *test_type = NULL;
+
+    g_variant_get(parameters, "(&s&s&s)", &application_id, &issue, &test_type);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_ai_repair_approval_gate(application_id, issue, test_type))
     );
     return;
   }
