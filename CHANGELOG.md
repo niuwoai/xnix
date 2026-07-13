@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.87] - 2026-07-14
+
+### Added
+
+- Added C Runtime KRunner query plan records and a CLI read method for resolving desktop search queries to Runtime application identities and managed launcher actions.
+- Added Runtime D-Bus contract coverage for `GetKRunnerQueryPlan` so KDE KRunner surfaces can read Runtime-owned query plans without enabling direct execution.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, daemon diagnostics, the D-Bus client, and layout verification to include KRunner query planning while keeping backend launch, query execution, host-root mutation, and backend details disabled.
+
 ## [0.2.86] - 2026-07-14
 
 ### Added

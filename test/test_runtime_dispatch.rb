@@ -130,6 +130,18 @@ assert(!tray_status["safety"]["backend_details_exposed"], "dispatch must keep tr
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKRunnerQueryPlan",
+  JSON.generate(["notepad"])
+)
+assert(status.success?, "dispatch GetKRunnerQueryPlan must exit successfully: #{stderr}")
+krunner_query = JSON.parse(stdout)
+assert(krunner_query["query_type"] == "krunner-query-plan", "dispatch must route GetKRunnerQueryPlan")
+assert(krunner_query["matches"].first["application_id"] == "org.xnix.sample.notepad", "dispatch must expose KRunner matches")
+assert(!krunner_query["summary"]["backend_launch_enabled"], "dispatch must keep KRunner backend launch disabled")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

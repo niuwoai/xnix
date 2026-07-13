@@ -81,6 +81,10 @@ module Xnix
         parse_dictionary(call("GetTrayStatus"))
       end
 
+      def krunner_query_plan(query)
+        parse_dictionary(call("GetKRunnerQueryPlan", query))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

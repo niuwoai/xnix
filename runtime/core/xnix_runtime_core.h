@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.86"
+#define XNIX_RUNTIME_VERSION "0.2.87"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[36];
+  const char *read_only_methods[37];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -841,6 +841,39 @@ typedef struct {
   const char *summary;
 } XnixRuntimeTrayStatusPlan;
 
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *runner_id;
+  const char *subtitle;
+  const char *mode_label;
+  const char *action_type;
+  const char *desktop_entry_id;
+  const char *action_argv[3];
+  size_t action_argc;
+  const char *supported_extensions[2];
+  size_t supported_extension_count;
+  size_t relevance_percent;
+  bool runtime_owned_launch;
+  bool backend_details_exposed;
+} XnixRuntimeKRunnerMatch;
+
+typedef struct {
+  const char *query_type;
+  const char *entry_point;
+  const char *desktop;
+  const char *query;
+  XnixRuntimeKRunnerMatch matches[1];
+  size_t match_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool runtime_owned_launch;
+  bool query_execution_enabled;
+  bool backend_launch_enabled;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeKRunnerQueryPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -961,6 +994,10 @@ bool xnix_runtime_notification_plan(
   XnixRuntimeNotificationPlan *plan
 );
 bool xnix_runtime_tray_status_plan(XnixRuntimeTrayStatusPlan *plan);
+bool xnix_runtime_krunner_query_plan(
+  const char *query,
+  XnixRuntimeKRunnerQueryPlan *plan
+);
 bool xnix_runtime_portal_request_plan(
   const char *application_id,
   const char *operation,

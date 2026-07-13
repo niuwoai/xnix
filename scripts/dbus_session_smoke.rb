@@ -152,6 +152,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKRunnerQueryPlan",
+    "notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKRunnerQueryPlan: #{stderr}")
+  assert(stdout.include?("krunner-query-plan"), "runtime smoke adapter must expose KRunner query plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetPortalRequestPlan",
     "org.xnix.sample.notepad",
     "file-open"

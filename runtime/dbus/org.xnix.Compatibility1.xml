@@ -61,6 +61,10 @@
     <method name="GetTrayStatus">
       <arg name="status" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetKRunnerQueryPlan">
+      <arg name="query" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetPortalRequestPlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="operation" type="s" direction="in"/>

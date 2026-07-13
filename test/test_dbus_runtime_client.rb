@@ -85,6 +85,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetKRunnerQueryPlan"
+      [
+        "({'query_type': <'krunner-query-plan'>, 'entry_point': <'krunner'>, 'desktop': <'KDE Plasma'>, 'query': <'notepad'>, 'match_count': <1>, 'top_application_id': <'org.xnix.sample.notepad'>, 'top_name': <'Sample Notepad'>, 'top_relevance_percent': <100>, 'action_type': <'runtime-launch'>, 'desktop_entry_id': <'org.xnix.sample.notepad.desktop'>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'runtime_owned_launch': <true>, 'query_execution_enabled': <false>, 'backend_launch_enabled': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -195,7 +201,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <36>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <37>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -356,6 +362,17 @@ assert(!tray_status["bridge_configuration_persisted"], "D-Bus client must parse 
 assert(!tray_status["host_root_modified"], "D-Bus client must parse tray host-root safety")
 assert(!tray_status["backend_details_exposed"], "D-Bus client must parse tray backend detail status")
 
+krunner_query = client.krunner_query_plan("notepad")
+assert(krunner_query["query_type"] == "krunner-query-plan", "D-Bus client must parse KRunner query plans")
+assert(krunner_query["entry_point"] == "krunner", "D-Bus client must parse KRunner entry points")
+assert(krunner_query["match_count"] == 1, "D-Bus client must parse KRunner match counts")
+assert(krunner_query["top_application_id"] == "org.xnix.sample.notepad", "D-Bus client must parse KRunner top matches")
+assert(krunner_query["action_type"] == "runtime-launch", "D-Bus client must parse KRunner action types")
+assert(krunner_query["runtime_owned_launch"], "D-Bus client must parse KRunner Runtime launch ownership")
+assert(!krunner_query["query_execution_enabled"], "D-Bus client must parse KRunner execution gates")
+assert(!krunner_query["backend_launch_enabled"], "D-Bus client must parse KRunner backend launch gates")
+assert(!krunner_query["backend_details_exposed"], "D-Bus client must parse KRunner backend detail status")
+
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
 assert(portal_request_plan["operation"] == "file-open", "D-Bus client must parse Portal request operations")
@@ -473,7 +490,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 36, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 37, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

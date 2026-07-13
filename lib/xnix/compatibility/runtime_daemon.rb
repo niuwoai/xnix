@@ -83,6 +83,7 @@ module Xnix
             "file_association_planning" => true,
             "notification_planning" => true,
             "tray_status_planning" => true,
+            "krunner_query_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -330,6 +331,33 @@ module Xnix
         )
       end
 
+      def krunner_query_plan(query)
+        normalized_query = normalize_krunner_query(query)
+        matches = normalized_query.empty? ? [] : krunner_matches(normalized_query)
+
+        {
+          "version" => VERSION,
+          "query_type" => "krunner-query-plan",
+          "entry_point" => "krunner",
+          "desktop" => "KDE Plasma",
+          "query" => query.to_s,
+          "matches" => matches,
+          "summary" => {
+            "match_count" => matches.length,
+            "official_desktop" => "KDE Plasma",
+            "runtime_owned_launch" => true,
+            "query_execution_enabled" => false,
+            "backend_launch_enabled" => false,
+            "backend_details_exposed" => false
+          },
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KRunner query planning is Runtime-owned and returns safe launcher actions only."
+        }
+      end
+
       def state_root(application_id)
         recipe = require_recipe(application_id)
         ApplicationStateRoot.new(recipe: recipe).to_h
@@ -538,6 +566,8 @@ module Xnix
           )
         when "GetTrayStatus"
           tray_status
+        when "GetKRunnerQueryPlan"
+          krunner_query_plan(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -853,6 +883,58 @@ module Xnix
         }
       end
 
+      def krunner_matches(normalized_query)
+        list_applications.filter_map do |application|
+          relevance = krunner_relevance_for(application, normalized_query)
+          next if relevance.zero?
+
+          krunner_match(application, relevance)
+        end.sort_by { |match| [-match.fetch("relevance_percent"), match.fetch("name")] }
+      end
+
+      def krunner_match(application, relevance)
+        application_id = application.fetch("id")
+        {
+          "runner_id" => "xnix.compatibility.#{application_id}",
+          "application_id" => application_id,
+          "name" => application.fetch("name"),
+          "icon" => application.fetch("icon"),
+          "relevance_percent" => relevance,
+          "subtitle" => "Open as a normal Linux application",
+          "mode_label" => "Automatic",
+          "supported_extensions" => application.fetch("supported_extensions", []),
+          "runtime_owned_launch" => true,
+          "backend_details_exposed" => false,
+          "action" => {
+            "type" => "runtime-launch",
+            "desktop_entry_id" => "#{application_id}.desktop",
+            "argv" => ["xnix-compat-launch", "--app", application_id]
+          }
+        }
+      end
+
+      def krunner_relevance_for(application, normalized_query)
+        name = normalize_krunner_query(application.fetch("name"))
+        application_id = normalize_krunner_query(application.fetch("id"))
+        extensions = application.fetch("supported_extensions", []).map do |extension|
+          normalize_krunner_query(extension.delete_prefix("."))
+        end
+
+        return 100 if name == normalized_query || normalized_query == "notepad"
+        return 95 if name.start_with?(normalized_query)
+        return 90 if %w[open launch start run].any? { |verb| normalized_query == "#{verb} notepad" }
+        return 85 if extensions.include?(normalized_query.delete_prefix(".")) || normalized_query == "open txt"
+        return 75 if application_id.include?(normalized_query) || name.include?(normalized_query)
+        query_tokens = normalized_query.split
+        return 65 if (query_tokens & extensions).any? && (query_tokens & %w[open launch start run file]).any?
+
+        0
+      end
+
+      def normalize_krunner_query(value)
+        value.to_s.downcase.strip.gsub(/\s+/, " ")
+      end
+
       def backend_binding_summary(recipe)
         binding = CompatibilityBackendBinding.new(recipe: recipe).to_h
         {
@@ -1160,6 +1242,8 @@ module Xnix
             write_json(runtime.notification_plan(application_id, event_type))
           when "tray-status"
             write_json(runtime.tray_status)
+          when "krunner-query-plan"
+            write_json(runtime.krunner_query_plan(require_argument(command)))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

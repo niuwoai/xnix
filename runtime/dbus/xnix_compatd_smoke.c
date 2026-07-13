@@ -64,6 +64,10 @@ static const gchar introspection_xml[] =
   "    <method name='GetTrayStatus'>"
   "      <arg name='status' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKRunnerQueryPlan'>"
+  "      <arg name='query' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetPortalRequestPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='operation' type='s' direction='in'/>"
@@ -400,6 +404,42 @@ build_tray_status(void)
   g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&status);
+}
+
+static GVariant *
+build_krunner_query_plan(const gchar *query)
+{
+  GVariantBuilder plan;
+  gboolean has_match = FALSE;
+
+  if (query != NULL) {
+    gchar *normalized = g_ascii_strdown(query, -1);
+    has_match = g_strrstr(normalized, "notepad") != NULL ||
+                g_strcmp0(normalized, "open txt") == 0 ||
+                g_strcmp0(normalized, "txt") == 0;
+    g_free(normalized);
+  }
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "query_type", g_variant_new_string("krunner-query-plan"));
+  g_variant_builder_add(&plan, "{sv}", "entry_point", g_variant_new_string("krunner"));
+  g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "query", g_variant_new_string(query == NULL ? "" : query));
+  g_variant_builder_add(&plan, "{sv}", "match_count", g_variant_new_int32(has_match ? 1 : 0));
+  g_variant_builder_add(&plan, "{sv}", "top_application_id", g_variant_new_string(has_match ? "org.xnix.sample.notepad" : ""));
+  g_variant_builder_add(&plan, "{sv}", "top_name", g_variant_new_string(has_match ? "Sample Notepad" : ""));
+  g_variant_builder_add(&plan, "{sv}", "top_relevance_percent", g_variant_new_int32(has_match ? 100 : 0));
+  g_variant_builder_add(&plan, "{sv}", "action_type", g_variant_new_string(has_match ? "runtime-launch" : ""));
+  g_variant_builder_add(&plan, "{sv}", "desktop_entry_id", g_variant_new_string(has_match ? "org.xnix.sample.notepad.desktop" : ""));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned_launch", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "query_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -835,7 +875,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(36));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(37));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1044,6 +1084,17 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_tray_status())
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKRunnerQueryPlan") == 0) {
+    const gchar *query = NULL;
+
+    g_variant_get(parameters, "(&s)", &query);
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_krunner_query_plan(query))
     );
     return;
   }

@@ -28,6 +28,7 @@ module Xnix
         GetFileAssociationPlan
         GetNotificationPlan
         GetTrayStatus
+        GetKRunnerQueryPlan
         GetPortalRequestPlan
         GetApplicationStateRoot
         GetCompatibilityPackageSource
@@ -74,6 +75,7 @@ module Xnix
         "GetFileAssociationPlan" => "file_association_plan",
         "GetNotificationPlan" => "notification_plan",
         "GetTrayStatus" => "tray_status",
+        "GetKRunnerQueryPlan" => "krunner_query_plan",
         "GetPortalRequestPlan" => "portal_request_plan",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",
