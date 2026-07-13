@@ -97,6 +97,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetPortalRequestPlan",
+    "org.xnix.sample.notepad",
+    "file-open"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetPortalRequestPlan: #{stderr}")
+  assert(stdout.include?("portal-request-plan"), "runtime smoke adapter must expose Portal request plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetApplicationStateRoot",
     "org.xnix.sample.notepad"
   )

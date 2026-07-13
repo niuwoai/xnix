@@ -17,7 +17,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 catalog = Xnix::Compatibility::CompatibilityEngineCatalog.new
 model = catalog.to_h
 
-assert(model["version"] == "0.2.79", "compatibility engine catalog must expose the current version")
+assert(model["version"] == "0.2.80", "compatibility engine catalog must expose the current version")
 assert(model["catalog_type"] == "compatibility-engine", "compatibility engine catalog must identify the model type")
 assert(model["runtime_policy_owner"], "Runtime must own engine selection policy")
 assert(!model["desktop_shell_policy_owner"], "KDE must not own engine selection policy")

@@ -44,6 +44,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='manifest' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetPortalRequestPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='operation' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetApplicationStateRoot'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='state_root' type='a{sv}' direction='out'/>"
@@ -236,6 +241,29 @@ build_desktop_activation_manifest(const gchar *application_id)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_portal_request_plan(const gchar *application_id, const gchar *operation)
+{
+  GVariantBuilder plan;
+  gboolean denied = g_strcmp0(operation, "camera") == 0 ||
+                    g_strcmp0(operation, "remote-desktop") == 0;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "request_type", g_variant_new_string("portal-request-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "operation", g_variant_new_string(operation));
+  g_variant_builder_add(&plan, "{sv}", "decision", g_variant_new_string(denied ? "deny" : "ask"));
+  g_variant_builder_add(&plan, "{sv}", "request_allowed", g_variant_new_boolean(!denied));
+  g_variant_builder_add(&plan, "{sv}", "portal_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "permission_granted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_permission_changed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -620,7 +648,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(29));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(30));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -756,6 +784,23 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_activation_manifest(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetPortalRequestPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *operation = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &operation);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_portal_request_plan(application_id, operation))
     );
     return;
   }

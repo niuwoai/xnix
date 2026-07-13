@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.80] - 2026-07-14
+
+### Added
+
+- Added C Runtime Portal request plan records and a CLI read method for mapping desktop resource requests to XDG Desktop Portal calls without granting permissions.
+- Added Runtime D-Bus contract coverage for `GetPortalRequestPlan` so KDE surfaces can request portal planning through the stable Runtime API.
+
+### Changed
+
+- Extended Runtime C ownership into Portal request planning while keeping request creation, permission grants, host permission changes, and host-root mutation disabled.
+
 ## [0.2.79] - 2026-07-14
 
 ### Added

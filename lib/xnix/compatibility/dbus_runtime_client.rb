@@ -125,6 +125,10 @@ module Xnix
         parse_dictionary(call("GetPortalAccessPolicy", application_id, operation))
       end
 
+      def portal_request_plan(application_id, operation)
+        parse_dictionary(call("GetPortalRequestPlan", application_id, operation))
+      end
+
       def runtime_service_binding
         parse_dictionary(call("GetRuntimeServiceBinding"))
       end

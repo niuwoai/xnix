@@ -22,6 +22,7 @@ require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
 require_relative "desktop_integration_manifest"
 require_relative "portal_access_policy"
+require_relative "portal_request_model"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_live_owner_gate"
 require_relative "runtime_method_parity_manifest"
@@ -84,6 +85,7 @@ module Xnix
             "runtime_write_gates" => true,
             "compatibility_settings" => true,
             "compatibility_settings_change_planning" => true,
+            "portal_request_planning" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -139,6 +141,7 @@ module Xnix
           "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary,
           "runtime_service_binding" => runtime_service_binding_summary,
           "runtime_write_gate" => runtime_write_gate_summary("Launch"),
+          "portal_request_plan" => portal_request_plan_summary(recipe),
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
@@ -237,6 +240,11 @@ module Xnix
       def portal_access_policy(application_id, operation)
         require_recipe(application_id)
         PortalAccessPolicy.new(application_id: application_id, operation: operation).to_h
+      end
+
+      def portal_request_plan(application_id, operation)
+        require_recipe(application_id)
+        PortalRequestModel.new(application_id: application_id, operation: operation).to_h
       end
 
       def runtime_service_binding
@@ -351,6 +359,11 @@ module Xnix
           )
         when "GetPortalAccessPolicy"
           portal_access_policy(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
+        when "GetPortalRequestPlan"
+          portal_request_plan(
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
           )
@@ -686,6 +699,19 @@ module Xnix
           "denial_error_name" => gate.fetch("denial_error_name"),
           "backend_details_exposed" => gate.fetch("backend_details_exposed"),
           "summary" => gate.fetch("desktop_safe_summary")
+        }
+      end
+
+      def portal_request_plan_summary(recipe)
+        plan = PortalRequestModel.new(application_id: recipe.id, operation: "file-open").to_h
+        {
+          "request_type" => plan.fetch("request_type"),
+          "operation" => plan.fetch("operation"),
+          "decision" => plan.fetch("decision"),
+          "request_allowed" => plan.fetch("request_allowed"),
+          "portal_required" => plan.fetch("safety").fetch("portal_required"),
+          "host_permission_changed" => plan.fetch("safety").fetch("host_permission_changed"),
+          "backend_details_exposed" => plan.fetch("safety").fetch("backend_details_exposed")
         }
       end
 

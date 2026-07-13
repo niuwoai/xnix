@@ -55,6 +55,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetPortalRequestPlan"
+      [
+        "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetApplicationStateRoot"
       [
         "({'root_type': <'compatibility-application-state-root'>, 'allocation_state': <'planned'>, 'snapshot_eligible': <true>, 'user_documents_included': <false>, 'backend_details_exposed': <false>},)\n",
@@ -159,7 +165,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <29>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <30>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -232,6 +238,16 @@ assert(desktop_activation["activation_ready"], "D-Bus client must parse desktop 
 assert(!desktop_activation["files_written"], "D-Bus client must parse desktop activation write safety")
 assert(!desktop_activation["host_root_modified"], "D-Bus client must parse desktop activation host-root safety")
 assert(!desktop_activation["backend_details_exposed"], "D-Bus client must parse desktop activation backend detail status")
+
+portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
+assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
+assert(portal_request_plan["operation"] == "file-open", "D-Bus client must parse Portal request operations")
+assert(portal_request_plan["request_allowed"], "D-Bus client must parse Portal request allowance")
+assert(portal_request_plan["portal_required"], "D-Bus client must parse Portal request requirement")
+assert(!portal_request_plan["request_object_created"], "D-Bus client must parse Portal request object state")
+assert(!portal_request_plan["permission_granted"], "D-Bus client must parse Portal permission grant state")
+assert(!portal_request_plan["host_permission_changed"], "D-Bus client must parse Portal host permission safety")
+assert(!portal_request_plan["backend_details_exposed"], "D-Bus client must parse Portal request backend detail status")
 
 state_root = client.state_root("org.xnix.sample.notepad")
 assert(state_root["root_type"] == "compatibility-application-state-root", "D-Bus client must parse application state roots")
@@ -340,7 +356,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 29, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 30, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
