@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.54"
+VERSION = "0.2.55"
 
 def assert(condition, message)
   return if condition
@@ -44,7 +44,7 @@ assert(!offline_command.include?("--mount"), "offline container must not mount h
 
 assert(runtime_activation_command.fetch(runtime_activation_command.index("--network") + 1) == "none", "runtime activation smoke must run without networking")
 assert(runtime_activation_command.include?("--read-only"), "runtime activation smoke must keep the container root read-only")
-assert(runtime_activation_command.last(2) == ["ruby", "test/test_runtime_activation_install.rb"], "runtime activation smoke must run the activation installer test")
+assert(runtime_activation_command.last(2) == ["ruby", "scripts/runtime_activation_smoke.rb"], "runtime activation smoke must run the packaged activation smoke")
 
 assert(runtime_dbus_command.fetch(runtime_dbus_command.index("--network") + 1) == "none", "runtime D-Bus smoke must run without networking")
 assert(runtime_dbus_command.include?("--read-only"), "runtime D-Bus smoke must keep the container root read-only")

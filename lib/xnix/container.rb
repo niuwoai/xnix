@@ -33,7 +33,7 @@ module Xnix
     end
 
     def runtime_activation_smoke_command
-      offline_run_command(["ruby", "test/test_runtime_activation_install.rb"])
+      offline_run_command(["ruby", "scripts/runtime_activation_smoke.rb"])
     end
 
     def runtime_dbus_smoke_command

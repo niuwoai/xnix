@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.55] - 2026-07-13
+
+### Added
+
+- Added `scripts/runtime_activation_smoke.rb`, a constrained packaged Runtime activation smoke that installs into a temporary root and executes the staged libexec wrapper against installed Runtime assets.
+
+### Changed
+
+- Extended Runtime activation installation to include Runtime Ruby libraries, version metadata, recipe assets, D-Bus contract references, and smoke references required by the packaged wrapper.
+
 ## [0.2.54] - 2026-07-13
 
 ### Added

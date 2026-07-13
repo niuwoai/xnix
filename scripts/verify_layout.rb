@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.54"
+EXPECTED_VERSION = "0.2.55"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -123,6 +123,7 @@ REQUIRED_FILES = %w[
   scripts/full_smoke.rb
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
+  scripts/runtime_activation_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
@@ -187,6 +188,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_write_gate.rb
   test/test_runtime_activation.rb
   test/test_runtime_activation_install.rb
+  test/test_runtime_activation_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_integration_status.rb
@@ -432,6 +434,16 @@ assert(runtime_service_binding_source.include?("\"network_required\" => false"),
 assert(runtime_service_binding_source.include?("\"host_root_modified\" => false"), "Runtime service binding must not mutate the host root")
 assert(runtime_service_binding_source.include?("\"privileged_container_required\" => false"), "Runtime service binding must not require privileged containers")
 assert(runtime_service_binding_source.include?("\"backend_details_exposed\" => false"), "Runtime service binding must hide backend details")
+
+runtime_activation_installer_source = read_project_file("scripts/install_runtime_activation.rb")
+%w[SOURCE_RUNTIME_LIB SOURCE_RECIPE_DIR SOURCE_DBUS_CONTRACT SOURCE_DBUS_SMOKE SOURCE_SESSION_SMOKE usr/lib/xnix usr/runtime/recipes].each do |token|
+  assert(runtime_activation_installer_source.include?(token), "Runtime activation installer must include #{token}")
+end
+
+runtime_activation_smoke_source = read_project_file("scripts/runtime_activation_smoke.rb")
+%w[usr/libexec/xnix/compatd usr/lib/xnix/compatibility/runtime_daemon.rb GetRuntimeMethodParityManifest GetRuntimeWriteGate WriteMethodDisabled].each do |token|
+  assert(runtime_activation_smoke_source.include?(token), "Runtime activation smoke must include #{token}")
+end
 
 runtime_live_owner_gate_source = read_project_file("lib/xnix/compatibility/runtime_live_owner_gate.rb")
 assert(runtime_live_owner_gate_source.include?("xnix-runtime-live-owner-gate"), "Runtime live owner gate must expose a CLI command")

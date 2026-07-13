@@ -109,6 +109,8 @@ AI repair approval gates delegate to `xnix-ai-repair-approval-gate`. The gate mo
 
 Runtime service binding status delegates to `xnix-runtime-service-binding`. The binding model verifies that D-Bus activation, systemd hardening, the packaged libexec wrapper, and the D-Bus contract agree on the Runtime service boundary. It distinguishes activation binding readiness from live production D-Bus ownership, does not mutate the host root, does not require a privileged container, and does not claim backend readiness.
 
+Runtime activation smoke delegates to `scripts/runtime_activation_smoke.rb`. The smoke installs activation files into a temporary root, including the packaged libexec wrapper, Runtime Ruby libraries, version metadata, recipe assets, and D-Bus reference files. It then runs the staged `/usr/libexec/xnix/compatd` through probe, read-only dispatch, write-gate dispatch, and gated write rejection. The smoke uses only the staging root and keeps live production D-Bus ownership pending.
+
 Runtime live owner gates delegate to `xnix-runtime-live-owner-gate` and `GetRuntimeLiveOwnerGate`. The gate model keeps production bus ownership separate from the Linux session-bus smoke adapter, blocks KDE from claiming Runtime ownership, and records the remaining transition gates: long-running owner packaging, stable bus-name acquisition, read-only method parity, and production recipe trust. It is read-only and does not enable launch, install, repair, restore, settings persistence, host-root mutation, or backend-specific details.
 
 Runtime owner smoke planning delegates to `xnix-runtime-owner-smoke-plan` and `GetRuntimeOwnerSmokePlan`. The smoke plan defines how a future packaged owner must prove activation-file alignment, stable bus-name ownership, read-only method parity, write-method rejection, smoke-adapter separation, and KDE-safe summary output. It is read-only, runs in a restricted-session model, does not start a host system service, does not claim the production bus, and does not enable backend launch or settings persistence.
@@ -170,6 +172,7 @@ Portal request modeling delegates to `xnix-portal-request-model`. The model desc
 - AI diagnostic recommendations must be user-visible, review-first, non-executing, and approval-aware before any Runtime repair action occurs.
 - AI repair approval gates must be review-first, non-executing, and blocked until Compatibility Center review, Runtime approval, and restore-point preflight pass.
 - Runtime service binding status must distinguish activation binding readiness from live D-Bus ownership and must not mutate the host root during inspection.
+- Runtime activation smoke must run the staged packaged wrapper against installed Runtime libraries and assets before claiming activation wrapper readiness.
 - Runtime live owner gates must keep the smoke adapter non-production and must not let KDE claim Runtime bus ownership.
 - Runtime owner smoke plans must not start host services, claim the production bus, enable write methods, or expose backend details.
 - Runtime method parity manifests must verify read-only method coverage without enabling write methods.
