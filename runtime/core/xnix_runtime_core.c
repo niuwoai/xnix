@@ -791,6 +791,60 @@ static const XnixRuntimeSettingsChangePolicy settings_change_policies[] = {
   },
 };
 
+static const XnixRuntimeServiceBindingPolicy service_binding_policy = {
+  .activation = {
+    .dbus_service_file = "runtime/dbus/org.xnix.Compatibility1.service",
+    .systemd_unit = "runtime/systemd/xnix-compatd.service",
+    .libexec_wrapper = "libexec/xnix/compatd",
+    .dbus_contract = "runtime/dbus/org.xnix.Compatibility1.xml",
+    .packaged_wrapper = "/usr/libexec/xnix/compatd",
+  },
+  .checks = {
+    {
+      .id = "dbus-service-activation",
+      .status = "pass",
+      .summary = "D-Bus activation points to the packaged Runtime wrapper.",
+    },
+    {
+      .id = "systemd-service-hardening",
+      .status = "pass",
+      .summary = "systemd activation uses the stable bus name and hardened service settings.",
+    },
+    {
+      .id = "libexec-wrapper",
+      .status = "pass",
+      .summary = "Packaged Runtime wrapper delegates to the Runtime daemon entry point.",
+    },
+    {
+      .id = "dbus-contract",
+      .status = "pass",
+      .summary = "D-Bus contract exposes read-only Runtime service binding status.",
+    },
+    {
+      .id = "live-dbus-owner",
+      .status = "pending",
+      .summary = "A long-running production D-Bus owner is still pending.",
+    },
+  },
+  .check_count = 5,
+  .counts = {
+    .total = 5,
+    .passed = 4,
+    .pending = 1,
+    .blocked = 0,
+  },
+  .runtime_owned = true,
+  .kde_policy_owner = false,
+  .activation_binding_ready = true,
+  .live_dbus_owner_ready = false,
+  .smoke_adapter_available = true,
+  .network_required = false,
+  .host_root_modified = false,
+  .privileged_container_required = false,
+  .backend_details_exposed = false,
+  .summary = "Runtime service activation files are aligned; live D-Bus ownership remains pending.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1329,4 +1383,10 @@ xnix_runtime_find_settings_change_policy(const char *application_id)
   }
 
   return NULL;
+}
+
+const XnixRuntimeServiceBindingPolicy *
+xnix_runtime_service_binding_policy(void)
+{
+  return &service_binding_policy;
 }

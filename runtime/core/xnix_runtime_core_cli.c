@@ -1254,6 +1254,108 @@ print_settings_change_policy_for_application(
 }
 
 static void
+print_service_activation(const XnixRuntimeServiceActivation *activation)
+{
+  fputs("{", stdout);
+  print_string_field("dbus_service_file", activation->dbus_service_file);
+  fputs(",", stdout);
+  print_string_field("systemd_unit", activation->systemd_unit);
+  fputs(",", stdout);
+  print_string_field("libexec_wrapper", activation->libexec_wrapper);
+  fputs(",", stdout);
+  print_string_field("dbus_contract", activation->dbus_contract);
+  fputs(",", stdout);
+  print_string_field("packaged_wrapper", activation->packaged_wrapper);
+  fputs("}", stdout);
+}
+
+static void
+print_service_binding_checks(const XnixRuntimeServiceBindingPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->check_count; index++) {
+    const XnixRuntimeServiceBindingCheck *check = &policy->checks[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", check->id);
+    fputs(",", stdout);
+    print_string_field("status", check->status);
+    fputs(",", stdout);
+    print_string_field("summary", check->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_service_binding_counts(const XnixRuntimeServiceBindingCounts *counts)
+{
+  fputs("{", stdout);
+  fputs("\"total\":", stdout);
+  printf("%zu,", counts->total);
+  fputs("\"passed\":", stdout);
+  printf("%zu,", counts->passed);
+  fputs("\"pending\":", stdout);
+  printf("%zu,", counts->pending);
+  fputs("\"blocked\":", stdout);
+  printf("%zu", counts->blocked);
+  fputs("}", stdout);
+}
+
+static void
+print_service_binding_policy(const XnixRuntimeServiceBindingPolicy *policy)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("binding_type", "runtime-service-binding");
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  printf("\"bus_name\":\"%s\",", xnix_runtime_bus_name());
+  printf("\"object_path\":\"%s\",", xnix_runtime_object_path());
+  printf("\"interface\":\"%s\",", xnix_runtime_interface());
+  fputs("\"activation\":", stdout);
+  print_service_activation(&policy->activation);
+  fputs(",", stdout);
+  fputs("\"checks\":", stdout);
+  print_service_binding_checks(policy);
+  fputs(",", stdout);
+  fputs("\"counts\":", stdout);
+  print_service_binding_counts(&policy->counts);
+  fputs(",", stdout);
+  fputs("\"activation_binding_ready\":", stdout);
+  print_bool(policy->activation_binding_ready);
+  fputs(",", stdout);
+  fputs("\"live_dbus_owner_ready\":", stdout);
+  print_bool(policy->live_dbus_owner_ready);
+  fputs(",", stdout);
+  fputs("\"smoke_adapter_available\":", stdout);
+  print_bool(policy->smoke_adapter_available);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -2037,6 +2139,16 @@ print_settings_change_policy(const char *application_id)
 }
 
 static int
+print_runtime_service_binding(void)
+{
+  const XnixRuntimeServiceBindingPolicy *policy = xnix_runtime_service_binding_policy();
+
+  print_service_binding_policy(policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2115,6 +2227,8 @@ print_probe(void)
   fputs("\"settings_change_policy_owner\":\"c\",", stdout);
   fputs("\"settings_change_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_settings_change_policy_count());
+  fputs("\"service_binding_policy_owner\":\"c\",", stdout);
+  fputs("\"service_binding_policy_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2168,7 +2282,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2277,6 +2391,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "settings-change-policy") == 0 && argc == 3) {
     return print_settings_change_policy(argv[2]);
+  }
+
+  if (strcmp(argv[1], "runtime-service-binding") == 0 && argc == 2) {
+    return print_runtime_service_binding();
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

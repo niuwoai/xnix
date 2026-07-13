@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.68"
+#define XNIX_RUNTIME_VERSION "0.2.69"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -352,6 +352,44 @@ typedef struct {
   const char *summary;
 } XnixRuntimeSettingsChangePolicy;
 
+typedef struct {
+  const char *dbus_service_file;
+  const char *systemd_unit;
+  const char *libexec_wrapper;
+  const char *dbus_contract;
+  const char *packaged_wrapper;
+} XnixRuntimeServiceActivation;
+
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeServiceBindingCheck;
+
+typedef struct {
+  size_t total;
+  size_t passed;
+  size_t pending;
+  size_t blocked;
+} XnixRuntimeServiceBindingCounts;
+
+typedef struct {
+  XnixRuntimeServiceActivation activation;
+  XnixRuntimeServiceBindingCheck checks[5];
+  size_t check_count;
+  XnixRuntimeServiceBindingCounts counts;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool activation_binding_ready;
+  bool live_dbus_owner_ready;
+  bool smoke_adapter_available;
+  bool network_required;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeServiceBindingPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -416,5 +454,7 @@ const XnixRuntimeSettingsPolicy *xnix_runtime_find_settings_policy(const char *a
 size_t xnix_runtime_settings_change_policy_count(void);
 const XnixRuntimeSettingsChangePolicy *xnix_runtime_settings_change_policy_at(size_t index);
 const XnixRuntimeSettingsChangePolicy *xnix_runtime_find_settings_change_policy(const char *application_id);
+
+const XnixRuntimeServiceBindingPolicy *xnix_runtime_service_binding_policy(void);
 
 #endif

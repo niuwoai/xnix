@@ -19,7 +19,7 @@ rule = Xnix::Compatibility::KWinWindowRule.new(
   name: "Sample Notepad"
 ).to_h
 
-assert(rule["version"] == "0.2.68", "KWin window rule must expose the current version")
+assert(rule["version"] == "0.2.69", "KWin window rule must expose the current version")
 assert(rule["request_type"] == "kwin-window-rule", "KWin window rule must identify the model type")
 assert(rule["desktop"] == "KDE Plasma", "KWin window rule must target KDE Plasma")
 assert(rule["script_role"] == "identity-and-layout", "KWin window rule must keep a bounded script role")

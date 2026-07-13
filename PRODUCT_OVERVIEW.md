@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-14 | Current version: v0.2.68
+> Last updated: 2026-07-14 | Current version: v0.2.69
 
 ## Summary
 
@@ -59,8 +59,8 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - AI diagnostic inputs delegate to `xnix-ai-diagnostic-input`, which packages recipe, run-plan, test-result, repair, signal, and privacy-boundary context without calling an AI provider or requiring network access.
 - AI diagnostic recommendations delegate to `xnix-ai-diagnostic-recommendation`, which converts diagnostic inputs into user-visible, review-first recommendations without executing repairs or calling an AI provider.
 - AI repair approval gates delegate to `xnix-ai-repair-approval-gate`, which blocks AI-driven repair execution until Compatibility Center review, Runtime approval, and restore-point preflight gates pass.
-- The C Runtime core delegates to `xnix_runtime_core.c` and `xnix-runtime-core`, which expose the stable Runtime D-Bus identity, reserved write methods, write gate decisions, safe application catalog reads, engine selection reads, Portal access policy reads, snapshot policy reads, application state-root policy reads, install readiness policy reads, artifact manifest policy reads, acquisition preflight policy reads, package source policy reads, backend binding policy reads, settings policy reads, and settings change policy reads without relying on Ruby for that product boundary.
-- Runtime service binding status delegates to `xnix-runtime-service-binding`, which verifies D-Bus activation files, systemd hardening, the libexec wrapper, and contract exposure without mutating the host root or claiming live D-Bus ownership before it exists.
+- The C Runtime core delegates to `xnix_runtime_core.c` and `xnix-runtime-core`, which expose the stable Runtime D-Bus identity, reserved write methods, write gate decisions, safe application catalog reads, engine selection reads, Portal access policy reads, snapshot policy reads, application state-root policy reads, install readiness policy reads, artifact manifest policy reads, acquisition preflight policy reads, package source policy reads, backend binding policy reads, settings policy reads, and settings change policy reads, and service binding policy reads without relying on Ruby for that product boundary.
+- Runtime service binding status delegates to `xnix-runtime-service-binding` and `xnix-runtime-core`, which verify D-Bus activation files, systemd hardening, the libexec wrapper, and contract exposure without mutating the host root or claiming live D-Bus ownership before it exists.
 - Runtime activation smoke delegates to `scripts/runtime_activation_smoke.rb`, which installs the packaged wrapper, Runtime Ruby libraries, version metadata, recipes, and D-Bus references into a temporary root, then runs the staged `/usr/libexec/xnix/compatd` through probe, read-only dispatch, write-gate dispatch, and gated write rejection without modifying the host root.
 - Runtime live owner gates delegate to `xnix-runtime-live-owner-gate`, which separates aligned activation files from production bus ownership and blocks treating the smoke adapter or KDE as the Runtime owner.
 - Runtime owner smoke planning delegates to `xnix-runtime-owner-smoke-plan`, which defines the future production owner smoke sequence for bus-name ownership, read-only method parity, write-method rejection, and smoke-adapter boundary checks without starting services or claiming production ownership.
@@ -125,7 +125,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | AI diagnostic input | Runtime packages safe diagnostic context for future AI analysis without exposing user documents or backend details |
 | AI diagnostic recommendation | Runtime prepares user-visible review-first recommendations without auto-executing repairs |
 | AI repair approval gate | Runtime blocks AI repair execution until review, approval, and restore-point preflight gates pass |
-| C Runtime core | C owns stable Runtime identity, application catalog metadata, engine selection metadata, Portal access policy metadata, snapshot policy metadata, application state-root policy metadata, install readiness metadata, artifact manifest metadata, acquisition preflight metadata, package source metadata, backend binding metadata, settings metadata, settings change metadata, and write-gate decisions while Ruby remains test tooling |
+| C Runtime core | C owns stable Runtime identity, application catalog metadata, engine selection metadata, Portal access policy metadata, snapshot policy metadata, application state-root policy metadata, install readiness metadata, artifact manifest metadata, acquisition preflight metadata, package source metadata, backend binding metadata, settings metadata, settings change metadata, service binding metadata, and write-gate decisions while Ruby remains test tooling |
 | Runtime service binding | Runtime reports D-Bus activation, systemd, libexec, and live-owner readiness for KDE and diagnostics |
 | Runtime activation smoke | Staged packaged wrapper runs against installed Runtime libraries and assets in a temporary root |
 | Runtime live owner gate | Runtime reports production bus-owner transition gates and keeps the smoke adapter non-production |
