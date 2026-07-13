@@ -49,6 +49,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetKWinWindowRulePlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetFileAssociationPlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>

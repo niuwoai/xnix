@@ -91,6 +91,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetKWinWindowRulePlan"
+      [
+        "({'request_type': <'kwin-window-rule'>, 'desktop': <'KDE Plasma'>, 'application_id': <'org.xnix.sample.notepad'>, 'name': <'Sample Notepad'>, 'script_role': <'identity-and-layout'>, 'resource_name': <'org.xnix.sample.notepad'>, 'class_group': <'xnix-compatibility'>, 'title_hint': <'Sample Notepad'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'task_manager_grouping_key': <'org.xnix.sample.notepad'>, 'launcher_url': <'applications:xnix-org.xnix.sample.notepad.desktop'>, 'skip_taskbar': <false>, 'show_in_switcher': <true>, 'placement': <'normal-window'>, 'pinning_allowed': <true>, 'restore_allowed': <true>, 'restore_key': <'org.xnix.sample.notepad'>, 'prefer_existing_window': <true>, 'window_manager_policy_only': <true>, 'runtime_owns_backend_policy': <true>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -201,7 +207,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <37>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <38>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -373,6 +379,22 @@ assert(!krunner_query["query_execution_enabled"], "D-Bus client must parse KRunn
 assert(!krunner_query["backend_launch_enabled"], "D-Bus client must parse KRunner backend launch gates")
 assert(!krunner_query["backend_details_exposed"], "D-Bus client must parse KRunner backend detail status")
 
+kwin_rule = client.kwin_window_rule_plan("org.xnix.sample.notepad")
+assert(kwin_rule["request_type"] == "kwin-window-rule", "D-Bus client must parse KWin window rule plans")
+assert(kwin_rule["desktop"] == "KDE Plasma", "D-Bus client must parse KWin desktops")
+assert(kwin_rule["application_id"] == "org.xnix.sample.notepad", "D-Bus client must parse KWin application ids")
+assert(kwin_rule["script_role"] == "identity-and-layout", "D-Bus client must parse KWin script roles")
+assert(kwin_rule["resource_name"] == "org.xnix.sample.notepad", "D-Bus client must parse KWin resource names")
+assert(kwin_rule["class_group"] == "xnix-compatibility", "D-Bus client must parse KWin class groups")
+assert(kwin_rule["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse KWin desktop files")
+assert(!kwin_rule["skip_taskbar"], "D-Bus client must parse KWin taskbar visibility")
+assert(kwin_rule["show_in_switcher"], "D-Bus client must parse KWin switcher visibility")
+assert(kwin_rule["pinning_allowed"], "D-Bus client must parse KWin pinning")
+assert(kwin_rule["restore_allowed"], "D-Bus client must parse KWin restore")
+assert(kwin_rule["window_manager_policy_only"], "D-Bus client must parse KWin policy scope")
+assert(kwin_rule["runtime_owns_backend_policy"], "D-Bus client must parse KWin Runtime ownership")
+assert(!kwin_rule["backend_details_exposed"], "D-Bus client must parse KWin backend detail status")
+
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
 assert(portal_request_plan["operation"] == "file-open", "D-Bus client must parse Portal request operations")
@@ -490,7 +512,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 37, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 38, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

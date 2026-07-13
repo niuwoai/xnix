@@ -80,6 +80,7 @@ module Xnix
             "desktop_activation_manifests" => true,
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
+            "kwin_window_rule_planning" => true,
             "file_association_planning" => true,
             "notification_planning" => true,
             "tray_status_planning" => true,
@@ -252,6 +253,47 @@ module Xnix
           "backend_details_exposed" => false,
           "desktop_safe_summary" => "Compatibility windows are grouped, pinned, switched, and restored through a normal desktop entry."
         )
+      end
+
+      def kwin_window_rule_plan(application_id)
+        identity = task_manager_identity_plan(application_id)
+        {
+          "version" => VERSION,
+          "request_type" => "kwin-window-rule",
+          "desktop" => "KDE Plasma",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "application_id" => identity.fetch("application_id"),
+          "name" => identity.fetch("name"),
+          "script_role" => "identity-and-layout",
+          "match" => identity.fetch("kwin").fetch("match").merge(
+            "title_hint" => identity.fetch("window").fetch("title_hint")
+          ),
+          "set" => {
+            "desktop_file" => identity.fetch("desktop_file"),
+            "application_id" => identity.fetch("application_id"),
+            "task_manager_grouping_key" => identity.fetch("task_manager").fetch("grouping_key"),
+            "launcher_url" => identity.fetch("task_manager").fetch("launcher_url"),
+            "skip_taskbar" => identity.fetch("task_manager").fetch("skip_taskbar"),
+            "show_in_switcher" => identity.fetch("task_manager").fetch("show_in_switcher"),
+            "placement" => identity.fetch("kwin").fetch("placement")
+          },
+          "restore" => {
+            "pinning_allowed" => identity.fetch("task_manager").fetch("pinning_allowed"),
+            "restore_allowed" => identity.fetch("restore").fetch("restore_allowed"),
+            "restore_key" => identity.fetch("restore").fetch("restore_key"),
+            "prefer_existing_window" => identity.fetch("restore").fetch("prefer_existing_window")
+          },
+          "safety" => {
+            "window_manager_policy_only" => true,
+            "runtime_owns_backend_policy" => true,
+            "host_root_modified" => false,
+            "backend_details_exposed" => false
+          },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KWin window rules are Runtime-owned identity and layout hints for normal desktop behavior."
+        }
       end
 
       def file_association_plan(application_id)
@@ -557,6 +599,8 @@ module Xnix
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
           task_manager_identity_plan(required_parameter(method_name, parameters, 0))
+        when "GetKWinWindowRulePlan"
+          kwin_window_rule_plan(required_parameter(method_name, parameters, 0))
         when "GetFileAssociationPlan"
           file_association_plan(required_parameter(method_name, parameters, 0))
         when "GetNotificationPlan"
@@ -1232,6 +1276,8 @@ module Xnix
             write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "task-manager-identity-plan"
             write_json(runtime.task_manager_identity_plan(require_argument(command)))
+          when "kwin-window-rule-plan"
+            write_json(runtime.kwin_window_rule_plan(require_argument(command)))
           when "file-association-plan"
             write_json(runtime.file_association_plan(require_argument(command)))
           when "notification-plan"

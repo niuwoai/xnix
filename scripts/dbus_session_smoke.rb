@@ -120,6 +120,32 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKWinWindowRulePlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKWinWindowRulePlan: #{stderr}")
+  assert(stdout.include?("kwin-window-rule"), "runtime smoke adapter must expose KWin window rule plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "ruby",
+    "bin/xnix-kwin-window-rule",
+    "--source",
+    "dbus",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "KWin window rule model must consume Runtime plans over D-Bus: #{stderr}")
+  kwin_rule = JSON.parse(stdout)
+  assert(kwin_rule.fetch("source").fetch("kind") == "runtime-dbus-session", "KWin window rule model must report the D-Bus Runtime source")
+  assert(kwin_rule.fetch("request_type") == "kwin-window-rule", "KWin window rule model must preserve Runtime plan type")
+  assert(kwin_rule.fetch("match").fetch("resource_name") == "org.xnix.sample.notepad", "KWin window rule model must expose D-Bus match identity")
+  assert(!kwin_rule.fetch("safety").fetch("backend_details_exposed"), "KWin window rule model must preserve backend detail gates from D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetFileAssociationPlan",
     "org.xnix.sample.notepad"
   )

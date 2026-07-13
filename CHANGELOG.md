@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.89] - 2026-07-14
+
+### Added
+
+- Added C Runtime KWin window rule plan records and a CLI read method for Runtime-owned identity and layout hints.
+- Added Runtime D-Bus contract coverage for `GetKWinWindowRulePlan` so KDE KWin surfaces can read Runtime-owned window-rule plans without owning backend policy.
+
+### Changed
+
+- Updated the KDE-facing KWin window rule model to consume Runtime-owned window-rule plans before falling back to local task-manager identity data.
+- Extended Runtime method parity, D-Bus smoke coverage, daemon diagnostics, the D-Bus client, and layout verification to include KWin window rule planning while keeping host-root mutation and backend details disabled.
+
 ## [0.2.88] - 2026-07-14
 
 ### Changed

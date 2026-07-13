@@ -25,6 +25,7 @@ module Xnix
         GetDesktopActivationManifest
         GetDesktopEntryPlan
         GetTaskManagerIdentityPlan
+        GetKWinWindowRulePlan
         GetFileAssociationPlan
         GetNotificationPlan
         GetTrayStatus
@@ -72,6 +73,7 @@ module Xnix
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
+        "GetKWinWindowRulePlan" => "kwin_window_rule_plan",
         "GetFileAssociationPlan" => "file_association_plan",
         "GetNotificationPlan" => "notification_plan",
         "GetTrayStatus" => "tray_status",

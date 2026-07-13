@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.88"
+#define XNIX_RUNTIME_VERSION "0.2.89"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[37];
+  const char *read_only_methods[38];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -772,6 +772,34 @@ typedef struct {
 
 typedef struct {
   const XnixRuntimeApplication *application;
+  const char *request_type;
+  const char *desktop;
+  const char *script_role;
+  const char *resource_name;
+  const char *class_group;
+  const char *title_hint;
+  const char *desktop_file;
+  const char *application_id;
+  const char *task_manager_grouping_key;
+  const char *launcher_url;
+  const char *placement;
+  bool skip_taskbar;
+  bool show_in_switcher;
+  bool pinning_allowed;
+  bool restore_allowed;
+  const char *restore_key;
+  bool prefer_existing_window;
+  bool window_manager_policy_only;
+  bool runtime_owns_backend_policy;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeKWinWindowRulePlan;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
   const char *desktop_file;
   const char *mimeapps_path;
   const char *default_section;
@@ -983,6 +1011,10 @@ bool xnix_runtime_desktop_entry_plan(
 bool xnix_runtime_task_manager_identity_plan(
   const char *application_id,
   XnixRuntimeTaskManagerIdentityPlan *plan
+);
+bool xnix_runtime_kwin_window_rule_plan(
+  const char *application_id,
+  XnixRuntimeKWinWindowRulePlan *plan
 );
 bool xnix_runtime_file_association_plan(
   const char *application_id,

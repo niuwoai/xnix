@@ -142,6 +142,19 @@ assert(!krunner_query["summary"]["backend_launch_enabled"], "dispatch must keep 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKWinWindowRulePlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetKWinWindowRulePlan must exit successfully: #{stderr}")
+kwin_rule = JSON.parse(stdout)
+assert(kwin_rule["request_type"] == "kwin-window-rule", "dispatch must route GetKWinWindowRulePlan")
+assert(kwin_rule["match"]["class_group"] == "xnix-compatibility", "dispatch must expose KWin class groups")
+assert(kwin_rule["set"]["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "dispatch must expose KWin desktop files")
+assert(!kwin_rule["safety"]["backend_details_exposed"], "dispatch must keep KWin backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

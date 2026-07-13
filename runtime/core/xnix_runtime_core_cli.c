@@ -2824,6 +2824,8 @@ print_probe(void)
   fputs("\"desktop_entry_plan_count\":1,", stdout);
   fputs("\"task_manager_identity_plan_owner\":\"c\",", stdout);
   fputs("\"task_manager_identity_plan_count\":1,", stdout);
+  fputs("\"kwin_window_rule_plan_owner\":\"c\",", stdout);
+  fputs("\"kwin_window_rule_plan_count\":1,", stdout);
   fputs("\"file_association_plan_owner\":\"c\",", stdout);
   fputs("\"file_association_plan_count\":1,", stdout);
   fputs("\"notification_plan_owner\":\"c\",", stdout);
@@ -2891,6 +2893,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_desktop_activation.inc"
 #include "xnix_runtime_core_cli_desktop_entry.inc"
 #include "xnix_runtime_core_cli_task_manager_identity.inc"
+#include "xnix_runtime_core_cli_kwin_window_rule.inc"
 #include "xnix_runtime_core_cli_file_association.inc"
 #include "xnix_runtime_core_cli_notification.inc"
 #include "xnix_runtime_core_cli_tray_status.inc"
