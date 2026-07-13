@@ -37,6 +37,7 @@ begin
   assert(status.success?, "runtime smoke adapter must be introspectable: #{stderr}")
   assert(stdout.include?(INTERFACE), "runtime smoke adapter introspection must expose #{INTERFACE}")
   assert(stdout.include?("ListApplications"), "runtime smoke adapter introspection must expose ListApplications")
+  assert(stdout.include?("GetRuntimeServiceBinding"), "runtime smoke adapter introspection must expose Runtime service binding")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -178,6 +179,16 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetPortalAccessPolicy: #{stderr}")
   assert(stdout.include?("portal-access"), "runtime smoke adapter must expose Portal policy over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeServiceBinding"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeServiceBinding: #{stderr}")
+  assert(stdout.include?("runtime-service-binding"), "runtime smoke adapter must expose Runtime service binding over D-Bus")
 
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure

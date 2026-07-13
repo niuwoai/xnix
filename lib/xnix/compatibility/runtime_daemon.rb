@@ -14,6 +14,7 @@ require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
+require_relative "runtime_service_binding"
 
 module Xnix
   module Compatibility
@@ -52,6 +53,7 @@ module Xnix
             "ai_diagnostic_inputs" => true,
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
+            "runtime_service_binding" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -93,6 +95,7 @@ module Xnix
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
+          "runtime_service_binding" => runtime_service_binding_summary,
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -144,6 +147,10 @@ module Xnix
       def portal_access_policy(application_id, operation)
         require_recipe(application_id)
         PortalAccessPolicy.new(application_id: application_id, operation: operation).to_h
+      end
+
+      def runtime_service_binding
+        RuntimeServiceBinding.new.to_h
       end
 
       def dispatch(method_name, parameters = [])
@@ -201,6 +208,8 @@ module Xnix
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
           )
+        when "GetRuntimeServiceBinding"
+          runtime_service_binding
         else
           raise ArgumentError, "unsupported runtime method: #{method_name}"
         end
@@ -314,6 +323,17 @@ module Xnix
         }
       end
 
+      def runtime_service_binding_summary
+        binding = RuntimeServiceBinding.new.to_h
+        {
+          "binding_type" => binding.fetch("binding_type"),
+          "activation_binding_ready" => binding.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => binding.fetch("live_dbus_owner_ready"),
+          "counts" => binding.fetch("counts"),
+          "summary" => binding.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -380,6 +400,8 @@ module Xnix
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE
             test_type = @argv.shift || "preflight"
             write_json(runtime.ai_repair_approval_gate(application_id, issue, test_type))
+          when "service-binding"
+            write_json(runtime.runtime_service_binding)
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

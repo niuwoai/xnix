@@ -73,6 +73,7 @@ module Xnix
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
+          "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -166,17 +167,39 @@ module Xnix
         }
       end
 
+      def runtime_service_binding_summary(binding)
+        return nil unless binding
+
+        counts = binding.fetch("counts", {})
+        {
+          "binding_type" => binding.fetch("binding_type"),
+          "activation_binding_ready" => binding.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => binding.fetch("live_dbus_owner_ready"),
+          "pending_count" => counts.fetch("pending", 0),
+          "blocked_count" => counts.fetch("blocked", 0),
+          "summary" => binding.fetch("summary", "")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
-          "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) },
-          "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" },
-          "ai_diagnostic_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_input", {}).fetch("safe_for_ai_diagnostics", false) },
-          "ai_recommendation_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_recommendation", {}).fetch("safe_for_ai_diagnostics", false) },
-          "blocked_ai_repair_gate_count" => applications.count { |application| application.fetch("ai_repair_approval_gate", {}).fetch("gate_decision", nil) == "blocked-until-approval" }
+          "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
+          "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
+          "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
+          "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },
+          "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) }
         }
+      end
+
+      def section(application, key)
+        value = application.fetch(key, nil)
+        return value if value.is_a?(Hash)
+
+        {}
       end
 
       class CLI

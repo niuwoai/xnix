@@ -89,6 +89,10 @@ module Xnix
         parse_dictionary(call("GetPortalAccessPolicy", application_id, operation))
       end
 
+      def runtime_service_binding
+        parse_dictionary(call("GetRuntimeServiceBinding"))
+      end
+
       private
 
       def call(method_name, *arguments)

@@ -97,6 +97,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetRuntimeServiceBinding"
+      [
+        "({'binding_type': <'runtime-service-binding'>, 'activation_binding_ready': <true>, 'live_dbus_owner_ready': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -167,6 +173,11 @@ assert(snapshot_plan["enabled_by_default"], "D-Bus client must parse snapshot pl
 portal_policy = client.portal_access_policy("org.xnix.sample.notepad", "file-open")
 assert(portal_policy["policy_type"] == "portal-access", "D-Bus client must parse Portal access policies")
 assert(portal_policy["portal_required"], "D-Bus client must parse Portal policy booleans")
+
+service_binding = client.runtime_service_binding
+assert(service_binding["binding_type"] == "runtime-service-binding", "D-Bus client must parse Runtime service binding")
+assert(service_binding["activation_binding_ready"], "D-Bus client must parse Runtime service binding readiness")
+assert(!service_binding["live_dbus_owner_ready"], "D-Bus client must parse live D-Bus owner readiness")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

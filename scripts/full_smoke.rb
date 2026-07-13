@@ -13,7 +13,13 @@ LOG_PATH = PROJECT_ROOT.join("output", "serial.log")
 
 abort "Full smoke tests require a tenth formal version" unless Xnix::Milestone.full_build_required?(VERSION)
 
-[["configure-system"], ["download-system"], ["build-system"]].each do |arguments|
+[
+  ["build"],
+  ["fetch-sources"],
+  ["configure-system"],
+  ["download-system"],
+  ["build-system"]
+].each do |arguments|
   success = system("ruby", "scripts/container.rb", *arguments)
   abort "Full smoke step failed: #{arguments.first}" unless success
 end

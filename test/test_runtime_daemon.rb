@@ -18,7 +18,7 @@ command = ["ruby", project_root.join("bin/xnix-compatd").to_s]
 stdout, stderr, status = Open3.capture3(*command, "probe")
 assert(status.success?, "runtime daemon probe must exit successfully: #{stderr}")
 probe = JSON.parse(stdout)
-assert(probe["version"] == "0.2.39", "runtime daemon probe must report the current version")
+assert(probe["version"] == "0.2.40", "runtime daemon probe must report the current version")
 assert(probe["bus_name"] == "org.xnix.Compatibility1", "runtime daemon probe must keep the stable bus name")
 assert(probe["capabilities"]["recipe_store"], "runtime daemon probe must expose recipe store capability")
 assert(probe["capabilities"]["registry_backed_recipe_store"], "runtime daemon probe must expose registry-backed recipe loading")
@@ -30,6 +30,7 @@ assert(probe["capabilities"]["compatibility_test_results"], "runtime daemon prob
 assert(probe["capabilities"]["ai_diagnostic_inputs"], "runtime daemon probe must expose AI diagnostic input capability")
 assert(probe["capabilities"]["ai_diagnostic_recommendations"], "runtime daemon probe must expose AI diagnostic recommendation capability")
 assert(probe["capabilities"]["ai_repair_approval_gates"], "runtime daemon probe must expose AI repair approval gate capability")
+assert(probe["capabilities"]["runtime_service_binding"], "runtime daemon probe must expose Runtime service binding capability")
 assert(probe["capabilities"]["dbus_method_dispatch"], "runtime daemon probe must expose method dispatch capability")
 assert(!probe["capabilities"]["dbus_binding"], "runtime daemon must not claim a D-Bus binding before it exists")
 assert(probe["recipe_trust"]["registry_backed"], "runtime daemon probe must report registry-backed recipe loading")
@@ -62,6 +63,9 @@ assert(!diagnostics["ai_diagnostic_recommendation"]["ai_provider_called"], "runt
 assert(diagnostics["ai_repair_approval_gate"]["gate_type"] == "ai-repair-approval-gate", "runtime daemon diagnostics must include AI repair approval gates")
 assert(diagnostics["ai_repair_approval_gate"]["gate_decision"] == "blocked-until-approval", "runtime daemon diagnostics must block repair execution until approval")
 assert(!diagnostics["ai_repair_approval_gate"]["auto_execution_allowed"], "runtime daemon diagnostics must not allow automatic AI repair execution")
+assert(diagnostics["runtime_service_binding"]["binding_type"] == "runtime-service-binding", "runtime daemon diagnostics must include Runtime service binding status")
+assert(diagnostics["runtime_service_binding"]["activation_binding_ready"], "runtime daemon diagnostics must expose activation binding readiness")
+assert(!diagnostics["runtime_service_binding"]["live_dbus_owner_ready"], "runtime daemon diagnostics must not claim live D-Bus ownership")
 assert(diagnostics["repair_plan"]["plan_type"] == "compatibility-repair", "runtime daemon diagnostics must include repair planning")
 assert(diagnostics["repair_plan"]["issue"] == "engine-binding-pending", "runtime daemon diagnostics must identify the pending repair issue")
 assert(diagnostics["repair_plan"]["snapshot_required"], "runtime daemon diagnostics repair plan must require snapshots")
@@ -104,5 +108,11 @@ assert(status.success?, "runtime daemon ai-repair-approval-gate must exit succes
 ai_gate = JSON.parse(stdout)
 assert(ai_gate["gate_type"] == "ai-repair-approval-gate", "runtime daemon ai-repair-approval-gate command must emit a gate")
 assert(ai_gate["gate_decision"] == "blocked-until-approval", "runtime daemon ai-repair-approval-gate must block until approval")
+
+stdout, stderr, status = Open3.capture3(*command, "service-binding")
+assert(status.success?, "runtime daemon service-binding must exit successfully: #{stderr}")
+service_binding = JSON.parse(stdout)
+assert(service_binding["binding_type"] == "runtime-service-binding", "runtime daemon service-binding command must emit service binding")
+assert(service_binding["activation_binding_ready"], "runtime daemon service-binding must report activation readiness")
 
 puts "PASS: compatibility runtime daemon unit tests"

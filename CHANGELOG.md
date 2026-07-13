@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.40] - 2026-07-13
+
+### Added
+
+- Added `xnix-runtime-service-binding`, a Runtime-owned service binding model for D-Bus activation files, systemd hardening, the packaged libexec wrapper, contract exposure, and live-owner readiness.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke exposure, and focused coverage for Runtime service binding status.
+
+### Changed
+
+- Extended the Runtime foundation documentation to distinguish activation binding readiness from live production D-Bus ownership.
+- Fixed the full smoke sequence so a clean milestone run builds the constrained Docker image and fetches Buildroot before configuring, downloading package sources, building, and booting QEMU.
+
 ## [0.2.39] - 2026-07-13
 
 ### Added

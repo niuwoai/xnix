@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.39", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.40", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -32,6 +32,7 @@ assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model mus
 assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
 assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
 assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
+assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center model must summarize Runtime service binding readiness")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -55,10 +56,40 @@ assert(!application["ai_diagnostic_recommendation"]["ai_provider_called"], "KDE 
 assert(application["ai_repair_approval_gate"]["gate_type"] == "ai-repair-approval-gate", "KDE center model must expose AI repair approval gates")
 assert(application["ai_repair_approval_gate"]["gate_decision"] == "blocked-until-approval", "KDE center model must expose AI repair gate decisions")
 assert(!application["ai_repair_approval_gate"]["auto_execution_allowed"], "KDE center model must not allow automatic AI repair execution")
+assert(application["runtime_service_binding"]["binding_type"] == "runtime-service-binding", "KDE center model must expose Runtime service binding")
+assert(application["runtime_service_binding"]["activation_binding_ready"], "KDE center model must expose activation binding readiness")
+assert(!application["runtime_service_binding"]["live_dbus_owner_ready"], "KDE center model must not claim live D-Bus ownership")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)
 assert(!json.match?(/prefix|\.wine|proton|virtual machine/i), "KDE center model must not expose backend storage or implementation terms")
+
+MinimalRuntime = Struct.new(:application) do
+  def list_applications
+    [application]
+  end
+
+  def diagnostics(_application_id)
+    {
+      "application_id" => application.fetch("id"),
+      "status" => "known",
+      "runtime_mode" => "automatic"
+    }
+  end
+
+  def source_metadata
+    {
+      "kind" => "runtime-dbus-session",
+      "bus_name" => "org.xnix.Compatibility1",
+      "object_path" => "/org/xnix/Compatibility1",
+      "interface" => "org.xnix.Compatibility1"
+    }
+  end
+end
+
+minimal_model = Xnix::Compatibility::KdeCenterModel.new(runtime: MinimalRuntime.new(runtime.list_applications.first)).to_h
+assert(minimal_model["summary"]["pending_test_step_count"].zero?, "KDE center model must tolerate missing D-Bus test plan summaries")
+assert(minimal_model["summary"]["runtime_service_binding_ready_count"].zero?, "KDE center model must tolerate missing D-Bus service binding summaries")
 
 stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")
 assert(status.success?, "KDE center model CLI must exit successfully: #{stderr}")

@@ -80,6 +80,9 @@
       <arg name="operation" type="s" direction="in"/>
       <arg name="policy" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetRuntimeServiceBinding">
+      <arg name="binding" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

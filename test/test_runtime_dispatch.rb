@@ -135,6 +135,11 @@ assert(status.success?, "dispatch GetPortalAccessPolicy must exit successfully: 
 portal_policy = JSON.parse(stdout)
 assert(portal_policy["policy_type"] == "portal-access", "dispatch must route GetPortalAccessPolicy")
 
+stdout, stderr, status = Open3.capture3(*command, "dispatch", "GetRuntimeServiceBinding")
+assert(status.success?, "dispatch GetRuntimeServiceBinding must exit successfully: #{stderr}")
+service_binding = JSON.parse(stdout)
+assert(service_binding["binding_type"] == "runtime-service-binding", "dispatch must route GetRuntimeServiceBinding")
+
 _stdout, stderr, status = Open3.capture3(*command, "dispatch", "Launch", JSON.generate(["org.xnix.sample.notepad", {}]))
 assert(!status.success?, "dispatch must reject unsupported write methods until a backend exists")
 assert(stderr.include?("unsupported runtime method"), "dispatch must explain unsupported methods")

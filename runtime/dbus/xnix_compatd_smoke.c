@@ -83,6 +83,9 @@ static const gchar introspection_xml[] =
   "      <arg name='operation' type='s' direction='in'/>"
   "      <arg name='policy' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetRuntimeServiceBinding'>"
+  "      <arg name='binding' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -277,6 +280,22 @@ build_portal_policy(const gchar *application_id, const gchar *operation)
   g_variant_builder_add(&policy, "{sv}", "portal_required", g_variant_new_boolean(TRUE));
 
   return g_variant_builder_end(&policy);
+}
+
+static GVariant *
+build_runtime_service_binding(void)
+{
+  GVariantBuilder binding;
+
+  g_variant_builder_init(&binding, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&binding, "{sv}", "binding_type", g_variant_new_string("runtime-service-binding"));
+  g_variant_builder_add(&binding, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&binding, "{sv}", "live_dbus_owner_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&binding, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&binding, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&binding, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&binding);
 }
 
 static void
@@ -474,6 +493,11 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_portal_policy(application_id, operation)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeServiceBinding") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_service_binding()));
     return;
   }
 
