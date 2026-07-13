@@ -58,6 +58,19 @@ assert(run_plan["plan_type"] == "compatibility-run", "dispatch must route GetRun
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetDesktopEntryPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetDesktopEntryPlan must exit successfully: #{stderr}")
+desktop_entry_plan = JSON.parse(stdout)
+assert(desktop_entry_plan["plan_type"] == "desktop-entry-plan", "dispatch must route GetDesktopEntryPlan")
+assert(desktop_entry_plan["standard_desktop_entry"], "dispatch must expose standard desktop entry status")
+assert(desktop_entry_plan["launch_uses_runtime"], "dispatch must keep desktop entry launch Runtime-managed")
+assert(!desktop_entry_plan["safety"]["backend_command_exposed"], "dispatch must keep backend commands hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

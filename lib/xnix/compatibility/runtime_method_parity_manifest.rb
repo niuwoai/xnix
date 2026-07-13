@@ -23,6 +23,7 @@ module Xnix
         GetEngineCatalog
         GetRunPlan
         GetDesktopActivationManifest
+        GetDesktopEntryPlan
         GetPortalRequestPlan
         GetApplicationStateRoot
         GetCompatibilityPackageSource
@@ -63,6 +64,7 @@ module Xnix
         "GetEngineCatalog" => "engine_catalog",
         "GetRunPlan" => "run_plan",
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
+        "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetPortalRequestPlan" => "portal_request_plan",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",

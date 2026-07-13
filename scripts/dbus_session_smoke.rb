@@ -97,6 +97,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetDesktopEntryPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetDesktopEntryPlan: #{stderr}")
+  assert(stdout.include?("desktop-entry-plan"), "runtime smoke adapter must expose desktop entry plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetPortalRequestPlan",
     "org.xnix.sample.notepad",
     "file-open"

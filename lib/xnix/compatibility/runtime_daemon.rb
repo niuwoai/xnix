@@ -20,6 +20,7 @@ require_relative "compatibility_repair_plan"
 require_relative "compatibility_snapshot_plan"
 require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
+require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "portal_access_policy"
 require_relative "portal_request_model"
@@ -72,6 +73,7 @@ module Xnix
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
+            "desktop_entry_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -127,6 +129,7 @@ module Xnix
           "action_queue" => action_queue_summary(recipe),
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
+          "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -160,6 +163,45 @@ module Xnix
       def desktop_activation_manifest(application_id)
         recipe = require_recipe(application_id)
         DesktopIntegrationManifest.new(recipe: recipe).to_h
+      end
+
+      def desktop_entry_plan(application_id)
+        recipe = require_recipe(application_id)
+        desktop_entry = DesktopEntry.new(recipe)
+        {
+          "version" => VERSION,
+          "plan_type" => "desktop-entry-plan",
+          "desktop" => "KDE Plasma",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "application_id" => recipe.id,
+          "desktop_file" => desktop_entry.file_name,
+          "relative_path" => File.join("applications", desktop_entry.file_name),
+          "name" => recipe.name,
+          "comment" => "Run with Xnix Compatibility Runtime",
+          "exec" => "#{DesktopEntry::LAUNCHER} --app #{recipe.id} %U",
+          "icon" => recipe.icon,
+          "categories" => ["Utility"],
+          "mime_types" => recipe.mime_types,
+          "startup_wm_class" => "xnix-#{recipe.id}",
+          "file_argument_mode" => "%U",
+          "standard_desktop_entry" => true,
+          "launch_uses_runtime" => true,
+          "accepts_file_uris" => true,
+          "user_visible" => true,
+          "startup_notify" => true,
+          "terminal" => false,
+          "no_display" => false,
+          "safety" => {
+            "files_written" => false,
+            "host_root_modified" => false,
+            "backend_command_exposed" => false,
+            "raw_windows_executable_exposed" => false,
+            "compatibility_storage_path_exposed" => false,
+            "backend_details_exposed" => false
+          },
+          "desktop_safe_summary" => "Compatibility application desktop entries launch through the Runtime without exposing backend commands."
+        }
       end
 
       def state_root(application_id)
@@ -296,6 +338,8 @@ module Xnix
           run_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopActivationManifest"
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
+        when "GetDesktopEntryPlan"
+          desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -504,6 +548,22 @@ module Xnix
           "backend_commands_exposed" => manifest.fetch("safety").fetch("backend_commands_exposed"),
           "portal_required_for_file_access" => manifest.fetch("safety").fetch("portal_required_for_file_access"),
           "host_privilege_required" => manifest.fetch("safety").fetch("host_privilege_required")
+        }
+      end
+
+      def desktop_entry_plan_summary(recipe)
+        plan = desktop_entry_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "desktop_file" => plan.fetch("desktop_file"),
+          "standard_desktop_entry" => plan.fetch("standard_desktop_entry"),
+          "launch_uses_runtime" => plan.fetch("launch_uses_runtime"),
+          "accepts_file_uris" => plan.fetch("accepts_file_uris"),
+          "backend_command_exposed" => plan.fetch("safety").fetch("backend_command_exposed"),
+          "raw_windows_executable_exposed" => plan.fetch("safety").fetch("raw_windows_executable_exposed"),
+          "compatibility_storage_path_exposed" => plan.fetch("safety").fetch("compatibility_storage_path_exposed"),
+          "host_root_modified" => plan.fetch("safety").fetch("host_root_modified"),
+          "summary" => plan.fetch("desktop_safe_summary")
         }
       end
 
@@ -800,6 +860,8 @@ module Xnix
             write_json(runtime.test_result(application_id, test_type))
           when "backend-binding"
             write_json(runtime.backend_binding(require_argument(command)))
+          when "desktop-entry-plan"
+            write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

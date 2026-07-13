@@ -19,7 +19,7 @@ Xnix::Compatibility::RuntimeWriteGate::WRITE_METHODS.each do |method_name|
   gate = Xnix::Compatibility::RuntimeWriteGate.new(method_name: method_name)
   model = gate.to_h
 
-  assert(model["version"] == "0.2.80", "Runtime write gate must expose the current version")
+  assert(model["version"] == "0.2.81", "Runtime write gate must expose the current version")
   assert(model["gate_type"] == "runtime-write-gate", "Runtime write gate must identify the gate type")
   assert(model["method_name"] == method_name, "Runtime write gate must preserve the method name")
   assert(model["runtime_owned"], "Runtime must own write gates")

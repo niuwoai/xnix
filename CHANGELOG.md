@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.81] - 2026-07-14
+
+### Added
+
+- Added C Runtime desktop entry plan records and a CLI read method for exposing compatibility applications as normal Linux `.desktop` launcher identities.
+- Added Runtime D-Bus contract coverage for `GetDesktopEntryPlan` so KDE surfaces can read launcher identity without seeing backend commands, raw Windows executables, or prefix paths.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, and diagnostics to include desktop entry planning while keeping file writes, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.80] - 2026-07-14
 
 ### Added

@@ -61,6 +61,10 @@ module Xnix
         parse_dictionary(call("GetDesktopActivationManifest", application_id))
       end
 
+      def desktop_entry_plan(application_id)
+        parse_dictionary(call("GetDesktopEntryPlan", application_id))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

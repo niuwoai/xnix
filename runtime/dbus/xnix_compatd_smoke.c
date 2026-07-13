@@ -44,6 +44,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='manifest' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetDesktopEntryPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetPortalRequestPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='operation' type='s' direction='in'/>"
@@ -241,6 +245,31 @@ build_desktop_activation_manifest(const gchar *application_id)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_desktop_entry_plan(const gchar *application_id)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-entry-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&plan, "{sv}", "name", g_variant_new_string("Sample Notepad"));
+  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad %U"));
+  g_variant_builder_add(&plan, "{sv}", "standard_desktop_entry", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "launch_uses_runtime", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "accepts_file_uris", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "backend_command_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "raw_windows_executable_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "compatibility_storage_path_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -648,7 +677,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(30));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(31));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -784,6 +813,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_activation_manifest(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDesktopEntryPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_desktop_entry_plan(application_id))
     );
     return;
   }

@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KRunnerModel.new(runtime: runtime, query: "notepad").to_h
 
-assert(model["version"] == "0.2.80", "KRunner model must expose the current version")
+assert(model["version"] == "0.2.81", "KRunner model must expose the current version")
 assert(model["entry_point"] == "krunner", "KRunner model must identify the KDE entry point")
 assert(model["desktop"] == "KDE Plasma", "KRunner model must stay scoped to KDE Plasma")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KRunner model must describe local fallback reads")

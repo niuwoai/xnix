@@ -55,6 +55,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetDesktopEntryPlan"
+      [
+        "({'plan_type': <'desktop-entry-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'name': <'Sample Notepad'>, 'exec': <'xnix-compat-launch --app org.xnix.sample.notepad %U'>, 'standard_desktop_entry': <true>, 'launch_uses_runtime': <true>, 'accepts_file_uris': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_command_exposed': <false>, 'raw_windows_executable_exposed': <false>, 'compatibility_storage_path_exposed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -165,7 +171,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <30>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <31>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -238,6 +244,20 @@ assert(desktop_activation["activation_ready"], "D-Bus client must parse desktop 
 assert(!desktop_activation["files_written"], "D-Bus client must parse desktop activation write safety")
 assert(!desktop_activation["host_root_modified"], "D-Bus client must parse desktop activation host-root safety")
 assert(!desktop_activation["backend_details_exposed"], "D-Bus client must parse desktop activation backend detail status")
+
+desktop_entry_plan = client.desktop_entry_plan("org.xnix.sample.notepad")
+assert(desktop_entry_plan["plan_type"] == "desktop-entry-plan", "D-Bus client must parse desktop entry plans")
+assert(desktop_entry_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse desktop file names")
+assert(desktop_entry_plan["exec"] == "xnix-compat-launch --app org.xnix.sample.notepad %U", "D-Bus client must parse managed launcher commands")
+assert(desktop_entry_plan["standard_desktop_entry"], "D-Bus client must parse standard desktop entry status")
+assert(desktop_entry_plan["launch_uses_runtime"], "D-Bus client must parse Runtime launcher status")
+assert(desktop_entry_plan["accepts_file_uris"], "D-Bus client must parse file URI status")
+assert(!desktop_entry_plan["files_written"], "D-Bus client must parse desktop entry write safety")
+assert(!desktop_entry_plan["host_root_modified"], "D-Bus client must parse desktop entry host-root safety")
+assert(!desktop_entry_plan["backend_command_exposed"], "D-Bus client must parse backend command hiding")
+assert(!desktop_entry_plan["raw_windows_executable_exposed"], "D-Bus client must parse Windows executable hiding")
+assert(!desktop_entry_plan["compatibility_storage_path_exposed"], "D-Bus client must parse prefix hiding")
+assert(!desktop_entry_plan["backend_details_exposed"], "D-Bus client must parse desktop entry backend detail status")
 
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
@@ -356,7 +376,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 30, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 31, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

@@ -2818,6 +2818,8 @@ print_probe(void)
   fputs("\"compatibility_run_plan_count\":1,", stdout);
   fputs("\"desktop_activation_manifest_owner\":\"c\",", stdout);
   fputs("\"desktop_activation_manifest_count\":1,", stdout);
+  fputs("\"desktop_entry_plan_owner\":\"c\",", stdout);
+  fputs("\"desktop_entry_plan_count\":1,", stdout);
   fputs("\"portal_request_plan_owner\":\"c\",", stdout);
   fputs("\"portal_request_plan_count\":7,", stdout);
   fputs("\"write_methods\":", stdout);
@@ -2874,5 +2876,6 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_action_review.inc"
 #include "xnix_runtime_core_cli_run_plan.inc"
 #include "xnix_runtime_core_cli_desktop_activation.inc"
+#include "xnix_runtime_core_cli_desktop_entry.inc"
 #include "xnix_runtime_core_cli_portal_request.inc"
 #include "xnix_runtime_core_cli_dispatch.inc"
