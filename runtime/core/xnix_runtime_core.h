@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.61"
+#define XNIX_RUNTIME_VERSION "0.2.62"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -109,6 +109,42 @@ typedef struct {
   const char *summary;
 } XnixRuntimeStateRootPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeInstallPhase;
+
+typedef struct {
+  const char *application_id;
+  const char *install_state;
+  const char *selected_strategy;
+  const char *blocked_actions[6];
+  size_t blocked_action_count;
+  XnixRuntimeInstallPhase phases[6];
+  size_t phase_count;
+  bool artifact_manifest_ready;
+  bool artifact_signature_verified;
+  bool acquisition_ready;
+  bool package_source_ready;
+  bool state_root_allocated;
+  bool development_recipe_install_allowed;
+  bool production_recipe_install_allowed;
+  bool install_ready;
+  bool desktop_activation_ready;
+  bool download_enabled;
+  bool install_enabled;
+  bool network_request_created;
+  bool artifacts_downloaded;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool desktop_shell_command_exposed;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeInstallReadinessPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -141,5 +177,13 @@ const XnixRuntimeSnapshotPolicy *xnix_runtime_find_snapshot_policy(const char *r
 size_t xnix_runtime_state_root_policy_count(void);
 const XnixRuntimeStateRootPolicy *xnix_runtime_state_root_policy_at(size_t index);
 const XnixRuntimeStateRootPolicy *xnix_runtime_find_state_root_policy(const char *application_id);
+
+size_t xnix_runtime_install_readiness_policy_count(void);
+const XnixRuntimeInstallReadinessPolicy *xnix_runtime_install_readiness_policy_at(size_t index);
+const XnixRuntimeInstallReadinessPolicy *xnix_runtime_find_install_readiness_policy(const char *application_id);
+bool xnix_runtime_install_readiness_allows_recipe_install(
+  const XnixRuntimeInstallReadinessPolicy *policy,
+  const char *environment
+);
 
 #endif

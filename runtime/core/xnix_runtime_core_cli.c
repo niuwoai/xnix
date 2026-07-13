@@ -402,6 +402,176 @@ print_state_root_policy_for_application(
 }
 
 static void
+print_install_application(const XnixRuntimeApplication *application)
+{
+  fputs("{", stdout);
+  print_string_field("id", application->id);
+  fputs(",", stdout);
+  print_string_field("name", application->name);
+  fputs(",", stdout);
+  print_string_field("requested_mode", application->runtime_mode);
+  fputs(",", stdout);
+  fputs("\"supported_extensions\":[", stdout);
+  print_string(application->primary_extension);
+  fputs("],", stdout);
+  fputs("\"mime_types\":[", stdout);
+  print_string(application->primary_mime_type);
+  fputs("]}", stdout);
+}
+
+static void
+print_install_readiness(
+  const XnixRuntimeInstallReadinessPolicy *policy,
+  const char *recipe_install_decision
+)
+{
+  fputs("{", stdout);
+  fputs("\"artifact_manifest_ready\":", stdout);
+  print_bool(policy->artifact_manifest_ready);
+  fputs(",", stdout);
+  fputs("\"artifact_signature_verified\":", stdout);
+  print_bool(policy->artifact_signature_verified);
+  fputs(",", stdout);
+  fputs("\"acquisition_ready\":", stdout);
+  print_bool(policy->acquisition_ready);
+  fputs(",", stdout);
+  fputs("\"package_source_ready\":", stdout);
+  print_bool(policy->package_source_ready);
+  fputs(",", stdout);
+  fputs("\"state_root_allocated\":", stdout);
+  print_bool(policy->state_root_allocated);
+  fputs(",", stdout);
+  fputs("\"recipe_install_allowed\":", stdout);
+  print_bool(strcmp(recipe_install_decision, "allow") == 0);
+  fputs(",", stdout);
+  print_string_field("recipe_install_decision", recipe_install_decision);
+  fputs("}", stdout);
+}
+
+static void
+print_install_phases(const XnixRuntimeInstallReadinessPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->phase_count; index++) {
+    const XnixRuntimeInstallPhase *phase = &policy->phases[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", phase->id);
+    fputs(",", stdout);
+    print_string_field("status", phase->status);
+    fputs(",", stdout);
+    print_string_field("summary", phase->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_install_policy_record(const XnixRuntimeInstallReadinessPolicy *policy)
+{
+  fputs("{", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  print_string_field("install_state", policy->install_state);
+  fputs(",", stdout);
+  fputs("\"install_ready\":", stdout);
+  print_bool(policy->install_ready);
+  fputs(",", stdout);
+  fputs("\"desktop_activation_ready\":", stdout);
+  print_bool(policy->desktop_activation_ready);
+  fputs(",", stdout);
+  fputs("\"download_enabled\":", stdout);
+  print_bool(policy->download_enabled);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_install_policy_for_application(
+  const XnixRuntimeApplication *application,
+  const XnixRuntimeInstallReadinessPolicy *policy,
+  const char *environment,
+  const char *recipe_install_decision
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("plan_type", "compatibility-install-readiness");
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_install_application(application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("environment", environment);
+  fputs(",", stdout);
+  print_string_field("install_state", policy->install_state);
+  fputs(",", stdout);
+  fputs("\"install_ready\":", stdout);
+  print_bool(policy->install_ready);
+  fputs(",", stdout);
+  fputs("\"desktop_activation_ready\":", stdout);
+  print_bool(policy->desktop_activation_ready);
+  fputs(",", stdout);
+  fputs("\"download_enabled\":", stdout);
+  print_bool(policy->download_enabled);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"network_request_created\":", stdout);
+  print_bool(policy->network_request_created);
+  fputs(",", stdout);
+  fputs("\"artifacts_downloaded\":", stdout);
+  print_bool(policy->artifacts_downloaded);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"desktop_shell_command_exposed\":", stdout);
+  print_bool(policy->desktop_shell_command_exposed);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  fputs("\"readiness\":", stdout);
+  print_install_readiness(policy, recipe_install_decision);
+  fputs(",", stdout);
+  fputs("\"phases\":", stdout);
+  print_install_phases(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_snapshot_policy_record(const XnixRuntimeSnapshotPolicy *policy)
 {
   fputs("{", stdout);
@@ -687,6 +857,60 @@ print_state_root_policy(const char *application_id)
 }
 
 static int
+print_install_readiness_policy_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("catalog_type", "install-readiness-policy");
+  fputs(",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  print_string_field("catalog_owner", "c");
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"host_root_modified\":false,", stdout);
+  fputs("\"policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_install_readiness_policy_count());
+  fputs("\"policies\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_install_readiness_policy_count(); index++) {
+    const XnixRuntimeInstallReadinessPolicy *policy =
+      xnix_runtime_install_readiness_policy_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_install_policy_record(policy);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_install_readiness_policy(const char *application_id, const char *environment)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+  const XnixRuntimeInstallReadinessPolicy *policy =
+    xnix_runtime_find_install_readiness_policy(application_id);
+  const char *recipe_install_decision = "block";
+
+  if (strcmp(environment, "development") != 0 && strcmp(environment, "production") != 0) {
+    fprintf(stderr, "xnix-runtime-core: environment must be development or production\n");
+    return 64;
+  }
+  if (application == NULL || policy == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime install readiness policy catalog\n");
+    return 64;
+  }
+  if (xnix_runtime_install_readiness_allows_recipe_install(policy, environment)) {
+    recipe_install_decision = "allow";
+  }
+
+  print_install_policy_for_application(application, policy, environment, recipe_install_decision);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -744,6 +968,9 @@ print_probe(void)
   fputs("\"state_root_policy_owner\":\"c\",", stdout);
   fputs("\"state_root_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_state_root_policy_count());
+  fputs("\"install_readiness_policy_owner\":\"c\",", stdout);
+  fputs("\"install_readiness_policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_install_readiness_policy_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -797,7 +1024,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -850,6 +1077,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "state-root-policy") == 0 && argc == 3) {
     return print_state_root_policy(argv[2]);
+  }
+
+  if (strcmp(argv[1], "list-install-readiness-policies") == 0 && argc == 2) {
+    return print_install_readiness_policy_catalog();
+  }
+
+  if (strcmp(argv[1], "install-readiness-policy") == 0 && argc == 4) {
+    return print_install_readiness_policy(argv[2], argv[3]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

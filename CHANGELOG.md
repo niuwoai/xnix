@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.62] - 2026-07-13
+
+### Added
+
+- Added C Runtime install readiness policy records and CLI read methods for listing install gates and evaluating per-application install readiness by environment.
+- Added C Runtime install readiness tests that verify blocked downloads, blocked installation, development recipe staging, production recipe blocking, phase order, and host-root safety.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility install readiness layer while keeping package downloads, installation, desktop activation, and backend launch disabled.
+
 ## [0.2.61] - 2026-07-13
 
 ### Added

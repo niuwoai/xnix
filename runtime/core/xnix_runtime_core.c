@@ -271,6 +271,76 @@ static const XnixRuntimeStateRootPolicy state_root_policies[] = {
   },
 };
 
+static const XnixRuntimeInstallReadinessPolicy install_readiness_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .install_state = "planned",
+    .selected_strategy = "automatic-managed",
+    .blocked_actions = {
+      "download artifacts before signed manifest verification",
+      "install packages before Runtime install plan readiness",
+      "stage desktop integration before recipe install gate approval",
+      "launch backend before managed binding readiness",
+      "expose backend commands or storage paths to KDE",
+      "mutate the host root during install planning",
+    },
+    .blocked_action_count = 6,
+    .phases = {
+      {
+        .id = "resolve-artifact-manifest",
+        .status = "blocked",
+        .summary = "Wait for a signed compatibility artifact manifest.",
+      },
+      {
+        .id = "verify-artifact-digests",
+        .status = "blocked",
+        .summary = "Wait for digest verification before artifact activation.",
+      },
+      {
+        .id = "prepare-package-source",
+        .status = "blocked",
+        .summary = "Wait for Runtime-owned package source readiness.",
+      },
+      {
+        .id = "allocate-application-state",
+        .status = "blocked",
+        .summary = "Wait for Runtime-owned application state allocation.",
+      },
+      {
+        .id = "stage-desktop-integration",
+        .status = "pending",
+        .summary = "Stage desktop artifacts only after install gates pass.",
+      },
+      {
+        .id = "enable-launch-binding",
+        .status = "blocked",
+        .summary = "Backend launch binding stays disabled until install preflight completes.",
+      },
+    },
+    .phase_count = 6,
+    .artifact_manifest_ready = false,
+    .artifact_signature_verified = false,
+    .acquisition_ready = false,
+    .package_source_ready = false,
+    .state_root_allocated = false,
+    .development_recipe_install_allowed = true,
+    .production_recipe_install_allowed = false,
+    .install_ready = false,
+    .desktop_activation_ready = false,
+    .download_enabled = false,
+    .install_enabled = false,
+    .network_request_created = false,
+    .artifacts_downloaded = false,
+    .host_root_modified = false,
+    .privileged_container_required = false,
+    .desktop_shell_command_exposed = false,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .backend_details_exposed = false,
+    .summary = "Compatibility install is planned and waiting for Runtime-owned readiness gates.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -545,4 +615,59 @@ xnix_runtime_find_state_root_policy(const char *application_id)
   }
 
   return NULL;
+}
+
+size_t
+xnix_runtime_install_readiness_policy_count(void)
+{
+  return sizeof(install_readiness_policies) / sizeof(install_readiness_policies[0]);
+}
+
+const XnixRuntimeInstallReadinessPolicy *
+xnix_runtime_install_readiness_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_install_readiness_policy_count()) {
+    return NULL;
+  }
+
+  return &install_readiness_policies[index];
+}
+
+const XnixRuntimeInstallReadinessPolicy *
+xnix_runtime_find_install_readiness_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_install_readiness_policy_count(); index++) {
+    const XnixRuntimeInstallReadinessPolicy *policy =
+      xnix_runtime_install_readiness_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+bool
+xnix_runtime_install_readiness_allows_recipe_install(
+  const XnixRuntimeInstallReadinessPolicy *policy,
+  const char *environment
+)
+{
+  if (policy == NULL || environment == NULL) {
+    return false;
+  }
+
+  if (strcmp(environment, "development") == 0) {
+    return policy->development_recipe_install_allowed;
+  }
+  if (strcmp(environment, "production") == 0) {
+    return policy->production_recipe_install_allowed;
+  }
+
+  return false;
 }
