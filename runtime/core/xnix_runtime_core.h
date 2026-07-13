@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.71"
+#define XNIX_RUNTIME_VERSION "0.2.72"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -453,6 +453,42 @@ typedef struct {
   const char *summary;
 } XnixRuntimeOwnerSmokePlanPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  size_t method_count;
+  const char *missing_methods[1];
+  size_t missing_method_count;
+  const char *summary;
+} XnixRuntimeMethodParityCheck;
+
+typedef struct {
+  size_t total;
+  size_t passed;
+  size_t blocked;
+  size_t pending;
+} XnixRuntimeMethodParityCounts;
+
+typedef struct {
+  const char *read_only_methods[28];
+  size_t read_only_method_count;
+  XnixRuntimeMethodParityCheck parity_checks[5];
+  size_t parity_check_count;
+  XnixRuntimeMethodParityCounts counts;
+  const char *write_methods[4];
+  size_t write_method_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool read_only_method_parity_ready;
+  bool write_methods_supported;
+  bool write_method_dispatch_enabled;
+  bool network_required;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeMethodParityManifestPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -521,5 +557,6 @@ const XnixRuntimeSettingsChangePolicy *xnix_runtime_find_settings_change_policy(
 const XnixRuntimeServiceBindingPolicy *xnix_runtime_service_binding_policy(void);
 const XnixRuntimeLiveOwnerGatePolicy *xnix_runtime_live_owner_gate_policy(void);
 const XnixRuntimeOwnerSmokePlanPolicy *xnix_runtime_owner_smoke_plan_policy(void);
+const XnixRuntimeMethodParityManifestPolicy *xnix_runtime_method_parity_manifest_policy(void);
 
 #endif

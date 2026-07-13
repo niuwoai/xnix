@@ -1535,6 +1535,104 @@ print_owner_smoke_plan_policy(const XnixRuntimeOwnerSmokePlanPolicy *policy)
 }
 
 static void
+print_method_parity_checks(const XnixRuntimeMethodParityManifestPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->parity_check_count; index++) {
+    const XnixRuntimeMethodParityCheck *check = &policy->parity_checks[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", check->id);
+    fputs(",", stdout);
+    print_string_field("status", check->status);
+    fputs(",", stdout);
+    fputs("\"method_count\":", stdout);
+    printf("%zu,", check->method_count);
+    fputs("\"missing_methods\":", stdout);
+    print_string_array(check->missing_methods, check->missing_method_count);
+    fputs(",", stdout);
+    print_string_field("summary", check->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_method_parity_counts(const XnixRuntimeMethodParityCounts *counts)
+{
+  fputs("{", stdout);
+  fputs("\"total\":", stdout);
+  printf("%zu,", counts->total);
+  fputs("\"passed\":", stdout);
+  printf("%zu,", counts->passed);
+  fputs("\"blocked\":", stdout);
+  printf("%zu,", counts->blocked);
+  fputs("\"pending\":", stdout);
+  printf("%zu", counts->pending);
+  fputs("}", stdout);
+}
+
+static void
+print_method_parity_manifest_policy(
+  const XnixRuntimeMethodParityManifestPolicy *policy
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("manifest_type", "runtime-method-parity-manifest");
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  printf("\"bus_name\":\"%s\",", xnix_runtime_bus_name());
+  printf("\"object_path\":\"%s\",", xnix_runtime_object_path());
+  printf("\"interface\":\"%s\",", xnix_runtime_interface());
+  fputs("\"read_only_methods\":", stdout);
+  print_string_array(policy->read_only_methods, policy->read_only_method_count);
+  fputs(",", stdout);
+  fputs("\"method_count\":", stdout);
+  printf("%zu,", policy->read_only_method_count);
+  fputs("\"parity_checks\":", stdout);
+  print_method_parity_checks(policy);
+  fputs(",", stdout);
+  fputs("\"counts\":", stdout);
+  print_method_parity_counts(&policy->counts);
+  fputs(",", stdout);
+  fputs("\"read_only_method_parity_ready\":", stdout);
+  print_bool(policy->read_only_method_parity_ready);
+  fputs(",", stdout);
+  fputs("\"write_methods\":", stdout);
+  print_string_array(policy->write_methods, policy->write_method_count);
+  fputs(",", stdout);
+  fputs("\"write_methods_supported\":", stdout);
+  print_bool(policy->write_methods_supported);
+  fputs(",", stdout);
+  fputs("\"write_method_dispatch_enabled\":", stdout);
+  print_bool(policy->write_method_dispatch_enabled);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -2348,6 +2446,17 @@ print_runtime_owner_smoke_plan(void)
 }
 
 static int
+print_runtime_method_parity_manifest(void)
+{
+  const XnixRuntimeMethodParityManifestPolicy *policy =
+    xnix_runtime_method_parity_manifest_policy();
+
+  print_method_parity_manifest_policy(policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2432,6 +2541,8 @@ print_probe(void)
   fputs("\"live_owner_gate_policy_count\":1,", stdout);
   fputs("\"owner_smoke_plan_policy_owner\":\"c\",", stdout);
   fputs("\"owner_smoke_plan_policy_count\":1,", stdout);
+  fputs("\"method_parity_manifest_policy_owner\":\"c\",", stdout);
+  fputs("\"method_parity_manifest_policy_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2485,7 +2596,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2606,6 +2717,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "runtime-owner-smoke-plan") == 0 && argc == 2) {
     return print_runtime_owner_smoke_plan();
+  }
+
+  if (strcmp(argv[1], "runtime-method-parity-manifest") == 0 && argc == 2) {
+    return print_runtime_method_parity_manifest();
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

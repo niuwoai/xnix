@@ -968,6 +968,101 @@ static const XnixRuntimeOwnerSmokePlanPolicy owner_smoke_plan_policy = {
   .summary = "Runtime owner smoke is planned; production bus ownership remains disabled until all gates pass.",
 };
 
+static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy = {
+  .read_only_methods = {
+    "ListApplications",
+    "GetApplication",
+    "GetDiagnostics",
+    "GetEngineCatalog",
+    "GetRunPlan",
+    "GetApplicationStateRoot",
+    "GetCompatibilityPackageSource",
+    "GetCompatibilityAcquisitionPreflight",
+    "GetCompatibilityArtifactManifest",
+    "GetCompatibilityInstallPlan",
+    "GetBackendBinding",
+    "GetRepairPlan",
+    "GetTestPlan",
+    "GetTestResult",
+    "GetAIDiagnosticInput",
+    "GetAIDiagnosticRecommendation",
+    "GetAIRepairApprovalGate",
+    "GetSnapshotPlan",
+    "GetPortalAccessPolicy",
+    "GetRuntimeServiceBinding",
+    "GetRuntimeLiveOwnerGate",
+    "GetRuntimeOwnerSmokePlan",
+    "GetRuntimeMethodParityManifest",
+    "GetRuntimeWriteGate",
+    "GetCompatibilitySettings",
+    "GetCompatibilitySettingsChangePlan",
+    "GetCompatibilityActionQueue",
+    "GetCompatibilityActionReviewReceipt",
+  },
+  .read_only_method_count = 28,
+  .parity_checks = {
+    {
+      .id = "dbus-contract",
+      .status = "pass",
+      .method_count = 28,
+      .missing_method_count = 0,
+      .summary = "dbus-contract covers all Runtime read-only methods.",
+    },
+    {
+      .id = "runtime-dispatch",
+      .status = "pass",
+      .method_count = 28,
+      .missing_method_count = 0,
+      .summary = "runtime-dispatch covers all Runtime read-only methods.",
+    },
+    {
+      .id = "dbus-client",
+      .status = "pass",
+      .method_count = 28,
+      .missing_method_count = 0,
+      .summary = "dbus-client covers all Runtime read-only methods.",
+    },
+    {
+      .id = "smoke-adapter",
+      .status = "pass",
+      .method_count = 28,
+      .missing_method_count = 0,
+      .summary = "smoke-adapter covers all Runtime read-only methods.",
+    },
+    {
+      .id = "session-smoke",
+      .status = "pass",
+      .method_count = 28,
+      .missing_method_count = 0,
+      .summary = "session-smoke covers all Runtime read-only methods.",
+    },
+  },
+  .parity_check_count = 5,
+  .counts = {
+    .total = 5,
+    .passed = 5,
+    .blocked = 0,
+    .pending = 0,
+  },
+  .write_methods = {
+    "InstallRecipe",
+    "Launch",
+    "CreateSnapshot",
+    "RestoreSnapshot",
+  },
+  .write_method_count = 4,
+  .runtime_owned = true,
+  .kde_policy_owner = false,
+  .read_only_method_parity_ready = true,
+  .write_methods_supported = false,
+  .write_method_dispatch_enabled = false,
+  .network_required = false,
+  .host_root_modified = false,
+  .privileged_container_required = false,
+  .backend_details_exposed = false,
+  .summary = "Runtime read-only D-Bus method parity is ready for owner smoke.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1524,4 +1619,10 @@ const XnixRuntimeOwnerSmokePlanPolicy *
 xnix_runtime_owner_smoke_plan_policy(void)
 {
   return &owner_smoke_plan_policy;
+}
+
+const XnixRuntimeMethodParityManifestPolicy *
+xnix_runtime_method_parity_manifest_policy(void)
+{
+  return &method_parity_manifest_policy;
 }

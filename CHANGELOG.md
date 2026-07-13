@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.72] - 2026-07-14
+
+### Added
+
+- Added C Runtime method parity manifest policy records and a CLI read method for reporting read-only D-Bus method coverage across contract, dispatch, client, smoke adapter, and session smoke.
+- Added C Runtime method parity tests that verify the 28 read-only methods, parity check counts, gated write methods, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first method parity manifest layer while keeping all write methods disabled.
+
 ## [0.2.71] - 2026-07-14
 
 ### Added
