@@ -69,6 +69,7 @@ module Xnix
           "pending_action_count" => pending_checks,
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
+          "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -107,12 +108,26 @@ module Xnix
         }
       end
 
+      def test_result_summary(test_result)
+        return nil unless test_result
+
+        {
+          "result_type" => test_result.fetch("result_type"),
+          "test_type" => test_result.fetch("test_type"),
+          "execution_state" => test_result.fetch("execution_state"),
+          "overall_status" => test_result.fetch("overall_status"),
+          "counts" => test_result.fetch("counts"),
+          "summary" => test_result.fetch("summary")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
-          "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) }
+          "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) },
+          "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" }
         }
       end
 

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.36] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-test-result`, a Runtime-owned compatibility test result model for passed, pending, and blocked test outcomes.
+- Added focused coverage for test result counts, diagnostic evidence, Compatibility Center summaries, Runtime diagnostics, dispatch, D-Bus client reads, and session-bus smoke exposure.
+
+### Changed
+
+- Extended Runtime diagnostics, read-only Runtime dispatch, D-Bus planning reads, and the KDE Compatibility Center model with compatibility test result summaries.
+
 ## [0.2.35] - 2026-07-13
 
 ### Added

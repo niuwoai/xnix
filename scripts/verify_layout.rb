@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.35"
+EXPECTED_VERSION = "0.2.36"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -25,6 +25,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/compatibility_test_plan.rb
+  lib/xnix/compatibility/compatibility_test_result.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/compatibility_snapshot_plan.rb
   lib/xnix/compatibility/compatibility_run_plan.rb
@@ -63,6 +64,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-run-plan
   bin/xnix-compat-snapshot-plan
   bin/xnix-compat-test-plan
+  bin/xnix-compat-test-result
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
@@ -111,6 +113,7 @@ REQUIRED_FILES = %w[
   test/test_compatibility_snapshot_plan.rb
   test/test_compatibility_run_plan.rb
   test/test_compatibility_test_plan.rb
+  test/test_compatibility_test_result.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
   test/test_recipe_install_gate.rb
@@ -262,6 +265,13 @@ assert(test_plan_source.include?("xnix-compat-test-plan"), "Compatibility test p
 end
 assert(test_plan_source.include?("\"backend_details_exposed\" => false"), "Compatibility test plan must hide backend details")
 
+test_result_source = read_project_file("lib/xnix/compatibility/compatibility_test_result.rb")
+assert(test_result_source.include?("xnix-compat-test-result"), "Compatibility test result must expose a CLI command")
+%w[compatibility-test-result waiting-for-runtime safe_for_ai_diagnostics runtime-launch-binding].each do |token|
+  assert(test_result_source.include?(token), "Compatibility test result must include #{token}")
+end
+assert(test_result_source.include?("\"backend_details_exposed\" => false"), "Compatibility test result must hide backend details")
+
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
@@ -340,7 +350,8 @@ assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Ru
 assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runtime daemon must expose compatibility test planning capability")
-%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
+assert(runtime_daemon_source.include?("\"compatibility_test_results\""), "Runtime daemon must expose compatibility test result capability")
+%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -348,7 +359,7 @@ assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runti
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan repair_plan test_plan snapshot_plan portal_access_policy].each do |method_name|
+%w[engine_catalog run_plan repair_plan test_plan test_result snapshot_plan portal_access_policy].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

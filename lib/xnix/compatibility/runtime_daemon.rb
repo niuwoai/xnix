@@ -8,6 +8,7 @@ require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
 require_relative "compatibility_snapshot_plan"
 require_relative "compatibility_test_plan"
+require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 
@@ -44,6 +45,7 @@ module Xnix
             "compatibility_run_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
+            "compatibility_test_results" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -81,6 +83,7 @@ module Xnix
             }
           ],
           "test_plan" => test_plan_summary(recipe),
+          "test_result" => test_result_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -102,6 +105,11 @@ module Xnix
       def test_plan(application_id, test_type = "preflight")
         recipe = require_recipe(application_id)
         CompatibilityTestPlan.new(recipe: recipe, test_type: test_type).to_h
+      end
+
+      def test_result(application_id, test_type = "preflight")
+        recipe = require_recipe(application_id)
+        CompatibilityTestResult.new(recipe: recipe, test_type: test_type).to_h
       end
 
       def snapshot_plan(application_id, reason)
@@ -133,6 +141,11 @@ module Xnix
           )
         when "GetTestPlan"
           test_plan(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || "preflight"
+          )
+        when "GetTestResult"
+          test_result(
             required_parameter(method_name, parameters, 0),
             parameters[1] || "preflight"
           )
@@ -208,6 +221,18 @@ module Xnix
         }
       end
 
+      def test_result_summary(recipe)
+        result = CompatibilityTestResult.new(recipe: recipe).to_h
+        {
+          "result_type" => result.fetch("result_type"),
+          "test_type" => result.fetch("test_type"),
+          "execution_state" => result.fetch("execution_state"),
+          "overall_status" => result.fetch("overall_status"),
+          "counts" => result.fetch("counts"),
+          "summary" => result.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -255,6 +280,10 @@ module Xnix
             application_id = require_argument(command)
             test_type = @argv.shift || "preflight"
             write_json(runtime.test_plan(application_id, test_type))
+          when "test-result"
+            application_id = require_argument(command)
+            test_type = @argv.shift || "preflight"
+            write_json(runtime.test_result(application_id, test_type))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

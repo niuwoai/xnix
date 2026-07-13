@@ -28,6 +28,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetRunPlan
   GetRepairPlan
   GetTestPlan
+  GetTestResult
   GetSnapshotPlan
   GetPortalAccessPolicy
 ].each do |method|

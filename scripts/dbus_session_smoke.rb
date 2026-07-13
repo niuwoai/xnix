@@ -109,6 +109,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetTestResult",
+    "org.xnix.sample.notepad",
+    "preflight"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetTestResult: #{stderr}")
+  assert(stdout.include?("compatibility-test-result"), "runtime smoke adapter must expose test results over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetSnapshotPlan",
     "org.xnix.sample.notepad",
     "before-repair"

@@ -28,8 +28,8 @@ KDE packages display status and submit user decisions. They do not create a Wine
 
 The KDE Compatibility Center consumes a read-only presentation model from `xnix-kde-center-model`. That model prefers the Runtime D-Bus service when a session source is available and falls back to the local Runtime read model for offline development. In both cases, it filters backend storage paths and implementation terminology before anything reaches the Plasma shell.
 
-The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, snapshot plans, and Portal access policy. `DBusRuntimeClient` wraps these methods for KDE-facing code and parses D-Bus boolean variants into native booleans. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
-The Runtime D-Bus contract also exposes compatibility test plans as read-only planning data. KDE can show preflight, smoke, and repair-readiness summaries in the Compatibility Center, but the Runtime owns recipe validation, Portal preflight, snapshot preflight, and managed launch-binding checks.
+The Runtime D-Bus contract exposes read-only planning methods for engine catalog, run plans, repair plans, test plans, test results, snapshot plans, and Portal access policy. `DBusRuntimeClient` wraps these methods for KDE-facing code and parses D-Bus boolean variants into native booleans. These methods give KDE surfaces a stable integration path without giving KDE ownership of backend decisions. Write methods remain asynchronous and unsupported until production backend binding exists.
+The Runtime D-Bus contract also exposes compatibility test plans and test results as read-only planning data. KDE can show preflight, smoke, and repair-readiness summaries in the Compatibility Center, but the Runtime owns recipe validation, Portal preflight, snapshot preflight, managed launch-binding checks, and result status.
 
 Generated application launchers delegate to `xnix-compat-launch --app <id>`. That entry point validates the Runtime application id, accepts optional `file://` URIs from desktop file associations, and emits a Runtime `Launch` request model. Plain application launches do not need file portal access; file launches are marked as portal-mediated.
 
@@ -81,6 +81,8 @@ Compatibility snapshot planning delegates to `xnix-compat-snapshot-plan`. Snapsh
 
 Compatibility test planning delegates to `xnix-compat-test-plan`. Test plans combine recipe validation, Portal preflight, snapshot preflight, and Runtime launch-binding checks into desktop-safe preflight, smoke, and repair-readiness plans. They can feed Compatibility Center cards and repair planning without exposing backend implementation details.
 
+Compatibility test results delegate to `xnix-compat-test-result`. Test results summarize passed, pending, and blocked outcomes from the Runtime-owned plan so AI diagnostics can reason about current compatibility state without claiming backend execution before a real launch backend exists.
+
 ## Permissions and Asynchronous Requests
 
 Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return request objects and complete with signals, so Runtime methods that need user approval return an object path and complete through `RequestCompleted`. The Runtime must not promise direct access to a user's files, clipboard, camera, printer, display, or screen capture.
@@ -96,6 +98,7 @@ Portal request modeling delegates to `xnix-portal-request-model`. The model desc
 - Runtime D-Bus clients must wrap planning reads directly and parse boolean variants as booleans.
 - The Compatibility Center model may summarize applications, compatibility state, and pending actions, but must not expose backend storage paths or implementation details.
 - The Compatibility Center may show compatibility test summaries, but Runtime code must own test planning and diagnostics policy.
+- The Compatibility Center may show compatibility test result summaries, but Runtime code must own result status and diagnostic evidence.
 - KRunner query models must resolve to Runtime application identities and managed launcher actions, not backend commands.
 - Launcher entries must call `xnix-compat-launch --app <id> %U` and must not expose backend commands, storage paths, or Windows executable paths.
 - File association models must use generated desktop files, standard `mimeapps.list` syntax, and Portal-mediated file-open requests.
@@ -119,6 +122,7 @@ Portal request modeling delegates to `xnix-portal-request-model`. The model desc
 - Compatibility repair plans must expose approval, snapshot, rollback, and notification requirements before a repair is executed.
 - Compatibility snapshot plans must preserve user documents, avoid host-system snapshots, and provide bounded restore-point retention.
 - Compatibility test plans must keep recipe, Portal, snapshot, and launch-binding checks Runtime-owned and desktop-safe.
+- Compatibility test results must distinguish passed, pending, and blocked checks without exposing backend implementation details.
 - Portal access policy must require user-mediated XDG Desktop Portal requests and must deny direct desktop access for sensitive operations.
 - Portal request models must describe XDG Desktop Portal requests and completion handling without mutating host permissions.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
