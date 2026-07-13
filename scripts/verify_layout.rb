@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.87"
+EXPECTED_VERSION = "0.2.88"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -716,6 +716,9 @@ end
 krunner_source = read_project_file("lib/xnix/compatibility/krunner_model.rb")
 assert(krunner_source.include?("xnix-compat-launch"), "KRunner model must delegate launches to the managed launcher")
 assert(krunner_source.include?("\"backend_details_exposed\" => false"), "KRunner model must hide backend details")
+assert(krunner_source.include?("runtime.krunner_query_plan"), "KRunner model must consume Runtime-owned query plans")
+assert(krunner_source.include?("normalized_flat_plan_match"), "KRunner model must normalize flat D-Bus query plans")
+assert(krunner_source.include?("\"query_execution_enabled\""), "KRunner model must preserve query execution gates")
 assert(krunner_source.include?("extension_launch_query?"), "KRunner model must support file-oriented natural queries")
 
 recipe_trust_policy_source = read_project_file("lib/xnix/compatibility/recipe_trust_policy.rb")

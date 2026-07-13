@@ -24,16 +24,26 @@ module Xnix
       end
 
       def to_h
-        resolved_matches = matches
+        plan = runtime_query_plan
+        resolved_matches = matches_from_plan(plan)
 
         {
           "version" => RuntimeDaemon::VERSION,
-          "entry_point" => "krunner",
-          "desktop" => "KDE Plasma",
-          "query" => query,
+          "query_type" => plan.fetch("query_type", "krunner-query-plan"),
+          "entry_point" => plan.fetch("entry_point", "krunner"),
+          "desktop" => plan.fetch("desktop", "KDE Plasma"),
+          "query" => plan.fetch("query", query),
           "source" => source_metadata,
+          "runtime_owned" => plan.fetch("runtime_owned", true),
+          "kde_policy_owner" => plan.fetch("kde_policy_owner", false),
           "matches" => resolved_matches,
-          "summary" => summary(resolved_matches)
+          "summary" => summary_from_plan(plan, resolved_matches),
+          "host_root_modified" => plan.fetch("host_root_modified", false),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed", false),
+          "desktop_safe_summary" => plan.fetch(
+            "desktop_safe_summary",
+            "KRunner query planning is Runtime-owned and returns safe launcher actions only."
+          )
         }
       end
 
@@ -54,16 +64,95 @@ module Xnix
         }
       end
 
-      def matches
+      def runtime_query_plan
+        return runtime.krunner_query_plan(query) if runtime.respond_to?(:krunner_query_plan)
+
+        fallback_query_plan
+      end
+
+      def fallback_query_plan
         normalized_query = normalize(query)
-        return [] if normalized_query.empty?
+        resolved_matches = if normalized_query.empty?
+                             []
+                           else
+                             runtime.list_applications.filter_map do |application|
+                               relevance = relevance_for(application, normalized_query)
+                               next if relevance.zero?
 
-        runtime.list_applications.filter_map do |application|
-          relevance = relevance_for(application, normalized_query)
-          next if relevance.zero?
+                               match_for(application, relevance)
+                             end.sort_by { |match| [-match.fetch("relevance"), match.fetch("name")] }
+                           end
 
-          match_for(application, relevance)
-        end.sort_by { |match| [-match.fetch("relevance"), match.fetch("name")] }
+        {
+          "query_type" => "krunner-query-plan",
+          "entry_point" => "krunner",
+          "desktop" => "KDE Plasma",
+          "query" => query,
+          "matches" => resolved_matches,
+          "summary" => {
+            "match_count" => resolved_matches.length,
+            "official_desktop" => "KDE Plasma",
+            "runtime_owned_launch" => true,
+            "query_execution_enabled" => false,
+            "backend_launch_enabled" => false,
+            "backend_details_exposed" => false
+          },
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KRunner query planning is Runtime-owned and returns safe launcher actions only."
+        }
+      end
+
+      def matches_from_plan(plan)
+        plan_matches = plan.fetch("matches", nil)
+        return plan_matches.map { |match| normalized_plan_match(match) } if plan_matches.is_a?(Array)
+
+        return [] if plan.fetch("match_count", 0).to_i.zero?
+
+        [normalized_flat_plan_match(plan)]
+      end
+
+      def normalized_plan_match(match)
+        relevance_percent = match.fetch("relevance_percent", (match.fetch("relevance", 0.0).to_f * 100).round)
+        application_id = match.fetch("application_id")
+        action = match.fetch("action", {})
+
+        {
+          "runner_id" => match.fetch("runner_id", "xnix.compatibility.#{application_id}"),
+          "application_id" => application_id,
+          "name" => match.fetch("name"),
+          "icon" => match.fetch("icon", "application-x-executable"),
+          "relevance" => relevance_percent.to_f / 100.0,
+          "relevance_percent" => relevance_percent,
+          "subtitle" => match.fetch("subtitle", "Open as a normal Linux application"),
+          "mode_label" => match.fetch("mode_label", "Automatic"),
+          "supported_extensions" => match.fetch("supported_extensions", []),
+          "runtime_owned_launch" => match.fetch("runtime_owned_launch", true),
+          "backend_details_exposed" => match.fetch("backend_details_exposed", false),
+          "action" => {
+            "type" => action.fetch("type", match.fetch("action_type", "runtime-launch")),
+            "desktop_entry_id" => action.fetch("desktop_entry_id", match.fetch("desktop_entry_id", "#{application_id}.desktop")),
+            "argv" => action.fetch("argv", ["xnix-compat-launch", "--app", application_id])
+          }
+        }
+      end
+
+      def normalized_flat_plan_match(plan)
+        application_id = plan.fetch("top_application_id")
+        relevance_percent = plan.fetch("top_relevance_percent", 0).to_i
+
+        normalized_plan_match(
+          "runner_id" => "xnix.compatibility.#{application_id}",
+          "application_id" => application_id,
+          "name" => plan.fetch("top_name"),
+          "relevance_percent" => relevance_percent,
+          "action_type" => plan.fetch("action_type", "runtime-launch"),
+          "desktop_entry_id" => plan.fetch("desktop_entry_id", "#{application_id}.desktop"),
+          "runtime_owned_launch" => plan.fetch("runtime_owned_launch", true),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed", false)
+        )
       end
 
       def relevance_for(application, normalized_query)
@@ -122,12 +211,16 @@ module Xnix
         []
       end
 
-      def summary(resolved_matches)
+      def summary_from_plan(plan, resolved_matches)
+        plan_summary = plan.fetch("summary", {})
+
         {
           "match_count" => resolved_matches.length,
-          "official_desktop" => "KDE Plasma",
-          "runtime_owned_launch" => true,
-          "backend_details_exposed" => false
+          "official_desktop" => plan_summary.fetch("official_desktop", plan.fetch("desktop", "KDE Plasma")),
+          "runtime_owned_launch" => plan_summary.fetch("runtime_owned_launch", plan.fetch("runtime_owned_launch", true)),
+          "query_execution_enabled" => plan_summary.fetch("query_execution_enabled", plan.fetch("query_execution_enabled", false)),
+          "backend_launch_enabled" => plan_summary.fetch("backend_launch_enabled", plan.fetch("backend_launch_enabled", false)),
+          "backend_details_exposed" => plan_summary.fetch("backend_details_exposed", plan.fetch("backend_details_exposed", false))
         }
       end
 

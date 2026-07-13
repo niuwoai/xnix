@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-14 | Current version: v0.2.87
+> Last updated: 2026-07-14 | Current version: v0.2.88
 
 ## Summary
 
@@ -80,7 +80,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Task manager identity delegates to `xnix-compat-window-identity`, which models desktop file mapping, grouping, pinning, restore behavior, and KWin identity-only metadata for compatibility windows.
 - KWin window rules delegate to `xnix-kwin-window-rule`, which gives KWin scripts identity and layout hints for compatibility windows while leaving backend policy in the Runtime.
 - Desktop integration manifests delegate to `xnix-desktop-integration-manifest`, which bundles a recipe's launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings artifacts into one activation plan without exposing backend commands.
-- KRunner query integration delegates to `xnix-krunner-model`, `xnix-runtime-core krunner-query-plan`, and `GetKRunnerQueryPlan`, which map application names and file-oriented natural queries to Runtime application identities and managed launcher actions without exposing backend details or enabling direct query execution.
+- KRunner query integration delegates to `xnix-krunner-model`, `xnix-runtime-core krunner-query-plan`, and `GetKRunnerQueryPlan`, which map application names and file-oriented natural queries to Runtime application identities and managed launcher actions without exposing backend details or enabling direct query execution. The KDE-facing model now consumes Runtime query plans first and only keeps application-list matching as a compatibility fallback.
 - Desktop activation delegates to `xnix-install-desktop-integration`, which stages generated application launchers, Dolphin service menus, and the desktop integration manifest under a target root without modifying the host root. The CLI path now enforces recipe install-gate preflight, blocks development-only registries in production mode, and keeps explicit development staging available for digest-verified local tests.
 - Desktop activation rollback delegates to `xnix-rollback-desktop-integration`, which reads activation receipts and removes only unchanged staged files after SHA-256 verification.
 - Runtime operations that need desktop resources must use XDG Desktop Portal request/response flows; backend-specific direct access is not a public UI contract.

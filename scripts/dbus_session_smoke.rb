@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "json"
 require "open3"
 
 BUS_NAME = "org.xnix.Compatibility1"
@@ -157,6 +158,21 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetKRunnerQueryPlan: #{stderr}")
   assert(stdout.include?("krunner-query-plan"), "runtime smoke adapter must expose KRunner query plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "ruby",
+    "bin/xnix-krunner-model",
+    "--source",
+    "dbus",
+    "--query",
+    "notepad"
+  )
+  assert(status.success?, "KRunner model must consume Runtime query plans over D-Bus: #{stderr}")
+  krunner_model = JSON.parse(stdout)
+  assert(krunner_model.fetch("source").fetch("kind") == "runtime-dbus-session", "KRunner model must report the D-Bus Runtime source")
+  assert(krunner_model.fetch("query_type") == "krunner-query-plan", "KRunner model must preserve Runtime query plan type")
+  assert(krunner_model.fetch("matches").first.fetch("application_id") == "org.xnix.sample.notepad", "KRunner model must expose D-Bus query plan matches")
+  assert(!krunner_model.fetch("summary").fetch("backend_launch_enabled"), "KRunner model must preserve backend launch gates from D-Bus")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

@@ -51,5 +51,7 @@ assert(contents.include?("GetCompatibilitySettings"), "D-Bus smoke script must c
 assert(contents.include?("GetCompatibilitySettingsChangePlan"), "D-Bus smoke script must call GetCompatibilitySettingsChangePlan")
 assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script must call GetCompatibilityActionQueue")
 assert(contents.include?("GetCompatibilityActionReviewReceipt"), "D-Bus smoke script must call GetCompatibilityActionReviewReceipt")
+assert(contents.include?("GetKRunnerQueryPlan"), "D-Bus smoke script must call GetKRunnerQueryPlan")
+assert(contents.include?("bin/xnix-krunner-model"), "D-Bus smoke script must verify the KRunner D-Bus read model")
 
 puts "PASS: compatibility runtime D-Bus smoke script unit tests"

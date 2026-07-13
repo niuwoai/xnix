@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.88] - 2026-07-14
+
+### Changed
+
+- Updated the KDE KRunner read model to consume Runtime-owned KRunner query plans before falling back to local application-list matching.
+- Normalized both nested local Runtime query plans and flat D-Bus smoke query plans into KDE-safe KRunner matches while preserving Runtime launch and execution gates.
+
+### Fixed
+
+- Prevented the KDE-facing KRunner model from duplicating Runtime query policy when `krunner_query_plan` is available.
+
 ## [0.2.87] - 2026-07-14
 
 ### Added
