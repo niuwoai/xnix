@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.49] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned Compatibility Center action queues through `xnix-compat-action-queue`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended KDE-facing Runtime read models so pending install readiness, settings changes, AI repair review, Runtime service ownership, and Portal policy review are grouped into non-executing Compatibility Center action cards.
+
 ## [0.2.48] - 2026-07-13
 
 ### Added

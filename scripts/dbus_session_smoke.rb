@@ -282,6 +282,17 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilitySettingsChangePlan: #{stderr}")
   assert(stdout.include?("settings-change-plan"), "runtime smoke adapter must expose settings change plans over D-Bus")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityActionQueue",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityActionQueue: #{stderr}")
+  assert(stdout.include?("compatibility-center-action-queue"), "runtime smoke adapter must expose Compatibility Center action queues over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin

@@ -21,12 +21,14 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.48", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.49", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
 assert(model["summary"]["known_application_count"] == 1, "KDE center model must summarize known applications")
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
+assert(model["summary"]["queued_compatibility_action_count"] == 5, "KDE center model must summarize queued Compatibility Center actions")
+assert(model["summary"]["queued_user_review_count"] == 3, "KDE center model must summarize queued review actions")
 assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
 assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
 assert(model["summary"]["pending_install_plan_count"] == 1, "KDE center model must summarize pending install plans")
@@ -55,6 +57,11 @@ assert(application["test_plan"]["plan_type"] == "compatibility-test", "KDE cente
 assert(application["test_plan"]["pending_step_count"] == 3, "KDE center model must expose pending test steps")
 assert(application["test_result"]["result_type"] == "compatibility-test-result", "KDE center model must expose test result summaries")
 assert(application["test_result"]["overall_status"] == "pending", "KDE center model must expose test result status")
+assert(application["action_queue"]["queue_type"] == "compatibility-center-action-queue", "KDE center model must expose action queues")
+assert(application["action_queue"]["action_count"] == 5, "KDE center model must expose action queue counts")
+assert(application["action_queue"]["user_review_required_count"] == 3, "KDE center model must expose review action counts")
+assert(!application["action_queue"]["execution_enabled"], "KDE center model must not enable action queue execution")
+assert(!application["action_queue"]["backend_details_exposed"], "KDE center model must hide action queue backend details")
 assert(application["install_plan"]["plan_type"] == "compatibility-install-plan", "KDE center model must expose install plan summaries")
 assert(application["install_plan"]["install_state"] == "planned", "KDE center model must expose install plan state")
 assert(!application["install_plan"]["install_ready"], "KDE center model must not claim install readiness")
@@ -131,6 +138,7 @@ end
 
 minimal_model = Xnix::Compatibility::KdeCenterModel.new(runtime: MinimalRuntime.new(runtime.list_applications.first)).to_h
 assert(minimal_model["summary"]["pending_test_step_count"].zero?, "KDE center model must tolerate missing D-Bus test plan summaries")
+assert(minimal_model["summary"]["queued_compatibility_action_count"].zero?, "KDE center model must tolerate missing D-Bus action queue summaries")
 assert(minimal_model["summary"]["runtime_service_binding_ready_count"].zero?, "KDE center model must tolerate missing D-Bus service binding summaries")
 
 stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")

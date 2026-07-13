@@ -45,5 +45,6 @@ assert(contents.include?("GetPortalAccessPolicy"), "D-Bus smoke script must call
 assert(contents.include?("GetRuntimeServiceBinding"), "D-Bus smoke script must call GetRuntimeServiceBinding")
 assert(contents.include?("GetCompatibilitySettings"), "D-Bus smoke script must call GetCompatibilitySettings")
 assert(contents.include?("GetCompatibilitySettingsChangePlan"), "D-Bus smoke script must call GetCompatibilitySettingsChangePlan")
+assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script must call GetCompatibilityActionQueue")
 
 puts "PASS: compatibility runtime D-Bus smoke script unit tests"

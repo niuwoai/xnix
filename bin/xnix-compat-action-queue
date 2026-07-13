@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/compatibility_action_queue"
+
+exit Xnix::Compatibility::CompatibilityActionQueue::CLI.new(ARGV).run

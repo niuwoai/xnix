@@ -69,6 +69,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityAcquisitionPreflight", application_id))
       end
 
+      def action_queue(application_id)
+        parse_dictionary(call("GetCompatibilityActionQueue", application_id))
+      end
+
       def artifact_manifest(application_id)
         parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
       end
@@ -169,6 +173,7 @@ module Xnix
         return string_match[1] if string_match
         return true if value == "true"
         return false if value == "false"
+        return value.to_i if value.match?(/\A-?\d+\z/)
         return value.scan(/'([^']*)'/).flatten if value.start_with?("[") && value.end_with?("]")
 
         value

@@ -151,6 +151,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityActionQueue"
+      [
+        "({'queue_type': <'compatibility-center-action-queue'>, 'action_count': <5>, 'pending_action_count': <5>, 'user_review_required_count': <3>, 'execution_enabled': <false>, 'repair_execution_enabled': <false>, 'settings_persistence_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -279,6 +285,16 @@ assert(!settings_change["settings_persisted"], "D-Bus client must parse settings
 assert(settings_change["portal_policy_review_required"], "D-Bus client must parse settings change Portal review status")
 assert(!settings_change["snapshot_recommended"], "D-Bus client must parse settings change snapshot status")
 assert(!settings_change["backend_details_exposed"], "D-Bus client must parse settings change backend detail status")
+
+action_queue = client.action_queue("org.xnix.sample.notepad")
+assert(action_queue["queue_type"] == "compatibility-center-action-queue", "D-Bus client must parse Compatibility Center action queues")
+assert(action_queue["action_count"] == 5, "D-Bus client must parse action queue counts")
+assert(action_queue["pending_action_count"] == 5, "D-Bus client must parse pending action counts")
+assert(action_queue["user_review_required_count"] == 3, "D-Bus client must parse review action counts")
+assert(!action_queue["execution_enabled"], "D-Bus client must parse action queue execution status")
+assert(!action_queue["repair_execution_enabled"], "D-Bus client must parse repair execution status")
+assert(!action_queue["settings_persistence_enabled"], "D-Bus client must parse settings persistence status")
+assert(!action_queue["backend_details_exposed"], "D-Bus client must parse action queue backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

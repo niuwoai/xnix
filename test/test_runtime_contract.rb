@@ -43,6 +43,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetRuntimeServiceBinding
   GetCompatibilitySettings
   GetCompatibilitySettingsChangePlan
+  GetCompatibilityActionQueue
 ].each do |method|
   assert(contract.include?("name=\"#{method}\""), "D-Bus contract must expose #{method}")
 end

@@ -8,6 +8,7 @@ require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
 require_relative "compatibility_acquisition_preflight"
+require_relative "compatibility_action_queue"
 require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
@@ -55,6 +56,7 @@ module Xnix
             "application_listing" => true,
             "application_state_roots" => true,
             "compatibility_acquisition_preflight" => true,
+            "compatibility_action_queues" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -108,6 +110,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "action_queue" => action_queue_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -146,6 +149,11 @@ module Xnix
       def acquisition_preflight(application_id)
         recipe = require_recipe(application_id)
         CompatibilityAcquisitionPreflight.new(recipe: recipe).to_h
+      end
+
+      def action_queue(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityActionQueue.new(recipe: recipe).to_h
       end
 
       def artifact_manifest(application_id)
@@ -240,6 +248,8 @@ module Xnix
           package_source(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityAcquisitionPreflight"
           acquisition_preflight(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityActionQueue"
+          action_queue(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityInstallPlan"
@@ -374,6 +384,21 @@ module Xnix
           "overall_status" => result.fetch("overall_status"),
           "counts" => result.fetch("counts"),
           "summary" => result.fetch("desktop_safe_summary")
+        }
+      end
+
+      def action_queue_summary(recipe)
+        queue = CompatibilityActionQueue.new(recipe: recipe).to_h
+        {
+          "queue_type" => queue.fetch("queue_type"),
+          "action_count" => queue.fetch("action_count"),
+          "pending_action_count" => queue.fetch("pending_action_count"),
+          "user_review_required_count" => queue.fetch("user_review_required_count"),
+          "execution_enabled" => queue.fetch("execution_enabled"),
+          "repair_execution_enabled" => queue.fetch("repair_execution_enabled"),
+          "settings_persistence_enabled" => queue.fetch("settings_persistence_enabled"),
+          "backend_details_exposed" => queue.fetch("backend_details_exposed"),
+          "summary" => queue.fetch("desktop_safe_summary")
         }
       end
 
@@ -601,6 +626,8 @@ module Xnix
             write_json(runtime.package_source(require_argument(command)))
           when "acquisition-preflight"
             write_json(runtime.acquisition_preflight(require_argument(command)))
+          when "action-queue"
+            write_json(runtime.action_queue(require_argument(command)))
           when "artifact-manifest"
             write_json(runtime.artifact_manifest(require_argument(command)))
           when "install-plan"

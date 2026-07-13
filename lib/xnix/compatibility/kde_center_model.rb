@@ -67,6 +67,7 @@ module Xnix
           "compatibility_status" => diagnostics.fetch("status"),
           "compatibility_label" => STATUS_LABELS.fetch(diagnostics.fetch("status"), "Needs review"),
           "pending_action_count" => pending_checks,
+          "action_queue" => action_queue_summary(diagnostics.fetch("action_queue", nil)),
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
@@ -130,6 +131,22 @@ module Xnix
           "overall_status" => test_result.fetch("overall_status"),
           "counts" => test_result.fetch("counts"),
           "summary" => test_result.fetch("summary")
+        }
+      end
+
+      def action_queue_summary(queue)
+        return nil unless queue
+
+        {
+          "queue_type" => queue.fetch("queue_type"),
+          "action_count" => queue.fetch("action_count"),
+          "pending_action_count" => queue.fetch("pending_action_count"),
+          "user_review_required_count" => queue.fetch("user_review_required_count"),
+          "execution_enabled" => queue.fetch("execution_enabled"),
+          "repair_execution_enabled" => queue.fetch("repair_execution_enabled"),
+          "settings_persistence_enabled" => queue.fetch("settings_persistence_enabled"),
+          "backend_details_exposed" => queue.fetch("backend_details_exposed"),
+          "summary" => queue.fetch("summary")
         }
       end
 
@@ -312,6 +329,8 @@ module Xnix
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
+          "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
+          "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
           "pending_install_plan_count" => applications.count { |application| !section(application, "install_plan").fetch("install_ready", false) },

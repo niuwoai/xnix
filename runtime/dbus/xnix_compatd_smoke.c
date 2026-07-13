@@ -122,6 +122,10 @@ static const gchar introspection_xml[] =
   "      <arg name='value' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityActionQueue'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='queue' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -468,6 +472,27 @@ build_settings_change_plan(const gchar *application_id,
 }
 
 static GVariant *
+build_action_queue(const gchar *application_id)
+{
+  GVariantBuilder queue;
+
+  g_variant_builder_init(&queue, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&queue, "{sv}", "queue_type", g_variant_new_string("compatibility-center-action-queue"));
+  g_variant_builder_add(&queue, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&queue, "{sv}", "surface", g_variant_new_string("Compatibility Center"));
+  g_variant_builder_add(&queue, "{sv}", "action_count", g_variant_new_int32(5));
+  g_variant_builder_add(&queue, "{sv}", "pending_action_count", g_variant_new_int32(5));
+  g_variant_builder_add(&queue, "{sv}", "user_review_required_count", g_variant_new_int32(3));
+  g_variant_builder_add(&queue, "{sv}", "execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&queue, "{sv}", "repair_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&queue, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&queue, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&queue, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&queue);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -794,6 +819,19 @@ handle_method_call(GDBusConnection *connection,
       invocation,
       g_variant_new("(@a{sv})", build_settings_change_plan(application_id, section_id, field_id, value))
     );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityActionQueue") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_action_queue(application_id)));
     return;
   }
 

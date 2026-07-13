@@ -88,6 +88,16 @@ assert(acquisition_preflight["preflight_type"] == "compatibility-acquisition-pre
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityActionQueue",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityActionQueue must exit successfully: #{stderr}")
+action_queue = JSON.parse(stdout)
+assert(action_queue["queue_type"] == "compatibility-center-action-queue", "dispatch must route GetCompatibilityActionQueue")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilityArtifactManifest",
   JSON.generate(["org.xnix.sample.notepad"])
 )
