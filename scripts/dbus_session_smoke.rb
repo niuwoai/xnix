@@ -108,6 +108,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetTaskManagerIdentityPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetTaskManagerIdentityPlan: #{stderr}")
+  assert(stdout.include?("task-manager-identity-plan"), "runtime smoke adapter must expose task manager identity plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetPortalRequestPlan",
     "org.xnix.sample.notepad",
     "file-open"

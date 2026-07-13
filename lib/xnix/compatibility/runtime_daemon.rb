@@ -32,6 +32,7 @@ require_relative "runtime_service_binding"
 require_relative "runtime_write_gate"
 require_relative "settings_model"
 require_relative "settings_change_plan"
+require_relative "task_manager_identity"
 
 module Xnix
   module Compatibility
@@ -74,6 +75,7 @@ module Xnix
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
             "desktop_entry_planning" => true,
+            "task_manager_identity_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -130,6 +132,7 @@ module Xnix
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
+          "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -202,6 +205,41 @@ module Xnix
           },
           "desktop_safe_summary" => "Compatibility application desktop entries launch through the Runtime without exposing backend commands."
         }
+      end
+
+      def task_manager_identity_plan(application_id)
+        recipe = require_recipe(application_id)
+        plan = TaskManagerIdentity.new(application_id: recipe.id, name: recipe.name).to_h
+        plan["task_manager"] = plan.fetch("task_manager").merge(
+          "skip_taskbar" => false,
+          "show_in_switcher" => true
+        )
+        plan["kwin"] = plan.fetch("kwin").merge(
+          "placement" => "normal-window",
+          "set" => plan.fetch("kwin").fetch("set").merge(
+            "skip_taskbar" => false,
+            "show_in_switcher" => true
+          )
+        )
+        plan.merge(
+          "plan_type" => "task-manager-identity-plan",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "restore" => {
+            "restore_allowed" => true,
+            "restore_key" => recipe.id,
+            "prefer_existing_window" => true
+          },
+          "safety" => {
+            "window_manager_policy_only" => true,
+            "runtime_owns_backend_policy" => true,
+            "host_root_modified" => false,
+            "backend_details_exposed" => false
+          },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "Compatibility windows are grouped, pinned, switched, and restored through a normal desktop entry."
+        )
       end
 
       def state_root(application_id)
@@ -340,6 +378,8 @@ module Xnix
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
         when "GetDesktopEntryPlan"
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
+        when "GetTaskManagerIdentityPlan"
+          task_manager_identity_plan(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -563,6 +603,23 @@ module Xnix
           "raw_windows_executable_exposed" => plan.fetch("safety").fetch("raw_windows_executable_exposed"),
           "compatibility_storage_path_exposed" => plan.fetch("safety").fetch("compatibility_storage_path_exposed"),
           "host_root_modified" => plan.fetch("safety").fetch("host_root_modified"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def task_manager_identity_plan_summary(recipe)
+        plan = task_manager_identity_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "desktop_file" => plan.fetch("desktop_file"),
+          "class_group" => plan.fetch("window").fetch("class_group"),
+          "grouping_key" => plan.fetch("task_manager").fetch("grouping_key"),
+          "pinning_allowed" => plan.fetch("task_manager").fetch("pinning_allowed"),
+          "restore_allowed" => plan.fetch("task_manager").fetch("restore_allowed"),
+          "skip_taskbar" => plan.fetch("kwin").fetch("set").fetch("skip_taskbar"),
+          "show_in_switcher" => plan.fetch("kwin").fetch("set").fetch("show_in_switcher"),
+          "window_manager_policy_only" => plan.fetch("safety").fetch("window_manager_policy_only"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
       end
@@ -862,6 +919,8 @@ module Xnix
             write_json(runtime.backend_binding(require_argument(command)))
           when "desktop-entry-plan"
             write_json(runtime.desktop_entry_plan(require_argument(command)))
+          when "task-manager-identity-plan"
+            write_json(runtime.task_manager_identity_plan(require_argument(command)))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

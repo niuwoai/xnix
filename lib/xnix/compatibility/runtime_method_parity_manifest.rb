@@ -24,6 +24,7 @@ module Xnix
         GetRunPlan
         GetDesktopActivationManifest
         GetDesktopEntryPlan
+        GetTaskManagerIdentityPlan
         GetPortalRequestPlan
         GetApplicationStateRoot
         GetCompatibilityPackageSource
@@ -65,6 +66,7 @@ module Xnix
         "GetRunPlan" => "run_plan",
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
+        "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
         "GetPortalRequestPlan" => "portal_request_plan",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",

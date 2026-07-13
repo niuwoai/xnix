@@ -61,6 +61,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetTaskManagerIdentityPlan"
+      [
+        "({'plan_type': <'task-manager-identity-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'launcher_url': <'applications:xnix-org.xnix.sample.notepad.desktop'>, 'window_kind': <'compatibility-application'>, 'class_group': <'xnix-compatibility'>, 'grouping_key': <'org.xnix.sample.notepad'>, 'pinning_allowed': <true>, 'restore_allowed': <true>, 'skip_taskbar': <false>, 'show_in_switcher': <true>, 'prefer_existing_window': <true>, 'window_manager_policy_only': <true>, 'runtime_owns_backend_policy': <true>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -171,7 +177,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <31>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <32>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -258,6 +264,23 @@ assert(!desktop_entry_plan["backend_command_exposed"], "D-Bus client must parse 
 assert(!desktop_entry_plan["raw_windows_executable_exposed"], "D-Bus client must parse Windows executable hiding")
 assert(!desktop_entry_plan["compatibility_storage_path_exposed"], "D-Bus client must parse prefix hiding")
 assert(!desktop_entry_plan["backend_details_exposed"], "D-Bus client must parse desktop entry backend detail status")
+
+task_manager_identity_plan = client.task_manager_identity_plan("org.xnix.sample.notepad")
+assert(task_manager_identity_plan["plan_type"] == "task-manager-identity-plan", "D-Bus client must parse task manager identity plans")
+assert(task_manager_identity_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse task manager desktop files")
+assert(task_manager_identity_plan["launcher_url"] == "applications:xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse task manager launcher URLs")
+assert(task_manager_identity_plan["window_kind"] == "compatibility-application", "D-Bus client must parse task manager window kinds")
+assert(task_manager_identity_plan["class_group"] == "xnix-compatibility", "D-Bus client must parse task manager class groups")
+assert(task_manager_identity_plan["grouping_key"] == "org.xnix.sample.notepad", "D-Bus client must parse task manager grouping keys")
+assert(task_manager_identity_plan["pinning_allowed"], "D-Bus client must parse task manager pinning status")
+assert(task_manager_identity_plan["restore_allowed"], "D-Bus client must parse task manager restore status")
+assert(!task_manager_identity_plan["skip_taskbar"], "D-Bus client must parse taskbar visibility")
+assert(task_manager_identity_plan["show_in_switcher"], "D-Bus client must parse switcher visibility")
+assert(task_manager_identity_plan["prefer_existing_window"], "D-Bus client must parse restore preferences")
+assert(task_manager_identity_plan["window_manager_policy_only"], "D-Bus client must parse window-manager policy scope")
+assert(task_manager_identity_plan["runtime_owns_backend_policy"], "D-Bus client must parse Runtime backend policy ownership")
+assert(!task_manager_identity_plan["host_root_modified"], "D-Bus client must parse task manager host-root safety")
+assert(!task_manager_identity_plan["backend_details_exposed"], "D-Bus client must parse task manager backend detail status")
 
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
@@ -376,7 +399,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 31, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 32, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

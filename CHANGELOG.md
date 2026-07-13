@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.82] - 2026-07-14
+
+### Added
+
+- Added C Runtime task manager identity plan records and a CLI read method for grouping, pinning, switching, and restoring compatibility windows as normal KDE taskbar entries.
+- Added Runtime D-Bus contract coverage for `GetTaskManagerIdentityPlan` so KDE surfaces can read window identity hints without seeing backend implementation details.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, and diagnostics to include task manager identity planning while keeping KWin policy identity-only and backend policy Runtime-owned.
+
 ## [0.2.81] - 2026-07-14
 
 ### Added

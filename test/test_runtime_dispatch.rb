@@ -71,6 +71,20 @@ assert(!desktop_entry_plan["safety"]["backend_command_exposed"], "dispatch must 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetTaskManagerIdentityPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetTaskManagerIdentityPlan must exit successfully: #{stderr}")
+task_manager_identity_plan = JSON.parse(stdout)
+assert(task_manager_identity_plan["plan_type"] == "task-manager-identity-plan", "dispatch must route GetTaskManagerIdentityPlan")
+assert(task_manager_identity_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "dispatch must expose task manager desktop files")
+assert(task_manager_identity_plan["task_manager"]["grouping_key"] == "org.xnix.sample.notepad", "dispatch must expose task manager grouping keys")
+assert(task_manager_identity_plan["task_manager"]["pinning_allowed"], "dispatch must keep task manager pinning allowed")
+assert(!task_manager_identity_plan["safety"]["backend_details_exposed"], "dispatch must keep task manager backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )
