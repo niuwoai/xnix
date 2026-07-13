@@ -130,6 +130,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityInstallPlan",
+    "org.xnix.sample.notepad",
+    "development"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityInstallPlan: #{stderr}")
+  assert(stdout.include?("compatibility-install-plan"), "runtime smoke adapter must expose compatibility install plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetBackendBinding",
     "org.xnix.sample.notepad"
   )

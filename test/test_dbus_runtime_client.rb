@@ -73,6 +73,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityInstallPlan"
+      [
+        "({'plan_type': <'compatibility-install-plan'>, 'install_state': <'planned'>, 'install_ready': <false>, 'desktop_activation_ready': <false>, 'download_enabled': <false>, 'install_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendBinding"
       [
         "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
@@ -187,6 +193,14 @@ assert(artifact_manifest["manifest_state"] == "planned", "D-Bus client must pars
 assert(!artifact_manifest["manifest_ready"], "D-Bus client must parse artifact manifest readiness")
 assert(!artifact_manifest["signature_verified"], "D-Bus client must parse artifact manifest signature status")
 assert(!artifact_manifest["download_enabled"], "D-Bus client must parse artifact download status")
+
+install_plan = client.install_plan("org.xnix.sample.notepad")
+assert(install_plan["plan_type"] == "compatibility-install-plan", "D-Bus client must parse compatibility install plans")
+assert(install_plan["install_state"] == "planned", "D-Bus client must parse install plan state")
+assert(!install_plan["install_ready"], "D-Bus client must parse install readiness")
+assert(!install_plan["desktop_activation_ready"], "D-Bus client must parse desktop activation readiness")
+assert(!install_plan["download_enabled"], "D-Bus client must parse install plan download status")
+assert(!install_plan["install_enabled"], "D-Bus client must parse install plan install status")
 
 backend_binding = client.backend_binding("org.xnix.sample.notepad")
 assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")

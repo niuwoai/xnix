@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "install_plan" => install_plan_summary(diagnostics.fetch("install_plan", nil)),
           "acquisition_preflight" => acquisition_preflight_summary(diagnostics.fetch("acquisition_preflight", nil)),
           "artifact_manifest" => artifact_manifest_summary(diagnostics.fetch("artifact_manifest", nil)),
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
@@ -202,6 +203,23 @@ module Xnix
         }
       end
 
+      def install_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "selected_strategy" => plan.fetch("selected_strategy"),
+          "install_state" => plan.fetch("install_state"),
+          "install_ready" => plan.fetch("install_ready"),
+          "desktop_activation_ready" => plan.fetch("desktop_activation_ready"),
+          "download_enabled" => plan.fetch("download_enabled"),
+          "install_enabled" => plan.fetch("install_enabled"),
+          "phase_count" => plan.fetch("phase_count"),
+          "blocked_phase_count" => plan.fetch("blocked_phase_count"),
+          "summary" => plan.fetch("summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(ai_input)
         return nil unless ai_input
 
@@ -265,6 +283,7 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "pending_install_plan_count" => applications.count { |application| !section(application, "install_plan").fetch("install_ready", false) },
           "pending_acquisition_preflight_count" => applications.count { |application| !section(application, "acquisition_preflight").fetch("acquisition_ready", false) },
           "pending_artifact_manifest_count" => applications.count { |application| !section(application, "artifact_manifest").fetch("manifest_ready", false) },
           "pending_package_source_count" => applications.count { |application| !section(application, "package_source").fetch("package_source_ready", false) },

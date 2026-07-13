@@ -56,6 +56,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='manifest' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityInstallPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='environment' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendBinding'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
@@ -243,6 +248,26 @@ build_compatibility_artifact_manifest(const gchar *application_id)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_compatibility_install_plan(const gchar *application_id, const gchar *environment)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-install-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "environment", g_variant_new_string(environment));
+  g_variant_builder_add(&plan, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&plan, "{sv}", "install_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "install_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "desktop_activation_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "download_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "install_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -527,6 +552,20 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_compatibility_artifact_manifest(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityInstallPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *environment = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &environment);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_compatibility_install_plan(application_id, environment)));
     return;
   }
 

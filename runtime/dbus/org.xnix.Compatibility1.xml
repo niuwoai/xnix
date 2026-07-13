@@ -53,6 +53,11 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="manifest" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityInstallPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="environment" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetBackendBinding">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="binding" type="a{sv}" direction="out"/>

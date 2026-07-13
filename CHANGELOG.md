@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.46] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-install-plan`, a Runtime-owned compatibility install plan that joins artifact manifest, acquisition preflight, package source, state root, and recipe install gate readiness before any desktop activation or backend launch.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for install plan status.
+
+### Changed
+
+- Extended Runtime and KDE read models so installation readiness is visible as a first-class Compatibility Center signal before artifact download, desktop activation, or backend launch is enabled.
+
 ## [0.2.45] - 2026-07-13
 
 ### Added

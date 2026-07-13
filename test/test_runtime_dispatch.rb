@@ -98,6 +98,16 @@ assert(artifact_manifest["manifest_type"] == "compatibility-artifact-manifest", 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityInstallPlan",
+  JSON.generate(["org.xnix.sample.notepad", "development"])
+)
+assert(status.success?, "dispatch GetCompatibilityInstallPlan must exit successfully: #{stderr}")
+install_plan = JSON.parse(stdout)
+assert(install_plan["plan_type"] == "compatibility-install-plan", "dispatch must route GetCompatibilityInstallPlan")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendBinding",
   JSON.generate(["org.xnix.sample.notepad"])
 )

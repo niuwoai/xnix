@@ -11,6 +11,7 @@ require_relative "compatibility_acquisition_preflight"
 require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
+require_relative "compatibility_install_plan"
 require_relative "compatibility_package_source"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -54,6 +55,7 @@ module Xnix
             "compatibility_acquisition_preflight" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
+            "compatibility_install_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
@@ -102,6 +104,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
           "package_source" => package_source_summary(recipe),
@@ -142,6 +145,11 @@ module Xnix
       def artifact_manifest(application_id)
         recipe = require_recipe(application_id)
         CompatibilityArtifactManifest.new(recipe: recipe).to_h
+      end
+
+      def install_plan(application_id, environment = "development")
+        recipe = require_recipe(application_id)
+        CompatibilityInstallPlan.new(recipe: recipe, environment: environment).to_h
       end
 
       def backend_binding(application_id)
@@ -213,6 +221,11 @@ module Xnix
           acquisition_preflight(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityInstallPlan"
+          install_plan(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || "development"
+          )
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
@@ -401,6 +414,22 @@ module Xnix
         }
       end
 
+      def install_plan_summary(recipe)
+        plan = CompatibilityInstallPlan.new(recipe: recipe).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "selected_strategy" => plan.fetch("selected_strategy"),
+          "install_state" => plan.fetch("install_state"),
+          "install_ready" => plan.fetch("install_ready"),
+          "desktop_activation_ready" => plan.fetch("desktop_activation_ready"),
+          "download_enabled" => plan.fetch("download_enabled"),
+          "install_enabled" => plan.fetch("install_enabled"),
+          "phase_count" => plan.fetch("phases").length,
+          "blocked_phase_count" => plan.fetch("phases").count { |phase| phase.fetch("status") == "blocked" },
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -512,6 +541,10 @@ module Xnix
             write_json(runtime.acquisition_preflight(require_argument(command)))
           when "artifact-manifest"
             write_json(runtime.artifact_manifest(require_argument(command)))
+          when "install-plan"
+            application_id = require_argument(command)
+            environment = @argv.shift || "development"
+            write_json(runtime.install_plan(application_id, environment))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE

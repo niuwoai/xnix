@@ -32,6 +32,7 @@ assert(contents.include?("GetApplicationStateRoot"), "D-Bus smoke script must ca
 assert(contents.include?("GetCompatibilityPackageSource"), "D-Bus smoke script must call GetCompatibilityPackageSource")
 assert(contents.include?("GetCompatibilityAcquisitionPreflight"), "D-Bus smoke script must call GetCompatibilityAcquisitionPreflight")
 assert(contents.include?("GetCompatibilityArtifactManifest"), "D-Bus smoke script must call GetCompatibilityArtifactManifest")
+assert(contents.include?("GetCompatibilityInstallPlan"), "D-Bus smoke script must call GetCompatibilityInstallPlan")
 assert(contents.include?("GetBackendBinding"), "D-Bus smoke script must call GetBackendBinding")
 assert(contents.include?("GetRepairPlan"), "D-Bus smoke script must call GetRepairPlan")
 assert(contents.include?("GetTestPlan"), "D-Bus smoke script must call GetTestPlan")

@@ -73,6 +73,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
       end
 
+      def install_plan(application_id, environment = "development")
+        parse_dictionary(call("GetCompatibilityInstallPlan", application_id, environment))
+      end
+
       def backend_binding(application_id)
         parse_dictionary(call("GetBackendBinding", application_id))
       end
