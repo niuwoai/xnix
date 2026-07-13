@@ -145,6 +145,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilitySettingsChangePlan"
+      [
+        "({'plan_type': <'settings-change-plan'>, 'change_state': <'planned'>, 'apply_enabled': <false>, 'settings_persisted': <false>, 'portal_policy_review_required': <true>, 'snapshot_recommended': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -264,6 +270,15 @@ assert(settings["settings_state"] == "planned", "D-Bus client must parse setting
 assert(!settings["settings_persisted"], "D-Bus client must parse settings persistence status")
 assert(!settings["host_root_modified"], "D-Bus client must parse settings host mutation status")
 assert(!settings["backend_details_exposed"], "D-Bus client must parse settings backend detail status")
+
+settings_change = client.settings_change_plan("org.xnix.sample.notepad", "resource-access", "documents", "ask")
+assert(settings_change["plan_type"] == "settings-change-plan", "D-Bus client must parse settings change plans")
+assert(settings_change["change_state"] == "planned", "D-Bus client must parse settings change state")
+assert(!settings_change["apply_enabled"], "D-Bus client must parse settings change execution status")
+assert(!settings_change["settings_persisted"], "D-Bus client must parse settings change persistence status")
+assert(settings_change["portal_policy_review_required"], "D-Bus client must parse settings change Portal review status")
+assert(!settings_change["snapshot_recommended"], "D-Bus client must parse settings change snapshot status")
+assert(!settings_change["backend_details_exposed"], "D-Bus client must parse settings change backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

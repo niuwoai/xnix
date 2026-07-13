@@ -121,6 +121,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilitySettings", application_id))
       end
 
+      def settings_change_plan(application_id, section_id, field_id, value)
+        parse_dictionary(call("GetCompatibilitySettingsChangePlan", application_id, section_id, field_id, value))
+      end
+
       private
 
       def call(method_name, *arguments)

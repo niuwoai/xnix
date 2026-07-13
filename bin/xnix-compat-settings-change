@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/settings_change_plan"
+
+exit Xnix::Compatibility::SettingsChangePlan::CLI.new(ARGV).run

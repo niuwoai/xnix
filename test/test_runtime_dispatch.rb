@@ -210,6 +210,17 @@ assert(status.success?, "dispatch GetCompatibilitySettings must exit successfull
 settings = JSON.parse(stdout)
 assert(settings["request_type"] == "settings-model", "dispatch must route GetCompatibilitySettings")
 
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
+  "GetCompatibilitySettingsChangePlan",
+  JSON.generate(["org.xnix.sample.notepad", "resource-access", "documents", "ask"])
+)
+assert(status.success?, "dispatch GetCompatibilitySettingsChangePlan must exit successfully: #{stderr}")
+settings_change = JSON.parse(stdout)
+assert(settings_change["plan_type"] == "settings-change-plan", "dispatch must route GetCompatibilitySettingsChangePlan")
+assert(!settings_change["apply_enabled"], "dispatch must keep settings changes planned")
+
 _stdout, stderr, status = Open3.capture3(*command, "dispatch", "Launch", JSON.generate(["org.xnix.sample.notepad", {}]))
 assert(!status.success?, "dispatch must reject unsupported write methods until a backend exists")
 assert(stderr.include?("unsupported runtime method"), "dispatch must explain unsupported methods")

@@ -22,6 +22,7 @@ require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_service_binding"
 require_relative "settings_model"
+require_relative "settings_change_plan"
 
 module Xnix
   module Compatibility
@@ -68,6 +69,7 @@ module Xnix
             "ai_repair_approval_gates" => true,
             "runtime_service_binding" => true,
             "compatibility_settings" => true,
+            "compatibility_settings_change_planning" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -117,6 +119,7 @@ module Xnix
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
           "runtime_service_binding" => runtime_service_binding_summary,
           "settings" => settings_summary(recipe),
+          "settings_change_plan" => settings_change_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -209,6 +212,16 @@ module Xnix
         SettingsModel.new(application_id: recipe.id).to_h
       end
 
+      def settings_change_plan(application_id, section_id, field_id, value)
+        recipe = require_recipe(application_id)
+        SettingsChangePlan.new(
+          application_id: recipe.id,
+          section_id: section_id,
+          field_id: field_id,
+          value: value
+        ).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -283,6 +296,13 @@ module Xnix
           runtime_service_binding
         when "GetCompatibilitySettings"
           settings(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilitySettingsChangePlan"
+          settings_change_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1),
+            required_parameter(method_name, parameters, 2),
+            required_parameter(method_name, parameters, 3)
+          )
         else
           raise ArgumentError, "unsupported runtime method: #{method_name}"
         end
@@ -503,6 +523,25 @@ module Xnix
         }
       end
 
+      def settings_change_plan_summary(recipe)
+        plan = SettingsChangePlan.new(
+          application_id: recipe.id,
+          section_id: "resource-access",
+          field_id: "documents",
+          value: "ask"
+        ).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "change_state" => plan.fetch("change_state"),
+          "apply_enabled" => plan.fetch("apply_enabled"),
+          "settings_persisted" => plan.fetch("settings_persisted"),
+          "portal_policy_review_required" => plan.fetch("portal_policy_review_required"),
+          "snapshot_recommended" => plan.fetch("snapshot_recommended"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -587,6 +626,14 @@ module Xnix
             write_json(runtime.runtime_service_binding)
           when "settings"
             write_json(runtime.settings(require_argument(command)))
+          when "settings-change"
+            application_id = require_argument(command)
+            section_id = @argv.shift
+            field_id = @argv.shift
+            value = @argv.shift
+            raise ArgumentError, "settings-change requires section, field, and value" unless section_id && field_id && value
+
+            write_json(runtime.settings_change_plan(application_id, section_id, field_id, value))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

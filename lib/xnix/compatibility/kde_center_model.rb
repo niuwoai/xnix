@@ -81,6 +81,7 @@ module Xnix
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
+          "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -291,6 +292,21 @@ module Xnix
         }
       end
 
+      def settings_change_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "change_state" => plan.fetch("change_state"),
+          "apply_enabled" => plan.fetch("apply_enabled"),
+          "settings_persisted" => plan.fetch("settings_persisted"),
+          "portal_policy_review_required" => plan.fetch("portal_policy_review_required"),
+          "snapshot_recommended" => plan.fetch("snapshot_recommended"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("summary", "")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
@@ -308,7 +324,8 @@ module Xnix
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
           "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
-          "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" }
+          "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },
+          "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) }
         }
       end
 

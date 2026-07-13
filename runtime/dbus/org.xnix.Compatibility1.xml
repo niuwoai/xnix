@@ -112,6 +112,13 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="settings" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilitySettingsChangePlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="section_id" type="s" direction="in"/>
+      <arg name="field_id" type="s" direction="in"/>
+      <arg name="value" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

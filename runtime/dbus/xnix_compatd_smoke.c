@@ -115,6 +115,13 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='settings' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilitySettingsChangePlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='section_id' type='s' direction='in'/>"
+  "      <arg name='field_id' type='s' direction='in'/>"
+  "      <arg name='value' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -437,6 +444,30 @@ build_settings_model(const gchar *application_id)
 }
 
 static GVariant *
+build_settings_change_plan(const gchar *application_id,
+                           const gchar *section_id,
+                           const gchar *field_id,
+                           const gchar *value)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("settings-change-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "section_id", g_variant_new_string(section_id));
+  g_variant_builder_add(&plan, "{sv}", "field_id", g_variant_new_string(field_id));
+  g_variant_builder_add(&plan, "{sv}", "requested_value", g_variant_new_string(value));
+  g_variant_builder_add(&plan, "{sv}", "change_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "apply_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "portal_policy_review_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_recommended", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -744,6 +775,25 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_settings_model(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilitySettingsChangePlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *section_id = NULL;
+    const gchar *field_id = NULL;
+    const gchar *value = NULL;
+
+    g_variant_get(parameters, "(&s&s&s&s)", &application_id, &section_id, &field_id, &value);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_settings_change_plan(application_id, section_id, field_id, value))
+    );
     return;
   }
 

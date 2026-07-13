@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.47"
+EXPECTED_VERSION = "0.2.48"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -60,6 +60,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/recipe_store.rb
   lib/xnix/compatibility/recipe_trust_policy.rb
   lib/xnix/compatibility/runtime_daemon.rb
+  lib/xnix/compatibility/settings_change_plan.rb
   lib/xnix/compatibility/runtime_service_binding.rb
   lib/xnix/compatibility/settings_model.rb
   lib/xnix/compatibility/task_manager_identity.rb
@@ -85,6 +86,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-test-plan
   bin/xnix-compat-test-result
   bin/xnix-compat-settings
+  bin/xnix-compat-settings-change
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
   bin/xnix-desktop-integration-manifest
@@ -173,6 +175,7 @@ REQUIRED_FILES = %w[
   test/test_kwin_window_rule.rb
   test/test_krunner_model.rb
   test/test_settings_model.rb
+  test/test_settings_change_plan.rb
   test/test_task_manager_identity.rb
   test/test_tray_status_model.rb
 ].freeze
@@ -506,7 +509,8 @@ assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime 
 assert(runtime_daemon_source.include?("\"application_state_roots\""), "Runtime daemon must expose application state root capability")
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
 assert(runtime_daemon_source.include?("\"compatibility_settings\""), "Runtime daemon must expose compatibility settings capability")
-%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetCompatibilitySettings].each do |method_name|
+assert(runtime_daemon_source.include?("\"compatibility_settings_change_planning\""), "Runtime daemon must expose settings change planning capability")
+%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -514,12 +518,21 @@ assert(runtime_daemon_source.include?("\"compatibility_settings\""), "Runtime da
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan state_root package_source acquisition_preflight artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding settings].each do |method_name|
+%w[engine_catalog run_plan state_root package_source acquisition_preflight artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding settings settings_change_plan].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")
 assert(dbus_client_source.include?("return false if value == \"false\""), "D-Bus Runtime client must parse boolean false values")
 assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime client must parse string arrays")
+
+settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")
+assert(settings_change_source.include?("xnix-compat-settings-change"), "Settings change plan must expose a CLI command")
+%w[settings-change-plan validate-setting review-user-confirmation review-portal-policy prepare-restore-point persist-runtime-setting].each do |token|
+  assert(settings_change_source.include?(token), "Settings change plan must include #{token}")
+end
+%w[apply_enabled settings_persisted host_root_modified backend_details_exposed].each do |token|
+  assert(settings_change_source.include?("\"#{token}\" => false"), "Settings change plan must keep #{token} false while planning")
+end
 
 krunner_source = read_project_file("lib/xnix/compatibility/krunner_model.rb")
 assert(krunner_source.include?("xnix-compat-launch"), "KRunner model must delegate launches to the managed launcher")
