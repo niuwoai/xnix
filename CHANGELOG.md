@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.50] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned Compatibility Center action review receipts through `xnix-compat-action-review`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended Compatibility Center action handling so KDE review intent is recorded as a non-executing Runtime receipt that cannot launch backends, persist settings, grant resources, or mutate the host root.
+
 ## [0.2.49] - 2026-07-13
 
 ### Added

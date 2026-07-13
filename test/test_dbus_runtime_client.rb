@@ -157,6 +157,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityActionReviewReceipt"
+      [
+        "({'receipt_type': <'compatibility-center-action-review-receipt'>, 'action_id': <'review-ai-repair'>, 'decision': <'approved'>, 'decision_recorded': <true>, 'execution_enabled': <false>, 'repair_execution_enabled': <false>, 'settings_persistence_enabled': <false>, 'resource_grant_created': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -295,6 +301,17 @@ assert(!action_queue["execution_enabled"], "D-Bus client must parse action queue
 assert(!action_queue["repair_execution_enabled"], "D-Bus client must parse repair execution status")
 assert(!action_queue["settings_persistence_enabled"], "D-Bus client must parse settings persistence status")
 assert(!action_queue["backend_details_exposed"], "D-Bus client must parse action queue backend detail status")
+
+action_review = client.action_review_receipt("org.xnix.sample.notepad", "review-ai-repair", "approved")
+assert(action_review["receipt_type"] == "compatibility-center-action-review-receipt", "D-Bus client must parse action review receipts")
+assert(action_review["action_id"] == "review-ai-repair", "D-Bus client must parse action review ids")
+assert(action_review["decision"] == "approved", "D-Bus client must parse action review decisions")
+assert(action_review["decision_recorded"], "D-Bus client must parse action review recording status")
+assert(!action_review["execution_enabled"], "D-Bus client must parse action review execution status")
+assert(!action_review["repair_execution_enabled"], "D-Bus client must parse action review repair execution status")
+assert(!action_review["settings_persistence_enabled"], "D-Bus client must parse action review settings persistence status")
+assert(!action_review["resource_grant_created"], "D-Bus client must parse action review resource grant status")
+assert(!action_review["backend_details_exposed"], "D-Bus client must parse action review backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

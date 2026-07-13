@@ -293,6 +293,19 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityActionQueue: #{stderr}")
   assert(stdout.include?("compatibility-center-action-queue"), "runtime smoke adapter must expose Compatibility Center action queues over D-Bus")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityActionReviewReceipt",
+    "org.xnix.sample.notepad",
+    "review-ai-repair",
+    "approved"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityActionReviewReceipt: #{stderr}")
+  assert(stdout.include?("compatibility-center-action-review-receipt"), "runtime smoke adapter must expose action review receipts over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin

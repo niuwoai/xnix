@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "pathname"
+require_relative "action_review_receipt"
 require_relative "application_state_root"
 require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
@@ -57,6 +58,7 @@ module Xnix
             "application_state_roots" => true,
             "compatibility_acquisition_preflight" => true,
             "compatibility_action_queues" => true,
+            "compatibility_action_review_receipts" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -111,6 +113,7 @@ module Xnix
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
           "action_queue" => action_queue_summary(recipe),
+          "action_review_receipt" => action_review_receipt_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -154,6 +157,11 @@ module Xnix
       def action_queue(application_id)
         recipe = require_recipe(application_id)
         CompatibilityActionQueue.new(recipe: recipe).to_h
+      end
+
+      def action_review_receipt(application_id, action_id, decision)
+        recipe = require_recipe(application_id)
+        ActionReviewReceipt.new(recipe: recipe, action_id: action_id, decision: decision).to_h
       end
 
       def artifact_manifest(application_id)
@@ -250,6 +258,12 @@ module Xnix
           acquisition_preflight(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityActionQueue"
           action_queue(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityActionReviewReceipt"
+          action_review_receipt(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1),
+            required_parameter(method_name, parameters, 2)
+          )
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityInstallPlan"
@@ -399,6 +413,22 @@ module Xnix
           "settings_persistence_enabled" => queue.fetch("settings_persistence_enabled"),
           "backend_details_exposed" => queue.fetch("backend_details_exposed"),
           "summary" => queue.fetch("desktop_safe_summary")
+        }
+      end
+
+      def action_review_receipt_summary(recipe)
+        receipt = ActionReviewReceipt.new(recipe: recipe, action_id: "review-ai-repair", decision: "approved").to_h
+        {
+          "receipt_type" => receipt.fetch("receipt_type"),
+          "decision" => receipt.fetch("decision"),
+          "decision_recorded" => receipt.fetch("decision_recorded"),
+          "action_id" => receipt.fetch("action").fetch("id"),
+          "execution_enabled" => receipt.fetch("execution_enabled"),
+          "repair_execution_enabled" => receipt.fetch("repair_execution_enabled"),
+          "settings_persistence_enabled" => receipt.fetch("settings_persistence_enabled"),
+          "resource_grant_created" => receipt.fetch("resource_grant_created"),
+          "backend_details_exposed" => receipt.fetch("backend_details_exposed"),
+          "summary" => receipt.fetch("desktop_safe_summary")
         }
       end
 
@@ -628,6 +658,13 @@ module Xnix
             write_json(runtime.acquisition_preflight(require_argument(command)))
           when "action-queue"
             write_json(runtime.action_queue(require_argument(command)))
+          when "action-review"
+            application_id = require_argument(command)
+            action_id = @argv.shift
+            decision = @argv.shift
+            raise ArgumentError, "action-review requires action id and decision" unless action_id && decision
+
+            write_json(runtime.action_review_receipt(application_id, action_id, decision))
           when "artifact-manifest"
             write_json(runtime.artifact_manifest(require_argument(command)))
           when "install-plan"

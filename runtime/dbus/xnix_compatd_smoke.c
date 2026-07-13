@@ -126,6 +126,12 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='queue' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityActionReviewReceipt'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='action_id' type='s' direction='in'/>"
+  "      <arg name='decision' type='s' direction='in'/>"
+  "      <arg name='receipt' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -493,6 +499,27 @@ build_action_queue(const gchar *application_id)
 }
 
 static GVariant *
+build_action_review_receipt(const gchar *application_id, const gchar *action_id, const gchar *decision)
+{
+  GVariantBuilder receipt;
+
+  g_variant_builder_init(&receipt, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&receipt, "{sv}", "receipt_type", g_variant_new_string("compatibility-center-action-review-receipt"));
+  g_variant_builder_add(&receipt, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&receipt, "{sv}", "action_id", g_variant_new_string(action_id));
+  g_variant_builder_add(&receipt, "{sv}", "decision", g_variant_new_string(decision));
+  g_variant_builder_add(&receipt, "{sv}", "decision_recorded", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&receipt, "{sv}", "execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&receipt, "{sv}", "repair_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&receipt, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&receipt, "{sv}", "resource_grant_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&receipt, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&receipt, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&receipt);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -832,6 +859,24 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_action_queue(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityActionReviewReceipt") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *action_id = NULL;
+    const gchar *decision = NULL;
+
+    g_variant_get(parameters, "(&s&s&s)", &application_id, &action_id, &decision);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_action_review_receipt(application_id, action_id, decision))
+    );
     return;
   }
 

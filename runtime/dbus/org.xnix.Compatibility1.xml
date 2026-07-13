@@ -123,6 +123,12 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="queue" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityActionReviewReceipt">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="action_id" type="s" direction="in"/>
+      <arg name="decision" type="s" direction="in"/>
+      <arg name="receipt" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

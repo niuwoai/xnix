@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.49"
+EXPECTED_VERSION = "0.2.50"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -22,6 +22,7 @@ REQUIRED_FILES = %w[
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
+  lib/xnix/compatibility/action_review_receipt.rb
   lib/xnix/compatibility/ai_diagnostic_input.rb
   lib/xnix/compatibility/ai_diagnostic_recommendation.rb
   lib/xnix/compatibility/ai_repair_approval_gate.rb
@@ -71,6 +72,7 @@ REQUIRED_FILES = %w[
   bin/xnix-ai-diagnostic-recommendation
   bin/xnix-ai-repair-approval-gate
   bin/xnix-compat-acquisition-preflight
+  bin/xnix-compat-action-review
   bin/xnix-compat-action-queue
   bin/xnix-compat-artifact-manifest
   bin/xnix-compat-install-plan
@@ -124,6 +126,7 @@ REQUIRED_FILES = %w[
   kde/plasmoids/org.xnix.compatibilitycenter/contents/ui/main.qml
   kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop
   docs/compatibility-runtime.md
+  test/test_action_review_receipt.rb
   test/test_ai_diagnostic_input.rb
   test/test_ai_diagnostic_recommendation.rb
   test/test_ai_repair_approval_gate.rb
@@ -501,6 +504,7 @@ assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must 
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
 assert(runtime_daemon_source.include?("\"compatibility_acquisition_preflight\""), "Runtime daemon must expose compatibility acquisition preflight capability")
 assert(runtime_daemon_source.include?("\"compatibility_action_queues\""), "Runtime daemon must expose Compatibility Center action queue capability")
+assert(runtime_daemon_source.include?("\"compatibility_action_review_receipts\""), "Runtime daemon must expose Compatibility Center action review receipt capability")
 assert(runtime_daemon_source.include?("\"compatibility_artifact_manifests\""), "Runtime daemon must expose compatibility artifact manifest capability")
 assert(runtime_daemon_source.include?("\"compatibility_install_planning\""), "Runtime daemon must expose compatibility install planning capability")
 assert(runtime_daemon_source.include?("\"compatibility_package_sources\""), "Runtime daemon must expose compatibility package source capability")
@@ -514,7 +518,7 @@ assert(runtime_daemon_source.include?("\"application_state_roots\""), "Runtime d
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
 assert(runtime_daemon_source.include?("\"compatibility_settings\""), "Runtime daemon must expose compatibility settings capability")
 assert(runtime_daemon_source.include?("\"compatibility_settings_change_planning\""), "Runtime daemon must expose settings change planning capability")
-%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
+%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -522,7 +526,7 @@ assert(runtime_daemon_source.include?("\"compatibility_settings_change_planning\
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan state_root package_source acquisition_preflight action_queue artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding settings settings_change_plan].each do |method_name|
+%w[engine_catalog run_plan state_root package_source acquisition_preflight action_queue action_review_receipt artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding settings settings_change_plan].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")
@@ -546,6 +550,15 @@ assert(action_queue_source.include?("xnix-compat-action-queue"), "Compatibility 
 end
 %w[execution_enabled repair_execution_enabled settings_persistence_enabled host_root_modified network_required backend_details_exposed].each do |token|
   assert(action_queue_source.include?("\"#{token}\" => false"), "Compatibility action queue must keep #{token} false")
+end
+
+action_review_source = read_project_file("lib/xnix/compatibility/action_review_receipt.rb")
+assert(action_review_source.include?("xnix-compat-action-review"), "Compatibility action review receipt must expose a CLI command")
+%w[compatibility-center-action-review-receipt decision_recorded reviewed approved deferred rejected].each do |token|
+  assert(action_review_source.include?(token), "Compatibility action review receipt must include #{token}")
+end
+%w[execution_enabled repair_execution_enabled settings_persistence_enabled resource_grant_created host_root_modified network_required backend_details_exposed].each do |token|
+  assert(action_review_source.include?("\"#{token}\" => false"), "Compatibility action review receipt must keep #{token} false")
 end
 
 krunner_source = read_project_file("lib/xnix/compatibility/krunner_model.rb")

@@ -73,6 +73,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityActionQueue", application_id))
       end
 
+      def action_review_receipt(application_id, action_id, decision)
+        parse_dictionary(call("GetCompatibilityActionReviewReceipt", application_id, action_id, decision))
+      end
+
       def artifact_manifest(application_id)
         parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
       end

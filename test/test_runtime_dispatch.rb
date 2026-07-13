@@ -98,6 +98,16 @@ assert(action_queue["queue_type"] == "compatibility-center-action-queue", "dispa
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityActionReviewReceipt",
+  JSON.generate(["org.xnix.sample.notepad", "review-ai-repair", "approved"])
+)
+assert(status.success?, "dispatch GetCompatibilityActionReviewReceipt must exit successfully: #{stderr}")
+action_review = JSON.parse(stdout)
+assert(action_review["receipt_type"] == "compatibility-center-action-review-receipt", "dispatch must route GetCompatibilityActionReviewReceipt")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilityArtifactManifest",
   JSON.generate(["org.xnix.sample.notepad"])
 )
