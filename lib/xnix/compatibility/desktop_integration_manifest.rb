@@ -7,6 +7,7 @@ require_relative "dolphin_service_menu"
 require_relative "file_association_model"
 require_relative "kde_integration_status"
 require_relative "portal_access_policy"
+require_relative "portal_request_model"
 require_relative "recipe_store"
 require_relative "runtime_daemon"
 
@@ -25,6 +26,7 @@ module Xnix
       CENTER_MODEL_COMMAND = "xnix-kde-center-model"
       SETTINGS_COMMAND = "xnix-compat-settings"
       PORTAL_POLICY_COMMAND = "xnix-portal-access-policy"
+      PORTAL_REQUEST_COMMAND = "xnix-portal-request-model"
 
       def initialize(recipe:)
         @recipe = recipe
@@ -168,6 +170,11 @@ module Xnix
           "portal_policy" => {
             "argv" => [PORTAL_POLICY_COMMAND, "--app", recipe.id, "--operation", "file-open"],
             "operations" => PortalAccessPolicy::OPERATIONS.keys
+          },
+          "portal_request" => {
+            "argv" => [PORTAL_REQUEST_COMMAND, "--app", recipe.id, "--operation", "file-open"],
+            "destination" => PortalRequestModel::PORTAL_DESTINATION,
+            "request_type" => "portal-request"
           },
           "sections" => %w[run-mode resource-access devices network snapshots]
         }

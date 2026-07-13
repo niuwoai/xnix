@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.34] - 2026-07-13
+
+### Added
+
+- Added `xnix-portal-request-model`, a Runtime-owned XDG Desktop Portal request model for file, URI, print, screenshot, clipboard, camera, and remote-desktop operations.
+- Added focused coverage for Portal D-Bus destination, interface, method, request handle tokens, Response completion, denied-request guidance, CLI validation, and backend-detail filtering.
+
+### Changed
+
+- Extended desktop integration manifests so settings artifacts expose both Portal policy evaluation and Portal request modeling.
+
 ## [0.2.33] - 2026-07-13
 
 ### Added

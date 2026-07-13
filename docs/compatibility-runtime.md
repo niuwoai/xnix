@@ -84,6 +84,8 @@ Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return 
 
 Portal access policy delegates to `xnix-portal-access-policy`. The policy covers file open, URI open, print, screenshot, clipboard, camera, and remote-desktop operations. KDE settings may display the decision, but the Runtime owns the policy; the desktop shell requests authorization and receives only the resulting user-mediated grant.
 
+Portal request modeling delegates to `xnix-portal-request-model`. The model describes the XDG Desktop Portal D-Bus destination, interface, method, request handle token, completion `Response` signal, denied-state guidance, and Runtime-owned result handling. It does not call the host portal during model generation and does not mutate host permissions.
+
 ## KDE Integration Rules
 
 - The Compatibility Center Plasmoid is a Runtime client, not an alternative Runtime.
@@ -113,6 +115,7 @@ Portal access policy delegates to `xnix-portal-access-policy`. The policy covers
 - Compatibility repair plans must expose approval, snapshot, rollback, and notification requirements before a repair is executed.
 - Compatibility snapshot plans must preserve user documents, avoid host-system snapshots, and provide bounded restore-point retention.
 - Portal access policy must require user-mediated XDG Desktop Portal requests and must deny direct desktop access for sensitive operations.
+- Portal request models must describe XDG Desktop Portal requests and completion handling without mutating host permissions.
 - KRunner resolves a natural-language query to an application identity and requests a Runtime launch.
 - KWin scripts attach window identity and layout metadata; they do not make backend policy decisions.
 - Dolphin actions ask the Runtime to select an application and obtain portal-granted documents.

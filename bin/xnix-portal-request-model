@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/portal_request_model"
+
+exit Xnix::Compatibility::PortalRequestModel::CLI.new(ARGV).run

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.33"
+EXPECTED_VERSION = "0.2.34"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -42,6 +42,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/launch_request.rb
   lib/xnix/compatibility/notification_request.rb
   lib/xnix/compatibility/portal_access_policy.rb
+  lib/xnix/compatibility/portal_request_model.rb
   lib/xnix/compatibility/registry_backed_recipe_store.rb
   lib/xnix/compatibility/recipe_install_gate.rb
   lib/xnix/compatibility/recipe_registry.rb
@@ -71,6 +72,7 @@ REQUIRED_FILES = %w[
   bin/xnix-kwin-window-rule
   bin/xnix-krunner-model
   bin/xnix-portal-access-policy
+  bin/xnix-portal-request-model
   bin/xnix-recipe-install-gate
   bin/xnix-recipe-registry
   bin/xnix-recipe-trust-policy
@@ -122,6 +124,7 @@ REQUIRED_FILES = %w[
   test/test_launch_request.rb
   test/test_notification_request.rb
   test/test_portal_access_policy.rb
+  test/test_portal_request_model.rb
   test/test_runtime_contract.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
@@ -266,6 +269,12 @@ end
 assert(portal_policy_source.include?("org.freedesktop.portal"), "Portal access policy must use XDG Desktop Portal interfaces")
 assert(portal_policy_source.include?("\"direct_access_allowed\" => false"), "Portal access policy must deny direct desktop access")
 
+portal_request_source = read_project_file("lib/xnix/compatibility/portal_request_model.rb")
+assert(portal_request_source.include?("org.freedesktop.portal.Desktop"), "Portal request model must target the portal desktop service")
+assert(portal_request_source.include?("\"portal-request\""), "Portal request model must identify request type")
+assert(portal_request_source.include?("\"host_permission_changed\" => false"), "Portal request model must not mutate host permissions")
+assert(portal_request_source.include?("\"backend_details_exposed\" => false"), "Portal request model must hide backend details")
+
 tray_status_source = read_project_file("lib/xnix/compatibility/tray_status_model.rb")
 %w[runtime_activity compatibility_status tray_bridge].each do |method_name|
   assert(tray_status_source.include?(method_name), "Tray status model must include #{method_name}")
@@ -288,7 +297,7 @@ kde_status_source = read_project_file("lib/xnix/compatibility/kde_integration_st
 end
 
 desktop_manifest_source = read_project_file("lib/xnix/compatibility/desktop_integration_manifest.rb")
-%w[xnix-compat-launch xnix-compat-window-identity xnix-kwin-window-rule xnix-file-association-model xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy].each do |command|
+%w[xnix-compat-launch xnix-compat-window-identity xnix-kwin-window-rule xnix-file-association-model xnix-compat-open xnix-compat-tray-status xnix-compat-notify xnix-kde-center-model xnix-compat-settings xnix-portal-access-policy xnix-portal-request-model].each do |command|
   assert(desktop_manifest_source.include?(command), "Desktop integration manifest must include #{command}")
 end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
