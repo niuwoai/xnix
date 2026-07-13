@@ -56,6 +56,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetNotificationPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='event_type' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetPortalRequestPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='operation' type='s' direction='in'/>"
@@ -328,6 +333,38 @@ build_file_association_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "overwrite_existing_mimeapps", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "portal_required_for_file_open", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_notification_plan(const gchar *application_id, const gchar *event_type)
+{
+  GVariantBuilder plan;
+  const gboolean review_required =
+    g_strcmp0(event_type, "approval-required") == 0 ||
+    g_strcmp0(event_type, "install-failed") == 0;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("notification-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "event_type", g_variant_new_string(event_type));
+  g_variant_builder_add(&plan, "{sv}", "notification_id", g_variant_new_string("org.xnix.sample.notepad.approval-required"));
+  g_variant_builder_add(&plan, "{sv}", "title", g_variant_new_string("Sample Notepad needs approval"));
+  g_variant_builder_add(&plan, "{sv}", "urgency", g_variant_new_string(review_required ? "critical" : "normal"));
+  g_variant_builder_add(&plan, "{sv}", "category", g_variant_new_string("compatibility.approval"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_entry", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&plan, "{sv}", "action_count", g_variant_new_int32(2));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "requires_user_review", g_variant_new_boolean(review_required));
+  g_variant_builder_add(&plan, "{sv}", "action_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "repair_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
@@ -739,7 +776,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(33));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(34));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -923,6 +960,23 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_file_association_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetNotificationPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *event_type = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &event_type);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_notification_plan(application_id, event_type))
     );
     return;
   }

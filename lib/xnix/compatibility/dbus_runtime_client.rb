@@ -73,6 +73,10 @@ module Xnix
         parse_dictionary(call("GetFileAssociationPlan", application_id))
       end
 
+      def notification_plan(application_id, event_type)
+        parse_dictionary(call("GetNotificationPlan", application_id, event_type))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

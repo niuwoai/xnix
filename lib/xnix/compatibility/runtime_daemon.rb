@@ -23,6 +23,7 @@ require_relative "compatibility_test_result"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "file_association_model"
+require_relative "notification_request"
 require_relative "portal_access_policy"
 require_relative "portal_request_model"
 require_relative "registry_backed_recipe_store"
@@ -78,6 +79,7 @@ module Xnix
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
             "file_association_planning" => true,
+            "notification_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -136,6 +138,7 @@ module Xnix
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "file_association_plan" => file_association_plan_summary(recipe),
+          "notification_plan" => notification_plan_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -256,6 +259,48 @@ module Xnix
           "backend_details_exposed" => false,
           "desktop_safe_summary" => "Recipe MIME types are mapped to a generated desktop entry and portal-mediated file opens."
         )
+      end
+
+      def notification_plan(application_id, event_type)
+        recipe = require_recipe(application_id)
+        request = NotificationRequest.new(application_id: recipe.id, event_type: event_type).to_h
+        {
+          "version" => VERSION,
+          "plan_type" => "notification-plan",
+          "desktop" => "KDE Plasma",
+          "event_type" => request.fetch("event_type"),
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "application" => {
+            "id" => recipe.id,
+            "name" => recipe.name,
+            "icon" => recipe.icon,
+            "runtime_mode" => recipe.mode,
+            "desktop_entry" => "xnix-#{recipe.id}.desktop"
+          },
+          "notification" => {
+            "id" => "#{recipe.id}.#{event_type}",
+            "title" => request.fetch("title"),
+            "body" => request.fetch("body"),
+            "urgency" => request.fetch("urgency"),
+            "category" => "compatibility.#{event_type.tr("-", ".")}",
+            "desktop_entry" => "xnix-#{recipe.id}.desktop",
+            "actions" => request.fetch("actions"),
+            "action_count" => request.fetch("actions").length
+          },
+          "safety" => {
+            "user_visible" => true,
+            "requires_user_review" => %w[approval-required install-failed].include?(event_type),
+            "action_execution_enabled" => false,
+            "repair_execution_enabled" => false,
+            "settings_persistence_enabled" => false,
+            "host_root_modified" => false,
+            "backend_details_exposed" => false
+          },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "Runtime events become KDE notification plans while execution and persistence gates remain closed."
+        }
       end
 
       def state_root(application_id)
@@ -398,6 +443,11 @@ module Xnix
           task_manager_identity_plan(required_parameter(method_name, parameters, 0))
         when "GetFileAssociationPlan"
           file_association_plan(required_parameter(method_name, parameters, 0))
+        when "GetNotificationPlan"
+          notification_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -654,6 +704,23 @@ module Xnix
           "staged_root_only" => plan.fetch("safety").fetch("staged_root_only"),
           "overwrite_existing_mimeapps" => plan.fetch("safety").fetch("overwrite_existing_mimeapps"),
           "portal_required_for_file_open" => plan.fetch("safety").fetch("portal_required_for_file_open"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def notification_plan_summary(recipe)
+        plan = notification_plan(recipe.id, "approval-required")
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "event_type" => plan.fetch("event_type"),
+          "notification_id" => plan.fetch("notification").fetch("id"),
+          "urgency" => plan.fetch("notification").fetch("urgency"),
+          "action_count" => plan.fetch("notification").fetch("action_count"),
+          "requires_user_review" => plan.fetch("safety").fetch("requires_user_review"),
+          "action_execution_enabled" => plan.fetch("safety").fetch("action_execution_enabled"),
+          "repair_execution_enabled" => plan.fetch("safety").fetch("repair_execution_enabled"),
+          "settings_persistence_enabled" => plan.fetch("safety").fetch("settings_persistence_enabled"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
@@ -958,6 +1025,12 @@ module Xnix
             write_json(runtime.task_manager_identity_plan(require_argument(command)))
           when "file-association-plan"
             write_json(runtime.file_association_plan(require_argument(command)))
+          when "notification-plan"
+            application_id = require_argument(command)
+            event_type = @argv.shift
+            raise ArgumentError, "notification-plan requires event type" unless event_type
+
+            write_json(runtime.notification_plan(application_id, event_type))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

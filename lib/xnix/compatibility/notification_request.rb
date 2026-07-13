@@ -2,7 +2,6 @@
 
 require "json"
 require "optparse"
-require_relative "runtime_daemon"
 
 module Xnix
   module Compatibility

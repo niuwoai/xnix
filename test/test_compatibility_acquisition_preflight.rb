@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 preflight = Xnix::Compatibility::CompatibilityAcquisitionPreflight.new(recipe: recipe).to_h
 check_ids = preflight.fetch("checks").map { |item| item.fetch("id") }
 
-assert(preflight["version"] == "0.2.83", "compatibility acquisition preflight must expose the current version")
+assert(preflight["version"] == "0.2.84", "compatibility acquisition preflight must expose the current version")
 assert(preflight["preflight_type"] == "compatibility-acquisition-preflight", "compatibility acquisition preflight must identify preflight type")
 assert(preflight["application"]["id"] == "org.xnix.sample.notepad", "compatibility acquisition preflight must preserve the application id")
 assert(preflight["runtime_owned"], "Runtime must own compatibility acquisition preflight")

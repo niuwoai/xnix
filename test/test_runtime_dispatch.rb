@@ -100,6 +100,22 @@ assert(!file_association_plan["safety"]["backend_details_exposed"], "dispatch mu
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetNotificationPlan",
+  JSON.generate(["org.xnix.sample.notepad", "approval-required"])
+)
+assert(status.success?, "dispatch GetNotificationPlan must exit successfully: #{stderr}")
+notification_plan = JSON.parse(stdout)
+assert(notification_plan["plan_type"] == "notification-plan", "dispatch must route GetNotificationPlan")
+assert(notification_plan["event_type"] == "approval-required", "dispatch must preserve notification event types")
+assert(notification_plan["notification"]["urgency"] == "critical", "dispatch must expose notification urgency")
+assert(notification_plan["notification"]["actions"].include?("review-request"), "dispatch must expose notification review actions")
+assert(notification_plan["safety"]["requires_user_review"], "dispatch must expose notification review requirements")
+assert(!notification_plan["safety"]["action_execution_enabled"], "dispatch must keep notification actions gated")
+assert(!notification_plan["safety"]["backend_details_exposed"], "dispatch must keep notification backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

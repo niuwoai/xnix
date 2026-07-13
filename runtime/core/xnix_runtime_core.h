@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.83"
+#define XNIX_RUNTIME_VERSION "0.2.84"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[33];
+  const char *read_only_methods[34];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -767,6 +767,29 @@ typedef struct {
   const char *summary;
 } XnixRuntimeFileAssociationPlan;
 
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *event_type;
+  const char *notification_id;
+  const char *title;
+  const char *body;
+  const char *urgency;
+  const char *category;
+  const char *desktop_entry;
+  const char *actions[3];
+  size_t action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool user_visible;
+  bool requires_user_review;
+  bool action_execution_enabled;
+  bool repair_execution_enabled;
+  bool settings_persistence_enabled;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeNotificationPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -876,6 +899,11 @@ bool xnix_runtime_task_manager_identity_plan(
 bool xnix_runtime_file_association_plan(
   const char *application_id,
   XnixRuntimeFileAssociationPlan *plan
+);
+bool xnix_runtime_notification_plan(
+  const char *application_id,
+  const char *event_type,
+  XnixRuntimeNotificationPlan *plan
 );
 bool xnix_runtime_portal_request_plan(
   const char *application_id,

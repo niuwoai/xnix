@@ -130,6 +130,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetNotificationPlan",
+    "org.xnix.sample.notepad",
+    "approval-required"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetNotificationPlan: #{stderr}")
+  assert(stdout.include?("notification-plan"), "runtime smoke adapter must expose notification plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetPortalRequestPlan",
     "org.xnix.sample.notepad",
     "file-open"

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.84] - 2026-07-14
+
+### Added
+
+- Added C Runtime notification plan records and a CLI read method for KDE notification events covering install failures, repair receipts, mode changes, and approval requests.
+- Added Runtime D-Bus contract coverage for `GetNotificationPlan` so KDE notification surfaces can read event plans without enabling execution or exposing backend details.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, daemon diagnostics, and the D-Bus client to include notification planning while keeping action execution, repair execution, settings persistence, and host-root mutation disabled.
+
 ## [0.2.83] - 2026-07-14
 
 ### Added

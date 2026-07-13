@@ -26,6 +26,7 @@ module Xnix
         GetDesktopEntryPlan
         GetTaskManagerIdentityPlan
         GetFileAssociationPlan
+        GetNotificationPlan
         GetPortalRequestPlan
         GetApplicationStateRoot
         GetCompatibilityPackageSource
@@ -69,6 +70,7 @@ module Xnix
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
         "GetFileAssociationPlan" => "file_association_plan",
+        "GetNotificationPlan" => "notification_plan",
         "GetPortalRequestPlan" => "portal_request_plan",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",
