@@ -282,6 +282,16 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeMethodParityManifest"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeMethodParityManifest: #{stderr}")
+  assert(stdout.include?("runtime-method-parity-manifest"), "runtime smoke adapter must expose Runtime method parity manifests over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetCompatibilitySettings",
     "org.xnix.sample.notepad"
   )

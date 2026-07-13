@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.53] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned read-only method parity manifests through `xnix-runtime-method-parity-manifest`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended production owner smoke readiness so XML contract, Runtime dispatch, D-Bus client, smoke adapter, and session smoke coverage must agree on the Runtime read-only method set before write methods are considered.
+
 ## [0.2.52] - 2026-07-13
 
 ### Added

@@ -82,6 +82,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
           "runtime_live_owner_gate" => runtime_live_owner_gate_summary(diagnostics.fetch("runtime_live_owner_gate", nil)),
+          "runtime_method_parity_manifest" => runtime_method_parity_manifest_summary(diagnostics.fetch("runtime_method_parity_manifest", nil)),
           "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary(diagnostics.fetch("runtime_owner_smoke_plan", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
@@ -349,6 +350,21 @@ module Xnix
         }
       end
 
+      def runtime_method_parity_manifest_summary(manifest)
+        return nil unless manifest
+
+        {
+          "manifest_type" => manifest.fetch("manifest_type"),
+          "method_count" => manifest.fetch("method_count"),
+          "read_only_method_parity_ready" => manifest.fetch("read_only_method_parity_ready"),
+          "passed_check_count" => manifest.fetch("passed_check_count"),
+          "blocked_check_count" => manifest.fetch("blocked_check_count"),
+          "write_methods_supported" => manifest.fetch("write_methods_supported"),
+          "write_method_dispatch_enabled" => manifest.fetch("write_method_dispatch_enabled"),
+          "summary" => manifest.fetch("summary", "")
+        }
+      end
+
       def settings_summary(settings)
         return nil unless settings
 
@@ -404,6 +420,9 @@ module Xnix
           "pending_runtime_owner_smoke_plan_count" => applications.count do |application|
             owner_smoke_plan = section(application, "runtime_owner_smoke_plan")
             !owner_smoke_plan.empty? && owner_smoke_plan.fetch("smoke_state", nil) == "planned"
+          end,
+          "runtime_method_parity_ready_count" => applications.count do |application|
+            section(application, "runtime_method_parity_manifest").fetch("read_only_method_parity_ready", false)
           end,
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },

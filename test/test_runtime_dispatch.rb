@@ -232,6 +232,13 @@ owner_smoke_plan = JSON.parse(stdout)
 assert(owner_smoke_plan["plan_type"] == "runtime-owner-smoke-plan", "dispatch must route GetRuntimeOwnerSmokePlan")
 assert(!owner_smoke_plan["production_bus_claimed"], "dispatch must keep production bus ownership unclaimed")
 
+stdout, stderr, status = Open3.capture3(*command, "dispatch", "GetRuntimeMethodParityManifest")
+assert(status.success?, "dispatch GetRuntimeMethodParityManifest must exit successfully: #{stderr}")
+method_parity = JSON.parse(stdout)
+assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "dispatch must route GetRuntimeMethodParityManifest")
+assert(method_parity["read_only_method_parity_ready"], "dispatch must report method parity readiness")
+assert(!method_parity["write_methods_supported"], "dispatch must not claim write method support")
+
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",

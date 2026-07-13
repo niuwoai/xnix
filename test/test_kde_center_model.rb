@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.52", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.53", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -43,6 +43,7 @@ assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model
 assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
 assert(model["summary"]["pending_runtime_live_owner_gate_count"] == 1, "KDE center model must summarize pending Runtime live owner gates")
 assert(model["summary"]["pending_runtime_owner_smoke_plan_count"] == 1, "KDE center model must summarize pending Runtime owner smoke plans")
+assert(model["summary"]["runtime_method_parity_ready_count"] == 1, "KDE center model must summarize Runtime method parity readiness")
 assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center model must summarize Runtime service binding readiness")
 assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
 assert(model["summary"]["pending_settings_change_plan_count"] == 1, "KDE center model must summarize pending settings change plans")
@@ -115,6 +116,13 @@ assert(application["runtime_owner_smoke_plan"]["smoke_environment"] == "restrict
 assert(application["runtime_owner_smoke_plan"]["pending_step_count"] == 6, "KDE center model must expose pending owner smoke steps")
 assert(!application["runtime_owner_smoke_plan"]["system_service_started"], "KDE center model must not claim started system services")
 assert(!application["runtime_owner_smoke_plan"]["production_bus_claimed"], "KDE center model must not claim production bus ownership")
+assert(application["runtime_method_parity_manifest"]["manifest_type"] == "runtime-method-parity-manifest", "KDE center model must expose Runtime method parity manifests")
+assert(application["runtime_method_parity_manifest"]["method_count"] == 27, "KDE center model must expose Runtime method counts")
+assert(application["runtime_method_parity_manifest"]["read_only_method_parity_ready"], "KDE center model must expose Runtime method parity readiness")
+assert(application["runtime_method_parity_manifest"]["passed_check_count"] == 5, "KDE center model must expose Runtime method parity pass counts")
+assert(application["runtime_method_parity_manifest"]["blocked_check_count"].zero?, "KDE center model must expose Runtime method parity blocked counts")
+assert(!application["runtime_method_parity_manifest"]["write_methods_supported"], "KDE center model must not claim write method support")
+assert(!application["runtime_method_parity_manifest"]["write_method_dispatch_enabled"], "KDE center model must not claim write method dispatch")
 assert(application["runtime_service_binding"]["binding_type"] == "runtime-service-binding", "KDE center model must expose Runtime service binding")
 assert(application["runtime_service_binding"]["activation_binding_ready"], "KDE center model must expose activation binding readiness")
 assert(!application["runtime_service_binding"]["live_dbus_owner_ready"], "KDE center model must not claim live D-Bus ownership")
@@ -162,6 +170,7 @@ assert(minimal_model["summary"]["queued_compatibility_action_count"].zero?, "KDE
 assert(minimal_model["summary"]["recorded_action_review_count"].zero?, "KDE center model must tolerate missing D-Bus action review summaries")
 assert(minimal_model["summary"]["pending_runtime_live_owner_gate_count"].zero?, "KDE center model must tolerate missing D-Bus live owner gate summaries")
 assert(minimal_model["summary"]["pending_runtime_owner_smoke_plan_count"].zero?, "KDE center model must tolerate missing D-Bus owner smoke plan summaries")
+assert(minimal_model["summary"]["runtime_method_parity_ready_count"].zero?, "KDE center model must tolerate missing D-Bus method parity summaries")
 assert(minimal_model["summary"]["runtime_service_binding_ready_count"].zero?, "KDE center model must tolerate missing D-Bus service binding summaries")
 
 stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")

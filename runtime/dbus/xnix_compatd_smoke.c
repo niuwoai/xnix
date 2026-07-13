@@ -117,6 +117,9 @@ static const gchar introspection_xml[] =
   "    <method name='GetRuntimeOwnerSmokePlan'>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetRuntimeMethodParityManifest'>"
+  "      <arg name='manifest' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetCompatibilitySettings'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='settings' type='a{sv}' direction='out'/>"
@@ -582,6 +585,25 @@ build_runtime_owner_smoke_plan(void)
   return g_variant_builder_end(&plan);
 }
 
+static GVariant *
+build_runtime_method_parity_manifest(void)
+{
+  GVariantBuilder manifest;
+
+  g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(27));
+  g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
+  g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
+  g_variant_builder_add(&manifest, "{sv}", "write_methods_supported", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "write_method_dispatch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&manifest);
+}
+
 static void
 handle_method_call(GDBusConnection *connection,
                    const gchar *sender,
@@ -871,6 +893,11 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeOwnerSmokePlan") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_smoke_plan()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeMethodParityManifest") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_method_parity_manifest()));
     return;
   }
 

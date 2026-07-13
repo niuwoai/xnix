@@ -151,6 +151,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
+      [
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <27>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetCompatibilitySettings"
       [
         "({'request_type': <'settings-model'>, 'settings_state': <'planned'>, 'settings_persisted': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -310,6 +316,16 @@ assert(owner_smoke_plan["pending_step_count"] == 6, "D-Bus client must parse own
 assert(!owner_smoke_plan["system_service_started"], "D-Bus client must parse owner smoke service state")
 assert(!owner_smoke_plan["production_bus_claimed"], "D-Bus client must parse owner smoke bus claim state")
 assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse owner smoke backend detail status")
+
+method_parity = client.runtime_method_parity_manifest
+assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
+assert(method_parity["method_count"] == 27, "D-Bus client must parse Runtime method counts")
+assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
+assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
+assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
+assert(!method_parity["write_methods_supported"], "D-Bus client must parse write method support status")
+assert(!method_parity["write_method_dispatch_enabled"], "D-Bus client must parse write method dispatch status")
+assert(!method_parity["backend_details_exposed"], "D-Bus client must parse Runtime parity backend detail status")
 
 settings = client.settings("org.xnix.sample.notepad")
 assert(settings["request_type"] == "settings-model", "D-Bus client must parse compatibility settings")

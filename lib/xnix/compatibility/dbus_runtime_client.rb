@@ -133,6 +133,10 @@ module Xnix
         parse_dictionary(call("GetRuntimeOwnerSmokePlan"))
       end
 
+      def runtime_method_parity_manifest
+        parse_dictionary(call("GetRuntimeMethodParityManifest"))
+      end
+
       def settings(application_id)
         parse_dictionary(call("GetCompatibilitySettings", application_id))
       end

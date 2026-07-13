@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/runtime_method_parity_manifest"
+
+exit Xnix::Compatibility::RuntimeMethodParityManifest::CLI.new(ARGV).run

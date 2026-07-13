@@ -23,6 +23,7 @@ require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_live_owner_gate"
+require_relative "runtime_method_parity_manifest"
 require_relative "runtime_owner_smoke_plan"
 require_relative "runtime_service_binding"
 require_relative "settings_model"
@@ -74,6 +75,7 @@ module Xnix
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
             "runtime_live_owner_gates" => true,
+            "runtime_method_parity_manifests" => true,
             "runtime_owner_smoke_plans" => true,
             "runtime_service_binding" => true,
             "compatibility_settings" => true,
@@ -128,6 +130,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
           "runtime_live_owner_gate" => runtime_live_owner_gate_summary,
+          "runtime_method_parity_manifest" => runtime_method_parity_manifest_summary,
           "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary,
           "runtime_service_binding" => runtime_service_binding_summary,
           "settings" => settings_summary(recipe),
@@ -237,6 +240,10 @@ module Xnix
         RuntimeOwnerSmokePlan.new.to_h
       end
 
+      def runtime_method_parity_manifest
+        RuntimeMethodParityManifest.new.to_h
+      end
+
       def settings(application_id)
         recipe = require_recipe(application_id)
         SettingsModel.new(application_id: recipe.id).to_h
@@ -336,6 +343,8 @@ module Xnix
           runtime_live_owner_gate
         when "GetRuntimeOwnerSmokePlan"
           runtime_owner_smoke_plan
+        when "GetRuntimeMethodParityManifest"
+          runtime_method_parity_manifest
         when "GetCompatibilitySettings"
           settings(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettingsChangePlan"
@@ -615,6 +624,20 @@ module Xnix
         }
       end
 
+      def runtime_method_parity_manifest_summary
+        manifest = RuntimeMethodParityManifest.new.to_h
+        {
+          "manifest_type" => manifest.fetch("manifest_type"),
+          "method_count" => manifest.fetch("method_count"),
+          "read_only_method_parity_ready" => manifest.fetch("read_only_method_parity_ready"),
+          "passed_check_count" => manifest.fetch("counts").fetch("passed"),
+          "blocked_check_count" => manifest.fetch("counts").fetch("blocked"),
+          "write_methods_supported" => manifest.fetch("write_methods_supported"),
+          "write_method_dispatch_enabled" => manifest.fetch("write_method_dispatch_enabled"),
+          "summary" => manifest.fetch("desktop_safe_summary")
+        }
+      end
+
       def settings_summary(recipe)
         model = SettingsModel.new(application_id: recipe.id).to_h
         {
@@ -742,6 +765,8 @@ module Xnix
             write_json(runtime.runtime_live_owner_gate)
           when "owner-smoke-plan"
             write_json(runtime.runtime_owner_smoke_plan)
+          when "method-parity"
+            write_json(runtime.runtime_method_parity_manifest)
           when "settings"
             write_json(runtime.settings(require_argument(command)))
           when "settings-change"
