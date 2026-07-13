@@ -49,6 +49,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetBackendBinding"
+      [
+        "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetRepairPlan"
       [
         "({'plan_type': <'compatibility-repair'>, 'issue': <'engine-binding-pending'>, 'snapshot_required': <true>},)\n",
@@ -133,6 +139,11 @@ assert(!engine_catalog["backend_details_exposed"], "D-Bus client must parse bool
 run_plan = client.run_plan("org.xnix.sample.notepad")
 assert(run_plan["plan_type"] == "compatibility-run", "D-Bus client must parse run plans")
 assert(!run_plan["backend_details_exposed"], "D-Bus client must parse run plan booleans")
+
+backend_binding = client.backend_binding("org.xnix.sample.notepad")
+assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")
+assert(!backend_binding["managed_binding_ready"], "D-Bus client must parse backend binding readiness")
+assert(!backend_binding["launch_enabled"], "D-Bus client must parse backend launch status")
 
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")

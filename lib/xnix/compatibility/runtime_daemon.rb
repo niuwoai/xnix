@@ -6,6 +6,7 @@ require "pathname"
 require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
+require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -46,6 +47,7 @@ module Xnix
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
             "compatibility_engine_catalog" => true,
+            "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
@@ -92,6 +94,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "backend_binding" => backend_binding_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
@@ -107,6 +110,11 @@ module Xnix
       def run_plan(application_id)
         recipe = require_recipe(application_id)
         CompatibilityRunPlan.new(recipe: recipe).to_h
+      end
+
+      def backend_binding(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityBackendBinding.new(recipe: recipe).to_h
       end
 
       def repair_plan(application_id, issue)
@@ -165,6 +173,8 @@ module Xnix
           engine_catalog
         when "GetRunPlan"
           run_plan(required_parameter(method_name, parameters, 0))
+        when "GetBackendBinding"
+          backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
           repair_plan(
             required_parameter(method_name, parameters, 0),
@@ -284,6 +294,18 @@ module Xnix
         }
       end
 
+      def backend_binding_summary(recipe)
+        binding = CompatibilityBackendBinding.new(recipe: recipe).to_h
+        {
+          "binding_type" => binding.fetch("binding_type"),
+          "selected_strategy" => binding.fetch("selected_strategy"),
+          "managed_binding_ready" => binding.fetch("managed_binding_ready"),
+          "launch_enabled" => binding.fetch("launch_enabled"),
+          "preflight_count" => binding.fetch("required_preflight").length,
+          "summary" => binding.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -385,6 +407,8 @@ module Xnix
             application_id = require_argument(command)
             test_type = @argv.shift || "preflight"
             write_json(runtime.test_result(application_id, test_type))
+          when "backend-binding"
+            write_json(runtime.backend_binding(require_argument(command)))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE

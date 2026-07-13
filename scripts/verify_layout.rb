@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.40"
+EXPECTED_VERSION = "0.2.41"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -25,6 +25,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/ai_diagnostic_input.rb
   lib/xnix/compatibility/ai_diagnostic_recommendation.rb
   lib/xnix/compatibility/ai_repair_approval_gate.rb
+  lib/xnix/compatibility/compatibility_backend_binding.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/compatibility_test_plan.rb
@@ -62,6 +63,7 @@ REQUIRED_FILES = %w[
   bin/xnix-ai-diagnostic-input
   bin/xnix-ai-diagnostic-recommendation
   bin/xnix-ai-repair-approval-gate
+  bin/xnix-compat-backend-binding
   bin/xnix-compatd
   bin/xnix-compat-engine-catalog
   bin/xnix-compat-launch
@@ -111,6 +113,7 @@ REQUIRED_FILES = %w[
   test/test_ai_diagnostic_input.rb
   test/test_ai_diagnostic_recommendation.rb
   test/test_ai_repair_approval_gate.rb
+  test/test_compatibility_backend_binding.rb
   test/test_container.rb
   test/test_buildroot.rb
   test/test_qemu.rb
@@ -313,6 +316,16 @@ assert(ai_repair_gate_source.include?("\"repair_executed\" => false"), "AI repai
 assert(ai_repair_gate_source.include?("\"auto_execution_allowed\" => false"), "AI repair approval gate must not permit automatic repair execution")
 assert(ai_repair_gate_source.include?("\"backend_details_exposed\" => false"), "AI repair approval gate must hide backend details")
 
+backend_binding_source = read_project_file("lib/xnix/compatibility/compatibility_backend_binding.rb")
+assert(backend_binding_source.include?("xnix-compat-backend-binding"), "Compatibility backend binding must expose a CLI command")
+%w[compatibility-backend-binding required_preflight managed_binding_ready launch_enabled].each do |token|
+  assert(backend_binding_source.include?(token), "Compatibility backend binding must include #{token}")
+end
+assert(backend_binding_source.include?("\"execution_request_created\" => false"), "Compatibility backend binding must not create execution requests")
+assert(backend_binding_source.include?("\"host_root_modified\" => false"), "Compatibility backend binding must not mutate the host root")
+assert(backend_binding_source.include?("\"privileged_container_required\" => false"), "Compatibility backend binding must not require privileged containers")
+assert(backend_binding_source.include?("\"backend_details_exposed\" => false"), "Compatibility backend binding must hide backend details")
+
 runtime_service_binding_source = read_project_file("lib/xnix/compatibility/runtime_service_binding.rb")
 assert(runtime_service_binding_source.include?("xnix-runtime-service-binding"), "Runtime service binding must expose a CLI command")
 %w[runtime-service-binding activation_binding_ready live_dbus_owner_ready dbus-service-activation systemd-service-hardening].each do |token|
@@ -400,13 +413,14 @@ runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon
 assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
 assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
+assert(runtime_daemon_source.include?("\"compatibility_backend_binding\""), "Runtime daemon must expose compatibility backend binding capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runtime daemon must expose compatibility test planning capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_results\""), "Runtime daemon must expose compatibility test result capability")
 assert(runtime_daemon_source.include?("\"ai_diagnostic_inputs\""), "Runtime daemon must expose AI diagnostic input capability")
 assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Runtime daemon must expose AI diagnostic recommendation capability")
 assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime daemon must expose AI repair approval gate capability")
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
-%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding].each do |method_name|
+%w[GetEngineCatalog GetRunPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -414,7 +428,7 @@ assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime d
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding].each do |method_name|
+%w[engine_catalog run_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

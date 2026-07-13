@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
@@ -122,6 +123,19 @@ module Xnix
           "overall_status" => test_result.fetch("overall_status"),
           "counts" => test_result.fetch("counts"),
           "summary" => test_result.fetch("summary")
+        }
+      end
+
+      def backend_binding_summary(binding)
+        return nil unless binding
+
+        {
+          "binding_type" => binding.fetch("binding_type"),
+          "selected_strategy" => binding.fetch("selected_strategy"),
+          "managed_binding_ready" => binding.fetch("managed_binding_ready"),
+          "launch_enabled" => binding.fetch("launch_enabled"),
+          "preflight_count" => binding.fetch("preflight_count"),
+          "summary" => binding.fetch("summary")
         }
       end
 
@@ -188,6 +202,7 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
           "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },

@@ -86,6 +86,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetBackendBinding",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetBackendBinding: #{stderr}")
+  assert(stdout.include?("compatibility-backend-binding"), "runtime smoke adapter must expose backend binding over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetRepairPlan",
     "org.xnix.sample.notepad",
     "engine-binding-pending"

@@ -28,6 +28,7 @@ assert(contents.include?("ListApplications"), "D-Bus smoke script must call List
 assert(contents.include?("GetDiagnostics"), "D-Bus smoke script must call GetDiagnostics")
 assert(contents.include?("GetEngineCatalog"), "D-Bus smoke script must call GetEngineCatalog")
 assert(contents.include?("GetRunPlan"), "D-Bus smoke script must call GetRunPlan")
+assert(contents.include?("GetBackendBinding"), "D-Bus smoke script must call GetBackendBinding")
 assert(contents.include?("GetRepairPlan"), "D-Bus smoke script must call GetRepairPlan")
 assert(contents.include?("GetTestPlan"), "D-Bus smoke script must call GetTestPlan")
 assert(contents.include?("GetTestResult"), "D-Bus smoke script must call GetTestResult")

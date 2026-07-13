@@ -58,6 +58,16 @@ assert(run_plan["plan_type"] == "compatibility-run", "dispatch must route GetRun
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetBackendBinding",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetBackendBinding must exit successfully: #{stderr}")
+backend_binding = JSON.parse(stdout)
+assert(backend_binding["binding_type"] == "compatibility-backend-binding", "dispatch must route GetBackendBinding")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.41] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-backend-binding`, a Runtime-owned managed compatibility backend binding model that reports launch readiness, required preflight, blocked unsafe actions, and desktop-safe status without exposing implementation details.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for backend binding status.
+
+### Changed
+
+- Extended Runtime and KDE read models so pending backend binding is visible as a first-class Compatibility Center signal before any launch backend is enabled.
+
 ## [0.2.40] - 2026-07-13
 
 ### Added
