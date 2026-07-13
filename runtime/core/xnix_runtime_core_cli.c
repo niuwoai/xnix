@@ -1436,6 +1436,105 @@ print_live_owner_gate_policy(const XnixRuntimeLiveOwnerGatePolicy *policy)
 }
 
 static void
+print_owner_smoke_steps(const XnixRuntimeOwnerSmokePlanPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->step_count; index++) {
+    const XnixRuntimeOwnerSmokeStep *step = &policy->steps[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", step->id);
+    fputs(",", stdout);
+    print_string_field("status", step->status);
+    fputs(",", stdout);
+    print_string_field("summary", step->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_owner_smoke_counts(const XnixRuntimeOwnerSmokeCounts *counts)
+{
+  fputs("{", stdout);
+  fputs("\"total\":", stdout);
+  printf("%zu,", counts->total);
+  fputs("\"passed\":", stdout);
+  printf("%zu,", counts->passed);
+  fputs("\"pending\":", stdout);
+  printf("%zu,", counts->pending);
+  fputs("\"blocked\":", stdout);
+  printf("%zu", counts->blocked);
+  fputs("}", stdout);
+}
+
+static void
+print_owner_smoke_plan_policy(const XnixRuntimeOwnerSmokePlanPolicy *policy)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("plan_type", "runtime-owner-smoke-plan");
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  printf("\"bus_name\":\"%s\",", xnix_runtime_bus_name());
+  printf("\"object_path\":\"%s\",", xnix_runtime_object_path());
+  printf("\"interface\":\"%s\",", xnix_runtime_interface());
+  fputs("\"activation_binding_ready\":", stdout);
+  print_bool(policy->activation_binding_ready);
+  fputs(",", stdout);
+  fputs("\"live_dbus_owner_ready\":", stdout);
+  print_bool(policy->live_dbus_owner_ready);
+  fputs(",", stdout);
+  fputs("\"production_owner_enabled\":", stdout);
+  print_bool(policy->production_owner_enabled);
+  fputs(",", stdout);
+  fputs("\"owner_transition_ready\":", stdout);
+  print_bool(policy->owner_transition_ready);
+  fputs(",", stdout);
+  print_string_field("smoke_state", policy->smoke_state);
+  fputs(",", stdout);
+  print_string_field("smoke_environment", policy->smoke_environment);
+  fputs(",", stdout);
+  fputs("\"steps\":", stdout);
+  print_owner_smoke_steps(policy);
+  fputs(",", stdout);
+  fputs("\"counts\":", stdout);
+  print_owner_smoke_counts(&policy->counts);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"system_service_started\":", stdout);
+  print_bool(policy->system_service_started);
+  fputs(",", stdout);
+  fputs("\"production_bus_claimed\":", stdout);
+  print_bool(policy->production_bus_claimed);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -2239,6 +2338,16 @@ print_runtime_live_owner_gate(void)
 }
 
 static int
+print_runtime_owner_smoke_plan(void)
+{
+  const XnixRuntimeOwnerSmokePlanPolicy *policy = xnix_runtime_owner_smoke_plan_policy();
+
+  print_owner_smoke_plan_policy(policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2321,6 +2430,8 @@ print_probe(void)
   fputs("\"service_binding_policy_count\":1,", stdout);
   fputs("\"live_owner_gate_policy_owner\":\"c\",", stdout);
   fputs("\"live_owner_gate_policy_count\":1,", stdout);
+  fputs("\"owner_smoke_plan_policy_owner\":\"c\",", stdout);
+  fputs("\"owner_smoke_plan_policy_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2374,7 +2485,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2491,6 +2602,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "runtime-live-owner-gate") == 0 && argc == 2) {
     return print_runtime_live_owner_gate();
+  }
+
+  if (strcmp(argv[1], "runtime-owner-smoke-plan") == 0 && argc == 2) {
+    return print_runtime_owner_smoke_plan();
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.70"
+#define XNIX_RUNTIME_VERSION "0.2.71"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -417,6 +417,42 @@ typedef struct {
   const char *summary;
 } XnixRuntimeLiveOwnerGatePolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeOwnerSmokeStep;
+
+typedef struct {
+  size_t total;
+  size_t passed;
+  size_t pending;
+  size_t blocked;
+} XnixRuntimeOwnerSmokeCounts;
+
+typedef struct {
+  XnixRuntimeOwnerSmokeStep steps[7];
+  size_t step_count;
+  XnixRuntimeOwnerSmokeCounts counts;
+  const char *blocked_actions[5];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool activation_binding_ready;
+  bool live_dbus_owner_ready;
+  bool production_owner_enabled;
+  bool owner_transition_ready;
+  const char *smoke_state;
+  const char *smoke_environment;
+  bool network_required;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool system_service_started;
+  bool production_bus_claimed;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeOwnerSmokePlanPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -484,5 +520,6 @@ const XnixRuntimeSettingsChangePolicy *xnix_runtime_find_settings_change_policy(
 
 const XnixRuntimeServiceBindingPolicy *xnix_runtime_service_binding_policy(void);
 const XnixRuntimeLiveOwnerGatePolicy *xnix_runtime_live_owner_gate_policy(void);
+const XnixRuntimeOwnerSmokePlanPolicy *xnix_runtime_owner_smoke_plan_policy(void);
 
 #endif

@@ -898,6 +898,76 @@ static const XnixRuntimeLiveOwnerGatePolicy live_owner_gate_policy = {
   .summary = "Runtime activation files are aligned, but production D-Bus ownership remains gated.",
 };
 
+static const XnixRuntimeOwnerSmokePlanPolicy owner_smoke_plan_policy = {
+  .steps = {
+    {
+      .id = "validate-activation-files",
+      .status = "pass",
+      .summary = "Verify D-Bus service activation, systemd hardening, libexec wrapper, and contract alignment.",
+    },
+    {
+      .id = "start-packaged-runtime-owner",
+      .status = "pending",
+      .summary = "Start the packaged Runtime owner in an isolated session without modifying the host root.",
+    },
+    {
+      .id = "assert-stable-bus-name",
+      .status = "pending",
+      .summary = "Prove the packaged Runtime owner owns org.xnix.Compatibility1 on the test bus.",
+    },
+    {
+      .id = "check-read-only-method-parity",
+      .status = "pending",
+      .summary = "Call the read-only planning methods required by KDE and compare them with the contract.",
+    },
+    {
+      .id = "reject-write-methods",
+      .status = "pending",
+      .summary = "Confirm launch, install, snapshot, restore, repair, and settings persistence remain gated.",
+    },
+    {
+      .id = "verify-non-production-smoke-adapter-boundary",
+      .status = "pending",
+      .summary = "Confirm the smoke adapter is never accepted as a production Runtime owner.",
+    },
+    {
+      .id = "report-kde-safe-summary",
+      .status = "pending",
+      .summary = "Return a Compatibility Center summary without backend details or host paths.",
+    },
+  },
+  .step_count = 7,
+  .counts = {
+    .total = 7,
+    .passed = 1,
+    .pending = 6,
+    .blocked = 0,
+  },
+  .blocked_actions = {
+    "Do not start a host system service from the smoke plan.",
+    "Do not claim the production Runtime bus name from the smoke adapter.",
+    "Do not enable backend launch, install, repair, restore, or settings persistence.",
+    "Do not mutate the host root while planning owner smoke.",
+    "Do not expose backend implementation details or host paths to KDE.",
+  },
+  .blocked_action_count = 5,
+  .runtime_owned = true,
+  .kde_policy_owner = false,
+  .activation_binding_ready = true,
+  .live_dbus_owner_ready = false,
+  .production_owner_enabled = false,
+  .owner_transition_ready = false,
+  .smoke_state = "planned",
+  .smoke_environment = "restricted-session",
+  .network_required = false,
+  .host_root_modified = false,
+  .privileged_container_required = false,
+  .system_service_started = false,
+  .production_bus_claimed = false,
+  .backend_details_exposed = false,
+  .summary = "Runtime owner smoke is planned; production bus ownership remains disabled until all gates pass.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1448,4 +1518,10 @@ const XnixRuntimeLiveOwnerGatePolicy *
 xnix_runtime_live_owner_gate_policy(void)
 {
   return &live_owner_gate_policy;
+}
+
+const XnixRuntimeOwnerSmokePlanPolicy *
+xnix_runtime_owner_smoke_plan_policy(void)
+{
+  return &owner_smoke_plan_policy;
 }

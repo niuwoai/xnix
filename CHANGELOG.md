@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.71] - 2026-07-14
+
+### Added
+
+- Added C Runtime owner smoke plan policy records and a CLI read method for reporting the planned production owner smoke sequence.
+- Added C Runtime owner smoke plan tests that verify smoke step ordering, readiness counts, disabled production bus claims, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first owner smoke plan layer while keeping production bus ownership and system service startup disabled.
+
 ## [0.2.70] - 2026-07-14
 
 ### Added
