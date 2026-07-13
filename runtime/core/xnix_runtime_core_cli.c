@@ -10,6 +10,27 @@ print_bool(bool value)
 }
 
 static void
+print_string(const char *value)
+{
+  fputc('"', stdout);
+  for (const char *cursor = value; cursor != NULL && *cursor != '\0'; cursor++) {
+    if (*cursor == '"' || *cursor == '\\') {
+      fputc('\\', stdout);
+    }
+    fputc(*cursor, stdout);
+  }
+  fputc('"', stdout);
+}
+
+static void
+print_string_field(const char *name, const char *value)
+{
+  print_string(name);
+  fputc(':', stdout);
+  print_string(value);
+}
+
+static void
 print_write_methods(void)
 {
   fputc('[', stdout);
@@ -17,9 +38,71 @@ print_write_methods(void)
     if (index > 0) {
       fputs(",", stdout);
     }
-    printf("\"%s\"", xnix_runtime_write_method_at(index));
+    print_string(xnix_runtime_write_method_at(index));
   }
   fputc(']', stdout);
+}
+
+static void
+print_application(const XnixRuntimeApplication *application)
+{
+  fputs("{", stdout);
+  print_string_field("id", application->id);
+  fputs(",", stdout);
+  print_string_field("name", application->name);
+  fputs(",", stdout);
+  print_string_field("icon", application->icon);
+  fputs(",", stdout);
+  print_string_field("runtime_mode", application->runtime_mode);
+  fputs(",", stdout);
+  print_string_field("desktop_category", application->desktop_category);
+  fputs(",", stdout);
+  print_string_field("launcher_command", application->launcher_command);
+  fputs(",", stdout);
+  print_string_field("primary_extension", application->primary_extension);
+  fputs(",", stdout);
+  print_string_field("primary_mime_type", application->primary_mime_type);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(application->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(application->kde_policy_owner);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(application->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static int
+print_applications(void)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < xnix_runtime_application_count(); index++) {
+    const XnixRuntimeApplication *application = xnix_runtime_application_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_application(application);
+  }
+  fputs("]\n", stdout);
+  return 0;
+}
+
+static int
+print_application_by_id(const char *application_id)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+
+  if (application == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime catalog\n");
+    return 64;
+  }
+
+  print_application(application);
+  fputs("\n", stdout);
+  return 0;
 }
 
 static int
@@ -35,6 +118,9 @@ print_probe(void)
   printf("\"interface\":\"%s\",", xnix_runtime_interface());
   fputs("\"runtime_owned\":true,", stdout);
   fputs("\"kde_policy_owner\":false,", stdout);
+  fputs("\"application_catalog_owner\":\"c\",", stdout);
+  fputs("\"application_count\":", stdout);
+  printf("%zu,", xnix_runtime_application_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -88,7 +174,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -101,6 +187,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "probe") == 0 && argc == 2) {
     return print_probe();
+  }
+
+  if (strcmp(argv[1], "list-applications") == 0 && argc == 2) {
+    return print_applications();
+  }
+
+  if (strcmp(argv[1], "get-application") == 0 && argc == 3) {
+    return print_application_by_id(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

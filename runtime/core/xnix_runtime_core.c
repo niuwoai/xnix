@@ -9,6 +9,22 @@ static const char *const write_methods[] = {
   "RestoreSnapshot",
 };
 
+static const XnixRuntimeApplication applications[] = {
+  {
+    .id = "org.xnix.sample.notepad",
+    .name = "Sample Notepad",
+    .icon = "accessories-text-editor",
+    .runtime_mode = "automatic",
+    .desktop_category = "Utility",
+    .launcher_command = "xnix-compat-launch --app org.xnix.sample.notepad %U",
+    .primary_extension = ".txt",
+    .primary_mime_type = "application/x-xnix-txt",
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -93,4 +109,38 @@ xnix_runtime_write_method_at(size_t index)
   }
 
   return write_methods[index];
+}
+
+size_t
+xnix_runtime_application_count(void)
+{
+  return sizeof(applications) / sizeof(applications[0]);
+}
+
+const XnixRuntimeApplication *
+xnix_runtime_application_at(size_t index)
+{
+  if (index >= xnix_runtime_application_count()) {
+    return NULL;
+  }
+
+  return &applications[index];
+}
+
+const XnixRuntimeApplication *
+xnix_runtime_find_application(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_application_count(); index++) {
+    const XnixRuntimeApplication *application = xnix_runtime_application_at(index);
+
+    if (application != NULL && strcmp(application_id, application->id) == 0) {
+      return application;
+    }
+  }
+
+  return NULL;
 }

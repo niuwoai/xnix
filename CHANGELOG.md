@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.57] - 2026-07-13
+
+### Added
+
+- Added C Runtime application catalog records and CLI read methods for listing and querying safe desktop application metadata.
+- Added C Runtime catalog tests that compile the C core, verify the sample application record, reject unknown application ids, and guard against backend detail exposure.
+
+### Changed
+
+- Extended Runtime C ownership from identity and write gates into the first application recipe metadata layer while keeping Ruby as the test and development-tool harness.
+
 ## [0.2.56] - 2026-07-13
 
 ### Added

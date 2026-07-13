@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.56"
+#define XNIX_RUNTIME_VERSION "0.2.57"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -21,6 +21,20 @@ typedef struct {
   bool backend_details_exposed;
 } XnixRuntimeWriteGate;
 
+typedef struct {
+  const char *id;
+  const char *name;
+  const char *icon;
+  const char *runtime_mode;
+  const char *desktop_category;
+  const char *launcher_command;
+  const char *primary_extension;
+  const char *primary_mime_type;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool backend_details_exposed;
+} XnixRuntimeApplication;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -32,5 +46,9 @@ bool xnix_runtime_is_write_method(const char *method_name);
 bool xnix_runtime_write_gate(const char *method_name, XnixRuntimeWriteGate *gate);
 size_t xnix_runtime_write_method_count(void);
 const char *xnix_runtime_write_method_at(size_t index);
+
+size_t xnix_runtime_application_count(void);
+const XnixRuntimeApplication *xnix_runtime_application_at(size_t index);
+const XnixRuntimeApplication *xnix_runtime_find_application(const char *application_id);
 
 #endif

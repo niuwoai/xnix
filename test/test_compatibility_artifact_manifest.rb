@@ -20,7 +20,7 @@ manifest = Xnix::Compatibility::CompatibilityArtifactManifest.new(recipe: recipe
 group_ids = manifest.fetch("artifact_groups").map { |item| item.fetch("id") }
 preflight_ids = manifest.fetch("required_preflight").map { |item| item.fetch("id") }
 
-assert(manifest["version"] == "0.2.56", "compatibility artifact manifest must expose the current version")
+assert(manifest["version"] == "0.2.57", "compatibility artifact manifest must expose the current version")
 assert(manifest["manifest_type"] == "compatibility-artifact-manifest", "compatibility artifact manifest must identify manifest type")
 assert(manifest["application"]["id"] == "org.xnix.sample.notepad", "compatibility artifact manifest must preserve the application id")
 assert(manifest["runtime_owned"], "Runtime must own compatibility artifact manifests")
