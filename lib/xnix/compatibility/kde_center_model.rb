@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
@@ -154,6 +155,21 @@ module Xnix
         }
       end
 
+      def package_source_summary(source)
+        return nil unless source
+
+        {
+          "source_type" => source.fetch("source_type"),
+          "selected_strategy" => source.fetch("selected_strategy"),
+          "source_selection_state" => source.fetch("source_selection_state"),
+          "package_source_ready" => source.fetch("package_source_ready"),
+          "install_enabled" => source.fetch("install_enabled"),
+          "channel_count" => source.fetch("channel_count"),
+          "preflight_count" => source.fetch("preflight_count"),
+          "summary" => source.fetch("summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(ai_input)
         return nil unless ai_input
 
@@ -217,6 +233,7 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "pending_package_source_count" => applications.count { |application| !section(application, "package_source").fetch("package_source_ready", false) },
           "planned_state_root_count" => applications.count { |application| section(application, "state_root").fetch("allocation_state", nil) == "planned" },
           "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },

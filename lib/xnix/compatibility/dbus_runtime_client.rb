@@ -61,6 +61,10 @@ module Xnix
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end
 
+      def package_source(application_id)
+        parse_dictionary(call("GetCompatibilityPackageSource", application_id))
+      end
+
       def backend_binding(application_id)
         parse_dictionary(call("GetBackendBinding", application_id))
       end

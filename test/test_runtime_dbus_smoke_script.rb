@@ -29,6 +29,7 @@ assert(contents.include?("GetDiagnostics"), "D-Bus smoke script must call GetDia
 assert(contents.include?("GetEngineCatalog"), "D-Bus smoke script must call GetEngineCatalog")
 assert(contents.include?("GetRunPlan"), "D-Bus smoke script must call GetRunPlan")
 assert(contents.include?("GetApplicationStateRoot"), "D-Bus smoke script must call GetApplicationStateRoot")
+assert(contents.include?("GetCompatibilityPackageSource"), "D-Bus smoke script must call GetCompatibilityPackageSource")
 assert(contents.include?("GetBackendBinding"), "D-Bus smoke script must call GetBackendBinding")
 assert(contents.include?("GetRepairPlan"), "D-Bus smoke script must call GetRepairPlan")
 assert(contents.include?("GetTestPlan"), "D-Bus smoke script must call GetTestPlan")

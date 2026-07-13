@@ -68,6 +68,16 @@ assert(state_root["root_type"] == "compatibility-application-state-root", "dispa
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityPackageSource",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityPackageSource must exit successfully: #{stderr}")
+package_source = JSON.parse(stdout)
+assert(package_source["source_type"] == "compatibility-package-source", "dispatch must route GetCompatibilityPackageSource")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendBinding",
   JSON.generate(["org.xnix.sample.notepad"])
 )

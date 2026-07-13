@@ -44,6 +44,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='state_root' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityPackageSource'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='source' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendBinding'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
@@ -178,6 +182,23 @@ build_application_state_root(const gchar *application_id)
   g_variant_builder_add(&state_root, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&state_root);
+}
+
+static GVariant *
+build_compatibility_package_source(const gchar *application_id)
+{
+  GVariantBuilder source;
+
+  g_variant_builder_init(&source, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&source, "{sv}", "source_type", g_variant_new_string("compatibility-package-source"));
+  g_variant_builder_add(&source, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&source, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&source, "{sv}", "source_selection_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&source, "{sv}", "package_source_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&source, "{sv}", "install_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&source, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&source);
 }
 
 static GVariant *
@@ -423,6 +444,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_application_state_root(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityPackageSource") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_compatibility_package_source(application_id)));
     return;
   }
 

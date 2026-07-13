@@ -97,6 +97,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityPackageSource",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityPackageSource: #{stderr}")
+  assert(stdout.include?("compatibility-package-source"), "runtime smoke adapter must expose compatibility package sources over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetBackendBinding",
     "org.xnix.sample.notepad"
   )

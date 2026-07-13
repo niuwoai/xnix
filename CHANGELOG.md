@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.43] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-package-source`, a Runtime-owned compatibility package source model for signed source policy, source-channel planning, cache preflight, and blocked package installation before launch binding.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for package source status.
+
+### Changed
+
+- Extended Runtime and KDE read models so package source selection is visible as a first-class Compatibility Center signal before backend launch is enabled.
+
 ## [0.2.42] - 2026-07-13
 
 ### Added

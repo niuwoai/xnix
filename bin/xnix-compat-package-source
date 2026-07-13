@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/compatibility_package_source"
+
+exit Xnix::Compatibility::CompatibilityPackageSource::CLI.new(ARGV).run

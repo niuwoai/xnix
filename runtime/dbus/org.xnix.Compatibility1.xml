@@ -41,6 +41,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="state_root" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityPackageSource">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="source" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetBackendBinding">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="binding" type="a{sv}" direction="out"/>

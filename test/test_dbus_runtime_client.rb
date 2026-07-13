@@ -55,6 +55,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityPackageSource"
+      [
+        "({'source_type': <'compatibility-package-source'>, 'source_selection_state': <'planned'>, 'package_source_ready': <false>, 'install_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendBinding"
       [
         "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
@@ -150,6 +156,12 @@ state_root = client.state_root("org.xnix.sample.notepad")
 assert(state_root["root_type"] == "compatibility-application-state-root", "D-Bus client must parse application state roots")
 assert(state_root["snapshot_eligible"], "D-Bus client must parse state root booleans")
 assert(!state_root["user_documents_included"], "D-Bus client must parse state root exclusions")
+
+package_source = client.package_source("org.xnix.sample.notepad")
+assert(package_source["source_type"] == "compatibility-package-source", "D-Bus client must parse compatibility package sources")
+assert(package_source["source_selection_state"] == "planned", "D-Bus client must parse package source state")
+assert(!package_source["package_source_ready"], "D-Bus client must parse package source readiness")
+assert(!package_source["install_enabled"], "D-Bus client must parse package install status")
 
 backend_binding = client.backend_binding("org.xnix.sample.notepad")
 assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")

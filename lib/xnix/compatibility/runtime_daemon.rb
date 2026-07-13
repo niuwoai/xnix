@@ -9,6 +9,7 @@ require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
+require_relative "compatibility_package_source"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
 require_relative "compatibility_snapshot_plan"
@@ -49,6 +50,7 @@ module Xnix
             "application_listing" => true,
             "application_state_roots" => true,
             "compatibility_engine_catalog" => true,
+            "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
             "compatibility_repair_planning" => true,
@@ -96,6 +98,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "package_source" => package_source_summary(recipe),
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
@@ -118,6 +121,11 @@ module Xnix
       def state_root(application_id)
         recipe = require_recipe(application_id)
         ApplicationStateRoot.new(recipe: recipe).to_h
+      end
+
+      def package_source(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityPackageSource.new(recipe: recipe).to_h
       end
 
       def backend_binding(application_id)
@@ -183,6 +191,8 @@ module Xnix
           run_plan(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityPackageSource"
+          package_source(required_parameter(method_name, parameters, 0))
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
@@ -329,6 +339,20 @@ module Xnix
         }
       end
 
+      def package_source_summary(recipe)
+        source = CompatibilityPackageSource.new(recipe: recipe).to_h
+        {
+          "source_type" => source.fetch("source_type"),
+          "selected_strategy" => source.fetch("selected_strategy"),
+          "source_selection_state" => source.fetch("source_selection_state"),
+          "package_source_ready" => source.fetch("package_source_ready"),
+          "install_enabled" => source.fetch("install_enabled"),
+          "channel_count" => source.fetch("source_channels").length,
+          "preflight_count" => source.fetch("required_preflight").length,
+          "summary" => source.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -434,6 +458,8 @@ module Xnix
             write_json(runtime.backend_binding(require_argument(command)))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
+          when "package-source"
+            write_json(runtime.package_source(require_argument(command)))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE
