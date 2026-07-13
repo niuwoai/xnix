@@ -67,6 +67,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetAIDiagnosticInput"
+      [
+        "({'input_type': <'ai-diagnostic-input'>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetSnapshotPlan"
       [
         "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'enabled_by_default': <true>},)\n",
@@ -123,6 +129,12 @@ test_result = client.test_result("org.xnix.sample.notepad")
 assert(test_result["result_type"] == "compatibility-test-result", "D-Bus client must parse test results")
 assert(test_result["safe_for_ai_diagnostics"], "D-Bus client must parse test result booleans")
 assert(!test_result["backend_details_exposed"], "D-Bus client must parse test result false booleans")
+
+ai_input = client.ai_diagnostic_input("org.xnix.sample.notepad")
+assert(ai_input["input_type"] == "ai-diagnostic-input", "D-Bus client must parse AI diagnostic inputs")
+assert(ai_input["safe_for_ai_diagnostics"], "D-Bus client must parse AI diagnostic input booleans")
+assert(!ai_input["ai_provider_called"], "D-Bus client must parse AI provider false booleans")
+assert(!ai_input["network_required"], "D-Bus client must parse network false booleans")
 
 snapshot_plan = client.snapshot_plan("org.xnix.sample.notepad", "before-repair")
 assert(snapshot_plan["plan_type"] == "compatibility-snapshot", "D-Bus client must parse snapshot plans")

@@ -55,6 +55,12 @@ static const gchar introspection_xml[] =
   "      <arg name='test_type' type='s' direction='in'/>"
   "      <arg name='result' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetAIDiagnosticInput'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='issue' type='s' direction='in'/>"
+  "      <arg name='test_type' type='s' direction='in'/>"
+  "      <arg name='input' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetSnapshotPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='reason' type='s' direction='in'/>"
@@ -177,6 +183,24 @@ build_test_result(const gchar *application_id, const gchar *test_type)
   g_variant_builder_add(&result, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&result);
+}
+
+static GVariant *
+build_ai_diagnostic_input(const gchar *application_id, const gchar *issue, const gchar *test_type)
+{
+  GVariantBuilder input;
+
+  g_variant_builder_init(&input, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&input, "{sv}", "input_type", g_variant_new_string("ai-diagnostic-input"));
+  g_variant_builder_add(&input, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&input, "{sv}", "issue", g_variant_new_string(issue));
+  g_variant_builder_add(&input, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&input, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&input, "{sv}", "ai_provider_called", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&input, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&input, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&input);
 }
 
 static GVariant *
@@ -320,6 +344,24 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_test_result(application_id, test_type)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetAIDiagnosticInput") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *issue = NULL;
+    const gchar *test_type = NULL;
+
+    g_variant_get(parameters, "(&s&s&s)", &application_id, &issue, &test_type);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_ai_diagnostic_input(application_id, issue, test_type))
+    );
     return;
   }
 

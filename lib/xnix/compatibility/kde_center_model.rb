@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -121,13 +122,28 @@ module Xnix
         }
       end
 
+      def ai_diagnostic_input_summary(ai_input)
+        return nil unless ai_input
+
+        {
+          "input_type" => ai_input.fetch("input_type"),
+          "section_count" => ai_input.fetch("section_count"),
+          "signal_count" => ai_input.fetch("signal_count"),
+          "ai_provider_called" => ai_input.fetch("ai_provider_called"),
+          "network_required" => ai_input.fetch("network_required"),
+          "safe_for_ai_diagnostics" => ai_input.fetch("safe_for_ai_diagnostics"),
+          "summary" => ai_input.fetch("summary")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) },
-          "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" }
+          "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" },
+          "ai_diagnostic_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_input", {}).fetch("safe_for_ai_diagnostics", false) }
         }
       end
 

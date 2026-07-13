@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.36", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.37", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -29,6 +29,7 @@ assert(model["summary"]["known_application_count"] == 1, "KDE center model must 
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
 assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
 assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
+assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -43,6 +44,9 @@ assert(application["test_plan"]["plan_type"] == "compatibility-test", "KDE cente
 assert(application["test_plan"]["pending_step_count"] == 3, "KDE center model must expose pending test steps")
 assert(application["test_result"]["result_type"] == "compatibility-test-result", "KDE center model must expose test result summaries")
 assert(application["test_result"]["overall_status"] == "pending", "KDE center model must expose test result status")
+assert(application["ai_diagnostic_input"]["input_type"] == "ai-diagnostic-input", "KDE center model must expose AI diagnostic input summaries")
+assert(application["ai_diagnostic_input"]["safe_for_ai_diagnostics"], "KDE center model must expose AI diagnostic safety")
+assert(!application["ai_diagnostic_input"]["ai_provider_called"], "KDE center model must not claim AI provider calls")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

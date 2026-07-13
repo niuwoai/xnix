@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.37] - 2026-07-13
+
+### Added
+
+- Added `xnix-ai-diagnostic-input`, a Runtime-owned AI diagnostic input model for safe recipe, run-plan, test-result, repair, signal, and privacy-boundary context.
+- Added focused coverage for AI diagnostic safety boundaries, allowed and blocked AI tasks, Runtime diagnostics, dispatch, D-Bus client reads, Compatibility Center summaries, and session-bus smoke exposure.
+
+### Changed
+
+- Extended Runtime diagnostics, read-only Runtime dispatch, D-Bus planning reads, and the KDE Compatibility Center model with AI diagnostic input summaries.
+
 ## [0.2.36] - 2026-07-13
 
 ### Added

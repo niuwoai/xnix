@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.36"
+EXPECTED_VERSION = "0.2.37"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -22,6 +22,7 @@ REQUIRED_FILES = %w[
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
   lib/xnix/ssh_test_key.rb
+  lib/xnix/compatibility/ai_diagnostic_input.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
   lib/xnix/compatibility/compatibility_test_plan.rb
@@ -55,6 +56,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/task_manager_identity.rb
   lib/xnix/compatibility/tray_status_model.rb
   lib/xnix/milestone.rb
+  bin/xnix-ai-diagnostic-input
   bin/xnix-compatd
   bin/xnix-compat-engine-catalog
   bin/xnix-compat-launch
@@ -100,6 +102,7 @@ REQUIRED_FILES = %w[
   kde/plasmoids/org.xnix.compatibilitycenter/contents/ui/main.qml
   kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop
   docs/compatibility-runtime.md
+  test/test_ai_diagnostic_input.rb
   test/test_container.rb
   test/test_buildroot.rb
   test/test_qemu.rb
@@ -272,6 +275,15 @@ assert(test_result_source.include?("xnix-compat-test-result"), "Compatibility te
 end
 assert(test_result_source.include?("\"backend_details_exposed\" => false"), "Compatibility test result must hide backend details")
 
+ai_diagnostic_source = read_project_file("lib/xnix/compatibility/ai_diagnostic_input.rb")
+assert(ai_diagnostic_source.include?("xnix-ai-diagnostic-input"), "AI diagnostic input must expose a CLI command")
+%w[ai-diagnostic-input diagnostic_signals privacy_boundaries allowed_ai_tasks blocked_ai_tasks].each do |token|
+  assert(ai_diagnostic_source.include?(token), "AI diagnostic input must include #{token}")
+end
+assert(ai_diagnostic_source.include?("\"ai_provider_called\" => false"), "AI diagnostic input must not call an AI provider")
+assert(ai_diagnostic_source.include?("\"network_required\" => false"), "AI diagnostic input must not require network access")
+assert(ai_diagnostic_source.include?("\"backend_details_exposed\" => false"), "AI diagnostic input must hide backend details")
+
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
@@ -351,7 +363,8 @@ assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must 
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runtime daemon must expose compatibility test planning capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_results\""), "Runtime daemon must expose compatibility test result capability")
-%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
+assert(runtime_daemon_source.include?("\"ai_diagnostic_inputs\""), "Runtime daemon must expose AI diagnostic input capability")
+%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -359,7 +372,7 @@ assert(runtime_daemon_source.include?("\"compatibility_test_results\""), "Runtim
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan repair_plan test_plan test_result snapshot_plan portal_access_policy].each do |method_name|
+%w[engine_catalog run_plan repair_plan test_plan test_result ai_diagnostic_input snapshot_plan portal_access_policy].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

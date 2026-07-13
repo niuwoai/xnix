@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "pathname"
+require_relative "ai_diagnostic_input"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -46,6 +47,7 @@ module Xnix
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
+            "ai_diagnostic_inputs" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -84,6 +86,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -110,6 +113,11 @@ module Xnix
       def test_result(application_id, test_type = "preflight")
         recipe = require_recipe(application_id)
         CompatibilityTestResult.new(recipe: recipe, test_type: test_type).to_h
+      end
+
+      def ai_diagnostic_input(application_id, issue = AIDiagnosticInput::DEFAULT_ISSUE, test_type = "preflight")
+        recipe = require_recipe(application_id)
+        AIDiagnosticInput.new(recipe: recipe, issue: issue, test_type: test_type).to_h
       end
 
       def snapshot_plan(application_id, reason)
@@ -148,6 +156,12 @@ module Xnix
           test_result(
             required_parameter(method_name, parameters, 0),
             parameters[1] || "preflight"
+          )
+        when "GetAIDiagnosticInput"
+          ai_diagnostic_input(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || AIDiagnosticInput::DEFAULT_ISSUE,
+            parameters[2] || "preflight"
           )
         when "GetSnapshotPlan"
           snapshot_plan(
@@ -233,6 +247,19 @@ module Xnix
         }
       end
 
+      def ai_diagnostic_input_summary(recipe)
+        input = AIDiagnosticInput.new(recipe: recipe).to_h
+        {
+          "input_type" => input.fetch("input_type"),
+          "section_count" => input.fetch("context_sections").length,
+          "signal_count" => input.fetch("diagnostic_signals").length,
+          "ai_provider_called" => input.fetch("ai_provider_called"),
+          "network_required" => input.fetch("network_required"),
+          "safe_for_ai_diagnostics" => input.fetch("safe_for_ai_diagnostics"),
+          "summary" => input.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -284,6 +311,11 @@ module Xnix
             application_id = require_argument(command)
             test_type = @argv.shift || "preflight"
             write_json(runtime.test_result(application_id, test_type))
+          when "ai-diagnostic-input"
+            application_id = require_argument(command)
+            issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE
+            test_type = @argv.shift || "preflight"
+            write_json(runtime.ai_diagnostic_input(application_id, issue, test_type))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

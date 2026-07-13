@@ -121,6 +121,19 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetAIDiagnosticInput",
+    "org.xnix.sample.notepad",
+    "engine-binding-pending",
+    "preflight"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetAIDiagnosticInput: #{stderr}")
+  assert(stdout.include?("ai-diagnostic-input"), "runtime smoke adapter must expose AI diagnostic inputs over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetSnapshotPlan",
     "org.xnix.sample.notepad",
     "before-repair"
