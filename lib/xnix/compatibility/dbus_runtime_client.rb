@@ -101,6 +101,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityActionReviewReceipt", application_id, action_id, decision))
       end
 
+      def compatibility_center_summary(application_id)
+        parse_dictionary(call("GetCompatibilityCenterSummary", application_id))
+      end
+
       def artifact_manifest(application_id)
         parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
       end

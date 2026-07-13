@@ -52,6 +52,7 @@ module Xnix
         GetCompatibilitySettingsChangePlan
         GetCompatibilityActionQueue
         GetCompatibilityActionReviewReceipt
+        GetCompatibilityCenterSummary
       ].freeze
 
       WRITE_METHODS = %w[
@@ -96,7 +97,8 @@ module Xnix
         "GetCompatibilitySettings" => "settings",
         "GetCompatibilitySettingsChangePlan" => "settings_change_plan",
         "GetCompatibilityActionQueue" => "action_queue",
-        "GetCompatibilityActionReviewReceipt" => "action_review_receipt"
+        "GetCompatibilityActionReviewReceipt" => "action_review_receipt",
+        "GetCompatibilityCenterSummary" => "compatibility_center_summary"
       }.freeze
 
       def to_h

@@ -70,6 +70,7 @@ module Xnix
             "compatibility_acquisition_preflight" => true,
             "compatibility_action_queues" => true,
             "compatibility_action_review_receipts" => true,
+            "compatibility_center_summaries" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -136,6 +137,7 @@ module Xnix
           "test_result" => test_result_summary(recipe),
           "action_queue" => action_queue_summary(recipe),
           "action_review_receipt" => action_review_receipt_summary(recipe),
+          "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
@@ -353,6 +355,67 @@ module Xnix
         ActionReviewReceipt.new(recipe: recipe, action_id: action_id, decision: decision).to_h
       end
 
+      def compatibility_center_summary(application_id)
+        recipe = require_recipe(application_id)
+        repair = repair_plan_summary(recipe.id, "engine-binding-pending")
+
+        {
+          "version" => VERSION,
+          "summary_type" => "compatibility-center-summary",
+          "desktop" => "KDE Plasma",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "application" => {
+            "id" => recipe.id,
+            "name" => recipe.name,
+            "icon" => recipe.icon,
+            "runtime_mode" => recipe.mode
+          },
+          "compatibility" => {
+            "state" => "review-required",
+            "runtime_mode" => recipe.mode,
+            "known_issue_count" => 1,
+            "known_issues" => [
+              {
+                "id" => "engine-binding-pending",
+                "severity" => repair.fetch("severity"),
+                "summary" => repair.fetch("summary")
+              }
+            ]
+          },
+          "repair_records" => {
+            "state" => "pending-review",
+            "last_event" => repair.fetch("notification_event"),
+            "record_count" => 1,
+            "records" => [
+              {
+                "id" => "review-ai-repair",
+                "state" => "pending-review",
+                "last_event" => repair.fetch("notification_event")
+              }
+            ]
+          },
+          "actions" => [
+            "open-compatibility-center",
+            "review-actions",
+            "open-settings",
+            "run-preflight-test"
+          ],
+          "safety" => {
+            "user_visible" => true,
+            "action_execution_enabled" => false,
+            "repair_execution_enabled" => false,
+            "backend_launch_enabled" => false,
+            "settings_persistence_enabled" => false,
+            "host_root_modified" => false,
+            "backend_details_exposed" => false
+          },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "Compatibility Center summary is Runtime-owned, user-visible, and non-executing."
+        }
+      end
+
       def artifact_manifest(application_id)
         recipe = require_recipe(application_id)
         CompatibilityArtifactManifest.new(recipe: recipe).to_h
@@ -489,6 +552,8 @@ module Xnix
             required_parameter(method_name, parameters, 1),
             required_parameter(method_name, parameters, 2)
           )
+        when "GetCompatibilityCenterSummary"
+          compatibility_center_summary(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityInstallPlan"
@@ -669,6 +734,25 @@ module Xnix
           "resource_grant_created" => receipt.fetch("resource_grant_created"),
           "backend_details_exposed" => receipt.fetch("backend_details_exposed"),
           "summary" => receipt.fetch("desktop_safe_summary")
+        }
+      end
+
+      def compatibility_center_summary_summary(recipe)
+        summary = compatibility_center_summary(recipe.id)
+        {
+          "summary_type" => summary.fetch("summary_type"),
+          "compatibility_state" => summary.fetch("compatibility").fetch("state"),
+          "runtime_mode" => summary.fetch("compatibility").fetch("runtime_mode"),
+          "known_issue_count" => summary.fetch("compatibility").fetch("known_issue_count"),
+          "repair_record_state" => summary.fetch("repair_records").fetch("state"),
+          "repair_record_count" => summary.fetch("repair_records").fetch("record_count"),
+          "last_repair_event" => summary.fetch("repair_records").fetch("last_event"),
+          "action_count" => summary.fetch("actions").length,
+          "action_execution_enabled" => summary.fetch("safety").fetch("action_execution_enabled"),
+          "repair_execution_enabled" => summary.fetch("safety").fetch("repair_execution_enabled"),
+          "backend_launch_enabled" => summary.fetch("safety").fetch("backend_launch_enabled"),
+          "backend_details_exposed" => summary.fetch("backend_details_exposed"),
+          "summary" => summary.fetch("desktop_safe_summary")
         }
       end
 
@@ -1091,6 +1175,8 @@ module Xnix
             raise ArgumentError, "action-review requires action id and decision" unless action_id && decision
 
             write_json(runtime.action_review_receipt(application_id, action_id, decision))
+          when "compatibility-center-summary"
+            write_json(runtime.compatibility_center_summary(require_argument(command)))
           when "artifact-manifest"
             write_json(runtime.artifact_manifest(require_argument(command)))
           when "install-plan"

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.85"
+#define XNIX_RUNTIME_VERSION "0.2.86"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[35];
+  const char *read_only_methods[36];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -634,6 +634,34 @@ typedef struct {
   bool backend_details_exposed;
   const char *summary;
 } XnixRuntimeCompatibilityActionReviewReceipt;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *summary_type;
+  const char *desktop;
+  const char *compatibility_state;
+  const char *runtime_mode;
+  const char *known_issue_id;
+  const char *known_issue_severity;
+  const char *known_issue_summary;
+  const char *repair_record_id;
+  const char *repair_record_state;
+  const char *last_repair_event;
+  const char *actions[4];
+  size_t action_count;
+  size_t known_issue_count;
+  size_t repair_record_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool user_visible;
+  bool action_execution_enabled;
+  bool repair_execution_enabled;
+  bool backend_launch_enabled;
+  bool settings_persistence_enabled;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityCenterSummary;
 
 typedef struct {
   const XnixRuntimeApplication *application;
@@ -902,6 +930,10 @@ bool xnix_runtime_compatibility_action_review_receipt(
   const char *action_id,
   const char *decision,
   XnixRuntimeCompatibilityActionReviewReceipt *receipt
+);
+bool xnix_runtime_compatibility_center_summary(
+  const char *application_id,
+  XnixRuntimeCompatibilityCenterSummary *summary
 );
 bool xnix_runtime_compatibility_run_plan(
   const char *application_id,

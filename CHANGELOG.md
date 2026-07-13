@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.86] - 2026-07-14
+
+### Added
+
+- Added C Runtime Compatibility Center summary records and a CLI read method for application state, known issues, repair records, and safe KDE navigation actions.
+- Added Runtime D-Bus contract coverage for `GetCompatibilityCenterSummary` so KDE Compatibility Center surfaces can read a Runtime-owned center summary without enabling execution.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, daemon diagnostics, the D-Bus client, and the KDE Center read model to include Compatibility Center summaries while keeping action execution, repair execution, backend launch, settings persistence, host-root mutation, and backend details disabled.
+
 ## [0.2.85] - 2026-07-14
 
 ### Added

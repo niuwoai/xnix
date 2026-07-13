@@ -171,6 +171,10 @@
       <arg name="decision" type="s" direction="in"/>
       <arg name="receipt" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityCenterSummary">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="summary" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

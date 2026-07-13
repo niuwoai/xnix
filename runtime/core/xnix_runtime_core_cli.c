@@ -2814,6 +2814,8 @@ print_probe(void)
   fputs("\"compatibility_action_queue_count\":1,", stdout);
   fputs("\"compatibility_action_review_receipt_owner\":\"c\",", stdout);
   fputs("\"compatibility_action_review_receipt_count\":1,", stdout);
+  fputs("\"compatibility_center_summary_owner\":\"c\",", stdout);
+  fputs("\"compatibility_center_summary_count\":1,", stdout);
   fputs("\"compatibility_run_plan_owner\":\"c\",", stdout);
   fputs("\"compatibility_run_plan_count\":1,", stdout);
   fputs("\"desktop_activation_manifest_owner\":\"c\",", stdout);
@@ -2882,6 +2884,7 @@ print_write_gate(const char *method_name)
 
 #include "xnix_runtime_core_cli_action_queue.inc"
 #include "xnix_runtime_core_cli_action_review.inc"
+#include "xnix_runtime_core_cli_compatibility_center.inc"
 #include "xnix_runtime_core_cli_run_plan.inc"
 #include "xnix_runtime_core_cli_desktop_activation.inc"
 #include "xnix_runtime_core_cli_desktop_entry.inc"

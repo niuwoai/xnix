@@ -174,6 +174,10 @@ static const gchar introspection_xml[] =
   "      <arg name='decision' type='s' direction='in'/>"
   "      <arg name='receipt' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityCenterSummary'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='summary' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -740,6 +744,34 @@ build_action_review_receipt(const gchar *application_id, const gchar *action_id,
 }
 
 static GVariant *
+build_compatibility_center_summary(const gchar *application_id)
+{
+  GVariantBuilder summary;
+
+  g_variant_builder_init(&summary, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&summary, "{sv}", "summary_type", g_variant_new_string("compatibility-center-summary"));
+  g_variant_builder_add(&summary, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&summary, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&summary, "{sv}", "compatibility_state", g_variant_new_string("review-required"));
+  g_variant_builder_add(&summary, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
+  g_variant_builder_add(&summary, "{sv}", "known_issue_count", g_variant_new_int32(1));
+  g_variant_builder_add(&summary, "{sv}", "repair_record_state", g_variant_new_string("pending-review"));
+  g_variant_builder_add(&summary, "{sv}", "last_repair_event", g_variant_new_string("approval-required"));
+  g_variant_builder_add(&summary, "{sv}", "action_count", g_variant_new_int32(4));
+  g_variant_builder_add(&summary, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&summary, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&summary, "{sv}", "action_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "repair_execution_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&summary, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&summary);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -803,7 +835,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(35));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(36));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1323,6 +1355,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_action_review_receipt(application_id, action_id, decision))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityCenterSummary") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_compatibility_center_summary(application_id))
     );
     return;
   }

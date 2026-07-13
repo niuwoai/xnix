@@ -195,7 +195,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <35>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <36>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -226,6 +226,12 @@ class FakeCapture
     when "org.xnix.Compatibility1.GetCompatibilityActionReviewReceipt"
       [
         "({'receipt_type': <'compatibility-center-action-review-receipt'>, 'action_id': <'review-ai-repair'>, 'decision': <'approved'>, 'decision_recorded': <true>, 'execution_enabled': <false>, 'repair_execution_enabled': <false>, 'settings_persistence_enabled': <false>, 'resource_grant_created': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetCompatibilityCenterSummary"
+      [
+        "({'summary_type': <'compatibility-center-summary'>, 'compatibility_state': <'review-required'>, 'runtime_mode': <'automatic'>, 'known_issue_count': <1>, 'repair_record_state': <'pending-review'>, 'last_repair_event': <'approval-required'>, 'action_count': <4>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'user_visible': <true>, 'action_execution_enabled': <false>, 'repair_execution_enabled': <false>, 'backend_launch_enabled': <false>, 'settings_persistence_enabled': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -467,7 +473,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 35, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 36, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
@@ -522,6 +528,20 @@ assert(!action_review["repair_execution_enabled"], "D-Bus client must parse acti
 assert(!action_review["settings_persistence_enabled"], "D-Bus client must parse action review settings persistence status")
 assert(!action_review["resource_grant_created"], "D-Bus client must parse action review resource grant status")
 assert(!action_review["backend_details_exposed"], "D-Bus client must parse action review backend detail status")
+
+compatibility_center_summary = client.compatibility_center_summary("org.xnix.sample.notepad")
+assert(compatibility_center_summary["summary_type"] == "compatibility-center-summary", "D-Bus client must parse Compatibility Center summaries")
+assert(compatibility_center_summary["compatibility_state"] == "review-required", "D-Bus client must parse Compatibility Center state")
+assert(compatibility_center_summary["known_issue_count"] == 1, "D-Bus client must parse Compatibility Center issue counts")
+assert(compatibility_center_summary["repair_record_state"] == "pending-review", "D-Bus client must parse Compatibility Center repair state")
+assert(compatibility_center_summary["action_count"] == 4, "D-Bus client must parse Compatibility Center action counts")
+assert(compatibility_center_summary["runtime_owned"], "D-Bus client must parse Compatibility Center Runtime ownership")
+assert(!compatibility_center_summary["kde_policy_owner"], "D-Bus client must parse Compatibility Center KDE policy ownership")
+assert(compatibility_center_summary["user_visible"], "D-Bus client must parse Compatibility Center visibility")
+assert(!compatibility_center_summary["action_execution_enabled"], "D-Bus client must parse Compatibility Center action gates")
+assert(!compatibility_center_summary["repair_execution_enabled"], "D-Bus client must parse Compatibility Center repair gates")
+assert(!compatibility_center_summary["backend_launch_enabled"], "D-Bus client must parse Compatibility Center launch gates")
+assert(!compatibility_center_summary["backend_details_exposed"], "D-Bus client must parse Compatibility Center backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

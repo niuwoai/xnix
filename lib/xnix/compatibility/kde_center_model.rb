@@ -69,6 +69,7 @@ module Xnix
           "pending_action_count" => pending_checks,
           "action_queue" => action_queue_summary(diagnostics.fetch("action_queue", nil)),
           "action_review_receipt" => action_review_receipt_summary(diagnostics.fetch("action_review_receipt", nil)),
+          "compatibility_center_summary" => compatibility_center_summary_summary(diagnostics.fetch("compatibility_center_summary", nil)),
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
@@ -169,6 +170,26 @@ module Xnix
           "resource_grant_created" => receipt.fetch("resource_grant_created"),
           "backend_details_exposed" => receipt.fetch("backend_details_exposed"),
           "summary" => receipt.fetch("summary")
+        }
+      end
+
+      def compatibility_center_summary_summary(summary)
+        return nil unless summary
+
+        {
+          "summary_type" => summary.fetch("summary_type"),
+          "compatibility_state" => summary.fetch("compatibility_state"),
+          "runtime_mode" => summary.fetch("runtime_mode"),
+          "known_issue_count" => summary.fetch("known_issue_count"),
+          "repair_record_state" => summary.fetch("repair_record_state"),
+          "repair_record_count" => summary.fetch("repair_record_count"),
+          "last_repair_event" => summary.fetch("last_repair_event"),
+          "action_count" => summary.fetch("action_count"),
+          "action_execution_enabled" => summary.fetch("action_execution_enabled"),
+          "repair_execution_enabled" => summary.fetch("repair_execution_enabled"),
+          "backend_launch_enabled" => summary.fetch("backend_launch_enabled"),
+          "backend_details_exposed" => summary.fetch("backend_details_exposed"),
+          "summary" => summary.fetch("summary")
         }
       end
 
@@ -420,6 +441,8 @@ module Xnix
           "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },
           "recorded_action_review_count" => applications.count { |application| section(application, "action_review_receipt").fetch("decision_recorded", false) },
+          "compatibility_center_summary_count" => applications.count { |application| section(application, "compatibility_center_summary").fetch("summary_type", nil) == "compatibility-center-summary" },
+          "compatibility_center_known_issue_count" => applications.sum { |application| section(application, "compatibility_center_summary").fetch("known_issue_count", 0) },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
           "pending_install_plan_count" => applications.count { |application| !section(application, "install_plan").fetch("install_ready", false) },

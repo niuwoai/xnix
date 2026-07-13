@@ -180,6 +180,18 @@ assert(action_review["receipt_type"] == "compatibility-center-action-review-rece
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityCenterSummary",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityCenterSummary must exit successfully: #{stderr}")
+compatibility_center_summary = JSON.parse(stdout)
+assert(compatibility_center_summary["summary_type"] == "compatibility-center-summary", "dispatch must route GetCompatibilityCenterSummary")
+assert(compatibility_center_summary["compatibility"]["state"] == "review-required", "dispatch must expose Compatibility Center state")
+assert(!compatibility_center_summary["safety"]["backend_launch_enabled"], "dispatch must keep Compatibility Center backend launch disabled")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilityArtifactManifest",
   JSON.generate(["org.xnix.sample.notepad"])
 )
