@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.59"
+#define XNIX_RUNTIME_VERSION "0.2.60"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -61,6 +61,27 @@ typedef struct {
   bool backend_details_exposed;
 } XnixRuntimePortalPolicy;
 
+typedef struct {
+  const char *reason;
+  const char *summary;
+  bool enabled_by_default;
+  bool application_state;
+  bool runtime_metadata;
+  bool desktop_activation_receipts;
+  bool user_documents;
+  bool host_system;
+  bool restore_available;
+  bool restore_requires_user_confirmation;
+  bool restore_preserve_user_documents;
+  const char *retention_policy;
+  size_t keep_latest;
+  bool prune_automatically;
+  bool runtime_policy_owner;
+  bool desktop_shell_policy_owner;
+  bool backend_details_exposed;
+  bool host_root_modified;
+} XnixRuntimeSnapshotPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -85,5 +106,9 @@ const XnixRuntimeEngine *xnix_runtime_select_engine_for_mode(const char *mode);
 size_t xnix_runtime_portal_policy_count(void);
 const XnixRuntimePortalPolicy *xnix_runtime_portal_policy_at(size_t index);
 const XnixRuntimePortalPolicy *xnix_runtime_find_portal_policy(const char *operation);
+
+size_t xnix_runtime_snapshot_policy_count(void);
+const XnixRuntimeSnapshotPolicy *xnix_runtime_snapshot_policy_at(size_t index);
+const XnixRuntimeSnapshotPolicy *xnix_runtime_find_snapshot_policy(const char *reason);
 
 #endif

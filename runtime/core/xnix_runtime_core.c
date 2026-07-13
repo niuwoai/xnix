@@ -159,6 +159,69 @@ static const XnixRuntimePortalPolicy portal_policies[] = {
   },
 };
 
+static const XnixRuntimeSnapshotPolicy snapshot_policies[] = {
+  {
+    .reason = "before-repair",
+    .summary = "Create a restore point before a compatibility repair.",
+    .enabled_by_default = true,
+    .application_state = true,
+    .runtime_metadata = true,
+    .desktop_activation_receipts = true,
+    .user_documents = false,
+    .host_system = false,
+    .restore_available = true,
+    .restore_requires_user_confirmation = true,
+    .restore_preserve_user_documents = true,
+    .retention_policy = "bounded",
+    .keep_latest = 5,
+    .prune_automatically = true,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+    .host_root_modified = false,
+  },
+  {
+    .reason = "before-engine-change",
+    .summary = "Create a restore point before changing the compatibility engine.",
+    .enabled_by_default = true,
+    .application_state = true,
+    .runtime_metadata = true,
+    .desktop_activation_receipts = true,
+    .user_documents = false,
+    .host_system = false,
+    .restore_available = true,
+    .restore_requires_user_confirmation = true,
+    .restore_preserve_user_documents = true,
+    .retention_policy = "bounded",
+    .keep_latest = 5,
+    .prune_automatically = true,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+    .host_root_modified = false,
+  },
+  {
+    .reason = "manual",
+    .summary = "Create a user-requested restore point.",
+    .enabled_by_default = true,
+    .application_state = true,
+    .runtime_metadata = true,
+    .desktop_activation_receipts = true,
+    .user_documents = false,
+    .host_system = false,
+    .restore_available = true,
+    .restore_requires_user_confirmation = true,
+    .restore_preserve_user_documents = true,
+    .retention_policy = "bounded",
+    .keep_latest = 5,
+    .prune_automatically = true,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+    .host_root_modified = false,
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -360,6 +423,40 @@ xnix_runtime_find_portal_policy(const char *operation)
     const XnixRuntimePortalPolicy *policy = xnix_runtime_portal_policy_at(index);
 
     if (policy != NULL && strcmp(operation, policy->operation) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_snapshot_policy_count(void)
+{
+  return sizeof(snapshot_policies) / sizeof(snapshot_policies[0]);
+}
+
+const XnixRuntimeSnapshotPolicy *
+xnix_runtime_snapshot_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_snapshot_policy_count()) {
+    return NULL;
+  }
+
+  return &snapshot_policies[index];
+}
+
+const XnixRuntimeSnapshotPolicy *
+xnix_runtime_find_snapshot_policy(const char *reason)
+{
+  if (reason == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_snapshot_policy_count(); index++) {
+    const XnixRuntimeSnapshotPolicy *policy = xnix_runtime_snapshot_policy_at(index);
+
+    if (policy != NULL && strcmp(reason, policy->reason) == 0) {
       return policy;
     }
   }

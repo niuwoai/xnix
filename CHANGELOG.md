@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.60] - 2026-07-13
+
+### Added
+
+- Added C Runtime snapshot policy records and CLI read methods for listing restore-point policies and evaluating per-application snapshot plans.
+- Added C Runtime snapshot policy tests that verify restore scope, bounded retention, Runtime ownership, user-document preservation, host-system exclusion, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first snapshot and rollback policy layer while keeping host-root mutation disabled.
+
 ## [0.2.59] - 2026-07-13
 
 ### Added
