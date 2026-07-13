@@ -20,7 +20,7 @@ model = Xnix::Compatibility::FileAssociationModel.new(recipe: recipe)
 payload = model.to_h
 contents = model.render_mimeapps
 
-assert(payload["version"] == "0.2.67", "file association model must expose the current version")
+assert(payload["version"] == "0.2.68", "file association model must expose the current version")
 assert(payload["association_type"] == "desktop-file-association", "file association model must identify its type")
 assert(payload["desktop"] == "KDE Plasma", "file association model must target KDE Plasma")
 assert(payload["application"]["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "file association model must bind the generated desktop file")

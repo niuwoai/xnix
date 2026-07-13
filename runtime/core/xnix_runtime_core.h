@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.67"
+#define XNIX_RUNTIME_VERSION "0.2.68"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -314,6 +314,44 @@ typedef struct {
   const char *summary;
 } XnixRuntimeSettingsPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeSettingsChangeStep;
+
+typedef struct {
+  const char *section;
+  const char *field;
+  const char *value;
+  const char *options[3];
+  size_t option_count;
+} XnixRuntimeAffectedSettingsPolicy;
+
+typedef struct {
+  const char *application_id;
+  const char *section_id;
+  const char *field_id;
+  const char *requested_value;
+  const char *change_state;
+  XnixRuntimeAffectedSettingsPolicy affected_policy;
+  XnixRuntimeSettingsChangeStep steps[5];
+  size_t step_count;
+  const char *blocked_actions[4];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool apply_enabled;
+  bool settings_persisted;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  bool user_confirmation_required;
+  bool snapshot_recommended;
+  bool portal_policy_review_required;
+  bool runtime_restart_required;
+  const char *summary;
+} XnixRuntimeSettingsChangePolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -374,5 +412,9 @@ const XnixRuntimeBackendBindingPolicy *xnix_runtime_find_backend_binding_policy(
 size_t xnix_runtime_settings_policy_count(void);
 const XnixRuntimeSettingsPolicy *xnix_runtime_settings_policy_at(size_t index);
 const XnixRuntimeSettingsPolicy *xnix_runtime_find_settings_policy(const char *application_id);
+
+size_t xnix_runtime_settings_change_policy_count(void);
+const XnixRuntimeSettingsChangePolicy *xnix_runtime_settings_change_policy_at(size_t index);
+const XnixRuntimeSettingsChangePolicy *xnix_runtime_find_settings_change_policy(const char *application_id);
 
 #endif

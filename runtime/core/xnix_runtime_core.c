@@ -728,6 +728,69 @@ static const XnixRuntimeSettingsPolicy settings_policies[] = {
   },
 };
 
+static const XnixRuntimeSettingsChangePolicy settings_change_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .section_id = "resource-access",
+    .field_id = "documents",
+    .requested_value = "allow",
+    .change_state = "planned",
+    .affected_policy = {
+      .section = "resource-access",
+      .field = "documents",
+      .value = "allow",
+      .options = {"allow", "ask", "deny"},
+      .option_count = 3,
+    },
+    .steps = {
+      {
+        .id = "validate-setting",
+        .status = "pass",
+        .summary = "The requested settings value is valid for the Runtime settings schema.",
+      },
+      {
+        .id = "review-user-confirmation",
+        .status = "required",
+        .summary = "KDE must present the change for user review before persistence.",
+      },
+      {
+        .id = "review-portal-policy",
+        .status = "required",
+        .summary = "Runtime Portal policy must be reviewed before desktop resource access changes.",
+      },
+      {
+        .id = "prepare-restore-point",
+        .status = "pass",
+        .summary = "Runtime should prepare a restore point before risky compatibility settings changes.",
+      },
+      {
+        .id = "persist-runtime-setting",
+        .status = "pending",
+        .summary = "Runtime persistence is not enabled in this version.",
+      },
+    },
+    .step_count = 5,
+    .blocked_actions = {
+      "persist compatibility settings before Runtime confirmation",
+      "grant desktop resources without Portal policy review",
+      "modify host root while planning settings changes",
+      "expose backend implementation settings to KDE",
+    },
+    .blocked_action_count = 4,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .apply_enabled = false,
+    .settings_persisted = false,
+    .host_root_modified = false,
+    .backend_details_exposed = false,
+    .user_confirmation_required = true,
+    .snapshot_recommended = false,
+    .portal_policy_review_required = true,
+    .runtime_restart_required = false,
+    .summary = "Compatibility settings change is planned and waiting for Runtime persistence support.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1224,6 +1287,41 @@ xnix_runtime_find_settings_policy(const char *application_id)
 
   for (size_t index = 0; index < xnix_runtime_settings_policy_count(); index++) {
     const XnixRuntimeSettingsPolicy *policy = xnix_runtime_settings_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_settings_change_policy_count(void)
+{
+  return sizeof(settings_change_policies) / sizeof(settings_change_policies[0]);
+}
+
+const XnixRuntimeSettingsChangePolicy *
+xnix_runtime_settings_change_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_settings_change_policy_count()) {
+    return NULL;
+  }
+
+  return &settings_change_policies[index];
+}
+
+const XnixRuntimeSettingsChangePolicy *
+xnix_runtime_find_settings_change_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_settings_change_policy_count(); index++) {
+    const XnixRuntimeSettingsChangePolicy *policy =
+      xnix_runtime_settings_change_policy_at(index);
 
     if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;

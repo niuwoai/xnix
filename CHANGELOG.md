@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.68] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility settings change policy records and CLI read methods for listing planned settings-change gates and evaluating per-application settings change plans.
+- Added C Runtime settings change tests that verify confirmation, Portal review, persistence blocking, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility settings change layer while keeping settings persistence, resource grants, Runtime restarts, and host-root mutation disabled.
+
 ## [0.2.67] - 2026-07-13
 
 ### Added

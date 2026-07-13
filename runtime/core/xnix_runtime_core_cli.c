@@ -1115,6 +1115,145 @@ print_settings_policy_for_application(
 }
 
 static void
+print_settings_change_affected_policy(
+  const XnixRuntimeAffectedSettingsPolicy *affected_policy
+)
+{
+  fputs("{", stdout);
+  print_string_field("section", affected_policy->section);
+  fputs(",", stdout);
+  print_string_field("field", affected_policy->field);
+  fputs(",", stdout);
+  print_string_field("value", affected_policy->value);
+  fputs(",", stdout);
+  fputs("\"options\":", stdout);
+  print_string_array(affected_policy->options, affected_policy->option_count);
+  fputs("}", stdout);
+}
+
+static void
+print_settings_change_steps(const XnixRuntimeSettingsChangePolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->step_count; index++) {
+    const XnixRuntimeSettingsChangeStep *step = &policy->steps[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", step->id);
+    fputs(",", stdout);
+    print_string_field("status", step->status);
+    fputs(",", stdout);
+    print_string_field("summary", step->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_settings_change_policy_record(const XnixRuntimeSettingsChangePolicy *policy)
+{
+  fputs("{", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  print_string_field("section_id", policy->section_id);
+  fputs(",", stdout);
+  print_string_field("field_id", policy->field_id);
+  fputs(",", stdout);
+  print_string_field("requested_value", policy->requested_value);
+  fputs(",", stdout);
+  print_string_field("change_state", policy->change_state);
+  fputs(",", stdout);
+  fputs("\"apply_enabled\":", stdout);
+  print_bool(policy->apply_enabled);
+  fputs(",", stdout);
+  fputs("\"settings_persisted\":", stdout);
+  print_bool(policy->settings_persisted);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"portal_policy_review_required\":", stdout);
+  print_bool(policy->portal_policy_review_required);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_settings_change_policy_for_application(
+  const XnixRuntimeApplication *application,
+  const XnixRuntimeSettingsChangePolicy *policy
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("plan_type", "settings-change-plan");
+  fputs(",", stdout);
+  print_string_field("desktop", "KDE Plasma");
+  fputs(",", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_settings_application(application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("section_id", policy->section_id);
+  fputs(",", stdout);
+  print_string_field("field_id", policy->field_id);
+  fputs(",", stdout);
+  print_string_field("requested_value", policy->requested_value);
+  fputs(",", stdout);
+  print_string_field("change_state", policy->change_state);
+  fputs(",", stdout);
+  fputs("\"apply_enabled\":", stdout);
+  print_bool(policy->apply_enabled);
+  fputs(",", stdout);
+  fputs("\"settings_persisted\":", stdout);
+  print_bool(policy->settings_persisted);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs(",", stdout);
+  fputs("\"user_confirmation_required\":", stdout);
+  print_bool(policy->user_confirmation_required);
+  fputs(",", stdout);
+  fputs("\"snapshot_recommended\":", stdout);
+  print_bool(policy->snapshot_recommended);
+  fputs(",", stdout);
+  fputs("\"portal_policy_review_required\":", stdout);
+  print_bool(policy->portal_policy_review_required);
+  fputs(",", stdout);
+  fputs("\"runtime_restart_required\":", stdout);
+  print_bool(policy->runtime_restart_required);
+  fputs(",", stdout);
+  fputs("\"affected_policy\":", stdout);
+  print_settings_change_affected_policy(&policy->affected_policy);
+  fputs(",", stdout);
+  fputs("\"steps\":", stdout);
+  print_settings_change_steps(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -1852,6 +1991,52 @@ print_settings_policy(const char *application_id)
 }
 
 static int
+print_settings_change_policy_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("catalog_type", "settings-change-policy");
+  fputs(",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  print_string_field("catalog_owner", "c");
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"host_root_modified\":false,", stdout);
+  fputs("\"policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_settings_change_policy_count());
+  fputs("\"policies\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_settings_change_policy_count(); index++) {
+    const XnixRuntimeSettingsChangePolicy *policy =
+      xnix_runtime_settings_change_policy_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_settings_change_policy_record(policy);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_settings_change_policy(const char *application_id)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+  const XnixRuntimeSettingsChangePolicy *policy =
+    xnix_runtime_find_settings_change_policy(application_id);
+
+  if (application == NULL || policy == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime settings change policy catalog\n");
+    return 64;
+  }
+
+  print_settings_change_policy_for_application(application, policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -1927,6 +2112,9 @@ print_probe(void)
   fputs("\"settings_policy_owner\":\"c\",", stdout);
   fputs("\"settings_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_settings_policy_count());
+  fputs("\"settings_change_policy_owner\":\"c\",", stdout);
+  fputs("\"settings_change_policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_settings_change_policy_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -1980,7 +2168,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2081,6 +2269,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "settings-policy") == 0 && argc == 3) {
     return print_settings_policy(argv[2]);
+  }
+
+  if (strcmp(argv[1], "list-settings-change-policies") == 0 && argc == 2) {
+    return print_settings_change_policy_catalog();
+  }
+
+  if (strcmp(argv[1], "settings-change-policy") == 0 && argc == 3) {
+    return print_settings_change_policy(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

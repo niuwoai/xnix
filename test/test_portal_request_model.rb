@@ -23,7 +23,7 @@ operations.each do |operation|
     reason: "Open a selected document."
   ).to_h
 
-  assert(request["version"] == "0.2.67", "Portal request model must expose the current version")
+  assert(request["version"] == "0.2.68", "Portal request model must expose the current version")
   assert(request["request_type"] == "portal-request", "Portal request model must identify the request type")
   assert(request["desktop"] == "KDE Plasma", "Portal request model must target KDE Plasma")
   assert(request["application_id"] == "org.xnix.sample.notepad", "Portal request model must preserve the application id")
