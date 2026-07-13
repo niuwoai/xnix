@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.38] - 2026-07-13
+
+### Added
+
+- Added `xnix-ai-diagnostic-recommendation`, a Runtime-owned AI diagnostic recommendation model for review-first compatibility guidance.
+- Added focused coverage for user-visible recommendations, approval-required actions, blocked AI tasks, Runtime diagnostics, dispatch, D-Bus client reads, Compatibility Center summaries, and session-bus smoke exposure.
+
+### Changed
+
+- Extended Runtime diagnostics, read-only Runtime dispatch, D-Bus planning reads, and the KDE Compatibility Center model with AI diagnostic recommendation summaries.
+
 ## [0.2.37] - 2026-07-13
 
 ### Added

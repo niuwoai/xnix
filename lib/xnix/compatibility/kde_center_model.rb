@@ -71,6 +71,7 @@ module Xnix
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
+          "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -136,6 +137,20 @@ module Xnix
         }
       end
 
+      def ai_diagnostic_recommendation_summary(recommendation)
+        return nil unless recommendation
+
+        {
+          "recommendation_type" => recommendation.fetch("recommendation_type"),
+          "recommendation_count" => recommendation.fetch("recommendation_count"),
+          "approval_required_count" => recommendation.fetch("approval_required_count"),
+          "ai_provider_called" => recommendation.fetch("ai_provider_called"),
+          "network_required" => recommendation.fetch("network_required"),
+          "safe_for_ai_diagnostics" => recommendation.fetch("safe_for_ai_diagnostics"),
+          "summary" => recommendation.fetch("summary")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
@@ -143,7 +158,8 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| application.fetch("test_result", {}).fetch("overall_status", nil) == "pending" },
-          "ai_diagnostic_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_input", {}).fetch("safe_for_ai_diagnostics", false) }
+          "ai_diagnostic_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_input", {}).fetch("safe_for_ai_diagnostics", false) },
+          "ai_recommendation_ready_count" => applications.count { |application| application.fetch("ai_diagnostic_recommendation", {}).fetch("safe_for_ai_diagnostics", false) }
         }
       end
 

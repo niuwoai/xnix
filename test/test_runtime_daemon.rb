@@ -18,7 +18,7 @@ command = ["ruby", project_root.join("bin/xnix-compatd").to_s]
 stdout, stderr, status = Open3.capture3(*command, "probe")
 assert(status.success?, "runtime daemon probe must exit successfully: #{stderr}")
 probe = JSON.parse(stdout)
-assert(probe["version"] == "0.2.37", "runtime daemon probe must report the current version")
+assert(probe["version"] == "0.2.38", "runtime daemon probe must report the current version")
 assert(probe["bus_name"] == "org.xnix.Compatibility1", "runtime daemon probe must keep the stable bus name")
 assert(probe["capabilities"]["recipe_store"], "runtime daemon probe must expose recipe store capability")
 assert(probe["capabilities"]["registry_backed_recipe_store"], "runtime daemon probe must expose registry-backed recipe loading")
@@ -28,6 +28,7 @@ assert(probe["capabilities"]["compatibility_repair_planning"], "runtime daemon p
 assert(probe["capabilities"]["compatibility_test_planning"], "runtime daemon probe must expose test planning capability")
 assert(probe["capabilities"]["compatibility_test_results"], "runtime daemon probe must expose test result capability")
 assert(probe["capabilities"]["ai_diagnostic_inputs"], "runtime daemon probe must expose AI diagnostic input capability")
+assert(probe["capabilities"]["ai_diagnostic_recommendations"], "runtime daemon probe must expose AI diagnostic recommendation capability")
 assert(probe["capabilities"]["dbus_method_dispatch"], "runtime daemon probe must expose method dispatch capability")
 assert(!probe["capabilities"]["dbus_binding"], "runtime daemon must not claim a D-Bus binding before it exists")
 assert(probe["recipe_trust"]["registry_backed"], "runtime daemon probe must report registry-backed recipe loading")
@@ -54,6 +55,9 @@ assert(diagnostics["test_result"]["counts"]["pending"] == 3, "runtime daemon dia
 assert(diagnostics["ai_diagnostic_input"]["input_type"] == "ai-diagnostic-input", "runtime daemon diagnostics must include AI diagnostic input")
 assert(diagnostics["ai_diagnostic_input"]["safe_for_ai_diagnostics"], "runtime daemon diagnostics must mark AI diagnostic input safe")
 assert(!diagnostics["ai_diagnostic_input"]["ai_provider_called"], "runtime daemon diagnostics must not claim an AI provider call")
+assert(diagnostics["ai_diagnostic_recommendation"]["recommendation_type"] == "ai-diagnostic-recommendation", "runtime daemon diagnostics must include AI diagnostic recommendations")
+assert(diagnostics["ai_diagnostic_recommendation"]["recommendation_count"] == 3, "runtime daemon diagnostics must count AI diagnostic recommendations")
+assert(!diagnostics["ai_diagnostic_recommendation"]["ai_provider_called"], "runtime daemon diagnostics must not claim recommendation AI provider calls")
 assert(diagnostics["repair_plan"]["plan_type"] == "compatibility-repair", "runtime daemon diagnostics must include repair planning")
 assert(diagnostics["repair_plan"]["issue"] == "engine-binding-pending", "runtime daemon diagnostics must identify the pending repair issue")
 assert(diagnostics["repair_plan"]["snapshot_required"], "runtime daemon diagnostics repair plan must require snapshots")
@@ -84,5 +88,11 @@ assert(status.success?, "runtime daemon ai-diagnostic-input must exit successful
 ai_input = JSON.parse(stdout)
 assert(ai_input["input_type"] == "ai-diagnostic-input", "runtime daemon ai-diagnostic-input command must emit an AI diagnostic input")
 assert(ai_input["safe_for_ai_diagnostics"], "runtime daemon ai-diagnostic-input must be safe for AI diagnostics")
+
+stdout, stderr, status = Open3.capture3(*command, "ai-diagnostic-recommendation", "org.xnix.sample.notepad")
+assert(status.success?, "runtime daemon ai-diagnostic-recommendation must exit successfully: #{stderr}")
+ai_recommendation = JSON.parse(stdout)
+assert(ai_recommendation["recommendation_type"] == "ai-diagnostic-recommendation", "runtime daemon ai-diagnostic-recommendation command must emit recommendations")
+assert(ai_recommendation["recommendations"].length == 3, "runtime daemon ai-diagnostic-recommendation must expose recommendations")
 
 puts "PASS: compatibility runtime daemon unit tests"

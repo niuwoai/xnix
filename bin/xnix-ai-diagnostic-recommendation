@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/ai_diagnostic_recommendation"
+
+exit Xnix::Compatibility::AIDiagnosticRecommendation::CLI.new(ARGV).run
