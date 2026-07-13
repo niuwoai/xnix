@@ -272,6 +272,16 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeOwnerSmokePlan"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerSmokePlan: #{stderr}")
+  assert(stdout.include?("runtime-owner-smoke-plan"), "runtime smoke adapter must expose Runtime owner smoke plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetCompatibilitySettings",
     "org.xnix.sample.notepad"
   )

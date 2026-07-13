@@ -226,6 +226,12 @@ live_owner_gate = JSON.parse(stdout)
 assert(live_owner_gate["gate_type"] == "runtime-live-owner-gate", "dispatch must route GetRuntimeLiveOwnerGate")
 assert(!live_owner_gate["owner_transition_ready"], "dispatch must keep live owner transition gated")
 
+stdout, stderr, status = Open3.capture3(*command, "dispatch", "GetRuntimeOwnerSmokePlan")
+assert(status.success?, "dispatch GetRuntimeOwnerSmokePlan must exit successfully: #{stderr}")
+owner_smoke_plan = JSON.parse(stdout)
+assert(owner_smoke_plan["plan_type"] == "runtime-owner-smoke-plan", "dispatch must route GetRuntimeOwnerSmokePlan")
+assert(!owner_smoke_plan["production_bus_claimed"], "dispatch must keep production bus ownership unclaimed")
+
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",

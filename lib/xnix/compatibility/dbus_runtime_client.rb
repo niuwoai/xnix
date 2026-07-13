@@ -129,6 +129,10 @@ module Xnix
         parse_dictionary(call("GetRuntimeLiveOwnerGate"))
       end
 
+      def runtime_owner_smoke_plan
+        parse_dictionary(call("GetRuntimeOwnerSmokePlan"))
+      end
+
       def settings(application_id)
         parse_dictionary(call("GetCompatibilitySettings", application_id))
       end

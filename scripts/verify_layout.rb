@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.51"
+EXPECTED_VERSION = "0.2.52"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -63,6 +63,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/recipe_trust_policy.rb
   lib/xnix/compatibility/runtime_daemon.rb
   lib/xnix/compatibility/runtime_live_owner_gate.rb
+  lib/xnix/compatibility/runtime_owner_smoke_plan.rb
   lib/xnix/compatibility/settings_change_plan.rb
   lib/xnix/compatibility/runtime_service_binding.rb
   lib/xnix/compatibility/settings_model.rb
@@ -108,6 +109,7 @@ REQUIRED_FILES = %w[
   bin/xnix-recipe-trust-policy
   bin/xnix-rollback-desktop-integration
   bin/xnix-runtime-live-owner-gate
+  bin/xnix-runtime-owner-smoke-plan
   bin/xnix-runtime-service-binding
   libexec/xnix/compatd
   scripts/container.rb
@@ -175,6 +177,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
+  test/test_runtime_owner_smoke_plan.rb
   test/test_runtime_service_binding.rb
   test/test_runtime_activation.rb
   test/test_runtime_activation_install.rb
@@ -436,6 +439,17 @@ assert(runtime_live_owner_gate_source.include?("\"kde_may_claim_runtime_ownershi
 assert(runtime_live_owner_gate_source.include?("\"host_root_modified\" => false"), "Runtime live owner gate must not mutate the host root")
 assert(runtime_live_owner_gate_source.include?("\"backend_details_exposed\" => false"), "Runtime live owner gate must hide backend details")
 
+runtime_owner_smoke_plan_source = read_project_file("lib/xnix/compatibility/runtime_owner_smoke_plan.rb")
+assert(runtime_owner_smoke_plan_source.include?("xnix-runtime-owner-smoke-plan"), "Runtime owner smoke plan must expose a CLI command")
+%w[runtime-owner-smoke-plan validate-activation-files start-packaged-runtime-owner assert-stable-bus-name check-read-only-method-parity reject-write-methods verify-non-production-smoke-adapter-boundary].each do |token|
+  assert(runtime_owner_smoke_plan_source.include?(token), "Runtime owner smoke plan must include #{token}")
+end
+assert(runtime_owner_smoke_plan_source.include?("\"smoke_state\" => \"planned\""), "Runtime owner smoke plan must stay planned")
+assert(runtime_owner_smoke_plan_source.include?("\"system_service_started\" => false"), "Runtime owner smoke plan must not start system services")
+assert(runtime_owner_smoke_plan_source.include?("\"production_bus_claimed\" => false"), "Runtime owner smoke plan must not claim production bus ownership")
+assert(runtime_owner_smoke_plan_source.include?("\"host_root_modified\" => false"), "Runtime owner smoke plan must not mutate the host root")
+assert(runtime_owner_smoke_plan_source.include?("\"backend_details_exposed\" => false"), "Runtime owner smoke plan must hide backend details")
+
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
@@ -531,10 +545,11 @@ assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Run
 assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime daemon must expose AI repair approval gate capability")
 assert(runtime_daemon_source.include?("\"application_state_roots\""), "Runtime daemon must expose application state root capability")
 assert(runtime_daemon_source.include?("\"runtime_live_owner_gates\""), "Runtime daemon must expose Runtime live owner gate capability")
+assert(runtime_daemon_source.include?("\"runtime_owner_smoke_plans\""), "Runtime daemon must expose Runtime owner smoke plan capability")
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
 assert(runtime_daemon_source.include?("\"compatibility_settings\""), "Runtime daemon must expose compatibility settings capability")
 assert(runtime_daemon_source.include?("\"compatibility_settings_change_planning\""), "Runtime daemon must expose settings change planning capability")
-%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
+%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerSmokePlan GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -542,7 +557,7 @@ assert(runtime_daemon_source.include?("\"compatibility_settings_change_planning\
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan state_root package_source acquisition_preflight action_queue action_review_receipt artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding runtime_live_owner_gate settings settings_change_plan].each do |method_name|
+%w[engine_catalog run_plan state_root package_source acquisition_preflight action_queue action_review_receipt artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding runtime_live_owner_gate runtime_owner_smoke_plan settings settings_change_plan].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

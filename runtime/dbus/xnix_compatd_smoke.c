@@ -114,6 +114,9 @@ static const gchar introspection_xml[] =
   "    <method name='GetRuntimeLiveOwnerGate'>"
   "      <arg name='gate' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetRuntimeOwnerSmokePlan'>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetCompatibilitySettings'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='settings' type='a{sv}' direction='out'/>"
@@ -557,6 +560,28 @@ build_runtime_live_owner_gate(void)
   return g_variant_builder_end(&gate);
 }
 
+static GVariant *
+build_runtime_owner_smoke_plan(void)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("runtime-owner-smoke-plan"));
+  g_variant_builder_add(&plan, "{sv}", "smoke_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "smoke_environment", g_variant_new_string("restricted-session"));
+  g_variant_builder_add(&plan, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "live_dbus_owner_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "production_owner_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "owner_transition_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "pending_step_count", g_variant_new_int32(6));
+  g_variant_builder_add(&plan, "{sv}", "system_service_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "production_bus_claimed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
 static void
 handle_method_call(GDBusConnection *connection,
                    const gchar *sender,
@@ -841,6 +866,11 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeLiveOwnerGate") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_live_owner_gate()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeOwnerSmokePlan") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_smoke_plan()));
     return;
   }
 

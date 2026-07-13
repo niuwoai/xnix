@@ -82,6 +82,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
           "runtime_live_owner_gate" => runtime_live_owner_gate_summary(diagnostics.fetch("runtime_live_owner_gate", nil)),
+          "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary(diagnostics.fetch("runtime_owner_smoke_plan", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
           "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
@@ -330,6 +331,24 @@ module Xnix
         }
       end
 
+      def runtime_owner_smoke_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "smoke_state" => plan.fetch("smoke_state"),
+          "smoke_environment" => plan.fetch("smoke_environment"),
+          "activation_binding_ready" => plan.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => plan.fetch("live_dbus_owner_ready"),
+          "production_owner_enabled" => plan.fetch("production_owner_enabled"),
+          "owner_transition_ready" => plan.fetch("owner_transition_ready"),
+          "pending_step_count" => plan.fetch("pending_step_count"),
+          "system_service_started" => plan.fetch("system_service_started"),
+          "production_bus_claimed" => plan.fetch("production_bus_claimed"),
+          "summary" => plan.fetch("summary", "")
+        }
+      end
+
       def settings_summary(settings)
         return nil unless settings
 
@@ -381,6 +400,10 @@ module Xnix
           "pending_runtime_live_owner_gate_count" => applications.count do |application|
             live_owner_gate = section(application, "runtime_live_owner_gate")
             !live_owner_gate.empty? && !live_owner_gate.fetch("owner_transition_ready", false)
+          end,
+          "pending_runtime_owner_smoke_plan_count" => applications.count do |application|
+            owner_smoke_plan = section(application, "runtime_owner_smoke_plan")
+            !owner_smoke_plan.empty? && owner_smoke_plan.fetch("smoke_state", nil) == "planned"
           end,
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },

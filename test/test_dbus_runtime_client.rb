@@ -145,6 +145,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetRuntimeOwnerSmokePlan"
+      [
+        "({'plan_type': <'runtime-owner-smoke-plan'>, 'smoke_state': <'planned'>, 'smoke_environment': <'restricted-session'>, 'activation_binding_ready': <true>, 'live_dbus_owner_ready': <false>, 'production_owner_enabled': <false>, 'owner_transition_ready': <false>, 'pending_step_count': <6>, 'system_service_started': <false>, 'production_bus_claimed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetCompatibilitySettings"
       [
         "({'request_type': <'settings-model'>, 'settings_state': <'planned'>, 'settings_persisted': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -291,6 +297,19 @@ assert(!live_owner_gate["owner_transition_ready"], "D-Bus client must parse Runt
 assert(!live_owner_gate["smoke_adapter_is_production_owner"], "D-Bus client must parse smoke adapter owner status")
 assert(!live_owner_gate["kde_may_claim_runtime_ownership"], "D-Bus client must parse KDE ownership status")
 assert(!live_owner_gate["backend_details_exposed"], "D-Bus client must parse Runtime live owner backend detail status")
+
+owner_smoke_plan = client.runtime_owner_smoke_plan
+assert(owner_smoke_plan["plan_type"] == "runtime-owner-smoke-plan", "D-Bus client must parse Runtime owner smoke plans")
+assert(owner_smoke_plan["smoke_state"] == "planned", "D-Bus client must parse Runtime owner smoke state")
+assert(owner_smoke_plan["smoke_environment"] == "restricted-session", "D-Bus client must parse Runtime owner smoke environment")
+assert(owner_smoke_plan["activation_binding_ready"], "D-Bus client must parse owner smoke activation readiness")
+assert(!owner_smoke_plan["live_dbus_owner_ready"], "D-Bus client must parse owner smoke live readiness")
+assert(!owner_smoke_plan["production_owner_enabled"], "D-Bus client must parse owner smoke production owner status")
+assert(!owner_smoke_plan["owner_transition_ready"], "D-Bus client must parse owner smoke transition status")
+assert(owner_smoke_plan["pending_step_count"] == 6, "D-Bus client must parse owner smoke step counts")
+assert(!owner_smoke_plan["system_service_started"], "D-Bus client must parse owner smoke service state")
+assert(!owner_smoke_plan["production_bus_claimed"], "D-Bus client must parse owner smoke bus claim state")
+assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse owner smoke backend detail status")
 
 settings = client.settings("org.xnix.sample.notepad")
 assert(settings["request_type"] == "settings-model", "D-Bus client must parse compatibility settings")

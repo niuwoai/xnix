@@ -23,6 +23,7 @@ require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_live_owner_gate"
+require_relative "runtime_owner_smoke_plan"
 require_relative "runtime_service_binding"
 require_relative "settings_model"
 require_relative "settings_change_plan"
@@ -73,6 +74,7 @@ module Xnix
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
             "runtime_live_owner_gates" => true,
+            "runtime_owner_smoke_plans" => true,
             "runtime_service_binding" => true,
             "compatibility_settings" => true,
             "compatibility_settings_change_planning" => true,
@@ -126,6 +128,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
           "runtime_live_owner_gate" => runtime_live_owner_gate_summary,
+          "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary,
           "runtime_service_binding" => runtime_service_binding_summary,
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
@@ -230,6 +233,10 @@ module Xnix
         RuntimeLiveOwnerGate.new.to_h
       end
 
+      def runtime_owner_smoke_plan
+        RuntimeOwnerSmokePlan.new.to_h
+      end
+
       def settings(application_id)
         recipe = require_recipe(application_id)
         SettingsModel.new(application_id: recipe.id).to_h
@@ -327,6 +334,8 @@ module Xnix
           runtime_service_binding
         when "GetRuntimeLiveOwnerGate"
           runtime_live_owner_gate
+        when "GetRuntimeOwnerSmokePlan"
+          runtime_owner_smoke_plan
         when "GetCompatibilitySettings"
           settings(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettingsChangePlan"
@@ -589,6 +598,23 @@ module Xnix
         }
       end
 
+      def runtime_owner_smoke_plan_summary
+        plan = RuntimeOwnerSmokePlan.new.to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "smoke_state" => plan.fetch("smoke_state"),
+          "smoke_environment" => plan.fetch("smoke_environment"),
+          "activation_binding_ready" => plan.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => plan.fetch("live_dbus_owner_ready"),
+          "production_owner_enabled" => plan.fetch("production_owner_enabled"),
+          "owner_transition_ready" => plan.fetch("owner_transition_ready"),
+          "pending_step_count" => plan.fetch("counts").fetch("pending"),
+          "system_service_started" => plan.fetch("system_service_started"),
+          "production_bus_claimed" => plan.fetch("production_bus_claimed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def settings_summary(recipe)
         model = SettingsModel.new(application_id: recipe.id).to_h
         {
@@ -714,6 +740,8 @@ module Xnix
             write_json(runtime.runtime_service_binding)
           when "live-owner-gate"
             write_json(runtime.runtime_live_owner_gate)
+          when "owner-smoke-plan"
+            write_json(runtime.runtime_owner_smoke_plan)
           when "settings"
             write_json(runtime.settings(require_argument(command)))
           when "settings-change"

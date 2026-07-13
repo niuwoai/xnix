@@ -111,6 +111,9 @@
     <method name="GetRuntimeLiveOwnerGate">
       <arg name="gate" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetRuntimeOwnerSmokePlan">
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetCompatibilitySettings">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="settings" type="a{sv}" direction="out"/>

@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.52] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned production owner smoke planning through `xnix-runtime-owner-smoke-plan`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended live-owner readiness so the future production Runtime owner has explicit smoke steps for bus-name ownership, read-only method parity, write-method rejection, and smoke-adapter boundary checks.
+
 ## [0.2.51] - 2026-07-13
 
 ### Added

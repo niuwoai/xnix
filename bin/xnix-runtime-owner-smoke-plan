@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/runtime_owner_smoke_plan"
+
+exit Xnix::Compatibility::RuntimeOwnerSmokePlan::CLI.new(ARGV).run
