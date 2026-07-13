@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.51] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned live D-Bus owner gate modeling through `xnix-runtime-live-owner-gate`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended Runtime service readiness so KDE can distinguish aligned activation files from gated production D-Bus ownership, while keeping the smoke adapter explicitly non-production.
+
 ## [0.2.50] - 2026-07-13
 
 ### Added

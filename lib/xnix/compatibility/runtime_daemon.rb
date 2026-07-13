@@ -22,6 +22,7 @@ require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
+require_relative "runtime_live_owner_gate"
 require_relative "runtime_service_binding"
 require_relative "settings_model"
 require_relative "settings_change_plan"
@@ -71,6 +72,7 @@ module Xnix
             "ai_diagnostic_inputs" => true,
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
+            "runtime_live_owner_gates" => true,
             "runtime_service_binding" => true,
             "compatibility_settings" => true,
             "compatibility_settings_change_planning" => true,
@@ -123,6 +125,7 @@ module Xnix
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
+          "runtime_live_owner_gate" => runtime_live_owner_gate_summary,
           "runtime_service_binding" => runtime_service_binding_summary,
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
@@ -223,6 +226,10 @@ module Xnix
         RuntimeServiceBinding.new.to_h
       end
 
+      def runtime_live_owner_gate
+        RuntimeLiveOwnerGate.new.to_h
+      end
+
       def settings(application_id)
         recipe = require_recipe(application_id)
         SettingsModel.new(application_id: recipe.id).to_h
@@ -318,6 +325,8 @@ module Xnix
           )
         when "GetRuntimeServiceBinding"
           runtime_service_binding
+        when "GetRuntimeLiveOwnerGate"
+          runtime_live_owner_gate
         when "GetCompatibilitySettings"
           settings(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettingsChangePlan"
@@ -565,6 +574,21 @@ module Xnix
         }
       end
 
+      def runtime_live_owner_gate_summary
+        gate = RuntimeLiveOwnerGate.new.to_h
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "activation_binding_ready" => gate.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => gate.fetch("live_dbus_owner_ready"),
+          "production_owner_enabled" => gate.fetch("production_owner_enabled"),
+          "owner_transition_ready" => gate.fetch("owner_transition_ready"),
+          "smoke_adapter_is_production_owner" => gate.fetch("smoke_adapter_is_production_owner"),
+          "pending_gate_count" => gate.fetch("required_gates").count { |item| item.fetch("status") == "pending" },
+          "blocked_reason_count" => gate.fetch("blocked_reasons").length,
+          "summary" => gate.fetch("desktop_safe_summary")
+        }
+      end
+
       def settings_summary(recipe)
         model = SettingsModel.new(application_id: recipe.id).to_h
         {
@@ -688,6 +712,8 @@ module Xnix
             write_json(runtime.ai_repair_approval_gate(application_id, issue, test_type))
           when "service-binding"
             write_json(runtime.runtime_service_binding)
+          when "live-owner-gate"
+            write_json(runtime.runtime_live_owner_gate)
           when "settings"
             write_json(runtime.settings(require_argument(command)))
           when "settings-change"

@@ -111,6 +111,9 @@ static const gchar introspection_xml[] =
   "    <method name='GetRuntimeServiceBinding'>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetRuntimeLiveOwnerGate'>"
+  "      <arg name='gate' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetCompatibilitySettings'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='settings' type='a{sv}' direction='out'/>"
@@ -535,6 +538,25 @@ build_runtime_service_binding(void)
   return g_variant_builder_end(&binding);
 }
 
+static GVariant *
+build_runtime_live_owner_gate(void)
+{
+  GVariantBuilder gate;
+
+  g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("runtime-live-owner-gate"));
+  g_variant_builder_add(&gate, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&gate, "{sv}", "live_dbus_owner_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "production_owner_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "owner_transition_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "smoke_adapter_is_production_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "kde_may_claim_runtime_ownership", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&gate);
+}
+
 static void
 handle_method_call(GDBusConnection *connection,
                    const gchar *sender,
@@ -814,6 +836,11 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeServiceBinding") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_service_binding()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeLiveOwnerGate") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_live_owner_gate()));
     return;
   }
 

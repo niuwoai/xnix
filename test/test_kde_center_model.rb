@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.50", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.51", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -41,6 +41,7 @@ assert(model["summary"]["pending_backend_binding_count"] == 1, "KDE center model
 assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
 assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
 assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
+assert(model["summary"]["pending_runtime_live_owner_gate_count"] == 1, "KDE center model must summarize pending Runtime live owner gates")
 assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center model must summarize Runtime service binding readiness")
 assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
 assert(model["summary"]["pending_settings_change_plan_count"] == 1, "KDE center model must summarize pending settings change plans")
@@ -101,6 +102,12 @@ assert(!application["ai_diagnostic_recommendation"]["ai_provider_called"], "KDE 
 assert(application["ai_repair_approval_gate"]["gate_type"] == "ai-repair-approval-gate", "KDE center model must expose AI repair approval gates")
 assert(application["ai_repair_approval_gate"]["gate_decision"] == "blocked-until-approval", "KDE center model must expose AI repair gate decisions")
 assert(!application["ai_repair_approval_gate"]["auto_execution_allowed"], "KDE center model must not allow automatic AI repair execution")
+assert(application["runtime_live_owner_gate"]["gate_type"] == "runtime-live-owner-gate", "KDE center model must expose Runtime live owner gates")
+assert(application["runtime_live_owner_gate"]["activation_binding_ready"], "KDE center model must expose Runtime live owner activation readiness")
+assert(!application["runtime_live_owner_gate"]["live_dbus_owner_ready"], "KDE center model must not claim Runtime live D-Bus ownership")
+assert(!application["runtime_live_owner_gate"]["production_owner_enabled"], "KDE center model must not enable production Runtime ownership")
+assert(!application["runtime_live_owner_gate"]["owner_transition_ready"], "KDE center model must not enable Runtime owner transition")
+assert(!application["runtime_live_owner_gate"]["smoke_adapter_is_production_owner"], "KDE center model must not treat smoke adapter as production owner")
 assert(application["runtime_service_binding"]["binding_type"] == "runtime-service-binding", "KDE center model must expose Runtime service binding")
 assert(application["runtime_service_binding"]["activation_binding_ready"], "KDE center model must expose activation binding readiness")
 assert(!application["runtime_service_binding"]["live_dbus_owner_ready"], "KDE center model must not claim live D-Bus ownership")
@@ -146,6 +153,7 @@ minimal_model = Xnix::Compatibility::KdeCenterModel.new(runtime: MinimalRuntime.
 assert(minimal_model["summary"]["pending_test_step_count"].zero?, "KDE center model must tolerate missing D-Bus test plan summaries")
 assert(minimal_model["summary"]["queued_compatibility_action_count"].zero?, "KDE center model must tolerate missing D-Bus action queue summaries")
 assert(minimal_model["summary"]["recorded_action_review_count"].zero?, "KDE center model must tolerate missing D-Bus action review summaries")
+assert(minimal_model["summary"]["pending_runtime_live_owner_gate_count"].zero?, "KDE center model must tolerate missing D-Bus live owner gate summaries")
 assert(minimal_model["summary"]["runtime_service_binding_ready_count"].zero?, "KDE center model must tolerate missing D-Bus service binding summaries")
 
 stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")

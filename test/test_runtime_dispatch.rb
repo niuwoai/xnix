@@ -220,6 +220,12 @@ assert(status.success?, "dispatch GetRuntimeServiceBinding must exit successfull
 service_binding = JSON.parse(stdout)
 assert(service_binding["binding_type"] == "runtime-service-binding", "dispatch must route GetRuntimeServiceBinding")
 
+stdout, stderr, status = Open3.capture3(*command, "dispatch", "GetRuntimeLiveOwnerGate")
+assert(status.success?, "dispatch GetRuntimeLiveOwnerGate must exit successfully: #{stderr}")
+live_owner_gate = JSON.parse(stdout)
+assert(live_owner_gate["gate_type"] == "runtime-live-owner-gate", "dispatch must route GetRuntimeLiveOwnerGate")
+assert(!live_owner_gate["owner_transition_ready"], "dispatch must keep live owner transition gated")
+
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",

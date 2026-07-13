@@ -125,6 +125,10 @@ module Xnix
         parse_dictionary(call("GetRuntimeServiceBinding"))
       end
 
+      def runtime_live_owner_gate
+        parse_dictionary(call("GetRuntimeLiveOwnerGate"))
+      end
+
       def settings(application_id)
         parse_dictionary(call("GetCompatibilitySettings", application_id))
       end

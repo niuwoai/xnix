@@ -139,6 +139,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetRuntimeLiveOwnerGate"
+      [
+        "({'gate_type': <'runtime-live-owner-gate'>, 'activation_binding_ready': <true>, 'live_dbus_owner_ready': <false>, 'production_owner_enabled': <false>, 'owner_transition_ready': <false>, 'smoke_adapter_is_production_owner': <false>, 'kde_may_claim_runtime_ownership': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetCompatibilitySettings"
       [
         "({'request_type': <'settings-model'>, 'settings_state': <'planned'>, 'settings_persisted': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -275,6 +281,16 @@ service_binding = client.runtime_service_binding
 assert(service_binding["binding_type"] == "runtime-service-binding", "D-Bus client must parse Runtime service binding")
 assert(service_binding["activation_binding_ready"], "D-Bus client must parse Runtime service binding readiness")
 assert(!service_binding["live_dbus_owner_ready"], "D-Bus client must parse live D-Bus owner readiness")
+
+live_owner_gate = client.runtime_live_owner_gate
+assert(live_owner_gate["gate_type"] == "runtime-live-owner-gate", "D-Bus client must parse Runtime live owner gates")
+assert(live_owner_gate["activation_binding_ready"], "D-Bus client must parse Runtime live owner activation readiness")
+assert(!live_owner_gate["live_dbus_owner_ready"], "D-Bus client must parse Runtime live owner readiness")
+assert(!live_owner_gate["production_owner_enabled"], "D-Bus client must parse Runtime production owner status")
+assert(!live_owner_gate["owner_transition_ready"], "D-Bus client must parse Runtime owner transition status")
+assert(!live_owner_gate["smoke_adapter_is_production_owner"], "D-Bus client must parse smoke adapter owner status")
+assert(!live_owner_gate["kde_may_claim_runtime_ownership"], "D-Bus client must parse KDE ownership status")
+assert(!live_owner_gate["backend_details_exposed"], "D-Bus client must parse Runtime live owner backend detail status")
 
 settings = client.settings("org.xnix.sample.notepad")
 assert(settings["request_type"] == "settings-model", "D-Bus client must parse compatibility settings")

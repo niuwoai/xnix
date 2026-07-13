@@ -81,6 +81,7 @@ module Xnix
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
+          "runtime_live_owner_gate" => runtime_live_owner_gate_summary(diagnostics.fetch("runtime_live_owner_gate", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
           "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
@@ -313,6 +314,22 @@ module Xnix
         }
       end
 
+      def runtime_live_owner_gate_summary(gate)
+        return nil unless gate
+
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "activation_binding_ready" => gate.fetch("activation_binding_ready"),
+          "live_dbus_owner_ready" => gate.fetch("live_dbus_owner_ready"),
+          "production_owner_enabled" => gate.fetch("production_owner_enabled"),
+          "owner_transition_ready" => gate.fetch("owner_transition_ready"),
+          "smoke_adapter_is_production_owner" => gate.fetch("smoke_adapter_is_production_owner"),
+          "pending_gate_count" => gate.fetch("pending_gate_count"),
+          "blocked_reason_count" => gate.fetch("blocked_reason_count"),
+          "summary" => gate.fetch("summary", "")
+        }
+      end
+
       def settings_summary(settings)
         return nil unless settings
 
@@ -361,6 +378,10 @@ module Xnix
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
           "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },
+          "pending_runtime_live_owner_gate_count" => applications.count do |application|
+            live_owner_gate = section(application, "runtime_live_owner_gate")
+            !live_owner_gate.empty? && !live_owner_gate.fetch("owner_transition_ready", false)
+          end,
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },
           "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) }

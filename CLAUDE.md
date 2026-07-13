@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.50`
+- Version: `0.2.51`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -34,6 +34,7 @@ ruby -Ilib test/test_compatibility_backend_binding.rb
 ruby -Ilib test/test_ai_diagnostic_input.rb
 ruby -Ilib test/test_ai_diagnostic_recommendation.rb
 ruby -Ilib test/test_ai_repair_approval_gate.rb
+ruby -Ilib test/test_runtime_live_owner_gate.rb
 ruby -Ilib test/test_runtime_service_binding.rb
 ruby scripts/container.rb fetch-sources
 ruby -Ilib test/test_buildroot.rb

@@ -262,6 +262,16 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeLiveOwnerGate"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeLiveOwnerGate: #{stderr}")
+  assert(stdout.include?("runtime-live-owner-gate"), "runtime smoke adapter must expose Runtime live owner gate over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetCompatibilitySettings",
     "org.xnix.sample.notepad"
   )
