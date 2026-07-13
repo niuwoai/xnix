@@ -22,6 +22,7 @@ module Xnix
         GetDiagnostics
         GetEngineCatalog
         GetRunPlan
+        GetDesktopActivationManifest
         GetApplicationStateRoot
         GetCompatibilityPackageSource
         GetCompatibilityAcquisitionPreflight
@@ -60,6 +61,7 @@ module Xnix
         "GetDiagnostics" => "diagnostics",
         "GetEngineCatalog" => "engine_catalog",
         "GetRunPlan" => "run_plan",
+        "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",
         "GetCompatibilityAcquisitionPreflight" => "acquisition_preflight",

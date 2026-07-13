@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.79] - 2026-07-14
+
+### Added
+
+- Added C Runtime desktop activation manifest records and a CLI read method for describing KDE launcher, task manager, file manager, tray, notification, Compatibility Center, and settings entry points.
+- Added Runtime D-Bus contract coverage for `GetDesktopActivationManifest` so desktop shells can consume a stable read-only activation contract.
+
+### Changed
+
+- Extended Runtime C ownership into desktop activation planning while keeping desktop file writes, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.78] - 2026-07-14
 
 ### Added

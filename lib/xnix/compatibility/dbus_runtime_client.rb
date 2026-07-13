@@ -57,6 +57,10 @@ module Xnix
         parse_dictionary(call("GetRunPlan", application_id))
       end
 
+      def desktop_activation_manifest(application_id)
+        parse_dictionary(call("GetDesktopActivationManifest", application_id))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

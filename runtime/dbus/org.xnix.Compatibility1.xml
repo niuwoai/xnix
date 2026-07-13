@@ -37,6 +37,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetDesktopActivationManifest">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="manifest" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetApplicationStateRoot">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="state_root" type="a{sv}" direction="out"/>

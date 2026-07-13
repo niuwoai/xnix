@@ -86,6 +86,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetDesktopActivationManifest",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetDesktopActivationManifest: #{stderr}")
+  assert(stdout.include?("desktop-activation"), "runtime smoke adapter must expose desktop activation manifests over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetApplicationStateRoot",
     "org.xnix.sample.notepad"
   )

@@ -49,6 +49,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetDesktopActivationManifest"
+      [
+        "({'manifest_type': <'desktop-activation'>, 'desktop': <'KDE Plasma'>, 'artifact_count': <7>, 'activation_ready': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetApplicationStateRoot"
       [
         "({'root_type': <'compatibility-application-state-root'>, 'allocation_state': <'planned'>, 'snapshot_eligible': <true>, 'user_documents_included': <false>, 'backend_details_exposed': <false>},)\n",
@@ -153,7 +159,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <28>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <29>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -217,6 +223,15 @@ assert(!engine_catalog["backend_details_exposed"], "D-Bus client must parse bool
 run_plan = client.run_plan("org.xnix.sample.notepad")
 assert(run_plan["plan_type"] == "compatibility-run", "D-Bus client must parse run plans")
 assert(!run_plan["backend_details_exposed"], "D-Bus client must parse run plan booleans")
+
+desktop_activation = client.desktop_activation_manifest("org.xnix.sample.notepad")
+assert(desktop_activation["manifest_type"] == "desktop-activation", "D-Bus client must parse desktop activation manifests")
+assert(desktop_activation["desktop"] == "KDE Plasma", "D-Bus client must parse desktop activation target")
+assert(desktop_activation["artifact_count"] == 7, "D-Bus client must parse desktop activation artifact counts")
+assert(desktop_activation["activation_ready"], "D-Bus client must parse desktop activation readiness")
+assert(!desktop_activation["files_written"], "D-Bus client must parse desktop activation write safety")
+assert(!desktop_activation["host_root_modified"], "D-Bus client must parse desktop activation host-root safety")
+assert(!desktop_activation["backend_details_exposed"], "D-Bus client must parse desktop activation backend detail status")
 
 state_root = client.state_root("org.xnix.sample.notepad")
 assert(state_root["root_type"] == "compatibility-application-state-root", "D-Bus client must parse application state roots")
@@ -325,7 +340,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 28, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 29, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

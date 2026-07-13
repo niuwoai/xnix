@@ -20,6 +20,7 @@ require_relative "compatibility_repair_plan"
 require_relative "compatibility_snapshot_plan"
 require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
+require_relative "desktop_integration_manifest"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_live_owner_gate"
@@ -69,6 +70,7 @@ module Xnix
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
+            "desktop_activation_manifests" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -122,6 +124,7 @@ module Xnix
           "test_result" => test_result_summary(recipe),
           "action_queue" => action_queue_summary(recipe),
           "action_review_receipt" => action_review_receipt_summary(recipe),
+          "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -149,6 +152,11 @@ module Xnix
       def run_plan(application_id)
         recipe = require_recipe(application_id)
         CompatibilityRunPlan.new(recipe: recipe).to_h
+      end
+
+      def desktop_activation_manifest(application_id)
+        recipe = require_recipe(application_id)
+        DesktopIntegrationManifest.new(recipe: recipe).to_h
       end
 
       def state_root(application_id)
@@ -278,6 +286,8 @@ module Xnix
           engine_catalog
         when "GetRunPlan"
           run_plan(required_parameter(method_name, parameters, 0))
+        when "GetDesktopActivationManifest"
+          desktop_activation_manifest(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -467,6 +477,20 @@ module Xnix
           "resource_grant_created" => receipt.fetch("resource_grant_created"),
           "backend_details_exposed" => receipt.fetch("backend_details_exposed"),
           "summary" => receipt.fetch("desktop_safe_summary")
+        }
+      end
+
+      def desktop_activation_manifest_summary(recipe)
+        manifest = DesktopIntegrationManifest.new(recipe: recipe).to_h
+        {
+          "manifest_type" => manifest.fetch("manifest_type"),
+          "desktop" => manifest.fetch("desktop"),
+          "official_desktop_only" => manifest.fetch("official_desktop_only"),
+          "artifact_count" => manifest.fetch("artifacts").length,
+          "entry_points" => manifest.fetch("entry_points"),
+          "backend_commands_exposed" => manifest.fetch("safety").fetch("backend_commands_exposed"),
+          "portal_required_for_file_access" => manifest.fetch("safety").fetch("portal_required_for_file_access"),
+          "host_privilege_required" => manifest.fetch("safety").fetch("host_privilege_required")
         }
       end
 
