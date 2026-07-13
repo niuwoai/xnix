@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.55"
+EXPECTED_VERSION = "0.2.56"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -128,6 +128,9 @@ REQUIRED_FILES = %w[
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
   runtime/dbus/xnix_compatd_smoke.c
+  runtime/core/xnix_runtime_core.h
+  runtime/core/xnix_runtime_core.c
+  runtime/core/xnix_runtime_core_cli.c
   runtime/recipes/registry.json
   runtime/recipes/org.xnix.sample.notepad.json
   runtime/systemd/xnix-compatd.service
@@ -179,6 +182,7 @@ REQUIRED_FILES = %w[
   test/test_portal_access_policy.rb
   test/test_portal_request_model.rb
   test/test_runtime_contract.rb
+  test/test_runtime_core.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
@@ -252,6 +256,8 @@ assert(dockerfile.include?("dbus"), "Dockerfile must install D-Bus tooling for r
 assert(dockerfile.include?("libglib2.0-bin"), "Dockerfile must install gdbus for runtime smoke tests")
 assert(dockerfile.include?("libglib2.0-dev"), "Dockerfile must install GIO headers for runtime smoke tests")
 assert(dockerfile.include?("pkg-config"), "Dockerfile must install pkg-config for runtime smoke tests")
+assert(dockerfile.include?("xnix_runtime_core.c"), "Dockerfile must compile the C Runtime core")
+assert(dockerfile.include?("xnix-runtime-core"), "Dockerfile must install the C Runtime core smoke binary")
 assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")
@@ -353,6 +359,20 @@ end
 assert(ai_repair_gate_source.include?("\"repair_executed\" => false"), "AI repair approval gate must not execute repairs")
 assert(ai_repair_gate_source.include?("\"auto_execution_allowed\" => false"), "AI repair approval gate must not permit automatic repair execution")
 assert(ai_repair_gate_source.include?("\"backend_details_exposed\" => false"), "AI repair approval gate must hide backend details")
+
+c_runtime_core_header = read_project_file("runtime/core/xnix_runtime_core.h")
+c_runtime_core_source = read_project_file("runtime/core/xnix_runtime_core.c")
+c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c")
+assert(c_runtime_core_header.include?("#define XNIX_RUNTIME_VERSION \"#{EXPECTED_VERSION}\""), "C Runtime core must expose #{EXPECTED_VERSION}")
+%w[XNIX_RUNTIME_BUS_NAME XNIX_RUNTIME_OBJECT_PATH XNIX_RUNTIME_INTERFACE XNIX_RUNTIME_WRITE_ERROR].each do |token|
+  assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
+end
+%w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot].each do |token|
+  assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
+end
+%w[business_logic_runtime tests-and-development-tools write-gate].each do |token|
+  assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
+end
 
 application_state_root_source = read_project_file("lib/xnix/compatibility/application_state_root.rb")
 assert(application_state_root_source.include?("xnix-compat-state-root"), "Application state root must expose a CLI command")

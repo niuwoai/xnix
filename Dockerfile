@@ -36,6 +36,10 @@ RUN mkdir --parents /workspace/.cache/buildroot \
 RUN gcc /workspace/runtime/dbus/xnix_compatd_smoke.c \
         -o /usr/local/bin/xnix-dbus-smoke \
         $(pkg-config --cflags --libs gio-2.0)
+RUN gcc -std=c11 -Wall -Wextra -Werror \
+        /workspace/runtime/core/xnix_runtime_core.c \
+        /workspace/runtime/core/xnix_runtime_core_cli.c \
+        -o /usr/local/bin/xnix-runtime-core
 
 USER xnix
 WORKDIR /workspace

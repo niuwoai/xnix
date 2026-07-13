@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.56] - 2026-07-13
+
+### Added
+
+- Added a C Runtime core library and CLI for stable Runtime identity, reserved write-method enumeration, and write-gate decisions.
+- Added C Runtime core tests that compile and execute the C implementation while keeping Ruby as the test harness.
+
+### Changed
+
+- Documented the Runtime implementation direction so important product logic moves into C while Ruby remains focused on tests and development tooling.
+
 ## [0.2.55] - 2026-07-13
 
 ### Added
