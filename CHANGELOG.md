@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.78] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility run plan records and a CLI read method for mapping registered applications to Runtime-owned execution strategies.
+- Added C Runtime run plan tests that verify recipe-based strategy selection, required preflight, disabled launch requests, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility run plan layer while keeping backend launch disabled until managed binding is ready.
+
 ## [0.2.77] - 2026-07-14
 
 ### Added

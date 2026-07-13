@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.77"
+#define XNIX_RUNTIME_VERSION "0.2.78"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -608,6 +608,23 @@ typedef struct {
   const char *summary;
 } XnixRuntimeCompatibilityActionReviewReceipt;
 
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const XnixRuntimeEngine *engine;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool portal_policy_required;
+  bool snapshot_before_risky_change;
+  bool diagnostics_required;
+  bool backend_binding_ready;
+  bool launch_enabled;
+  bool execution_request_created;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityRunPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -697,6 +714,10 @@ bool xnix_runtime_compatibility_action_review_receipt(
   const char *action_id,
   const char *decision,
   XnixRuntimeCompatibilityActionReviewReceipt *receipt
+);
+bool xnix_runtime_compatibility_run_plan(
+  const char *application_id,
+  XnixRuntimeCompatibilityRunPlan *plan
 );
 
 #endif
