@@ -576,6 +576,53 @@ static const XnixRuntimePackageSourcePolicy package_source_policies[] = {
   },
 };
 
+static const XnixRuntimeBackendBindingPolicy backend_binding_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .selected_strategy = "automatic-managed",
+    .required_preflight = {
+      {
+        .id = "engine-package-source",
+        .status = "pending",
+        .summary = "A managed compatibility engine package source must be selected by the Runtime.",
+      },
+      {
+        .id = "application-state-root",
+        .status = "pending",
+        .summary = "A Runtime-owned application state root must be allocated before launch binding.",
+      },
+      {
+        .id = "portal-policy-review",
+        .status = "required",
+        .summary = "Portal access policy must be reviewed before file and desktop resource bridging.",
+      },
+      {
+        .id = "snapshot-baseline",
+        .status = "required",
+        .summary = "A baseline restore point must exist before managed compatibility execution.",
+      },
+    },
+    .required_preflight_count = 4,
+    .blocked_actions = {
+      "launch compatibility engine without managed binding",
+      "expose backend command to desktop shell",
+      "write application state outside Runtime ownership",
+      "grant desktop resources without Portal policy",
+    },
+    .blocked_action_count = 4,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .managed_binding_ready = false,
+    .launch_enabled = false,
+    .execution_request_created = false,
+    .host_root_modified = false,
+    .network_required = false,
+    .privileged_container_required = false,
+    .backend_details_exposed = false,
+    .summary = "Managed compatibility backend binding is pending Runtime preflight.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1003,6 +1050,41 @@ xnix_runtime_find_package_source_policy(const char *application_id)
   for (size_t index = 0; index < xnix_runtime_package_source_policy_count(); index++) {
     const XnixRuntimePackageSourcePolicy *policy =
       xnix_runtime_package_source_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_backend_binding_policy_count(void)
+{
+  return sizeof(backend_binding_policies) / sizeof(backend_binding_policies[0]);
+}
+
+const XnixRuntimeBackendBindingPolicy *
+xnix_runtime_backend_binding_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_backend_binding_policy_count()) {
+    return NULL;
+  }
+
+  return &backend_binding_policies[index];
+}
+
+const XnixRuntimeBackendBindingPolicy *
+xnix_runtime_find_backend_binding_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_backend_binding_policy_count(); index++) {
+    const XnixRuntimeBackendBindingPolicy *policy =
+      xnix_runtime_backend_binding_policy_at(index);
 
     if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;

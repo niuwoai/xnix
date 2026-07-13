@@ -871,6 +871,124 @@ print_package_source_policy_for_application(
 }
 
 static void
+print_backend_binding_application(const XnixRuntimeApplication *application)
+{
+  fputs("{", stdout);
+  print_string_field("id", application->id);
+  fputs(",", stdout);
+  print_string_field("name", application->name);
+  fputs(",", stdout);
+  print_string_field("requested_mode", application->runtime_mode);
+  fputs(",", stdout);
+  fputs("\"supported_extensions\":[", stdout);
+  print_string(application->primary_extension);
+  fputs("]}", stdout);
+}
+
+static void
+print_backend_binding_required_preflight(const XnixRuntimeBackendBindingPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->required_preflight_count; index++) {
+    const XnixRuntimeBackendBindingPreflight *preflight = &policy->required_preflight[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", preflight->id);
+    fputs(",", stdout);
+    print_string_field("status", preflight->status);
+    fputs(",", stdout);
+    print_string_field("summary", preflight->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_backend_binding_policy_record(const XnixRuntimeBackendBindingPolicy *policy)
+{
+  fputs("{", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  fputs("\"managed_binding_ready\":", stdout);
+  print_bool(policy->managed_binding_ready);
+  fputs(",", stdout);
+  fputs("\"launch_enabled\":", stdout);
+  print_bool(policy->launch_enabled);
+  fputs(",", stdout);
+  fputs("\"execution_request_created\":", stdout);
+  print_bool(policy->execution_request_created);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_backend_binding_policy_for_application(
+  const XnixRuntimeApplication *application,
+  const XnixRuntimeBackendBindingPolicy *policy
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("binding_type", "compatibility-backend-binding");
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_backend_binding_application(application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  fputs("\"managed_binding_ready\":", stdout);
+  print_bool(policy->managed_binding_ready);
+  fputs(",", stdout);
+  fputs("\"launch_enabled\":", stdout);
+  print_bool(policy->launch_enabled);
+  fputs(",", stdout);
+  fputs("\"execution_request_created\":", stdout);
+  print_bool(policy->execution_request_created);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"required_preflight\":", stdout);
+  print_backend_binding_required_preflight(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -1518,6 +1636,52 @@ print_package_source_policy(const char *application_id)
 }
 
 static int
+print_backend_binding_policy_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("catalog_type", "backend-binding-policy");
+  fputs(",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  print_string_field("catalog_owner", "c");
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"host_root_modified\":false,", stdout);
+  fputs("\"policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_backend_binding_policy_count());
+  fputs("\"policies\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_backend_binding_policy_count(); index++) {
+    const XnixRuntimeBackendBindingPolicy *policy =
+      xnix_runtime_backend_binding_policy_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_backend_binding_policy_record(policy);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_backend_binding_policy(const char *application_id)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+  const XnixRuntimeBackendBindingPolicy *policy =
+    xnix_runtime_find_backend_binding_policy(application_id);
+
+  if (application == NULL || policy == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime backend binding policy catalog\n");
+    return 64;
+  }
+
+  print_backend_binding_policy_for_application(application, policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -1587,6 +1751,9 @@ print_probe(void)
   fputs("\"package_source_policy_owner\":\"c\",", stdout);
   fputs("\"package_source_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_package_source_policy_count());
+  fputs("\"backend_binding_policy_owner\":\"c\",", stdout);
+  fputs("\"backend_binding_policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_backend_binding_policy_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -1640,7 +1807,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -1725,6 +1892,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "package-source-policy") == 0 && argc == 3) {
     return print_package_source_policy(argv[2]);
+  }
+
+  if (strcmp(argv[1], "list-backend-binding-policies") == 0 && argc == 2) {
+    return print_backend_binding_policy_catalog();
+  }
+
+  if (strcmp(argv[1], "backend-binding-policy") == 0 && argc == 3) {
+    return print_backend_binding_policy(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

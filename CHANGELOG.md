@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.66] - 2026-07-13
+
+### Added
+
+- Added C Runtime backend binding policy records and CLI read methods for listing managed backend binding gates and evaluating per-application launch-binding readiness.
+- Added C Runtime backend binding tests that verify required preflight, blocked launch actions, blocked execution requests, host-root safety, network safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first managed backend binding layer while keeping launch enablement, execution request creation, privileged containers, and host-root mutation disabled.
+
 ## [0.2.65] - 2026-07-13
 
 ### Added

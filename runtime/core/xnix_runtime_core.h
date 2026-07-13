@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.65"
+#define XNIX_RUNTIME_VERSION "0.2.66"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -260,6 +260,31 @@ typedef struct {
   const char *summary;
 } XnixRuntimePackageSourcePolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeBackendBindingPreflight;
+
+typedef struct {
+  const char *application_id;
+  const char *selected_strategy;
+  XnixRuntimeBackendBindingPreflight required_preflight[4];
+  size_t required_preflight_count;
+  const char *blocked_actions[4];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool managed_binding_ready;
+  bool launch_enabled;
+  bool execution_request_created;
+  bool host_root_modified;
+  bool network_required;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeBackendBindingPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -312,5 +337,9 @@ const XnixRuntimeAcquisitionPreflightPolicy *xnix_runtime_find_acquisition_prefl
 size_t xnix_runtime_package_source_policy_count(void);
 const XnixRuntimePackageSourcePolicy *xnix_runtime_package_source_policy_at(size_t index);
 const XnixRuntimePackageSourcePolicy *xnix_runtime_find_package_source_policy(const char *application_id);
+
+size_t xnix_runtime_backend_binding_policy_count(void);
+const XnixRuntimeBackendBindingPolicy *xnix_runtime_backend_binding_policy_at(size_t index);
+const XnixRuntimeBackendBindingPolicy *xnix_runtime_find_backend_binding_policy(const char *application_id);
 
 #endif
