@@ -222,6 +222,55 @@ static const XnixRuntimeSnapshotPolicy snapshot_policies[] = {
   },
 };
 
+static const XnixRuntimeStateRootPolicy state_root_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .state_namespace = "org.xnix.sample.notepad",
+    .storage_scope = "per-application",
+    .allocation_state = "planned",
+    .managed_scopes = {
+      "application-data",
+      "runtime-metadata",
+      "diagnostic-cache",
+      "desktop-activation-receipts",
+    },
+    .managed_scope_summaries = {
+      "Application-managed state is isolated under Runtime ownership.",
+      "Runtime metadata tracks compatibility state without exposing host paths.",
+      "Diagnostic cache is Runtime-owned and can be regenerated.",
+      "Desktop activation receipts remain part of rollback planning.",
+    },
+    .managed_scope_snapshot_included = {
+      true,
+      true,
+      false,
+      true,
+    },
+    .managed_scope_count = 4,
+    .blocked_actions = {
+      "write application state outside Runtime ownership",
+      "include user documents in state snapshots",
+      "expose host storage paths to KDE",
+      "restore state without user confirmation",
+    },
+    .blocked_action_count = 4,
+    .retention_policy = "bounded",
+    .automatic_restore_points = 5,
+    .manual_restore_points = 10,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .directories_created = false,
+    .host_root_modified = false,
+    .user_documents_included = false,
+    .portal_required_for_user_files = true,
+    .snapshot_eligible = true,
+    .restore_requires_confirmation = true,
+    .user_documents_excluded = true,
+    .backend_details_exposed = false,
+    .summary = "Runtime application state root is planned and isolated from user documents.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -457,6 +506,40 @@ xnix_runtime_find_snapshot_policy(const char *reason)
     const XnixRuntimeSnapshotPolicy *policy = xnix_runtime_snapshot_policy_at(index);
 
     if (policy != NULL && strcmp(reason, policy->reason) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_state_root_policy_count(void)
+{
+  return sizeof(state_root_policies) / sizeof(state_root_policies[0]);
+}
+
+const XnixRuntimeStateRootPolicy *
+xnix_runtime_state_root_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_state_root_policy_count()) {
+    return NULL;
+  }
+
+  return &state_root_policies[index];
+}
+
+const XnixRuntimeStateRootPolicy *
+xnix_runtime_find_state_root_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_state_root_policy_count(); index++) {
+    const XnixRuntimeStateRootPolicy *policy = xnix_runtime_state_root_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;
     }
   }

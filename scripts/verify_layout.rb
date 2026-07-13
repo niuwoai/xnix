@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.60"
+EXPECTED_VERSION = "0.2.61"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -367,13 +367,13 @@ assert(c_runtime_core_header.include?("#define XNIX_RUNTIME_VERSION \"#{EXPECTED
 %w[XNIX_RUNTIME_BUS_NAME XNIX_RUNTIME_OBJECT_PATH XNIX_RUNTIME_INTERFACE XNIX_RUNTIME_WRITE_ERROR].each do |token|
   assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
 end
-%w[XnixRuntimeApplication xnix_runtime_application_count xnix_runtime_find_application XnixRuntimeEngine xnix_runtime_engine_count xnix_runtime_select_engine_for_mode XnixRuntimePortalPolicy xnix_runtime_portal_policy_count xnix_runtime_find_portal_policy XnixRuntimeSnapshotPolicy xnix_runtime_snapshot_policy_count xnix_runtime_find_snapshot_policy].each do |token|
+%w[XnixRuntimeApplication xnix_runtime_application_count xnix_runtime_find_application XnixRuntimeEngine xnix_runtime_engine_count xnix_runtime_select_engine_for_mode XnixRuntimePortalPolicy xnix_runtime_portal_policy_count xnix_runtime_find_portal_policy XnixRuntimeSnapshotPolicy xnix_runtime_snapshot_policy_count xnix_runtime_find_snapshot_policy XnixRuntimeStateRootPolicy xnix_runtime_state_root_policy_count xnix_runtime_find_state_root_policy].each do |token|
   assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
 end
-%w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot xnix_runtime_find_application org.xnix.sample.notepad application/x-xnix-txt xnix_runtime_select_engine_for_mode automatic-managed local-compatibility-engine isolated-compatibility-engine xnix_runtime_find_portal_policy org.freedesktop.portal.FileChooser org.freedesktop.portal.Camera remote-desktop selected-files xnix_runtime_find_snapshot_policy before-repair before-engine-change desktop_activation_receipts].each do |token|
+%w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot xnix_runtime_find_application org.xnix.sample.notepad application/x-xnix-txt xnix_runtime_select_engine_for_mode automatic-managed local-compatibility-engine isolated-compatibility-engine xnix_runtime_find_portal_policy org.freedesktop.portal.FileChooser org.freedesktop.portal.Camera remote-desktop selected-files xnix_runtime_find_snapshot_policy before-repair before-engine-change desktop_activation_receipts xnix_runtime_find_state_root_policy application-data runtime-metadata diagnostic-cache].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
-%w[business_logic_runtime tests-and-development-tools application_catalog_owner engine_catalog_owner portal_policy_owner snapshot_policy_owner list-applications get-application list-engines select-engine list-portal-policies portal-policy list-snapshot-policies snapshot-policy write-gate].each do |token|
+%w[business_logic_runtime tests-and-development-tools application_catalog_owner engine_catalog_owner portal_policy_owner snapshot_policy_owner state_root_policy_owner list-applications get-application list-engines select-engine list-portal-policies portal-policy list-snapshot-policies snapshot-policy list-state-root-policies state-root-policy write-gate].each do |token|
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 

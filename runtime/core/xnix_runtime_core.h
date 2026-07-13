@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.60"
+#define XNIX_RUNTIME_VERSION "0.2.61"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -82,6 +82,33 @@ typedef struct {
   bool host_root_modified;
 } XnixRuntimeSnapshotPolicy;
 
+typedef struct {
+  const char *application_id;
+  const char *state_namespace;
+  const char *storage_scope;
+  const char *allocation_state;
+  const char *managed_scopes[4];
+  const char *managed_scope_summaries[4];
+  bool managed_scope_snapshot_included[4];
+  size_t managed_scope_count;
+  const char *blocked_actions[4];
+  size_t blocked_action_count;
+  const char *retention_policy;
+  size_t automatic_restore_points;
+  size_t manual_restore_points;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool directories_created;
+  bool host_root_modified;
+  bool user_documents_included;
+  bool portal_required_for_user_files;
+  bool snapshot_eligible;
+  bool restore_requires_confirmation;
+  bool user_documents_excluded;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeStateRootPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -110,5 +137,9 @@ const XnixRuntimePortalPolicy *xnix_runtime_find_portal_policy(const char *opera
 size_t xnix_runtime_snapshot_policy_count(void);
 const XnixRuntimeSnapshotPolicy *xnix_runtime_snapshot_policy_at(size_t index);
 const XnixRuntimeSnapshotPolicy *xnix_runtime_find_snapshot_policy(const char *reason);
+
+size_t xnix_runtime_state_root_policy_count(void);
+const XnixRuntimeStateRootPolicy *xnix_runtime_state_root_policy_at(size_t index);
+const XnixRuntimeStateRootPolicy *xnix_runtime_find_state_root_policy(const char *application_id);
 
 #endif

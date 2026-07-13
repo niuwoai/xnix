@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.61] - 2026-07-13
+
+### Added
+
+- Added C Runtime application state root policy records and CLI read methods for listing state-root policies and evaluating a per-application state root plan.
+- Added C Runtime state-root policy tests that verify managed scopes, retention boundaries, Portal file requirements, restore confirmation, user-document exclusion, and host-root safety.
+
+### Changed
+
+- Extended Runtime C ownership into the first application state-root policy layer while keeping directory creation, host-root mutation, and backend-detail exposure disabled.
+
 ## [0.2.60] - 2026-07-13
 
 ### Added
