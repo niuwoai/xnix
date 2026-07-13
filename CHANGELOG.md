@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.54] - 2026-07-13
+
+### Added
+
+- Added Runtime-owned write gate modeling through `xnix-runtime-write-gate`, diagnostics, read-only dispatch, D-Bus contract, D-Bus client, KDE Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Changed gated Runtime write-method dispatch so install, launch, snapshot, and restore requests now fail with an explicit `WriteMethodDisabled` boundary instead of a generic unsupported-method error.
+
 ## [0.2.53] - 2026-07-13
 
 ### Added

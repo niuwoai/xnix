@@ -137,6 +137,10 @@ module Xnix
         parse_dictionary(call("GetRuntimeMethodParityManifest"))
       end
 
+      def runtime_write_gate(method_name)
+        parse_dictionary(call("GetRuntimeWriteGate", method_name))
+      end
+
       def settings(application_id)
         parse_dictionary(call("GetCompatibilitySettings", application_id))
       end

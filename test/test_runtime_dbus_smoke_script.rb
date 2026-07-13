@@ -46,6 +46,7 @@ assert(contents.include?("GetRuntimeServiceBinding"), "D-Bus smoke script must c
 assert(contents.include?("GetRuntimeLiveOwnerGate"), "D-Bus smoke script must call GetRuntimeLiveOwnerGate")
 assert(contents.include?("GetRuntimeOwnerSmokePlan"), "D-Bus smoke script must call GetRuntimeOwnerSmokePlan")
 assert(contents.include?("GetRuntimeMethodParityManifest"), "D-Bus smoke script must call GetRuntimeMethodParityManifest")
+assert(contents.include?("GetRuntimeWriteGate"), "D-Bus smoke script must call GetRuntimeWriteGate")
 assert(contents.include?("GetCompatibilitySettings"), "D-Bus smoke script must call GetCompatibilitySettings")
 assert(contents.include?("GetCompatibilitySettingsChangePlan"), "D-Bus smoke script must call GetCompatibilitySettingsChangePlan")
 assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script must call GetCompatibilityActionQueue")

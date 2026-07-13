@@ -292,6 +292,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeWriteGate",
+    "Launch"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeWriteGate: #{stderr}")
+  assert(stdout.include?("runtime-write-gate"), "runtime smoke adapter must expose Runtime write gates over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetCompatibilitySettings",
     "org.xnix.sample.notepad"
   )

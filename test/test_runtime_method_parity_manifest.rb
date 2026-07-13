@@ -17,15 +17,16 @@ project_root = Pathname.new(__dir__).join("..").realpath
 manifest = Xnix::Compatibility::RuntimeMethodParityManifest.new.to_h
 check_ids = manifest.fetch("parity_checks").map { |item| item.fetch("id") }
 
-assert(manifest["version"] == "0.2.53", "Runtime method parity manifest must expose the current version")
+assert(manifest["version"] == "0.2.54", "Runtime method parity manifest must expose the current version")
 assert(manifest["manifest_type"] == "runtime-method-parity-manifest", "Runtime method parity manifest must identify the manifest type")
 assert(manifest["runtime_owned"], "Runtime must own method parity")
 assert(!manifest["kde_policy_owner"], "KDE must not own method parity")
 assert(manifest["bus_name"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable bus name")
 assert(manifest["object_path"] == "/org/xnix/Compatibility1", "Runtime method parity manifest must expose the stable object path")
 assert(manifest["interface"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable interface")
-assert(manifest["method_count"] == 27, "Runtime method parity manifest must count read-only methods")
+assert(manifest["method_count"] == 28, "Runtime method parity manifest must count read-only methods")
 assert(manifest["read_only_methods"].include?("GetRuntimeMethodParityManifest"), "Runtime method parity manifest must include itself")
+assert(manifest["read_only_methods"].include?("GetRuntimeWriteGate"), "Runtime method parity manifest must include write gate queries")
 assert(manifest["read_only_methods"].include?("GetRuntimeOwnerSmokePlan"), "Runtime method parity manifest must include owner smoke planning")
 assert(check_ids == %w[dbus-contract runtime-dispatch dbus-client smoke-adapter session-smoke], "Runtime method parity manifest must check expected sources")
 assert(manifest["parity_checks"].all? { |item| item["status"] == "pass" }, "Runtime method parity checks must pass")

@@ -85,6 +85,7 @@ module Xnix
           "runtime_method_parity_manifest" => runtime_method_parity_manifest_summary(diagnostics.fetch("runtime_method_parity_manifest", nil)),
           "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary(diagnostics.fetch("runtime_owner_smoke_plan", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
+          "runtime_write_gate" => runtime_write_gate_summary(diagnostics.fetch("runtime_write_gate", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
           "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
@@ -365,6 +366,23 @@ module Xnix
         }
       end
 
+      def runtime_write_gate_summary(gate)
+        return nil unless gate
+
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "method_name" => gate.fetch("method_name"),
+          "gate_decision" => gate.fetch("gate_decision"),
+          "write_method_enabled" => gate.fetch("write_method_enabled"),
+          "dispatch_enabled" => gate.fetch("dispatch_enabled"),
+          "request_object_created" => gate.fetch("request_object_created"),
+          "required_gate_count" => gate.fetch("required_gate_count"),
+          "denial_error_name" => gate.fetch("denial_error_name"),
+          "backend_details_exposed" => gate.fetch("backend_details_exposed"),
+          "summary" => gate.fetch("summary", "")
+        }
+      end
+
       def settings_summary(settings)
         return nil unless settings
 
@@ -425,6 +443,7 @@ module Xnix
             section(application, "runtime_method_parity_manifest").fetch("read_only_method_parity_ready", false)
           end,
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
+          "blocked_runtime_write_gate_count" => applications.count { |application| section(application, "runtime_write_gate").fetch("gate_decision", nil) == "blocked-until-production-backend" },
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },
           "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) }
         }

@@ -40,6 +40,7 @@ module Xnix
         GetRuntimeLiveOwnerGate
         GetRuntimeOwnerSmokePlan
         GetRuntimeMethodParityManifest
+        GetRuntimeWriteGate
         GetCompatibilitySettings
         GetCompatibilitySettingsChangePlan
         GetCompatibilityActionQueue
@@ -77,6 +78,7 @@ module Xnix
         "GetRuntimeLiveOwnerGate" => "runtime_live_owner_gate",
         "GetRuntimeOwnerSmokePlan" => "runtime_owner_smoke_plan",
         "GetRuntimeMethodParityManifest" => "runtime_method_parity_manifest",
+        "GetRuntimeWriteGate" => "runtime_write_gate",
         "GetCompatibilitySettings" => "settings",
         "GetCompatibilitySettingsChangePlan" => "settings_change_plan",
         "GetCompatibilityActionQueue" => "action_queue",

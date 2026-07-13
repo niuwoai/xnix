@@ -120,6 +120,10 @@ static const gchar introspection_xml[] =
   "    <method name='GetRuntimeMethodParityManifest'>"
   "      <arg name='manifest' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetRuntimeWriteGate'>"
+  "      <arg name='method_name' type='s' direction='in'/>"
+  "      <arg name='gate' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetCompatibilitySettings'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='settings' type='a{sv}' direction='out'/>"
@@ -592,7 +596,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(27));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(28));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -602,6 +606,35 @@ build_runtime_method_parity_manifest(void)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_runtime_write_gate(const gchar *method_name)
+{
+  GVariantBuilder gate;
+
+  g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("runtime-write-gate"));
+  g_variant_builder_add(&gate, "{sv}", "method_name", g_variant_new_string(method_name));
+  g_variant_builder_add(&gate, "{sv}", "gate_decision", g_variant_new_string("blocked-until-production-backend"));
+  g_variant_builder_add(&gate, "{sv}", "write_method_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "dispatch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "required_gate_count", g_variant_new_int32(6));
+  g_variant_builder_add(&gate, "{sv}", "denial_error_name", g_variant_new_string("org.xnix.Compatibility1.Error.WriteMethodDisabled"));
+  g_variant_builder_add(&gate, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&gate);
+}
+
+static gboolean
+is_write_method(const gchar *method_name)
+{
+  return g_strcmp0(method_name, "InstallRecipe") == 0 ||
+         g_strcmp0(method_name, "Launch") == 0 ||
+         g_strcmp0(method_name, "CreateSnapshot") == 0 ||
+         g_strcmp0(method_name, "RestoreSnapshot") == 0;
 }
 
 static void
@@ -618,6 +651,15 @@ handle_method_call(GDBusConnection *connection,
   (void) sender;
   (void) object_path;
   (void) interface_name;
+
+  if (is_write_method(method_name)) {
+    g_dbus_method_invocation_return_dbus_error(
+      invocation,
+      "org.xnix.Compatibility1.Error.WriteMethodDisabled",
+      "Runtime write methods are blocked until production backend gates pass"
+    );
+    return;
+  }
   (void) user_data;
 
   if (g_strcmp0(method_name, "ListApplications") == 0) {
@@ -898,6 +940,14 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeMethodParityManifest") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_method_parity_manifest()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
+    const gchar *requested_method = NULL;
+
+    g_variant_get(parameters, "(&s)", &requested_method);
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_write_gate(requested_method)));
     return;
   }
 

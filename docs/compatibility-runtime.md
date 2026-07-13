@@ -115,6 +115,8 @@ Runtime owner smoke planning delegates to `xnix-runtime-owner-smoke-plan` and `G
 
 Runtime method parity manifests delegate to `xnix-runtime-method-parity-manifest` and `GetRuntimeMethodParityManifest`. The manifest checks that the D-Bus XML contract, Runtime dispatch, D-Bus client wrapper, C smoke adapter, and session smoke script all expose the same KDE-facing read-only methods. Passing parity is required before production owner smoke can be trusted, but it does not enable write methods such as install, launch, snapshot, or restore.
 
+Runtime write gates delegate to `xnix-runtime-write-gate` and `GetRuntimeWriteGate`. The gate model gives KDE a desktop-safe explanation for blocked `InstallRecipe`, `Launch`, `CreateSnapshot`, and `RestoreSnapshot` requests. Until production Runtime ownership, backend binding, recipe trust, user review, Portal approval, and snapshot preflight gates pass, write methods return `org.xnix.Compatibility1.Error.WriteMethodDisabled`; they do not create request objects, start execution, mutate the host root, or expose backend details.
+
 ## Permissions and Asynchronous Requests
 
 Desktop-sensitive actions must use XDG Desktop Portal. Portal operations return request objects and complete with signals, so Runtime methods that need user approval return an object path and complete through `RequestCompleted`. The Runtime must not promise direct access to a user's files, clipboard, camera, printer, display, or screen capture.

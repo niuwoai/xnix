@@ -153,7 +153,13 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <27>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <28>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRuntimeWriteGate"
+      [
+        "({'gate_type': <'runtime-write-gate'>, 'method_name': <'Launch'>, 'gate_decision': <'blocked-until-production-backend'>, 'write_method_enabled': <false>, 'dispatch_enabled': <false>, 'request_object_created': <false>, 'required_gate_count': <6>, 'denial_error_name': <'org.xnix.Compatibility1.Error.WriteMethodDisabled'>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -319,13 +325,24 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 27, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 28, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
 assert(!method_parity["write_methods_supported"], "D-Bus client must parse write method support status")
 assert(!method_parity["write_method_dispatch_enabled"], "D-Bus client must parse write method dispatch status")
 assert(!method_parity["backend_details_exposed"], "D-Bus client must parse Runtime parity backend detail status")
+
+write_gate = client.runtime_write_gate("Launch")
+assert(write_gate["gate_type"] == "runtime-write-gate", "D-Bus client must parse Runtime write gates")
+assert(write_gate["method_name"] == "Launch", "D-Bus client must preserve write gate method names")
+assert(write_gate["gate_decision"] == "blocked-until-production-backend", "D-Bus client must parse write gate decisions")
+assert(!write_gate["write_method_enabled"], "D-Bus client must parse disabled write method status")
+assert(!write_gate["dispatch_enabled"], "D-Bus client must parse disabled dispatch status")
+assert(!write_gate["request_object_created"], "D-Bus client must parse request object state")
+assert(write_gate["required_gate_count"] == 6, "D-Bus client must parse write gate counts")
+assert(write_gate["denial_error_name"] == "org.xnix.Compatibility1.Error.WriteMethodDisabled", "D-Bus client must parse write gate error names")
+assert(!write_gate["backend_details_exposed"], "D-Bus client must parse write gate backend detail status")
 
 settings = client.settings("org.xnix.sample.notepad")
 assert(settings["request_type"] == "settings-model", "D-Bus client must parse compatibility settings")

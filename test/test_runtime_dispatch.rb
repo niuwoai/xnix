@@ -242,6 +242,20 @@ assert(!method_parity["write_methods_supported"], "dispatch must not claim write
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetRuntimeWriteGate",
+  JSON.generate(["Launch"])
+)
+assert(status.success?, "dispatch GetRuntimeWriteGate must exit successfully: #{stderr}")
+write_gate = JSON.parse(stdout)
+assert(write_gate["gate_type"] == "runtime-write-gate", "dispatch must route GetRuntimeWriteGate")
+assert(write_gate["method_name"] == "Launch", "dispatch must preserve Runtime write gate method names")
+assert(write_gate["gate_decision"] == "blocked-until-production-backend", "dispatch must keep write methods gated")
+assert(!write_gate["write_method_enabled"], "dispatch must not enable Runtime write methods")
+assert(!write_gate["dispatch_enabled"], "dispatch must not enable Runtime write dispatch")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilitySettings",
   JSON.generate(["org.xnix.sample.notepad"])
 )
@@ -262,6 +276,6 @@ assert(!settings_change["apply_enabled"], "dispatch must keep settings changes p
 
 _stdout, stderr, status = Open3.capture3(*command, "dispatch", "Launch", JSON.generate(["org.xnix.sample.notepad", {}]))
 assert(!status.success?, "dispatch must reject unsupported write methods until a backend exists")
-assert(stderr.include?("unsupported runtime method"), "dispatch must explain unsupported methods")
+assert(stderr.include?("WriteMethodDisabled"), "dispatch must explain gated write methods")
 
 puts "PASS: compatibility runtime dispatch unit tests"

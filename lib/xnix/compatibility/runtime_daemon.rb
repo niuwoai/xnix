@@ -26,6 +26,7 @@ require_relative "runtime_live_owner_gate"
 require_relative "runtime_method_parity_manifest"
 require_relative "runtime_owner_smoke_plan"
 require_relative "runtime_service_binding"
+require_relative "runtime_write_gate"
 require_relative "settings_model"
 require_relative "settings_change_plan"
 
@@ -78,6 +79,7 @@ module Xnix
             "runtime_method_parity_manifests" => true,
             "runtime_owner_smoke_plans" => true,
             "runtime_service_binding" => true,
+            "runtime_write_gates" => true,
             "compatibility_settings" => true,
             "compatibility_settings_change_planning" => true,
             "diagnostics" => true,
@@ -133,6 +135,7 @@ module Xnix
           "runtime_method_parity_manifest" => runtime_method_parity_manifest_summary,
           "runtime_owner_smoke_plan" => runtime_owner_smoke_plan_summary,
           "runtime_service_binding" => runtime_service_binding_summary,
+          "runtime_write_gate" => runtime_write_gate_summary("Launch"),
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
@@ -244,6 +247,10 @@ module Xnix
         RuntimeMethodParityManifest.new.to_h
       end
 
+      def runtime_write_gate(method_name)
+        RuntimeWriteGate.new(method_name: method_name).to_h
+      end
+
       def settings(application_id)
         recipe = require_recipe(application_id)
         SettingsModel.new(application_id: recipe.id).to_h
@@ -345,6 +352,8 @@ module Xnix
           runtime_owner_smoke_plan
         when "GetRuntimeMethodParityManifest"
           runtime_method_parity_manifest
+        when "GetRuntimeWriteGate"
+          runtime_write_gate(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettings"
           settings(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettingsChangePlan"
@@ -354,6 +363,8 @@ module Xnix
             required_parameter(method_name, parameters, 2),
             required_parameter(method_name, parameters, 3)
           )
+        when *RuntimeWriteGate::WRITE_METHODS
+          raise ArgumentError, RuntimeWriteGate.new(method_name: method_name).failure_message
         else
           raise ArgumentError, "unsupported runtime method: #{method_name}"
         end
@@ -638,6 +649,22 @@ module Xnix
         }
       end
 
+      def runtime_write_gate_summary(method_name)
+        gate = RuntimeWriteGate.new(method_name: method_name).to_h
+        {
+          "gate_type" => gate.fetch("gate_type"),
+          "method_name" => gate.fetch("method_name"),
+          "gate_decision" => gate.fetch("gate_decision"),
+          "write_method_enabled" => gate.fetch("write_method_enabled"),
+          "dispatch_enabled" => gate.fetch("dispatch_enabled"),
+          "request_object_created" => gate.fetch("request_object_created"),
+          "required_gate_count" => gate.fetch("required_gates").length,
+          "denial_error_name" => gate.fetch("denial_error_name"),
+          "backend_details_exposed" => gate.fetch("backend_details_exposed"),
+          "summary" => gate.fetch("desktop_safe_summary")
+        }
+      end
+
       def settings_summary(recipe)
         model = SettingsModel.new(application_id: recipe.id).to_h
         {
@@ -767,6 +794,8 @@ module Xnix
             write_json(runtime.runtime_owner_smoke_plan)
           when "method-parity"
             write_json(runtime.runtime_method_parity_manifest)
+          when "write-gate"
+            write_json(runtime.runtime_write_gate(require_argument(command)))
           when "settings"
             write_json(runtime.settings(require_argument(command)))
           when "settings-change"
