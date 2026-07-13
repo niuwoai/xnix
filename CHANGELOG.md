@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.74] - 2026-07-14
+
+### Added
+
+- Added C Runtime recipe install gate records and a CLI read method for evaluating production and development install decisions from the C Runtime core.
+- Added C Runtime recipe install gate tests that verify production blocking, development staging, unknown recipe blocking, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first recipe install gate layer while keeping production installation disabled for development-only registries.
+
 ## [0.2.73] - 2026-07-14
 
 ### Added

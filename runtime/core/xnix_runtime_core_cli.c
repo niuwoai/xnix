@@ -1708,6 +1708,76 @@ print_recipe_trust_policy(const XnixRuntimeRecipeTrustPolicy *policy)
 }
 
 static void
+print_recipe_install_match(const XnixRuntimeRecipeInstallGate *gate)
+{
+  if (!gate->matched_recipe_present) {
+    fputs("null", stdout);
+    return;
+  }
+
+  fputs("{", stdout);
+  print_string_field("id", gate->matched_recipe.id);
+  fputs(",", stdout);
+  print_string_field("signature_status", gate->matched_recipe.signature_status);
+  fputs(",", stdout);
+  fputs("\"digest_verified\":", stdout);
+  print_bool(gate->matched_recipe.digest_verified);
+  fputs("}", stdout);
+}
+
+static void
+print_recipe_install_gate(const XnixRuntimeRecipeInstallGate *gate)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("gate_type", "recipe-install");
+  fputs(",", stdout);
+  print_string_field("application_id", gate->application_id);
+  fputs(",", stdout);
+  print_string_field("mode", gate->mode);
+  fputs(",", stdout);
+  print_string_field("decision", gate->decision);
+  fputs(",", stdout);
+  print_string_field("policy_decision", gate->policy_decision);
+  fputs(",", stdout);
+  fputs("\"matched_recipe\":", stdout);
+  print_recipe_install_match(gate);
+  fputs(",", stdout);
+  fputs("\"blocking_reasons\":", stdout);
+  print_string_array(gate->blocking_reasons, gate->blocking_reason_count);
+  fputs(",", stdout);
+  fputs("\"requirements\":", stdout);
+  print_string_array(gate->requirements, gate->requirement_count);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(gate->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(gate->kde_policy_owner);
+  fputs(",", stdout);
+  fputs("\"development_staging_allowed\":", stdout);
+  print_bool(gate->development_staging_allowed);
+  fputs(",", stdout);
+  fputs("\"production_install_allowed\":", stdout);
+  print_bool(gate->production_install_allowed);
+  fputs(",", stdout);
+  fputs("\"request_object_created\":", stdout);
+  print_bool(gate->request_object_created);
+  fputs(",", stdout);
+  fputs("\"install_started\":", stdout);
+  print_bool(gate->install_started);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(gate->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(gate->backend_details_exposed);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", gate->summary);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -2542,6 +2612,21 @@ print_recipe_trust(void)
 }
 
 static int
+print_recipe_install_gate_for_application(const char *application_id, const char *mode)
+{
+  XnixRuntimeRecipeInstallGate gate;
+
+  if (!xnix_runtime_recipe_install_gate(application_id, mode, &gate)) {
+    fprintf(stderr, "xnix-runtime-core: recipe install gate mode must be development or production\n");
+    return 64;
+  }
+
+  print_recipe_install_gate(&gate);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2630,6 +2715,8 @@ print_probe(void)
   fputs("\"method_parity_manifest_policy_count\":1,", stdout);
   fputs("\"recipe_trust_policy_owner\":\"c\",", stdout);
   fputs("\"recipe_trust_policy_count\":1,", stdout);
+  fputs("\"recipe_install_gate_owner\":\"c\",", stdout);
+  fputs("\"recipe_install_gate_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2683,7 +2770,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2812,6 +2899,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "recipe-trust-policy") == 0 && argc == 2) {
     return print_recipe_trust();
+  }
+
+  if (strcmp(argv[1], "recipe-install-gate") == 0 && argc == 4) {
+    return print_recipe_install_gate_for_application(argv[2], argv[3]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

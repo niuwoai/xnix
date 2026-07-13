@@ -1108,6 +1108,17 @@ static const XnixRuntimeRecipeTrustPolicy recipe_trust_policy = {
   .summary = "Recipes are verified for local development only.",
 };
 
+static const char *const production_recipe_install_requirements[] = {
+  "Use a registry with a production signed source and verified recipe signatures.",
+  "Keep SHA-256 digest verification enabled before activation.",
+  "Do not promote development-only recipes into production installation.",
+};
+
+static const char *const development_recipe_install_requirements[] = {
+  "Register the application recipe in the selected registry.",
+  "Keep SHA-256 digest verification enabled for development staging.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1676,4 +1687,95 @@ const XnixRuntimeRecipeTrustPolicy *
 xnix_runtime_recipe_trust_policy(void)
 {
   return &recipe_trust_policy;
+}
+
+bool
+xnix_runtime_recipe_install_gate(
+  const char *application_id,
+  const char *mode,
+  XnixRuntimeRecipeInstallGate *gate
+)
+{
+  bool development_mode = false;
+  bool production_mode = false;
+  bool matched = false;
+
+  if (application_id == NULL || mode == NULL || gate == NULL) {
+    return false;
+  }
+
+  development_mode = strcmp(mode, "development") == 0;
+  production_mode = strcmp(mode, "production") == 0;
+
+  if (!development_mode && !production_mode) {
+    return false;
+  }
+
+  matched = strcmp(application_id, "org.xnix.sample.notepad") == 0;
+
+  gate->application_id = application_id;
+  gate->mode = mode;
+  gate->policy_decision = recipe_trust_policy.decision;
+  gate->matched_recipe.id = matched ? "org.xnix.sample.notepad" : NULL;
+  gate->matched_recipe.signature_status = matched ? "development" : NULL;
+  gate->matched_recipe.digest_verified = matched;
+  gate->matched_recipe_present = matched;
+  gate->runtime_owned = true;
+  gate->kde_policy_owner = false;
+  gate->request_object_created = false;
+  gate->install_started = false;
+  gate->host_root_modified = false;
+  gate->backend_details_exposed = false;
+  gate->development_staging_allowed = matched && development_mode;
+  gate->production_install_allowed = false;
+  gate->blocking_reason_count = 0;
+  gate->requirement_count = 0;
+  gate->summary = "Recipe installation is blocked until trust requirements are satisfied.";
+
+  if (!matched) {
+    gate->blocking_reasons[gate->blocking_reason_count++] = "recipe is not registered";
+  }
+
+  if (matched && !gate->matched_recipe.digest_verified) {
+    gate->blocking_reasons[gate->blocking_reason_count++] = "recipe digest is not verified";
+  }
+
+  if (production_mode || !matched) {
+    for (size_t index = 0; index < recipe_trust_policy.blocking_reason_count; index++) {
+      gate->blocking_reasons[gate->blocking_reason_count++] =
+        recipe_trust_policy.blocking_reasons[index];
+    }
+  }
+
+  if (development_mode && matched && gate->matched_recipe.digest_verified) {
+    gate->blocking_reason_count = 0;
+  }
+
+  if (gate->blocking_reason_count == 0) {
+    gate->decision = "allow";
+    gate->summary = "Recipe installation may continue.";
+    return true;
+  }
+
+  gate->decision = "block";
+
+  if (production_mode) {
+    for (size_t index = 0;
+         index < sizeof(production_recipe_install_requirements) /
+                   sizeof(production_recipe_install_requirements[0]);
+         index++) {
+      gate->requirements[gate->requirement_count++] =
+        production_recipe_install_requirements[index];
+    }
+  } else {
+    for (size_t index = 0;
+         index < sizeof(development_recipe_install_requirements) /
+                   sizeof(development_recipe_install_requirements[0]);
+         index++) {
+      gate->requirements[gate->requirement_count++] =
+        development_recipe_install_requirements[index];
+    }
+  }
+
+  return true;
 }

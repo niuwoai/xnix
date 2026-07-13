@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.73"
+#define XNIX_RUNTIME_VERSION "0.2.74"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -517,6 +517,34 @@ typedef struct {
   const char *summary;
 } XnixRuntimeRecipeTrustPolicy;
 
+typedef struct {
+  const char *id;
+  const char *signature_status;
+  bool digest_verified;
+} XnixRuntimeRecipeInstallMatch;
+
+typedef struct {
+  const char *application_id;
+  const char *mode;
+  const char *decision;
+  const char *policy_decision;
+  XnixRuntimeRecipeInstallMatch matched_recipe;
+  bool matched_recipe_present;
+  const char *blocking_reasons[4];
+  size_t blocking_reason_count;
+  const char *requirements[3];
+  size_t requirement_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool development_staging_allowed;
+  bool production_install_allowed;
+  bool request_object_created;
+  bool install_started;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeRecipeInstallGate;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -587,5 +615,10 @@ const XnixRuntimeLiveOwnerGatePolicy *xnix_runtime_live_owner_gate_policy(void);
 const XnixRuntimeOwnerSmokePlanPolicy *xnix_runtime_owner_smoke_plan_policy(void);
 const XnixRuntimeMethodParityManifestPolicy *xnix_runtime_method_parity_manifest_policy(void);
 const XnixRuntimeRecipeTrustPolicy *xnix_runtime_recipe_trust_policy(void);
+bool xnix_runtime_recipe_install_gate(
+  const char *application_id,
+  const char *mode,
+  XnixRuntimeRecipeInstallGate *gate
+);
 
 #endif
