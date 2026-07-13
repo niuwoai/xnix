@@ -61,6 +61,10 @@ module Xnix
         parse_dictionary(call("GetRepairPlan", application_id, issue))
       end
 
+      def test_plan(application_id, test_type = "preflight")
+        parse_dictionary(call("GetTestPlan", application_id, test_type))
+      end
+
       def snapshot_plan(application_id, reason)
         parse_dictionary(call("GetSnapshotPlan", application_id, reason))
       end

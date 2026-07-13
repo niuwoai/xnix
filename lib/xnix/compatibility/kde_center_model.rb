@@ -68,6 +68,7 @@ module Xnix
           "compatibility_label" => STATUS_LABELS.fetch(diagnostics.fetch("status"), "Needs review"),
           "pending_action_count" => pending_checks,
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
+          "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -93,11 +94,25 @@ module Xnix
         }
       end
 
+      def test_plan_summary(test_plan)
+        return nil unless test_plan
+
+        {
+          "plan_type" => test_plan.fetch("plan_type"),
+          "test_type" => test_plan.fetch("test_type"),
+          "step_count" => test_plan.fetch("step_count"),
+          "pending_step_count" => test_plan.fetch("pending_step_count"),
+          "blocked" => test_plan.fetch("blocked"),
+          "summary" => test_plan.fetch("summary")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
-          "pending_action_count" => applications.sum { |application| application["pending_action_count"] }
+          "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
+          "pending_test_step_count" => applications.sum { |application| application.fetch("test_plan", {}).fetch("pending_step_count", 0) }
         }
       end
 

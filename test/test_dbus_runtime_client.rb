@@ -55,6 +55,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetTestPlan"
+      [
+        "({'plan_type': <'compatibility-test'>, 'test_type': <'preflight'>, 'runtime_owned': <true>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetSnapshotPlan"
       [
         "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'enabled_by_default': <true>},)\n",
@@ -101,6 +107,11 @@ assert(!run_plan["backend_details_exposed"], "D-Bus client must parse run plan b
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
 assert(repair_plan["snapshot_required"], "D-Bus client must parse repair plan booleans")
+
+test_plan = client.test_plan("org.xnix.sample.notepad")
+assert(test_plan["plan_type"] == "compatibility-test", "D-Bus client must parse test plans")
+assert(test_plan["runtime_owned"], "D-Bus client must parse test plan booleans")
+assert(!test_plan["backend_details_exposed"], "D-Bus client must parse test plan false booleans")
 
 snapshot_plan = client.snapshot_plan("org.xnix.sample.notepad", "before-repair")
 assert(snapshot_plan["plan_type"] == "compatibility-snapshot", "D-Bus client must parse snapshot plans")

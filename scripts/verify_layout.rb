@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.34"
+EXPECTED_VERSION = "0.2.35"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -24,6 +24,7 @@ REQUIRED_FILES = %w[
   lib/xnix/ssh_test_key.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
+  lib/xnix/compatibility/compatibility_test_plan.rb
   lib/xnix/compatibility/application_recipe.rb
   lib/xnix/compatibility/compatibility_snapshot_plan.rb
   lib/xnix/compatibility/compatibility_run_plan.rb
@@ -61,6 +62,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-repair-plan
   bin/xnix-compat-run-plan
   bin/xnix-compat-snapshot-plan
+  bin/xnix-compat-test-plan
   bin/xnix-compat-settings
   bin/xnix-compat-tray-status
   bin/xnix-compat-window-identity
@@ -108,6 +110,7 @@ REQUIRED_FILES = %w[
   test/test_compatibility_repair_plan.rb
   test/test_compatibility_snapshot_plan.rb
   test/test_compatibility_run_plan.rb
+  test/test_compatibility_test_plan.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
   test/test_recipe_install_gate.rb
@@ -252,6 +255,13 @@ assert(snapshot_plan_source.include?("\"host_system\" => false"), "Compatibility
 assert(snapshot_plan_source.include?("\"user_documents\" => false"), "Compatibility snapshot plan must not snapshot user documents")
 assert(snapshot_plan_source.include?("\"preserve_user_documents\" => true"), "Compatibility snapshot restore must preserve user documents")
 
+test_plan_source = read_project_file("lib/xnix/compatibility/compatibility_test_plan.rb")
+assert(test_plan_source.include?("xnix-compat-test-plan"), "Compatibility test plan must expose a CLI command")
+%w[compatibility-test portal-preflight snapshot-preflight runtime-launch-binding].each do |token|
+  assert(test_plan_source.include?(token), "Compatibility test plan must include #{token}")
+end
+assert(test_plan_source.include?("\"backend_details_exposed\" => false"), "Compatibility test plan must hide backend details")
+
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|
   assert(notification_source.include?("\"#{event_type}\""), "Notification requests must include #{event_type}")
@@ -329,7 +339,8 @@ runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon
 assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
 assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
-%w[GetEngineCatalog GetRunPlan GetRepairPlan GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
+assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runtime daemon must expose compatibility test planning capability")
+%w[GetEngineCatalog GetRunPlan GetRepairPlan GetTestPlan GetSnapshotPlan GetPortalAccessPolicy].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -337,7 +348,7 @@ assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runt
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan repair_plan snapshot_plan portal_access_policy].each do |method_name|
+%w[engine_catalog run_plan repair_plan test_plan snapshot_plan portal_access_policy].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

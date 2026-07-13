@@ -68,6 +68,16 @@ assert(repair_plan["plan_type"] == "compatibility-repair", "dispatch must route 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetTestPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetTestPlan must exit successfully: #{stderr}")
+test_plan = JSON.parse(stdout)
+assert(test_plan["plan_type"] == "compatibility-test", "dispatch must route GetTestPlan")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetSnapshotPlan",
   JSON.generate(["org.xnix.sample.notepad", "before-repair"])
 )

@@ -42,6 +42,11 @@
       <arg name="issue" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetTestPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="test_type" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetSnapshotPlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="reason" type="s" direction="in"/>

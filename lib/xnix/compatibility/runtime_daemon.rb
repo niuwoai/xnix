@@ -7,6 +7,7 @@ require_relative "compatibility_engine_catalog"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
 require_relative "compatibility_snapshot_plan"
+require_relative "compatibility_test_plan"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 
@@ -42,6 +43,7 @@ module Xnix
             "compatibility_engine_catalog" => true,
             "compatibility_run_planning" => true,
             "compatibility_repair_planning" => true,
+            "compatibility_test_planning" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -78,6 +80,7 @@ module Xnix
               "message" => "Compatibility engine launch binding is not enabled in this version."
             }
           ],
+          "test_plan" => test_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -94,6 +97,11 @@ module Xnix
       def repair_plan(application_id, issue)
         require_recipe(application_id)
         CompatibilityRepairPlan.new(application_id: application_id, issue: issue).to_h
+      end
+
+      def test_plan(application_id, test_type = "preflight")
+        recipe = require_recipe(application_id)
+        CompatibilityTestPlan.new(recipe: recipe, test_type: test_type).to_h
       end
 
       def snapshot_plan(application_id, reason)
@@ -122,6 +130,11 @@ module Xnix
           repair_plan(
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
+          )
+        when "GetTestPlan"
+          test_plan(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || "preflight"
           )
         when "GetSnapshotPlan"
           snapshot_plan(
@@ -183,6 +196,18 @@ module Xnix
         }
       end
 
+      def test_plan_summary(recipe)
+        plan = CompatibilityTestPlan.new(recipe: recipe).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "test_type" => plan.fetch("test_type"),
+          "step_count" => plan.fetch("steps").length,
+          "pending_step_count" => plan.fetch("steps").count { |step| step.fetch("status") == "pending" },
+          "blocked" => plan.fetch("blocked"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -226,6 +251,10 @@ module Xnix
             write_json(runtime.get_application(require_argument(command)))
           when "diagnostics"
             write_json(runtime.diagnostics(require_argument(command)))
+          when "test-plan"
+            application_id = require_argument(command)
+            test_type = @argv.shift || "preflight"
+            write_json(runtime.test_plan(application_id, test_type))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

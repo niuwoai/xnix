@@ -21,12 +21,13 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.34", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.35", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
 assert(model["summary"]["known_application_count"] == 1, "KDE center model must summarize known applications")
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
+assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -37,6 +38,8 @@ assert(application["repair"]["issue"] == "engine-binding-pending", "KDE center m
 assert(application["repair"]["snapshot_required"], "KDE center model must expose repair snapshot requirements")
 assert(application["repair"]["snapshot"]["plan_type"] == "compatibility-snapshot", "KDE center model must expose snapshot summaries")
 assert(application["repair"]["notification_event"] == "approval-required", "KDE center model must map repair plans to notifications")
+assert(application["test_plan"]["plan_type"] == "compatibility-test", "KDE center model must expose test plan summaries")
+assert(application["test_plan"]["pending_step_count"] == 3, "KDE center model must expose pending test steps")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

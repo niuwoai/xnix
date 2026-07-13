@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.35] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-test-plan`, a Runtime-owned compatibility test plan model for preflight, smoke, and repair-readiness checks.
+- Added focused coverage for recipe validation, Portal preflight, snapshot preflight, launch-binding readiness, Compatibility Center summaries, Runtime diagnostics, dispatch, D-Bus client reads, and session-bus smoke exposure.
+
+### Changed
+
+- Extended Runtime diagnostics, read-only Runtime dispatch, D-Bus planning reads, and the KDE Compatibility Center model with compatibility test plan summaries.
+
 ## [0.2.34] - 2026-07-13
 
 ### Added

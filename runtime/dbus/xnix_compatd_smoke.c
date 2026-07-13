@@ -45,6 +45,11 @@ static const gchar introspection_xml[] =
   "      <arg name='issue' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetTestPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='test_type' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetSnapshotPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='reason' type='s' direction='in'/>"
@@ -134,6 +139,21 @@ build_repair_plan(const gchar *application_id, const gchar *issue)
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&plan, "{sv}", "snapshot_required", g_variant_new_boolean(TRUE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_test_plan(const gchar *application_id, const gchar *test_type)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-test"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
 }
@@ -251,6 +271,20 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_repair_plan(application_id, issue)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetTestPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *test_type = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &test_type);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_test_plan(application_id, test_type)));
     return;
   }
 
