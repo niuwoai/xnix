@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.64] - 2026-07-13
+
+### Added
+
+- Added C Runtime acquisition preflight policy records and CLI read methods for listing acquisition gates and evaluating per-application acquisition readiness.
+- Added C Runtime acquisition preflight tests that verify preflight checks, blocked network requests, blocked downloads, pending package-source readiness, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility acquisition preflight layer while keeping network requests, artifact downloads, installation, and host-root mutation disabled.
+
 ## [0.2.63] - 2026-07-13
 
 ### Added

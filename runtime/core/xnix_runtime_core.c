@@ -428,6 +428,63 @@ static const XnixRuntimeArtifactManifestPolicy artifact_manifest_policies[] = {
   },
 };
 
+static const XnixRuntimeAcquisitionPreflightPolicy acquisition_preflight_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .preflight_state = "planned",
+    .selected_strategy = "automatic-managed",
+    .checks = {
+      {
+        .id = "package-source-ready",
+        .status = "pending",
+        .summary = "Runtime package source selection must be ready before acquisition.",
+      },
+      {
+        .id = "signed-artifact-manifest",
+        .status = "required",
+        .summary = "Runtime must verify a signed artifact manifest before acquisition.",
+      },
+      {
+        .id = "runtime-cache-space",
+        .status = "pending",
+        .summary = "Runtime cache capacity must be checked before artifact acquisition.",
+      },
+      {
+        .id = "network-policy-review",
+        .status = "required",
+        .summary = "Runtime must approve network policy before any acquisition request.",
+      },
+      {
+        .id = "rollback-marker",
+        .status = "required",
+        .summary = "Runtime must define rollback markers before acquisition can change state.",
+      },
+    },
+    .check_count = 5,
+    .blocked_actions = {
+      "download compatibility artifacts before acquisition preflight",
+      "install compatibility artifacts before signed manifest verification",
+      "invoke network access from KDE",
+      "mutate host root during acquisition preflight",
+    },
+    .blocked_action_count = 4,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .acquisition_ready = false,
+    .download_enabled = false,
+    .install_enabled = false,
+    .network_required_for_planning = false,
+    .network_request_created = false,
+    .artifacts_downloaded = false,
+    .host_root_modified = false,
+    .privileged_container_required = false,
+    .desktop_shell_command_exposed = false,
+    .package_source_ready = false,
+    .backend_details_exposed = false,
+    .summary = "Compatibility acquisition preflight is planned and waiting for Runtime source readiness.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -785,6 +842,41 @@ xnix_runtime_find_artifact_manifest_policy(const char *application_id)
   for (size_t index = 0; index < xnix_runtime_artifact_manifest_policy_count(); index++) {
     const XnixRuntimeArtifactManifestPolicy *policy =
       xnix_runtime_artifact_manifest_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_acquisition_preflight_policy_count(void)
+{
+  return sizeof(acquisition_preflight_policies) / sizeof(acquisition_preflight_policies[0]);
+}
+
+const XnixRuntimeAcquisitionPreflightPolicy *
+xnix_runtime_acquisition_preflight_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_acquisition_preflight_policy_count()) {
+    return NULL;
+  }
+
+  return &acquisition_preflight_policies[index];
+}
+
+const XnixRuntimeAcquisitionPreflightPolicy *
+xnix_runtime_find_acquisition_preflight_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_acquisition_preflight_policy_count(); index++) {
+    const XnixRuntimeAcquisitionPreflightPolicy *policy =
+      xnix_runtime_acquisition_preflight_policy_at(index);
 
     if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;

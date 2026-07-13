@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.63"
+#define XNIX_RUNTIME_VERSION "0.2.64"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -187,6 +187,36 @@ typedef struct {
   const char *summary;
 } XnixRuntimeArtifactManifestPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeAcquisitionCheck;
+
+typedef struct {
+  const char *application_id;
+  const char *preflight_state;
+  const char *selected_strategy;
+  XnixRuntimeAcquisitionCheck checks[5];
+  size_t check_count;
+  const char *blocked_actions[4];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool acquisition_ready;
+  bool download_enabled;
+  bool install_enabled;
+  bool network_required_for_planning;
+  bool network_request_created;
+  bool artifacts_downloaded;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool desktop_shell_command_exposed;
+  bool package_source_ready;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeAcquisitionPreflightPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -231,5 +261,9 @@ bool xnix_runtime_install_readiness_allows_recipe_install(
 size_t xnix_runtime_artifact_manifest_policy_count(void);
 const XnixRuntimeArtifactManifestPolicy *xnix_runtime_artifact_manifest_policy_at(size_t index);
 const XnixRuntimeArtifactManifestPolicy *xnix_runtime_find_artifact_manifest_policy(const char *application_id);
+
+size_t xnix_runtime_acquisition_preflight_policy_count(void);
+const XnixRuntimeAcquisitionPreflightPolicy *xnix_runtime_acquisition_preflight_policy_at(size_t index);
+const XnixRuntimeAcquisitionPreflightPolicy *xnix_runtime_find_acquisition_preflight_policy(const char *application_id);
 
 #endif
