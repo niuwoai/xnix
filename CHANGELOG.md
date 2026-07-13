@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.83] - 2026-07-14
+
+### Added
+
+- Added C Runtime file association plan records and a CLI read method for mapping recipe MIME types to generated desktop entries and portal-mediated file opens.
+- Added Runtime D-Bus contract coverage for `GetFileAssociationPlan` so KDE file-manager surfaces can read MIME association plans without writing files or seeing backend details.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, and diagnostics to include file association planning while keeping `mimeapps.list` changes staged and non-overwriting.
+
 ## [0.2.82] - 2026-07-14
 
 ### Added

@@ -52,6 +52,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetFileAssociationPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetPortalRequestPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='operation' type='s' direction='in'/>"
@@ -298,6 +302,32 @@ build_task_manager_identity_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "prefer_existing_window", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "window_manager_policy_only", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "runtime_owns_backend_policy", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_file_association_plan(const gchar *application_id)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("file-association-plan"));
+  g_variant_builder_add(&plan, "{sv}", "association_type", g_variant_new_string("desktop-file-association"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&plan, "{sv}", "mimeapps_path", g_variant_new_string("usr/share/applications/mimeapps.list"));
+  g_variant_builder_add(&plan, "{sv}", "file_open_command", g_variant_new_string("xnix-compat-open"));
+  g_variant_builder_add(&plan, "{sv}", "file_open_argument", g_variant_new_string("%U"));
+  g_variant_builder_add(&plan, "{sv}", "mime_type_count", g_variant_new_int32(2));
+  g_variant_builder_add(&plan, "{sv}", "standard_mimeapps_list", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "staged_root_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "overwrite_existing_mimeapps", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "portal_required_for_file_open", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "files_written", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
@@ -709,7 +739,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(32));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(33));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -877,6 +907,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_task_manager_identity_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetFileAssociationPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_file_association_plan(application_id))
     );
     return;
   }

@@ -67,6 +67,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetFileAssociationPlan"
+      [
+        "({'plan_type': <'file-association-plan'>, 'association_type': <'desktop-file-association'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'mimeapps_path': <'usr/share/applications/mimeapps.list'>, 'file_open_command': <'xnix-compat-open'>, 'file_open_argument': <'%U'>, 'mime_type_count': <2>, 'standard_mimeapps_list': <true>, 'staged_root_only': <true>, 'overwrite_existing_mimeapps': <false>, 'portal_required_for_file_open': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -177,7 +183,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <32>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <33>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -281,6 +287,22 @@ assert(task_manager_identity_plan["window_manager_policy_only"], "D-Bus client m
 assert(task_manager_identity_plan["runtime_owns_backend_policy"], "D-Bus client must parse Runtime backend policy ownership")
 assert(!task_manager_identity_plan["host_root_modified"], "D-Bus client must parse task manager host-root safety")
 assert(!task_manager_identity_plan["backend_details_exposed"], "D-Bus client must parse task manager backend detail status")
+
+file_association_plan = client.file_association_plan("org.xnix.sample.notepad")
+assert(file_association_plan["plan_type"] == "file-association-plan", "D-Bus client must parse file association plans")
+assert(file_association_plan["association_type"] == "desktop-file-association", "D-Bus client must parse file association types")
+assert(file_association_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse file association desktop files")
+assert(file_association_plan["mimeapps_path"] == "usr/share/applications/mimeapps.list", "D-Bus client must parse mimeapps paths")
+assert(file_association_plan["file_open_command"] == "xnix-compat-open", "D-Bus client must parse file open commands")
+assert(file_association_plan["file_open_argument"] == "%U", "D-Bus client must parse file open arguments")
+assert(file_association_plan["mime_type_count"] == 2, "D-Bus client must parse file association counts")
+assert(file_association_plan["standard_mimeapps_list"], "D-Bus client must parse standard mimeapps status")
+assert(file_association_plan["staged_root_only"], "D-Bus client must parse staged-root status")
+assert(!file_association_plan["overwrite_existing_mimeapps"], "D-Bus client must parse overwrite safety")
+assert(file_association_plan["portal_required_for_file_open"], "D-Bus client must parse file-open Portal requirement")
+assert(!file_association_plan["files_written"], "D-Bus client must parse file association write safety")
+assert(!file_association_plan["host_root_modified"], "D-Bus client must parse file association host-root safety")
+assert(!file_association_plan["backend_details_exposed"], "D-Bus client must parse file association backend detail status")
 
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
@@ -399,7 +421,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 32, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 33, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

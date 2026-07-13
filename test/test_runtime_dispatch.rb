@@ -85,6 +85,21 @@ assert(!task_manager_identity_plan["safety"]["backend_details_exposed"], "dispat
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetFileAssociationPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetFileAssociationPlan must exit successfully: #{stderr}")
+file_association_plan = JSON.parse(stdout)
+assert(file_association_plan["plan_type"] == "file-association-plan", "dispatch must route GetFileAssociationPlan")
+assert(file_association_plan["application"]["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "dispatch must expose file association desktop files")
+assert(file_association_plan["mimeapps"]["path"] == "usr/share/applications/mimeapps.list", "dispatch must expose mimeapps paths")
+assert(file_association_plan["associations"].length == 2, "dispatch must expose file association records")
+assert(file_association_plan["associations"].all? { |entry| entry["file_open"]["portal_required"] }, "dispatch must keep file opens Portal-mediated")
+assert(!file_association_plan["safety"]["backend_details_exposed"], "dispatch must keep file association backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

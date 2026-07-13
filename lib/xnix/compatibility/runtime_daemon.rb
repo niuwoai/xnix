@@ -22,6 +22,7 @@ require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
+require_relative "file_association_model"
 require_relative "portal_access_policy"
 require_relative "portal_request_model"
 require_relative "registry_backed_recipe_store"
@@ -76,6 +77,7 @@ module Xnix
             "desktop_activation_manifests" => true,
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
+            "file_association_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -133,6 +135,7 @@ module Xnix
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
+          "file_association_plan" => file_association_plan_summary(recipe),
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -239,6 +242,19 @@ module Xnix
           "host_root_modified" => false,
           "backend_details_exposed" => false,
           "desktop_safe_summary" => "Compatibility windows are grouped, pinned, switched, and restored through a normal desktop entry."
+        )
+      end
+
+      def file_association_plan(application_id)
+        recipe = require_recipe(application_id)
+        FileAssociationModel.new(recipe: recipe).to_h.merge(
+          "plan_type" => "file-association-plan",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "files_written" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "Recipe MIME types are mapped to a generated desktop entry and portal-mediated file opens."
         )
       end
 
@@ -380,6 +396,8 @@ module Xnix
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
           task_manager_identity_plan(required_parameter(method_name, parameters, 0))
+        when "GetFileAssociationPlan"
+          file_association_plan(required_parameter(method_name, parameters, 0))
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -619,6 +637,23 @@ module Xnix
           "skip_taskbar" => plan.fetch("kwin").fetch("set").fetch("skip_taskbar"),
           "show_in_switcher" => plan.fetch("kwin").fetch("set").fetch("show_in_switcher"),
           "window_manager_policy_only" => plan.fetch("safety").fetch("window_manager_policy_only"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def file_association_plan_summary(recipe)
+        plan = file_association_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "association_type" => plan.fetch("association_type"),
+          "desktop_file" => plan.fetch("application").fetch("desktop_file"),
+          "mimeapps_path" => plan.fetch("mimeapps").fetch("path"),
+          "association_count" => plan.fetch("associations").length,
+          "standard_mimeapps_list" => plan.fetch("safety").fetch("standard_mimeapps_list"),
+          "staged_root_only" => plan.fetch("safety").fetch("staged_root_only"),
+          "overwrite_existing_mimeapps" => plan.fetch("safety").fetch("overwrite_existing_mimeapps"),
+          "portal_required_for_file_open" => plan.fetch("safety").fetch("portal_required_for_file_open"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
@@ -921,6 +956,8 @@ module Xnix
             write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "task-manager-identity-plan"
             write_json(runtime.task_manager_identity_plan(require_argument(command)))
+          when "file-association-plan"
+            write_json(runtime.file_association_plan(require_argument(command)))
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

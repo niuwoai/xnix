@@ -69,6 +69,10 @@ module Xnix
         parse_dictionary(call("GetTaskManagerIdentityPlan", application_id))
       end
 
+      def file_association_plan(application_id)
+        parse_dictionary(call("GetFileAssociationPlan", application_id))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

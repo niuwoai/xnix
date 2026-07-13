@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.82"
+#define XNIX_RUNTIME_VERSION "0.2.83"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[32];
+  const char *read_only_methods[33];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -742,6 +742,31 @@ typedef struct {
   const char *summary;
 } XnixRuntimeTaskManagerIdentityPlan;
 
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *desktop_file;
+  const char *mimeapps_path;
+  const char *default_section;
+  const char *added_section;
+  const char *file_open_command;
+  const char *file_open_argument;
+  const char *supported_extensions[2];
+  size_t supported_extension_count;
+  const char *mime_types[2];
+  size_t mime_type_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool standard_mimeapps_list;
+  bool staged_root_only;
+  bool overwrite_existing_mimeapps;
+  bool portal_required_for_file_open;
+  bool default_application;
+  bool files_written;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeFileAssociationPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -847,6 +872,10 @@ bool xnix_runtime_desktop_entry_plan(
 bool xnix_runtime_task_manager_identity_plan(
   const char *application_id,
   XnixRuntimeTaskManagerIdentityPlan *plan
+);
+bool xnix_runtime_file_association_plan(
+  const char *application_id,
+  XnixRuntimeFileAssociationPlan *plan
 );
 bool xnix_runtime_portal_request_plan(
   const char *application_id,
