@@ -1948,6 +1948,73 @@ print_install_policy_for_application(
 }
 
 static void
+print_compatibility_install_plan(const XnixRuntimeCompatibilityInstallPlan *plan)
+{
+  const XnixRuntimeInstallReadinessPolicy *policy = plan->install_readiness;
+
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("plan_type", "compatibility-install-plan");
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_install_application(plan->application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(plan->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(plan->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("environment", plan->environment);
+  fputs(",", stdout);
+  print_string_field("install_state", policy->install_state);
+  fputs(",", stdout);
+  fputs("\"install_ready\":", stdout);
+  print_bool(policy->install_ready);
+  fputs(",", stdout);
+  fputs("\"desktop_activation_ready\":", stdout);
+  print_bool(policy->desktop_activation_ready);
+  fputs(",", stdout);
+  fputs("\"download_enabled\":", stdout);
+  print_bool(policy->download_enabled);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"network_request_created\":", stdout);
+  print_bool(policy->network_request_created);
+  fputs(",", stdout);
+  fputs("\"artifacts_downloaded\":", stdout);
+  print_bool(policy->artifacts_downloaded);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"desktop_shell_command_exposed\":", stdout);
+  print_bool(policy->desktop_shell_command_exposed);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  fputs("\"readiness\":", stdout);
+  print_install_readiness(policy, plan->recipe_install_gate.decision);
+  fputs(",", stdout);
+  fputs("\"phases\":", stdout);
+  print_install_phases(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_snapshot_policy_record(const XnixRuntimeSnapshotPolicy *policy)
 {
   fputs("{", stdout);
@@ -2627,6 +2694,30 @@ print_recipe_install_gate_for_application(const char *application_id, const char
 }
 
 static int
+print_compatibility_install_plan_for_application(
+  const char *application_id,
+  const char *environment
+)
+{
+  XnixRuntimeCompatibilityInstallPlan plan;
+
+  if (strcmp(environment, "development") != 0 &&
+      strcmp(environment, "production") != 0) {
+    fprintf(stderr, "xnix-runtime-core: compatibility install plan environment must be development or production\n");
+    return 64;
+  }
+
+  if (!xnix_runtime_compatibility_install_plan(application_id, environment, &plan)) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime install plan catalog\n");
+    return 64;
+  }
+
+  print_compatibility_install_plan(&plan);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2717,6 +2808,8 @@ print_probe(void)
   fputs("\"recipe_trust_policy_count\":1,", stdout);
   fputs("\"recipe_install_gate_owner\":\"c\",", stdout);
   fputs("\"recipe_install_gate_count\":1,", stdout);
+  fputs("\"compatibility_install_plan_owner\":\"c\",", stdout);
+  fputs("\"compatibility_install_plan_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2767,147 +2860,4 @@ print_write_gate(const char *method_name)
   return 0;
 }
 
-static int
-usage(void)
-{
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
-  return 64;
-}
-
-int
-main(int argc, char **argv)
-{
-  if (argc < 2) {
-    return usage();
-  }
-
-  if (strcmp(argv[1], "probe") == 0 && argc == 2) {
-    return print_probe();
-  }
-
-  if (strcmp(argv[1], "list-applications") == 0 && argc == 2) {
-    return print_applications();
-  }
-
-  if (strcmp(argv[1], "get-application") == 0 && argc == 3) {
-    return print_application_by_id(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-engines") == 0 && argc == 2) {
-    return print_engine_catalog();
-  }
-
-  if (strcmp(argv[1], "select-engine") == 0 && argc == 3) {
-    return print_engine_for_mode(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-portal-policies") == 0 && argc == 2) {
-    return print_portal_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "portal-policy") == 0 && argc == 4) {
-    return print_portal_policy(argv[2], argv[3]);
-  }
-
-  if (strcmp(argv[1], "list-snapshot-policies") == 0 && argc == 2) {
-    return print_snapshot_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "snapshot-policy") == 0 && argc == 4) {
-    return print_snapshot_policy(argv[2], argv[3]);
-  }
-
-  if (strcmp(argv[1], "list-state-root-policies") == 0 && argc == 2) {
-    return print_state_root_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "state-root-policy") == 0 && argc == 3) {
-    return print_state_root_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-install-readiness-policies") == 0 && argc == 2) {
-    return print_install_readiness_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "install-readiness-policy") == 0 && argc == 4) {
-    return print_install_readiness_policy(argv[2], argv[3]);
-  }
-
-  if (strcmp(argv[1], "list-artifact-manifest-policies") == 0 && argc == 2) {
-    return print_artifact_manifest_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "artifact-manifest-policy") == 0 && argc == 3) {
-    return print_artifact_manifest_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-acquisition-preflight-policies") == 0 && argc == 2) {
-    return print_acquisition_preflight_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "acquisition-preflight-policy") == 0 && argc == 3) {
-    return print_acquisition_preflight_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-package-source-policies") == 0 && argc == 2) {
-    return print_package_source_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "package-source-policy") == 0 && argc == 3) {
-    return print_package_source_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-backend-binding-policies") == 0 && argc == 2) {
-    return print_backend_binding_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "backend-binding-policy") == 0 && argc == 3) {
-    return print_backend_binding_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-settings-policies") == 0 && argc == 2) {
-    return print_settings_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "settings-policy") == 0 && argc == 3) {
-    return print_settings_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "list-settings-change-policies") == 0 && argc == 2) {
-    return print_settings_change_policy_catalog();
-  }
-
-  if (strcmp(argv[1], "settings-change-policy") == 0 && argc == 3) {
-    return print_settings_change_policy(argv[2]);
-  }
-
-  if (strcmp(argv[1], "runtime-service-binding") == 0 && argc == 2) {
-    return print_runtime_service_binding();
-  }
-
-  if (strcmp(argv[1], "runtime-live-owner-gate") == 0 && argc == 2) {
-    return print_runtime_live_owner_gate();
-  }
-
-  if (strcmp(argv[1], "runtime-owner-smoke-plan") == 0 && argc == 2) {
-    return print_runtime_owner_smoke_plan();
-  }
-
-  if (strcmp(argv[1], "runtime-method-parity-manifest") == 0 && argc == 2) {
-    return print_runtime_method_parity_manifest();
-  }
-
-  if (strcmp(argv[1], "recipe-trust-policy") == 0 && argc == 2) {
-    return print_recipe_trust();
-  }
-
-  if (strcmp(argv[1], "recipe-install-gate") == 0 && argc == 4) {
-    return print_recipe_install_gate_for_application(argv[2], argv[3]);
-  }
-
-  if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {
-    return print_write_gate(argv[2]);
-  }
-
-  return usage();
-}
+#include "xnix_runtime_core_cli_dispatch.inc"

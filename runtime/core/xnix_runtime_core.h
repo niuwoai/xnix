@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.74"
+#define XNIX_RUNTIME_VERSION "0.2.75"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -545,6 +545,15 @@ typedef struct {
   const char *summary;
 } XnixRuntimeRecipeInstallGate;
 
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const XnixRuntimeInstallReadinessPolicy *install_readiness;
+  XnixRuntimeRecipeInstallGate recipe_install_gate;
+  const char *environment;
+  bool runtime_owned;
+  bool kde_policy_owner;
+} XnixRuntimeCompatibilityInstallPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -619,6 +628,11 @@ bool xnix_runtime_recipe_install_gate(
   const char *application_id,
   const char *mode,
   XnixRuntimeRecipeInstallGate *gate
+);
+bool xnix_runtime_compatibility_install_plan(
+  const char *application_id,
+  const char *environment,
+  XnixRuntimeCompatibilityInstallPlan *plan
 );
 
 #endif

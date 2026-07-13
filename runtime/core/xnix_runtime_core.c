@@ -1779,3 +1779,45 @@ xnix_runtime_recipe_install_gate(
 
   return true;
 }
+
+bool
+xnix_runtime_compatibility_install_plan(
+  const char *application_id,
+  const char *environment,
+  XnixRuntimeCompatibilityInstallPlan *plan
+)
+{
+  const XnixRuntimeApplication *application = NULL;
+  const XnixRuntimeInstallReadinessPolicy *install_readiness = NULL;
+
+  if (application_id == NULL || environment == NULL || plan == NULL) {
+    return false;
+  }
+
+  if (strcmp(environment, "development") != 0 &&
+      strcmp(environment, "production") != 0) {
+    return false;
+  }
+
+  application = xnix_runtime_find_application(application_id);
+  install_readiness = xnix_runtime_find_install_readiness_policy(application_id);
+
+  if (application == NULL || install_readiness == NULL) {
+    return false;
+  }
+
+  if (!xnix_runtime_recipe_install_gate(
+        application_id,
+        environment,
+        &plan->recipe_install_gate
+      )) {
+    return false;
+  }
+
+  plan->application = application;
+  plan->install_readiness = install_readiness;
+  plan->environment = environment;
+  plan->runtime_owned = true;
+  plan->kde_policy_owner = false;
+  return true;
+}
