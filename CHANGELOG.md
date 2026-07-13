@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.63] - 2026-07-13
+
+### Added
+
+- Added C Runtime artifact manifest policy records and CLI read methods for listing artifact manifest gates and evaluating per-application artifact readiness.
+- Added C Runtime artifact manifest tests that verify artifact groups, required preflight, blocked downloads, blocked cache activation, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility artifact manifest layer while keeping artifact downloads, cache activation, installation, and host-root mutation disabled.
+
 ## [0.2.62] - 2026-07-13
 
 ### Added

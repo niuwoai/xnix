@@ -341,6 +341,93 @@ static const XnixRuntimeInstallReadinessPolicy install_readiness_policies[] = {
   },
 };
 
+static const XnixRuntimeArtifactManifestPolicy artifact_manifest_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .manifest_state = "planned",
+    .selected_strategy = "automatic-managed",
+    .artifact_groups = {
+      {
+        .id = "runtime-launch-metadata",
+        .kind = "metadata",
+        .cache_namespace = "org.xnix.sample.notepad.launch-metadata",
+        .summary = "Runtime launch metadata must be resolved before launch binding.",
+        .required = true,
+        .resolved = false,
+        .downloaded = false,
+      },
+      {
+        .id = "local-execution-artifacts",
+        .kind = "execution-artifacts",
+        .cache_namespace = "org.xnix.sample.notepad.local-execution",
+        .summary = "Local execution artifacts remain planned until signed manifest verification passes.",
+        .required = true,
+        .resolved = false,
+        .downloaded = false,
+      },
+      {
+        .id = "isolated-environment-artifacts",
+        .kind = "environment-artifacts",
+        .cache_namespace = "org.xnix.sample.notepad.isolated-environment",
+        .summary = "Isolated environment artifacts remain optional until Runtime policy selects them.",
+        .required = false,
+        .resolved = false,
+        .downloaded = false,
+      },
+    },
+    .artifact_group_count = 3,
+    .required_preflight = {
+      {
+        .id = "acquisition-preflight-ready",
+        .status = "pending",
+        .summary = "Runtime acquisition preflight must be ready before artifact manifest resolution.",
+      },
+      {
+        .id = "manifest-signature-verification",
+        .status = "required",
+        .summary = "Runtime must verify the signed artifact manifest before artifact use.",
+      },
+      {
+        .id = "artifact-digest-verification",
+        .status = "required",
+        .summary = "Runtime must verify artifact digests before cache activation.",
+      },
+      {
+        .id = "cache-namespace-allocation",
+        .status = "pending",
+        .summary = "Runtime must allocate cache namespaces before artifact acquisition.",
+      },
+      {
+        .id = "rollback-reference",
+        .status = "required",
+        .summary = "Runtime must record rollback references before artifacts can affect state.",
+      },
+    },
+    .required_preflight_count = 5,
+    .blocked_actions = {
+      "download artifacts before signed manifest verification",
+      "activate artifacts before digest verification",
+      "expose artifact cache paths to KDE",
+      "mutate host root during artifact manifest planning",
+    },
+    .blocked_action_count = 4,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .manifest_ready = false,
+    .signature_verified = false,
+    .acquisition_preflight_ready = false,
+    .download_enabled = false,
+    .install_enabled = false,
+    .network_request_created = false,
+    .artifacts_downloaded = false,
+    .host_root_modified = false,
+    .privileged_container_required = false,
+    .desktop_shell_command_exposed = false,
+    .backend_details_exposed = false,
+    .summary = "Compatibility artifact manifest is planned and waiting for acquisition preflight.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -670,4 +757,39 @@ xnix_runtime_install_readiness_allows_recipe_install(
   }
 
   return false;
+}
+
+size_t
+xnix_runtime_artifact_manifest_policy_count(void)
+{
+  return sizeof(artifact_manifest_policies) / sizeof(artifact_manifest_policies[0]);
+}
+
+const XnixRuntimeArtifactManifestPolicy *
+xnix_runtime_artifact_manifest_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_artifact_manifest_policy_count()) {
+    return NULL;
+  }
+
+  return &artifact_manifest_policies[index];
+}
+
+const XnixRuntimeArtifactManifestPolicy *
+xnix_runtime_find_artifact_manifest_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_artifact_manifest_policy_count(); index++) {
+    const XnixRuntimeArtifactManifestPolicy *policy =
+      xnix_runtime_artifact_manifest_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
 }

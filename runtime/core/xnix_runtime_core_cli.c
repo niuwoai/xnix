@@ -402,6 +402,172 @@ print_state_root_policy_for_application(
 }
 
 static void
+print_artifact_application(const XnixRuntimeApplication *application)
+{
+  fputs("{", stdout);
+  print_string_field("id", application->id);
+  fputs(",", stdout);
+  print_string_field("name", application->name);
+  fputs(",", stdout);
+  print_string_field("requested_mode", application->runtime_mode);
+  fputs("}", stdout);
+}
+
+static void
+print_artifact_groups(const XnixRuntimeArtifactManifestPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->artifact_group_count; index++) {
+    const XnixRuntimeArtifactGroup *group = &policy->artifact_groups[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", group->id);
+    fputs(",", stdout);
+    print_string_field("kind", group->kind);
+    fputs(",", stdout);
+    fputs("\"required\":", stdout);
+    print_bool(group->required);
+    fputs(",", stdout);
+    fputs("\"resolved\":", stdout);
+    print_bool(group->resolved);
+    fputs(",", stdout);
+    fputs("\"downloaded\":", stdout);
+    print_bool(group->downloaded);
+    fputs(",", stdout);
+    print_string_field("cache_namespace", group->cache_namespace);
+    fputs(",", stdout);
+    print_string_field("summary", group->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_artifact_required_preflight(const XnixRuntimeArtifactManifestPolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->required_preflight_count; index++) {
+    const XnixRuntimeArtifactPreflight *preflight = &policy->required_preflight[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", preflight->id);
+    fputs(",", stdout);
+    print_string_field("status", preflight->status);
+    fputs(",", stdout);
+    print_string_field("summary", preflight->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_artifact_manifest_policy_record(const XnixRuntimeArtifactManifestPolicy *policy)
+{
+  fputs("{", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  print_string_field("manifest_state", policy->manifest_state);
+  fputs(",", stdout);
+  fputs("\"manifest_ready\":", stdout);
+  print_bool(policy->manifest_ready);
+  fputs(",", stdout);
+  fputs("\"signature_verified\":", stdout);
+  print_bool(policy->signature_verified);
+  fputs(",", stdout);
+  fputs("\"download_enabled\":", stdout);
+  print_bool(policy->download_enabled);
+  fputs(",", stdout);
+  fputs("\"artifacts_downloaded\":", stdout);
+  print_bool(policy->artifacts_downloaded);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_artifact_manifest_policy_for_application(
+  const XnixRuntimeApplication *application,
+  const XnixRuntimeArtifactManifestPolicy *policy
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("manifest_type", "compatibility-artifact-manifest");
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_artifact_application(application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  print_string_field("manifest_state", policy->manifest_state);
+  fputs(",", stdout);
+  fputs("\"manifest_ready\":", stdout);
+  print_bool(policy->manifest_ready);
+  fputs(",", stdout);
+  fputs("\"signature_verified\":", stdout);
+  print_bool(policy->signature_verified);
+  fputs(",", stdout);
+  fputs("\"acquisition_preflight_ready\":", stdout);
+  print_bool(policy->acquisition_preflight_ready);
+  fputs(",", stdout);
+  fputs("\"download_enabled\":", stdout);
+  print_bool(policy->download_enabled);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"network_request_created\":", stdout);
+  print_bool(policy->network_request_created);
+  fputs(",", stdout);
+  fputs("\"artifacts_downloaded\":", stdout);
+  print_bool(policy->artifacts_downloaded);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"desktop_shell_command_exposed\":", stdout);
+  print_bool(policy->desktop_shell_command_exposed);
+  fputs(",", stdout);
+  fputs("\"artifact_groups\":", stdout);
+  print_artifact_groups(policy);
+  fputs(",", stdout);
+  fputs("\"required_preflight\":", stdout);
+  print_artifact_required_preflight(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -911,6 +1077,52 @@ print_install_readiness_policy(const char *application_id, const char *environme
 }
 
 static int
+print_artifact_manifest_policy_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("catalog_type", "artifact-manifest-policy");
+  fputs(",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  print_string_field("catalog_owner", "c");
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"host_root_modified\":false,", stdout);
+  fputs("\"policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_artifact_manifest_policy_count());
+  fputs("\"policies\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_artifact_manifest_policy_count(); index++) {
+    const XnixRuntimeArtifactManifestPolicy *policy =
+      xnix_runtime_artifact_manifest_policy_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_artifact_manifest_policy_record(policy);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_artifact_manifest_policy(const char *application_id)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+  const XnixRuntimeArtifactManifestPolicy *policy =
+    xnix_runtime_find_artifact_manifest_policy(application_id);
+
+  if (application == NULL || policy == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime artifact manifest policy catalog\n");
+    return 64;
+  }
+
+  print_artifact_manifest_policy_for_application(application, policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -971,6 +1183,9 @@ print_probe(void)
   fputs("\"install_readiness_policy_owner\":\"c\",", stdout);
   fputs("\"install_readiness_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_install_readiness_policy_count());
+  fputs("\"artifact_manifest_policy_owner\":\"c\",", stdout);
+  fputs("\"artifact_manifest_policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_artifact_manifest_policy_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -1024,7 +1239,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -1085,6 +1300,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "install-readiness-policy") == 0 && argc == 4) {
     return print_install_readiness_policy(argv[2], argv[3]);
+  }
+
+  if (strcmp(argv[1], "list-artifact-manifest-policies") == 0 && argc == 2) {
+    return print_artifact_manifest_policy_catalog();
+  }
+
+  if (strcmp(argv[1], "artifact-manifest-policy") == 0 && argc == 3) {
+    return print_artifact_manifest_policy(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {
