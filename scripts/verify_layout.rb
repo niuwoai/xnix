@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.92"
+EXPECTED_VERSION = "0.2.93"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -145,6 +145,7 @@ REQUIRED_FILES = %w[
   runtime/core/xnix_runtime_core_portal_request.inc
   runtime/core/xnix_runtime_core_ai_diagnostic_input.inc
   runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc
+  runtime/core/xnix_runtime_core_ai_repair_approval_gate.inc
   runtime/core/xnix_runtime_core_cli.c
   runtime/core/xnix_runtime_core_cli_action_queue.inc
   runtime/core/xnix_runtime_core_cli_action_review.inc
@@ -162,6 +163,7 @@ REQUIRED_FILES = %w[
   runtime/core/xnix_runtime_core_cli_portal_request.inc
   runtime/core/xnix_runtime_core_cli_ai_diagnostic_input.inc
   runtime/core/xnix_runtime_core_cli_ai_diagnostic_recommendation.inc
+  runtime/core/xnix_runtime_core_cli_ai_repair_approval_gate.inc
   runtime/core/xnix_runtime_core_cli_dispatch.inc
   runtime/recipes/registry.json
   runtime/recipes/org.xnix.sample.notepad.json
@@ -393,6 +395,8 @@ assert(ai_repair_gate_source.include?("xnix-ai-repair-approval-gate"), "AI repai
 end
 assert(ai_repair_gate_source.include?("\"repair_executed\" => false"), "AI repair approval gate must not execute repairs")
 assert(ai_repair_gate_source.include?("\"auto_execution_allowed\" => false"), "AI repair approval gate must not permit automatic repair execution")
+assert(ai_repair_gate_source.include?("\"c_runtime_backed\" => true"), "AI repair approval gate must expose C Runtime backing")
+assert(ai_repair_gate_source.include?("GetAIRepairApprovalGate"), "AI repair approval gate must expose the Runtime method")
 assert(ai_repair_gate_source.include?("\"backend_details_exposed\" => false"), "AI repair approval gate must hide backend details")
 
 c_runtime_core_header = read_project_file("runtime/core/xnix_runtime_core.h")
@@ -411,7 +415,8 @@ c_runtime_core_source = read_project_file("runtime/core/xnix_runtime_core.c") +
                         read_project_file("runtime/core/xnix_runtime_core_krunner_query.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_portal_request.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_input.inc") +
-                        read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc")
+                        read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc") +
+                        read_project_file("runtime/core/xnix_runtime_core_ai_repair_approval_gate.inc")
 c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_action_queue.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_action_review.inc") +
@@ -429,6 +434,7 @@ c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_portal_request.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_input.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_recommendation.inc") +
+                     read_project_file("runtime/core/xnix_runtime_core_cli_ai_repair_approval_gate.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_dispatch.inc")
 assert(c_runtime_core_header.include?("#define XNIX_RUNTIME_VERSION \"#{EXPECTED_VERSION}\""), "C Runtime core must expose #{EXPECTED_VERSION}")
 %w[XNIX_RUNTIME_BUS_NAME XNIX_RUNTIME_OBJECT_PATH XNIX_RUNTIME_INTERFACE XNIX_RUNTIME_WRITE_ERROR].each do |token|
@@ -440,11 +446,17 @@ end
 %w[XnixRuntimeAIDiagnosticRecommendation xnix_runtime_ai_diagnostic_recommendation].each do |token|
   assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
 end
+%w[XnixRuntimeAIRepairApprovalGate XnixRuntimeAIRepairRequiredGate xnix_runtime_ai_repair_approval_gate].each do |token|
+  assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
+end
 %w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot xnix_runtime_find_application org.xnix.sample.notepad application/x-xnix-txt xnix_runtime_select_engine_for_mode automatic-managed local-compatibility-engine isolated-compatibility-engine xnix_runtime_find_portal_policy org.freedesktop.portal.FileChooser org.freedesktop.portal.Camera remote-desktop selected-files xnix_runtime_portal_request_plan portal_request_method_for_operation handle_token permission_granted host_permission_changed OpenFile RequestClipboard AccessCamera xnix_runtime_find_snapshot_policy before-repair before-engine-change desktop_activation_receipts xnix_runtime_find_state_root_policy application-data runtime-metadata diagnostic-cache xnix_runtime_find_install_readiness_policy resolve-artifact-manifest verify-artifact-digests prepare-package-source allocate-application-state xnix_runtime_find_artifact_manifest_policy runtime-launch-metadata local-execution-artifacts isolated-environment-artifacts manifest-signature-verification artifact-digest-verification xnix_runtime_find_acquisition_preflight_policy package-source-ready signed-artifact-manifest runtime-cache-space network-policy-review rollback-marker xnix_runtime_find_package_source_policy os-managed-compatibility-packages runtime-managed-toolcache isolated-environment-template-catalog signed-source-verification source-policy-review runtime-cache-quota offline-fallback xnix_runtime_find_backend_binding_policy engine-package-source application-state-root portal-policy-review snapshot-baseline xnix_runtime_find_settings_policy run-mode resource-access devices snapshots settings_change_policies xnix_runtime_find_settings_change_policy validate-setting persist-runtime-setting service_binding_policy xnix_runtime_service_binding_policy dbus-service-activation live-dbus-owner live_owner_gate_policy xnix_runtime_live_owner_gate_policy production-recipe-trust owner_smoke_plan_policy xnix_runtime_owner_smoke_plan_policy validate-activation-files assert-stable-bus-name method_parity_manifest_policy xnix_runtime_method_parity_manifest_policy recipe_trust_policy xnix_runtime_recipe_trust_policy production_recipe_install_requirements xnix_runtime_compatibility_install_plan xnix_runtime_compatibility_action_queue xnix_runtime_compatibility_action_review_receipt xnix_runtime_compatibility_center_summary compatibility-center-summary known_issue_count repair_record_state backend_launch_enabled xnix_runtime_compatibility_run_plan xnix_runtime_desktop_activation_manifest xnix_runtime_kde_integration_status kde-integration-status standard-desktop-entry window-identity-and-restore xnix_runtime_desktop_entry_plan xnix_runtime_task_manager_identity_plan xnix_runtime_file_association_plan xnix_runtime_notification_plan xnix_runtime_tray_status_plan xnix_runtime_krunner_query_plan xnix_runtime_ai_diagnostic_input ai-diagnostic-input safe_for_ai_diagnostics desktop-activation desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan query_execution_enabled approval-required install-failed repair-applied mode-changed action_execution_enabled repair_execution_enabled settings_persistence_enabled live_backend_bridge_enabled bridge_configuration_persisted mimeapps.list applications:xnix-org.xnix.sample.notepad.desktop xnix-compat-open standard_desktop_entry launch_uses_runtime raw_windows_executable_exposed compatibility_storage_path_exposed pinning_allowed restore_allowed skip_taskbar show_in_switcher identity-only window_manager_policy_only portal_required_for_file_open overwrite_existing_mimeapps portal_policy_required snapshot_before_risky_change diagnostics_required execution_request_created review-install-readiness review-settings-change review-ai-repair verify-runtime-service review-portal-policy decision_recorded reviewed approved deferred rejected signed recipe validation is not enabled registry.digest registry.signature registry.development GetDesktopActivationManifest GetKDEIntegrationStatus GetDesktopEntryPlan GetTaskManagerIdentityPlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetCompatibilityCenterSummary GetPortalRequestPlan GetAIDiagnosticInput GetRuntimeMethodParityManifest GetRuntimeWriteGate].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
 assert(c_runtime_core_source.include?("read user documents"), "C Runtime core source must block AI user-document reads")
 %w[xnix_runtime_ai_diagnostic_recommendation ai-diagnostic-recommendation auto_execute approval_surface GetAIDiagnosticRecommendation].each do |token|
+  assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
+end
+%w[xnix_runtime_ai_repair_approval_gate ai-repair-approval-gate blocked-until-approval runtime-approval-token restore-point-preflight GetAIRepairApprovalGate].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
 %w[xnix_runtime_kwin_window_rule_plan kwin-window-rule identity-and-layout GetKWinWindowRulePlan].each do |token|
@@ -454,6 +466,9 @@ end
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[ai_diagnostic_recommendation_owner ai_diagnostic_recommendation_count ai-diagnostic-recommendation].each do |token|
+  assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
+end
+%w[ai_repair_approval_gate_owner ai_repair_required_gate_count ai-repair-approval-gate].each do |token|
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[kwin_window_rule_plan_owner kwin_window_rule_plan_count kwin-window-rule-plan].each do |token|

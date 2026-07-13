@@ -177,7 +177,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetAIRepairApprovalGate"
       [
-        "({'gate_type': <'ai-repair-approval-gate'>, 'gate_decision': <'blocked-until-approval'>, 'auto_execution_allowed': <false>, 'repair_executed': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'gate_type': <'ai-repair-approval-gate'>, 'runtime_method': <'GetAIRepairApprovalGate'>, 'c_runtime_backed': <true>, 'gate_decision': <'blocked-until-approval'>, 'required_gate_count': <3>, 'approval_required_count': <1>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'auto_execution_allowed': <false>, 'repair_executed': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -496,7 +496,14 @@ assert(!ai_recommendation["auto_execution_allowed"], "D-Bus client must parse re
 
 ai_gate = client.ai_repair_approval_gate("org.xnix.sample.notepad")
 assert(ai_gate["gate_type"] == "ai-repair-approval-gate", "D-Bus client must parse AI repair approval gates")
+assert(ai_gate["runtime_method"] == "GetAIRepairApprovalGate", "D-Bus client must parse AI repair approval Runtime methods")
+assert(ai_gate["c_runtime_backed"], "D-Bus client must parse AI repair approval C backing")
 assert(ai_gate["gate_decision"] == "blocked-until-approval", "D-Bus client must parse AI repair approval gate decisions")
+assert(ai_gate["required_gate_count"] == 3, "D-Bus client must parse AI repair required gate count")
+assert(ai_gate["approval_required_count"] == 1, "D-Bus client must parse AI repair approval action count")
+assert(ai_gate["safe_for_ai_diagnostics"], "D-Bus client must parse AI repair diagnostic safety")
+assert(!ai_gate["ai_provider_called"], "D-Bus client must parse AI repair provider false booleans")
+assert(!ai_gate["network_required"], "D-Bus client must parse AI repair network false booleans")
 assert(!ai_gate["auto_execution_allowed"], "D-Bus client must parse AI repair gate execution booleans")
 assert(!ai_gate["repair_executed"], "D-Bus client must parse AI repair execution false booleans")
 

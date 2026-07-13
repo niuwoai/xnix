@@ -773,7 +773,14 @@ build_ai_repair_approval_gate(const gchar *application_id, const gchar *issue, c
   g_variant_builder_add(&gate, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&gate, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&gate, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&gate, "{sv}", "runtime_method", g_variant_new_string("GetAIRepairApprovalGate"));
+  g_variant_builder_add(&gate, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&gate, "{sv}", "gate_decision", g_variant_new_string("blocked-until-approval"));
+  g_variant_builder_add(&gate, "{sv}", "required_gate_count", g_variant_new_int32(3));
+  g_variant_builder_add(&gate, "{sv}", "approval_required_count", g_variant_new_int32(1));
+  g_variant_builder_add(&gate, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&gate, "{sv}", "ai_provider_called", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&gate, "{sv}", "network_required", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "auto_execution_allowed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "repair_executed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));

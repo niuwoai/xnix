@@ -19,11 +19,13 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 gate = Xnix::Compatibility::AIRepairApprovalGate.new(recipe: recipe).to_h
 gate_ids = gate.fetch("required_gates").map { |item| item.fetch("id") }
 
-assert(gate["version"] == "0.2.92", "AI repair approval gate must expose the current version")
+assert(gate["version"] == "0.2.93", "AI repair approval gate must expose the current version")
 assert(gate["gate_type"] == "ai-repair-approval-gate", "AI repair approval gate must identify the gate type")
 assert(gate["recommendation_type"] == "ai-diagnostic-recommendation", "AI repair approval gate must reference recommendations")
 assert(gate["application"]["id"] == "org.xnix.sample.notepad", "AI repair approval gate must preserve the application id")
+assert(gate["runtime_method"] == "GetAIRepairApprovalGate", "AI repair approval gate must expose the Runtime method")
 assert(gate["runtime_owned"], "Runtime must own AI repair approval gates")
+assert(gate["c_runtime_backed"], "AI repair approval gate must expose C Runtime backing")
 assert(!gate["kde_policy_owner"], "KDE must not own AI repair approval policy")
 assert(!gate["ai_provider_called"], "AI repair approval gate must not call an AI provider")
 assert(!gate["network_required"], "AI repair approval gate must not require network access")

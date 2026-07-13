@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.93] - 2026-07-14
+
+### Added
+
+- Added C Runtime AI repair approval gate records and a CLI read method for review-first repair gates, required approval gates, approval-required actions, and blocked repair actions.
+- Added C Runtime probe ownership for AI repair approval gates so KDE can verify Runtime-owned repair gating without owning repair execution policy.
+
+### Changed
+
+- Marked AI repair approval gates as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping provider calls, network access, automatic execution, repair execution, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.92] - 2026-07-14
 
 ### Added

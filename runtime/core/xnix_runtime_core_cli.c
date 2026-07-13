@@ -2842,6 +2842,8 @@ print_probe(void)
   fputs("\"ai_diagnostic_signal_count\":3,", stdout);
   fputs("\"ai_diagnostic_recommendation_owner\":\"c\",", stdout);
   fputs("\"ai_diagnostic_recommendation_count\":3,", stdout);
+  fputs("\"ai_repair_approval_gate_owner\":\"c\",", stdout);
+  fputs("\"ai_repair_required_gate_count\":3,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2908,4 +2910,5 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_portal_request.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_input.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_recommendation.inc"
+#include "xnix_runtime_core_cli_ai_repair_approval_gate.inc"
 #include "xnix_runtime_core_cli_dispatch.inc"
