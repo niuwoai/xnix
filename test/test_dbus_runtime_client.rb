@@ -61,6 +61,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityAcquisitionPreflight"
+      [
+        "({'preflight_type': <'compatibility-acquisition-preflight'>, 'preflight_state': <'planned'>, 'acquisition_ready': <false>, 'download_enabled': <false>, 'install_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendBinding"
       [
         "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
@@ -162,6 +168,12 @@ assert(package_source["source_type"] == "compatibility-package-source", "D-Bus c
 assert(package_source["source_selection_state"] == "planned", "D-Bus client must parse package source state")
 assert(!package_source["package_source_ready"], "D-Bus client must parse package source readiness")
 assert(!package_source["install_enabled"], "D-Bus client must parse package install status")
+
+acquisition_preflight = client.acquisition_preflight("org.xnix.sample.notepad")
+assert(acquisition_preflight["preflight_type"] == "compatibility-acquisition-preflight", "D-Bus client must parse compatibility acquisition preflight")
+assert(acquisition_preflight["preflight_state"] == "planned", "D-Bus client must parse acquisition preflight state")
+assert(!acquisition_preflight["acquisition_ready"], "D-Bus client must parse acquisition readiness")
+assert(!acquisition_preflight["download_enabled"], "D-Bus client must parse download status")
 
 backend_binding = client.backend_binding("org.xnix.sample.notepad")
 assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")

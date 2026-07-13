@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.43", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.44", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -29,6 +29,7 @@ assert(model["summary"]["known_application_count"] == 1, "KDE center model must 
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
 assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
 assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
+assert(model["summary"]["pending_acquisition_preflight_count"] == 1, "KDE center model must summarize pending acquisition preflight")
 assert(model["summary"]["pending_package_source_count"] == 1, "KDE center model must summarize pending package sources")
 assert(model["summary"]["planned_state_root_count"] == 1, "KDE center model must summarize planned state roots")
 assert(model["summary"]["pending_backend_binding_count"] == 1, "KDE center model must summarize pending backend bindings")
@@ -50,6 +51,10 @@ assert(application["test_plan"]["plan_type"] == "compatibility-test", "KDE cente
 assert(application["test_plan"]["pending_step_count"] == 3, "KDE center model must expose pending test steps")
 assert(application["test_result"]["result_type"] == "compatibility-test-result", "KDE center model must expose test result summaries")
 assert(application["test_result"]["overall_status"] == "pending", "KDE center model must expose test result status")
+assert(application["acquisition_preflight"]["preflight_type"] == "compatibility-acquisition-preflight", "KDE center model must expose acquisition preflight summaries")
+assert(application["acquisition_preflight"]["preflight_state"] == "planned", "KDE center model must expose acquisition preflight state")
+assert(!application["acquisition_preflight"]["acquisition_ready"], "KDE center model must not claim acquisition readiness")
+assert(!application["acquisition_preflight"]["download_enabled"], "KDE center model must not enable downloads")
 assert(application["package_source"]["source_type"] == "compatibility-package-source", "KDE center model must expose package source summaries")
 assert(application["package_source"]["source_selection_state"] == "planned", "KDE center model must expose package source state")
 assert(!application["package_source"]["package_source_ready"], "KDE center model must not claim package source readiness")

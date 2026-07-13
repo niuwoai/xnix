@@ -7,6 +7,7 @@ require_relative "application_state_root"
 require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
+require_relative "compatibility_acquisition_preflight"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_package_source"
@@ -49,6 +50,7 @@ module Xnix
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
             "application_state_roots" => true,
+            "compatibility_acquisition_preflight" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
@@ -98,6 +100,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "package_source" => package_source_summary(recipe),
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
@@ -126,6 +129,11 @@ module Xnix
       def package_source(application_id)
         recipe = require_recipe(application_id)
         CompatibilityPackageSource.new(recipe: recipe).to_h
+      end
+
+      def acquisition_preflight(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityAcquisitionPreflight.new(recipe: recipe).to_h
       end
 
       def backend_binding(application_id)
@@ -193,6 +201,8 @@ module Xnix
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
           package_source(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityAcquisitionPreflight"
+          acquisition_preflight(required_parameter(method_name, parameters, 0))
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
@@ -353,6 +363,20 @@ module Xnix
         }
       end
 
+      def acquisition_preflight_summary(recipe)
+        preflight = CompatibilityAcquisitionPreflight.new(recipe: recipe).to_h
+        {
+          "preflight_type" => preflight.fetch("preflight_type"),
+          "selected_strategy" => preflight.fetch("selected_strategy"),
+          "preflight_state" => preflight.fetch("preflight_state"),
+          "acquisition_ready" => preflight.fetch("acquisition_ready"),
+          "download_enabled" => preflight.fetch("download_enabled"),
+          "install_enabled" => preflight.fetch("install_enabled"),
+          "check_count" => preflight.fetch("checks").length,
+          "summary" => preflight.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -460,6 +484,8 @@ module Xnix
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"
             write_json(runtime.package_source(require_argument(command)))
+          when "acquisition-preflight"
+            write_json(runtime.acquisition_preflight(require_argument(command)))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE

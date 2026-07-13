@@ -78,6 +78,16 @@ assert(package_source["source_type"] == "compatibility-package-source", "dispatc
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityAcquisitionPreflight",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityAcquisitionPreflight must exit successfully: #{stderr}")
+acquisition_preflight = JSON.parse(stdout)
+assert(acquisition_preflight["preflight_type"] == "compatibility-acquisition-preflight", "dispatch must route GetCompatibilityAcquisitionPreflight")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendBinding",
   JSON.generate(["org.xnix.sample.notepad"])
 )

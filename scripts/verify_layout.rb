@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.43"
+EXPECTED_VERSION = "0.2.44"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -26,6 +26,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/ai_diagnostic_recommendation.rb
   lib/xnix/compatibility/ai_repair_approval_gate.rb
   lib/xnix/compatibility/application_state_root.rb
+  lib/xnix/compatibility/compatibility_acquisition_preflight.rb
   lib/xnix/compatibility/compatibility_backend_binding.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_package_source.rb
@@ -65,6 +66,7 @@ REQUIRED_FILES = %w[
   bin/xnix-ai-diagnostic-input
   bin/xnix-ai-diagnostic-recommendation
   bin/xnix-ai-repair-approval-gate
+  bin/xnix-compat-acquisition-preflight
   bin/xnix-compat-state-root
   bin/xnix-compat-backend-binding
   bin/xnix-compatd
@@ -118,6 +120,7 @@ REQUIRED_FILES = %w[
   test/test_ai_diagnostic_recommendation.rb
   test/test_ai_repair_approval_gate.rb
   test/test_application_state_root.rb
+  test/test_compatibility_acquisition_preflight.rb
   test/test_compatibility_backend_binding.rb
   test/test_container.rb
   test/test_buildroot.rb
@@ -332,6 +335,19 @@ assert(application_state_root_source.include?("\"host_root_modified\" => false")
 assert(application_state_root_source.include?("\"user_documents_included\" => false"), "Application state root must exclude user documents")
 assert(application_state_root_source.include?("\"backend_details_exposed\" => false"), "Application state root must hide backend details")
 
+acquisition_preflight_source = read_project_file("lib/xnix/compatibility/compatibility_acquisition_preflight.rb")
+assert(acquisition_preflight_source.include?("xnix-compat-acquisition-preflight"), "Compatibility acquisition preflight must expose a CLI command")
+%w[compatibility-acquisition-preflight package-source-ready signed-artifact-manifest runtime-cache-space network-policy-review rollback-marker].each do |token|
+  assert(acquisition_preflight_source.include?(token), "Compatibility acquisition preflight must include #{token}")
+end
+assert(acquisition_preflight_source.include?("\"acquisition_ready\" => false"), "Compatibility acquisition preflight must not claim acquisition readiness")
+assert(acquisition_preflight_source.include?("\"download_enabled\" => false"), "Compatibility acquisition preflight must not enable downloads")
+assert(acquisition_preflight_source.include?("\"install_enabled\" => false"), "Compatibility acquisition preflight must not enable installation")
+assert(acquisition_preflight_source.include?("\"network_request_created\" => false"), "Compatibility acquisition preflight must not create network requests")
+assert(acquisition_preflight_source.include?("\"artifacts_downloaded\" => false"), "Compatibility acquisition preflight must not download artifacts")
+assert(acquisition_preflight_source.include?("\"host_root_modified\" => false"), "Compatibility acquisition preflight must not mutate the host root")
+assert(acquisition_preflight_source.include?("\"backend_details_exposed\" => false"), "Compatibility acquisition preflight must hide backend details")
+
 package_source_source = read_project_file("lib/xnix/compatibility/compatibility_package_source.rb")
 assert(package_source_source.include?("xnix-compat-package-source"), "Compatibility package source must expose a CLI command")
 %w[compatibility-package-source source_channels required_preflight signed_source_required runtime-cache offline-fallback].each do |token|
@@ -441,6 +457,7 @@ runtime_daemon_source = read_project_file("lib/xnix/compatibility/runtime_daemon
 assert(runtime_daemon_source.include?("RegistryBackedRecipeStore.for_path"), "Runtime daemon must use registry-backed recipe loading")
 assert(runtime_daemon_source.include?("\"recipe_trust\""), "Runtime daemon must expose recipe trust status")
 assert(runtime_daemon_source.include?("\"registry_backed_recipe_store\""), "Runtime daemon must expose registry-backed store capability")
+assert(runtime_daemon_source.include?("\"compatibility_acquisition_preflight\""), "Runtime daemon must expose compatibility acquisition preflight capability")
 assert(runtime_daemon_source.include?("\"compatibility_package_sources\""), "Runtime daemon must expose compatibility package source capability")
 assert(runtime_daemon_source.include?("\"compatibility_backend_binding\""), "Runtime daemon must expose compatibility backend binding capability")
 assert(runtime_daemon_source.include?("\"compatibility_test_planning\""), "Runtime daemon must expose compatibility test planning capability")
@@ -450,7 +467,7 @@ assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Run
 assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime daemon must expose AI repair approval gate capability")
 assert(runtime_daemon_source.include?("\"application_state_roots\""), "Runtime daemon must expose application state root capability")
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
-%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding].each do |method_name|
+%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -458,7 +475,7 @@ assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime d
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan state_root package_source backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding].each do |method_name|
+%w[engine_catalog run_plan state_root package_source acquisition_preflight backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

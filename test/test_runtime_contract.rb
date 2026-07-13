@@ -28,6 +28,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetRunPlan
   GetApplicationStateRoot
   GetCompatibilityPackageSource
+  GetCompatibilityAcquisitionPreflight
   GetBackendBinding
   GetRepairPlan
   GetTestPlan

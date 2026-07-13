@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "acquisition_preflight" => acquisition_preflight_summary(diagnostics.fetch("acquisition_preflight", nil)),
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
@@ -170,6 +171,21 @@ module Xnix
         }
       end
 
+      def acquisition_preflight_summary(preflight)
+        return nil unless preflight
+
+        {
+          "preflight_type" => preflight.fetch("preflight_type"),
+          "selected_strategy" => preflight.fetch("selected_strategy"),
+          "preflight_state" => preflight.fetch("preflight_state"),
+          "acquisition_ready" => preflight.fetch("acquisition_ready"),
+          "download_enabled" => preflight.fetch("download_enabled"),
+          "install_enabled" => preflight.fetch("install_enabled"),
+          "check_count" => preflight.fetch("check_count"),
+          "summary" => preflight.fetch("summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(ai_input)
         return nil unless ai_input
 
@@ -233,6 +249,7 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "pending_acquisition_preflight_count" => applications.count { |application| !section(application, "acquisition_preflight").fetch("acquisition_ready", false) },
           "pending_package_source_count" => applications.count { |application| !section(application, "package_source").fetch("package_source_ready", false) },
           "planned_state_root_count" => applications.count { |application| section(application, "state_root").fetch("allocation_state", nil) == "planned" },
           "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },

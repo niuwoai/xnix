@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.44] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-acquisition-preflight`, a Runtime-owned acquisition preflight model for package-source readiness, signed artifact manifests, cache capacity, network policy review, and rollback markers without downloading artifacts or mutating the host root.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for acquisition preflight status.
+
+### Changed
+
+- Extended Runtime and KDE read models so acquisition readiness is visible as a first-class Compatibility Center signal before package download, installation, or backend launch is enabled.
+
 ## [0.2.43] - 2026-07-13
 
 ### Added
