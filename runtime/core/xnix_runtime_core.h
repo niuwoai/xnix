@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.72"
+#define XNIX_RUNTIME_VERSION "0.2.73"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -489,6 +489,34 @@ typedef struct {
   const char *summary;
 } XnixRuntimeMethodParityManifestPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *message;
+} XnixRuntimeRecipeTrustCheck;
+
+typedef struct {
+  const char *decision;
+  size_t recipe_count;
+  XnixRuntimeRecipeTrustCheck checks[3];
+  size_t check_count;
+  const char *blocking_reasons[3];
+  size_t blocking_reason_count;
+  const char *next_requirements[3];
+  size_t next_requirement_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool digest_verified;
+  bool signed_recipe_validation;
+  bool development_registry;
+  bool production_trusted;
+  bool development_staging_allowed;
+  bool production_install_allowed;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeRecipeTrustPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -558,5 +586,6 @@ const XnixRuntimeServiceBindingPolicy *xnix_runtime_service_binding_policy(void)
 const XnixRuntimeLiveOwnerGatePolicy *xnix_runtime_live_owner_gate_policy(void);
 const XnixRuntimeOwnerSmokePlanPolicy *xnix_runtime_owner_smoke_plan_policy(void);
 const XnixRuntimeMethodParityManifestPolicy *xnix_runtime_method_parity_manifest_policy(void);
+const XnixRuntimeRecipeTrustPolicy *xnix_runtime_recipe_trust_policy(void);
 
 #endif

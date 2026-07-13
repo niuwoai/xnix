@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.73] - 2026-07-14
+
+### Added
+
+- Added C Runtime recipe trust policy records and a CLI read method for reporting development-only registry trust, signature readiness, and production install blocking.
+- Added C Runtime recipe trust tests that verify digest checks, pending signature validation, development registry warnings, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first recipe trust policy layer while keeping production recipe trust and production install disabled.
+
 ## [0.2.72] - 2026-07-14
 
 ### Added

@@ -1063,6 +1063,51 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
   .summary = "Runtime read-only D-Bus method parity is ready for owner smoke.",
 };
 
+static const XnixRuntimeRecipeTrustPolicy recipe_trust_policy = {
+  .decision = "development-only",
+  .recipe_count = 1,
+  .checks = {
+    {
+      .id = "registry.digest",
+      .status = "pass",
+      .message = "Recipe digests are verified against registry metadata.",
+    },
+    {
+      .id = "registry.signature",
+      .status = "pending",
+      .message = "Production signed recipe validation is required before external recipes are trusted.",
+    },
+    {
+      .id = "registry.development",
+      .status = "warn",
+      .message = "Development-only recipes are allowed for local testing but not for production trust.",
+    },
+  },
+  .check_count = 3,
+  .blocking_reasons = {
+    "production signed recipe validation is not enabled",
+    "registry contains development-only recipes",
+  },
+  .blocking_reason_count = 2,
+  .next_requirements = {
+    "Add production trust roots for recipe signatures.",
+    "Require verified signatures before accepting external recipe registries.",
+    "Bind recipe trust decisions to install and activation requests.",
+  },
+  .next_requirement_count = 3,
+  .runtime_owned = true,
+  .kde_policy_owner = false,
+  .digest_verified = true,
+  .signed_recipe_validation = false,
+  .development_registry = true,
+  .production_trusted = false,
+  .development_staging_allowed = true,
+  .production_install_allowed = false,
+  .host_root_modified = false,
+  .backend_details_exposed = false,
+  .summary = "Recipes are verified for local development only.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1625,4 +1670,10 @@ const XnixRuntimeMethodParityManifestPolicy *
 xnix_runtime_method_parity_manifest_policy(void)
 {
   return &method_parity_manifest_policy;
+}
+
+const XnixRuntimeRecipeTrustPolicy *
+xnix_runtime_recipe_trust_policy(void)
+{
+  return &recipe_trust_policy;
 }
