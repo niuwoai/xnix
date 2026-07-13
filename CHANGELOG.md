@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.76] - 2026-07-14
+
+### Added
+
+- Added C Runtime Compatibility Center action queue records and a CLI read method for KDE task-card planning.
+- Added C Runtime action queue tests that verify action ordering, review counts, disabled execution, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first Compatibility Center action queue layer while keeping KDE limited to display and review intent.
+
 ## [0.2.75] - 2026-07-14
 
 ### Added

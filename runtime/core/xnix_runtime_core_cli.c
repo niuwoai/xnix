@@ -2810,6 +2810,8 @@ print_probe(void)
   fputs("\"recipe_install_gate_count\":1,", stdout);
   fputs("\"compatibility_install_plan_owner\":\"c\",", stdout);
   fputs("\"compatibility_install_plan_count\":1,", stdout);
+  fputs("\"compatibility_action_queue_owner\":\"c\",", stdout);
+  fputs("\"compatibility_action_queue_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2860,4 +2862,5 @@ print_write_gate(const char *method_name)
   return 0;
 }
 
+#include "xnix_runtime_core_cli_action_queue.inc"
 #include "xnix_runtime_core_cli_dispatch.inc"

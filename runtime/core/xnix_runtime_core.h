@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.75"
+#define XNIX_RUNTIME_VERSION "0.2.76"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -554,6 +554,39 @@ typedef struct {
   bool kde_policy_owner;
 } XnixRuntimeCompatibilityInstallPlan;
 
+typedef struct {
+  const char *id;
+  const char *source_type;
+  const char *status;
+  const char *priority;
+  const char *title;
+  const char *summary;
+  const char *runtime_gate;
+  const char *next_step;
+  bool user_review_required;
+  bool execution_enabled;
+  bool backend_details_exposed;
+} XnixRuntimeCompatibilityAction;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  XnixRuntimeCompatibilityAction actions[5];
+  size_t action_count;
+  size_t pending_action_count;
+  size_t user_review_required_count;
+  const char *blocked_actions[6];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool execution_enabled;
+  bool repair_execution_enabled;
+  bool settings_persistence_enabled;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityActionQueue;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -633,6 +666,10 @@ bool xnix_runtime_compatibility_install_plan(
   const char *application_id,
   const char *environment,
   XnixRuntimeCompatibilityInstallPlan *plan
+);
+bool xnix_runtime_compatibility_action_queue(
+  const char *application_id,
+  XnixRuntimeCompatibilityActionQueue *queue
 );
 
 #endif

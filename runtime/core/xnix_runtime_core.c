@@ -1821,3 +1821,148 @@ xnix_runtime_compatibility_install_plan(
   plan->kde_policy_owner = false;
   return true;
 }
+
+static XnixRuntimeCompatibilityAction
+compatibility_action(
+  const char *id,
+  const char *source_type,
+  const char *status,
+  const char *priority,
+  const char *title,
+  const char *summary,
+  bool user_review_required,
+  const char *runtime_gate,
+  const char *next_step
+)
+{
+  XnixRuntimeCompatibilityAction action;
+
+  action.id = id;
+  action.source_type = source_type;
+  action.status = status;
+  action.priority = priority;
+  action.title = title;
+  action.summary = summary;
+  action.runtime_gate = runtime_gate;
+  action.next_step = next_step;
+  action.user_review_required = user_review_required;
+  action.execution_enabled = false;
+  action.backend_details_exposed = false;
+
+  return action;
+}
+
+bool
+xnix_runtime_compatibility_action_queue(
+  const char *application_id,
+  XnixRuntimeCompatibilityActionQueue *queue
+)
+{
+  const XnixRuntimeApplication *application = NULL;
+  const XnixRuntimeInstallReadinessPolicy *install_readiness = NULL;
+  const XnixRuntimeSettingsChangePolicy *settings_change = NULL;
+  const XnixRuntimeServiceBindingPolicy *service_binding = NULL;
+  const XnixRuntimePortalPolicy *portal_policy = NULL;
+
+  if (application_id == NULL || queue == NULL) {
+    return false;
+  }
+
+  application = xnix_runtime_find_application(application_id);
+  install_readiness = xnix_runtime_find_install_readiness_policy(application_id);
+  settings_change = xnix_runtime_find_settings_change_policy(application_id);
+  service_binding = xnix_runtime_service_binding_policy();
+  portal_policy = xnix_runtime_find_portal_policy("file-open");
+
+  if (application == NULL || install_readiness == NULL ||
+      settings_change == NULL || service_binding == NULL ||
+      portal_policy == NULL) {
+    return false;
+  }
+
+  queue->application = application;
+  queue->actions[0] = compatibility_action(
+    "review-install-readiness",
+    "compatibility-install-plan",
+    install_readiness->install_ready ? "pass" : "blocked",
+    "high",
+    "Review install readiness",
+    install_readiness->summary,
+    false,
+    "install-plan-readiness",
+    "Wait for signed artifacts, package source readiness, state allocation, and recipe install gate approval."
+  );
+  queue->actions[1] = compatibility_action(
+    "review-settings-change",
+    "compatibility-settings-change-plan",
+    settings_change->apply_enabled ? "pass" : "review-required",
+    "medium",
+    "Review compatibility settings change",
+    settings_change->summary,
+    settings_change->user_confirmation_required,
+    "runtime-settings-persistence",
+    "Keep the change pending until Runtime persistence support and Portal policy review are available."
+  );
+  queue->actions[2] = compatibility_action(
+    "review-ai-repair",
+    "ai-repair-approval-gate",
+    "approval-required",
+    "high",
+    "Review AI repair recommendation",
+    "AI repair recommendations are blocked from execution until Runtime approval gates pass.",
+    true,
+    "ai-repair-approval",
+    "Require Compatibility Center review, Runtime approval, and restore-point preflight before repair execution."
+  );
+  queue->actions[3] = compatibility_action(
+    "verify-runtime-service",
+    "runtime-service-binding",
+    service_binding->live_dbus_owner_ready ? "pass" : "pending",
+    "medium",
+    "Verify Runtime service ownership",
+    service_binding->summary,
+    false,
+    "live-dbus-owner",
+    "Keep using the session-bus smoke adapter until production D-Bus ownership is enabled."
+  );
+  queue->actions[4] = compatibility_action(
+    "review-portal-policy",
+    "portal-access-policy",
+    portal_policy->portal_required ? "review-required" : "pass",
+    "medium",
+    "Review desktop resource policy",
+    portal_policy->summary,
+    portal_policy->user_mediation_required,
+    "portal-policy-review",
+    "Use XDG Desktop Portal approval before granting file access to compatibility applications."
+  );
+  queue->action_count = 5;
+  queue->pending_action_count = 0;
+  queue->user_review_required_count = 0;
+  for (size_t index = 0; index < queue->action_count; index++) {
+    if (strcmp(queue->actions[index].status, "pass") != 0) {
+      queue->pending_action_count++;
+    }
+    if (queue->actions[index].user_review_required) {
+      queue->user_review_required_count++;
+    }
+  }
+  queue->blocked_actions[0] = "execute queued actions from KDE without Runtime approval";
+  queue->blocked_actions[1] = "persist settings while action queue execution is disabled";
+  queue->blocked_actions[2] = "start compatibility backends from the Compatibility Center";
+  queue->blocked_actions[3] = "grant desktop resources without XDG Desktop Portal review";
+  queue->blocked_actions[4] = "mutate the host root from Compatibility Center actions";
+  queue->blocked_actions[5] = "expose backend implementation details in action cards";
+  queue->blocked_action_count = 6;
+  queue->runtime_owned = true;
+  queue->kde_policy_owner = false;
+  queue->execution_enabled = false;
+  queue->repair_execution_enabled = false;
+  queue->settings_persistence_enabled = false;
+  queue->host_root_modified = false;
+  queue->network_required = false;
+  queue->backend_details_exposed = false;
+  queue->summary = "Compatibility Center actions are queued for review and cannot execute until Runtime gates are implemented.";
+
+  return true;
+}

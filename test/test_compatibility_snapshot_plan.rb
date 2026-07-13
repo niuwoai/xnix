@@ -21,7 +21,7 @@ Xnix::Compatibility::CompatibilitySnapshotPlan::REASONS.keys.each do |reason|
     reason: reason
   ).to_h
 
-  assert(plan["version"] == "0.2.75", "compatibility snapshot plan must expose the current version")
+  assert(plan["version"] == "0.2.76", "compatibility snapshot plan must expose the current version")
   assert(plan["plan_type"] == "compatibility-snapshot", "compatibility snapshot plan must identify the model type")
   assert(plan["application_id"] == "org.xnix.sample.notepad", "compatibility snapshot plan must preserve the application id")
   assert(plan["reason"] == reason, "compatibility snapshot plan must preserve the reason")
