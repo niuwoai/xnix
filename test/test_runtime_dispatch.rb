@@ -88,6 +88,16 @@ assert(acquisition_preflight["preflight_type"] == "compatibility-acquisition-pre
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityArtifactManifest",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityArtifactManifest must exit successfully: #{stderr}")
+artifact_manifest = JSON.parse(stdout)
+assert(artifact_manifest["manifest_type"] == "compatibility-artifact-manifest", "dispatch must route GetCompatibilityArtifactManifest")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendBinding",
   JSON.generate(["org.xnix.sample.notepad"])
 )

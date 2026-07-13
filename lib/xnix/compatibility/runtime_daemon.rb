@@ -8,6 +8,7 @@ require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
 require_relative "compatibility_acquisition_preflight"
+require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_package_source"
@@ -51,6 +52,7 @@ module Xnix
             "application_listing" => true,
             "application_state_roots" => true,
             "compatibility_acquisition_preflight" => true,
+            "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
@@ -101,6 +103,7 @@ module Xnix
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
+          "artifact_manifest" => artifact_manifest_summary(recipe),
           "package_source" => package_source_summary(recipe),
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
@@ -134,6 +137,11 @@ module Xnix
       def acquisition_preflight(application_id)
         recipe = require_recipe(application_id)
         CompatibilityAcquisitionPreflight.new(recipe: recipe).to_h
+      end
+
+      def artifact_manifest(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityArtifactManifest.new(recipe: recipe).to_h
       end
 
       def backend_binding(application_id)
@@ -203,6 +211,8 @@ module Xnix
           package_source(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityAcquisitionPreflight"
           acquisition_preflight(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityArtifactManifest"
+          artifact_manifest(required_parameter(method_name, parameters, 0))
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
@@ -377,6 +387,20 @@ module Xnix
         }
       end
 
+      def artifact_manifest_summary(recipe)
+        manifest = CompatibilityArtifactManifest.new(recipe: recipe).to_h
+        {
+          "manifest_type" => manifest.fetch("manifest_type"),
+          "selected_strategy" => manifest.fetch("selected_strategy"),
+          "manifest_state" => manifest.fetch("manifest_state"),
+          "manifest_ready" => manifest.fetch("manifest_ready"),
+          "signature_verified" => manifest.fetch("signature_verified"),
+          "download_enabled" => manifest.fetch("download_enabled"),
+          "artifact_group_count" => manifest.fetch("artifact_groups").length,
+          "summary" => manifest.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -486,6 +510,8 @@ module Xnix
             write_json(runtime.package_source(require_argument(command)))
           when "acquisition-preflight"
             write_json(runtime.acquisition_preflight(require_argument(command)))
+          when "artifact-manifest"
+            write_json(runtime.artifact_manifest(require_argument(command)))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE

@@ -67,6 +67,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityArtifactManifest"
+      [
+        "({'manifest_type': <'compatibility-artifact-manifest'>, 'manifest_state': <'planned'>, 'manifest_ready': <false>, 'signature_verified': <false>, 'download_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendBinding"
       [
         "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
@@ -174,6 +180,13 @@ assert(acquisition_preflight["preflight_type"] == "compatibility-acquisition-pre
 assert(acquisition_preflight["preflight_state"] == "planned", "D-Bus client must parse acquisition preflight state")
 assert(!acquisition_preflight["acquisition_ready"], "D-Bus client must parse acquisition readiness")
 assert(!acquisition_preflight["download_enabled"], "D-Bus client must parse download status")
+
+artifact_manifest = client.artifact_manifest("org.xnix.sample.notepad")
+assert(artifact_manifest["manifest_type"] == "compatibility-artifact-manifest", "D-Bus client must parse compatibility artifact manifests")
+assert(artifact_manifest["manifest_state"] == "planned", "D-Bus client must parse artifact manifest state")
+assert(!artifact_manifest["manifest_ready"], "D-Bus client must parse artifact manifest readiness")
+assert(!artifact_manifest["signature_verified"], "D-Bus client must parse artifact manifest signature status")
+assert(!artifact_manifest["download_enabled"], "D-Bus client must parse artifact download status")
 
 backend_binding = client.backend_binding("org.xnix.sample.notepad")
 assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")

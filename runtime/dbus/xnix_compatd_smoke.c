@@ -52,6 +52,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='preflight' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityArtifactManifest'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='manifest' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendBinding'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
@@ -221,6 +225,24 @@ build_compatibility_acquisition_preflight(const gchar *application_id)
   g_variant_builder_add(&preflight, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&preflight);
+}
+
+static GVariant *
+build_compatibility_artifact_manifest(const gchar *application_id)
+{
+  GVariantBuilder manifest;
+
+  g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("compatibility-artifact-manifest"));
+  g_variant_builder_add(&manifest, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&manifest, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&manifest, "{sv}", "manifest_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&manifest, "{sv}", "manifest_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "signature_verified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "download_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&manifest);
 }
 
 static GVariant *
@@ -492,6 +514,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_compatibility_acquisition_preflight(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityArtifactManifest") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_compatibility_artifact_manifest(application_id)));
     return;
   }
 

@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/compatibility_artifact_manifest"
+
+exit Xnix::Compatibility::CompatibilityArtifactManifest::CLI.new(ARGV).run

@@ -49,6 +49,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="preflight" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityArtifactManifest">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="manifest" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetBackendBinding">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="binding" type="a{sv}" direction="out"/>

@@ -69,6 +69,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityAcquisitionPreflight", application_id))
       end
 
+      def artifact_manifest(application_id)
+        parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
+      end
+
       def backend_binding(application_id)
         parse_dictionary(call("GetBackendBinding", application_id))
       end

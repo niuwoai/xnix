@@ -71,6 +71,7 @@ module Xnix
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
           "acquisition_preflight" => acquisition_preflight_summary(diagnostics.fetch("acquisition_preflight", nil)),
+          "artifact_manifest" => artifact_manifest_summary(diagnostics.fetch("artifact_manifest", nil)),
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
@@ -186,6 +187,21 @@ module Xnix
         }
       end
 
+      def artifact_manifest_summary(manifest)
+        return nil unless manifest
+
+        {
+          "manifest_type" => manifest.fetch("manifest_type"),
+          "selected_strategy" => manifest.fetch("selected_strategy"),
+          "manifest_state" => manifest.fetch("manifest_state"),
+          "manifest_ready" => manifest.fetch("manifest_ready"),
+          "signature_verified" => manifest.fetch("signature_verified"),
+          "download_enabled" => manifest.fetch("download_enabled"),
+          "artifact_group_count" => manifest.fetch("artifact_group_count"),
+          "summary" => manifest.fetch("summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(ai_input)
         return nil unless ai_input
 
@@ -250,6 +266,7 @@ module Xnix
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
           "pending_acquisition_preflight_count" => applications.count { |application| !section(application, "acquisition_preflight").fetch("acquisition_ready", false) },
+          "pending_artifact_manifest_count" => applications.count { |application| !section(application, "artifact_manifest").fetch("manifest_ready", false) },
           "pending_package_source_count" => applications.count { |application| !section(application, "package_source").fetch("package_source_ready", false) },
           "planned_state_root_count" => applications.count { |application| section(application, "state_root").fetch("allocation_state", nil) == "planned" },
           "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },

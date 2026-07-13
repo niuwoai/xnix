@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.45] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-artifact-manifest`, a Runtime-owned compatibility artifact manifest model for signed manifest readiness, artifact groups, digest verification, cache namespaces, and rollback references without downloading artifacts or exposing cache paths.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for artifact manifest status.
+
+### Changed
+
+- Extended Runtime and KDE read models so artifact manifest readiness is visible as a first-class Compatibility Center signal before artifact download, installation, or backend launch is enabled.
+
 ## [0.2.44] - 2026-07-13
 
 ### Added
