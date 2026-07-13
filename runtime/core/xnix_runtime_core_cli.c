@@ -699,6 +699,178 @@ print_acquisition_preflight_policy_for_application(
 }
 
 static void
+print_package_source_application(const XnixRuntimeApplication *application)
+{
+  fputs("{", stdout);
+  print_string_field("id", application->id);
+  fputs(",", stdout);
+  print_string_field("name", application->name);
+  fputs(",", stdout);
+  print_string_field("requested_mode", application->runtime_mode);
+  fputs("}", stdout);
+}
+
+static void
+print_package_source_policy_object(const XnixRuntimePackageSourcePolicy *policy)
+{
+  fputs("{", stdout);
+  fputs("\"signed_source_required\":", stdout);
+  print_bool(policy->signed_source_required);
+  fputs(",", stdout);
+  fputs("\"runtime_cache_required\":", stdout);
+  print_bool(policy->runtime_cache_required);
+  fputs(",", stdout);
+  fputs("\"direct_desktop_install_allowed\":", stdout);
+  print_bool(policy->direct_desktop_install_allowed);
+  fputs(",", stdout);
+  fputs("\"user_visible_backend_names\":", stdout);
+  print_bool(policy->user_visible_backend_names);
+  fputs(",", stdout);
+  fputs("\"host_package_manager_invoked\":", stdout);
+  print_bool(policy->host_package_manager_invoked);
+  fputs("}", stdout);
+}
+
+static void
+print_package_source_channels(const XnixRuntimePackageSourcePolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->source_channel_count; index++) {
+    const XnixRuntimePackageSourceChannel *channel = &policy->source_channels[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", channel->id);
+    fputs(",", stdout);
+    print_string_field("kind", channel->kind);
+    fputs(",", stdout);
+    fputs("\"runtime_owned\":", stdout);
+    print_bool(channel->runtime_owned);
+    fputs(",", stdout);
+    print_string_field("selection_state", channel->selection_state);
+    fputs(",", stdout);
+    fputs("\"supported_strategies\":", stdout);
+    print_string_array(channel->supported_strategies, channel->supported_strategy_count);
+    fputs(",", stdout);
+    print_string_field("summary", channel->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_package_source_required_preflight(const XnixRuntimePackageSourcePolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->required_preflight_count; index++) {
+    const XnixRuntimePackageSourcePreflight *preflight = &policy->required_preflight[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", preflight->id);
+    fputs(",", stdout);
+    print_string_field("status", preflight->status);
+    fputs(",", stdout);
+    print_string_field("summary", preflight->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_package_source_policy_record(const XnixRuntimePackageSourcePolicy *policy)
+{
+  fputs("{", stdout);
+  print_string_field("application_id", policy->application_id);
+  fputs(",", stdout);
+  print_string_field("source_selection_state", policy->source_selection_state);
+  fputs(",", stdout);
+  fputs("\"package_source_ready\":", stdout);
+  print_bool(policy->package_source_ready);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"network_required_for_planning\":", stdout);
+  print_bool(policy->network_required_for_planning);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_package_source_policy_for_application(
+  const XnixRuntimeApplication *application,
+  const XnixRuntimePackageSourcePolicy *policy
+)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("source_type", "compatibility-package-source");
+  fputs(",", stdout);
+  fputs("\"application\":", stdout);
+  print_package_source_application(application);
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  print_string_field("selected_strategy", policy->selected_strategy);
+  fputs(",", stdout);
+  print_string_field("source_selection_state", policy->source_selection_state);
+  fputs(",", stdout);
+  fputs("\"package_source_ready\":", stdout);
+  print_bool(policy->package_source_ready);
+  fputs(",", stdout);
+  fputs("\"install_enabled\":", stdout);
+  print_bool(policy->install_enabled);
+  fputs(",", stdout);
+  fputs("\"network_required_for_planning\":", stdout);
+  print_bool(policy->network_required_for_planning);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"desktop_shell_command_exposed\":", stdout);
+  print_bool(policy->desktop_shell_command_exposed);
+  fputs(",", stdout);
+  fputs("\"source_policy\":", stdout);
+  print_package_source_policy_object(policy);
+  fputs(",", stdout);
+  fputs("\"source_channels\":", stdout);
+  print_package_source_channels(policy);
+  fputs(",", stdout);
+  fputs("\"required_preflight\":", stdout);
+  print_package_source_required_preflight(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_actions\":", stdout);
+  print_string_array(policy->blocked_actions, policy->blocked_action_count);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -1300,6 +1472,52 @@ print_acquisition_preflight_policy(const char *application_id)
 }
 
 static int
+print_package_source_policy_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("catalog_type", "package-source-policy");
+  fputs(",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  print_string_field("catalog_owner", "c");
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"host_root_modified\":false,", stdout);
+  fputs("\"policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_package_source_policy_count());
+  fputs("\"policies\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_package_source_policy_count(); index++) {
+    const XnixRuntimePackageSourcePolicy *policy =
+      xnix_runtime_package_source_policy_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_package_source_policy_record(policy);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_package_source_policy(const char *application_id)
+{
+  const XnixRuntimeApplication *application = xnix_runtime_find_application(application_id);
+  const XnixRuntimePackageSourcePolicy *policy =
+    xnix_runtime_find_package_source_policy(application_id);
+
+  if (application == NULL || policy == NULL) {
+    fprintf(stderr, "xnix-runtime-core: application is not registered in the C Runtime package source policy catalog\n");
+    return 64;
+  }
+
+  print_package_source_policy_for_application(application, policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -1366,6 +1584,9 @@ print_probe(void)
   fputs("\"acquisition_preflight_policy_owner\":\"c\",", stdout);
   fputs("\"acquisition_preflight_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_acquisition_preflight_policy_count());
+  fputs("\"package_source_policy_owner\":\"c\",", stdout);
+  fputs("\"package_source_policy_count\":", stdout);
+  printf("%zu,", xnix_runtime_package_source_policy_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -1419,7 +1640,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -1496,6 +1717,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "acquisition-preflight-policy") == 0 && argc == 3) {
     return print_acquisition_preflight_policy(argv[2]);
+  }
+
+  if (strcmp(argv[1], "list-package-source-policies") == 0 && argc == 2) {
+    return print_package_source_policy_catalog();
+  }
+
+  if (strcmp(argv[1], "package-source-policy") == 0 && argc == 3) {
+    return print_package_source_policy(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

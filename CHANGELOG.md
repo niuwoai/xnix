@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.65] - 2026-07-13
+
+### Added
+
+- Added C Runtime package source policy records and CLI read methods for listing package-source gates and evaluating per-application source selection readiness.
+- Added C Runtime package source tests that verify source channels, required preflight, signed-source policy, blocked package-manager command exposure, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility package source layer while keeping package installation, host package manager invocation, network planning requirements, and host-root mutation disabled.
+
 ## [0.2.64] - 2026-07-13
 
 ### Added

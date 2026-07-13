@@ -485,6 +485,97 @@ static const XnixRuntimeAcquisitionPreflightPolicy acquisition_preflight_policie
   },
 };
 
+static const XnixRuntimePackageSourcePolicy package_source_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .source_selection_state = "planned",
+    .selected_strategy = "automatic-managed",
+    .source_channels = {
+      {
+        .id = "os-managed-compatibility-packages",
+        .kind = "distribution-packages",
+        .selection_state = "planned",
+        .supported_strategies = {
+          "local-compatibility-engine",
+        },
+        .supported_strategy_count = 1,
+        .runtime_owned = true,
+        .summary = "Distribution-provided compatibility packages can be selected only through Runtime policy.",
+      },
+      {
+        .id = "runtime-managed-toolcache",
+        .kind = "runtime-cache",
+        .selection_state = "planned",
+        .supported_strategies = {
+          "automatic-managed",
+          "local-compatibility-engine",
+          "isolated-compatibility-engine",
+        },
+        .supported_strategy_count = 3,
+        .runtime_owned = true,
+        .summary = "Runtime-managed tool cache keeps package selection outside desktop shell code.",
+      },
+      {
+        .id = "isolated-environment-template-catalog",
+        .kind = "template-catalog",
+        .selection_state = "planned",
+        .supported_strategies = {
+          "isolated-compatibility-engine",
+        },
+        .supported_strategy_count = 1,
+        .runtime_owned = true,
+        .summary = "Isolated environment templates remain Runtime-owned and are not launched during planning.",
+      },
+    },
+    .source_channel_count = 3,
+    .required_preflight = {
+      {
+        .id = "signed-source-verification",
+        .status = "required",
+        .summary = "Runtime must verify a signed source before package installation is enabled.",
+      },
+      {
+        .id = "source-policy-review",
+        .status = "pending",
+        .summary = "Runtime policy must select the package source before launch binding.",
+      },
+      {
+        .id = "runtime-cache-quota",
+        .status = "pending",
+        .summary = "Runtime cache quota must be checked before package acquisition.",
+      },
+      {
+        .id = "offline-fallback",
+        .status = "pending",
+        .summary = "Runtime must define the offline behavior before package acquisition.",
+      },
+    },
+    .required_preflight_count = 4,
+    .blocked_actions = {
+      "install compatibility packages without Runtime source selection",
+      "expose package manager commands to KDE",
+      "use unsigned package sources",
+      "mutate the host root during package-source planning",
+    },
+    .blocked_action_count = 4,
+    .signed_source_required = true,
+    .runtime_cache_required = true,
+    .direct_desktop_install_allowed = false,
+    .user_visible_backend_names = false,
+    .host_package_manager_invoked = false,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .package_source_ready = false,
+    .install_enabled = false,
+    .network_required_for_planning = false,
+    .host_root_modified = false,
+    .privileged_container_required = false,
+    .desktop_shell_command_exposed = false,
+    .backend_details_exposed = false,
+    .summary = "Compatibility package source selection is planned and Runtime-owned.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -877,6 +968,41 @@ xnix_runtime_find_acquisition_preflight_policy(const char *application_id)
   for (size_t index = 0; index < xnix_runtime_acquisition_preflight_policy_count(); index++) {
     const XnixRuntimeAcquisitionPreflightPolicy *policy =
       xnix_runtime_acquisition_preflight_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_package_source_policy_count(void)
+{
+  return sizeof(package_source_policies) / sizeof(package_source_policies[0]);
+}
+
+const XnixRuntimePackageSourcePolicy *
+xnix_runtime_package_source_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_package_source_policy_count()) {
+    return NULL;
+  }
+
+  return &package_source_policies[index];
+}
+
+const XnixRuntimePackageSourcePolicy *
+xnix_runtime_find_package_source_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_package_source_policy_count(); index++) {
+    const XnixRuntimePackageSourcePolicy *policy =
+      xnix_runtime_package_source_policy_at(index);
 
     if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;

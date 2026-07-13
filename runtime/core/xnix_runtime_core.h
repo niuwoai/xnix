@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.64"
+#define XNIX_RUNTIME_VERSION "0.2.65"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -217,6 +217,49 @@ typedef struct {
   const char *summary;
 } XnixRuntimeAcquisitionPreflightPolicy;
 
+typedef struct {
+  const char *id;
+  const char *kind;
+  const char *selection_state;
+  const char *supported_strategies[3];
+  size_t supported_strategy_count;
+  bool runtime_owned;
+  const char *summary;
+} XnixRuntimePackageSourceChannel;
+
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimePackageSourcePreflight;
+
+typedef struct {
+  const char *application_id;
+  const char *source_selection_state;
+  const char *selected_strategy;
+  XnixRuntimePackageSourceChannel source_channels[3];
+  size_t source_channel_count;
+  XnixRuntimePackageSourcePreflight required_preflight[4];
+  size_t required_preflight_count;
+  const char *blocked_actions[4];
+  size_t blocked_action_count;
+  bool signed_source_required;
+  bool runtime_cache_required;
+  bool direct_desktop_install_allowed;
+  bool user_visible_backend_names;
+  bool host_package_manager_invoked;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool package_source_ready;
+  bool install_enabled;
+  bool network_required_for_planning;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool desktop_shell_command_exposed;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimePackageSourcePolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -265,5 +308,9 @@ const XnixRuntimeArtifactManifestPolicy *xnix_runtime_find_artifact_manifest_pol
 size_t xnix_runtime_acquisition_preflight_policy_count(void);
 const XnixRuntimeAcquisitionPreflightPolicy *xnix_runtime_acquisition_preflight_policy_at(size_t index);
 const XnixRuntimeAcquisitionPreflightPolicy *xnix_runtime_find_acquisition_preflight_policy(const char *application_id);
+
+size_t xnix_runtime_package_source_policy_count(void);
+const XnixRuntimePackageSourcePolicy *xnix_runtime_package_source_policy_at(size_t index);
+const XnixRuntimePackageSourcePolicy *xnix_runtime_find_package_source_policy(const char *application_id);
 
 #endif
