@@ -22,10 +22,14 @@ issues.each do |issue|
     issue: issue
   ).to_h
 
-  assert(plan["version"] == "0.2.93", "compatibility repair plan must expose the current version")
+  assert(plan["version"] == "0.2.94", "compatibility repair plan must expose the current version")
   assert(plan["plan_type"] == "compatibility-repair", "compatibility repair plan must identify the model type")
   assert(plan["application_id"] == "org.xnix.sample.notepad", "compatibility repair plan must preserve the application id")
   assert(plan["issue"] == issue, "compatibility repair plan must preserve the issue")
+  assert(plan["runtime_method"] == "GetRepairPlan", "compatibility repair plan must expose the Runtime method")
+  assert(plan["runtime_owned"], "compatibility repair plan must be Runtime-owned")
+  assert(plan["c_runtime_backed"], "compatibility repair plan must expose C Runtime backing")
+  assert(!plan["kde_policy_owner"], "compatibility repair plan must not be KDE-owned")
   assert(%w[info warning critical].include?(plan["severity"]), "compatibility repair plan must expose severity")
   assert([true, false].include?(plan["automatic_allowed"]), "compatibility repair plan must expose automatic allowance")
   assert([true, false].include?(plan["user_approval_required"]), "compatibility repair plan must expose approval requirements")
@@ -40,6 +44,12 @@ issues.each do |issue|
   assert(plan["rollback_available"], "compatibility repair plan must keep rollback available")
   assert(!plan["actions"].empty?, "compatibility repair plan must include actions")
   assert(%w[approval-required repair-applied install-failed].include?(plan["notification_event"]), "compatibility repair plan must map to notification events")
+  assert(!plan["repair_execution_requested"], "compatibility repair plan must not request repair execution")
+  assert(!plan["repair_executed"], "compatibility repair plan must not execute repairs")
+  assert(!plan["backend_launch_enabled"], "compatibility repair plan must not enable backend launch")
+  assert(!plan["network_required"], "compatibility repair plan must not require network access")
+  assert(!plan["host_root_modified"], "compatibility repair plan must not mutate the host root")
+  assert(!plan["backend_details_exposed"], "compatibility repair plan must hide backend details")
 end
 
 pending_plan = Xnix::Compatibility::CompatibilityRepairPlan.new(

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.94] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility repair plan records and a CLI read method for diagnostic issue repair planning, approval requirements, snapshot summaries, rollback availability, notification mapping, and non-execution safety gates.
+- Added C Runtime probe ownership for compatibility repair plans so KDE can verify repair issue coverage without owning repair execution policy.
+
+### Changed
+
+- Marked compatibility repair plans as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping repair execution, backend launch, network access, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.93] - 2026-07-14
 
 ### Added

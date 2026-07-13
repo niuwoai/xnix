@@ -83,6 +83,10 @@ module Xnix
           "plan_type" => "compatibility-repair",
           "application_id" => application_id,
           "issue" => issue,
+          "runtime_method" => "GetRepairPlan",
+          "runtime_owned" => true,
+          "c_runtime_backed" => true,
+          "kde_policy_owner" => false,
           "severity" => rule.fetch("severity"),
           "automatic_allowed" => rule.fetch("automatic_allowed"),
           "user_approval_required" => rule.fetch("user_approval_required"),
@@ -91,6 +95,12 @@ module Xnix
           "rollback_available" => true,
           "actions" => rule.fetch("actions"),
           "notification_event" => notification_event,
+          "repair_execution_requested" => false,
+          "repair_executed" => false,
+          "backend_launch_enabled" => false,
+          "network_required" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
           "desktop_safe_summary" => rule.fetch("summary")
         }
       end

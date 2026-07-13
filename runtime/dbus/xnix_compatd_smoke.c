@@ -683,7 +683,20 @@ build_repair_plan(const gchar *application_id, const gchar *issue)
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-repair"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "issue", g_variant_new_string(issue));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetRepairPlan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "severity", g_variant_new_string("warning"));
+  g_variant_builder_add(&plan, "{sv}", "user_approval_required", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "snapshot_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "rollback_available", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "repair_execution_requested", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "repair_executed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
 }

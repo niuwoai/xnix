@@ -147,7 +147,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRepairPlan"
       [
-        "({'plan_type': <'compatibility-repair'>, 'issue': <'engine-binding-pending'>, 'snapshot_required': <true>},)\n",
+        "({'plan_type': <'compatibility-repair'>, 'issue': <'engine-binding-pending'>, 'runtime_method': <'GetRepairPlan'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'severity': <'warning'>, 'user_approval_required': <true>, 'snapshot_required': <true>, 'rollback_available': <true>, 'repair_execution_requested': <false>, 'repair_executed': <false>, 'backend_launch_enabled': <false>, 'network_required': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -462,7 +462,18 @@ assert(!backend_binding["launch_enabled"], "D-Bus client must parse backend laun
 
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
+assert(repair_plan["runtime_method"] == "GetRepairPlan", "D-Bus client must parse repair plan Runtime methods")
+assert(repair_plan["runtime_owned"], "D-Bus client must parse repair plan Runtime ownership")
+assert(repair_plan["c_runtime_backed"], "D-Bus client must parse repair plan C backing")
+assert(!repair_plan["kde_policy_owner"], "D-Bus client must parse repair plan KDE policy false booleans")
 assert(repair_plan["snapshot_required"], "D-Bus client must parse repair plan booleans")
+assert(repair_plan["rollback_available"], "D-Bus client must parse repair rollback availability")
+assert(!repair_plan["repair_execution_requested"], "D-Bus client must parse repair request false booleans")
+assert(!repair_plan["repair_executed"], "D-Bus client must parse repair execution false booleans")
+assert(!repair_plan["backend_launch_enabled"], "D-Bus client must parse repair backend launch false booleans")
+assert(!repair_plan["network_required"], "D-Bus client must parse repair network false booleans")
+assert(!repair_plan["host_root_modified"], "D-Bus client must parse repair host-root false booleans")
+assert(!repair_plan["backend_details_exposed"], "D-Bus client must parse repair backend detail false booleans")
 
 test_plan = client.test_plan("org.xnix.sample.notepad")
 assert(test_plan["plan_type"] == "compatibility-test", "D-Bus client must parse test plans")

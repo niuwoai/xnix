@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.93"
+#define XNIX_RUNTIME_VERSION "0.2.94"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -1052,6 +1052,36 @@ typedef struct {
   const char *summary;
 } XnixRuntimeAIRepairApprovalGate;
 
+typedef struct {
+  const char *id;
+  const char *kind;
+  const char *label;
+} XnixRuntimeCompatibilityRepairAction;
+
+typedef struct {
+  const char *application_id;
+  const char *issue;
+  const char *severity;
+  XnixRuntimeCompatibilityRepairAction actions[2];
+  size_t action_count;
+  const XnixRuntimeSnapshotPolicy *snapshot_policy;
+  const char *notification_event;
+  bool automatic_allowed;
+  bool user_approval_required;
+  bool snapshot_required;
+  bool rollback_available;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool repair_execution_requested;
+  bool repair_executed;
+  bool backend_launch_enabled;
+  bool network_required;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityRepairPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -1205,6 +1235,11 @@ bool xnix_runtime_ai_repair_approval_gate(
   const char *issue,
   const char *test_type,
   XnixRuntimeAIRepairApprovalGate *gate
+);
+bool xnix_runtime_compatibility_repair_plan(
+  const char *application_id,
+  const char *issue,
+  XnixRuntimeCompatibilityRepairPlan *plan
 );
 
 #endif
