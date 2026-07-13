@@ -200,6 +200,16 @@ assert(status.success?, "dispatch GetRuntimeServiceBinding must exit successfull
 service_binding = JSON.parse(stdout)
 assert(service_binding["binding_type"] == "runtime-service-binding", "dispatch must route GetRuntimeServiceBinding")
 
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
+  "GetCompatibilitySettings",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilitySettings must exit successfully: #{stderr}")
+settings = JSON.parse(stdout)
+assert(settings["request_type"] == "settings-model", "dispatch must route GetCompatibilitySettings")
+
 _stdout, stderr, status = Open3.capture3(*command, "dispatch", "Launch", JSON.generate(["org.xnix.sample.notepad", {}]))
 assert(!status.success?, "dispatch must reject unsupported write methods until a backend exists")
 assert(stderr.include?("unsupported runtime method"), "dispatch must explain unsupported methods")

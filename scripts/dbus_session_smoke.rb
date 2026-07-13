@@ -257,6 +257,17 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeServiceBinding: #{stderr}")
   assert(stdout.include?("runtime-service-binding"), "runtime smoke adapter must expose Runtime service binding over D-Bus")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilitySettings",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilitySettings: #{stderr}")
+  assert(stdout.include?("settings-model"), "runtime smoke adapter must expose compatibility settings over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin

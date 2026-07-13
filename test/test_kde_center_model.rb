@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.46", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.47", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -39,6 +39,7 @@ assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model mus
 assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
 assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
 assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center model must summarize Runtime service binding readiness")
+assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -89,6 +90,11 @@ assert(!application["ai_repair_approval_gate"]["auto_execution_allowed"], "KDE c
 assert(application["runtime_service_binding"]["binding_type"] == "runtime-service-binding", "KDE center model must expose Runtime service binding")
 assert(application["runtime_service_binding"]["activation_binding_ready"], "KDE center model must expose activation binding readiness")
 assert(!application["runtime_service_binding"]["live_dbus_owner_ready"], "KDE center model must not claim live D-Bus ownership")
+assert(application["settings"]["request_type"] == "settings-model", "KDE center model must expose compatibility settings")
+assert(application["settings"]["settings_state"] == "planned", "KDE center model must expose settings state")
+assert(!application["settings"]["settings_persisted"], "KDE center model must not claim settings persistence")
+assert(!application["settings"]["host_root_modified"], "KDE center model must not mutate host root for settings")
+assert(!application["settings"]["backend_details_exposed"], "KDE center model must hide settings backend details")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

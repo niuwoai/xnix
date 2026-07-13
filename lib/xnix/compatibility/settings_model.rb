@@ -22,7 +22,15 @@ module Xnix
           "request_type" => "settings-model",
           "desktop" => "KDE Plasma",
           "application_id" => @application_id,
-          "sections" => sections
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "settings_state" => "planned",
+          "settings_persisted" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "section_count" => sections.length,
+          "sections" => sections,
+          "desktop_safe_summary" => "Compatibility settings are modeled by the Runtime and ready for KDE display."
         }
       end
 

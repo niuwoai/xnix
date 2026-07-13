@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.47] - 2026-07-13
+
+### Added
+
+- Added Runtime-backed compatibility settings exposure through diagnostics, read-only dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, and session-bus smoke coverage.
+
+### Changed
+
+- Extended `xnix-compat-settings` so KDE can display Runtime-owned run mode, resource access, device, network, and snapshot settings without owning backend policy or exposing implementation terminology.
+
 ## [0.2.46] - 2026-07-13
 
 ### Added

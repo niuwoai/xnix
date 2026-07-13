@@ -18,9 +18,16 @@ model = Xnix::Compatibility::SettingsModel.new(application_id: "org.xnix.sample.
 sections = model.fetch("sections")
 section_ids = sections.map { |section| section.fetch("id") }
 
-assert(model["version"] == "0.2.46", "settings model must expose the current version")
+assert(model["version"] == "0.2.47", "settings model must expose the current version")
 assert(model["request_type"] == "settings-model", "settings model must identify the model type")
 assert(model["desktop"] == "KDE Plasma", "settings model must target KDE Plasma")
+assert(model["runtime_owned"], "Runtime must own compatibility settings")
+assert(!model["kde_policy_owner"], "KDE must not own compatibility settings policy")
+assert(model["settings_state"] == "planned", "settings model must expose planned settings state")
+assert(!model["settings_persisted"], "settings model must not claim persisted settings yet")
+assert(!model["host_root_modified"], "settings model must not mutate the host root")
+assert(!model["backend_details_exposed"], "settings model must hide backend details")
+assert(model["section_count"] == 5, "settings model must count user-facing sections")
 assert(section_ids == %w[run-mode resource-access devices network snapshots], "settings model must expose the required sections")
 
 run_mode = sections.find { |section| section["id"] == "run-mode" }

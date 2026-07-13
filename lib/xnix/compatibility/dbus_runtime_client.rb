@@ -117,6 +117,10 @@ module Xnix
         parse_dictionary(call("GetRuntimeServiceBinding"))
       end
 
+      def settings(application_id)
+        parse_dictionary(call("GetCompatibilitySettings", application_id))
+      end
+
       private
 
       def call(method_name, *arguments)

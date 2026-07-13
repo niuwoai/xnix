@@ -21,6 +21,7 @@ require_relative "compatibility_test_result"
 require_relative "portal_access_policy"
 require_relative "registry_backed_recipe_store"
 require_relative "runtime_service_binding"
+require_relative "settings_model"
 
 module Xnix
   module Compatibility
@@ -66,6 +67,7 @@ module Xnix
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
             "runtime_service_binding" => true,
+            "compatibility_settings" => true,
             "diagnostics" => true,
             "dbus_method_dispatch" => true,
             "dbus_binding" => false,
@@ -114,6 +116,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
           "runtime_service_binding" => runtime_service_binding_summary,
+          "settings" => settings_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -201,6 +204,11 @@ module Xnix
         RuntimeServiceBinding.new.to_h
       end
 
+      def settings(application_id)
+        recipe = require_recipe(application_id)
+        SettingsModel.new(application_id: recipe.id).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -273,6 +281,8 @@ module Xnix
           )
         when "GetRuntimeServiceBinding"
           runtime_service_binding
+        when "GetCompatibilitySettings"
+          settings(required_parameter(method_name, parameters, 0))
         else
           raise ArgumentError, "unsupported runtime method: #{method_name}"
         end
@@ -480,6 +490,19 @@ module Xnix
         }
       end
 
+      def settings_summary(recipe)
+        model = SettingsModel.new(application_id: recipe.id).to_h
+        {
+          "request_type" => model.fetch("request_type"),
+          "settings_state" => model.fetch("settings_state"),
+          "settings_persisted" => model.fetch("settings_persisted"),
+          "section_count" => model.fetch("section_count"),
+          "host_root_modified" => model.fetch("host_root_modified"),
+          "backend_details_exposed" => model.fetch("backend_details_exposed"),
+          "summary" => model.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -562,6 +585,8 @@ module Xnix
             write_json(runtime.ai_repair_approval_gate(application_id, issue, test_type))
           when "service-binding"
             write_json(runtime.runtime_service_binding)
+          when "settings"
+            write_json(runtime.settings(require_argument(command)))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

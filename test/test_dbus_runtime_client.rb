@@ -139,6 +139,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilitySettings"
+      [
+        "({'request_type': <'settings-model'>, 'settings_state': <'planned'>, 'settings_persisted': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     else
       ["", "unexpected method", Status.new(false)]
     end
@@ -251,6 +257,13 @@ service_binding = client.runtime_service_binding
 assert(service_binding["binding_type"] == "runtime-service-binding", "D-Bus client must parse Runtime service binding")
 assert(service_binding["activation_binding_ready"], "D-Bus client must parse Runtime service binding readiness")
 assert(!service_binding["live_dbus_owner_ready"], "D-Bus client must parse live D-Bus owner readiness")
+
+settings = client.settings("org.xnix.sample.notepad")
+assert(settings["request_type"] == "settings-model", "D-Bus client must parse compatibility settings")
+assert(settings["settings_state"] == "planned", "D-Bus client must parse settings state")
+assert(!settings["settings_persisted"], "D-Bus client must parse settings persistence status")
+assert(!settings["host_root_modified"], "D-Bus client must parse settings host mutation status")
+assert(!settings["backend_details_exposed"], "D-Bus client must parse settings backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

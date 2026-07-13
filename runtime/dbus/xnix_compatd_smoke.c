@@ -111,6 +111,10 @@ static const gchar introspection_xml[] =
   "    <method name='GetRuntimeServiceBinding'>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilitySettings'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='settings' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -414,6 +418,25 @@ build_portal_policy(const gchar *application_id, const gchar *operation)
 }
 
 static GVariant *
+build_settings_model(const gchar *application_id)
+{
+  GVariantBuilder settings;
+
+  g_variant_builder_init(&settings, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&settings, "{sv}", "request_type", g_variant_new_string("settings-model"));
+  g_variant_builder_add(&settings, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&settings, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&settings, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&settings, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&settings, "{sv}", "settings_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&settings, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&settings, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&settings, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&settings);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -708,6 +731,19 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeServiceBinding") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_service_binding()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilitySettings") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_settings_model(application_id)));
     return;
   }
 

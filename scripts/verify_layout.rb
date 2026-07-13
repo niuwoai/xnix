@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.46"
+EXPECTED_VERSION = "0.2.47"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -421,6 +421,10 @@ settings_source = read_project_file("lib/xnix/compatibility/settings_model.rb")
 %w[run-mode resource-access devices network snapshots].each do |section_id|
   assert(settings_source.include?("\"id\" => \"#{section_id}\""), "Settings model must include #{section_id}")
 end
+assert(settings_source.include?("\"runtime_owned\" => true"), "Settings model must be Runtime-owned")
+assert(settings_source.include?("\"settings_state\" => \"planned\""), "Settings model must expose planned settings state")
+assert(settings_source.include?("\"host_root_modified\" => false"), "Settings model must not mutate the host root")
+assert(settings_source.include?("\"backend_details_exposed\" => false"), "Settings model must hide backend details")
 
 portal_policy_source = read_project_file("lib/xnix/compatibility/portal_access_policy.rb")
 %w[file-open uri-open print screenshot clipboard camera remote-desktop].each do |operation|
@@ -501,7 +505,8 @@ assert(runtime_daemon_source.include?("\"ai_diagnostic_recommendations\""), "Run
 assert(runtime_daemon_source.include?("\"ai_repair_approval_gates\""), "Runtime daemon must expose AI repair approval gate capability")
 assert(runtime_daemon_source.include?("\"application_state_roots\""), "Runtime daemon must expose application state root capability")
 assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime daemon must expose Runtime service binding capability")
-%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding].each do |method_name|
+assert(runtime_daemon_source.include?("\"compatibility_settings\""), "Runtime daemon must expose compatibility settings capability")
+%w[GetEngineCatalog GetRunPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetCompatibilitySettings].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -509,7 +514,7 @@ assert(runtime_daemon_source.include?("\"runtime_service_binding\""), "Runtime d
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan state_root package_source acquisition_preflight artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding].each do |method_name|
+%w[engine_catalog run_plan state_root package_source acquisition_preflight artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding settings].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

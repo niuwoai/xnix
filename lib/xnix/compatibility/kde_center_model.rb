@@ -80,6 +80,7 @@ module Xnix
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
           "runtime_service_binding" => runtime_service_binding_summary(diagnostics.fetch("runtime_service_binding", nil)),
+          "settings" => settings_summary(diagnostics.fetch("settings", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -276,6 +277,20 @@ module Xnix
         }
       end
 
+      def settings_summary(settings)
+        return nil unless settings
+
+        {
+          "request_type" => settings.fetch("request_type"),
+          "settings_state" => settings.fetch("settings_state"),
+          "settings_persisted" => settings.fetch("settings_persisted"),
+          "section_count" => settings.fetch("section_count"),
+          "host_root_modified" => settings.fetch("host_root_modified"),
+          "backend_details_exposed" => settings.fetch("backend_details_exposed"),
+          "summary" => settings.fetch("summary", "")
+        }
+      end
+
       def summary(applications)
         {
           "application_count" => applications.length,
@@ -292,7 +307,8 @@ module Xnix
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
           "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },
-          "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) }
+          "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
+          "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" }
         }
       end
 
