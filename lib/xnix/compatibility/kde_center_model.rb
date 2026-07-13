@@ -70,6 +70,7 @@ module Xnix
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
+          "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
@@ -139,6 +140,20 @@ module Xnix
         }
       end
 
+      def state_root_summary(state_root)
+        return nil unless state_root
+
+        {
+          "root_type" => state_root.fetch("root_type"),
+          "state_namespace" => state_root.fetch("state_namespace"),
+          "allocation_state" => state_root.fetch("allocation_state"),
+          "managed_scope_count" => state_root.fetch("managed_scope_count"),
+          "snapshot_eligible" => state_root.fetch("snapshot_eligible"),
+          "user_documents_included" => state_root.fetch("user_documents_included"),
+          "summary" => state_root.fetch("summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(ai_input)
         return nil unless ai_input
 
@@ -202,6 +217,7 @@ module Xnix
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },
+          "planned_state_root_count" => applications.count { |application| section(application, "state_root").fetch("allocation_state", nil) == "planned" },
           "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },

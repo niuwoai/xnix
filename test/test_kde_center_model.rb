@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.41", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.42", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -29,6 +29,7 @@ assert(model["summary"]["known_application_count"] == 1, "KDE center model must 
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
 assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
 assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
+assert(model["summary"]["planned_state_root_count"] == 1, "KDE center model must summarize planned state roots")
 assert(model["summary"]["pending_backend_binding_count"] == 1, "KDE center model must summarize pending backend bindings")
 assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
 assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
@@ -48,6 +49,9 @@ assert(application["test_plan"]["plan_type"] == "compatibility-test", "KDE cente
 assert(application["test_plan"]["pending_step_count"] == 3, "KDE center model must expose pending test steps")
 assert(application["test_result"]["result_type"] == "compatibility-test-result", "KDE center model must expose test result summaries")
 assert(application["test_result"]["overall_status"] == "pending", "KDE center model must expose test result status")
+assert(application["state_root"]["root_type"] == "compatibility-application-state-root", "KDE center model must expose application state roots")
+assert(application["state_root"]["allocation_state"] == "planned", "KDE center model must expose state root allocation")
+assert(!application["state_root"]["user_documents_included"], "KDE center model must expose state root document exclusions")
 assert(application["backend_binding"]["binding_type"] == "compatibility-backend-binding", "KDE center model must expose backend binding summaries")
 assert(!application["backend_binding"]["managed_binding_ready"], "KDE center model must not claim backend binding readiness")
 assert(!application["backend_binding"]["launch_enabled"], "KDE center model must not enable backend launches")

@@ -49,6 +49,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetApplicationStateRoot"
+      [
+        "({'root_type': <'compatibility-application-state-root'>, 'allocation_state': <'planned'>, 'snapshot_eligible': <true>, 'user_documents_included': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendBinding"
       [
         "({'binding_type': <'compatibility-backend-binding'>, 'selected_strategy': <'automatic-managed'>, 'managed_binding_ready': <false>, 'launch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
@@ -139,6 +145,11 @@ assert(!engine_catalog["backend_details_exposed"], "D-Bus client must parse bool
 run_plan = client.run_plan("org.xnix.sample.notepad")
 assert(run_plan["plan_type"] == "compatibility-run", "D-Bus client must parse run plans")
 assert(!run_plan["backend_details_exposed"], "D-Bus client must parse run plan booleans")
+
+state_root = client.state_root("org.xnix.sample.notepad")
+assert(state_root["root_type"] == "compatibility-application-state-root", "D-Bus client must parse application state roots")
+assert(state_root["snapshot_eligible"], "D-Bus client must parse state root booleans")
+assert(!state_root["user_documents_included"], "D-Bus client must parse state root exclusions")
 
 backend_binding = client.backend_binding("org.xnix.sample.notepad")
 assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bus client must parse backend bindings")

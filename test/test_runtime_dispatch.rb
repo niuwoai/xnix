@@ -58,6 +58,16 @@ assert(run_plan["plan_type"] == "compatibility-run", "dispatch must route GetRun
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetApplicationStateRoot",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetApplicationStateRoot must exit successfully: #{stderr}")
+state_root = JSON.parse(stdout)
+assert(state_root["root_type"] == "compatibility-application-state-root", "dispatch must route GetApplicationStateRoot")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendBinding",
   JSON.generate(["org.xnix.sample.notepad"])
 )

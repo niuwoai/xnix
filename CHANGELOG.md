@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.42] - 2026-07-13
+
+### Added
+
+- Added `xnix-compat-state-root`, a Runtime-owned application state root model for per-application state ownership, snapshot eligibility, Portal file boundaries, and restore confirmation without creating host directories or exposing storage paths.
+- Added read-only Runtime diagnostics, dispatch, D-Bus contract, D-Bus client, Compatibility Center summaries, session-bus smoke coverage, and focused tests for application state root status.
+
+### Changed
+
+- Extended Runtime and KDE read models so planned state roots are visible as a first-class Compatibility Center signal before backend launch is enabled.
+
 ## [0.2.41] - 2026-07-13
 
 ### Added

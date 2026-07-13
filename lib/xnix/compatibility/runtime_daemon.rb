@@ -3,6 +3,7 @@
 require "json"
 require "optparse"
 require "pathname"
+require_relative "application_state_root"
 require_relative "ai_diagnostic_input"
 require_relative "ai_diagnostic_recommendation"
 require_relative "ai_repair_approval_gate"
@@ -46,6 +47,7 @@ module Xnix
             "recipe_store" => true,
             "registry_backed_recipe_store" => registry_backed_recipe_store?,
             "application_listing" => true,
+            "application_state_roots" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
@@ -94,6 +96,7 @@ module Xnix
           ],
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
+          "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
@@ -110,6 +113,11 @@ module Xnix
       def run_plan(application_id)
         recipe = require_recipe(application_id)
         CompatibilityRunPlan.new(recipe: recipe).to_h
+      end
+
+      def state_root(application_id)
+        recipe = require_recipe(application_id)
+        ApplicationStateRoot.new(recipe: recipe).to_h
       end
 
       def backend_binding(application_id)
@@ -173,6 +181,8 @@ module Xnix
           engine_catalog
         when "GetRunPlan"
           run_plan(required_parameter(method_name, parameters, 0))
+        when "GetApplicationStateRoot"
+          state_root(required_parameter(method_name, parameters, 0))
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
@@ -306,6 +316,19 @@ module Xnix
         }
       end
 
+      def state_root_summary(recipe)
+        state_root = ApplicationStateRoot.new(recipe: recipe).to_h
+        {
+          "root_type" => state_root.fetch("root_type"),
+          "state_namespace" => state_root.fetch("state_namespace"),
+          "allocation_state" => state_root.fetch("allocation_state"),
+          "managed_scope_count" => state_root.fetch("managed_scopes").length,
+          "snapshot_eligible" => state_root.fetch("snapshot_eligible"),
+          "user_documents_included" => state_root.fetch("user_documents_included"),
+          "summary" => state_root.fetch("desktop_safe_summary")
+        }
+      end
+
       def ai_diagnostic_input_summary(recipe)
         input = AIDiagnosticInput.new(recipe: recipe).to_h
         {
@@ -409,6 +432,8 @@ module Xnix
             write_json(runtime.test_result(application_id, test_type))
           when "backend-binding"
             write_json(runtime.backend_binding(require_argument(command)))
+          when "state-root"
+            write_json(runtime.state_root(require_argument(command)))
           when "ai-diagnostic-input"
             application_id = require_argument(command)
             issue = @argv.shift || AIDiagnosticInput::DEFAULT_ISSUE

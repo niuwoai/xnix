@@ -40,6 +40,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetApplicationStateRoot'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='state_root' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendBinding'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
@@ -157,6 +161,23 @@ build_run_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_application_state_root(const gchar *application_id)
+{
+  GVariantBuilder state_root;
+
+  g_variant_builder_init(&state_root, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&state_root, "{sv}", "root_type", g_variant_new_string("compatibility-application-state-root"));
+  g_variant_builder_add(&state_root, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&state_root, "{sv}", "state_namespace", g_variant_new_string(application_id));
+  g_variant_builder_add(&state_root, "{sv}", "allocation_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&state_root, "{sv}", "snapshot_eligible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&state_root, "{sv}", "user_documents_included", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&state_root, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&state_root);
 }
 
 static GVariant *
@@ -389,6 +410,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_run_plan(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetApplicationStateRoot") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_application_state_root(application_id)));
     return;
   }
 
