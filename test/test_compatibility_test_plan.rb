@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 plan = Xnix::Compatibility::CompatibilityTestPlan.new(recipe: recipe).to_h
 step_ids = plan.fetch("steps").map { |step| step.fetch("id") }
 
-assert(plan["version"] == "0.2.58", "compatibility test plan must expose the current version")
+assert(plan["version"] == "0.2.59", "compatibility test plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-test", "compatibility test plan must identify the plan type")
 assert(plan["test_type"] == "preflight", "compatibility test plan must default to preflight tests")
 assert(plan["desktop"] == "KDE Plasma", "compatibility test plan must target KDE Plasma")

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.59] - 2026-07-13
+
+### Added
+
+- Added C Runtime Portal access policy records and CLI read methods for listing sensitive desktop operations and evaluating per-application Portal policy.
+- Added C Runtime Portal policy tests that verify ask and deny defaults, Runtime ownership, KDE non-ownership, direct-access denial, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first XDG Desktop Portal permission policy layer while keeping all host permission changes disabled.
+
 ## [0.2.58] - 2026-07-13
 
 ### Added

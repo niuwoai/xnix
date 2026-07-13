@@ -58,6 +58,107 @@ static const XnixRuntimeEngine engines[] = {
   },
 };
 
+static const XnixRuntimePortalPolicy portal_policies[] = {
+  {
+    .operation = "file-open",
+    .portal_interface = "org.freedesktop.portal.FileChooser",
+    .decision = "ask",
+    .summary = "File access requires a user-approved desktop portal request.",
+    .resources = {"documents", "downloads", "selected-files"},
+    .resource_count = 3,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "uri-open",
+    .portal_interface = "org.freedesktop.portal.OpenURI",
+    .decision = "ask",
+    .summary = "URI handling requires a user-approved desktop portal request.",
+    .resources = {"external-uri"},
+    .resource_count = 1,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "print",
+    .portal_interface = "org.freedesktop.portal.Print",
+    .decision = "ask",
+    .summary = "Printing requires a user-approved desktop portal request.",
+    .resources = {"printer"},
+    .resource_count = 1,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "screenshot",
+    .portal_interface = "org.freedesktop.portal.Screenshot",
+    .decision = "ask",
+    .summary = "Screenshots require a user-approved desktop portal request.",
+    .resources = {"screen"},
+    .resource_count = 1,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "clipboard",
+    .portal_interface = "org.freedesktop.portal.Clipboard",
+    .decision = "ask",
+    .summary = "Clipboard access requires a user-approved desktop portal request.",
+    .resources = {"clipboard"},
+    .resource_count = 1,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "camera",
+    .portal_interface = "org.freedesktop.portal.Camera",
+    .decision = "deny",
+    .summary = "Camera access is denied until the user changes the application policy.",
+    .resources = {"camera"},
+    .resource_count = 1,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+  {
+    .operation = "remote-desktop",
+    .portal_interface = "org.freedesktop.portal.RemoteDesktop",
+    .decision = "deny",
+    .summary = "Remote desktop access is denied until the user changes the application policy.",
+    .resources = {"screen", "input-devices"},
+    .resource_count = 2,
+    .portal_required = true,
+    .user_mediation_required = true,
+    .direct_access_allowed = false,
+    .runtime_policy_owner = true,
+    .desktop_shell_policy_owner = false,
+    .backend_details_exposed = false,
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -227,6 +328,40 @@ xnix_runtime_select_engine_for_mode(const char *mode)
   }
   if (strcmp(mode, "vm") == 0) {
     return xnix_runtime_find_engine("isolated-compatibility-engine");
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_portal_policy_count(void)
+{
+  return sizeof(portal_policies) / sizeof(portal_policies[0]);
+}
+
+const XnixRuntimePortalPolicy *
+xnix_runtime_portal_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_portal_policy_count()) {
+    return NULL;
+  }
+
+  return &portal_policies[index];
+}
+
+const XnixRuntimePortalPolicy *
+xnix_runtime_find_portal_policy(const char *operation)
+{
+  if (operation == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_portal_policy_count(); index++) {
+    const XnixRuntimePortalPolicy *policy = xnix_runtime_portal_policy_at(index);
+
+    if (policy != NULL && strcmp(operation, policy->operation) == 0) {
+      return policy;
+    }
   }
 
   return NULL;

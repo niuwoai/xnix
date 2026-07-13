@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.58"
+#define XNIX_RUNTIME_VERSION "0.2.59"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -46,6 +46,21 @@ typedef struct {
   bool backend_details_exposed;
 } XnixRuntimeEngine;
 
+typedef struct {
+  const char *operation;
+  const char *portal_interface;
+  const char *decision;
+  const char *summary;
+  const char *resources[3];
+  size_t resource_count;
+  bool portal_required;
+  bool user_mediation_required;
+  bool direct_access_allowed;
+  bool runtime_policy_owner;
+  bool desktop_shell_policy_owner;
+  bool backend_details_exposed;
+} XnixRuntimePortalPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -66,5 +81,9 @@ size_t xnix_runtime_engine_count(void);
 const XnixRuntimeEngine *xnix_runtime_engine_at(size_t index);
 const XnixRuntimeEngine *xnix_runtime_find_engine(const char *engine_id);
 const XnixRuntimeEngine *xnix_runtime_select_engine_for_mode(const char *mode);
+
+size_t xnix_runtime_portal_policy_count(void);
+const XnixRuntimePortalPolicy *xnix_runtime_portal_policy_at(size_t index);
+const XnixRuntimePortalPolicy *xnix_runtime_find_portal_policy(const char *operation);
 
 #endif
