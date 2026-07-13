@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.76"
+#define XNIX_RUNTIME_VERSION "0.2.77"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -587,6 +587,27 @@ typedef struct {
   const char *summary;
 } XnixRuntimeCompatibilityActionQueue;
 
+typedef struct {
+  char receipt_id[192];
+  const XnixRuntimeApplication *application;
+  XnixRuntimeCompatibilityAction action;
+  const char *decision;
+  const char *next_step;
+  const char *blocked_actions[6];
+  size_t blocked_action_count;
+  bool decision_recorded;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool execution_enabled;
+  bool repair_execution_enabled;
+  bool settings_persistence_enabled;
+  bool resource_grant_created;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityActionReviewReceipt;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -670,6 +691,12 @@ bool xnix_runtime_compatibility_install_plan(
 bool xnix_runtime_compatibility_action_queue(
   const char *application_id,
   XnixRuntimeCompatibilityActionQueue *queue
+);
+bool xnix_runtime_compatibility_action_review_receipt(
+  const char *application_id,
+  const char *action_id,
+  const char *decision,
+  XnixRuntimeCompatibilityActionReviewReceipt *receipt
 );
 
 #endif

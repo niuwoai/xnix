@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.77] - 2026-07-14
+
+### Added
+
+- Added C Runtime Compatibility Center action review receipt records and a CLI read method for recording KDE review intent without execution authority.
+- Added C Runtime action review receipt tests that verify recorded decisions, deferred reviews, Runtime gate preservation, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first Compatibility Center action review receipt layer while keeping KDE review intent separate from Runtime execution approval.
+
 ## [0.2.76] - 2026-07-14
 
 ### Added

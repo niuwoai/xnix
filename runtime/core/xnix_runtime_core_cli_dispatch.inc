@@ -1,7 +1,7 @@
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|compatibility-install-plan APP_ID ENVIRONMENT|compatibility-action-queue APP_ID|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|compatibility-install-plan APP_ID ENVIRONMENT|compatibility-action-queue APP_ID|compatibility-action-review APP_ID ACTION_ID DECISION|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -70,6 +70,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "compatibility-action-queue") == 0 && argc == 3) {
     return print_compatibility_action_queue_for_application(argv[2]);
+  }
+
+  if (strcmp(argv[1], "compatibility-action-review") == 0 && argc == 5) {
+    return print_compatibility_action_review_receipt_for_application(
+      argv[2],
+      argv[3],
+      argv[4]
+    );
   }
 
   if (strcmp(argv[1], "list-artifact-manifest-policies") == 0 && argc == 2) {

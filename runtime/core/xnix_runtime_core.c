@@ -1,5 +1,6 @@
 #include "xnix_runtime_core.h"
 
+#include <stdio.h>
 #include <string.h>
 
 static const char *const write_methods[] = {
@@ -1966,3 +1967,5 @@ xnix_runtime_compatibility_action_queue(
 
   return true;
 }
+
+#include "xnix_runtime_core_action_review.inc"
