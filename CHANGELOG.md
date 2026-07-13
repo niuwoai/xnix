@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.58] - 2026-07-13
+
+### Added
+
+- Added C Runtime compatibility engine catalog records and CLI read methods for listing Runtime engine strategies and selecting an engine by recipe mode.
+- Added C Runtime engine catalog tests that verify stable strategy order, blocked launch readiness, C ownership, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership from application metadata into the first engine selection layer while keeping all backend execution disabled.
+
 ## [0.2.57] - 2026-07-13
 
 ### Added

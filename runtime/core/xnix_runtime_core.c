@@ -25,6 +25,39 @@ static const XnixRuntimeApplication applications[] = {
   },
 };
 
+static const XnixRuntimeEngine engines[] = {
+  {
+    .id = "automatic-managed",
+    .label = "Automatic",
+    .kind = "orchestrator",
+    .summary = "Xnix will choose the best available compatibility path.",
+    .ready = false,
+    .launch_enabled = false,
+    .user_visible = true,
+    .backend_details_exposed = false,
+  },
+  {
+    .id = "local-compatibility-engine",
+    .label = "Local compatibility engine",
+    .kind = "local",
+    .summary = "Local compatibility engine binding is pending.",
+    .ready = false,
+    .launch_enabled = false,
+    .user_visible = true,
+    .backend_details_exposed = false,
+  },
+  {
+    .id = "isolated-compatibility-engine",
+    .label = "Isolated compatibility engine",
+    .kind = "isolated",
+    .summary = "Isolated compatibility engine binding is pending.",
+    .ready = false,
+    .launch_enabled = false,
+    .user_visible = true,
+    .backend_details_exposed = false,
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -140,6 +173,60 @@ xnix_runtime_find_application(const char *application_id)
     if (application != NULL && strcmp(application_id, application->id) == 0) {
       return application;
     }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_engine_count(void)
+{
+  return sizeof(engines) / sizeof(engines[0]);
+}
+
+const XnixRuntimeEngine *
+xnix_runtime_engine_at(size_t index)
+{
+  if (index >= xnix_runtime_engine_count()) {
+    return NULL;
+  }
+
+  return &engines[index];
+}
+
+const XnixRuntimeEngine *
+xnix_runtime_find_engine(const char *engine_id)
+{
+  if (engine_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_engine_count(); index++) {
+    const XnixRuntimeEngine *engine = xnix_runtime_engine_at(index);
+
+    if (engine != NULL && strcmp(engine_id, engine->id) == 0) {
+      return engine;
+    }
+  }
+
+  return NULL;
+}
+
+const XnixRuntimeEngine *
+xnix_runtime_select_engine_for_mode(const char *mode)
+{
+  if (mode == NULL) {
+    return NULL;
+  }
+
+  if (strcmp(mode, "automatic") == 0) {
+    return xnix_runtime_find_engine("automatic-managed");
+  }
+  if (strcmp(mode, "wine") == 0) {
+    return xnix_runtime_find_engine("local-compatibility-engine");
+  }
+  if (strcmp(mode, "vm") == 0) {
+    return xnix_runtime_find_engine("isolated-compatibility-engine");
   }
 
   return NULL;

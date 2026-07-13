@@ -74,6 +74,55 @@ print_application(const XnixRuntimeApplication *application)
   fputs("}", stdout);
 }
 
+static void
+print_engine_record(const XnixRuntimeEngine *engine)
+{
+  fputs("{", stdout);
+  print_string_field("id", engine->id);
+  fputs(",", stdout);
+  print_string_field("label", engine->label);
+  fputs(",", stdout);
+  print_string_field("kind", engine->kind);
+  fputs(",", stdout);
+  fputs("\"ready\":", stdout);
+  print_bool(engine->ready);
+  fputs(",", stdout);
+  fputs("\"launch_enabled\":", stdout);
+  print_bool(engine->launch_enabled);
+  fputs(",", stdout);
+  fputs("\"user_visible\":", stdout);
+  print_bool(engine->user_visible);
+  fputs(",", stdout);
+  print_string_field("summary", engine->summary);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(engine->backend_details_exposed);
+  fputs("}", stdout);
+}
+
+static void
+print_selected_engine(const XnixRuntimeEngine *engine)
+{
+  fputs("{", stdout);
+  print_string_field("engine_id", engine->id);
+  fputs(",", stdout);
+  print_string_field("label", engine->label);
+  fputs(",", stdout);
+  print_string_field("kind", engine->kind);
+  fputs(",", stdout);
+  fputs("\"ready\":", stdout);
+  print_bool(engine->ready);
+  fputs(",", stdout);
+  fputs("\"launch_enabled\":", stdout);
+  print_bool(engine->launch_enabled);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(engine->backend_details_exposed);
+  fputs(",", stdout);
+  print_string_field("summary", engine->summary);
+  fputs("}", stdout);
+}
+
 static int
 print_applications(void)
 {
@@ -87,6 +136,46 @@ print_applications(void)
     print_application(application);
   }
   fputs("]\n", stdout);
+  return 0;
+}
+
+static int
+print_engine_catalog(void)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  fputs("\"catalog_type\":\"compatibility-engine\",", stdout);
+  fputs("\"runtime_policy_owner\":true,", stdout);
+  fputs("\"desktop_shell_policy_owner\":false,", stdout);
+  fputs("\"catalog_owner\":\"c\",", stdout);
+  fputs("\"backend_details_exposed\":false,", stdout);
+  fputs("\"engine_count\":", stdout);
+  printf("%zu,", xnix_runtime_engine_count());
+  fputs("\"engines\":[", stdout);
+  for (size_t index = 0; index < xnix_runtime_engine_count(); index++) {
+    const XnixRuntimeEngine *engine = xnix_runtime_engine_at(index);
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    print_engine_record(engine);
+  }
+  fputs("]}\n", stdout);
+  return 0;
+}
+
+static int
+print_engine_for_mode(const char *mode)
+{
+  const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
+
+  if (engine == NULL) {
+    fprintf(stderr, "xnix-runtime-core: mode must be one of automatic, wine, vm\n");
+    return 64;
+  }
+
+  print_selected_engine(engine);
+  fputs("\n", stdout);
   return 0;
 }
 
@@ -121,6 +210,9 @@ print_probe(void)
   fputs("\"application_catalog_owner\":\"c\",", stdout);
   fputs("\"application_count\":", stdout);
   printf("%zu,", xnix_runtime_application_count());
+  fputs("\"engine_catalog_owner\":\"c\",", stdout);
+  fputs("\"engine_count\":", stdout);
+  printf("%zu,", xnix_runtime_engine_count());
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -174,7 +266,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -195,6 +287,14 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "get-application") == 0 && argc == 3) {
     return print_application_by_id(argv[2]);
+  }
+
+  if (strcmp(argv[1], "list-engines") == 0 && argc == 2) {
+    return print_engine_catalog();
+  }
+
+  if (strcmp(argv[1], "select-engine") == 0 && argc == 3) {
+    return print_engine_for_mode(argv[2]);
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.57"
+#define XNIX_RUNTIME_VERSION "0.2.58"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -35,6 +35,17 @@ typedef struct {
   bool backend_details_exposed;
 } XnixRuntimeApplication;
 
+typedef struct {
+  const char *id;
+  const char *label;
+  const char *kind;
+  const char *summary;
+  bool ready;
+  bool launch_enabled;
+  bool user_visible;
+  bool backend_details_exposed;
+} XnixRuntimeEngine;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -50,5 +61,10 @@ const char *xnix_runtime_write_method_at(size_t index);
 size_t xnix_runtime_application_count(void);
 const XnixRuntimeApplication *xnix_runtime_application_at(size_t index);
 const XnixRuntimeApplication *xnix_runtime_find_application(const char *application_id);
+
+size_t xnix_runtime_engine_count(void);
+const XnixRuntimeEngine *xnix_runtime_engine_at(size_t index);
+const XnixRuntimeEngine *xnix_runtime_find_engine(const char *engine_id);
+const XnixRuntimeEngine *xnix_runtime_select_engine_for_mode(const char *mode);
 
 #endif
