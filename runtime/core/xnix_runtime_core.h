@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.69"
+#define XNIX_RUNTIME_VERSION "0.2.70"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -390,6 +390,33 @@ typedef struct {
   const char *summary;
 } XnixRuntimeServiceBindingPolicy;
 
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeLiveOwnerRequiredGate;
+
+typedef struct {
+  XnixRuntimeLiveOwnerRequiredGate required_gates[5];
+  size_t required_gate_count;
+  const char *blocked_reasons[5];
+  size_t blocked_reason_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool activation_binding_ready;
+  bool live_dbus_owner_ready;
+  bool production_owner_enabled;
+  bool owner_transition_ready;
+  bool smoke_adapter_available;
+  bool smoke_adapter_is_production_owner;
+  bool kde_may_claim_runtime_ownership;
+  bool network_required;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeLiveOwnerGatePolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -456,5 +483,6 @@ const XnixRuntimeSettingsChangePolicy *xnix_runtime_settings_change_policy_at(si
 const XnixRuntimeSettingsChangePolicy *xnix_runtime_find_settings_change_policy(const char *application_id);
 
 const XnixRuntimeServiceBindingPolicy *xnix_runtime_service_binding_policy(void);
+const XnixRuntimeLiveOwnerGatePolicy *xnix_runtime_live_owner_gate_policy(void);
 
 #endif

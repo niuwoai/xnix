@@ -845,6 +845,59 @@ static const XnixRuntimeServiceBindingPolicy service_binding_policy = {
   .summary = "Runtime service activation files are aligned; live D-Bus ownership remains pending.",
 };
 
+static const XnixRuntimeLiveOwnerGatePolicy live_owner_gate_policy = {
+  .required_gates = {
+    {
+      .id = "activation-binding",
+      .status = "pass",
+      .summary = "D-Bus activation files, systemd unit, libexec wrapper, and contract must stay aligned.",
+    },
+    {
+      .id = "long-running-runtime-owner",
+      .status = "pending",
+      .summary = "The Runtime needs a packaged long-running process that owns the stable bus name.",
+    },
+    {
+      .id = "bus-name-acquisition",
+      .status = "pending",
+      .summary = "Production smoke must prove the packaged Runtime owns org.xnix.Compatibility1.",
+    },
+    {
+      .id = "read-only-method-parity",
+      .status = "pending",
+      .summary = "The live owner must answer the same read-only planning methods as the smoke adapter.",
+    },
+    {
+      .id = "production-recipe-trust",
+      .status = "pending",
+      .summary = "Production ownership must be gated by signed recipe validation instead of development registry trust.",
+    },
+  },
+  .required_gate_count = 5,
+  .blocked_reasons = {
+    "Do not treat the D-Bus smoke adapter as the production Runtime owner.",
+    "Do not let KDE own Runtime policy or bus-name readiness decisions.",
+    "Do not enable launch, install, repair, restore, or settings persistence from this gate.",
+    "Do not mutate the host root while evaluating live-owner readiness.",
+    "Do not expose compatibility backend implementation details in live-owner readiness.",
+  },
+  .blocked_reason_count = 5,
+  .runtime_owned = true,
+  .kde_policy_owner = false,
+  .activation_binding_ready = true,
+  .live_dbus_owner_ready = false,
+  .production_owner_enabled = false,
+  .owner_transition_ready = false,
+  .smoke_adapter_available = true,
+  .smoke_adapter_is_production_owner = false,
+  .kde_may_claim_runtime_ownership = false,
+  .network_required = false,
+  .host_root_modified = false,
+  .privileged_container_required = false,
+  .backend_details_exposed = false,
+  .summary = "Runtime activation files are aligned, but production D-Bus ownership remains gated.",
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1389,4 +1442,10 @@ const XnixRuntimeServiceBindingPolicy *
 xnix_runtime_service_binding_policy(void)
 {
   return &service_binding_policy;
+}
+
+const XnixRuntimeLiveOwnerGatePolicy *
+xnix_runtime_live_owner_gate_policy(void)
+{
+  return &live_owner_gate_policy;
 }

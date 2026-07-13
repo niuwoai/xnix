@@ -1356,6 +1356,86 @@ print_service_binding_policy(const XnixRuntimeServiceBindingPolicy *policy)
 }
 
 static void
+print_live_owner_required_gates(const XnixRuntimeLiveOwnerGatePolicy *policy)
+{
+  fputc('[', stdout);
+  for (size_t index = 0; index < policy->required_gate_count; index++) {
+    const XnixRuntimeLiveOwnerRequiredGate *gate = &policy->required_gates[index];
+
+    if (index > 0) {
+      fputs(",", stdout);
+    }
+    fputs("{", stdout);
+    print_string_field("id", gate->id);
+    fputs(",", stdout);
+    print_string_field("status", gate->status);
+    fputs(",", stdout);
+    print_string_field("summary", gate->summary);
+    fputs("}", stdout);
+  }
+  fputc(']', stdout);
+}
+
+static void
+print_live_owner_gate_policy(const XnixRuntimeLiveOwnerGatePolicy *policy)
+{
+  fputs("{", stdout);
+  printf("\"version\":\"%s\",", xnix_runtime_version());
+  print_string_field("gate_type", "runtime-live-owner-gate");
+  fputs(",", stdout);
+  fputs("\"runtime_owned\":", stdout);
+  print_bool(policy->runtime_owned);
+  fputs(",", stdout);
+  fputs("\"kde_policy_owner\":", stdout);
+  print_bool(policy->kde_policy_owner);
+  fputs(",", stdout);
+  printf("\"bus_name\":\"%s\",", xnix_runtime_bus_name());
+  printf("\"object_path\":\"%s\",", xnix_runtime_object_path());
+  printf("\"interface\":\"%s\",", xnix_runtime_interface());
+  fputs("\"activation_binding_ready\":", stdout);
+  print_bool(policy->activation_binding_ready);
+  fputs(",", stdout);
+  fputs("\"live_dbus_owner_ready\":", stdout);
+  print_bool(policy->live_dbus_owner_ready);
+  fputs(",", stdout);
+  fputs("\"production_owner_enabled\":", stdout);
+  print_bool(policy->production_owner_enabled);
+  fputs(",", stdout);
+  fputs("\"owner_transition_ready\":", stdout);
+  print_bool(policy->owner_transition_ready);
+  fputs(",", stdout);
+  fputs("\"smoke_adapter_available\":", stdout);
+  print_bool(policy->smoke_adapter_available);
+  fputs(",", stdout);
+  fputs("\"smoke_adapter_is_production_owner\":", stdout);
+  print_bool(policy->smoke_adapter_is_production_owner);
+  fputs(",", stdout);
+  fputs("\"kde_may_claim_runtime_ownership\":", stdout);
+  print_bool(policy->kde_may_claim_runtime_ownership);
+  fputs(",", stdout);
+  fputs("\"required_gates\":", stdout);
+  print_live_owner_required_gates(policy);
+  fputs(",", stdout);
+  fputs("\"blocked_reasons\":", stdout);
+  print_string_array(policy->blocked_reasons, policy->blocked_reason_count);
+  fputs(",", stdout);
+  fputs("\"network_required\":", stdout);
+  print_bool(policy->network_required);
+  fputs(",", stdout);
+  fputs("\"host_root_modified\":", stdout);
+  print_bool(policy->host_root_modified);
+  fputs(",", stdout);
+  fputs("\"privileged_container_required\":", stdout);
+  print_bool(policy->privileged_container_required);
+  fputs(",", stdout);
+  fputs("\"backend_details_exposed\":", stdout);
+  print_bool(policy->backend_details_exposed);
+  fputs(",", stdout);
+  print_string_field("desktop_safe_summary", policy->summary);
+  fputs("}", stdout);
+}
+
+static void
 print_install_application(const XnixRuntimeApplication *application)
 {
   fputs("{", stdout);
@@ -2149,6 +2229,16 @@ print_runtime_service_binding(void)
 }
 
 static int
+print_runtime_live_owner_gate(void)
+{
+  const XnixRuntimeLiveOwnerGatePolicy *policy = xnix_runtime_live_owner_gate_policy();
+
+  print_live_owner_gate_policy(policy);
+  fputs("\n", stdout);
+  return 0;
+}
+
+static int
 print_engine_for_mode(const char *mode)
 {
   const XnixRuntimeEngine *engine = xnix_runtime_select_engine_for_mode(mode);
@@ -2229,6 +2319,8 @@ print_probe(void)
   printf("%zu,", xnix_runtime_settings_change_policy_count());
   fputs("\"service_binding_policy_owner\":\"c\",", stdout);
   fputs("\"service_binding_policy_count\":1,", stdout);
+  fputs("\"live_owner_gate_policy_owner\":\"c\",", stdout);
+  fputs("\"live_owner_gate_policy_count\":1,", stdout);
   fputs("\"write_methods\":", stdout);
   print_write_methods();
   fputs(",", stdout);
@@ -2282,7 +2374,7 @@ print_write_gate(const char *method_name)
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -2395,6 +2487,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "runtime-service-binding") == 0 && argc == 2) {
     return print_runtime_service_binding();
+  }
+
+  if (strcmp(argv[1], "runtime-live-owner-gate") == 0 && argc == 2) {
+    return print_runtime_live_owner_gate();
   }
 
   if (strcmp(argv[1], "write-gate") == 0 && argc == 3) {

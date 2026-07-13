@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.70] - 2026-07-14
+
+### Added
+
+- Added C Runtime live owner gate policy records and a CLI read method for reporting production D-Bus ownership transition gates.
+- Added C Runtime live owner gate tests that verify required gate ordering, pending production ownership, KDE non-ownership, host-root safety, network safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first live owner gate layer while keeping the smoke adapter separate from production Runtime ownership.
+
 ## [0.2.69] - 2026-07-14
 
 ### Added
