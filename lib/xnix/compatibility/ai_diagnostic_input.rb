@@ -25,6 +25,8 @@ module Xnix
           "input_type" => "ai-diagnostic-input",
           "application" => application_context,
           "runtime_owned" => true,
+          "runtime_method" => "GetAIDiagnosticInput",
+          "c_runtime_backed" => true,
           "kde_policy_owner" => false,
           "ai_provider_called" => false,
           "network_required" => false,

@@ -165,7 +165,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetAIDiagnosticInput"
       [
-        "({'input_type': <'ai-diagnostic-input'>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'input_type': <'ai-diagnostic-input'>, 'runtime_method': <'GetAIDiagnosticInput'>, 'c_runtime_backed': <true>, 'diagnostic_signal_count': <3>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -476,6 +476,9 @@ assert(!test_result["backend_details_exposed"], "D-Bus client must parse test re
 
 ai_input = client.ai_diagnostic_input("org.xnix.sample.notepad")
 assert(ai_input["input_type"] == "ai-diagnostic-input", "D-Bus client must parse AI diagnostic inputs")
+assert(ai_input["runtime_method"] == "GetAIDiagnosticInput", "D-Bus client must parse AI diagnostic Runtime method")
+assert(ai_input["c_runtime_backed"], "D-Bus client must parse AI diagnostic C ownership")
+assert(ai_input["diagnostic_signal_count"] == 3, "D-Bus client must parse AI diagnostic signal count")
 assert(ai_input["safe_for_ai_diagnostics"], "D-Bus client must parse AI diagnostic input booleans")
 assert(!ai_input["ai_provider_called"], "D-Bus client must parse AI provider false booleans")
 assert(!ai_input["network_required"], "D-Bus client must parse network false booleans")

@@ -20,10 +20,12 @@ input = Xnix::Compatibility::AIDiagnosticInput.new(recipe: recipe).to_h
 section_ids = input.fetch("context_sections").map { |section| section.fetch("id") }
 signal_ids = input.fetch("diagnostic_signals").map { |signal| signal.fetch("id") }
 
-assert(input["version"] == "0.2.90", "AI diagnostic input must expose the current version")
+assert(input["version"] == "0.2.91", "AI diagnostic input must expose the current version")
 assert(input["input_type"] == "ai-diagnostic-input", "AI diagnostic input must identify the input type")
 assert(input["application"]["id"] == "org.xnix.sample.notepad", "AI diagnostic input must preserve the application id")
 assert(input["runtime_owned"], "Runtime must own AI diagnostic input")
+assert(input["runtime_method"] == "GetAIDiagnosticInput", "AI diagnostic input must expose the Runtime method")
+assert(input["c_runtime_backed"], "AI diagnostic input must be backed by the C Runtime contract")
 assert(!input["kde_policy_owner"], "KDE must not own AI diagnostic policy")
 assert(!input["ai_provider_called"], "AI diagnostic input must not call an AI provider")
 assert(!input["network_required"], "AI diagnostic input must not require network access")

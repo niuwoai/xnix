@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.90"
+#define XNIX_RUNTIME_VERSION "0.2.91"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -933,6 +933,56 @@ typedef struct {
   const char *summary;
 } XnixRuntimeKRunnerQueryPlan;
 
+typedef struct {
+  const char *id;
+  const char *source;
+  const char *summary;
+  const char *primary_fact_key;
+  const char *primary_fact_value;
+} XnixRuntimeAIDiagnosticContextSection;
+
+typedef struct {
+  const char *id;
+  const char *severity;
+  const char *source;
+  const char *summary;
+  const char *recommended_next_action;
+} XnixRuntimeAIDiagnosticSignal;
+
+typedef struct {
+  bool user_documents_included;
+  bool host_paths_included;
+  bool raw_backend_logs_included;
+  bool secrets_included;
+  bool network_calls_allowed;
+  bool requires_user_approval_for_sensitive_actions;
+} XnixRuntimeAIDiagnosticPrivacyBoundaries;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *input_type;
+  const char *issue;
+  const char *test_type;
+  XnixRuntimeAIDiagnosticContextSection context_sections[4];
+  size_t context_section_count;
+  XnixRuntimeAIDiagnosticSignal diagnostic_signals[3];
+  size_t diagnostic_signal_count;
+  XnixRuntimeAIDiagnosticPrivacyBoundaries privacy_boundaries;
+  const char *allowed_ai_tasks[4];
+  size_t allowed_ai_task_count;
+  const char *blocked_ai_tasks[4];
+  size_t blocked_ai_task_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool ai_provider_called;
+  bool network_required;
+  bool safe_for_ai_diagnostics;
+  bool backend_details_exposed;
+  bool host_root_modified;
+  const char *summary;
+} XnixRuntimeAIDiagnosticInput;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -1068,6 +1118,12 @@ bool xnix_runtime_portal_request_plan(
   const char *application_id,
   const char *operation,
   XnixRuntimePortalRequestPlan *plan
+);
+bool xnix_runtime_ai_diagnostic_input(
+  const char *application_id,
+  const char *issue,
+  const char *test_type,
+  XnixRuntimeAIDiagnosticInput *input
 );
 
 #endif

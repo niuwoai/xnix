@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.91] - 2026-07-14
+
+### Added
+
+- Added C Runtime AI diagnostic input records and a CLI read method for Runtime-safe diagnostic context, signals, privacy boundaries, and AI task policy.
+- Added C Runtime probe ownership for AI diagnostic input safety so KDE and tests can verify AI diagnostic boundaries without relying on Ruby product logic.
+
+### Changed
+
+- Marked AI diagnostic inputs as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping provider calls, network access, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.90] - 2026-07-14
 
 ### Added

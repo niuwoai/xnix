@@ -729,6 +729,9 @@ build_ai_diagnostic_input(const gchar *application_id, const gchar *issue, const
   g_variant_builder_add(&input, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&input, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&input, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&input, "{sv}", "runtime_method", g_variant_new_string("GetAIDiagnosticInput"));
+  g_variant_builder_add(&input, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&input, "{sv}", "diagnostic_signal_count", g_variant_new_int32(3));
   g_variant_builder_add(&input, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&input, "{sv}", "ai_provider_called", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&input, "{sv}", "network_required", g_variant_new_boolean(FALSE));
