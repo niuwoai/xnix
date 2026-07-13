@@ -3,4 +3,4 @@
 
 require_relative "../lib/xnix/compatibility/kde_integration_status"
 
-exit Xnix::Compatibility::KdeIntegrationStatus::CLI.new.run
+exit Xnix::Compatibility::KdeIntegrationStatus::CLI.new(ARGV).run

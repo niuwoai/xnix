@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.89"
+#define XNIX_RUNTIME_VERSION "0.2.90"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[38];
+  const char *read_only_methods[39];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -711,6 +711,37 @@ typedef struct {
   const char *desktop;
   const char *summary;
 } XnixRuntimeDesktopActivationManifest;
+
+typedef struct {
+  const char *id;
+  const char *name;
+  const char *state;
+  const char *model_command;
+  const char *runtime_method;
+  const char *adapter_role;
+  bool runtime_backed;
+  bool c_runtime_backed;
+  bool dbus_read_available;
+  bool kde_policy_owner;
+  const char *summary;
+  const char *next_step;
+} XnixRuntimeKDEIntegrationEntryPoint;
+
+typedef struct {
+  XnixRuntimeKDEIntegrationEntryPoint entry_points[7];
+  size_t entry_point_count;
+  size_t initial_count;
+  size_t planned_count;
+  size_t complete_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool official_desktop_only;
+  bool stable_desktop_contract;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *desktop;
+  const char *summary;
+} XnixRuntimeKDEIntegrationStatus;
 
 typedef struct {
   const XnixRuntimeApplication *application;
@@ -1003,6 +1034,9 @@ bool xnix_runtime_compatibility_run_plan(
 bool xnix_runtime_desktop_activation_manifest(
   const char *application_id,
   XnixRuntimeDesktopActivationManifest *manifest
+);
+bool xnix_runtime_kde_integration_status(
+  XnixRuntimeKDEIntegrationStatus *status
 );
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,

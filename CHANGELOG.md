@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.90] - 2026-07-14
+
+### Added
+
+- Added C Runtime KDE integration status records and a CLI read method for the seven first-release KDE entry points.
+- Added Runtime D-Bus contract coverage for `GetKDEIntegrationStatus` so KDE surfaces can read official desktop scope and entry-point readiness from the Runtime.
+
+### Changed
+
+- Updated `xnix-kde-integration-status` to consume Runtime-owned KDE integration status before falling back to local data.
+- Extended Runtime method parity, daemon dispatch, D-Bus smoke coverage, and the D-Bus client to include KDE integration status while keeping KDE as a replaceable shell and backend policy Runtime-owned.
+
 ## [0.2.89] - 2026-07-14
 
 ### Added

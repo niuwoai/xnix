@@ -2820,6 +2820,8 @@ print_probe(void)
   fputs("\"compatibility_run_plan_count\":1,", stdout);
   fputs("\"desktop_activation_manifest_owner\":\"c\",", stdout);
   fputs("\"desktop_activation_manifest_count\":1,", stdout);
+  fputs("\"kde_integration_status_owner\":\"c\",", stdout);
+  fputs("\"kde_integration_entry_point_count\":7,", stdout);
   fputs("\"desktop_entry_plan_owner\":\"c\",", stdout);
   fputs("\"desktop_entry_plan_count\":1,", stdout);
   fputs("\"task_manager_identity_plan_owner\":\"c\",", stdout);
@@ -2891,6 +2893,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_compatibility_center.inc"
 #include "xnix_runtime_core_cli_run_plan.inc"
 #include "xnix_runtime_core_cli_desktop_activation.inc"
+#include "xnix_runtime_core_cli_kde_integration_status.inc"
 #include "xnix_runtime_core_cli_desktop_entry.inc"
 #include "xnix_runtime_core_cli_task_manager_identity.inc"
 #include "xnix_runtime_core_cli_kwin_window_rule.inc"

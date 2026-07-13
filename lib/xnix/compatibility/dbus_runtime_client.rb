@@ -69,6 +69,10 @@ module Xnix
         parse_dictionary(call("GetTaskManagerIdentityPlan", application_id))
       end
 
+      def kde_integration_status
+        parse_dictionary(call("GetKDEIntegrationStatus"))
+      end
+
       def kwin_window_rule_plan(application_id)
         parse_dictionary(call("GetKWinWindowRulePlan", application_id))
       end

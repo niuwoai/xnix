@@ -25,6 +25,7 @@ module Xnix
         GetDesktopActivationManifest
         GetDesktopEntryPlan
         GetTaskManagerIdentityPlan
+        GetKDEIntegrationStatus
         GetKWinWindowRulePlan
         GetFileAssociationPlan
         GetNotificationPlan
@@ -73,6 +74,7 @@ module Xnix
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
+        "GetKDEIntegrationStatus" => "kde_integration_status",
         "GetKWinWindowRulePlan" => "kwin_window_rule_plan",
         "GetFileAssociationPlan" => "file_association_plan",
         "GetNotificationPlan" => "notification_plan",

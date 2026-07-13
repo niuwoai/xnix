@@ -120,6 +120,30 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKDEIntegrationStatus"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKDEIntegrationStatus: #{stderr}")
+  assert(stdout.include?("kde-integration-status"), "runtime smoke adapter must expose KDE integration status over D-Bus")
+  assert(stdout.include?("GetDesktopEntryPlan"), "runtime smoke adapter KDE status must expose Runtime method coverage")
+
+  stdout, stderr, status = Open3.capture3(
+    "ruby",
+    "bin/xnix-kde-integration-status",
+    "--source",
+    "dbus"
+  )
+  assert(status.success?, "KDE integration status model must consume Runtime status over D-Bus: #{stderr}")
+  kde_status = JSON.parse(stdout)
+  assert(kde_status.fetch("source").fetch("kind") == "runtime-dbus-session", "KDE integration status model must report the D-Bus Runtime source")
+  assert(kde_status.fetch("entry_points").length == 7, "KDE integration status model must expose seven D-Bus entry points")
+  assert(kde_status.fetch("entry_points").all? { |entry| entry.fetch("dbus_read_available") }, "KDE integration status model must preserve D-Bus read availability")
+  assert(!kde_status.fetch("backend_details_exposed"), "KDE integration status model must preserve backend detail gates from D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetKWinWindowRulePlan",
     "org.xnix.sample.notepad"
   )

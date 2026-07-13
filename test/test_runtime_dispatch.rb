@@ -142,6 +142,19 @@ assert(!krunner_query["summary"]["backend_launch_enabled"], "dispatch must keep 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKDEIntegrationStatus",
+  JSON.generate([])
+)
+assert(status.success?, "dispatch GetKDEIntegrationStatus must exit successfully: #{stderr}")
+kde_status = JSON.parse(stdout)
+assert(kde_status["status_type"] == "kde-integration-status", "dispatch must route GetKDEIntegrationStatus")
+assert(kde_status["entry_point_count"] == 7, "dispatch must expose seven KDE entry points")
+assert(kde_status["entry_points"].all? { |entry| entry.fetch("c_runtime_backed") }, "dispatch must expose C Runtime-backed entry points")
+assert(!kde_status["backend_details_exposed"], "dispatch must keep KDE integration backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetKWinWindowRulePlan",
   JSON.generate(["org.xnix.sample.notepad"])
 )

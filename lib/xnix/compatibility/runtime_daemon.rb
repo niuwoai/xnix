@@ -78,6 +78,7 @@ module Xnix
             "compatibility_backend_binding" => true,
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
+            "kde_integration_status" => true,
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
             "kwin_window_rule_planning" => true,
@@ -179,6 +180,31 @@ module Xnix
       def desktop_activation_manifest(application_id)
         recipe = require_recipe(application_id)
         DesktopIntegrationManifest.new(recipe: recipe).to_h
+      end
+
+      def kde_integration_status
+        entry_points = kde_integration_entry_points
+
+        {
+          "status_type" => "kde-integration-status",
+          "desktop" => "KDE Plasma",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "official_desktop_only" => true,
+          "stable_desktop_contract" => true,
+          "entry_point_ids" => entry_points.map { |entry| entry.fetch("id") },
+          "entry_point_names" => entry_points.map { |entry| entry.fetch("name") },
+          "entry_point_states" => entry_points.map { |entry| entry.fetch("state") },
+          "runtime_methods" => entry_points.map { |entry| entry.fetch("runtime_method") },
+          "entry_points" => entry_points,
+          "entry_point_count" => entry_points.length,
+          "initial_count" => entry_points.count { |entry| entry.fetch("state") == "initial" },
+          "planned_count" => entry_points.count { |entry| entry.fetch("state") == "planned" },
+          "complete_count" => entry_points.count { |entry| entry.fetch("state") == "complete" },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KDE Plasma is the only official first-release shell, and all seven entry points are Runtime-backed."
+        }
       end
 
       def desktop_entry_plan(application_id)
@@ -595,6 +621,8 @@ module Xnix
           run_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopActivationManifest"
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
+        when "GetKDEIntegrationStatus"
+          kde_integration_status
         when "GetDesktopEntryPlan"
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
@@ -716,6 +744,83 @@ module Xnix
       end
 
       private
+
+      def kde_integration_entry_points
+        [
+          kde_integration_entry(
+            "launcher",
+            "Launcher",
+            "GetDesktopEntryPlan",
+            "standard-desktop-entry",
+            "Windows applications appear in the KDE launcher through generated desktop entries.",
+            "Connect activation receipts to a production recipe installer."
+          ),
+          kde_integration_entry(
+            "task-manager",
+            "Task Manager",
+            "GetTaskManagerIdentityPlan",
+            "window-identity-and-restore",
+            "Compatibility windows expose grouping, pinning, switcher, and restore identity.",
+            "Connect Runtime identity plans to a production KWin script and task manager bridge."
+          ),
+          kde_integration_entry(
+            "file-manager",
+            "File Manager",
+            "GetFileAssociationPlan",
+            "dolphin-service-menu-and-mime",
+            "Dolphin opens selected files through portal-mediated Runtime file-open planning.",
+            "Connect file-open requests to production Runtime launch requests."
+          ),
+          kde_integration_entry(
+            "system-tray",
+            "System Tray",
+            "GetTrayStatus",
+            "runtime-status-surface",
+            "The tray can show Runtime activity, attention state, and bridge readiness.",
+            "Connect tray status plans to a production Plasma tray surface."
+          ),
+          kde_integration_entry(
+            "notifications",
+            "Notifications",
+            "GetNotificationPlan",
+            "runtime-event-notification",
+            "Runtime events map to KDE notification payloads for install, repair, mode, and approval states.",
+            "Connect notification plans to the production KDE notification path."
+          ),
+          kde_integration_entry(
+            "compatibility-center",
+            "Compatibility Center",
+            "GetCompatibilityCenterSummary",
+            "plasma-read-model",
+            "The Compatibility Center can show Runtime-owned application state and safe action cards.",
+            "Render live Runtime applications and diagnostics in the Plasmoid."
+          ),
+          kde_integration_entry(
+            "settings",
+            "Settings",
+            "GetCompatibilitySettings",
+            "user-facing-policy-controls",
+            "Settings expose user-facing Runtime policy without backend terminology.",
+            "Connect settings plans to a production KDE settings module and persisted Runtime policy."
+          )
+        ]
+      end
+
+      def kde_integration_entry(id, name, runtime_method, adapter_role, summary, next_step)
+        {
+          "id" => id,
+          "name" => name,
+          "state" => "initial",
+          "runtime_method" => runtime_method,
+          "adapter_role" => adapter_role,
+          "runtime_backed" => true,
+          "c_runtime_backed" => true,
+          "dbus_read_available" => true,
+          "kde_policy_owner" => false,
+          "summary" => summary,
+          "next_step" => next_step
+        }
+      end
 
       def required_parameter(method_name, parameters, index)
         value = parameters[index]
@@ -1272,6 +1377,8 @@ module Xnix
             write_json(runtime.test_result(application_id, test_type))
           when "backend-binding"
             write_json(runtime.backend_binding(require_argument(command)))
+          when "kde-integration-status"
+            write_json(runtime.kde_integration_status)
           when "desktop-entry-plan"
             write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "task-manager-identity-plan"

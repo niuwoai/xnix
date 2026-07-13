@@ -52,6 +52,9 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKDEIntegrationStatus'>"
+  "      <arg name='status' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -273,6 +276,68 @@ build_desktop_activation_manifest(const gchar *application_id)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_kde_integration_status(void)
+{
+  static const gchar *entry_point_ids[] = {
+    "launcher",
+    "task-manager",
+    "file-manager",
+    "system-tray",
+    "notifications",
+    "compatibility-center",
+    "settings"
+  };
+  static const gchar *entry_point_names[] = {
+    "Launcher",
+    "Task Manager",
+    "File Manager",
+    "System Tray",
+    "Notifications",
+    "Compatibility Center",
+    "Settings"
+  };
+  static const gchar *entry_point_states[] = {
+    "initial",
+    "initial",
+    "initial",
+    "initial",
+    "initial",
+    "initial",
+    "initial"
+  };
+  static const gchar *runtime_methods[] = {
+    "GetDesktopEntryPlan",
+    "GetTaskManagerIdentityPlan",
+    "GetFileAssociationPlan",
+    "GetTrayStatus",
+    "GetNotificationPlan",
+    "GetCompatibilityCenterSummary",
+    "GetCompatibilitySettings"
+  };
+  GVariantBuilder status;
+
+  g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("kde-integration-status"));
+  g_variant_builder_add(&status, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&status, "{sv}", "entry_point_count", g_variant_new_int32(7));
+  g_variant_builder_add(&status, "{sv}", "initial_count", g_variant_new_int32(7));
+  g_variant_builder_add(&status, "{sv}", "planned_count", g_variant_new_int32(0));
+  g_variant_builder_add(&status, "{sv}", "complete_count", g_variant_new_int32(0));
+  g_variant_builder_add(&status, "{sv}", "entry_point_ids", g_variant_new_strv(entry_point_ids, 7));
+  g_variant_builder_add(&status, "{sv}", "entry_point_names", g_variant_new_strv(entry_point_names, 7));
+  g_variant_builder_add(&status, "{sv}", "entry_point_states", g_variant_new_strv(entry_point_states, 7));
+  g_variant_builder_add(&status, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 7));
+  g_variant_builder_add(&status, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "official_desktop_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "stable_desktop_contract", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&status);
 }
 
 static GVariant *
@@ -913,7 +978,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(38));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(39));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1081,6 +1146,14 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_task_manager_identity_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKDEIntegrationStatus") == 0) {
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_kde_integration_status())
     );
     return;
   }

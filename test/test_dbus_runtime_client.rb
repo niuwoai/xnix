@@ -67,6 +67,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetKDEIntegrationStatus"
+      [
+        "({'status_type': <'kde-integration-status'>, 'desktop': <'KDE Plasma'>, 'entry_point_count': <7>, 'initial_count': <7>, 'planned_count': <0>, 'complete_count': <0>, 'entry_point_ids': <['launcher', 'task-manager', 'file-manager', 'system-tray', 'notifications', 'compatibility-center', 'settings']>, 'entry_point_names': <['Launcher', 'Task Manager', 'File Manager', 'System Tray', 'Notifications', 'Compatibility Center', 'Settings']>, 'entry_point_states': <['initial', 'initial', 'initial', 'initial', 'initial', 'initial', 'initial']>, 'runtime_methods': <['GetDesktopEntryPlan', 'GetTaskManagerIdentityPlan', 'GetFileAssociationPlan', 'GetTrayStatus', 'GetNotificationPlan', 'GetCompatibilityCenterSummary', 'GetCompatibilitySettings']>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'official_desktop_only': <true>, 'stable_desktop_contract': <true>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetFileAssociationPlan"
       [
         "({'plan_type': <'file-association-plan'>, 'association_type': <'desktop-file-association'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'mimeapps_path': <'usr/share/applications/mimeapps.list'>, 'file_open_command': <'xnix-compat-open'>, 'file_open_argument': <'%U'>, 'mime_type_count': <2>, 'standard_mimeapps_list': <true>, 'staged_root_only': <true>, 'overwrite_existing_mimeapps': <false>, 'portal_required_for_file_open': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -207,7 +213,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <38>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <39>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -317,6 +323,18 @@ assert(task_manager_identity_plan["window_manager_policy_only"], "D-Bus client m
 assert(task_manager_identity_plan["runtime_owns_backend_policy"], "D-Bus client must parse Runtime backend policy ownership")
 assert(!task_manager_identity_plan["host_root_modified"], "D-Bus client must parse task manager host-root safety")
 assert(!task_manager_identity_plan["backend_details_exposed"], "D-Bus client must parse task manager backend detail status")
+
+kde_status = client.kde_integration_status
+assert(kde_status["status_type"] == "kde-integration-status", "D-Bus client must parse KDE integration status")
+assert(kde_status["desktop"] == "KDE Plasma", "D-Bus client must parse KDE integration desktops")
+assert(kde_status["entry_point_count"] == 7, "D-Bus client must parse KDE entry point counts")
+assert(kde_status["entry_point_ids"].include?("launcher"), "D-Bus client must parse KDE entry point ids")
+assert(kde_status["runtime_methods"].include?("GetDesktopEntryPlan"), "D-Bus client must parse KDE Runtime methods")
+assert(kde_status["runtime_owned"], "D-Bus client must parse KDE integration Runtime ownership")
+assert(!kde_status["kde_policy_owner"], "D-Bus client must parse KDE integration policy ownership")
+assert(kde_status["official_desktop_only"], "D-Bus client must parse official desktop scope")
+assert(kde_status["stable_desktop_contract"], "D-Bus client must parse stable desktop contract status")
+assert(!kde_status["backend_details_exposed"], "D-Bus client must parse KDE integration backend detail status")
 
 file_association_plan = client.file_association_plan("org.xnix.sample.notepad")
 assert(file_association_plan["plan_type"] == "file-association-plan", "D-Bus client must parse file association plans")
@@ -512,7 +530,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 38, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 39, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

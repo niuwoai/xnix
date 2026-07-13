@@ -64,7 +64,7 @@ module Xnix
       end
 
       def entry_points
-        KdeIntegrationStatus::ENTRY_POINTS.map { |entry| entry.fetch("id") }
+        KdeIntegrationStatus.new.entry_point_ids
       end
 
       def artifacts
