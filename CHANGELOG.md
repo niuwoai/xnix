@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.67] - 2026-07-13
+
+### Added
+
+- Added C Runtime compatibility settings policy records and CLI read methods for listing settings gates and evaluating per-application KDE settings models.
+- Added C Runtime settings tests that verify user-facing sections, default values, Runtime ownership, blocked persistence, host-root safety, and backend-detail filtering.
+
+### Changed
+
+- Extended Runtime C ownership into the first compatibility settings layer while keeping settings persistence, host-root mutation, and backend terminology out of KDE-facing settings data.
+
 ## [0.2.66] - 2026-07-13
 
 ### Added

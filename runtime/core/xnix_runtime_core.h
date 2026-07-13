@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.66"
+#define XNIX_RUNTIME_VERSION "0.2.67"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -285,6 +285,35 @@ typedef struct {
   const char *summary;
 } XnixRuntimeBackendBindingPolicy;
 
+typedef struct {
+  const char *id;
+  const char *label;
+  const char *value;
+  const char *options[3];
+  size_t option_count;
+} XnixRuntimeSettingsField;
+
+typedef struct {
+  const char *id;
+  const char *title;
+  const char *description;
+  XnixRuntimeSettingsField fields[2];
+  size_t field_count;
+} XnixRuntimeSettingsSection;
+
+typedef struct {
+  const char *application_id;
+  const char *settings_state;
+  XnixRuntimeSettingsSection sections[5];
+  size_t section_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool settings_persisted;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeSettingsPolicy;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -341,5 +370,9 @@ const XnixRuntimePackageSourcePolicy *xnix_runtime_find_package_source_policy(co
 size_t xnix_runtime_backend_binding_policy_count(void);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_backend_binding_policy_at(size_t index);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_find_backend_binding_policy(const char *application_id);
+
+size_t xnix_runtime_settings_policy_count(void);
+const XnixRuntimeSettingsPolicy *xnix_runtime_settings_policy_at(size_t index);
+const XnixRuntimeSettingsPolicy *xnix_runtime_find_settings_policy(const char *application_id);
 
 #endif

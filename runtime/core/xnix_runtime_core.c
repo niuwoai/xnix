@@ -623,6 +623,111 @@ static const XnixRuntimeBackendBindingPolicy backend_binding_policies[] = {
   },
 };
 
+static const XnixRuntimeSettingsPolicy settings_policies[] = {
+  {
+    .application_id = "org.xnix.sample.notepad",
+    .settings_state = "planned",
+    .sections = {
+      {
+        .id = "run-mode",
+        .title = "Run mode",
+        .description = "Choose how Xnix balances speed and compatibility.",
+        .fields = {
+          {
+            .id = "mode",
+            .label = "Run mode",
+            .value = "automatic",
+            .options = {"automatic", "performance", "compatibility"},
+            .option_count = 3,
+          },
+          {
+            .id = "preference",
+            .label = "Priority",
+            .value = "compatibility",
+            .options = {"performance", "compatibility"},
+            .option_count = 2,
+          },
+        },
+        .field_count = 2,
+      },
+      {
+        .id = "resource-access",
+        .title = "File access",
+        .description = "Control which user folders this application may request.",
+        .fields = {
+          {
+            .id = "documents",
+            .label = "Documents",
+            .value = "ask",
+            .options = {"allow", "ask", "deny"},
+            .option_count = 3,
+          },
+          {
+            .id = "downloads",
+            .label = "Downloads",
+            .value = "ask",
+            .options = {"allow", "ask", "deny"},
+            .option_count = 3,
+          },
+        },
+        .field_count = 2,
+      },
+      {
+        .id = "devices",
+        .title = "Devices",
+        .description = "Control sensitive device access.",
+        .fields = {
+          {
+            .id = "camera",
+            .label = "Camera",
+            .value = "deny",
+            .options = {"allow", "ask", "deny"},
+            .option_count = 3,
+          },
+        },
+        .field_count = 1,
+      },
+      {
+        .id = "network",
+        .title = "Network",
+        .description = "Control network access for compatibility actions.",
+        .fields = {
+          {
+            .id = "network",
+            .label = "Network",
+            .value = "allow",
+            .options = {"allow", "ask", "deny"},
+            .option_count = 3,
+          },
+        },
+        .field_count = 1,
+      },
+      {
+        .id = "snapshots",
+        .title = "Snapshots",
+        .description = "Keep restore points before risky compatibility changes.",
+        .fields = {
+          {
+            .id = "snapshots",
+            .label = "Environment snapshots",
+            .value = "enabled",
+            .options = {"enabled", "disabled"},
+            .option_count = 2,
+          },
+        },
+        .field_count = 1,
+      },
+    },
+    .section_count = 5,
+    .runtime_owned = true,
+    .kde_policy_owner = false,
+    .settings_persisted = false,
+    .host_root_modified = false,
+    .backend_details_exposed = false,
+    .summary = "Compatibility settings are modeled by the Runtime and ready for KDE display.",
+  },
+};
+
 const char *
 xnix_runtime_version(void)
 {
@@ -1085,6 +1190,40 @@ xnix_runtime_find_backend_binding_policy(const char *application_id)
   for (size_t index = 0; index < xnix_runtime_backend_binding_policy_count(); index++) {
     const XnixRuntimeBackendBindingPolicy *policy =
       xnix_runtime_backend_binding_policy_at(index);
+
+    if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
+      return policy;
+    }
+  }
+
+  return NULL;
+}
+
+size_t
+xnix_runtime_settings_policy_count(void)
+{
+  return sizeof(settings_policies) / sizeof(settings_policies[0]);
+}
+
+const XnixRuntimeSettingsPolicy *
+xnix_runtime_settings_policy_at(size_t index)
+{
+  if (index >= xnix_runtime_settings_policy_count()) {
+    return NULL;
+  }
+
+  return &settings_policies[index];
+}
+
+const XnixRuntimeSettingsPolicy *
+xnix_runtime_find_settings_policy(const char *application_id)
+{
+  if (application_id == NULL) {
+    return NULL;
+  }
+
+  for (size_t index = 0; index < xnix_runtime_settings_policy_count(); index++) {
+    const XnixRuntimeSettingsPolicy *policy = xnix_runtime_settings_policy_at(index);
 
     if (policy != NULL && strcmp(application_id, policy->application_id) == 0) {
       return policy;
