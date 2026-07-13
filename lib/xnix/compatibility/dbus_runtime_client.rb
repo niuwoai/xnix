@@ -77,6 +77,10 @@ module Xnix
         parse_dictionary(call("GetNotificationPlan", application_id, event_type))
       end
 
+      def tray_status
+        parse_dictionary(call("GetTrayStatus"))
+      end
+
       def state_root(application_id)
         parse_dictionary(call("GetApplicationStateRoot", application_id))
       end

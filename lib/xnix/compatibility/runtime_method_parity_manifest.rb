@@ -27,6 +27,7 @@ module Xnix
         GetTaskManagerIdentityPlan
         GetFileAssociationPlan
         GetNotificationPlan
+        GetTrayStatus
         GetPortalRequestPlan
         GetApplicationStateRoot
         GetCompatibilityPackageSource
@@ -71,6 +72,7 @@ module Xnix
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
         "GetFileAssociationPlan" => "file_association_plan",
         "GetNotificationPlan" => "notification_plan",
+        "GetTrayStatus" => "tray_status",
         "GetPortalRequestPlan" => "portal_request_plan",
         "GetApplicationStateRoot" => "state_root",
         "GetCompatibilityPackageSource" => "package_source",

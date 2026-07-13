@@ -2826,6 +2826,8 @@ print_probe(void)
   fputs("\"file_association_plan_count\":1,", stdout);
   fputs("\"notification_plan_owner\":\"c\",", stdout);
   fputs("\"notification_plan_count\":4,", stdout);
+  fputs("\"tray_status_plan_owner\":\"c\",", stdout);
+  fputs("\"tray_status_plan_count\":1,", stdout);
   fputs("\"portal_request_plan_owner\":\"c\",", stdout);
   fputs("\"portal_request_plan_count\":7,", stdout);
   fputs("\"write_methods\":", stdout);
@@ -2886,5 +2888,6 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_task_manager_identity.inc"
 #include "xnix_runtime_core_cli_file_association.inc"
 #include "xnix_runtime_core_cli_notification.inc"
+#include "xnix_runtime_core_cli_tray_status.inc"
 #include "xnix_runtime_core_cli_portal_request.inc"
 #include "xnix_runtime_core_cli_dispatch.inc"

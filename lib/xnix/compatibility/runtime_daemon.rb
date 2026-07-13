@@ -35,6 +35,7 @@ require_relative "runtime_write_gate"
 require_relative "settings_model"
 require_relative "settings_change_plan"
 require_relative "task_manager_identity"
+require_relative "tray_status_model"
 
 module Xnix
   module Compatibility
@@ -80,6 +81,7 @@ module Xnix
             "task_manager_identity_planning" => true,
             "file_association_planning" => true,
             "notification_planning" => true,
+            "tray_status_planning" => true,
             "compatibility_repair_planning" => true,
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
@@ -139,6 +141,7 @@ module Xnix
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "file_association_plan" => file_association_plan_summary(recipe),
           "notification_plan" => notification_plan_summary(recipe),
+          "tray_status" => tray_status_summary,
           "install_plan" => install_plan_summary(recipe),
           "acquisition_preflight" => acquisition_preflight_summary(recipe),
           "artifact_manifest" => artifact_manifest_summary(recipe),
@@ -303,6 +306,28 @@ module Xnix
         }
       end
 
+      def tray_status
+        TrayStatusModel.new(
+          active_count: 1,
+          attention_count: 1,
+          bridged_tray_count: 0
+        ).to_h.merge(
+          "status_type" => "tray-status-plan",
+          "runtime_owned" => true,
+          "kde_policy_owner" => false,
+          "safety" => {
+            "user_visible" => true,
+            "live_backend_bridge_enabled" => false,
+            "bridge_configuration_persisted" => false,
+            "host_root_modified" => false,
+            "backend_details_exposed" => false
+          },
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "Runtime tray status is visible to KDE while live tray bridging and persistence remain gated."
+        )
+      end
+
       def state_root(application_id)
         recipe = require_recipe(application_id)
         ApplicationStateRoot.new(recipe: recipe).to_h
@@ -448,6 +473,8 @@ module Xnix
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
           )
+        when "GetTrayStatus"
+          tray_status
         when "GetApplicationStateRoot"
           state_root(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityPackageSource"
@@ -723,6 +750,22 @@ module Xnix
           "settings_persistence_enabled" => plan.fetch("safety").fetch("settings_persistence_enabled"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def tray_status_summary
+        status = tray_status
+        {
+          "status_type" => status.fetch("status_type"),
+          "active_application_count" => status.fetch("runtime_activity").fetch("active_application_count"),
+          "attention_required_count" => status.fetch("runtime_activity").fetch("attention_required_count"),
+          "compatibility_state" => status.fetch("compatibility_status").fetch("state"),
+          "tray_bridge_state" => status.fetch("tray_bridge").fetch("state"),
+          "bridged_tray_application_count" => status.fetch("tray_bridge").fetch("bridged_tray_application_count"),
+          "live_backend_bridge_enabled" => status.fetch("safety").fetch("live_backend_bridge_enabled"),
+          "bridge_configuration_persisted" => status.fetch("safety").fetch("bridge_configuration_persisted"),
+          "backend_details_exposed" => status.fetch("backend_details_exposed"),
+          "summary" => status.fetch("desktop_safe_summary")
         }
       end
 
@@ -1031,6 +1074,8 @@ module Xnix
             raise ArgumentError, "notification-plan requires event type" unless event_type
 
             write_json(runtime.notification_plan(application_id, event_type))
+          when "tray-status"
+            write_json(runtime.tray_status)
           when "state-root"
             write_json(runtime.state_root(require_argument(command)))
           when "package-source"

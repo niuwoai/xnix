@@ -142,6 +142,16 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetTrayStatus"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetTrayStatus: #{stderr}")
+  assert(stdout.include?("tray-status-plan"), "runtime smoke adapter must expose tray status over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetPortalRequestPlan",
     "org.xnix.sample.notepad",
     "file-open"

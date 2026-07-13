@@ -61,6 +61,9 @@ static const gchar introspection_xml[] =
   "      <arg name='event_type' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetTrayStatus'>"
+  "      <arg name='status' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetPortalRequestPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='operation' type='s' direction='in'/>"
@@ -369,6 +372,30 @@ build_notification_plan(const gchar *application_id, const gchar *event_type)
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_tray_status(void)
+{
+  GVariantBuilder status;
+
+  g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("tray-status-plan"));
+  g_variant_builder_add(&status, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&status, "{sv}", "active_application_count", g_variant_new_int32(1));
+  g_variant_builder_add(&status, "{sv}", "attention_required_count", g_variant_new_int32(1));
+  g_variant_builder_add(&status, "{sv}", "bridged_tray_application_count", g_variant_new_int32(0));
+  g_variant_builder_add(&status, "{sv}", "compatibility_state", g_variant_new_string("attention-required"));
+  g_variant_builder_add(&status, "{sv}", "tray_bridge_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&status, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "live_backend_bridge_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "bridge_configuration_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&status);
 }
 
 static GVariant *
@@ -776,7 +803,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(34));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(35));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -977,6 +1004,14 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_notification_plan(application_id, event_type))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetTrayStatus") == 0) {
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_tray_status())
     );
     return;
   }

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.85] - 2026-07-14
+
+### Added
+
+- Added C Runtime tray status plan records and a CLI read method for KDE system tray Runtime activity, attention state, tray bridge readiness, and user navigation actions.
+- Added Runtime D-Bus contract coverage for `GetTrayStatus` so KDE tray surfaces can read Runtime status without enabling live tray bridging or backend policy ownership.
+
+### Changed
+
+- Extended Runtime method parity, D-Bus smoke coverage, daemon diagnostics, and the D-Bus client to include tray status planning while keeping live tray bridging, bridge persistence, host-root mutation, and backend details disabled.
+
 ## [0.2.84] - 2026-07-14
 
 ### Added

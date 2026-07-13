@@ -116,6 +116,20 @@ assert(!notification_plan["safety"]["backend_details_exposed"], "dispatch must k
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetTrayStatus"
+)
+assert(status.success?, "dispatch GetTrayStatus must exit successfully: #{stderr}")
+tray_status = JSON.parse(stdout)
+assert(tray_status["status_type"] == "tray-status-plan", "dispatch must route GetTrayStatus")
+assert(tray_status["runtime_activity"]["active_application_count"] == 1, "dispatch must expose tray active counts")
+assert(tray_status["compatibility_status"]["state"] == "attention-required", "dispatch must expose tray attention state")
+assert(tray_status["tray_bridge"]["state"] == "idle", "dispatch must expose Ruby tray bridge state")
+assert(!tray_status["safety"]["live_backend_bridge_enabled"], "dispatch must keep live tray bridge gated")
+assert(!tray_status["safety"]["backend_details_exposed"], "dispatch must keep tray backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetApplicationStateRoot",
   JSON.generate(["org.xnix.sample.notepad"])
 )

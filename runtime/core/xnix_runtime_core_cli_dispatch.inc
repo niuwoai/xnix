@@ -1,7 +1,7 @@
 static int
 usage(void)
 {
-  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|portal-request-plan APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|compatibility-install-plan APP_ID ENVIRONMENT|compatibility-action-queue APP_ID|compatibility-action-review APP_ID ACTION_ID DECISION|compatibility-run-plan APP_ID|desktop-activation-manifest APP_ID|desktop-entry-plan APP_ID|task-manager-identity-plan APP_ID|file-association-plan APP_ID|notification-plan APP_ID EVENT_TYPE|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
+  fputs("Usage: xnix-runtime-core {probe|list-applications|get-application APP_ID|list-engines|select-engine MODE|list-portal-policies|portal-policy APP_ID OPERATION|portal-request-plan APP_ID OPERATION|list-snapshot-policies|snapshot-policy APP_ID REASON|list-state-root-policies|state-root-policy APP_ID|list-install-readiness-policies|install-readiness-policy APP_ID ENVIRONMENT|compatibility-install-plan APP_ID ENVIRONMENT|compatibility-action-queue APP_ID|compatibility-action-review APP_ID ACTION_ID DECISION|compatibility-run-plan APP_ID|desktop-activation-manifest APP_ID|desktop-entry-plan APP_ID|task-manager-identity-plan APP_ID|file-association-plan APP_ID|notification-plan APP_ID EVENT_TYPE|tray-status-plan|list-artifact-manifest-policies|artifact-manifest-policy APP_ID|list-acquisition-preflight-policies|acquisition-preflight-policy APP_ID|list-package-source-policies|package-source-policy APP_ID|list-backend-binding-policies|backend-binding-policy APP_ID|list-settings-policies|settings-policy APP_ID|list-settings-change-policies|settings-change-policy APP_ID|runtime-service-binding|runtime-live-owner-gate|runtime-owner-smoke-plan|runtime-method-parity-manifest|recipe-trust-policy|recipe-install-gate APP_ID MODE|write-gate METHOD}\n", stderr);
   return 64;
 }
 
@@ -106,6 +106,10 @@ main(int argc, char **argv)
 
   if (strcmp(argv[1], "notification-plan") == 0 && argc == 4) {
     return print_notification_plan_for_application(argv[2], argv[3]);
+  }
+
+  if (strcmp(argv[1], "tray-status-plan") == 0 && argc == 2) {
+    return print_tray_status_plan();
   }
 
   if (strcmp(argv[1], "list-artifact-manifest-policies") == 0 && argc == 2) {

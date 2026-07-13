@@ -79,6 +79,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetTrayStatus"
+      [
+        "({'status_type': <'tray-status-plan'>, 'desktop': <'KDE Plasma'>, 'active_application_count': <1>, 'attention_required_count': <1>, 'bridged_tray_application_count': <0>, 'compatibility_state': <'attention-required'>, 'tray_bridge_state': <'planned'>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'user_visible': <true>, 'live_backend_bridge_enabled': <false>, 'bridge_configuration_persisted': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetPortalRequestPlan"
       [
         "({'request_type': <'portal-request-plan'>, 'operation': <'file-open'>, 'decision': <'ask'>, 'request_allowed': <true>, 'portal_required': <true>, 'request_object_created': <false>, 'permission_granted': <false>, 'host_permission_changed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -189,7 +195,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <34>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <35>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -328,6 +334,22 @@ assert(!notification_plan["settings_persistence_enabled"], "D-Bus client must pa
 assert(!notification_plan["host_root_modified"], "D-Bus client must parse notification host-root safety")
 assert(!notification_plan["backend_details_exposed"], "D-Bus client must parse notification backend detail status")
 
+tray_status = client.tray_status
+assert(tray_status["status_type"] == "tray-status-plan", "D-Bus client must parse tray status plans")
+assert(tray_status["desktop"] == "KDE Plasma", "D-Bus client must parse tray desktops")
+assert(tray_status["active_application_count"] == 1, "D-Bus client must parse tray active application counts")
+assert(tray_status["attention_required_count"] == 1, "D-Bus client must parse tray attention counts")
+assert(tray_status["bridged_tray_application_count"] == 0, "D-Bus client must parse bridged tray counts")
+assert(tray_status["compatibility_state"] == "attention-required", "D-Bus client must parse compatibility tray states")
+assert(tray_status["tray_bridge_state"] == "planned", "D-Bus client must parse tray bridge states")
+assert(tray_status["runtime_owned"], "D-Bus client must parse tray Runtime ownership")
+assert(!tray_status["kde_policy_owner"], "D-Bus client must parse tray KDE policy ownership")
+assert(tray_status["user_visible"], "D-Bus client must parse tray visibility")
+assert(!tray_status["live_backend_bridge_enabled"], "D-Bus client must parse live tray bridge gates")
+assert(!tray_status["bridge_configuration_persisted"], "D-Bus client must parse tray persistence gates")
+assert(!tray_status["host_root_modified"], "D-Bus client must parse tray host-root safety")
+assert(!tray_status["backend_details_exposed"], "D-Bus client must parse tray backend detail status")
+
 portal_request_plan = client.portal_request_plan("org.xnix.sample.notepad", "file-open")
 assert(portal_request_plan["request_type"] == "portal-request-plan", "D-Bus client must parse Portal request plans")
 assert(portal_request_plan["operation"] == "file-open", "D-Bus client must parse Portal request operations")
@@ -445,7 +467,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 34, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 35, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

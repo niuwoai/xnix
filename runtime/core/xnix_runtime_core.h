@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.84"
+#define XNIX_RUNTIME_VERSION "0.2.85"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -497,7 +497,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[34];
+  const char *read_only_methods[35];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -790,6 +790,29 @@ typedef struct {
   const char *summary;
 } XnixRuntimeNotificationPlan;
 
+typedef struct {
+  const char *status_type;
+  const char *desktop;
+  size_t active_application_count;
+  size_t attention_required_count;
+  size_t bridged_tray_application_count;
+  const char *runtime_activity_summary;
+  const char *compatibility_state;
+  const char *compatibility_label;
+  const char *tray_bridge_state;
+  const char *tray_bridge_label;
+  const char *actions[2];
+  size_t action_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool user_visible;
+  bool live_backend_bridge_enabled;
+  bool bridge_configuration_persisted;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeTrayStatusPlan;
+
 const char *xnix_runtime_version(void);
 const char *xnix_runtime_bus_name(void);
 const char *xnix_runtime_object_path(void);
@@ -905,6 +928,7 @@ bool xnix_runtime_notification_plan(
   const char *event_type,
   XnixRuntimeNotificationPlan *plan
 );
+bool xnix_runtime_tray_status_plan(XnixRuntimeTrayStatusPlan *plan);
 bool xnix_runtime_portal_request_plan(
   const char *application_id,
   const char *operation,

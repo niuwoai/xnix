@@ -981,6 +981,7 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetTaskManagerIdentityPlan",
     "GetFileAssociationPlan",
     "GetNotificationPlan",
+    "GetTrayStatus",
     "GetPortalRequestPlan",
     "GetApplicationStateRoot",
     "GetCompatibilityPackageSource",
@@ -1006,40 +1007,40 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetCompatibilityActionQueue",
     "GetCompatibilityActionReviewReceipt",
   },
-  .read_only_method_count = 34,
+  .read_only_method_count = 35,
   .parity_checks = {
     {
       .id = "dbus-contract",
       .status = "pass",
-      .method_count = 34,
+      .method_count = 35,
       .missing_method_count = 0,
       .summary = "dbus-contract covers all Runtime read-only methods.",
     },
     {
       .id = "runtime-dispatch",
       .status = "pass",
-      .method_count = 34,
+      .method_count = 35,
       .missing_method_count = 0,
       .summary = "runtime-dispatch covers all Runtime read-only methods.",
     },
     {
       .id = "dbus-client",
       .status = "pass",
-      .method_count = 34,
+      .method_count = 35,
       .missing_method_count = 0,
       .summary = "dbus-client covers all Runtime read-only methods.",
     },
     {
       .id = "smoke-adapter",
       .status = "pass",
-      .method_count = 34,
+      .method_count = 35,
       .missing_method_count = 0,
       .summary = "smoke-adapter covers all Runtime read-only methods.",
     },
     {
       .id = "session-smoke",
       .status = "pass",
-      .method_count = 34,
+      .method_count = 35,
       .missing_method_count = 0,
       .summary = "session-smoke covers all Runtime read-only methods.",
     },
@@ -1981,4 +1982,5 @@ xnix_runtime_compatibility_action_queue(
 #include "xnix_runtime_core_task_manager_identity.inc"
 #include "xnix_runtime_core_file_association.inc"
 #include "xnix_runtime_core_notification.inc"
+#include "xnix_runtime_core_tray_status.inc"
 #include "xnix_runtime_core_portal_request.inc"

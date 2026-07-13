@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 require "json"
-require_relative "runtime_daemon"
+require "pathname"
 
 module Xnix
   module Compatibility
     class TrayStatusModel
+      PROJECT_ROOT = Pathname.new(__dir__).join("../../..").realpath
+      VERSION = PROJECT_ROOT.join("VERSION").read.strip
+
       def initialize(active_count:, attention_count:, bridged_tray_count:)
         @active_count = integer_count(active_count, "active count")
         @attention_count = integer_count(attention_count, "attention count")
@@ -14,7 +17,7 @@ module Xnix
 
       def to_h
         {
-          "version" => RuntimeDaemon::VERSION,
+          "version" => VERSION,
           "request_type" => "tray-status-model",
           "desktop" => "KDE Plasma",
           "runtime_activity" => runtime_activity,

@@ -40,7 +40,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   service_menu = root_path.join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = root_path.join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
-  assert(result["version"] == "0.2.84", "desktop activation installer must expose the current version")
+  assert(result["version"] == "0.2.85", "desktop activation installer must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer must identify the application")
   assert(result["root"] == root, "desktop activation installer must report the staging root")
   assert(result["preflight"]["decision"] == "allow", "desktop activation installer must report allowed preflight")
