@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.139", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.140", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")

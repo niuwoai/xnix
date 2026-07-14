@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.140] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-entrypoints-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime previews of the seven first-release KDE entry points from digest-verified registry recipes.
+- Added Go Runtime KDE entrypoint aggregation that combines session status with launcher, task-manager, Dolphin, tray, notification, Compatibility Center, and settings surface planning for one normal application contract.
+- Added Go and Ruby harness coverage that verifies KDE entrypoint previews remain Runtime-owned, Go-backed, KDE-targeted, official-desktop-only, backend-detail-free, host-root-safe, and honest about desktop file writes, MIME default writes, settings persistence, notifications, task-manager activation, KWin rule application, tray bridging, backend process starts, request objects, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE application surface contract one step closer to Go-owned Runtime product logic while keeping KDE responsible for display, navigation, and user interaction only.
+
 ## [0.2.139] - 2026-07-15
 
 ### Added

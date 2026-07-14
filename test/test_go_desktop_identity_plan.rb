@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoints-preview"), "Go Runtime CLI must render KDE entrypoint previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mode-switch-preview"), "Go Runtime CLI must render KDE mode switch previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
@@ -1162,6 +1163,103 @@ if go_available
   assert(!execution_session_status.downcase.include?("proton"), "execution session status preview must not expose backend implementation names")
   assert(!execution_session_status.downcase.include?("wine "), "execution session status preview must not expose backend implementation names")
   assert(!execution_session_status.downcase.include?("virtual machine"), "execution session status preview must not expose implementation labels")
+
+  kde_entrypoints, kde_entrypoints_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-entrypoints-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_entrypoints_status.success?, "Go KDE entrypoints preview CLI must run successfully")
+  kde_entrypoints_payload = JSON.parse(kde_entrypoints)
+  assert(kde_entrypoints_payload.fetch("schema_version") == "xnix.runtime.kde_entrypoints.v1", "KDE entrypoints preview schema version must be stable")
+  assert(kde_entrypoints_payload.fetch("request_type") == "kde-entrypoints-preview", "KDE entrypoints preview must identify its request type")
+  assert(kde_entrypoints_payload.fetch("surface_type") == "kde-first-release-entrypoints", "KDE entrypoints preview must identify the first-release surface")
+  assert(kde_entrypoints_payload.fetch("source") == "execution-session-status-preview", "KDE entrypoints preview must derive from execution session status")
+  assert(kde_entrypoints_payload.fetch("desktop") == "KDE Plasma", "KDE entrypoints preview must target KDE Plasma")
+  assert(kde_entrypoints_payload.fetch("runtime_method") == "Launch", "KDE entrypoints preview must target the Runtime Launch method")
+  assert(kde_entrypoints_payload.fetch("read_method") == "GetKDEEntryPointsPreview", "KDE entrypoints preview must expose the Runtime read method")
+  assert(kde_entrypoints_payload.fetch("application_id") == recipe.id, "KDE entrypoints preview must preserve application identity")
+  assert(kde_entrypoints_payload.fetch("application_name") == recipe.name, "KDE entrypoints preview must preserve display names")
+  assert(kde_entrypoints_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "KDE entrypoints preview must bind generated desktop files")
+  kde_session_status = kde_entrypoints_payload.fetch("session_status")
+  assert(kde_session_status.fetch("request_type") == "execution-session-status-preview", "KDE entrypoints preview must summarize session status")
+  assert(kde_session_status.fetch("session_state") == "planned-blocked", "KDE entrypoints preview must keep session state planned and blocked")
+  assert(kde_session_status.fetch("gate_count") == 5, "KDE entrypoints preview must preserve session gate count")
+  assert(kde_session_status.fetch("blocked_gate_count") == 1, "KDE entrypoints preview must preserve blocked session gates")
+  assert(kde_session_status.fetch("desktop_surface_state") == "planned", "KDE entrypoints preview must keep desktop surface planned")
+  assert(kde_session_status.fetch("user_visible_state") == "Runtime gates required", "KDE entrypoints preview must expose user-visible Runtime gate state")
+  assert(kde_session_status.fetch("runtime_launch_approval") == false, "KDE entrypoints preview must not grant Runtime launch approval")
+  assert(kde_session_status.fetch("launch_allowed") == false, "KDE entrypoints preview must not allow launch")
+  assert(kde_session_status.fetch("execution_started") == false, "KDE entrypoints preview must not start execution")
+  assert(kde_entrypoints_payload.fetch("entry_point_ids") == %w[launcher task-manager file-manager system-tray notifications compatibility-center settings], "KDE entrypoints preview must preserve the seven first-release entry points")
+  assert(kde_entrypoints_payload.fetch("entry_point_count") == 7, "KDE entrypoints preview must count seven entry points")
+  assert(kde_entrypoints_payload.fetch("visible_entry_point_count") == 7, "KDE entrypoints preview must make all first-release entry points visible")
+  assert(kde_entrypoints_payload.fetch("planned_entry_point_count") == 7, "KDE entrypoints preview must keep all entry points planned")
+  assert(kde_entrypoints_payload.fetch("active_entry_point_count") == 0, "KDE entrypoints preview must not mark entry points active")
+  assert(kde_entrypoints_payload.fetch("portal_entry_point_count") == 1, "KDE entrypoints preview must count the Portal-mediated file-manager entry point")
+  assert(kde_entrypoints_payload.fetch("runtime_gate_entry_point_count") == 7, "KDE entrypoints preview must keep all entry points behind Runtime gates")
+  kde_entrypoint_items = kde_entrypoints_payload.fetch("entry_points")
+  kde_entrypoint_items.each do |entry|
+    assert(entry.fetch("visible") == true, "KDE entrypoint #{entry.fetch("id")} must be visible")
+    assert(entry.fetch("planned") == true, "KDE entrypoint #{entry.fetch("id")} must be planned")
+    assert(entry.fetch("active") == false, "KDE entrypoint #{entry.fetch("id")} must not be active")
+    assert(entry.fetch("requires_runtime_gate") == true, "KDE entrypoint #{entry.fetch("id")} must require Runtime gates")
+    assert(entry.fetch("blocked_by_runtime_gate") == true, "KDE entrypoint #{entry.fetch("id")} must remain blocked by Runtime gates")
+    assert(entry.fetch("writes_host") == false, "KDE entrypoint #{entry.fetch("id")} must not write host files")
+    assert(entry.fetch("starts_backend") == false, "KDE entrypoint #{entry.fetch("id")} must not start backends")
+    assert(entry.fetch("backend_details_exposed") == false, "KDE entrypoint #{entry.fetch("id")} must not expose backend details")
+  end
+  kde_file_manager = kde_entrypoint_items.find { |entry| entry.fetch("id") == "file-manager" }
+  assert(kde_file_manager.fetch("kde_component") == "Dolphin", "KDE entrypoints preview must bind file-manager entry to Dolphin")
+  assert(kde_file_manager.fetch("runtime_source") == "file-open-preview", "KDE entrypoints preview must route file-manager through file-open previews")
+  assert(kde_file_manager.fetch("requires_portal") == true, "KDE entrypoints preview must require Portal mediation for file-manager")
+  kde_task_manager = kde_entrypoint_items.find { |entry| entry.fetch("id") == "task-manager" }
+  assert(kde_task_manager.fetch("runtime_source") == "execution-session-status-preview", "KDE entrypoints preview must route task-manager through session status")
+  assert(kde_entrypoints_payload.fetch("runtime_owned") == true, "KDE entrypoints preview must remain Runtime-owned")
+  assert(kde_entrypoints_payload.fetch("go_runtime_backed") == true, "KDE entrypoints preview must be Go Runtime-backed")
+  assert(kde_entrypoints_payload.fetch("kde_policy_owner") == false, "KDE entrypoints preview must not make KDE own backend policy")
+  assert(kde_entrypoints_payload.fetch("official_desktop_only") == true, "KDE entrypoints preview must keep KDE as the official first desktop")
+  assert(kde_entrypoints_payload.fetch("stable_desktop_contract") == true, "KDE entrypoints preview must expose a stable desktop contract")
+  assert(kde_entrypoints_payload.fetch("normal_application_surface") == true, "KDE entrypoints preview must present a normal application surface")
+  assert(kde_entrypoints_payload.fetch("compatibility_center_card") == true, "KDE entrypoints preview must be suitable for Compatibility Center cards")
+  assert(kde_entrypoints_payload.fetch("safe_for_ai_diagnostics") == true, "KDE entrypoints preview must be safe for AI diagnostics")
+  assert(kde_entrypoints_payload.fetch("desktop_entry_launch_visible") == true, "KDE entrypoints preview must allow KDE launcher visibility")
+  assert(kde_entrypoints_payload.fetch("user_decision_captured") == true, "KDE entrypoints preview must capture user decision")
+  assert(kde_entrypoints_payload.fetch("user_decision_allows_launch") == true, "KDE entrypoints preview must model approved user intent")
+  assert(kde_entrypoints_payload.fetch("entry_point_plan_created") == true, "KDE entrypoints preview must create a read model")
+  assert(kde_entrypoints_payload.fetch("desktop_files_written") == false, "KDE entrypoints preview must not write desktop files")
+  assert(kde_entrypoints_payload.fetch("mimeapps_written") == false, "KDE entrypoints preview must not write MIME defaults")
+  assert(kde_entrypoints_payload.fetch("settings_persisted") == false, "KDE entrypoints preview must not persist settings")
+  assert(kde_entrypoints_payload.fetch("notifications_sent") == false, "KDE entrypoints preview must not send notifications")
+  assert(kde_entrypoints_payload.fetch("task_manager_entry_active") == false, "KDE entrypoints preview must not activate task-manager entries")
+  assert(kde_entrypoints_payload.fetch("kwin_rule_applied") == false, "KDE entrypoints preview must not apply KWin rules")
+  assert(kde_entrypoints_payload.fetch("live_tray_bridge_enabled") == false, "KDE entrypoints preview must not enable live tray bridge")
+  assert(kde_entrypoints_payload.fetch("runtime_launch_approval") == false, "KDE entrypoints preview must not grant Runtime approval")
+  assert(kde_entrypoints_payload.fetch("launch_allowed") == false, "KDE entrypoints preview must not allow launch")
+  assert(kde_entrypoints_payload.fetch("launch_enabled") == false, "KDE entrypoints preview must not enable launch")
+  assert(kde_entrypoints_payload.fetch("execution_started") == false, "KDE entrypoints preview must not start execution")
+  assert(kde_entrypoints_payload.fetch("backend_process_started") == false, "KDE entrypoints preview must not start backend processes")
+  assert(kde_entrypoints_payload.fetch("request_objects_created") == false, "KDE entrypoints preview must not create request objects")
+  assert(kde_entrypoints_payload.fetch("host_root_modified") == false, "KDE entrypoints preview must not mutate the host root")
+  assert(kde_entrypoints_payload.fetch("network_required") == false, "KDE entrypoints preview must not require network access")
+  assert(kde_entrypoints_payload.fetch("backend_details_exposed") == false, "KDE entrypoints preview must not expose backend details")
+  assert(kde_entrypoints_payload.fetch("blocked_actions").include?("write KDE entrypoint files from preview"), "KDE entrypoints preview must block host entrypoint writes")
+  assert(kde_entrypoints_payload.fetch("blocked_actions").include?("start compatibility profile from entrypoint preview"), "KDE entrypoints preview must block compatibility profile starts")
+  assert(!kde_entrypoints.downcase.include?("prefix"), "KDE entrypoints preview must not expose implementation storage")
+  assert(!kde_entrypoints.include?(".exe"), "KDE entrypoints preview must not expose a Windows executable")
+  assert(!kde_entrypoints.downcase.include?("program files"), "KDE entrypoints preview must not expose Windows paths")
+  assert(!kde_entrypoints.downcase.include?("qemu-system"), "KDE entrypoints preview must not expose VM implementation commands")
+  assert(!kde_entrypoints.downcase.include?("proton"), "KDE entrypoints preview must not expose backend implementation names")
+  assert(!kde_entrypoints.downcase.include?("wine "), "KDE entrypoints preview must not expose backend implementation names")
+  assert(!kde_entrypoints.downcase.include?("virtual machine"), "KDE entrypoints preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

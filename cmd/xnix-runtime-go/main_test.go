@@ -1327,6 +1327,125 @@ func TestExecutionSessionStatusPreviewCommandKeepsLiveStateReadOnly(t *testing.T
 	}
 }
 
+func TestKDEEntryPointsPreviewCommandCoversFirstReleaseSurface(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"kde-entrypoints-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.kde_entrypoints.v1" ||
+		payload["request_type"] != "kde-entrypoints-preview" ||
+		payload["surface_type"] != "kde-first-release-entrypoints" ||
+		payload["source"] != "execution-session-status-preview" ||
+		payload["desktop"] != "KDE Plasma" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetKDEEntryPointsPreview" {
+		t.Fatalf("unexpected KDE entrypoints schema: %#v", payload)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["application_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["file_count"] != float64(1) {
+		t.Fatalf("unexpected KDE entrypoints identity: %#v", payload)
+	}
+	sessionStatus := payload["session_status"].(map[string]any)
+	if sessionStatus["request_type"] != "execution-session-status-preview" ||
+		sessionStatus["session_state"] != "planned-blocked" ||
+		sessionStatus["gate_count"] != float64(5) ||
+		sessionStatus["blocked_gate_count"] != float64(1) ||
+		sessionStatus["desktop_surface_state"] != "planned" ||
+		sessionStatus["user_visible_state"] != "Runtime gates required" ||
+		sessionStatus["runtime_launch_approval"] != false ||
+		sessionStatus["launch_allowed"] != false ||
+		sessionStatus["execution_started"] != false {
+		t.Fatalf("unexpected session status summary: %#v", sessionStatus)
+	}
+	if payload["entry_point_count"] != float64(7) ||
+		payload["visible_entry_point_count"] != float64(7) ||
+		payload["planned_entry_point_count"] != float64(7) ||
+		payload["active_entry_point_count"] != float64(0) ||
+		payload["portal_entry_point_count"] != float64(1) ||
+		payload["runtime_gate_entry_point_count"] != float64(7) {
+		t.Fatalf("unexpected entrypoint counts: %#v", payload)
+	}
+	ids := payload["entry_point_ids"].([]any)
+	expectedIDs := []string{"launcher", "task-manager", "file-manager", "system-tray", "notifications", "compatibility-center", "settings"}
+	for index, expected := range expectedIDs {
+		if ids[index] != expected {
+			t.Fatalf("unexpected entrypoint ids: %#v", ids)
+		}
+	}
+	entryPoints := payload["entry_points"].([]any)
+	for _, rawEntryPoint := range entryPoints {
+		entryPoint := rawEntryPoint.(map[string]any)
+		if entryPoint["visible"] != true ||
+			entryPoint["planned"] != true ||
+			entryPoint["active"] != false ||
+			entryPoint["requires_runtime_gate"] != true ||
+			entryPoint["blocked_by_runtime_gate"] != true ||
+			entryPoint["writes_host"] != false ||
+			entryPoint["starts_backend"] != false ||
+			entryPoint["backend_details_exposed"] != false {
+			t.Fatalf("unexpected entrypoint safety flags: %#v", entryPoint)
+		}
+	}
+	fileManager := entryPoints[2].(map[string]any)
+	if fileManager["id"] != "file-manager" ||
+		fileManager["kde_component"] != "Dolphin" ||
+		fileManager["runtime_source"] != "file-open-preview" ||
+		fileManager["requires_portal"] != true {
+		t.Fatalf("unexpected file-manager entrypoint: %#v", fileManager)
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["official_desktop_only"] != true ||
+		payload["stable_desktop_contract"] != true ||
+		payload["normal_application_surface"] != true ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["entry_point_plan_created"] != true ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["settings_persisted"] != false ||
+		payload["notifications_sent"] != false ||
+		payload["task_manager_entry_active"] != false ||
+		payload["kwin_rule_applied"] != false ||
+		payload["live_tray_bridge_enabled"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE entrypoints safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
