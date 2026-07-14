@@ -290,6 +290,16 @@ assert(kde_application_surface_plan["plan_type"] == "kde-application-surface-pla
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetDesktopResourceBridgePlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetDesktopResourceBridgePlan must exit successfully: #{stderr}")
+desktop_resource_bridge_plan = JSON.parse(stdout)
+assert(desktop_resource_bridge_plan["plan_type"] == "desktop-resource-bridge-plan", "dispatch must route GetDesktopResourceBridgePlan")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

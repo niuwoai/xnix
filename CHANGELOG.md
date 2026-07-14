@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.104] - 2026-07-14
+
+### Added
+
+- Added C Runtime desktop resource bridge plan records and a CLI read method for file, URI, print, clipboard, and screenshot bridge readiness.
+- Added `GetDesktopResourceBridgePlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and unit coverage for desktop resource bridge summaries while keeping the C Runtime as the product boundary.
+
+### Changed
+
+- Extended Runtime diagnostics with Portal-mediated desktop resource bridge summaries that keep bridge enablement, Portal request creation, backend process starts, direct host file access, direct clipboard access, direct print access, host-root mutation, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.103] - 2026-07-14
 
 ### Added

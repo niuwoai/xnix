@@ -139,6 +139,18 @@ begin
   assert(stdout.include?("normal_linux_application_surface"), "runtime smoke adapter must keep Windows applications desktop-native")
 
   stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetDesktopResourceBridgePlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetDesktopResourceBridgePlan: #{stderr}")
+  assert(stdout.include?("desktop-resource-bridge-plan"), "runtime smoke adapter must expose desktop resource bridge plans over D-Bus")
+  assert(stdout.include?("portal_mediated"), "runtime smoke adapter must keep bridge access Portal-mediated")
+
+  stdout, stderr, status = Open3.capture3(
     "ruby",
     "bin/xnix-kde-integration-status",
     "--source",

@@ -128,6 +128,10 @@ main(int argc, char **argv)
     return print_kde_application_surface_plan_for_application(argv[2]);
   }
 
+  if (strcmp(argv[1], "desktop-resource-bridge-plan") == 0 && argc == 3) {
+    return print_desktop_resource_bridge_plan_for_application(argv[2]);
+  }
+
   if (strcmp(argv[1], "desktop-entry-plan") == 0 && argc == 3) {
     return print_desktop_entry_plan_for_application(argv[2]);
   }

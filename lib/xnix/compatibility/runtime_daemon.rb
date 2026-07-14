@@ -24,6 +24,7 @@ require_relative "compatibility_snapshot_plan"
 require_relative "compatibility_test_plan"
 require_relative "compatibility_test_result"
 require_relative "desktop_entry"
+require_relative "desktop_resource_bridge_plan"
 require_relative "desktop_integration_manifest"
 require_relative "file_association_model"
 require_relative "kde_application_surface_plan"
@@ -87,6 +88,7 @@ module Xnix
             "desktop_activation_manifests" => true,
             "kde_integration_status" => true,
             "kde_application_surface_plans" => true,
+            "desktop_resource_bridge_plans" => true,
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
             "kwin_window_rule_planning" => true,
@@ -155,6 +157,7 @@ module Xnix
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
+          "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "file_association_plan" => file_association_plan_summary(recipe),
@@ -225,6 +228,11 @@ module Xnix
       def kde_application_surface_plan(application_id)
         recipe = require_recipe(application_id)
         KDEApplicationSurfacePlan.new(recipe: recipe).to_h
+      end
+
+      def desktop_resource_bridge_plan(application_id)
+        recipe = require_recipe(application_id)
+        DesktopResourceBridgePlan.new(recipe: recipe).to_h
       end
 
       def desktop_entry_plan(application_id)
@@ -664,6 +672,8 @@ module Xnix
           kde_integration_status
         when "GetKDEApplicationSurfacePlan"
           kde_application_surface_plan(required_parameter(method_name, parameters, 0))
+        when "GetDesktopResourceBridgePlan"
+          desktop_resource_bridge_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopEntryPlan"
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
@@ -1036,6 +1046,23 @@ module Xnix
           "standard_launcher_visible" => plan.fetch("standard_launcher_visible"),
           "launch_enabled" => plan.fetch("launch_enabled"),
           "backend_process_started" => plan.fetch("backend_process_started"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def desktop_resource_bridge_plan_summary(recipe)
+        plan = desktop_resource_bridge_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "bridge_state" => plan.fetch("bridge_state"),
+          "resource_count" => plan.fetch("resource_count"),
+          "portal_mediated" => plan.fetch("portal_mediated"),
+          "file_bridge_planned" => plan.fetch("file_bridge_planned"),
+          "print_bridge_planned" => plan.fetch("print_bridge_planned"),
+          "clipboard_bridge_planned" => plan.fetch("clipboard_bridge_planned"),
+          "bridges_enabled" => plan.fetch("bridges_enabled"),
+          "requests_created" => plan.fetch("requests_created"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
@@ -1507,6 +1534,8 @@ module Xnix
             write_json(runtime.kde_integration_status)
           when "kde-application-surface-plan"
             write_json(runtime.kde_application_surface_plan(require_argument(command)))
+          when "desktop-resource-bridge-plan"
+            write_json(runtime.desktop_resource_bridge_plan(require_argument(command)))
           when "desktop-entry-plan"
             write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "task-manager-identity-plan"

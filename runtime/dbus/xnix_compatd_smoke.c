@@ -59,6 +59,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetDesktopResourceBridgePlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -414,6 +418,60 @@ build_kde_application_surface_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_command_exposed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "raw_windows_executable_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_desktop_resource_bridge_plan(const gchar *application_id)
+{
+  static const gchar *resource_ids[] = {
+    "file-open",
+    "uri-open",
+    "print",
+    "clipboard",
+    "screenshot"
+  };
+  static const gchar *portal_interfaces[] = {
+    "org.freedesktop.portal.FileChooser",
+    "org.freedesktop.portal.OpenURI",
+    "org.freedesktop.portal.Print",
+    "org.freedesktop.portal.Clipboard",
+    "org.freedesktop.portal.Screenshot"
+  };
+  static const gchar *required_runtime_gates[] = {
+    "portal-policy-review",
+    "portal-request-plan",
+    "snapshot-baseline",
+    "backend-environment-plan",
+    "runtime-write-gate"
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-resource-bridge-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetDesktopResourceBridgePlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "bridge_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "resource_count", g_variant_new_int32(5));
+  g_variant_builder_add(&plan, "{sv}", "resource_ids", g_variant_new_strv(resource_ids, 5));
+  g_variant_builder_add(&plan, "{sv}", "portal_interfaces", g_variant_new_strv(portal_interfaces, 5));
+  g_variant_builder_add(&plan, "{sv}", "required_runtime_gates", g_variant_new_strv(required_runtime_gates, 5));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "portal_mediated", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "file_bridge_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "print_bridge_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "clipboard_bridge_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "bridges_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "requests_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_process_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "direct_host_file_access", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "direct_clipboard_access", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "direct_print_access", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
@@ -1224,7 +1282,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(44));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(45));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1416,6 +1474,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_kde_application_surface_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDesktopResourceBridgePlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_desktop_resource_bridge_plan(application_id))
     );
     return;
   }

@@ -2792,6 +2792,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_desktop_activation.inc"
 #include "xnix_runtime_core_cli_kde_integration_status.inc"
 #include "xnix_runtime_core_cli_kde_application_surface_plan.inc"
+#include "xnix_runtime_core_cli_desktop_resource_bridge_plan.inc"
 #include "xnix_runtime_core_cli_desktop_entry.inc"
 #include "xnix_runtime_core_cli_task_manager_identity.inc"
 #include "xnix_runtime_core_cli_kwin_window_rule.inc"

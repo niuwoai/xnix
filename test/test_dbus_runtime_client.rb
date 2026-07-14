@@ -79,6 +79,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetDesktopResourceBridgePlan"
+      [
+        "({'plan_type': <'desktop-resource-bridge-plan'>, 'runtime_method': <'GetDesktopResourceBridgePlan'>, 'application_id': <'org.xnix.sample.notepad'>, 'bridge_state': <'planned'>, 'resource_count': <5>, 'resource_ids': <['file-open', 'uri-open', 'print', 'clipboard', 'screenshot']>, 'portal_mediated': <true>, 'file_bridge_planned': <true>, 'print_bridge_planned': <true>, 'clipboard_bridge_planned': <true>, 'bridges_enabled': <false>, 'requests_created': <false>, 'backend_process_started': <false>, 'direct_host_file_access': <false>, 'direct_clipboard_access': <false>, 'direct_print_access': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetFileAssociationPlan"
       [
         "({'plan_type': <'file-association-plan'>, 'association_type': <'desktop-file-association'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'mimeapps_path': <'usr/share/applications/mimeapps.list'>, 'file_open_command': <'xnix-compat-open'>, 'file_open_argument': <'%U'>, 'mime_type_count': <2>, 'standard_mimeapps_list': <true>, 'staged_root_only': <true>, 'overwrite_existing_mimeapps': <false>, 'portal_required_for_file_open': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -243,7 +249,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <44>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <45>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -510,6 +516,17 @@ assert(kde_application_surface_plan["standard_launcher_visible"], "D-Bus client 
 assert(!kde_application_surface_plan["backend_process_started"], "D-Bus client must parse KDE surface backend process state")
 assert(!kde_application_surface_plan["backend_details_exposed"], "D-Bus client must parse KDE surface backend detail gates")
 
+desktop_resource_bridge_plan = client.desktop_resource_bridge_plan("org.xnix.sample.notepad")
+assert(desktop_resource_bridge_plan["plan_type"] == "desktop-resource-bridge-plan", "D-Bus client must parse desktop resource bridge plans")
+assert(desktop_resource_bridge_plan["runtime_method"] == "GetDesktopResourceBridgePlan", "D-Bus client must parse desktop bridge Runtime methods")
+assert(desktop_resource_bridge_plan["portal_mediated"], "D-Bus client must parse Portal mediation")
+assert(desktop_resource_bridge_plan["file_bridge_planned"], "D-Bus client must parse file bridge planning")
+assert(desktop_resource_bridge_plan["print_bridge_planned"], "D-Bus client must parse print bridge planning")
+assert(desktop_resource_bridge_plan["clipboard_bridge_planned"], "D-Bus client must parse clipboard bridge planning")
+assert(!desktop_resource_bridge_plan["bridges_enabled"], "D-Bus client must parse disabled bridges")
+assert(!desktop_resource_bridge_plan["direct_host_file_access"], "D-Bus client must parse host file access gates")
+assert(!desktop_resource_bridge_plan["backend_details_exposed"], "D-Bus client must parse desktop bridge backend detail gates")
+
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
 assert(repair_plan["runtime_method"] == "GetRepairPlan", "D-Bus client must parse repair plan Runtime methods")
@@ -668,7 +685,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 44, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 45, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

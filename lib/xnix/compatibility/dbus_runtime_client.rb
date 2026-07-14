@@ -77,6 +77,10 @@ module Xnix
         parse_dictionary(call("GetKDEApplicationSurfacePlan", application_id))
       end
 
+      def desktop_resource_bridge_plan(application_id)
+        parse_dictionary(call("GetDesktopResourceBridgePlan", application_id))
+      end
+
       def kwin_window_rule_plan(application_id)
         parse_dictionary(call("GetKWinWindowRulePlan", application_id))
       end

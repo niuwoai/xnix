@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.103"
+#define XNIX_RUNTIME_VERSION "0.2.104"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -593,7 +593,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[44];
+  const char *read_only_methods[45];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1037,6 +1037,51 @@ typedef struct {
   bool backend_details_exposed;
   const char *summary;
 } XnixRuntimeKDEApplicationSurfacePlan;
+
+typedef struct {
+  const char *id;
+  const char *name;
+  const char *operation;
+  const char *portal_interface;
+  const char *runtime_method;
+  const char *state;
+  bool portal_required;
+  bool user_approval_required;
+  bool bridge_enabled;
+  bool request_created;
+  bool direct_backend_access_allowed;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeDesktopResourceBridge;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *bridge_state;
+  XnixRuntimeDesktopResourceBridge resources[5];
+  size_t resource_count;
+  const char *required_runtime_gates[5];
+  size_t required_runtime_gate_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool portal_mediated;
+  bool file_bridge_planned;
+  bool uri_bridge_planned;
+  bool print_bridge_planned;
+  bool clipboard_bridge_planned;
+  bool screenshot_bridge_planned;
+  bool bridges_enabled;
+  bool requests_created;
+  bool backend_process_started;
+  bool direct_host_file_access;
+  bool direct_clipboard_access;
+  bool direct_print_access;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeDesktopResourceBridgePlan;
 
 typedef struct {
   const XnixRuntimeApplication *application;
@@ -1510,6 +1555,10 @@ bool xnix_runtime_kde_integration_status(
 bool xnix_runtime_kde_application_surface_plan(
   const char *application_id,
   XnixRuntimeKDEApplicationSurfacePlan *plan
+);
+bool xnix_runtime_desktop_resource_bridge_plan(
+  const char *application_id,
+  XnixRuntimeDesktopResourceBridgePlan *plan
 );
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,
