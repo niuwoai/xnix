@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.109"
+VERSION = "0.2.110"
 
 def assert(condition, message)
   return if condition
@@ -15,13 +15,18 @@ def assert(condition, message)
 end
 
 container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION)
+custom_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, docker_bin: "/tmp/xnix-docker")
 build_command = container.build_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
+custom_build_command = custom_container.build_command
+custom_offline_command = custom_container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
+assert(custom_build_command.first(2) == ["/tmp/xnix-docker", "build"], "build command must support a custom Docker CLI")
+assert(custom_offline_command.first(2) == ["/tmp/xnix-docker", "run"], "runtime command must support a custom Docker CLI")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
 assert(build_command.include?("--pull=false"), "build command must prefer the local base image cache")
 assert(!build_command.include?("--memory"), "Buildx must not receive an unsupported memory argument")

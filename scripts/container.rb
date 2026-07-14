@@ -10,15 +10,25 @@ require_relative "../lib/xnix/ssh_test_key"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
+DOCKER_BIN = Xnix::Container.docker_bin
 
-def colima_context?
-  output, status = Open3.capture2("docker", "context", "show")
-  status.success? && output.strip == "colima"
+def docker_available?
+  system(DOCKER_BIN, "--version", out: File::NULL, err: File::NULL)
+rescue SystemCallError
+  false
 end
 
-abort "Xnix commands require the Colima Docker context" unless colima_context?
+def colima_context?
+  output, status = Open3.capture2(DOCKER_BIN, "context", "show")
+  status.success? && output.strip == "colima"
+rescue SystemCallError
+  false
+end
 
-container = Xnix::Container.new(project_root: PROJECT_ROOT.to_s, version: VERSION)
+abort "Xnix commands require a Docker CLI. Install Docker or set XNIX_DOCKER_BIN=/absolute/path/to/docker." unless docker_available?
+abort "Xnix commands require the Colima Docker context. Run `docker context use colima` or set XNIX_DOCKER_BIN to a Docker-compatible CLI that uses the Colima context." unless colima_context?
+
+container = Xnix::Container.new(project_root: PROJECT_ROOT.to_s, version: VERSION, docker_bin: DOCKER_BIN)
 buildroot = Xnix::Buildroot.new
 qemu = Xnix::Qemu.new
 

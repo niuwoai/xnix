@@ -155,6 +155,20 @@ assert(!kde_status["backend_details_exposed"], "dispatch must keep KDE integrati
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKDEShellIntegrationPlan",
+  JSON.generate([])
+)
+assert(status.success?, "dispatch GetKDEShellIntegrationPlan must exit successfully: #{stderr}")
+kde_shell_plan = JSON.parse(stdout)
+assert(kde_shell_plan["plan_type"] == "kde-shell-integration-plan", "dispatch must route GetKDEShellIntegrationPlan")
+assert(kde_shell_plan["component_count"] == 9, "dispatch must expose KDE shell component counts")
+assert(!kde_shell_plan["shell_configuration_written"], "dispatch must keep KDE shell writes disabled")
+assert(!kde_shell_plan["component_activation_enabled"], "dispatch must keep KDE shell component activation disabled")
+assert(!kde_shell_plan["backend_launch_enabled"], "dispatch must keep KDE shell backend launch disabled")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetKWinWindowRulePlan",
   JSON.generate(["org.xnix.sample.notepad"])
 )

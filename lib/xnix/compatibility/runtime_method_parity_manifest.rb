@@ -26,6 +26,7 @@ module Xnix
         GetDesktopEntryPlan
         GetTaskManagerIdentityPlan
         GetKDEIntegrationStatus
+        GetKDEShellIntegrationPlan
         GetKDEApplicationSurfacePlan
         GetDesktopResourceBridgePlan
         GetKWinWindowRulePlan
@@ -86,6 +87,7 @@ module Xnix
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
         "GetKDEIntegrationStatus" => "kde_integration_status",
+        "GetKDEShellIntegrationPlan" => "kde_shell_integration_plan",
         "GetKDEApplicationSurfacePlan" => "kde_application_surface_plan",
         "GetDesktopResourceBridgePlan" => "desktop_resource_bridge_plan",
         "GetKWinWindowRulePlan" => "kwin_window_rule_plan",

@@ -33,6 +33,7 @@ require_relative "desktop_resource_bridge_plan"
 require_relative "desktop_integration_manifest"
 require_relative "file_association_model"
 require_relative "kde_application_surface_plan"
+require_relative "kde_shell_integration_plan"
 require_relative "launch_request"
 require_relative "notification_request"
 require_relative "portal_access_policy"
@@ -97,6 +98,7 @@ module Xnix
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
             "kde_integration_status" => true,
+            "kde_shell_integration_plans" => true,
             "kde_application_surface_plans" => true,
             "desktop_resource_bridge_plans" => true,
             "desktop_entry_planning" => true,
@@ -166,6 +168,7 @@ module Xnix
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
+          "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
           "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
@@ -243,6 +246,10 @@ module Xnix
       def kde_application_surface_plan(application_id)
         recipe = require_recipe(application_id)
         KDEApplicationSurfacePlan.new(recipe: recipe).to_h
+      end
+
+      def kde_shell_integration_plan
+        KDEShellIntegrationPlan.new.to_h
       end
 
       def desktop_resource_bridge_plan(application_id)
@@ -715,6 +722,8 @@ module Xnix
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
         when "GetKDEIntegrationStatus"
           kde_integration_status
+        when "GetKDEShellIntegrationPlan"
+          kde_shell_integration_plan
         when "GetKDEApplicationSurfacePlan"
           kde_application_surface_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopResourceBridgePlan"
@@ -1111,6 +1120,29 @@ module Xnix
           "launch_enabled" => plan.fetch("launch_enabled"),
           "backend_process_started" => plan.fetch("backend_process_started"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def kde_shell_integration_plan_summary
+        plan = kde_shell_integration_plan
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "desktop_shell" => plan.fetch("desktop_shell"),
+          "component_count" => plan.fetch("component_count"),
+          "initial_component_count" => plan.fetch("initial_component_count"),
+          "planned_component_count" => plan.fetch("planned_component_count"),
+          "official_desktop_only" => plan.fetch("official_desktop_only"),
+          "runtime_owned" => plan.fetch("runtime_owned"),
+          "kde_policy_owner" => plan.fetch("kde_policy_owner"),
+          "plasma_fork_required" => plan.fetch("plasma_fork_required"),
+          "plasma_source_modified" => plan.fetch("plasma_source_modified"),
+          "shell_configuration_written" => plan.fetch("shell_configuration_written"),
+          "component_activation_enabled" => plan.fetch("component_activation_enabled"),
+          "backend_launch_enabled" => plan.fetch("backend_launch_enabled"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "host_root_modified" => plan.fetch("host_root_modified"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
       end
@@ -1711,6 +1743,8 @@ module Xnix
             write_json(runtime.backend_environment_plan(require_argument(command)))
           when "kde-integration-status"
             write_json(runtime.kde_integration_status)
+          when "kde-shell-integration-plan"
+            write_json(runtime.kde_shell_integration_plan)
           when "kde-application-surface-plan"
             write_json(runtime.kde_application_surface_plan(require_argument(command)))
           when "desktop-resource-bridge-plan"

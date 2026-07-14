@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.110] - 2026-07-15
+
+### Added
+
+- Added Runtime-owned KDE shell integration plans that define KDE Plasma shell component boundaries for the start menu, task manager, Dolphin, tray, notifications, Compatibility Center, settings, KRunner, and KWin.
+- Added `GetKDEShellIntegrationPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and C Runtime CLI coverage for KDE shell planning while keeping Plasma fork/source/config writes, component activation, backend launch, host-root mutation, privileged-container, and backend-detail gates disabled.
+
+### Changed
+
+- Extended Runtime diagnostics and Compatibility Center summaries with KDE shell component planning so KDE remains a replaceable desktop shell while Runtime owns compatibility policy.
+
 ## [0.2.109] - 2026-07-15
 
 ### Added

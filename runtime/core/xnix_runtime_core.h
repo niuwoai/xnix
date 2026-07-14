@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.109"
+#define XNIX_RUNTIME_VERSION "0.2.110"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -828,7 +828,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[50];
+  const char *read_only_methods[51];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1224,6 +1224,43 @@ typedef struct {
   const char *desktop;
   const char *summary;
 } XnixRuntimeKDEIntegrationStatus;
+
+typedef struct {
+  const char *id;
+  const char *label;
+  const char *state;
+  const char *runtime_method;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool shell_writes_enabled;
+  bool backend_launch_enabled;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeKDEShellComponent;
+
+typedef struct {
+  const char *plan_type;
+  const char *runtime_method;
+  const char *desktop_shell;
+  XnixRuntimeKDEShellComponent components[9];
+  size_t component_count;
+  size_t initial_component_count;
+  size_t planned_component_count;
+  bool official_desktop_only;
+  bool fallback_desktops_supported;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool plasma_fork_required;
+  bool plasma_source_modified;
+  bool shell_configuration_written;
+  bool component_activation_enabled;
+  bool backend_launch_enabled;
+  bool backend_details_exposed;
+  bool host_root_modified;
+  bool privileged_container_required;
+  const char *summary;
+} XnixRuntimeKDEShellIntegrationPlan;
 
 typedef struct {
   const char *id;
@@ -1788,6 +1825,9 @@ bool xnix_runtime_desktop_activation_manifest(
 );
 bool xnix_runtime_kde_integration_status(
   XnixRuntimeKDEIntegrationStatus *status
+);
+bool xnix_runtime_kde_shell_integration_plan(
+  XnixRuntimeKDEShellIntegrationPlan *plan
 );
 bool xnix_runtime_kde_application_surface_plan(
   const char *application_id,

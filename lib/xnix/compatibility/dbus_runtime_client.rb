@@ -73,6 +73,10 @@ module Xnix
         parse_dictionary(call("GetKDEIntegrationStatus"))
       end
 
+      def kde_shell_integration_plan
+        parse_dictionary(call("GetKDEShellIntegrationPlan"))
+      end
+
       def kde_application_surface_plan(application_id)
         parse_dictionary(call("GetKDEApplicationSurfacePlan", application_id))
       end

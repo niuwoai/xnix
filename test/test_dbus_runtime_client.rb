@@ -73,6 +73,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetKDEShellIntegrationPlan"
+      [
+        "({'plan_type': <'kde-shell-integration-plan'>, 'runtime_method': <'GetKDEShellIntegrationPlan'>, 'desktop_shell': <'KDE Plasma'>, 'component_ids': <['start-menu', 'task-manager', 'file-manager', 'system-tray', 'notification-center', 'compatibility-center', 'unified-settings', 'krunner-search', 'kwin-window-management']>, 'component_count': <9>, 'initial_component_count': <8>, 'planned_component_count': <1>, 'official_desktop_only': <true>, 'fallback_desktops_supported': <false>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'plasma_fork_required': <false>, 'plasma_source_modified': <false>, 'shell_configuration_written': <false>, 'component_activation_enabled': <false>, 'backend_launch_enabled': <false>, 'backend_details_exposed': <false>, 'host_root_modified': <false>, 'privileged_container_required': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetKDEApplicationSurfacePlan"
       [
         "({'plan_type': <'kde-application-surface-plan'>, 'runtime_method': <'GetKDEApplicationSurfacePlan'>, 'application_id': <'org.xnix.sample.notepad'>, 'surface_state': <'planned'>, 'desktop_shell': <'KDE Plasma'>, 'entry_point_count': <7>, 'entry_point_ids': <['launcher', 'task-manager', 'file-manager', 'system-tray', 'notifications', 'compatibility-center', 'settings']>, 'required_runtime_gates': <['recipe-install-gate', 'portal-policy-review', 'snapshot-baseline', 'backend-environment-plan', 'backend-lifecycle-plan', 'runtime-write-gate']>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'official_desktop_only': <true>, 'normal_linux_application_surface': <true>, 'standard_launcher_visible': <true>, 'launch_enabled': <false>, 'backend_process_started': <false>, 'desktop_files_written': <false>, 'mimeapps_written': <false>, 'host_root_modified': <false>, 'backend_command_exposed': <false>, 'raw_windows_executable_exposed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -279,7 +285,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <50>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <51>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -401,6 +407,22 @@ assert(!kde_status["kde_policy_owner"], "D-Bus client must parse KDE integration
 assert(kde_status["official_desktop_only"], "D-Bus client must parse official desktop scope")
 assert(kde_status["stable_desktop_contract"], "D-Bus client must parse stable desktop contract status")
 assert(!kde_status["backend_details_exposed"], "D-Bus client must parse KDE integration backend detail status")
+
+kde_shell_plan = client.kde_shell_integration_plan
+assert(kde_shell_plan["plan_type"] == "kde-shell-integration-plan", "D-Bus client must parse KDE shell integration plans")
+assert(kde_shell_plan["runtime_method"] == "GetKDEShellIntegrationPlan", "D-Bus client must parse KDE shell Runtime methods")
+assert(kde_shell_plan["desktop_shell"] == "KDE Plasma", "D-Bus client must parse KDE shell desktop names")
+assert(kde_shell_plan["component_count"] == 9, "D-Bus client must parse KDE shell component counts")
+assert(kde_shell_plan["initial_component_count"] == 8, "D-Bus client must parse KDE shell initial component counts")
+assert(kde_shell_plan["planned_component_count"] == 1, "D-Bus client must parse KDE shell planned component counts")
+assert(kde_shell_plan["component_ids"].include?("compatibility-center"), "D-Bus client must parse KDE shell component ids")
+assert(kde_shell_plan["runtime_owned"], "D-Bus client must parse KDE shell Runtime ownership")
+assert(!kde_shell_plan["kde_policy_owner"], "D-Bus client must parse KDE shell policy ownership")
+assert(!kde_shell_plan["plasma_fork_required"], "D-Bus client must parse KDE shell fork requirements")
+assert(!kde_shell_plan["shell_configuration_written"], "D-Bus client must parse KDE shell write gates")
+assert(!kde_shell_plan["component_activation_enabled"], "D-Bus client must parse KDE shell activation gates")
+assert(!kde_shell_plan["backend_launch_enabled"], "D-Bus client must parse KDE shell backend launch gates")
+assert(!kde_shell_plan["backend_details_exposed"], "D-Bus client must parse KDE shell backend detail gates")
 
 file_association_plan = client.file_association_plan("org.xnix.sample.notepad")
 assert(file_association_plan["plan_type"] == "file-association-plan", "D-Bus client must parse file association plans")
@@ -782,7 +804,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 50, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 51, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

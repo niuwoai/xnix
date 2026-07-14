@@ -8,10 +8,20 @@ module Xnix
     TEMPORARY_FILESYSTEM_SIZE = "64m"
     IMAGE_NAME = "xnix-builder"
     SOURCE_CACHE_VOLUME = "xnix-buildroot-cache"
+    DOCKER_ENV = "XNIX_DOCKER_BIN"
+    DEFAULT_DOCKER_BIN = "docker"
 
-    def initialize(project_root:, version:)
+    def self.docker_bin
+      value = ENV.fetch(DOCKER_ENV, DEFAULT_DOCKER_BIN).to_s
+      return DEFAULT_DOCKER_BIN if value.empty?
+
+      value
+    end
+
+    def initialize(project_root:, version:, docker_bin: self.class.docker_bin)
       @project_root = project_root
       @version = version
+      @docker_bin = docker_bin
     end
 
     def image_tag
@@ -20,7 +30,7 @@ module Xnix
 
     def build_command
       [
-        "docker", "build",
+        @docker_bin, "build",
         "--pull=false",
         "--tag", image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
@@ -64,7 +74,7 @@ module Xnix
 
     def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false)
       [
-        "docker", "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
+        @docker_bin, "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
         "--memory", BUILD_MEMORY_LIMIT,
         "--cpus", CPU_LIMIT,
         "--pids-limit", PROCESS_LIMIT,

@@ -101,6 +101,8 @@ print_probe(void)
   fputs("\"desktop_activation_manifest_count\":1,", stdout);
   fputs("\"kde_integration_status_owner\":\"c\",", stdout);
   fputs("\"kde_integration_entry_point_count\":7,", stdout);
+  fputs("\"kde_shell_integration_plan_owner\":\"c\",", stdout);
+  fputs("\"kde_shell_component_count\":9,", stdout);
   fputs("\"kde_application_surface_plan_owner\":\"c\",", stdout);
   fputs("\"kde_application_surface_entry_point_count\":7,", stdout);
   fputs("\"desktop_resource_bridge_plan_owner\":\"c\",", stdout);

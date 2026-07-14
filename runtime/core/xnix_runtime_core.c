@@ -981,6 +981,7 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetDesktopEntryPlan",
     "GetTaskManagerIdentityPlan",
     "GetKDEIntegrationStatus",
+    "GetKDEShellIntegrationPlan",
     "GetKDEApplicationSurfacePlan",
     "GetDesktopResourceBridgePlan",
     "GetFileAssociationPlan",
@@ -1023,40 +1024,40 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetKRunnerQueryPlan",
     "GetKWinWindowRulePlan",
   },
-  .read_only_method_count = 50,
+  .read_only_method_count = 51,
   .parity_checks = {
     {
       .id = "dbus-contract",
       .status = "pass",
-      .method_count = 50,
+      .method_count = 51,
       .missing_method_count = 0,
       .summary = "dbus-contract covers all Runtime read-only methods.",
     },
     {
       .id = "runtime-dispatch",
       .status = "pass",
-      .method_count = 50,
+      .method_count = 51,
       .missing_method_count = 0,
       .summary = "runtime-dispatch covers all Runtime read-only methods.",
     },
     {
       .id = "dbus-client",
       .status = "pass",
-      .method_count = 50,
+      .method_count = 51,
       .missing_method_count = 0,
       .summary = "dbus-client covers all Runtime read-only methods.",
     },
     {
       .id = "smoke-adapter",
       .status = "pass",
-      .method_count = 50,
+      .method_count = 51,
       .missing_method_count = 0,
       .summary = "smoke-adapter covers all Runtime read-only methods.",
     },
     {
       .id = "session-smoke",
       .status = "pass",
-      .method_count = 50,
+      .method_count = 51,
       .missing_method_count = 0,
       .summary = "session-smoke covers all Runtime read-only methods.",
     },
@@ -2008,6 +2009,7 @@ xnix_runtime_compatibility_action_queue(
 #include "xnix_runtime_core_tray_status.inc"
 #include "xnix_runtime_core_krunner_query.inc"
 #include "xnix_runtime_core_portal_request.inc"
+#include "xnix_runtime_core_kde_shell_integration_plan.inc"
 #include "xnix_runtime_core_compatibility_review_flow_plan.inc"
 #include "xnix_runtime_core_compatibility_snapshot_plan.inc"
 #include "xnix_runtime_core_compatibility_test_plan.inc"

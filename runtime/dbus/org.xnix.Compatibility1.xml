@@ -52,6 +52,9 @@
     <method name="GetKDEIntegrationStatus">
       <arg name="status" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetKDEShellIntegrationPlan">
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetKDEApplicationSurfacePlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>

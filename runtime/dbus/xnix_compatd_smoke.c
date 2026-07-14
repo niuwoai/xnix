@@ -55,6 +55,9 @@ static const gchar introspection_xml[] =
   "    <method name='GetKDEIntegrationStatus'>"
   "      <arg name='status' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKDEShellIntegrationPlan'>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKDEApplicationSurfacePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -386,6 +389,47 @@ build_kde_integration_status(void)
   g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&status);
+}
+
+static GVariant *
+build_kde_shell_integration_plan(void)
+{
+  static const gchar *component_ids[] = {
+    "start-menu",
+    "task-manager",
+    "file-manager",
+    "system-tray",
+    "notification-center",
+    "compatibility-center",
+    "unified-settings",
+    "krunner-search",
+    "kwin-window-management"
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("kde-shell-integration-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetKDEShellIntegrationPlan"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_shell", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "component_ids", g_variant_new_strv(component_ids, 9));
+  g_variant_builder_add(&plan, "{sv}", "component_count", g_variant_new_int32(9));
+  g_variant_builder_add(&plan, "{sv}", "initial_component_count", g_variant_new_int32(8));
+  g_variant_builder_add(&plan, "{sv}", "planned_component_count", g_variant_new_int32(1));
+  g_variant_builder_add(&plan, "{sv}", "official_desktop_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "fallback_desktops_supported", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "plasma_fork_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "plasma_source_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "shell_configuration_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "component_activation_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -1558,7 +1602,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(50));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(51));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1734,6 +1778,14 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_kde_integration_status())
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKDEShellIntegrationPlan") == 0) {
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_kde_shell_integration_plan())
     );
     return;
   }

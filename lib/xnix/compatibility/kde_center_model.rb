@@ -71,6 +71,7 @@ module Xnix
           "action_queue" => action_queue_summary(diagnostics.fetch("action_queue", nil)),
           "action_review_receipt" => action_review_receipt_summary(diagnostics.fetch("action_review_receipt", nil)),
           "compatibility_center_summary" => compatibility_center_summary_summary(diagnostics.fetch("compatibility_center_summary", nil)),
+          "kde_shell_integration_plan" => kde_shell_integration_plan_summary(diagnostics.fetch("kde_shell_integration_plan", nil)),
           "kde_application_surface_plan" => kde_application_surface_plan_summary(diagnostics.fetch("kde_application_surface_plan", nil)),
           "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(diagnostics.fetch("desktop_resource_bridge_plan", nil)),
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
@@ -216,6 +217,29 @@ module Xnix
           "launch_enabled" => plan.fetch("launch_enabled"),
           "backend_process_started" => plan.fetch("backend_process_started"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("summary")
+        }
+      end
+
+      def kde_shell_integration_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "desktop_shell" => plan.fetch("desktop_shell"),
+          "component_count" => plan.fetch("component_count"),
+          "initial_component_count" => plan.fetch("initial_component_count"),
+          "planned_component_count" => plan.fetch("planned_component_count"),
+          "official_desktop_only" => plan.fetch("official_desktop_only"),
+          "runtime_owned" => plan.fetch("runtime_owned"),
+          "kde_policy_owner" => plan.fetch("kde_policy_owner"),
+          "plasma_fork_required" => plan.fetch("plasma_fork_required"),
+          "shell_configuration_written" => plan.fetch("shell_configuration_written"),
+          "component_activation_enabled" => plan.fetch("component_activation_enabled"),
+          "backend_launch_enabled" => plan.fetch("backend_launch_enabled"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "host_root_modified" => plan.fetch("host_root_modified"),
           "summary" => plan.fetch("summary")
         }
       end
@@ -625,6 +649,8 @@ module Xnix
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },
           "recorded_action_review_count" => applications.count { |application| section(application, "action_review_receipt").fetch("decision_recorded", false) },
           "compatibility_center_summary_count" => applications.count { |application| section(application, "compatibility_center_summary").fetch("summary_type", nil) == "compatibility-center-summary" },
+          "kde_shell_integration_plan_count" => applications.count { |application| section(application, "kde_shell_integration_plan").fetch("plan_type", nil) == "kde-shell-integration-plan" },
+          "kde_shell_component_count" => applications.map { |application| section(application, "kde_shell_integration_plan").fetch("component_count", 0) }.max || 0,
           "compatibility_center_known_issue_count" => applications.sum { |application| section(application, "compatibility_center_summary").fetch("known_issue_count", 0) },
           "pending_test_step_count" => applications.sum { |application| section(application, "test_plan").fetch("pending_step_count", 0) },
           "pending_test_result_count" => applications.count { |application| section(application, "test_result").fetch("overall_status", nil) == "pending" },

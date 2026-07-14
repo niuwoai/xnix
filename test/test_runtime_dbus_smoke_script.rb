@@ -64,6 +64,7 @@ assert(contents.include?("GetKRunnerQueryPlan"), "D-Bus smoke script must call G
 assert(contents.include?("bin/xnix-krunner-model"), "D-Bus smoke script must verify the KRunner D-Bus read model")
 assert(contents.include?("GetKDEIntegrationStatus"), "D-Bus smoke script must call GetKDEIntegrationStatus")
 assert(contents.include?("bin/xnix-kde-integration-status"), "D-Bus smoke script must verify the KDE integration D-Bus read model")
+assert(contents.include?("GetKDEShellIntegrationPlan"), "D-Bus smoke script must call GetKDEShellIntegrationPlan")
 assert(contents.include?("GetKWinWindowRulePlan"), "D-Bus smoke script must call GetKWinWindowRulePlan")
 assert(contents.include?("bin/xnix-kwin-window-rule"), "D-Bus smoke script must verify the KWin D-Bus read model")
 

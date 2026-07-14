@@ -131,6 +131,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKDEShellIntegrationPlan"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKDEShellIntegrationPlan: #{stderr}")
+  assert(stdout.include?("kde-shell-integration-plan"), "runtime smoke adapter must expose KDE shell integration plans over D-Bus")
+  assert(stdout.include?("shell_configuration_written"), "runtime smoke adapter KDE shell plan must keep shell writes observable")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetKDEApplicationSurfacePlan",
     "org.xnix.sample.notepad"
   )
