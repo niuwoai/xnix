@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.118] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go notification-preview --registry <path> --app <id> --event <event>` for read-only KDE notification previews from the registry-backed desktop identity plan.
+- Added Go Runtime notification modeling for install failures, repair receipts, mode changes, and approval requests with urgency, category, actions, review state, and desktop identity fields.
+- Added Go and Ruby harness coverage that verifies Runtime-owned notification previews remain KDE-targeted, user-visible, backend-detail-free, host-root-safe, and honest about action, repair, and settings execution gates remaining closed.
+
+### Changed
+
+- Moved the notification-center entry point one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and user interaction only.
+
 ## [0.2.117] - 2026-07-15
 
 ### Added

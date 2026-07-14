@@ -31,6 +31,7 @@ assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
@@ -111,6 +112,43 @@ if go_available
   assert(mimeapps.include?("application/x-xnix-log=xnix-#{recipe.id}.desktop;\n"), "MIME apps preview must add log file associations")
   assert(!mimeapps.downcase.include?("prefix"), "MIME apps preview must not expose implementation storage")
   assert(!mimeapps.include?(".exe"), "MIME apps preview must not expose a Windows executable")
+
+  notification, notification_status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "notification-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--event",
+    "install-failed",
+    chdir: project_root
+  )
+  assert(notification_status.success?, "Go notification preview CLI must run successfully")
+  notification_payload = JSON.parse(notification)
+  assert(notification_payload.fetch("schema_version") == "xnix.runtime.notification.v1", "notification preview schema version must be stable")
+  assert(notification_payload.fetch("request_type") == "desktop-notification-preview", "notification preview must identify its request type")
+  assert(notification_payload.fetch("source") == "runtime-event", "notification preview must identify Runtime events as the source")
+  assert(notification_payload.fetch("desktop") == "KDE Plasma", "notification preview must target KDE Plasma")
+  assert(notification_payload.fetch("application_id") == recipe.id, "notification preview must preserve application identity")
+  assert(notification_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "notification preview must bind generated desktop files")
+  assert(notification_payload.fetch("event_type") == "install-failed", "notification preview must preserve event type")
+  assert(notification_payload.fetch("urgency") == "critical", "install-failed notifications must be critical")
+  assert(notification_payload.fetch("category") == "compatibility.install", "install-failed notifications must use the install category")
+  assert(notification_payload.fetch("actions") == ["open-compatibility-center", "show-diagnostics"], "install-failed notifications must expose review actions")
+  assert(notification_payload.fetch("requires_user_review") == true, "install-failed notifications must require review")
+  assert(notification_payload.fetch("runtime_owned") == true, "notification preview must remain Runtime-owned")
+  assert(notification_payload.fetch("kde_policy_owner") == false, "notification preview must not make KDE own backend policy")
+  assert(notification_payload.fetch("user_visible") == true, "notification preview must be user visible")
+  assert(notification_payload.fetch("action_execution_enabled") == false, "notification preview must not enable action execution")
+  assert(notification_payload.fetch("repair_execution_enabled") == false, "notification preview must not enable repair execution")
+  assert(notification_payload.fetch("settings_persistence_enabled") == false, "notification preview must not persist settings")
+  assert(notification_payload.fetch("host_root_modified") == false, "notification preview must not mutate the host root")
+  assert(notification_payload.fetch("backend_details_exposed") == false, "notification preview must not expose backend details")
+  assert(!notification.downcase.include?("prefix"), "notification preview must not expose implementation storage")
+  assert(!notification.include?(".exe"), "notification preview must not expose a Windows executable")
 
   tray_status, tray_status_result = Open3.capture2(
     go_binary,

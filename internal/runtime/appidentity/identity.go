@@ -157,6 +157,33 @@ type TrayApplicationEntry struct {
 	UserVisible        bool   `json:"user_visible"`
 }
 
+type NotificationPreview struct {
+	SchemaVersion              string   `json:"schema_version"`
+	RequestType                string   `json:"request_type"`
+	Source                     string   `json:"source"`
+	Desktop                    string   `json:"desktop"`
+	ApplicationID              string   `json:"application_id"`
+	DisplayName                string   `json:"display_name"`
+	DesktopFile                string   `json:"desktop_file"`
+	EventType                  string   `json:"event_type"`
+	NotificationID             string   `json:"notification_id"`
+	Urgency                    string   `json:"urgency"`
+	Category                   string   `json:"category"`
+	Title                      string   `json:"title"`
+	Body                       string   `json:"body"`
+	Actions                    []string `json:"actions"`
+	RequiresUserReview         bool     `json:"requires_user_review"`
+	RuntimeOwned               bool     `json:"runtime_owned"`
+	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
+	UserVisible                bool     `json:"user_visible"`
+	ActionExecutionEnabled     bool     `json:"action_execution_enabled"`
+	RepairExecutionEnabled     bool     `json:"repair_execution_enabled"`
+	SettingsPersistenceEnabled bool     `json:"settings_persistence_enabled"`
+	HostRootModified           bool     `json:"host_root_modified"`
+	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
+	Summary                    string   `json:"summary"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -452,6 +479,76 @@ func (plan Plan) TrayStatusPreview() (TrayStatusPreview, error) {
 		BackendDetailsExposed:        false,
 		Summary:                      "tray status preview lets KDE show compatibility application status while live tray bridging and backend policy stay gated in the Runtime.",
 	}, nil
+}
+
+func (plan Plan) NotificationPreview(eventType string) (NotificationPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return NotificationPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.DesktopFile, eventType} {
+		if !singleLine(value) {
+			return NotificationPreview{}, errors.New("notification preview requires single-line identity fields")
+		}
+	}
+
+	preview := NotificationPreview{
+		SchemaVersion:              "xnix.runtime.notification.v1",
+		RequestType:                "desktop-notification-preview",
+		Source:                     "runtime-event",
+		Desktop:                    "KDE Plasma",
+		ApplicationID:              plan.ApplicationID,
+		DisplayName:                plan.DisplayName,
+		DesktopFile:                plan.DesktopFile,
+		EventType:                  eventType,
+		NotificationID:             plan.ApplicationID + "." + eventType,
+		RuntimeOwned:               true,
+		KDEPolicyOwner:             false,
+		UserVisible:                true,
+		ActionExecutionEnabled:     false,
+		RepairExecutionEnabled:     false,
+		SettingsPersistenceEnabled: false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+	}
+
+	switch eventType {
+	case "install-failed":
+		preview.Urgency = "critical"
+		preview.Category = "compatibility.install"
+		preview.Title = plan.DisplayName + " installation needs attention"
+		preview.Body = "The Runtime could not complete installation planning and needs Compatibility Center review."
+		preview.Actions = []string{"open-compatibility-center", "show-diagnostics"}
+		preview.RequiresUserReview = true
+		preview.Summary = "notification preview surfaces an installation failure for KDE review without starting repair or install execution."
+	case "repair-applied":
+		preview.Urgency = "normal"
+		preview.Category = "compatibility.repair"
+		preview.Title = plan.DisplayName + " repair receipt is ready"
+		preview.Body = "A Runtime repair receipt is available for review before any further action is enabled."
+		preview.Actions = []string{"open-compatibility-center"}
+		preview.RequiresUserReview = false
+		preview.Summary = "notification preview reports repair receipts while repair execution remains disabled in this milestone."
+	case "mode-changed":
+		preview.Urgency = "low"
+		preview.Category = "compatibility.settings"
+		preview.Title = plan.DisplayName + " compatibility mode changed"
+		preview.Body = "The Runtime recorded a compatibility mode change plan for KDE settings review."
+		preview.Actions = []string{"open-settings"}
+		preview.RequiresUserReview = false
+		preview.Summary = "notification preview reports mode changes while settings persistence remains disabled."
+	case "approval-required":
+		preview.Urgency = "critical"
+		preview.Category = "compatibility.approval"
+		preview.Title = plan.DisplayName + " needs approval"
+		preview.Body = "A compatibility action needs explicit review before the Runtime can proceed."
+		preview.Actions = []string{"open-compatibility-center", "review-request"}
+		preview.RequiresUserReview = true
+		preview.Summary = "notification preview asks KDE to show a user-review notification while Runtime execution gates stay closed."
+	default:
+		return NotificationPreview{}, fmt.Errorf("unsupported notification event type: %s", eventType)
+	}
+
+	return preview, nil
 }
 
 func singleLine(value string) bool {

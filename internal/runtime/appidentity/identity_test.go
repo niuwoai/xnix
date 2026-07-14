@@ -235,6 +235,68 @@ func TestTrayStatusPreviewKeepsLiveBridgeGated(t *testing.T) {
 	}
 }
 
+func TestNotificationPreviewKeepsExecutionGatesClosed(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.NotificationPreview("install-failed")
+	if err != nil {
+		t.Fatalf("NotificationPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.notification.v1" || preview.RequestType != "desktop-notification-preview" {
+		t.Fatalf("unexpected notification schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" || preview.Source != "runtime-event" ||
+		preview.ApplicationID != "org.example.ledger" || preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected notification identity: %#v", preview)
+	}
+	if preview.EventType != "install-failed" || preview.Urgency != "critical" ||
+		preview.Category != "compatibility.install" || !preview.RequiresUserReview {
+		t.Fatalf("unexpected install-failed event metadata: %#v", preview)
+	}
+	if !sameStrings(preview.Actions, []string{"open-compatibility-center", "show-diagnostics"}) {
+		t.Fatalf("Actions = %#v", preview.Actions)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.ActionExecutionEnabled || preview.RepairExecutionEnabled ||
+		preview.SettingsPersistenceEnabled || preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected notification safety flags: %#v", preview)
+	}
+
+	approval, err := plan.NotificationPreview("approval-required")
+	if err != nil {
+		t.Fatalf("NotificationPreview approval returned error: %v", err)
+	}
+	if approval.Urgency != "critical" || approval.Category != "compatibility.approval" || !approval.RequiresUserReview {
+		t.Fatalf("unexpected approval metadata: %#v", approval)
+	}
+	if !sameStrings(approval.Actions, []string{"open-compatibility-center", "review-request"}) {
+		t.Fatalf("approval actions = %#v", approval.Actions)
+	}
+	if _, err := plan.NotificationPreview("unknown-event"); err == nil {
+		t.Fatalf("NotificationPreview accepted an unknown event")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("notification preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

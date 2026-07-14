@@ -110,6 +110,52 @@ func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 	}
 }
 
+func TestNotificationPreviewCommandRendersKDENotification(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"notification-preview", "--registry", registryPath, "--app", "org.example.ledger", "--event", "approval-required"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.notification.v1" || payload["request_type"] != "desktop-notification-preview" {
+		t.Fatalf("unexpected notification schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" || payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected notification identity: %#v", payload)
+	}
+	if payload["event_type"] != "approval-required" || payload["urgency"] != "critical" ||
+		payload["category"] != "compatibility.approval" || payload["requires_user_review"] != true {
+		t.Fatalf("unexpected approval notification: %#v", payload)
+	}
+	actions := payload["actions"].([]any)
+	if actions[0] != "open-compatibility-center" || actions[1] != "review-request" {
+		t.Fatalf("unexpected actions: %#v", actions)
+	}
+	if payload["action_execution_enabled"] != false || payload["repair_execution_enabled"] != false ||
+		payload["settings_persistence_enabled"] != false || payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected notification safety flags: %#v", payload)
+	}
+}
+
 func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
