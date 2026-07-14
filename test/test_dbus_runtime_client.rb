@@ -163,6 +163,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetExecutionReadiness"
+      [
+        "({'readiness_type': <'compatibility-execution-readiness'>, 'runtime_method': <'GetExecutionReadiness'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'execution_state': <'blocked'>, 'overall_status': <'not-ready'>, 'launch_allowed': <false>, 'launch_enabled': <false>, 'execution_request_created': <false>, 'backend_binding_ready': <false>, 'desktop_entry_launch_visible': <true>, 'safe_for_ai_diagnostics': <true>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetAIDiagnosticInput"
       [
         "({'input_type': <'ai-diagnostic-input'>, 'runtime_method': <'GetAIDiagnosticInput'>, 'c_runtime_backed': <true>, 'diagnostic_signal_count': <3>, 'safe_for_ai_diagnostics': <true>, 'ai_provider_called': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
@@ -213,7 +219,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <39>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <40>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -499,6 +505,22 @@ assert(!test_result["test_executed"], "D-Bus client must parse test result execu
 assert(!test_result["host_root_modified"], "D-Bus client must parse test result host-root false booleans")
 assert(!test_result["backend_details_exposed"], "D-Bus client must parse test result false booleans")
 
+execution_readiness = client.execution_readiness("org.xnix.sample.notepad")
+assert(execution_readiness["readiness_type"] == "compatibility-execution-readiness", "D-Bus client must parse execution readiness")
+assert(execution_readiness["runtime_method"] == "GetExecutionReadiness", "D-Bus client must parse execution readiness Runtime methods")
+assert(execution_readiness["runtime_owned"], "D-Bus client must parse execution readiness Runtime ownership")
+assert(execution_readiness["c_runtime_backed"], "D-Bus client must parse execution readiness C backing")
+assert(!execution_readiness["kde_policy_owner"], "D-Bus client must parse execution readiness KDE false booleans")
+assert(execution_readiness["execution_state"] == "blocked", "D-Bus client must parse execution readiness state")
+assert(!execution_readiness["launch_allowed"], "D-Bus client must parse execution readiness launch allowance")
+assert(!execution_readiness["launch_enabled"], "D-Bus client must parse execution readiness launch enablement")
+assert(!execution_readiness["execution_request_created"], "D-Bus client must parse execution readiness request creation")
+assert(!execution_readiness["backend_binding_ready"], "D-Bus client must parse execution readiness backend binding state")
+assert(execution_readiness["desktop_entry_launch_visible"], "D-Bus client must parse execution readiness desktop visibility")
+assert(execution_readiness["safe_for_ai_diagnostics"], "D-Bus client must parse execution readiness AI safety")
+assert(!execution_readiness["host_root_modified"], "D-Bus client must parse execution readiness host-root false booleans")
+assert(!execution_readiness["backend_details_exposed"], "D-Bus client must parse execution readiness false booleans")
+
 ai_input = client.ai_diagnostic_input("org.xnix.sample.notepad")
 assert(ai_input["input_type"] == "ai-diagnostic-input", "D-Bus client must parse AI diagnostic inputs")
 assert(ai_input["runtime_method"] == "GetAIDiagnosticInput", "D-Bus client must parse AI diagnostic Runtime method")
@@ -582,7 +604,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 39, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 40, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

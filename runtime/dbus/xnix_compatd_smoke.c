@@ -120,6 +120,10 @@ static const gchar introspection_xml[] =
   "      <arg name='test_type' type='s' direction='in'/>"
   "      <arg name='result' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetExecutionReadiness'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='readiness' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetAIDiagnosticInput'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='issue' type='s' direction='in'/>"
@@ -747,6 +751,32 @@ build_test_result(const gchar *application_id, const gchar *test_type)
 }
 
 static GVariant *
+build_execution_readiness(const gchar *application_id)
+{
+  GVariantBuilder readiness;
+
+  g_variant_builder_init(&readiness, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&readiness, "{sv}", "readiness_type", g_variant_new_string("compatibility-execution-readiness"));
+  g_variant_builder_add(&readiness, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&readiness, "{sv}", "runtime_method", g_variant_new_string("GetExecutionReadiness"));
+  g_variant_builder_add(&readiness, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "execution_state", g_variant_new_string("blocked"));
+  g_variant_builder_add(&readiness, "{sv}", "overall_status", g_variant_new_string("not-ready"));
+  g_variant_builder_add(&readiness, "{sv}", "launch_allowed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "execution_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "backend_binding_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "desktop_entry_launch_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&readiness);
+}
+
+static GVariant *
 build_ai_diagnostic_input(const gchar *application_id, const gchar *issue, const gchar *test_type)
 {
   GVariantBuilder input;
@@ -1032,7 +1062,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(39));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(40));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1415,6 +1445,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_test_result(application_id, test_type)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetExecutionReadiness") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_execution_readiness(application_id)));
     return;
   }
 

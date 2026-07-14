@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.97"
+#define XNIX_RUNTIME_VERSION "0.2.98"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -513,7 +513,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[39];
+  const char *read_only_methods[40];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -775,6 +775,43 @@ typedef struct {
   bool backend_details_exposed;
   const char *summary;
 } XnixRuntimeCompatibilityTestResult;
+
+typedef struct {
+  const char *id;
+  const char *status;
+  const char *summary;
+} XnixRuntimeExecutionReadinessGate;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const XnixRuntimeEngine *engine;
+  const char *readiness_type;
+  const char *runtime_method;
+  const char *execution_state;
+  const char *overall_status;
+  const char *recommended_action;
+  XnixRuntimeExecutionReadinessGate gates[5];
+  size_t gate_count;
+  const char *blocked_actions[5];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool compatibility_center_card;
+  bool safe_for_ai_diagnostics;
+  bool desktop_entry_launch_visible;
+  bool launch_allowed;
+  bool launch_enabled;
+  bool execution_request_created;
+  bool backend_binding_ready;
+  bool portal_policy_required;
+  bool snapshot_required;
+  bool user_action_required;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeExecutionReadiness;
 
 typedef struct {
   const char *entry_point;
@@ -1290,6 +1327,10 @@ bool xnix_runtime_compatibility_test_result(
   const char *application_id,
   const char *test_type,
   XnixRuntimeCompatibilityTestResult *result
+);
+bool xnix_runtime_execution_readiness(
+  const char *application_id,
+  XnixRuntimeExecutionReadiness *readiness
 );
 bool xnix_runtime_desktop_activation_manifest(
   const char *application_id,

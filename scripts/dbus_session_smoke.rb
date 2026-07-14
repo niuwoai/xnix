@@ -344,6 +344,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetExecutionReadiness",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetExecutionReadiness: #{stderr}")
+  assert(stdout.include?("compatibility-execution-readiness"), "runtime smoke adapter must expose execution readiness over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetAIDiagnosticInput",
     "org.xnix.sample.notepad",
     "engine-binding-pending",

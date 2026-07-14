@@ -290,6 +290,16 @@ assert(test_result["result_type"] == "compatibility-test-result", "dispatch must
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetExecutionReadiness",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetExecutionReadiness must exit successfully: #{stderr}")
+execution_readiness = JSON.parse(stdout)
+assert(execution_readiness["readiness_type"] == "compatibility-execution-readiness", "dispatch must route GetExecutionReadiness")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetAIDiagnosticInput",
   JSON.generate(["org.xnix.sample.notepad"])
 )

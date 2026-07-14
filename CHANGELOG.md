@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.98] - 2026-07-14
+
+### Added
+
+- Added C Runtime execution readiness records and a CLI read method that summarizes launch gates before KDE exposes launch intent.
+- Added `GetExecutionReadiness` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, and session-bus smoke coverage.
+- Added a Ruby development harness and unit test for execution readiness while keeping C as the product boundary.
+
+### Changed
+
+- Extended Runtime diagnostics with execution readiness summaries that keep Launch blocked until backend binding, Portal review, snapshot baseline, and Runtime write gates are ready.
+
 ## [0.2.97] - 2026-07-14
 
 ### Added

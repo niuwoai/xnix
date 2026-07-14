@@ -141,6 +141,10 @@ module Xnix
         parse_dictionary(call("GetTestResult", application_id, test_type))
       end
 
+      def execution_readiness(application_id)
+        parse_dictionary(call("GetExecutionReadiness", application_id))
+      end
+
       def ai_diagnostic_input(application_id, issue = "engine-binding-pending", test_type = "preflight")
         parse_dictionary(call("GetAIDiagnosticInput", application_id, issue, test_type))
       end

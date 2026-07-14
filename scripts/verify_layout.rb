@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.97"
+EXPECTED_VERSION = "0.2.98"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -32,6 +32,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/compatibility_artifact_manifest.rb
   lib/xnix/compatibility/compatibility_backend_binding.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
+  lib/xnix/compatibility/compatibility_execution_readiness.rb
   lib/xnix/compatibility/compatibility_install_plan.rb
   lib/xnix/compatibility/compatibility_package_source.rb
   lib/xnix/compatibility/compatibility_repair_plan.rb
@@ -84,6 +85,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-backend-binding
   bin/xnix-compatd
   bin/xnix-compat-engine-catalog
+  bin/xnix-compat-execution-readiness
   bin/xnix-compat-package-source
   bin/xnix-compat-launch
   bin/xnix-compat-notify
@@ -146,6 +148,7 @@ REQUIRED_FILES = %w[
   runtime/core/xnix_runtime_core_compatibility_snapshot_plan.inc
   runtime/core/xnix_runtime_core_compatibility_test_plan.inc
   runtime/core/xnix_runtime_core_compatibility_test_result.inc
+  runtime/core/xnix_runtime_core_execution_readiness.inc
   runtime/core/xnix_runtime_core_compatibility_repair_plan.inc
   runtime/core/xnix_runtime_core_ai_diagnostic_input.inc
   runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc
@@ -168,6 +171,7 @@ REQUIRED_FILES = %w[
   runtime/core/xnix_runtime_core_cli_compatibility_snapshot_plan.inc
   runtime/core/xnix_runtime_core_cli_compatibility_test_plan.inc
   runtime/core/xnix_runtime_core_cli_compatibility_test_result.inc
+  runtime/core/xnix_runtime_core_cli_execution_readiness.inc
   runtime/core/xnix_runtime_core_cli_compatibility_repair_plan.inc
   runtime/core/xnix_runtime_core_cli_ai_diagnostic_input.inc
   runtime/core/xnix_runtime_core_cli_ai_diagnostic_recommendation.inc
@@ -205,6 +209,7 @@ REQUIRED_FILES = %w[
   test/test_compatibility_run_plan.rb
   test/test_compatibility_test_plan.rb
   test/test_compatibility_test_result.rb
+  test/test_compatibility_execution_readiness.rb
   test/test_recipe_store.rb
   test/test_recipe_registry.rb
   test/test_recipe_install_gate.rb
@@ -395,6 +400,17 @@ assert(test_result_source.include?("\"test_executed\" => false"), "Compatibility
 assert(test_result_source.include?("\"host_root_modified\" => false"), "Compatibility test result must not mutate the host root")
 assert(test_result_source.include?("\"backend_details_exposed\" => false"), "Compatibility test result must hide backend details")
 
+execution_readiness_source = read_project_file("lib/xnix/compatibility/compatibility_execution_readiness.rb")
+assert(execution_readiness_source.include?("xnix-compat-execution-readiness"), "Compatibility execution readiness must expose a CLI command")
+%w[compatibility-execution-readiness GetExecutionReadiness runtime-launch-write-gate desktop_entry_launch_visible].each do |token|
+  assert(execution_readiness_source.include?(token), "Compatibility execution readiness must include #{token}")
+end
+assert(execution_readiness_source.include?("\"c_runtime_backed\" => true"), "Compatibility execution readiness must expose C Runtime backing")
+assert(execution_readiness_source.include?("\"launch_allowed\" => launch_allowed?"), "Compatibility execution readiness must expose launch allowance")
+assert(execution_readiness_source.include?("\"execution_request_created\" => false"), "Compatibility execution readiness must not create execution requests")
+assert(execution_readiness_source.include?("\"host_root_modified\" => false"), "Compatibility execution readiness must not mutate the host root")
+assert(execution_readiness_source.include?("\"backend_details_exposed\" => false"), "Compatibility execution readiness must hide backend details")
+
 ai_diagnostic_source = read_project_file("lib/xnix/compatibility/ai_diagnostic_input.rb")
 assert(ai_diagnostic_source.include?("xnix-ai-diagnostic-input"), "AI diagnostic input must expose a CLI command")
 %w[ai-diagnostic-input diagnostic_signals privacy_boundaries allowed_ai_tasks blocked_ai_tasks].each do |token|
@@ -446,6 +462,7 @@ c_runtime_core_source = read_project_file("runtime/core/xnix_runtime_core.c") +
                         read_project_file("runtime/core/xnix_runtime_core_compatibility_snapshot_plan.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_compatibility_test_plan.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_compatibility_test_result.inc") +
+                        read_project_file("runtime/core/xnix_runtime_core_execution_readiness.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_compatibility_repair_plan.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_input.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc") +
@@ -468,6 +485,7 @@ c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_snapshot_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_test_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_test_result.inc") +
+                     read_project_file("runtime/core/xnix_runtime_core_cli_execution_readiness.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_repair_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_input.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_recommendation.inc") +
@@ -498,6 +516,9 @@ end
 %w[XnixRuntimeCompatibilityTestResult XnixRuntimeCompatibilityTestStepResult xnix_runtime_compatibility_test_result].each do |token|
   assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
 end
+%w[XnixRuntimeExecutionReadiness XnixRuntimeExecutionReadinessGate xnix_runtime_execution_readiness].each do |token|
+  assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
+end
 %w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot xnix_runtime_find_application org.xnix.sample.notepad application/x-xnix-txt xnix_runtime_select_engine_for_mode automatic-managed local-compatibility-engine isolated-compatibility-engine xnix_runtime_find_portal_policy org.freedesktop.portal.FileChooser org.freedesktop.portal.Camera remote-desktop selected-files xnix_runtime_portal_request_plan portal_request_method_for_operation handle_token permission_granted host_permission_changed OpenFile RequestClipboard AccessCamera xnix_runtime_find_snapshot_policy before-repair before-engine-change desktop_activation_receipts xnix_runtime_find_state_root_policy application-data runtime-metadata diagnostic-cache xnix_runtime_find_install_readiness_policy resolve-artifact-manifest verify-artifact-digests prepare-package-source allocate-application-state xnix_runtime_find_artifact_manifest_policy runtime-launch-metadata local-execution-artifacts isolated-environment-artifacts manifest-signature-verification artifact-digest-verification xnix_runtime_find_acquisition_preflight_policy package-source-ready signed-artifact-manifest runtime-cache-space network-policy-review rollback-marker xnix_runtime_find_package_source_policy os-managed-compatibility-packages runtime-managed-toolcache isolated-environment-template-catalog signed-source-verification source-policy-review runtime-cache-quota offline-fallback xnix_runtime_find_backend_binding_policy engine-package-source application-state-root portal-policy-review snapshot-baseline xnix_runtime_find_settings_policy run-mode resource-access devices snapshots settings_change_policies xnix_runtime_find_settings_change_policy validate-setting persist-runtime-setting service_binding_policy xnix_runtime_service_binding_policy dbus-service-activation live-dbus-owner live_owner_gate_policy xnix_runtime_live_owner_gate_policy production-recipe-trust owner_smoke_plan_policy xnix_runtime_owner_smoke_plan_policy validate-activation-files assert-stable-bus-name method_parity_manifest_policy xnix_runtime_method_parity_manifest_policy recipe_trust_policy xnix_runtime_recipe_trust_policy production_recipe_install_requirements xnix_runtime_compatibility_install_plan xnix_runtime_compatibility_action_queue xnix_runtime_compatibility_action_review_receipt xnix_runtime_compatibility_center_summary compatibility-center-summary known_issue_count repair_record_state backend_launch_enabled xnix_runtime_compatibility_run_plan xnix_runtime_desktop_activation_manifest xnix_runtime_kde_integration_status kde-integration-status standard-desktop-entry window-identity-and-restore xnix_runtime_desktop_entry_plan xnix_runtime_task_manager_identity_plan xnix_runtime_file_association_plan xnix_runtime_notification_plan xnix_runtime_tray_status_plan xnix_runtime_krunner_query_plan xnix_runtime_ai_diagnostic_input ai-diagnostic-input safe_for_ai_diagnostics desktop-activation desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan query_execution_enabled approval-required install-failed repair-applied mode-changed action_execution_enabled repair_execution_enabled settings_persistence_enabled live_backend_bridge_enabled bridge_configuration_persisted mimeapps.list applications:xnix-org.xnix.sample.notepad.desktop xnix-compat-open standard_desktop_entry launch_uses_runtime raw_windows_executable_exposed compatibility_storage_path_exposed pinning_allowed restore_allowed skip_taskbar show_in_switcher identity-only window_manager_policy_only portal_required_for_file_open overwrite_existing_mimeapps portal_policy_required snapshot_before_risky_change diagnostics_required execution_request_created review-install-readiness review-settings-change review-ai-repair verify-runtime-service review-portal-policy decision_recorded reviewed approved deferred rejected signed recipe validation is not enabled registry.digest registry.signature registry.development GetDesktopActivationManifest GetKDEIntegrationStatus GetDesktopEntryPlan GetTaskManagerIdentityPlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetCompatibilityCenterSummary GetPortalRequestPlan GetAIDiagnosticInput GetRuntimeMethodParityManifest GetRuntimeWriteGate].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
@@ -518,6 +539,9 @@ end
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
 %w[xnix_runtime_compatibility_test_result compatibility-test-result waiting-for-runtime safe_for_ai_diagnostics GetTestResult].each do |token|
+  assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
+end
+%w[xnix_runtime_execution_readiness compatibility-execution-readiness GetExecutionReadiness runtime-launch-write-gate desktop_entry_launch_visible launch_allowed].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
 %w[xnix_runtime_kwin_window_rule_plan kwin-window-rule identity-and-layout GetKWinWindowRulePlan].each do |token|
@@ -542,6 +566,9 @@ end
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[compatibility_test_result_owner compatibility_test_result_type_count compatibility-test-result GetTestResult].each do |token|
+  assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
+end
+%w[execution_readiness_owner execution_readiness_application_count execution-readiness compatibility-execution-readiness GetExecutionReadiness].each do |token|
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[kwin_window_rule_plan_owner kwin_window_rule_plan_count kwin-window-rule-plan].each do |token|
@@ -799,7 +826,8 @@ assert(runtime_daemon_source.include?("\"file_association_planning\""), "Runtime
 assert(runtime_daemon_source.include?("\"notification_planning\""), "Runtime daemon must expose notification planning capability")
 assert(runtime_daemon_source.include?("\"tray_status_planning\""), "Runtime daemon must expose tray status planning capability")
 assert(runtime_daemon_source.include?("\"krunner_query_planning\""), "Runtime daemon must expose KRunner query planning capability")
-%w[GetEngineCatalog GetRunPlan GetDesktopActivationManifest GetKDEIntegrationStatus GetDesktopEntryPlan GetTaskManagerIdentityPlan GetKWinWindowRulePlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetPortalRequestPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityCenterSummary GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeWriteGate GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
+assert(runtime_daemon_source.include?("\"compatibility_execution_readiness\""), "Runtime daemon must expose execution readiness capability")
+%w[GetEngineCatalog GetRunPlan GetDesktopActivationManifest GetKDEIntegrationStatus GetDesktopEntryPlan GetTaskManagerIdentityPlan GetKWinWindowRulePlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetPortalRequestPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityCenterSummary GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetRepairPlan GetTestPlan GetTestResult GetExecutionReadiness GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeWriteGate GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")
   assert(read_project_file("runtime/dbus/org.xnix.Compatibility1.xml").include?("name=\"#{method_name}\""), "D-Bus contract must include #{method_name}")
   assert(read_project_file("runtime/dbus/xnix_compatd_smoke.c").include?(method_name), "D-Bus smoke adapter must include #{method_name}")
@@ -807,7 +835,7 @@ assert(runtime_daemon_source.include?("\"krunner_query_planning\""), "Runtime da
 end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
-%w[engine_catalog run_plan kde_integration_status desktop_entry_plan task_manager_identity_plan kwin_window_rule_plan file_association_plan notification_plan tray_status krunner_query_plan state_root package_source acquisition_preflight action_queue action_review_receipt compatibility_center_summary artifact_manifest install_plan backend_binding repair_plan test_plan test_result ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding runtime_live_owner_gate runtime_owner_smoke_plan runtime_method_parity_manifest runtime_write_gate settings settings_change_plan].each do |method_name|
+%w[engine_catalog run_plan kde_integration_status desktop_entry_plan task_manager_identity_plan kwin_window_rule_plan file_association_plan notification_plan tray_status krunner_query_plan state_root package_source acquisition_preflight action_queue action_review_receipt compatibility_center_summary artifact_manifest install_plan backend_binding repair_plan test_plan test_result execution_readiness ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding runtime_live_owner_gate runtime_owner_smoke_plan runtime_method_parity_manifest runtime_write_gate settings settings_change_plan].each do |method_name|
   assert(dbus_client_source.include?("def #{method_name}"), "D-Bus Runtime client must expose #{method_name}")
 end
 assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus Runtime client must parse boolean true values")

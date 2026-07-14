@@ -117,6 +117,10 @@
       <arg name="test_type" type="s" direction="in"/>
       <arg name="result" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetExecutionReadiness">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="readiness" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetAIDiagnosticInput">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="issue" type="s" direction="in"/>

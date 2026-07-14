@@ -37,6 +37,7 @@ assert(contents.include?("GetBackendBinding"), "D-Bus smoke script must call Get
 assert(contents.include?("GetRepairPlan"), "D-Bus smoke script must call GetRepairPlan")
 assert(contents.include?("GetTestPlan"), "D-Bus smoke script must call GetTestPlan")
 assert(contents.include?("GetTestResult"), "D-Bus smoke script must call GetTestResult")
+assert(contents.include?("GetExecutionReadiness"), "D-Bus smoke script must call GetExecutionReadiness")
 assert(contents.include?("GetAIDiagnosticInput"), "D-Bus smoke script must call GetAIDiagnosticInput")
 assert(contents.include?("GetAIDiagnosticRecommendation"), "D-Bus smoke script must call GetAIDiagnosticRecommendation")
 assert(contents.include?("GetAIRepairApprovalGate"), "D-Bus smoke script must call GetAIRepairApprovalGate")
