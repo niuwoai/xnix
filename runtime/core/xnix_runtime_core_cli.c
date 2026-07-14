@@ -2772,6 +2772,9 @@ print_probe(void)
   fputs("\"snapshot_policy_owner\":\"c\",", stdout);
   fputs("\"snapshot_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_snapshot_policy_count());
+  fputs("\"compatibility_snapshot_plan_owner\":\"c\",", stdout);
+  fputs("\"compatibility_snapshot_reason_count\":", stdout);
+  printf("%zu,", xnix_runtime_snapshot_policy_count());
   fputs("\"state_root_policy_owner\":\"c\",", stdout);
   fputs("\"state_root_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_state_root_policy_count());
@@ -2910,6 +2913,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_tray_status.inc"
 #include "xnix_runtime_core_cli_krunner_query.inc"
 #include "xnix_runtime_core_cli_portal_request.inc"
+#include "xnix_runtime_core_cli_compatibility_snapshot_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_repair_plan.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_input.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_recommendation.inc"

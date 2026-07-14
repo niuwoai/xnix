@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.95] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility snapshot plan records and a CLI read method for Runtime-owned restore-point planning before repair, engine changes, and manual snapshots.
+- Added C Runtime probe ownership for compatibility snapshot plans so KDE can verify snapshot reason coverage without owning snapshot or restore policy.
+
+### Changed
+
+- Marked compatibility snapshot plans as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping snapshot creation, restore execution, host-root mutation, user-document capture, host-system capture, and backend detail exposure disabled.
+
 ## [0.2.94] - 2026-07-14
 
 ### Added

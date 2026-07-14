@@ -28,10 +28,22 @@ module Xnix
           "plan_type" => "compatibility-snapshot",
           "application_id" => application_id,
           "reason" => reason,
+          "runtime_method" => "GetSnapshotPlan",
+          "runtime_owned" => true,
+          "c_runtime_backed" => true,
+          "kde_policy_owner" => false,
           "enabled_by_default" => true,
           "snapshot_scope" => snapshot_scope,
           "restore" => restore,
           "retention" => retention,
+          "snapshot_request_created" => false,
+          "snapshot_created" => false,
+          "restore_requested" => false,
+          "restore_executed" => false,
+          "user_documents_included" => false,
+          "host_system_included" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
           "desktop_safe_summary" => REASONS.fetch(reason)
         }
       end

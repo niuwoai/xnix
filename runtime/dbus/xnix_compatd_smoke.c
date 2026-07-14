@@ -810,7 +810,19 @@ build_snapshot_plan(const gchar *application_id, const gchar *reason)
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-snapshot"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "reason", g_variant_new_string(reason));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetSnapshotPlan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "enabled_by_default", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "restore_requested", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "restore_executed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "user_documents_included", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_system_included", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
 }

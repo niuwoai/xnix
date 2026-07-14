@@ -183,7 +183,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetSnapshotPlan"
       [
-        "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'enabled_by_default': <true>},)\n",
+        "({'plan_type': <'compatibility-snapshot'>, 'reason': <'before-repair'>, 'runtime_method': <'GetSnapshotPlan'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'enabled_by_default': <true>, 'snapshot_request_created': <false>, 'snapshot_created': <false>, 'restore_requested': <false>, 'restore_executed': <false>, 'user_documents_included': <false>, 'host_system_included': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -520,7 +520,19 @@ assert(!ai_gate["repair_executed"], "D-Bus client must parse AI repair execution
 
 snapshot_plan = client.snapshot_plan("org.xnix.sample.notepad", "before-repair")
 assert(snapshot_plan["plan_type"] == "compatibility-snapshot", "D-Bus client must parse snapshot plans")
+assert(snapshot_plan["runtime_method"] == "GetSnapshotPlan", "D-Bus client must parse snapshot plan Runtime methods")
+assert(snapshot_plan["runtime_owned"], "D-Bus client must parse snapshot plan Runtime ownership")
+assert(snapshot_plan["c_runtime_backed"], "D-Bus client must parse snapshot plan C backing")
+assert(!snapshot_plan["kde_policy_owner"], "D-Bus client must parse snapshot plan KDE false booleans")
 assert(snapshot_plan["enabled_by_default"], "D-Bus client must parse snapshot plan booleans")
+assert(!snapshot_plan["snapshot_request_created"], "D-Bus client must parse snapshot request false booleans")
+assert(!snapshot_plan["snapshot_created"], "D-Bus client must parse snapshot created false booleans")
+assert(!snapshot_plan["restore_requested"], "D-Bus client must parse restore request false booleans")
+assert(!snapshot_plan["restore_executed"], "D-Bus client must parse restore execution false booleans")
+assert(!snapshot_plan["user_documents_included"], "D-Bus client must parse user document exclusion")
+assert(!snapshot_plan["host_system_included"], "D-Bus client must parse host system exclusion")
+assert(!snapshot_plan["host_root_modified"], "D-Bus client must parse snapshot host-root false booleans")
+assert(!snapshot_plan["backend_details_exposed"], "D-Bus client must parse snapshot backend detail false booleans")
 
 portal_policy = client.portal_access_policy("org.xnix.sample.notepad", "file-open")
 assert(portal_policy["policy_type"] == "portal-access", "D-Bus client must parse Portal access policies")

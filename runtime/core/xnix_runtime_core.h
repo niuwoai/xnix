@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.94"
+#define XNIX_RUNTIME_VERSION "0.2.95"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -108,6 +108,22 @@ typedef struct {
   bool backend_details_exposed;
   bool host_root_modified;
 } XnixRuntimeSnapshotPolicy;
+
+typedef struct {
+  const char *application_id;
+  const XnixRuntimeSnapshotPolicy *policy;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool snapshot_request_created;
+  bool snapshot_created;
+  bool restore_requested;
+  bool restore_executed;
+  bool user_documents_included;
+  bool host_system_included;
+  bool host_root_modified;
+  bool backend_details_exposed;
+} XnixRuntimeCompatibilitySnapshotPlan;
 
 typedef struct {
   const char *application_id;
@@ -1110,6 +1126,11 @@ const XnixRuntimePortalPolicy *xnix_runtime_find_portal_policy(const char *opera
 size_t xnix_runtime_snapshot_policy_count(void);
 const XnixRuntimeSnapshotPolicy *xnix_runtime_snapshot_policy_at(size_t index);
 const XnixRuntimeSnapshotPolicy *xnix_runtime_find_snapshot_policy(const char *reason);
+bool xnix_runtime_compatibility_snapshot_plan(
+  const char *application_id,
+  const char *reason,
+  XnixRuntimeCompatibilitySnapshotPlan *plan
+);
 
 size_t xnix_runtime_state_root_policy_count(void);
 const XnixRuntimeStateRootPolicy *xnix_runtime_state_root_policy_at(size_t index);
