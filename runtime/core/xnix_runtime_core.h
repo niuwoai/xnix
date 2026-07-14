@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.104"
+#define XNIX_RUNTIME_VERSION "0.2.105"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -476,6 +476,42 @@ typedef struct {
 } XnixRuntimeSettingsChangePolicy;
 
 typedef struct {
+  const char *id;
+  const char *label;
+  const char *intent;
+  bool selected;
+  bool requested;
+  bool backend_details_exposed;
+} XnixRuntimeCompatibilityModeOption;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *current_mode;
+  const char *requested_mode;
+  const char *mode_state;
+  XnixRuntimeCompatibilityModeOption modes[4];
+  size_t mode_count;
+  const char *required_runtime_gates[5];
+  size_t required_runtime_gate_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool valid_mode;
+  bool requires_user_confirmation;
+  bool portal_review_required;
+  bool snapshot_required;
+  bool settings_persistence_enabled;
+  bool backend_reconfiguration_enabled;
+  bool backend_process_started;
+  bool launch_enabled;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityModeSwitchPlan;
+
+typedef struct {
   const char *dbus_service_file;
   const char *systemd_unit;
   const char *libexec_wrapper;
@@ -593,7 +629,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[45];
+  const char *read_only_methods[46];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1559,6 +1595,11 @@ bool xnix_runtime_kde_application_surface_plan(
 bool xnix_runtime_desktop_resource_bridge_plan(
   const char *application_id,
   XnixRuntimeDesktopResourceBridgePlan *plan
+);
+bool xnix_runtime_compatibility_mode_switch_plan(
+  const char *application_id,
+  const char *requested_mode,
+  XnixRuntimeCompatibilityModeSwitchPlan *plan
 );
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,

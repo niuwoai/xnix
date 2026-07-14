@@ -196,6 +196,11 @@
       <arg name="value" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityModeSwitchPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="requested_mode" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetCompatibilityActionQueue">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="queue" type="a{sv}" direction="out"/>

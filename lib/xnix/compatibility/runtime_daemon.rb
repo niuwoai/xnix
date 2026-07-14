@@ -17,6 +17,7 @@ require_relative "compatibility_backend_lifecycle"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_execution_readiness"
 require_relative "compatibility_install_plan"
+require_relative "compatibility_mode_switch_plan"
 require_relative "compatibility_package_source"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -80,6 +81,7 @@ module Xnix
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
+            "compatibility_mode_switch_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_backend_environment_plans" => true,
@@ -182,6 +184,7 @@ module Xnix
           "portal_request_plan" => portal_request_plan_summary(recipe),
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
+          "compatibility_mode_switch_plan" => compatibility_mode_switch_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -654,6 +657,11 @@ module Xnix
         ).to_h
       end
 
+      def compatibility_mode_switch_plan(application_id, requested_mode)
+        recipe = require_recipe(application_id)
+        CompatibilityModeSwitchPlan.new(recipe: recipe, requested_mode: requested_mode).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -790,6 +798,11 @@ module Xnix
             required_parameter(method_name, parameters, 1),
             required_parameter(method_name, parameters, 2),
             required_parameter(method_name, parameters, 3)
+          )
+        when "GetCompatibilityModeSwitchPlan"
+          compatibility_mode_switch_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
           )
         when *RuntimeWriteGate::WRITE_METHODS
           raise ArgumentError, RuntimeWriteGate.new(method_name: method_name).failure_message
@@ -1469,6 +1482,26 @@ module Xnix
         }
       end
 
+      def compatibility_mode_switch_plan_summary(recipe)
+        plan = compatibility_mode_switch_plan(recipe.id, "prefer-compatibility")
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "current_mode" => plan.fetch("current_mode"),
+          "requested_mode" => plan.fetch("requested_mode"),
+          "mode_state" => plan.fetch("mode_state"),
+          "mode_count" => plan.fetch("mode_count"),
+          "requires_user_confirmation" => plan.fetch("requires_user_confirmation"),
+          "portal_review_required" => plan.fetch("portal_review_required"),
+          "snapshot_required" => plan.fetch("snapshot_required"),
+          "settings_persistence_enabled" => plan.fetch("settings_persistence_enabled"),
+          "backend_reconfiguration_enabled" => plan.fetch("backend_reconfiguration_enabled"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -1612,6 +1645,12 @@ module Xnix
             raise ArgumentError, "settings-change requires section, field, and value" unless section_id && field_id && value
 
             write_json(runtime.settings_change_plan(application_id, section_id, field_id, value))
+          when "mode-switch-plan"
+            application_id = require_argument(command)
+            requested_mode = @argv.shift
+            raise ArgumentError, "mode-switch-plan requires requested mode" unless requested_mode
+
+            write_json(runtime.compatibility_mode_switch_plan(application_id, requested_mode))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

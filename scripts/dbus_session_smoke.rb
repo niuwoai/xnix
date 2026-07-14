@@ -151,6 +151,19 @@ begin
   assert(stdout.include?("portal_mediated"), "runtime smoke adapter must keep bridge access Portal-mediated")
 
   stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityModeSwitchPlan",
+    "org.xnix.sample.notepad",
+    "prefer-compatibility"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityModeSwitchPlan: #{stderr}")
+  assert(stdout.include?("compatibility-mode-switch-plan"), "runtime smoke adapter must expose compatibility mode switch plans over D-Bus")
+  assert(stdout.include?("settings_persistence_enabled"), "runtime smoke adapter must keep mode switch persistence gated")
+
+  stdout, stderr, status = Open3.capture3(
     "ruby",
     "bin/xnix-kde-integration-status",
     "--source",

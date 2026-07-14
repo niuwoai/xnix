@@ -217,6 +217,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilitySettingsChangePlan", application_id, section_id, field_id, value))
       end
 
+      def compatibility_mode_switch_plan(application_id, requested_mode)
+        parse_dictionary(call("GetCompatibilityModeSwitchPlan", application_id, requested_mode))
+      end
+
       private
 
       def call(method_name, *arguments)

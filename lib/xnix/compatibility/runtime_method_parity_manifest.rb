@@ -59,6 +59,7 @@ module Xnix
         GetRuntimeWriteGate
         GetCompatibilitySettings
         GetCompatibilitySettingsChangePlan
+        GetCompatibilityModeSwitchPlan
         GetCompatibilityActionQueue
         GetCompatibilityActionReviewReceipt
         GetCompatibilityCenterSummary
@@ -114,6 +115,7 @@ module Xnix
         "GetRuntimeWriteGate" => "runtime_write_gate",
         "GetCompatibilitySettings" => "settings",
         "GetCompatibilitySettingsChangePlan" => "settings_change_plan",
+        "GetCompatibilityModeSwitchPlan" => "compatibility_mode_switch_plan",
         "GetCompatibilityActionQueue" => "action_queue",
         "GetCompatibilityActionReviewReceipt" => "action_review_receipt",
         "GetCompatibilityCenterSummary" => "compatibility_center_summary"

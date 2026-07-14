@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.104", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.105", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -50,6 +50,7 @@ assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center
 assert(model["summary"]["blocked_runtime_write_gate_count"] == 1, "KDE center model must summarize blocked Runtime write gates")
 assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
 assert(model["summary"]["pending_settings_change_plan_count"] == 1, "KDE center model must summarize pending settings change plans")
+assert(model["summary"]["pending_mode_switch_plan_count"] == 1, "KDE center model must summarize pending compatibility mode switch plans")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -154,7 +155,7 @@ assert(application["runtime_owner_smoke_plan"]["pending_step_count"] == 6, "KDE 
 assert(!application["runtime_owner_smoke_plan"]["system_service_started"], "KDE center model must not claim started system services")
 assert(!application["runtime_owner_smoke_plan"]["production_bus_claimed"], "KDE center model must not claim production bus ownership")
 assert(application["runtime_method_parity_manifest"]["manifest_type"] == "runtime-method-parity-manifest", "KDE center model must expose Runtime method parity manifests")
-assert(application["runtime_method_parity_manifest"]["method_count"] == 45, "KDE center model must expose Runtime method counts")
+assert(application["runtime_method_parity_manifest"]["method_count"] == 46, "KDE center model must expose Runtime method counts")
 assert(application["runtime_method_parity_manifest"]["read_only_method_parity_ready"], "KDE center model must expose Runtime method parity readiness")
 assert(application["runtime_method_parity_manifest"]["passed_check_count"] == 5, "KDE center model must expose Runtime method parity pass counts")
 assert(application["runtime_method_parity_manifest"]["blocked_check_count"].zero?, "KDE center model must expose Runtime method parity blocked counts")
@@ -181,6 +182,16 @@ assert(application["settings_change_plan"]["change_state"] == "planned", "KDE ce
 assert(!application["settings_change_plan"]["apply_enabled"], "KDE center model must not enable planned settings changes")
 assert(!application["settings_change_plan"]["settings_persisted"], "KDE center model must not claim settings change persistence")
 assert(!application["settings_change_plan"]["backend_details_exposed"], "KDE center model must hide settings change backend details")
+assert(application["compatibility_mode_switch_plan"]["plan_type"] == "compatibility-mode-switch-plan", "KDE center model must expose compatibility mode switch plans")
+assert(application["compatibility_mode_switch_plan"]["runtime_method"] == "GetCompatibilityModeSwitchPlan", "KDE center model must expose compatibility mode switch Runtime methods")
+assert(application["compatibility_mode_switch_plan"]["mode_state"] == "planned", "KDE center model must keep mode switches planned")
+assert(application["compatibility_mode_switch_plan"]["mode_count"] == 4, "KDE center model must expose compatibility mode counts")
+assert(application["compatibility_mode_switch_plan"]["requires_user_confirmation"], "KDE center model must expose mode switch confirmation gates")
+assert(application["compatibility_mode_switch_plan"]["snapshot_required"], "KDE center model must expose mode switch snapshot gates")
+assert(!application["compatibility_mode_switch_plan"]["settings_persistence_enabled"], "KDE center model must not enable mode switch persistence")
+assert(!application["compatibility_mode_switch_plan"]["backend_reconfiguration_enabled"], "KDE center model must not reconfigure backends from mode switches")
+assert(!application["compatibility_mode_switch_plan"]["backend_process_started"], "KDE center model must not start backend processes from mode switches")
+assert(!application["compatibility_mode_switch_plan"]["backend_details_exposed"], "KDE center model must hide mode switch backend details")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

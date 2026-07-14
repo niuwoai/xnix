@@ -300,6 +300,17 @@ assert(desktop_resource_bridge_plan["plan_type"] == "desktop-resource-bridge-pla
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityModeSwitchPlan",
+  JSON.generate(["org.xnix.sample.notepad", "prefer-compatibility"])
+)
+assert(status.success?, "dispatch GetCompatibilityModeSwitchPlan must exit successfully: #{stderr}")
+mode_switch_plan = JSON.parse(stdout)
+assert(mode_switch_plan["plan_type"] == "compatibility-mode-switch-plan", "dispatch must route GetCompatibilityModeSwitchPlan")
+assert(!mode_switch_plan["settings_persistence_enabled"], "dispatch must keep compatibility mode switches planned")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

@@ -11,8 +11,9 @@ module Xnix
     class KdeCenterModel
       MODE_LABELS = {
         "automatic" => "Automatic",
-        "wine" => "Compatibility engine",
-        "vm" => "Isolated environment"
+        "prefer-performance" => "Prefer performance",
+        "prefer-compatibility" => "Prefer compatibility",
+        "isolated-execution" => "Isolated execution"
       }.freeze
 
       STATUS_LABELS = {
@@ -93,6 +94,7 @@ module Xnix
           "runtime_write_gate" => runtime_write_gate_summary(diagnostics.fetch("runtime_write_gate", nil)),
           "settings" => settings_summary(diagnostics.fetch("settings", nil)),
           "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
+          "compatibility_mode_switch_plan" => compatibility_mode_switch_plan_summary(diagnostics.fetch("compatibility_mode_switch_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -227,6 +229,27 @@ module Xnix
           "clipboard_bridge_planned" => plan.fetch("clipboard_bridge_planned"),
           "bridges_enabled" => plan.fetch("bridges_enabled"),
           "requests_created" => plan.fetch("requests_created"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("summary")
+        }
+      end
+
+      def compatibility_mode_switch_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "current_mode" => plan.fetch("current_mode"),
+          "requested_mode" => plan.fetch("requested_mode"),
+          "mode_state" => plan.fetch("mode_state"),
+          "mode_count" => plan.fetch("mode_count"),
+          "requires_user_confirmation" => plan.fetch("requires_user_confirmation"),
+          "portal_review_required" => plan.fetch("portal_review_required"),
+          "snapshot_required" => plan.fetch("snapshot_required"),
+          "settings_persistence_enabled" => plan.fetch("settings_persistence_enabled"),
+          "backend_reconfiguration_enabled" => plan.fetch("backend_reconfiguration_enabled"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("summary")
         }
@@ -535,7 +558,8 @@ module Xnix
           "runtime_service_binding_ready_count" => applications.count { |application| section(application, "runtime_service_binding").fetch("activation_binding_ready", false) },
           "blocked_runtime_write_gate_count" => applications.count { |application| section(application, "runtime_write_gate").fetch("gate_decision", nil) == "blocked-until-production-backend" },
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },
-          "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) }
+          "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) },
+          "pending_mode_switch_plan_count" => applications.count { |application| section(application, "compatibility_mode_switch_plan").fetch("mode_state", nil) == "planned" }
         }
       end
 

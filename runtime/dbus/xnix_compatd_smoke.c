@@ -63,6 +63,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityModeSwitchPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='requested_mode' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -1148,6 +1153,61 @@ build_settings_change_plan(const gchar *application_id,
   return g_variant_builder_end(&plan);
 }
 
+static gboolean
+supported_compatibility_mode(const gchar *requested_mode)
+{
+  return g_strcmp0(requested_mode, "automatic") == 0 ||
+         g_strcmp0(requested_mode, "prefer-performance") == 0 ||
+         g_strcmp0(requested_mode, "prefer-compatibility") == 0 ||
+         g_strcmp0(requested_mode, "isolated-execution") == 0;
+}
+
+static GVariant *
+build_compatibility_mode_switch_plan(const gchar *application_id,
+                                     const gchar *requested_mode)
+{
+  const gchar *mode_ids[] = {
+    "automatic",
+    "prefer-performance",
+    "prefer-compatibility",
+    "isolated-execution",
+  };
+  const gchar *required_runtime_gates[] = {
+    "settings-review",
+    "portal-policy-review",
+    "snapshot-baseline",
+    "backend-environment-plan",
+    "runtime-write-gate",
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-mode-switch-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityModeSwitchPlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "current_mode", g_variant_new_string("automatic"));
+  g_variant_builder_add(&plan, "{sv}", "requested_mode", g_variant_new_string(requested_mode));
+  g_variant_builder_add(&plan, "{sv}", "mode_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "mode_count", g_variant_new_int32(4));
+  g_variant_builder_add(&plan, "{sv}", "mode_ids", g_variant_new_strv(mode_ids, 4));
+  g_variant_builder_add(&plan, "{sv}", "required_runtime_gates", g_variant_new_strv(required_runtime_gates, 5));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "valid_mode", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "requires_user_confirmation", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "portal_review_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_reconfiguration_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_process_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
 static GVariant *
 build_action_queue(const gchar *application_id)
 {
@@ -1282,7 +1342,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(45));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(46));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1490,6 +1550,33 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_resource_bridge_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityModeSwitchPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *requested_mode = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &requested_mode);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+    if (!supported_compatibility_mode(requested_mode)) {
+      g_dbus_method_invocation_return_error(
+        invocation,
+        G_IO_ERROR,
+        G_IO_ERROR_INVALID_ARGUMENT,
+        "Unsupported compatibility mode: %s",
+        requested_mode == NULL ? "" : requested_mode
+      );
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_compatibility_mode_switch_plan(application_id, requested_mode))
     );
     return;
   }

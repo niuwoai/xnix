@@ -53,6 +53,7 @@ assert(contents.include?("GetRuntimeMethodParityManifest"), "D-Bus smoke script 
 assert(contents.include?("GetRuntimeWriteGate"), "D-Bus smoke script must call GetRuntimeWriteGate")
 assert(contents.include?("GetCompatibilitySettings"), "D-Bus smoke script must call GetCompatibilitySettings")
 assert(contents.include?("GetCompatibilitySettingsChangePlan"), "D-Bus smoke script must call GetCompatibilitySettingsChangePlan")
+assert(contents.include?("GetCompatibilityModeSwitchPlan"), "D-Bus smoke script must call GetCompatibilityModeSwitchPlan")
 assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script must call GetCompatibilityActionQueue")
 assert(contents.include?("GetCompatibilityActionReviewReceipt"), "D-Bus smoke script must call GetCompatibilityActionReviewReceipt")
 assert(contents.include?("GetKRunnerQueryPlan"), "D-Bus smoke script must call GetKRunnerQueryPlan")

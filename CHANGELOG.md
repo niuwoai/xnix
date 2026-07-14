@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.105] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility mode switch plan records and a CLI read method for `automatic`, `prefer-performance`, `prefer-compatibility`, and `isolated-execution` user-facing modes.
+- Added `GetCompatibilityModeSwitchPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and unit coverage that reject unsupported modes and assert mode-switch JSON does not expose backend implementation terminology.
+
+### Changed
+
+- Extended Runtime diagnostics with compatibility mode switch summaries that keep settings persistence, backend reconfiguration, backend process starts, launch enablement, host-root mutation, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.104] - 2026-07-14
 
 ### Added

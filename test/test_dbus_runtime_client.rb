@@ -85,6 +85,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityModeSwitchPlan"
+      [
+        "({'plan_type': <'compatibility-mode-switch-plan'>, 'runtime_method': <'GetCompatibilityModeSwitchPlan'>, 'application_id': <'org.xnix.sample.notepad'>, 'current_mode': <'automatic'>, 'requested_mode': <'prefer-compatibility'>, 'mode_state': <'planned'>, 'mode_count': <4>, 'mode_ids': <['automatic', 'prefer-performance', 'prefer-compatibility', 'isolated-execution']>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'valid_mode': <true>, 'requires_user_confirmation': <true>, 'portal_review_required': <true>, 'snapshot_required': <true>, 'settings_persistence_enabled': <false>, 'backend_reconfiguration_enabled': <false>, 'backend_process_started': <false>, 'launch_enabled': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetFileAssociationPlan"
       [
         "({'plan_type': <'file-association-plan'>, 'association_type': <'desktop-file-association'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'mimeapps_path': <'usr/share/applications/mimeapps.list'>, 'file_open_command': <'xnix-compat-open'>, 'file_open_argument': <'%U'>, 'mime_type_count': <2>, 'standard_mimeapps_list': <true>, 'staged_root_only': <true>, 'overwrite_existing_mimeapps': <false>, 'portal_required_for_file_open': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -249,7 +255,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <45>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <46>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -527,6 +533,17 @@ assert(!desktop_resource_bridge_plan["bridges_enabled"], "D-Bus client must pars
 assert(!desktop_resource_bridge_plan["direct_host_file_access"], "D-Bus client must parse host file access gates")
 assert(!desktop_resource_bridge_plan["backend_details_exposed"], "D-Bus client must parse desktop bridge backend detail gates")
 
+mode_switch_plan = client.compatibility_mode_switch_plan("org.xnix.sample.notepad", "prefer-compatibility")
+assert(mode_switch_plan["plan_type"] == "compatibility-mode-switch-plan", "D-Bus client must parse compatibility mode switch plans")
+assert(mode_switch_plan["runtime_method"] == "GetCompatibilityModeSwitchPlan", "D-Bus client must parse compatibility mode switch Runtime methods")
+assert(mode_switch_plan["requested_mode"] == "prefer-compatibility", "D-Bus client must parse compatibility mode switch requested modes")
+assert(mode_switch_plan["mode_count"] == 4, "D-Bus client must parse compatibility mode counts")
+assert(mode_switch_plan["requires_user_confirmation"], "D-Bus client must parse compatibility mode confirmation gates")
+assert(!mode_switch_plan["settings_persistence_enabled"], "D-Bus client must parse compatibility mode persistence gates")
+assert(!mode_switch_plan["backend_reconfiguration_enabled"], "D-Bus client must parse compatibility mode reconfiguration gates")
+assert(!mode_switch_plan["backend_process_started"], "D-Bus client must parse compatibility mode backend process gates")
+assert(!mode_switch_plan["backend_details_exposed"], "D-Bus client must parse compatibility mode backend detail gates")
+
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
 assert(repair_plan["runtime_method"] == "GetRepairPlan", "D-Bus client must parse repair plan Runtime methods")
@@ -685,7 +702,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 45, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 46, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
