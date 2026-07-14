@@ -3,6 +3,7 @@
 require "fileutils"
 require "digest"
 require "json"
+require "open3"
 require "optparse"
 require "pathname"
 require_relative "desktop_entry"
@@ -22,10 +23,11 @@ module Xnix
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
       RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
 
-      def initialize(root:, recipe:, install_gate: nil)
+      def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil)
         @root = Pathname.new(root)
         @recipe = recipe
         @install_gate = install_gate
+        @desktop_entry_renderer = desktop_entry_renderer || RubyDesktopEntryRenderer.new
       end
 
       def install
@@ -54,6 +56,7 @@ module Xnix
             "staging_root_required" => true,
             "host_root_modified" => false,
             "backend_commands_exposed" => false,
+            "desktop_entry_source" => desktop_entry_renderer.source,
             "recipe_install_gate_enforced" => !install_gate.nil?,
             "rollback_receipt_written" => true
           }
@@ -62,7 +65,7 @@ module Xnix
 
       private
 
-      attr_reader :root, :recipe, :install_gate
+      attr_reader :root, :recipe, :install_gate, :desktop_entry_renderer
 
       def validate_root!
         raise ArgumentError, "root must not be /" if root.cleanpath.to_s == "/"
@@ -86,7 +89,7 @@ module Xnix
         desktop_entry = DesktopEntry.new(recipe)
         install_file(
           relative_path: File.join(APPLICATIONS_DIR, desktop_entry.file_name),
-          contents: desktop_entry.render,
+          contents: desktop_entry_renderer.render(recipe),
           mode: 0o644,
           kind: "desktop-entry",
           entry_point: "launcher"
@@ -183,6 +186,60 @@ module Xnix
                               end
       end
 
+      class RubyDesktopEntryRenderer
+        def source
+          "ruby"
+        end
+
+        def render(recipe)
+          DesktopEntry.new(recipe).render
+        end
+      end
+
+      class RuntimeGoDesktopEntryRenderer
+        def initialize(command:, registry_path:, application_id:)
+          @command = command
+          @registry_path = registry_path
+          @application_id = application_id
+        end
+
+        def source
+          "runtime-go"
+        end
+
+        def render(recipe)
+          raise ArgumentError, "runtime-go renderer application mismatch" unless recipe.id == @application_id
+
+          output, status = Open3.capture2(
+            @command,
+            "desktop-entry-preview",
+            "--registry",
+            @registry_path,
+            "--app",
+            @application_id
+          )
+          raise ArgumentError, "runtime-go desktop entry renderer failed" unless status.success?
+
+          validate_output!(output, recipe)
+          output
+        rescue SystemCallError => e
+          raise ArgumentError, "runtime-go desktop entry renderer unavailable: #{e.message}"
+        end
+
+        private
+
+        def validate_output!(output, recipe)
+          required = [
+            "[Desktop Entry]\n",
+            "Exec=xnix-compat-launch --app #{recipe.id} %U\n",
+            "X-Xnix-ApplicationId=#{recipe.id}\n"
+          ]
+          missing = required.reject { |fragment| output.include?(fragment) }
+          raise ArgumentError, "runtime-go desktop entry renderer returned an incomplete desktop entry" unless missing.empty?
+          raise ArgumentError, "runtime-go desktop entry renderer exposed backend details" if output.match?(/wine|prefix|\.exe|proton|qemu-system|program files/i)
+        end
+      end
+
       class CLI
         def initialize(argv)
           @argv = argv.dup
@@ -190,6 +247,8 @@ module Xnix
           @recipe_dir = RuntimeDaemon::DEFAULT_RECIPE_DIR
           @root = nil
           @mode = "production"
+          @desktop_entry_source = "ruby"
+          @runtime_go_bin = "xnix-runtime-go"
         end
 
         def run
@@ -202,7 +261,12 @@ module Xnix
           raise ArgumentError, "unknown application: #{@application_id}" unless recipe
 
           install_gate = build_install_gate(recipe_store)
-          result = DesktopActivationInstaller.new(root: @root, recipe: recipe, install_gate: install_gate).install
+          result = DesktopActivationInstaller.new(
+            root: @root,
+            recipe: recipe,
+            install_gate: install_gate,
+            desktop_entry_renderer: build_desktop_entry_renderer
+          ).install
           puts JSON.pretty_generate(result)
           0
         rescue OptionParser::ParseError, ArgumentError => e
@@ -227,7 +291,24 @@ module Xnix
             options.on("--mode MODE", RecipeInstallGate::MODES, "Evaluate production or development install policy") do |value|
               @mode = value
             end
+            options.on("--desktop-entry-source SOURCE", %w[ruby runtime-go], "Render desktop entries with ruby or runtime-go") do |value|
+              @desktop_entry_source = value
+            end
+            options.on("--runtime-go-bin PATH", "Path to xnix-runtime-go when --desktop-entry-source runtime-go is used") do |value|
+              @runtime_go_bin = value
+            end
           end
+        end
+
+        def build_desktop_entry_renderer
+          return RubyDesktopEntryRenderer.new if @desktop_entry_source == "ruby"
+
+          registry_path = File.join(@recipe_dir, "registry.json")
+          RuntimeGoDesktopEntryRenderer.new(
+            command: @runtime_go_bin,
+            registry_path: registry_path,
+            application_id: @application_id
+          )
         end
 
         def build_install_gate(recipe_store)

@@ -40,7 +40,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   service_menu = root_path.join("usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop")
   manifest_path = root_path.join("usr/share/xnix/compatibility/manifests/org.xnix.sample.notepad.json")
 
-  assert(result["version"] == "0.2.113", "desktop activation installer must expose the current version")
+  assert(result["version"] == "0.2.114", "desktop activation installer must expose the current version")
   assert(result["application_id"] == "org.xnix.sample.notepad", "desktop activation installer must identify the application")
   assert(result["root"] == root, "desktop activation installer must report the staging root")
   assert(result["preflight"]["decision"] == "allow", "desktop activation installer must report allowed preflight")
@@ -52,6 +52,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["safety"]["staging_root_required"], "desktop activation installer must require a staging root")
   assert(!result["safety"]["host_root_modified"], "desktop activation installer must not modify the host root")
   assert(!result["safety"]["backend_commands_exposed"], "desktop activation installer must not expose backend commands")
+  assert(result["safety"]["desktop_entry_source"] == "ruby", "desktop activation installer must report the default desktop entry source")
   assert(result["safety"]["recipe_install_gate_enforced"], "desktop activation installer must enforce the recipe install gate when supplied")
   assert(result["safety"]["rollback_receipt_written"], "desktop activation installer must report rollback receipt writing")
 
@@ -76,6 +77,25 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
 end
 
 Dir.mktmpdir("xnix-desktop-root") do |root|
+  result = Xnix::Compatibility::DesktopActivationInstaller.new(
+    root: root,
+    recipe: recipe,
+    install_gate: development_gate,
+    desktop_entry_renderer: Xnix::Compatibility::DesktopActivationInstaller::RuntimeGoDesktopEntryRenderer.new(
+      command: project_root.join("test/fixtures/xnix-runtime-go-fake").to_s,
+      registry_path: project_root.join("runtime/recipes/registry.json").to_s,
+      application_id: recipe.id
+    )
+  ).install
+  desktop_entry = Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
+
+  assert(result["safety"]["desktop_entry_source"] == "runtime-go", "desktop activation installer must report Runtime Go desktop entry source")
+  assert(desktop_entry.read.include?("X-Xnix-Renderer=fake-runtime-go"), "Runtime Go renderer output must be staged as the desktop entry")
+  assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad %U"), "Runtime Go renderer output must keep the managed launcher")
+  assert(!desktop_entry.read.match?(/wine|prefix|\.exe|proton|qemu-system|program files/i), "Runtime Go renderer output must not expose backend details")
+end
+
+Dir.mktmpdir("xnix-desktop-root") do |root|
   stdout, stderr, status = Open3.capture3(
     "ruby",
     project_root.join("bin/xnix-install-desktop-integration").to_s,
@@ -92,6 +112,28 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["preflight"]["decision"] == "allow", "desktop activation installer CLI must enforce an allowed preflight")
   assert(Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop").file?, "desktop activation installer CLI must install the desktop entry")
   assert(Pathname.new(root).join("usr/share/applications/mimeapps.list").file?, "desktop activation installer CLI must install file associations")
+end
+
+Dir.mktmpdir("xnix-desktop-root") do |root|
+  stdout, stderr, status = Open3.capture3(
+    "ruby",
+    project_root.join("bin/xnix-install-desktop-integration").to_s,
+    "--root",
+    root,
+    "--app",
+    "org.xnix.sample.notepad",
+    "--mode",
+    "development",
+    "--desktop-entry-source",
+    "runtime-go",
+    "--runtime-go-bin",
+    project_root.join("test/fixtures/xnix-runtime-go-fake").to_s
+  )
+  assert(status.success?, "desktop activation installer CLI must use the Runtime Go renderer: #{stderr}")
+  result = JSON.parse(stdout)
+  desktop_entry = Pathname.new(root).join("usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
+  assert(result["safety"]["desktop_entry_source"] == "runtime-go", "desktop activation installer CLI must report Runtime Go rendering")
+  assert(desktop_entry.read.include?("X-Xnix-Renderer=fake-runtime-go"), "desktop activation installer CLI must stage Runtime Go renderer output")
 end
 
 Dir.mktmpdir("xnix-desktop-root") do |root|

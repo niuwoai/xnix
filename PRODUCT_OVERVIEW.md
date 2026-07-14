@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-15 | Current version: v0.2.113
+> Last updated: 2026-07-15 | Current version: v0.2.114
 
 ## Summary
 
@@ -84,6 +84,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Application recipes generate normal `.desktop` launchers that call `xnix-compat-launch --app <id>`. Desktop entry plans delegate to `xnix-runtime-core desktop-entry-plan` and `GetDesktopEntryPlan`, which define the KDE launcher identity, MIME exposure, startup behavior, and safety flags without writing files, displaying a prefix path, exposing a backend command, or exposing a raw Windows executable command. The launcher entry point validates the Runtime application id, preserves optional file URIs, and models a `Launch` request without displaying backend implementation details.
 - Go desktop identity planning delegates to `xnix-runtime-go desktop-identity-plan --registry <path> --app <id>`, which resolves a recipe from the Runtime registry, verifies its SHA-256 digest, records registry provenance and signature status, and converts it into a standard KDE-safe application identity with a stable desktop file name, managed launcher command, MIME types, KDE entry-point hints, user-facing settings labels, and disabled write, launch, backend-detail, host-root, storage, and raw-executable gates.
 - Go desktop entry previews delegate to `xnix-runtime-go desktop-entry-preview --registry <path> --app <id>`, which renders standard `[Desktop Entry]` text from the registry-backed identity plan for KDE launcher, task-manager, and MIME association consumers without writing activation files or exposing backend commands.
+- Desktop activation staging can now use the Runtime Go desktop-entry renderer through `xnix-install-desktop-integration --desktop-entry-source runtime-go`, validating the rendered launcher text before writing it under the staging root.
 - Task manager identity plans delegate to `xnix-runtime-core task-manager-identity-plan` and `GetTaskManagerIdentityPlan`, which map compatibility windows to normal desktop entries for taskbar grouping, pinning, switcher visibility, and restore without exposing backend implementation details or giving KDE backend policy ownership.
 - KWin window rule plans delegate to `xnix-runtime-core kwin-window-rule-plan` and `GetKWinWindowRulePlan`. The C Runtime record gives KWin identity and layout hints for matching compatibility windows, attaching generated desktop files, keeping taskbar and switcher visibility, and restoring existing windows while backend policy remains Runtime-owned.
 - File association generation delegates to `xnix-file-association-model`, which maps recipe MIME types to generated desktop files and standard `mimeapps.list` defaults inside a staging root without overwriting existing associations.
@@ -119,7 +120,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 | Settings | KDE settings model presents user concepts such as automatic mode, performance, compatibility, allowed resources, devices, network, and snapshots |
 | KRunner query | KDE natural-language entry maps queries to Runtime application identities and managed launcher actions through a C-owned Runtime query plan |
 | Activation manifest | Runtime manifest groups all seven KDE artifacts for a recipe activation without exposing backend commands |
-| Activation staging | Runtime installer writes desktop entry, MIME association, Dolphin service menu, and manifest files under a staging root after recipe install-gate preflight |
+| Activation staging | Runtime installer writes desktop entry, MIME association, Dolphin service menu, and manifest files under a staging root after recipe install-gate preflight, with a Runtime Go renderer option for the desktop entry |
 | Activation rollback | Runtime rollback removes only receipt-tracked, checksum-matching staged files |
 | Recipe registry | Registry verifier checks recipe metadata, paths, digests, and development signature status |
 | Registry-backed loading | Runtime loads registered recipes after digest verification and keeps no-registry fallback only for development fixtures |

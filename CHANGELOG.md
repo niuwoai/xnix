@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.114] - 2026-07-15
+
+### Added
+
+- Added an activation-staging desktop entry renderer switch so `xnix-install-desktop-integration` can stage desktop entries rendered by `xnix-runtime-go desktop-entry-preview`.
+- Added Runtime Go renderer validation in the activation installer, including managed launcher, application id, and backend-detail safety checks before staging the desktop entry.
+- Added CLI and unit coverage for the `--desktop-entry-source runtime-go` path while keeping the default Ruby renderer available for constrained local development.
+
+### Changed
+
+- Extended activation safety reporting with the desktop entry source so KDE activation receipts can distinguish Ruby staging output from Runtime Go-rendered desktop entries.
+
 ## [0.2.113] - 2026-07-15
 
 ### Added

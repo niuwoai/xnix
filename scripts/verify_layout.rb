@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.113"
+EXPECTED_VERSION = "0.2.114"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -226,6 +226,7 @@ REQUIRED_FILES = %w[
   runtime/recipes/registry.json
   runtime/recipes/org.xnix.sample.notepad.json
   runtime/systemd/xnix-compatd.service
+  test/fixtures/xnix-runtime-go-fake
   kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
   kde/plasmoids/org.xnix.compatibilitycenter/contents/ui/main.qml
   kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop

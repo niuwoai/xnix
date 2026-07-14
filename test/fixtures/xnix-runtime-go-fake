@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+abort "usage" unless ARGV == [
+  "desktop-entry-preview",
+  "--registry",
+  File.expand_path("../../runtime/recipes/registry.json", __dir__),
+  "--app",
+  "org.xnix.sample.notepad"
+]
+
+puts [
+  "[Desktop Entry]",
+  "Type=Application",
+  "Version=1.0",
+  "Name=Sample Notepad",
+  "Comment=Run with Xnix Compatibility Runtime",
+  "Exec=xnix-compat-launch --app org.xnix.sample.notepad %U",
+  "Icon=accessories-text-editor",
+  "Categories=Utility;",
+  "StartupNotify=true",
+  "StartupWMClass=xnix-org.xnix.sample.notepad",
+  "X-Xnix-ApplicationId=org.xnix.sample.notepad",
+  "X-Xnix-RuntimeOwned=true",
+  "X-Xnix-Renderer=fake-runtime-go",
+  "MimeType=application/x-xnix-log;application/x-xnix-txt;"
+].join("\n")
