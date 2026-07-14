@@ -53,6 +53,7 @@ assert(source.include?("BackendTerminologyHidden"), "Go plan must explicitly hid
 assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop safety validation")
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("backend-selection-preview"), "Go Runtime CLI must render KDE backend selection previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-resource-bridge-preview"), "Go Runtime CLI must render KDE desktop resource bridge previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
@@ -167,6 +168,65 @@ if go_available
   assert(!center.downcase.include?("prefix"), "Compatibility Center preview must not expose implementation storage")
   assert(!center.include?(".exe"), "Compatibility Center preview must not expose a Windows executable")
   assert(!center.downcase.include?("proton"), "Compatibility Center preview must not expose backend implementation names")
+
+  backend_selection, backend_selection_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "backend-selection-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(backend_selection_status.success?, "Go backend selection preview CLI must run successfully")
+  backend_selection_payload = JSON.parse(backend_selection)
+  assert(backend_selection_payload.fetch("schema_version") == "xnix.runtime.backend_selection.v1", "backend selection preview schema version must be stable")
+  assert(backend_selection_payload.fetch("request_type") == "backend-selection-preview", "backend selection preview must identify its request type")
+  assert(backend_selection_payload.fetch("plan_type") == "compatibility-backend-selection-plan", "backend selection preview must identify the Runtime plan type")
+  assert(backend_selection_payload.fetch("source") == "compatibility-center", "backend selection preview must identify the Compatibility Center source")
+  assert(backend_selection_payload.fetch("desktop") == "KDE Plasma", "backend selection preview must target KDE Plasma")
+  assert(backend_selection_payload.fetch("runtime_method") == "GetBackendSelectionPlan", "backend selection preview must expose the Runtime method")
+  assert(backend_selection_payload.fetch("application_id") == recipe.id, "backend selection preview must preserve application identity")
+  assert(backend_selection_payload.fetch("display_name") == recipe.name, "backend selection preview must preserve display names")
+  assert(backend_selection_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "backend selection preview must bind generated desktop files")
+  assert(backend_selection_payload.fetch("recommended_profile_id") == "local-compatibility", "backend selection preview must recommend local compatibility for automatic recipes")
+  assert(backend_selection_payload.fetch("candidate_count") == 2, "backend selection preview must expose two compatibility profiles")
+  assert(backend_selection_payload.fetch("ready_candidate_count") == 0, "backend selection preview must keep profiles blocked before review")
+  assert(backend_selection_payload.fetch("blocked_candidate_count") == 2, "backend selection preview must count blocked profiles")
+  backend_profiles = backend_selection_payload.fetch("candidate_profiles")
+  assert(backend_profiles.map { |profile| profile.fetch("id") } == %w[local-compatibility isolated-compatibility], "backend selection preview must preserve profile order")
+  assert(backend_profiles.first.fetch("recommended") == true, "backend selection preview must mark the recommended profile")
+  assert(backend_profiles.first.fetch("selection_state") == "recommended", "backend selection preview must expose the recommended profile state")
+  assert(backend_profiles.all? { |profile| !profile.fetch("ready") }, "backend selection preview must not mark profiles ready before review")
+  assert(backend_profiles.all? { |profile| profile.fetch("blocked") }, "backend selection preview must keep profiles blocked before review")
+  assert(backend_profiles.all? { |profile| !profile.fetch("selection_committed") }, "backend selection preview must not commit profile selection")
+  assert(backend_profiles.all? { |profile| !profile.fetch("environment_created") }, "backend selection preview must not create profile environments")
+  assert(backend_profiles.all? { |profile| !profile.fetch("backend_process_started") }, "backend selection preview must not start backend processes")
+  assert(backend_profiles.all? { |profile| !profile.fetch("backend_details_exposed") }, "backend selection preview must not expose backend details")
+  assert(backend_selection_payload.fetch("required_reviews") == %w[backend-capability-review backend-binding-review application-state-root-review portal-policy-review snapshot-baseline-review], "backend selection preview must expose required Runtime reviews")
+  assert(backend_selection_payload.fetch("runtime_owned") == true, "backend selection preview must remain Runtime-owned")
+  assert(backend_selection_payload.fetch("go_runtime_backed") == true, "backend selection preview must be Go Runtime-backed")
+  assert(backend_selection_payload.fetch("kde_policy_owner") == false, "backend selection preview must not make KDE own backend policy")
+  assert(backend_selection_payload.fetch("user_visible") == true, "backend selection preview must remain user visible")
+  assert(backend_selection_payload.fetch("selection_committed") == false, "backend selection preview must not commit selection")
+  assert(backend_selection_payload.fetch("selection_change_enabled") == false, "backend selection preview must not enable selection changes")
+  assert(backend_selection_payload.fetch("backend_launch_enabled") == false, "backend selection preview must not launch backends")
+  assert(backend_selection_payload.fetch("capability_activation_enabled") == false, "backend selection preview must not activate capabilities")
+  assert(backend_selection_payload.fetch("environment_created") == false, "backend selection preview must not create environments")
+  assert(backend_selection_payload.fetch("request_object_created") == false, "backend selection preview must not create request objects")
+  assert(backend_selection_payload.fetch("state_root_created") == false, "backend selection preview must not create state roots")
+  assert(backend_selection_payload.fetch("snapshot_created") == false, "backend selection preview must not create snapshots")
+  assert(backend_selection_payload.fetch("host_root_modified") == false, "backend selection preview must not mutate the host root")
+  assert(backend_selection_payload.fetch("privileged_container_required") == false, "backend selection preview must not require privileged containers")
+  assert(backend_selection_payload.fetch("backend_details_exposed") == false, "backend selection preview must not expose backend details")
+  assert(!backend_selection.downcase.include?("prefix"), "backend selection preview must not expose implementation storage")
+  assert(!backend_selection.include?(".exe"), "backend selection preview must not expose a Windows executable")
+  assert(!backend_selection.downcase.include?("program files"), "backend selection preview must not expose Windows paths")
+  assert(!backend_selection.downcase.include?("qemu-system"), "backend selection preview must not expose VM implementation commands")
+  assert(!backend_selection.downcase.include?("proton"), "backend selection preview must not expose backend implementation names")
+  assert(!backend_selection.downcase.include?("wine "), "backend selection preview must not expose backend implementation names")
+  assert(!backend_selection.downcase.include?("virtual machine"), "backend selection preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

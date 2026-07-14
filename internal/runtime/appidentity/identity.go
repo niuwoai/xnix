@@ -27,6 +27,7 @@ type Recipe struct {
 }
 
 type Plan struct {
+	RecipeMode                  string            `json:"-"`
 	SchemaVersion               string            `json:"schema_version"`
 	ApplicationID               string            `json:"application_id"`
 	DisplayName                 string            `json:"display_name"`
@@ -795,6 +796,7 @@ func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 	identityDigest := digestIdentity(recipe, mimeTypes)
 
 	return Plan{
+		RecipeMode:               recipe.Mode,
 		SchemaVersion:            "xnix.runtime.desktop_identity.v1",
 		ApplicationID:            recipe.ID,
 		DisplayName:              recipe.Name,

@@ -20,10 +20,12 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|file-open-preview|krunner-query-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|file-open-preview|krunner-query-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
+	case "backend-selection-preview":
+		return runBackendSelectionPreview(args[1:], stdout)
 	case "compatibility-center-preview":
 		return runCompatibilityCenterPreview(args[1:], stdout)
 	case "desktop-entry-preview":
@@ -67,6 +69,25 @@ func runCompatibilityCenterPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := appidentity.NewCompatibilityCenterPreview(recipes, provenance)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runBackendSelectionPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("backend-selection-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.BackendSelectionPreview()
 	if err != nil {
 		return err
 	}

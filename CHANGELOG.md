@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.129] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go backend-selection-preview --registry <path> --app <id>` for read-only KDE Compatibility Center backend-selection previews from digest-verified registry recipes.
+- Added Go Runtime backend-selection planning for local and isolated compatibility profiles with recommendation, required review, preflight, and blocked-action metadata.
+- Added Go and Ruby harness coverage that verifies backend-selection previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about profile selection, launch, environment creation, request objects, state roots, snapshots, privileged containers, and capability activation remaining disabled.
+
+### Changed
+
+- Moved the user-visible compatibility profile selection surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for presentation and confirmation only.
+
 ## [0.2.128] - 2026-07-15
 
 ### Added
