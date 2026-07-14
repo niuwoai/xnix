@@ -47,6 +47,8 @@ print_probe(void)
   fputs("\"backend_capability_matrix_owner\":\"c\",", stdout);
   fputs("\"backend_capability_profile_count\":2,", stdout);
   fputs("\"backend_capability_count\":7,", stdout);
+  fputs("\"backend_selection_plan_owner\":\"c\",", stdout);
+  fputs("\"backend_selection_candidate_count\":2,", stdout);
   fputs("\"backend_lifecycle_owner\":\"c\",", stdout);
   fputs("\"backend_lifecycle_application_count\":1,", stdout);
   fputs("\"backend_environment_plan_owner\":\"c\",", stdout);

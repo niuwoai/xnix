@@ -133,6 +133,10 @@ static const gchar introspection_xml[] =
   "    <method name='GetBackendCapabilityMatrix'>"
   "      <arg name='matrix' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetBackendSelectionPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendLifecycle'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='lifecycle' type='a{sv}' direction='out'/>"
@@ -876,6 +880,51 @@ build_backend_capability_matrix(void)
 }
 
 static GVariant *
+build_backend_selection_plan(const gchar *application_id)
+{
+  const gchar *candidate_ids[] = {
+    "local-compatibility",
+    "isolated-compatibility",
+  };
+  const gchar *required_reviews[] = {
+    "backend-capability-review",
+    "backend-binding-review",
+    "application-state-root-review",
+    "portal-policy-review",
+    "snapshot-baseline-review",
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-backend-selection-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetBackendSelectionPlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&plan, "{sv}", "recommended_profile_id", g_variant_new_string("local-compatibility"));
+  g_variant_builder_add(&plan, "{sv}", "candidate_profile_ids", g_variant_new_strv(candidate_ids, 2));
+  g_variant_builder_add(&plan, "{sv}", "required_reviews", g_variant_new_strv(required_reviews, 5));
+  g_variant_builder_add(&plan, "{sv}", "candidate_count", g_variant_new_int32(2));
+  g_variant_builder_add(&plan, "{sv}", "ready_candidate_count", g_variant_new_int32(0));
+  g_variant_builder_add(&plan, "{sv}", "blocked_candidate_count", g_variant_new_int32(2));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "selection_committed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "selection_change_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "capability_activation_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "environment_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "state_root_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "snapshot_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
 build_backend_lifecycle(const gchar *application_id)
 {
   GVariantBuilder lifecycle;
@@ -1509,7 +1558,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(49));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(50));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1950,6 +1999,19 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetBackendCapabilityMatrix") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_capability_matrix()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetBackendSelectionPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_selection_plan(application_id)));
     return;
   }
 

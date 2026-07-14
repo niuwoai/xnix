@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.109] - 2026-07-15
+
+### Added
+
+- Added Runtime-owned backend selection plans that explain recommended local or isolated compatibility profiles before any selection is committed.
+- Added `GetBackendSelectionPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and C Runtime CLI coverage for backend selection planning while keeping selection, launch, activation, environment, request-object, state-root, snapshot, host-root, privileged-container, and backend-detail gates disabled.
+
+### Changed
+
+- Extended Runtime diagnostics and Compatibility Center summaries with pending backend selection state so KDE can explain Runtime profile recommendations without owning backend policy.
+
 ## [0.2.108] - 2026-07-15
 
 ### Added

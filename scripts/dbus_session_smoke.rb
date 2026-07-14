@@ -384,6 +384,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetBackendSelectionPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetBackendSelectionPlan: #{stderr}")
+  assert(stdout.include?("compatibility-backend-selection-plan"), "runtime smoke adapter must expose backend selection plans over D-Bus")
+  assert(stdout.include?("selection_committed"), "runtime smoke adapter must keep backend selection uncommitted")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetBackendLifecycle",
     "org.xnix.sample.notepad"
   )

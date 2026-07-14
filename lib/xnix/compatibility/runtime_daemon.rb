@@ -13,6 +13,7 @@ require_relative "compatibility_action_queue"
 require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
 require_relative "compatibility_backend_capability_matrix"
+require_relative "compatibility_backend_selection_plan"
 require_relative "compatibility_backend_environment_plan"
 require_relative "compatibility_backend_lifecycle"
 require_relative "compatibility_engine_catalog"
@@ -90,6 +91,7 @@ module Xnix
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_backend_capability_matrix" => true,
+            "compatibility_backend_selection_plans" => true,
             "compatibility_backend_environment_plans" => true,
             "compatibility_backend_lifecycle" => true,
             "compatibility_run_planning" => true,
@@ -178,6 +180,7 @@ module Xnix
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
           "backend_capability_matrix" => backend_capability_matrix_summary,
+          "backend_selection_plan" => backend_selection_plan_summary(recipe),
           "backend_environment_plan" => backend_environment_plan_summary(recipe),
           "backend_lifecycle" => backend_lifecycle_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
@@ -571,6 +574,11 @@ module Xnix
         CompatibilityBackendCapabilityMatrix.new.to_h
       end
 
+      def backend_selection_plan(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityBackendSelectionPlan.new(recipe: recipe).to_h
+      end
+
       def backend_lifecycle(application_id)
         recipe = require_recipe(application_id)
         CompatibilityBackendLifecycle.new(recipe: recipe).to_h
@@ -755,6 +763,8 @@ module Xnix
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetBackendCapabilityMatrix"
           backend_capability_matrix
+        when "GetBackendSelectionPlan"
+          backend_selection_plan(required_parameter(method_name, parameters, 0))
         when "GetBackendLifecycle"
           backend_lifecycle(required_parameter(method_name, parameters, 0))
         when "GetBackendEnvironmentPlan"
@@ -1290,6 +1300,25 @@ module Xnix
         }
       end
 
+      def backend_selection_plan_summary(recipe)
+        plan = CompatibilityBackendSelectionPlan.new(recipe: recipe).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "recommended_profile_id" => plan.fetch("recommended_profile_id"),
+          "candidate_count" => plan.fetch("candidate_count"),
+          "blocked_candidate_count" => plan.fetch("blocked_candidate_count"),
+          "selection_committed" => plan.fetch("selection_committed"),
+          "selection_change_enabled" => plan.fetch("selection_change_enabled"),
+          "backend_launch_enabled" => plan.fetch("backend_launch_enabled"),
+          "environment_created" => plan.fetch("environment_created"),
+          "request_object_created" => plan.fetch("request_object_created"),
+          "host_root_modified" => plan.fetch("host_root_modified"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def backend_lifecycle_summary(recipe)
         lifecycle = CompatibilityBackendLifecycle.new(recipe: recipe).to_h
         {
@@ -1674,6 +1703,8 @@ module Xnix
             write_json(runtime.backend_binding(require_argument(command)))
           when "backend-capability-matrix"
             write_json(runtime.backend_capability_matrix)
+          when "backend-selection-plan"
+            write_json(runtime.backend_selection_plan(require_argument(command)))
           when "backend-lifecycle"
             write_json(runtime.backend_lifecycle(require_argument(command)))
           when "backend-environment-plan"

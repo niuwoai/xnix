@@ -2810,6 +2810,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_execution_readiness.inc"
 #include "xnix_runtime_core_cli_launch_intent.inc"
 #include "xnix_runtime_core_cli_backend_capability_matrix.inc"
+#include "xnix_runtime_core_cli_backend_selection_plan.inc"
 #include "xnix_runtime_core_cli_backend_lifecycle.inc"
 #include "xnix_runtime_core_cli_backend_environment_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_repair_plan.inc"

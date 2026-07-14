@@ -141,6 +141,10 @@ module Xnix
         parse_dictionary(call("GetBackendCapabilityMatrix"))
       end
 
+      def backend_selection_plan(application_id)
+        parse_dictionary(call("GetBackendSelectionPlan", application_id))
+      end
+
       def backend_lifecycle(application_id)
         parse_dictionary(call("GetBackendLifecycle", application_id))
       end

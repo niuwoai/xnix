@@ -271,6 +271,17 @@ assert(!backend_capability_matrix["backend_launch_enabled"], "dispatch must keep
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetBackendSelectionPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetBackendSelectionPlan must exit successfully: #{stderr}")
+backend_selection_plan = JSON.parse(stdout)
+assert(backend_selection_plan["plan_type"] == "compatibility-backend-selection-plan", "dispatch must route GetBackendSelectionPlan")
+assert(!backend_selection_plan["selection_committed"], "dispatch must keep backend selection uncommitted")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendLifecycle",
   JSON.generate(["org.xnix.sample.notepad"])
 )

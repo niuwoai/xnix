@@ -41,6 +41,7 @@ module Xnix
         GetCompatibilityInstallPlan
         GetBackendBinding
         GetBackendCapabilityMatrix
+        GetBackendSelectionPlan
         GetBackendLifecycle
         GetBackendEnvironmentPlan
         GetRepairPlan
@@ -100,6 +101,7 @@ module Xnix
         "GetCompatibilityInstallPlan" => "install_plan",
         "GetBackendBinding" => "backend_binding",
         "GetBackendCapabilityMatrix" => "backend_capability_matrix",
+        "GetBackendSelectionPlan" => "backend_selection_plan",
         "GetBackendLifecycle" => "backend_lifecycle",
         "GetBackendEnvironmentPlan" => "backend_environment_plan",
         "GetRepairPlan" => "repair_plan",
