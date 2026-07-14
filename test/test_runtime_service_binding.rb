@@ -17,7 +17,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 binding = Xnix::Compatibility::RuntimeServiceBinding.new.to_h
 check_ids = binding.fetch("checks").map { |item| item.fetch("id") }
 
-assert(binding["version"] == "0.2.106", "Runtime service binding must expose the current version")
+assert(binding["version"] == "0.2.107", "Runtime service binding must expose the current version")
 assert(binding["binding_type"] == "runtime-service-binding", "Runtime service binding must identify the binding type")
 assert(binding["runtime_owned"], "Runtime must own service binding status")
 assert(!binding["kde_policy_owner"], "KDE must not own service binding policy")

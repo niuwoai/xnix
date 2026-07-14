@@ -97,6 +97,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetCompatibilityReviewFlowPlan"
+      [
+        "({'plan_type': <'compatibility-review-flow-plan'>, 'runtime_method': <'GetCompatibilityReviewFlowPlan'>, 'application_id': <'org.xnix.sample.notepad'>, 'review_state': <'planned'>, 'section_id': <'resource-access'>, 'field_id': <'documents'>, 'requested_value': <'ask'>, 'operation': <'file-open'>, 'step_count': <5>, 'required_review_count': <3>, 'blocked_step_count': <1>, 'pending_step_count': <1>, 'step_ids': <['settings-change-review', 'permission-review', 'portal-request-review', 'runtime-write-gate', 'review-receipt']>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'user_confirmation_required': <true>, 'portal_policy_review_required': <true>, 'settings_change_planned': <true>, 'permission_review_planned': <true>, 'portal_request_planned': <true>, 'review_receipt_required': <true>, 'apply_enabled': <false>, 'request_object_created': <false>, 'permission_granted': <false>, 'settings_persisted': <false>, 'execution_started': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetFileAssociationPlan"
       [
         "({'plan_type': <'file-association-plan'>, 'association_type': <'desktop-file-association'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'mimeapps_path': <'usr/share/applications/mimeapps.list'>, 'file_open_command': <'xnix-compat-open'>, 'file_open_argument': <'%U'>, 'mime_type_count': <2>, 'standard_mimeapps_list': <true>, 'staged_root_only': <true>, 'overwrite_existing_mimeapps': <false>, 'portal_required_for_file_open': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -261,7 +267,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <47>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <48>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -562,6 +568,23 @@ assert(!permission_review_plan["settings_persisted"], "D-Bus client must parse c
 assert(!permission_review_plan["host_permission_changed"], "D-Bus client must parse compatibility permission host gates")
 assert(!permission_review_plan["backend_details_exposed"], "D-Bus client must parse compatibility permission backend detail gates")
 
+review_flow_plan = client.compatibility_review_flow_plan("org.xnix.sample.notepad", "resource-access", "documents", "ask", "file-open")
+assert(review_flow_plan["plan_type"] == "compatibility-review-flow-plan", "D-Bus client must parse compatibility review flow plans")
+assert(review_flow_plan["runtime_method"] == "GetCompatibilityReviewFlowPlan", "D-Bus client must parse compatibility review flow Runtime methods")
+assert(review_flow_plan["step_count"] == 5, "D-Bus client must parse compatibility review flow step counts")
+assert(review_flow_plan["required_review_count"] == 3, "D-Bus client must parse compatibility review required counts")
+assert(review_flow_plan["blocked_step_count"] == 1, "D-Bus client must parse compatibility review blocked counts")
+assert(review_flow_plan["pending_step_count"] == 1, "D-Bus client must parse compatibility review pending counts")
+assert(review_flow_plan["user_confirmation_required"], "D-Bus client must parse compatibility review confirmation gates")
+assert(review_flow_plan["portal_policy_review_required"], "D-Bus client must parse compatibility review Portal gates")
+assert(!review_flow_plan["apply_enabled"], "D-Bus client must parse compatibility review apply gates")
+assert(!review_flow_plan["request_object_created"], "D-Bus client must parse compatibility review request gates")
+assert(!review_flow_plan["permission_granted"], "D-Bus client must parse compatibility review permission gates")
+assert(!review_flow_plan["settings_persisted"], "D-Bus client must parse compatibility review persistence gates")
+assert(!review_flow_plan["execution_started"], "D-Bus client must parse compatibility review execution gates")
+assert(!review_flow_plan["host_root_modified"], "D-Bus client must parse compatibility review host gates")
+assert(!review_flow_plan["backend_details_exposed"], "D-Bus client must parse compatibility review backend detail gates")
+
 repair_plan = client.repair_plan("org.xnix.sample.notepad", "engine-binding-pending")
 assert(repair_plan["plan_type"] == "compatibility-repair", "D-Bus client must parse repair plans")
 assert(repair_plan["runtime_method"] == "GetRepairPlan", "D-Bus client must parse repair plan Runtime methods")
@@ -720,7 +743,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 47, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 48, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

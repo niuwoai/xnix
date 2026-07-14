@@ -96,6 +96,7 @@ module Xnix
           "settings_change_plan" => settings_change_plan_summary(diagnostics.fetch("settings_change_plan", nil)),
           "compatibility_mode_switch_plan" => compatibility_mode_switch_plan_summary(diagnostics.fetch("compatibility_mode_switch_plan", nil)),
           "compatibility_permission_review_plan" => compatibility_permission_review_plan_summary(diagnostics.fetch("compatibility_permission_review_plan", nil)),
+          "compatibility_review_flow_plan" => compatibility_review_flow_plan_summary(diagnostics.fetch("compatibility_review_flow_plan", nil)),
           "supported_extensions" => application.fetch("supported_extensions", []),
           "summary" => application_status_summary(pending_checks)
         }
@@ -274,6 +275,30 @@ module Xnix
           "permissions_granted" => plan.fetch("permissions_granted"),
           "settings_persisted" => plan.fetch("settings_persisted"),
           "host_permission_changed" => plan.fetch("host_permission_changed"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("summary")
+        }
+      end
+
+      def compatibility_review_flow_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "review_state" => plan.fetch("review_state"),
+          "step_count" => plan.fetch("step_count"),
+          "required_review_count" => plan.fetch("required_review_count"),
+          "blocked_step_count" => plan.fetch("blocked_step_count"),
+          "pending_step_count" => plan.fetch("pending_step_count"),
+          "user_confirmation_required" => plan.fetch("user_confirmation_required"),
+          "portal_policy_review_required" => plan.fetch("portal_policy_review_required"),
+          "apply_enabled" => plan.fetch("apply_enabled"),
+          "request_object_created" => plan.fetch("request_object_created"),
+          "permission_granted" => plan.fetch("permission_granted"),
+          "settings_persisted" => plan.fetch("settings_persisted"),
+          "execution_started" => plan.fetch("execution_started"),
+          "host_root_modified" => plan.fetch("host_root_modified"),
           "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("summary")
         }
@@ -584,7 +609,8 @@ module Xnix
           "runtime_settings_model_count" => applications.count { |application| section(application, "settings").fetch("settings_state", nil) == "planned" },
           "pending_settings_change_plan_count" => applications.count { |application| !section(application, "settings_change_plan").fetch("apply_enabled", false) },
           "pending_mode_switch_plan_count" => applications.count { |application| section(application, "compatibility_mode_switch_plan").fetch("mode_state", nil) == "planned" },
-          "pending_permission_review_plan_count" => applications.count { |application| section(application, "compatibility_permission_review_plan").fetch("review_state", nil) == "planned" }
+          "pending_permission_review_plan_count" => applications.count { |application| section(application, "compatibility_permission_review_plan").fetch("review_state", nil) == "planned" },
+          "pending_review_flow_plan_count" => applications.count { |application| section(application, "compatibility_review_flow_plan").fetch("review_state", nil) == "planned" }
         }
       end
 

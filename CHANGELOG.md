@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.107] - 2026-07-15
+
+### Added
+
+- Added Runtime-owned compatibility review flow plans that connect settings change review, permission review, Portal request review, Runtime write gates, and review receipts into one KDE-visible confirmation flow.
+- Added `GetCompatibilityReviewFlowPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and C Runtime CLI coverage for review flow planning while keeping all apply, request-object, permission-grant, settings-persistence, execution, host-root, and backend-detail gates disabled.
+
+### Changed
+
+- Extended Runtime diagnostics and Compatibility Center summaries with pending review flow counts so KDE can explain the full user confirmation path before any sensitive compatibility setting or desktop resource change is applied.
+
 ## [0.2.106] - 2026-07-14
 
 ### Added

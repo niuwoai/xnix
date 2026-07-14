@@ -205,6 +205,14 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetCompatibilityReviewFlowPlan">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="section_id" type="s" direction="in"/>
+      <arg name="field_id" type="s" direction="in"/>
+      <arg name="value" type="s" direction="in"/>
+      <arg name="operation" type="s" direction="in"/>
+      <arg name="plan" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetCompatibilityActionQueue">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="queue" type="a{sv}" direction="out"/>

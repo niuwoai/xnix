@@ -2803,6 +2803,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_tray_status.inc"
 #include "xnix_runtime_core_cli_krunner_query.inc"
 #include "xnix_runtime_core_cli_portal_request.inc"
+#include "xnix_runtime_core_cli_compatibility_review_flow_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_snapshot_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_test_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_test_result.inc"

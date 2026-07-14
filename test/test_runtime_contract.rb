@@ -64,6 +64,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetCompatibilitySettingsChangePlan
   GetCompatibilityModeSwitchPlan
   GetCompatibilityPermissionReviewPlan
+  GetCompatibilityReviewFlowPlan
   GetCompatibilityActionQueue
   GetCompatibilityActionReviewReceipt
   GetCompatibilityCenterSummary

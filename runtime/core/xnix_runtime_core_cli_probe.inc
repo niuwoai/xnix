@@ -58,6 +58,8 @@ print_probe(void)
   fputs("\"compatibility_mode_switch_mode_count\":4,", stdout);
   fputs("\"compatibility_permission_review_plan_owner\":\"c\",", stdout);
   fputs("\"compatibility_permission_review_count\":7,", stdout);
+  fputs("\"compatibility_review_flow_plan_owner\":\"c\",", stdout);
+  fputs("\"compatibility_review_flow_step_count\":5,", stdout);
   fputs("\"service_binding_policy_owner\":\"c\",", stdout);
   fputs("\"service_binding_policy_count\":1,", stdout);
   fputs("\"live_owner_gate_policy_owner\":\"c\",", stdout);

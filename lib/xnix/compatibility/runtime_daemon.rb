@@ -19,6 +19,7 @@ require_relative "compatibility_execution_readiness"
 require_relative "compatibility_install_plan"
 require_relative "compatibility_mode_switch_plan"
 require_relative "compatibility_permission_review_plan"
+require_relative "compatibility_review_flow_plan"
 require_relative "compatibility_package_source"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -84,6 +85,7 @@ module Xnix
             "compatibility_install_planning" => true,
             "compatibility_mode_switch_planning" => true,
             "compatibility_permission_review_planning" => true,
+            "compatibility_review_flow_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_backend_environment_plans" => true,
@@ -188,6 +190,7 @@ module Xnix
           "settings_change_plan" => settings_change_plan_summary(recipe),
           "compatibility_mode_switch_plan" => compatibility_mode_switch_plan_summary(recipe),
           "compatibility_permission_review_plan" => compatibility_permission_review_plan_summary(recipe),
+          "compatibility_review_flow_plan" => compatibility_review_flow_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -670,6 +673,17 @@ module Xnix
         CompatibilityPermissionReviewPlan.new(recipe: recipe).to_h
       end
 
+      def compatibility_review_flow_plan(application_id, section_id, field_id, value, operation)
+        recipe = require_recipe(application_id)
+        CompatibilityReviewFlowPlan.new(
+          recipe: recipe,
+          section_id: section_id,
+          field_id: field_id,
+          value: value,
+          operation: operation
+        ).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -814,6 +828,14 @@ module Xnix
           )
         when "GetCompatibilityPermissionReviewPlan"
           compatibility_permission_review_plan(required_parameter(method_name, parameters, 0))
+        when "GetCompatibilityReviewFlowPlan"
+          compatibility_review_flow_plan(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1),
+            required_parameter(method_name, parameters, 2),
+            required_parameter(method_name, parameters, 3),
+            required_parameter(method_name, parameters, 4)
+          )
         when *RuntimeWriteGate::WRITE_METHODS
           raise ArgumentError, RuntimeWriteGate.new(method_name: method_name).failure_message
         else
@@ -1534,6 +1556,35 @@ module Xnix
         }
       end
 
+      def compatibility_review_flow_plan_summary(recipe)
+        plan = compatibility_review_flow_plan(
+          recipe.id,
+          CompatibilityReviewFlowPlan::DEFAULT_SECTION_ID,
+          CompatibilityReviewFlowPlan::DEFAULT_FIELD_ID,
+          CompatibilityReviewFlowPlan::DEFAULT_VALUE,
+          CompatibilityReviewFlowPlan::DEFAULT_OPERATION
+        )
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "review_state" => plan.fetch("review_state"),
+          "step_count" => plan.fetch("step_count"),
+          "required_review_count" => plan.fetch("required_review_count"),
+          "blocked_step_count" => plan.fetch("blocked_step_count"),
+          "pending_step_count" => plan.fetch("pending_step_count"),
+          "user_confirmation_required" => plan.fetch("user_confirmation_required"),
+          "portal_policy_review_required" => plan.fetch("portal_policy_review_required"),
+          "apply_enabled" => plan.fetch("apply_enabled"),
+          "request_object_created" => plan.fetch("request_object_created"),
+          "permission_granted" => plan.fetch("permission_granted"),
+          "settings_persisted" => plan.fetch("settings_persisted"),
+          "execution_started" => plan.fetch("execution_started"),
+          "host_root_modified" => plan.fetch("host_root_modified"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -1685,6 +1736,13 @@ module Xnix
             write_json(runtime.compatibility_mode_switch_plan(application_id, requested_mode))
           when "permission-review-plan"
             write_json(runtime.compatibility_permission_review_plan(require_argument(command)))
+          when "review-flow-plan"
+            application_id = require_argument(command)
+            section_id = @argv.shift || CompatibilityReviewFlowPlan::DEFAULT_SECTION_ID
+            field_id = @argv.shift || CompatibilityReviewFlowPlan::DEFAULT_FIELD_ID
+            value = @argv.shift || CompatibilityReviewFlowPlan::DEFAULT_VALUE
+            operation = @argv.shift || CompatibilityReviewFlowPlan::DEFAULT_OPERATION
+            write_json(runtime.compatibility_review_flow_plan(application_id, section_id, field_id, value, operation))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.106"
+#define XNIX_RUNTIME_VERSION "0.2.107"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -129,6 +129,51 @@ typedef struct {
   bool backend_details_exposed;
   const char *summary;
 } XnixRuntimeCompatibilityPermissionReviewPlan;
+
+typedef struct {
+  const char *id;
+  const char *label;
+  const char *runtime_method;
+  const char *status;
+  const char *summary;
+  bool user_visible;
+  bool user_action_required;
+  bool runtime_gate_required;
+  bool blocks_apply;
+} XnixRuntimeCompatibilityReviewFlowStep;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *review_state;
+  const char *section_id;
+  const char *field_id;
+  const char *requested_value;
+  const char *operation;
+  XnixRuntimeCompatibilityReviewFlowStep steps[5];
+  size_t step_count;
+  size_t required_review_count;
+  size_t blocked_step_count;
+  size_t pending_step_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool user_confirmation_required;
+  bool portal_policy_review_required;
+  bool settings_change_planned;
+  bool permission_review_planned;
+  bool portal_request_planned;
+  bool review_receipt_required;
+  bool apply_enabled;
+  bool request_object_created;
+  bool permission_granted;
+  bool settings_persisted;
+  bool execution_started;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityReviewFlowPlan;
 
 typedef struct {
   const char *reason;
@@ -671,7 +716,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[47];
+  const char *read_only_methods[48];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1646,6 +1691,14 @@ bool xnix_runtime_compatibility_mode_switch_plan(
 bool xnix_runtime_compatibility_permission_review_plan(
   const char *application_id,
   XnixRuntimeCompatibilityPermissionReviewPlan *plan
+);
+bool xnix_runtime_compatibility_review_flow_plan(
+  const char *application_id,
+  const char *section_id,
+  const char *field_id,
+  const char *requested_value,
+  const char *operation,
+  XnixRuntimeCompatibilityReviewFlowPlan *plan
 );
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,

@@ -322,6 +322,18 @@ assert(!permission_review_plan["permissions_granted"], "dispatch must keep compa
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityReviewFlowPlan",
+  JSON.generate(["org.xnix.sample.notepad", "resource-access", "documents", "ask", "file-open"])
+)
+assert(status.success?, "dispatch GetCompatibilityReviewFlowPlan must exit successfully: #{stderr}")
+review_flow_plan = JSON.parse(stdout)
+assert(review_flow_plan["plan_type"] == "compatibility-review-flow-plan", "dispatch must route GetCompatibilityReviewFlowPlan")
+assert(!review_flow_plan["apply_enabled"], "dispatch must keep compatibility review flows non-applying")
+assert(!review_flow_plan["request_object_created"], "dispatch must keep review flow request creation gated")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

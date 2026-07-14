@@ -225,6 +225,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityPermissionReviewPlan", application_id))
       end
 
+      def compatibility_review_flow_plan(application_id, section_id, field_id, value, operation)
+        parse_dictionary(call("GetCompatibilityReviewFlowPlan", application_id, section_id, field_id, value, operation))
+      end
+
       private
 
       def call(method_name, *arguments)

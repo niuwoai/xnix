@@ -176,6 +176,22 @@ begin
   assert(stdout.include?("permissions_granted"), "runtime smoke adapter must keep permission grants gated")
 
   stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityReviewFlowPlan",
+    "org.xnix.sample.notepad",
+    "resource-access",
+    "documents",
+    "ask",
+    "file-open"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityReviewFlowPlan: #{stderr}")
+  assert(stdout.include?("compatibility-review-flow-plan"), "runtime smoke adapter must expose compatibility review flow plans over D-Bus")
+  assert(stdout.include?("request_object_created"), "runtime smoke adapter must keep review flow request creation gated")
+
+  stdout, stderr, status = Open3.capture3(
     "ruby",
     "bin/xnix-kde-integration-status",
     "--source",

@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 plan = Xnix::Compatibility::CompatibilityInstallPlan.new(recipe: recipe).to_h
 phase_ids = plan.fetch("phases").map { |phase| phase.fetch("id") }
 
-assert(plan["version"] == "0.2.106", "compatibility install plan must expose the current version")
+assert(plan["version"] == "0.2.107", "compatibility install plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-install-plan", "compatibility install plan must identify plan type")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "compatibility install plan must preserve the application id")
 assert(plan["runtime_owned"], "Runtime must own compatibility install plans")

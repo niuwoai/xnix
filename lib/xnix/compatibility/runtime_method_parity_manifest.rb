@@ -61,6 +61,7 @@ module Xnix
         GetCompatibilitySettingsChangePlan
         GetCompatibilityModeSwitchPlan
         GetCompatibilityPermissionReviewPlan
+        GetCompatibilityReviewFlowPlan
         GetCompatibilityActionQueue
         GetCompatibilityActionReviewReceipt
         GetCompatibilityCenterSummary
@@ -118,6 +119,7 @@ module Xnix
         "GetCompatibilitySettingsChangePlan" => "settings_change_plan",
         "GetCompatibilityModeSwitchPlan" => "compatibility_mode_switch_plan",
         "GetCompatibilityPermissionReviewPlan" => "compatibility_permission_review_plan",
+        "GetCompatibilityReviewFlowPlan" => "compatibility_review_flow_plan",
         "GetCompatibilityActionQueue" => "action_queue",
         "GetCompatibilityActionReviewReceipt" => "action_review_receipt",
         "GetCompatibilityCenterSummary" => "compatibility_center_summary"

@@ -72,6 +72,14 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityReviewFlowPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='section_id' type='s' direction='in'/>"
+  "      <arg name='field_id' type='s' direction='in'/>"
+  "      <arg name='value' type='s' direction='in'/>"
+  "      <arg name='operation' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -1261,6 +1269,66 @@ build_compatibility_permission_review_plan(const gchar *application_id)
 }
 
 static GVariant *
+build_compatibility_review_flow_plan(
+  const gchar *application_id,
+  const gchar *section_id,
+  const gchar *field_id,
+  const gchar *value,
+  const gchar *operation
+)
+{
+  const gchar *step_ids[] = {
+    "settings-change-review",
+    "permission-review",
+    "portal-request-review",
+    "runtime-write-gate",
+    "review-receipt",
+  };
+  const gchar *runtime_methods[] = {
+    "GetCompatibilitySettingsChangePlan",
+    "GetCompatibilityPermissionReviewPlan",
+    "GetPortalRequestPlan",
+    "GetRuntimeWriteGate",
+    "GetCompatibilityActionReviewReceipt",
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-review-flow-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityReviewFlowPlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "review_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "section_id", g_variant_new_string(section_id));
+  g_variant_builder_add(&plan, "{sv}", "field_id", g_variant_new_string(field_id));
+  g_variant_builder_add(&plan, "{sv}", "requested_value", g_variant_new_string(value));
+  g_variant_builder_add(&plan, "{sv}", "operation", g_variant_new_string(operation));
+  g_variant_builder_add(&plan, "{sv}", "step_ids", g_variant_new_strv(step_ids, 5));
+  g_variant_builder_add(&plan, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 5));
+  g_variant_builder_add(&plan, "{sv}", "step_count", g_variant_new_int32(5));
+  g_variant_builder_add(&plan, "{sv}", "required_review_count", g_variant_new_int32(3));
+  g_variant_builder_add(&plan, "{sv}", "blocked_step_count", g_variant_new_int32(1));
+  g_variant_builder_add(&plan, "{sv}", "pending_step_count", g_variant_new_int32(1));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "user_confirmation_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "portal_policy_review_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "settings_change_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "permission_review_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "portal_request_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "review_receipt_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "apply_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "permission_granted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
 build_action_queue(const gchar *application_id)
 {
   GVariantBuilder queue;
@@ -1394,7 +1462,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(47));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(48));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1645,6 +1713,26 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_compatibility_permission_review_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityReviewFlowPlan") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *section_id = NULL;
+    const gchar *field_id = NULL;
+    const gchar *value = NULL;
+    const gchar *operation = NULL;
+
+    g_variant_get(parameters, "(&s&s&s&s&s)", &application_id, &section_id, &field_id, &value, &operation);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_compatibility_review_flow_plan(application_id, section_id, field_id, value, operation))
     );
     return;
   }
