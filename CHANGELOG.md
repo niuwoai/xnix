@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.134] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-decision-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only KDE Compatibility Center launch decision previews from digest-verified registry recipes.
+- Added Go Runtime decision planning that captures reviewed, approved, deferred, and rejected launch-review intent without recording review receipts, persisting queues, granting Runtime launch approval, or starting execution.
+- Added Go and Ruby harness coverage that verifies execution-decision previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, Portal-aware, backend-detail-free, host-root-safe, and honest about user intent being captured while Runtime approval, review receipts, queue mutation, permissions, and execution remain disabled.
+
+### Changed
+
+- Moved the user-visible launch review decision surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for forwarding the decision intent only.
+
 ## [0.2.133] - 2026-07-15
 
 ### Added

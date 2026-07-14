@@ -608,6 +608,110 @@ func TestExecutionReviewPreviewCommandRendersCompatibilityCenterCard(t *testing.
 	}
 }
 
+func TestExecutionDecisionPreviewCommandCapturesDecisionWithoutApproval(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-decision-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.request_decision.v1" ||
+		payload["request_type"] != "execution-decision-preview" ||
+		payload["decision_type"] != "compatibility-center-launch-decision" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-review-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionDecisionPreview" {
+		t.Fatalf("unexpected execution decision schema: %#v", payload)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["application_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected execution decision identity: %#v", payload)
+	}
+	review := payload["execution_review"].(map[string]any)
+	if review["schema_version"] != "xnix.runtime.request_review.v1" ||
+		review["request_type"] != "execution-review-preview" ||
+		review["review_type"] != "compatibility-center-launch-review" ||
+		review["source"] != "execution-request-preview" ||
+		review["read_method"] != "GetExecutionReviewPreview" ||
+		review["action_queue_candidate"] != true ||
+		review["review_receipt_required"] != true ||
+		review["review_receipt_recorded"] != false ||
+		review["action_queue_persisted"] != false ||
+		review["execution_started"] != false ||
+		review["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution review summary: %#v", review)
+	}
+	decision := payload["decision"].(map[string]any)
+	if decision["decision"] != "approved" ||
+		decision["decision_accepted"] != true ||
+		decision["user_intent_captured"] != true ||
+		decision["decision_recorded"] != false ||
+		decision["runtime_approval_granted"] != false ||
+		decision["execution_allowed"] != false ||
+		decision["review_receipt_created"] != false ||
+		decision["queue_state_changed"] != false ||
+		decision["permission_grant_created"] != false ||
+		decision["desktop_notification_intent"] != "show-launch-approval-pending" {
+		t.Fatalf("unexpected decision payload: %#v", decision)
+	}
+	queue := payload["action_queue"].(map[string]any)
+	if queue["execution_enabled"] != false ||
+		queue["queue_persisted"] != false ||
+		queue["review_receipt_recorded"] != false {
+		t.Fatalf("unexpected action queue: %#v", queue)
+	}
+	if payload["portal_required"] != true ||
+		payload["snapshot_required"] != true ||
+		payload["file_count"] != float64(1) ||
+		payload["file_uris"].([]any)[0] != "file:///home/test/Documents/book.abc" {
+		t.Fatalf("unexpected execution decision file routing: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["action_queue_candidate"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["review_receipt_required"] != true ||
+		payload["review_receipt_recorded"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_request_created"] != false ||
+		payload["execution_request_persisted"] != false ||
+		payload["action_queue_persisted"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_binding_ready"] != false ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution decision safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

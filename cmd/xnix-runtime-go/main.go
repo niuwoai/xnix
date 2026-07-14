@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-readiness-preview|execution-request-preview|execution-review-preview|file-open-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-readiness-preview|execution-request-preview|execution-review-preview|file-open-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -34,6 +34,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopIdentityPlan(args[1:], stdout)
 	case "desktop-resource-bridge-preview":
 		return runDesktopResourceBridgePreview(args[1:], stdout)
+	case "execution-decision-preview":
+		return runExecutionDecisionPreview(args[1:], stdout)
 	case "execution-readiness-preview":
 		return runExecutionReadinessPreview(args[1:], stdout)
 	case "execution-request-preview":
@@ -172,6 +174,25 @@ func runExecutionReviewPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.ExecutionReviewPreview(fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runExecutionDecisionPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, err := parseExecutionDecisionPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.ExecutionDecisionPreview(decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -686,6 +707,34 @@ func parseExecutionRequestPreviewSource(args []string) (appidentity.Recipe, appi
 
 func parseExecutionReviewPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, []string, error) {
 	return parseLaunchActionPreviewSource("execution-review-preview", args)
+}
+
+func parseExecutionDecisionPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	flags := flag.NewFlagSet("execution-decision-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	decision := flags.String("decision", "", "review decision: reviewed, approved, deferred, or rejected")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, errors.New("execution-decision-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, errors.New("execution-decision-preview requires --app when --registry is used")
+	}
+	if *decision == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, errors.New("execution-decision-preview requires --decision")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, errors.New("execution-decision-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *decision, flags.Args(), err
 }
 
 func parseLaunchActionPreviewSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, []string, error) {
