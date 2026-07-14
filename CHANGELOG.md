@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.128] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go mode-switch-preview --registry <path> --app <id> --mode <mode>` for read-only KDE unified-settings mode switch previews from digest-verified registry recipes.
+- Added Go Runtime mode-switch planning for automatic, prefer-performance, prefer-compatibility, and isolated-execution modes with user confirmation, Portal review, snapshot, environment-plan, and write-gate metadata.
+- Added Go and Ruby harness coverage that verifies mode-switch previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about settings persistence, backend reconfiguration, backend processes, and launch remaining disabled.
+
+### Changed
+
+- Moved the user-visible compatibility mode switch surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and confirmation only.
+
 ## [0.2.127] - 2026-07-15
 
 ### Added

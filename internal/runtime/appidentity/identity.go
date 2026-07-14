@@ -255,6 +255,50 @@ type SettingsChangeStep struct {
 	Summary string `json:"summary"`
 }
 
+type ModeSwitchPreview struct {
+	SchemaVersion                 string             `json:"schema_version"`
+	RequestType                   string             `json:"request_type"`
+	PlanType                      string             `json:"plan_type"`
+	Source                        string             `json:"source"`
+	Desktop                       string             `json:"desktop"`
+	RuntimeMethod                 string             `json:"runtime_method"`
+	ApplicationID                 string             `json:"application_id"`
+	DisplayName                   string             `json:"display_name"`
+	Icon                          string             `json:"icon"`
+	DesktopFile                   string             `json:"desktop_file"`
+	CurrentMode                   string             `json:"current_mode"`
+	RequestedMode                 string             `json:"requested_mode"`
+	ModeState                     string             `json:"mode_state"`
+	Modes                         []ModeSwitchOption `json:"modes"`
+	ModeCount                     int                `json:"mode_count"`
+	RequiredRuntimeGates          []string           `json:"required_runtime_gates"`
+	RuntimeOwned                  bool               `json:"runtime_owned"`
+	GoRuntimeBacked               bool               `json:"go_runtime_backed"`
+	KDEPolicyOwner                bool               `json:"kde_policy_owner"`
+	UserVisible                   bool               `json:"user_visible"`
+	ValidMode                     bool               `json:"valid_mode"`
+	RequiresUserConfirmation      bool               `json:"requires_user_confirmation"`
+	PortalReviewRequired          bool               `json:"portal_review_required"`
+	SnapshotRequired              bool               `json:"snapshot_required"`
+	SettingsPersistenceEnabled    bool               `json:"settings_persistence_enabled"`
+	BackendReconfigurationEnabled bool               `json:"backend_reconfiguration_enabled"`
+	BackendProcessStarted         bool               `json:"backend_process_started"`
+	LaunchEnabled                 bool               `json:"launch_enabled"`
+	HostRootModified              bool               `json:"host_root_modified"`
+	BackendDetailsExposed         bool               `json:"backend_details_exposed"`
+	UserFacingSettings            map[string]string  `json:"user_facing_settings"`
+	DesktopSafeSummary            string             `json:"desktop_safe_summary"`
+}
+
+type ModeSwitchOption struct {
+	ID                    string `json:"id"`
+	Label                 string `json:"label"`
+	Intent                string `json:"intent"`
+	Selected              bool   `json:"selected"`
+	Requested             bool   `json:"requested"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+}
+
 type ReviewFlowPreview struct {
 	SchemaVersion              string                     `json:"schema_version"`
 	RequestType                string                     `json:"request_type"`
@@ -1155,6 +1199,60 @@ func (plan Plan) SettingsPreview() (SettingsPreview, error) {
 	}, nil
 }
 
+func (plan Plan) ModeSwitchPreview(requestedMode string) (ModeSwitchPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return ModeSwitchPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, requestedMode} {
+		if !singleLine(value) {
+			return ModeSwitchPreview{}, errors.New("mode switch preview requires single-line fields")
+		}
+	}
+	if !supportedModeSwitchMode(requestedMode) {
+		return ModeSwitchPreview{}, fmt.Errorf("unsupported compatibility mode: %s", requestedMode)
+	}
+
+	modes := modeSwitchOptions(plan.runtimeModeID(), requestedMode)
+	preview := ModeSwitchPreview{
+		SchemaVersion:                 "xnix.runtime.mode_switch.v1",
+		RequestType:                   "mode-switch-preview",
+		PlanType:                      "compatibility-mode-switch-plan",
+		Source:                        "unified-settings",
+		Desktop:                       "KDE Plasma",
+		RuntimeMethod:                 "GetCompatibilityModeSwitchPlan",
+		ApplicationID:                 plan.ApplicationID,
+		DisplayName:                   plan.DisplayName,
+		Icon:                          plan.Icon,
+		DesktopFile:                   plan.DesktopFile,
+		CurrentMode:                   plan.runtimeModeID(),
+		RequestedMode:                 requestedMode,
+		ModeState:                     "planned",
+		Modes:                         modes,
+		ModeCount:                     len(modes),
+		RequiredRuntimeGates:          []string{"settings-review", "portal-policy-review", "snapshot-baseline", "backend-environment-plan", "runtime-write-gate"},
+		RuntimeOwned:                  true,
+		GoRuntimeBacked:               true,
+		KDEPolicyOwner:                false,
+		UserVisible:                   true,
+		ValidMode:                     true,
+		RequiresUserConfirmation:      true,
+		PortalReviewRequired:          true,
+		SnapshotRequired:              true,
+		SettingsPersistenceEnabled:    false,
+		BackendReconfigurationEnabled: false,
+		BackendProcessStarted:         false,
+		LaunchEnabled:                 false,
+		HostRootModified:              false,
+		BackendDetailsExposed:         false,
+		UserFacingSettings:            plan.UserFacingSettings,
+		DesktopSafeSummary:            "Compatibility mode switch is planned for user review and cannot change Runtime state in this version.",
+	}
+	if err := validateNoBackendTerms(preview, "mode switch preview"); err != nil {
+		return ModeSwitchPreview{}, err
+	}
+	return preview, nil
+}
+
 func (plan Plan) SettingsChangePreview(sectionID string, fieldID string, requestedValue string) (SettingsChangePreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return SettingsChangePreview{}, err
@@ -1378,6 +1476,60 @@ func (plan Plan) ReviewFlowPreview(sectionID string, fieldID string, requestedVa
 		return ReviewFlowPreview{}, err
 	}
 	return preview, nil
+}
+
+func (plan Plan) runtimeModeID() string {
+	switch plan.UserFacingSettings["run_mode"] {
+	case "automatic", "prefer-performance", "prefer-compatibility", "isolated-execution":
+		return plan.UserFacingSettings["run_mode"]
+	default:
+		return "automatic"
+	}
+}
+
+func supportedModeSwitchMode(mode string) bool {
+	for _, option := range baseModeSwitchOptions() {
+		if option.ID == mode {
+			return true
+		}
+	}
+	return false
+}
+
+func modeSwitchOptions(currentMode string, requestedMode string) []ModeSwitchOption {
+	options := baseModeSwitchOptions()
+	result := make([]ModeSwitchOption, 0, len(options))
+	for _, option := range options {
+		option.Selected = option.ID == currentMode
+		option.Requested = option.ID == requestedMode
+		result = append(result, option)
+	}
+	return result
+}
+
+func baseModeSwitchOptions() []ModeSwitchOption {
+	return []ModeSwitchOption{
+		{
+			ID:     "automatic",
+			Label:  "Automatic",
+			Intent: "Let Xnix choose the safest available compatibility path.",
+		},
+		{
+			ID:     "prefer-performance",
+			Label:  "Prefer performance",
+			Intent: "Prefer a low-overhead compatibility path when policy gates allow it.",
+		},
+		{
+			ID:     "prefer-compatibility",
+			Label:  "Prefer compatibility",
+			Intent: "Prefer a more conservative compatibility path for difficult applications.",
+		},
+		{
+			ID:     "isolated-execution",
+			Label:  "Isolated execution",
+			Intent: "Prefer a stronger isolation boundary for higher-risk applications.",
+		},
+	}
 }
 
 func settingsSection(id string, title string, description string, fields []SettingsField) SettingsSection {

@@ -58,6 +58,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mode-switch-preview"), "Go Runtime CLI must render KDE mode switch previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("permission-review-preview"), "Go Runtime CLI must render KDE permission review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("portal-request-preview"), "Go Runtime CLI must render KDE Portal request previews")
@@ -335,6 +336,55 @@ if go_available
   assert(!settings.downcase.include?("prefix"), "settings preview must not expose implementation storage")
   assert(!settings.include?(".exe"), "settings preview must not expose a Windows executable")
   assert(!settings.downcase.include?("proton"), "settings preview must not expose backend implementation names")
+
+  mode_switch, mode_switch_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "mode-switch-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--mode",
+    "prefer-compatibility"
+  )
+  assert(mode_switch_status.success?, "Go mode switch preview CLI must run successfully")
+  mode_switch_payload = JSON.parse(mode_switch)
+  assert(mode_switch_payload.fetch("schema_version") == "xnix.runtime.mode_switch.v1", "mode switch preview schema version must be stable")
+  assert(mode_switch_payload.fetch("request_type") == "mode-switch-preview", "mode switch preview must identify its request type")
+  assert(mode_switch_payload.fetch("plan_type") == "compatibility-mode-switch-plan", "mode switch preview must identify the Runtime plan type")
+  assert(mode_switch_payload.fetch("source") == "unified-settings", "mode switch preview must identify the KDE settings source")
+  assert(mode_switch_payload.fetch("desktop") == "KDE Plasma", "mode switch preview must target KDE Plasma")
+  assert(mode_switch_payload.fetch("runtime_method") == "GetCompatibilityModeSwitchPlan", "mode switch preview must expose the Runtime method")
+  assert(mode_switch_payload.fetch("application_id") == recipe.id, "mode switch preview must preserve application identity")
+  assert(mode_switch_payload.fetch("display_name") == recipe.name, "mode switch preview must preserve display names")
+  assert(mode_switch_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "mode switch preview must bind generated desktop files")
+  assert(mode_switch_payload.fetch("current_mode") == "automatic", "mode switch preview must expose the current mode")
+  assert(mode_switch_payload.fetch("requested_mode") == "prefer-compatibility", "mode switch preview must expose the requested mode")
+  assert(mode_switch_payload.fetch("mode_state") == "planned", "mode switch preview must stay planned")
+  assert(mode_switch_payload.fetch("mode_count") == 4, "mode switch preview must expose four user-facing modes")
+  assert(mode_switch_payload.fetch("modes").map { |mode| mode.fetch("id") } == %w[automatic prefer-performance prefer-compatibility isolated-execution], "mode switch preview must preserve mode order")
+  assert(mode_switch_payload.fetch("modes").one? { |mode| mode.fetch("selected") }, "mode switch preview must mark one selected mode")
+  assert(mode_switch_payload.fetch("modes").one? { |mode| mode.fetch("requested") }, "mode switch preview must mark one requested mode")
+  assert(mode_switch_payload.fetch("required_runtime_gates") == %w[settings-review portal-policy-review snapshot-baseline backend-environment-plan runtime-write-gate], "mode switch preview must expose required Runtime gates")
+  assert(mode_switch_payload.fetch("runtime_owned") == true, "mode switch preview must remain Runtime-owned")
+  assert(mode_switch_payload.fetch("go_runtime_backed") == true, "mode switch preview must be Go Runtime-backed")
+  assert(mode_switch_payload.fetch("kde_policy_owner") == false, "mode switch preview must not make KDE own backend policy")
+  assert(mode_switch_payload.fetch("user_visible") == true, "mode switch preview must be user visible")
+  assert(mode_switch_payload.fetch("valid_mode") == true, "mode switch preview must validate requested modes")
+  assert(mode_switch_payload.fetch("requires_user_confirmation") == true, "mode switch preview must require user confirmation")
+  assert(mode_switch_payload.fetch("portal_review_required") == true, "mode switch preview must require Portal review")
+  assert(mode_switch_payload.fetch("snapshot_required") == true, "mode switch preview must require snapshot review")
+  assert(mode_switch_payload.fetch("settings_persistence_enabled") == false, "mode switch preview must keep settings persistence disabled")
+  assert(mode_switch_payload.fetch("backend_reconfiguration_enabled") == false, "mode switch preview must not reconfigure backends")
+  assert(mode_switch_payload.fetch("backend_process_started") == false, "mode switch preview must not start backend processes")
+  assert(mode_switch_payload.fetch("launch_enabled") == false, "mode switch preview must not enable launch")
+  assert(mode_switch_payload.fetch("host_root_modified") == false, "mode switch preview must not mutate the host root")
+  assert(mode_switch_payload.fetch("backend_details_exposed") == false, "mode switch preview must not expose backend details")
+  assert(!mode_switch.downcase.include?("prefix"), "mode switch preview must not expose implementation storage")
+  assert(!mode_switch.include?(".exe"), "mode switch preview must not expose a Windows executable")
+  assert(!mode_switch.downcase.include?("proton"), "mode switch preview must not expose backend implementation names")
 
   settings_change, settings_change_status = capture_runtime_go(
     project_root,

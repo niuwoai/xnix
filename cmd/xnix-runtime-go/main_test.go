@@ -387,6 +387,80 @@ func TestSettingsPreviewCommandRendersKDESettings(t *testing.T) {
 	}
 }
 
+func TestModeSwitchPreviewCommandRendersUserFacingModes(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"mode-switch-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "prefer-performance"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.mode_switch.v1" ||
+		payload["request_type"] != "mode-switch-preview" ||
+		payload["plan_type"] != "compatibility-mode-switch-plan" ||
+		payload["source"] != "unified-settings" ||
+		payload["runtime_method"] != "GetCompatibilityModeSwitchPlan" {
+		t.Fatalf("unexpected mode switch schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["display_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected mode switch identity: %#v", payload)
+	}
+	if payload["current_mode"] != "automatic" ||
+		payload["requested_mode"] != "prefer-performance" ||
+		payload["mode_state"] != "planned" ||
+		payload["mode_count"] != float64(4) {
+		t.Fatalf("unexpected mode switch request: %#v", payload)
+	}
+	modes := payload["modes"].([]any)
+	if modes[0].(map[string]any)["id"] != "automatic" ||
+		modes[1].(map[string]any)["id"] != "prefer-performance" ||
+		modes[2].(map[string]any)["id"] != "prefer-compatibility" ||
+		modes[3].(map[string]any)["id"] != "isolated-execution" {
+		t.Fatalf("unexpected mode order: %#v", modes)
+	}
+	if modes[0].(map[string]any)["selected"] != true ||
+		modes[1].(map[string]any)["requested"] != true {
+		t.Fatalf("unexpected selected/requested mode markers: %#v", modes)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false || payload["user_visible"] != true ||
+		payload["valid_mode"] != true || payload["requires_user_confirmation"] != true ||
+		payload["portal_review_required"] != true || payload["snapshot_required"] != true ||
+		payload["settings_persistence_enabled"] != false ||
+		payload["backend_reconfiguration_enabled"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected mode switch safety flags: %#v", payload)
+	}
+
+	output.Reset()
+	err = run([]string{"mode-switch-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "unsupported-mode"}, &output)
+	if err == nil {
+		t.Fatalf("mode-switch-preview accepted an unsupported mode")
+	}
+}
+
 func TestSettingsChangePreviewCommandRendersReviewPlan(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

@@ -20,7 +20,7 @@ source = Xnix::Compatibility::CompatibilityPackageSource.new(recipe: recipe).to_
 channel_ids = source.fetch("source_channels").map { |item| item.fetch("id") }
 preflight_ids = source.fetch("required_preflight").map { |item| item.fetch("id") }
 
-assert(source["version"] == "0.2.127", "compatibility package source must expose the current version")
+assert(source["version"] == "0.2.128", "compatibility package source must expose the current version")
 assert(source["source_type"] == "compatibility-package-source", "compatibility package source must identify source type")
 assert(source["application"]["id"] == "org.xnix.sample.notepad", "compatibility package source must preserve the application id")
 assert(source["runtime_owned"], "Runtime must own compatibility package source selection")

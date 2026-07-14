@@ -356,6 +356,74 @@ func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
 	}
 }
 
+func TestModeSwitchPreviewKeepsRuntimeStateGated(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.ModeSwitchPreview("prefer-compatibility")
+	if err != nil {
+		t.Fatalf("ModeSwitchPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.mode_switch.v1" ||
+		preview.RequestType != "mode-switch-preview" ||
+		preview.PlanType != "compatibility-mode-switch-plan" ||
+		preview.Source != "unified-settings" ||
+		preview.RuntimeMethod != "GetCompatibilityModeSwitchPlan" {
+		t.Fatalf("unexpected mode switch schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected mode switch identity: %#v", preview)
+	}
+	if preview.CurrentMode != "automatic" ||
+		preview.RequestedMode != "prefer-compatibility" ||
+		preview.ModeState != "planned" ||
+		preview.ModeCount != 4 {
+		t.Fatalf("unexpected mode switch request: %#v", preview)
+	}
+	if got, want := modeSwitchOptionIDs(preview.Modes), []string{"automatic", "prefer-performance", "prefer-compatibility", "isolated-execution"}; !sameStrings(got, want) {
+		t.Fatalf("mode ids = %#v, want %#v", got, want)
+	}
+	if countSelectedModes(preview.Modes) != 1 || countRequestedModes(preview.Modes) != 1 {
+		t.Fatalf("mode switch preview must mark one selected and one requested mode: %#v", preview.Modes)
+	}
+	if !sameStrings(preview.RequiredRuntimeGates, []string{"settings-review", "portal-policy-review", "snapshot-baseline", "backend-environment-plan", "runtime-write-gate"}) {
+		t.Fatalf("unexpected required gates: %#v", preview.RequiredRuntimeGates)
+	}
+	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner || !preview.UserVisible ||
+		!preview.ValidMode || !preview.RequiresUserConfirmation || !preview.PortalReviewRequired ||
+		!preview.SnapshotRequired || preview.SettingsPersistenceEnabled ||
+		preview.BackendReconfigurationEnabled || preview.BackendProcessStarted ||
+		preview.LaunchEnabled || preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected mode switch safety flags: %#v", preview)
+	}
+
+	if _, err := plan.ModeSwitchPreview("unsupported-mode"); err == nil {
+		t.Fatalf("ModeSwitchPreview accepted an unsupported mode")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("mode switch preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestSettingsChangePreviewPlansReviewBeforePersistence(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",
@@ -1076,6 +1144,34 @@ func settingFieldValue(sections []SettingsSection, sectionID string, fieldID str
 		}
 	}
 	return ""
+}
+
+func modeSwitchOptionIDs(options []ModeSwitchOption) []string {
+	ids := make([]string, 0, len(options))
+	for _, option := range options {
+		ids = append(ids, option.ID)
+	}
+	return ids
+}
+
+func countSelectedModes(options []ModeSwitchOption) int {
+	count := 0
+	for _, option := range options {
+		if option.Selected {
+			count++
+		}
+	}
+	return count
+}
+
+func countRequestedModes(options []ModeSwitchOption) int {
+	count := 0
+	for _, option := range options {
+		if option.Requested {
+			count++
+		}
+	}
+	return count
 }
 
 func permissionReviewIDs(permissions []PermissionReviewEntry) []string {
