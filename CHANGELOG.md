@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.136] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-resource-grant-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime launch resource-grant previews from digest-verified registry recipes.
+- Added Go Runtime launch resource planning that connects execution preflight, compatibility permission review, and desktop resource bridge summaries into one KDE-visible resource access read model.
+- Added Go and Ruby harness coverage that verifies execution-resource-grant previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, Portal-aware, backend-detail-free, host-root-safe, and honest about grant objects, request objects, permission grants, resource bridges, settings persistence, launch approval, network requirements, and execution remaining disabled.
+
+### Changed
+
+- Moved launch-time resource access planning one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and review only.
+
 ## [0.2.135] - 2026-07-15
 
 ### Added

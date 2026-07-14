@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-review-preview|file-open-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|file-open-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -42,6 +42,8 @@ func run(args []string, stdout io.Writer) error {
 		return runExecutionReadinessPreview(args[1:], stdout)
 	case "execution-request-preview":
 		return runExecutionRequestPreview(args[1:], stdout)
+	case "execution-resource-grant-preview":
+		return runExecutionResourceGrantPreview(args[1:], stdout)
 	case "execution-review-preview":
 		return runExecutionReviewPreview(args[1:], stdout)
 	case "file-open-preview":
@@ -214,6 +216,25 @@ func runExecutionPreflightPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.ExecutionPreflightPreview(decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runExecutionResourceGrantPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, err := parseExecutionResourceGrantPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.ExecutionResourceGrantPreview(decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -736,6 +757,10 @@ func parseExecutionDecisionPreviewSource(args []string) (appidentity.Recipe, app
 
 func parseExecutionPreflightPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
 	return parseLaunchDecisionPreviewSource("execution-preflight-preview", args)
+}
+
+func parseExecutionResourceGrantPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	return parseLaunchDecisionPreviewSource("execution-resource-grant-preview", args)
 }
 
 func parseLaunchDecisionPreviewSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {

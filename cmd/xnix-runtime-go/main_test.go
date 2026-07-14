@@ -811,6 +811,120 @@ func TestExecutionPreflightPreviewCommandBlocksLaunchUntilGatesPass(t *testing.T
 	}
 }
 
+func TestExecutionResourceGrantPreviewCommandKeepsPermissionsUngrantable(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-resource-grant-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.resource_grant.v1" ||
+		payload["request_type"] != "execution-resource-grant-preview" ||
+		payload["grant_type"] != "compatibility-launch-resource-grant" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-preflight-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionResourceGrantPreview" {
+		t.Fatalf("unexpected execution resource grant schema: %#v", payload)
+	}
+	preflight := payload["execution_preflight"].(map[string]any)
+	if preflight["schema_version"] != "xnix.runtime.launch_preflight.v1" ||
+		preflight["request_type"] != "execution-preflight-preview" ||
+		preflight["user_decision_allows_launch"] != true ||
+		preflight["preflight_passed"] != false ||
+		preflight["portal_required"] != true ||
+		preflight["write_gate_open"] != false ||
+		preflight["runtime_launch_approval"] != false ||
+		preflight["permission_granted"] != false {
+		t.Fatalf("unexpected preflight summary: %#v", preflight)
+	}
+	if payload["grant_count"] != float64(7) ||
+		payload["allow_count"] != float64(1) ||
+		payload["ask_count"] != float64(5) ||
+		payload["deny_count"] != float64(1) ||
+		payload["portal_required_count"] != float64(6) ||
+		payload["pending_review_count"] != float64(5) {
+		t.Fatalf("unexpected grant counts: %#v", payload)
+	}
+	grants := payload["resource_grants"].([]any)
+	if len(grants) != 7 {
+		t.Fatalf("unexpected resource grants: %#v", grants)
+	}
+	grantByID := map[string]map[string]any{}
+	for _, rawGrant := range grants {
+		grant := rawGrant.(map[string]any)
+		grantByID[grant["id"].(string)] = grant
+		if grant["request_object_created"] != false ||
+			grant["permission_granted"] != false ||
+			grant["direct_access_allowed"] != false ||
+			grant["backend_details_exposed"] != false {
+			t.Fatalf("grant enabled unsafe access: %#v", grant)
+		}
+	}
+	if grantByID["documents"]["grant_state"] != "requires-review" ||
+		grantByID["downloads"]["grant_state"] != "requires-review" ||
+		grantByID["camera"]["grant_state"] != "planned-deny" ||
+		grantByID["network"]["grant_state"] != "planned-allow" ||
+		grantByID["network"]["portal_required"] != false {
+		t.Fatalf("unexpected resource grant states: %#v", grantByID)
+	}
+	bridge := payload["bridge_summary"].(map[string]any)
+	if bridge["request_type"] != "desktop-resource-bridge-preview" ||
+		bridge["plan_type"] != "desktop-resource-bridge-plan" ||
+		bridge["bridge_state"] != "planned" ||
+		bridge["resource_count"] != float64(5) ||
+		bridge["portal_mediated"] != true ||
+		bridge["resource_bridges_enabled"] != false ||
+		bridge["request_objects_created"] != false ||
+		bridge["direct_host_file_access"] != false {
+		t.Fatalf("unexpected bridge summary: %#v", bridge)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["preflight_passed"] != false ||
+		payload["portal_review_required"] != true ||
+		payload["snapshot_required"] != true ||
+		payload["grant_plan_created"] != true ||
+		payload["grant_objects_created"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["resource_bridges_enabled"] != false ||
+		payload["settings_persisted"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_permission_changed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution resource grant safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
