@@ -70,6 +70,7 @@ module Xnix
           "action_queue" => action_queue_summary(diagnostics.fetch("action_queue", nil)),
           "action_review_receipt" => action_review_receipt_summary(diagnostics.fetch("action_review_receipt", nil)),
           "compatibility_center_summary" => compatibility_center_summary_summary(diagnostics.fetch("compatibility_center_summary", nil)),
+          "kde_application_surface_plan" => kde_application_surface_plan_summary(diagnostics.fetch("kde_application_surface_plan", nil)),
           "repair" => repair_summary(diagnostics.fetch("repair_plan", nil)),
           "test_plan" => test_plan_summary(diagnostics.fetch("test_plan", nil)),
           "test_result" => test_result_summary(diagnostics.fetch("test_result", nil)),
@@ -192,6 +193,23 @@ module Xnix
           "backend_launch_enabled" => summary.fetch("backend_launch_enabled"),
           "backend_details_exposed" => summary.fetch("backend_details_exposed"),
           "summary" => summary.fetch("summary")
+        }
+      end
+
+      def kde_application_surface_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "surface_state" => plan.fetch("surface_state"),
+          "desktop_shell" => plan.fetch("desktop_shell"),
+          "entry_point_count" => plan.fetch("entry_point_count"),
+          "normal_linux_application_surface" => plan.fetch("normal_linux_application_surface"),
+          "standard_launcher_visible" => plan.fetch("standard_launcher_visible"),
+          "launch_enabled" => plan.fetch("launch_enabled"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("summary")
         }
       end
 

@@ -55,6 +55,10 @@ static const gchar introspection_xml[] =
   "    <method name='GetKDEIntegrationStatus'>"
   "      <arg name='status' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKDEApplicationSurfacePlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -354,6 +358,65 @@ build_kde_integration_status(void)
   g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&status);
+}
+
+static GVariant *
+build_kde_application_surface_plan(const gchar *application_id)
+{
+  static const gchar *entry_point_ids[] = {
+    "launcher",
+    "task-manager",
+    "file-manager",
+    "system-tray",
+    "notifications",
+    "compatibility-center",
+    "settings"
+  };
+  static const gchar *runtime_methods[] = {
+    "GetDesktopEntryPlan",
+    "GetTaskManagerIdentityPlan",
+    "GetFileAssociationPlan",
+    "GetTrayStatus",
+    "GetNotificationPlan",
+    "GetCompatibilityCenterSummary",
+    "GetCompatibilitySettings"
+  };
+  static const gchar *required_runtime_gates[] = {
+    "recipe-install-gate",
+    "portal-policy-review",
+    "snapshot-baseline",
+    "backend-environment-plan",
+    "backend-lifecycle-plan",
+    "runtime-write-gate"
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("kde-application-surface-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetKDEApplicationSurfacePlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "surface_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_shell", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "entry_point_count", g_variant_new_int32(7));
+  g_variant_builder_add(&plan, "{sv}", "entry_point_ids", g_variant_new_strv(entry_point_ids, 7));
+  g_variant_builder_add(&plan, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 7));
+  g_variant_builder_add(&plan, "{sv}", "required_runtime_gates", g_variant_new_strv(required_runtime_gates, 6));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "official_desktop_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "normal_linux_application_surface", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "standard_launcher_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_process_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "desktop_files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "mimeapps_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_command_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "raw_windows_executable_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
 }
 
 static GVariant *
@@ -1161,7 +1224,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(43));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(44));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1337,6 +1400,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_kde_integration_status())
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKDEApplicationSurfacePlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_kde_application_surface_plan(application_id))
     );
     return;
   }

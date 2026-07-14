@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.103] - 2026-07-14
+
+### Added
+
+- Added C Runtime KDE application surface plan records and a CLI read method that combine launcher, task manager, Dolphin, tray, notification, Compatibility Center, and settings entry points for one managed compatibility application.
+- Added `GetKDEApplicationSurfacePlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and unit coverage for KDE application surface summaries while keeping the C Runtime as the product boundary.
+
+### Changed
+
+- Extended Runtime diagnostics with KDE application surface summaries that present Windows applications as normal Linux applications while keeping backend launch, backend process starts, desktop-file writes, MIME writes, host-root mutation, raw executable exposure, backend command exposure, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.102] - 2026-07-14
 
 ### Added

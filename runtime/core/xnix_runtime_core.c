@@ -981,6 +981,7 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetDesktopEntryPlan",
     "GetTaskManagerIdentityPlan",
     "GetKDEIntegrationStatus",
+    "GetKDEApplicationSurfacePlan",
     "GetFileAssociationPlan",
     "GetNotificationPlan",
     "GetTrayStatus",
@@ -1016,40 +1017,40 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetKRunnerQueryPlan",
     "GetKWinWindowRulePlan",
   },
-  .read_only_method_count = 43,
+  .read_only_method_count = 44,
   .parity_checks = {
     {
       .id = "dbus-contract",
       .status = "pass",
-      .method_count = 43,
+      .method_count = 44,
       .missing_method_count = 0,
       .summary = "dbus-contract covers all Runtime read-only methods.",
     },
     {
       .id = "runtime-dispatch",
       .status = "pass",
-      .method_count = 43,
+      .method_count = 44,
       .missing_method_count = 0,
       .summary = "runtime-dispatch covers all Runtime read-only methods.",
     },
     {
       .id = "dbus-client",
       .status = "pass",
-      .method_count = 43,
+      .method_count = 44,
       .missing_method_count = 0,
       .summary = "dbus-client covers all Runtime read-only methods.",
     },
     {
       .id = "smoke-adapter",
       .status = "pass",
-      .method_count = 43,
+      .method_count = 44,
       .missing_method_count = 0,
       .summary = "smoke-adapter covers all Runtime read-only methods.",
     },
     {
       .id = "session-smoke",
       .status = "pass",
-      .method_count = 43,
+      .method_count = 44,
       .missing_method_count = 0,
       .summary = "session-smoke covers all Runtime read-only methods.",
     },
@@ -1989,6 +1990,7 @@ xnix_runtime_compatibility_action_queue(
 #include "xnix_runtime_core_run_plan.inc"
 #include "xnix_runtime_core_desktop_activation.inc"
 #include "xnix_runtime_core_kde_integration_status.inc"
+#include "xnix_runtime_core_kde_application_surface_plan.inc"
 #include "xnix_runtime_core_desktop_entry.inc"
 #include "xnix_runtime_core_task_manager_identity.inc"
 #include "xnix_runtime_core_kwin_window_rule.inc"

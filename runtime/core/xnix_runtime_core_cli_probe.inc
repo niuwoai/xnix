@@ -90,6 +90,8 @@ print_probe(void)
   fputs("\"desktop_activation_manifest_count\":1,", stdout);
   fputs("\"kde_integration_status_owner\":\"c\",", stdout);
   fputs("\"kde_integration_entry_point_count\":7,", stdout);
+  fputs("\"kde_application_surface_plan_owner\":\"c\",", stdout);
+  fputs("\"kde_application_surface_entry_point_count\":7,", stdout);
   fputs("\"desktop_entry_plan_owner\":\"c\",", stdout);
   fputs("\"desktop_entry_plan_count\":1,", stdout);
   fputs("\"task_manager_identity_plan_owner\":\"c\",", stdout);

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.102"
+#define XNIX_RUNTIME_VERSION "0.2.103"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -593,7 +593,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[43];
+  const char *read_only_methods[44];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -989,6 +989,54 @@ typedef struct {
   const char *desktop;
   const char *summary;
 } XnixRuntimeKDEIntegrationStatus;
+
+typedef struct {
+  const char *id;
+  const char *name;
+  const char *runtime_method;
+  const char *state;
+  bool runtime_backed;
+  bool c_runtime_backed;
+  bool kde_writes_policy;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeKDEApplicationSurfaceEntryPoint;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *surface_state;
+  const char *desktop_shell;
+  XnixRuntimeKDEApplicationSurfaceEntryPoint entry_points[7];
+  size_t entry_point_count;
+  const char *required_runtime_gates[6];
+  size_t required_runtime_gate_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool official_desktop_only;
+  bool normal_linux_application_surface;
+  bool standard_launcher_visible;
+  bool task_manager_identity_ready;
+  bool file_associations_planned;
+  bool dolphin_action_planned;
+  bool krunner_query_planned;
+  bool tray_status_planned;
+  bool notification_route_planned;
+  bool settings_surface_planned;
+  bool portal_review_required;
+  bool execution_ready;
+  bool launch_enabled;
+  bool backend_process_started;
+  bool desktop_files_written;
+  bool mimeapps_written;
+  bool host_root_modified;
+  bool backend_command_exposed;
+  bool raw_windows_executable_exposed;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeKDEApplicationSurfacePlan;
 
 typedef struct {
   const XnixRuntimeApplication *application;
@@ -1458,6 +1506,10 @@ bool xnix_runtime_desktop_activation_manifest(
 );
 bool xnix_runtime_kde_integration_status(
   XnixRuntimeKDEIntegrationStatus *status
+);
+bool xnix_runtime_kde_application_surface_plan(
+  const char *application_id,
+  XnixRuntimeKDEApplicationSurfacePlan *plan
 );
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,

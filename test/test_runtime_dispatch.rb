@@ -280,6 +280,16 @@ assert(backend_environment_plan["plan_type"] == "compatibility-backend-environme
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKDEApplicationSurfacePlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetKDEApplicationSurfacePlan must exit successfully: #{stderr}")
+kde_application_surface_plan = JSON.parse(stdout)
+assert(kde_application_surface_plan["plan_type"] == "kde-application-surface-plan", "dispatch must route GetKDEApplicationSurfacePlan")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

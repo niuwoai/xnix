@@ -26,6 +26,7 @@ require_relative "compatibility_test_result"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "file_association_model"
+require_relative "kde_application_surface_plan"
 require_relative "launch_request"
 require_relative "notification_request"
 require_relative "portal_access_policy"
@@ -85,6 +86,7 @@ module Xnix
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
             "kde_integration_status" => true,
+            "kde_application_surface_plans" => true,
             "desktop_entry_planning" => true,
             "task_manager_identity_planning" => true,
             "kwin_window_rule_planning" => true,
@@ -152,6 +154,7 @@ module Xnix
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
+          "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "file_association_plan" => file_association_plan_summary(recipe),
@@ -217,6 +220,11 @@ module Xnix
           "backend_details_exposed" => false,
           "desktop_safe_summary" => "KDE Plasma is the only official first-release shell, and all seven entry points are Runtime-backed."
         }
+      end
+
+      def kde_application_surface_plan(application_id)
+        recipe = require_recipe(application_id)
+        KDEApplicationSurfacePlan.new(recipe: recipe).to_h
       end
 
       def desktop_entry_plan(application_id)
@@ -654,6 +662,8 @@ module Xnix
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
         when "GetKDEIntegrationStatus"
           kde_integration_status
+        when "GetKDEApplicationSurfacePlan"
+          kde_application_surface_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopEntryPlan"
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
@@ -1012,6 +1022,22 @@ module Xnix
           "backend_commands_exposed" => manifest.fetch("safety").fetch("backend_commands_exposed"),
           "portal_required_for_file_access" => manifest.fetch("safety").fetch("portal_required_for_file_access"),
           "host_privilege_required" => manifest.fetch("safety").fetch("host_privilege_required")
+        }
+      end
+
+      def kde_application_surface_plan_summary(recipe)
+        plan = kde_application_surface_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "surface_state" => plan.fetch("surface_state"),
+          "desktop_shell" => plan.fetch("desktop_shell"),
+          "entry_point_count" => plan.fetch("entry_point_count"),
+          "normal_linux_application_surface" => plan.fetch("normal_linux_application_surface"),
+          "standard_launcher_visible" => plan.fetch("standard_launcher_visible"),
+          "launch_enabled" => plan.fetch("launch_enabled"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
         }
       end
 
@@ -1479,6 +1505,8 @@ module Xnix
             write_json(runtime.backend_environment_plan(require_argument(command)))
           when "kde-integration-status"
             write_json(runtime.kde_integration_status)
+          when "kde-application-surface-plan"
+            write_json(runtime.kde_application_surface_plan(require_argument(command)))
           when "desktop-entry-plan"
             write_json(runtime.desktop_entry_plan(require_argument(command)))
           when "task-manager-identity-plan"

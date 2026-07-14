@@ -127,6 +127,18 @@ begin
   assert(stdout.include?("GetDesktopEntryPlan"), "runtime smoke adapter KDE status must expose Runtime method coverage")
 
   stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKDEApplicationSurfacePlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKDEApplicationSurfacePlan: #{stderr}")
+  assert(stdout.include?("kde-application-surface-plan"), "runtime smoke adapter must expose KDE application surface plans over D-Bus")
+  assert(stdout.include?("normal_linux_application_surface"), "runtime smoke adapter must keep Windows applications desktop-native")
+
+  stdout, stderr, status = Open3.capture3(
     "ruby",
     "bin/xnix-kde-integration-status",
     "--source",
