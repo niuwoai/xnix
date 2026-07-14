@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.100] - 2026-07-14
+
+### Changed
+
+- Split the C Runtime CLI probe output into `xnix_runtime_core_cli_probe.inc` so the main CLI translation unit stays below the repository file-size guardrail.
+- Kept the C Runtime probe contract unchanged while preparing the CLI surface for additional Runtime-owned KDE and compatibility planning reads.
+
 ## [0.2.99] - 2026-07-14
 
 ### Added

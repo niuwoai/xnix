@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.99"
+EXPECTED_VERSION = "0.2.100"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -155,6 +155,7 @@ REQUIRED_FILES = %w[
   runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc
   runtime/core/xnix_runtime_core_ai_repair_approval_gate.inc
   runtime/core/xnix_runtime_core_cli.c
+  runtime/core/xnix_runtime_core_cli_probe.inc
   runtime/core/xnix_runtime_core_cli_action_queue.inc
   runtime/core/xnix_runtime_core_cli_action_review.inc
   runtime/core/xnix_runtime_core_cli_compatibility_center.inc
@@ -474,6 +475,7 @@ c_runtime_core_source = read_project_file("runtime/core/xnix_runtime_core.c") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_repair_approval_gate.inc")
 c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c") +
+                     read_project_file("runtime/core/xnix_runtime_core_cli_probe.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_action_queue.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_action_review.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_center.inc") +
