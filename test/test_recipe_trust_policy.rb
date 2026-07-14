@@ -21,7 +21,7 @@ registry_report = Xnix::Compatibility::RecipeRegistry.new(
 ).verify
 policy = Xnix::Compatibility::RecipeTrustPolicy.new(registry_report: registry_report).to_h
 
-assert(policy["version"] == "0.2.131", "recipe trust policy must expose the current version")
+assert(policy["version"] == "0.2.132", "recipe trust policy must expose the current version")
 assert(policy["policy_type"] == "recipe-trust", "recipe trust policy must identify the model type")
 assert(policy["decision"] == "development-only", "development registry must not be production-trusted")
 assert(policy["recipe_count"] == 1, "recipe trust policy must report recipe count")
@@ -35,7 +35,7 @@ assert(status.success?, "recipe trust policy CLI must exit successfully: #{stder
 assert(JSON.parse(stdout) == policy, "recipe trust policy CLI must emit the policy model")
 
 trusted_report = {
-  "version" => "0.2.131",
+  "version" => "0.2.132",
   "schema_version" => 1,
   "registry_name" => "trusted",
   "registry_path" => "/dev/null",

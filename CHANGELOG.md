@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.132] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-request-preview --registry <path> --app <id> [file://...]` for read-only KDE execution-request intake previews from digest-verified registry recipes.
+- Added Go Runtime request-intake planning that turns KDE launch intent into a blocked, non-persistent execution request preview with launch-intent summary, Runtime gate summary, selected file routing, write-gate denial metadata, and safety flags before any request object can be created.
+- Added Go and Ruby harness coverage that verifies execution-request previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, Portal-aware, backend-detail-free, host-root-safe, and honest about request persistence, permissions, execution, and profile binding remaining disabled.
+
+### Changed
+
+- Moved the user-visible execution-request intake surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for forwarding launch intent and presenting review state only.
+
 ## [0.2.131] - 2026-07-15
 
 ### Added

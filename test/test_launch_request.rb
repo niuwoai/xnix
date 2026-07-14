@@ -20,7 +20,7 @@ request = Xnix::Compatibility::LaunchRequest.new(recipe_store: store).build(
   application_id: "org.xnix.sample.notepad"
 )
 
-assert(request["version"] == "0.2.131", "launch request must expose the current version")
+assert(request["version"] == "0.2.132", "launch request must expose the current version")
 assert(request["intent_type"] == "runtime-launch-intent", "launch request must identify the Runtime launch intent")
 assert(request["request_type"] == "launch-application", "launch request must identify the request type")
 assert(request["source"] == "desktop-launcher", "launch request must identify the desktop source")
