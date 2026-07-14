@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|permission-review-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -38,6 +38,8 @@ func run(args []string, stdout io.Writer) error {
 		return runMIMEAppsPreview(args[1:], stdout)
 	case "notification-preview":
 		return runNotificationPreview(args[1:], stdout)
+	case "permission-review-preview":
+		return runPermissionReviewPreview(args[1:], stdout)
 	case "settings-preview":
 		return runSettingsPreview(args[1:], stdout)
 	case "tray-status-preview":
@@ -175,6 +177,25 @@ func runSettingsPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.SettingsPreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runPermissionReviewPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("permission-review-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.PermissionReviewPreview()
 	if err != nil {
 		return err
 	}

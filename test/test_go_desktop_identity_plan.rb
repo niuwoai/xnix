@@ -58,6 +58,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("permission-review-preview"), "Go Runtime CLI must render KDE permission review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
@@ -330,6 +331,53 @@ if go_available
   assert(!settings.downcase.include?("prefix"), "settings preview must not expose implementation storage")
   assert(!settings.include?(".exe"), "settings preview must not expose a Windows executable")
   assert(!settings.downcase.include?("proton"), "settings preview must not expose backend implementation names")
+
+  permission_review, permission_review_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "permission-review-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(permission_review_status.success?, "Go permission review preview CLI must run successfully")
+  permission_payload = JSON.parse(permission_review)
+  assert(permission_payload.fetch("schema_version") == "xnix.runtime.permission_review.v1", "permission review preview schema version must be stable")
+  assert(permission_payload.fetch("request_type") == "permission-review-preview", "permission review preview must identify its request type")
+  assert(permission_payload.fetch("plan_type") == "compatibility-permission-review-plan", "permission review preview must identify the Runtime plan type")
+  assert(permission_payload.fetch("source") == "unified-settings", "permission review preview must identify the KDE settings source")
+  assert(permission_payload.fetch("desktop") == "KDE Plasma", "permission review preview must target KDE Plasma")
+  assert(permission_payload.fetch("runtime_method") == "GetCompatibilityPermissionReviewPlan", "permission review preview must expose the Runtime method")
+  assert(permission_payload.fetch("application_id") == recipe.id, "permission review preview must preserve application identity")
+  assert(permission_payload.fetch("display_name") == recipe.name, "permission review preview must preserve display names")
+  assert(permission_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "permission review preview must bind generated desktop files")
+  assert(permission_payload.fetch("review_state") == "planned", "permission review preview must stay planned")
+  assert(permission_payload.fetch("permission_count") == 7, "permission review preview must expose seven permissions")
+  assert(permission_payload.fetch("allow_count") == 1, "permission review preview must count allowed defaults")
+  assert(permission_payload.fetch("ask_count") == 5, "permission review preview must count ask defaults")
+  assert(permission_payload.fetch("deny_count") == 1, "permission review preview must count denied defaults")
+  assert(permission_payload.fetch("permissions").map { |permission| permission.fetch("id") } == %w[documents downloads camera network clipboard print screenshot], "permission review preview must preserve permission order")
+  assert(permission_payload.fetch("permissions").find { |permission| permission.fetch("id") == "network" }.fetch("decision") == "allow", "permission review preview must expose network defaults")
+  assert(permission_payload.fetch("permissions").find { |permission| permission.fetch("id") == "camera" }.fetch("decision") == "deny", "permission review preview must expose camera defaults")
+  assert(permission_payload.fetch("permissions").all? { |permission| !permission.fetch("change_pending") }, "permission review preview must not mark pending changes")
+  assert(permission_payload.fetch("permissions").all? { |permission| !permission.fetch("request_object_created") }, "permission review preview must not create request objects")
+  assert(permission_payload.fetch("permissions").all? { |permission| !permission.fetch("permission_granted") }, "permission review preview must not grant permissions")
+  assert(permission_payload.fetch("permissions").all? { |permission| !permission.fetch("direct_access_allowed") }, "permission review preview must not allow direct access")
+  assert(permission_payload.fetch("user_review_required") == true, "permission review preview must require user review")
+  assert(permission_payload.fetch("portal_review_required") == true, "permission review preview must require Portal review")
+  assert(permission_payload.fetch("permission_changes_applied") == false, "permission review preview must not apply permission changes")
+  assert(permission_payload.fetch("request_objects_created") == false, "permission review preview must not create request objects")
+  assert(permission_payload.fetch("permissions_granted") == false, "permission review preview must not grant permissions")
+  assert(permission_payload.fetch("settings_persisted") == false, "permission review preview must not persist settings")
+  assert(permission_payload.fetch("settings_persistence_enabled") == false, "permission review preview must keep settings persistence disabled")
+  assert(permission_payload.fetch("host_permission_changed") == false, "permission review preview must not change host permissions")
+  assert(permission_payload.fetch("host_root_modified") == false, "permission review preview must not mutate the host root")
+  assert(permission_payload.fetch("backend_details_exposed") == false, "permission review preview must not expose backend details")
+  assert(!permission_review.downcase.include?("prefix"), "permission review preview must not expose implementation storage")
+  assert(!permission_review.include?(".exe"), "permission review preview must not expose a Windows executable")
+  assert(!permission_review.downcase.include?("proton"), "permission review preview must not expose backend implementation names")
 
   tray_status, tray_status_result = capture_runtime_go(
     project_root,

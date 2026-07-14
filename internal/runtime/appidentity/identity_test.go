@@ -356,6 +356,76 @@ func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
 	}
 }
 
+func TestPermissionReviewPreviewKeepsPermissionGatesClosed(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.PermissionReviewPreview()
+	if err != nil {
+		t.Fatalf("PermissionReviewPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.permission_review.v1" ||
+		preview.RequestType != "permission-review-preview" ||
+		preview.PlanType != "compatibility-permission-review-plan" {
+		t.Fatalf("unexpected permission review schema: %#v", preview)
+	}
+	if preview.Source != "unified-settings" || preview.Desktop != "KDE Plasma" ||
+		preview.RuntimeMethod != "GetCompatibilityPermissionReviewPlan" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected permission review identity: %#v", preview)
+	}
+	if preview.ReviewState != "planned" || preview.PermissionCount != 7 ||
+		preview.AllowCount != 1 || preview.AskCount != 5 || preview.DenyCount != 1 {
+		t.Fatalf("unexpected permission counts: %#v", preview)
+	}
+	if got, want := permissionReviewIDs(preview.Permissions), []string{"documents", "downloads", "camera", "network", "clipboard", "print", "screenshot"}; !sameStrings(got, want) {
+		t.Fatalf("permission ids = %#v, want %#v", got, want)
+	}
+	if permissionDecision(preview.Permissions, "network") != "allow" ||
+		permissionDecision(preview.Permissions, "camera") != "deny" ||
+		permissionDecision(preview.Permissions, "documents") != "ask" {
+		t.Fatalf("unexpected permission decisions: %#v", preview.Permissions)
+	}
+	for _, permission := range preview.Permissions {
+		if permission.ChangePending || permission.RequestObjectCreated ||
+			permission.PermissionGranted || permission.DirectAccessAllowed ||
+			permission.BackendDetailsExposed {
+			t.Fatalf("permission gate unexpectedly open: %#v", permission)
+		}
+	}
+	if !sameStrings(preview.RequiredRuntimeGates, []string{"user-review", "portal-policy-review", "runtime-write-gate", "settings-persistence", "audit-log"}) {
+		t.Fatalf("required gates = %#v", preview.RequiredRuntimeGates)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		!preview.UserReviewRequired || !preview.PortalReviewRequired ||
+		preview.PermissionChangesApplied || preview.RequestObjectsCreated ||
+		preview.PermissionsGranted || preview.SettingsPersisted ||
+		preview.SettingsPersistenceEnabled || preview.HostPermissionChanged ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected permission safety flags: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("permission review preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 	preview, err := NewKRunnerQueryPreview([]Recipe{
 		{
@@ -610,6 +680,23 @@ func settingFieldValue(sections []SettingsSection, sectionID string, fieldID str
 			if field.ID == fieldID {
 				return field.Value
 			}
+		}
+	}
+	return ""
+}
+
+func permissionReviewIDs(permissions []PermissionReviewEntry) []string {
+	ids := make([]string, 0, len(permissions))
+	for _, permission := range permissions {
+		ids = append(ids, permission.ID)
+	}
+	return ids
+}
+
+func permissionDecision(permissions []PermissionReviewEntry, permissionID string) string {
+	for _, permission := range permissions {
+		if permission.ID == permissionID {
+			return permission.Decision
 		}
 	}
 	return ""

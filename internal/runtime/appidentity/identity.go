@@ -222,6 +222,63 @@ type SettingsField struct {
 	Options []string `json:"options"`
 }
 
+type PermissionReviewPreview struct {
+	SchemaVersion              string                  `json:"schema_version"`
+	RequestType                string                  `json:"request_type"`
+	PlanType                   string                  `json:"plan_type"`
+	Source                     string                  `json:"source"`
+	Desktop                    string                  `json:"desktop"`
+	RuntimeMethod              string                  `json:"runtime_method"`
+	ApplicationID              string                  `json:"application_id"`
+	DisplayName                string                  `json:"display_name"`
+	Icon                       string                  `json:"icon"`
+	DesktopFile                string                  `json:"desktop_file"`
+	ReviewState                string                  `json:"review_state"`
+	Permissions                []PermissionReviewEntry `json:"permissions"`
+	PermissionCount            int                     `json:"permission_count"`
+	AllowCount                 int                     `json:"allow_count"`
+	AskCount                   int                     `json:"ask_count"`
+	DenyCount                  int                     `json:"deny_count"`
+	RequiredRuntimeGates       []string                `json:"required_runtime_gates"`
+	RuntimeOwned               bool                    `json:"runtime_owned"`
+	KDEPolicyOwner             bool                    `json:"kde_policy_owner"`
+	UserVisible                bool                    `json:"user_visible"`
+	UserReviewRequired         bool                    `json:"user_review_required"`
+	PortalReviewRequired       bool                    `json:"portal_review_required"`
+	PermissionChangesApplied   bool                    `json:"permission_changes_applied"`
+	RequestObjectsCreated      bool                    `json:"request_objects_created"`
+	PermissionsGranted         bool                    `json:"permissions_granted"`
+	SettingsPersisted          bool                    `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool                    `json:"settings_persistence_enabled"`
+	HostPermissionChanged      bool                    `json:"host_permission_changed"`
+	HostRootModified           bool                    `json:"host_root_modified"`
+	BackendDetailsExposed      bool                    `json:"backend_details_exposed"`
+	UserFacingSettings         map[string]string       `json:"user_facing_settings"`
+	Summary                    PermissionReviewSummary `json:"summary"`
+}
+
+type PermissionReviewEntry struct {
+	ID                    string `json:"id"`
+	Label                 string `json:"label"`
+	Operation             string `json:"operation"`
+	Decision              string `json:"decision"`
+	PortalInterface       string `json:"portal_interface"`
+	PortalRequired        bool   `json:"portal_required"`
+	UserMediationRequired bool   `json:"user_mediation_required"`
+	CurrentValue          string `json:"current_value"`
+	RequestedValue        string `json:"requested_value"`
+	ChangePending         bool   `json:"change_pending"`
+	RequestObjectCreated  bool   `json:"request_object_created"`
+	PermissionGranted     bool   `json:"permission_granted"`
+	DirectAccessAllowed   bool   `json:"direct_access_allowed"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+}
+
+type PermissionReviewSummary struct {
+	Headline string `json:"headline"`
+	Detail   string `json:"detail"`
+}
+
 type KRunnerQueryPreview struct {
 	SchemaVersion         string         `json:"schema_version"`
 	QueryType             string         `json:"query_type"`
@@ -805,6 +862,105 @@ func settingsField(id string, label string, value string, options []string) Sett
 		Label:   label,
 		Value:   value,
 		Options: options,
+	}
+}
+
+func (plan Plan) PermissionReviewPreview() (PermissionReviewPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return PermissionReviewPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {
+		if !singleLine(value) {
+			return PermissionReviewPreview{}, errors.New("permission review preview requires single-line identity fields")
+		}
+	}
+
+	permissions := defaultPermissionReviewEntries()
+	allowCount := 0
+	askCount := 0
+	denyCount := 0
+	for _, permission := range permissions {
+		switch permission.Decision {
+		case "allow":
+			allowCount++
+		case "ask":
+			askCount++
+		case "deny":
+			denyCount++
+		}
+	}
+
+	preview := PermissionReviewPreview{
+		SchemaVersion:              "xnix.runtime.permission_review.v1",
+		RequestType:                "permission-review-preview",
+		PlanType:                   "compatibility-permission-review-plan",
+		Source:                     "unified-settings",
+		Desktop:                    "KDE Plasma",
+		RuntimeMethod:              "GetCompatibilityPermissionReviewPlan",
+		ApplicationID:              plan.ApplicationID,
+		DisplayName:                plan.DisplayName,
+		Icon:                       plan.Icon,
+		DesktopFile:                plan.DesktopFile,
+		ReviewState:                "planned",
+		Permissions:                permissions,
+		PermissionCount:            len(permissions),
+		AllowCount:                 allowCount,
+		AskCount:                   askCount,
+		DenyCount:                  denyCount,
+		RequiredRuntimeGates:       []string{"user-review", "portal-policy-review", "runtime-write-gate", "settings-persistence", "audit-log"},
+		RuntimeOwned:               true,
+		KDEPolicyOwner:             false,
+		UserVisible:                true,
+		UserReviewRequired:         true,
+		PortalReviewRequired:       true,
+		PermissionChangesApplied:   false,
+		RequestObjectsCreated:      false,
+		PermissionsGranted:         false,
+		SettingsPersisted:          false,
+		SettingsPersistenceEnabled: false,
+		HostPermissionChanged:      false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		UserFacingSettings:         plan.UserFacingSettings,
+		Summary: PermissionReviewSummary{
+			Headline: "KDE can review compatibility permissions before access changes.",
+			Detail:   "The Runtime groups file, device, network, clipboard, print, and screenshot permissions while keeping changes and grants disabled.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "permission review preview"); err != nil {
+		return PermissionReviewPreview{}, err
+	}
+	return preview, nil
+}
+
+func defaultPermissionReviewEntries() []PermissionReviewEntry {
+	return []PermissionReviewEntry{
+		permissionReviewEntry("documents", "Documents", "file-open", "ask", "org.freedesktop.portal.FileChooser", true),
+		permissionReviewEntry("downloads", "Downloads", "file-open", "ask", "org.freedesktop.portal.FileChooser", true),
+		permissionReviewEntry("camera", "Camera", "camera", "deny", "org.freedesktop.portal.Camera", true),
+		permissionReviewEntry("network", "Network", "network", "allow", "none", false),
+		permissionReviewEntry("clipboard", "Clipboard", "clipboard", "ask", "org.freedesktop.portal.Clipboard", true),
+		permissionReviewEntry("print", "Print", "print", "ask", "org.freedesktop.portal.Print", true),
+		permissionReviewEntry("screenshot", "Screenshot", "screenshot", "ask", "org.freedesktop.portal.Screenshot", true),
+	}
+}
+
+func permissionReviewEntry(id string, label string, operation string, decision string, portalInterface string, portalRequired bool) PermissionReviewEntry {
+	return PermissionReviewEntry{
+		ID:                    id,
+		Label:                 label,
+		Operation:             operation,
+		Decision:              decision,
+		PortalInterface:       portalInterface,
+		PortalRequired:        portalRequired,
+		UserMediationRequired: true,
+		CurrentValue:          decision,
+		RequestedValue:        decision,
+		ChangePending:         false,
+		RequestObjectCreated:  false,
+		PermissionGranted:     false,
+		DirectAccessAllowed:   false,
+		BackendDetailsExposed: false,
 	}
 }
 

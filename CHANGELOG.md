@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.123] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go permission-review-preview --registry <path> --app <id>` for read-only KDE permission review previews from digest-verified registry recipes.
+- Added Go Runtime permission review planning for documents, downloads, camera, network, clipboard, print, and screenshot decisions with Portal metadata and Runtime gate summaries.
+- Added Go and Ruby harness coverage that verifies permission review previews remain Runtime-owned, KDE-targeted, Portal-review-required, backend-detail-free, host-root-safe, and honest about request objects, permission grants, direct access, settings persistence, and host permission changes remaining disabled.
+
+### Changed
+
+- Moved the user-visible permission review surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for review presentation only.
+
 ## [0.2.122] - 2026-07-15
 
 ### Added
