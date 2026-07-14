@@ -925,6 +925,140 @@ func TestExecutionResourceGrantPreviewCommandKeepsPermissionsUngrantable(t *test
 	}
 }
 
+func TestExecutionTransactionPreviewCommandBlocksCommitAndLaunch(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-transaction-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.launch_transaction.v1" ||
+		payload["request_type"] != "execution-transaction-preview" ||
+		payload["transaction_type"] != "compatibility-launch-transaction" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-resource-grant-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionTransactionPreview" {
+		t.Fatalf("unexpected execution transaction schema: %#v", payload)
+	}
+	resourceGrant := payload["resource_grant"].(map[string]any)
+	if resourceGrant["request_type"] != "execution-resource-grant-preview" ||
+		resourceGrant["grant_type"] != "compatibility-launch-resource-grant" ||
+		resourceGrant["grant_count"] != float64(7) ||
+		resourceGrant["portal_required_count"] != float64(6) ||
+		resourceGrant["pending_review_count"] != float64(5) ||
+		resourceGrant["grant_plan_created"] != true ||
+		resourceGrant["grant_objects_created"] != false ||
+		resourceGrant["permission_granted"] != false ||
+		resourceGrant["resource_bridges_enabled"] != false {
+		t.Fatalf("unexpected transaction resource grant: %#v", resourceGrant)
+	}
+	readiness := payload["readiness"].(map[string]any)
+	if readiness["request_type"] != "execution-readiness-preview" ||
+		readiness["readiness_type"] != "compatibility-execution-readiness" ||
+		readiness["execution_state"] != "blocked" ||
+		readiness["overall_status"] != "not-ready" ||
+		readiness["gate_count"] != float64(5) ||
+		readiness["launch_allowed"] != false ||
+		readiness["launch_enabled"] != false ||
+		readiness["backend_binding_ready"] != false {
+		t.Fatalf("unexpected transaction readiness: %#v", readiness)
+	}
+	backendBinding := payload["backend_binding"].(map[string]any)
+	if backendBinding["recommended_profile_id"] != "local-compatibility" ||
+		backendBinding["candidate_count"] != float64(2) ||
+		backendBinding["ready_candidate_count"] != float64(0) ||
+		backendBinding["blocked_candidate_count"] != float64(2) ||
+		backendBinding["binding_required"] != true ||
+		backendBinding["binding_committed"] != false ||
+		backendBinding["environment_created"] != false ||
+		backendBinding["backend_launch_enabled"] != false {
+		t.Fatalf("unexpected backend binding: %#v", backendBinding)
+	}
+	snapshot := payload["snapshot_baseline"].(map[string]any)
+	if snapshot["required"] != true ||
+		snapshot["state"] != "required" ||
+		snapshot["baseline_created"] != false ||
+		snapshot["restore_point_available"] != false ||
+		snapshot["user_documents_included"] != false ||
+		snapshot["host_system_included"] != false {
+		t.Fatalf("unexpected snapshot baseline: %#v", snapshot)
+	}
+	writeGate := payload["write_gate"].(map[string]any)
+	if writeGate["method_name"] != "Launch" ||
+		writeGate["gate_decision"] != "blocked-until-production-backend" ||
+		writeGate["denial_error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" ||
+		writeGate["write_method_enabled"] != false ||
+		writeGate["dispatch_enabled"] != false ||
+		writeGate["request_object_created"] != false {
+		t.Fatalf("unexpected write gate: %#v", writeGate)
+	}
+	if payload["step_count"] != float64(7) ||
+		payload["passed_step_count"] != float64(2) ||
+		payload["required_step_count"] != float64(2) ||
+		payload["pending_step_count"] != float64(2) ||
+		payload["blocked_step_count"] != float64(1) {
+		t.Fatalf("unexpected transaction step counts: %#v", payload)
+	}
+	steps := payload["transaction_steps"].([]any)
+	if len(steps) != 7 ||
+		steps[0].(map[string]any)["id"] != "identity-validation" ||
+		steps[1].(map[string]any)["id"] != "user-decision" ||
+		steps[1].(map[string]any)["status"] != "pass" ||
+		steps[2].(map[string]any)["id"] != "portal-resource-review" ||
+		steps[3].(map[string]any)["id"] != "resource-grant-objects" ||
+		steps[4].(map[string]any)["id"] != "snapshot-baseline" ||
+		steps[5].(map[string]any)["id"] != "backend-binding" ||
+		steps[6].(map[string]any)["id"] != "runtime-launch-write-gate" ||
+		steps[6].(map[string]any)["status"] != "blocked" {
+		t.Fatalf("unexpected transaction steps: %#v", steps)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["transaction_plan_created"] != true ||
+		payload["transaction_committed"] != false ||
+		payload["readiness_passed"] != false ||
+		payload["resource_grants_committed"] != false ||
+		payload["portal_approval_recorded"] != false ||
+		payload["snapshot_baseline_created"] != false ||
+		payload["backend_binding_committed"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["host_permission_changed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution transaction safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
