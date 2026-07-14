@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -30,6 +30,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
+	case "file-open-preview":
+		return runFileOpenPreview(args[1:], stdout)
 	case "krunner-query-preview":
 		return runKRunnerQueryPreview(args[1:], stdout)
 	case "mimeapps-preview":
@@ -53,6 +55,21 @@ func runCompatibilityCenterPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := appidentity.NewCompatibilityCenterPreview(recipes, provenance)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runFileOpenPreview(args []string, stdout io.Writer) error {
+	recipes, provenance, applicationID, fileURIs, err := parseFileOpenPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewFileOpenPreview(recipes, provenance, fileURIs, applicationID)
 	if err != nil {
 		return err
 	}
@@ -272,6 +289,27 @@ func parseRegistryPreviewSource(commandName string, args []string) ([]appidentit
 	}
 
 	return appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+}
+
+func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	flags := flag.NewFlagSet("file-open-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to use for the file-open preview")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	if err := flags.Parse(args); err != nil {
+		return nil, appidentity.Provenance{}, "", nil, err
+	}
+	if *registryPath == "" {
+		return nil, appidentity.Provenance{}, "", nil, errors.New("file-open-preview requires --registry")
+	}
+	fileURIs := flags.Args()
+	if len(fileURIs) == 0 {
+		return nil, appidentity.Provenance{}, "", nil, errors.New("file-open-preview requires at least one file URI")
+	}
+
+	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+	return recipes, provenance, *applicationID, fileURIs, err
 }
 
 func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, error) {

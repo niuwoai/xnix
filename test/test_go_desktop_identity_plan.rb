@@ -54,6 +54,7 @@ assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop 
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
@@ -160,6 +161,45 @@ if go_available
   assert(!center.downcase.include?("prefix"), "Compatibility Center preview must not expose implementation storage")
   assert(!center.include?(".exe"), "Compatibility Center preview must not expose a Windows executable")
   assert(!center.downcase.include?("proton"), "Compatibility Center preview must not expose backend implementation names")
+
+  file_open, file_open_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "file-open-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(file_open_status.success?, "Go file-open preview CLI must run successfully")
+  file_open_payload = JSON.parse(file_open)
+  assert(file_open_payload.fetch("schema_version") == "xnix.runtime.file_open.v1", "file-open preview schema version must be stable")
+  assert(file_open_payload.fetch("request_type") == "file-open-preview", "file-open preview must identify its request type")
+  assert(file_open_payload.fetch("source") == "dolphin-service-menu", "file-open preview must identify the Dolphin source")
+  assert(file_open_payload.fetch("desktop") == "KDE Plasma", "file-open preview must target KDE Plasma")
+  assert(file_open_payload.fetch("application_id") == recipe.id, "file-open preview must resolve applications by extension")
+  assert(file_open_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "file-open preview must bind generated desktop files")
+  assert(file_open_payload.fetch("runtime_method") == "Launch", "file-open preview must target the Runtime launch method")
+  assert(file_open_payload.fetch("portal_required") == true, "file-open preview must require Portal mediation")
+  assert(file_open_payload.fetch("portal_interface") == "org.freedesktop.portal.FileChooser", "file-open preview must target the FileChooser Portal")
+  assert(file_open_payload.fetch("portal_method") == "OpenFile", "file-open preview must target the OpenFile Portal method")
+  assert(file_open_payload.fetch("file_count") == 1, "file-open preview must count selected files")
+  assert(file_open_payload.fetch("file_uris") == ["file:///home/test/Documents/example.txt"], "file-open preview must preserve file URIs")
+  assert(file_open_payload.fetch("selected_extension") == ".txt", "file-open preview must expose the selected extension")
+  assert(file_open_payload.fetch("selection_mode") == "extension-match", "file-open preview must select by extension when no app is provided")
+  assert(file_open_payload.fetch("action").fetch("type") == "runtime-file-open", "file-open preview must expose a Runtime file-open action")
+  assert(file_open_payload.fetch("action").fetch("argv") == ["xnix-compat-open", "--app", recipe.id, "%U"], "file-open preview must delegate to the managed file-open command")
+  assert(file_open_payload.fetch("runtime_owned") == true, "file-open preview must remain Runtime-owned")
+  assert(file_open_payload.fetch("kde_policy_owner") == false, "file-open preview must not make KDE own backend policy")
+  assert(file_open_payload.fetch("request_object_created") == false, "file-open preview must not create request objects")
+  assert(file_open_payload.fetch("permission_granted") == false, "file-open preview must not grant permissions")
+  assert(file_open_payload.fetch("backend_launch_enabled") == false, "file-open preview must not launch backends")
+  assert(file_open_payload.fetch("direct_host_file_access") == false, "file-open preview must not directly access host files")
+  assert(file_open_payload.fetch("host_root_modified") == false, "file-open preview must not mutate the host root")
+  assert(file_open_payload.fetch("backend_details_exposed") == false, "file-open preview must not expose backend details")
+  assert(!file_open.downcase.include?("prefix"), "file-open preview must not expose implementation storage")
+  assert(!file_open.include?(".exe"), "file-open preview must not expose a Windows executable")
+  assert(!file_open.downcase.include?("proton"), "file-open preview must not expose backend implementation names")
 
   krunner, krunner_status = capture_runtime_go(
     project_root,

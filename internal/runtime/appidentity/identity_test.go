@@ -510,6 +510,75 @@ func TestCompatibilityCenterPreviewSummarizesApplicationsSafely(t *testing.T) {
 	}
 }
 
+func TestFileOpenPreviewRequiresPortalAndSelectsByExtension(t *testing.T) {
+	preview, err := NewFileOpenPreview([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".xls", ".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, []string{"file:///home/test/Documents/book.xls"}, "")
+	if err != nil {
+		t.Fatalf("NewFileOpenPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.file_open.v1" || preview.RequestType != "file-open-preview" {
+		t.Fatalf("unexpected file-open schema: %#v", preview)
+	}
+	if preview.Source != "dolphin-service-menu" || preview.Desktop != "KDE Plasma" ||
+		preview.ApplicationID != "org.example.ledger" || preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected file-open identity: %#v", preview)
+	}
+	if preview.RuntimeMethod != "Launch" || !preview.PortalRequired ||
+		preview.PortalInterface != "org.freedesktop.portal.FileChooser" ||
+		preview.PortalMethod != "OpenFile" {
+		t.Fatalf("unexpected Portal metadata: %#v", preview)
+	}
+	if preview.FileCount != 1 || !sameStrings(preview.FileURIs, []string{"file:///home/test/Documents/book.xls"}) ||
+		preview.SelectedExtension != ".xls" || preview.SelectionMode != "extension-match" {
+		t.Fatalf("unexpected file selection: %#v", preview)
+	}
+	if preview.Action.Type != "runtime-file-open" ||
+		!sameStrings(preview.Action.Argv, []string{"xnix-compat-open", "--app", "org.example.ledger", "%U"}) {
+		t.Fatalf("unexpected file-open action: %#v", preview.Action)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.RequestObjectCreated || preview.PermissionGranted ||
+		preview.BackendLaunchEnabled || preview.DirectHostFileAccess ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected file-open safety flags: %#v", preview)
+	}
+
+	explicit, err := NewFileOpenPreview([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}}, Provenance{Source: "registry"}, []string{"file:///home/test/Documents/other.txt"}, "org.example.ledger")
+	if err != nil {
+		t.Fatalf("explicit NewFileOpenPreview returned error: %v", err)
+	}
+	if explicit.SelectionMode != "explicit-application" || explicit.SelectedExtension != ".txt" {
+		t.Fatalf("unexpected explicit selection: %#v", explicit)
+	}
+	if _, err := NewFileOpenPreview(nil, Provenance{Source: "registry"}, []string{"https://example.invalid/file.xls"}, ""); err == nil {
+		t.Fatalf("file-open preview accepted a non-file URI")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("file-open preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

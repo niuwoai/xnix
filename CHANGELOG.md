@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.122] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go file-open-preview --registry <path> [--app <id>] file://...` for read-only Dolphin file-open previews from digest-verified registry recipes.
+- Added Go Runtime file-open planning that resolves applications by selected-file extension or explicit application id, records Portal `OpenFile` mediation, and returns the managed `xnix-compat-open --app <id> %U` action.
+- Added Go and Ruby harness coverage that verifies Dolphin file-open previews remain Runtime-owned, KDE-targeted, Portal-required, backend-detail-free, host-root-safe, and honest about request objects, permission grants, direct host file access, and backend launch remaining disabled.
+
+### Changed
+
+- Moved the Dolphin file-open entry point one step closer to Go-owned Runtime product logic while keeping Dolphin responsible for selection and presentation only.
+
 ## [0.2.121] - 2026-07-15
 
 ### Added

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -323,6 +325,47 @@ type CompatibilityCenterApp struct {
 }
 
 type CompatibilityCenterSummaryText struct {
+	Headline string `json:"headline"`
+	Detail   string `json:"detail"`
+}
+
+type FileOpenPreview struct {
+	SchemaVersion         string            `json:"schema_version"`
+	RequestType           string            `json:"request_type"`
+	Source                string            `json:"source"`
+	Desktop               string            `json:"desktop"`
+	ApplicationID         string            `json:"application_id"`
+	DisplayName           string            `json:"display_name"`
+	DesktopFile           string            `json:"desktop_file"`
+	RuntimeMethod         string            `json:"runtime_method"`
+	PortalRequired        bool              `json:"portal_required"`
+	PortalInterface       string            `json:"portal_interface"`
+	PortalMethod          string            `json:"portal_method"`
+	FileCount             int               `json:"file_count"`
+	FileURIs              []string          `json:"file_uris"`
+	SelectedExtension     string            `json:"selected_extension"`
+	SelectionMode         string            `json:"selection_mode"`
+	Action                FileOpenAction    `json:"action"`
+	RuntimeOwned          bool              `json:"runtime_owned"`
+	KDEPolicyOwner        bool              `json:"kde_policy_owner"`
+	UserVisible           bool              `json:"user_visible"`
+	RequestObjectCreated  bool              `json:"request_object_created"`
+	PermissionGranted     bool              `json:"permission_granted"`
+	BackendLaunchEnabled  bool              `json:"backend_launch_enabled"`
+	DirectHostFileAccess  bool              `json:"direct_host_file_access"`
+	HostRootModified      bool              `json:"host_root_modified"`
+	BackendDetailsExposed bool              `json:"backend_details_exposed"`
+	SupportedExtensions   []string          `json:"supported_extensions"`
+	UserFacingSettings    map[string]string `json:"user_facing_settings"`
+	Summary               FileOpenSummary   `json:"summary"`
+}
+
+type FileOpenAction struct {
+	Type string   `json:"type"`
+	Argv []string `json:"argv"`
+}
+
+type FileOpenSummary struct {
 	Headline string `json:"headline"`
 	Detail   string `json:"detail"`
 }
@@ -908,6 +951,115 @@ func compatibilityCenterApp(plan Plan, recipe Recipe) CompatibilityCenterApp {
 		BackendDetailsExposed:      false,
 		Summary:                    "KDE can display this compatibility application, but execution and repair actions remain gated in the Runtime.",
 	}
+}
+
+func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string) (FileOpenPreview, error) {
+	if len(fileURIs) == 0 {
+		return FileOpenPreview{}, errors.New("file-open preview requires at least one file URI")
+	}
+	if applicationID != "" && !idPattern.MatchString(applicationID) {
+		return FileOpenPreview{}, errors.New("application id must be a reverse-DNS identifier")
+	}
+
+	normalizedURIs, selectedExtension, err := normalizeFileURIs(fileURIs)
+	if err != nil {
+		return FileOpenPreview{}, err
+	}
+	recipe, selectionMode, err := selectFileOpenRecipe(recipes, normalizedURIs, selectedExtension, applicationID)
+	if err != nil {
+		return FileOpenPreview{}, err
+	}
+	plan, err := NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return FileOpenPreview{}, err
+	}
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return FileOpenPreview{}, err
+	}
+
+	preview := FileOpenPreview{
+		SchemaVersion:         "xnix.runtime.file_open.v1",
+		RequestType:           "file-open-preview",
+		Source:                "dolphin-service-menu",
+		Desktop:               "KDE Plasma",
+		ApplicationID:         plan.ApplicationID,
+		DisplayName:           plan.DisplayName,
+		DesktopFile:           plan.DesktopFile,
+		RuntimeMethod:         "Launch",
+		PortalRequired:        true,
+		PortalInterface:       "org.freedesktop.portal.FileChooser",
+		PortalMethod:          "OpenFile",
+		FileCount:             len(normalizedURIs),
+		FileURIs:              normalizedURIs,
+		SelectedExtension:     selectedExtension,
+		SelectionMode:         selectionMode,
+		RuntimeOwned:          true,
+		KDEPolicyOwner:        false,
+		UserVisible:           true,
+		RequestObjectCreated:  false,
+		PermissionGranted:     false,
+		BackendLaunchEnabled:  false,
+		DirectHostFileAccess:  false,
+		HostRootModified:      false,
+		BackendDetailsExposed: false,
+		SupportedExtensions:   normalizedExtensions(recipe.SupportedExtensions),
+		UserFacingSettings:    plan.UserFacingSettings,
+		Action: FileOpenAction{
+			Type: "runtime-file-open",
+			Argv: []string{"xnix-compat-open", "--app", plan.ApplicationID, "%U"},
+		},
+		Summary: FileOpenSummary{
+			Headline: "Dolphin can hand selected files to the Runtime for review.",
+			Detail:   "The request remains Portal-mediated and does not start a backend or grant file access in this preview.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "file-open preview"); err != nil {
+		return FileOpenPreview{}, err
+	}
+	return preview, nil
+}
+
+func normalizeFileURIs(fileURIs []string) ([]string, string, error) {
+	normalized := make([]string, 0, len(fileURIs))
+	selectedExtension := ""
+	for _, fileURI := range fileURIs {
+		parsed, err := url.Parse(fileURI)
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid file URI: %s", fileURI)
+		}
+		if parsed.Scheme != "file" {
+			return nil, "", errors.New("only file URIs are accepted")
+		}
+		if parsed.Path == "" || !strings.HasPrefix(parsed.Path, "/") {
+			return nil, "", errors.New("file URI must include an absolute path")
+		}
+		extension := strings.ToLower(path.Ext(parsed.Path))
+		if selectedExtension == "" {
+			selectedExtension = extension
+		}
+		normalized = append(normalized, parsed.String())
+	}
+	if selectedExtension == "" {
+		return nil, "", errors.New("selected file must have an extension")
+	}
+	return normalized, selectedExtension, nil
+}
+
+func selectFileOpenRecipe(recipes []Recipe, fileURIs []string, selectedExtension string, applicationID string) (Recipe, string, error) {
+	if applicationID != "" {
+		for _, recipe := range recipes {
+			if recipe.ID == applicationID {
+				return recipe, "explicit-application", nil
+			}
+		}
+		return Recipe{}, "", fmt.Errorf("unknown application: %s", applicationID)
+	}
+	for _, recipe := range recipes {
+		if containsString(normalizedExtensions(recipe.SupportedExtensions), selectedExtension) {
+			return recipe, "extension-match", nil
+		}
+	}
+	return Recipe{}, "", fmt.Errorf("no compatible application is registered for %s", selectedExtension)
 }
 
 func krunnerMatch(plan Plan, recipe Recipe, relevancePercent int) KRunnerMatch {
