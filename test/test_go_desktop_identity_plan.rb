@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoint-action-preview"), "Go Runtime CLI must render KDE entrypoint action previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoints-preview"), "Go Runtime CLI must render KDE entrypoint previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
@@ -1299,6 +1300,37 @@ if go_available
   assert(!kde_entrypoint_action.downcase.include?("prefix"), "KDE entrypoint action preview must not expose implementation storage")
   assert(!kde_entrypoint_action.include?(".exe"), "KDE entrypoint action preview must not expose a Windows executable")
   assert(!kde_entrypoint_action.downcase.include?("virtual machine"), "KDE entrypoint action preview must not expose implementation labels")
+
+  kde_action_queue, kde_action_queue_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-action-queue-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_action_queue_status.success?, "Go KDE action queue preview CLI must run successfully")
+  kde_action_queue_payload = JSON.parse(kde_action_queue)
+  assert(kde_action_queue_payload.fetch("schema_version") == "xnix.runtime.kde_action_queue.v1", "KDE action queue preview schema version must be stable")
+  assert(kde_action_queue_payload.fetch("request_type") == "kde-action-queue-preview", "KDE action queue preview must identify its request type")
+  assert(kde_action_queue_payload.fetch("queue_type") == "compatibility-center-kde-action-queue", "KDE action queue preview must identify its queue type")
+  assert(kde_action_queue_payload.fetch("source") == "kde-entrypoint-action-preview", "KDE action queue preview must derive from entrypoint action previews")
+  assert(kde_action_queue_payload.fetch("action_count") == 7, "KDE action queue preview must aggregate the seven first-release actions")
+  assert(kde_action_queue_payload.fetch("pending_action_count") == 7, "KDE action queue preview must keep actions pending")
+  assert(kde_action_queue_payload.fetch("portal_action_count") == 1, "KDE action queue preview must count the Portal-mediated file action")
+  assert(kde_action_queue_payload.fetch("action_queue_created") == true, "KDE action queue preview must create a read model")
+  assert(kde_action_queue_payload.fetch("action_queue_persisted") == false, "KDE action queue preview must not persist queues")
+  assert(kde_action_queue_payload.fetch("request_objects_created") == false, "KDE action queue preview must not create Runtime request objects")
+  assert(kde_action_queue_payload.fetch("execution_started") == false, "KDE action queue preview must not start execution")
+  assert(kde_action_queue_payload.fetch("host_root_modified") == false, "KDE action queue preview must not mutate the host root")
+  assert(!kde_action_queue.downcase.include?("prefix"), "KDE action queue preview must not expose implementation storage")
+  assert(!kde_action_queue.include?(".exe"), "KDE action queue preview must not expose a Windows executable")
+  assert(!kde_action_queue.downcase.include?("virtual machine"), "KDE action queue preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

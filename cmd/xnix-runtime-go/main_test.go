@@ -1504,6 +1504,51 @@ func TestKDEEntryPointActionPreviewCommandRoutesFileManagerAction(t *testing.T) 
 	}
 }
 
+func TestKDEActionQueuePreviewCommandAggregatesEntryActions(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"kde-action-queue-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.kde_action_queue.v1" ||
+		payload["request_type"] != "kde-action-queue-preview" ||
+		payload["queue_type"] != "compatibility-center-kde-action-queue" ||
+		payload["source"] != "kde-entrypoint-action-preview" ||
+		payload["action_count"] != float64(7) ||
+		payload["pending_action_count"] != float64(7) ||
+		payload["portal_action_count"] != float64(1) ||
+		payload["runtime_gate_action_count"] != float64(7) {
+		t.Fatalf("unexpected KDE action queue schema or counts: %#v", payload)
+	}
+	if payload["action_queue_created"] != true ||
+		payload["action_queue_persisted"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE action queue safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

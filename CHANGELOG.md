@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.142] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-queue-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime previews of Compatibility Center queue cards derived from the seven KDE entrypoint actions.
+- Added Go Runtime KDE action queue modeling that keeps launcher, task-manager, Dolphin, tray, notification, Compatibility Center, and settings follow-up visible to KDE without persisting queues or creating launch request objects.
+- Added Go and Ruby harness coverage that verifies KDE action queue previews remain Runtime-owned, Go-backed, KDE-targeted, Portal-aware for file actions, backend-detail-free, host-root-safe, and honest about queue persistence, desktop file writes, MIME default writes, settings persistence, notifications, task-manager activation, KWin rule application, tray bridging, request objects, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE entrypoint action contract toward a Compatibility Center queue read model while keeping KDE responsible for presentation and user interaction only.
+
 ## [0.2.141] - 2026-07-15
 
 ### Added
