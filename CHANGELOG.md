@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.133] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-review-preview --registry <path> --app <id> [file://...]` for read-only KDE Compatibility Center launch-review card previews from digest-verified registry recipes.
+- Added Go Runtime review-card planning that turns a blocked execution request preview into a non-persistent Compatibility Center request-review queue candidate with review card metadata, gate summaries, selected file routing, and write-gate denial state.
+- Added Go and Ruby harness coverage that verifies execution-review previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, Portal-aware, backend-detail-free, host-root-safe, and honest about review receipts, queue persistence, request persistence, permissions, and execution remaining disabled.
+
+### Changed
+
+- Moved the user-visible launch review card surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and navigation only.
+
 ## [0.2.132] - 2026-07-15
 
 ### Added

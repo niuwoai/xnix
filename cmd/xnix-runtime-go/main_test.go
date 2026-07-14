@@ -487,6 +487,127 @@ func TestExecutionRequestPreviewCommandKeepsRequestUncreated(t *testing.T) {
 	}
 }
 
+func TestExecutionReviewPreviewCommandRendersCompatibilityCenterCard(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-review-preview", "--registry", registryPath, "--app", "org.example.ledger", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.request_review.v1" ||
+		payload["request_type"] != "execution-review-preview" ||
+		payload["review_type"] != "compatibility-center-launch-review" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-request-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionReviewPreview" {
+		t.Fatalf("unexpected execution review schema: %#v", payload)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["application_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected execution review identity: %#v", payload)
+	}
+	request := payload["execution_request"].(map[string]any)
+	if request["schema_version"] != "xnix.runtime.request_intake.v1" ||
+		request["request_type"] != "execution-request-preview" ||
+		request["request_state"] != "blocked" ||
+		request["source"] != "runtime-launch-intent" ||
+		request["read_method"] != "GetExecutionRequestPreview" ||
+		request["portal_required"] != true ||
+		request["snapshot_required"] != true ||
+		request["file_count"] != float64(1) ||
+		request["launch_intent_captured"] != true ||
+		request["execution_request_created"] != false ||
+		request["execution_request_persisted"] != false ||
+		request["execution_started"] != false ||
+		request["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution request summary: %#v", request)
+	}
+	card := payload["review_card"].(map[string]any)
+	if card["id"] != "org.example.ledger:launch-review" ||
+		card["card_type"] != "compatibility-center-launch-review" ||
+		card["status"] != "blocked" ||
+		card["severity"] != "requires-runtime-gates" ||
+		card["user_review_required"] != true ||
+		card["runtime_approval_needed"] != true ||
+		card["primary_action"] != "Open Compatibility Center" {
+		t.Fatalf("unexpected execution review card: %#v", card)
+	}
+	queue := payload["action_queue"].(map[string]any)
+	if queue["queue_type"] != "compatibility-center-request-review-queue" ||
+		queue["action_count"] != float64(1) ||
+		queue["pending_action_count"] != float64(1) ||
+		queue["user_review_required_count"] != float64(1) ||
+		queue["execution_enabled"] != false ||
+		queue["queue_persisted"] != false ||
+		queue["review_receipt_recorded"] != false ||
+		queue["actions"].([]any)[0] != "review-launch-request" {
+		t.Fatalf("unexpected execution review queue: %#v", queue)
+	}
+	profile := payload["compatibility_profile"].(map[string]any)
+	if profile["id"] != "local-compatibility" ||
+		profile["kind"] != "local" ||
+		profile["ready"] != false ||
+		profile["launch_enabled"] != false ||
+		profile["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution review profile: %#v", profile)
+	}
+	gateSummary := payload["gate_summary"].(map[string]any)
+	if gateSummary["gate_count"] != float64(5) ||
+		gateSummary["required_gate_count"] != float64(2) ||
+		gateSummary["pending_gate_count"] != float64(1) ||
+		gateSummary["blocked_gate_count"] != float64(1) {
+		t.Fatalf("unexpected execution review gate summary: %#v", gateSummary)
+	}
+	if payload["portal_required"] != true ||
+		payload["snapshot_required"] != true ||
+		payload["file_count"] != float64(1) ||
+		payload["file_uris"].([]any)[0] != "file:///home/test/Documents/book.abc" {
+		t.Fatalf("unexpected execution review file routing: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["action_queue_candidate"] != true ||
+		payload["review_receipt_required"] != true ||
+		payload["review_receipt_recorded"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_request_created"] != false ||
+		payload["execution_request_persisted"] != false ||
+		payload["action_queue_persisted"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_binding_ready"] != false ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution review safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
