@@ -178,6 +178,42 @@ func (plan Plan) ValidateSafeForDesktop() error {
 	return nil
 }
 
+func (plan Plan) RenderDesktopEntry() (string, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return "", err
+	}
+	if !plan.StandardDesktopEntry || !plan.UserVisible {
+		return "", errors.New("desktop entry requires a standard user-visible plan")
+	}
+	if len(plan.LaunchCommand) != 4 {
+		return "", errors.New("desktop entry requires a complete managed launcher command")
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, plan.StartupWMClass} {
+		if !singleLine(value) {
+			return "", errors.New("desktop entry fields must be non-empty single-line strings")
+		}
+	}
+
+	lines := []string{
+		"[Desktop Entry]",
+		"Type=Application",
+		"Version=1.0",
+		"Name=" + plan.DisplayName,
+		"Comment=Run with Xnix Compatibility Runtime",
+		"Exec=" + strings.Join(plan.LaunchCommand, " "),
+		"Icon=" + plan.Icon,
+		"Categories=" + strings.Join(plan.Categories, ";") + ";",
+		"StartupNotify=true",
+		"StartupWMClass=" + plan.StartupWMClass,
+		"X-Xnix-ApplicationId=" + plan.ApplicationID,
+		"X-Xnix-RuntimeOwned=true",
+	}
+	if len(plan.MIMETypes) > 0 {
+		lines = append(lines, "MimeType="+strings.Join(plan.MIMETypes, ";")+";")
+	}
+	return strings.Join(lines, "\n") + "\n", nil
+}
+
 func singleLine(value string) bool {
 	return value != "" && !strings.ContainsAny(value, "\r\n")
 }

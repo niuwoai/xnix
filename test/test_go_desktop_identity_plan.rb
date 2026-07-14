@@ -29,6 +29,7 @@ assert(source.include?("BackendTerminologyHidden"), "Go plan must explicitly hid
 assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop safety validation")
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
@@ -70,6 +71,24 @@ if go_available
   %w[prefix .exe qemu-system].each do |term|
     assert(!lower.include?(term), "plan JSON must not expose #{term}")
   end
+
+  desktop_entry, entry_status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "desktop-entry-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    chdir: project_root
+  )
+  assert(entry_status.success?, "Go desktop entry preview CLI must run successfully")
+  assert(desktop_entry.include?("[Desktop Entry]\n"), "desktop entry preview must use the desktop entry header")
+  assert(desktop_entry.include?("Exec=xnix-compat-launch --app #{recipe.id} %U\n"), "desktop entry preview must use the managed Runtime launcher")
+  assert(desktop_entry.include?("X-Xnix-ApplicationId=#{recipe.id}\n"), "desktop entry preview must include the Runtime application id")
+  assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
+  assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")
 end
 
 puts "PASS: Go Runtime desktop identity plan unit tests"

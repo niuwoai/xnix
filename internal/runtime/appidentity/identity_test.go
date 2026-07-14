@@ -59,6 +59,45 @@ func TestPlanJSONHidesBackendTerminology(t *testing.T) {
 	}
 }
 
+func TestRenderDesktopEntryUsesManagedRuntimeLauncher(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	entry, err := plan.RenderDesktopEntry()
+	if err != nil {
+		t.Fatalf("RenderDesktopEntry returned error: %v", err)
+	}
+	required := []string{
+		"[Desktop Entry]\n",
+		"Type=Application\n",
+		"Name=Example Ledger\n",
+		"Exec=xnix-compat-launch --app org.example.ledger %U\n",
+		"Icon=office-chart-area\n",
+		"StartupWMClass=xnix-org.example.ledger\n",
+		"X-Xnix-ApplicationId=org.example.ledger\n",
+		"X-Xnix-RuntimeOwned=true\n",
+		"MimeType=application/x-xnix-abc;application/x-xnix-xls;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(entry, fragment) {
+			t.Fatalf("desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system"} {
+		if strings.Contains(strings.ToLower(entry), forbidden) {
+			t.Fatalf("desktop entry exposes forbidden term %q: %s", forbidden, entry)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

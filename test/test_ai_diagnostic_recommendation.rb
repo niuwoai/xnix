@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 model = Xnix::Compatibility::AIDiagnosticRecommendation.new(recipe: recipe).to_h
 recommendation_ids = model.fetch("recommendations").map { |recommendation| recommendation.fetch("id") }
 
-assert(model["version"] == "0.2.112", "AI diagnostic recommendation must expose the current version")
+assert(model["version"] == "0.2.113", "AI diagnostic recommendation must expose the current version")
 assert(model["recommendation_type"] == "ai-diagnostic-recommendation", "AI diagnostic recommendation must identify the recommendation type")
 assert(model["input_type"] == "ai-diagnostic-input", "AI diagnostic recommendation must reference the input type")
 assert(model["application"]["id"] == "org.xnix.sample.notepad", "AI diagnostic recommendation must preserve the application id")

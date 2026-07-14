@@ -41,3 +41,36 @@ func TestDesktopIdentityPlanCommandLoadsRegistryApplication(t *testing.T) {
 		t.Fatalf("unexpected registry provenance: %#v", payload)
 	}
 }
+
+func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-entry-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	entry := output.String()
+	required := []string{
+		"[Desktop Entry]\n",
+		"Name=Example Ledger\n",
+		"Exec=xnix-compat-launch --app org.example.ledger %U\n",
+		"MimeType=application/x-xnix-abc;\n",
+	}
+	for _, fragment := range required {
+		if !bytes.Contains(output.Bytes(), []byte(fragment)) {
+			t.Fatalf("desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+}

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.113] - 2026-07-15
+
+### Added
+
+- Added Go Runtime desktop entry rendering so registry-backed desktop identity plans can produce standard KDE `.desktop` text without writing activation files.
+- Added `xnix-runtime-go desktop-entry-preview --registry <path> --app <id>` for read-only launcher preview output using the managed Runtime launcher command.
+- Added Go and Ruby harness coverage that assert the generated desktop entry remains user-visible, Runtime-owned, backend-detail-free, and safe for KDE launcher and task-manager use.
+
+### Changed
+
+- Moved standard desktop entry generation one step closer to Go-owned Runtime product logic while keeping Ruby desktop activation code as a staging harness.
+
 ## [0.2.112] - 2026-07-15
 
 ### Added

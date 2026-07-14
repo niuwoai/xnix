@@ -20,10 +20,12 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go desktop-identity-plan (--recipe PATH | --registry PATH --app ID)")
+		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan} (--recipe PATH | --registry PATH --app ID)")
 	}
 
 	switch args[0] {
+	case "desktop-entry-preview":
+		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
 	default:
@@ -32,29 +34,7 @@ func run(args []string, stdout io.Writer) error {
 }
 
 func runDesktopIdentityPlan(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("desktop-identity-plan", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	applicationID := flags.String("app", "", "application id to load from the recipe registry")
-	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
-	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
-	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if (*recipePath == "") == (*registryPath == "") {
-		return errors.New("desktop-identity-plan requires exactly one source: --recipe or --registry")
-	}
-	if *registryPath != "" && *applicationID == "" {
-		return errors.New("desktop-identity-plan requires --app when --registry is used")
-	}
-	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
-		return errors.New("desktop-identity-plan --recipe cannot be combined with --app or --recipe-root")
-	}
-	if flags.NArg() != 0 {
-		return errors.New("desktop-identity-plan does not accept positional arguments")
-	}
-
-	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	recipe, provenance, err := parseRecipeSource("desktop-identity-plan", args)
 	if err != nil {
 		return err
 	}
@@ -69,6 +49,49 @@ func runDesktopIdentityPlan(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(plan)
+}
+
+func runDesktopEntryPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("desktop-entry-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	entry, err := plan.RenderDesktopEntry()
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(stdout, entry)
+	return err
+}
+
+func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, error) {
+	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, fmt.Errorf("%s requires exactly one source: --recipe or --registry", commandName)
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, fmt.Errorf("%s requires --app when --registry is used", commandName)
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, fmt.Errorf("%s --recipe cannot be combined with --app or --recipe-root", commandName)
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, fmt.Errorf("%s does not accept positional arguments", commandName)
+	}
+
+	return loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 }
 
 func loadRecipe(recipePath string, registryPath string, recipeRoot string, applicationID string) (appidentity.Recipe, appidentity.Provenance, error) {
