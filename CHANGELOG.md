@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.116] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go window-identity-preview --registry <path> --app <id>` for read-only KDE window identity previews from the registry-backed desktop identity plan.
+- Added Go Runtime task-manager and KWin identity hints covering generated desktop files, launcher URLs, grouping keys, pinning, restore, taskbar visibility, switcher visibility, and bounded KWin window-management policy.
+- Added Go and Ruby harness coverage that verifies Runtime-owned window identity previews remain KDE-targeted, backend-detail-free, host-root-safe, and usable by future task manager and KWin integrations.
+
+### Changed
+
+- Moved another durable desktop integration surface toward Go-owned Runtime product logic while keeping KDE responsible for presentation and interaction only.
+
 ## [0.2.115] - 2026-07-15
 
 ### Added

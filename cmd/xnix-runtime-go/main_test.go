@@ -109,3 +109,45 @@ func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 		}
 	}
 }
+
+func TestWindowIdentityPreviewCommandRendersKDEWindowIdentity(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"window-identity-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.window_identity.v1" {
+		t.Fatalf("schema_version = %#v", payload["schema_version"])
+	}
+	if payload["desktop_file"] != "xnix-org.example.ledger.desktop" || payload["launcher_url"] != "applications:xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop identity: %#v", payload)
+	}
+	taskManager := payload["task_manager"].(map[string]any)
+	if taskManager["grouping_key"] != "org.example.ledger" || taskManager["pinning_allowed"] != true ||
+		taskManager["restore_allowed"] != true || taskManager["skip_taskbar"] != false || taskManager["show_in_switcher"] != true {
+		t.Fatalf("unexpected task manager hints: %#v", taskManager)
+	}
+	kwin := payload["kwin"].(map[string]any)
+	if kwin["script_role"] != "identity-and-layout" || kwin["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		kwin["window_manager_policy_only"] != true || kwin["runtime_owns_backend_policy"] != true {
+		t.Fatalf("unexpected KWin hints: %#v", kwin)
+	}
+}

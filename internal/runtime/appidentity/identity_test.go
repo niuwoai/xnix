@@ -134,6 +134,55 @@ func TestRenderMIMEAppsUsesGeneratedDesktopFile(t *testing.T) {
 	}
 }
 
+func TestWindowIdentityPreviewUsesNormalDesktopWindowIdentity(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.WindowIdentityPreview()
+	if err != nil {
+		t.Fatalf("WindowIdentityPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.window_identity.v1" {
+		t.Fatalf("SchemaVersion = %q", preview.SchemaVersion)
+	}
+	if preview.Desktop != "KDE Plasma" || preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop identity: %#v", preview)
+	}
+	if preview.LauncherURL != "applications:xnix-org.example.ledger.desktop" {
+		t.Fatalf("LauncherURL = %q", preview.LauncherURL)
+	}
+	if preview.TaskManager.GroupingKey != "org.example.ledger" || !preview.TaskManager.PinningAllowed ||
+		!preview.TaskManager.RestoreAllowed || preview.TaskManager.SkipTaskbar || !preview.TaskManager.ShowInSwitcher {
+		t.Fatalf("unexpected task manager hints: %#v", preview.TaskManager)
+	}
+	if preview.KWin.ScriptRole != "identity-and-layout" || preview.KWin.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		!preview.KWin.WindowManagerPolicyOnly || !preview.KWin.RuntimeOwnsBackendPolicy {
+		t.Fatalf("unexpected KWin hints: %#v", preview.KWin)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected safety flags: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("window identity preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

@@ -56,6 +56,56 @@ type Plan struct {
 	Summary                     string            `json:"summary"`
 }
 
+type WindowIdentityPreview struct {
+	SchemaVersion         string            `json:"schema_version"`
+	ApplicationID         string            `json:"application_id"`
+	DisplayName           string            `json:"display_name"`
+	Desktop               string            `json:"desktop"`
+	DesktopFile           string            `json:"desktop_file"`
+	LauncherURL           string            `json:"launcher_url"`
+	WindowKind            string            `json:"window_kind"`
+	ClassGroup            string            `json:"class_group"`
+	ResourceName          string            `json:"resource_name"`
+	TitleHint             string            `json:"title_hint"`
+	TaskManager           TaskManagerHints  `json:"task_manager"`
+	KWin                  KWinIdentityHints `json:"kwin"`
+	Restore               RestoreHints      `json:"restore"`
+	RuntimeOwned          bool              `json:"runtime_owned"`
+	KDEPolicyOwner        bool              `json:"kde_policy_owner"`
+	HostRootModified      bool              `json:"host_root_modified"`
+	BackendDetailsExposed bool              `json:"backend_details_exposed"`
+	UserFacingSettings    map[string]string `json:"user_facing_settings"`
+	Summary               string            `json:"summary"`
+}
+
+type TaskManagerHints struct {
+	GroupingKey          string `json:"grouping_key"`
+	PinningAllowed       bool   `json:"pinning_allowed"`
+	RestoreAllowed       bool   `json:"restore_allowed"`
+	SkipTaskbar          bool   `json:"skip_taskbar"`
+	ShowInSwitcher       bool   `json:"show_in_switcher"`
+	PreferExistingWindow bool   `json:"prefer_existing_window"`
+}
+
+type KWinIdentityHints struct {
+	ScriptRole               string `json:"script_role"`
+	ResourceName             string `json:"resource_name"`
+	ClassGroup               string `json:"class_group"`
+	DesktopFile              string `json:"desktop_file"`
+	TaskManagerGroupingKey   string `json:"task_manager_grouping_key"`
+	LauncherURL              string `json:"launcher_url"`
+	Placement                string `json:"placement"`
+	WindowManagerPolicyOnly  bool   `json:"window_manager_policy_only"`
+	RuntimeOwnsBackendPolicy bool   `json:"runtime_owns_backend_policy"`
+}
+
+type RestoreHints struct {
+	RestoreKey           string `json:"restore_key"`
+	PinningAllowed       bool   `json:"pinning_allowed"`
+	RestoreAllowed       bool   `json:"restore_allowed"`
+	PreferExistingWindow bool   `json:"prefer_existing_window"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -239,6 +289,64 @@ func (plan Plan) RenderMIMEApps() (string, error) {
 		lines = append(lines, mimeType+"="+plan.DesktopFile+";")
 	}
 	return strings.Join(lines, "\n") + "\n", nil
+}
+
+func (plan Plan) WindowIdentityPreview() (WindowIdentityPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return WindowIdentityPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.DesktopFile} {
+		if !singleLine(value) {
+			return WindowIdentityPreview{}, errors.New("window identity preview requires single-line identity fields")
+		}
+	}
+
+	launcherURL := "applications:" + plan.DesktopFile
+	taskManager := TaskManagerHints{
+		GroupingKey:          plan.ApplicationID,
+		PinningAllowed:       true,
+		RestoreAllowed:       true,
+		SkipTaskbar:          false,
+		ShowInSwitcher:       true,
+		PreferExistingWindow: true,
+	}
+
+	return WindowIdentityPreview{
+		SchemaVersion: "xnix.runtime.window_identity.v1",
+		ApplicationID: plan.ApplicationID,
+		DisplayName:   plan.DisplayName,
+		Desktop:       "KDE Plasma",
+		DesktopFile:   plan.DesktopFile,
+		LauncherURL:   launcherURL,
+		WindowKind:    "compatibility-application",
+		ClassGroup:    "xnix-compatibility",
+		ResourceName:  plan.ApplicationID,
+		TitleHint:     plan.DisplayName,
+		TaskManager:   taskManager,
+		KWin: KWinIdentityHints{
+			ScriptRole:               "identity-and-layout",
+			ResourceName:             plan.ApplicationID,
+			ClassGroup:               "xnix-compatibility",
+			DesktopFile:              plan.DesktopFile,
+			TaskManagerGroupingKey:   plan.ApplicationID,
+			LauncherURL:              launcherURL,
+			Placement:                "normal-window",
+			WindowManagerPolicyOnly:  true,
+			RuntimeOwnsBackendPolicy: true,
+		},
+		Restore: RestoreHints{
+			RestoreKey:           plan.ApplicationID,
+			PinningAllowed:       taskManager.PinningAllowed,
+			RestoreAllowed:       taskManager.RestoreAllowed,
+			PreferExistingWindow: taskManager.PreferExistingWindow,
+		},
+		RuntimeOwned:          true,
+		KDEPolicyOwner:        false,
+		HostRootModified:      false,
+		BackendDetailsExposed: false,
+		UserFacingSettings:    plan.UserFacingSettings,
+		Summary:               "window identity preview lets KDE group, pin, switch, and restore compatibility windows as normal Linux application windows while backend policy stays in the Runtime.",
+	}, nil
 }
 
 func singleLine(value string) bool {

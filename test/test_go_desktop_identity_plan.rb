@@ -31,6 +31,7 @@ assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
@@ -109,6 +110,38 @@ if go_available
   assert(mimeapps.include?("application/x-xnix-log=xnix-#{recipe.id}.desktop;\n"), "MIME apps preview must add log file associations")
   assert(!mimeapps.downcase.include?("prefix"), "MIME apps preview must not expose implementation storage")
   assert(!mimeapps.include?(".exe"), "MIME apps preview must not expose a Windows executable")
+
+  window_identity, window_status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "window-identity-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    chdir: project_root
+  )
+  assert(window_status.success?, "Go window identity preview CLI must run successfully")
+  window_payload = JSON.parse(window_identity)
+  assert(window_payload.fetch("schema_version") == "xnix.runtime.window_identity.v1", "window identity preview schema version must be stable")
+  assert(window_payload.fetch("desktop") == "KDE Plasma", "window identity preview must target KDE Plasma")
+  assert(window_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "window identity preview must bind generated desktop files")
+  assert(window_payload.fetch("launcher_url") == "applications:xnix-#{recipe.id}.desktop", "window identity preview must expose a launcher URL")
+  assert(window_payload.fetch("task_manager").fetch("grouping_key") == recipe.id, "window identity preview must group taskbar windows by Runtime application id")
+  assert(window_payload.fetch("task_manager").fetch("pinning_allowed") == true, "window identity preview must allow taskbar pinning")
+  assert(window_payload.fetch("task_manager").fetch("restore_allowed") == true, "window identity preview must allow restore")
+  assert(window_payload.fetch("task_manager").fetch("skip_taskbar") == false, "window identity preview must keep windows visible in the taskbar")
+  assert(window_payload.fetch("task_manager").fetch("show_in_switcher") == true, "window identity preview must keep windows visible in the switcher")
+  assert(window_payload.fetch("kwin").fetch("script_role") == "identity-and-layout", "window identity preview must provide bounded KWin identity hints")
+  assert(window_payload.fetch("kwin").fetch("window_manager_policy_only") == true, "window identity preview must keep KWin policy scoped to window identity")
+  assert(window_payload.fetch("kwin").fetch("runtime_owns_backend_policy") == true, "window identity preview must keep backend policy in the Runtime")
+  assert(window_payload.fetch("runtime_owned") == true, "window identity preview must remain Runtime-owned")
+  assert(window_payload.fetch("kde_policy_owner") == false, "window identity preview must not make KDE own backend policy")
+  assert(window_payload.fetch("host_root_modified") == false, "window identity preview must not mutate the host root")
+  assert(window_payload.fetch("backend_details_exposed") == false, "window identity preview must not expose backend details")
+  assert(!window_identity.downcase.include?("prefix"), "window identity preview must not expose implementation storage")
+  assert(!window_identity.include?(".exe"), "window identity preview must not expose a Windows executable")
 end
 
 puts "PASS: Go Runtime desktop identity plan unit tests"
