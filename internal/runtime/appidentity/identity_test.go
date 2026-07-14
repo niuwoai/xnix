@@ -439,6 +439,77 @@ func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 	}
 }
 
+func TestCompatibilityCenterPreviewSummarizesApplicationsSafely(t *testing.T) {
+	preview, err := NewCompatibilityCenterPreview([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "wine",
+			SupportedExtensions: []string{".xls", ".abc"},
+		},
+	}, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.compatibility_center.v1" ||
+		preview.SummaryType != "compatibility-center-preview" ||
+		preview.Desktop != "KDE Plasma" || preview.Title != "Xnix Compatibility Center" {
+		t.Fatalf("unexpected center identity: %#v", preview)
+	}
+	if preview.Source.Kind != "runtime-go-registry" || preview.Source.RegistryName != "test-registry" ||
+		!preview.Source.RecipeDigestVerified || preview.Source.RecipeSignatureStatus != "development-only" {
+		t.Fatalf("unexpected center source: %#v", preview.Source)
+	}
+	if preview.ApplicationCount != 1 || len(preview.Applications) != 1 ||
+		preview.KnownIssueCount != 0 || preview.RepairRecordCount != 0 || preview.PendingReviewCount != 0 {
+		t.Fatalf("unexpected center counts: %#v", preview)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner ||
+		preview.ActionExecutionEnabled || preview.RepairExecutionEnabled ||
+		preview.BackendLaunchEnabled || preview.SettingsPersistenceEnabled ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected center safety flags: %#v", preview)
+	}
+
+	application := preview.Applications[0]
+	if application.ApplicationID != "org.example.ledger" || application.DisplayName != "Example Ledger" ||
+		application.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected center application identity: %#v", application)
+	}
+	if application.CompatibilityState != "registered" || application.DiagnosticsState != "not-run" ||
+		application.RuntimeMode != "Managed compatibility" || application.KnownIssueCount != 0 ||
+		application.RepairRecordState != "none" || application.RepairRecordCount != 0 ||
+		application.LastRepairEvent != "none" {
+		t.Fatalf("unexpected center application status: %#v", application)
+	}
+	if !sameStrings(application.Actions, []string{"open-settings", "show-diagnostics", "review-application"}) {
+		t.Fatalf("Actions = %#v", application.Actions)
+	}
+	if !application.RuntimeOwned || application.KDEPolicyOwner || !application.UserVisible ||
+		application.ActionExecutionEnabled || application.RepairExecutionEnabled ||
+		application.BackendLaunchEnabled || application.SettingsPersistenceEnabled ||
+		application.HostRootModified || application.BackendDetailsExposed {
+		t.Fatalf("unexpected center application safety flags: %#v", application)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

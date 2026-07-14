@@ -63,6 +63,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("compatibility-center-preview"), "Go Runtime CLI must render Compatibility Center previews")
 
 if go_available
   output, status = capture_runtime_go(
@@ -117,6 +118,48 @@ if go_available
   assert(desktop_entry.include?("X-Xnix-ApplicationId=#{recipe.id}\n"), "desktop entry preview must include the Runtime application id")
   assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
   assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")
+
+  center, center_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "compatibility-center-preview",
+    "--registry",
+    "runtime/recipes/registry.json"
+  )
+  assert(center_status.success?, "Go Compatibility Center preview CLI must run successfully")
+  center_payload = JSON.parse(center)
+  assert(center_payload.fetch("schema_version") == "xnix.runtime.compatibility_center.v1", "Compatibility Center preview schema version must be stable")
+  assert(center_payload.fetch("summary_type") == "compatibility-center-preview", "Compatibility Center preview must identify its summary type")
+  assert(center_payload.fetch("desktop") == "KDE Plasma", "Compatibility Center preview must target KDE Plasma")
+  assert(center_payload.fetch("source").fetch("kind") == "runtime-go-registry", "Compatibility Center preview must use the Go registry source")
+  assert(center_payload.fetch("source").fetch("registry_name") == "xnix-local-development", "Compatibility Center preview must expose the registry name")
+  assert(center_payload.fetch("source").fetch("recipe_digest_verified") == true, "Compatibility Center preview must verify registry digests")
+  assert(center_payload.fetch("application_count") == 1, "Compatibility Center preview must summarize registered applications")
+  assert(center_payload.fetch("known_issue_count") == 0, "Compatibility Center preview must not invent known issues before diagnostics run")
+  assert(center_payload.fetch("repair_record_count") == 0, "Compatibility Center preview must not invent repair records")
+  assert(center_payload.fetch("pending_review_count") == 0, "Compatibility Center preview must not invent review requests")
+  center_app = center_payload.fetch("applications").first
+  assert(center_app.fetch("application_id") == recipe.id, "Compatibility Center preview must preserve application identity")
+  assert(center_app.fetch("display_name") == recipe.name, "Compatibility Center preview must preserve display names")
+  assert(center_app.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "Compatibility Center preview must bind generated desktop files")
+  assert(center_app.fetch("compatibility_state") == "registered", "Compatibility Center preview must expose registered compatibility state")
+  assert(center_app.fetch("diagnostics_state") == "not-run", "Compatibility Center preview must not claim diagnostics execution")
+  assert(center_app.fetch("runtime_mode") == "Automatic", "Compatibility Center preview must expose user-facing runtime mode")
+  assert(center_app.fetch("known_issue_count") == 0, "Compatibility Center preview must not invent per-app issues")
+  assert(center_app.fetch("repair_record_state") == "none", "Compatibility Center preview must not invent repair records")
+  assert(center_app.fetch("actions") == ["open-settings", "show-diagnostics", "review-application"], "Compatibility Center preview must expose safe navigation actions")
+  assert(center_payload.fetch("runtime_owned") == true, "Compatibility Center preview must remain Runtime-owned")
+  assert(center_payload.fetch("kde_policy_owner") == false, "Compatibility Center preview must not make KDE own backend policy")
+  assert(center_payload.fetch("action_execution_enabled") == false, "Compatibility Center preview must not enable actions")
+  assert(center_payload.fetch("repair_execution_enabled") == false, "Compatibility Center preview must not enable repairs")
+  assert(center_payload.fetch("backend_launch_enabled") == false, "Compatibility Center preview must not launch backends")
+  assert(center_payload.fetch("settings_persistence_enabled") == false, "Compatibility Center preview must not persist settings")
+  assert(center_payload.fetch("host_root_modified") == false, "Compatibility Center preview must not mutate the host root")
+  assert(center_payload.fetch("backend_details_exposed") == false, "Compatibility Center preview must not expose backend details")
+  assert(!center.downcase.include?("prefix"), "Compatibility Center preview must not expose implementation storage")
+  assert(!center.include?(".exe"), "Compatibility Center preview must not expose a Windows executable")
+  assert(!center.downcase.include?("proton"), "Compatibility Center preview must not expose backend implementation names")
 
   krunner, krunner_status = capture_runtime_go(
     project_root,

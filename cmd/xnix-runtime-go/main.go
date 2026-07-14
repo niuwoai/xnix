@@ -20,10 +20,12 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
+	case "compatibility-center-preview":
+		return runCompatibilityCenterPreview(args[1:], stdout)
 	case "desktop-entry-preview":
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
@@ -43,6 +45,21 @@ func run(args []string, stdout io.Writer) error {
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
+}
+
+func runCompatibilityCenterPreview(args []string, stdout io.Writer) error {
+	recipes, provenance, err := parseRegistryPreviewSource("compatibility-center-preview", args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewCompatibilityCenterPreview(recipes, provenance)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
 }
 
 func runKRunnerQueryPreview(args []string, stdout io.Writer) error {
@@ -237,6 +254,24 @@ func parseKRunnerQueryPreviewSource(args []string) ([]appidentity.Recipe, appide
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
 	return recipes, provenance, *query, err
+}
+
+func parseRegistryPreviewSource(commandName string, args []string) ([]appidentity.Recipe, appidentity.Provenance, error) {
+	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	if err := flags.Parse(args); err != nil {
+		return nil, appidentity.Provenance{}, err
+	}
+	if *registryPath == "" {
+		return nil, appidentity.Provenance{}, fmt.Errorf("%s requires --registry", commandName)
+	}
+	if flags.NArg() != 0 {
+		return nil, appidentity.Provenance{}, fmt.Errorf("%s does not accept positional arguments", commandName)
+	}
+
+	return appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
 }
 
 func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, error) {

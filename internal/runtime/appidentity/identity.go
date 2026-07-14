@@ -273,6 +273,60 @@ type KRunnerSummary struct {
 	BackendDetailsExposed bool   `json:"backend_details_exposed"`
 }
 
+type CompatibilityCenterPreview struct {
+	SchemaVersion              string                         `json:"schema_version"`
+	SummaryType                string                         `json:"summary_type"`
+	Desktop                    string                         `json:"desktop"`
+	Title                      string                         `json:"title"`
+	Source                     KRunnerSource                  `json:"source"`
+	RuntimeOwned               bool                           `json:"runtime_owned"`
+	KDEPolicyOwner             bool                           `json:"kde_policy_owner"`
+	ApplicationCount           int                            `json:"application_count"`
+	KnownIssueCount            int                            `json:"known_issue_count"`
+	RepairRecordCount          int                            `json:"repair_record_count"`
+	PendingReviewCount         int                            `json:"pending_review_count"`
+	Applications               []CompatibilityCenterApp       `json:"applications"`
+	ActionExecutionEnabled     bool                           `json:"action_execution_enabled"`
+	RepairExecutionEnabled     bool                           `json:"repair_execution_enabled"`
+	BackendLaunchEnabled       bool                           `json:"backend_launch_enabled"`
+	SettingsPersistenceEnabled bool                           `json:"settings_persistence_enabled"`
+	HostRootModified           bool                           `json:"host_root_modified"`
+	BackendDetailsExposed      bool                           `json:"backend_details_exposed"`
+	Summary                    CompatibilityCenterSummaryText `json:"summary"`
+}
+
+type CompatibilityCenterApp struct {
+	ApplicationID              string   `json:"application_id"`
+	DisplayName                string   `json:"display_name"`
+	Icon                       string   `json:"icon"`
+	DesktopFile                string   `json:"desktop_file"`
+	CompatibilityState         string   `json:"compatibility_state"`
+	CompatibilityLabel         string   `json:"compatibility_label"`
+	DiagnosticsState           string   `json:"diagnostics_state"`
+	RuntimeMode                string   `json:"runtime_mode"`
+	SupportedExtensions        []string `json:"supported_extensions"`
+	KnownIssueCount            int      `json:"known_issue_count"`
+	RepairRecordState          string   `json:"repair_record_state"`
+	RepairRecordCount          int      `json:"repair_record_count"`
+	LastRepairEvent            string   `json:"last_repair_event"`
+	Actions                    []string `json:"actions"`
+	UserVisible                bool     `json:"user_visible"`
+	RuntimeOwned               bool     `json:"runtime_owned"`
+	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
+	ActionExecutionEnabled     bool     `json:"action_execution_enabled"`
+	RepairExecutionEnabled     bool     `json:"repair_execution_enabled"`
+	BackendLaunchEnabled       bool     `json:"backend_launch_enabled"`
+	SettingsPersistenceEnabled bool     `json:"settings_persistence_enabled"`
+	HostRootModified           bool     `json:"host_root_modified"`
+	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
+	Summary                    string   `json:"summary"`
+}
+
+type CompatibilityCenterSummaryText struct {
+	Headline string `json:"headline"`
+	Detail   string `json:"detail"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -773,6 +827,87 @@ func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query strin
 		return KRunnerQueryPreview{}, err
 	}
 	return preview, nil
+}
+
+func NewCompatibilityCenterPreview(recipes []Recipe, provenance Provenance) (CompatibilityCenterPreview, error) {
+	if provenance.Source == "" {
+		provenance.Source = "registry"
+	}
+
+	applications := make([]CompatibilityCenterApp, 0, len(recipes))
+	for _, recipe := range recipes {
+		plan, err := NewPlanWithProvenance(recipe, provenance)
+		if err != nil {
+			return CompatibilityCenterPreview{}, err
+		}
+		if err := plan.ValidateSafeForDesktop(); err != nil {
+			return CompatibilityCenterPreview{}, err
+		}
+		applications = append(applications, compatibilityCenterApp(plan, recipe))
+	}
+	sort.Slice(applications, func(left int, right int) bool {
+		return applications[left].DisplayName < applications[right].DisplayName
+	})
+
+	preview := CompatibilityCenterPreview{
+		SchemaVersion:    "xnix.runtime.compatibility_center.v1",
+		SummaryType:      "compatibility-center-preview",
+		Desktop:          "KDE Plasma",
+		Title:            "Xnix Compatibility Center",
+		RuntimeOwned:     true,
+		KDEPolicyOwner:   false,
+		ApplicationCount: len(applications),
+		Applications:     applications,
+		Source: KRunnerSource{
+			Kind:                  "runtime-go-registry",
+			RegistryName:          provenance.RegistryName,
+			RecipeDigestVerified:  provenance.DigestVerified,
+			RecipeSignatureStatus: provenance.SignatureStatus,
+		},
+		ActionExecutionEnabled:     false,
+		RepairExecutionEnabled:     false,
+		BackendLaunchEnabled:       false,
+		SettingsPersistenceEnabled: false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		Summary: CompatibilityCenterSummaryText{
+			Headline: "Compatibility applications are ready for KDE review.",
+			Detail:   "The Runtime exposes application status, user-facing mode, diagnostics state, and repair records without enabling execution.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
+		return CompatibilityCenterPreview{}, err
+	}
+	return preview, nil
+}
+
+func compatibilityCenterApp(plan Plan, recipe Recipe) CompatibilityCenterApp {
+	return CompatibilityCenterApp{
+		ApplicationID:              plan.ApplicationID,
+		DisplayName:                plan.DisplayName,
+		Icon:                       plan.Icon,
+		DesktopFile:                plan.DesktopFile,
+		CompatibilityState:         "registered",
+		CompatibilityLabel:         "Registered",
+		DiagnosticsState:           "not-run",
+		RuntimeMode:                modeLabel(recipe.Mode),
+		SupportedExtensions:        normalizedExtensions(recipe.SupportedExtensions),
+		KnownIssueCount:            0,
+		RepairRecordState:          "none",
+		RepairRecordCount:          0,
+		LastRepairEvent:            "none",
+		Actions:                    []string{"open-settings", "show-diagnostics", "review-application"},
+		UserVisible:                true,
+		RuntimeOwned:               true,
+		KDEPolicyOwner:             false,
+		ActionExecutionEnabled:     false,
+		RepairExecutionEnabled:     false,
+		BackendLaunchEnabled:       false,
+		SettingsPersistenceEnabled: false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		Summary:                    "KDE can display this compatibility application, but execution and repair actions remain gated in the Runtime.",
+	}
 }
 
 func krunnerMatch(plan Plan, recipe Recipe, relevancePercent int) KRunnerMatch {

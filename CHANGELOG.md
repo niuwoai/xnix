@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.121] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go compatibility-center-preview --registry <path>` for read-only KDE Compatibility Center previews across digest-verified registry recipes.
+- Added Go Runtime Compatibility Center application cards with generated desktop identity, user-facing runtime mode, diagnostics state, known issue counts, repair record state, safe navigation actions, and disabled execution gates.
+- Added Go and Ruby harness coverage that verifies Compatibility Center previews remain Runtime-owned, KDE-targeted, backend-detail-free, host-root-safe, and honest about diagnostics, actions, repairs, backend launch, and settings persistence remaining gated.
+
+### Changed
+
+- Moved the Compatibility Center overview entry point one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and review only.
+
 ## [0.2.120] - 2026-07-15
 
 ### Added
