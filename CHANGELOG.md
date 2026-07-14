@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.138] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-session-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime execution session identity previews from digest-verified registry recipes.
+- Added Go Runtime session identity planning that combines launch transactions, KDE window identity, task-manager hints, KWin rule hints, and tray status into one KDE-visible session read model.
+- Added Go and Ruby harness coverage that verifies execution-session previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, backend-detail-free, host-root-safe, and honest about live session creation, window observation, task-manager activation, KWin rule application, tray bridging, backend process starts, request objects, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved launch-session desktop identity one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and window-shell integration only.
+
 ## [0.2.137] - 2026-07-15
 
 ### Added

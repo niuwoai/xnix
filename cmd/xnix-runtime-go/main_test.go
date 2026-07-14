@@ -1059,6 +1059,131 @@ func TestExecutionTransactionPreviewCommandBlocksCommitAndLaunch(t *testing.T) {
 	}
 }
 
+func TestExecutionSessionPreviewCommandPlansDesktopIdentityWithoutStarting(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-session-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.session_identity.v1" ||
+		payload["request_type"] != "execution-session-preview" ||
+		payload["session_type"] != "compatibility-execution-session" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-transaction-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionSessionPreview" {
+		t.Fatalf("unexpected execution session schema: %#v", payload)
+	}
+	transaction := payload["transaction"].(map[string]any)
+	if transaction["request_type"] != "execution-transaction-preview" ||
+		transaction["transaction_type"] != "compatibility-launch-transaction" ||
+		transaction["step_count"] != float64(7) ||
+		transaction["blocked_step_count"] != float64(1) ||
+		transaction["transaction_committed"] != false ||
+		transaction["runtime_launch_approval"] != false ||
+		transaction["launch_allowed"] != false ||
+		transaction["execution_started"] != false {
+		t.Fatalf("unexpected session transaction summary: %#v", transaction)
+	}
+	window := payload["window_identity"].(map[string]any)
+	if window["schema_version"] != "xnix.runtime.window_identity.v1" ||
+		window["window_kind"] != "compatibility-application" ||
+		window["class_group"] != "xnix-compatibility" ||
+		window["resource_name"] != "org.example.ledger" ||
+		window["launcher_url"] != "applications:xnix-org.example.ledger.desktop" ||
+		window["title_hint"] != "Example Ledger" ||
+		window["window_observed"] != false ||
+		window["window_registration"] != "planned" ||
+		window["backend_details_exposed"] != false {
+		t.Fatalf("unexpected window identity summary: %#v", window)
+	}
+	taskManager := payload["task_manager"].(map[string]any)
+	if taskManager["grouping_key"] != "org.example.ledger" ||
+		taskManager["pinning_allowed"] != true ||
+		taskManager["restore_allowed"] != true ||
+		taskManager["skip_taskbar"] != false ||
+		taskManager["show_in_switcher"] != true ||
+		taskManager["prefer_existing_window"] != true ||
+		taskManager["entry_planned"] != true ||
+		taskManager["entry_active"] != false {
+		t.Fatalf("unexpected task manager summary: %#v", taskManager)
+	}
+	kwin := payload["kwin"].(map[string]any)
+	if kwin["script_role"] != "identity-and-layout" ||
+		kwin["resource_name"] != "org.example.ledger" ||
+		kwin["class_group"] != "xnix-compatibility" ||
+		kwin["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		kwin["task_manager_grouping_key"] != "org.example.ledger" ||
+		kwin["launcher_url"] != "applications:xnix-org.example.ledger.desktop" ||
+		kwin["placement"] != "normal-window" ||
+		kwin["window_manager_policy_only"] != true ||
+		kwin["rule_planned"] != true ||
+		kwin["rule_applied"] != false {
+		t.Fatalf("unexpected KWin summary: %#v", kwin)
+	}
+	tray := payload["tray"].(map[string]any)
+	if tray["status_type"] != "tray-status-preview" ||
+		tray["registered_application_count"] != float64(1) ||
+		tray["active_application_count"] != float64(0) ||
+		tray["attention_required_count"] != float64(0) ||
+		tray["compatibility_state"] != "ready" ||
+		tray["tray_bridge_state"] != "planned" ||
+		tray["entry_planned"] != true ||
+		tray["live_bridge_enabled"] != false ||
+		tray["bridge_configuration_persisted"] != false ||
+		tray["backend_details_exposed"] != false {
+		t.Fatalf("unexpected tray summary: %#v", tray)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["session_plan_created"] != true ||
+		payload["session_created"] != false ||
+		payload["session_registered"] != false ||
+		payload["window_observed"] != false ||
+		payload["task_manager_entry_planned"] != true ||
+		payload["task_manager_entry_active"] != false ||
+		payload["kwin_rule_planned"] != true ||
+		payload["kwin_rule_applied"] != false ||
+		payload["tray_entry_planned"] != true ||
+		payload["live_tray_bridge_enabled"] != false ||
+		payload["transaction_committed"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution session safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
