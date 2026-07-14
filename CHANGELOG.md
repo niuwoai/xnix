@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.125] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go portal-request-preview --registry <path> --app <id> --operation <operation> [--reason <text>]` for read-only KDE Portal request previews from digest-verified registry recipes.
+- Added Go Runtime Portal request planning for file-open, URI-open, print, screenshot, clipboard, camera, and remote-desktop operations with deterministic handle tokens, Portal D-Bus endpoints, completion metadata, and denied-action guidance.
+- Added Go and Ruby harness coverage that verifies Portal request previews remain Runtime-owned, KDE-targeted, backend-detail-free, host-root-safe, host-path-free, and honest about request objects, permission grants, host permission changes, direct access, and denied operations.
+
+### Changed
+
+- Moved the user-visible Portal request planning surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for presenting review and denial guidance only.
+
 ## [0.2.124] - 2026-07-15
 
 ### Added

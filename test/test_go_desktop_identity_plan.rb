@@ -60,6 +60,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("permission-review-preview"), "Go Runtime CLI must render KDE permission review previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("portal-request-preview"), "Go Runtime CLI must render KDE Portal request previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
@@ -428,6 +429,80 @@ if go_available
   assert(!desktop_resource_bridge.include?(".exe"), "desktop resource bridge preview must not expose a Windows executable")
   assert(!desktop_resource_bridge.downcase.include?("proton"), "desktop resource bridge preview must not expose backend implementation names")
   assert(!desktop_resource_bridge.downcase.match?(%r{/users|/home|/var|/opt|/tmp}), "desktop resource bridge preview must not expose host paths")
+
+  portal_request, portal_request_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "portal-request-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--operation",
+    "file-open",
+    "--reason",
+    "Open a selected document."
+  )
+  assert(portal_request_status.success?, "Go Portal request preview CLI must run successfully")
+  portal_payload = JSON.parse(portal_request)
+  assert(portal_payload.fetch("schema_version") == "xnix.runtime.portal_request.v1", "Portal request preview schema version must be stable")
+  assert(portal_payload.fetch("request_type") == "portal-request-preview", "Portal request preview must identify its request type")
+  assert(portal_payload.fetch("source") == "runtime-portal-request-plan", "Portal request preview must identify the Runtime Portal plan source")
+  assert(portal_payload.fetch("desktop") == "KDE Plasma", "Portal request preview must target KDE Plasma")
+  assert(portal_payload.fetch("runtime_method") == "GetPortalRequestPlan", "Portal request preview must expose the Runtime method")
+  assert(portal_payload.fetch("application_id") == recipe.id, "Portal request preview must preserve application identity")
+  assert(portal_payload.fetch("display_name") == recipe.name, "Portal request preview must preserve display names")
+  assert(portal_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "Portal request preview must bind generated desktop files")
+  assert(portal_payload.fetch("operation") == "file-open", "Portal request preview must preserve operation")
+  assert(portal_payload.fetch("reason") == "Open a selected document.", "Portal request preview must preserve the user-facing reason")
+  assert(portal_payload.fetch("decision") == "ask", "file-open Portal request preview must ask by default")
+  assert(portal_payload.fetch("request_allowed") == true, "file-open Portal request preview must allow mediated requests")
+  assert(portal_payload.fetch("runtime_owned") == true, "Portal request preview must remain Runtime-owned")
+  assert(portal_payload.fetch("kde_policy_owner") == false, "Portal request preview must not make KDE own policy")
+  assert(portal_payload.fetch("portal").fetch("destination") == "org.freedesktop.portal.Desktop", "Portal request preview must target the Portal service")
+  assert(portal_payload.fetch("portal").fetch("interface") == "org.freedesktop.portal.FileChooser", "file-open Portal request preview must target FileChooser")
+  assert(portal_payload.fetch("portal").fetch("method") == "OpenFile", "file-open Portal request preview must call OpenFile")
+  assert(portal_payload.fetch("portal").fetch("object_path") == "/org/freedesktop/portal/desktop", "Portal request preview must expose the standard Portal object path")
+  assert(portal_payload.fetch("request").fetch("object_path_required") == true, "Portal request preview must require request object paths")
+  assert(portal_payload.fetch("request").fetch("request_object_created") == false, "Portal request preview must not create request objects")
+  assert(portal_payload.fetch("request").fetch("handle_token") == "xnix_org_xnix_sample_notepad_file_open", "Portal request preview must produce deterministic handle tokens")
+  assert(portal_payload.fetch("request").fetch("user_mediation_required") == true, "Portal request preview must require user mediation")
+  assert(portal_payload.fetch("request").fetch("resources") == %w[documents downloads selected-files], "Portal request preview must expose selected file resources")
+  assert(portal_payload.fetch("request").fetch("runtime_policy_owner") == true, "Portal request preview policy must be Runtime-owned")
+  assert(portal_payload.fetch("request").fetch("desktop_shell_policy_owner") == false, "Portal request preview policy must not be KDE-owned")
+  assert(portal_payload.fetch("completion").fetch("signal") == "Response", "Portal request preview must wait for Response")
+  assert(portal_payload.fetch("completion").fetch("result_owner") == "Runtime", "Portal request preview results must return to Runtime")
+  assert(portal_payload.fetch("denied").nil?, "allowed Portal request preview must not include denial guidance")
+  assert(portal_payload.fetch("safety").fetch("direct_access_allowed") == false, "Portal request preview must deny direct access")
+  assert(portal_payload.fetch("safety").fetch("portal_required") == true, "Portal request preview must require Portals")
+  assert(portal_payload.fetch("safety").fetch("permission_granted") == false, "Portal request preview must not grant permissions")
+  assert(portal_payload.fetch("safety").fetch("host_permission_changed") == false, "Portal request preview must not change host permissions")
+  assert(portal_payload.fetch("safety").fetch("host_root_modified") == false, "Portal request preview must not mutate the host root")
+  assert(portal_payload.fetch("safety").fetch("backend_details_exposed") == false, "Portal request preview must not expose backend details")
+  assert(!portal_request.downcase.include?("prefix"), "Portal request preview must not expose implementation storage")
+  assert(!portal_request.include?(".exe"), "Portal request preview must not expose a Windows executable")
+  assert(!portal_request.downcase.include?("proton"), "Portal request preview must not expose backend implementation names")
+  assert(!portal_request.downcase.match?(%r{/users|/home|/var|/opt|/tmp}), "Portal request preview must not expose host paths")
+
+  denied_portal_request, denied_portal_request_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "portal-request-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--operation",
+    "camera"
+  )
+  assert(denied_portal_request_status.success?, "Go denied Portal request preview CLI must run successfully")
+  denied_portal_payload = JSON.parse(denied_portal_request)
+  assert(denied_portal_payload.fetch("decision") == "deny", "camera Portal request preview must deny by default")
+  assert(denied_portal_payload.fetch("request_allowed") == false, "denied Portal request preview must not allow requests")
+  assert(denied_portal_payload.fetch("denied").fetch("next_action") == "open-compatibility-settings", "denied Portal request preview must guide users to settings")
+  assert(denied_portal_payload.fetch("safety").fetch("permission_granted") == false, "denied Portal request preview must not grant permissions")
 
   tray_status, tray_status_result = capture_runtime_go(
     project_root,

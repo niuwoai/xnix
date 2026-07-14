@@ -544,6 +544,109 @@ func TestDesktopResourceBridgePreviewCommandRendersKDEBridgePlan(t *testing.T) {
 	}
 }
 
+func TestPortalRequestPreviewCommandRendersPortalRequest(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"portal-request-preview", "--registry", registryPath, "--app", "org.example.ledger", "--operation", "file-open", "--reason", "Open a selected document."}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.portal_request.v1" ||
+		payload["request_type"] != "portal-request-preview" ||
+		payload["source"] != "runtime-portal-request-plan" {
+		t.Fatalf("unexpected Portal request schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["runtime_method"] != "GetPortalRequestPlan" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected Portal request identity: %#v", payload)
+	}
+	if payload["operation"] != "file-open" ||
+		payload["reason"] != "Open a selected document." ||
+		payload["decision"] != "ask" ||
+		payload["request_allowed"] != true {
+		t.Fatalf("unexpected Portal request decision: %#v", payload)
+	}
+	portal := payload["portal"].(map[string]any)
+	if portal["destination"] != "org.freedesktop.portal.Desktop" ||
+		portal["interface"] != "org.freedesktop.portal.FileChooser" ||
+		portal["method"] != "OpenFile" ||
+		portal["object_path"] != "/org/freedesktop/portal/desktop" ||
+		portal["dbus_api"] != "XDG Desktop Portal" {
+		t.Fatalf("unexpected Portal endpoint: %#v", portal)
+	}
+	request := payload["request"].(map[string]any)
+	if request["object_path_required"] != true ||
+		request["request_object_created"] != false ||
+		request["handle_token"] != "xnix_org_example_ledger_file_open" ||
+		request["user_mediation_required"] != true ||
+		request["runtime_policy_owner"] != true ||
+		request["desktop_shell_policy_owner"] != false {
+		t.Fatalf("unexpected Portal request object: %#v", request)
+	}
+	resources := request["resources"].([]any)
+	if resources[0] != "documents" || resources[1] != "downloads" || resources[2] != "selected-files" {
+		t.Fatalf("unexpected Portal resources: %#v", resources)
+	}
+	completion := payload["completion"].(map[string]any)
+	if completion["signal"] != "Response" ||
+		completion["response_field"] != "response" ||
+		completion["success_code"] != float64(0) ||
+		completion["cancelled_code"] != float64(1) ||
+		completion["denied_code"] != float64(2) ||
+		completion["result_owner"] != "Runtime" {
+		t.Fatalf("unexpected Portal completion: %#v", completion)
+	}
+	if payload["denied"] != nil {
+		t.Fatalf("allowed Portal request included denial guidance: %#v", payload["denied"])
+	}
+	safety := payload["safety"].(map[string]any)
+	if safety["direct_access_allowed"] != false ||
+		safety["portal_required"] != true ||
+		safety["permission_granted"] != false ||
+		safety["host_permission_changed"] != false ||
+		safety["host_root_modified"] != false ||
+		safety["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Portal safety flags: %#v", safety)
+	}
+
+	output.Reset()
+	err = run([]string{"portal-request-preview", "--registry", registryPath, "--app", "org.example.ledger", "--operation", "camera"}, &output)
+	if err != nil {
+		t.Fatalf("camera run returned error: %v", err)
+	}
+	payload = map[string]any{}
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("camera Unmarshal returned error: %v", err)
+	}
+	if payload["decision"] != "deny" || payload["request_allowed"] != false {
+		t.Fatalf("unexpected camera Portal decision: %#v", payload)
+	}
+	denied := payload["denied"].(map[string]any)
+	if denied["next_action"] != "open-compatibility-settings" ||
+		denied["notification_event"] != "approval-required" {
+		t.Fatalf("unexpected denied guidance: %#v", denied)
+	}
+}
+
 func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

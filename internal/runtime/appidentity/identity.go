@@ -336,6 +336,88 @@ type DesktopResourceBridgeSummary struct {
 	Detail   string `json:"detail"`
 }
 
+type PortalRequestPreview struct {
+	SchemaVersion      string                  `json:"schema_version"`
+	RequestType        string                  `json:"request_type"`
+	Source             string                  `json:"source"`
+	Desktop            string                  `json:"desktop"`
+	RuntimeMethod      string                  `json:"runtime_method"`
+	ApplicationID      string                  `json:"application_id"`
+	DisplayName        string                  `json:"display_name"`
+	Icon               string                  `json:"icon"`
+	DesktopFile        string                  `json:"desktop_file"`
+	Operation          string                  `json:"operation"`
+	Reason             string                  `json:"reason"`
+	Decision           string                  `json:"decision"`
+	RequestAllowed     bool                    `json:"request_allowed"`
+	RuntimeOwned       bool                    `json:"runtime_owned"`
+	KDEPolicyOwner     bool                    `json:"kde_policy_owner"`
+	UserVisible        bool                    `json:"user_visible"`
+	Portal             PortalRequestEndpoint   `json:"portal"`
+	Request            PortalRequestObject     `json:"request"`
+	Completion         PortalRequestCompletion `json:"completion"`
+	Denied             *PortalRequestDenied    `json:"denied"`
+	Safety             PortalRequestSafety     `json:"safety"`
+	UserFacingSettings map[string]string       `json:"user_facing_settings"`
+	Summary            PortalRequestSummary    `json:"summary"`
+}
+
+type PortalRequestEndpoint struct {
+	Destination string `json:"destination"`
+	Interface   string `json:"interface"`
+	Method      string `json:"method"`
+	ObjectPath  string `json:"object_path"`
+	DBusAPI     string `json:"dbus_api"`
+}
+
+type PortalRequestObject struct {
+	ObjectPathRequired      bool     `json:"object_path_required"`
+	RequestObjectCreated    bool     `json:"request_object_created"`
+	HandleToken             string   `json:"handle_token"`
+	UserMediationRequired   bool     `json:"user_mediation_required"`
+	Resources               []string `json:"resources"`
+	RuntimePolicyOwner      bool     `json:"runtime_policy_owner"`
+	DesktopShellPolicyOwner bool     `json:"desktop_shell_policy_owner"`
+}
+
+type PortalRequestCompletion struct {
+	Signal        string `json:"signal"`
+	ResponseField string `json:"response_field"`
+	SuccessCode   int    `json:"success_code"`
+	CancelledCode int    `json:"cancelled_code"`
+	DeniedCode    int    `json:"denied_code"`
+	ResultOwner   string `json:"result_owner"`
+}
+
+type PortalRequestDenied struct {
+	Reason            string `json:"reason"`
+	NextAction        string `json:"next_action"`
+	NotificationEvent string `json:"notification_event"`
+}
+
+type PortalRequestSafety struct {
+	DirectAccessAllowed   bool `json:"direct_access_allowed"`
+	PortalRequired        bool `json:"portal_required"`
+	PermissionGranted     bool `json:"permission_granted"`
+	HostPermissionChanged bool `json:"host_permission_changed"`
+	HostRootModified      bool `json:"host_root_modified"`
+	BackendDetailsExposed bool `json:"backend_details_exposed"`
+}
+
+type PortalRequestSummary struct {
+	Headline string `json:"headline"`
+	Detail   string `json:"detail"`
+}
+
+type portalOperationRule struct {
+	Operation       string
+	PortalInterface string
+	PortalMethod    string
+	Decision        string
+	Resources       []string
+	Summary         string
+}
+
 type KRunnerQueryPreview struct {
 	SchemaVersion         string         `json:"schema_version"`
 	QueryType             string         `json:"query_type"`
@@ -1132,6 +1214,166 @@ func desktopResourceBridgeResource(id string, name string, operation string, por
 		BackendDetailsExposed:      false,
 		Summary:                    summary,
 	}
+}
+
+func (plan Plan) PortalRequestPreview(operation string, reason string) (PortalRequestPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return PortalRequestPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, operation, reason} {
+		if !singleLineOrBlank(value) {
+			return PortalRequestPreview{}, errors.New("portal request preview requires single-line fields")
+		}
+	}
+	rule, ok := portalOperationRuleFor(operation)
+	if !ok {
+		return PortalRequestPreview{}, fmt.Errorf("unsupported Portal operation: %s", operation)
+	}
+	if strings.TrimSpace(reason) == "" {
+		reason = "Compatibility application requested " + operation + " access."
+	}
+
+	requestAllowed := rule.Decision != "deny"
+	var denied *PortalRequestDenied
+	if !requestAllowed {
+		denied = &PortalRequestDenied{
+			Reason:            rule.Summary,
+			NextAction:        "open-compatibility-settings",
+			NotificationEvent: "approval-required",
+		}
+	}
+
+	preview := PortalRequestPreview{
+		SchemaVersion:  "xnix.runtime.portal_request.v1",
+		RequestType:    "portal-request-preview",
+		Source:         "runtime-portal-request-plan",
+		Desktop:        "KDE Plasma",
+		RuntimeMethod:  "GetPortalRequestPlan",
+		ApplicationID:  plan.ApplicationID,
+		DisplayName:    plan.DisplayName,
+		Icon:           plan.Icon,
+		DesktopFile:    plan.DesktopFile,
+		Operation:      rule.Operation,
+		Reason:         reason,
+		Decision:       rule.Decision,
+		RequestAllowed: requestAllowed,
+		RuntimeOwned:   true,
+		KDEPolicyOwner: false,
+		UserVisible:    true,
+		Portal: PortalRequestEndpoint{
+			Destination: "org.freedesktop.portal.Desktop",
+			Interface:   rule.PortalInterface,
+			Method:      rule.PortalMethod,
+			ObjectPath:  "/org/freedesktop/portal/desktop",
+			DBusAPI:     "XDG Desktop Portal",
+		},
+		Request: PortalRequestObject{
+			ObjectPathRequired:      true,
+			RequestObjectCreated:    false,
+			HandleToken:             portalRequestHandleToken(plan.ApplicationID, rule.Operation),
+			UserMediationRequired:   true,
+			Resources:               append([]string(nil), rule.Resources...),
+			RuntimePolicyOwner:      true,
+			DesktopShellPolicyOwner: false,
+		},
+		Completion: PortalRequestCompletion{
+			Signal:        "Response",
+			ResponseField: "response",
+			SuccessCode:   0,
+			CancelledCode: 1,
+			DeniedCode:    2,
+			ResultOwner:   "Runtime",
+		},
+		Denied: denied,
+		Safety: PortalRequestSafety{
+			DirectAccessAllowed:   false,
+			PortalRequired:        true,
+			PermissionGranted:     false,
+			HostPermissionChanged: false,
+			HostRootModified:      false,
+			BackendDetailsExposed: false,
+		},
+		UserFacingSettings: plan.UserFacingSettings,
+		Summary: PortalRequestSummary{
+			Headline: "KDE can show the Portal request before any desktop resource is granted.",
+			Detail:   "The Runtime owns the Portal request plan, waits for the Portal response, and keeps direct access disabled.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "Portal request preview"); err != nil {
+		return PortalRequestPreview{}, err
+	}
+	return preview, nil
+}
+
+func portalOperationRuleFor(operation string) (portalOperationRule, bool) {
+	for _, rule := range []portalOperationRule{
+		{
+			Operation:       "file-open",
+			PortalInterface: "org.freedesktop.portal.FileChooser",
+			PortalMethod:    "OpenFile",
+			Decision:        "ask",
+			Resources:       []string{"documents", "downloads", "selected-files"},
+			Summary:         "File access requires a user-approved desktop Portal request.",
+		},
+		{
+			Operation:       "uri-open",
+			PortalInterface: "org.freedesktop.portal.OpenURI",
+			PortalMethod:    "OpenURI",
+			Decision:        "ask",
+			Resources:       []string{"external-uri"},
+			Summary:         "URI handling requires a user-approved desktop Portal request.",
+		},
+		{
+			Operation:       "print",
+			PortalInterface: "org.freedesktop.portal.Print",
+			PortalMethod:    "Print",
+			Decision:        "ask",
+			Resources:       []string{"printer"},
+			Summary:         "Printing requires a user-approved desktop Portal request.",
+		},
+		{
+			Operation:       "screenshot",
+			PortalInterface: "org.freedesktop.portal.Screenshot",
+			PortalMethod:    "Screenshot",
+			Decision:        "ask",
+			Resources:       []string{"screen"},
+			Summary:         "Screenshots require a user-approved desktop Portal request.",
+		},
+		{
+			Operation:       "clipboard",
+			PortalInterface: "org.freedesktop.portal.Clipboard",
+			PortalMethod:    "RequestClipboard",
+			Decision:        "ask",
+			Resources:       []string{"clipboard"},
+			Summary:         "Clipboard access requires a user-approved desktop Portal request.",
+		},
+		{
+			Operation:       "camera",
+			PortalInterface: "org.freedesktop.portal.Camera",
+			PortalMethod:    "AccessCamera",
+			Decision:        "deny",
+			Resources:       []string{"camera"},
+			Summary:         "Camera access is denied until the user changes the application policy.",
+		},
+		{
+			Operation:       "remote-desktop",
+			PortalInterface: "org.freedesktop.portal.RemoteDesktop",
+			PortalMethod:    "CreateSession",
+			Decision:        "deny",
+			Resources:       []string{"screen", "input-devices"},
+			Summary:         "Remote desktop access is denied until the user changes the application policy.",
+		},
+	} {
+		if rule.Operation == operation {
+			return rule, true
+		}
+	}
+	return portalOperationRule{}, false
+}
+
+func portalRequestHandleToken(applicationID string, operation string) string {
+	replacer := strings.NewReplacer(".", "_", "-", "_")
+	return "xnix_" + replacer.Replace(applicationID) + "_" + replacer.Replace(operation)
 }
 
 func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query string) (KRunnerQueryPreview, error) {

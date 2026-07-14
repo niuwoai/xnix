@@ -502,6 +502,107 @@ func TestDesktopResourceBridgePreviewKeepsBridgesDisabled(t *testing.T) {
 	}
 }
 
+func TestPortalRequestPreviewPlansPortalFlowWithoutGrantingAccess(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.PortalRequestPreview("file-open", "Open a selected document.")
+	if err != nil {
+		t.Fatalf("PortalRequestPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.portal_request.v1" ||
+		preview.RequestType != "portal-request-preview" ||
+		preview.Source != "runtime-portal-request-plan" {
+		t.Fatalf("unexpected Portal request schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" ||
+		preview.RuntimeMethod != "GetPortalRequestPlan" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected Portal request identity: %#v", preview)
+	}
+	if preview.Operation != "file-open" ||
+		preview.Reason != "Open a selected document." ||
+		preview.Decision != "ask" ||
+		!preview.RequestAllowed {
+		t.Fatalf("unexpected file-open decision: %#v", preview)
+	}
+	if preview.Portal.Destination != "org.freedesktop.portal.Desktop" ||
+		preview.Portal.Interface != "org.freedesktop.portal.FileChooser" ||
+		preview.Portal.Method != "OpenFile" ||
+		preview.Portal.ObjectPath != "/org/freedesktop/portal/desktop" ||
+		preview.Portal.DBusAPI != "XDG Desktop Portal" {
+		t.Fatalf("unexpected Portal endpoint: %#v", preview.Portal)
+	}
+	if !preview.Request.ObjectPathRequired ||
+		preview.Request.RequestObjectCreated ||
+		preview.Request.HandleToken != "xnix_org_example_ledger_file_open" ||
+		!preview.Request.UserMediationRequired ||
+		!sameStrings(preview.Request.Resources, []string{"documents", "downloads", "selected-files"}) ||
+		!preview.Request.RuntimePolicyOwner ||
+		preview.Request.DesktopShellPolicyOwner {
+		t.Fatalf("unexpected Portal request object: %#v", preview.Request)
+	}
+	if preview.Completion.Signal != "Response" ||
+		preview.Completion.ResponseField != "response" ||
+		preview.Completion.SuccessCode != 0 ||
+		preview.Completion.CancelledCode != 1 ||
+		preview.Completion.DeniedCode != 2 ||
+		preview.Completion.ResultOwner != "Runtime" {
+		t.Fatalf("unexpected Portal completion: %#v", preview.Completion)
+	}
+	if preview.Denied != nil {
+		t.Fatalf("allowed Portal request included denial guidance: %#v", preview.Denied)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.Safety.DirectAccessAllowed || !preview.Safety.PortalRequired ||
+		preview.Safety.PermissionGranted || preview.Safety.HostPermissionChanged ||
+		preview.Safety.HostRootModified || preview.Safety.BackendDetailsExposed {
+		t.Fatalf("unexpected Portal safety flags: %#v", preview)
+	}
+
+	camera, err := plan.PortalRequestPreview("camera", "")
+	if err != nil {
+		t.Fatalf("camera PortalRequestPreview returned error: %v", err)
+	}
+	if camera.Decision != "deny" || camera.RequestAllowed ||
+		camera.Portal.Interface != "org.freedesktop.portal.Camera" ||
+		camera.Portal.Method != "AccessCamera" ||
+		camera.Denied == nil ||
+		camera.Denied.NextAction != "open-compatibility-settings" ||
+		camera.Denied.NotificationEvent != "approval-required" ||
+		camera.Safety.PermissionGranted {
+		t.Fatalf("unexpected camera denial: %#v", camera)
+	}
+	if _, err := plan.PortalRequestPreview("unknown", ""); err == nil {
+		t.Fatalf("PortalRequestPreview accepted an unknown operation")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Portal request preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+	for _, hostPath := range []string{"/users", "/home", "/var", "/opt", "/tmp"} {
+		if strings.Contains(text, hostPath) {
+			t.Fatalf("Portal request preview exposes host path %q: %s", hostPath, text)
+		}
+	}
+}
+
 func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 	preview, err := NewKRunnerQueryPreview([]Recipe{
 		{
