@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|mimeapps-preview|notification-preview|tray-status-preview|window-identity-preview} (--recipe PATH | --registry PATH --app ID)")
+		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview} (--recipe PATH | --registry PATH --app ID)")
 	}
 
 	switch args[0] {
@@ -32,6 +32,8 @@ func run(args []string, stdout io.Writer) error {
 		return runMIMEAppsPreview(args[1:], stdout)
 	case "notification-preview":
 		return runNotificationPreview(args[1:], stdout)
+	case "settings-preview":
+		return runSettingsPreview(args[1:], stdout)
 	case "tray-status-preview":
 		return runTrayStatusPreview(args[1:], stdout)
 	case "window-identity-preview":
@@ -103,6 +105,25 @@ func runNotificationPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.NotificationPreview(eventType)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runSettingsPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("settings-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.SettingsPreview()
 	if err != nil {
 		return err
 	}

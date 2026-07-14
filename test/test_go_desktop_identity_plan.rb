@@ -32,6 +32,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
@@ -149,6 +150,45 @@ if go_available
   assert(notification_payload.fetch("backend_details_exposed") == false, "notification preview must not expose backend details")
   assert(!notification.downcase.include?("prefix"), "notification preview must not expose implementation storage")
   assert(!notification.include?(".exe"), "notification preview must not expose a Windows executable")
+
+  settings, settings_status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "settings-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    chdir: project_root
+  )
+  assert(settings_status.success?, "Go settings preview CLI must run successfully")
+  settings_payload = JSON.parse(settings)
+  assert(settings_payload.fetch("schema_version") == "xnix.runtime.settings.v1", "settings preview schema version must be stable")
+  assert(settings_payload.fetch("request_type") == "settings-preview", "settings preview must identify its request type")
+  assert(settings_payload.fetch("desktop") == "KDE Plasma", "settings preview must target KDE Plasma")
+  assert(settings_payload.fetch("application_id") == recipe.id, "settings preview must preserve application identity")
+  assert(settings_payload.fetch("display_name") == recipe.name, "settings preview must preserve display names")
+  assert(settings_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "settings preview must bind generated desktop files")
+  assert(settings_payload.fetch("section_count") == 5, "settings preview must expose all user-facing settings sections")
+  assert(settings_payload.fetch("sections").map { |section| section.fetch("id") } == %w[run-mode resource-access devices network snapshots], "settings preview must expose the required section order")
+  run_mode = settings_payload.fetch("sections").find { |section| section.fetch("id") == "run-mode" }
+  assert(run_mode.fetch("fields").find { |field| field.fetch("id") == "mode" }.fetch("value") == "automatic", "settings preview must default to automatic mode")
+  access = settings_payload.fetch("sections").find { |section| section.fetch("id") == "resource-access" }
+  assert(access.fetch("fields").find { |field| field.fetch("id") == "documents" }.fetch("value") == "ask", "settings preview must default documents access to review")
+  assert(access.fetch("fields").find { |field| field.fetch("id") == "downloads" }.fetch("value") == "ask", "settings preview must default downloads access to review")
+  devices = settings_payload.fetch("sections").find { |section| section.fetch("id") == "devices" }
+  assert(devices.fetch("fields").find { |field| field.fetch("id") == "camera" }.fetch("value") == "deny", "settings preview must default camera access to deny")
+  assert(settings_payload.fetch("runtime_owned") == true, "settings preview must remain Runtime-owned")
+  assert(settings_payload.fetch("kde_policy_owner") == false, "settings preview must not make KDE own backend policy")
+  assert(settings_payload.fetch("user_visible") == true, "settings preview must be user visible")
+  assert(settings_payload.fetch("settings_persisted") == false, "settings preview must not claim persisted settings")
+  assert(settings_payload.fetch("settings_persistence_enabled") == false, "settings preview must keep settings persistence disabled")
+  assert(settings_payload.fetch("host_root_modified") == false, "settings preview must not mutate the host root")
+  assert(settings_payload.fetch("backend_details_exposed") == false, "settings preview must not expose backend details")
+  assert(!settings.downcase.include?("prefix"), "settings preview must not expose implementation storage")
+  assert(!settings.include?(".exe"), "settings preview must not expose a Windows executable")
+  assert(!settings.downcase.include?("proton"), "settings preview must not expose backend implementation names")
 
   tray_status, tray_status_result = Open3.capture2(
     go_binary,

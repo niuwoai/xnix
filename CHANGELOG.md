@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.119] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go settings-preview --registry <path> --app <id>` for read-only KDE unified-settings previews from the registry-backed desktop identity plan.
+- Added Go Runtime settings modeling for run mode, file access, device access, network access, and snapshots with desktop identity fields and user-facing defaults.
+- Added Go and Ruby harness coverage that verifies Runtime-owned settings previews remain KDE-targeted, user-visible, backend-detail-free, host-root-safe, and honest about settings persistence remaining disabled.
+
+### Changed
+
+- Moved the unified-settings entry point one step closer to Go-owned Runtime product logic while keeping KDE responsible for display and review only.
+
 ## [0.2.118] - 2026-07-15
 
 ### Added

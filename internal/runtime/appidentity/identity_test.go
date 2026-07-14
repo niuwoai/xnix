@@ -297,6 +297,65 @@ func TestNotificationPreviewKeepsExecutionGatesClosed(t *testing.T) {
 	}
 }
 
+func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.SettingsPreview()
+	if err != nil {
+		t.Fatalf("SettingsPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.settings.v1" || preview.RequestType != "settings-preview" {
+		t.Fatalf("unexpected settings schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" || preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" || preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected settings identity: %#v", preview)
+	}
+	if preview.SectionCount != 5 || len(preview.Sections) != 5 {
+		t.Fatalf("unexpected section count: %#v", preview.Sections)
+	}
+	if got, want := settingSectionIDs(preview.Sections), []string{"run-mode", "resource-access", "devices", "network", "snapshots"}; !sameStrings(got, want) {
+		t.Fatalf("section ids = %#v, want %#v", got, want)
+	}
+	if settingFieldValue(preview.Sections, "run-mode", "mode") != "automatic" {
+		t.Fatalf("run mode did not default to automatic: %#v", preview.Sections)
+	}
+	if settingFieldValue(preview.Sections, "resource-access", "documents") != "ask" ||
+		settingFieldValue(preview.Sections, "resource-access", "downloads") != "ask" {
+		t.Fatalf("file access did not default to review: %#v", preview.Sections)
+	}
+	if settingFieldValue(preview.Sections, "devices", "camera") != "deny" ||
+		settingFieldValue(preview.Sections, "network", "network") != "allow" ||
+		settingFieldValue(preview.Sections, "snapshots", "snapshots") != "enabled" {
+		t.Fatalf("unexpected device, network, or snapshot defaults: %#v", preview.Sections)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.SettingsPersisted || preview.SettingsPersistenceEnabled ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected settings safety flags: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("settings preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},
@@ -309,6 +368,28 @@ func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 			t.Fatalf("NewPlan accepted invalid recipe: %#v", recipe)
 		}
 	}
+}
+
+func settingSectionIDs(sections []SettingsSection) []string {
+	ids := make([]string, 0, len(sections))
+	for _, section := range sections {
+		ids = append(ids, section.ID)
+	}
+	return ids
+}
+
+func settingFieldValue(sections []SettingsSection, sectionID string, fieldID string) string {
+	for _, section := range sections {
+		if section.ID != sectionID {
+			continue
+		}
+		for _, field := range section.Fields {
+			if field.ID == fieldID {
+				return field.Value
+			}
+		}
+	}
+	return ""
 }
 
 func sameStrings(left []string, right []string) bool {

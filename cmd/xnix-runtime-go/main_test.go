@@ -156,6 +156,58 @@ func TestNotificationPreviewCommandRendersKDENotification(t *testing.T) {
 	}
 }
 
+func TestSettingsPreviewCommandRendersKDESettings(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"settings-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.settings.v1" || payload["request_type"] != "settings-preview" {
+		t.Fatalf("unexpected settings schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" || payload["application_id"] != "org.example.ledger" ||
+		payload["display_name"] != "Example Ledger" || payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected settings identity: %#v", payload)
+	}
+	if payload["section_count"] != float64(5) {
+		t.Fatalf("unexpected settings section count: %#v", payload)
+	}
+	sections := payload["sections"].([]any)
+	runMode := sections[0].(map[string]any)
+	if runMode["id"] != "run-mode" {
+		t.Fatalf("unexpected first settings section: %#v", runMode)
+	}
+	fields := runMode["fields"].([]any)
+	mode := fields[0].(map[string]any)
+	if mode["id"] != "mode" || mode["value"] != "automatic" {
+		t.Fatalf("unexpected run mode field: %#v", mode)
+	}
+	if payload["runtime_owned"] != true || payload["kde_policy_owner"] != false ||
+		payload["user_visible"] != true || payload["settings_persisted"] != false ||
+		payload["settings_persistence_enabled"] != false || payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected settings safety flags: %#v", payload)
+	}
+}
+
 func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

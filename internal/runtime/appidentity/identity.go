@@ -184,6 +184,42 @@ type NotificationPreview struct {
 	Summary                    string   `json:"summary"`
 }
 
+type SettingsPreview struct {
+	SchemaVersion              string            `json:"schema_version"`
+	RequestType                string            `json:"request_type"`
+	Desktop                    string            `json:"desktop"`
+	ApplicationID              string            `json:"application_id"`
+	DisplayName                string            `json:"display_name"`
+	Icon                       string            `json:"icon"`
+	DesktopFile                string            `json:"desktop_file"`
+	RuntimeOwned               bool              `json:"runtime_owned"`
+	KDEPolicyOwner             bool              `json:"kde_policy_owner"`
+	UserVisible                bool              `json:"user_visible"`
+	SettingsState              string            `json:"settings_state"`
+	SettingsPersisted          bool              `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool              `json:"settings_persistence_enabled"`
+	HostRootModified           bool              `json:"host_root_modified"`
+	BackendDetailsExposed      bool              `json:"backend_details_exposed"`
+	SectionCount               int               `json:"section_count"`
+	Sections                   []SettingsSection `json:"sections"`
+	UserFacingSettings         map[string]string `json:"user_facing_settings"`
+	Summary                    string            `json:"summary"`
+}
+
+type SettingsSection struct {
+	ID          string          `json:"id"`
+	Title       string          `json:"title"`
+	Description string          `json:"description"`
+	Fields      []SettingsField `json:"fields"`
+}
+
+type SettingsField struct {
+	ID      string   `json:"id"`
+	Label   string   `json:"label"`
+	Value   string   `json:"value"`
+	Options []string `json:"options"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -549,6 +585,77 @@ func (plan Plan) NotificationPreview(eventType string) (NotificationPreview, err
 	}
 
 	return preview, nil
+}
+
+func (plan Plan) SettingsPreview() (SettingsPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return SettingsPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {
+		if !singleLine(value) {
+			return SettingsPreview{}, errors.New("settings preview requires single-line identity fields")
+		}
+	}
+
+	sections := []SettingsSection{
+		settingsSection("run-mode", "Run mode", "Choose how Xnix balances speed and compatibility.", []SettingsField{
+			settingsField("mode", "Run mode", "automatic", []string{"automatic", "performance", "compatibility"}),
+			settingsField("preference", "Priority", "compatibility", []string{"performance", "compatibility"}),
+		}),
+		settingsSection("resource-access", "File access", "Control which user folders this application may request.", []SettingsField{
+			settingsField("documents", "Documents", "ask", []string{"allow", "ask", "deny"}),
+			settingsField("downloads", "Downloads", "ask", []string{"allow", "ask", "deny"}),
+		}),
+		settingsSection("devices", "Devices", "Control sensitive device access.", []SettingsField{
+			settingsField("camera", "Camera", "deny", []string{"allow", "ask", "deny"}),
+		}),
+		settingsSection("network", "Network", "Control network access for compatibility actions.", []SettingsField{
+			settingsField("network", "Network", "allow", []string{"allow", "ask", "deny"}),
+		}),
+		settingsSection("snapshots", "Snapshots", "Keep restore points before risky compatibility changes.", []SettingsField{
+			settingsField("snapshots", "Environment snapshots", "enabled", []string{"enabled", "disabled"}),
+		}),
+	}
+
+	return SettingsPreview{
+		SchemaVersion:              "xnix.runtime.settings.v1",
+		RequestType:                "settings-preview",
+		Desktop:                    "KDE Plasma",
+		ApplicationID:              plan.ApplicationID,
+		DisplayName:                plan.DisplayName,
+		Icon:                       plan.Icon,
+		DesktopFile:                plan.DesktopFile,
+		RuntimeOwned:               true,
+		KDEPolicyOwner:             false,
+		UserVisible:                true,
+		SettingsState:              "planned",
+		SettingsPersisted:          false,
+		SettingsPersistenceEnabled: false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		SectionCount:               len(sections),
+		Sections:                   sections,
+		UserFacingSettings:         plan.UserFacingSettings,
+		Summary:                    "settings preview lets KDE show user-facing compatibility controls while persistence and implementation details stay gated in the Runtime.",
+	}, nil
+}
+
+func settingsSection(id string, title string, description string, fields []SettingsField) SettingsSection {
+	return SettingsSection{
+		ID:          id,
+		Title:       title,
+		Description: description,
+		Fields:      fields,
+	}
+}
+
+func settingsField(id string, label string, value string, options []string) SettingsField {
+	return SettingsField{
+		ID:      id,
+		Label:   label,
+		Value:   value,
+		Options: options,
+	}
 }
 
 func singleLine(value string) bool {
