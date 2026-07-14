@@ -56,6 +56,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("backend-selection-preview"), "Go Runtime CLI must render KDE backend selection previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-resource-bridge-preview"), "Go Runtime CLI must render KDE desktop resource bridge previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-readiness-preview"), "Go Runtime CLI must render KDE execution readiness previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
@@ -227,6 +228,67 @@ if go_available
   assert(!backend_selection.downcase.include?("proton"), "backend selection preview must not expose backend implementation names")
   assert(!backend_selection.downcase.include?("wine "), "backend selection preview must not expose backend implementation names")
   assert(!backend_selection.downcase.include?("virtual machine"), "backend selection preview must not expose implementation labels")
+
+  execution_readiness, execution_readiness_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "execution-readiness-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(execution_readiness_status.success?, "Go execution readiness preview CLI must run successfully")
+  execution_readiness_payload = JSON.parse(execution_readiness)
+  assert(execution_readiness_payload.fetch("schema_version") == "xnix.runtime.launch_readiness.v1", "execution readiness preview schema version must be stable")
+  assert(execution_readiness_payload.fetch("request_type") == "execution-readiness-preview", "execution readiness preview must identify its request type")
+  assert(execution_readiness_payload.fetch("readiness_type") == "compatibility-execution-readiness", "execution readiness preview must identify the readiness type")
+  assert(execution_readiness_payload.fetch("source") == "compatibility-center", "execution readiness preview must identify the Compatibility Center source")
+  assert(execution_readiness_payload.fetch("desktop") == "KDE Plasma", "execution readiness preview must target KDE Plasma")
+  assert(execution_readiness_payload.fetch("runtime_method") == "GetExecutionReadiness", "execution readiness preview must expose the Runtime method")
+  readiness_application = execution_readiness_payload.fetch("application")
+  assert(readiness_application.fetch("id") == recipe.id, "execution readiness preview must preserve application identity")
+  assert(readiness_application.fetch("name") == recipe.name, "execution readiness preview must preserve display names")
+  assert(readiness_application.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "execution readiness preview must bind generated desktop files")
+  assert(readiness_application.fetch("launcher_command") == ["xnix-compat-launch", "--app", recipe.id, "%U"], "execution readiness preview must expose the managed launcher command")
+  readiness_profile = execution_readiness_payload.fetch("compatibility_profile")
+  assert(readiness_profile.fetch("id") == "local-compatibility", "execution readiness preview must use the recommended profile")
+  assert(readiness_profile.fetch("kind") == "local", "execution readiness preview must keep profile kind user-facing")
+  assert(readiness_profile.fetch("ready") == false, "execution readiness preview must not mark the profile ready")
+  assert(readiness_profile.fetch("launch_enabled") == false, "execution readiness preview must not enable profile launch")
+  assert(readiness_profile.fetch("backend_details_exposed") == false, "execution readiness preview must hide backend details")
+  assert(execution_readiness_payload.fetch("execution_state") == "blocked", "execution readiness preview must stay blocked before Runtime gates pass")
+  assert(execution_readiness_payload.fetch("overall_status") == "not-ready", "execution readiness preview must not claim launch readiness")
+  assert(execution_readiness_payload.fetch("gate_count") == 5, "execution readiness preview must expose five Runtime gates")
+  assert(execution_readiness_payload.fetch("required_gate_count") == 2, "execution readiness preview must count required gates")
+  assert(execution_readiness_payload.fetch("pending_gate_count") == 1, "execution readiness preview must count pending gates")
+  assert(execution_readiness_payload.fetch("blocked_gate_count") == 1, "execution readiness preview must count blocked gates")
+  assert(execution_readiness_payload.fetch("gates").map { |gate| gate.fetch("id") } == %w[recipe-validation portal-policy-review snapshot-baseline backend-binding runtime-launch-write-gate], "execution readiness preview must preserve gate order")
+  assert(execution_readiness_payload.fetch("runtime_owned") == true, "execution readiness preview must remain Runtime-owned")
+  assert(execution_readiness_payload.fetch("go_runtime_backed") == true, "execution readiness preview must be Go Runtime-backed")
+  assert(execution_readiness_payload.fetch("kde_policy_owner") == false, "execution readiness preview must not make KDE own backend policy")
+  assert(execution_readiness_payload.fetch("compatibility_center_card") == true, "execution readiness preview must be suitable for Compatibility Center cards")
+  assert(execution_readiness_payload.fetch("safe_for_ai_diagnostics") == true, "execution readiness preview must be safe for AI diagnostics")
+  assert(execution_readiness_payload.fetch("desktop_entry_launch_visible") == true, "execution readiness preview must allow KDE to show the desktop entry")
+  assert(execution_readiness_payload.fetch("launch_allowed") == false, "execution readiness preview must not allow launch")
+  assert(execution_readiness_payload.fetch("launch_enabled") == false, "execution readiness preview must not enable launch")
+  assert(execution_readiness_payload.fetch("execution_request_created") == false, "execution readiness preview must not create execution requests")
+  assert(execution_readiness_payload.fetch("backend_binding_ready") == false, "execution readiness preview must not claim backend binding readiness")
+  assert(execution_readiness_payload.fetch("portal_policy_required") == true, "execution readiness preview must require Portal review")
+  assert(execution_readiness_payload.fetch("snapshot_required") == true, "execution readiness preview must require snapshot review")
+  assert(execution_readiness_payload.fetch("user_action_required") == true, "execution readiness preview must require user or Runtime action")
+  assert(execution_readiness_payload.fetch("blocked_actions").include?("launch compatibility profile"), "execution readiness preview must block compatibility launch")
+  assert(execution_readiness_payload.fetch("host_root_modified") == false, "execution readiness preview must not mutate the host root")
+  assert(execution_readiness_payload.fetch("network_required") == false, "execution readiness preview must not require network access")
+  assert(execution_readiness_payload.fetch("backend_details_exposed") == false, "execution readiness preview must not expose backend details")
+  assert(!execution_readiness.downcase.include?("prefix"), "execution readiness preview must not expose implementation storage")
+  assert(!execution_readiness.include?(".exe"), "execution readiness preview must not expose a Windows executable")
+  assert(!execution_readiness.downcase.include?("program files"), "execution readiness preview must not expose Windows paths")
+  assert(!execution_readiness.downcase.include?("qemu-system"), "execution readiness preview must not expose VM implementation commands")
+  assert(!execution_readiness.downcase.include?("proton"), "execution readiness preview must not expose backend implementation names")
+  assert(!execution_readiness.downcase.include?("wine "), "execution readiness preview must not expose backend implementation names")
+  assert(!execution_readiness.downcase.include?("virtual machine"), "execution readiness preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

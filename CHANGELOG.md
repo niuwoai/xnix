@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.130] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-readiness-preview --registry <path> --app <id>` for read-only KDE Compatibility Center launch-readiness previews from digest-verified registry recipes.
+- Added Go Runtime execution-readiness planning that exposes application identity, the recommended compatibility profile, Runtime gates, gate counts, blocked actions, and launch safety flags before any execution request can be created.
+- Added Go and Ruby harness coverage that verifies execution-readiness previews remain Runtime-owned, Go-backed, KDE-targeted, AI-diagnostic-safe, desktop-entry-visible, backend-detail-free, host-root-safe, and honest about launch, execution requests, profile binding, Portal review, and snapshot gates remaining blocked or required.
+
+### Changed
+
+- Moved the user-visible launch-readiness surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for displaying launch status and routing launch intent through Runtime gates.
+
 ## [0.2.129] - 2026-07-15
 
 ### Added

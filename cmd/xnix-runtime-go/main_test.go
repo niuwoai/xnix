@@ -220,6 +220,87 @@ func TestBackendSelectionPreviewCommandRendersProfiles(t *testing.T) {
 	}
 }
 
+func TestExecutionReadinessPreviewCommandKeepsLaunchGated(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-readiness-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.launch_readiness.v1" ||
+		payload["request_type"] != "execution-readiness-preview" ||
+		payload["readiness_type"] != "compatibility-execution-readiness" ||
+		payload["source"] != "compatibility-center" ||
+		payload["runtime_method"] != "GetExecutionReadiness" {
+		t.Fatalf("unexpected execution readiness schema: %#v", payload)
+	}
+	application := payload["application"].(map[string]any)
+	if application["id"] != "org.example.ledger" ||
+		application["name"] != "Example Ledger" ||
+		application["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected execution readiness application: %#v", application)
+	}
+	profile := payload["compatibility_profile"].(map[string]any)
+	if profile["id"] != "local-compatibility" ||
+		profile["kind"] != "local" ||
+		profile["ready"] != false ||
+		profile["launch_enabled"] != false ||
+		profile["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution readiness profile: %#v", profile)
+	}
+	if payload["execution_state"] != "blocked" ||
+		payload["overall_status"] != "not-ready" ||
+		payload["gate_count"] != float64(5) ||
+		payload["required_gate_count"] != float64(2) ||
+		payload["pending_gate_count"] != float64(1) ||
+		payload["blocked_gate_count"] != float64(1) {
+		t.Fatalf("unexpected execution readiness state: %#v", payload)
+	}
+	gates := payload["gates"].([]any)
+	if len(gates) != 5 ||
+		gates[0].(map[string]any)["id"] != "recipe-validation" ||
+		gates[1].(map[string]any)["id"] != "portal-policy-review" ||
+		gates[2].(map[string]any)["id"] != "snapshot-baseline" ||
+		gates[3].(map[string]any)["id"] != "backend-binding" ||
+		gates[4].(map[string]any)["id"] != "runtime-launch-write-gate" {
+		t.Fatalf("unexpected execution readiness gates: %#v", gates)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_request_created"] != false ||
+		payload["backend_binding_ready"] != false ||
+		payload["portal_policy_required"] != true ||
+		payload["snapshot_required"] != true ||
+		payload["user_action_required"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution readiness safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
