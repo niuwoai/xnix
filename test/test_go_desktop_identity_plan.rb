@@ -30,6 +30,7 @@ assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop 
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
@@ -89,6 +90,25 @@ if go_available
   assert(desktop_entry.include?("X-Xnix-ApplicationId=#{recipe.id}\n"), "desktop entry preview must include the Runtime application id")
   assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
   assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")
+
+  mimeapps, mimeapps_status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "mimeapps-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    chdir: project_root
+  )
+  assert(mimeapps_status.success?, "Go MIME apps preview CLI must run successfully")
+  assert(mimeapps.include?("[Default Applications]\n"), "MIME apps preview must include default associations")
+  assert(mimeapps.include?("[Added Associations]\n"), "MIME apps preview must include added associations")
+  assert(mimeapps.include?("application/x-xnix-txt=xnix-#{recipe.id}.desktop\n"), "MIME apps preview must map text files to the generated desktop file")
+  assert(mimeapps.include?("application/x-xnix-log=xnix-#{recipe.id}.desktop;\n"), "MIME apps preview must add log file associations")
+  assert(!mimeapps.downcase.include?("prefix"), "MIME apps preview must not expose implementation storage")
+  assert(!mimeapps.include?(".exe"), "MIME apps preview must not expose a Windows executable")
 end
 
 puts "PASS: Go Runtime desktop identity plan unit tests"

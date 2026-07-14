@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.115] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go mimeapps-preview --registry <path> --app <id>` for read-only `mimeapps.list` preview output from the registry-backed desktop identity plan.
+- Added activation-staging file association renderer selection so `xnix-install-desktop-integration --file-association-source runtime-go` can stage MIME defaults rendered by the Go Runtime.
+- Added Go, Ruby, and CLI coverage for Runtime Go MIME association rendering while preserving the default Ruby renderer for constrained development staging.
+
+### Changed
+
+- Extended activation safety reporting with the file association source so staged KDE activation results can distinguish Ruby MIME output from Runtime Go-rendered MIME output.
+
 ## [0.2.114] - 2026-07-15
 
 ### Added

@@ -25,35 +25,35 @@ type Recipe struct {
 }
 
 type Plan struct {
-	SchemaVersion                  string            `json:"schema_version"`
-	ApplicationID                  string            `json:"application_id"`
-	DisplayName                    string            `json:"display_name"`
-	Icon                           string            `json:"icon"`
-	DesktopFile                    string            `json:"desktop_file"`
-	StartupWMClass                 string            `json:"startup_wm_class"`
-	Categories                     []string          `json:"categories"`
-	MIMETypes                      []string          `json:"mime_types"`
-	LauncherAction                 string            `json:"launcher_action"`
-	LaunchCommand                  []string          `json:"launch_command"`
-	UserVisible                    bool              `json:"user_visible"`
-	StandardDesktopEntry           bool              `json:"standard_desktop_entry"`
-	AcceptsFileURIs                bool              `json:"accepts_file_uris"`
-	RuntimeOwned                   bool              `json:"runtime_owned"`
-	BackendTerminologyHidden       bool              `json:"backend_terminology_hidden"`
-	DesktopFileWriteEnabled        bool              `json:"desktop_file_write_enabled"`
-	BackendLaunchEnabled           bool              `json:"backend_launch_enabled"`
-	BackendDetailsExposed          bool              `json:"backend_details_exposed"`
-	RawWindowsExecutableExposed    bool              `json:"raw_windows_executable_exposed"`
-	CompatibilityStorageExposed    bool              `json:"compatibility_storage_exposed"`
-	HostRootMutationEnabled        bool              `json:"host_root_mutation_enabled"`
-	StableIdentityDigest           string            `json:"stable_identity_digest"`
-	RecipeSource                   string            `json:"recipe_source"`
-	RegistryName                   string            `json:"registry_name,omitempty"`
-	RecipeDigestVerified           bool              `json:"recipe_digest_verified"`
-	RecipeSignatureStatus          string            `json:"recipe_signature_status,omitempty"`
-	KDEEntryPoints                 []string          `json:"kde_entry_points"`
-	UserFacingSettings             map[string]string `json:"user_facing_settings"`
-	Summary                        string            `json:"summary"`
+	SchemaVersion               string            `json:"schema_version"`
+	ApplicationID               string            `json:"application_id"`
+	DisplayName                 string            `json:"display_name"`
+	Icon                        string            `json:"icon"`
+	DesktopFile                 string            `json:"desktop_file"`
+	StartupWMClass              string            `json:"startup_wm_class"`
+	Categories                  []string          `json:"categories"`
+	MIMETypes                   []string          `json:"mime_types"`
+	LauncherAction              string            `json:"launcher_action"`
+	LaunchCommand               []string          `json:"launch_command"`
+	UserVisible                 bool              `json:"user_visible"`
+	StandardDesktopEntry        bool              `json:"standard_desktop_entry"`
+	AcceptsFileURIs             bool              `json:"accepts_file_uris"`
+	RuntimeOwned                bool              `json:"runtime_owned"`
+	BackendTerminologyHidden    bool              `json:"backend_terminology_hidden"`
+	DesktopFileWriteEnabled     bool              `json:"desktop_file_write_enabled"`
+	BackendLaunchEnabled        bool              `json:"backend_launch_enabled"`
+	BackendDetailsExposed       bool              `json:"backend_details_exposed"`
+	RawWindowsExecutableExposed bool              `json:"raw_windows_executable_exposed"`
+	CompatibilityStorageExposed bool              `json:"compatibility_storage_exposed"`
+	HostRootMutationEnabled     bool              `json:"host_root_mutation_enabled"`
+	StableIdentityDigest        string            `json:"stable_identity_digest"`
+	RecipeSource                string            `json:"recipe_source"`
+	RegistryName                string            `json:"registry_name,omitempty"`
+	RecipeDigestVerified        bool              `json:"recipe_digest_verified"`
+	RecipeSignatureStatus       string            `json:"recipe_signature_status,omitempty"`
+	KDEEntryPoints              []string          `json:"kde_entry_points"`
+	UserFacingSettings          map[string]string `json:"user_facing_settings"`
+	Summary                     string            `json:"summary"`
 }
 
 func NewPlan(recipe Recipe) (Plan, error) {
@@ -210,6 +210,33 @@ func (plan Plan) RenderDesktopEntry() (string, error) {
 	}
 	if len(plan.MIMETypes) > 0 {
 		lines = append(lines, "MimeType="+strings.Join(plan.MIMETypes, ";")+";")
+	}
+	return strings.Join(lines, "\n") + "\n", nil
+}
+
+func (plan Plan) RenderMIMEApps() (string, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return "", err
+	}
+	if !singleLine(plan.DesktopFile) {
+		return "", errors.New("MIME association preview requires a desktop file")
+	}
+	if len(plan.MIMETypes) == 0 {
+		return "", errors.New("MIME association preview requires at least one MIME type")
+	}
+	for _, mimeType := range plan.MIMETypes {
+		if !singleLine(mimeType) {
+			return "", errors.New("MIME association preview requires single-line MIME types")
+		}
+	}
+
+	lines := []string{"[Default Applications]"}
+	for _, mimeType := range plan.MIMETypes {
+		lines = append(lines, mimeType+"="+plan.DesktopFile)
+	}
+	lines = append(lines, "", "[Added Associations]")
+	for _, mimeType := range plan.MIMETypes {
+		lines = append(lines, mimeType+"="+plan.DesktopFile+";")
 	}
 	return strings.Join(lines, "\n") + "\n", nil
 }

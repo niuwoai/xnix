@@ -74,3 +74,38 @@ func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
 		}
 	}
 }
+
+func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"mimeapps-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	mimeapps := output.String()
+	required := []string{
+		"[Default Applications]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop\n",
+		"application/x-xnix-log=xnix-org.example.ledger.desktop\n",
+		"[Added Associations]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop;\n",
+		"application/x-xnix-log=xnix-org.example.ledger.desktop;\n",
+	}
+	for _, fragment := range required {
+		if !bytes.Contains(output.Bytes(), []byte(fragment)) {
+			t.Fatalf("MIME apps preview missing %q in:\n%s", fragment, mimeapps)
+		}
+	}
+}

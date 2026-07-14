@@ -23,11 +23,12 @@ module Xnix
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
       RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
 
-      def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil)
+      def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil, file_association_renderer: nil)
         @root = Pathname.new(root)
         @recipe = recipe
         @install_gate = install_gate
         @desktop_entry_renderer = desktop_entry_renderer || RubyDesktopEntryRenderer.new
+        @file_association_renderer = file_association_renderer || RubyFileAssociationRenderer.new
       end
 
       def install
@@ -57,6 +58,7 @@ module Xnix
             "host_root_modified" => false,
             "backend_commands_exposed" => false,
             "desktop_entry_source" => desktop_entry_renderer.source,
+            "file_association_source" => file_association_renderer.source,
             "recipe_install_gate_enforced" => !install_gate.nil?,
             "rollback_receipt_written" => true
           }
@@ -65,7 +67,7 @@ module Xnix
 
       private
 
-      attr_reader :root, :recipe, :install_gate, :desktop_entry_renderer
+      attr_reader :root, :recipe, :install_gate, :desktop_entry_renderer, :file_association_renderer
 
       def validate_root!
         raise ArgumentError, "root must not be /" if root.cleanpath.to_s == "/"
@@ -108,10 +110,9 @@ module Xnix
       end
 
       def install_file_associations
-        model = FileAssociationModel.new(recipe: recipe)
         install_file(
           relative_path: FileAssociationModel::MIMEAPPS_RELATIVE_PATH,
-          contents: model.render_mimeapps,
+          contents: file_association_renderer.render(recipe),
           mode: 0o644,
           kind: "mimeapps-list",
           entry_point: "file-manager"
@@ -240,6 +241,66 @@ module Xnix
         end
       end
 
+      class RubyFileAssociationRenderer
+        def source
+          "ruby"
+        end
+
+        def render(recipe)
+          FileAssociationModel.new(recipe: recipe).render_mimeapps
+        end
+      end
+
+      class RuntimeGoFileAssociationRenderer
+        def initialize(command:, registry_path:, application_id:)
+          @command = command
+          @registry_path = registry_path
+          @application_id = application_id
+        end
+
+        def source
+          "runtime-go"
+        end
+
+        def render(recipe)
+          raise ArgumentError, "runtime-go file association renderer application mismatch" unless recipe.id == @application_id
+
+          output, status = Open3.capture2(
+            @command,
+            "mimeapps-preview",
+            "--registry",
+            @registry_path,
+            "--app",
+            @application_id
+          )
+          raise ArgumentError, "runtime-go file association renderer failed" unless status.success?
+
+          validate_output!(output, recipe)
+          output
+        rescue SystemCallError => e
+          raise ArgumentError, "runtime-go file association renderer unavailable: #{e.message}"
+        end
+
+        private
+
+        def validate_output!(output, recipe)
+          desktop_file = DesktopEntry.new(recipe).file_name
+          required = [
+            "[Default Applications]\n",
+            "[Added Associations]\n",
+            *recipe.mime_types.flat_map do |mime_type|
+              [
+                "#{mime_type}=#{desktop_file}\n",
+                "#{mime_type}=#{desktop_file};\n"
+              ]
+            end
+          ]
+          missing = required.reject { |fragment| output.include?(fragment) }
+          raise ArgumentError, "runtime-go file association renderer returned an incomplete MIME association list" unless missing.empty?
+          raise ArgumentError, "runtime-go file association renderer exposed backend details" if output.match?(/wine|prefix|\.exe|proton|qemu-system|program files/i)
+        end
+      end
+
       class CLI
         def initialize(argv)
           @argv = argv.dup
@@ -248,6 +309,7 @@ module Xnix
           @root = nil
           @mode = "production"
           @desktop_entry_source = "ruby"
+          @file_association_source = "ruby"
           @runtime_go_bin = "xnix-runtime-go"
         end
 
@@ -265,7 +327,8 @@ module Xnix
             root: @root,
             recipe: recipe,
             install_gate: install_gate,
-            desktop_entry_renderer: build_desktop_entry_renderer
+            desktop_entry_renderer: build_desktop_entry_renderer,
+            file_association_renderer: build_file_association_renderer
           ).install
           puts JSON.pretty_generate(result)
           0
@@ -278,7 +341,7 @@ module Xnix
 
         def parser
           OptionParser.new do |options|
-            options.banner = "Usage: xnix-install-desktop-integration --root PATH --app APP_ID [--recipe-dir PATH] [--mode MODE]"
+            options.banner = "Usage: xnix-install-desktop-integration --root PATH --app APP_ID [--recipe-dir PATH] [--mode MODE] [--desktop-entry-source SOURCE] [--file-association-source SOURCE]"
             options.on("--root PATH", "Install desktop activation files under PATH") do |value|
               @root = value
             end
@@ -294,7 +357,10 @@ module Xnix
             options.on("--desktop-entry-source SOURCE", %w[ruby runtime-go], "Render desktop entries with ruby or runtime-go") do |value|
               @desktop_entry_source = value
             end
-            options.on("--runtime-go-bin PATH", "Path to xnix-runtime-go when --desktop-entry-source runtime-go is used") do |value|
+            options.on("--file-association-source SOURCE", %w[ruby runtime-go], "Render MIME associations with ruby or runtime-go") do |value|
+              @file_association_source = value
+            end
+            options.on("--runtime-go-bin PATH", "Path to xnix-runtime-go when a runtime-go source is used") do |value|
               @runtime_go_bin = value
             end
           end
@@ -305,6 +371,17 @@ module Xnix
 
           registry_path = File.join(@recipe_dir, "registry.json")
           RuntimeGoDesktopEntryRenderer.new(
+            command: @runtime_go_bin,
+            registry_path: registry_path,
+            application_id: @application_id
+          )
+        end
+
+        def build_file_association_renderer
+          return RubyFileAssociationRenderer.new if @file_association_source == "ruby"
+
+          registry_path = File.join(@recipe_dir, "registry.json")
+          RuntimeGoFileAssociationRenderer.new(
             command: @runtime_go_bin,
             registry_path: registry_path,
             application_id: @application_id

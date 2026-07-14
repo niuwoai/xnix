@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan} (--recipe PATH | --registry PATH --app ID)")
+		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|mimeapps-preview} (--recipe PATH | --registry PATH --app ID)")
 	}
 
 	switch args[0] {
@@ -28,6 +28,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
+	case "mimeapps-preview":
+		return runMIMEAppsPreview(args[1:], stdout)
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -65,6 +67,23 @@ func runDesktopEntryPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	_, err = io.WriteString(stdout, entry)
+	return err
+}
+
+func runMIMEAppsPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("mimeapps-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	mimeapps, err := plan.RenderMIMEApps()
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(stdout, mimeapps)
 	return err
 }
 

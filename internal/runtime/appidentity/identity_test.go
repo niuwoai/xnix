@@ -98,6 +98,42 @@ func TestRenderDesktopEntryUsesManagedRuntimeLauncher(t *testing.T) {
 	}
 }
 
+func TestRenderMIMEAppsUsesGeneratedDesktopFile(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	mimeapps, err := plan.RenderMIMEApps()
+	if err != nil {
+		t.Fatalf("RenderMIMEApps returned error: %v", err)
+	}
+	required := []string{
+		"[Default Applications]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop\n",
+		"application/x-xnix-xls=xnix-org.example.ledger.desktop\n",
+		"[Added Associations]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop;\n",
+		"application/x-xnix-xls=xnix-org.example.ledger.desktop;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(mimeapps, fragment) {
+			t.Fatalf("MIME apps preview missing %q in:\n%s", fragment, mimeapps)
+		}
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system"} {
+		if strings.Contains(strings.ToLower(mimeapps), forbidden) {
+			t.Fatalf("MIME apps preview exposes forbidden term %q: %s", forbidden, mimeapps)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},
