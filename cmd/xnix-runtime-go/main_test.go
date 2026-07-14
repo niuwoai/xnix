@@ -1446,6 +1446,64 @@ func TestKDEEntryPointsPreviewCommandCoversFirstReleaseSurface(t *testing.T) {
 	}
 }
 
+func TestKDEEntryPointActionPreviewCommandRoutesFileManagerAction(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"kde-entrypoint-action-preview", "--registry", registryPath, "--app", "org.example.ledger", "--entrypoint", "file-manager", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.kde_entrypoint_action.v1" ||
+		payload["request_type"] != "kde-entrypoint-action-preview" ||
+		payload["action_type"] != "kde-entrypoint-action" ||
+		payload["source"] != "kde-entrypoints-preview" ||
+		payload["entry_point_id"] != "file-manager" ||
+		payload["kde_component"] != "Dolphin" ||
+		payload["runtime_source"] != "file-open-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetKDEEntryPointActionPreview" {
+		t.Fatalf("unexpected KDE entrypoint action schema: %#v", payload)
+	}
+	action := payload["action"].(map[string]any)
+	if action["intent"] != "open-files" ||
+		action["safe_result"] != "show file access review" ||
+		action["requires_portal"] != true ||
+		action["requires_runtime_gate"] != true ||
+		action["blocked_by_runtime_gate"] != true ||
+		action["creates_request_object"] != false ||
+		action["starts_backend"] != false ||
+		action["mutates_host"] != false {
+		t.Fatalf("unexpected KDE entrypoint action summary: %#v", action)
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["desktop_files_written"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE entrypoint action safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

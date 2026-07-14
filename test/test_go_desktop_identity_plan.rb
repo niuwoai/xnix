@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoint-action-preview"), "Go Runtime CLI must render KDE entrypoint action previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoints-preview"), "Go Runtime CLI must render KDE entrypoint previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mode-switch-preview"), "Go Runtime CLI must render KDE mode switch previews")
@@ -1260,6 +1261,44 @@ if go_available
   assert(!kde_entrypoints.downcase.include?("proton"), "KDE entrypoints preview must not expose backend implementation names")
   assert(!kde_entrypoints.downcase.include?("wine "), "KDE entrypoints preview must not expose backend implementation names")
   assert(!kde_entrypoints.downcase.include?("virtual machine"), "KDE entrypoints preview must not expose implementation labels")
+
+  kde_entrypoint_action, kde_entrypoint_action_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-entrypoint-action-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--entrypoint",
+    "file-manager",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_entrypoint_action_status.success?, "Go KDE entrypoint action preview CLI must run successfully")
+  kde_entrypoint_action_payload = JSON.parse(kde_entrypoint_action)
+  assert(kde_entrypoint_action_payload.fetch("schema_version") == "xnix.runtime.kde_entrypoint_action.v1", "KDE entrypoint action preview schema version must be stable")
+  assert(kde_entrypoint_action_payload.fetch("request_type") == "kde-entrypoint-action-preview", "KDE entrypoint action preview must identify its request type")
+  assert(kde_entrypoint_action_payload.fetch("source") == "kde-entrypoints-preview", "KDE entrypoint action preview must derive from KDE entrypoint previews")
+  assert(kde_entrypoint_action_payload.fetch("entry_point_id") == "file-manager", "KDE entrypoint action preview must preserve the selected entrypoint")
+  assert(kde_entrypoint_action_payload.fetch("kde_component") == "Dolphin", "KDE entrypoint action preview must bind Dolphin actions")
+  assert(kde_entrypoint_action_payload.fetch("runtime_source") == "file-open-preview", "KDE entrypoint action preview must route file-manager actions through file-open previews")
+  action = kde_entrypoint_action_payload.fetch("action")
+  assert(action.fetch("intent") == "open-files", "KDE entrypoint action preview must classify file-manager intent")
+  assert(action.fetch("safe_result") == "show file access review", "KDE entrypoint action preview must keep file actions in review")
+  assert(action.fetch("requires_portal") == true, "KDE entrypoint action preview must require Portal mediation for file actions")
+  assert(action.fetch("starts_backend") == false, "KDE entrypoint action preview must not start backends")
+  assert(action.fetch("creates_request_object") == false, "KDE entrypoint action preview must not create request objects")
+  assert(kde_entrypoint_action_payload.fetch("entry_point_action_captured") == true, "KDE entrypoint action preview must capture entrypoint actions")
+  assert(kde_entrypoint_action_payload.fetch("desktop_files_written") == false, "KDE entrypoint action preview must not write desktop files")
+  assert(kde_entrypoint_action_payload.fetch("request_objects_created") == false, "KDE entrypoint action preview must not create Runtime request objects")
+  assert(kde_entrypoint_action_payload.fetch("execution_started") == false, "KDE entrypoint action preview must not start execution")
+  assert(kde_entrypoint_action_payload.fetch("host_root_modified") == false, "KDE entrypoint action preview must not mutate the host root")
+  assert(!kde_entrypoint_action.downcase.include?("prefix"), "KDE entrypoint action preview must not expose implementation storage")
+  assert(!kde_entrypoint_action.include?(".exe"), "KDE entrypoint action preview must not expose a Windows executable")
+  assert(!kde_entrypoint_action.downcase.include?("virtual machine"), "KDE entrypoint action preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

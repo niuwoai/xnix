@@ -21,7 +21,7 @@ end
 recipe = Xnix::Compatibility::RecipeStore.new(path: PROJECT_ROOT.join("runtime/recipes")).find("org.xnix.sample.notepad")
 plan = Xnix::Compatibility::CompatibilityBackendSelectionPlan.new(recipe: recipe).to_h
 
-assert(plan["version"] == "0.2.140", "backend selection plan must expose the current version")
+assert(plan["version"] == "0.2.141", "backend selection plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-backend-selection-plan", "backend selection plan must identify the plan type")
 assert(plan["runtime_method"] == "GetBackendSelectionPlan", "backend selection plan must expose the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "backend selection plan must identify the application")

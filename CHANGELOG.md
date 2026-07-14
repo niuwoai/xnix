@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.141] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-entrypoint-action-preview --registry <path> --app <id> --entrypoint <id> --decision <decision> [file://...]` for read-only Runtime previews of a single KDE entrypoint action.
+- Added Go Runtime action routing for launcher, task-manager, Dolphin, tray, notification, Compatibility Center, and settings entry points while keeping all execution and host mutation disabled.
+- Added Go and Ruby harness coverage that verifies KDE entrypoint action previews remain Runtime-owned, Go-backed, KDE-targeted, Portal-aware for file actions, backend-detail-free, host-root-safe, and honest about desktop file writes, MIME default writes, settings persistence, notifications, task-manager activation, KWin rule application, tray bridging, request objects, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE entrypoint contract from visibility-only planning toward user-action routing without granting KDE backend policy ownership.
+
 ## [0.2.140] - 2026-07-15
 
 ### Added
