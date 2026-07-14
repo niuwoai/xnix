@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.112] - 2026-07-15
+
+### Added
+
+- Added Go Runtime registry-backed recipe loading for desktop identity planning with schema checks, application-id lookup, safe relative-path enforcement, SHA-256 verification, recipe-id matching, and signature-status reporting.
+- Added `xnix-runtime-go desktop-identity-plan --registry <path> --app <id>` so the Go Runtime can resolve a managed application from the recipe library before producing a KDE-safe normal Linux application identity.
+- Added Go unit coverage for registry digest verification, digest mismatch rejection, unsafe path rejection, and CLI registry lookup.
+
+### Changed
+
+- Updated the Go desktop identity harness to prefer registry-backed recipe lookup over direct recipe-file input while retaining direct input for constrained development tests.
+
 ## [0.2.111] - 2026-07-15
 
 ### Added

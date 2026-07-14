@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.111"
+EXPECTED_VERSION = "0.2.112"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -139,8 +139,11 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-service-binding
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
+  cmd/xnix-runtime-go/main_test.go
   internal/runtime/appidentity/identity.go
   internal/runtime/appidentity/identity_test.go
+  internal/runtime/appidentity/registry.go
+  internal/runtime/appidentity/registry_test.go
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb

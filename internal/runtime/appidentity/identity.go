@@ -47,14 +47,25 @@ type Plan struct {
 	CompatibilityStorageExposed    bool              `json:"compatibility_storage_exposed"`
 	HostRootMutationEnabled        bool              `json:"host_root_mutation_enabled"`
 	StableIdentityDigest           string            `json:"stable_identity_digest"`
+	RecipeSource                   string            `json:"recipe_source"`
+	RegistryName                   string            `json:"registry_name,omitempty"`
+	RecipeDigestVerified           bool              `json:"recipe_digest_verified"`
+	RecipeSignatureStatus          string            `json:"recipe_signature_status,omitempty"`
 	KDEEntryPoints                 []string          `json:"kde_entry_points"`
 	UserFacingSettings             map[string]string `json:"user_facing_settings"`
 	Summary                        string            `json:"summary"`
 }
 
 func NewPlan(recipe Recipe) (Plan, error) {
+	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
+}
+
+func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 	if err := recipe.Validate(); err != nil {
 		return Plan{}, err
+	}
+	if provenance.Source == "" {
+		provenance.Source = "direct-file"
 	}
 
 	mimeTypes := recipe.MIMETypes()
@@ -77,6 +88,10 @@ func NewPlan(recipe Recipe) (Plan, error) {
 		RuntimeOwned:             true,
 		BackendTerminologyHidden: true,
 		StableIdentityDigest:     identityDigest,
+		RecipeSource:             provenance.Source,
+		RegistryName:             provenance.RegistryName,
+		RecipeDigestVerified:     provenance.DigestVerified,
+		RecipeSignatureStatus:    provenance.SignatureStatus,
 		KDEEntryPoints: []string{
 			"start-menu",
 			"task-manager",

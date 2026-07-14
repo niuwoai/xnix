@@ -27,6 +27,8 @@ dockerfile = File.read(File.join(project_root, "Dockerfile"))
 assert(source.include?("package appidentity"), "Go application identity package must exist")
 assert(source.include?("BackendTerminologyHidden"), "Go plan must explicitly hide backend terminology")
 assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop safety validation")
+assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
@@ -37,8 +39,10 @@ if go_available
     "run",
     "./cmd/xnix-runtime-go",
     "desktop-identity-plan",
-    "--recipe",
-    "runtime/recipes/org.xnix.sample.notepad.json",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
     chdir: project_root
   )
   assert(status.success?, "Go desktop identity CLI must run successfully")
@@ -57,6 +61,10 @@ if go_available
   assert(plan.fetch("desktop_file_write_enabled") == false, "plan must not write desktop files")
   assert(plan.fetch("backend_launch_enabled") == false, "plan must not launch a backend")
   assert(plan.fetch("backend_details_exposed") == false, "plan must not expose backend details")
+  assert(plan.fetch("recipe_source") == "registry", "plan must prefer registry-backed recipe lookup")
+  assert(plan.fetch("registry_name") == "xnix-local-development", "plan must expose the registry name")
+  assert(plan.fetch("recipe_digest_verified") == true, "plan must verify recipe digest")
+  assert(plan.fetch("recipe_signature_status") == "development-only", "plan must expose development signature status")
 
   lower = output.downcase
   %w[prefix .exe qemu-system].each do |term|
