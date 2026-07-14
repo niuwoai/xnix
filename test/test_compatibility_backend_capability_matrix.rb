@@ -19,7 +19,7 @@ end
 
 matrix = Xnix::Compatibility::CompatibilityBackendCapabilityMatrix.new.to_h
 
-assert(matrix["version"] == "0.2.142", "backend capability matrix must expose the current version")
+assert(matrix["version"] == "0.2.143", "backend capability matrix must expose the current version")
 assert(matrix["matrix_type"] == "compatibility-backend-capability-matrix", "backend capability matrix must identify the matrix type")
 assert(matrix["runtime_method"] == "GetBackendCapabilityMatrix", "backend capability matrix must expose the Runtime method")
 assert(matrix["profile_count"] == 2, "backend capability matrix must expose two compatibility profiles")

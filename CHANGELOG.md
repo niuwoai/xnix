@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.143] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-review-preview --registry <path> --app <id> --action <id> --decision <decision> [file://...]` for read-only Runtime previews of user review intent on one queued KDE action.
+- Added Go Runtime KDE action review modeling that selects a queued launcher, task-manager, Dolphin, tray, notification, Compatibility Center, or settings action and keeps the user decision visible without recording a durable receipt.
+- Added Go and Ruby harness coverage that verifies KDE action review previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about decision recording, review receipts, queue mutation, settings persistence, notifications, permission grants, request objects, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center queue flow one step closer to user-review handling while keeping the Runtime's execution and persistence gates closed.
+
 ## [0.2.142] - 2026-07-15
 
 ### Added

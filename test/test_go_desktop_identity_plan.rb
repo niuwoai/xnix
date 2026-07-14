@@ -69,6 +69,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-review-preview"), "Go Runtime CLI must render KDE action review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoint-action-preview"), "Go Runtime CLI must render KDE entrypoint action previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoints-preview"), "Go Runtime CLI must render KDE entrypoint previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
@@ -1331,6 +1332,37 @@ if go_available
   assert(!kde_action_queue.downcase.include?("prefix"), "KDE action queue preview must not expose implementation storage")
   assert(!kde_action_queue.include?(".exe"), "KDE action queue preview must not expose a Windows executable")
   assert(!kde_action_queue.downcase.include?("virtual machine"), "KDE action queue preview must not expose implementation labels")
+
+  kde_action_review, kde_action_review_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-action-review-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--action",
+    "review-file-manager-action",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_action_review_status.success?, "Go KDE action review preview CLI must run successfully")
+  kde_action_review_payload = JSON.parse(kde_action_review)
+  assert(kde_action_review_payload.fetch("schema_version") == "xnix.runtime.kde_action_review.v1", "KDE action review preview schema version must be stable")
+  assert(kde_action_review_payload.fetch("request_type") == "kde-action-review-preview", "KDE action review preview must identify its request type")
+  assert(kde_action_review_payload.fetch("source") == "kde-action-queue-preview", "KDE action review preview must derive from action queue previews")
+  assert(kde_action_review_payload.fetch("action").fetch("id") == "review-file-manager-action", "KDE action review preview must preserve the queued action")
+  assert(kde_action_review_payload.fetch("decision").fetch("decision") == "approved", "KDE action review preview must preserve review decision")
+  assert(kde_action_review_payload.fetch("decision").fetch("decision_recorded") == false, "KDE action review preview must not record decisions")
+  assert(kde_action_review_payload.fetch("review_receipt_recorded") == false, "KDE action review preview must not record review receipts")
+  assert(kde_action_review_payload.fetch("queue_state_changed") == false, "KDE action review preview must not mutate queues")
+  assert(kde_action_review_payload.fetch("execution_started") == false, "KDE action review preview must not start execution")
+  assert(kde_action_review_payload.fetch("host_root_modified") == false, "KDE action review preview must not mutate the host root")
+  assert(!kde_action_review.downcase.include?("prefix"), "KDE action review preview must not expose implementation storage")
+  assert(!kde_action_review.include?(".exe"), "KDE action review preview must not expose a Windows executable")
+  assert(!kde_action_review.downcase.include?("virtual machine"), "KDE action review preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,
