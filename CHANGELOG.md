@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.131] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go launch-intent-preview --registry <path> --app <id> [file://...]` for read-only KDE desktop-launch intent previews from digest-verified registry recipes.
+- Added Go Runtime launch-intent planning that captures desktop launcher clicks, selected file URIs, recommended compatibility profile, run-plan safety, write-gate denial metadata, and blocked actions before any execution request can be created.
+- Added Go and Ruby harness coverage that verifies launch-intent previews remain Runtime-owned, Go-backed, KDE-targeted, Portal-aware, desktop-entry-safe, backend-detail-free, host-root-safe, and honest about launch, request objects, permissions, execution, and profile binding remaining disabled.
+
+### Changed
+
+- Moved the user-visible KDE launcher intent surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for showing and forwarding launch intent only.
+
 ## [0.2.130] - 2026-07-15
 
 ### Added

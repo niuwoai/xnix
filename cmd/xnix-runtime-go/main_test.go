@@ -301,6 +301,91 @@ func TestExecutionReadinessPreviewCommandKeepsLaunchGated(t *testing.T) {
 	}
 }
 
+func TestLaunchIntentPreviewCommandCapturesDesktopLaunch(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"launch-intent-preview", "--registry", registryPath, "--app", "org.example.ledger", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.launch_intent.v1" ||
+		payload["request_type"] != "launch-intent-preview" ||
+		payload["intent_type"] != "runtime-launch-intent" ||
+		payload["source"] != "desktop-launcher" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetLaunchIntent" {
+		t.Fatalf("unexpected launch intent schema: %#v", payload)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["application_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected launch intent identity: %#v", payload)
+	}
+	profile := payload["compatibility_profile"].(map[string]any)
+	if profile["id"] != "local-compatibility" ||
+		profile["ready"] != false ||
+		profile["launch_enabled"] != false ||
+		profile["backend_details_exposed"] != false {
+		t.Fatalf("unexpected launch intent profile: %#v", profile)
+	}
+	runPlan := payload["run_plan"].(map[string]any)
+	if runPlan["plan_type"] != "compatibility-run" ||
+		runPlan["strategy"] != "automatic-managed" ||
+		runPlan["backend_details_exposed"] != false ||
+		runPlan["backend_ready"] != false ||
+		runPlan["portal_policy_required"] != true ||
+		runPlan["snapshot_before_risky_change"] != true ||
+		runPlan["runtime_write_gate_required"] != true ||
+		runPlan["execution_request_created"] != false {
+		t.Fatalf("unexpected launch intent run plan: %#v", runPlan)
+	}
+	if payload["execution_state"] != "blocked" ||
+		payload["overall_status"] != "not-ready" ||
+		payload["write_gate_decision"] != "blocked-until-production-backend" ||
+		payload["denial_error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" {
+		t.Fatalf("unexpected launch intent gate state: %#v", payload)
+	}
+	if payload["portal_required"] != true ||
+		payload["file_count"] != float64(1) ||
+		payload["file_uris"].([]any)[0] != "file:///home/test/Documents/book.abc" {
+		t.Fatalf("unexpected launch intent files: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["standard_desktop_entry"] != true ||
+		payload["launch_uses_runtime"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_request_created"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_binding_ready"] != false ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected launch intent safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-readiness-preview|file-open-preview|krunner-query-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-readiness-preview|file-open-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -40,6 +40,8 @@ func run(args []string, stdout io.Writer) error {
 		return runFileOpenPreview(args[1:], stdout)
 	case "krunner-query-preview":
 		return runKRunnerQueryPreview(args[1:], stdout)
+	case "launch-intent-preview":
+		return runLaunchIntentPreview(args[1:], stdout)
 	case "mimeapps-preview":
 		return runMIMEAppsPreview(args[1:], stdout)
 	case "mode-switch-preview":
@@ -109,6 +111,25 @@ func runExecutionReadinessPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.ExecutionReadinessPreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runLaunchIntentPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, fileURIs, err := parseLaunchIntentPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.LaunchIntentPreview(fileURIs)
 	if err != nil {
 		return err
 	}
@@ -611,6 +632,30 @@ func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentit
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
 	return recipes, provenance, *applicationID, fileURIs, err
+}
+
+func parseLaunchIntentPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, []string, error) {
+	flags := flag.NewFlagSet("launch-intent-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, nil, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, nil, errors.New("launch-intent-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, nil, errors.New("launch-intent-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, nil, errors.New("launch-intent-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, flags.Args(), err
 }
 
 func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, error) {
