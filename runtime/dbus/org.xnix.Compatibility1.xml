@@ -102,6 +102,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="binding" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetBackendLifecycle">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="lifecycle" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetRepairPlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="issue" type="s" direction="in"/>

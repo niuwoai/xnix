@@ -12,6 +12,7 @@ require_relative "compatibility_acquisition_preflight"
 require_relative "compatibility_action_queue"
 require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
+require_relative "compatibility_backend_lifecycle"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_execution_readiness"
 require_relative "compatibility_install_plan"
@@ -78,6 +79,7 @@ module Xnix
             "compatibility_install_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
+            "compatibility_backend_lifecycle" => true,
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
             "kde_integration_status" => true,
@@ -159,6 +161,7 @@ module Xnix
           "package_source" => package_source_summary(recipe),
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
+          "backend_lifecycle" => backend_lifecycle_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(recipe),
@@ -533,6 +536,11 @@ module Xnix
         CompatibilityBackendBinding.new(recipe: recipe).to_h
       end
 
+      def backend_lifecycle(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityBackendLifecycle.new(recipe: recipe).to_h
+      end
+
       def repair_plan(application_id, issue)
         require_recipe(application_id)
         CompatibilityRepairPlan.new(application_id: application_id, issue: issue).to_h
@@ -680,6 +688,8 @@ module Xnix
           )
         when "GetBackendBinding"
           backend_binding(required_parameter(method_name, parameters, 0))
+        when "GetBackendLifecycle"
+          backend_lifecycle(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
           repair_plan(
             required_parameter(method_name, parameters, 0),
@@ -1142,6 +1152,19 @@ module Xnix
         }
       end
 
+      def backend_lifecycle_summary(recipe)
+        lifecycle = CompatibilityBackendLifecycle.new(recipe: recipe).to_h
+        {
+          "lifecycle_type" => lifecycle.fetch("lifecycle_type"),
+          "lifecycle_state" => lifecycle.fetch("lifecycle_state"),
+          "overall_status" => lifecycle.fetch("overall_status"),
+          "stage_count" => lifecycle.fetch("stages").length,
+          "backend_process_started" => lifecycle.fetch("backend_process_started"),
+          "launch_enabled" => lifecycle.fetch("launch_enabled"),
+          "summary" => lifecycle.fetch("desktop_safe_summary")
+        }
+      end
+
       def state_root_summary(recipe)
         state_root = ApplicationStateRoot.new(recipe: recipe).to_h
         {
@@ -1427,6 +1450,8 @@ module Xnix
             write_json(runtime.launch_intent(require_argument(command)))
           when "backend-binding"
             write_json(runtime.backend_binding(require_argument(command)))
+          when "backend-lifecycle"
+            write_json(runtime.backend_lifecycle(require_argument(command)))
           when "kde-integration-status"
             write_json(runtime.kde_integration_status)
           when "desktop-entry-plan"

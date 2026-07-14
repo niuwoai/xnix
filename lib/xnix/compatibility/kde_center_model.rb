@@ -79,6 +79,7 @@ module Xnix
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
+          "backend_lifecycle" => backend_lifecycle_summary(diagnostics.fetch("backend_lifecycle", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
           "ai_repair_approval_gate" => ai_repair_approval_gate_summary(diagnostics.fetch("ai_repair_approval_gate", nil)),
@@ -203,6 +204,20 @@ module Xnix
           "launch_enabled" => binding.fetch("launch_enabled"),
           "preflight_count" => binding.fetch("preflight_count"),
           "summary" => binding.fetch("summary")
+        }
+      end
+
+      def backend_lifecycle_summary(lifecycle)
+        return nil unless lifecycle
+
+        {
+          "lifecycle_type" => lifecycle.fetch("lifecycle_type"),
+          "lifecycle_state" => lifecycle.fetch("lifecycle_state"),
+          "overall_status" => lifecycle.fetch("overall_status"),
+          "stage_count" => lifecycle.fetch("stage_count"),
+          "backend_process_started" => lifecycle.fetch("backend_process_started"),
+          "launch_enabled" => lifecycle.fetch("launch_enabled"),
+          "summary" => lifecycle.fetch("summary")
         }
       end
 

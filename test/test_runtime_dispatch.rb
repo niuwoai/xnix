@@ -260,6 +260,16 @@ assert(backend_binding["binding_type"] == "compatibility-backend-binding", "disp
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetBackendLifecycle",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetBackendLifecycle must exit successfully: #{stderr}")
+backend_lifecycle = JSON.parse(stdout)
+assert(backend_lifecycle["lifecycle_type"] == "compatibility-backend-lifecycle", "dispatch must route GetBackendLifecycle")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )

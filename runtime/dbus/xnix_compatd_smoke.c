@@ -105,6 +105,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetBackendLifecycle'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='lifecycle' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetRepairPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='issue' type='s' direction='in'/>"
@@ -683,6 +687,34 @@ build_backend_binding(const gchar *application_id)
 }
 
 static GVariant *
+build_backend_lifecycle(const gchar *application_id)
+{
+  GVariantBuilder lifecycle;
+
+  g_variant_builder_init(&lifecycle, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&lifecycle, "{sv}", "lifecycle_type", g_variant_new_string("compatibility-backend-lifecycle"));
+  g_variant_builder_add(&lifecycle, "{sv}", "runtime_method", g_variant_new_string("GetBackendLifecycle"));
+  g_variant_builder_add(&lifecycle, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&lifecycle, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
+  g_variant_builder_add(&lifecycle, "{sv}", "lifecycle_state", g_variant_new_string("blocked"));
+  g_variant_builder_add(&lifecycle, "{sv}", "overall_status", g_variant_new_string("not-ready"));
+  g_variant_builder_add(&lifecycle, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&lifecycle, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&lifecycle, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "backend_binding_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "execution_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "backend_process_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "local_backend_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "isolated_backend_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&lifecycle, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&lifecycle);
+}
+
+static GVariant *
 build_repair_plan(const gchar *application_id, const gchar *issue)
 {
   GVariantBuilder plan;
@@ -1096,7 +1128,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(41));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(42));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1437,6 +1469,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_binding(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetBackendLifecycle") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_lifecycle(application_id)));
     return;
   }
 

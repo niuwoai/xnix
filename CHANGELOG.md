@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.101] - 2026-07-14
+
+### Added
+
+- Added C Runtime backend lifecycle records and a CLI read method so KDE can display backend lifecycle state without starting local or isolated compatibility backends.
+- Added `GetBackendLifecycle` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, and Compatibility Center read model.
+- Added Ruby development harness and unit coverage for backend lifecycle summaries while keeping product-side lifecycle logic mirrored by the C Runtime core.
+
+### Changed
+
+- Extended Runtime diagnostics with backend lifecycle summaries that keep backend process starts, launch enablement, host-root mutation, network access, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.100] - 2026-07-14
 
 ### Changed

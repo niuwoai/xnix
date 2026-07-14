@@ -2804,6 +2804,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_compatibility_test_result.inc"
 #include "xnix_runtime_core_cli_execution_readiness.inc"
 #include "xnix_runtime_core_cli_launch_intent.inc"
+#include "xnix_runtime_core_cli_backend_lifecycle.inc"
 #include "xnix_runtime_core_cli_compatibility_repair_plan.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_input.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_recommendation.inc"

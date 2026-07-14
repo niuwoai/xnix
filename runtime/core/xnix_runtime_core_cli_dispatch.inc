@@ -196,6 +196,10 @@ main(int argc, char **argv)
     return print_backend_binding_policy(argv[2]);
   }
 
+  if (strcmp(argv[1], "backend-lifecycle") == 0 && argc == 3) {
+    return print_backend_lifecycle_for_application(argv[2]);
+  }
+
   if (strcmp(argv[1], "list-settings-policies") == 0 && argc == 2) {
     return print_settings_policy_catalog();
   }

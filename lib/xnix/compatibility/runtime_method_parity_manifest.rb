@@ -38,6 +38,7 @@ module Xnix
         GetCompatibilityArtifactManifest
         GetCompatibilityInstallPlan
         GetBackendBinding
+        GetBackendLifecycle
         GetRepairPlan
         GetTestPlan
         GetTestResult
@@ -89,6 +90,7 @@ module Xnix
         "GetCompatibilityArtifactManifest" => "artifact_manifest",
         "GetCompatibilityInstallPlan" => "install_plan",
         "GetBackendBinding" => "backend_binding",
+        "GetBackendLifecycle" => "backend_lifecycle",
         "GetRepairPlan" => "repair_plan",
         "GetTestPlan" => "test_plan",
         "GetTestResult" => "test_result",
