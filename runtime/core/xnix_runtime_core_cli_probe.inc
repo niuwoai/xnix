@@ -56,6 +56,8 @@ print_probe(void)
   printf("%zu,", xnix_runtime_settings_change_policy_count());
   fputs("\"compatibility_mode_switch_plan_owner\":\"c\",", stdout);
   fputs("\"compatibility_mode_switch_mode_count\":4,", stdout);
+  fputs("\"compatibility_permission_review_plan_owner\":\"c\",", stdout);
+  fputs("\"compatibility_permission_review_count\":7,", stdout);
   fputs("\"service_binding_policy_owner\":\"c\",", stdout);
   fputs("\"service_binding_policy_count\":1,", stdout);
   fputs("\"live_owner_gate_policy_owner\":\"c\",", stdout);

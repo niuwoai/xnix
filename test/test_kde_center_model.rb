@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.105", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.106", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -51,6 +51,7 @@ assert(model["summary"]["blocked_runtime_write_gate_count"] == 1, "KDE center mo
 assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
 assert(model["summary"]["pending_settings_change_plan_count"] == 1, "KDE center model must summarize pending settings change plans")
 assert(model["summary"]["pending_mode_switch_plan_count"] == 1, "KDE center model must summarize pending compatibility mode switch plans")
+assert(model["summary"]["pending_permission_review_plan_count"] == 1, "KDE center model must summarize pending compatibility permission review plans")
 
 application = model.fetch("applications").first
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
@@ -155,7 +156,7 @@ assert(application["runtime_owner_smoke_plan"]["pending_step_count"] == 6, "KDE 
 assert(!application["runtime_owner_smoke_plan"]["system_service_started"], "KDE center model must not claim started system services")
 assert(!application["runtime_owner_smoke_plan"]["production_bus_claimed"], "KDE center model must not claim production bus ownership")
 assert(application["runtime_method_parity_manifest"]["manifest_type"] == "runtime-method-parity-manifest", "KDE center model must expose Runtime method parity manifests")
-assert(application["runtime_method_parity_manifest"]["method_count"] == 46, "KDE center model must expose Runtime method counts")
+assert(application["runtime_method_parity_manifest"]["method_count"] == 47, "KDE center model must expose Runtime method counts")
 assert(application["runtime_method_parity_manifest"]["read_only_method_parity_ready"], "KDE center model must expose Runtime method parity readiness")
 assert(application["runtime_method_parity_manifest"]["passed_check_count"] == 5, "KDE center model must expose Runtime method parity pass counts")
 assert(application["runtime_method_parity_manifest"]["blocked_check_count"].zero?, "KDE center model must expose Runtime method parity blocked counts")
@@ -192,6 +193,14 @@ assert(!application["compatibility_mode_switch_plan"]["settings_persistence_enab
 assert(!application["compatibility_mode_switch_plan"]["backend_reconfiguration_enabled"], "KDE center model must not reconfigure backends from mode switches")
 assert(!application["compatibility_mode_switch_plan"]["backend_process_started"], "KDE center model must not start backend processes from mode switches")
 assert(!application["compatibility_mode_switch_plan"]["backend_details_exposed"], "KDE center model must hide mode switch backend details")
+assert(application["compatibility_permission_review_plan"]["plan_type"] == "compatibility-permission-review-plan", "KDE center model must expose compatibility permission review plans")
+assert(application["compatibility_permission_review_plan"]["runtime_method"] == "GetCompatibilityPermissionReviewPlan", "KDE center model must expose compatibility permission review Runtime methods")
+assert(application["compatibility_permission_review_plan"]["review_state"] == "planned", "KDE center model must keep permission reviews planned")
+assert(application["compatibility_permission_review_plan"]["permission_count"] == 7, "KDE center model must expose permission review counts")
+assert(!application["compatibility_permission_review_plan"]["permissions_granted"], "KDE center model must not grant permissions")
+assert(!application["compatibility_permission_review_plan"]["settings_persisted"], "KDE center model must not persist permission settings")
+assert(!application["compatibility_permission_review_plan"]["host_permission_changed"], "KDE center model must not change host permissions")
+assert(!application["compatibility_permission_review_plan"]["backend_details_exposed"], "KDE center model must hide permission review backend details")
 assert(application["supported_extensions"].include?(".txt"), "KDE center model must include supported file extensions")
 
 json = JSON.pretty_generate(model)

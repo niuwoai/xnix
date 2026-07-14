@@ -221,6 +221,10 @@ module Xnix
         parse_dictionary(call("GetCompatibilityModeSwitchPlan", application_id, requested_mode))
       end
 
+      def compatibility_permission_review_plan(application_id)
+        parse_dictionary(call("GetCompatibilityPermissionReviewPlan", application_id))
+      end
+
       private
 
       def call(method_name, *arguments)

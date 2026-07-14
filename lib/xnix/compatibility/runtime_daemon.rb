@@ -18,6 +18,7 @@ require_relative "compatibility_engine_catalog"
 require_relative "compatibility_execution_readiness"
 require_relative "compatibility_install_plan"
 require_relative "compatibility_mode_switch_plan"
+require_relative "compatibility_permission_review_plan"
 require_relative "compatibility_package_source"
 require_relative "compatibility_run_plan"
 require_relative "compatibility_repair_plan"
@@ -82,6 +83,7 @@ module Xnix
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
             "compatibility_mode_switch_planning" => true,
+            "compatibility_permission_review_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
             "compatibility_backend_environment_plans" => true,
@@ -185,6 +187,7 @@ module Xnix
           "settings" => settings_summary(recipe),
           "settings_change_plan" => settings_change_plan_summary(recipe),
           "compatibility_mode_switch_plan" => compatibility_mode_switch_plan_summary(recipe),
+          "compatibility_permission_review_plan" => compatibility_permission_review_plan_summary(recipe),
           "repair_plan" => repair_plan_summary(recipe.id, "engine-binding-pending")
         }
       end
@@ -662,6 +665,11 @@ module Xnix
         CompatibilityModeSwitchPlan.new(recipe: recipe, requested_mode: requested_mode).to_h
       end
 
+      def compatibility_permission_review_plan(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityPermissionReviewPlan.new(recipe: recipe).to_h
+      end
+
       def dispatch(method_name, parameters = [])
         case method_name
         when "ListApplications"
@@ -804,6 +812,8 @@ module Xnix
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
           )
+        when "GetCompatibilityPermissionReviewPlan"
+          compatibility_permission_review_plan(required_parameter(method_name, parameters, 0))
         when *RuntimeWriteGate::WRITE_METHODS
           raise ArgumentError, RuntimeWriteGate.new(method_name: method_name).failure_message
         else
@@ -1502,6 +1512,28 @@ module Xnix
         }
       end
 
+      def compatibility_permission_review_plan_summary(recipe)
+        plan = compatibility_permission_review_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "review_state" => plan.fetch("review_state"),
+          "permission_count" => plan.fetch("permission_count"),
+          "allow_count" => plan.fetch("allow_count"),
+          "ask_count" => plan.fetch("ask_count"),
+          "deny_count" => plan.fetch("deny_count"),
+          "user_review_required" => plan.fetch("user_review_required"),
+          "portal_review_required" => plan.fetch("portal_review_required"),
+          "permission_changes_applied" => plan.fetch("permission_changes_applied"),
+          "request_objects_created" => plan.fetch("request_objects_created"),
+          "permissions_granted" => plan.fetch("permissions_granted"),
+          "settings_persisted" => plan.fetch("settings_persisted"),
+          "host_permission_changed" => plan.fetch("host_permission_changed"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
       def registry_backed_recipe_store?
         recipe_store.respond_to?(:registry_report)
       end
@@ -1651,6 +1683,8 @@ module Xnix
             raise ArgumentError, "mode-switch-plan requires requested mode" unless requested_mode
 
             write_json(runtime.compatibility_mode_switch_plan(application_id, requested_mode))
+          when "permission-review-plan"
+            write_json(runtime.compatibility_permission_review_plan(require_argument(command)))
           when "dispatch"
             method_name = require_argument(command)
             parameters = @argv.empty? ? [] : JSON.parse(@argv.shift)

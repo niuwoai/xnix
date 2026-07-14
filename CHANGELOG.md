@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.106] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility permission review plan records and a CLI read method for documents, downloads, camera, network, clipboard, print, and screenshot permissions.
+- Added `GetCompatibilityPermissionReviewPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and unit coverage that reject backend implementation terminology while asserting permission review plans remain non-mutating.
+
+### Changed
+
+- Extended Runtime diagnostics with compatibility permission review summaries that keep permission changes, request object creation, permission grants, settings persistence, host-root mutation, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.105] - 2026-07-14
 
 ### Added

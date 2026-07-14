@@ -68,6 +68,10 @@ static const gchar introspection_xml[] =
   "      <arg name='requested_mode' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetCompatibilityPermissionReviewPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetKWinWindowRulePlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -1209,6 +1213,54 @@ build_compatibility_mode_switch_plan(const gchar *application_id,
 }
 
 static GVariant *
+build_compatibility_permission_review_plan(const gchar *application_id)
+{
+  const gchar *permission_ids[] = {
+    "documents",
+    "downloads",
+    "camera",
+    "network",
+    "clipboard",
+    "print",
+    "screenshot",
+  };
+  const gchar *required_runtime_gates[] = {
+    "user-review",
+    "portal-policy-review",
+    "runtime-write-gate",
+    "settings-persistence",
+    "audit-log",
+  };
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-permission-review-plan"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityPermissionReviewPlan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "review_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&plan, "{sv}", "permission_count", g_variant_new_int32(7));
+  g_variant_builder_add(&plan, "{sv}", "allow_count", g_variant_new_int32(1));
+  g_variant_builder_add(&plan, "{sv}", "ask_count", g_variant_new_int32(5));
+  g_variant_builder_add(&plan, "{sv}", "deny_count", g_variant_new_int32(1));
+  g_variant_builder_add(&plan, "{sv}", "permission_ids", g_variant_new_strv(permission_ids, 7));
+  g_variant_builder_add(&plan, "{sv}", "required_runtime_gates", g_variant_new_strv(required_runtime_gates, 5));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "user_review_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "portal_review_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "permission_changes_applied", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "request_objects_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "permissions_granted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_permission_changed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
 build_action_queue(const gchar *application_id)
 {
   GVariantBuilder queue;
@@ -1342,7 +1394,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(46));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(47));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1577,6 +1629,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_compatibility_mode_switch_plan(application_id, requested_mode))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetCompatibilityPermissionReviewPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_compatibility_permission_review_plan(application_id))
     );
     return;
   }

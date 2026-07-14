@@ -164,6 +164,18 @@ begin
   assert(stdout.include?("settings_persistence_enabled"), "runtime smoke adapter must keep mode switch persistence gated")
 
   stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetCompatibilityPermissionReviewPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetCompatibilityPermissionReviewPlan: #{stderr}")
+  assert(stdout.include?("compatibility-permission-review-plan"), "runtime smoke adapter must expose compatibility permission review plans over D-Bus")
+  assert(stdout.include?("permissions_granted"), "runtime smoke adapter must keep permission grants gated")
+
+  stdout, stderr, status = Open3.capture3(
     "ruby",
     "bin/xnix-kde-integration-status",
     "--source",

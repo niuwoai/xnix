@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/compatibility_permission_review_plan"
+
+exit Xnix::Compatibility::CompatibilityPermissionReviewPlanCLI.new(ARGV).run

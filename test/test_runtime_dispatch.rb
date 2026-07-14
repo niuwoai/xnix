@@ -311,6 +311,17 @@ assert(!mode_switch_plan["settings_persistence_enabled"], "dispatch must keep co
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetCompatibilityPermissionReviewPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetCompatibilityPermissionReviewPlan must exit successfully: #{stderr}")
+permission_review_plan = JSON.parse(stdout)
+assert(permission_review_plan["plan_type"] == "compatibility-permission-review-plan", "dispatch must route GetCompatibilityPermissionReviewPlan")
+assert(!permission_review_plan["permissions_granted"], "dispatch must keep compatibility permissions ungranted")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetRepairPlan",
   JSON.generate(["org.xnix.sample.notepad", "engine-binding-pending"])
 )
