@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.120] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go krunner-query-preview --registry <path> --query <text>` for read-only KDE KRunner query previews across digest-verified registry recipes.
+- Added Go Runtime KRunner matching for application names, application identifiers, file extensions, and natural launch phrases while returning normal Linux application launcher actions.
+- Added registry-wide Go recipe loading plus Go and Ruby harness coverage that verifies KRunner results remain Runtime-owned, KDE-targeted, backend-detail-free, host-root-safe, and honest about query execution and backend launch remaining disabled.
+
+### Changed
+
+- Moved the KRunner search entry point one step closer to Go-owned Runtime product logic while keeping KDE responsible for presenting and invoking approved launcher actions only.
+
 ## [0.2.119] - 2026-07-15
 
 ### Added

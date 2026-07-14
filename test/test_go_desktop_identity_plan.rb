@@ -15,11 +15,35 @@ end
 
 project_root = File.expand_path("..", __dir__)
 go_binary = ENV.fetch("XNIX_GO_BIN", "go")
-go_available = begin
-  system(go_binary, "version", out: File::NULL, err: File::NULL)
-rescue SystemCallError
-  false
+runtime_go_binary = ENV.fetch("XNIX_RUNTIME_GO_BIN", "")
+
+def capture_runtime_go(project_root, runtime_go_binary, go_binary, *arguments)
+  if !runtime_go_binary.empty?
+    Open3.capture2(runtime_go_binary, *arguments, chdir: project_root)
+  else
+    Open3.capture2(go_binary, "run", "./cmd/xnix-runtime-go", *arguments, chdir: project_root)
+  end
 end
+
+go_available = if !runtime_go_binary.empty?
+                 system(
+                   runtime_go_binary,
+                   "desktop-identity-plan",
+                   "--registry",
+                   "runtime/recipes/registry.json",
+                   "--app",
+                   "org.xnix.sample.notepad",
+                   out: File::NULL,
+                   err: File::NULL,
+                   chdir: project_root
+                 )
+               else
+                 begin
+                   system(go_binary, "version", out: File::NULL, err: File::NULL)
+                 rescue SystemCallError
+                   false
+                 end
+               end
 
 source = File.read(File.join(project_root, "internal/runtime/appidentity/identity.go"))
 dockerfile = File.read(File.join(project_root, "Dockerfile"))
@@ -30,6 +54,7 @@ assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop 
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
@@ -40,16 +65,15 @@ assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
 assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
 
 if go_available
-  output, status = Open3.capture2(
+  output, status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "desktop-identity-plan",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(status.success?, "Go desktop identity CLI must run successfully")
 
@@ -77,16 +101,15 @@ if go_available
     assert(!lower.include?(term), "plan JSON must not expose #{term}")
   end
 
-  desktop_entry, entry_status = Open3.capture2(
+  desktop_entry, entry_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "desktop-entry-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(entry_status.success?, "Go desktop entry preview CLI must run successfully")
   assert(desktop_entry.include?("[Desktop Entry]\n"), "desktop entry preview must use the desktop entry header")
@@ -95,16 +118,53 @@ if go_available
   assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
   assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")
 
-  mimeapps, mimeapps_status = Open3.capture2(
+  krunner, krunner_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
+    "krunner-query-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--query",
+    "notepad"
+  )
+  assert(krunner_status.success?, "Go KRunner query preview CLI must run successfully")
+  krunner_payload = JSON.parse(krunner)
+  assert(krunner_payload.fetch("schema_version") == "xnix.runtime.krunner_query.v1", "KRunner preview schema version must be stable")
+  assert(krunner_payload.fetch("query_type") == "krunner-query-plan", "KRunner preview must identify Runtime query plans")
+  assert(krunner_payload.fetch("entry_point") == "krunner", "KRunner preview must identify the KDE runner entry point")
+  assert(krunner_payload.fetch("desktop") == "KDE Plasma", "KRunner preview must target KDE Plasma")
+  assert(krunner_payload.fetch("source").fetch("kind") == "runtime-go-registry", "KRunner preview must use the Go registry source")
+  assert(krunner_payload.fetch("source").fetch("registry_name") == "xnix-local-development", "KRunner preview must expose the registry name")
+  assert(krunner_payload.fetch("source").fetch("recipe_digest_verified") == true, "KRunner preview must verify registry digests")
+  assert(krunner_payload.fetch("runtime_owned") == true, "KRunner preview must remain Runtime-owned")
+  assert(krunner_payload.fetch("kde_policy_owner") == false, "KRunner preview must not make KDE own backend policy")
+  assert(krunner_payload.fetch("matches").length == 1, "KRunner preview must resolve the sample application")
+  krunner_match = krunner_payload.fetch("matches").first
+  assert(krunner_match.fetch("application_id") == recipe.id, "KRunner preview must preserve application identity")
+  assert(krunner_match.fetch("name") == recipe.name, "KRunner preview must preserve display names")
+  assert(krunner_match.fetch("subtitle") == "Open as a normal Linux application", "KRunner preview must use normal desktop wording")
+  assert(krunner_match.fetch("action").fetch("type") == "runtime-launch", "KRunner preview must expose a Runtime launch action")
+  assert(krunner_match.fetch("action").fetch("desktop_entry_id") == "xnix-#{recipe.id}.desktop", "KRunner preview must bind generated desktop files")
+  assert(krunner_match.fetch("action").fetch("argv") == ["xnix-compat-launch", "--app", recipe.id], "KRunner preview must delegate to the managed launcher")
+  assert(krunner_payload.fetch("summary").fetch("query_execution_enabled") == false, "KRunner preview must not execute queries")
+  assert(krunner_payload.fetch("summary").fetch("backend_launch_enabled") == false, "KRunner preview must not launch backends")
+  assert(krunner_payload.fetch("summary").fetch("backend_details_exposed") == false, "KRunner preview must not expose backend details")
+  assert(krunner_payload.fetch("host_root_modified") == false, "KRunner preview must not mutate the host root")
+  assert(krunner_payload.fetch("backend_details_exposed") == false, "KRunner preview must keep backend details hidden")
+  assert(!krunner.downcase.include?("prefix"), "KRunner preview must not expose implementation storage")
+  assert(!krunner.include?(".exe"), "KRunner preview must not expose a Windows executable")
+  assert(!krunner.downcase.include?("proton"), "KRunner preview must not expose backend implementation names")
+
+  mimeapps, mimeapps_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
     "mimeapps-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(mimeapps_status.success?, "Go MIME apps preview CLI must run successfully")
   assert(mimeapps.include?("[Default Applications]\n"), "MIME apps preview must include default associations")
@@ -114,18 +174,17 @@ if go_available
   assert(!mimeapps.downcase.include?("prefix"), "MIME apps preview must not expose implementation storage")
   assert(!mimeapps.include?(".exe"), "MIME apps preview must not expose a Windows executable")
 
-  notification, notification_status = Open3.capture2(
+  notification, notification_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "notification-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
     "org.xnix.sample.notepad",
     "--event",
-    "install-failed",
-    chdir: project_root
+    "install-failed"
   )
   assert(notification_status.success?, "Go notification preview CLI must run successfully")
   notification_payload = JSON.parse(notification)
@@ -151,16 +210,15 @@ if go_available
   assert(!notification.downcase.include?("prefix"), "notification preview must not expose implementation storage")
   assert(!notification.include?(".exe"), "notification preview must not expose a Windows executable")
 
-  settings, settings_status = Open3.capture2(
+  settings, settings_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "settings-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(settings_status.success?, "Go settings preview CLI must run successfully")
   settings_payload = JSON.parse(settings)
@@ -190,16 +248,15 @@ if go_available
   assert(!settings.include?(".exe"), "settings preview must not expose a Windows executable")
   assert(!settings.downcase.include?("proton"), "settings preview must not expose backend implementation names")
 
-  tray_status, tray_status_result = Open3.capture2(
+  tray_status, tray_status_result = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "tray-status-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(tray_status_result.success?, "Go tray status preview CLI must run successfully")
   tray_payload = JSON.parse(tray_status)
@@ -226,16 +283,15 @@ if go_available
   assert(!tray_status.downcase.include?("prefix"), "tray status preview must not expose implementation storage")
   assert(!tray_status.include?(".exe"), "tray status preview must not expose a Windows executable")
 
-  window_identity, window_status = Open3.capture2(
+  window_identity, window_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
     go_binary,
-    "run",
-    "./cmd/xnix-runtime-go",
     "window-identity-preview",
     "--registry",
     "runtime/recipes/registry.json",
     "--app",
-    "org.xnix.sample.notepad",
-    chdir: project_root
+    "org.xnix.sample.notepad"
   )
   assert(window_status.success?, "Go window identity preview CLI must run successfully")
   window_payload = JSON.parse(window_identity)

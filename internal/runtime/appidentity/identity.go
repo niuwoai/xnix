@@ -220,6 +220,59 @@ type SettingsField struct {
 	Options []string `json:"options"`
 }
 
+type KRunnerQueryPreview struct {
+	SchemaVersion         string         `json:"schema_version"`
+	QueryType             string         `json:"query_type"`
+	EntryPoint            string         `json:"entry_point"`
+	Desktop               string         `json:"desktop"`
+	Query                 string         `json:"query"`
+	Source                KRunnerSource  `json:"source"`
+	RuntimeOwned          bool           `json:"runtime_owned"`
+	KDEPolicyOwner        bool           `json:"kde_policy_owner"`
+	Matches               []KRunnerMatch `json:"matches"`
+	Summary               KRunnerSummary `json:"summary"`
+	HostRootModified      bool           `json:"host_root_modified"`
+	BackendDetailsExposed bool           `json:"backend_details_exposed"`
+	DesktopSafeSummary    string         `json:"desktop_safe_summary"`
+}
+
+type KRunnerSource struct {
+	Kind                  string `json:"kind"`
+	RegistryName          string `json:"registry_name,omitempty"`
+	RecipeDigestVerified  bool   `json:"recipe_digest_verified,omitempty"`
+	RecipeSignatureStatus string `json:"recipe_signature_status,omitempty"`
+}
+
+type KRunnerMatch struct {
+	RunnerID              string        `json:"runner_id"`
+	ApplicationID         string        `json:"application_id"`
+	Name                  string        `json:"name"`
+	Icon                  string        `json:"icon"`
+	Relevance             float64       `json:"relevance"`
+	RelevancePercent      int           `json:"relevance_percent"`
+	Subtitle              string        `json:"subtitle"`
+	ModeLabel             string        `json:"mode_label"`
+	SupportedExtensions   []string      `json:"supported_extensions"`
+	RuntimeOwnedLaunch    bool          `json:"runtime_owned_launch"`
+	BackendDetailsExposed bool          `json:"backend_details_exposed"`
+	Action                KRunnerAction `json:"action"`
+}
+
+type KRunnerAction struct {
+	Type           string   `json:"type"`
+	DesktopEntryID string   `json:"desktop_entry_id"`
+	Argv           []string `json:"argv"`
+}
+
+type KRunnerSummary struct {
+	MatchCount            int    `json:"match_count"`
+	OfficialDesktop       string `json:"official_desktop"`
+	RuntimeOwnedLaunch    bool   `json:"runtime_owned_launch"`
+	QueryExecutionEnabled bool   `json:"query_execution_enabled"`
+	BackendLaunchEnabled  bool   `json:"backend_launch_enabled"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -658,8 +711,214 @@ func settingsField(id string, label string, value string, options []string) Sett
 	}
 }
 
+func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query string) (KRunnerQueryPreview, error) {
+	if !singleLineOrBlank(query) {
+		return KRunnerQueryPreview{}, errors.New("KRunner query preview requires a single-line query")
+	}
+	if provenance.Source == "" {
+		provenance.Source = "registry"
+	}
+
+	normalizedQuery := normalizeQuery(query)
+	matches := make([]KRunnerMatch, 0, len(recipes))
+	for _, recipe := range recipes {
+		plan, err := NewPlanWithProvenance(recipe, provenance)
+		if err != nil {
+			return KRunnerQueryPreview{}, err
+		}
+		if err := plan.ValidateSafeForDesktop(); err != nil {
+			return KRunnerQueryPreview{}, err
+		}
+		relevancePercent := krunnerRelevancePercent(recipe, normalizedQuery)
+		if relevancePercent == 0 {
+			continue
+		}
+		matches = append(matches, krunnerMatch(plan, recipe, relevancePercent))
+	}
+	sort.Slice(matches, func(left int, right int) bool {
+		if matches[left].RelevancePercent != matches[right].RelevancePercent {
+			return matches[left].RelevancePercent > matches[right].RelevancePercent
+		}
+		return matches[left].Name < matches[right].Name
+	})
+
+	preview := KRunnerQueryPreview{
+		SchemaVersion: "xnix.runtime.krunner_query.v1",
+		QueryType:     "krunner-query-plan",
+		EntryPoint:    "krunner",
+		Desktop:       "KDE Plasma",
+		Query:         query,
+		Source: KRunnerSource{
+			Kind:                  "runtime-go-registry",
+			RegistryName:          provenance.RegistryName,
+			RecipeDigestVerified:  provenance.DigestVerified,
+			RecipeSignatureStatus: provenance.SignatureStatus,
+		},
+		RuntimeOwned:     true,
+		KDEPolicyOwner:   false,
+		Matches:          matches,
+		HostRootModified: false,
+		Summary: KRunnerSummary{
+			MatchCount:            len(matches),
+			OfficialDesktop:       "KDE Plasma",
+			RuntimeOwnedLaunch:    true,
+			QueryExecutionEnabled: false,
+			BackendLaunchEnabled:  false,
+			BackendDetailsExposed: false,
+		},
+		BackendDetailsExposed: false,
+		DesktopSafeSummary:    "KRunner query planning is Runtime-owned and returns safe launcher actions only.",
+	}
+	if err := validateNoBackendTerms(preview, "KRunner query preview"); err != nil {
+		return KRunnerQueryPreview{}, err
+	}
+	return preview, nil
+}
+
+func krunnerMatch(plan Plan, recipe Recipe, relevancePercent int) KRunnerMatch {
+	return KRunnerMatch{
+		RunnerID:              "xnix.compatibility." + plan.ApplicationID,
+		ApplicationID:         plan.ApplicationID,
+		Name:                  plan.DisplayName,
+		Icon:                  plan.Icon,
+		Relevance:             float64(relevancePercent) / 100.0,
+		RelevancePercent:      relevancePercent,
+		Subtitle:              "Open as a normal Linux application",
+		ModeLabel:             modeLabel(recipe.Mode),
+		SupportedExtensions:   normalizedExtensions(recipe.SupportedExtensions),
+		RuntimeOwnedLaunch:    true,
+		BackendDetailsExposed: false,
+		Action: KRunnerAction{
+			Type:           "runtime-launch",
+			DesktopEntryID: plan.DesktopFile,
+			Argv:           []string{"xnix-compat-launch", "--app", plan.ApplicationID},
+		},
+	}
+}
+
+func krunnerRelevancePercent(recipe Recipe, normalizedQuery string) int {
+	if normalizedQuery == "" {
+		return 0
+	}
+	name := normalizeQuery(recipe.Name)
+	applicationID := normalizeQuery(recipe.ID)
+	extensions := make([]string, 0, len(recipe.SupportedExtensions))
+	for _, extension := range recipe.SupportedExtensions {
+		extensions = append(extensions, normalizeQuery(strings.TrimPrefix(extension, ".")))
+	}
+
+	switch {
+	case name == normalizedQuery || applicationID == normalizedQuery:
+		return 100
+	case strings.HasPrefix(name, normalizedQuery):
+		return 95
+	case strings.Contains(name, normalizedQuery):
+		return 90
+	case containsString(extensions, strings.TrimPrefix(normalizedQuery, ".")):
+		return 85
+	case strings.Contains(applicationID, normalizedQuery):
+		return 75
+	case naturalLaunchQuery(normalizedQuery, name):
+		return 65
+	case extensionLaunchQuery(normalizedQuery, extensions):
+		return 55
+	default:
+		return 0
+	}
+}
+
+func naturalLaunchQuery(normalizedQuery string, normalizedName string) bool {
+	for _, verb := range []string{"open", "launch", "start", "run"} {
+		if normalizedQuery == verb+" "+normalizedName || strings.HasSuffix(normalizedQuery, " "+normalizedName) {
+			return true
+		}
+	}
+	return false
+}
+
+func extensionLaunchQuery(normalizedQuery string, extensions []string) bool {
+	tokens := strings.Fields(normalizedQuery)
+	if !intersects(tokens, []string{"open", "launch", "start", "run", "file"}) {
+		return false
+	}
+	for _, extension := range extensions {
+		if containsString(tokens, extension) {
+			return true
+		}
+	}
+	return false
+}
+
+func modeLabel(mode string) string {
+	switch mode {
+	case "automatic":
+		return "Automatic"
+	case "wine":
+		return "Managed compatibility"
+	case "vm":
+		return "Isolated environment"
+	default:
+		return "Automatic"
+	}
+}
+
+func normalizedExtensions(extensions []string) []string {
+	result := make([]string, 0, len(extensions))
+	seen := make(map[string]bool, len(extensions))
+	for _, extension := range extensions {
+		normalized := "." + strings.ToLower(strings.TrimPrefix(extension, "."))
+		if !seen[normalized] {
+			result = append(result, normalized)
+			seen[normalized] = true
+		}
+	}
+	sort.Strings(result)
+	return result
+}
+
 func singleLine(value string) bool {
 	return value != "" && !strings.ContainsAny(value, "\r\n")
+}
+
+func singleLineOrBlank(value string) bool {
+	return !strings.ContainsAny(value, "\r\n")
+}
+
+func normalizeQuery(value string) string {
+	return strings.Join(strings.Fields(strings.ToLower(value)), " ")
+}
+
+func containsString(values []string, candidate string) bool {
+	for _, value := range values {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+func intersects(left []string, right []string) bool {
+	for _, value := range left {
+		if containsString(right, value) {
+			return true
+		}
+	}
+	return false
+}
+
+func validateNoBackendTerms(value any, label string) error {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("encode %s JSON: %w", label, err)
+	}
+	text := strings.ToLower(string(encoded))
+	forbidden := []string{"prefix", ".exe", "wine ", "wine/", "proton", "qemu-system", "program files", ".wine"}
+	for _, term := range forbidden {
+		if strings.Contains(text, term) {
+			return fmt.Errorf("%s exposes forbidden backend term: %s", label, term)
+		}
+	}
+	return nil
 }
 
 func digestIdentity(recipe Recipe, mimeTypes []string) string {

@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview} (--recipe PATH | --registry PATH --app ID)")
+		return errors.New("usage: xnix-runtime-go {desktop-entry-preview|desktop-identity-plan|krunner-query-preview|mimeapps-preview|notification-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -28,6 +28,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
+	case "krunner-query-preview":
+		return runKRunnerQueryPreview(args[1:], stdout)
 	case "mimeapps-preview":
 		return runMIMEAppsPreview(args[1:], stdout)
 	case "notification-preview":
@@ -41,6 +43,21 @@ func run(args []string, stdout io.Writer) error {
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
+}
+
+func runKRunnerQueryPreview(args []string, stdout io.Writer) error {
+	recipes, provenance, query, err := parseKRunnerQueryPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewKRunnerQueryPreview(recipes, provenance, query)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
 }
 
 func runDesktopIdentityPlan(args []string, stdout io.Writer) error {
@@ -200,6 +217,26 @@ func parseNotificationPreviewSource(args []string) (appidentity.Recipe, appident
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 	return recipe, provenance, *eventType, err
+}
+
+func parseKRunnerQueryPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, error) {
+	flags := flag.NewFlagSet("krunner-query-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	query := flags.String("query", "", "KRunner query text")
+	if err := flags.Parse(args); err != nil {
+		return nil, appidentity.Provenance{}, "", err
+	}
+	if *registryPath == "" {
+		return nil, appidentity.Provenance{}, "", errors.New("krunner-query-preview requires --registry")
+	}
+	if flags.NArg() != 0 {
+		return nil, appidentity.Provenance{}, "", errors.New("krunner-query-preview does not accept positional arguments")
+	}
+
+	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+	return recipes, provenance, *query, err
 }
 
 func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, appidentity.Provenance, error) {

@@ -356,6 +356,89 @@ func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
 	}
 }
 
+func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
+	preview, err := NewKRunnerQueryPreview([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "wine",
+			SupportedExtensions: []string{".xls", ".abc"},
+		},
+		{
+			ID:                  "org.example.notes",
+			Name:                "Example Notes",
+			Icon:                "accessories-text-editor",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".txt"},
+		},
+	}, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "open xls")
+	if err != nil {
+		t.Fatalf("NewKRunnerQueryPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.krunner_query.v1" || preview.QueryType != "krunner-query-plan" {
+		t.Fatalf("unexpected KRunner schema: %#v", preview)
+	}
+	if preview.EntryPoint != "krunner" || preview.Desktop != "KDE Plasma" || preview.Query != "open xls" {
+		t.Fatalf("unexpected KRunner identity: %#v", preview)
+	}
+	if preview.Source.Kind != "runtime-go-registry" || preview.Source.RegistryName != "test-registry" ||
+		!preview.Source.RecipeDigestVerified || preview.Source.RecipeSignatureStatus != "development-only" {
+		t.Fatalf("unexpected KRunner source: %#v", preview.Source)
+	}
+	if len(preview.Matches) != 1 {
+		t.Fatalf("match count = %d, want 1: %#v", len(preview.Matches), preview.Matches)
+	}
+	match := preview.Matches[0]
+	if match.ApplicationID != "org.example.ledger" || match.Name != "Example Ledger" ||
+		match.Action.DesktopEntryID != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected KRunner match identity: %#v", match)
+	}
+	if match.ModeLabel != "Managed compatibility" || match.RelevancePercent != 55 ||
+		match.Action.Type != "runtime-launch" || !sameStrings(match.Action.Argv, []string{"xnix-compat-launch", "--app", "org.example.ledger"}) {
+		t.Fatalf("unexpected KRunner match details: %#v", match)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || preview.HostRootModified ||
+		preview.BackendDetailsExposed || preview.Summary.QueryExecutionEnabled ||
+		preview.Summary.BackendLaunchEnabled || preview.Summary.BackendDetailsExposed ||
+		!preview.Summary.RuntimeOwnedLaunch {
+		t.Fatalf("unexpected KRunner safety flags: %#v", preview)
+	}
+
+	blank, err := NewKRunnerQueryPreview([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}}, Provenance{Source: "registry"}, " ")
+	if err != nil {
+		t.Fatalf("blank NewKRunnerQueryPreview returned error: %v", err)
+	}
+	if len(blank.Matches) != 0 || blank.Summary.MatchCount != 0 {
+		t.Fatalf("blank query returned matches: %#v", blank)
+	}
+	if _, err := NewKRunnerQueryPreview(nil, Provenance{Source: "registry"}, "line\nbreak"); err == nil {
+		t.Fatalf("KRunner query preview accepted a multiline query")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KRunner query preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

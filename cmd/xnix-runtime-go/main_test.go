@@ -75,6 +75,66 @@ func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
 	}
 }
 
+func TestKRunnerQueryPreviewCommandSearchesRegistry(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"wine","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"krunner-query-preview", "--registry", registryPath, "--query", "ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.krunner_query.v1" || payload["query_type"] != "krunner-query-plan" {
+		t.Fatalf("unexpected KRunner schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" || payload["entry_point"] != "krunner" || payload["query"] != "ledger" {
+		t.Fatalf("unexpected KRunner identity: %#v", payload)
+	}
+	source := payload["source"].(map[string]any)
+	if source["kind"] != "runtime-go-registry" || source["registry_name"] != "test-registry" ||
+		source["recipe_digest_verified"] != true || source["recipe_signature_status"] != "development-only" {
+		t.Fatalf("unexpected source: %#v", source)
+	}
+	matches := payload["matches"].([]any)
+	if len(matches) != 1 {
+		t.Fatalf("unexpected matches: %#v", matches)
+	}
+	match := matches[0].(map[string]any)
+	if match["application_id"] != "org.example.ledger" || match["name"] != "Example Ledger" ||
+		match["mode_label"] != "Managed compatibility" || match["runtime_owned_launch"] != true ||
+		match["backend_details_exposed"] != false {
+		t.Fatalf("unexpected match: %#v", match)
+	}
+	action := match["action"].(map[string]any)
+	if action["type"] != "runtime-launch" || action["desktop_entry_id"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected action: %#v", action)
+	}
+	summary := payload["summary"].(map[string]any)
+	if summary["match_count"] != float64(1) || summary["query_execution_enabled"] != false ||
+		summary["backend_launch_enabled"] != false || summary["backend_details_exposed"] != false {
+		t.Fatalf("unexpected summary: %#v", summary)
+	}
+	if payload["runtime_owned"] != true || payload["kde_policy_owner"] != false ||
+		payload["host_root_modified"] != false || payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KRunner safety flags: %#v", payload)
+	}
+}
+
 func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)

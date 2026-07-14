@@ -82,6 +82,63 @@ func LoadRecipeFromRegistry(registryPath string, recipeRoot string, applicationI
 	}, nil
 }
 
+func LoadRecipesFromRegistry(registryPath string, recipeRoot string) ([]Recipe, Provenance, error) {
+	if registryPath == "" {
+		return nil, Provenance{}, errors.New("registry path is required")
+	}
+	if recipeRoot == "" {
+		recipeRoot = filepath.Dir(registryPath)
+	}
+
+	registryData, err := os.ReadFile(registryPath)
+	if err != nil {
+		return nil, Provenance{}, fmt.Errorf("read registry: %w", err)
+	}
+	registry, err := ParseRegistry(registryData)
+	if err != nil {
+		return nil, Provenance{}, err
+	}
+
+	recipes := make([]Recipe, 0, len(registry.Recipes))
+	signatureStatuses := make(map[string]bool, len(registry.Recipes))
+	for _, entry := range registry.Recipes {
+		recipePath, err := safeRecipePath(recipeRoot, entry.Path)
+		if err != nil {
+			return nil, Provenance{}, err
+		}
+		recipeData, err := os.ReadFile(recipePath)
+		if err != nil {
+			return nil, Provenance{}, fmt.Errorf("read registry recipe: %w", err)
+		}
+		if err := verifySHA256(recipeData, entry.SHA256); err != nil {
+			return nil, Provenance{}, err
+		}
+		recipe, err := ParseRecipe(recipeData)
+		if err != nil {
+			return nil, Provenance{}, err
+		}
+		if recipe.ID != entry.ID {
+			return nil, Provenance{}, fmt.Errorf("registry recipe id mismatch: %s != %s", recipe.ID, entry.ID)
+		}
+		recipes = append(recipes, recipe)
+		signatureStatuses[entry.SignatureStatus] = true
+	}
+
+	signatureStatus := "mixed"
+	if len(signatureStatuses) == 1 {
+		for status := range signatureStatuses {
+			signatureStatus = status
+		}
+	}
+
+	return recipes, Provenance{
+		Source:          "registry",
+		RegistryName:    registry.RegistryName,
+		DigestVerified:  true,
+		SignatureStatus: signatureStatus,
+	}, nil
+}
+
 func ParseRegistry(data []byte) (Registry, error) {
 	var registry Registry
 	if err := json.Unmarshal(data, &registry); err != nil {
