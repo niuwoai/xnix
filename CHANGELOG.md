@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.96] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility test plan records and a CLI read method for recipe validation, Portal preflight, snapshot preflight, and managed launch-binding checks.
+- Added C Runtime probe ownership for compatibility test plans so KDE can verify test type coverage without owning test execution policy.
+
+### Changed
+
+- Marked compatibility test plans as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping execution requests, test execution, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.95] - 2026-07-14
 
 ### Added

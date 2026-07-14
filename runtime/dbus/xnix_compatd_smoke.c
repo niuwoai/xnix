@@ -710,7 +710,13 @@ build_test_plan(const gchar *application_id, const gchar *test_type)
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-test"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetTestPlan"));
   g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "execution_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "test_executed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);

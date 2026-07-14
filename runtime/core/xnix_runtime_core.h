@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.95"
+#define XNIX_RUNTIME_VERSION "0.2.96"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -697,6 +697,47 @@ typedef struct {
 } XnixRuntimeCompatibilityRunPlan;
 
 typedef struct {
+  const char *id;
+  const char *status;
+  const char *title;
+  const char *summary;
+  const char *required_for[3];
+  size_t required_for_count;
+  const char *portal_destination;
+  const char *portal_interface;
+  const char *portal_method;
+  const char *portal_handle_token;
+  const char *snapshot_reason;
+  bool snapshot_enabled_by_default;
+  bool snapshot_restore_available;
+  const char *run_strategy;
+  bool backend_ready;
+  bool run_plan_backend_details_exposed;
+} XnixRuntimeCompatibilityTestStep;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *test_type;
+  const char *desktop;
+  XnixRuntimeCompatibilityTestStep steps[4];
+  size_t step_count;
+  const char *blocking_reasons[4];
+  size_t blocking_reason_count;
+  const char *notification_event;
+  const char *repair_plan_issue;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool blocked;
+  bool compatibility_center_card;
+  bool execution_request_created;
+  bool test_executed;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityTestPlan;
+
+typedef struct {
   const char *entry_point;
   const char *kind;
   const char *relative_path;
@@ -1200,6 +1241,11 @@ bool xnix_runtime_compatibility_center_summary(
 bool xnix_runtime_compatibility_run_plan(
   const char *application_id,
   XnixRuntimeCompatibilityRunPlan *plan
+);
+bool xnix_runtime_compatibility_test_plan(
+  const char *application_id,
+  const char *test_type,
+  XnixRuntimeCompatibilityTestPlan *plan
 );
 bool xnix_runtime_desktop_activation_manifest(
   const char *application_id,

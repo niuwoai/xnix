@@ -153,7 +153,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetTestPlan"
       [
-        "({'plan_type': <'compatibility-test'>, 'test_type': <'preflight'>, 'runtime_owned': <true>, 'backend_details_exposed': <false>},)\n",
+        "({'plan_type': <'compatibility-test'>, 'test_type': <'preflight'>, 'runtime_method': <'GetTestPlan'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'execution_request_created': <false>, 'test_executed': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -477,7 +477,13 @@ assert(!repair_plan["backend_details_exposed"], "D-Bus client must parse repair 
 
 test_plan = client.test_plan("org.xnix.sample.notepad")
 assert(test_plan["plan_type"] == "compatibility-test", "D-Bus client must parse test plans")
+assert(test_plan["runtime_method"] == "GetTestPlan", "D-Bus client must parse test plan Runtime methods")
 assert(test_plan["runtime_owned"], "D-Bus client must parse test plan booleans")
+assert(test_plan["c_runtime_backed"], "D-Bus client must parse test plan C backing")
+assert(!test_plan["kde_policy_owner"], "D-Bus client must parse test plan KDE false booleans")
+assert(!test_plan["execution_request_created"], "D-Bus client must parse test plan execution request false booleans")
+assert(!test_plan["test_executed"], "D-Bus client must parse test plan execution false booleans")
+assert(!test_plan["host_root_modified"], "D-Bus client must parse test plan host-root false booleans")
 assert(!test_plan["backend_details_exposed"], "D-Bus client must parse test plan false booleans")
 
 test_result = client.test_result("org.xnix.sample.notepad")

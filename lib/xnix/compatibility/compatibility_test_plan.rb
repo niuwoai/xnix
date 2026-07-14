@@ -27,12 +27,17 @@ module Xnix
           "desktop" => "KDE Plasma",
           "application_id" => recipe.id,
           "name" => recipe.name,
+          "runtime_method" => "GetTestPlan",
           "runtime_owned" => true,
+          "c_runtime_backed" => true,
           "kde_policy_owner" => false,
           "steps" => steps,
           "blocked" => blocked?,
           "blocking_reasons" => blocking_reasons,
           "artifacts" => artifacts,
+          "execution_request_created" => false,
+          "test_executed" => false,
+          "host_root_modified" => false,
           "desktop_safe_summary" => desktop_safe_summary,
           "backend_details_exposed" => false
         }
