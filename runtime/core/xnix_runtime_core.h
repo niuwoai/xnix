@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.96"
+#define XNIX_RUNTIME_VERSION "0.2.97"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -738,6 +738,45 @@ typedef struct {
 } XnixRuntimeCompatibilityTestPlan;
 
 typedef struct {
+  size_t total;
+  size_t passed;
+  size_t pending;
+  size_t blocked;
+} XnixRuntimeCompatibilityTestResultCounts;
+
+typedef struct {
+  const char *id;
+  const char *title;
+  const char *status;
+  const char *result;
+  const char *evidence;
+  const char *next_action;
+} XnixRuntimeCompatibilityTestStepResult;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const char *test_type;
+  const char *result_source;
+  const char *execution_state;
+  const char *overall_status;
+  XnixRuntimeCompatibilityTestResultCounts counts;
+  XnixRuntimeCompatibilityTestStepResult step_results[4];
+  size_t step_result_count;
+  const char *notification_event;
+  const char *repair_plan_issue;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool compatibility_center_card;
+  bool diagnostics_record;
+  bool safe_for_ai_diagnostics;
+  bool test_executed;
+  bool host_root_modified;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeCompatibilityTestResult;
+
+typedef struct {
   const char *entry_point;
   const char *kind;
   const char *relative_path;
@@ -1246,6 +1285,11 @@ bool xnix_runtime_compatibility_test_plan(
   const char *application_id,
   const char *test_type,
   XnixRuntimeCompatibilityTestPlan *plan
+);
+bool xnix_runtime_compatibility_test_result(
+  const char *application_id,
+  const char *test_type,
+  XnixRuntimeCompatibilityTestResult *result
 );
 bool xnix_runtime_desktop_activation_manifest(
   const char *application_id,

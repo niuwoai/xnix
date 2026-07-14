@@ -159,7 +159,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetTestResult"
       [
-        "({'result_type': <'compatibility-test-result'>, 'test_type': <'preflight'>, 'overall_status': <'pending'>, 'safe_for_ai_diagnostics': <true>, 'backend_details_exposed': <false>},)\n",
+        "({'result_type': <'compatibility-test-result'>, 'test_type': <'preflight'>, 'runtime_method': <'GetTestResult'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'result_source': <'runtime-model'>, 'execution_state': <'waiting-for-runtime'>, 'overall_status': <'pending'>, 'safe_for_ai_diagnostics': <true>, 'test_executed': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -488,7 +488,15 @@ assert(!test_plan["backend_details_exposed"], "D-Bus client must parse test plan
 
 test_result = client.test_result("org.xnix.sample.notepad")
 assert(test_result["result_type"] == "compatibility-test-result", "D-Bus client must parse test results")
+assert(test_result["runtime_method"] == "GetTestResult", "D-Bus client must parse test result Runtime methods")
+assert(test_result["runtime_owned"], "D-Bus client must parse test result Runtime ownership")
+assert(test_result["c_runtime_backed"], "D-Bus client must parse test result C backing")
+assert(!test_result["kde_policy_owner"], "D-Bus client must parse test result KDE false booleans")
+assert(test_result["result_source"] == "runtime-model", "D-Bus client must parse test result sources")
+assert(test_result["execution_state"] == "waiting-for-runtime", "D-Bus client must parse test result execution state")
 assert(test_result["safe_for_ai_diagnostics"], "D-Bus client must parse test result booleans")
+assert(!test_result["test_executed"], "D-Bus client must parse test result execution false booleans")
+assert(!test_result["host_root_modified"], "D-Bus client must parse test result host-root false booleans")
 assert(!test_result["backend_details_exposed"], "D-Bus client must parse test result false booleans")
 
 ai_input = client.ai_diagnostic_input("org.xnix.sample.notepad")

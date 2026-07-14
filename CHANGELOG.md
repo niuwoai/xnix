@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.97] - 2026-07-14
+
+### Added
+
+- Added C Runtime compatibility test result records and a CLI read method for passed, pending, and blocked compatibility test outcome summaries.
+- Added C Runtime probe ownership for compatibility test results so KDE and AI diagnostics can verify result coverage without owning test execution.
+
+### Changed
+
+- Marked compatibility test results as C Runtime-backed in the Ruby and D-Bus smoke layers while keeping test execution, host-root mutation, and backend detail exposure disabled.
+
 ## [0.2.96] - 2026-07-14
 
 ### Added

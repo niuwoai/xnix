@@ -731,8 +731,16 @@ build_test_result(const gchar *application_id, const gchar *test_type)
   g_variant_builder_add(&result, "{sv}", "result_type", g_variant_new_string("compatibility-test-result"));
   g_variant_builder_add(&result, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&result, "{sv}", "test_type", g_variant_new_string(test_type));
+  g_variant_builder_add(&result, "{sv}", "runtime_method", g_variant_new_string("GetTestResult"));
+  g_variant_builder_add(&result, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&result, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&result, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&result, "{sv}", "result_source", g_variant_new_string("runtime-model"));
+  g_variant_builder_add(&result, "{sv}", "execution_state", g_variant_new_string("waiting-for-runtime"));
   g_variant_builder_add(&result, "{sv}", "overall_status", g_variant_new_string("pending"));
   g_variant_builder_add(&result, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&result, "{sv}", "test_executed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&result, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&result, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&result);

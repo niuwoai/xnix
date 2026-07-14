@@ -24,7 +24,9 @@ module Xnix
           "test_type" => plan.fetch("test_type"),
           "application_id" => plan.fetch("application_id"),
           "name" => plan.fetch("name"),
+          "runtime_method" => "GetTestResult",
           "runtime_owned" => true,
+          "c_runtime_backed" => true,
           "kde_policy_owner" => false,
           "result_source" => RESULT_SOURCE,
           "execution_state" => execution_state,
@@ -33,6 +35,8 @@ module Xnix
           "step_results" => step_results,
           "artifacts" => artifacts,
           "safe_for_ai_diagnostics" => true,
+          "test_executed" => false,
+          "host_root_modified" => false,
           "desktop_safe_summary" => desktop_safe_summary,
           "backend_details_exposed" => false
         }

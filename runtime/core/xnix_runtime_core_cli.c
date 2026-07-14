@@ -2825,6 +2825,8 @@ print_probe(void)
   fputs("\"compatibility_repair_issue_count\":4,", stdout);
   fputs("\"compatibility_test_plan_owner\":\"c\",", stdout);
   fputs("\"compatibility_test_type_count\":3,", stdout);
+  fputs("\"compatibility_test_result_owner\":\"c\",", stdout);
+  fputs("\"compatibility_test_result_type_count\":3,", stdout);
   fputs("\"desktop_activation_manifest_owner\":\"c\",", stdout);
   fputs("\"desktop_activation_manifest_count\":1,", stdout);
   fputs("\"kde_integration_status_owner\":\"c\",", stdout);
@@ -2917,6 +2919,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_portal_request.inc"
 #include "xnix_runtime_core_cli_compatibility_snapshot_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_test_plan.inc"
+#include "xnix_runtime_core_cli_compatibility_test_result.inc"
 #include "xnix_runtime_core_cli_compatibility_repair_plan.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_input.inc"
 #include "xnix_runtime_core_cli_ai_diagnostic_recommendation.inc"

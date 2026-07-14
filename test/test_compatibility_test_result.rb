@@ -19,12 +19,14 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 result = Xnix::Compatibility::CompatibilityTestResult.new(recipe: recipe).to_h
 step_ids = result.fetch("step_results").map { |step| step.fetch("id") }
 
-assert(result["version"] == "0.2.96", "compatibility test result must expose the current version")
+assert(result["version"] == "0.2.97", "compatibility test result must expose the current version")
 assert(result["result_type"] == "compatibility-test-result", "compatibility test result must identify result type")
 assert(result["plan_type"] == "compatibility-test", "compatibility test result must reference the test plan")
 assert(result["test_type"] == "preflight", "compatibility test result must default to preflight")
 assert(result["application_id"] == "org.xnix.sample.notepad", "compatibility test result must preserve the application id")
+assert(result["runtime_method"] == "GetTestResult", "compatibility test result must expose the Runtime method")
 assert(result["runtime_owned"], "Runtime must own compatibility test results")
+assert(result["c_runtime_backed"], "compatibility test result must be C Runtime-backed")
 assert(!result["kde_policy_owner"], "KDE must not own compatibility test results")
 assert(result["execution_state"] == "waiting-for-runtime", "test result must not claim execution completion before backend binding")
 assert(result["overall_status"] == "pending", "test result must stay pending while Runtime work remains")
@@ -37,6 +39,8 @@ assert(result["artifacts"]["compatibility_center_card"], "test result must feed 
 assert(result["artifacts"]["diagnostics_record"], "test result must feed diagnostics")
 assert(result["artifacts"]["repair_plan_issue"] == "engine-binding-pending", "test result must map pending execution to repair planning")
 assert(result["safe_for_ai_diagnostics"], "test result must be safe for AI diagnostics")
+assert(!result["test_executed"], "compatibility test result must not execute tests")
+assert(!result["host_root_modified"], "compatibility test result must not mutate the host root")
 assert(!result["backend_details_exposed"], "compatibility test result must hide backend details")
 
 smoke_result = Xnix::Compatibility::CompatibilityTestResult.new(recipe: recipe, test_type: "smoke").to_h
