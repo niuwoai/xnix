@@ -130,6 +130,9 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='binding' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetBackendCapabilityMatrix'>"
+  "      <arg name='matrix' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetBackendLifecycle'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='lifecycle' type='a{sv}' direction='out'/>"
@@ -829,6 +832,50 @@ build_backend_binding(const gchar *application_id)
 }
 
 static GVariant *
+build_backend_capability_matrix(void)
+{
+  const gchar *profile_ids[] = {
+    "local-compatibility",
+    "isolated-compatibility",
+  };
+  const gchar *capability_ids[] = {
+    "application-launch",
+    "package-management",
+    "file-bridge",
+    "clipboard-bridge",
+    "print-bridge",
+    "snapshot-restore",
+    "diagnostics",
+  };
+  GVariantBuilder matrix;
+
+  g_variant_builder_init(&matrix, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&matrix, "{sv}", "matrix_type", g_variant_new_string("compatibility-backend-capability-matrix"));
+  g_variant_builder_add(&matrix, "{sv}", "runtime_method", g_variant_new_string("GetBackendCapabilityMatrix"));
+  g_variant_builder_add(&matrix, "{sv}", "profile_ids", g_variant_new_strv(profile_ids, 2));
+  g_variant_builder_add(&matrix, "{sv}", "capability_ids", g_variant_new_strv(capability_ids, 7));
+  g_variant_builder_add(&matrix, "{sv}", "profile_count", g_variant_new_int32(2));
+  g_variant_builder_add(&matrix, "{sv}", "capability_count", g_variant_new_int32(7));
+  g_variant_builder_add(&matrix, "{sv}", "ready_capability_count", g_variant_new_int32(2));
+  g_variant_builder_add(&matrix, "{sv}", "pending_capability_count", g_variant_new_int32(12));
+  g_variant_builder_add(&matrix, "{sv}", "blocked_capability_count", g_variant_new_int32(0));
+  g_variant_builder_add(&matrix, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&matrix, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&matrix, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "selection_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "capability_activation_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "request_objects_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "state_root_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "snapshots_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&matrix, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&matrix);
+}
+
+static GVariant *
 build_backend_lifecycle(const gchar *application_id)
 {
   GVariantBuilder lifecycle;
@@ -1462,7 +1509,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(48));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(49));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1898,6 +1945,11 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_binding(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetBackendCapabilityMatrix") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_backend_capability_matrix()));
     return;
   }
 

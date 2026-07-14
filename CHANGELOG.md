@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.108] - 2026-07-15
+
+### Added
+
+- Added C Runtime backend capability matrix records and a CLI read method for local and isolated compatibility profiles.
+- Added `GetBackendCapabilityMatrix` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, Runtime dispatch, and KDE-safe Compatibility Center read model.
+- Added Ruby development harness and unit coverage for application launch, package management, file bridge, clipboard bridge, print bridge, snapshot restore, and diagnostics capability planning.
+
+### Changed
+
+- Extended Runtime diagnostics and Compatibility Center summaries with backend capability matrix state while keeping selection, launch, activation, request-object, state-root, snapshot, host-root, privileged-container, and backend-detail gates disabled.
+
 ## [0.2.107] - 2026-07-15
 
 ### Added

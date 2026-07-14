@@ -37,7 +37,7 @@ store = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/re
 sample_recipe = store.find("org.xnix.sample.notepad")
 sample_plan = Xnix::Compatibility::CompatibilityRunPlan.new(recipe: sample_recipe).to_h
 
-assert(sample_plan["version"] == "0.2.107", "compatibility run plan must expose the current version")
+assert(sample_plan["version"] == "0.2.108", "compatibility run plan must expose the current version")
 assert(sample_plan["plan_type"] == "compatibility-run", "compatibility run plan must identify the model type")
 assert(sample_plan["application"]["id"] == "org.xnix.sample.notepad", "compatibility run plan must identify the application")
 assert(sample_plan["execution"]["strategy"] == "automatic-managed", "automatic recipes must use managed automatic strategy")

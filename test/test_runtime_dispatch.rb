@@ -260,6 +260,17 @@ assert(backend_binding["binding_type"] == "compatibility-backend-binding", "disp
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetBackendCapabilityMatrix",
+  JSON.generate([])
+)
+assert(status.success?, "dispatch GetBackendCapabilityMatrix must exit successfully: #{stderr}")
+backend_capability_matrix = JSON.parse(stdout)
+assert(backend_capability_matrix["matrix_type"] == "compatibility-backend-capability-matrix", "dispatch must route GetBackendCapabilityMatrix")
+assert(!backend_capability_matrix["backend_launch_enabled"], "dispatch must keep backend capability launch gated")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetBackendLifecycle",
   JSON.generate(["org.xnix.sample.notepad"])
 )

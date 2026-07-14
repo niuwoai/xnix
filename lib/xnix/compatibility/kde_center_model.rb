@@ -82,6 +82,7 @@ module Xnix
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
+          "backend_capability_matrix" => backend_capability_matrix_summary(diagnostics.fetch("backend_capability_matrix", nil)),
           "backend_environment_plan" => backend_environment_plan_summary(diagnostics.fetch("backend_environment_plan", nil)),
           "backend_lifecycle" => backend_lifecycle_summary(diagnostics.fetch("backend_lifecycle", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
@@ -314,6 +315,28 @@ module Xnix
           "launch_enabled" => binding.fetch("launch_enabled"),
           "preflight_count" => binding.fetch("preflight_count"),
           "summary" => binding.fetch("summary")
+        }
+      end
+
+      def backend_capability_matrix_summary(matrix)
+        return nil unless matrix
+
+        {
+          "matrix_type" => matrix.fetch("matrix_type"),
+          "runtime_method" => matrix.fetch("runtime_method"),
+          "profile_count" => matrix.fetch("profile_count"),
+          "capability_count" => matrix.fetch("capability_count"),
+          "ready_capability_count" => matrix.fetch("ready_capability_count"),
+          "pending_capability_count" => matrix.fetch("pending_capability_count"),
+          "selection_enabled" => matrix.fetch("selection_enabled"),
+          "backend_launch_enabled" => matrix.fetch("backend_launch_enabled"),
+          "capability_activation_enabled" => matrix.fetch("capability_activation_enabled"),
+          "request_objects_created" => matrix.fetch("request_objects_created"),
+          "state_root_created" => matrix.fetch("state_root_created"),
+          "snapshots_created" => matrix.fetch("snapshots_created"),
+          "host_root_modified" => matrix.fetch("host_root_modified"),
+          "backend_details_exposed" => matrix.fetch("backend_details_exposed"),
+          "summary" => matrix.fetch("summary")
         }
       end
 
@@ -590,6 +613,7 @@ module Xnix
           "pending_package_source_count" => applications.count { |application| !section(application, "package_source").fetch("package_source_ready", false) },
           "planned_state_root_count" => applications.count { |application| section(application, "state_root").fetch("allocation_state", nil) == "planned" },
           "pending_backend_binding_count" => applications.count { |application| !section(application, "backend_binding").fetch("managed_binding_ready", false) },
+          "pending_backend_capability_matrix_count" => applications.count { |application| !section(application, "backend_capability_matrix").fetch("selection_enabled", false) },
           "ai_diagnostic_ready_count" => applications.count { |application| section(application, "ai_diagnostic_input").fetch("safe_for_ai_diagnostics", false) },
           "ai_recommendation_ready_count" => applications.count { |application| section(application, "ai_diagnostic_recommendation").fetch("safe_for_ai_diagnostics", false) },
           "blocked_ai_repair_gate_count" => applications.count { |application| section(application, "ai_repair_approval_gate").fetch("gate_decision", nil) == "blocked-until-approval" },

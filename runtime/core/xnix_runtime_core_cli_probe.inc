@@ -44,6 +44,9 @@ print_probe(void)
   fputs("\"backend_binding_policy_owner\":\"c\",", stdout);
   fputs("\"backend_binding_policy_count\":", stdout);
   printf("%zu,", xnix_runtime_backend_binding_policy_count());
+  fputs("\"backend_capability_matrix_owner\":\"c\",", stdout);
+  fputs("\"backend_capability_profile_count\":2,", stdout);
+  fputs("\"backend_capability_count\":7,", stdout);
   fputs("\"backend_lifecycle_owner\":\"c\",", stdout);
   fputs("\"backend_lifecycle_application_count\":1,", stdout);
   fputs("\"backend_environment_plan_owner\":\"c\",", stdout);

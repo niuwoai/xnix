@@ -175,6 +175,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetBackendCapabilityMatrix"
+      [
+        "({'matrix_type': <'compatibility-backend-capability-matrix'>, 'runtime_method': <'GetBackendCapabilityMatrix'>, 'profile_count': <2>, 'capability_count': <7>, 'ready_capability_count': <2>, 'pending_capability_count': <12>, 'blocked_capability_count': <0>, 'profile_ids': <['local-compatibility', 'isolated-compatibility']>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'selection_enabled': <false>, 'backend_launch_enabled': <false>, 'capability_activation_enabled': <false>, 'request_objects_created': <false>, 'state_root_created': <false>, 'snapshots_created': <false>, 'host_root_modified': <false>, 'privileged_container_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetBackendLifecycle"
       [
         "({'lifecycle_type': <'compatibility-backend-lifecycle'>, 'runtime_method': <'GetBackendLifecycle'>, 'lifecycle_state': <'blocked'>, 'overall_status': <'not-ready'>, 'runtime_owned': <true>, 'c_runtime_backed': <true>, 'kde_policy_owner': <false>, 'backend_binding_ready': <false>, 'launch_enabled': <false>, 'execution_request_created': <false>, 'backend_process_started': <false>, 'local_backend_started': <false>, 'isolated_backend_started': <false>, 'host_root_modified': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
@@ -267,7 +273,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <48>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <49>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -514,6 +520,20 @@ assert(backend_binding["binding_type"] == "compatibility-backend-binding", "D-Bu
 assert(!backend_binding["managed_binding_ready"], "D-Bus client must parse backend binding readiness")
 assert(!backend_binding["launch_enabled"], "D-Bus client must parse backend launch status")
 
+backend_capability_matrix = client.backend_capability_matrix
+assert(backend_capability_matrix["matrix_type"] == "compatibility-backend-capability-matrix", "D-Bus client must parse backend capability matrices")
+assert(backend_capability_matrix["runtime_method"] == "GetBackendCapabilityMatrix", "D-Bus client must parse backend capability matrix Runtime methods")
+assert(backend_capability_matrix["profile_count"] == 2, "D-Bus client must parse backend capability profile counts")
+assert(backend_capability_matrix["capability_count"] == 7, "D-Bus client must parse backend capability counts")
+assert(!backend_capability_matrix["selection_enabled"], "D-Bus client must parse backend selection gates")
+assert(!backend_capability_matrix["backend_launch_enabled"], "D-Bus client must parse backend launch gates")
+assert(!backend_capability_matrix["capability_activation_enabled"], "D-Bus client must parse backend capability activation gates")
+assert(!backend_capability_matrix["request_objects_created"], "D-Bus client must parse backend capability request gates")
+assert(!backend_capability_matrix["state_root_created"], "D-Bus client must parse backend capability state gates")
+assert(!backend_capability_matrix["snapshots_created"], "D-Bus client must parse backend capability snapshot gates")
+assert(!backend_capability_matrix["host_root_modified"], "D-Bus client must parse backend capability host gates")
+assert(!backend_capability_matrix["backend_details_exposed"], "D-Bus client must parse backend capability detail gates")
+
 backend_lifecycle = client.backend_lifecycle("org.xnix.sample.notepad")
 assert(backend_lifecycle["lifecycle_type"] == "compatibility-backend-lifecycle", "D-Bus client must parse backend lifecycle")
 assert(backend_lifecycle["runtime_method"] == "GetBackendLifecycle", "D-Bus client must parse backend lifecycle Runtime methods")
@@ -743,7 +763,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 48, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 49, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

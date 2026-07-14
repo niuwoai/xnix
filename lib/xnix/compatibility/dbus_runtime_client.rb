@@ -137,6 +137,10 @@ module Xnix
         parse_dictionary(call("GetBackendBinding", application_id))
       end
 
+      def backend_capability_matrix
+        parse_dictionary(call("GetBackendCapabilityMatrix"))
+      end
+
       def backend_lifecycle(application_id)
         parse_dictionary(call("GetBackendLifecycle", application_id))
       end

@@ -373,6 +373,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetBackendCapabilityMatrix"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetBackendCapabilityMatrix: #{stderr}")
+  assert(stdout.include?("compatibility-backend-capability-matrix"), "runtime smoke adapter must expose backend capability matrix over D-Bus")
+  assert(stdout.include?("backend_launch_enabled"), "runtime smoke adapter must keep backend launch gated")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetBackendLifecycle",
     "org.xnix.sample.notepad"
   )

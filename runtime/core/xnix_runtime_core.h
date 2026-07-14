@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.107"
+#define XNIX_RUNTIME_VERSION "0.2.108"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -417,6 +417,67 @@ typedef struct {
 
 typedef struct {
   const char *id;
+  const char *label;
+  const char *status;
+  const char *summary;
+  bool user_visible;
+  bool requires_portal_review;
+  bool requires_state_root;
+  bool requires_snapshot;
+  bool activation_enabled;
+  bool request_object_created;
+  bool backend_process_started;
+  bool backend_details_exposed;
+} XnixRuntimeBackendCapability;
+
+typedef struct {
+  const char *id;
+  const char *label;
+  const char *kind;
+  const char *selection_state;
+  XnixRuntimeBackendCapability capabilities[7];
+  size_t capability_count;
+  size_t ready_count;
+  size_t pending_count;
+  size_t blocked_count;
+  bool runtime_owned;
+  bool kde_policy_owner;
+  bool profile_ready;
+  bool selection_enabled;
+  bool backend_process_started;
+  bool network_required_for_planning;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeBackendCapabilityProfile;
+
+typedef struct {
+  const char *matrix_type;
+  const char *runtime_method;
+  XnixRuntimeBackendCapabilityProfile profiles[2];
+  size_t profile_count;
+  size_t capability_count;
+  size_t ready_capability_count;
+  size_t pending_capability_count;
+  size_t blocked_capability_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool selection_enabled;
+  bool backend_launch_enabled;
+  bool capability_activation_enabled;
+  bool request_objects_created;
+  bool state_root_created;
+  bool snapshots_created;
+  bool host_root_modified;
+  bool privileged_container_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeBackendCapabilityMatrix;
+
+typedef struct {
+  const char *id;
   const char *status;
   const char *summary;
 } XnixRuntimeBackendLifecycleStage;
@@ -716,7 +777,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[48];
+  const char *read_only_methods[49];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1606,6 +1667,7 @@ const XnixRuntimePackageSourcePolicy *xnix_runtime_find_package_source_policy(co
 size_t xnix_runtime_backend_binding_policy_count(void);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_backend_binding_policy_at(size_t index);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_find_backend_binding_policy(const char *application_id);
+bool xnix_runtime_backend_capability_matrix(XnixRuntimeBackendCapabilityMatrix *matrix);
 bool xnix_runtime_backend_lifecycle(const char *application_id, XnixRuntimeBackendLifecycle *lifecycle);
 bool xnix_runtime_backend_environment_plan(const char *application_id, XnixRuntimeBackendEnvironmentPlan *plan);
 
