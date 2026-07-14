@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.101"
+EXPECTED_VERSION = "0.2.102"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -31,6 +31,7 @@ REQUIRED_FILES = %w[
   lib/xnix/compatibility/compatibility_action_queue.rb
   lib/xnix/compatibility/compatibility_artifact_manifest.rb
   lib/xnix/compatibility/compatibility_backend_binding.rb
+  lib/xnix/compatibility/compatibility_backend_environment_plan.rb
   lib/xnix/compatibility/compatibility_backend_lifecycle.rb
   lib/xnix/compatibility/compatibility_engine_catalog.rb
   lib/xnix/compatibility/compatibility_execution_readiness.rb
@@ -84,6 +85,7 @@ REQUIRED_FILES = %w[
   bin/xnix-compat-install-plan
   bin/xnix-compat-state-root
   bin/xnix-compat-backend-binding
+  bin/xnix-compat-backend-environment-plan
   bin/xnix-compat-backend-lifecycle
   bin/xnix-compatd
   bin/xnix-compat-engine-catalog
@@ -199,6 +201,7 @@ REQUIRED_FILES = %w[
   test/test_compatibility_artifact_manifest.rb
   test/test_compatibility_install_plan.rb
   test/test_compatibility_backend_binding.rb
+  test/test_compatibility_backend_environment_plan.rb
   test/test_compatibility_backend_lifecycle.rb
   test/test_container.rb
   test/test_buildroot.rb
@@ -474,6 +477,7 @@ c_runtime_core_source = read_project_file("runtime/core/xnix_runtime_core.c") +
                      read_project_file("runtime/core/xnix_runtime_core_execution_readiness.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_launch_intent.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_backend_lifecycle.inc") +
+                     read_project_file("runtime/core/xnix_runtime_core_backend_environment_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_compatibility_repair_plan.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_input.inc") +
                         read_project_file("runtime/core/xnix_runtime_core_ai_diagnostic_recommendation.inc") +
@@ -500,6 +504,7 @@ c_runtime_core_cli = read_project_file("runtime/core/xnix_runtime_core_cli.c") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_execution_readiness.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_launch_intent.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_backend_lifecycle.inc") +
+                     read_project_file("runtime/core/xnix_runtime_core_cli_backend_environment_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_compatibility_repair_plan.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_input.inc") +
                      read_project_file("runtime/core/xnix_runtime_core_cli_ai_diagnostic_recommendation.inc") +
@@ -536,6 +541,9 @@ end
 %w[XnixRuntimeBackendLifecycle XnixRuntimeBackendLifecycleStage xnix_runtime_backend_lifecycle].each do |token|
   assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
 end
+%w[XnixRuntimeBackendEnvironmentPlan XnixRuntimeBackendEnvironmentProfile xnix_runtime_backend_environment_plan].each do |token|
+  assert(c_runtime_core_header.include?(token), "C Runtime core header must include #{token}")
+end
 %w[xnix_runtime_write_gate blocked-until-production-backend InstallRecipe Launch CreateSnapshot RestoreSnapshot xnix_runtime_find_application org.xnix.sample.notepad application/x-xnix-txt xnix_runtime_select_engine_for_mode automatic-managed local-compatibility-engine isolated-compatibility-engine xnix_runtime_find_portal_policy org.freedesktop.portal.FileChooser org.freedesktop.portal.Camera remote-desktop selected-files xnix_runtime_portal_request_plan portal_request_method_for_operation handle_token permission_granted host_permission_changed OpenFile RequestClipboard AccessCamera xnix_runtime_find_snapshot_policy before-repair before-engine-change desktop_activation_receipts xnix_runtime_find_state_root_policy application-data runtime-metadata diagnostic-cache xnix_runtime_find_install_readiness_policy resolve-artifact-manifest verify-artifact-digests prepare-package-source allocate-application-state xnix_runtime_find_artifact_manifest_policy runtime-launch-metadata local-execution-artifacts isolated-environment-artifacts manifest-signature-verification artifact-digest-verification xnix_runtime_find_acquisition_preflight_policy package-source-ready signed-artifact-manifest runtime-cache-space network-policy-review rollback-marker xnix_runtime_find_package_source_policy os-managed-compatibility-packages runtime-managed-toolcache isolated-environment-template-catalog signed-source-verification source-policy-review runtime-cache-quota offline-fallback xnix_runtime_find_backend_binding_policy engine-package-source application-state-root portal-policy-review snapshot-baseline xnix_runtime_find_settings_policy run-mode resource-access devices snapshots settings_change_policies xnix_runtime_find_settings_change_policy validate-setting persist-runtime-setting service_binding_policy xnix_runtime_service_binding_policy dbus-service-activation live-dbus-owner live_owner_gate_policy xnix_runtime_live_owner_gate_policy production-recipe-trust owner_smoke_plan_policy xnix_runtime_owner_smoke_plan_policy validate-activation-files assert-stable-bus-name method_parity_manifest_policy xnix_runtime_method_parity_manifest_policy recipe_trust_policy xnix_runtime_recipe_trust_policy production_recipe_install_requirements xnix_runtime_compatibility_install_plan xnix_runtime_compatibility_action_queue xnix_runtime_compatibility_action_review_receipt xnix_runtime_compatibility_center_summary compatibility-center-summary known_issue_count repair_record_state backend_launch_enabled xnix_runtime_compatibility_run_plan xnix_runtime_desktop_activation_manifest xnix_runtime_kde_integration_status kde-integration-status standard-desktop-entry window-identity-and-restore xnix_runtime_desktop_entry_plan xnix_runtime_task_manager_identity_plan xnix_runtime_file_association_plan xnix_runtime_notification_plan xnix_runtime_tray_status_plan xnix_runtime_krunner_query_plan xnix_runtime_ai_diagnostic_input ai-diagnostic-input safe_for_ai_diagnostics desktop-activation desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan query_execution_enabled approval-required install-failed repair-applied mode-changed action_execution_enabled repair_execution_enabled settings_persistence_enabled live_backend_bridge_enabled bridge_configuration_persisted mimeapps.list applications:xnix-org.xnix.sample.notepad.desktop xnix-compat-open standard_desktop_entry launch_uses_runtime raw_windows_executable_exposed compatibility_storage_path_exposed pinning_allowed restore_allowed skip_taskbar show_in_switcher identity-only window_manager_policy_only portal_required_for_file_open overwrite_existing_mimeapps portal_policy_required snapshot_before_risky_change diagnostics_required execution_request_created review-install-readiness review-settings-change review-ai-repair verify-runtime-service review-portal-policy decision_recorded reviewed approved deferred rejected signed recipe validation is not enabled registry.digest registry.signature registry.development GetDesktopActivationManifest GetKDEIntegrationStatus GetDesktopEntryPlan GetTaskManagerIdentityPlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetCompatibilityCenterSummary GetPortalRequestPlan GetAIDiagnosticInput GetRuntimeMethodParityManifest GetRuntimeWriteGate].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
@@ -567,10 +575,13 @@ end
 %w[xnix_runtime_backend_lifecycle compatibility-backend-lifecycle GetBackendLifecycle backend_process_started local_backend_started isolated_backend_started].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
+%w[xnix_runtime_backend_environment_plan compatibility-backend-environment-plan GetBackendEnvironmentPlan local-compatibility-environment isolated-compatibility-environment clipboard_bridge_enabled print_bridge_enabled].each do |token|
+  assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
+end
 %w[xnix_runtime_kwin_window_rule_plan kwin-window-rule identity-and-layout GetKWinWindowRulePlan].each do |token|
   assert(c_runtime_core_source.include?(token), "C Runtime core source must include #{token}")
 end
-%w[business_logic_runtime tests-and-development-tools application_catalog_owner engine_catalog_owner portal_policy_owner portal_request_plan_owner ai_diagnostic_input_owner ai_diagnostic_signal_count desktop_entry_plan_owner task_manager_identity_plan_owner kde_integration_status_owner kde_integration_entry_point_count file_association_plan_owner notification_plan_owner tray_status_plan_owner krunner_query_plan_owner krunner_query_plan_count compatibility_center_summary_owner snapshot_policy_owner state_root_policy_owner install_readiness_policy_owner artifact_manifest_policy_owner acquisition_preflight_policy_owner package_source_policy_owner backend_binding_policy_owner backend_lifecycle_owner settings_policy_owner settings_change_policy_owner service_binding_policy_owner live_owner_gate_policy_owner owner_smoke_plan_policy_owner method_parity_manifest_policy_owner recipe_trust_policy_owner recipe_install_gate_owner compatibility_install_plan_owner compatibility_action_queue_owner compatibility_action_review_receipt_owner compatibility_center_summary_count compatibility_run_plan_owner desktop_activation_manifest_owner compatibility-center-action-review-receipt compatibility-center-summary receipt_id required_runtime_gate compatibility-run desktop-activation kde-integration-status portal-request-plan ai-diagnostic-input desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan list-applications get-application list-engines select-engine list-portal-policies portal-policy portal-request-plan list-snapshot-policies snapshot-policy list-state-root-policies state-root-policy list-install-readiness-policies install-readiness-policy compatibility-install-plan compatibility-action-queue compatibility-action-review compatibility-center-summary compatibility-run-plan desktop-activation-manifest kde-integration-status desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan ai-diagnostic-input list-artifact-manifest-policies artifact-manifest-policy list-acquisition-preflight-policies acquisition-preflight-policy list-package-source-policies package-source-policy list-backend-binding-policies backend-binding-policy backend-lifecycle list-settings-policies settings-policy list-settings-change-policies settings-change-policy runtime-service-binding runtime-live-owner-gate runtime-owner-smoke-plan runtime-method-parity-manifest recipe-trust-policy recipe-install-gate write-gate].each do |token|
+%w[business_logic_runtime tests-and-development-tools application_catalog_owner engine_catalog_owner portal_policy_owner portal_request_plan_owner ai_diagnostic_input_owner ai_diagnostic_signal_count desktop_entry_plan_owner task_manager_identity_plan_owner kde_integration_status_owner kde_integration_entry_point_count file_association_plan_owner notification_plan_owner tray_status_plan_owner krunner_query_plan_owner krunner_query_plan_count compatibility_center_summary_owner snapshot_policy_owner state_root_policy_owner install_readiness_policy_owner artifact_manifest_policy_owner acquisition_preflight_policy_owner package_source_policy_owner backend_binding_policy_owner backend_lifecycle_owner backend_environment_plan_owner settings_policy_owner settings_change_policy_owner service_binding_policy_owner live_owner_gate_policy_owner owner_smoke_plan_policy_owner method_parity_manifest_policy_owner recipe_trust_policy_owner recipe_install_gate_owner compatibility_install_plan_owner compatibility_action_queue_owner compatibility_action_review_receipt_owner compatibility_center_summary_count compatibility_run_plan_owner desktop_activation_manifest_owner compatibility-center-action-review-receipt compatibility-center-summary receipt_id required_runtime_gate compatibility-run desktop-activation kde-integration-status portal-request-plan ai-diagnostic-input desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan list-applications get-application list-engines select-engine list-portal-policies portal-policy portal-request-plan list-snapshot-policies snapshot-policy list-state-root-policies state-root-policy list-install-readiness-policies install-readiness-policy compatibility-install-plan compatibility-action-queue compatibility-action-review compatibility-center-summary compatibility-run-plan desktop-activation-manifest kde-integration-status desktop-entry-plan task-manager-identity-plan file-association-plan notification-plan tray-status-plan krunner-query-plan ai-diagnostic-input list-artifact-manifest-policies artifact-manifest-policy list-acquisition-preflight-policies acquisition-preflight-policy list-package-source-policies package-source-policy list-backend-binding-policies backend-binding-policy backend-lifecycle backend-environment-plan list-settings-policies settings-policy list-settings-change-policies settings-change-policy runtime-service-binding runtime-live-owner-gate runtime-owner-smoke-plan runtime-method-parity-manifest recipe-trust-policy recipe-install-gate write-gate].each do |token|
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[ai_diagnostic_recommendation_owner ai_diagnostic_recommendation_count ai-diagnostic-recommendation].each do |token|
@@ -598,6 +609,9 @@ end
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[backend_lifecycle_owner backend_lifecycle_application_count backend-lifecycle compatibility-backend-lifecycle GetBackendLifecycle].each do |token|
+  assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
+end
+%w[backend_environment_plan_owner backend_environment_plan_count backend-environment-plan compatibility-backend-environment-plan GetBackendEnvironmentPlan].each do |token|
   assert(c_runtime_core_cli.include?(token), "C Runtime core CLI must include #{token}")
 end
 %w[kwin_window_rule_plan_owner kwin_window_rule_plan_count kwin-window-rule-plan].each do |token|

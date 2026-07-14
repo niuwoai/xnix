@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/xnix/compatibility/compatibility_backend_environment_plan"
+
+exit Xnix::Compatibility::CompatibilityBackendEnvironmentPlan::CLI.new(ARGV).run

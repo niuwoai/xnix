@@ -12,6 +12,7 @@ require_relative "compatibility_acquisition_preflight"
 require_relative "compatibility_action_queue"
 require_relative "compatibility_artifact_manifest"
 require_relative "compatibility_backend_binding"
+require_relative "compatibility_backend_environment_plan"
 require_relative "compatibility_backend_lifecycle"
 require_relative "compatibility_engine_catalog"
 require_relative "compatibility_execution_readiness"
@@ -79,6 +80,7 @@ module Xnix
             "compatibility_install_planning" => true,
             "compatibility_package_sources" => true,
             "compatibility_backend_binding" => true,
+            "compatibility_backend_environment_plans" => true,
             "compatibility_backend_lifecycle" => true,
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
@@ -161,6 +163,7 @@ module Xnix
           "package_source" => package_source_summary(recipe),
           "state_root" => state_root_summary(recipe),
           "backend_binding" => backend_binding_summary(recipe),
+          "backend_environment_plan" => backend_environment_plan_summary(recipe),
           "backend_lifecycle" => backend_lifecycle_summary(recipe),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(recipe),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(recipe),
@@ -541,6 +544,11 @@ module Xnix
         CompatibilityBackendLifecycle.new(recipe: recipe).to_h
       end
 
+      def backend_environment_plan(application_id)
+        recipe = require_recipe(application_id)
+        CompatibilityBackendEnvironmentPlan.new(recipe: recipe).to_h
+      end
+
       def repair_plan(application_id, issue)
         require_recipe(application_id)
         CompatibilityRepairPlan.new(application_id: application_id, issue: issue).to_h
@@ -690,6 +698,8 @@ module Xnix
           backend_binding(required_parameter(method_name, parameters, 0))
         when "GetBackendLifecycle"
           backend_lifecycle(required_parameter(method_name, parameters, 0))
+        when "GetBackendEnvironmentPlan"
+          backend_environment_plan(required_parameter(method_name, parameters, 0))
         when "GetRepairPlan"
           repair_plan(
             required_parameter(method_name, parameters, 0),
@@ -1089,11 +1099,11 @@ module Xnix
       end
 
       def krunner_matches(normalized_query)
-        list_applications.filter_map do |application|
+        list_applications.each_with_object([]) do |application, matches|
           relevance = krunner_relevance_for(application, normalized_query)
           next if relevance.zero?
 
-          krunner_match(application, relevance)
+          matches << krunner_match(application, relevance)
         end.sort_by { |match| [-match.fetch("relevance_percent"), match.fetch("name")] }
       end
 
@@ -1162,6 +1172,19 @@ module Xnix
           "backend_process_started" => lifecycle.fetch("backend_process_started"),
           "launch_enabled" => lifecycle.fetch("launch_enabled"),
           "summary" => lifecycle.fetch("desktop_safe_summary")
+        }
+      end
+
+      def backend_environment_plan_summary(recipe)
+        plan = CompatibilityBackendEnvironmentPlan.new(recipe: recipe).to_h
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "environment_state" => plan.fetch("environment_state"),
+          "profile_count" => plan.fetch("profiles").length,
+          "environment_created" => plan.fetch("environment_created"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
+          "launch_enabled" => plan.fetch("launch_enabled"),
+          "summary" => plan.fetch("desktop_safe_summary")
         }
       end
 
@@ -1452,6 +1475,8 @@ module Xnix
             write_json(runtime.backend_binding(require_argument(command)))
           when "backend-lifecycle"
             write_json(runtime.backend_lifecycle(require_argument(command)))
+          when "backend-environment-plan"
+            write_json(runtime.backend_environment_plan(require_argument(command)))
           when "kde-integration-status"
             write_json(runtime.kde_integration_status)
           when "desktop-entry-plan"

@@ -133,6 +133,10 @@ module Xnix
         parse_dictionary(call("GetBackendLifecycle", application_id))
       end
 
+      def backend_environment_plan(application_id)
+        parse_dictionary(call("GetBackendEnvironmentPlan", application_id))
+      end
+
       def repair_plan(application_id, issue)
         parse_dictionary(call("GetRepairPlan", application_id, issue))
       end

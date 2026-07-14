@@ -319,6 +319,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetBackendEnvironmentPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetBackendEnvironmentPlan: #{stderr}")
+  assert(stdout.include?("compatibility-backend-environment-plan"), "runtime smoke adapter must expose backend environment plans over D-Bus")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetRepairPlan",
     "org.xnix.sample.notepad",
     "engine-binding-pending"

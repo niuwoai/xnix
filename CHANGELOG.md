@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.102] - 2026-07-14
+
+### Added
+
+- Added C Runtime backend environment plan records and a CLI read method for local and isolated compatibility environment readiness.
+- Added `GetBackendEnvironmentPlan` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, session-bus smoke coverage, and Compatibility Center read model.
+- Added Ruby development harness and unit coverage for backend environment plan summaries while keeping C as the product boundary.
+
+### Changed
+
+- Extended Runtime diagnostics with backend environment summaries that keep environment creation, backend process starts, clipboard and print bridges, host storage exposure, launch enablement, network access, and backend detail exposure disabled until Runtime gates pass.
+
 ## [0.2.101] - 2026-07-14
 
 ### Added

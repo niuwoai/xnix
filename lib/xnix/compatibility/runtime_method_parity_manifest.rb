@@ -39,6 +39,7 @@ module Xnix
         GetCompatibilityInstallPlan
         GetBackendBinding
         GetBackendLifecycle
+        GetBackendEnvironmentPlan
         GetRepairPlan
         GetTestPlan
         GetTestResult
@@ -91,6 +92,7 @@ module Xnix
         "GetCompatibilityInstallPlan" => "install_plan",
         "GetBackendBinding" => "backend_binding",
         "GetBackendLifecycle" => "backend_lifecycle",
+        "GetBackendEnvironmentPlan" => "backend_environment_plan",
         "GetRepairPlan" => "repair_plan",
         "GetTestPlan" => "test_plan",
         "GetTestResult" => "test_result",

@@ -79,6 +79,7 @@ module Xnix
           "package_source" => package_source_summary(diagnostics.fetch("package_source", nil)),
           "state_root" => state_root_summary(diagnostics.fetch("state_root", nil)),
           "backend_binding" => backend_binding_summary(diagnostics.fetch("backend_binding", nil)),
+          "backend_environment_plan" => backend_environment_plan_summary(diagnostics.fetch("backend_environment_plan", nil)),
           "backend_lifecycle" => backend_lifecycle_summary(diagnostics.fetch("backend_lifecycle", nil)),
           "ai_diagnostic_input" => ai_diagnostic_input_summary(diagnostics.fetch("ai_diagnostic_input", nil)),
           "ai_diagnostic_recommendation" => ai_diagnostic_recommendation_summary(diagnostics.fetch("ai_diagnostic_recommendation", nil)),
@@ -218,6 +219,20 @@ module Xnix
           "backend_process_started" => lifecycle.fetch("backend_process_started"),
           "launch_enabled" => lifecycle.fetch("launch_enabled"),
           "summary" => lifecycle.fetch("summary")
+        }
+      end
+
+      def backend_environment_plan_summary(plan)
+        return nil unless plan
+
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "environment_state" => plan.fetch("environment_state"),
+          "profile_count" => plan.fetch("profile_count"),
+          "environment_created" => plan.fetch("environment_created"),
+          "backend_process_started" => plan.fetch("backend_process_started"),
+          "launch_enabled" => plan.fetch("launch_enabled"),
+          "summary" => plan.fetch("summary")
         }
       end
 

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.101"
+#define XNIX_RUNTIME_VERSION "0.2.102"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -366,6 +366,50 @@ typedef struct {
 
 typedef struct {
   const char *id;
+  const char *kind;
+  const char *status;
+  const char *summary;
+  bool selected;
+  bool environment_created;
+  bool process_started;
+  bool host_storage_exposed;
+  bool backend_details_exposed;
+} XnixRuntimeBackendEnvironmentProfile;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const XnixRuntimeEngine *engine;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *selected_strategy;
+  const char *environment_state;
+  XnixRuntimeBackendEnvironmentProfile profiles[2];
+  size_t profile_count;
+  const char *required_reviews[4];
+  size_t required_review_count;
+  const char *blocked_actions[5];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool local_environment_ready;
+  bool isolated_environment_ready;
+  bool environment_created;
+  bool backend_process_started;
+  bool host_storage_exposed;
+  bool clipboard_bridge_enabled;
+  bool print_bridge_enabled;
+  bool portal_review_required;
+  bool snapshot_required;
+  bool launch_enabled;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeBackendEnvironmentPlan;
+
+typedef struct {
+  const char *id;
   const char *label;
   const char *value;
   const char *options[3];
@@ -549,7 +593,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[42];
+  const char *read_only_methods[43];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1347,6 +1391,7 @@ size_t xnix_runtime_backend_binding_policy_count(void);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_backend_binding_policy_at(size_t index);
 const XnixRuntimeBackendBindingPolicy *xnix_runtime_find_backend_binding_policy(const char *application_id);
 bool xnix_runtime_backend_lifecycle(const char *application_id, XnixRuntimeBackendLifecycle *lifecycle);
+bool xnix_runtime_backend_environment_plan(const char *application_id, XnixRuntimeBackendEnvironmentPlan *plan);
 
 size_t xnix_runtime_settings_policy_count(void);
 const XnixRuntimeSettingsPolicy *xnix_runtime_settings_policy_at(size_t index);
