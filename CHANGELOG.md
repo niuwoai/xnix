@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.126] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go settings-change-preview --registry <path> --app <id> --section <section> --field <field> --value <value>` for read-only KDE unified-settings change previews from digest-verified registry recipes.
+- Added Go Runtime settings-change planning for run mode, resource access, device access, network access, and snapshots with user confirmation, Portal policy review, restore-point, persistence, and blocked-action metadata.
+- Added Go and Ruby harness coverage that verifies settings-change previews remain Runtime-owned, KDE-targeted, backend-detail-free, host-root-safe, and honest about apply, persistence, resource grants, and review gates remaining disabled or required.
+
+### Changed
+
+- Moved the user-visible settings-change review surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for presentation and confirmation only.
+
 ## [0.2.125] - 2026-07-15
 
 ### Added

@@ -208,6 +208,53 @@ type SettingsPreview struct {
 	Summary                    string            `json:"summary"`
 }
 
+type SettingsChangePreview struct {
+	SchemaVersion              string                       `json:"schema_version"`
+	RequestType                string                       `json:"request_type"`
+	PlanType                   string                       `json:"plan_type"`
+	Source                     string                       `json:"source"`
+	Desktop                    string                       `json:"desktop"`
+	RuntimeMethod              string                       `json:"runtime_method"`
+	ApplicationID              string                       `json:"application_id"`
+	DisplayName                string                       `json:"display_name"`
+	Icon                       string                       `json:"icon"`
+	DesktopFile                string                       `json:"desktop_file"`
+	SectionID                  string                       `json:"section_id"`
+	FieldID                    string                       `json:"field_id"`
+	RequestedValue             string                       `json:"requested_value"`
+	ChangeState                string                       `json:"change_state"`
+	ApplyEnabled               bool                         `json:"apply_enabled"`
+	SettingsPersisted          bool                         `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool                         `json:"settings_persistence_enabled"`
+	HostRootModified           bool                         `json:"host_root_modified"`
+	BackendDetailsExposed      bool                         `json:"backend_details_exposed"`
+	UserConfirmationRequired   bool                         `json:"user_confirmation_required"`
+	SnapshotRecommended        bool                         `json:"snapshot_recommended"`
+	PortalPolicyReviewRequired bool                         `json:"portal_policy_review_required"`
+	RuntimeRestartRequired     bool                         `json:"runtime_restart_required"`
+	AffectedPolicy             SettingsChangeAffectedPolicy `json:"affected_policy"`
+	Steps                      []SettingsChangeStep         `json:"steps"`
+	BlockedActions             []string                     `json:"blocked_actions"`
+	RuntimeOwned               bool                         `json:"runtime_owned"`
+	KDEPolicyOwner             bool                         `json:"kde_policy_owner"`
+	UserVisible                bool                         `json:"user_visible"`
+	UserFacingSettings         map[string]string            `json:"user_facing_settings"`
+	DesktopSafeSummary         string                       `json:"desktop_safe_summary"`
+}
+
+type SettingsChangeAffectedPolicy struct {
+	Section string   `json:"section"`
+	Field   string   `json:"field"`
+	Value   string   `json:"value"`
+	Options []string `json:"options"`
+}
+
+type SettingsChangeStep struct {
+	ID      string `json:"id"`
+	Status  string `json:"status"`
+	Summary string `json:"summary"`
+}
+
 type SettingsSection struct {
 	ID          string          `json:"id"`
 	Title       string          `json:"title"`
@@ -416,6 +463,15 @@ type portalOperationRule struct {
 	Decision        string
 	Resources       []string
 	Summary         string
+}
+
+type settingsChangeRule struct {
+	Section              string
+	Field                string
+	Options              []string
+	UserConfirmation     bool
+	SnapshotRecommended  bool
+	PortalPolicyRequired bool
 }
 
 type KRunnerQueryPreview struct {
@@ -986,6 +1042,78 @@ func (plan Plan) SettingsPreview() (SettingsPreview, error) {
 	}, nil
 }
 
+func (plan Plan) SettingsChangePreview(sectionID string, fieldID string, requestedValue string) (SettingsChangePreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return SettingsChangePreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, sectionID, fieldID, requestedValue} {
+		if !singleLine(value) {
+			return SettingsChangePreview{}, errors.New("settings change preview requires single-line fields")
+		}
+	}
+	rule, ok := settingsChangeRuleFor(sectionID, fieldID)
+	if !ok {
+		return SettingsChangePreview{}, fmt.Errorf("unknown settings field: %s/%s", sectionID, fieldID)
+	}
+	if !containsString(rule.Options, requestedValue) {
+		return SettingsChangePreview{}, fmt.Errorf("unsupported settings value: %s", requestedValue)
+	}
+
+	preview := SettingsChangePreview{
+		SchemaVersion:              "xnix.runtime.settings_change.v1",
+		RequestType:                "settings-change-preview",
+		PlanType:                   "settings-change-plan",
+		Source:                     "unified-settings",
+		Desktop:                    "KDE Plasma",
+		RuntimeMethod:              "GetCompatibilitySettingsChangePlan",
+		ApplicationID:              plan.ApplicationID,
+		DisplayName:                plan.DisplayName,
+		Icon:                       plan.Icon,
+		DesktopFile:                plan.DesktopFile,
+		SectionID:                  sectionID,
+		FieldID:                    fieldID,
+		RequestedValue:             requestedValue,
+		ChangeState:                "planned",
+		ApplyEnabled:               false,
+		SettingsPersisted:          false,
+		SettingsPersistenceEnabled: false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		UserConfirmationRequired:   rule.UserConfirmation,
+		SnapshotRecommended:        rule.SnapshotRecommended,
+		PortalPolicyReviewRequired: rule.PortalPolicyRequired,
+		RuntimeRestartRequired:     false,
+		AffectedPolicy: SettingsChangeAffectedPolicy{
+			Section: sectionID,
+			Field:   fieldID,
+			Value:   requestedValue,
+			Options: append([]string(nil), rule.Options...),
+		},
+		Steps: []SettingsChangeStep{
+			settingsChangeStep("validate-setting", "pass", "The requested settings value is valid for the Runtime settings schema."),
+			settingsChangeStep("review-user-confirmation", requiredStatus(rule.UserConfirmation), "KDE must present the change for user review before persistence."),
+			settingsChangeStep("review-portal-policy", requiredStatus(rule.PortalPolicyRequired), "Runtime Portal policy must be reviewed before desktop resource access changes."),
+			settingsChangeStep("prepare-restore-point", recommendedStatus(rule.SnapshotRecommended), "Runtime should prepare a restore point before risky compatibility settings changes."),
+			settingsChangeStep("persist-runtime-setting", "pending", "Runtime persistence is not enabled in this version."),
+		},
+		BlockedActions: []string{
+			"persist compatibility settings before Runtime confirmation",
+			"grant desktop resources without Portal policy review",
+			"modify host root while planning settings changes",
+			"expose backend implementation settings to KDE",
+		},
+		RuntimeOwned:       true,
+		KDEPolicyOwner:     false,
+		UserVisible:        true,
+		UserFacingSettings: plan.UserFacingSettings,
+		DesktopSafeSummary: "Compatibility settings change is planned and waiting for Runtime persistence support.",
+	}
+	if err := validateNoBackendTerms(preview, "settings change preview"); err != nil {
+		return SettingsChangePreview{}, err
+	}
+	return preview, nil
+}
+
 func settingsSection(id string, title string, description string, fields []SettingsField) SettingsSection {
 	return SettingsSection{
 		ID:          id,
@@ -1002,6 +1130,87 @@ func settingsField(id string, label string, value string, options []string) Sett
 		Value:   value,
 		Options: options,
 	}
+}
+
+func settingsChangeRuleFor(sectionID string, fieldID string) (settingsChangeRule, bool) {
+	for _, rule := range []settingsChangeRule{
+		{
+			Section:             "run-mode",
+			Field:               "mode",
+			Options:             []string{"automatic", "performance", "compatibility"},
+			UserConfirmation:    true,
+			SnapshotRecommended: true,
+		},
+		{
+			Section:             "run-mode",
+			Field:               "preference",
+			Options:             []string{"performance", "compatibility"},
+			UserConfirmation:    true,
+			SnapshotRecommended: true,
+		},
+		{
+			Section:              "resource-access",
+			Field:                "documents",
+			Options:              []string{"allow", "ask", "deny"},
+			UserConfirmation:     true,
+			PortalPolicyRequired: true,
+		},
+		{
+			Section:              "resource-access",
+			Field:                "downloads",
+			Options:              []string{"allow", "ask", "deny"},
+			UserConfirmation:     true,
+			PortalPolicyRequired: true,
+		},
+		{
+			Section:              "devices",
+			Field:                "camera",
+			Options:              []string{"allow", "ask", "deny"},
+			UserConfirmation:     true,
+			PortalPolicyRequired: true,
+		},
+		{
+			Section:              "network",
+			Field:                "network",
+			Options:              []string{"allow", "ask", "deny"},
+			UserConfirmation:     true,
+			PortalPolicyRequired: true,
+		},
+		{
+			Section:             "snapshots",
+			Field:               "snapshots",
+			Options:             []string{"enabled", "disabled"},
+			UserConfirmation:    true,
+			SnapshotRecommended: true,
+		},
+	} {
+		if rule.Section == sectionID && rule.Field == fieldID {
+			return rule, true
+		}
+	}
+	return settingsChangeRule{}, false
+}
+
+func settingsChangeStep(id string, status string, summary string) SettingsChangeStep {
+	return SettingsChangeStep{
+		ID:      id,
+		Status:  status,
+		Summary: summary,
+	}
+}
+
+func requiredStatus(required bool) string {
+	if required {
+		return "required"
+	}
+	return "pass"
+}
+
+func recommendedStatus(recommended bool) string {
+	if recommended {
+		return "recommended"
+	}
+	return "pass"
 }
 
 func (plan Plan) PermissionReviewPreview() (PermissionReviewPreview, error) {

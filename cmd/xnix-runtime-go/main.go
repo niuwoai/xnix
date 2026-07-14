@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|permission-review-preview|portal-request-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|permission-review-preview|portal-request-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -44,6 +44,8 @@ func run(args []string, stdout io.Writer) error {
 		return runPermissionReviewPreview(args[1:], stdout)
 	case "portal-request-preview":
 		return runPortalRequestPreview(args[1:], stdout)
+	case "settings-change-preview":
+		return runSettingsChangePreview(args[1:], stdout)
 	case "settings-preview":
 		return runSettingsPreview(args[1:], stdout)
 	case "tray-status-preview":
@@ -209,6 +211,25 @@ func runSettingsPreview(args []string, stdout io.Writer) error {
 	return encoder.Encode(preview)
 }
 
+func runSettingsChangePreview(args []string, stdout io.Writer) error {
+	recipe, provenance, sectionID, fieldID, value, err := parseSettingsChangePreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.SettingsChangePreview(sectionID, fieldID, value)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
 func runPermissionReviewPreview(args []string, stdout io.Writer) error {
 	recipe, provenance, err := parseRecipeSource("permission-review-preview", args)
 	if err != nil {
@@ -346,6 +367,45 @@ func parsePortalRequestPreviewSource(args []string) (appidentity.Recipe, appiden
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 	return recipe, provenance, *operation, *reason, err
+}
+
+func parseSettingsChangePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, string, error) {
+	flags := flag.NewFlagSet("settings-change-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	sectionID := flags.String("section", "", "settings section identifier")
+	fieldID := flags.String("field", "", "settings field identifier")
+	value := flags.String("value", "", "requested settings value")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", err
+	}
+	if *sectionID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview requires --section")
+	}
+	if *fieldID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview requires --field")
+	}
+	if *value == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview requires --value")
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("settings-change-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *sectionID, *fieldID, *value, err
 }
 
 func parseKRunnerQueryPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, error) {

@@ -61,6 +61,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("permission-review-preview"), "Go Runtime CLI must render KDE permission review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("portal-request-preview"), "Go Runtime CLI must render KDE Portal request previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-change-preview"), "Go Runtime CLI must render KDE settings change previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
@@ -333,6 +334,57 @@ if go_available
   assert(!settings.downcase.include?("prefix"), "settings preview must not expose implementation storage")
   assert(!settings.include?(".exe"), "settings preview must not expose a Windows executable")
   assert(!settings.downcase.include?("proton"), "settings preview must not expose backend implementation names")
+
+  settings_change, settings_change_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "settings-change-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--section",
+    "resource-access",
+    "--field",
+    "documents",
+    "--value",
+    "allow"
+  )
+  assert(settings_change_status.success?, "Go settings change preview CLI must run successfully")
+  settings_change_payload = JSON.parse(settings_change)
+  assert(settings_change_payload.fetch("schema_version") == "xnix.runtime.settings_change.v1", "settings change preview schema version must be stable")
+  assert(settings_change_payload.fetch("request_type") == "settings-change-preview", "settings change preview must identify its request type")
+  assert(settings_change_payload.fetch("plan_type") == "settings-change-plan", "settings change preview must identify the Runtime plan type")
+  assert(settings_change_payload.fetch("source") == "unified-settings", "settings change preview must identify the KDE settings source")
+  assert(settings_change_payload.fetch("desktop") == "KDE Plasma", "settings change preview must target KDE Plasma")
+  assert(settings_change_payload.fetch("runtime_method") == "GetCompatibilitySettingsChangePlan", "settings change preview must expose the Runtime method")
+  assert(settings_change_payload.fetch("application_id") == recipe.id, "settings change preview must preserve application identity")
+  assert(settings_change_payload.fetch("display_name") == recipe.name, "settings change preview must preserve display names")
+  assert(settings_change_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "settings change preview must bind generated desktop files")
+  assert(settings_change_payload.fetch("section_id") == "resource-access", "settings change preview must expose the requested section")
+  assert(settings_change_payload.fetch("field_id") == "documents", "settings change preview must expose the requested field")
+  assert(settings_change_payload.fetch("requested_value") == "allow", "settings change preview must expose the requested value")
+  assert(settings_change_payload.fetch("change_state") == "planned", "settings change preview must stay planned")
+  assert(settings_change_payload.fetch("user_confirmation_required") == true, "settings change preview must require user confirmation")
+  assert(settings_change_payload.fetch("portal_policy_review_required") == true, "settings change preview must require Portal policy review for file access")
+  assert(settings_change_payload.fetch("snapshot_recommended") == false, "settings change preview must not recommend snapshots for file access only")
+  assert(settings_change_payload.fetch("runtime_restart_required") == false, "settings change preview must not require a Runtime restart")
+  assert(settings_change_payload.fetch("affected_policy").fetch("options") == %w[allow ask deny], "settings change preview must expose allowed policy options")
+  assert(settings_change_payload.fetch("steps").map { |step| step.fetch("id") } == %w[validate-setting review-user-confirmation review-portal-policy prepare-restore-point persist-runtime-setting], "settings change preview must expose review steps")
+  assert(settings_change_payload.fetch("steps").map { |step| step.fetch("status") } == %w[pass required required pass pending], "settings change preview must gate persistence behind required reviews")
+  assert(settings_change_payload.fetch("blocked_actions").include?("persist compatibility settings before Runtime confirmation"), "settings change preview must block premature persistence")
+  assert(settings_change_payload.fetch("runtime_owned") == true, "settings change preview must remain Runtime-owned")
+  assert(settings_change_payload.fetch("kde_policy_owner") == false, "settings change preview must not make KDE own backend policy")
+  assert(settings_change_payload.fetch("user_visible") == true, "settings change preview must be user visible")
+  assert(settings_change_payload.fetch("apply_enabled") == false, "settings change preview must not enable apply")
+  assert(settings_change_payload.fetch("settings_persisted") == false, "settings change preview must not persist settings")
+  assert(settings_change_payload.fetch("settings_persistence_enabled") == false, "settings change preview must keep settings persistence disabled")
+  assert(settings_change_payload.fetch("host_root_modified") == false, "settings change preview must not mutate the host root")
+  assert(settings_change_payload.fetch("backend_details_exposed") == false, "settings change preview must not expose backend details")
+  assert(!settings_change.downcase.include?("prefix"), "settings change preview must not expose implementation storage")
+  assert(!settings_change.include?(".exe"), "settings change preview must not expose a Windows executable")
+  assert(!settings_change.downcase.include?("proton"), "settings change preview must not expose backend implementation names")
 
   permission_review, permission_review_status = capture_runtime_go(
     project_root,

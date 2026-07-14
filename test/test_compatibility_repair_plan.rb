@@ -22,7 +22,7 @@ issues.each do |issue|
     issue: issue
   ).to_h
 
-  assert(plan["version"] == "0.2.125", "compatibility repair plan must expose the current version")
+  assert(plan["version"] == "0.2.126", "compatibility repair plan must expose the current version")
   assert(plan["plan_type"] == "compatibility-repair", "compatibility repair plan must identify the model type")
   assert(plan["application_id"] == "org.xnix.sample.notepad", "compatibility repair plan must preserve the application id")
   assert(plan["issue"] == issue, "compatibility repair plan must preserve the issue")

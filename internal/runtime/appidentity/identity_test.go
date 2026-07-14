@@ -356,6 +356,101 @@ func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
 	}
 }
 
+func TestSettingsChangePreviewPlansReviewBeforePersistence(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.SettingsChangePreview("resource-access", "documents", "allow")
+	if err != nil {
+		t.Fatalf("SettingsChangePreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.settings_change.v1" ||
+		preview.RequestType != "settings-change-preview" ||
+		preview.PlanType != "settings-change-plan" ||
+		preview.Source != "unified-settings" ||
+		preview.RuntimeMethod != "GetCompatibilitySettingsChangePlan" {
+		t.Fatalf("unexpected settings change schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected settings change identity: %#v", preview)
+	}
+	if preview.SectionID != "resource-access" ||
+		preview.FieldID != "documents" ||
+		preview.RequestedValue != "allow" ||
+		preview.ChangeState != "planned" {
+		t.Fatalf("unexpected settings change request: %#v", preview)
+	}
+	if !preview.UserConfirmationRequired || !preview.PortalPolicyReviewRequired ||
+		preview.SnapshotRecommended || preview.RuntimeRestartRequired {
+		t.Fatalf("unexpected review requirements: %#v", preview)
+	}
+	if preview.AffectedPolicy.Section != "resource-access" ||
+		preview.AffectedPolicy.Field != "documents" ||
+		preview.AffectedPolicy.Value != "allow" ||
+		!sameStrings(preview.AffectedPolicy.Options, []string{"allow", "ask", "deny"}) {
+		t.Fatalf("unexpected affected policy: %#v", preview.AffectedPolicy)
+	}
+	if len(preview.Steps) != 5 ||
+		preview.Steps[0].Status != "pass" ||
+		preview.Steps[1].Status != "required" ||
+		preview.Steps[2].Status != "required" ||
+		preview.Steps[3].Status != "pass" ||
+		preview.Steps[4].Status != "pending" {
+		t.Fatalf("unexpected settings change steps: %#v", preview.Steps)
+	}
+	if !sameStrings(preview.BlockedActions, []string{
+		"persist compatibility settings before Runtime confirmation",
+		"grant desktop resources without Portal policy review",
+		"modify host root while planning settings changes",
+		"expose backend implementation settings to KDE",
+	}) {
+		t.Fatalf("unexpected blocked actions: %#v", preview.BlockedActions)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.ApplyEnabled || preview.SettingsPersisted || preview.SettingsPersistenceEnabled ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected settings change safety flags: %#v", preview)
+	}
+
+	mode, err := plan.SettingsChangePreview("run-mode", "mode", "performance")
+	if err != nil {
+		t.Fatalf("run-mode SettingsChangePreview returned error: %v", err)
+	}
+	if !mode.SnapshotRecommended || mode.PortalPolicyReviewRequired ||
+		mode.Steps[3].Status != "recommended" {
+		t.Fatalf("unexpected run-mode review requirements: %#v", mode)
+	}
+
+	if _, err := plan.SettingsChangePreview("resource-access", "documents", "always"); err == nil {
+		t.Fatalf("SettingsChangePreview accepted an unsupported value")
+	}
+	if _, err := plan.SettingsChangePreview("unknown", "mode", "automatic"); err == nil {
+		t.Fatalf("SettingsChangePreview accepted an unknown field")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("settings change preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestPermissionReviewPreviewKeepsPermissionGatesClosed(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

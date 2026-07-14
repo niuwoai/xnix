@@ -387,6 +387,91 @@ func TestSettingsPreviewCommandRendersKDESettings(t *testing.T) {
 	}
 }
 
+func TestSettingsChangePreviewCommandRendersReviewPlan(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"settings-change-preview", "--registry", registryPath, "--app", "org.example.ledger", "--section", "resource-access", "--field", "documents", "--value", "allow"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.settings_change.v1" ||
+		payload["request_type"] != "settings-change-preview" ||
+		payload["plan_type"] != "settings-change-plan" ||
+		payload["source"] != "unified-settings" ||
+		payload["runtime_method"] != "GetCompatibilitySettingsChangePlan" {
+		t.Fatalf("unexpected settings change schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["display_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected settings change identity: %#v", payload)
+	}
+	if payload["section_id"] != "resource-access" ||
+		payload["field_id"] != "documents" ||
+		payload["requested_value"] != "allow" ||
+		payload["change_state"] != "planned" {
+		t.Fatalf("unexpected settings change request: %#v", payload)
+	}
+	if payload["user_confirmation_required"] != true ||
+		payload["portal_policy_review_required"] != true ||
+		payload["snapshot_recommended"] != false ||
+		payload["runtime_restart_required"] != false {
+		t.Fatalf("unexpected review requirements: %#v", payload)
+	}
+	affected := payload["affected_policy"].(map[string]any)
+	if affected["section"] != "resource-access" ||
+		affected["field"] != "documents" ||
+		affected["value"] != "allow" {
+		t.Fatalf("unexpected affected policy: %#v", affected)
+	}
+	steps := payload["steps"].([]any)
+	if len(steps) != 5 ||
+		steps[1].(map[string]any)["status"] != "required" ||
+		steps[2].(map[string]any)["status"] != "required" ||
+		steps[4].(map[string]any)["status"] != "pending" {
+		t.Fatalf("unexpected settings change steps: %#v", steps)
+	}
+	if payload["runtime_owned"] != true || payload["kde_policy_owner"] != false ||
+		payload["user_visible"] != true || payload["apply_enabled"] != false ||
+		payload["settings_persisted"] != false ||
+		payload["settings_persistence_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected settings change safety flags: %#v", payload)
+	}
+
+	output.Reset()
+	err = run([]string{"settings-change-preview", "--registry", registryPath, "--app", "org.example.ledger", "--section", "run-mode", "--field", "mode", "--value", "performance"}, &output)
+	if err != nil {
+		t.Fatalf("run-mode run returned error: %v", err)
+	}
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal run-mode returned error: %v", err)
+	}
+	if payload["snapshot_recommended"] != true ||
+		payload["portal_policy_review_required"] != false {
+		t.Fatalf("unexpected run-mode requirements: %#v", payload)
+	}
+}
+
 func TestPermissionReviewPreviewCommandRendersKDEPermissionReview(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
