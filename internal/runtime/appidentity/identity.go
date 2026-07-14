@@ -255,6 +255,119 @@ type SettingsChangeStep struct {
 	Summary string `json:"summary"`
 }
 
+type ReviewFlowPreview struct {
+	SchemaVersion              string                     `json:"schema_version"`
+	RequestType                string                     `json:"request_type"`
+	PlanType                   string                     `json:"plan_type"`
+	Source                     string                     `json:"source"`
+	Desktop                    string                     `json:"desktop"`
+	RuntimeMethod              string                     `json:"runtime_method"`
+	ApplicationID              string                     `json:"application_id"`
+	DisplayName                string                     `json:"display_name"`
+	Icon                       string                     `json:"icon"`
+	DesktopFile                string                     `json:"desktop_file"`
+	ReviewState                string                     `json:"review_state"`
+	SectionID                  string                     `json:"section_id"`
+	FieldID                    string                     `json:"field_id"`
+	RequestedValue             string                     `json:"requested_value"`
+	Operation                  string                     `json:"operation"`
+	Steps                      []ReviewFlowStep           `json:"steps"`
+	StepCount                  int                        `json:"step_count"`
+	RequiredReviewCount        int                        `json:"required_review_count"`
+	BlockedStepCount           int                        `json:"blocked_step_count"`
+	PendingStepCount           int                        `json:"pending_step_count"`
+	SettingsChangePlan         ReviewFlowSettingsChange   `json:"settings_change_plan"`
+	PermissionReviewPlan       ReviewFlowPermissionReview `json:"permission_review_plan"`
+	PortalRequestPlan          ReviewFlowPortalRequest    `json:"portal_request_plan"`
+	RuntimeWriteGate           ReviewFlowWriteGate        `json:"runtime_write_gate"`
+	ReviewReceipt              ReviewFlowReceipt          `json:"review_receipt"`
+	RuntimeOwned               bool                       `json:"runtime_owned"`
+	GoRuntimeBacked            bool                       `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool                       `json:"kde_policy_owner"`
+	UserVisible                bool                       `json:"user_visible"`
+	UserConfirmationRequired   bool                       `json:"user_confirmation_required"`
+	PortalPolicyReviewRequired bool                       `json:"portal_policy_review_required"`
+	SettingsChangePlanned      bool                       `json:"settings_change_planned"`
+	PermissionReviewPlanned    bool                       `json:"permission_review_planned"`
+	PortalRequestPlanned       bool                       `json:"portal_request_planned"`
+	ReviewReceiptRequired      bool                       `json:"review_receipt_required"`
+	ApplyEnabled               bool                       `json:"apply_enabled"`
+	RequestObjectCreated       bool                       `json:"request_object_created"`
+	PermissionGranted          bool                       `json:"permission_granted"`
+	SettingsPersisted          bool                       `json:"settings_persisted"`
+	ExecutionStarted           bool                       `json:"execution_started"`
+	HostRootModified           bool                       `json:"host_root_modified"`
+	BackendDetailsExposed      bool                       `json:"backend_details_exposed"`
+	UserFacingSettings         map[string]string          `json:"user_facing_settings"`
+	DesktopSafeSummary         string                     `json:"desktop_safe_summary"`
+}
+
+type ReviewFlowStep struct {
+	ID                  string `json:"id"`
+	Label               string `json:"label"`
+	RuntimeMethod       string `json:"runtime_method"`
+	Status              string `json:"status"`
+	UserVisible         bool   `json:"user_visible"`
+	UserActionRequired  bool   `json:"user_action_required"`
+	RuntimeGateRequired bool   `json:"runtime_gate_required"`
+	BlocksApply         bool   `json:"blocks_apply"`
+	Summary             string `json:"summary"`
+}
+
+type ReviewFlowSettingsChange struct {
+	PlanType          string `json:"plan_type"`
+	ChangeState       string `json:"change_state"`
+	SectionID         string `json:"section_id"`
+	FieldID           string `json:"field_id"`
+	RequestedValue    string `json:"requested_value"`
+	ApplyEnabled      bool   `json:"apply_enabled"`
+	SettingsPersisted bool   `json:"settings_persisted"`
+}
+
+type ReviewFlowPermissionReview struct {
+	RequestType              string `json:"request_type"`
+	PlanType                 string `json:"plan_type"`
+	ReviewState              string `json:"review_state"`
+	PermissionCount          int    `json:"permission_count"`
+	UserReviewRequired       bool   `json:"user_review_required"`
+	PortalReviewRequired     bool   `json:"portal_review_required"`
+	PermissionChangesApplied bool   `json:"permission_changes_applied"`
+	PermissionsGranted       bool   `json:"permissions_granted"`
+}
+
+type ReviewFlowPortalRequest struct {
+	RequestType           string `json:"request_type"`
+	Operation             string `json:"operation"`
+	Decision              string `json:"decision"`
+	RequestAllowed        bool   `json:"request_allowed"`
+	PortalRequired        bool   `json:"portal_required"`
+	RequestObjectCreated  bool   `json:"request_object_created"`
+	PermissionGranted     bool   `json:"permission_granted"`
+	HostPermissionChanged bool   `json:"host_permission_changed"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+}
+
+type ReviewFlowWriteGate struct {
+	GateType             string   `json:"gate_type"`
+	MethodName           string   `json:"method_name"`
+	GateDecision         string   `json:"gate_decision"`
+	WriteMethodEnabled   bool     `json:"write_method_enabled"`
+	DispatchEnabled      bool     `json:"dispatch_enabled"`
+	RequestObjectCreated bool     `json:"request_object_created"`
+	RequiredGates        []string `json:"required_gates"`
+	DenialErrorName      string   `json:"denial_error_name"`
+}
+
+type ReviewFlowReceipt struct {
+	ReceiptType                string `json:"receipt_type"`
+	ActionID                   string `json:"action_id"`
+	Decision                   string `json:"decision"`
+	DecisionRecorded           bool   `json:"decision_recorded"`
+	ExecutionEnabled           bool   `json:"execution_enabled"`
+	SettingsPersistenceEnabled bool   `json:"settings_persistence_enabled"`
+	ResourceGrantCreated       bool   `json:"resource_grant_created"`
+}
+
 type SettingsSection struct {
 	ID          string          `json:"id"`
 	Title       string          `json:"title"`
@@ -1114,6 +1227,159 @@ func (plan Plan) SettingsChangePreview(sectionID string, fieldID string, request
 	return preview, nil
 }
 
+func (plan Plan) ReviewFlowPreview(sectionID string, fieldID string, requestedValue string, operation string) (ReviewFlowPreview, error) {
+	if strings.TrimSpace(sectionID) == "" {
+		sectionID = "resource-access"
+	}
+	if strings.TrimSpace(fieldID) == "" {
+		fieldID = "documents"
+	}
+	if strings.TrimSpace(requestedValue) == "" {
+		requestedValue = "ask"
+	}
+	if strings.TrimSpace(operation) == "" {
+		operation = "file-open"
+	}
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return ReviewFlowPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, sectionID, fieldID, requestedValue, operation} {
+		if !singleLine(value) {
+			return ReviewFlowPreview{}, errors.New("review flow preview requires single-line fields")
+		}
+	}
+
+	settingsChange, err := plan.SettingsChangePreview(sectionID, fieldID, requestedValue)
+	if err != nil {
+		return ReviewFlowPreview{}, err
+	}
+	permissionReview, err := plan.PermissionReviewPreview()
+	if err != nil {
+		return ReviewFlowPreview{}, err
+	}
+	portalRequest, err := plan.PortalRequestPreview(operation, "Review desktop resource access before applying compatibility settings.")
+	if err != nil {
+		return ReviewFlowPreview{}, err
+	}
+
+	steps := reviewFlowSteps()
+	requiredReviewCount := 0
+	blockedStepCount := 0
+	pendingStepCount := 0
+	for _, step := range steps {
+		switch step.Status {
+		case "required":
+			requiredReviewCount++
+		case "blocked":
+			blockedStepCount++
+		case "pending":
+			pendingStepCount++
+		}
+	}
+
+	preview := ReviewFlowPreview{
+		SchemaVersion:       "xnix.runtime.review_flow.v1",
+		RequestType:         "review-flow-preview",
+		PlanType:            "compatibility-review-flow-plan",
+		Source:              "compatibility-center-review",
+		Desktop:             "KDE Plasma",
+		RuntimeMethod:       "GetCompatibilityReviewFlowPlan",
+		ApplicationID:       plan.ApplicationID,
+		DisplayName:         plan.DisplayName,
+		Icon:                plan.Icon,
+		DesktopFile:         plan.DesktopFile,
+		ReviewState:         "planned",
+		SectionID:           sectionID,
+		FieldID:             fieldID,
+		RequestedValue:      requestedValue,
+		Operation:           operation,
+		Steps:               steps,
+		StepCount:           len(steps),
+		RequiredReviewCount: requiredReviewCount,
+		BlockedStepCount:    blockedStepCount,
+		PendingStepCount:    pendingStepCount,
+		SettingsChangePlan: ReviewFlowSettingsChange{
+			PlanType:          settingsChange.PlanType,
+			ChangeState:       settingsChange.ChangeState,
+			SectionID:         settingsChange.SectionID,
+			FieldID:           settingsChange.FieldID,
+			RequestedValue:    settingsChange.RequestedValue,
+			ApplyEnabled:      settingsChange.ApplyEnabled,
+			SettingsPersisted: settingsChange.SettingsPersisted,
+		},
+		PermissionReviewPlan: ReviewFlowPermissionReview{
+			RequestType:              permissionReview.RequestType,
+			PlanType:                 permissionReview.PlanType,
+			ReviewState:              permissionReview.ReviewState,
+			PermissionCount:          permissionReview.PermissionCount,
+			UserReviewRequired:       permissionReview.UserReviewRequired,
+			PortalReviewRequired:     permissionReview.PortalReviewRequired,
+			PermissionChangesApplied: permissionReview.PermissionChangesApplied,
+			PermissionsGranted:       permissionReview.PermissionsGranted,
+		},
+		PortalRequestPlan: ReviewFlowPortalRequest{
+			RequestType:           portalRequest.RequestType,
+			Operation:             portalRequest.Operation,
+			Decision:              portalRequest.Decision,
+			RequestAllowed:        portalRequest.RequestAllowed,
+			PortalRequired:        portalRequest.Safety.PortalRequired,
+			RequestObjectCreated:  portalRequest.Request.RequestObjectCreated,
+			PermissionGranted:     portalRequest.Safety.PermissionGranted,
+			HostPermissionChanged: portalRequest.Safety.HostPermissionChanged,
+			BackendDetailsExposed: portalRequest.Safety.BackendDetailsExposed,
+		},
+		RuntimeWriteGate: ReviewFlowWriteGate{
+			GateType:             "runtime-write-gate",
+			MethodName:           "Launch",
+			GateDecision:         "blocked-until-production-backend",
+			WriteMethodEnabled:   false,
+			DispatchEnabled:      false,
+			RequestObjectCreated: false,
+			RequiredGates: []string{
+				"production-runtime-owner",
+				"backend-binding-ready",
+				"recipe-trust-production",
+				"user-action-review",
+				"portal-approval-if-sensitive",
+				"snapshot-preflight-for-risky-change",
+			},
+			DenialErrorName: "org.xnix.Compatibility1.Error.WriteMethodDisabled",
+		},
+		ReviewReceipt: ReviewFlowReceipt{
+			ReceiptType:                "compatibility-center-action-review-receipt",
+			ActionID:                   "review-settings-change",
+			Decision:                   "pending",
+			DecisionRecorded:           false,
+			ExecutionEnabled:           false,
+			SettingsPersistenceEnabled: false,
+			ResourceGrantCreated:       false,
+		},
+		RuntimeOwned:               true,
+		GoRuntimeBacked:            true,
+		KDEPolicyOwner:             false,
+		UserVisible:                true,
+		UserConfirmationRequired:   settingsChange.UserConfirmationRequired,
+		PortalPolicyReviewRequired: settingsChange.PortalPolicyReviewRequired || permissionReview.PortalReviewRequired || portalRequest.Safety.PortalRequired,
+		SettingsChangePlanned:      true,
+		PermissionReviewPlanned:    true,
+		PortalRequestPlanned:       true,
+		ReviewReceiptRequired:      true,
+		ApplyEnabled:               false,
+		RequestObjectCreated:       false,
+		PermissionGranted:          false,
+		SettingsPersisted:          false,
+		ExecutionStarted:           false,
+		HostRootModified:           false,
+		BackendDetailsExposed:      false,
+		UserFacingSettings:         plan.UserFacingSettings,
+		DesktopSafeSummary:         "KDE can display the full Runtime-owned review flow, but no permission, setting, or execution change is applied.",
+	}
+	if err := validateNoBackendTerms(preview, "review flow preview"); err != nil {
+		return ReviewFlowPreview{}, err
+	}
+	return preview, nil
+}
+
 func settingsSection(id string, title string, description string, fields []SettingsField) SettingsSection {
 	return SettingsSection{
 		ID:          id,
@@ -1129,6 +1395,60 @@ func settingsField(id string, label string, value string, options []string) Sett
 		Label:   label,
 		Value:   value,
 		Options: options,
+	}
+}
+
+func reviewFlowSteps() []ReviewFlowStep {
+	return []ReviewFlowStep{
+		reviewFlowStep(
+			"settings-change-review",
+			"Review settings change",
+			"GetCompatibilitySettingsChangePlan",
+			"required",
+			"KDE presents the requested user-facing settings change before Runtime persistence.",
+		),
+		reviewFlowStep(
+			"permission-review",
+			"Review permissions",
+			"GetCompatibilityPermissionReviewPlan",
+			"required",
+			"KDE shows the grouped Runtime permission review before any permission grant.",
+		),
+		reviewFlowStep(
+			"portal-request-review",
+			"Review Portal request",
+			"GetPortalRequestPlan",
+			"required",
+			"Runtime maps sensitive desktop access to an XDG Desktop Portal request plan.",
+		),
+		reviewFlowStep(
+			"runtime-write-gate",
+			"Check Runtime write gate",
+			"GetRuntimeWriteGate",
+			"blocked",
+			"Runtime write gates still block persistence, launch, snapshots, and restore.",
+		),
+		reviewFlowStep(
+			"review-receipt",
+			"Record review intent",
+			"GetCompatibilityActionReviewReceipt",
+			"pending",
+			"Review intent can be recorded, but it cannot approve execution by itself.",
+		),
+	}
+}
+
+func reviewFlowStep(id string, label string, runtimeMethod string, status string, summary string) ReviewFlowStep {
+	return ReviewFlowStep{
+		ID:                  id,
+		Label:               label,
+		RuntimeMethod:       runtimeMethod,
+		Status:              status,
+		UserVisible:         true,
+		UserActionRequired:  status == "required" || status == "pending",
+		RuntimeGateRequired: true,
+		BlocksApply:         status != "pass",
+		Summary:             summary,
 	}
 }
 

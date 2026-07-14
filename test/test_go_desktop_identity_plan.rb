@@ -61,6 +61,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("notification-preview"), "Go Runtime CLI must render KDE notification previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("permission-review-preview"), "Go Runtime CLI must render KDE permission review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("portal-request-preview"), "Go Runtime CLI must render KDE Portal request previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("review-flow-preview"), "Go Runtime CLI must render KDE review flow previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-change-preview"), "Go Runtime CLI must render KDE settings change previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("settings-preview"), "Go Runtime CLI must render KDE settings previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
@@ -385,6 +386,71 @@ if go_available
   assert(!settings_change.downcase.include?("prefix"), "settings change preview must not expose implementation storage")
   assert(!settings_change.include?(".exe"), "settings change preview must not expose a Windows executable")
   assert(!settings_change.downcase.include?("proton"), "settings change preview must not expose backend implementation names")
+
+  review_flow, review_flow_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "review-flow-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--section",
+    "resource-access",
+    "--field",
+    "documents",
+    "--value",
+    "ask",
+    "--operation",
+    "file-open"
+  )
+  assert(review_flow_status.success?, "Go review flow preview CLI must run successfully")
+  review_flow_payload = JSON.parse(review_flow)
+  assert(review_flow_payload.fetch("schema_version") == "xnix.runtime.review_flow.v1", "review flow preview schema version must be stable")
+  assert(review_flow_payload.fetch("request_type") == "review-flow-preview", "review flow preview must identify its request type")
+  assert(review_flow_payload.fetch("plan_type") == "compatibility-review-flow-plan", "review flow preview must identify the Runtime plan type")
+  assert(review_flow_payload.fetch("source") == "compatibility-center-review", "review flow preview must identify the Compatibility Center source")
+  assert(review_flow_payload.fetch("desktop") == "KDE Plasma", "review flow preview must target KDE Plasma")
+  assert(review_flow_payload.fetch("runtime_method") == "GetCompatibilityReviewFlowPlan", "review flow preview must expose the Runtime method")
+  assert(review_flow_payload.fetch("application_id") == recipe.id, "review flow preview must preserve application identity")
+  assert(review_flow_payload.fetch("display_name") == recipe.name, "review flow preview must preserve display names")
+  assert(review_flow_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "review flow preview must bind generated desktop files")
+  assert(review_flow_payload.fetch("review_state") == "planned", "review flow preview must stay planned")
+  assert(review_flow_payload.fetch("section_id") == "resource-access", "review flow preview must expose the requested section")
+  assert(review_flow_payload.fetch("field_id") == "documents", "review flow preview must expose the requested field")
+  assert(review_flow_payload.fetch("requested_value") == "ask", "review flow preview must expose the requested value")
+  assert(review_flow_payload.fetch("operation") == "file-open", "review flow preview must expose the Portal operation")
+  assert(review_flow_payload.fetch("step_count") == 5, "review flow preview must expose five review steps")
+  assert(review_flow_payload.fetch("required_review_count") == 3, "review flow preview must require three reviews")
+  assert(review_flow_payload.fetch("blocked_step_count") == 1, "review flow preview must expose one blocked Runtime write gate")
+  assert(review_flow_payload.fetch("pending_step_count") == 1, "review flow preview must expose one pending receipt step")
+  assert(review_flow_payload.fetch("steps").map { |step| step.fetch("id") } == %w[settings-change-review permission-review portal-request-review runtime-write-gate review-receipt], "review flow preview must preserve review step order")
+  assert(review_flow_payload.fetch("settings_change_plan").fetch("apply_enabled") == false, "review flow preview must not apply settings changes")
+  assert(review_flow_payload.fetch("settings_change_plan").fetch("settings_persisted") == false, "review flow preview must not persist settings")
+  assert(review_flow_payload.fetch("permission_review_plan").fetch("permissions_granted") == false, "review flow preview must not grant permissions")
+  assert(review_flow_payload.fetch("portal_request_plan").fetch("request_object_created") == false, "review flow preview must not create Portal request objects")
+  assert(review_flow_payload.fetch("portal_request_plan").fetch("permission_granted") == false, "review flow preview must not grant Portal permissions")
+  assert(review_flow_payload.fetch("runtime_write_gate").fetch("gate_type") == "runtime-write-gate", "review flow preview must include Runtime write gate summary")
+  assert(review_flow_payload.fetch("runtime_write_gate").fetch("write_method_enabled") == false, "review flow preview must keep write methods disabled")
+  assert(review_flow_payload.fetch("review_receipt").fetch("receipt_type") == "compatibility-center-action-review-receipt", "review flow preview must include review receipt summary")
+  assert(review_flow_payload.fetch("review_receipt").fetch("decision_recorded") == false, "review flow preview must not record review intent in preview mode")
+  assert(review_flow_payload.fetch("runtime_owned") == true, "review flow preview must remain Runtime-owned")
+  assert(review_flow_payload.fetch("go_runtime_backed") == true, "review flow preview must be Go Runtime-backed")
+  assert(review_flow_payload.fetch("kde_policy_owner") == false, "review flow preview must not make KDE own backend policy")
+  assert(review_flow_payload.fetch("user_visible") == true, "review flow preview must be user visible")
+  assert(review_flow_payload.fetch("user_confirmation_required") == true, "review flow preview must require user confirmation")
+  assert(review_flow_payload.fetch("portal_policy_review_required") == true, "review flow preview must require Portal policy review")
+  assert(review_flow_payload.fetch("apply_enabled") == false, "review flow preview must not enable apply")
+  assert(review_flow_payload.fetch("request_object_created") == false, "review flow preview must not create request objects")
+  assert(review_flow_payload.fetch("permission_granted") == false, "review flow preview must not grant permissions")
+  assert(review_flow_payload.fetch("settings_persisted") == false, "review flow preview must not persist settings")
+  assert(review_flow_payload.fetch("execution_started") == false, "review flow preview must not start execution")
+  assert(review_flow_payload.fetch("host_root_modified") == false, "review flow preview must not mutate the host root")
+  assert(review_flow_payload.fetch("backend_details_exposed") == false, "review flow preview must not expose backend details")
+  assert(!review_flow.downcase.include?("prefix"), "review flow preview must not expose implementation storage")
+  assert(!review_flow.include?(".exe"), "review flow preview must not expose a Windows executable")
+  assert(!review_flow.downcase.include?("proton"), "review flow preview must not expose backend implementation names")
 
   permission_review, permission_review_status = capture_runtime_go(
     project_root,

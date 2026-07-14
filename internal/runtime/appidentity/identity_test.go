@@ -451,6 +451,127 @@ func TestSettingsChangePreviewPlansReviewBeforePersistence(t *testing.T) {
 	}
 }
 
+func TestReviewFlowPreviewConnectsSettingsPermissionsAndPortalReviews(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.ReviewFlowPreview("resource-access", "documents", "ask", "file-open")
+	if err != nil {
+		t.Fatalf("ReviewFlowPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.review_flow.v1" ||
+		preview.RequestType != "review-flow-preview" ||
+		preview.PlanType != "compatibility-review-flow-plan" ||
+		preview.Source != "compatibility-center-review" ||
+		preview.RuntimeMethod != "GetCompatibilityReviewFlowPlan" {
+		t.Fatalf("unexpected review flow schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected review flow identity: %#v", preview)
+	}
+	if preview.SectionID != "resource-access" ||
+		preview.FieldID != "documents" ||
+		preview.RequestedValue != "ask" ||
+		preview.Operation != "file-open" ||
+		preview.ReviewState != "planned" {
+		t.Fatalf("unexpected review flow request: %#v", preview)
+	}
+	if preview.StepCount != 5 ||
+		preview.RequiredReviewCount != 3 ||
+		preview.BlockedStepCount != 1 ||
+		preview.PendingStepCount != 1 {
+		t.Fatalf("unexpected review flow counts: %#v", preview)
+	}
+	if got, want := reviewFlowStepIDs(preview.Steps), []string{"settings-change-review", "permission-review", "portal-request-review", "runtime-write-gate", "review-receipt"}; !sameStrings(got, want) {
+		t.Fatalf("review flow step ids = %#v, want %#v", got, want)
+	}
+	if preview.SettingsChangePlan.PlanType != "settings-change-plan" ||
+		preview.SettingsChangePlan.ChangeState != "planned" ||
+		preview.SettingsChangePlan.ApplyEnabled ||
+		preview.SettingsChangePlan.SettingsPersisted {
+		t.Fatalf("unexpected settings change summary: %#v", preview.SettingsChangePlan)
+	}
+	if preview.PermissionReviewPlan.PlanType != "compatibility-permission-review-plan" ||
+		preview.PermissionReviewPlan.PermissionCount != 7 ||
+		!preview.PermissionReviewPlan.UserReviewRequired ||
+		!preview.PermissionReviewPlan.PortalReviewRequired ||
+		preview.PermissionReviewPlan.PermissionChangesApplied ||
+		preview.PermissionReviewPlan.PermissionsGranted {
+		t.Fatalf("unexpected permission review summary: %#v", preview.PermissionReviewPlan)
+	}
+	if preview.PortalRequestPlan.RequestType != "portal-request-preview" ||
+		preview.PortalRequestPlan.Operation != "file-open" ||
+		preview.PortalRequestPlan.Decision != "ask" ||
+		!preview.PortalRequestPlan.RequestAllowed ||
+		!preview.PortalRequestPlan.PortalRequired ||
+		preview.PortalRequestPlan.RequestObjectCreated ||
+		preview.PortalRequestPlan.PermissionGranted ||
+		preview.PortalRequestPlan.HostPermissionChanged ||
+		preview.PortalRequestPlan.BackendDetailsExposed {
+		t.Fatalf("unexpected Portal request summary: %#v", preview.PortalRequestPlan)
+	}
+	if preview.RuntimeWriteGate.GateType != "runtime-write-gate" ||
+		preview.RuntimeWriteGate.MethodName != "Launch" ||
+		preview.RuntimeWriteGate.WriteMethodEnabled ||
+		preview.RuntimeWriteGate.DispatchEnabled ||
+		preview.RuntimeWriteGate.RequestObjectCreated ||
+		!sameStrings(preview.RuntimeWriteGate.RequiredGates, []string{
+			"production-runtime-owner",
+			"backend-binding-ready",
+			"recipe-trust-production",
+			"user-action-review",
+			"portal-approval-if-sensitive",
+			"snapshot-preflight-for-risky-change",
+		}) {
+		t.Fatalf("unexpected write gate summary: %#v", preview.RuntimeWriteGate)
+	}
+	if preview.ReviewReceipt.ReceiptType != "compatibility-center-action-review-receipt" ||
+		preview.ReviewReceipt.DecisionRecorded ||
+		preview.ReviewReceipt.ExecutionEnabled ||
+		preview.ReviewReceipt.SettingsPersistenceEnabled ||
+		preview.ReviewReceipt.ResourceGrantCreated {
+		t.Fatalf("unexpected review receipt summary: %#v", preview.ReviewReceipt)
+	}
+	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner || !preview.UserVisible ||
+		!preview.UserConfirmationRequired || !preview.PortalPolicyReviewRequired ||
+		!preview.SettingsChangePlanned || !preview.PermissionReviewPlanned ||
+		!preview.PortalRequestPlanned || !preview.ReviewReceiptRequired ||
+		preview.ApplyEnabled || preview.RequestObjectCreated || preview.PermissionGranted ||
+		preview.SettingsPersisted || preview.ExecutionStarted || preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("unexpected review flow safety flags: %#v", preview)
+	}
+
+	if _, err := plan.ReviewFlowPreview("resource-access", "documents", "always", "file-open"); err == nil {
+		t.Fatalf("ReviewFlowPreview accepted an unsupported settings value")
+	}
+	if _, err := plan.ReviewFlowPreview("resource-access", "documents", "ask", "unknown"); err == nil {
+		t.Fatalf("ReviewFlowPreview accepted an unsupported Portal operation")
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("review flow preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestPermissionReviewPreviewKeepsPermissionGatesClosed(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",
@@ -978,6 +1099,14 @@ func desktopResourceBridgeIDs(resources []DesktopResourceBridgeResource) []strin
 	ids := make([]string, 0, len(resources))
 	for _, resource := range resources {
 		ids = append(ids, resource.ID)
+	}
+	return ids
+}
+
+func reviewFlowStepIDs(steps []ReviewFlowStep) []string {
+	ids := make([]string, 0, len(steps))
+	for _, step := range steps {
+		ids = append(ids, step.ID)
 	}
 	return ids
 }

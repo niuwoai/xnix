@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.127] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go review-flow-preview --registry <path> --app <id> [--section <section>] [--field <field>] [--value <value>] [--operation <operation>]` for read-only KDE Compatibility Center review-flow previews from digest-verified registry recipes.
+- Added Go Runtime review-flow planning that connects settings-change review, permission review, Portal request review, Runtime write gates, and review receipts into one KDE-visible confirmation flow.
+- Added Go and Ruby harness coverage that verifies review-flow previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about apply, request objects, permission grants, settings persistence, execution, and receipt recording remaining disabled or pending.
+
+### Changed
+
+- Moved the user-visible Compatibility Center review-flow surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for displaying confirmation steps only.
+
 ## [0.2.126] - 2026-07-15
 
 ### Added

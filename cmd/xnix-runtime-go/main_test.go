@@ -472,6 +472,113 @@ func TestSettingsChangePreviewCommandRendersReviewPlan(t *testing.T) {
 	}
 }
 
+func TestReviewFlowPreviewCommandRendersConnectedReviewPlan(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"review-flow-preview", "--registry", registryPath, "--app", "org.example.ledger", "--section", "resource-access", "--field", "documents", "--value", "ask", "--operation", "file-open"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.review_flow.v1" ||
+		payload["request_type"] != "review-flow-preview" ||
+		payload["plan_type"] != "compatibility-review-flow-plan" ||
+		payload["source"] != "compatibility-center-review" ||
+		payload["runtime_method"] != "GetCompatibilityReviewFlowPlan" {
+		t.Fatalf("unexpected review flow schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["display_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected review flow identity: %#v", payload)
+	}
+	if payload["section_id"] != "resource-access" ||
+		payload["field_id"] != "documents" ||
+		payload["requested_value"] != "ask" ||
+		payload["operation"] != "file-open" ||
+		payload["review_state"] != "planned" {
+		t.Fatalf("unexpected review flow request: %#v", payload)
+	}
+	if payload["step_count"] != float64(5) ||
+		payload["required_review_count"] != float64(3) ||
+		payload["blocked_step_count"] != float64(1) ||
+		payload["pending_step_count"] != float64(1) {
+		t.Fatalf("unexpected review flow counts: %#v", payload)
+	}
+	steps := payload["steps"].([]any)
+	if steps[0].(map[string]any)["id"] != "settings-change-review" ||
+		steps[1].(map[string]any)["id"] != "permission-review" ||
+		steps[2].(map[string]any)["id"] != "portal-request-review" ||
+		steps[3].(map[string]any)["status"] != "blocked" ||
+		steps[4].(map[string]any)["status"] != "pending" {
+		t.Fatalf("unexpected review flow steps: %#v", steps)
+	}
+	settingsChange := payload["settings_change_plan"].(map[string]any)
+	if settingsChange["plan_type"] != "settings-change-plan" ||
+		settingsChange["apply_enabled"] != false ||
+		settingsChange["settings_persisted"] != false {
+		t.Fatalf("unexpected settings change summary: %#v", settingsChange)
+	}
+	permissionReview := payload["permission_review_plan"].(map[string]any)
+	if permissionReview["plan_type"] != "compatibility-permission-review-plan" ||
+		permissionReview["permission_count"] != float64(7) ||
+		permissionReview["permissions_granted"] != false {
+		t.Fatalf("unexpected permission review summary: %#v", permissionReview)
+	}
+	portalRequest := payload["portal_request_plan"].(map[string]any)
+	if portalRequest["request_type"] != "portal-request-preview" ||
+		portalRequest["operation"] != "file-open" ||
+		portalRequest["decision"] != "ask" ||
+		portalRequest["request_object_created"] != false ||
+		portalRequest["permission_granted"] != false {
+		t.Fatalf("unexpected Portal request summary: %#v", portalRequest)
+	}
+	writeGate := payload["runtime_write_gate"].(map[string]any)
+	if writeGate["gate_type"] != "runtime-write-gate" ||
+		writeGate["method_name"] != "Launch" ||
+		writeGate["write_method_enabled"] != false ||
+		writeGate["dispatch_enabled"] != false {
+		t.Fatalf("unexpected write gate summary: %#v", writeGate)
+	}
+	receipt := payload["review_receipt"].(map[string]any)
+	if receipt["receipt_type"] != "compatibility-center-action-review-receipt" ||
+		receipt["decision_recorded"] != false ||
+		receipt["execution_enabled"] != false ||
+		receipt["resource_grant_created"] != false {
+		t.Fatalf("unexpected review receipt summary: %#v", receipt)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false || payload["user_visible"] != true ||
+		payload["user_confirmation_required"] != true ||
+		payload["portal_policy_review_required"] != true ||
+		payload["apply_enabled"] != false ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["settings_persisted"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected review flow safety flags: %#v", payload)
+	}
+}
+
 func TestPermissionReviewPreviewCommandRendersKDEPermissionReview(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
