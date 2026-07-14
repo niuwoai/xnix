@@ -5,6 +5,7 @@ require "optparse"
 require "uri"
 require_relative "compatibility_run_plan"
 require_relative "recipe_store"
+require_relative "runtime_write_gate"
 require_relative "runtime_daemon"
 
 module Xnix
@@ -23,15 +24,41 @@ module Xnix
         uris = normalize_file_uris(file_uris)
 
         {
+          "version" => RuntimeDaemon::VERSION,
+          "intent_type" => "runtime-launch-intent",
           "request_type" => "launch-application",
           "source" => SOURCE,
           "application_id" => recipe.id,
           "application_name" => recipe.name,
           "runtime_method" => "Launch",
+          "read_method" => "GetLaunchIntent",
           "portal_required" => !uris.empty?,
           "run_plan" => run_plan_summary(recipe),
           "file_count" => uris.length,
-          "file_uris" => uris
+          "file_uris" => uris,
+          "runtime_owned" => true,
+          "c_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "standard_desktop_entry" => true,
+          "launch_uses_runtime" => true,
+          "desktop_entry_launch_visible" => true,
+          "launch_allowed" => false,
+          "launch_enabled" => false,
+          "execution_request_created" => false,
+          "execution_started" => false,
+          "host_root_modified" => false,
+          "network_required" => false,
+          "backend_details_exposed" => false,
+          "write_gate_decision" => launch_gate.fetch("gate_decision"),
+          "denial_error_name" => launch_gate.fetch("denial_error_name"),
+          "blocked_actions" => [
+            "create launch request object before Runtime gates pass",
+            "start Wine or VM backend from KDE",
+            "expose raw backend command to desktop shell",
+            "grant desktop resources without Portal review",
+            "mutate host root during launch intent planning"
+          ],
+          "desktop_safe_summary" => "KDE launch intent is captured without executing; Launch remains gated by the Runtime."
         }
       end
 
@@ -68,6 +95,10 @@ module Xnix
           "portal_policy_required" => plan.fetch("preflight").fetch("portal_policy_required"),
           "snapshot_before_risky_change" => plan.fetch("preflight").fetch("snapshot_before_risky_change")
         }
+      end
+
+      def launch_gate
+        @launch_gate ||= RuntimeWriteGate.new(method_name: "Launch").to_h
       end
 
       class CLI

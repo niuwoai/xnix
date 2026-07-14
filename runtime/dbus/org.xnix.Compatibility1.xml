@@ -121,6 +121,10 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="readiness" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetLaunchIntent">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="intent" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetAIDiagnosticInput">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="issue" type="s" direction="in"/>

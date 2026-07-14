@@ -24,6 +24,7 @@ require_relative "compatibility_test_result"
 require_relative "desktop_entry"
 require_relative "desktop_integration_manifest"
 require_relative "file_association_model"
+require_relative "launch_request"
 require_relative "notification_request"
 require_relative "portal_access_policy"
 require_relative "portal_request_model"
@@ -91,6 +92,7 @@ module Xnix
             "compatibility_test_planning" => true,
             "compatibility_test_results" => true,
             "compatibility_execution_readiness" => true,
+            "compatibility_launch_intents" => true,
             "ai_diagnostic_inputs" => true,
             "ai_diagnostic_recommendations" => true,
             "ai_repair_approval_gates" => true,
@@ -141,6 +143,7 @@ module Xnix
           "test_plan" => test_plan_summary(recipe),
           "test_result" => test_result_summary(recipe),
           "execution_readiness" => execution_readiness_summary(recipe),
+          "launch_intent" => launch_intent_summary(recipe),
           "action_queue" => action_queue_summary(recipe),
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
@@ -550,6 +553,10 @@ module Xnix
         CompatibilityExecutionReadiness.new(recipe: recipe).to_h
       end
 
+      def launch_intent(application_id)
+        LaunchRequest.new(recipe_store: recipe_store).build(application_id: application_id)
+      end
+
       def ai_diagnostic_input(application_id, issue = AIDiagnosticInput::DEFAULT_ISSUE, test_type = "preflight")
         recipe = require_recipe(application_id)
         AIDiagnosticInput.new(recipe: recipe, issue: issue, test_type: test_type).to_h
@@ -690,6 +697,8 @@ module Xnix
           )
         when "GetExecutionReadiness"
           execution_readiness(required_parameter(method_name, parameters, 0))
+        when "GetLaunchIntent"
+          launch_intent(required_parameter(method_name, parameters, 0))
         when "GetAIDiagnosticInput"
           ai_diagnostic_input(
             required_parameter(method_name, parameters, 0),
@@ -905,6 +914,20 @@ module Xnix
           "launch_enabled" => readiness.fetch("launch_enabled"),
           "backend_binding_ready" => readiness.fetch("backend_binding_ready"),
           "summary" => readiness.fetch("desktop_safe_summary")
+        }
+      end
+
+      def launch_intent_summary(recipe)
+        intent = LaunchRequest.new(recipe_store: recipe_store).build(application_id: recipe.id)
+        {
+          "intent_type" => intent.fetch("intent_type"),
+          "source" => intent.fetch("source"),
+          "runtime_method" => intent.fetch("runtime_method"),
+          "read_method" => intent.fetch("read_method"),
+          "launch_allowed" => intent.fetch("launch_allowed"),
+          "launch_enabled" => intent.fetch("launch_enabled"),
+          "execution_request_created" => intent.fetch("execution_request_created"),
+          "summary" => intent.fetch("desktop_safe_summary")
         }
       end
 
@@ -1400,6 +1423,8 @@ module Xnix
             write_json(runtime.test_result(application_id, test_type))
           when "execution-readiness"
             write_json(runtime.execution_readiness(require_argument(command)))
+          when "launch-intent"
+            write_json(runtime.launch_intent(require_argument(command)))
           when "backend-binding"
             write_json(runtime.backend_binding(require_argument(command)))
           when "kde-integration-status"

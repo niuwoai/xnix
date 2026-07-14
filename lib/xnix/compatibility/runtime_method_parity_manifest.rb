@@ -42,6 +42,7 @@ module Xnix
         GetTestPlan
         GetTestResult
         GetExecutionReadiness
+        GetLaunchIntent
         GetAIDiagnosticInput
         GetAIDiagnosticRecommendation
         GetAIRepairApprovalGate
@@ -92,6 +93,7 @@ module Xnix
         "GetTestPlan" => "test_plan",
         "GetTestResult" => "test_result",
         "GetExecutionReadiness" => "execution_readiness",
+        "GetLaunchIntent" => "launch_intent",
         "GetAIDiagnosticInput" => "ai_diagnostic_input",
         "GetAIDiagnosticRecommendation" => "ai_diagnostic_recommendation",
         "GetAIRepairApprovalGate" => "ai_repair_approval_gate",

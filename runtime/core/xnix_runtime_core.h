@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.98"
+#define XNIX_RUNTIME_VERSION "0.2.99"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -513,7 +513,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[40];
+  const char *read_only_methods[41];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -812,6 +812,40 @@ typedef struct {
   bool backend_details_exposed;
   const char *summary;
 } XnixRuntimeExecutionReadiness;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
+  const XnixRuntimeEngine *engine;
+  const char *intent_type;
+  const char *source;
+  const char *runtime_method;
+  const char *read_method;
+  const char *desktop_file;
+  const char *launcher_command;
+  const char *execution_state;
+  const char *overall_status;
+  const char *write_gate_decision;
+  const char *denial_error_name;
+  const char *blocked_actions[5];
+  size_t blocked_action_count;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool standard_desktop_entry;
+  bool launch_uses_runtime;
+  bool desktop_entry_launch_visible;
+  bool portal_required;
+  bool snapshot_required;
+  bool backend_binding_ready;
+  bool launch_allowed;
+  bool launch_enabled;
+  bool execution_request_created;
+  bool execution_started;
+  bool host_root_modified;
+  bool network_required;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeLaunchIntent;
 
 typedef struct {
   const char *entry_point;
@@ -1331,6 +1365,10 @@ bool xnix_runtime_compatibility_test_result(
 bool xnix_runtime_execution_readiness(
   const char *application_id,
   XnixRuntimeExecutionReadiness *readiness
+);
+bool xnix_runtime_launch_intent(
+  const char *application_id,
+  XnixRuntimeLaunchIntent *intent
 );
 bool xnix_runtime_desktop_activation_manifest(
   const char *application_id,

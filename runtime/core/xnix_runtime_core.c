@@ -995,6 +995,7 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetTestPlan",
     "GetTestResult",
     "GetExecutionReadiness",
+    "GetLaunchIntent",
     "GetAIDiagnosticInput",
     "GetAIDiagnosticRecommendation",
     "GetAIRepairApprovalGate",
@@ -1013,40 +1014,40 @@ static const XnixRuntimeMethodParityManifestPolicy method_parity_manifest_policy
     "GetKRunnerQueryPlan",
     "GetKWinWindowRulePlan",
   },
-  .read_only_method_count = 40,
+  .read_only_method_count = 41,
   .parity_checks = {
     {
       .id = "dbus-contract",
       .status = "pass",
-      .method_count = 40,
+      .method_count = 41,
       .missing_method_count = 0,
       .summary = "dbus-contract covers all Runtime read-only methods.",
     },
     {
       .id = "runtime-dispatch",
       .status = "pass",
-      .method_count = 40,
+      .method_count = 41,
       .missing_method_count = 0,
       .summary = "runtime-dispatch covers all Runtime read-only methods.",
     },
     {
       .id = "dbus-client",
       .status = "pass",
-      .method_count = 40,
+      .method_count = 41,
       .missing_method_count = 0,
       .summary = "dbus-client covers all Runtime read-only methods.",
     },
     {
       .id = "smoke-adapter",
       .status = "pass",
-      .method_count = 40,
+      .method_count = 41,
       .missing_method_count = 0,
       .summary = "smoke-adapter covers all Runtime read-only methods.",
     },
     {
       .id = "session-smoke",
       .status = "pass",
-      .method_count = 40,
+      .method_count = 41,
       .missing_method_count = 0,
       .summary = "session-smoke covers all Runtime read-only methods.",
     },
@@ -1998,6 +1999,7 @@ xnix_runtime_compatibility_action_queue(
 #include "xnix_runtime_core_compatibility_test_plan.inc"
 #include "xnix_runtime_core_compatibility_test_result.inc"
 #include "xnix_runtime_core_execution_readiness.inc"
+#include "xnix_runtime_core_launch_intent.inc"
 #include "xnix_runtime_core_compatibility_repair_plan.inc"
 #include "xnix_runtime_core_ai_diagnostic_input.inc"
 #include "xnix_runtime_core_ai_diagnostic_recommendation.inc"

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.99] - 2026-07-14
+
+### Added
+
+- Added C Runtime launch intent records and a CLI read method so KDE launcher clicks can be modeled before any `Launch` write method is enabled.
+- Added `GetLaunchIntent` to the Runtime D-Bus contract, D-Bus client, smoke adapter, method parity manifest, and session-bus smoke coverage.
+- Extended the Ruby development harness and launch request unit coverage to mirror the Runtime-owned launch intent boundary.
+
+### Changed
+
+- Extended Runtime diagnostics with launch intent summaries that keep KDE from creating launch request objects, starting Wine/VM backends, mutating the host root, or exposing backend commands before Runtime gates pass.
+
 ## [0.2.98] - 2026-07-14
 
 ### Added

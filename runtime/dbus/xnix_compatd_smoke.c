@@ -124,6 +124,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='readiness' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetLaunchIntent'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='intent' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetAIDiagnosticInput'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='issue' type='s' direction='in'/>"
@@ -777,6 +781,36 @@ build_execution_readiness(const gchar *application_id)
 }
 
 static GVariant *
+build_launch_intent(const gchar *application_id)
+{
+  GVariantBuilder intent;
+
+  g_variant_builder_init(&intent, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&intent, "{sv}", "intent_type", g_variant_new_string("runtime-launch-intent"));
+  g_variant_builder_add(&intent, "{sv}", "source", g_variant_new_string("desktop-launcher"));
+  g_variant_builder_add(&intent, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&intent, "{sv}", "runtime_method", g_variant_new_string("Launch"));
+  g_variant_builder_add(&intent, "{sv}", "read_method", g_variant_new_string("GetLaunchIntent"));
+  g_variant_builder_add(&intent, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&intent, "{sv}", "c_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&intent, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "standard_desktop_entry", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&intent, "{sv}", "launch_uses_runtime", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&intent, "{sv}", "desktop_entry_launch_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&intent, "{sv}", "launch_allowed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "execution_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "write_gate_decision", g_variant_new_string("blocked-until-production-backend"));
+  g_variant_builder_add(&intent, "{sv}", "denial_error_name", g_variant_new_string("org.xnix.Compatibility1.Error.WriteMethodDisabled"));
+  g_variant_builder_add(&intent, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&intent, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&intent);
+}
+
+static GVariant *
 build_ai_diagnostic_input(const gchar *application_id, const gchar *issue, const gchar *test_type)
 {
   GVariantBuilder input;
@@ -1062,7 +1096,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(40));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(41));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1458,6 +1492,19 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_execution_readiness(application_id)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetLaunchIntent") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_launch_intent(application_id)));
     return;
   }
 

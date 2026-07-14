@@ -300,6 +300,17 @@ assert(execution_readiness["readiness_type"] == "compatibility-execution-readine
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetLaunchIntent",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetLaunchIntent must exit successfully: #{stderr}")
+launch_intent = JSON.parse(stdout)
+assert(launch_intent["intent_type"] == "runtime-launch-intent", "dispatch must route GetLaunchIntent")
+assert(!launch_intent["execution_started"], "dispatch GetLaunchIntent must not start execution")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetAIDiagnosticInput",
   JSON.generate(["org.xnix.sample.notepad"])
 )
