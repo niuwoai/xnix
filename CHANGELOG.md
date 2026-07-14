@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.145] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-receipt-preview --registry <path> --app <id> --action <id> --decision <decision> [file://...]` for read-only Runtime previews of the review receipt shape for one queued KDE action.
+- Added Go Runtime KDE action receipt modeling that derives from action preflight state, builds a stable receipt identifier, and exposes required receipt fields without recording the receipt.
+- Added Go and Ruby harness coverage that verifies KDE action receipt previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about decision recording, review receipts, queue mutation, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center queue flow from preflight visibility toward a durable review-receipt contract while keeping Runtime write gates closed.
+
 ## [0.2.144] - 2026-07-15
 
 ### Added
