@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|permission-review-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|file-open-preview|krunner-query-preview|mimeapps-preview|notification-preview|permission-review-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -30,6 +30,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
+	case "desktop-resource-bridge-preview":
+		return runDesktopResourceBridgePreview(args[1:], stdout)
 	case "file-open-preview":
 		return runFileOpenPreview(args[1:], stdout)
 	case "krunner-query-preview":
@@ -146,6 +148,25 @@ func runMIMEAppsPreview(args []string, stdout io.Writer) error {
 	}
 	_, err = io.WriteString(stdout, mimeapps)
 	return err
+}
+
+func runDesktopResourceBridgePreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("desktop-resource-bridge-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.DesktopResourceBridgePreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
 }
 
 func runNotificationPreview(args []string, stdout io.Writer) error {

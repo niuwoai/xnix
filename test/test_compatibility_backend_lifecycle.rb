@@ -19,7 +19,7 @@ recipe = recipe_store.find("org.xnix.sample.notepad")
 lifecycle = Xnix::Compatibility::CompatibilityBackendLifecycle.new(recipe: recipe).to_h
 stage_ids = lifecycle.fetch("stages").map { |stage| stage.fetch("id") }
 
-assert(lifecycle["version"] == "0.2.123", "compatibility backend lifecycle must expose the current version")
+assert(lifecycle["version"] == "0.2.124", "compatibility backend lifecycle must expose the current version")
 assert(lifecycle["lifecycle_type"] == "compatibility-backend-lifecycle", "compatibility backend lifecycle must identify the lifecycle type")
 assert(lifecycle["runtime_method"] == "GetBackendLifecycle", "compatibility backend lifecycle must identify the Runtime method")
 assert(lifecycle["application"]["id"] == "org.xnix.sample.notepad", "compatibility backend lifecycle must preserve the application id")

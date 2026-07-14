@@ -426,6 +426,82 @@ func TestPermissionReviewPreviewKeepsPermissionGatesClosed(t *testing.T) {
 	}
 }
 
+func TestDesktopResourceBridgePreviewKeepsBridgesDisabled(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.DesktopResourceBridgePreview()
+	if err != nil {
+		t.Fatalf("DesktopResourceBridgePreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.desktop_resource_bridge.v1" ||
+		preview.RequestType != "desktop-resource-bridge-preview" ||
+		preview.PlanType != "desktop-resource-bridge-plan" {
+		t.Fatalf("unexpected desktop resource bridge schema: %#v", preview)
+	}
+	if preview.Source != "runtime-resource-boundary" || preview.Desktop != "KDE Plasma" ||
+		preview.RuntimeMethod != "GetDesktopResourceBridgePlan" ||
+		preview.ApplicationID != "org.example.ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop resource bridge identity: %#v", preview)
+	}
+	if preview.BridgeState != "planned" || preview.ResourceCount != 5 {
+		t.Fatalf("unexpected bridge state or count: %#v", preview)
+	}
+	if got, want := desktopResourceBridgeIDs(preview.Resources), []string{"file-open", "uri-open", "print", "clipboard", "screenshot"}; !sameStrings(got, want) {
+		t.Fatalf("resource ids = %#v, want %#v", got, want)
+	}
+	for _, resource := range preview.Resources {
+		if resource.RuntimeMethod != "GetPortalRequestPlan" ||
+			resource.State != "planned" ||
+			!resource.PortalRequired ||
+			!resource.UserApprovalRequired ||
+			resource.BridgeEnabled ||
+			resource.RequestCreated ||
+			resource.DirectBackendAccessAllowed ||
+			resource.BackendDetailsExposed {
+			t.Fatalf("unexpected resource bridge gate: %#v", resource)
+		}
+	}
+	if !sameStrings(preview.RequiredRuntimeGates, []string{"portal-policy-review", "portal-request-plan", "snapshot-baseline", "backend-environment-plan", "runtime-write-gate"}) {
+		t.Fatalf("required gates = %#v", preview.RequiredRuntimeGates)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		!preview.PortalMediated || !preview.FileBridgePlanned ||
+		!preview.URIBridgePlanned || !preview.PrintBridgePlanned ||
+		!preview.ClipboardBridgePlanned || !preview.ScreenshotBridgePlanned ||
+		preview.BridgesEnabled || preview.RequestsCreated ||
+		preview.BackendProcessStarted || preview.DirectHostFileAccess ||
+		preview.DirectClipboardAccess || preview.DirectPrintAccess ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected desktop resource bridge safety flags: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("desktop resource bridge preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+	for _, hostPath := range []string{"/users", "/home", "/var", "/opt", "/tmp"} {
+		if strings.Contains(text, hostPath) {
+			t.Fatalf("desktop resource bridge preview exposes host path %q: %s", hostPath, text)
+		}
+	}
+}
+
 func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 	preview, err := NewKRunnerQueryPreview([]Recipe{
 		{
@@ -700,6 +776,14 @@ func permissionDecision(permissions []PermissionReviewEntry, permissionID string
 		}
 	}
 	return ""
+}
+
+func desktopResourceBridgeIDs(resources []DesktopResourceBridgeResource) []string {
+	ids := make([]string, 0, len(resources))
+	for _, resource := range resources {
+		ids = append(ids, resource.ID)
+	}
+	return ids
 }
 
 func sameStrings(left []string, right []string) bool {

@@ -279,6 +279,63 @@ type PermissionReviewSummary struct {
 	Detail   string `json:"detail"`
 }
 
+type DesktopResourceBridgePreview struct {
+	SchemaVersion           string                          `json:"schema_version"`
+	RequestType             string                          `json:"request_type"`
+	PlanType                string                          `json:"plan_type"`
+	Source                  string                          `json:"source"`
+	Desktop                 string                          `json:"desktop"`
+	RuntimeMethod           string                          `json:"runtime_method"`
+	ApplicationID           string                          `json:"application_id"`
+	DisplayName             string                          `json:"display_name"`
+	Icon                    string                          `json:"icon"`
+	DesktopFile             string                          `json:"desktop_file"`
+	BridgeState             string                          `json:"bridge_state"`
+	Resources               []DesktopResourceBridgeResource `json:"resources"`
+	ResourceCount           int                             `json:"resource_count"`
+	RequiredRuntimeGates    []string                        `json:"required_runtime_gates"`
+	RuntimeOwned            bool                            `json:"runtime_owned"`
+	KDEPolicyOwner          bool                            `json:"kde_policy_owner"`
+	UserVisible             bool                            `json:"user_visible"`
+	PortalMediated          bool                            `json:"portal_mediated"`
+	FileBridgePlanned       bool                            `json:"file_bridge_planned"`
+	URIBridgePlanned        bool                            `json:"uri_bridge_planned"`
+	PrintBridgePlanned      bool                            `json:"print_bridge_planned"`
+	ClipboardBridgePlanned  bool                            `json:"clipboard_bridge_planned"`
+	ScreenshotBridgePlanned bool                            `json:"screenshot_bridge_planned"`
+	BridgesEnabled          bool                            `json:"bridges_enabled"`
+	RequestsCreated         bool                            `json:"requests_created"`
+	BackendProcessStarted   bool                            `json:"backend_process_started"`
+	DirectHostFileAccess    bool                            `json:"direct_host_file_access"`
+	DirectClipboardAccess   bool                            `json:"direct_clipboard_access"`
+	DirectPrintAccess       bool                            `json:"direct_print_access"`
+	HostRootModified        bool                            `json:"host_root_modified"`
+	BackendDetailsExposed   bool                            `json:"backend_details_exposed"`
+	UserFacingSettings      map[string]string               `json:"user_facing_settings"`
+	Summary                 DesktopResourceBridgeSummary    `json:"summary"`
+}
+
+type DesktopResourceBridgeResource struct {
+	ID                         string `json:"id"`
+	Name                       string `json:"name"`
+	Operation                  string `json:"operation"`
+	PortalInterface            string `json:"portal_interface"`
+	RuntimeMethod              string `json:"runtime_method"`
+	State                      string `json:"state"`
+	PortalRequired             bool   `json:"portal_required"`
+	UserApprovalRequired       bool   `json:"user_approval_required"`
+	BridgeEnabled              bool   `json:"bridge_enabled"`
+	RequestCreated             bool   `json:"request_created"`
+	DirectBackendAccessAllowed bool   `json:"direct_backend_access_allowed"`
+	BackendDetailsExposed      bool   `json:"backend_details_exposed"`
+	Summary                    string `json:"summary"`
+}
+
+type DesktopResourceBridgeSummary struct {
+	Headline string `json:"headline"`
+	Detail   string `json:"detail"`
+}
+
 type KRunnerQueryPreview struct {
 	SchemaVersion         string         `json:"schema_version"`
 	QueryType             string         `json:"query_type"`
@@ -961,6 +1018,119 @@ func permissionReviewEntry(id string, label string, operation string, decision s
 		PermissionGranted:     false,
 		DirectAccessAllowed:   false,
 		BackendDetailsExposed: false,
+	}
+}
+
+func (plan Plan) DesktopResourceBridgePreview() (DesktopResourceBridgePreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return DesktopResourceBridgePreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {
+		if !singleLine(value) {
+			return DesktopResourceBridgePreview{}, errors.New("desktop resource bridge preview requires single-line identity fields")
+		}
+	}
+
+	resources := defaultDesktopResourceBridgeResources()
+	preview := DesktopResourceBridgePreview{
+		SchemaVersion:           "xnix.runtime.desktop_resource_bridge.v1",
+		RequestType:             "desktop-resource-bridge-preview",
+		PlanType:                "desktop-resource-bridge-plan",
+		Source:                  "runtime-resource-boundary",
+		Desktop:                 "KDE Plasma",
+		RuntimeMethod:           "GetDesktopResourceBridgePlan",
+		ApplicationID:           plan.ApplicationID,
+		DisplayName:             plan.DisplayName,
+		Icon:                    plan.Icon,
+		DesktopFile:             plan.DesktopFile,
+		BridgeState:             "planned",
+		Resources:               resources,
+		ResourceCount:           len(resources),
+		RequiredRuntimeGates:    []string{"portal-policy-review", "portal-request-plan", "snapshot-baseline", "backend-environment-plan", "runtime-write-gate"},
+		RuntimeOwned:            true,
+		KDEPolicyOwner:          false,
+		UserVisible:             true,
+		PortalMediated:          true,
+		FileBridgePlanned:       true,
+		URIBridgePlanned:        true,
+		PrintBridgePlanned:      true,
+		ClipboardBridgePlanned:  true,
+		ScreenshotBridgePlanned: true,
+		BridgesEnabled:          false,
+		RequestsCreated:         false,
+		BackendProcessStarted:   false,
+		DirectHostFileAccess:    false,
+		DirectClipboardAccess:   false,
+		DirectPrintAccess:       false,
+		HostRootModified:        false,
+		BackendDetailsExposed:   false,
+		UserFacingSettings:      plan.UserFacingSettings,
+		Summary: DesktopResourceBridgeSummary{
+			Headline: "KDE can show desktop resource bridges before any access is enabled.",
+			Detail:   "The Runtime plans file, URI, print, clipboard, and screenshot bridges through XDG Desktop Portal review while keeping bridge activation disabled.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "desktop resource bridge preview"); err != nil {
+		return DesktopResourceBridgePreview{}, err
+	}
+	return preview, nil
+}
+
+func defaultDesktopResourceBridgeResources() []DesktopResourceBridgeResource {
+	return []DesktopResourceBridgeResource{
+		desktopResourceBridgeResource(
+			"file-open",
+			"File Open",
+			"file-open",
+			"org.freedesktop.portal.FileChooser",
+			"File opens require XDG Desktop Portal review before selected files can be handed to the Runtime.",
+		),
+		desktopResourceBridgeResource(
+			"uri-open",
+			"URI Open",
+			"uri-open",
+			"org.freedesktop.portal.OpenURI",
+			"URI opens are routed through a Runtime-owned Portal request plan.",
+		),
+		desktopResourceBridgeResource(
+			"print",
+			"Print",
+			"print",
+			"org.freedesktop.portal.Print",
+			"Printing stays behind user-approved desktop Portal review.",
+		),
+		desktopResourceBridgeResource(
+			"clipboard",
+			"Clipboard",
+			"clipboard",
+			"org.freedesktop.portal.Clipboard",
+			"Clipboard bridging stays disabled until Runtime records a reviewed Portal path.",
+		),
+		desktopResourceBridgeResource(
+			"screenshot",
+			"Screenshot",
+			"screenshot",
+			"org.freedesktop.portal.Screenshot",
+			"Screenshot access stays Portal-mediated and disabled until user review exists.",
+		),
+	}
+}
+
+func desktopResourceBridgeResource(id string, name string, operation string, portalInterface string, summary string) DesktopResourceBridgeResource {
+	return DesktopResourceBridgeResource{
+		ID:                         id,
+		Name:                       name,
+		Operation:                  operation,
+		PortalInterface:            portalInterface,
+		RuntimeMethod:              "GetPortalRequestPlan",
+		State:                      "planned",
+		PortalRequired:             true,
+		UserApprovalRequired:       true,
+		BridgeEnabled:              false,
+		RequestCreated:             false,
+		DirectBackendAccessAllowed: false,
+		BackendDetailsExposed:      false,
+		Summary:                    summary,
 	}
 }
 

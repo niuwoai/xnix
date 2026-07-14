@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.124] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go desktop-resource-bridge-preview --registry <path> --app <id>` for read-only KDE desktop resource bridge previews from digest-verified registry recipes.
+- Added Go Runtime desktop resource bridge planning for file-open, URI-open, print, clipboard, and screenshot bridges with Portal metadata and required Runtime gate summaries.
+- Added Go and Ruby harness coverage that verifies bridge previews remain Runtime-owned, KDE-targeted, Portal-mediated, backend-detail-free, host-root-safe, host-path-free, and honest about bridges, request objects, backend processes, and direct desktop resource access remaining disabled.
+
+### Changed
+
+- Moved the user-visible desktop resource bridge surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for bridge presentation and review only.
+
 ## [0.2.123] - 2026-07-15
 
 ### Added

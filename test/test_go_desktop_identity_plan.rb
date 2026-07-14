@@ -54,6 +54,7 @@ assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop 
 assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.go")).include?("LoadRecipeFromRegistry"), "Go Runtime must load recipes from the registry")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-resource-bridge-preview"), "Go Runtime CLI must render KDE desktop resource bridge previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("krunner-query-preview"), "Go Runtime CLI must render KDE KRunner query previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
@@ -378,6 +379,55 @@ if go_available
   assert(!permission_review.downcase.include?("prefix"), "permission review preview must not expose implementation storage")
   assert(!permission_review.include?(".exe"), "permission review preview must not expose a Windows executable")
   assert(!permission_review.downcase.include?("proton"), "permission review preview must not expose backend implementation names")
+
+  desktop_resource_bridge, desktop_resource_bridge_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "desktop-resource-bridge-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(desktop_resource_bridge_status.success?, "Go desktop resource bridge preview CLI must run successfully")
+  bridge_payload = JSON.parse(desktop_resource_bridge)
+  assert(bridge_payload.fetch("schema_version") == "xnix.runtime.desktop_resource_bridge.v1", "desktop resource bridge preview schema version must be stable")
+  assert(bridge_payload.fetch("request_type") == "desktop-resource-bridge-preview", "desktop resource bridge preview must identify its request type")
+  assert(bridge_payload.fetch("plan_type") == "desktop-resource-bridge-plan", "desktop resource bridge preview must identify the Runtime plan type")
+  assert(bridge_payload.fetch("source") == "runtime-resource-boundary", "desktop resource bridge preview must identify Runtime resource boundaries")
+  assert(bridge_payload.fetch("desktop") == "KDE Plasma", "desktop resource bridge preview must target KDE Plasma")
+  assert(bridge_payload.fetch("runtime_method") == "GetDesktopResourceBridgePlan", "desktop resource bridge preview must expose the Runtime method")
+  assert(bridge_payload.fetch("application_id") == recipe.id, "desktop resource bridge preview must preserve application identity")
+  assert(bridge_payload.fetch("display_name") == recipe.name, "desktop resource bridge preview must preserve display names")
+  assert(bridge_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "desktop resource bridge preview must bind generated desktop files")
+  assert(bridge_payload.fetch("bridge_state") == "planned", "desktop resource bridge preview must stay planned")
+  assert(bridge_payload.fetch("resource_count") == 5, "desktop resource bridge preview must expose five resource bridges")
+  assert(bridge_payload.fetch("resources").map { |resource| resource.fetch("id") } == %w[file-open uri-open print clipboard screenshot], "desktop resource bridge preview must preserve resource order")
+  assert(bridge_payload.fetch("resources").all? { |resource| resource.fetch("runtime_method") == "GetPortalRequestPlan" }, "desktop resource bridge preview resources must point at Portal request plans")
+  assert(bridge_payload.fetch("resources").all? { |resource| resource.fetch("portal_required") }, "desktop resource bridge preview resources must require Portals")
+  assert(bridge_payload.fetch("resources").all? { |resource| resource.fetch("user_approval_required") }, "desktop resource bridge preview resources must require user approval")
+  assert(bridge_payload.fetch("resources").all? { |resource| !resource.fetch("bridge_enabled") }, "desktop resource bridge preview resources must keep bridges disabled")
+  assert(bridge_payload.fetch("resources").all? { |resource| !resource.fetch("request_created") }, "desktop resource bridge preview resources must not create Portal requests")
+  assert(bridge_payload.fetch("resources").all? { |resource| !resource.fetch("direct_backend_access_allowed") }, "desktop resource bridge preview resources must block direct access")
+  assert(bridge_payload.fetch("portal_mediated") == true, "desktop resource bridge preview must require Portal mediation")
+  assert(bridge_payload.fetch("file_bridge_planned") == true, "desktop resource bridge preview must plan file bridges")
+  assert(bridge_payload.fetch("uri_bridge_planned") == true, "desktop resource bridge preview must plan URI bridges")
+  assert(bridge_payload.fetch("print_bridge_planned") == true, "desktop resource bridge preview must plan print bridges")
+  assert(bridge_payload.fetch("clipboard_bridge_planned") == true, "desktop resource bridge preview must plan clipboard bridges")
+  assert(bridge_payload.fetch("screenshot_bridge_planned") == true, "desktop resource bridge preview must plan screenshot bridges")
+  assert(bridge_payload.fetch("bridges_enabled") == false, "desktop resource bridge preview must not enable bridges")
+  assert(bridge_payload.fetch("requests_created") == false, "desktop resource bridge preview must not create requests")
+  assert(bridge_payload.fetch("backend_process_started") == false, "desktop resource bridge preview must not start backend processes")
+  assert(bridge_payload.fetch("direct_host_file_access") == false, "desktop resource bridge preview must not grant direct host file access")
+  assert(bridge_payload.fetch("direct_clipboard_access") == false, "desktop resource bridge preview must not grant direct clipboard access")
+  assert(bridge_payload.fetch("direct_print_access") == false, "desktop resource bridge preview must not grant direct print access")
+  assert(bridge_payload.fetch("host_root_modified") == false, "desktop resource bridge preview must not mutate the host root")
+  assert(bridge_payload.fetch("backend_details_exposed") == false, "desktop resource bridge preview must not expose backend details")
+  assert(!desktop_resource_bridge.downcase.include?("prefix"), "desktop resource bridge preview must not expose implementation storage")
+  assert(!desktop_resource_bridge.include?(".exe"), "desktop resource bridge preview must not expose a Windows executable")
+  assert(!desktop_resource_bridge.downcase.include?("proton"), "desktop resource bridge preview must not expose backend implementation names")
+  assert(!desktop_resource_bridge.downcase.match?(%r{/users|/home|/var|/opt|/tmp}), "desktop resource bridge preview must not expose host paths")
 
   tray_status, tray_status_result = capture_runtime_go(
     project_root,

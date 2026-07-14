@@ -463,6 +463,87 @@ func TestPermissionReviewPreviewCommandRendersKDEPermissionReview(t *testing.T) 
 	}
 }
 
+func TestDesktopResourceBridgePreviewCommandRendersKDEBridgePlan(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-resource-bridge-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_resource_bridge.v1" ||
+		payload["request_type"] != "desktop-resource-bridge-preview" ||
+		payload["plan_type"] != "desktop-resource-bridge-plan" {
+		t.Fatalf("unexpected desktop resource bridge schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["source"] != "runtime-resource-boundary" ||
+		payload["runtime_method"] != "GetDesktopResourceBridgePlan" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop resource bridge identity: %#v", payload)
+	}
+	if payload["bridge_state"] != "planned" ||
+		payload["resource_count"] != float64(5) ||
+		payload["portal_mediated"] != true ||
+		payload["file_bridge_planned"] != true ||
+		payload["uri_bridge_planned"] != true ||
+		payload["print_bridge_planned"] != true ||
+		payload["clipboard_bridge_planned"] != true ||
+		payload["screenshot_bridge_planned"] != true {
+		t.Fatalf("unexpected bridge plan state: %#v", payload)
+	}
+	resources := payload["resources"].([]any)
+	if resources[0].(map[string]any)["id"] != "file-open" ||
+		resources[1].(map[string]any)["id"] != "uri-open" ||
+		resources[2].(map[string]any)["id"] != "print" ||
+		resources[3].(map[string]any)["id"] != "clipboard" ||
+		resources[4].(map[string]any)["id"] != "screenshot" {
+		t.Fatalf("unexpected bridge resources: %#v", resources)
+	}
+	for _, value := range resources {
+		resource := value.(map[string]any)
+		if resource["runtime_method"] != "GetPortalRequestPlan" ||
+			resource["state"] != "planned" ||
+			resource["portal_required"] != true ||
+			resource["user_approval_required"] != true ||
+			resource["bridge_enabled"] != false ||
+			resource["request_created"] != false ||
+			resource["direct_backend_access_allowed"] != false ||
+			resource["backend_details_exposed"] != false {
+			t.Fatalf("resource bridge gate unexpectedly open: %#v", resource)
+		}
+	}
+	if payload["runtime_owned"] != true || payload["kde_policy_owner"] != false ||
+		payload["user_visible"] != true ||
+		payload["bridges_enabled"] != false ||
+		payload["requests_created"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["direct_host_file_access"] != false ||
+		payload["direct_clipboard_access"] != false ||
+		payload["direct_print_access"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected desktop resource bridge safety flags: %#v", payload)
+	}
+}
+
 func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
