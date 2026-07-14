@@ -712,6 +712,105 @@ func TestExecutionDecisionPreviewCommandCapturesDecisionWithoutApproval(t *testi
 	}
 }
 
+func TestExecutionPreflightPreviewCommandBlocksLaunchUntilGatesPass(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"execution-preflight-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.launch_preflight.v1" ||
+		payload["request_type"] != "execution-preflight-preview" ||
+		payload["preflight_type"] != "compatibility-launch-preflight" ||
+		payload["request_state"] != "blocked" ||
+		payload["source"] != "execution-decision-preview" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["read_method"] != "GetExecutionPreflightPreview" {
+		t.Fatalf("unexpected execution preflight schema: %#v", payload)
+	}
+	decision := payload["execution_decision"].(map[string]any)
+	if decision["schema_version"] != "xnix.runtime.request_decision.v1" ||
+		decision["request_type"] != "execution-decision-preview" ||
+		decision["decision"] != "approved" ||
+		decision["decision_accepted"] != true ||
+		decision["user_intent_captured"] != true ||
+		decision["decision_recorded"] != false ||
+		decision["runtime_approval_granted"] != false ||
+		decision["execution_allowed"] != false ||
+		decision["review_receipt_created"] != false ||
+		decision["queue_state_changed"] != false {
+		t.Fatalf("unexpected execution decision summary: %#v", decision)
+	}
+	if payload["check_count"] != float64(5) ||
+		payload["passed_check_count"] != float64(1) ||
+		payload["required_check_count"] != float64(2) ||
+		payload["pending_check_count"] != float64(1) ||
+		payload["blocked_check_count"] != float64(1) {
+		t.Fatalf("unexpected execution preflight counts: %#v", payload)
+	}
+	checks := payload["preflight_checks"].([]any)
+	if len(checks) != 5 ||
+		checks[0].(map[string]any)["id"] != "user-decision" ||
+		checks[0].(map[string]any)["status"] != "pass" ||
+		checks[1].(map[string]any)["id"] != "portal-policy-review" ||
+		checks[1].(map[string]any)["status"] != "required" ||
+		checks[2].(map[string]any)["id"] != "snapshot-baseline" ||
+		checks[3].(map[string]any)["id"] != "backend-binding" ||
+		checks[4].(map[string]any)["id"] != "runtime-launch-write-gate" ||
+		checks[4].(map[string]any)["status"] != "blocked" {
+		t.Fatalf("unexpected execution preflight checks: %#v", checks)
+	}
+	if payload["portal_required"] != true ||
+		payload["snapshot_required"] != true ||
+		payload["file_count"] != float64(1) ||
+		payload["file_uris"].([]any)[0] != "file:///home/test/Documents/book.abc" {
+		t.Fatalf("unexpected execution preflight file routing: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["compatibility_center_card"] != true ||
+		payload["safe_for_ai_diagnostics"] != true ||
+		payload["desktop_entry_launch_visible"] != true ||
+		payload["launch_intent_captured"] != true ||
+		payload["user_decision_captured"] != true ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["preflight_complete"] != false ||
+		payload["preflight_passed"] != false ||
+		payload["portal_preflight_ready"] != false ||
+		payload["snapshot_preflight_ready"] != false ||
+		payload["backend_preflight_ready"] != false ||
+		payload["write_gate_open"] != false ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_binding_ready"] != false ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution preflight safety flags: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

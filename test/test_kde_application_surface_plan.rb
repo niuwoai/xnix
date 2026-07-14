@@ -16,7 +16,7 @@ store = Xnix::Compatibility::RecipeStore.new(path: PROJECT_ROOT.join("runtime/re
 recipe = store.find("org.xnix.sample.notepad")
 plan = Xnix::Compatibility::KDEApplicationSurfacePlan.new(recipe: recipe).to_h
 
-assert(plan["version"] == "0.2.134", "KDE application surface plan must expose the current version")
+assert(plan["version"] == "0.2.135", "KDE application surface plan must expose the current version")
 assert(plan["plan_type"] == "kde-application-surface-plan", "KDE application surface plan must identify the plan type")
 assert(plan["runtime_method"] == "GetKDEApplicationSurfacePlan", "KDE application surface plan must identify the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "KDE application surface plan must preserve the application id")

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.135] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go execution-preflight-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime launch preflight previews from digest-verified registry recipes.
+- Added Go Runtime launch-preflight planning that turns a Compatibility Center launch decision into explicit user decision, Portal review, snapshot baseline, backend binding, and Runtime Launch write-gate checks before execution can be considered.
+- Added Go and Ruby harness coverage that verifies execution-preflight previews remain Runtime-owned, Go-backed, KDE-targeted, Compatibility Center-ready, Portal-aware, backend-detail-free, host-root-safe, and honest about preflight, Runtime approval, request objects, permissions, backend binding, and execution remaining disabled.
+
+### Changed
+
+- Moved the user-visible launch preflight surface one step closer to Go-owned Runtime product logic while keeping KDE responsible for displaying gate status only.
+
 ## [0.2.134] - 2026-07-15
 
 ### Added
