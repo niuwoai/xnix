@@ -21,7 +21,7 @@ plan = Xnix::Compatibility::SettingsChangePlan.new(
   value: "allow"
 ).to_h
 
-assert(plan["version"] == "0.2.116", "settings change plan must expose the current version")
+assert(plan["version"] == "0.2.117", "settings change plan must expose the current version")
 assert(plan["plan_type"] == "settings-change-plan", "settings change plan must identify plan type")
 assert(plan["application_id"] == "org.xnix.sample.notepad", "settings change plan must preserve application id")
 assert(plan["runtime_owned"], "Runtime must own settings change plans")

@@ -110,6 +110,51 @@ func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"tray-status-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.tray_status.v1" || payload["status_type"] != "tray-status-preview" {
+		t.Fatalf("unexpected tray schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" || payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected tray identity: %#v", payload)
+	}
+	runtimeActivity := payload["runtime_activity"].(map[string]any)
+	if runtimeActivity["registered_application_count"] != float64(1) || runtimeActivity["active_application_count"] != float64(0) {
+		t.Fatalf("unexpected runtime activity: %#v", runtimeActivity)
+	}
+	trayBridge := payload["tray_bridge"].(map[string]any)
+	if trayBridge["state"] != "planned" || trayBridge["bridged_tray_application_count"] != float64(0) {
+		t.Fatalf("unexpected tray bridge: %#v", trayBridge)
+	}
+	if payload["runtime_owned"] != true || payload["kde_policy_owner"] != false ||
+		payload["live_backend_bridge_enabled"] != false || payload["bridge_configuration_persisted"] != false ||
+		payload["host_root_modified"] != false || payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected tray safety flags: %#v", payload)
+	}
+}
+
 func TestWindowIdentityPreviewCommandRendersKDEWindowIdentity(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

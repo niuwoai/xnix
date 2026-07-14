@@ -31,6 +31,7 @@ assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("mimeapps-preview"), "Go Runtime CLI must render MIME association previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("tray-status-preview"), "Go Runtime CLI must render KDE tray status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("window-identity-preview"), "Go Runtime CLI must render KDE window identity previews")
 assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
 assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
@@ -110,6 +111,42 @@ if go_available
   assert(mimeapps.include?("application/x-xnix-log=xnix-#{recipe.id}.desktop;\n"), "MIME apps preview must add log file associations")
   assert(!mimeapps.downcase.include?("prefix"), "MIME apps preview must not expose implementation storage")
   assert(!mimeapps.include?(".exe"), "MIME apps preview must not expose a Windows executable")
+
+  tray_status, tray_status_result = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "tray-status-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    chdir: project_root
+  )
+  assert(tray_status_result.success?, "Go tray status preview CLI must run successfully")
+  tray_payload = JSON.parse(tray_status)
+  assert(tray_payload.fetch("schema_version") == "xnix.runtime.tray_status.v1", "tray status preview schema version must be stable")
+  assert(tray_payload.fetch("status_type") == "tray-status-preview", "tray status preview must identify its status type")
+  assert(tray_payload.fetch("desktop") == "KDE Plasma", "tray status preview must target KDE Plasma")
+  assert(tray_payload.fetch("application_id") == recipe.id, "tray status preview must preserve application identity")
+  assert(tray_payload.fetch("display_name") == recipe.name, "tray status preview must preserve display names")
+  assert(tray_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "tray status preview must bind generated desktop files")
+  assert(tray_payload.fetch("runtime_activity").fetch("registered_application_count") == 1, "tray status preview must register one application")
+  assert(tray_payload.fetch("runtime_activity").fetch("active_application_count") == 0, "tray status preview must not claim live application activity")
+  assert(tray_payload.fetch("runtime_activity").fetch("attention_required_count") == 0, "tray status preview must not invent attention requests")
+  assert(tray_payload.fetch("compatibility_status").fetch("state") == "ready", "tray status preview must expose a ready compatibility state")
+  assert(tray_payload.fetch("tray_bridge").fetch("state") == "planned", "tray status preview must keep live tray bridging planned")
+  assert(tray_payload.fetch("tray_bridge").fetch("bridged_tray_application_count") == 0, "tray status preview must not claim bridged tray applications")
+  assert(tray_payload.fetch("actions") == ["open-compatibility-center", "open-settings"], "tray status preview must expose KDE navigation actions")
+  assert(tray_payload.fetch("runtime_owned") == true, "tray status preview must remain Runtime-owned")
+  assert(tray_payload.fetch("kde_policy_owner") == false, "tray status preview must not make KDE own backend policy")
+  assert(tray_payload.fetch("user_visible") == true, "tray status preview must be user visible")
+  assert(tray_payload.fetch("live_backend_bridge_enabled") == false, "tray status preview must keep live tray bridges disabled")
+  assert(tray_payload.fetch("bridge_configuration_persisted") == false, "tray status preview must keep bridge persistence disabled")
+  assert(tray_payload.fetch("host_root_modified") == false, "tray status preview must not mutate the host root")
+  assert(tray_payload.fetch("backend_details_exposed") == false, "tray status preview must not expose backend details")
+  assert(!tray_status.downcase.include?("prefix"), "tray status preview must not expose implementation storage")
+  assert(!tray_status.include?(".exe"), "tray status preview must not expose a Windows executable")
 
   window_identity, window_status = Open3.capture2(
     go_binary,

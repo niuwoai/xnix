@@ -106,6 +106,57 @@ type RestoreHints struct {
 	PreferExistingWindow bool   `json:"prefer_existing_window"`
 }
 
+type TrayStatusPreview struct {
+	SchemaVersion                string               `json:"schema_version"`
+	StatusType                   string               `json:"status_type"`
+	ApplicationID                string               `json:"application_id"`
+	DisplayName                  string               `json:"display_name"`
+	Desktop                      string               `json:"desktop"`
+	Icon                         string               `json:"icon"`
+	DesktopFile                  string               `json:"desktop_file"`
+	RuntimeActivity              TrayRuntimeActivity  `json:"runtime_activity"`
+	CompatibilityStatus          TrayCompatibility    `json:"compatibility_status"`
+	TrayBridge                   TrayBridgeStatus     `json:"tray_bridge"`
+	ApplicationEntry             TrayApplicationEntry `json:"application_entry"`
+	Actions                      []string             `json:"actions"`
+	RuntimeOwned                 bool                 `json:"runtime_owned"`
+	KDEPolicyOwner               bool                 `json:"kde_policy_owner"`
+	UserVisible                  bool                 `json:"user_visible"`
+	LiveBackendBridgeEnabled     bool                 `json:"live_backend_bridge_enabled"`
+	BridgeConfigurationPersisted bool                 `json:"bridge_configuration_persisted"`
+	HostRootModified             bool                 `json:"host_root_modified"`
+	BackendDetailsExposed        bool                 `json:"backend_details_exposed"`
+	Summary                      string               `json:"summary"`
+}
+
+type TrayRuntimeActivity struct {
+	ActiveApplicationCount     int    `json:"active_application_count"`
+	AttentionRequiredCount     int    `json:"attention_required_count"`
+	RegisteredApplicationCount int    `json:"registered_application_count"`
+	Summary                    string `json:"summary"`
+}
+
+type TrayCompatibility struct {
+	State string `json:"state"`
+	Label string `json:"label"`
+}
+
+type TrayBridgeStatus struct {
+	BridgedTrayApplicationCount int    `json:"bridged_tray_application_count"`
+	State                       string `json:"state"`
+	Label                       string `json:"label"`
+}
+
+type TrayApplicationEntry struct {
+	ApplicationID      string `json:"application_id"`
+	DisplayName        string `json:"display_name"`
+	Icon               string `json:"icon"`
+	DesktopFile        string `json:"desktop_file"`
+	CompatibilityState string `json:"compatibility_state"`
+	AttentionRequired  bool   `json:"attention_required"`
+	UserVisible        bool   `json:"user_visible"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -346,6 +397,60 @@ func (plan Plan) WindowIdentityPreview() (WindowIdentityPreview, error) {
 		BackendDetailsExposed: false,
 		UserFacingSettings:    plan.UserFacingSettings,
 		Summary:               "window identity preview lets KDE group, pin, switch, and restore compatibility windows as normal Linux application windows while backend policy stays in the Runtime.",
+	}, nil
+}
+
+func (plan Plan) TrayStatusPreview() (TrayStatusPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return TrayStatusPreview{}, err
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {
+		if !singleLine(value) {
+			return TrayStatusPreview{}, errors.New("tray status preview requires single-line identity fields")
+		}
+	}
+
+	return TrayStatusPreview{
+		SchemaVersion: "xnix.runtime.tray_status.v1",
+		StatusType:    "tray-status-preview",
+		ApplicationID: plan.ApplicationID,
+		DisplayName:   plan.DisplayName,
+		Desktop:       "KDE Plasma",
+		Icon:          plan.Icon,
+		DesktopFile:   plan.DesktopFile,
+		RuntimeActivity: TrayRuntimeActivity{
+			ActiveApplicationCount:     0,
+			AttentionRequiredCount:     0,
+			RegisteredApplicationCount: 1,
+			Summary:                    plan.DisplayName + " is registered for KDE tray visibility",
+		},
+		CompatibilityStatus: TrayCompatibility{
+			State: "ready",
+			Label: "Ready",
+		},
+		TrayBridge: TrayBridgeStatus{
+			BridgedTrayApplicationCount: 0,
+			State:                       "planned",
+			Label:                       "Tray bridge is planned",
+		},
+		ApplicationEntry: TrayApplicationEntry{
+			ApplicationID:      plan.ApplicationID,
+			DisplayName:        plan.DisplayName,
+			Icon:               plan.Icon,
+			DesktopFile:        plan.DesktopFile,
+			CompatibilityState: "ready",
+			AttentionRequired:  false,
+			UserVisible:        true,
+		},
+		Actions:                      []string{"open-compatibility-center", "open-settings"},
+		RuntimeOwned:                 true,
+		KDEPolicyOwner:               false,
+		UserVisible:                  true,
+		LiveBackendBridgeEnabled:     false,
+		BridgeConfigurationPersisted: false,
+		HostRootModified:             false,
+		BackendDetailsExposed:        false,
+		Summary:                      "tray status preview lets KDE show compatibility application status while live tray bridging and backend policy stay gated in the Runtime.",
 	}, nil
 }
 

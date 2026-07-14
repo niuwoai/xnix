@@ -19,7 +19,7 @@ plan = Xnix::Compatibility::KDEShellIntegrationPlan.new.to_h
 component_ids = plan.fetch("components").map { |component| component.fetch("id") }
 runtime_methods = plan.fetch("components").map { |component| component.fetch("runtime_method") }
 
-assert(plan["version"] == "0.2.116", "KDE shell integration plan must expose the current version")
+assert(plan["version"] == "0.2.117", "KDE shell integration plan must expose the current version")
 assert(plan["plan_type"] == "kde-shell-integration-plan", "KDE shell integration plan must identify the plan type")
 assert(plan["runtime_method"] == "GetKDEShellIntegrationPlan", "KDE shell integration plan must expose the Runtime method")
 assert(plan["desktop_shell"] == "KDE Plasma", "KDE shell integration plan must target KDE Plasma")

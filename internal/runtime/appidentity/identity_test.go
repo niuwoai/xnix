@@ -183,6 +183,58 @@ func TestWindowIdentityPreviewUsesNormalDesktopWindowIdentity(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewKeepsLiveBridgeGated(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.TrayStatusPreview()
+	if err != nil {
+		t.Fatalf("TrayStatusPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.tray_status.v1" || preview.StatusType != "tray-status-preview" {
+		t.Fatalf("unexpected tray schema: %#v", preview)
+	}
+	if preview.Desktop != "KDE Plasma" || preview.ApplicationID != "org.example.ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" || preview.Icon != "office-chart-area" {
+		t.Fatalf("unexpected tray identity: %#v", preview)
+	}
+	if preview.RuntimeActivity.RegisteredApplicationCount != 1 || preview.RuntimeActivity.ActiveApplicationCount != 0 ||
+		preview.RuntimeActivity.AttentionRequiredCount != 0 {
+		t.Fatalf("unexpected tray runtime activity: %#v", preview.RuntimeActivity)
+	}
+	if preview.CompatibilityStatus.State != "ready" || preview.TrayBridge.State != "planned" ||
+		preview.TrayBridge.BridgedTrayApplicationCount != 0 {
+		t.Fatalf("unexpected tray status: %#v %#v", preview.CompatibilityStatus, preview.TrayBridge)
+	}
+	if !sameStrings(preview.Actions, []string{"open-compatibility-center", "open-settings"}) {
+		t.Fatalf("Actions = %#v", preview.Actions)
+	}
+	if !preview.RuntimeOwned || preview.KDEPolicyOwner || !preview.UserVisible ||
+		preview.LiveBackendBridgeEnabled || preview.BridgeConfigurationPersisted ||
+		preview.HostRootModified || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected tray safety flags: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("tray status preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

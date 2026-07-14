@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.117] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go tray-status-preview --registry <path> --app <id>` for read-only KDE tray status previews from the registry-backed desktop identity plan.
+- Added Go Runtime tray status modeling for registered compatibility applications, ready state, planned tray bridge state, KDE navigation actions, and disabled live bridge/persistence gates.
+- Added Go and Ruby harness coverage that verifies Runtime-owned tray previews remain KDE-targeted, user-visible, backend-detail-free, host-root-safe, and honest about live tray bridging being planned rather than active.
+
+### Changed
+
+- Moved the system tray entry point one step closer to Go-owned Runtime product logic while keeping live backend tray bridging gated until a production bridge exists.
+
 ## [0.2.116] - 2026-07-15
 
 ### Added
