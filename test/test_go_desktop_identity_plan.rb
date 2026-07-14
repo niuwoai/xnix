@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-preflight-preview"), "Go Runtime CLI must render KDE action preflight previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-review-preview"), "Go Runtime CLI must render KDE action review previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-entrypoint-action-preview"), "Go Runtime CLI must render KDE entrypoint action previews")
@@ -1363,6 +1364,39 @@ if go_available
   assert(!kde_action_review.downcase.include?("prefix"), "KDE action review preview must not expose implementation storage")
   assert(!kde_action_review.include?(".exe"), "KDE action review preview must not expose a Windows executable")
   assert(!kde_action_review.downcase.include?("virtual machine"), "KDE action review preview must not expose implementation labels")
+
+  kde_action_preflight, kde_action_preflight_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-action-preflight-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--action",
+    "review-file-manager-action",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_action_preflight_status.success?, "Go KDE action preflight preview CLI must run successfully")
+  kde_action_preflight_payload = JSON.parse(kde_action_preflight)
+  assert(kde_action_preflight_payload.fetch("schema_version") == "xnix.runtime.kde_action_preflight.v1", "KDE action preflight preview schema version must be stable")
+  assert(kde_action_preflight_payload.fetch("request_type") == "kde-action-preflight-preview", "KDE action preflight preview must identify its request type")
+  assert(kde_action_preflight_payload.fetch("source") == "kde-action-review-preview", "KDE action preflight preview must derive from action review previews")
+  assert(kde_action_preflight_payload.fetch("action").fetch("id") == "review-file-manager-action", "KDE action preflight preview must preserve the queued action")
+  assert(kde_action_preflight_payload.fetch("review").fetch("decision") == "approved", "KDE action preflight preview must preserve review decision")
+  assert(kde_action_preflight_payload.fetch("execution_preflight").fetch("request_type") == "execution-preflight-preview", "KDE action preflight preview must summarize execution preflight")
+  assert(kde_action_preflight_payload.fetch("action_preflight_created") == true, "KDE action preflight preview must create a read model")
+  assert(kde_action_preflight_payload.fetch("preflight_complete") == false, "KDE action preflight preview must not complete preflight")
+  assert(kde_action_preflight_payload.fetch("review_receipt_recorded") == false, "KDE action preflight preview must not record review receipts")
+  assert(kde_action_preflight_payload.fetch("request_objects_created") == false, "KDE action preflight preview must not create Runtime request objects")
+  assert(kde_action_preflight_payload.fetch("execution_started") == false, "KDE action preflight preview must not start execution")
+  assert(kde_action_preflight_payload.fetch("host_root_modified") == false, "KDE action preflight preview must not mutate the host root")
+  assert(!kde_action_preflight.downcase.include?("prefix"), "KDE action preflight preview must not expose implementation storage")
+  assert(!kde_action_preflight.include?(".exe"), "KDE action preflight preview must not expose a Windows executable")
+  assert(!kde_action_preflight.downcase.include?("virtual machine"), "KDE action preflight preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.144] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-preflight-preview --registry <path> --app <id> --action <id> --decision <decision> [file://...]` for read-only Runtime previews of preflight gates after one queued KDE action has been reviewed.
+- Added Go Runtime KDE action preflight modeling that joins action review intent with execution preflight state before any review receipt, request object, permission grant, or launch approval can exist.
+- Added Go and Ruby harness coverage that verifies KDE action preflight previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about review receipts, queue mutation, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center queue flow from review preview toward explicit preflight-gate visibility while keeping all execution and persistence gates closed.
+
 ## [0.2.143] - 2026-07-15
 
 ### Added
