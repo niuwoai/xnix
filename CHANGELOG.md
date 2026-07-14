@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.111] - 2026-07-15
+
+### Added
+
+- Added a Go Runtime desktop identity planning package and CLI that turn an application recipe into a KDE-safe normal Linux application identity.
+- Added Go unit tests and Docker image validation so Runtime Go logic is compiled and tested inside the constrained Colima development environment.
+- Added Ruby harness coverage that verifies the Go source boundary, Docker build checks, managed launcher command, MIME identity, and backend terminology hiding when Go is available.
+
+### Changed
+
+- Updated Runtime implementation guidance so important product logic moves to Go first, with C reserved for low-level or already-owned Runtime policy surfaces and Ruby kept for tests and lightweight tooling.
+
 ## [0.2.110] - 2026-07-15
 
 ### Added

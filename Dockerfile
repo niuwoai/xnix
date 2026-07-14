@@ -13,6 +13,7 @@ RUN apt-get update \
         file \
         flex \
         git \
+        golang-go \
         libglib2.0-bin \
         libglib2.0-dev \
         libelf-dev \
@@ -33,6 +34,9 @@ RUN useradd --create-home --shell /bin/bash xnix
 COPY --chown=xnix:xnix . /workspace
 RUN mkdir --parents /workspace/.cache/buildroot \
     && chown --recursive xnix:xnix /workspace/.cache
+WORKDIR /workspace
+RUN go test ./...
+RUN go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go
 RUN gcc /workspace/runtime/dbus/xnix_compatd_smoke.c \
         -o /usr/local/bin/xnix-dbus-smoke \
         $(pkg-config --cflags --libs gio-2.0)

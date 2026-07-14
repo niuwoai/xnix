@@ -4,10 +4,11 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.110"
+EXPECTED_VERSION = "0.2.111"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
+  go.mod
   buildroot/Config.in
   buildroot/external.desc
   buildroot/external.mk
@@ -137,6 +138,9 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-owner-smoke-plan
   bin/xnix-runtime-service-binding
   bin/xnix-runtime-write-gate
+  cmd/xnix-runtime-go/main.go
+  internal/runtime/appidentity/identity.go
+  internal/runtime/appidentity/identity_test.go
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -270,6 +274,7 @@ REQUIRED_FILES = %w[
   test/test_dbus_runtime_client.rb
   test/test_dolphin_service_menu.rb
   test/test_file_association_model.rb
+  test/test_go_desktop_identity_plan.rb
   test/test_file_open_request.rb
   test/test_full_smoke_script.rb
   test/test_launch_request.rb

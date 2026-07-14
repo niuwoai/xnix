@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "open3"
+require "rbconfig"
+require_relative "../lib/xnix/compatibility/application_recipe"
+
+def assert(condition, message)
+  return if condition
+
+  warn "FAIL: #{message}"
+  exit 1
+end
+
+project_root = File.expand_path("..", __dir__)
+go_binary = ENV.fetch("XNIX_GO_BIN", "go")
+go_available = begin
+  system(go_binary, "version", out: File::NULL, err: File::NULL)
+rescue SystemCallError
+  false
+end
+
+source = File.read(File.join(project_root, "internal/runtime/appidentity/identity.go"))
+dockerfile = File.read(File.join(project_root, "Dockerfile"))
+
+assert(source.include?("package appidentity"), "Go application identity package must exist")
+assert(source.include?("BackendTerminologyHidden"), "Go plan must explicitly hide backend terminology")
+assert(source.include?("ValidateSafeForDesktop"), "Go plan must include desktop safety validation")
+assert(dockerfile.include?("golang-go"), "Docker image must install Go for Runtime core validation")
+assert(dockerfile.include?("go test ./..."), "Docker image must run Go tests")
+assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go"), "Docker image must build the Go Runtime CLI")
+
+if go_available
+  output, status = Open3.capture2(
+    go_binary,
+    "run",
+    "./cmd/xnix-runtime-go",
+    "desktop-identity-plan",
+    "--recipe",
+    "runtime/recipes/org.xnix.sample.notepad.json",
+    chdir: project_root
+  )
+  assert(status.success?, "Go desktop identity CLI must run successfully")
+
+  plan = JSON.parse(output)
+  recipe = Xnix::Compatibility::ApplicationRecipe.from_hash(JSON.parse(File.read(File.join(project_root, "runtime/recipes/org.xnix.sample.notepad.json"))))
+
+  assert(plan.fetch("schema_version") == "xnix.runtime.desktop_identity.v1", "plan schema version must be stable")
+  assert(plan.fetch("application_id") == recipe.id, "plan must preserve the recipe application id")
+  assert(plan.fetch("display_name") == recipe.name, "plan must preserve the user-facing application name")
+  assert(plan.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "plan must expose a standard desktop file name")
+  assert(plan.fetch("launch_command") == ["xnix-compat-launch", "--app", recipe.id, "%U"], "plan must use the managed Runtime launcher")
+  assert(plan.fetch("mime_types") == recipe.mime_types.sort, "plan must expose normalized MIME types")
+  assert(plan.fetch("runtime_owned") == true, "plan must be Runtime-owned")
+  assert(plan.fetch("backend_terminology_hidden") == true, "plan must hide backend terminology")
+  assert(plan.fetch("desktop_file_write_enabled") == false, "plan must not write desktop files")
+  assert(plan.fetch("backend_launch_enabled") == false, "plan must not launch a backend")
+  assert(plan.fetch("backend_details_exposed") == false, "plan must not expose backend details")
+
+  lower = output.downcase
+  %w[prefix .exe qemu-system].each do |term|
+    assert(!lower.include?(term), "plan JSON must not expose #{term}")
+  end
+end
+
+puts "PASS: Go Runtime desktop identity plan unit tests"
