@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.223
+> Last updated: 2026-07-16 | Baseline: v0.2.224
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -9,6 +9,7 @@ Use this file when the problem is not "add one more preview contract", but "turn
 This document intentionally does not replace:
 
 - `docs/claude-code-implementation-packages.md`, which is treated as an existing package guide.
+- `docs/claude-code-large-empty-domain-assignments.md`, which is the coarse dispatcher for branch-sized empty-domain assignments.
 - `docs/claude-code-open-domain-work-packages.md`, which is the broad backlog map.
 - `docs/claude-code-independent-implementation-briefs.md`, which is the smaller prompt-ready brief list.
 - `docs/claude-code-contract-implementation-handoff.md`, which groups contract-to-implementation workstreams.
@@ -49,7 +50,7 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.223 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.224 | What remains useful to implement |
 | --- | --- | --- |
 | Runtime owner | Owner candidate, full in-process read dispatch coverage for every D-Bus read-only Runtime method, owner-local probes, route manifests, service binding previews, lifecycle JSONL, and write gates exist. | Constrained long-running session-bus event loop, smoke-owned readiness, bus-call parity, and closed write-method evidence through the owner process. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |

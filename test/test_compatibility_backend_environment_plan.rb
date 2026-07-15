@@ -19,7 +19,7 @@ recipe = recipe_store.find("org.xnix.sample.notepad")
 plan = Xnix::Compatibility::CompatibilityBackendEnvironmentPlan.new(recipe: recipe).to_h
 profile_ids = plan.fetch("profiles").map { |profile| profile.fetch("id") }
 
-assert(plan["version"] == "0.2.223", "backend environment plan must expose the current version")
+assert(plan["version"] == "0.2.224", "backend environment plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-backend-environment-plan", "backend environment plan must identify the plan type")
 assert(plan["runtime_method"] == "GetBackendEnvironmentPlan", "backend environment plan must identify the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "backend environment plan must preserve the application id")

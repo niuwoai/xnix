@@ -517,6 +517,7 @@ build_settings_model(const gchar *application_id)
 
   g_variant_builder_init(&settings, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&settings, "{sv}", "request_type", g_variant_new_string("settings-model"));
+  add_go_owner_dispatch_bridge_fields(&settings, "GetCompatibilitySettings", application_id);
   g_variant_builder_add(&settings, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&settings, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&settings, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
@@ -765,6 +766,7 @@ build_compatibility_center_summary(const gchar *application_id)
 
   g_variant_builder_init(&summary, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&summary, "{sv}", "summary_type", g_variant_new_string("compatibility-center-summary"));
+  add_go_owner_dispatch_bridge_fields(&summary, "GetCompatibilityCenterSummary", application_id);
   g_variant_builder_add(&summary, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&summary, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&summary, "{sv}", "compatibility_state", g_variant_new_string("review-required"));

@@ -136,6 +136,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetDesktopEntryPlan: #{stderr}")
   assert(stdout.include?("desktop-entry-plan"), "runtime smoke adapter must expose desktop entry plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetDesktopEntryPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -159,6 +160,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetTaskManagerIdentityPlan: #{stderr}")
   assert(stdout.include?("task-manager-identity-plan"), "runtime smoke adapter must expose task manager identity plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetTaskManagerIdentityPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -299,6 +301,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetFileAssociationPlan: #{stderr}")
   assert(stdout.include?("file-association-plan"), "runtime smoke adapter must expose file association plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetFileAssociationPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -311,6 +314,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetNotificationPlan: #{stderr}")
   assert(stdout.include?("notification-plan"), "runtime smoke adapter must expose notification plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetNotificationPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -321,6 +325,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetTrayStatus: #{stderr}")
   assert(stdout.include?("tray-status-plan"), "runtime smoke adapter must expose tray status over D-Bus")
+  assert_go_owner_bridge(stdout, "GetTrayStatus")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -659,6 +664,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilitySettings: #{stderr}")
   assert(stdout.include?("settings-model"), "runtime smoke adapter must expose compatibility settings over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilitySettings")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -708,6 +714,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityCenterSummary: #{stderr}")
   assert(stdout.include?("compatibility-center-summary"), "runtime smoke adapter must expose Compatibility Center summaries over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityCenterSummary")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

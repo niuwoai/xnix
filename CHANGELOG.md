@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.224] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so the seven first-release KDE entry-point reads carry Go owner read-dispatch payload evidence: launcher, task manager, file manager, tray, notifications, Compatibility Center, and settings.
+- Added restricted session smoke assertions that prove those seven KDE entry-point reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without enabling desktop writes, backend launch, production D-Bus ownership, or host-root mutation.
+- Added `docs/claude-code-large-empty-domain-assignments.md`, a coarse Claude Code dispatcher that groups contract-heavy empty domains into large branch-sized assignments with explicit boundaries, tests, and copyable prompts.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track the seven-entry-point bridge as a Go-owned payload handoff through low-level C D-Bus transport.
+- Linked the large empty-domain assignment dispatcher from the existing Claude Code handoff documents so future implementation branches can choose between coarse and fine-grained task maps.
+
 ## [0.2.223] - 2026-07-16
 
 ### Added

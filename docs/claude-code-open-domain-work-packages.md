@@ -1,10 +1,12 @@
 # Claude Code Open Domain Work Packages
 
-> Last updated: 2026-07-15
+> Last updated: 2026-07-16
 
 This document breaks the current contract-heavy Xnix roadmap into large, independent implementation domains that Claude Code can own one branch at a time.
 
 It intentionally does not replace `docs/claude-code-implementation-packages.md`. Treat this file as a higher-level backlog map for empty or mostly contract-only areas.
+
+For coarse, branch-sized assignments that group empty domains into implementation workstreams, use `docs/claude-code-large-empty-domain-assignments.md`.
 
 For prompt-ready task cards that can be copied directly into Claude Code, use `docs/claude-code-independent-implementation-briefs.md`.
 

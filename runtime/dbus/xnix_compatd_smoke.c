@@ -6,13 +6,15 @@
 static GDBusNodeInfo *introspection_data = NULL;
 
 static gchar *
-go_owner_read_dispatch(const gchar *method_name, const gchar *dispatch_arg)
+go_owner_read_dispatch(const gchar *method_name,
+                       const gchar *dispatch_arg,
+                       const gchar *second_dispatch_arg)
 {
   gchar *stdout_data = NULL;
   gchar *stderr_data = NULL;
   GError *error = NULL;
   gint wait_status = 0;
-  gchar *argv[7] = {0};
+  gchar *argv[8] = {0};
 
   argv[0] = "xnix-runtime-owner";
   argv[1] = "--root";
@@ -20,7 +22,8 @@ go_owner_read_dispatch(const gchar *method_name, const gchar *dispatch_arg)
   argv[3] = "--dispatch-read";
   argv[4] = (gchar *)method_name;
   argv[5] = (gchar *)dispatch_arg;
-  argv[6] = NULL;
+  argv[6] = (gchar *)second_dispatch_arg;
+  argv[7] = NULL;
 
   if (!g_spawn_sync(NULL,
                     argv,
@@ -55,13 +58,14 @@ go_owner_read_dispatch(const gchar *method_name, const gchar *dispatch_arg)
 static gchar *
 go_owner_write_gate_dispatch(const gchar *method_name)
 {
-  return go_owner_read_dispatch("GetRuntimeWriteGate", method_name);
+  return go_owner_read_dispatch("GetRuntimeWriteGate", method_name, NULL);
 }
 
 static void
-add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
-                                    const gchar *method_name,
-                                    const gchar *dispatch_arg)
+add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
+                                     const gchar *method_name,
+                                     const gchar *dispatch_arg,
+                                     const gchar *second_dispatch_arg)
 {
   gchar *go_owner_dispatch_json = NULL;
   gboolean go_owner_dispatch_available = FALSE;
@@ -69,7 +73,7 @@ add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
   if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
     go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
   } else {
-    go_owner_dispatch_json = go_owner_read_dispatch(method_name, dispatch_arg);
+    go_owner_dispatch_json = go_owner_read_dispatch(method_name, dispatch_arg, second_dispatch_arg);
   }
   go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
 
@@ -78,6 +82,14 @@ add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
   g_free(go_owner_dispatch_json);
+}
+
+static void
+add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
+                                    const gchar *method_name,
+                                    const gchar *dispatch_arg)
+{
+  add_go_owner_dispatch_bridge_fields2(builder, method_name, dispatch_arg, NULL);
 }
 
 static GVariant *
@@ -484,6 +496,7 @@ build_desktop_entry_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-entry-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetDesktopEntryPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
@@ -544,6 +557,7 @@ build_task_manager_identity_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("task-manager-identity-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetTaskManagerIdentityPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
@@ -606,6 +620,7 @@ build_file_association_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("file-association-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetFileAssociationPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "association_type", g_variant_new_string("desktop-file-association"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
@@ -635,6 +650,7 @@ build_notification_plan(const gchar *application_id, const gchar *event_type)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("notification-plan"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetNotificationPlan", application_id, event_type);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "event_type", g_variant_new_string(event_type));
@@ -664,6 +680,7 @@ build_tray_status(void)
 
   g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("tray-status-plan"));
+  add_go_owner_dispatch_bridge_fields(&status, "GetTrayStatus", NULL);
   g_variant_builder_add(&status, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&status, "{sv}", "active_application_count", g_variant_new_int32(1));
   g_variant_builder_add(&status, "{sv}", "attention_required_count", g_variant_new_int32(1));
