@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.213] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime diagnostic history preview under `internal/runtime/appidentity`, projecting persisted diagnostic run history into a KDE/Compatibility Center-safe read model with latest run state, repair issue summary, outcome counts, and disabled action flags.
+- Added `xnix-runtime-go diagnostic-history-preview`, a constrained CLI that reads diagnostic run history from a controlled Runtime state root and renders a user-visible Compatibility Center card projection without exposing state-root paths, file contents, backend details, AI provider data, or executable repair actions.
+- Added Go unit and CLI coverage for diagnostic history preview safety flags, latest-run projection, Compatibility Center history state mapping, local-path non-exposure, and disabled AI/backend/repair gates.
+
+### Changed
+
+- Updated layout verification to require the diagnostic history preview source, CLI command, tests, schema, KDE read-model projection, and disabled side-effect gates.
+
 ## [0.2.212] - 2026-07-16
 
 ### Added

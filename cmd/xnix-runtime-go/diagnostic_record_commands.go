@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 
+	"xnix.local/xnix/internal/runtime/appidentity"
 	"xnix.local/xnix/internal/runtime/diagnostics"
 )
 
@@ -86,6 +87,43 @@ func runDiagnosticRunHistory(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(history)
+}
+
+func runDiagnosticHistoryPreview(args []string, stdout io.Writer) error {
+	history, err := parseDiagnosticHistory("diagnostic-history-preview", args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewDiagnosticHistoryPreview(history)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func parseDiagnosticHistory(command string, args []string) (diagnostics.RunHistory, error) {
+	flags := flag.NewFlagSet(command, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	stateRoot := flags.String("state-root", "", "Runtime state root used for diagnostic run records")
+	applicationID := flags.String("app", "", "optional application id filter")
+	if err := flags.Parse(args); err != nil {
+		return diagnostics.RunHistory{}, err
+	}
+	if *stateRoot == "" {
+		return diagnostics.RunHistory{}, errors.New(command + " requires --state-root")
+	}
+	if flags.NArg() != 0 {
+		return diagnostics.RunHistory{}, errors.New(command + " does not accept positional arguments")
+	}
+
+	store, err := diagnostics.NewRunRecordStore(*stateRoot)
+	if err != nil {
+		return diagnostics.RunHistory{}, err
+	}
+	return store.History(*applicationID)
 }
 
 func readDiagnosticFixture(path string) (diagnostics.Fixture, error) {

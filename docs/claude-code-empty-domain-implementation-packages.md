@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.212
+> Last updated: 2026-07-16 | Baseline: v0.2.213
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -49,14 +49,14 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.212 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.213 | What remains useful to implement |
 | --- | --- | --- |
 | Runtime owner | Owner candidate, read dispatch previews, route manifests, service binding previews, and write gates exist. | Constrained long-running session-bus owner, lifecycle logs, broader read-route coverage, and smoke-owned readiness. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |
 | KDE activation | Desktop activation previews and a target-root staging writer exist for desktop entries, MIME, Dolphin service menus, activation manifests, and rollback receipts. | Drift checks against live materialized state, optional digest-verified icons, KDE status consumption of receipt state, and stricter transaction rollback UX. |
 | Execution | Execution previews and `execution-ledger-record` exist for reviewed/preflighted state-root transaction records without backend launch. | Fake commit/list/inspect flows, joined dependency gates from trust/environment/Portal/snapshot state, and session-status records. |
 | Portal and snapshots | Fake Portal model previews and constrained snapshot store evidence exist. | Durable Portal request state machine, disabled real transport boundary, joined safety view, and rollback receipt integration. |
-| Diagnostics, repair, and AI | Fixture diagnostics, fake/disabled AI provider boundaries, `diagnostic-run-record` state-root receipts, and `diagnostic-run-history` summaries exist. | Broader repair workflows, approval receipt integration, provider configuration policy, and deeper Compatibility Center consumption of diagnostic history. |
+| Diagnostics, repair, and AI | Fixture diagnostics, fake/disabled AI provider boundaries, `diagnostic-run-record` state-root receipts, `diagnostic-run-history` summaries, and `diagnostic-history-preview` Compatibility Center projections exist. | Broader repair workflows, approval receipt integration, provider configuration policy, and deeper Compatibility Center consumption of diagnostic history. |
 | Developer gates | Contract drift and implementation evidence reports exist. | Stronger orphan-preview detection, CI-friendly package ownership checks, and evidence regression guards. |
 
 When a package overlaps existing evidence, extend the current package instead of replacing the surface. The preferred path is to add one new durable state transition, receipt, or smoke-owned behavior per branch.
@@ -313,7 +313,6 @@ Make permission requests and restore points real enough for execution readiness 
 go test ./internal/runtime/portal ./internal/runtime/snapshot ./internal/runtime/appidentity ./cmd/xnix-runtime-go
 ruby -Ilib test/test_portal_access_policy.rb
 ruby -Ilib test/test_portal_request_model.rb
-ruby -Ilib test/test_runtime_snapshot_plan.rb
 ruby -Ilib test/test_compatibility_snapshot_plan.rb
 ruby -Ilib test/test_compatibility_execution_readiness.rb
 ruby scripts/verify_layout.rb
@@ -626,6 +625,95 @@ Implement P9 from docs/claude-code-empty-domain-implementation-packages.md. Add 
 6. Assign P7 whenever diagnostics and repair UX need to become more than static previews.
 7. Assign P8 when image/QEMU proof becomes the milestone gate.
 8. Assign P9 whenever the project starts adding contracts faster than implementation evidence.
+
+## First Dispatch Wave
+
+Use this wave when the goal is to convert the largest empty domains into implementation evidence without making the project unsafe or too broad to review.
+
+| Slot | Package | Suggested branch | Why this is first-wave work | Minimal mergeable outcome |
+| --- | --- | --- | --- | --- |
+| 1 | P1 Runtime Owner Service | `codex/runtime-owner-smoke-service` | Most later work depends on a Runtime-owned read path instead of preview-only commands. | A constrained session-bus owner serves representative read methods and fails every write method closed. |
+| 2 | P2 Recipe and Artifact Trust Pipeline | `codex/recipe-artifact-trust-pipeline` | Install, environment, and execution work need trusted local inputs before they can be meaningful. | Local recipes and fixture artifacts verify digests, stage into a state/test root, and produce blocked receipts for invalid inputs. |
+| 3 | P3 Environment Lifecycle State | `codex/environment-lifecycle-state` | Backend readiness is currently mostly declarative; execution should not advance until readiness is persistent. | A state-root lifecycle store records missing, planned, staged, ready, repair-required, and blocked states. |
+| 4 | P9 Developer Verification Harness | `codex/implementation-evidence-report` | The project is adding contracts quickly; this keeps empty domains visible and prevents drift. | JSON and Markdown reports classify each domain by evidence level and fail on orphan contract-only surfaces. |
+
+Do not assign P6 execution transactions until P2, P3, and P4 have enough state evidence to block unsafe launches. Do not assign P8 image/QEMU acceptance until the branch can test real product milestones rather than only restating preview contracts.
+
+## Copyable First-Wave Prompts
+
+### P1 prompt
+
+```text
+Implement P1 from docs/claude-code-empty-domain-implementation-packages.md.
+
+Target outcome:
+- Add a constrained Go Runtime owner service that can claim a private test session bus, serve representative read-only Runtime methods, and fail every write method closed.
+
+Hard constraints:
+- No production bus ownership, system service installation, backend launch, host-root writes, privileged containers, broad host mounts, Docker socket mounts, or host networking.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add success, disabled-write, and blocked-production-owner tests.
+- Run the P1 required tests plus ruby scripts/verify_layout.rb and runtime contract drift reporting.
+```
+
+### P2 prompt
+
+```text
+Implement P2 from docs/claude-code-empty-domain-implementation-packages.md.
+
+Target outcome:
+- Build a local-only recipe and artifact trust pipeline with digest verification, fixture artifact staging, and state-root-scoped receipts.
+
+Hard constraints:
+- No network fetch, host package-manager calls, host-root mutation, desktop activation writes, production signing keys, or backend launch.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add valid, digest-mismatch, unsigned, and blocked-state tests.
+- Run the P2 required tests plus ruby scripts/verify_layout.rb.
+```
+
+### P3 prompt
+
+```text
+Implement P3 from docs/claude-code-empty-domain-implementation-packages.md.
+
+Target outcome:
+- Add a Runtime-owned environment lifecycle state store under a controlled state root, with readiness transitions that can be consumed by execution readiness and KDE-safe summaries.
+
+Hard constraints:
+- Do not start Wine, Proton, VM, or any compatibility backend.
+- Do not expose raw backend commands, executable paths, profile names, storage paths, or host paths in user-facing output.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add missing, staged, ready, repair-required, and blocked-state tests.
+- Run the P3 required tests plus ruby scripts/verify_layout.rb.
+```
+
+### P9 prompt
+
+```text
+Implement P9 from docs/claude-code-empty-domain-implementation-packages.md.
+
+Target outcome:
+- Add implementation-evidence reporting that classifies domains as contract-only, fixture-implemented, state-root-implemented, smoke-owned, or production-gated.
+
+Hard constraints:
+- The default report must not require Docker, QEMU, network, privileged containers, host-root access, or broad filesystem scans outside the repository.
+- Do not delete, rewrite, or auto-fix user files.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add JSON, Markdown, orphan-contract, and no-host-mutation tests.
+- Run the P9 required tests plus ruby scripts/verify_layout.rb.
+```
 
 ## Handoff Checklist for Each Claude Code Branch
 

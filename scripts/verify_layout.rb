@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.212"
+EXPECTED_VERSION = "0.2.213"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -194,6 +194,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/registry_test.go
   internal/runtime/appidentity/ai_diagnostics.go
   internal/runtime/appidentity/ai_diagnostics_test.go
+  internal/runtime/appidentity/diagnostic_history.go
+  internal/runtime/appidentity/diagnostic_history_test.go
   internal/runtime/appidentity/repair_plan.go
   internal/runtime/appidentity/repair_plan_test.go
   internal/runtime/appidentity/runtime_write_gate.go
@@ -1360,12 +1362,23 @@ end
   assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must implement #{token}")
 end
 
+go_runtime_diagnostic_history_preview_source = read_project_file("internal/runtime/appidentity/diagnostic_history.go")
+%w[DiagnosticHistoryPreview DiagnosticHistoryCenterSummary xnix.runtime.diagnostic_history_preview.v1 diagnostic-history-preview go-runtime-state-root-diagnostic-run-history+kde-read-model KDE\ Plasma GetDiagnostics GetDiagnosticHistoryPreview compatibility_center not-run needs-review blocked healthy].each do |token|
+  assert(go_runtime_diagnostic_history_preview_source.include?(token), "Go Runtime diagnostic history preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible CompatibilityCenterCard SafeForAIDiagnostics StateRootPathExposed FileContentRead FilePathsExposed AIProviderCallEnabled RequestObjectCreated PermissionGranted LaunchEnabled ExecutionStarted RepairExecutionEnabled SettingsPersisted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_diagnostic_history_preview_source.include?(token), "Go Runtime diagnostic history preview must expose #{token}")
+end
+%w[NewDiagnosticHistoryPreview diagnosticHistoryState diagnosticHistorySummary validateNoBackendTerms].each do |token|
+  assert(go_runtime_diagnostic_history_preview_source.include?(token), "Go Runtime diagnostic history preview must implement #{token}")
+end
+
 go_runtime_diagnostic_record_cli_source = [
   read_project_file("cmd/xnix-runtime-go/diagnostic_record_commands.go"),
   read_project_file("cmd/xnix-runtime-go/diagnostic_record_cli_test.go"),
   read_project_file("cmd/xnix-runtime-go/main.go")
 ].join("\n")
-%w[diagnostic-run-record diagnostic-run-history state-root fixture run-id NewRunRecordStore RunRecordRequest xnix.runtime.diagnostic_run_record.v1 xnix.runtime.diagnostic_run_history.v1 state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
+%w[diagnostic-run-record diagnostic-run-history diagnostic-history-preview state-root fixture run-id NewRunRecordStore RunRecordRequest NewDiagnosticHistoryPreview xnix.runtime.diagnostic_run_record.v1 xnix.runtime.diagnostic_run_history.v1 xnix.runtime.diagnostic_history_preview.v1 compatibility_center state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
   assert(go_runtime_diagnostic_record_cli_source.include?(token), "Go Runtime diagnostic run record CLI must include #{token}")
 end
 

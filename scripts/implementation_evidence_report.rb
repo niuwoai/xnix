@@ -209,20 +209,23 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/diagnostics/ai_test.go
       cmd/xnix-runtime-go/diagnostic_record_commands.go
       cmd/xnix-runtime-go/diagnostic_record_cli_test.go
+      internal/runtime/appidentity/diagnostic_history_test.go
     ],
     state_files: %w[
       internal/runtime/diagnostics/record.go
       internal/runtime/diagnostics/history.go
+      internal/runtime/appidentity/diagnostic_history.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/diagnostics/ai.go" => %w[DisabledProvider FakeProvider],
       "internal/runtime/diagnostics/record.go" => %w[xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed],
       "internal/runtime/diagnostics/history.go" => %w[xnix.runtime.diagnostic_run_history.v1 diagnostic-run-history go-runtime-state-root-diagnostic-run-history state_root_path_exposed ai_provider_called repair_executed],
-      "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record diagnostic-run-history state-root fixture run-id],
+      "internal/runtime/appidentity/diagnostic_history.go" => %w[xnix.runtime.diagnostic_history_preview.v1 diagnostic-history-preview go-runtime-state-root-diagnostic-run-history+kde-read-model compatibility_center_card safe_for_ai_diagnostics ai_provider_call_enabled repair_execution_enabled backend_details_exposed],
+      "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record diagnostic-run-history diagnostic-history-preview state-root fixture run-id],
       "internal/runtime/appidentity/ai_diagnostics.go" => %w[AIProviderCalled AutoExecutionAllowed]
     },
-    summary: "Fixture diagnostics can persist state-root run records and expose KDE-safe history summaries with review-first repair recommendations; real provider calls and auto-repair remain disabled."
+    summary: "Fixture diagnostics can persist state-root run records, expose KDE-safe history summaries, and project diagnostic history into a Compatibility Center read model; real provider calls, backend launch, and auto-repair remain disabled."
   },
   {
     id: "atomic-kde-image-qemu-acceptance",
