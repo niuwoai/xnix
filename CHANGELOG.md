@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.188] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-owner-route-manifest-preview` to classify every read-only Runtime method as a native Go preview route, C Runtime policy route requiring a Go owner adapter, or legacy Runtime dispatch route requiring migration before production ownership.
+- Wired owner route evidence into `runtime-owner-readiness-preview` so production owner readiness now gates on read-only owner route migration instead of relying on method parity alone.
+- Added Go unit, CLI, and layout verification coverage for route counts, route statuses, legacy dispatch detection, owner-readiness aggregation, and host-safe preview flags.
+
 ## [0.2.187] - 2026-07-15
 
 ### Added

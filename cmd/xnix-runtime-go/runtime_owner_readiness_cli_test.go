@@ -18,11 +18,11 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.187" ||
+	if payload["version"] != "0.2.188" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
-		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-process-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-process-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-route-manifest-preview+runtime-owner-recipe-trust-preview" ||
 		payload["runtime_method"] != "GetRuntimeOwnerReadiness" ||
 		payload["read_method"] != "GetRuntimeOwnerReadinessPreview" {
 		t.Fatalf("unexpected Runtime owner readiness CLI schema: %#v", payload)
@@ -79,6 +79,19 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		methodParity["write_method_dispatch_enabled"] != false {
 		t.Fatalf("unexpected method parity summary: %#v", methodParity)
 	}
+	ownerRouteManifest := payload["owner_route_manifest"].(map[string]any)
+	if ownerRouteManifest["request_type"] != "runtime-owner-route-manifest-preview" ||
+		ownerRouteManifest["manifest_type"] != "runtime-owner-route-manifest" ||
+		ownerRouteManifest["route_count"] != float64(57) ||
+		ownerRouteManifest["go_route_count"].(float64) <= 0 ||
+		ownerRouteManifest["c_core_route_count"].(float64) <= 0 ||
+		ownerRouteManifest["ruby_legacy_route_count"] != float64(1) ||
+		ownerRouteManifest["go_owner_route_coverage_ready"] != false ||
+		ownerRouteManifest["c_core_adapter_required"] != true ||
+		ownerRouteManifest["legacy_runtime_routes_present"] != true ||
+		ownerRouteManifest["production_owner_routes_ready"] != false {
+		t.Fatalf("unexpected owner route manifest summary: %#v", ownerRouteManifest)
+	}
 	recipeTrust := payload["recipe_trust"].(map[string]any)
 	if recipeTrust["request_type"] != "runtime-owner-recipe-trust-preview" ||
 		recipeTrust["trust_type"] != "runtime-owner-recipe-trust" ||
@@ -101,10 +114,11 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		"kde-ownership-boundary",
 		"host-safety-boundary",
 		"long-running-runtime-owner",
+		"read-only-owner-routes",
 		"production-bus-claim",
 		"production-recipe-trust",
 	}
-	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass", "pending", "pending", "pending"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
 	if len(checks) != len(expectedIDs) || len(checkIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected readiness checks: %#v ids=%#v", checks, checkIDs)
 	}
@@ -115,9 +129,9 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		}
 	}
 	counts := payload["counts"].(map[string]any)
-	if counts["total"] != float64(9) ||
+	if counts["total"] != float64(10) ||
 		counts["passed"] != float64(6) ||
-		counts["pending"] != float64(3) ||
+		counts["pending"] != float64(4) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected readiness counts: %#v", counts)
 	}
@@ -132,6 +146,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		payload["production_owner_enabled"] != false ||
 		payload["owner_transition_ready"] != false ||
 		payload["production_recipe_trust_ready"] != false ||
+		payload["production_owner_routes_ready"] != false ||
 		payload["network_required"] != false ||
 		payload["host_root_modified"] != false ||
 		payload["privileged_container_required"] != false ||
@@ -142,7 +157,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		t.Fatalf("unexpected owner readiness safety flags: %#v", payload)
 	}
 	blockedActions := payload["blocked_actions"].([]any)
-	if len(blockedActions) != 6 ||
+	if len(blockedActions) != 7 ||
 		blockedActions[0] != "start production Runtime owner from readiness preview" ||
 		blockedActions[1] != "claim production D-Bus name from readiness preview" {
 		t.Fatalf("unexpected readiness blocked actions: %#v", blockedActions)
