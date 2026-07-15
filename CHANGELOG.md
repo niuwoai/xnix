@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.162] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `backend-binding-preview` to connect backend selection, backend environment, and launch preflight gates into a Runtime-owned compatibility profile binding plan.
+- Added Go unit and CLI coverage proving binding commits, persistence, execution request creation, environment creation, backend startup, state-root creation, Portal request creation, snapshot creation, launch, host-root mutation, network and privileged-container requirements, raw backend command exposure, compatibility storage exposure, and backend detail exposure stay disabled.
+
 ## [0.2.161] - 2026-07-15
 
 ### Added

@@ -531,6 +531,103 @@ func TestBackendEnvironmentPreviewCommandRendersEnvironmentPlan(t *testing.T) {
 	}
 }
 
+func TestBackendBindingPreviewCommandRendersBindingPlan(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"backend-binding-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.backend_binding.v1" ||
+		payload["request_type"] != "backend-binding-preview" ||
+		payload["binding_type"] != "compatibility-backend-binding" ||
+		payload["runtime_method"] != "GetBackendBinding" {
+		t.Fatalf("unexpected backend binding schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["display_name"] != "Example Ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected backend binding identity: %#v", payload)
+	}
+	if payload["recommended_profile_id"] != "local-compatibility" ||
+		payload["profile_kind"] != "local" ||
+		payload["binding_state"] != "planned-blocked" ||
+		payload["binding_key"] != "org.example.ledger:local-compatibility" {
+		t.Fatalf("unexpected backend binding recommendation: %#v", payload)
+	}
+	selection := payload["selection"].(map[string]any)
+	if selection["request_type"] != "backend-selection-preview" ||
+		selection["recommended_profile_id"] != "local-compatibility" ||
+		selection["candidate_count"] != float64(2) ||
+		selection["selection_committed"] != false ||
+		selection["backend_launch_enabled"] != false ||
+		selection["backend_details_exposed"] != false {
+		t.Fatalf("unexpected selection summary: %#v", selection)
+	}
+	environment := payload["environment"].(map[string]any)
+	if environment["request_type"] != "backend-environment-preview" ||
+		environment["environment_state"] != "planned-blocked" ||
+		environment["profile_count"] != float64(2) ||
+		environment["bridge_capability_count"] != float64(5) ||
+		environment["environment_created"] != false ||
+		environment["backend_process_started"] != false ||
+		environment["backend_binding_ready"] != false ||
+		environment["backend_details_exposed"] != false {
+		t.Fatalf("unexpected environment summary: %#v", environment)
+	}
+	gateIDs := payload["preflight_gate_ids"].([]any)
+	expectedGateIDs := []string{"recipe-validation", "package-source-review", "application-state-root", "portal-policy-review", "snapshot-baseline", "runtime-launch-write-gate"}
+	for index, expected := range expectedGateIDs {
+		if gateIDs[index] != expected {
+			t.Fatalf("preflight_gate_ids[%d] = %#v, want %q", index, gateIDs[index], expected)
+		}
+	}
+	if payload["preflight_gate_count"] != float64(6) ||
+		payload["passed_gate_count"] != float64(1) ||
+		payload["pending_gate_count"] != float64(4) ||
+		payload["blocked_gate_count"] != float64(1) {
+		t.Fatalf("unexpected gate counts: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false || payload["user_visible"] != true ||
+		payload["managed_binding_ready"] != false ||
+		payload["binding_committed"] != false ||
+		payload["binding_persisted"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_request_created"] != false ||
+		payload["environment_created"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["state_root_created"] != false ||
+		payload["portal_request_created"] != false ||
+		payload["snapshot_created"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["compatibility_storage_exposed"] != false ||
+		payload["raw_backend_command_exposed"] != false {
+		t.Fatalf("unexpected backend binding safety flags: %#v", payload)
+	}
+}
+
 func TestExecutionReadinessPreviewCommandKeepsLaunchGated(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
