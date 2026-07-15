@@ -826,6 +826,7 @@ module Xnix
           kde_center_page_section("backend", "Backend", "compatibility-backend-selection", "GetBackendSelectionPlan", "backend-selection-preview", "selection-pending"),
           kde_center_page_section("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", page.fetch("activation_state")),
           kde_center_page_section("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", page.fetch("execution_state")),
+          kde_center_page_section("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked"),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")

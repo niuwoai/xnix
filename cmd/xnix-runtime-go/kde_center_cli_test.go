@@ -160,15 +160,16 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		launchIntent["backend_details_exposed"] != false {
 		t.Fatalf("unexpected launch intent snapshot: %#v", launchIntent)
 	}
-	if payload["navigation_count"] != float64(7) ||
+	if payload["navigation_count"] != float64(8) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
 		navigation[1].(map[string]any)["id"] != "backend" ||
 		navigation[2].(map[string]any)["id"] != "activation" ||
 		navigation[3].(map[string]any)["id"] != "execution" ||
-		navigation[4].(map[string]any)["id"] != "actions" ||
-		navigation[5].(map[string]any)["id"] != "settings" ||
-		navigation[6].(map[string]any)["id"] != "diagnostics" {
+		navigation[4].(map[string]any)["id"] != "launch" ||
+		navigation[5].(map[string]any)["id"] != "actions" ||
+		navigation[6].(map[string]any)["id"] != "settings" ||
+		navigation[7].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

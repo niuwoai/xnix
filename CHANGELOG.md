@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.174] - 2026-07-15
+
+### Added
+
+- Added a read-only Launch section to KDE Compatibility Center page navigation and section-detail routing, backed by `GetLaunchIntent`, so Plasma can explain managed desktop-entry launches without treating the page as a Launch approval surface.
+- Added Go, Ruby daemon, C smoke adapter, D-Bus client, and Ruby coverage proving the Launch section remains navigation-only, non-executing, and blocked from request creation, permission grants, host-root mutation, and backend detail exposure.
+
 ## [0.2.173] - 2026-07-15
 
 ### Added

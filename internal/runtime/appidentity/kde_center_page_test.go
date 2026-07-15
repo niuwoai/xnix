@@ -178,16 +178,17 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.LaunchIntentSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected launch intent snapshot: %#v", preview.LaunchIntentSnapshot)
 	}
-	if preview.NavigationCount != 7 ||
-		len(preview.Navigation) != 7 ||
+	if preview.NavigationCount != 8 ||
+		len(preview.Navigation) != 8 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
 		preview.Navigation[2].ID != "activation" ||
 		preview.Navigation[3].ID != "execution" ||
-		preview.Navigation[4].ID != "actions" ||
-		preview.Navigation[5].ID != "settings" ||
-		preview.Navigation[6].ID != "diagnostics" {
+		preview.Navigation[4].ID != "launch" ||
+		preview.Navigation[5].ID != "actions" ||
+		preview.Navigation[6].ID != "settings" ||
+		preview.Navigation[7].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -301,9 +302,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 7 ||
-		preview.ReadOnlySectionCount != 7 ||
-		preview.NavigationOnlySectionCount != 7 ||
+		preview.SectionCount != 8 ||
+		preview.ReadOnlySectionCount != 8 ||
+		preview.NavigationOnlySectionCount != 8 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -327,6 +328,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"backend":     "GetBackendSelectionPlan",
 		"activation":  "GetDesktopActivationStatus",
 		"execution":   "GetExecutionReadiness",
+		"launch":      "GetLaunchIntent",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
@@ -336,6 +338,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"backend":     "backend-selection-preview",
 		"activation":  "desktop-activation-status-preview",
 		"execution":   "execution-readiness-preview",
+		"launch":      "launch-intent-preview",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -420,7 +423,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
@@ -438,6 +441,26 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		!preview.SafeForAIDiagnostics || !preview.UserDecisionCaptured ||
 		!preview.UserDecisionAllowsLaunch {
 		t.Fatalf("unexpected section detail ownership flags: %#v", preview)
+	}
+	launchPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "launch", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("launch NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if launchPreview.SectionID != "launch" ||
+		launchPreview.SectionLabel != "Launch" ||
+		launchPreview.SectionTarget != "compatibility-launch-intent" ||
+		launchPreview.SectionState != "blocked" ||
+		launchPreview.SectionRuntimeMethod != "GetLaunchIntent" ||
+		launchPreview.SectionReadModel != "launch-intent-preview" ||
+		!launchPreview.ReadOnlyNavigation ||
+		launchPreview.SectionActionsEnabled ||
+		launchPreview.RequestObjectsCreated ||
+		launchPreview.PermissionGrantCreated ||
+		launchPreview.LaunchEnabled ||
+		launchPreview.ExecutionStarted ||
+		launchPreview.HostRootModified ||
+		launchPreview.BackendDetailsExposed {
+		t.Fatalf("unexpected launch section detail: %#v", launchPreview)
 	}
 	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
 	if err != nil {
