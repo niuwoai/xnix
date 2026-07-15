@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.213"
+EXPECTED_VERSION = "0.2.214"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1259,6 +1259,11 @@ end
 go_runtime_diagnostics_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_diagnostics_cli_source.include?("diagnostics-preview"), "Go Runtime CLI must expose Runtime diagnostics preview")
 assert(go_runtime_diagnostics_cli_source.include?("NewDiagnosticsPreview"), "Go Runtime CLI must call Runtime diagnostics preview")
+
+go_runtime_kde_center_page_source = read_project_file("internal/runtime/appidentity/kde_center_page.go")
+%w[KDECenterPageSectionsPreview KDECenterPageSectionDetailPreview compatibility-diagnostics GetDiagnostics diagnostic-history-preview NewDolphinAIAnalysisPreview].each do |token|
+  assert(go_runtime_kde_center_page_source.include?(token), "Go Runtime KDE center page diagnostics section must include #{token}")
+end
 
 go_runtime_ai_diagnostics_source = read_project_file("internal/runtime/appidentity/ai_diagnostics.go")
 %w[AIDiagnosticInputPreview AIDiagnosticRecommendationPreview AIRepairApprovalGatePreview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview xnix.runtime.ai_diagnostic_input.v1 xnix.runtime.ai_diagnostic_recommendation.v1 xnix.runtime.ai_repair_approval_gate.v1 GetAIDiagnosticInput GetAIDiagnosticInputPreview GetAIDiagnosticRecommendation GetAIDiagnosticRecommendationPreview GetAIRepairApprovalGate GetAIRepairApprovalGatePreview registry+go-runtime-ai-diagnostics compatibility-center-review runtime-approval-token restore-point-preflight blocked-until-approval].each do |token|

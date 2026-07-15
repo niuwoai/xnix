@@ -1027,7 +1027,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("notifications", "Notifications", "compatibility-notification-plan", "GetNotificationPlan", "notification-preview", "planned", "Notifications read Runtime-owned event plans while notification delivery, action execution, repair execution, settings persistence, and host mutation stay closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
-		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),
+		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "diagnostic-history-preview", "planned", "Diagnostics read Runtime-owned diagnostic state and history while Dolphin file analysis remains an AI-safe optional link."),
 	}
 }
 

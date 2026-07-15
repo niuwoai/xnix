@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.214] - 2026-07-16
+
+### Changed
+
+- Routed the Go KDE Compatibility Center Diagnostics section to `GetDiagnostics` and the `diagnostic-history-preview` read model so the page consumes Runtime-owned diagnostic state and history first.
+- Kept the Dolphin AI-safe file analysis link available from the Diagnostics section while leaving AI provider calls, file-content reads, request creation, permission grants, execution, backend launch, and host-root mutation disabled.
+- Updated layout verification and Go/Ruby tests to require the Diagnostics section to stay bound to Runtime diagnostics/history rather than treating AI diagnostic input as the primary section model.
+
 ## [0.2.213] - 2026-07-16
 
 ### Added

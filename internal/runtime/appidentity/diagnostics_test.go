@@ -111,7 +111,7 @@ func TestDiagnosticsPreviewAggregatesGoRuntimeStatus(t *testing.T) {
 	if preview.KDECenterSections.RequestType != "kde-center-page-sections-preview" ||
 		preview.KDECenterSections.SectionCount != 12 ||
 		preview.KDECenterSections.ReadOnlySectionCount != 12 ||
-		!containsString(preview.KDECenterSections.RuntimeMethods, "GetAIDiagnosticInput") ||
+		!containsString(preview.KDECenterSections.RuntimeMethods, "GetDiagnostics") ||
 		preview.KDECenterSections.SectionActionsEnabled ||
 		preview.KDECenterSections.RequestObjectsCreated ||
 		preview.KDECenterSections.ExecutionStarted ||

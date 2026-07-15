@@ -430,7 +430,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"notifications": "GetNotificationPlan",
 		"actions":       "GetCompatibilityActionQueue",
 		"settings":      "GetCompatibilitySettings",
-		"diagnostics":   "GetAIDiagnosticInput",
+		"diagnostics":   "GetDiagnostics",
 	}
 	wantModels := map[string]string{
 		"overview":      "compatibility-center-summary",
@@ -444,7 +444,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"notifications": "notification-preview",
 		"actions":       "compatibility-center-action-queue",
 		"settings":      "settings-model",
-		"diagnostics":   "ai-diagnostic-input",
+		"diagnostics":   "diagnostic-history-preview",
 	}
 	for _, section := range preview.Sections {
 		if section.RuntimeMethod != wantMethods[section.ID] ||
@@ -651,8 +651,8 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		t.Fatalf("diagnostics NewKDECenterPageSectionDetailPreview returned error: %v", err)
 	}
 	if diagnosticsPreview.SectionID != "diagnostics" ||
-		diagnosticsPreview.SectionRuntimeMethod != "GetAIDiagnosticInput" ||
-		diagnosticsPreview.SectionReadModel != "ai-diagnostic-input" ||
+		diagnosticsPreview.SectionRuntimeMethod != "GetDiagnostics" ||
+		diagnosticsPreview.SectionReadModel != "diagnostic-history-preview" ||
 		diagnosticsPreview.AIAnalysis == nil ||
 		diagnosticsPreview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
 		diagnosticsPreview.AIAnalysis.Disclosure != "count-and-extension-only" ||
