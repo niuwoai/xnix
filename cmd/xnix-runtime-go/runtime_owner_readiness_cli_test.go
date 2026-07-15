@@ -18,11 +18,11 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.186" ||
+	if payload["version"] != "0.2.187" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
-		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-process-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview" ||
 		payload["runtime_method"] != "GetRuntimeOwnerReadiness" ||
 		payload["read_method"] != "GetRuntimeOwnerReadinessPreview" {
 		t.Fatalf("unexpected Runtime owner readiness CLI schema: %#v", payload)
@@ -49,6 +49,17 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		liveOwnerGate["owner_transition_ready"] != false ||
 		liveOwnerGate["smoke_adapter_is_production_owner"] != false {
 		t.Fatalf("unexpected live owner gate summary: %#v", liveOwnerGate)
+	}
+	ownerProcess := payload["owner_process"].(map[string]any)
+	if ownerProcess["request_type"] != "runtime-owner-process-preview" ||
+		ownerProcess["process_type"] != "runtime-owner-process" ||
+		ownerProcess["current_owner_language"] != "ruby-wrapper" ||
+		ownerProcess["target_owner_language"] != "go" ||
+		ownerProcess["service_activation_ready"] != true ||
+		ownerProcess["packaged_entrypoint_ready"] != true ||
+		ownerProcess["go_owner_process_ready"] != false ||
+		ownerProcess["production_owner_process_ready"] != false {
+		t.Fatalf("unexpected owner process summary: %#v", ownerProcess)
 	}
 	ownerSmokePlan := payload["owner_smoke_plan"].(map[string]any)
 	if ownerSmokePlan["request_type"] != "runtime-owner-smoke-plan-preview" ||

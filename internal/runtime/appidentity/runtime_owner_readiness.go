@@ -13,6 +13,7 @@ type RuntimeOwnerReadinessPreview struct {
 	Interface                   string                            `json:"interface"`
 	ServiceBinding              RuntimeOwnerReadinessBinding      `json:"service_binding"`
 	LiveOwnerGate               RuntimeOwnerReadinessLiveGate     `json:"live_owner_gate"`
+	OwnerProcess                RuntimeOwnerReadinessProcess      `json:"owner_process"`
 	OwnerSmokePlan              RuntimeOwnerReadinessSmokePlan    `json:"owner_smoke_plan"`
 	MethodParityManifest        RuntimeOwnerReadinessMethodParity `json:"method_parity_manifest"`
 	RecipeTrust                 RuntimeOwnerReadinessRecipeTrust  `json:"recipe_trust"`
@@ -60,6 +61,18 @@ type RuntimeOwnerReadinessLiveGate struct {
 	OwnerTransitionReady     bool                       `json:"owner_transition_ready"`
 	SmokeAdapterIsProduction bool                       `json:"smoke_adapter_is_production_owner"`
 	Counts                   RuntimeLiveOwnerGateCounts `json:"counts"`
+}
+
+type RuntimeOwnerReadinessProcess struct {
+	RequestType                 string                    `json:"request_type"`
+	ProcessType                 string                    `json:"process_type"`
+	CurrentOwnerLanguage        string                    `json:"current_owner_language"`
+	TargetOwnerLanguage         string                    `json:"target_owner_language"`
+	ServiceActivationReady      bool                      `json:"service_activation_ready"`
+	PackagedEntrypointReady     bool                      `json:"packaged_entrypoint_ready"`
+	GoOwnerProcessReady         bool                      `json:"go_owner_process_ready"`
+	ProductionOwnerProcessReady bool                      `json:"production_owner_process_ready"`
+	Counts                      RuntimeOwnerProcessCounts `json:"counts"`
 }
 
 type RuntimeOwnerReadinessSmokePlan struct {
@@ -117,6 +130,10 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 	if err != nil {
 		return RuntimeOwnerReadinessPreview{}, err
 	}
+	ownerProcess, err := NewRuntimeOwnerProcessPreview(root)
+	if err != nil {
+		return RuntimeOwnerReadinessPreview{}, err
+	}
 	ownerSmokePlan, err := NewRuntimeOwnerSmokePlanPreview(root)
 	if err != nil {
 		return RuntimeOwnerReadinessPreview{}, err
@@ -130,7 +147,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 		return RuntimeOwnerReadinessPreview{}, err
 	}
 
-	checks := runtimeOwnerReadinessChecks(serviceBinding, liveOwnerGate, ownerSmokePlan, methodParityManifest, recipeTrust)
+	checks := runtimeOwnerReadinessChecks(serviceBinding, liveOwnerGate, ownerProcess, ownerSmokePlan, methodParityManifest, recipeTrust)
 	counts := countRuntimeOwnerReadinessChecks(checks)
 
 	preview := RuntimeOwnerReadinessPreview{
@@ -138,7 +155,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 		SchemaVersion: "xnix.runtime.owner_readiness.v1",
 		RequestType:   "runtime-owner-readiness-preview",
 		ReadinessType: "runtime-owner-readiness",
-		Source:        "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview",
+		Source:        "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-process-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview",
 		RuntimeMethod: "GetRuntimeOwnerReadiness",
 		ReadMethod:    "GetRuntimeOwnerReadinessPreview",
 		BusName:       serviceBinding.BusName,
@@ -161,6 +178,17 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 			OwnerTransitionReady:     liveOwnerGate.OwnerTransitionReady,
 			SmokeAdapterIsProduction: liveOwnerGate.SmokeAdapterIsProduction,
 			Counts:                   liveOwnerGate.Counts,
+		},
+		OwnerProcess: RuntimeOwnerReadinessProcess{
+			RequestType:                 ownerProcess.RequestType,
+			ProcessType:                 ownerProcess.ProcessType,
+			CurrentOwnerLanguage:        ownerProcess.CurrentOwnerLanguage,
+			TargetOwnerLanguage:         ownerProcess.TargetOwnerLanguage,
+			ServiceActivationReady:      ownerProcess.ServiceActivationReady,
+			PackagedEntrypointReady:     ownerProcess.PackagedEntrypointReady,
+			GoOwnerProcessReady:         ownerProcess.GoOwnerProcessReady,
+			ProductionOwnerProcessReady: ownerProcess.ProductionOwnerProcessReady,
+			Counts:                      ownerProcess.Counts,
 		},
 		OwnerSmokePlan: RuntimeOwnerReadinessSmokePlan{
 			RequestType:            ownerSmokePlan.RequestType,
@@ -223,7 +251,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 	return preview, nil
 }
 
-func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, liveOwnerGate RuntimeLiveOwnerGatePreview, ownerSmokePlan RuntimeOwnerSmokePlanPreview, methodParityManifest RuntimeMethodParityManifestPreview, recipeTrust RuntimeOwnerRecipeTrustPreview) []RuntimeOwnerReadinessCheck {
+func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, liveOwnerGate RuntimeLiveOwnerGatePreview, ownerProcess RuntimeOwnerProcessPreview, ownerSmokePlan RuntimeOwnerSmokePlanPreview, methodParityManifest RuntimeMethodParityManifestPreview, recipeTrust RuntimeOwnerRecipeTrustPreview) []RuntimeOwnerReadinessCheck {
 	return []RuntimeOwnerReadinessCheck{
 		runtimeOwnerReadinessCheck("activation-binding", runtimeOwnerReadinessPassBlocked(serviceBinding.ActivationBindingReady), "D-Bus activation files, systemd unit, libexec wrapper, and contract must be aligned."),
 		runtimeOwnerReadinessCheck("read-only-method-parity", runtimeOwnerReadinessPassBlocked(methodParityManifest.ReadOnlyMethodParityReady), "The production owner must cover every read-only Runtime method required by KDE."),
@@ -231,10 +259,20 @@ func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, li
 		runtimeOwnerReadinessCheck("write-method-gate", runtimeOwnerReadinessPassBlocked(!methodParityManifest.WriteMethodsSupported && !methodParityManifest.WriteMethodDispatchEnabled), "Install, launch, snapshot, and restore writes must remain disabled until the Runtime owner is production-ready."),
 		runtimeOwnerReadinessCheck("kde-ownership-boundary", runtimeOwnerReadinessPassBlocked(!serviceBinding.KDEMayClaimRuntimeOwnership && !liveOwnerGate.KDEMayClaimRuntimeOwnership && !liveOwnerGate.KDEPolicyOwner), "KDE must remain a presentation shell and must not own Runtime policy."),
 		runtimeOwnerReadinessCheck("host-safety-boundary", "pass", "Readiness preview must not start services, claim bus names, require network, or mutate the host root."),
-		runtimeOwnerReadinessCheck("long-running-runtime-owner", "pending", "A packaged long-running Runtime owner still needs implementation before production ownership."),
+		runtimeOwnerReadinessCheck("long-running-runtime-owner", runtimeOwnerProcessReadinessStatus(ownerProcess), "A packaged Go long-running Runtime owner still needs implementation before production ownership."),
 		runtimeOwnerReadinessCheck("production-bus-claim", "pending", "A production smoke must prove the packaged Runtime owner owns org.xnix.Compatibility1."),
 		runtimeOwnerReadinessCheck("production-recipe-trust", runtimeOwnerRecipeTrustReadinessStatus(recipeTrust), "Production owner readiness requires digest-verified and production-signed recipes."),
 	}
+}
+
+func runtimeOwnerProcessReadinessStatus(ownerProcess RuntimeOwnerProcessPreview) string {
+	if ownerProcess.ProductionOwnerProcessReady {
+		return "pass"
+	}
+	if ownerProcess.Counts.Blocked > 0 {
+		return "blocked"
+	}
+	return "pending"
 }
 
 func runtimeOwnerRecipeTrustReadinessStatus(recipeTrust RuntimeOwnerRecipeTrustPreview) string {

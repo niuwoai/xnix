@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -118,6 +118,8 @@ func run(args []string, stdout io.Writer) error {
 		return runRuntimeLiveOwnerGatePreview(args[1:], stdout)
 	case "runtime-method-parity-manifest-preview":
 		return runRuntimeMethodParityManifestPreview(args[1:], stdout)
+	case "runtime-owner-process-preview":
+		return runRuntimeOwnerProcessPreview(args[1:], stdout)
 	case "runtime-owner-readiness-preview":
 		return runRuntimeOwnerReadinessPreview(args[1:], stdout)
 	case "runtime-owner-recipe-trust-preview":
@@ -202,132 +204,6 @@ func runBackendBindingPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.BackendBindingPreview()
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeServiceBindingPreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-service-binding-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime activation files")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-service-binding-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeServiceBindingPreview(*root)
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeLiveOwnerGatePreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-live-owner-gate-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime activation files")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-live-owner-gate-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeLiveOwnerGatePreview(*root)
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeOwnerSmokePlanPreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-owner-smoke-plan-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime activation files")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-owner-smoke-plan-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeOwnerSmokePlanPreview(*root)
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeMethodParityManifestPreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-method-parity-manifest-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime D-Bus contract and smoke files")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-method-parity-manifest-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeMethodParityManifestPreview(*root)
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeOwnerReadinessPreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-owner-readiness-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime owner readiness inputs")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-owner-readiness-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeOwnerReadinessPreview(*root)
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
-}
-
-func runRuntimeOwnerRecipeTrustPreview(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet("runtime-owner-recipe-trust-preview", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-	root := flags.String("root", ".", "project root containing Runtime recipe registry")
-	if err := flags.Parse(args); err != nil {
-		return err
-	}
-	if flags.NArg() != 0 {
-		return errors.New("runtime-owner-recipe-trust-preview does not accept positional arguments")
-	}
-
-	preview, err := appidentity.NewRuntimeOwnerRecipeTrustPreview(*root)
 	if err != nil {
 		return err
 	}

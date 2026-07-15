@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.187] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-owner-process-preview` to verify the packaged Runtime owner activation chain, report the current Ruby wrapper as a transition entrypoint, and keep the production Go owner loop pending without starting services or claiming the D-Bus name.
+- Wired owner process evidence into `runtime-owner-readiness-preview` so the long-running Runtime owner gate is derived from process checks instead of a hard-coded pending state.
+
+### Changed
+
+- Split Runtime-owner Go CLI runners into `runtime_owner_commands.go` so future owner commands do not continue growing the main CLI file toward the file-size guardrail.
+
 ## [0.2.186] - 2026-07-15
 
 ### Added

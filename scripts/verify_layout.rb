@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.186"
+EXPECTED_VERSION = "0.2.187"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -869,7 +869,6 @@ assert(go_runtime_service_binding_source.include?("runtimeServiceBindingPackaged
 
 go_runtime_service_binding_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_service_binding_cli_source.include?("runtime-service-binding-preview"), "Go Runtime CLI must expose Runtime service binding preview")
-assert(go_runtime_service_binding_cli_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime CLI must call the Runtime service binding preview model")
 
 runtime_activation_installer_source = read_project_file("scripts/install_runtime_activation.rb")
 %w[SOURCE_RUNTIME_LIB SOURCE_RECIPE_DIR SOURCE_DBUS_CONTRACT SOURCE_DBUS_SMOKE SOURCE_DBUS_SMOKE_INTROSPECTION SOURCE_DBUS_SMOKE_KDE_CENTER SOURCE_DBUS_SMOKE_RUNTIME_MODELS SOURCE_SESSION_SMOKE usr/lib/xnix usr/runtime/recipes].each do |token|
@@ -905,7 +904,6 @@ assert(go_runtime_live_owner_gate_source.include?("validateNoBackendTerms"), "Go
 
 go_runtime_live_owner_gate_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_live_owner_gate_cli_source.include?("runtime-live-owner-gate-preview"), "Go Runtime CLI must expose Runtime live owner gate preview")
-assert(go_runtime_live_owner_gate_cli_source.include?("NewRuntimeLiveOwnerGatePreview"), "Go Runtime CLI must call the Runtime live owner gate preview model")
 
 runtime_owner_smoke_plan_source = read_project_file("lib/xnix/compatibility/runtime_owner_smoke_plan.rb")
 assert(runtime_owner_smoke_plan_source.include?("xnix-runtime-owner-smoke-plan"), "Runtime owner smoke plan must expose a CLI command")
@@ -930,7 +928,6 @@ assert(go_runtime_owner_smoke_plan_source.include?("validateNoBackendTerms"), "G
 
 go_runtime_owner_smoke_plan_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_owner_smoke_plan_cli_source.include?("runtime-owner-smoke-plan-preview"), "Go Runtime CLI must expose Runtime owner smoke plan preview")
-assert(go_runtime_owner_smoke_plan_cli_source.include?("NewRuntimeOwnerSmokePlanPreview"), "Go Runtime CLI must call the Runtime owner smoke plan preview model")
 
 runtime_method_parity_source = read_project_file("lib/xnix/compatibility/runtime_method_parity_manifest.rb")
 assert(runtime_method_parity_source.include?("xnix-runtime-method-parity-manifest"), "Runtime method parity manifest must expose a CLI command")
@@ -954,7 +951,6 @@ assert(go_runtime_method_parity_source.include?("validateNoBackendTerms"), "Go R
 
 go_runtime_method_parity_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_method_parity_cli_source.include?("runtime-method-parity-manifest-preview"), "Go Runtime CLI must expose Runtime method parity manifest preview")
-assert(go_runtime_method_parity_cli_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime CLI must call the Runtime method parity manifest preview model")
 
 go_runtime_owner_recipe_trust_source = read_project_file("internal/runtime/appidentity/runtime_owner_recipe_trust.go")
 %w[RuntimeOwnerRecipeTrustPreview runtime-owner-recipe-trust-preview xnix.runtime.owner_recipe_trust.v1 GetRuntimeOwnerRecipeTrust GetRuntimeOwnerRecipeTrustPreview registry-digests+recipe-signature-status registry-present recipe-digests signed-recipe-validation development-registry unsigned-recipes runtime/recipes/registry.json].each do |token|
@@ -969,10 +965,28 @@ assert(go_runtime_owner_recipe_trust_source.include?("validateNoBackendTerms"), 
 
 go_runtime_owner_recipe_trust_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_owner_recipe_trust_cli_source.include?("runtime-owner-recipe-trust-preview"), "Go Runtime CLI must expose Runtime owner recipe trust preview")
-assert(go_runtime_owner_recipe_trust_cli_source.include?("NewRuntimeOwnerRecipeTrustPreview"), "Go Runtime CLI must call the Runtime owner recipe trust preview model")
+
+go_runtime_owner_process_source = read_project_file("internal/runtime/appidentity/runtime_owner_process.go")
+%w[RuntimeOwnerProcessPreview runtime-owner-process-preview xnix.runtime.owner_process.v1 GetRuntimeOwnerProcess GetRuntimeOwnerProcessPreview runtime-service-binding-preview libexec-wrapper go-owner-target service-activation packaged-entrypoint production-owner-loop host-safety-boundary ruby-wrapper].each do |token|
+  assert(go_runtime_owner_process_source.include?(token), "Go Runtime owner process preview must include #{token}")
+end
+%w[ServiceActivationReady PackagedEntrypointReady GoOwnerProcessReady ProductionOwnerProcessReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_owner_process_source.include?(token), "Go Runtime owner process preview must expose #{token}")
+end
+assert(go_runtime_owner_process_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime owner process preview must derive from service binding")
+assert(go_runtime_owner_process_source.include?("validateNoBackendTerms"), "Go Runtime owner process preview must hide backend terms")
+
+go_runtime_owner_commands_source = read_project_file("cmd/xnix-runtime-go/runtime_owner_commands.go")
+%w[runRuntimeServiceBindingPreview runRuntimeLiveOwnerGatePreview runRuntimeOwnerProcessPreview runRuntimeOwnerSmokePlanPreview runRuntimeMethodParityManifestPreview runRuntimeOwnerReadinessPreview runRuntimeOwnerRecipeTrustPreview encodeIndentedJSON].each do |token|
+  assert(go_runtime_owner_commands_source.include?(token), "Go Runtime owner commands must include #{token}")
+end
+assert(go_runtime_owner_commands_source.include?("runtime-owner-process-preview"), "Go Runtime owner commands must expose Runtime owner process preview")
+%w[NewRuntimeServiceBindingPreview NewRuntimeLiveOwnerGatePreview NewRuntimeOwnerProcessPreview NewRuntimeOwnerSmokePlanPreview NewRuntimeMethodParityManifestPreview NewRuntimeOwnerReadinessPreview NewRuntimeOwnerRecipeTrustPreview].each do |token|
+  assert(go_runtime_owner_commands_source.include?(token), "Go Runtime owner commands must call #{token}")
+end
 
 go_runtime_owner_readiness_source = read_project_file("internal/runtime/appidentity/runtime_owner_readiness.go")
-%w[RuntimeOwnerReadinessPreview runtime-owner-readiness-preview xnix.runtime.owner_readiness.v1 GetRuntimeOwnerReadiness GetRuntimeOwnerReadinessPreview runtime-service-binding-preview runtime-live-owner-gate-preview runtime-owner-smoke-plan-preview runtime-method-parity-manifest-preview runtime-owner-recipe-trust-preview activation-binding read-only-method-parity owner-smoke-plan write-method-gate kde-ownership-boundary host-safety-boundary long-running-runtime-owner production-bus-claim production-recipe-trust].each do |token|
+%w[RuntimeOwnerReadinessPreview runtime-owner-readiness-preview xnix.runtime.owner_readiness.v1 GetRuntimeOwnerReadiness GetRuntimeOwnerReadinessPreview runtime-service-binding-preview runtime-live-owner-gate-preview runtime-owner-process-preview runtime-owner-smoke-plan-preview runtime-method-parity-manifest-preview runtime-owner-recipe-trust-preview activation-binding read-only-method-parity owner-smoke-plan write-method-gate kde-ownership-boundary host-safety-boundary long-running-runtime-owner production-bus-claim production-recipe-trust].each do |token|
   assert(go_runtime_owner_readiness_source.include?(token), "Go Runtime owner readiness preview must include #{token}")
 end
 %w[ActivationBindingReady ReadOnlyMethodParityReady OwnerSmokePlanned LiveDBusOwnerReady ProductionOwnerEnabled OwnerTransitionReady ProductionRecipeTrustReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership NetworkRequired HostRootModified PrivilegedContainerRequired SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled BackendDetailsExposed].each do |token|
@@ -980,6 +994,7 @@ end
 end
 assert(go_runtime_owner_readiness_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime owner readiness preview must derive from the service binding preview")
 assert(go_runtime_owner_readiness_source.include?("NewRuntimeLiveOwnerGatePreview"), "Go Runtime owner readiness preview must derive from the live owner gate preview")
+assert(go_runtime_owner_readiness_source.include?("NewRuntimeOwnerProcessPreview"), "Go Runtime owner readiness preview must derive from the owner process preview")
 assert(go_runtime_owner_readiness_source.include?("NewRuntimeOwnerSmokePlanPreview"), "Go Runtime owner readiness preview must derive from the owner smoke plan preview")
 assert(go_runtime_owner_readiness_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime owner readiness preview must derive from the method parity manifest preview")
 assert(go_runtime_owner_readiness_source.include?("NewRuntimeOwnerRecipeTrustPreview"), "Go Runtime owner readiness preview must derive from the owner recipe trust preview")
@@ -987,7 +1002,6 @@ assert(go_runtime_owner_readiness_source.include?("validateNoBackendTerms"), "Go
 
 go_runtime_owner_readiness_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_owner_readiness_cli_source.include?("runtime-owner-readiness-preview"), "Go Runtime CLI must expose Runtime owner readiness preview")
-assert(go_runtime_owner_readiness_cli_source.include?("NewRuntimeOwnerReadinessPreview"), "Go Runtime CLI must call the Runtime owner readiness preview model")
 
 runtime_write_gate_source = read_project_file("lib/xnix/compatibility/runtime_write_gate.rb")
 assert(runtime_write_gate_source.include?("xnix-runtime-write-gate"), "Runtime write gate must expose a CLI command")
