@@ -158,6 +158,70 @@ func TestDesktopActivationBundlePreviewCommandAggregatesKDEMaterials(t *testing.
 	}
 }
 
+func TestDesktopActivationManifestPreviewCommandRendersKDEContract(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-manifest-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_manifest.v1" ||
+		payload["request_type"] != "desktop-activation-manifest-preview" ||
+		payload["manifest_type"] != "kde-desktop-activation-manifest" ||
+		payload["runtime_method"] != "GetDesktopActivationManifest" ||
+		payload["read_method"] != "GetDesktopActivationManifestPreview" {
+		t.Fatalf("unexpected desktop activation manifest schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["launcher_url"] != "applications:xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop activation manifest identity: %#v", payload)
+	}
+	bundle := payload["bundle"].(map[string]any)
+	if bundle["request_type"] != "desktop-activation-bundle-preview" ||
+		bundle["material_count"] != float64(9) ||
+		bundle["desktop_files_written"] != false ||
+		bundle["host_root_modified"] != false {
+		t.Fatalf("unexpected bundle summary: %#v", bundle)
+	}
+	if payload["entry_point_count"] != float64(7) ||
+		payload["activation_material_count"] != float64(9) ||
+		payload["contract_section_count"] != float64(7) {
+		t.Fatalf("unexpected desktop activation manifest counts: %#v", payload)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false || payload["stable_desktop_contract"] != true ||
+		payload["seven_entry_point_contract"] != true || payload["portal_mediated_file_access"] != true ||
+		payload["desktop_files_written"] != false || payload["mimeapps_written"] != false ||
+		payload["manifest_written"] != false || payload["settings_persisted"] != false ||
+		payload["notifications_sent"] != false || payload["task_manager_entry_active"] != false ||
+		payload["kwin_rule_applied"] != false || payload["live_tray_bridge_enabled"] != false ||
+		payload["launch_enabled"] != false || payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false || payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false || payload["raw_windows_executable_exposed"] != false ||
+		payload["compatibility_storage_exposed"] != false {
+		t.Fatalf("unexpected desktop activation manifest safety flags: %#v", payload)
+	}
+}
+
 func TestDesktopActivationPreflightPreviewCommandRendersInstallGate(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)

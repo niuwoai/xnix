@@ -235,7 +235,7 @@ Suggested successful output:
 PASS: KDE-first presence smoke
 application: org.xnix.sample.notepad
 entrypoints: launcher, task-manager, file-manager, system-tray, notifications, compatibility-center, settings
-route-baseline: 57 total, 40 Go-routed, 17 C-backed, 0 Ruby legacy
+route-baseline: 57 total, 57 Go-routed, 0 C-backed, 0 Ruby legacy
 execution: disabled by Runtime gates
 host-root: unchanged
 ```

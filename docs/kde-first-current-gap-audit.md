@@ -13,11 +13,11 @@ The product direction is clear: KDE Plasma is the first official shell; the Xnix
 | Official desktop strategy | Product documentation and Runtime docs name KDE Plasma as the flagship shell and GNOME/XFCE as later shells | Aligned |
 | Runtime boundary | `runtime/dbus/org.xnix.Compatibility1.xml` exposes read-only planning methods and gated write methods | Aligned |
 | KDE seven entry points | Runtime docs and models cover launcher, task manager, file manager, tray, notifications, Compatibility Center, and settings | Contracted |
-| Go migration | Runtime owner route manifest reports 57 read-only routes, 40 Go-routed, 17 C-backed, and 0 Ruby legacy | In progress |
+| Go migration | Runtime owner route manifest reports 57 read-only routes, 57 Go-routed, 0 C-backed, and 0 Ruby legacy | Owner preview coverage complete; production owner still pending |
 | Production Runtime owner | Owner readiness, service binding, live owner gate, process preview, and smoke plan exist, but production bus ownership remains disabled | Pending |
 | Package acquisition | Package source, artifact manifest, acquisition preflight, and install plan contracts exist; current route evidence shows package source, acquisition preflight, and artifact manifest are Go-routed | In progress |
 | Backend lifecycle | Backend selection, environment, binding, capability matrix, and lifecycle previews exist; capability matrix and lifecycle are now Go-routed but remain non-executing | In progress |
-| Portal permissions | Portal access policy and request plan contracts exist; request plan is Go-routed, access policy remains C-backed | Contracted |
+| Portal permissions | Portal access policy and request plan contracts exist and are Go-routed; real Portal transport remains disabled by default | Contracted |
 | Snapshot and rollback | Snapshot plan and rollback concepts exist, but production snapshot creation and restore remain unavailable | Contracted |
 | Execution | Launch intent, execution readiness, request, review, decision, preflight, resource grant, transaction, session, and session status previews exist; actual launch remains disabled | Contracted |
 | AI diagnostics | AI diagnostic input, recommendation, and approval gate contracts exist; provider calls and automatic repair remain disabled | Contracted |
@@ -37,13 +37,13 @@ The current route manifest reports:
 - Write route gate: pass.
 - Host safety boundary: pass.
 
-This is strong evidence that the Ruby-to-Go/C migration has crossed an important threshold: there are no remaining legacy Ruby dispatch routes in the owner route manifest. The next useful migration work is not "remove Ruby everywhere"; it is to add Go owner handlers or Go owner adapter boundaries for the remaining C-backed read-only policy routes.
+This is strong evidence that the Ruby-to-Go/C migration has crossed an important threshold: there are no remaining legacy Ruby dispatch routes or C-backed read-only owner routes in the owner route manifest. The next useful migration work is not "remove Ruby everywhere"; it is to implement the long-running Go owner, production trust chain, and real gated Runtime subsystems behind the now-Go-routed read models.
 
 ## Remaining C-Backed Read-Only Routes
 
 These methods still need native Go owner routes or explicit Go owner adapter boundaries:
 
-- `GetDesktopActivationManifest`
+- No C-backed read-only owner routes remain in the current route manifest.
 - `GetTaskManagerIdentityPlan`
 - `GetKDEIntegrationStatus`
 - `GetKDEShellIntegrationPlan`
@@ -67,7 +67,7 @@ Recommended migration waves:
 2. Safety gate wave: `GetRuntimeWriteGate`, `GetPortalAccessPolicy`, `GetSnapshotPlan`, `GetApplicationStateRoot`.
 3. Compatibility validation wave: `GetTestPlan`, `GetTestResult`, `GetRepairPlan`.
 4. AI safety wave: `GetAIDiagnosticInput`, `GetAIDiagnosticRecommendation`, `GetAIRepairApprovalGate`.
-5. Install wave: `GetDesktopActivationManifest`, `GetCompatibilityInstallPlan`.
+5. Install wave: complete for `GetDesktopActivationManifest` and `GetCompatibilityInstallPlan`; next work is implementation behind the Go-routed contracts.
 
 ## First Milestone Gap
 
@@ -91,7 +91,7 @@ Remaining gaps:
 
 Recommended next implementation:
 
-- Add the next C-backed KDE surface owner route migration wave, then keep `scripts/kde_first_presence_smoke.rb` passing as the first-milestone regression proof.
+- Add the next implementation wave behind the Go-routed Runtime contracts, then keep `scripts/kde_first_presence_smoke.rb` passing as the first-milestone regression proof.
 
 ## Second Milestone Gap
 
@@ -141,7 +141,7 @@ The next work should prefer concrete evidence over more contracts.
 
 Recommended order:
 
-1. Finish a small Go owner route migration wave for C-backed KDE surface methods.
+1. Implement a small real subsystem behind the Go-routed Runtime contracts, starting with the owner daemon, recipe trust store, artifact cache, or KDE materialization writer.
 2. Keep the first-milestone KDE presence smoke passing as new route migrations land.
 3. Add a persistent test-root state model for backend lifecycle.
 4. Add fake Portal request object lifecycle.
@@ -151,6 +151,6 @@ Recommended order:
 ## Evidence Caveats
 
 - This audit was produced against a dirty worktree with parallel implementation changes present.
-- The KDE-first presence smoke ran successfully and reported 57 total read-only routes, 40 Go-routed routes, 17 C-backed routes, and 0 Ruby legacy routes.
+- The KDE-first presence smoke ran successfully and now reports 57 total read-only routes, 57 Go-routed routes, 0 C-backed routes, and 0 Ruby legacy routes.
 - Full `go test ./...`, constrained Docker smokes, and full smoke were not run for this audit.
 - `docs/claude-code-implementation-packages.md` is intentionally excluded from this audit because another agent owns that workstream.

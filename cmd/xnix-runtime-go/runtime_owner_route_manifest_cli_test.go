@@ -18,7 +18,7 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.201" ||
+	if payload["version"] != "0.2.202" ||
 		payload["schema_version"] != "xnix.runtime.owner_route_manifest.v1" ||
 		payload["request_type"] != "runtime-owner-route-manifest-preview" ||
 		payload["manifest_type"] != "runtime-owner-route-manifest" ||
@@ -35,16 +35,18 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 
 	routeCounts := payload["route_counts"].(map[string]any)
 	if routeCounts["total"] != float64(57) ||
-		routeCounts["go_routed"].(float64) <= 0 ||
-		routeCounts["c_core_backed"].(float64) <= 0 ||
+		routeCounts["go_routed"] != float64(57) ||
+		routeCounts["c_core_backed"] != float64(0) ||
 		routeCounts["ruby_legacy"] != float64(0) ||
+		routeCounts["ready"] != float64(57) ||
+		routeCounts["pending"] != float64(0) ||
 		routeCounts["blocked"] != float64(0) {
 		t.Fatalf("unexpected route counts: %#v", routeCounts)
 	}
 	checks := payload["checks"].([]any)
 	checkIDs := payload["check_ids"].([]any)
 	expectedIDs := []string{"method-parity", "go-route-coverage", "c-core-adapter-boundary", "ruby-legacy-dispatch", "write-route-gate", "host-safety-boundary"}
-	expectedStatuses := []string{"pass", "pending", "pending", "pass", "pass", "pass"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass"}
 	if len(checks) != len(expectedIDs) || len(checkIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected route checks: %#v ids=%#v", checks, checkIDs)
 	}
@@ -55,8 +57,8 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 		}
 	}
 	if payload["method_parity_ready"] != true ||
-		payload["go_owner_route_coverage_ready"] != false ||
-		payload["c_core_adapter_required"] != true ||
+		payload["go_owner_route_coverage_ready"] != true ||
+		payload["c_core_adapter_required"] != false ||
 		payload["legacy_runtime_routes_present"] != false ||
 		payload["production_owner_routes_ready"] != false ||
 		payload["runtime_owned"] != true ||

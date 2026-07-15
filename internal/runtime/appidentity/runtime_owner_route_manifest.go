@@ -82,6 +82,7 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetApplication":                         "application-preview",
 	"GetEngineCatalog":                       "engine-catalog-preview",
 	"GetRunPlan":                             "run-plan-preview",
+	"GetDesktopActivationManifest":           "desktop-activation-manifest-preview",
 	"GetCompatibilityPackageSource":          "package-source-preview",
 	"GetCompatibilityAcquisitionPreflight":   "acquisition-preflight-preview",
 	"GetCompatibilityArtifactManifest":       "artifact-manifest-preview",
@@ -136,9 +137,7 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetKDECenterPageSectionDetail":          "kde-center-page-section-detail-preview",
 }
 
-var runtimeOwnerRouteCCoreCommands = map[string]string{
-	"GetDesktopActivationManifest": "desktop-activation-manifest",
-}
+var runtimeOwnerRouteCCoreCommands = map[string]string{}
 
 func NewRuntimeOwnerRouteManifestPreview(root string) (RuntimeOwnerRouteManifestPreview, error) {
 	methodParity, err := NewRuntimeMethodParityManifestPreview(root)
@@ -352,7 +351,7 @@ func runtimeOwnerRouteManifestBlockedActions() []string {
 	return []string{
 		"start production Runtime owner from route manifest preview",
 		"claim production D-Bus name from route manifest preview",
-		"serve C-backed read-only routes without Go owner adapters",
+		"serve read-only routes without Go owner readiness evidence",
 		"enable write methods before all read-only routes are owner-ready",
 		"let KDE route Runtime policy directly",
 		"mutate host root during route manifest preview",
@@ -361,10 +360,10 @@ func runtimeOwnerRouteManifestBlockedActions() []string {
 
 func runtimeOwnerRouteManifestNextRequirements() []string {
 	return []string{
-		"Complete native Go owner handlers or owner adapters for every non-Go read-only route.",
-		"Add a Go owner adapter boundary for C Runtime policy routes.",
 		"Serve the route table from a restricted owner smoke before production bus ownership.",
+		"Keep C Runtime records available only as lower-level policy compatibility surfaces.",
 		"Keep KDE consumers on read-only Runtime methods while route migration continues.",
+		"Keep write methods disabled until production owner readiness is proven.",
 	}
 }
 

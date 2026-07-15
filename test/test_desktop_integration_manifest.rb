@@ -30,7 +30,7 @@ expected_entry_points = %w[
   settings
 ]
 
-assert(manifest["version"] == "0.2.201", "desktop integration manifest must expose the current version")
+assert(manifest["version"] == "0.2.202", "desktop integration manifest must expose the current version")
 assert(manifest["manifest_type"] == "desktop-integration", "manifest must identify its type")
 assert(manifest["desktop"] == "KDE Plasma", "manifest must target the official KDE desktop")
 assert(manifest["official_desktop_only"], "manifest must not expand first-release desktop scope")

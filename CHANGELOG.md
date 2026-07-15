@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.202] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-manifest-preview` for `GetDesktopActivationManifest`, aggregating the KDE desktop activation bundle and seven first-release KDE entry points into a read-only manifest without writing desktop files, changing MIME defaults, persisting settings, sending notifications, activating task-manager entries, applying KWin rules, enabling tray bridges, launching backends, exposing backend details, or mutating the host root.
+
+### Changed
+
+- Migrated `GetDesktopActivationManifest` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to a native Go preview route, completing native Go owner preview coverage for all 57 read-only Runtime routes while production D-Bus ownership remains gated.
+- Updated Runtime owner readiness and KDE-first route smoke expectations for the `57 total, 57 Go-routed, 0 C-backed, 0 Ruby legacy` baseline.
+
 ## [0.2.201] - 2026-07-15
 
 ### Added
