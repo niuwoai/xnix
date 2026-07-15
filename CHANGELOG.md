@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.220] - 2026-07-16
+
+### Added
+
+- Added Runtime owner smoke-batch JSONL records that render the full owner read dispatch table plus every disabled write-method response as ordered restricted-session evidence.
+- Added `xnix-runtime-owner --smoke-batch`, giving the future D-Bus owner event loop a batch-call harness without claiming a bus name, starting a service, enabling writes, requiring network, mutating the host root, or exposing backend details.
+- Added Go and restricted-session smoke coverage for smoke-batch read coverage, write denial coverage, ordering, dispatch readiness, and disabled side-effect flags.
+
+### Changed
+
+- Updated Runtime owner candidate smoke evidence so owner smoke now verifies candidate JSON, single read dispatch, lifecycle JSONL, and full read/write smoke-batch output.
+
 ## [0.2.219] - 2026-07-16
 
 ### Added

@@ -126,4 +126,33 @@ lifecycle_events.each_with_index do |event, index|
 end
 assert(lifecycle_events.last.fetch("shutdown_reason") == "preview-complete", "Runtime owner candidate smoke lifecycle must expose a safe shutdown reason")
 
+stdout, stderr, status = Open3.capture3(*owner_command, "--root", ".", "--smoke-batch")
+assert(status.success?, "Runtime owner candidate smoke must render smoke batch JSONL: #{stderr}")
+smoke_batch_records = stdout.lines.map { |line| JSON.parse(line) }
+assert(smoke_batch_records.length == 65, "Runtime owner smoke batch must include 61 read records and 4 write records")
+read_records = smoke_batch_records.select { |record| record.fetch("record_type") == "read-dispatch" }
+write_records = smoke_batch_records.select { |record| record.fetch("record_type") == "write-denial" }
+assert(read_records.length == 61, "Runtime owner smoke batch must cover every owner read dispatch method")
+assert(write_records.length == 4, "Runtime owner smoke batch must cover every disabled write method")
+smoke_batch_records.each_with_index do |record, index|
+  assert(record.fetch("schema_version") == "xnix.runtime.owner_smoke_batch.v1", "Runtime owner smoke batch must expose its schema")
+  assert(record.fetch("request_type") == "runtime-owner-smoke-batch-record", "Runtime owner smoke batch must expose its request type")
+  assert(record.fetch("batch_type") == "restricted-session-owner-call-batch", "Runtime owner smoke batch must identify restricted session evidence")
+  assert(record.fetch("sequence") == index + 1, "Runtime owner smoke batch must emit ordered records")
+  assert(record.fetch("read_dispatch_method_count") == 61, "Runtime owner smoke batch must expose read dispatch coverage")
+  assert(record.fetch("write_method_count") == 4, "Runtime owner smoke batch must expose write denial coverage")
+  assert(record.fetch("runtime_owned"), "Runtime owner smoke batch must keep Runtime ownership in the Runtime")
+  assert(record.fetch("go_runtime_backed"), "Runtime owner smoke batch must report Go backing")
+  assert(!record.fetch("kde_policy_owner"), "Runtime owner smoke batch must not make KDE the policy owner")
+  assert(!record.fetch("event_loop_started"), "Runtime owner smoke batch must not start an event loop")
+  assert(!record.fetch("session_bus_claimed"), "Runtime owner smoke batch must not claim the session bus")
+  assert(!record.fetch("production_bus_claimed"), "Runtime owner smoke batch must not claim the production bus")
+  assert(!record.fetch("host_root_modified"), "Runtime owner smoke batch must not mutate the host root")
+  assert(!record.fetch("backend_details_exposed"), "Runtime owner smoke batch must not expose backend details")
+  assert(record.fetch("dispatch_ready"), "Runtime owner smoke batch records must be dispatch-ready")
+end
+assert(read_records.all? { |record| record.fetch("read_only_dispatch") && !record.fetch("write_method") }, "Runtime owner smoke batch read records must remain read-only")
+assert(write_records.all? { |record| !record.fetch("read_only_dispatch") && record.fetch("write_method") }, "Runtime owner smoke batch write records must be explicit denials")
+assert(write_records.all? { |record| record.fetch("error_name") == "org.xnix.Compatibility1.Error.WriteMethodDisabled" }, "Runtime owner smoke batch write records must use stable disabled-write errors")
+
 puts "PASS: Runtime owner candidate restricted session smoke"

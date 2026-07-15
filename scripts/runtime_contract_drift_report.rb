@@ -129,6 +129,7 @@ def build_report(root)
   parity_source = read_project_file(root, "internal/runtime/appidentity/runtime_method_parity_manifest.go")
   route_source = read_project_file(root, "internal/runtime/appidentity/runtime_owner_route_manifest.go")
   owner_dispatch_source = read_project_file(root, "internal/runtime/owner/dispatch.go")
+  owner_smoke_batch_source = read_project_file(root, "internal/runtime/owner/smoke_batch.go")
   go_cli_source = read_sources(root, [
     "cmd/xnix-runtime-go/main.go",
     "cmd/xnix-runtime-go/runtime_owner_commands.go"
@@ -189,6 +190,12 @@ def build_report(root)
       summary: "Owner read dispatch covers every D-Bus owner read method."
     ) { |source, method| source.include?("\"#{method}\"") },
     source_coverage_check(
+      id: "owner-smoke-batch-source",
+      expected: ["SupportedReadDispatchMethods", "DisabledWriteResponse", "xnix.runtime.owner_smoke_batch.v1", "restricted-session-owner-call-batch"],
+      source: owner_smoke_batch_source,
+      summary: "Owner smoke batch derives read coverage from the owner dispatch table and write denials from the write gate."
+    ) { |source, token| source.include?(token) },
+    source_coverage_check(
       id: "runtime-dispatch",
       expected: read_only_methods,
       source: runtime_dispatch_source,
@@ -225,13 +232,14 @@ def build_report(root)
     "version" => version,
     "schema_version" => "xnix.runtime.contract_drift_report.v1",
     "report_type" => "runtime-contract-drift-report",
-    "source" => "dbus-contract+go-parity+go-owner-routes+owner-read-dispatch+runtime-dispatch+dbus-client+smoke-adapter+session-smoke",
+    "source" => "dbus-contract+go-parity+go-owner-routes+owner-read-dispatch+owner-smoke-batch+runtime-dispatch+dbus-client+smoke-adapter+session-smoke",
     "runtime_owned" => true,
     "go_runtime_backed" => true,
     "kde_policy_owner" => false,
     "read_only_method_count" => read_only_methods.length,
     "read_only_methods" => read_only_methods,
     "owner_read_dispatch_method_count" => dispatch_methods.length,
+    "owner_smoke_batch_record_count" => dispatch_methods.length + WRITE_METHODS.length,
     "write_methods" => WRITE_METHODS,
     "write_methods_supported" => false,
     "write_method_dispatch_enabled" => false,

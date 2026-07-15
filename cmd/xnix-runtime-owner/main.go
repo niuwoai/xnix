@@ -26,6 +26,7 @@ func run(args []string, stdout io.Writer) error {
 	writeMethod := flags.String("deny-write", "", "render a deterministic disabled write-method response")
 	readMethod := flags.String("dispatch-read", "", "render a read-only Runtime owner method dispatch response")
 	lifecycleLog := flags.Bool("lifecycle-log", false, "render smoke-owner lifecycle events as JSON Lines")
+	smokeBatch := flags.Bool("smoke-batch", false, "render restricted smoke-owner read/write call evidence as JSON Lines")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -35,13 +36,13 @@ func run(args []string, stdout io.Writer) error {
 
 	var payload any
 	selectedOperations := 0
-	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *lifecycleLog} {
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *lifecycleLog, *smokeBatch} {
 		if selected {
 			selectedOperations++
 		}
 	}
 	if selectedOperations > 1 {
-		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, or --lifecycle-log")
+		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, --lifecycle-log, or --smoke-batch")
 	}
 	if *writeMethod != "" {
 		response, err := owner.DisabledWriteResponse(*writeMethod)
@@ -63,6 +64,18 @@ func run(args []string, stdout io.Writer) error {
 		encoder := json.NewEncoder(stdout)
 		for _, event := range events {
 			if err := encoder.Encode(event); err != nil {
+				return err
+			}
+		}
+		return nil
+	} else if *smokeBatch {
+		records, err := owner.NewSmokeBatchRecords(*root)
+		if err != nil {
+			return err
+		}
+		encoder := json.NewEncoder(stdout)
+		for _, record := range records {
+			if err := encoder.Encode(record); err != nil {
 				return err
 			}
 		}

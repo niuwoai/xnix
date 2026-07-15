@@ -1,6 +1,6 @@
 # Claude Code Contract Implementation Handoff
 
-> Last updated: 2026-07-16 | Baseline: v0.2.219
+> Last updated: 2026-07-16 | Baseline: v0.2.220
 
 This document splits Xnix's contract-heavy roadmap into coarse, independently implementable workstreams for Claude Code.
 
