@@ -12,7 +12,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerReadinessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.202" ||
+	if preview.Version != "0.2.203" ||
 		preview.SchemaVersion != "xnix.runtime.owner_readiness.v1" ||
 		preview.RequestType != "runtime-owner-readiness-preview" ||
 		preview.ReadinessType != "runtime-owner-readiness" ||
@@ -52,10 +52,10 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		preview.OwnerProcess.TargetOwnerLanguage != "go" ||
 		!preview.OwnerProcess.ServiceActivationReady ||
 		!preview.OwnerProcess.PackagedEntrypointReady ||
-		preview.OwnerProcess.GoOwnerProcessReady ||
+		!preview.OwnerProcess.GoOwnerProcessReady ||
 		preview.OwnerProcess.ProductionOwnerProcessReady ||
-		preview.OwnerProcess.Counts.Passed != 3 ||
-		preview.OwnerProcess.Counts.Pending != 2 {
+		preview.OwnerProcess.Counts.Passed != 4 ||
+		preview.OwnerProcess.Counts.Pending != 1 {
 		t.Fatalf("unexpected owner process summary: %#v", preview.OwnerProcess)
 	}
 	if preview.OwnerSmokePlan.RequestType != "runtime-owner-smoke-plan-preview" ||
@@ -171,7 +171,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 
 func TestRuntimeOwnerReadinessPreviewBlocksMissingActivationAndParity(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.202\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.203\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

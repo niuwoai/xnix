@@ -18,7 +18,7 @@ func TestRuntimeOwnerProcessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.202" ||
+	if payload["version"] != "0.2.203" ||
 		payload["schema_version"] != "xnix.runtime.owner_process.v1" ||
 		payload["request_type"] != "runtime-owner-process-preview" ||
 		payload["process_type"] != "runtime-owner-process" ||
@@ -40,7 +40,7 @@ func TestRuntimeOwnerProcessPreviewCommandRendersGoReadModel(t *testing.T) {
 	checks := payload["checks"].([]any)
 	checkIDs := payload["check_ids"].([]any)
 	expectedIDs := []string{"service-activation", "packaged-entrypoint", "go-owner-target", "production-owner-loop", "host-safety-boundary"}
-	expectedStatuses := []string{"pass", "pass", "pending", "pending", "pass"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pending", "pass"}
 	if len(checks) != len(expectedIDs) || len(checkIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected checks: %#v ids=%#v", checks, checkIDs)
 	}
@@ -52,8 +52,8 @@ func TestRuntimeOwnerProcessPreviewCommandRendersGoReadModel(t *testing.T) {
 	}
 	counts := payload["counts"].(map[string]any)
 	if counts["total"] != float64(5) ||
-		counts["passed"] != float64(3) ||
-		counts["pending"] != float64(2) ||
+		counts["passed"] != float64(4) ||
+		counts["pending"] != float64(1) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected owner process counts: %#v", counts)
 	}
@@ -63,7 +63,7 @@ func TestRuntimeOwnerProcessPreviewCommandRendersGoReadModel(t *testing.T) {
 		payload["kde_may_claim_runtime_ownership"] != false ||
 		payload["service_activation_ready"] != true ||
 		payload["packaged_entrypoint_ready"] != true ||
-		payload["go_owner_process_ready"] != false ||
+		payload["go_owner_process_ready"] != true ||
 		payload["production_owner_process_ready"] != false ||
 		payload["system_service_started"] != false ||
 		payload["production_bus_claimed"] != false ||

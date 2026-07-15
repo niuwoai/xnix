@@ -12,7 +12,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 		t.Fatalf("NewRuntimeOwnerProcessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.202" ||
+	if preview.Version != "0.2.203" ||
 		preview.SchemaVersion != "xnix.runtime.owner_process.v1" ||
 		preview.RequestType != "runtime-owner-process-preview" ||
 		preview.ProcessType != "runtime-owner-process" ||
@@ -32,7 +32,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 		t.Fatalf("unexpected owner process language metadata: %#v", preview)
 	}
 	expectedIDs := []string{"service-activation", "packaged-entrypoint", "go-owner-target", "production-owner-loop", "host-safety-boundary"}
-	expectedStatuses := []string{"pass", "pass", "pending", "pending", "pass"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pending", "pass"}
 	if len(preview.Checks) != len(expectedIDs) || len(preview.CheckIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected checks: %#v ids=%#v", preview.Checks, preview.CheckIDs)
 	}
@@ -44,8 +44,8 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 		}
 	}
 	if preview.Counts.Total != 5 ||
-		preview.Counts.Passed != 3 ||
-		preview.Counts.Pending != 2 ||
+		preview.Counts.Passed != 4 ||
+		preview.Counts.Pending != 1 ||
 		preview.Counts.Blocked != 0 {
 		t.Fatalf("unexpected owner process counts: %#v", preview.Counts)
 	}
@@ -55,7 +55,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 		preview.KDEMayClaimRuntimeOwnership ||
 		!preview.ServiceActivationReady ||
 		!preview.PackagedEntrypointReady ||
-		preview.GoOwnerProcessReady ||
+		!preview.GoOwnerProcessReady ||
 		preview.ProductionOwnerProcessReady ||
 		preview.SystemServiceStarted ||
 		preview.ProductionBusClaimed ||
@@ -68,10 +68,10 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 	if len(preview.BlockedActions) != 6 ||
 		preview.BlockedActions[0] != "start production Runtime owner from process preview" ||
 		len(preview.NextRequirements) != 4 ||
-		preview.NextRequirements[0] != "Implement a Go long-running Runtime owner process." {
+		preview.NextRequirements[0] != "Bind the Go owner candidate to a restricted session-bus smoke." {
 		t.Fatalf("unexpected blocked actions or next requirements: actions=%#v next=%#v", preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner process activation is aligned, but the production Go owner loop remains pending." {
+	if preview.DesktopSafeSummary != "Runtime owner process has a Go owner candidate, but the production D-Bus event loop remains pending." {
 		t.Fatalf("unexpected owner process summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner process preview test"); err != nil {
@@ -81,7 +81,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 
 func TestRuntimeOwnerProcessPreviewBlocksMissingActivationAndEntrypoint(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.202\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.203\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

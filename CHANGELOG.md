@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.203] - 2026-07-16
+
+### Added
+
+- Added `xnix-runtime-owner` and the Go Runtime owner candidate package, exposing a safe smoke-owner/readiness JSON shape with full Go read-only route coverage and deterministic disabled write-method responses while keeping the production D-Bus loop, bus claims, service starts, host-root mutation, backend launch, and KDE ownership disabled.
+- Added a coarse Claude Code contract implementation handoff guide that groups the remaining contract-heavy Runtime, KDE, execution, AI, image, and quality-gate domains into larger independently assignable packages.
+
+### Changed
+
+- Updated Runtime owner process readiness to recognize the Go owner candidate as present while continuing to report the production D-Bus event loop and production ownership as pending.
+- Linked the new contract handoff guide from the existing Claude Code backlog documents.
+
 ## [0.2.202] - 2026-07-15
 
 ### Added

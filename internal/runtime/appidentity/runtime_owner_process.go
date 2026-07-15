@@ -64,6 +64,7 @@ func NewRuntimeOwnerProcessPreview(root string) (RuntimeOwnerProcessPreview, err
 	checks := runtimeOwnerProcessChecks(root, serviceBinding.ActivationBindingReady, wrapperContent)
 	counts := countRuntimeOwnerProcessChecks(checks)
 	entrypointReady := runtimeOwnerProcessCheckStatus(checks, "packaged-entrypoint") == "pass"
+	goOwnerReady := runtimeOwnerProcessCheckStatus(checks, "go-owner-target") == "pass"
 
 	preview := RuntimeOwnerProcessPreview{
 		Version:                     serviceBinding.Version,
@@ -84,7 +85,7 @@ func NewRuntimeOwnerProcessPreview(root string) (RuntimeOwnerProcessPreview, err
 		Counts:                      counts,
 		ServiceActivationReady:      serviceBinding.ActivationBindingReady,
 		PackagedEntrypointReady:     entrypointReady,
-		GoOwnerProcessReady:         false,
+		GoOwnerProcessReady:         goOwnerReady,
 		ProductionOwnerProcessReady: false,
 		RuntimeOwned:                true,
 		GoRuntimeBacked:             true,
@@ -98,7 +99,7 @@ func NewRuntimeOwnerProcessPreview(root string) (RuntimeOwnerProcessPreview, err
 		BackendDetailsExposed:       false,
 		BlockedActions:              runtimeOwnerProcessBlockedActions(),
 		NextRequirements:            runtimeOwnerProcessNextRequirements(),
-		DesktopSafeSummary:          runtimeOwnerProcessSummary(serviceBinding.ActivationBindingReady, entrypointReady),
+		DesktopSafeSummary:          runtimeOwnerProcessSummary(serviceBinding.ActivationBindingReady, entrypointReady, goOwnerReady),
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner process preview"); err != nil {
 		return RuntimeOwnerProcessPreview{}, err
@@ -110,7 +111,7 @@ func runtimeOwnerProcessChecks(root string, activationReady bool, wrapperContent
 	return []RuntimeOwnerProcessCheck{
 		runtimeOwnerProcessCheck("service-activation", runtimeOwnerProcessPassBlocked(activationReady), "D-Bus activation and systemd service files must point at the packaged Runtime entrypoint."),
 		runtimeOwnerProcessCheck("packaged-entrypoint", runtimeOwnerProcessPassBlocked(runtimeOwnerProcessEntrypointReady(root, wrapperContent)), "The packaged Runtime entrypoint must exist, be executable, and delegate to the current Runtime daemon."),
-		runtimeOwnerProcessCheck("go-owner-target", "pending", "The production Runtime owner process should move from the current wrapper to a Go-owned long-running owner."),
+		runtimeOwnerProcessCheck("go-owner-target", runtimeOwnerProcessPassPending(runtimeOwnerProcessGoCandidateReady(root)), "A Go Runtime owner candidate should exist before the packaged entrypoint can move away from the current wrapper."),
 		runtimeOwnerProcessCheck("production-owner-loop", "pending", "The Go owner still needs an event loop that owns the stable D-Bus name and serves read-only Runtime methods."),
 		runtimeOwnerProcessCheck("host-safety-boundary", "pass", "Owner process preview must not start services, claim bus names, require network, or mutate the host root."),
 	}
@@ -131,9 +132,27 @@ func runtimeOwnerProcessPassBlocked(passed bool) string {
 	return "blocked"
 }
 
+func runtimeOwnerProcessPassPending(passed bool) string {
+	if passed {
+		return "pass"
+	}
+	return "pending"
+}
+
 func runtimeOwnerProcessEntrypointReady(root string, wrapperContent string) bool {
 	info, err := os.Stat(runtimeServicePath(root, runtimeServiceBindingLibexecWrapper))
 	return err == nil && !info.IsDir() && info.Mode().Perm()&0o111 != 0 && strings.Contains(wrapperContent, "runtime_daemon")
+}
+
+func runtimeOwnerProcessGoCandidateReady(root string) bool {
+	ownerCommand := readRuntimeServiceBindingOptional(root, "cmd/xnix-runtime-owner/main.go")
+	ownerCandidate := readRuntimeServiceBindingOptional(root, "internal/runtime/owner/candidate.go")
+	return strings.Contains(ownerCommand, "xnix-runtime-owner") &&
+		strings.Contains(ownerCommand, "NewCandidate") &&
+		strings.Contains(ownerCommand, "DisabledWriteResponse") &&
+		strings.Contains(ownerCandidate, "runtime-owner-candidate") &&
+		strings.Contains(ownerCandidate, "go-runtime-owner-candidate") &&
+		strings.Contains(ownerCandidate, "ModeSmokeOwner")
 }
 
 func runtimeOwnerProcessCurrentLanguage(wrapperContent string) string {
@@ -188,16 +207,19 @@ func runtimeOwnerProcessBlockedActions() []string {
 
 func runtimeOwnerProcessNextRequirements() []string {
 	return []string{
-		"Implement a Go long-running Runtime owner process.",
-		"Bind the packaged entrypoint to the Go owner after parity smoke passes.",
+		"Bind the Go owner candidate to a restricted session-bus smoke.",
+		"Bind the packaged entrypoint to the Go owner after owner smoke parity passes.",
 		"Prove stable D-Bus name ownership in a restricted production-owner smoke.",
-		"Keep the current wrapper available only as a transition path until the Go owner is ready.",
+		"Keep the current wrapper available only as a transition path until the production owner loop is ready.",
 	}
 }
 
-func runtimeOwnerProcessSummary(activationReady bool, entrypointReady bool) string {
+func runtimeOwnerProcessSummary(activationReady bool, entrypointReady bool, goOwnerReady bool) string {
 	if !activationReady || !entrypointReady {
 		return "Runtime owner process activation is blocked by service or entrypoint defects."
+	}
+	if goOwnerReady {
+		return "Runtime owner process has a Go owner candidate, but the production D-Bus event loop remains pending."
 	}
 	return "Runtime owner process activation is aligned, but the production Go owner loop remains pending."
 }

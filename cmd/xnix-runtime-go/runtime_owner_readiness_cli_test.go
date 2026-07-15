@@ -18,7 +18,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.202" ||
+	if payload["version"] != "0.2.203" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
@@ -57,7 +57,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		ownerProcess["target_owner_language"] != "go" ||
 		ownerProcess["service_activation_ready"] != true ||
 		ownerProcess["packaged_entrypoint_ready"] != true ||
-		ownerProcess["go_owner_process_ready"] != false ||
+		ownerProcess["go_owner_process_ready"] != true ||
 		ownerProcess["production_owner_process_ready"] != false {
 		t.Fatalf("unexpected owner process summary: %#v", ownerProcess)
 	}

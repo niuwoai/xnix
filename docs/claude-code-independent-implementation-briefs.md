@@ -6,6 +6,8 @@ This file is a prompt-ready implementation backlog for Claude Code. It focuses o
 
 Use one brief per Claude Code branch. Do not ask one branch to implement multiple briefs unless the dependency is explicitly listed as part of the same acceptance path.
 
+For coarser branch-sized handoffs that group several related briefs into larger implementation packages, use `docs/claude-code-contract-implementation-handoff.md`.
+
 ## How to Use These Briefs
 
 1. Copy exactly one brief into Claude Code.

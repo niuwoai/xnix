@@ -8,6 +8,8 @@ It intentionally does not replace `docs/claude-code-implementation-packages.md`.
 
 For prompt-ready task cards that can be copied directly into Claude Code, use `docs/claude-code-independent-implementation-briefs.md`.
 
+For coarser contract-to-implementation handoff packages that can be assigned as larger Claude Code branches, use `docs/claude-code-contract-implementation-handoff.md`.
+
 ## Operating Rules
 
 - Use one branch per package.
