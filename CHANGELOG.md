@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.171] - 2026-07-15
+
+### Added
+
+- Added a Go-backed backend selection snapshot to the KDE Compatibility Center page preview so Plasma can show the Runtime-recommended compatibility profile without committing selection, creating environments, launching backends, mutating the host root, or exposing backend details.
+- Added a read-only Backend section to KDE Compatibility Center page sections and section-detail routing, backed by `GetBackendSelectionPlan`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the six-section page model.
+
 ## [0.2.170] - 2026-07-15
 
 ### Added

@@ -17,7 +17,8 @@ type KDECenterPagePreview struct {
 	LauncherCommand            []string                  `json:"launcher_command"`
 	Header                     KDECenterPageHeader       `json:"header"`
 	ApplicationSummary         KDECenterPageApplication  `json:"application_summary"`
-	ActivationStatusSnapshot  KDECenterPageActivation   `json:"activation_status_snapshot"`
+	BackendSelectionSnapshot   KDECenterPageBackend      `json:"backend_selection_snapshot"`
+	ActivationStatusSnapshot   KDECenterPageActivation   `json:"activation_status_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -84,6 +85,25 @@ type KDECenterPageApplication struct {
 	HostRootModified           bool     `json:"host_root_modified"`
 	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
 	Summary                    string   `json:"summary"`
+}
+
+type KDECenterPageBackend struct {
+	RequestType                 string `json:"request_type"`
+	PlanType                    string `json:"plan_type"`
+	RuntimeMethod               string `json:"runtime_method"`
+	SelectedStrategy            string `json:"selected_strategy"`
+	RecommendedProfileID        string `json:"recommended_profile_id"`
+	CandidateCount              int    `json:"candidate_count"`
+	ReadyCandidateCount         int    `json:"ready_candidate_count"`
+	BlockedCandidateCount       int    `json:"blocked_candidate_count"`
+	SelectionCommitted          bool   `json:"selection_committed"`
+	SelectionChangeEnabled      bool   `json:"selection_change_enabled"`
+	BackendLaunchEnabled        bool   `json:"backend_launch_enabled"`
+	CapabilityActivationEnabled bool   `json:"capability_activation_enabled"`
+	EnvironmentCreated          bool   `json:"environment_created"`
+	HostRootModified            bool   `json:"host_root_modified"`
+	BackendDetailsExposed       bool   `json:"backend_details_exposed"`
+	Summary                     string `json:"summary"`
 }
 
 type KDECenterPageActivation struct {
@@ -320,6 +340,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	backendSelection, err := plan.BackendSelectionPreview()
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 	activationStatus, err := plan.DesktopActivationStatusPreview("development")
 	if err != nil {
 		return KDECenterPagePreview{}, err
@@ -331,7 +355,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -368,6 +392,24 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			HostRootModified:           application.HostRootModified,
 			BackendDetailsExposed:      application.BackendDetailsExposed,
 			Summary:                    application.Summary,
+		},
+		BackendSelectionSnapshot: KDECenterPageBackend{
+			RequestType:                 backendSelection.RequestType,
+			PlanType:                    backendSelection.PlanType,
+			RuntimeMethod:               backendSelection.RuntimeMethod,
+			SelectedStrategy:            backendSelection.SelectedStrategy,
+			RecommendedProfileID:        backendSelection.RecommendedProfileID,
+			CandidateCount:              backendSelection.CandidateCount,
+			ReadyCandidateCount:         backendSelection.ReadyCandidateCount,
+			BlockedCandidateCount:       backendSelection.BlockedCandidateCount,
+			SelectionCommitted:          backendSelection.SelectionCommitted,
+			SelectionChangeEnabled:      backendSelection.SelectionChangeEnabled,
+			BackendLaunchEnabled:        backendSelection.BackendLaunchEnabled,
+			CapabilityActivationEnabled: backendSelection.CapabilityActivationEnabled,
+			EnvironmentCreated:          backendSelection.EnvironmentCreated,
+			HostRootModified:            backendSelection.HostRootModified,
+			BackendDetailsExposed:       backendSelection.BackendDetailsExposed,
+			Summary:                     backendSelection.DesktopSafeSummary,
 		},
 		ActivationStatusSnapshot: KDECenterPageActivation{
 			RequestType:           activationStatus.RequestType,
@@ -629,6 +671,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 func kdeCenterPageNavigation() []KDECenterPageNavigation {
 	return []KDECenterPageNavigation{
 		kdeCenterPageNavigationItem("overview", "Overview", "compatibility-center-overview"),
+		kdeCenterPageNavigationItem("backend", "Backend", "compatibility-backend-selection"),
 		kdeCenterPageNavigationItem("activation", "Activation", "compatibility-activation-status"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
@@ -651,6 +694,7 @@ func kdeCenterPageNavigationItem(id string, label string, target string) KDECent
 func kdeCenterPageSections() []KDECenterPageSection {
 	return []KDECenterPageSection{
 		kdeCenterPageSection("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready", "Overview reads Runtime-owned application state, known issue counts, and repair record state."),
+		kdeCenterPageSection("backend", "Backend", "compatibility-backend-selection", "GetBackendSelectionPlan", "backend-selection-preview", "selection-pending", "Backend reads Runtime-owned recommended compatibility profile while selection commit, environment creation, and launch remain closed."),
 		kdeCenterPageSection("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit", "Activation reads Runtime-owned KDE desktop activation status while commit, launch, and host mutation gates remain closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),

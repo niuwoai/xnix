@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -98,6 +98,19 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		t.Fatalf("unexpected settings snapshot: %#v", settings)
 	}
 	navigation := payload["navigation"].([]any)
+	backend := payload["backend_selection_snapshot"].(map[string]any)
+	if backend["request_type"] != "backend-selection-preview" ||
+		backend["runtime_method"] != "GetBackendSelectionPlan" ||
+		backend["recommended_profile_id"] != "local-compatibility" ||
+		backend["candidate_count"] != float64(2) ||
+		backend["selection_committed"] != false ||
+		backend["selection_change_enabled"] != false ||
+		backend["backend_launch_enabled"] != false ||
+		backend["environment_created"] != false ||
+		backend["host_root_modified"] != false ||
+		backend["backend_details_exposed"] != false {
+		t.Fatalf("unexpected backend selection snapshot: %#v", backend)
+	}
 	activation := payload["activation_status_snapshot"].(map[string]any)
 	if activation["request_type"] != "desktop-activation-status-preview" ||
 		activation["runtime_method"] != "GetDesktopActivationStatus" ||
@@ -109,13 +122,14 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		activation["backend_details_exposed"] != false {
 		t.Fatalf("unexpected activation status snapshot: %#v", activation)
 	}
-	if payload["navigation_count"] != float64(5) ||
+	if payload["navigation_count"] != float64(6) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
-		navigation[1].(map[string]any)["id"] != "activation" ||
-		navigation[2].(map[string]any)["id"] != "actions" ||
-		navigation[3].(map[string]any)["id"] != "settings" ||
-		navigation[4].(map[string]any)["id"] != "diagnostics" {
+		navigation[1].(map[string]any)["id"] != "backend" ||
+		navigation[2].(map[string]any)["id"] != "activation" ||
+		navigation[3].(map[string]any)["id"] != "actions" ||
+		navigation[4].(map[string]any)["id"] != "settings" ||
+		navigation[5].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

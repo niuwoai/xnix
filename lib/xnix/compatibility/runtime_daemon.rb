@@ -726,6 +726,7 @@ module Xnix
         recipe = require_recipe(application_id)
         summary = compatibility_center_summary(recipe.id)
         settings_model = settings(recipe.id)
+        backend_selection = backend_selection_plan_summary(recipe)
         activation_status = desktop_activation_status(recipe.id)
         decision_allowed = %w[approved reviewed].include?(decision)
 
@@ -742,6 +743,13 @@ module Xnix
           "runtime_mode" => summary.fetch("compatibility").fetch("runtime_mode"),
           "known_issue_count" => summary.fetch("compatibility").fetch("known_issue_count"),
           "repair_record_state" => summary.fetch("repair_records").fetch("state"),
+          "backend_selection_plan_type" => backend_selection.fetch("plan_type"),
+          "backend_selection_runtime_method" => backend_selection.fetch("runtime_method"),
+          "backend_recommended_profile_id" => backend_selection.fetch("recommended_profile_id"),
+          "backend_candidate_count" => backend_selection.fetch("candidate_count"),
+          "backend_selection_committed" => backend_selection.fetch("selection_committed"),
+          "backend_selection_change_enabled" => backend_selection.fetch("selection_change_enabled"),
+          "backend_launch_enabled" => backend_selection.fetch("backend_launch_enabled"),
           "activation_status_request_type" => activation_status.fetch("request_type"),
           "activation_state" => activation_status.fetch("activation_state"),
           "activation_status_runtime_method" => activation_status.fetch("runtime_method"),
@@ -797,6 +805,7 @@ module Xnix
         page = kde_center_page(recipe.id, decision)
         sections = [
           kde_center_page_section("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready"),
+          kde_center_page_section("backend", "Backend", "compatibility-backend-selection", "GetBackendSelectionPlan", "backend-selection-preview", "selection-pending"),
           kde_center_page_section("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", page.fetch("activation_state")),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
@@ -1481,6 +1490,11 @@ module Xnix
         {
           "page_type" => page.fetch("page_type"),
           "runtime_method" => page.fetch("runtime_method"),
+          "backend_selection_runtime_method" => page.fetch("backend_selection_runtime_method"),
+          "backend_recommended_profile_id" => page.fetch("backend_recommended_profile_id"),
+          "backend_selection_committed" => page.fetch("backend_selection_committed"),
+          "backend_selection_change_enabled" => page.fetch("backend_selection_change_enabled"),
+          "backend_launch_enabled" => page.fetch("backend_launch_enabled"),
           "activation_status_request_type" => page.fetch("activation_status_request_type"),
           "activation_status_runtime_method" => page.fetch("activation_status_runtime_method"),
           "activation_state" => page.fetch("activation_state"),
