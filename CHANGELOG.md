@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.215] - 2026-07-16
+
+### Added
+
+- Added a `diagnostic_history_route` object to the Go KDE Compatibility Center section detail read model, giving KDE a safe next-hop route to `diagnostic-history-preview` for the selected application.
+- Added Go and CLI/Ruby coverage proving the Diagnostics section route preserves the application id, requires a Runtime state root without exposing it, and keeps AI provider calls, file reads, request creation, permission grants, launch, execution, repair execution, host-root mutation, and backend details disabled.
+- Added `docs/claude-code-mainline-implementation-plan.md`, a mainline Claude Code handoff plan that splits the remaining contract-heavy work into independently reviewable implementation packages with explicit safety constraints and acceptance tests.
+
+### Changed
+
+- Updated layout verification to require the Diagnostics detail route, `GetDiagnosticHistoryPreview`, state-root safety flags, and the diagnostic history read model binding.
+- Documented the recommended first Claude Code dispatch wave around the Runtime owner service, recipe/artifact trust pipeline, environment lifecycle state, and developer evidence harness.
+
 ## [0.2.214] - 2026-07-16
 
 ### Changed

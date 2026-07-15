@@ -1872,6 +1872,47 @@ if go_available
   assert(!kde_center_page_section_detail.include?(".exe"), "KDE center page section detail preview must not expose a Windows executable")
   assert(!kde_center_page_section_detail.downcase.include?("virtual machine"), "KDE center page section detail preview must not expose implementation labels")
 
+  kde_diagnostics_section_detail, kde_diagnostics_section_detail_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-center-page-section-detail-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--section",
+    "diagnostics",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_diagnostics_section_detail_status.success?, "Go KDE diagnostics section detail preview CLI must run successfully")
+  kde_diagnostics_section_detail_payload = JSON.parse(kde_diagnostics_section_detail)
+  assert(kde_diagnostics_section_detail_payload.fetch("section_id") == "diagnostics", "KDE diagnostics detail must preserve the selected section")
+  assert(kde_diagnostics_section_detail_payload.fetch("section_runtime_method") == "GetDiagnostics", "KDE diagnostics detail must route to Runtime diagnostics")
+  assert(kde_diagnostics_section_detail_payload.fetch("section_read_model") == "diagnostic-history-preview", "KDE diagnostics detail must route to diagnostic history previews")
+  diagnostic_history_route = kde_diagnostics_section_detail_payload.fetch("diagnostic_history_route")
+  assert(diagnostic_history_route.fetch("request_type") == "diagnostic-history-route", "KDE diagnostics detail must expose a diagnostic history route")
+  assert(diagnostic_history_route.fetch("runtime_method") == "GetDiagnostics", "KDE diagnostic history route must use GetDiagnostics")
+  assert(diagnostic_history_route.fetch("read_method") == "GetDiagnosticHistoryPreview", "KDE diagnostic history route must expose the read method")
+  assert(diagnostic_history_route.fetch("read_model") == "diagnostic-history-preview", "KDE diagnostic history route must expose the read model")
+  assert(diagnostic_history_route.fetch("cli_command") == "diagnostic-history-preview", "KDE diagnostic history route must expose the CLI command")
+  assert(diagnostic_history_route.fetch("application_id") == "org.xnix.sample.notepad", "KDE diagnostic history route must preserve the application id")
+  assert(diagnostic_history_route.fetch("state_root_required") == true, "KDE diagnostic history route must require a Runtime state root")
+  assert(diagnostic_history_route.fetch("state_root_path_exposed") == false, "KDE diagnostic history route must not expose the state root")
+  assert(diagnostic_history_route.fetch("history_preview_created") == false, "KDE diagnostic history route must not pretend to read history without a state root")
+  assert(diagnostic_history_route.fetch("ai_provider_call_enabled") == false, "KDE diagnostic history route must not call AI providers")
+  assert(diagnostic_history_route.fetch("file_content_read") == false, "KDE diagnostic history route must not read file contents")
+  assert(diagnostic_history_route.fetch("file_paths_exposed") == false, "KDE diagnostic history route must not expose file paths")
+  assert(diagnostic_history_route.fetch("request_object_created") == false, "KDE diagnostic history route must not create request objects")
+  assert(diagnostic_history_route.fetch("permission_granted") == false, "KDE diagnostic history route must not grant permissions")
+  assert(diagnostic_history_route.fetch("launch_enabled") == false, "KDE diagnostic history route must not enable launch")
+  assert(diagnostic_history_route.fetch("execution_started") == false, "KDE diagnostic history route must not start execution")
+  assert(diagnostic_history_route.fetch("repair_execution_enabled") == false, "KDE diagnostic history route must not execute repairs")
+  assert(diagnostic_history_route.fetch("host_root_modified") == false, "KDE diagnostic history route must not mutate host root")
+  assert(diagnostic_history_route.fetch("backend_details_exposed") == false, "KDE diagnostic history route must hide backend details")
+
   file_open, file_open_status = capture_runtime_go(
     project_root,
     runtime_go_binary,

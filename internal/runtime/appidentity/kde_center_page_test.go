@@ -635,6 +635,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		notificationsPreview.SectionState != "planned" ||
 		notificationsPreview.SectionRuntimeMethod != "GetNotificationPlan" ||
 		notificationsPreview.SectionReadModel != "notification-preview" ||
+		notificationsPreview.DiagnosticHistoryRoute != nil ||
 		!notificationsPreview.ReadOnlyNavigation ||
 		notificationsPreview.SectionActionsEnabled ||
 		notificationsPreview.RequestObjectsCreated ||
@@ -653,6 +654,33 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 	if diagnosticsPreview.SectionID != "diagnostics" ||
 		diagnosticsPreview.SectionRuntimeMethod != "GetDiagnostics" ||
 		diagnosticsPreview.SectionReadModel != "diagnostic-history-preview" ||
+		diagnosticsPreview.DiagnosticHistoryRoute == nil ||
+		diagnosticsPreview.DiagnosticHistoryRoute.RequestType != "diagnostic-history-route" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.Source != "kde-center-page-section-detail-preview" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.RuntimeMethod != "GetDiagnostics" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.ReadMethod != "GetDiagnosticHistoryPreview" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.ReadModel != "diagnostic-history-preview" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.CLICommand != "diagnostic-history-preview" ||
+		diagnosticsPreview.DiagnosticHistoryRoute.ApplicationID != "org.example.ledger" ||
+		!diagnosticsPreview.DiagnosticHistoryRoute.UserVisible ||
+		!diagnosticsPreview.DiagnosticHistoryRoute.RuntimeOwned ||
+		!diagnosticsPreview.DiagnosticHistoryRoute.GoRuntimeBacked ||
+		diagnosticsPreview.DiagnosticHistoryRoute.KDEPolicyOwner ||
+		!diagnosticsPreview.DiagnosticHistoryRoute.StateRootRequired ||
+		diagnosticsPreview.DiagnosticHistoryRoute.StateRootPathExposed ||
+		diagnosticsPreview.DiagnosticHistoryRoute.HistoryPreviewCreated ||
+		diagnosticsPreview.DiagnosticHistoryRoute.AIProviderCallEnabled ||
+		diagnosticsPreview.DiagnosticHistoryRoute.FileContentRead ||
+		diagnosticsPreview.DiagnosticHistoryRoute.FilePathsExposed ||
+		diagnosticsPreview.DiagnosticHistoryRoute.RequestObjectCreated ||
+		diagnosticsPreview.DiagnosticHistoryRoute.PermissionGranted ||
+		diagnosticsPreview.DiagnosticHistoryRoute.LaunchEnabled ||
+		diagnosticsPreview.DiagnosticHistoryRoute.ExecutionStarted ||
+		diagnosticsPreview.DiagnosticHistoryRoute.RepairExecutionEnabled ||
+		diagnosticsPreview.DiagnosticHistoryRoute.HostRootModified ||
+		diagnosticsPreview.DiagnosticHistoryRoute.NetworkRequired ||
+		diagnosticsPreview.DiagnosticHistoryRoute.PrivilegedContainerRequired ||
+		diagnosticsPreview.DiagnosticHistoryRoute.BackendDetailsExposed ||
 		diagnosticsPreview.AIAnalysis == nil ||
 		diagnosticsPreview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
 		diagnosticsPreview.AIAnalysis.Disclosure != "count-and-extension-only" ||

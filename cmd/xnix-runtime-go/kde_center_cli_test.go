@@ -303,4 +303,39 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		payload["backend_details_exposed"] != false {
 		t.Fatalf("unexpected center page safety flags: %#v", payload)
 	}
+
+	output.Reset()
+	err = run([]string{"kde-center-page-section-detail-preview", "--registry", registryPath, "--app", "org.example.ledger", "--section", "diagnostics", "--decision", "approved", "file:///home/test/Documents/example.abc"}, &output)
+	if err != nil {
+		t.Fatalf("diagnostics section detail returned error: %v", err)
+	}
+	var detail map[string]any
+	if err := json.Unmarshal(output.Bytes(), &detail); err != nil {
+		t.Fatalf("Unmarshal diagnostics detail returned error: %v", err)
+	}
+	route := detail["diagnostic_history_route"].(map[string]any)
+	if detail["section_id"] != "diagnostics" ||
+		detail["section_runtime_method"] != "GetDiagnostics" ||
+		detail["section_read_model"] != "diagnostic-history-preview" ||
+		route["request_type"] != "diagnostic-history-route" ||
+		route["runtime_method"] != "GetDiagnostics" ||
+		route["read_method"] != "GetDiagnosticHistoryPreview" ||
+		route["read_model"] != "diagnostic-history-preview" ||
+		route["cli_command"] != "diagnostic-history-preview" ||
+		route["application_id"] != "org.example.ledger" ||
+		route["state_root_required"] != true ||
+		route["state_root_path_exposed"] != false ||
+		route["history_preview_created"] != false ||
+		route["ai_provider_call_enabled"] != false ||
+		route["file_content_read"] != false ||
+		route["file_paths_exposed"] != false ||
+		route["request_object_created"] != false ||
+		route["permission_granted"] != false ||
+		route["launch_enabled"] != false ||
+		route["execution_started"] != false ||
+		route["repair_execution_enabled"] != false ||
+		route["host_root_modified"] != false ||
+		route["backend_details_exposed"] != false {
+		t.Fatalf("unexpected diagnostics history route: %#v", detail)
+	}
 }

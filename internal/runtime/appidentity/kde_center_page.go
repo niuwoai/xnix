@@ -405,6 +405,7 @@ type KDECenterPageSectionDetailPreview struct {
 	SectionRuntimeMethod       string                        `json:"section_runtime_method"`
 	SectionReadModel           string                        `json:"section_read_model"`
 	SectionSummary             string                        `json:"section_summary"`
+	DiagnosticHistoryRoute     *KDEDiagnosticHistoryRoute    `json:"diagnostic_history_route,omitempty"`
 	AIAnalysis                 *KDEAIAnalysisLink            `json:"ai_analysis,omitempty"`
 	AIAnalysisInput            *KDECenterPageAIAnalysisInput `json:"ai_analysis_input,omitempty"`
 	AvailableSectionIDs        []string                      `json:"available_section_ids"`
@@ -457,6 +458,36 @@ type KDECenterPageAIAnalysisInput struct {
 	BackendLaunchEnabled   bool   `json:"backend_launch_enabled"`
 	HostRootModified       bool   `json:"host_root_modified"`
 	BackendDetailsExposed  bool   `json:"backend_details_exposed"`
+}
+
+type KDEDiagnosticHistoryRoute struct {
+	RequestType                 string `json:"request_type"`
+	Source                      string `json:"source"`
+	RuntimeMethod               string `json:"runtime_method"`
+	ReadMethod                  string `json:"read_method"`
+	ReadModel                   string `json:"read_model"`
+	CLICommand                  string `json:"cli_command"`
+	ApplicationID               string `json:"application_id"`
+	UserVisible                 bool   `json:"user_visible"`
+	RuntimeOwned                bool   `json:"runtime_owned"`
+	GoRuntimeBacked             bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner              bool   `json:"kde_policy_owner"`
+	StateRootRequired           bool   `json:"state_root_required"`
+	StateRootPathExposed        bool   `json:"state_root_path_exposed"`
+	HistoryPreviewCreated       bool   `json:"history_preview_created"`
+	AIProviderCallEnabled       bool   `json:"ai_provider_call_enabled"`
+	FileContentRead             bool   `json:"file_content_read"`
+	FilePathsExposed            bool   `json:"file_paths_exposed"`
+	RequestObjectCreated        bool   `json:"request_object_created"`
+	PermissionGranted           bool   `json:"permission_granted"`
+	LaunchEnabled               bool   `json:"launch_enabled"`
+	ExecutionStarted            bool   `json:"execution_started"`
+	RepairExecutionEnabled      bool   `json:"repair_execution_enabled"`
+	HostRootModified            bool   `json:"host_root_modified"`
+	NetworkRequired             bool   `json:"network_required"`
+	PrivilegedContainerRequired bool   `json:"privileged_container_required"`
+	BackendDetailsExposed       bool   `json:"backend_details_exposed"`
+	DesktopSafeSummary          string `json:"desktop_safe_summary"`
 }
 
 func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPagePreview, error) {
@@ -855,6 +886,41 @@ func kdeCenterPageAIAnalysisInput(recipe Recipe, provenance Provenance, sectionI
 	return &input, nil
 }
 
+func kdeDiagnosticHistoryRoute(sectionID string, applicationID string) *KDEDiagnosticHistoryRoute {
+	if sectionID != "diagnostics" {
+		return nil
+	}
+	return &KDEDiagnosticHistoryRoute{
+		RequestType:                 "diagnostic-history-route",
+		Source:                      "kde-center-page-section-detail-preview",
+		RuntimeMethod:               "GetDiagnostics",
+		ReadMethod:                  "GetDiagnosticHistoryPreview",
+		ReadModel:                   "diagnostic-history-preview",
+		CLICommand:                  "diagnostic-history-preview",
+		ApplicationID:               applicationID,
+		UserVisible:                 true,
+		RuntimeOwned:                true,
+		GoRuntimeBacked:             true,
+		KDEPolicyOwner:              false,
+		StateRootRequired:           true,
+		StateRootPathExposed:        false,
+		HistoryPreviewCreated:       false,
+		AIProviderCallEnabled:       false,
+		FileContentRead:             false,
+		FilePathsExposed:            false,
+		RequestObjectCreated:        false,
+		PermissionGranted:           false,
+		LaunchEnabled:               false,
+		ExecutionStarted:            false,
+		RepairExecutionEnabled:      false,
+		HostRootModified:            false,
+		NetworkRequired:             false,
+		PrivilegedContainerRequired: false,
+		BackendDetailsExposed:       false,
+		DesktopSafeSummary:          "KDE can request the Runtime diagnostic history preview for this application, but the section detail does not expose state-root paths or enable actions.",
+	}
+}
+
 func NewKDECenterPageSectionsPreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPageSectionsPreview, error) {
 	page, err := NewKDECenterPagePreview(recipe, provenance, decision, fileURIs)
 	if err != nil {
@@ -931,6 +997,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 	if err != nil {
 		return KDECenterPageSectionDetailPreview{}, err
 	}
+	diagnosticHistoryRoute := kdeDiagnosticHistoryRoute(section.ID, sections.ApplicationID)
 
 	preview := KDECenterPageSectionDetailPreview{
 		SchemaVersion:              "xnix.runtime.kde_center_page_section_detail.v1",
@@ -949,6 +1016,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 		SectionRuntimeMethod:       section.RuntimeMethod,
 		SectionReadModel:           section.ReadModel,
 		SectionSummary:             section.Summary,
+		DiagnosticHistoryRoute:     diagnosticHistoryRoute,
 		AIAnalysis:                 section.AIAnalysis,
 		AIAnalysisInput:            aiAnalysisInput,
 		AvailableSectionIDs:        kdeCenterPageSectionIDs(sections.Sections),

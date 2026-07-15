@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.214"
+EXPECTED_VERSION = "0.2.215"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1261,7 +1261,7 @@ assert(go_runtime_diagnostics_cli_source.include?("diagnostics-preview"), "Go Ru
 assert(go_runtime_diagnostics_cli_source.include?("NewDiagnosticsPreview"), "Go Runtime CLI must call Runtime diagnostics preview")
 
 go_runtime_kde_center_page_source = read_project_file("internal/runtime/appidentity/kde_center_page.go")
-%w[KDECenterPageSectionsPreview KDECenterPageSectionDetailPreview compatibility-diagnostics GetDiagnostics diagnostic-history-preview NewDolphinAIAnalysisPreview].each do |token|
+%w[KDECenterPageSectionsPreview KDECenterPageSectionDetailPreview KDEDiagnosticHistoryRoute diagnostic_history_route diagnostic-history-route compatibility-diagnostics GetDiagnostics GetDiagnosticHistoryPreview diagnostic-history-preview NewDolphinAIAnalysisPreview StateRootRequired StateRootPathExposed HistoryPreviewCreated].each do |token|
   assert(go_runtime_kde_center_page_source.include?(token), "Go Runtime KDE center page diagnostics section must include #{token}")
 end
 
