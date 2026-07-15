@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.163] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-preflight-preview` to connect desktop activation bundle readiness, recipe trust, recipe install gates, backend binding, staging-root requirements, and host-root write gates before any KDE activation files are written.
+- Added Go unit and CLI coverage proving production activation blocks development-only registries while development staging can be marked eligible without writing desktop files, MIME defaults, manifests, receipts, settings, notifications, task-manager entries, KWin rules, tray bridges, launching, networking, privileged containers, host-root mutation, raw backend command exposure, compatibility storage exposure, or backend detail exposure.
+
 ## [0.2.162] - 2026-07-15
 
 ### Added

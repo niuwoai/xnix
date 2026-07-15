@@ -158,6 +158,114 @@ func TestDesktopActivationBundlePreviewCommandAggregatesKDEMaterials(t *testing.
 	}
 }
 
+func TestDesktopActivationPreflightPreviewCommandRendersInstallGate(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-preflight-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_preflight.v1" ||
+		payload["request_type"] != "desktop-activation-preflight-preview" ||
+		payload["preflight_type"] != "normal-linux-application-activation-preflight" ||
+		payload["runtime_method"] != "GetDesktopActivationPreflight" {
+		t.Fatalf("unexpected activation preflight schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["install_mode"] != "development" ||
+		payload["preflight_decision"] != "development-staging-ready" {
+		t.Fatalf("unexpected activation preflight identity or decision: %#v", payload)
+	}
+	bundle := payload["bundle"].(map[string]any)
+	if bundle["request_type"] != "desktop-activation-bundle-preview" ||
+		bundle["material_count"] != float64(9) ||
+		bundle["desktop_files_written"] != false ||
+		bundle["host_root_modified"] != false {
+		t.Fatalf("unexpected activation bundle summary: %#v", bundle)
+	}
+	trust := payload["recipe_trust"].(map[string]any)
+	if trust["source"] != "registry" ||
+		trust["registry_name"] != "test-registry" ||
+		trust["digest_verified"] != true ||
+		trust["signature_status"] != "development-only" ||
+		trust["trust_decision"] != "development-only" ||
+		trust["production_trusted"] != false ||
+		trust["development_only"] != true {
+		t.Fatalf("unexpected recipe trust: %#v", trust)
+	}
+	installGate := payload["install_gate"].(map[string]any)
+	if installGate["gate_type"] != "recipe-install" ||
+		installGate["mode"] != "development" ||
+		installGate["decision"] != "allow" {
+		t.Fatalf("unexpected install gate: %#v", installGate)
+	}
+	binding := payload["backend_binding"].(map[string]any)
+	if binding["request_type"] != "backend-binding-preview" ||
+		binding["binding_state"] != "planned-blocked" ||
+		binding["binding_committed"] != false ||
+		binding["binding_persisted"] != false ||
+		binding["launch_enabled"] != false {
+		t.Fatalf("unexpected backend binding summary: %#v", binding)
+	}
+	checkIDs := payload["check_ids"].([]any)
+	expectedIDs := []string{"recipe-digest", "recipe-signature", "recipe-install-gate", "activation-materials", "backend-binding", "staging-root", "host-root-write-gate"}
+	for index, expected := range expectedIDs {
+		if checkIDs[index] != expected {
+			t.Fatalf("check_ids[%d] = %#v, want %q", index, checkIDs[index], expected)
+		}
+	}
+	if payload["check_count"] != float64(7) ||
+		payload["passed_check_count"] != float64(4) ||
+		payload["pending_check_count"] != float64(2) ||
+		payload["blocked_check_count"] != float64(1) {
+		t.Fatalf("unexpected check counts: %#v", payload)
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["normal_application_surface"] != true ||
+		payload["desktop_activation_ready"] != true ||
+		payload["development_staging_eligible"] != true ||
+		payload["production_activation_eligible"] != false ||
+		payload["installer_may_proceed"] != true ||
+		payload["staging_root_required"] != true ||
+		payload["host_root_allowed"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["manifest_written"] != false ||
+		payload["receipt_written"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_windows_executable_exposed"] != false ||
+		payload["compatibility_storage_exposed"] != false {
+		t.Fatalf("unexpected activation preflight safety flags: %#v", payload)
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

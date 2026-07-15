@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -34,6 +34,8 @@ func run(args []string, stdout io.Writer) error {
 		return runCompatibilityCenterPreview(args[1:], stdout)
 	case "desktop-activation-bundle-preview":
 		return runDesktopActivationBundlePreview(args[1:], stdout)
+	case "desktop-activation-preflight-preview":
+		return runDesktopActivationPreflightPreview(args[1:], stdout)
 	case "desktop-entry-preview":
 		return runDesktopEntryPreview(args[1:], stdout)
 	case "desktop-icon-preview":
@@ -667,6 +669,25 @@ func runDesktopActivationBundlePreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.DesktopActivationBundlePreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runDesktopActivationPreflightPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, mode, err := parseDesktopActivationPreflightPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.DesktopActivationPreflightPreview(mode)
 	if err != nil {
 		return err
 	}
@@ -1558,6 +1579,34 @@ func parseRecipeSource(commandName string, args []string) (appidentity.Recipe, a
 	}
 
 	return loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+}
+
+func parseDesktopActivationPreflightPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+	flags := flag.NewFlagSet("desktop-activation-preflight-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	mode := flags.String("mode", "production", "activation preflight mode: production or development")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-preflight-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-preflight-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-preflight-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-preflight-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *mode, err
 }
 
 func loadRecipe(recipePath string, registryPath string, recipeRoot string, applicationID string) (appidentity.Recipe, appidentity.Provenance, error) {
