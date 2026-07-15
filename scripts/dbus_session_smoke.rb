@@ -15,6 +15,12 @@ def assert(condition, message)
   exit 1
 end
 
+def assert_go_owner_bridge(stdout, method_name)
+  assert(stdout.include?("go_owner_dispatch_available"), "#{method_name} must report Go owner dispatch availability")
+  assert(stdout.include?("xnix.runtime.owner_read_dispatch.v1"), "#{method_name} must include Go owner dispatch schema evidence")
+  assert(stdout.include?("runtime-owner-read-dispatch"), "#{method_name} must include Go owner read dispatch payload evidence")
+end
+
 unless ENV["DBUS_SESSION_BUS_ADDRESS"]
   stdout, stderr, status = Open3.capture3("dbus-run-session", "--", "ruby", __FILE__)
   print stdout
@@ -593,6 +599,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeServiceBinding: #{stderr}")
   assert(stdout.include?("runtime-service-binding"), "runtime smoke adapter must expose Runtime service binding over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeServiceBinding")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -603,6 +610,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeLiveOwnerGate: #{stderr}")
   assert(stdout.include?("runtime-live-owner-gate"), "runtime smoke adapter must expose Runtime live owner gate over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeLiveOwnerGate")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -613,6 +621,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerSmokePlan: #{stderr}")
   assert(stdout.include?("runtime-owner-smoke-plan"), "runtime smoke adapter must expose Runtime owner smoke plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeOwnerSmokePlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -623,6 +632,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeMethodParityManifest: #{stderr}")
   assert(stdout.include?("runtime-method-parity-manifest"), "runtime smoke adapter must expose Runtime method parity manifests over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeMethodParityManifest")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -634,9 +644,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeWriteGate: #{stderr}")
   assert(stdout.include?("runtime-write-gate"), "runtime smoke adapter must expose Runtime write gates over D-Bus")
-  assert(stdout.include?("go_owner_dispatch_available"), "runtime smoke adapter must report Go owner dispatch availability")
-  assert(stdout.include?("xnix.runtime.owner_read_dispatch.v1"), "runtime smoke adapter must include Go owner dispatch schema evidence")
-  assert(stdout.include?("runtime-owner-read-dispatch"), "runtime smoke adapter must include Go owner read dispatch payload evidence")
+  assert_go_owner_bridge(stdout, "GetRuntimeWriteGate")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

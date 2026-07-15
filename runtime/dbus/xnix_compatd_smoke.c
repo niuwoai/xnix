@@ -6,21 +6,21 @@
 static GDBusNodeInfo *introspection_data = NULL;
 
 static gchar *
-go_owner_write_gate_dispatch(const gchar *method_name)
+go_owner_read_dispatch(const gchar *method_name, const gchar *dispatch_arg)
 {
   gchar *stdout_data = NULL;
   gchar *stderr_data = NULL;
   GError *error = NULL;
   gint wait_status = 0;
-  gchar *argv[] = {
-    "xnix-runtime-owner",
-    "--root",
-    ".",
-    "--dispatch-read",
-    "GetRuntimeWriteGate",
-    (gchar *)method_name,
-    NULL
-  };
+  gchar *argv[7] = {0};
+
+  argv[0] = "xnix-runtime-owner";
+  argv[1] = "--root";
+  argv[2] = ".";
+  argv[3] = "--dispatch-read";
+  argv[4] = (gchar *)method_name;
+  argv[5] = (gchar *)dispatch_arg;
+  argv[6] = NULL;
 
   if (!g_spawn_sync(NULL,
                     argv,
@@ -50,6 +50,34 @@ go_owner_write_gate_dispatch(const gchar *method_name)
   }
   g_strchomp(stdout_data);
   return stdout_data;
+}
+
+static gchar *
+go_owner_write_gate_dispatch(const gchar *method_name)
+{
+  return go_owner_read_dispatch("GetRuntimeWriteGate", method_name);
+}
+
+static void
+add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
+                                    const gchar *method_name,
+                                    const gchar *dispatch_arg)
+{
+  gchar *go_owner_dispatch_json = NULL;
+  gboolean go_owner_dispatch_available = FALSE;
+
+  if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
+    go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
+  } else {
+    go_owner_dispatch_json = go_owner_read_dispatch(method_name, dispatch_arg);
+  }
+  go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
+
+  g_variant_builder_add(builder, "{sv}", "read_model_source", g_variant_new_string("go-runtime-owner-dispatch+c-smoke-bridge"));
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
+  g_free(go_owner_dispatch_json);
 }
 
 static GVariant *

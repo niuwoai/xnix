@@ -197,9 +197,9 @@ def build_report(root)
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "go-owner-smoke-bridge",
-      expected: ["go_owner_dispatch_available", "go_owner_dispatch_schema", "go_owner_dispatch_json", "go-runtime-owner-dispatch+c-smoke-bridge"],
+      expected: ["go_owner_read_dispatch", "add_go_owner_dispatch_bridge_fields", "go_owner_dispatch_available", "go_owner_dispatch_schema", "go_owner_dispatch_json", "go-runtime-owner-dispatch+c-smoke-bridge"],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes selected Go owner dispatch payload evidence through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",

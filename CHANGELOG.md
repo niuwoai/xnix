@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.222] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so `GetRuntimeServiceBinding`, `GetRuntimeLiveOwnerGate`, `GetRuntimeOwnerSmokePlan`, and `GetRuntimeMethodParityManifest` carry Go owner read-dispatch payload evidence alongside their stable smoke fields.
+- Added restricted session smoke assertions that prove the Runtime owner self-description reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without claiming production ownership, enabling writes, starting backends, or mutating the host root.
+
+### Changed
+
+- Refactored the D-Bus smoke bridge to use a shared Go owner read-dispatch helper while keeping `GetRuntimeWriteGate` write denial behavior explicit and disabled.
+- Updated implementation evidence and contract drift reporting to track owner self-description bridge coverage as a Go-owned payload handoff through low-level C transport.
+
 ## [0.2.221] - 2026-07-16
 
 ### Added

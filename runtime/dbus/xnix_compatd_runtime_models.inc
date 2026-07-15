@@ -793,6 +793,7 @@ build_runtime_service_binding(void)
 
   g_variant_builder_init(&binding, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&binding, "{sv}", "binding_type", g_variant_new_string("runtime-service-binding"));
+  add_go_owner_dispatch_bridge_fields(&binding, "GetRuntimeServiceBinding", NULL);
   g_variant_builder_add(&binding, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&binding, "{sv}", "live_dbus_owner_ready", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&binding, "{sv}", "network_required", g_variant_new_boolean(FALSE));
@@ -809,6 +810,7 @@ build_runtime_live_owner_gate(void)
 
   g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("runtime-live-owner-gate"));
+  add_go_owner_dispatch_bridge_fields(&gate, "GetRuntimeLiveOwnerGate", NULL);
   g_variant_builder_add(&gate, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&gate, "{sv}", "live_dbus_owner_ready", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "production_owner_enabled", g_variant_new_boolean(FALSE));
@@ -828,6 +830,7 @@ build_runtime_owner_smoke_plan(void)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("runtime-owner-smoke-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetRuntimeOwnerSmokePlan", NULL);
   g_variant_builder_add(&plan, "{sv}", "smoke_state", g_variant_new_string("planned"));
   g_variant_builder_add(&plan, "{sv}", "smoke_environment", g_variant_new_string("restricted-session"));
   g_variant_builder_add(&plan, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
@@ -850,6 +853,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
+  add_go_owner_dispatch_bridge_fields(&manifest, "GetRuntimeMethodParityManifest", NULL);
   g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(57));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
@@ -866,25 +870,19 @@ static GVariant *
 build_runtime_write_gate(const gchar *method_name)
 {
   GVariantBuilder gate;
-  gchar *go_owner_dispatch_json = go_owner_write_gate_dispatch(method_name);
-  gboolean go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
 
   g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("runtime-write-gate"));
   g_variant_builder_add(&gate, "{sv}", "method_name", g_variant_new_string(method_name));
   g_variant_builder_add(&gate, "{sv}", "gate_decision", g_variant_new_string("blocked-until-production-backend"));
-  g_variant_builder_add(&gate, "{sv}", "read_model_source", g_variant_new_string("go-runtime-owner-dispatch+c-smoke-bridge"));
+  add_go_owner_dispatch_bridge_fields(&gate, "GetRuntimeWriteGate", method_name);
   g_variant_builder_add(&gate, "{sv}", "write_method_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "dispatch_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "required_gate_count", g_variant_new_int32(6));
   g_variant_builder_add(&gate, "{sv}", "denial_error_name", g_variant_new_string("org.xnix.Compatibility1.Error.WriteMethodDisabled"));
-  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
-  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
-  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
   g_variant_builder_add(&gate, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
-  g_free(go_owner_dispatch_json);
 
   return g_variant_builder_end(&gate);
 }
