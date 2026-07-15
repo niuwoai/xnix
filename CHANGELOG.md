@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.243] - 2026-07-16
+
+### Added
+
+- Added receipt-backed activation snapshot support to KDE Compatibility Center page previews through an explicit `--activation-root` option.
+- Added Go and CLI coverage proving `kde-center-page-preview` can compose staged activation receipt evidence without exposing the staging root or enabling launch.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks Compatibility Center consumption of staged activation receipts in addition to activation status reads.
+
 ## [0.2.242] - 2026-07-16
 
 ### Added

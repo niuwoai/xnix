@@ -120,6 +120,10 @@ type KDECenterPageActivation struct {
 	ActivationState       string `json:"activation_state"`
 	TransactionState      string `json:"transaction_state"`
 	PreflightDecision     string `json:"preflight_decision"`
+	ReceiptEvidenceState  string `json:"receipt_evidence_state"`
+	ReceiptRelativePath   string `json:"receipt_relative_path"`
+	ReceiptBacked         bool   `json:"receipt_backed"`
+	RollbackAvailable     bool   `json:"rollback_available"`
 	StatusSignalCount     int    `json:"status_signal_count"`
 	BlockedReasonCount    int    `json:"blocked_reason_count"`
 	NextSafeActionCount   int    `json:"next_safe_action_count"`
@@ -130,6 +134,10 @@ type KDECenterPageActivation struct {
 	HostRootModified      bool   `json:"host_root_modified"`
 	BackendDetailsExposed bool   `json:"backend_details_exposed"`
 	Summary               string `json:"summary"`
+}
+
+type KDECenterPageOptions struct {
+	ActivationRoot string
 }
 
 type KDECenterPageExecution struct {
@@ -491,6 +499,10 @@ type KDEDiagnosticHistoryRoute struct {
 }
 
 func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPagePreview, error) {
+	return NewKDECenterPagePreviewWithOptions(recipe, provenance, decision, fileURIs, KDECenterPageOptions{})
+}
+
+func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, decision string, fileURIs []string, options KDECenterPageOptions) (KDECenterPagePreview, error) {
 	if !singleLine(decision) {
 		return KDECenterPagePreview{}, errors.New("KDE center page preview requires a single-line decision")
 	}
@@ -528,7 +540,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
-	activationStatus, err := plan.DesktopActivationStatusPreview("development")
+	activationStatus, err := plan.DesktopActivationStatusPreviewWithReceipt(options.ActivationRoot, "development")
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
@@ -626,6 +638,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			ActivationState:       activationStatus.ActivationState,
 			TransactionState:      activationStatus.Transaction.TransactionState,
 			PreflightDecision:     activationStatus.PreflightDecision,
+			ReceiptEvidenceState:  activationStatus.ReceiptEvidence.EvidenceState,
+			ReceiptRelativePath:   activationStatus.ReceiptEvidence.ReceiptRelativePath,
+			ReceiptBacked:         activationStatus.ReceiptBacked,
+			RollbackAvailable:     activationStatus.RollbackAvailable,
 			StatusSignalCount:     len(activationStatus.StatusSignals),
 			BlockedReasonCount:    len(activationStatus.BlockedReasons),
 			NextSafeActionCount:   len(activationStatus.NextSafeActions),

@@ -2,6 +2,8 @@ package appidentity
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -310,6 +312,96 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		!containsString(preview.BlockedActions, "persist compatibility settings from center page preview") ||
 		!containsString(preview.BlockedActions, "create Runtime request objects from center page preview") {
 		t.Fatalf("unexpected blocked actions: %#v", preview.BlockedActions)
+	}
+}
+
+func TestKDECenterPagePreviewConsumesActivationReceipt(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}
+	root := t.TempDir()
+	writeKDECenterActivationReceipt(t, root, "org.example.ledger")
+
+	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", []string{"file:///home/test/Documents/book.xls"}, KDECenterPageOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+
+	activation := preview.ActivationStatusSnapshot
+	if activation.ActivationState != "receipt-backed-runtime-gated" ||
+		activation.ReceiptEvidenceState != "receipt-backed" ||
+		activation.ReceiptRelativePath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		!activation.ReceiptBacked ||
+		!activation.RollbackAvailable ||
+		activation.CommitEnabled ||
+		activation.LaunchEnabled ||
+		activation.HostRootModified ||
+		activation.BackendDetailsExposed {
+		t.Fatalf("unexpected receipt-backed activation snapshot: %#v", activation)
+	}
+	if activation.StatusSignalCount != 6 || activation.BlockedReasonCount != 3 {
+		t.Fatalf("unexpected receipt-backed activation counts: %#v", activation)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(root)) {
+		t.Fatalf("KDE center page exposed activation root: %s", text)
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KDE center page receipt-backed preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func writeKDECenterActivationReceipt(t *testing.T, root string, applicationID string) {
+	t.Helper()
+	relativePath := filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json")
+	path := filepath.Join(root, relativePath)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	receipt := `{
+  "schema_version": "xnix.runtime.desktop_activation_receipt.v1",
+  "receipt_type": "desktop-activation-receipt",
+  "application_id": "` + applicationID + `",
+  "installed": [
+    {
+      "id": "desktop-entry",
+      "relative_path": "usr/share/applications/xnix-org.example.ledger.desktop",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "written": true,
+      "host_root_modified": false,
+      "backend_details_exposed": false
+    }
+  ],
+  "rollback": {
+    "command": "xnix-rollback-desktop-integration",
+    "requires_matching_sha256": true,
+    "host_root_modified": false
+  },
+  "safety": {
+    "runtime_owned": true,
+    "host_root_modified": false,
+    "backend_details_exposed": false
+  }
+}
+`
+	if err := os.WriteFile(path, []byte(receipt), 0o600); err != nil {
+		t.Fatalf("WriteFile receipt returned error: %v", err)
 	}
 }
 

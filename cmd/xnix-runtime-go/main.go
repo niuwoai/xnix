@@ -877,11 +877,11 @@ func runKDEActionCardDeckPreview(args []string, stdout io.Writer) error {
 }
 
 func runKDECenterPagePreview(args []string, stdout io.Writer) error {
-	recipe, provenance, decision, fileURIs, err := parseKDECenterPagePreviewSource(args)
+	recipe, provenance, decision, fileURIs, options, err := parseKDECenterPagePreviewSource(args)
 	if err != nil {
 		return err
 	}
-	preview, err := appidentity.NewKDECenterPagePreview(recipe, provenance, decision, fileURIs)
+	preview, err := appidentity.NewKDECenterPagePreviewWithOptions(recipe, provenance, decision, fileURIs, options)
 	if err != nil {
 		return err
 	}
@@ -1700,8 +1700,34 @@ func parseKDEActionCardDeckPreviewSource(args []string) (appidentity.Recipe, app
 	return parseLaunchDecisionPreviewSource("kde-action-card-deck-preview", args)
 }
 
-func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
-	return parseLaunchDecisionPreviewSource("kde-center-page-preview", args)
+func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.KDECenterPageOptions, error) {
+	flags := flag.NewFlagSet("kde-center-page-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	decision := flags.String("decision", "", "review decision: reviewed, approved, deferred, or rejected")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	fileURIs := flags.Args()
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	if err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+	}
+	return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{ActivationRoot: *activationRoot}, nil
 }
 
 func parseKDECenterPageSectionsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {

@@ -19,7 +19,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 registry_path = project_root.join("runtime/recipes/registry.json")
 report = Xnix::Compatibility::RecipeRegistry.new(path: registry_path).verify
 
-assert(report["version"] == "0.2.242", "recipe registry must expose the current version")
+assert(report["version"] == "0.2.243", "recipe registry must expose the current version")
 assert(report["schema_version"] == 1, "recipe registry must expose the supported schema version")
 assert(report["registry_name"] == "xnix-local-development", "recipe registry must identify the development registry")
 assert(report["recipe_count"] == 1, "recipe registry must report the sample recipe")
