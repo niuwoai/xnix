@@ -113,13 +113,24 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.SettingsSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected settings snapshot: %#v", preview.SettingsSnapshot)
 	}
-	if preview.NavigationCount != 4 ||
-		len(preview.Navigation) != 4 ||
+	if preview.ActivationStatusSnapshot.RequestType != "desktop-activation-status-preview" ||
+		preview.ActivationStatusSnapshot.RuntimeMethod != "GetDesktopActivationStatus" ||
+		preview.ActivationStatusSnapshot.Renderer != "xnix-runtime-go desktop-activation-status-preview" ||
+		preview.ActivationStatusSnapshot.ActivationState != "ready-for-runtime-commit" ||
+		preview.ActivationStatusSnapshot.CommitEnabled ||
+		preview.ActivationStatusSnapshot.LaunchEnabled ||
+		preview.ActivationStatusSnapshot.HostRootModified ||
+		preview.ActivationStatusSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected activation status snapshot: %#v", preview.ActivationStatusSnapshot)
+	}
+	if preview.NavigationCount != 5 ||
+		len(preview.Navigation) != 5 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
-		preview.Navigation[1].ID != "actions" ||
-		preview.Navigation[2].ID != "settings" ||
-		preview.Navigation[3].ID != "diagnostics" {
+		preview.Navigation[1].ID != "activation" ||
+		preview.Navigation[2].ID != "actions" ||
+		preview.Navigation[3].ID != "settings" ||
+		preview.Navigation[4].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -233,9 +244,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 4 ||
-		preview.ReadOnlySectionCount != 4 ||
-		preview.NavigationOnlySectionCount != 4 ||
+		preview.SectionCount != 5 ||
+		preview.ReadOnlySectionCount != 5 ||
+		preview.NavigationOnlySectionCount != 5 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -256,12 +267,14 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	wantMethods := map[string]string{
 		"overview":    "GetCompatibilityCenterSummary",
+		"activation":  "GetDesktopActivationStatus",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
 	}
 	wantModels := map[string]string{
 		"overview":    "compatibility-center-summary",
+		"activation":  "desktop-activation-status-preview",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -346,7 +359,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,activation,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||

@@ -98,12 +98,24 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		t.Fatalf("unexpected settings snapshot: %#v", settings)
 	}
 	navigation := payload["navigation"].([]any)
-	if payload["navigation_count"] != float64(4) ||
+	activation := payload["activation_status_snapshot"].(map[string]any)
+	if activation["request_type"] != "desktop-activation-status-preview" ||
+		activation["runtime_method"] != "GetDesktopActivationStatus" ||
+		activation["renderer"] != "xnix-runtime-go desktop-activation-status-preview" ||
+		activation["activation_state"] != "ready-for-runtime-commit" ||
+		activation["commit_enabled"] != false ||
+		activation["launch_enabled"] != false ||
+		activation["host_root_modified"] != false ||
+		activation["backend_details_exposed"] != false {
+		t.Fatalf("unexpected activation status snapshot: %#v", activation)
+	}
+	if payload["navigation_count"] != float64(5) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
-		navigation[1].(map[string]any)["id"] != "actions" ||
-		navigation[2].(map[string]any)["id"] != "settings" ||
-		navigation[3].(map[string]any)["id"] != "diagnostics" {
+		navigation[1].(map[string]any)["id"] != "activation" ||
+		navigation[2].(map[string]any)["id"] != "actions" ||
+		navigation[3].(map[string]any)["id"] != "settings" ||
+		navigation[4].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

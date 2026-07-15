@@ -1446,6 +1446,15 @@ build_kde_center_page(const gchar *application_id, const gchar *decision)
   g_variant_builder_add(&page, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
   g_variant_builder_add(&page, "{sv}", "known_issue_count", g_variant_new_int32(1));
   g_variant_builder_add(&page, "{sv}", "repair_record_state", g_variant_new_string("pending-review"));
+  g_variant_builder_add(&page, "{sv}", "activation_status_request_type", g_variant_new_string("desktop-activation-status-preview"));
+  g_variant_builder_add(&page, "{sv}", "activation_state", g_variant_new_string("ready-for-runtime-commit"));
+  g_variant_builder_add(&page, "{sv}", "activation_status_runtime_method", g_variant_new_string("GetDesktopActivationStatus"));
+  g_variant_builder_add(&page, "{sv}", "activation_status_renderer", g_variant_new_string("xnix-runtime-go desktop-activation-status-preview"));
+  g_variant_builder_add(&page, "{sv}", "activation_status_signal_count", g_variant_new_int32(5));
+  g_variant_builder_add(&page, "{sv}", "activation_status_blocked_reason_count", g_variant_new_int32(4));
+  g_variant_builder_add(&page, "{sv}", "activation_status_next_action_count", g_variant_new_int32(5));
+  g_variant_builder_add(&page, "{sv}", "activation_commit_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "activation_launch_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "action_deck_request_type", g_variant_new_string("kde-action-card-deck-preview"));
   g_variant_builder_add(&page, "{sv}", "card_count", g_variant_new_int32(7));
   g_variant_builder_add(&page, "{sv}", "waiting_card_count", g_variant_new_int32(decision_allowed ? 7 : 0));
@@ -1518,24 +1527,28 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
                               g_strcmp0(decision, "reviewed") == 0;
   static const gchar *section_ids[] = {
     "overview",
+    "activation",
     "actions",
     "settings",
     "diagnostics"
   };
   static const gchar *runtime_methods[] = {
     "GetCompatibilityCenterSummary",
+    "GetDesktopActivationStatus",
     "GetCompatibilityActionQueue",
     "GetCompatibilitySettings",
     "GetDiagnostics"
   };
   static const gchar *read_models[] = {
     "compatibility-center-summary",
+    "desktop-activation-status-preview",
     "compatibility-center-action-queue",
     "settings-model",
     "runtime-diagnostics"
   };
   static const gchar *section_states[] = {
     "ready",
+    "ready-for-runtime-commit",
     "waiting-for-runtime-gates",
     "planned",
     "planned"
@@ -1545,6 +1558,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
 
   g_variant_builder_init(&sections, G_VARIANT_TYPE("aa{sv}"));
   add_kde_center_page_section(&sections, "overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready");
+  add_kde_center_page_section(&sections, "activation", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit");
   add_kde_center_page_section(&sections, "actions", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates");
   add_kde_center_page_section(&sections, "settings", "GetCompatibilitySettings", "settings-model", "planned");
   add_kde_center_page_section(&sections, "diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned");
@@ -1556,15 +1570,15 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   g_variant_builder_add(&model, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSections"));
   g_variant_builder_add(&model, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-sections-preview"));
   g_variant_builder_add(&model, "{sv}", "application_id", g_variant_new_string(application_id));
-  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(4));
-  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(4));
-  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(4));
+  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(5));
+  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(5));
+  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(5));
   g_variant_builder_add(&model, "{sv}", "executable_section_count", g_variant_new_int32(0));
   g_variant_builder_add(&model, "{sv}", "primary_section_id", g_variant_new_string("overview"));
-  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 4));
-  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 4));
-  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 4));
-  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 4));
+  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 5));
+  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 5));
+  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 5));
+  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 5));
   g_variant_builder_add(&model, "{sv}", "sections", g_variant_builder_end(&sections));
   g_variant_builder_add(&model, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&model, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
@@ -1609,6 +1623,14 @@ kde_center_page_section_detail(const gchar *section_id,
     *state = "ready";
     return TRUE;
   }
+  if (g_strcmp0(section_id, "activation") == 0) {
+    *label = "Activation";
+    *target = "compatibility-activation-status";
+    *runtime_method = "GetDesktopActivationStatus";
+    *read_model = "desktop-activation-status-preview";
+    *state = "ready-for-runtime-commit";
+    return TRUE;
+  }
   if (g_strcmp0(section_id, "actions") == 0) {
     *label = "Actions";
     *target = "compatibility-center-gates";
@@ -1645,6 +1667,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
                               g_strcmp0(decision, "reviewed") == 0;
   static const gchar *available_section_ids[] = {
     "overview",
+    "activation",
     "actions",
     "settings",
     "diagnostics"
@@ -1673,7 +1696,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
   g_variant_builder_add(&detail, "{sv}", "section_state", g_variant_new_string(state));
   g_variant_builder_add(&detail, "{sv}", "section_runtime_method", g_variant_new_string(runtime_method));
   g_variant_builder_add(&detail, "{sv}", "section_read_model", g_variant_new_string(read_model));
-  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 4));
+  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 5));
   g_variant_builder_add(&detail, "{sv}", "read_only_navigation", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_preview_created", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_persisted", g_variant_new_boolean(FALSE));

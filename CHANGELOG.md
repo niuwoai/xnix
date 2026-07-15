@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.170] - 2026-07-15
+
+### Added
+
+- Added a Go-backed desktop activation status snapshot to the KDE Compatibility Center page preview so Plasma can show activation readiness, the Runtime status method, status counts, and closed commit/launch/host-mutation gates directly on the application page.
+- Added a read-only Activation section to KDE Compatibility Center page sections and section-detail routing, backed by `GetDesktopActivationStatus`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the five-section page model.
+
 ## [0.2.169] - 2026-07-15
 
 ### Added

@@ -17,6 +17,7 @@ type KDECenterPagePreview struct {
 	LauncherCommand            []string                  `json:"launcher_command"`
 	Header                     KDECenterPageHeader       `json:"header"`
 	ApplicationSummary         KDECenterPageApplication  `json:"application_summary"`
+	ActivationStatusSnapshot  KDECenterPageActivation   `json:"activation_status_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -83,6 +84,26 @@ type KDECenterPageApplication struct {
 	HostRootModified           bool     `json:"host_root_modified"`
 	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
 	Summary                    string   `json:"summary"`
+}
+
+type KDECenterPageActivation struct {
+	RequestType           string `json:"request_type"`
+	StatusType            string `json:"status_type"`
+	RuntimeMethod         string `json:"runtime_method"`
+	Renderer              string `json:"renderer"`
+	ActivationState       string `json:"activation_state"`
+	TransactionState      string `json:"transaction_state"`
+	PreflightDecision     string `json:"preflight_decision"`
+	StatusSignalCount     int    `json:"status_signal_count"`
+	BlockedReasonCount    int    `json:"blocked_reason_count"`
+	NextSafeActionCount   int    `json:"next_safe_action_count"`
+	ActivationReady       bool   `json:"activation_ready"`
+	ActivationCommitted   bool   `json:"activation_committed"`
+	CommitEnabled         bool   `json:"commit_enabled"`
+	LaunchEnabled         bool   `json:"launch_enabled"`
+	HostRootModified      bool   `json:"host_root_modified"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+	Summary               string `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -299,6 +320,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	activationStatus, err := plan.DesktopActivationStatusPreview("development")
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -343,6 +368,25 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			HostRootModified:           application.HostRootModified,
 			BackendDetailsExposed:      application.BackendDetailsExposed,
 			Summary:                    application.Summary,
+		},
+		ActivationStatusSnapshot: KDECenterPageActivation{
+			RequestType:           activationStatus.RequestType,
+			StatusType:            activationStatus.StatusType,
+			RuntimeMethod:         activationStatus.PlannedRuntimeMethod,
+			Renderer:              activationStatus.CurrentRenderer,
+			ActivationState:       activationStatus.ActivationState,
+			TransactionState:      activationStatus.Transaction.TransactionState,
+			PreflightDecision:     activationStatus.PreflightDecision,
+			StatusSignalCount:     len(activationStatus.StatusSignals),
+			BlockedReasonCount:    len(activationStatus.BlockedReasons),
+			NextSafeActionCount:   len(activationStatus.NextSafeActions),
+			ActivationReady:       activationStatus.ActivationReady,
+			ActivationCommitted:   activationStatus.ActivationCommitted,
+			CommitEnabled:         activationStatus.CommitGate.CommitEnabled,
+			LaunchEnabled:         activationStatus.LaunchEnabled,
+			HostRootModified:      activationStatus.HostRootModified,
+			BackendDetailsExposed: activationStatus.BackendDetailsExposed,
+			Summary:               activationStatus.DesktopSafeSummary,
 		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
@@ -585,6 +629,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 func kdeCenterPageNavigation() []KDECenterPageNavigation {
 	return []KDECenterPageNavigation{
 		kdeCenterPageNavigationItem("overview", "Overview", "compatibility-center-overview"),
+		kdeCenterPageNavigationItem("activation", "Activation", "compatibility-activation-status"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
 		kdeCenterPageNavigationItem("diagnostics", "Diagnostics", "compatibility-diagnostics"),
@@ -606,6 +651,7 @@ func kdeCenterPageNavigationItem(id string, label string, target string) KDECent
 func kdeCenterPageSections() []KDECenterPageSection {
 	return []KDECenterPageSection{
 		kdeCenterPageSection("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready", "Overview reads Runtime-owned application state, known issue counts, and repair record state."),
+		kdeCenterPageSection("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit", "Activation reads Runtime-owned KDE desktop activation status while commit, launch, and host mutation gates remain closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
 		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),

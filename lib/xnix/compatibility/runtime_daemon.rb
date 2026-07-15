@@ -726,6 +726,7 @@ module Xnix
         recipe = require_recipe(application_id)
         summary = compatibility_center_summary(recipe.id)
         settings_model = settings(recipe.id)
+        activation_status = desktop_activation_status(recipe.id)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -741,6 +742,15 @@ module Xnix
           "runtime_mode" => summary.fetch("compatibility").fetch("runtime_mode"),
           "known_issue_count" => summary.fetch("compatibility").fetch("known_issue_count"),
           "repair_record_state" => summary.fetch("repair_records").fetch("state"),
+          "activation_status_request_type" => activation_status.fetch("request_type"),
+          "activation_state" => activation_status.fetch("activation_state"),
+          "activation_status_runtime_method" => activation_status.fetch("runtime_method"),
+          "activation_status_renderer" => activation_status.fetch("read_model_source"),
+          "activation_status_signal_count" => activation_status.fetch("status_signal_count"),
+          "activation_status_blocked_reason_count" => activation_status.fetch("blocked_reason_count"),
+          "activation_status_next_action_count" => activation_status.fetch("next_safe_action_count"),
+          "activation_commit_enabled" => activation_status.fetch("commit_enabled"),
+          "activation_launch_enabled" => activation_status.fetch("launch_enabled"),
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -787,6 +797,7 @@ module Xnix
         page = kde_center_page(recipe.id, decision)
         sections = [
           kde_center_page_section("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready"),
+          kde_center_page_section("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", page.fetch("activation_state")),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1470,6 +1481,11 @@ module Xnix
         {
           "page_type" => page.fetch("page_type"),
           "runtime_method" => page.fetch("runtime_method"),
+          "activation_status_request_type" => page.fetch("activation_status_request_type"),
+          "activation_status_runtime_method" => page.fetch("activation_status_runtime_method"),
+          "activation_state" => page.fetch("activation_state"),
+          "activation_commit_enabled" => page.fetch("activation_commit_enabled"),
+          "activation_launch_enabled" => page.fetch("activation_launch_enabled"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),
@@ -1504,7 +1520,7 @@ module Xnix
       end
 
       def kde_center_page_section_detail_summary(recipe)
-        detail = kde_center_page_section_detail(recipe.id, "overview", "approved")
+        detail = kde_center_page_section_detail(recipe.id, "activation", "approved")
         {
           "request_type" => detail.fetch("request_type"),
           "runtime_method" => detail.fetch("runtime_method"),
