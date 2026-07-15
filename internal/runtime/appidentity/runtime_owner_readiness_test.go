@@ -12,7 +12,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerReadinessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.188" ||
+	if preview.Version != "0.2.189" ||
 		preview.SchemaVersion != "xnix.runtime.owner_readiness.v1" ||
 		preview.RequestType != "runtime-owner-readiness-preview" ||
 		preview.ReadinessType != "runtime-owner-readiness" ||
@@ -82,13 +82,13 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		preview.OwnerRouteManifest.RouteCount != 57 ||
 		preview.OwnerRouteManifest.GoRouteCount != len(runtimeOwnerRouteGoCommands) ||
 		preview.OwnerRouteManifest.CCoreRouteCount != len(runtimeOwnerRouteCCoreCommands) ||
-		preview.OwnerRouteManifest.RubyLegacyRouteCount != 1 ||
+		preview.OwnerRouteManifest.RubyLegacyRouteCount != 0 ||
 		preview.OwnerRouteManifest.GoOwnerRouteCoverageReady ||
 		!preview.OwnerRouteManifest.CCoreAdapterRequired ||
-		!preview.OwnerRouteManifest.LegacyRuntimeRoutesPresent ||
+		preview.OwnerRouteManifest.LegacyRuntimeRoutesPresent ||
 		preview.OwnerRouteManifest.ProductionOwnerRoutesReady ||
-		preview.OwnerRouteManifest.Counts.Passed != 3 ||
-		preview.OwnerRouteManifest.Counts.Pending != 3 {
+		preview.OwnerRouteManifest.Counts.Passed != 4 ||
+		preview.OwnerRouteManifest.Counts.Pending != 2 {
 		t.Fatalf("unexpected owner route manifest summary: %#v", preview.OwnerRouteManifest)
 	}
 	if preview.RecipeTrust.RequestType != "runtime-owner-recipe-trust-preview" ||
@@ -161,7 +161,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		preview.BlockedActions[0] != "start production Runtime owner from readiness preview" {
 		t.Fatalf("unexpected blocked readiness metadata: reasons=%#v actions=%#v", preview.BlockedReasons, preview.BlockedActions)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner readiness has aligned activation and method parity; Go owner route migration, live production ownership, bus claim, and production-signed recipe trust remain pending." {
+	if preview.DesktopSafeSummary != "Runtime owner readiness has aligned activation and method parity; C owner adapter migration, live production ownership, bus claim, and production-signed recipe trust remain pending." {
 		t.Fatalf("unexpected desktop-safe summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner readiness preview test"); err != nil {
@@ -171,7 +171,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 
 func TestRuntimeOwnerReadinessPreviewBlocksMissingActivationAndParity(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.188\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.189\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

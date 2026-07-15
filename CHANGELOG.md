@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.189] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `diagnostics-preview` for `GetDiagnostics` to aggregate Runtime-safe application status, execution readiness, launch gates, KDE action queues, Compatibility Center summaries, KDE section coverage, and AI diagnostics safety without starting execution, reading file contents, calling an AI provider, or exposing backend details.
+
+### Changed
+
+- Migrated `GetDiagnostics` in `runtime-owner-route-manifest-preview` from the Ruby legacy dispatch bucket to a native Go preview route, reducing legacy Runtime owner routes to zero while leaving C Runtime adapter migration pending.
+- Wired CLI, unit, and layout verification coverage for the Go diagnostics route and updated owner-readiness route summaries.
+
 ## [0.2.188] - 2026-07-15
 
 ### Added

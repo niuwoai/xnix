@@ -78,6 +78,7 @@ type RuntimeOwnerRouteManifestCounts struct {
 }
 
 var runtimeOwnerRouteGoCommands = map[string]string{
+	"GetDiagnostics":                         "diagnostics-preview",
 	"GetDesktopActivationTransactionPreview": "desktop-activation-transaction-preview",
 	"GetDesktopActivationStatus":             "desktop-activation-status-preview",
 	"GetDesktopEntryPlan":                    "desktop-entry-preview",
@@ -351,7 +352,7 @@ func runtimeOwnerRouteManifestBlockedActions() []string {
 	return []string{
 		"start production Runtime owner from route manifest preview",
 		"claim production D-Bus name from route manifest preview",
-		"serve legacy Runtime dispatch as the final owner route",
+		"serve C-backed read-only routes without Go owner adapters",
 		"enable write methods before all read-only routes are owner-ready",
 		"let KDE route Runtime policy directly",
 		"mutate host root during route manifest preview",
@@ -360,7 +361,7 @@ func runtimeOwnerRouteManifestBlockedActions() []string {
 
 func runtimeOwnerRouteManifestNextRequirements() []string {
 	return []string{
-		"Implement native Go owner handlers for remaining legacy Runtime dispatch routes.",
+		"Complete native Go owner handlers or owner adapters for every non-Go read-only route.",
 		"Add a Go owner adapter boundary for C Runtime policy routes.",
 		"Serve the route table from a restricted owner smoke before production bus ownership.",
 		"Keep KDE consumers on read-only Runtime methods while route migration continues.",
@@ -371,8 +372,11 @@ func runtimeOwnerRouteManifestSummary(routeCounts RuntimeOwnerRouteCounts) strin
 	if routeCounts.Blocked > 0 {
 		return "Runtime owner routes are blocked by missing read-only route evidence."
 	}
-	if routeCounts.RubyLegacy > 0 || routeCounts.CCoreBacked > 0 {
+	if routeCounts.RubyLegacy > 0 {
 		return "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending."
+	}
+	if routeCounts.CCoreBacked > 0 {
+		return "Runtime owner routes have Go coverage for migrated diagnostics and current Go previews, with C adapter migration still pending."
 	}
 	return "Runtime owner routes are fully native to the Go owner preview, but production bus ownership remains gated."
 }

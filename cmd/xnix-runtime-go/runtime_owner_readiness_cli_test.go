@@ -18,7 +18,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.188" ||
+	if payload["version"] != "0.2.189" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
@@ -85,10 +85,10 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		ownerRouteManifest["route_count"] != float64(57) ||
 		ownerRouteManifest["go_route_count"].(float64) <= 0 ||
 		ownerRouteManifest["c_core_route_count"].(float64) <= 0 ||
-		ownerRouteManifest["ruby_legacy_route_count"] != float64(1) ||
+		ownerRouteManifest["ruby_legacy_route_count"] != float64(0) ||
 		ownerRouteManifest["go_owner_route_coverage_ready"] != false ||
 		ownerRouteManifest["c_core_adapter_required"] != true ||
-		ownerRouteManifest["legacy_runtime_routes_present"] != true ||
+		ownerRouteManifest["legacy_runtime_routes_present"] != false ||
 		ownerRouteManifest["production_owner_routes_ready"] != false {
 		t.Fatalf("unexpected owner route manifest summary: %#v", ownerRouteManifest)
 	}

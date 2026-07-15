@@ -373,7 +373,7 @@ func runtimeOwnerReadinessBlockedReasons() []string {
 		"Live production Runtime ownership is still pending.",
 		"Production bus-name acquisition has not been proven by a packaged owner smoke.",
 		"Production recipe trust still requires signed registry validation.",
-		"Go owner route coverage still needs C adapter boundaries and legacy dispatch migration.",
+		"Go owner route coverage still needs C adapter boundaries for C-backed read-only routes.",
 		"KDE remains a replaceable presentation shell and must not own Runtime policy.",
 		"Write methods stay disabled until the production Runtime owner is proven.",
 	}
@@ -384,7 +384,7 @@ func runtimeOwnerReadinessBlockedActions() []string {
 		"start production Runtime owner from readiness preview",
 		"claim production D-Bus name from readiness preview",
 		"mark smoke adapter as production owner",
-		"serve legacy Runtime dispatch as final production owner routes",
+		"serve C-backed read-only routes without Go owner adapters",
 		"enable launch, install, snapshot, restore, repair, or settings persistence",
 		"let KDE claim Runtime ownership",
 		"mutate host root during readiness evaluation",
@@ -396,7 +396,7 @@ func runtimeOwnerReadinessSummary(activationBindingReady bool, methodParityReady
 		return "Runtime owner readiness is blocked by activation or method parity defects."
 	}
 	if !ownerRoutesReady {
-		return "Runtime owner readiness has aligned activation and method parity; Go owner route migration, live production ownership, bus claim, and production-signed recipe trust remain pending."
+		return "Runtime owner readiness has aligned activation and method parity; C owner adapter migration, live production ownership, bus claim, and production-signed recipe trust remain pending."
 	}
 	if !recipeTrustReady {
 		return "Runtime owner readiness has aligned activation and method parity; live production ownership, bus claim, and production-signed recipe trust remain pending."

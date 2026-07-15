@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.188"
+EXPECTED_VERSION = "0.2.189"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -987,7 +987,7 @@ assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-p
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -997,6 +997,21 @@ assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteGoComma
 assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteCCoreCommands"), "Go Runtime owner route manifest must classify C Runtime routes")
 assert(go_runtime_owner_route_manifest_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime owner route manifest must derive from method parity")
 assert(go_runtime_owner_route_manifest_source.include?("validateNoBackendTerms"), "Go Runtime owner route manifest must hide backend terms")
+
+go_runtime_diagnostics_source = read_project_file("internal/runtime/appidentity/diagnostics.go")
+%w[DiagnosticsPreview diagnostics-preview xnix.runtime.diagnostics.v1 GetDiagnostics GetDiagnosticsPreview registry+go-runtime-previews GetAIDiagnosticInput compatibility-status-review runtime-metadata-only].each do |token|
+  assert(go_runtime_diagnostics_source.include?(token), "Go Runtime diagnostics preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible CompatibilityCenterCard SafeForAIDiagnostics AIProviderCallEnabled FileContentRead FilePathsExposed RequestObjectCreated PermissionGranted LaunchEnabled ExecutionStarted RepairExecutionEnabled SettingsPersisted HostRootModified NetworkRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_diagnostics_source.include?(token), "Go Runtime diagnostics preview must expose #{token}")
+end
+%w[NewPlanWithProvenance ExecutionReadinessPreview LaunchIntentPreview KDEActionQueuePreview NewCompatibilityCenterPreview NewKDECenterPageSectionsPreview validateNoBackendTerms].each do |token|
+  assert(go_runtime_diagnostics_source.include?(token), "Go Runtime diagnostics preview must call #{token}")
+end
+
+go_runtime_diagnostics_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_diagnostics_cli_source.include?("diagnostics-preview"), "Go Runtime CLI must expose Runtime diagnostics preview")
+assert(go_runtime_diagnostics_cli_source.include?("NewDiagnosticsPreview"), "Go Runtime CLI must call Runtime diagnostics preview")
 
 go_runtime_owner_readiness_source = read_project_file("internal/runtime/appidentity/runtime_owner_readiness.go")
 %w[RuntimeOwnerReadinessPreview runtime-owner-readiness-preview xnix.runtime.owner_readiness.v1 GetRuntimeOwnerReadiness GetRuntimeOwnerReadinessPreview runtime-service-binding-preview runtime-live-owner-gate-preview runtime-owner-process-preview runtime-owner-smoke-plan-preview runtime-method-parity-manifest-preview runtime-owner-route-manifest-preview runtime-owner-recipe-trust-preview activation-binding read-only-method-parity owner-smoke-plan write-method-gate kde-ownership-boundary host-safety-boundary long-running-runtime-owner read-only-owner-routes production-bus-claim production-recipe-trust].each do |token|

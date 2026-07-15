@@ -12,7 +12,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("NewRuntimeOwnerRouteManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.188" ||
+	if preview.Version != "0.2.189" ||
 		preview.SchemaVersion != "xnix.runtime.owner_route_manifest.v1" ||
 		preview.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.ManifestType != "runtime-owner-route-manifest" ||
@@ -29,16 +29,16 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 	if preview.RouteCounts.Total != len(runtimeMethodParityReadOnlyMethods) ||
 		preview.RouteCounts.GoRouted != len(runtimeOwnerRouteGoCommands) ||
 		preview.RouteCounts.CCoreBacked != len(runtimeOwnerRouteCCoreCommands) ||
-		preview.RouteCounts.RubyLegacy != 1 ||
+		preview.RouteCounts.RubyLegacy != 0 ||
 		preview.RouteCounts.Ready != len(runtimeOwnerRouteGoCommands) ||
-		preview.RouteCounts.Pending != len(runtimeOwnerRouteCCoreCommands)+1 ||
+		preview.RouteCounts.Pending != len(runtimeOwnerRouteCCoreCommands) ||
 		preview.RouteCounts.Blocked != 0 {
 		t.Fatalf("unexpected route counts: %#v", preview.RouteCounts)
 	}
 	if !preview.MethodParityReady ||
 		preview.GoOwnerRouteCoverageReady ||
 		!preview.CCoreAdapterRequired ||
-		!preview.LegacyRuntimeRoutesPresent ||
+		preview.LegacyRuntimeRoutesPresent ||
 		preview.ProductionOwnerRoutesReady ||
 		!preview.RuntimeOwned ||
 		!preview.GoRuntimeBacked ||
@@ -54,7 +54,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("unexpected route manifest safety flags: %#v", preview)
 	}
 	expectedIDs := []string{"method-parity", "go-route-coverage", "c-core-adapter-boundary", "ruby-legacy-dispatch", "write-route-gate", "host-safety-boundary"}
-	expectedStatuses := []string{"pass", "pending", "pending", "pending", "pass", "pass"}
+	expectedStatuses := []string{"pass", "pending", "pending", "pass", "pass", "pass"}
 	if len(preview.Checks) != len(expectedIDs) || len(preview.CheckIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected checks: %#v ids=%#v", preview.Checks, preview.CheckIDs)
 	}
@@ -66,23 +66,23 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		}
 	}
 	if preview.Counts.Total != 6 ||
-		preview.Counts.Passed != 3 ||
-		preview.Counts.Pending != 3 ||
+		preview.Counts.Passed != 4 ||
+		preview.Counts.Pending != 2 ||
 		preview.Counts.Blocked != 0 {
 		t.Fatalf("unexpected check counts: %#v", preview.Counts)
 	}
 
 	assertRuntimeOwnerRoute(t, preview, "GetRuntimeServiceBinding", "go-runtime-cli", "runtime-service-binding-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetRunPlan", "c-runtime-core", "compatibility-run-plan", "c-adapter-pending")
-	assertRuntimeOwnerRoute(t, preview, "GetDiagnostics", "ruby-runtime-dispatch", "GetDiagnostics", "legacy-dispatch-pending")
+	assertRuntimeOwnerRoute(t, preview, "GetDiagnostics", "go-runtime-cli", "diagnostics-preview", "go-preview-ready")
 
 	if len(preview.BlockedActions) != 6 ||
 		preview.BlockedActions[0] != "start production Runtime owner from route manifest preview" ||
 		len(preview.NextRequirements) != 4 ||
-		preview.NextRequirements[0] != "Implement native Go owner handlers for remaining legacy Runtime dispatch routes." {
+		preview.NextRequirements[0] != "Complete native Go owner handlers or owner adapters for every non-Go read-only route." {
 		t.Fatalf("unexpected blocked actions or next requirements: actions=%#v next=%#v", preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending." {
+	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated diagnostics and current Go previews, with C adapter migration still pending." {
 		t.Fatalf("unexpected route manifest summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner route manifest preview test"); err != nil {
@@ -92,7 +92,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 
 func TestRuntimeOwnerRouteManifestPreviewBlocksMissingRouteSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.188\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.189\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 
