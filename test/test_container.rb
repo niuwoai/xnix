@@ -5,7 +5,7 @@ require "pathname"
 require_relative "../lib/xnix/container"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath.to_s
-VERSION = "0.2.203"
+VERSION = "0.2.204"
 
 def assert(condition, message)
   return if condition
@@ -22,6 +22,7 @@ custom_build_command = custom_container.build_command
 custom_offline_command = custom_container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
+runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
@@ -54,6 +55,10 @@ assert(runtime_activation_command.last(2) == ["ruby", "scripts/runtime_activatio
 assert(runtime_dbus_command.fetch(runtime_dbus_command.index("--network") + 1) == "none", "runtime D-Bus smoke must run without networking")
 assert(runtime_dbus_command.include?("--read-only"), "runtime D-Bus smoke must keep the container root read-only")
 assert(runtime_dbus_command.last(2) == ["ruby", "scripts/dbus_session_smoke.rb"], "runtime D-Bus smoke must run the session bus smoke")
+
+assert(runtime_owner_candidate_command.fetch(runtime_owner_candidate_command.index("--network") + 1) == "none", "Runtime owner candidate smoke must run without networking")
+assert(runtime_owner_candidate_command.include?("--read-only"), "Runtime owner candidate smoke must keep the container root read-only")
+assert(runtime_owner_candidate_command.last(2) == ["ruby", "scripts/runtime_owner_candidate_smoke.rb"], "Runtime owner candidate smoke must run the restricted session smoke")
 
 assert(kde_center_dbus_command.fetch(kde_center_dbus_command.index("--network") + 1) == "none", "KDE center D-Bus smoke must run without networking")
 assert(kde_center_dbus_command.include?("--read-only"), "KDE center D-Bus smoke must keep the container root read-only")

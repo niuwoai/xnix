@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.203"
+EXPECTED_VERSION = "0.2.204"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -209,6 +209,7 @@ REQUIRED_FILES = %w[
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
+  scripts/runtime_owner_candidate_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
   runtime/dbus/org.xnix.Compatibility1.service
@@ -350,6 +351,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
   test/test_runtime_method_parity_manifest.rb
+  test/test_runtime_owner_candidate_smoke_script.rb
   test/test_runtime_owner_smoke_plan.rb
   test/test_runtime_service_binding.rb
   test/test_runtime_write_gate.rb
@@ -439,6 +441,7 @@ assert(dockerfile.include?("libglib2.0-dev"), "Dockerfile must install GIO heade
 assert(dockerfile.include?("pkg-config"), "Dockerfile must install pkg-config for runtime smoke tests")
 assert(dockerfile.include?("xnix_runtime_core.c"), "Dockerfile must compile the C Runtime core")
 assert(dockerfile.include?("xnix-runtime-core"), "Dockerfile must install the C Runtime core smoke binary")
+assert(dockerfile.include?("go build -o /usr/local/bin/xnix-runtime-owner"), "Dockerfile must install the Go Runtime owner candidate")
 assert(dockerfile.include?("USER xnix"), "Dockerfile must run as the non-root xnix user")
 FORBIDDEN_CONTAINER_TOKENS.each do |token|
   assert(!dockerfile.include?(token), "Dockerfile must not contain #{token}")
@@ -1487,6 +1490,11 @@ assert(dbus_client_source.include?("return true if value == \"true\""), "D-Bus R
 assert(dbus_client_source.include?("return false if value == \"false\""), "D-Bus Runtime client must parse boolean false values")
 assert(dbus_client_source.include?("value.to_i"), "D-Bus Runtime client must parse integer values")
 assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime client must parse string arrays")
+
+runtime_owner_candidate_smoke_source = read_project_file("scripts/runtime_owner_candidate_smoke.rb")
+%w[dbus-run-session xnix-runtime-owner smoke-owner xnix.runtime.owner_candidate.v1 org.xnix.Compatibility1.Error.WriteMethodDisabled session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed].each do |token|
+  assert(runtime_owner_candidate_smoke_source.include?(token), "Runtime owner candidate smoke must include #{token}")
+end
 
 settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")
 assert(settings_change_source.include?("xnix-compat-settings-change"), "Settings change plan must expose a CLI command")

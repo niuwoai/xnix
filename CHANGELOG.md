@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.204] - 2026-07-16
+
+### Added
+
+- Added `scripts/runtime_owner_candidate_smoke.rb`, a restricted session-bus smoke that runs the Go Runtime owner candidate in `smoke-owner` mode, verifies full Go read-only route coverage, checks deterministic disabled write-method responses, and confirms the candidate does not claim session or production bus ownership, start services, require network, mutate the host root, require privileged containers, or expose backend details.
+- Added the `runtime-owner-candidate-smoke` constrained container command and installed `xnix-runtime-owner` into the Docker smoke image for offline read-only Colima validation.
+
+### Changed
+
+- Updated the container command unit tests and layout verification to include the Runtime owner candidate smoke gate.
+
 ## [0.2.203] - 2026-07-16
 
 ### Added

@@ -37,6 +37,7 @@ RUN mkdir --parents /workspace/.cache/buildroot \
 WORKDIR /workspace
 RUN go test ./...
 RUN go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go
+RUN go build -o /usr/local/bin/xnix-runtime-owner ./cmd/xnix-runtime-owner
 RUN gcc /workspace/runtime/dbus/xnix_compatd_smoke.c \
         -o /usr/local/bin/xnix-dbus-smoke \
         $(pkg-config --cflags --libs gio-2.0)

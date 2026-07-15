@@ -50,6 +50,10 @@ module Xnix
       offline_run_command(["ruby", "scripts/dbus_session_smoke.rb"])
     end
 
+    def runtime_owner_candidate_smoke_command
+      offline_run_command(["ruby", "scripts/runtime_owner_candidate_smoke.rb"])
+    end
+
     def kde_center_dbus_smoke_command
       offline_run_command(["ruby", "scripts/kde_center_dbus_smoke.rb"])
     end
