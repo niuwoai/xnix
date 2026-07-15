@@ -237,20 +237,34 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		preview.ReadOnlySectionCount != 4 ||
 		preview.NavigationOnlySectionCount != 4 ||
 		preview.ExecutableSectionCount != 0 ||
+		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
 		t.Fatalf("unexpected KDE center page sections identity: %#v", preview)
+	}
+	if preview.AIAnalysis == nil ||
+		preview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		preview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!preview.AIAnalysis.SafeForAIDiagnostics ||
+		preview.AIAnalysis.AIProviderCallEnabled ||
+		preview.AIAnalysis.NetworkRequired ||
+		preview.AIAnalysis.FileContentRead ||
+		preview.AIAnalysis.FilePathsExposed ||
+		preview.AIAnalysis.RequestObjectCreated ||
+		preview.AIAnalysis.PermissionGranted ||
+		preview.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected sections AI analysis link: %#v", preview.AIAnalysis)
 	}
 	wantMethods := map[string]string{
 		"overview":    "GetCompatibilityCenterSummary",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
-		"diagnostics": "GetDiagnostics",
+		"diagnostics": "GetAIDiagnosticInput",
 	}
 	wantModels := map[string]string{
 		"overview":    "compatibility-center-summary",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
-		"diagnostics": "runtime-diagnostics",
+		"diagnostics": "ai-diagnostic-input",
 	}
 	for _, section := range preview.Sections {
 		if section.RuntimeMethod != wantMethods[section.ID] ||
@@ -262,6 +276,12 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 			section.SettingsPersisted ||
 			section.BackendDetailsExposed {
 			t.Fatalf("unexpected section contract: %#v", section)
+		}
+		if section.ID == "diagnostics" && section.AIAnalysis == nil {
+			t.Fatalf("diagnostics section should expose AI analysis link")
+		}
+		if section.ID != "diagnostics" && section.AIAnalysis != nil {
+			t.Fatalf("%s section should not expose AI analysis link: %#v", section.ID, section.AIAnalysis)
 		}
 	}
 	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
@@ -344,6 +364,28 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		!preview.SafeForAIDiagnostics || !preview.UserDecisionCaptured ||
 		!preview.UserDecisionAllowsLaunch {
 		t.Fatalf("unexpected section detail ownership flags: %#v", preview)
+	}
+	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("diagnostics NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if diagnosticsPreview.SectionID != "diagnostics" ||
+		diagnosticsPreview.SectionRuntimeMethod != "GetAIDiagnosticInput" ||
+		diagnosticsPreview.SectionReadModel != "ai-diagnostic-input" ||
+		diagnosticsPreview.AIAnalysis == nil ||
+		diagnosticsPreview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		diagnosticsPreview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		diagnosticsPreview.AIAnalysis.AIProviderCallEnabled ||
+		diagnosticsPreview.AIAnalysis.NetworkRequired ||
+		diagnosticsPreview.AIAnalysis.FileContentRead ||
+		diagnosticsPreview.AIAnalysis.FilePathsExposed ||
+		diagnosticsPreview.AIAnalysis.RequestObjectCreated ||
+		diagnosticsPreview.AIAnalysis.PermissionGranted ||
+		diagnosticsPreview.AIAnalysis.BackendLaunchEnabled ||
+		diagnosticsPreview.SectionActionsEnabled ||
+		diagnosticsPreview.RequestObjectsCreated ||
+		diagnosticsPreview.ExecutionStarted {
+		t.Fatalf("unexpected diagnostics section detail: %#v", diagnosticsPreview)
 	}
 	if !containsString(preview.BlockedActions, "persist KDE center page section detail from preview state") ||
 		!containsString(preview.BlockedActions, "create Runtime request objects from section detail") ||

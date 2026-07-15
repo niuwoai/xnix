@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.158] - 2026-07-15
+
+### Added
+
+- Added Dolphin AI-safe file analysis metadata to the KDE Compatibility Center Diagnostics section and section-detail preview.
+- Routed the Diagnostics section to the `GetAIDiagnosticInput` read model while keeping section navigation read-only and blocking AI provider calls, network access, file reads, path exposure, request creation, permission grants, execution, backend launch, and host-root mutation.
+
 ## [0.2.157] - 2026-07-15
 
 ### Added

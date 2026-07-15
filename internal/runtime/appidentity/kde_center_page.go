@@ -146,6 +146,8 @@ type KDECenterPageSectionsPreview struct {
 	ReadOnlySectionCount       int                    `json:"read_only_section_count"`
 	NavigationOnlySectionCount int                    `json:"navigation_only_section_count"`
 	ExecutableSectionCount     int                    `json:"executable_section_count"`
+	AIAnalysis                 *KDEAIAnalysisLink     `json:"ai_analysis,omitempty"`
+	AIAnalysisSectionCount     int                    `json:"ai_analysis_section_count"`
 	PrimarySectionID           string                 `json:"primary_section_id"`
 	Sections                   []KDECenterPageSection `json:"sections"`
 	RuntimeOwned               bool                   `json:"runtime_owned"`
@@ -176,65 +178,67 @@ type KDECenterPageSectionsPreview struct {
 }
 
 type KDECenterPageSection struct {
-	ID                    string `json:"id"`
-	Label                 string `json:"label"`
-	Target                string `json:"target"`
-	RuntimeMethod         string `json:"runtime_method"`
-	ReadModel             string `json:"read_model"`
-	State                 string `json:"state"`
-	NavigationOnly        bool   `json:"navigation_only"`
-	ReadOnly              bool   `json:"read_only"`
-	MutatesRuntime        bool   `json:"mutates_runtime"`
-	StartsProgram         bool   `json:"starts_program"`
-	SettingsPersisted     bool   `json:"settings_persisted"`
-	BackendDetailsExposed bool   `json:"backend_details_exposed"`
-	Summary               string `json:"summary"`
+	ID                    string             `json:"id"`
+	Label                 string             `json:"label"`
+	Target                string             `json:"target"`
+	RuntimeMethod         string             `json:"runtime_method"`
+	ReadModel             string             `json:"read_model"`
+	State                 string             `json:"state"`
+	AIAnalysis            *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	NavigationOnly        bool               `json:"navigation_only"`
+	ReadOnly              bool               `json:"read_only"`
+	MutatesRuntime        bool               `json:"mutates_runtime"`
+	StartsProgram         bool               `json:"starts_program"`
+	SettingsPersisted     bool               `json:"settings_persisted"`
+	BackendDetailsExposed bool               `json:"backend_details_exposed"`
+	Summary               string             `json:"summary"`
 }
 
 type KDECenterPageSectionDetailPreview struct {
-	SchemaVersion              string   `json:"schema_version"`
-	RequestType                string   `json:"request_type"`
-	PageType                   string   `json:"page_type"`
-	Source                     string   `json:"source"`
-	Desktop                    string   `json:"desktop"`
-	RuntimeMethod              string   `json:"runtime_method"`
-	ReadMethod                 string   `json:"read_method"`
-	ApplicationID              string   `json:"application_id"`
-	ApplicationName            string   `json:"application_name"`
-	SectionID                  string   `json:"section_id"`
-	SectionLabel               string   `json:"section_label"`
-	SectionTarget              string   `json:"section_target"`
-	SectionState               string   `json:"section_state"`
-	SectionRuntimeMethod       string   `json:"section_runtime_method"`
-	SectionReadModel           string   `json:"section_read_model"`
-	SectionSummary             string   `json:"section_summary"`
-	AvailableSectionIDs        []string `json:"available_section_ids"`
-	ReadOnlyNavigation         bool     `json:"read_only_navigation"`
-	DetailPreviewCreated       bool     `json:"detail_preview_created"`
-	DetailPersisted            bool     `json:"detail_persisted"`
-	SectionActionsEnabled      bool     `json:"section_actions_enabled"`
-	SettingsPersisted          bool     `json:"settings_persisted"`
-	SettingsPersistenceEnabled bool     `json:"settings_persistence_enabled"`
-	NotificationsSent          bool     `json:"notifications_sent"`
-	ResourceGrantCreated       bool     `json:"resource_grant_created"`
-	RuntimeLaunchApproval      bool     `json:"runtime_launch_approval"`
-	LaunchEnabled              bool     `json:"launch_enabled"`
-	ExecutionStarted           bool     `json:"execution_started"`
-	RequestObjectsCreated      bool     `json:"request_objects_created"`
-	PermissionGrantCreated     bool     `json:"permission_grant_created"`
-	HostRootModified           bool     `json:"host_root_modified"`
-	NetworkRequired            bool     `json:"network_required"`
-	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
-	RuntimeOwned               bool     `json:"runtime_owned"`
-	GoRuntimeBacked            bool     `json:"go_runtime_backed"`
-	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
-	OfficialDesktopOnly        bool     `json:"official_desktop_only"`
-	UserVisible                bool     `json:"user_visible"`
-	SafeForAIDiagnostics       bool     `json:"safe_for_ai_diagnostics"`
-	UserDecisionCaptured       bool     `json:"user_decision_captured"`
-	UserDecisionAllowsLaunch   bool     `json:"user_decision_allows_launch"`
-	BlockedActions             []string `json:"blocked_actions"`
-	DesktopSafeSummary         string   `json:"desktop_safe_summary"`
+	SchemaVersion              string             `json:"schema_version"`
+	RequestType                string             `json:"request_type"`
+	PageType                   string             `json:"page_type"`
+	Source                     string             `json:"source"`
+	Desktop                    string             `json:"desktop"`
+	RuntimeMethod              string             `json:"runtime_method"`
+	ReadMethod                 string             `json:"read_method"`
+	ApplicationID              string             `json:"application_id"`
+	ApplicationName            string             `json:"application_name"`
+	SectionID                  string             `json:"section_id"`
+	SectionLabel               string             `json:"section_label"`
+	SectionTarget              string             `json:"section_target"`
+	SectionState               string             `json:"section_state"`
+	SectionRuntimeMethod       string             `json:"section_runtime_method"`
+	SectionReadModel           string             `json:"section_read_model"`
+	SectionSummary             string             `json:"section_summary"`
+	AIAnalysis                 *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	AvailableSectionIDs        []string           `json:"available_section_ids"`
+	ReadOnlyNavigation         bool               `json:"read_only_navigation"`
+	DetailPreviewCreated       bool               `json:"detail_preview_created"`
+	DetailPersisted            bool               `json:"detail_persisted"`
+	SectionActionsEnabled      bool               `json:"section_actions_enabled"`
+	SettingsPersisted          bool               `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool               `json:"settings_persistence_enabled"`
+	NotificationsSent          bool               `json:"notifications_sent"`
+	ResourceGrantCreated       bool               `json:"resource_grant_created"`
+	RuntimeLaunchApproval      bool               `json:"runtime_launch_approval"`
+	LaunchEnabled              bool               `json:"launch_enabled"`
+	ExecutionStarted           bool               `json:"execution_started"`
+	RequestObjectsCreated      bool               `json:"request_objects_created"`
+	PermissionGrantCreated     bool               `json:"permission_grant_created"`
+	HostRootModified           bool               `json:"host_root_modified"`
+	NetworkRequired            bool               `json:"network_required"`
+	BackendDetailsExposed      bool               `json:"backend_details_exposed"`
+	RuntimeOwned               bool               `json:"runtime_owned"`
+	GoRuntimeBacked            bool               `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool               `json:"kde_policy_owner"`
+	OfficialDesktopOnly        bool               `json:"official_desktop_only"`
+	UserVisible                bool               `json:"user_visible"`
+	SafeForAIDiagnostics       bool               `json:"safe_for_ai_diagnostics"`
+	UserDecisionCaptured       bool               `json:"user_decision_captured"`
+	UserDecisionAllowsLaunch   bool               `json:"user_decision_allows_launch"`
+	BlockedActions             []string           `json:"blocked_actions"`
+	DesktopSafeSummary         string             `json:"desktop_safe_summary"`
 }
 
 func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPagePreview, error) {
@@ -398,6 +402,7 @@ func NewKDECenterPageSectionsPreview(recipe Recipe, provenance Provenance, decis
 	}
 
 	sections := kdeCenterPageSections()
+	aiAnalysis := firstKDECenterPageSectionAIAnalysis(sections)
 	preview := KDECenterPageSectionsPreview{
 		SchemaVersion:              "xnix.runtime.kde_center_page_sections.v1",
 		RequestType:                "kde-center-page-sections-preview",
@@ -412,6 +417,8 @@ func NewKDECenterPageSectionsPreview(recipe Recipe, provenance Provenance, decis
 		ReadOnlySectionCount:       len(sections),
 		NavigationOnlySectionCount: len(sections),
 		ExecutableSectionCount:     0,
+		AIAnalysis:                 aiAnalysis,
+		AIAnalysisSectionCount:     countKDECenterPageSectionAIAnalysis(sections),
 		PrimarySectionID:           "overview",
 		Sections:                   sections,
 		RuntimeOwned:               true,
@@ -478,6 +485,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 		SectionRuntimeMethod:       section.RuntimeMethod,
 		SectionReadModel:           section.ReadModel,
 		SectionSummary:             section.Summary,
+		AIAnalysis:                 section.AIAnalysis,
 		AvailableSectionIDs:        kdeCenterPageSectionIDs(sections.Sections),
 		ReadOnlyNavigation:         true,
 		DetailPreviewCreated:       true,
@@ -538,7 +546,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready", "Overview reads Runtime-owned application state, known issue counts, and repair record state."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
-		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned", "Diagnostics read safe Runtime status for AI review without exposing backend implementation details."),
+		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),
 	}
 }
 
@@ -550,6 +558,7 @@ func kdeCenterPageSection(id string, label string, target string, runtimeMethod 
 		RuntimeMethod:         runtimeMethod,
 		ReadModel:             readModel,
 		State:                 state,
+		AIAnalysis:            kdeCenterPageSectionAIAnalysis(id),
 		NavigationOnly:        true,
 		ReadOnly:              true,
 		MutatesRuntime:        false,
@@ -558,6 +567,33 @@ func kdeCenterPageSection(id string, label string, target string, runtimeMethod 
 		BackendDetailsExposed: false,
 		Summary:               summary,
 	}
+}
+
+func kdeCenterPageSectionAIAnalysis(sectionID string) *KDEAIAnalysisLink {
+	if sectionID != "diagnostics" {
+		return nil
+	}
+	link := kdeAIAnalysisLinkForEntryPoint("file-manager")
+	return link
+}
+
+func firstKDECenterPageSectionAIAnalysis(sections []KDECenterPageSection) *KDEAIAnalysisLink {
+	for _, section := range sections {
+		if section.AIAnalysis != nil {
+			return section.AIAnalysis
+		}
+	}
+	return nil
+}
+
+func countKDECenterPageSectionAIAnalysis(sections []KDECenterPageSection) int {
+	count := 0
+	for _, section := range sections {
+		if section.AIAnalysis != nil {
+			count++
+		}
+	}
+	return count
 }
 
 func findKDECenterPageSection(sections []KDECenterPageSection, sectionID string) (KDECenterPageSection, bool) {
