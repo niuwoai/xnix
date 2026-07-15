@@ -196,6 +196,12 @@ def build_report(root)
       summary: "Owner smoke batch derives read coverage from the owner dispatch table and write denials from the write gate."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
+      id: "go-owner-smoke-bridge",
+      expected: ["go_owner_dispatch_available", "go_owner_dispatch_schema", "go_owner_dispatch_json", "go-runtime-owner-dispatch+c-smoke-bridge"],
+      source: smoke_adapter_source,
+      summary: "D-Bus smoke adapter exposes selected Go owner dispatch payload evidence through the low-level C bridge."
+    ) { |source, token| source.include?(token) },
+    source_coverage_check(
       id: "runtime-dispatch",
       expected: read_only_methods,
       source: runtime_dispatch_source,

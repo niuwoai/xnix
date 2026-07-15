@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.220
+> Last updated: 2026-07-16 | Baseline: v0.2.221
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -49,7 +49,7 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.220 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.221 | What remains useful to implement |
 | --- | --- | --- |
 | Runtime owner | Owner candidate, full in-process read dispatch coverage for every D-Bus read-only Runtime method, owner-local probes, route manifests, service binding previews, lifecycle JSONL, and write gates exist. | Constrained long-running session-bus event loop, smoke-owned readiness, bus-call parity, and closed write-method evidence through the owner process. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |
@@ -70,6 +70,50 @@ Use this protocol when handing a package to Claude Code:
 3. State the unsafe actions that must remain disabled.
 4. Ask for a small semantic version bump, changelog entry, product overview update, targeted tests, and layout verification.
 5. Ask Claude Code to stop and report blockers if the package would require network fetch, host-root writes, production D-Bus ownership, real Portal calls, or backend launch.
+
+## Implementation Evidence Standard
+
+Claude Code should not treat a new contract, preview, CLI stub, route declaration, or documentation paragraph as implementation by itself. A package becomes mergeable only when it turns at least one existing contract into evidence that can fail, persist, or be exercised through a constrained smoke path.
+
+Use this scale when reviewing a branch:
+
+| Evidence level | Meaning | Merge expectation |
+| --- | --- | --- |
+| Contract-only | Interfaces, XML, model names, preview fields, or docs exist but nothing durable happens. | Not enough for these packages unless the branch only updates handoff docs. |
+| Fixture-implemented | The behavior runs against controlled fixtures and has success and failure tests. | Acceptable for package foundations that must avoid host mutation. |
+| State-root-implemented | The behavior writes or reads durable records under an explicit test/runtime state root. | Preferred for lifecycle, Portal, snapshot, execution, diagnostics, and staging work. |
+| Smoke-owned | A constrained container or private session-bus smoke can exercise the behavior end to end. | Required for Runtime owner and D-Bus bridge progress. |
+| Production-gated | The production path is represented, observable, and blocked until prerequisites are real. | Required whenever a package approaches writes, launch, Portal transport, backend processes, or host integration. |
+
+Every implementation package should add at least one of these durable evidence types:
+
+- A state-root record with a schema version, app id, operation id, created timestamp, result state, blocked reasons, and relative receipt paths.
+- A local fixture pipeline with verified digests and deterministic mismatch failures.
+- A constrained smoke path that exercises the real adapter boundary without production privileges.
+- A report entry that classifies the domain and fails on orphan contract-only surfaces.
+- A KDE-safe read model that consumes durable receipts instead of restating static previews.
+
+If a branch only adds more preview fields, more D-Bus methods, or more documentation without one of those evidence types, ask Claude Code to stop and narrow the branch. The point is to make empty domains heavier, not merely louder.
+
+## Package Completion Definition
+
+Each package handoff should include a short completion statement in this form:
+
+```text
+Converted contract(s):
+- <contract or preview surface>
+
+Implementation evidence added:
+- <fixture/state-root/smoke/report evidence>
+
+Still gated:
+- <unsafe production behavior that remains disabled>
+
+Verification run:
+- <commands>
+```
+
+This keeps package reviews concrete and prevents broad branches from hiding behind "foundation" language.
 
 Copyable template:
 

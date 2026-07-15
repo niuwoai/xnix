@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.221] - 2026-07-16
+
+### Added
+
+- Added Go-owner-backed D-Bus smoke bridge evidence for `GetRuntimeWriteGate`, letting the existing C session-bus adapter return the Go owner read-dispatch JSON alongside its stable write-gate fields.
+- Added restricted session smoke assertions that prove the D-Bus read path now includes `xnix.runtime.owner_read_dispatch.v1` payload evidence without enabling writes, starting a production owner, or mutating the host root.
+- Expanded the Claude Code empty-domain handoff document with an implementation-evidence scale and branch completion template so contract-only domains can be assigned without encouraging more preview-only work.
+
+### Changed
+
+- Updated Runtime contract and layout gates so the C D-Bus bridge is tracked as a low-level transport boundary that can consume Go Runtime owner business payloads.
+
 ## [0.2.220] - 2026-07-16
 
 ### Added

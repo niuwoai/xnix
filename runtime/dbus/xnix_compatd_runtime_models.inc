@@ -866,18 +866,25 @@ static GVariant *
 build_runtime_write_gate(const gchar *method_name)
 {
   GVariantBuilder gate;
+  gchar *go_owner_dispatch_json = go_owner_write_gate_dispatch(method_name);
+  gboolean go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
 
   g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("runtime-write-gate"));
   g_variant_builder_add(&gate, "{sv}", "method_name", g_variant_new_string(method_name));
   g_variant_builder_add(&gate, "{sv}", "gate_decision", g_variant_new_string("blocked-until-production-backend"));
+  g_variant_builder_add(&gate, "{sv}", "read_model_source", g_variant_new_string("go-runtime-owner-dispatch+c-smoke-bridge"));
   g_variant_builder_add(&gate, "{sv}", "write_method_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "dispatch_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "request_object_created", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "required_gate_count", g_variant_new_int32(6));
   g_variant_builder_add(&gate, "{sv}", "denial_error_name", g_variant_new_string("org.xnix.Compatibility1.Error.WriteMethodDisabled"));
+  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
+  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
+  g_variant_builder_add(&gate, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
   g_variant_builder_add(&gate, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&gate, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+  g_free(go_owner_dispatch_json);
 
   return g_variant_builder_end(&gate);
 }

@@ -5,6 +5,53 @@
 
 static GDBusNodeInfo *introspection_data = NULL;
 
+static gchar *
+go_owner_write_gate_dispatch(const gchar *method_name)
+{
+  gchar *stdout_data = NULL;
+  gchar *stderr_data = NULL;
+  GError *error = NULL;
+  gint wait_status = 0;
+  gchar *argv[] = {
+    "xnix-runtime-owner",
+    "--root",
+    ".",
+    "--dispatch-read",
+    "GetRuntimeWriteGate",
+    (gchar *)method_name,
+    NULL
+  };
+
+  if (!g_spawn_sync(NULL,
+                    argv,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH,
+                    NULL,
+                    NULL,
+                    &stdout_data,
+                    &stderr_data,
+                    &wait_status,
+                    &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  if (!g_spawn_check_wait_status(wait_status, &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  g_free(stderr_data);
+  if (stdout_data == NULL || stdout_data[0] == '\0') {
+    g_free(stdout_data);
+    return NULL;
+  }
+  g_strchomp(stdout_data);
+  return stdout_data;
+}
+
 static GVariant *
 build_application(void)
 {

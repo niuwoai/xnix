@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.220"
+EXPECTED_VERSION = "0.2.221"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1608,6 +1608,9 @@ dbus_smoke_source = [
   assert(dbus_smoke_source.include?(method_name), "D-Bus smoke adapter must include #{method_name}")
   assert(read_project_file("scripts/dbus_session_smoke.rb").include?(method_name), "D-Bus session smoke must call #{method_name}")
 end
+%w[g_spawn_sync go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_schema go_owner_dispatch_json go-runtime-owner-dispatch+c-smoke-bridge xnix.runtime.owner_read_dispatch.v1 runtime-owner-read-dispatch].each do |token|
+  assert(dbus_smoke_source.include?(token) || read_project_file("scripts/dbus_session_smoke.rb").include?(token), "D-Bus smoke adapter must expose Go owner bridge token #{token}")
+end
 
 dbus_client_source = read_project_file("lib/xnix/compatibility/dbus_runtime_client.rb")
 %w[engine_catalog run_plan kde_integration_status kde_shell_integration_plan kde_application_surface_plan desktop_resource_bridge_plan compatibility_mode_switch_plan compatibility_permission_review_plan compatibility_review_flow_plan desktop_entry_plan desktop_icon_plan task_manager_identity_plan kwin_window_rule_plan file_association_plan notification_plan tray_status krunner_query_plan state_root package_source acquisition_preflight action_queue action_review_receipt compatibility_center_summary artifact_manifest install_plan backend_binding backend_capability_matrix backend_selection_plan repair_plan test_plan test_result execution_readiness ai_diagnostic_input ai_diagnostic_recommendation ai_repair_approval_gate snapshot_plan portal_access_policy runtime_service_binding runtime_live_owner_gate runtime_owner_smoke_plan runtime_method_parity_manifest runtime_write_gate settings settings_change_plan].each do |method_name|
@@ -1633,6 +1636,8 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
   owner-read-dispatch-local-methods
   owner-read-dispatch-all-read-methods
   owner-read-dispatch-contract-subset
+  owner-smoke-batch-source
+  go-owner-smoke-bridge
   runtime-dispatch
   dbus-client-definitions
   smoke-adapter

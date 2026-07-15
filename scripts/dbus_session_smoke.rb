@@ -634,6 +634,9 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeWriteGate: #{stderr}")
   assert(stdout.include?("runtime-write-gate"), "runtime smoke adapter must expose Runtime write gates over D-Bus")
+  assert(stdout.include?("go_owner_dispatch_available"), "runtime smoke adapter must report Go owner dispatch availability")
+  assert(stdout.include?("xnix.runtime.owner_read_dispatch.v1"), "runtime smoke adapter must include Go owner dispatch schema evidence")
+  assert(stdout.include?("runtime-owner-read-dispatch"), "runtime smoke adapter must include Go owner read dispatch payload evidence")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

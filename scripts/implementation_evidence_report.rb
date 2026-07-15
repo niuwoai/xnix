@@ -72,6 +72,8 @@ DOMAIN_DEFINITIONS = [
     ],
     state_files: [],
     smoke_files: %w[
+      runtime/dbus/xnix_compatd_smoke.c
+      runtime/dbus/xnix_compatd_runtime_models.inc
       scripts/runtime_owner_candidate_smoke.rb
       scripts/dbus_session_smoke.rb
       test/test_runtime_owner_candidate_smoke_script.rb
@@ -80,9 +82,11 @@ DOMAIN_DEFINITIONS = [
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch],
+      "runtime/dbus/xnix_compatd_smoke.c" => %w[go_owner_write_gate_dispatch],
+      "runtime/dbus/xnix_compatd_runtime_models.inc" => %w[go_owner_dispatch_available go_owner_dispatch_json go-runtime-owner-dispatch+c-smoke-bridge],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and constrained smoke evidence; production ownership remains gated."
+    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and selected C D-Bus bridge evidence for Go owner payloads; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",
