@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.161] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `backend-environment-preview` to plan local and isolated compatibility environments plus Portal-mediated bridge capabilities from the Runtime boundary.
+- Added Go unit and CLI coverage proving environment creation, backend startup, backend binding, launch, request creation, host storage exposure, clipboard and print bridge activation, host-root mutation, privileged containers, raw backend command exposure, compatibility storage exposure, and backend detail exposure stay disabled.
+
 ## [0.2.160] - 2026-07-15
 
 ### Added
