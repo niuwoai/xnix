@@ -204,6 +204,7 @@ def build_report(root)
         "go_owner_dispatch_schema",
         "go_owner_dispatch_json",
         "go-runtime-owner-dispatch+c-smoke-bridge",
+        "add_go_owner_dispatch_bridge_fields(&plan, \"GetRunPlan\"",
         "add_go_owner_dispatch_bridge_fields(&manifest, \"GetDesktopActivationManifest\"",
         "add_go_owner_dispatch_bridge_fields2(&transaction, \"GetDesktopActivationTransactionPreview\"",
         "add_go_owner_dispatch_bridge_fields2(&status, \"GetDesktopActivationStatus\"",
@@ -229,11 +230,16 @@ def build_report(root)
         "add_go_owner_dispatch_bridge_fields(&plan, \"GetBackendSelectionPlan\"",
         "add_go_owner_dispatch_bridge_fields(&lifecycle, \"GetBackendLifecycle\"",
         "add_go_owner_dispatch_bridge_fields(&plan, \"GetBackendEnvironmentPlan\"",
+        "add_go_owner_dispatch_bridge_fields2(&plan, \"GetRepairPlan\"",
+        "add_go_owner_dispatch_bridge_fields2(&plan, \"GetTestPlan\"",
+        "add_go_owner_dispatch_bridge_fields2(&result, \"GetTestResult\"",
+        "add_go_owner_dispatch_bridge_fields(&readiness, \"GetExecutionReadiness\"",
+        "add_go_owner_dispatch_bridge_fields(&intent, \"GetLaunchIntent\"",
         "add_go_owner_dispatch_bridge_fields(&settings, \"GetCompatibilitySettings\"",
         "add_go_owner_dispatch_bridge_fields(&summary, \"GetCompatibilityCenterSummary\""
       ],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, and backend lifecycle reads through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, and execution readiness reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",

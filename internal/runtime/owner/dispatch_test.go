@@ -12,7 +12,7 @@ func TestDispatchReadRendersOwnerReadinessWithoutBusOwnership(t *testing.T) {
 		t.Fatalf("DispatchRead returned error: %v", err)
 	}
 
-	if dispatch.Version != "0.2.229" ||
+	if dispatch.Version != "0.2.230" ||
 		dispatch.SchemaVersion != "xnix.runtime.owner_read_dispatch.v1" ||
 		dispatch.RequestType != "runtime-owner-read-dispatch" ||
 		dispatch.DispatchType != "go-owner-read-dispatch" ||

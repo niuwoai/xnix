@@ -290,6 +290,7 @@ build_repair_plan(const gchar *application_id, const gchar *issue)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-repair"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetRepairPlan", application_id, issue);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetRepairPlan"));
@@ -317,6 +318,7 @@ build_test_plan(const gchar *application_id, const gchar *test_type)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-test"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetTestPlan", application_id, test_type);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "test_type", g_variant_new_string(test_type));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetTestPlan"));
@@ -338,6 +340,7 @@ build_test_result(const gchar *application_id, const gchar *test_type)
 
   g_variant_builder_init(&result, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&result, "{sv}", "result_type", g_variant_new_string("compatibility-test-result"));
+  add_go_owner_dispatch_bridge_fields2(&result, "GetTestResult", application_id, test_type);
   g_variant_builder_add(&result, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&result, "{sv}", "test_type", g_variant_new_string(test_type));
   g_variant_builder_add(&result, "{sv}", "runtime_method", g_variant_new_string("GetTestResult"));
@@ -362,6 +365,7 @@ build_execution_readiness(const gchar *application_id)
 
   g_variant_builder_init(&readiness, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&readiness, "{sv}", "readiness_type", g_variant_new_string("compatibility-execution-readiness"));
+  add_go_owner_dispatch_bridge_fields(&readiness, "GetExecutionReadiness", application_id);
   g_variant_builder_add(&readiness, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&readiness, "{sv}", "runtime_method", g_variant_new_string("GetExecutionReadiness"));
   g_variant_builder_add(&readiness, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
@@ -388,6 +392,7 @@ build_launch_intent(const gchar *application_id)
 
   g_variant_builder_init(&intent, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&intent, "{sv}", "intent_type", g_variant_new_string("runtime-launch-intent"));
+  add_go_owner_dispatch_bridge_fields(&intent, "GetLaunchIntent", application_id);
   g_variant_builder_add(&intent, "{sv}", "source", g_variant_new_string("desktop-launcher"));
   g_variant_builder_add(&intent, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&intent, "{sv}", "runtime_method", g_variant_new_string("Launch"));

@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.230] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so execution readiness reads carry Go owner read-dispatch payload evidence: run plan, repair plan, test plan, test result, execution readiness, and launch intent.
+- Added restricted session smoke assertions that prove execution readiness reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without creating execution requests, running tests, executing repairs, enabling launch, production D-Bus ownership, or host-root mutation.
+- Added `docs/claude-code-next-implementation-assignments.md`, a short copyable Claude Code assignment board for handing off large implementation packages without editing the existing implementation package guide.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track execution readiness reads as Go-owned payload handoffs through low-level C D-Bus transport.
+- Linked the short Claude Code assignment board from README, Product Overview, and the domain dispatch document.
+
 ## [0.2.229] - 2026-07-16
 
 ### Added

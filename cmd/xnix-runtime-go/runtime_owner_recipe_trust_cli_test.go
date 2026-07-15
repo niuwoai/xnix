@@ -18,7 +18,7 @@ func TestRuntimeOwnerRecipeTrustPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.229" ||
+	if payload["version"] != "0.2.230" ||
 		payload["schema_version"] != "xnix.runtime.owner_recipe_trust.v1" ||
 		payload["request_type"] != "runtime-owner-recipe-trust-preview" ||
 		payload["trust_type"] != "runtime-owner-recipe-trust" ||

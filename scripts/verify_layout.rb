@@ -4,12 +4,13 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.229"
+EXPECTED_VERSION = "0.2.230"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
   docs/claude-code-implementation-packages.md
   docs/claude-code-domain-dispatch.md
+  docs/claude-code-next-implementation-assignments.md
   docs/claude-code-contract-implementation-handoff.md
   docs/claude-code-empty-domain-implementation-packages.md
   docs/claude-code-independent-implementation-briefs.md

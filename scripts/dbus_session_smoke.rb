@@ -87,6 +87,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRunPlan: #{stderr}")
   assert(stdout.include?("compatibility-run"), "runtime smoke adapter must expose run plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRunPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -505,6 +506,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetRepairPlan: #{stderr}")
   assert(stdout.include?("compatibility-repair"), "runtime smoke adapter must expose repair plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRepairPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -517,6 +519,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetTestPlan: #{stderr}")
   assert(stdout.include?("compatibility-test"), "runtime smoke adapter must expose test plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetTestPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -529,6 +532,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetTestResult: #{stderr}")
   assert(stdout.include?("compatibility-test-result"), "runtime smoke adapter must expose test results over D-Bus")
+  assert_go_owner_bridge(stdout, "GetTestResult")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -540,6 +544,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetExecutionReadiness: #{stderr}")
   assert(stdout.include?("compatibility-execution-readiness"), "runtime smoke adapter must expose execution readiness over D-Bus")
+  assert_go_owner_bridge(stdout, "GetExecutionReadiness")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -551,6 +556,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetLaunchIntent: #{stderr}")
   assert(stdout.include?("runtime-launch-intent"), "runtime smoke adapter must expose launch intent over D-Bus")
+  assert_go_owner_bridge(stdout, "GetLaunchIntent")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

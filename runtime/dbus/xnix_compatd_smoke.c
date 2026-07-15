@@ -142,6 +142,7 @@ build_run_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-run"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetRunPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "strategy", g_variant_new_string("automatic-managed"));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
