@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.155] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `dolphin-ai-analysis-preview` for privacy-safe Dolphin “send to AI” file-review intents.
+- Added Go unit and CLI coverage proving Dolphin AI previews expose only file count and extension while keeping file paths, file contents, AI provider calls, network access, permission grants, backend launch, host-root mutation, and backend details disabled.
+
 ## [0.2.154] - 2026-07-15
 
 ### Added
