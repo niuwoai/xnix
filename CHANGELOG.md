@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.164] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-staging-preview` to plan the KDE activation staging file set, relative paths, modes, SHA-256 digests, activated entry points, installer command preview, and rollback receipt preview without writing files or exposing host paths.
+- Added Go unit and CLI coverage proving development staging can produce an auditable planned file set while production staging remains blocked for development-only registries, with desktop writes, MIME writes, manifest writes, receipt writes, settings persistence, notifications, task-manager activation, KWin rules, tray bridges, launch, execution, networking, privileged containers, host-root mutation, raw backend command exposure, compatibility storage exposure, and backend detail exposure disabled.
+
 ## [0.2.163] - 2026-07-15
 
 ### Added

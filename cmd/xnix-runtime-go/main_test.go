@@ -266,6 +266,115 @@ func TestDesktopActivationPreflightPreviewCommandRendersInstallGate(t *testing.T
 	}
 }
 
+func TestDesktopActivationStagingPreviewCommandRendersPlannedFiles(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-staging-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_staging.v1" ||
+		payload["request_type"] != "desktop-activation-staging-preview" ||
+		payload["staging_type"] != "kde-activation-staging-plan" ||
+		payload["runtime_method"] != "GetDesktopActivationStaging" {
+		t.Fatalf("unexpected staging schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["install_mode"] != "development" ||
+		payload["preflight_decision"] != "development-staging-ready" ||
+		payload["staging_state"] != "staging-plan-ready" {
+		t.Fatalf("unexpected staging identity or decision: %#v", payload)
+	}
+	preflight := payload["preflight"].(map[string]any)
+	if preflight["request_type"] != "desktop-activation-preflight-preview" ||
+		preflight["install_gate_decision"] != "allow" ||
+		preflight["installer_may_proceed"] != true ||
+		preflight["host_root_allowed"] != false {
+		t.Fatalf("unexpected preflight summary: %#v", preflight)
+	}
+	fileIDs := payload["planned_file_ids"].([]any)
+	expectedIDs := []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}
+	for index, expected := range expectedIDs {
+		if fileIDs[index] != expected {
+			t.Fatalf("planned_file_ids[%d] = %#v, want %q", index, fileIDs[index], expected)
+		}
+	}
+	if payload["planned_file_count"] != float64(5) ||
+		payload["receipt_file_id"] != "desktop-activation-receipt" ||
+		payload["activated_entry_point_count"] != float64(7) {
+		t.Fatalf("unexpected staging counts: %#v", payload)
+	}
+	files := payload["planned_files"].([]any)
+	first := files[0].(map[string]any)
+	if first["relative_path"] != "usr/share/applications/xnix-org.example.ledger.desktop" ||
+		first["mode"] != "0644" ||
+		len(first["sha256"].(string)) != 64 ||
+		first["planned_for_staging"] != true ||
+		first["written"] != false ||
+		first["host_root_modified"] != false {
+		t.Fatalf("unexpected first staged file: %#v", first)
+	}
+	receipt := files[4].(map[string]any)
+	if receipt["kind"] != "desktop-activation-receipt" ||
+		receipt["entry_point"] != "rollback" ||
+		receipt["relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt file: %#v", receipt)
+	}
+	command := payload["installer_command_preview"].([]any)
+	if command[0] != "xnix-install-desktop-integration" ||
+		command[2] != "runtime-go" ||
+		command[4] != "runtime-go" {
+		t.Fatalf("unexpected installer command preview: %#v", command)
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["development_staging_eligible"] != true ||
+		payload["production_activation_eligible"] != false ||
+		payload["installer_may_proceed"] != true ||
+		payload["staging_plan_ready"] != true ||
+		payload["staging_root_required"] != true ||
+		payload["staging_root_path_exposed"] != false ||
+		payload["host_root_allowed"] != false ||
+		payload["file_writes_performed"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["manifest_written"] != false ||
+		payload["receipt_written"] != false ||
+		payload["rollback_receipt_planned"] != true ||
+		payload["rollback_receipt_written"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_required"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_windows_executable_exposed"] != false ||
+		payload["compatibility_storage_exposed"] != false {
+		t.Fatalf("unexpected staging safety flags: %#v", payload)
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
