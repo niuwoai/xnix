@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.183] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-owner-smoke-plan-preview` to derive the future production owner smoke sequence from the Go live owner gate while keeping smoke execution, host system-service startup, production bus claims, and backend launch disabled.
+- Added Go unit, CLI, and layout verification coverage for owner smoke planning, including activation validation, packaged owner startup, bus-name assertion, read-only method parity, write-method rejection, smoke-adapter boundary checks, and KDE-safe summary reporting.
+
 ## [0.2.182] - 2026-07-15
 
 ### Added

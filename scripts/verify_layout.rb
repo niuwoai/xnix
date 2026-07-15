@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.182"
+EXPECTED_VERSION = "0.2.183"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -917,6 +917,20 @@ assert(runtime_owner_smoke_plan_source.include?("\"system_service_started\" => f
 assert(runtime_owner_smoke_plan_source.include?("\"production_bus_claimed\" => false"), "Runtime owner smoke plan must not claim production bus ownership")
 assert(runtime_owner_smoke_plan_source.include?("\"host_root_modified\" => false"), "Runtime owner smoke plan must not mutate the host root")
 assert(runtime_owner_smoke_plan_source.include?("\"backend_details_exposed\" => false"), "Runtime owner smoke plan must hide backend details")
+
+go_runtime_owner_smoke_plan_source = read_project_file("internal/runtime/appidentity/runtime_owner_smoke_plan.go")
+%w[RuntimeOwnerSmokePlanPreview runtime-owner-smoke-plan-preview xnix.runtime.owner_smoke_plan.v1 GetRuntimeOwnerSmokePlan GetRuntimeOwnerSmokePlanPreview runtime-live-owner-gate-preview validate-activation-files start-packaged-runtime-owner assert-stable-bus-name check-read-only-method-parity reject-write-methods verify-non-production-smoke-adapter-boundary report-kde-safe-summary].each do |token|
+  assert(go_runtime_owner_smoke_plan_source.include?(token), "Go Runtime owner smoke plan preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked ActivationBindingReady LiveDBusOwnerReady ProductionOwnerEnabled OwnerTransitionReady SmokeState SmokeEnvironment NetworkRequired HostRootModified PrivilegedContainerRequired SystemServiceStarted ProductionBusClaimed BackendDetailsExposed].each do |token|
+  assert(go_runtime_owner_smoke_plan_source.include?(token), "Go Runtime owner smoke plan preview must expose #{token}")
+end
+assert(go_runtime_owner_smoke_plan_source.include?("NewRuntimeLiveOwnerGatePreview"), "Go Runtime owner smoke plan preview must derive from the live owner gate preview")
+assert(go_runtime_owner_smoke_plan_source.include?("validateNoBackendTerms"), "Go Runtime owner smoke plan preview must hide backend terms")
+
+go_runtime_owner_smoke_plan_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_owner_smoke_plan_cli_source.include?("runtime-owner-smoke-plan-preview"), "Go Runtime CLI must expose Runtime owner smoke plan preview")
+assert(go_runtime_owner_smoke_plan_cli_source.include?("NewRuntimeOwnerSmokePlanPreview"), "Go Runtime CLI must call the Runtime owner smoke plan preview model")
 
 runtime_method_parity_source = read_project_file("lib/xnix/compatibility/runtime_method_parity_manifest.rb")
 assert(runtime_method_parity_source.include?("xnix-runtime-method-parity-manifest"), "Runtime method parity manifest must expose a CLI command")
