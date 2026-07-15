@@ -1017,11 +1017,11 @@ func runKDEActionCardPreview(args []string, stdout io.Writer) error {
 }
 
 func runKRunnerQueryPreview(args []string, stdout io.Writer) error {
-	recipes, provenance, query, err := parseKRunnerQueryPreviewSource(args)
+	recipes, provenance, query, options, err := parseKRunnerQueryPreviewSource(args)
 	if err != nil {
 		return err
 	}
-	preview, err := appidentity.NewKRunnerQueryPreview(recipes, provenance, query)
+	preview, err := appidentity.NewKRunnerQueryPreviewWithOptions(recipes, provenance, query, options)
 	if err != nil {
 		return err
 	}
@@ -1551,24 +1551,25 @@ func parseSettingsChangePreviewSource(args []string) (appidentity.Recipe, appide
 	return recipe, provenance, *sectionID, *fieldID, *value, err
 }
 
-func parseKRunnerQueryPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, error) {
+func parseKRunnerQueryPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, appidentity.KRunnerQueryOptions, error) {
 	flags := flag.NewFlagSet("krunner-query-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	query := flags.String("query", "", "KRunner query text")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
-		return nil, appidentity.Provenance{}, "", err
+		return nil, appidentity.Provenance{}, "", appidentity.KRunnerQueryOptions{}, err
 	}
 	if *registryPath == "" {
-		return nil, appidentity.Provenance{}, "", errors.New("krunner-query-preview requires --registry")
+		return nil, appidentity.Provenance{}, "", appidentity.KRunnerQueryOptions{}, errors.New("krunner-query-preview requires --registry")
 	}
 	if flags.NArg() != 0 {
-		return nil, appidentity.Provenance{}, "", errors.New("krunner-query-preview does not accept positional arguments")
+		return nil, appidentity.Provenance{}, "", appidentity.KRunnerQueryOptions{}, errors.New("krunner-query-preview does not accept positional arguments")
 	}
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
-	return recipes, provenance, *query, err
+	return recipes, provenance, *query, appidentity.KRunnerQueryOptions{ActivationRoot: *activationRoot}, err
 }
 
 func parseRegistryPreviewSource(commandName string, args []string) ([]appidentity.Recipe, appidentity.Provenance, error) {

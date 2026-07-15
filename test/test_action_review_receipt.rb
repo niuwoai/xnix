@@ -22,7 +22,7 @@ receipt = Xnix::Compatibility::ActionReviewReceipt.new(
   decision: "approved"
 ).to_h
 
-assert(receipt["version"] == "0.2.243", "action review receipt must expose the current version")
+assert(receipt["version"] == "0.2.244", "action review receipt must expose the current version")
 assert(receipt["receipt_type"] == "compatibility-center-action-review-receipt", "action review receipt must identify receipt type")
 assert(receipt["queue_type"] == "compatibility-center-action-queue", "action review receipt must reference the action queue")
 assert(receipt["application"]["id"] == "org.xnix.sample.notepad", "action review receipt must preserve application id")

@@ -2157,6 +2157,58 @@ func TestKRunnerQueryPreviewCommandSearchesRegistry(t *testing.T) {
 	}
 }
 
+func TestKRunnerQueryPreviewCommandConsumesActivationRoot(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"wine","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	stageRoot := filepath.Join(root, "stage")
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"krunner-query-preview", "--registry", registryPath, "--query", "ledger", "--activation-root", stageRoot}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["activation_receipt_root"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected receipt-backed KRunner root flags: %#v", payload)
+	}
+	matches := payload["matches"].([]any)
+	match := matches[0].(map[string]any)
+	if match["activation_receipt_backed"] != true ||
+		match["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		match["runtime_owned_launch"] != true ||
+		match["backend_details_exposed"] != false {
+		t.Fatalf("unexpected receipt-backed KRunner match: %#v", match)
+	}
+	summary := payload["summary"].(map[string]any)
+	if summary["receipt_backed_match_count"] != float64(1) ||
+		summary["query_execution_enabled"] != false ||
+		summary["backend_launch_enabled"] != false ||
+		summary["backend_details_exposed"] != false {
+		t.Fatalf("unexpected receipt-backed KRunner summary: %#v", summary)
+	}
+}
+
 func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)

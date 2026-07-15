@@ -677,6 +677,7 @@ type KRunnerQueryPreview struct {
 	KDEPolicyOwner        bool           `json:"kde_policy_owner"`
 	Matches               []KRunnerMatch `json:"matches"`
 	Summary               KRunnerSummary `json:"summary"`
+	ActivationReceiptRoot bool           `json:"activation_receipt_root"`
 	HostRootModified      bool           `json:"host_root_modified"`
 	BackendDetailsExposed bool           `json:"backend_details_exposed"`
 	DesktopSafeSummary    string         `json:"desktop_safe_summary"`
@@ -690,18 +691,20 @@ type KRunnerSource struct {
 }
 
 type KRunnerMatch struct {
-	RunnerID              string        `json:"runner_id"`
-	ApplicationID         string        `json:"application_id"`
-	Name                  string        `json:"name"`
-	Icon                  string        `json:"icon"`
-	Relevance             float64       `json:"relevance"`
-	RelevancePercent      int           `json:"relevance_percent"`
-	Subtitle              string        `json:"subtitle"`
-	ModeLabel             string        `json:"mode_label"`
-	SupportedExtensions   []string      `json:"supported_extensions"`
-	RuntimeOwnedLaunch    bool          `json:"runtime_owned_launch"`
-	BackendDetailsExposed bool          `json:"backend_details_exposed"`
-	Action                KRunnerAction `json:"action"`
+	RunnerID                string        `json:"runner_id"`
+	ApplicationID           string        `json:"application_id"`
+	Name                    string        `json:"name"`
+	Icon                    string        `json:"icon"`
+	Relevance               float64       `json:"relevance"`
+	RelevancePercent        int           `json:"relevance_percent"`
+	Subtitle                string        `json:"subtitle"`
+	ModeLabel               string        `json:"mode_label"`
+	SupportedExtensions     []string      `json:"supported_extensions"`
+	RuntimeOwnedLaunch      bool          `json:"runtime_owned_launch"`
+	ActivationReceiptBacked bool          `json:"activation_receipt_backed"`
+	ActivationReceiptPath   string        `json:"activation_receipt_path,omitempty"`
+	BackendDetailsExposed   bool          `json:"backend_details_exposed"`
+	Action                  KRunnerAction `json:"action"`
 }
 
 type KRunnerAction struct {
@@ -711,12 +714,17 @@ type KRunnerAction struct {
 }
 
 type KRunnerSummary struct {
-	MatchCount            int    `json:"match_count"`
-	OfficialDesktop       string `json:"official_desktop"`
-	RuntimeOwnedLaunch    bool   `json:"runtime_owned_launch"`
-	QueryExecutionEnabled bool   `json:"query_execution_enabled"`
-	BackendLaunchEnabled  bool   `json:"backend_launch_enabled"`
-	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+	MatchCount              int    `json:"match_count"`
+	OfficialDesktop         string `json:"official_desktop"`
+	RuntimeOwnedLaunch      bool   `json:"runtime_owned_launch"`
+	ReceiptBackedMatchCount int    `json:"receipt_backed_match_count"`
+	QueryExecutionEnabled   bool   `json:"query_execution_enabled"`
+	BackendLaunchEnabled    bool   `json:"backend_launch_enabled"`
+	BackendDetailsExposed   bool   `json:"backend_details_exposed"`
+}
+
+type KRunnerQueryOptions struct {
+	ActivationRoot string
 }
 
 type CompatibilityCenterPreview struct {
@@ -2178,6 +2186,10 @@ func portalRequestHandleToken(applicationID string, operation string) string {
 }
 
 func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query string) (KRunnerQueryPreview, error) {
+	return NewKRunnerQueryPreviewWithOptions(recipes, provenance, query, KRunnerQueryOptions{})
+}
+
+func NewKRunnerQueryPreviewWithOptions(recipes []Recipe, provenance Provenance, query string, options KRunnerQueryOptions) (KRunnerQueryPreview, error) {
 	if !singleLineOrBlank(query) {
 		return KRunnerQueryPreview{}, errors.New("KRunner query preview requires a single-line query")
 	}
@@ -2199,7 +2211,16 @@ func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query strin
 		if relevancePercent == 0 {
 			continue
 		}
-		matches = append(matches, krunnerMatch(plan, recipe, relevancePercent))
+		match := krunnerMatch(plan, recipe, relevancePercent)
+		if strings.TrimSpace(options.ActivationRoot) != "" {
+			evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+			if err != nil {
+				return KRunnerQueryPreview{}, err
+			}
+			match.ActivationReceiptBacked = evidence.SafeForKDE
+			match.ActivationReceiptPath = evidence.ReceiptRelativePath
+		}
+		matches = append(matches, match)
 	}
 	sort.Slice(matches, func(left int, right int) bool {
 		if matches[left].RelevancePercent != matches[right].RelevancePercent {
@@ -2220,17 +2241,19 @@ func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query strin
 			RecipeDigestVerified:  provenance.DigestVerified,
 			RecipeSignatureStatus: provenance.SignatureStatus,
 		},
-		RuntimeOwned:     true,
-		KDEPolicyOwner:   false,
-		Matches:          matches,
-		HostRootModified: false,
+		RuntimeOwned:          true,
+		KDEPolicyOwner:        false,
+		Matches:               matches,
+		ActivationReceiptRoot: strings.TrimSpace(options.ActivationRoot) != "",
+		HostRootModified:      false,
 		Summary: KRunnerSummary{
-			MatchCount:            len(matches),
-			OfficialDesktop:       "KDE Plasma",
-			RuntimeOwnedLaunch:    true,
-			QueryExecutionEnabled: false,
-			BackendLaunchEnabled:  false,
-			BackendDetailsExposed: false,
+			MatchCount:              len(matches),
+			OfficialDesktop:         "KDE Plasma",
+			RuntimeOwnedLaunch:      true,
+			ReceiptBackedMatchCount: krunnerReceiptBackedMatchCount(matches),
+			QueryExecutionEnabled:   false,
+			BackendLaunchEnabled:    false,
+			BackendDetailsExposed:   false,
 		},
 		BackendDetailsExposed: false,
 		DesktopSafeSummary:    "KRunner query planning is Runtime-owned and returns safe launcher actions only.",
@@ -2239,6 +2262,16 @@ func NewKRunnerQueryPreview(recipes []Recipe, provenance Provenance, query strin
 		return KRunnerQueryPreview{}, err
 	}
 	return preview, nil
+}
+
+func krunnerReceiptBackedMatchCount(matches []KRunnerMatch) int {
+	count := 0
+	for _, match := range matches {
+		if match.ActivationReceiptBacked {
+			count++
+		}
+	}
+	return count
 }
 
 func NewCompatibilityCenterPreview(recipes []Recipe, provenance Provenance) (CompatibilityCenterPreview, error) {

@@ -1037,6 +1037,73 @@ func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 	}
 }
 
+func TestKRunnerQueryPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	preview, err := NewKRunnerQueryPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".xls", ".abc"},
+		},
+	}, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "ledger", KRunnerQueryOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("NewKRunnerQueryPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ActivationReceiptRoot ||
+		preview.Summary.ReceiptBackedMatchCount != 1 ||
+		preview.Summary.QueryExecutionEnabled ||
+		preview.Summary.BackendLaunchEnabled ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("unexpected receipt-backed KRunner summary: %#v", preview)
+	}
+	if len(preview.Matches) != 1 {
+		t.Fatalf("match count = %d, want 1", len(preview.Matches))
+	}
+	match := preview.Matches[0]
+	if !match.ActivationReceiptBacked ||
+		match.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		!match.RuntimeOwnedLaunch ||
+		match.BackendDetailsExposed ||
+		match.Action.Type != "runtime-launch" {
+		t.Fatalf("unexpected receipt-backed KRunner match: %#v", match)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(root)) {
+		t.Fatalf("KRunner receipt-backed preview exposed activation root: %s", text)
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KRunner receipt-backed preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+
+	if _, err := NewKRunnerQueryPreviewWithOptions([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}}, Provenance{Source: "registry"}, "ledger", KRunnerQueryOptions{ActivationRoot: t.TempDir()}); err == nil ||
+		!strings.Contains(err.Error(), "read desktop activation receipt") {
+		t.Fatalf("missing activation receipt must fail closed, got %v", err)
+	}
+}
+
 func TestCompatibilityCenterPreviewSummarizesApplicationsSafely(t *testing.T) {
 	preview, err := NewCompatibilityCenterPreview([]Recipe{
 		{

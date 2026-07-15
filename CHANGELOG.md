@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.244] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KRunner query previews through `krunner-query-preview --activation-root`, so KDE search matches can prove staged activation evidence before launch remains gated.
+- Added Go and CLI coverage proving KRunner search consumes staged activation receipts without exposing the activation root, mutating the host root, enabling query execution, or starting compatibility backends.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks KRunner consumption of staged activation receipts alongside activation status and Compatibility Center page reads.
+
 ## [0.2.243] - 2026-07-16
 
 ### Added

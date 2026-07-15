@@ -207,9 +207,10 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/activation/stage.go" => ["refusing to stage", "host_root_modified", "RollbackReceiptWritten"],
       "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate],
       "internal/runtime/appidentity/desktop_activation_status.go" => %w[DesktopActivationStatusPreviewWithReceipt receipt_backed receipt_evidence RollbackAvailable],
-      "internal/runtime/appidentity/kde_center_page.go" => %w[KDECenterPageOptions ActivationRoot ReceiptBacked ReceiptEvidenceState]
+      "internal/runtime/appidentity/kde_center_page.go" => %w[KDECenterPageOptions ActivationRoot ReceiptBacked ReceiptEvidenceState],
+      "internal/runtime/appidentity/identity.go" => %w[KRunnerQueryOptions ActivationReceiptBacked ReceiptBackedMatchCount]
     },
-    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status plus Compatibility Center pages can consume staged activation receipt evidence."
+    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status, Compatibility Center pages, and KRunner query previews can consume staged activation receipt evidence."
   },
   {
     id: "execution-transaction-ledger",
