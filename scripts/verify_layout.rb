@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.191"
+EXPECTED_VERSION = "0.2.192"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -142,6 +142,7 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
   internal/runtime/appidentity/engine_catalog.go
+  internal/runtime/appidentity/run_plan.go
   internal/runtime/appidentity/identity.go
   internal/runtime/appidentity/identity_test.go
   internal/runtime/appidentity/registry.go
@@ -1005,7 +1006,7 @@ assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-p
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1028,6 +1029,20 @@ assert(go_runtime_engine_catalog_source.include?("validateNoBackendTerms"), "Go 
 go_runtime_engine_catalog_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
 assert(go_runtime_engine_catalog_cli_source.include?("engine-catalog-preview"), "Go Runtime CLI must expose engine catalog preview")
 assert(go_runtime_engine_catalog_cli_source.include?("NewEngineCatalogPreview"), "Go Runtime CLI must call engine catalog preview")
+
+go_runtime_run_plan_source = read_project_file("internal/runtime/appidentity/run_plan.go")
+%w[RunPlanPreview RunPlanApplication RunPlanExecution RunPlanEngineSummary RunPlanProfile RunPlanBinding RunPlanPreflight run-plan-preview xnix.runtime.run_plan.v1 GetRunPlan GetRunPlanPreview registry+go-runtime-run-plan compatibility-run automatic-managed local-compatible-managed isolated-compatible-managed].each do |token|
+  assert(go_runtime_run_plan_source.include?(token), "Go Runtime run plan preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible LaunchEnabled ExecutionRequestCreated ExecutionStarted BackendBindingReady RequestObjectCreated PermissionGranted HostRootModified NetworkRequired BackendDetailsExposed RawCommandExposed].each do |token|
+  assert(go_runtime_run_plan_source.include?(token), "Go Runtime run plan preview must expose #{token}")
+end
+assert(go_runtime_run_plan_source.include?("ValidateSafeForDesktop"), "Go Runtime run plan preview must validate desktop safety")
+assert(go_runtime_run_plan_source.include?("validateNoBackendTerms"), "Go Runtime run plan preview must hide backend terms")
+
+go_runtime_run_plan_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_run_plan_cli_source.include?("run-plan-preview"), "Go Runtime CLI must expose run plan preview")
+assert(go_runtime_run_plan_cli_source.include?("RunPlanPreview"), "Go Runtime CLI must call run plan preview")
 
 go_runtime_applications_source = read_project_file("internal/runtime/appidentity/applications.go")
 %w[ApplicationsPreview ApplicationPreview RuntimeApplicationPreview applications-preview application-preview xnix.runtime.applications.v1 xnix.runtime.application.v1 ListApplications GetApplication registry+go-runtime-desktop-identity start-menu task-manager file-manager system-tray notification-center compatibility-center unified-settings].each do |token|

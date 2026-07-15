@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {application-preview|applications-preview|backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {application-preview|applications-preview|backend-binding-preview|backend-environment-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|run-plan-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -122,6 +122,8 @@ func run(args []string, stdout io.Writer) error {
 		return runPortalRequestPreview(args[1:], stdout)
 	case "review-flow-preview":
 		return runReviewFlowPreview(args[1:], stdout)
+	case "run-plan-preview":
+		return runRunPlanPreview(args[1:], stdout)
 	case "runtime-live-owner-gate-preview":
 		return runRuntimeLiveOwnerGatePreview(args[1:], stdout)
 	case "runtime-method-parity-manifest-preview":
@@ -258,6 +260,25 @@ func runBackendBindingPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.BackendBindingPreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runRunPlanPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("run-plan-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.RunPlanPreview()
 	if err != nil {
 		return err
 	}

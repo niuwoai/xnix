@@ -81,6 +81,7 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"ListApplications":                       "applications-preview",
 	"GetApplication":                         "application-preview",
 	"GetEngineCatalog":                       "engine-catalog-preview",
+	"GetRunPlan":                             "run-plan-preview",
 	"GetDiagnostics":                         "diagnostics-preview",
 	"GetDesktopActivationTransactionPreview": "desktop-activation-transaction-preview",
 	"GetDesktopActivationStatus":             "desktop-activation-status-preview",
@@ -115,7 +116,6 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 }
 
 var runtimeOwnerRouteCCoreCommands = map[string]string{
-	"GetRunPlan":                           "compatibility-run-plan",
 	"GetDesktopActivationManifest":         "desktop-activation-manifest",
 	"GetTaskManagerIdentityPlan":           "task-manager-identity-plan",
 	"GetKDEIntegrationStatus":              "kde-integration-status",
@@ -376,7 +376,7 @@ func runtimeOwnerRouteManifestSummary(routeCounts RuntimeOwnerRouteCounts) strin
 		return "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending."
 	}
 	if routeCounts.CCoreBacked > 0 {
-		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, diagnostics, and current Go previews, with C adapter migration still pending."
+		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, diagnostics, and current Go previews, with C adapter migration still pending."
 	}
 	return "Runtime owner routes are fully native to the Go owner preview, but production bus ownership remains gated."
 }

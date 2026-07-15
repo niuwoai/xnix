@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.192] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `run-plan-preview` for `GetRunPlan`, rendering desktop-safe compatibility run planning from registry recipes without creating execution requests, launching profiles, granting permissions, exposing raw commands, or mutating the host root.
+
+### Changed
+
+- Migrated `GetRunPlan` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to a native Go preview route, completing the Go-routed run/launch/readiness planning slice while keeping remaining C-backed policy routes explicit.
+- Updated CLI coverage, unit tests, layout verification, and product documentation for the Go run plan migration.
+
 ## [0.2.191] - 2026-07-15
 
 ### Added
