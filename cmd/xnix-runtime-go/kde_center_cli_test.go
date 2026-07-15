@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -160,16 +160,41 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		launchIntent["backend_details_exposed"] != false {
 		t.Fatalf("unexpected launch intent snapshot: %#v", launchIntent)
 	}
-	if payload["navigation_count"] != float64(8) ||
+	window := payload["window_identity_snapshot"].(map[string]any)
+	if window["schema_version"] != "xnix.runtime.window_identity.v1" ||
+		window["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		window["launcher_url"] != "applications:xnix-org.example.ledger.desktop" ||
+		window["window_kind"] != "compatibility-application" ||
+		window["class_group"] != "xnix-compatibility" ||
+		window["resource_name"] != "org.example.ledger" ||
+		window["title_hint"] != "Example Ledger" ||
+		window["task_manager_grouping_key"] != "org.example.ledger" ||
+		window["task_manager_pinning_allowed"] != true ||
+		window["task_manager_restore_allowed"] != true ||
+		window["task_manager_skip_taskbar"] != false ||
+		window["task_manager_show_in_switcher"] != true ||
+		window["prefer_existing_window"] != true ||
+		window["kwin_script_role"] != "identity-and-layout" ||
+		window["kwin_placement"] != "normal-window" ||
+		window["window_manager_policy_only"] != true ||
+		window["runtime_owns_backend_policy"] != true ||
+		window["task_manager_entry_active"] != false ||
+		window["kwin_rule_applied"] != false ||
+		window["host_root_modified"] != false ||
+		window["backend_details_exposed"] != false {
+		t.Fatalf("unexpected window identity snapshot: %#v", window)
+	}
+	if payload["navigation_count"] != float64(9) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
 		navigation[1].(map[string]any)["id"] != "backend" ||
 		navigation[2].(map[string]any)["id"] != "activation" ||
 		navigation[3].(map[string]any)["id"] != "execution" ||
 		navigation[4].(map[string]any)["id"] != "launch" ||
-		navigation[5].(map[string]any)["id"] != "actions" ||
-		navigation[6].(map[string]any)["id"] != "settings" ||
-		navigation[7].(map[string]any)["id"] != "diagnostics" {
+		navigation[5].(map[string]any)["id"] != "window" ||
+		navigation[6].(map[string]any)["id"] != "actions" ||
+		navigation[7].(map[string]any)["id"] != "settings" ||
+		navigation[8].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

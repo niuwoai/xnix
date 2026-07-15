@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -178,17 +178,41 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.LaunchIntentSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected launch intent snapshot: %#v", preview.LaunchIntentSnapshot)
 	}
-	if preview.NavigationCount != 8 ||
-		len(preview.Navigation) != 8 ||
+	if preview.WindowIdentitySnapshot.SchemaVersion != "xnix.runtime.window_identity.v1" ||
+		preview.WindowIdentitySnapshot.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.WindowIdentitySnapshot.LauncherURL != "applications:xnix-org.example.ledger.desktop" ||
+		preview.WindowIdentitySnapshot.WindowKind != "compatibility-application" ||
+		preview.WindowIdentitySnapshot.ClassGroup != "xnix-compatibility" ||
+		preview.WindowIdentitySnapshot.ResourceName != "org.example.ledger" ||
+		preview.WindowIdentitySnapshot.TitleHint != "Example Ledger" ||
+		preview.WindowIdentitySnapshot.TaskManagerGroupingKey != "org.example.ledger" ||
+		!preview.WindowIdentitySnapshot.TaskManagerPinningAllowed ||
+		!preview.WindowIdentitySnapshot.TaskManagerRestoreAllowed ||
+		preview.WindowIdentitySnapshot.TaskManagerSkipTaskbar ||
+		!preview.WindowIdentitySnapshot.TaskManagerShowInSwitcher ||
+		!preview.WindowIdentitySnapshot.PreferExistingWindow ||
+		preview.WindowIdentitySnapshot.KWinScriptRole != "identity-and-layout" ||
+		preview.WindowIdentitySnapshot.KWinPlacement != "normal-window" ||
+		!preview.WindowIdentitySnapshot.WindowManagerPolicyOnly ||
+		!preview.WindowIdentitySnapshot.RuntimeOwnsBackendPolicy ||
+		preview.WindowIdentitySnapshot.TaskManagerEntryActive ||
+		preview.WindowIdentitySnapshot.KWinRuleApplied ||
+		preview.WindowIdentitySnapshot.HostRootModified ||
+		preview.WindowIdentitySnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected window identity snapshot: %#v", preview.WindowIdentitySnapshot)
+	}
+	if preview.NavigationCount != 9 ||
+		len(preview.Navigation) != 9 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
 		preview.Navigation[2].ID != "activation" ||
 		preview.Navigation[3].ID != "execution" ||
 		preview.Navigation[4].ID != "launch" ||
-		preview.Navigation[5].ID != "actions" ||
-		preview.Navigation[6].ID != "settings" ||
-		preview.Navigation[7].ID != "diagnostics" {
+		preview.Navigation[5].ID != "window" ||
+		preview.Navigation[6].ID != "actions" ||
+		preview.Navigation[7].ID != "settings" ||
+		preview.Navigation[8].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -302,9 +326,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 8 ||
-		preview.ReadOnlySectionCount != 8 ||
-		preview.NavigationOnlySectionCount != 8 ||
+		preview.SectionCount != 9 ||
+		preview.ReadOnlySectionCount != 9 ||
+		preview.NavigationOnlySectionCount != 9 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -329,6 +353,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"activation":  "GetDesktopActivationStatus",
 		"execution":   "GetExecutionReadiness",
 		"launch":      "GetLaunchIntent",
+		"window":      "GetTaskManagerIdentityPlan",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
@@ -339,6 +364,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"activation":  "desktop-activation-status-preview",
 		"execution":   "execution-readiness-preview",
 		"launch":      "launch-intent-preview",
+		"window":      "window-identity-preview",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -423,7 +449,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
@@ -461,6 +487,26 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		launchPreview.HostRootModified ||
 		launchPreview.BackendDetailsExposed {
 		t.Fatalf("unexpected launch section detail: %#v", launchPreview)
+	}
+	windowPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "window", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("window NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if windowPreview.SectionID != "window" ||
+		windowPreview.SectionLabel != "Window" ||
+		windowPreview.SectionTarget != "compatibility-window-identity" ||
+		windowPreview.SectionState != "planned" ||
+		windowPreview.SectionRuntimeMethod != "GetTaskManagerIdentityPlan" ||
+		windowPreview.SectionReadModel != "window-identity-preview" ||
+		!windowPreview.ReadOnlyNavigation ||
+		windowPreview.SectionActionsEnabled ||
+		windowPreview.RequestObjectsCreated ||
+		windowPreview.PermissionGrantCreated ||
+		windowPreview.LaunchEnabled ||
+		windowPreview.ExecutionStarted ||
+		windowPreview.HostRootModified ||
+		windowPreview.BackendDetailsExposed {
+		t.Fatalf("unexpected window section detail: %#v", windowPreview)
 	}
 	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
 	if err != nil {

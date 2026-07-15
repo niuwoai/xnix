@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.175] - 2026-07-15
+
+### Added
+
+- Added a Go-backed window identity snapshot to KDE Compatibility Center page previews so Plasma can explain task-manager grouping, pinning, restore, switcher visibility, and KWin identity hints without activating task-manager entries, applying KWin rules, starting execution, or exposing backend details.
+- Added a read-only Window section to KDE Compatibility Center page navigation and section-detail routing, backed by `GetTaskManagerIdentityPlan`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the nine-section page model.
+
 ## [0.2.174] - 2026-07-15
 
 ### Added

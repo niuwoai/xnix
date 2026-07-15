@@ -21,6 +21,7 @@ type KDECenterPagePreview struct {
 	ActivationStatusSnapshot   KDECenterPageActivation   `json:"activation_status_snapshot"`
 	ExecutionReadinessSnapshot KDECenterPageExecution    `json:"execution_readiness_snapshot"`
 	LaunchIntentSnapshot       KDECenterPageLaunchIntent `json:"launch_intent_snapshot"`
+	WindowIdentitySnapshot     KDECenterPageWindow       `json:"window_identity_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -175,6 +176,31 @@ type KDECenterPageLaunchIntent struct {
 	NetworkRequired         bool   `json:"network_required"`
 	BackendDetailsExposed   bool   `json:"backend_details_exposed"`
 	Summary                 string `json:"summary"`
+}
+
+type KDECenterPageWindow struct {
+	SchemaVersion             string `json:"schema_version"`
+	DesktopFile               string `json:"desktop_file"`
+	LauncherURL               string `json:"launcher_url"`
+	WindowKind                string `json:"window_kind"`
+	ClassGroup                string `json:"class_group"`
+	ResourceName              string `json:"resource_name"`
+	TitleHint                 string `json:"title_hint"`
+	TaskManagerGroupingKey    string `json:"task_manager_grouping_key"`
+	TaskManagerPinningAllowed bool   `json:"task_manager_pinning_allowed"`
+	TaskManagerRestoreAllowed bool   `json:"task_manager_restore_allowed"`
+	TaskManagerSkipTaskbar    bool   `json:"task_manager_skip_taskbar"`
+	TaskManagerShowInSwitcher bool   `json:"task_manager_show_in_switcher"`
+	PreferExistingWindow      bool   `json:"prefer_existing_window"`
+	KWinScriptRole            string `json:"kwin_script_role"`
+	KWinPlacement             string `json:"kwin_placement"`
+	WindowManagerPolicyOnly   bool   `json:"window_manager_policy_only"`
+	RuntimeOwnsBackendPolicy  bool   `json:"runtime_owns_backend_policy"`
+	TaskManagerEntryActive    bool   `json:"task_manager_entry_active"`
+	KWinRuleApplied           bool   `json:"kwin_rule_applied"`
+	HostRootModified          bool   `json:"host_root_modified"`
+	BackendDetailsExposed     bool   `json:"backend_details_exposed"`
+	Summary                   string `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -407,6 +433,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	windowIdentity, err := plan.WindowIdentityPreview()
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -414,7 +444,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -536,6 +566,30 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			BackendDetailsExposed:   launchIntent.BackendDetailsExposed,
 			Summary:                 launchIntent.DesktopSafeSummary,
 		},
+		WindowIdentitySnapshot: KDECenterPageWindow{
+			SchemaVersion:             windowIdentity.SchemaVersion,
+			DesktopFile:               windowIdentity.DesktopFile,
+			LauncherURL:               windowIdentity.LauncherURL,
+			WindowKind:                windowIdentity.WindowKind,
+			ClassGroup:                windowIdentity.ClassGroup,
+			ResourceName:              windowIdentity.ResourceName,
+			TitleHint:                 windowIdentity.TitleHint,
+			TaskManagerGroupingKey:    windowIdentity.TaskManager.GroupingKey,
+			TaskManagerPinningAllowed: windowIdentity.TaskManager.PinningAllowed,
+			TaskManagerRestoreAllowed: windowIdentity.TaskManager.RestoreAllowed,
+			TaskManagerSkipTaskbar:    windowIdentity.TaskManager.SkipTaskbar,
+			TaskManagerShowInSwitcher: windowIdentity.TaskManager.ShowInSwitcher,
+			PreferExistingWindow:      windowIdentity.TaskManager.PreferExistingWindow,
+			KWinScriptRole:            windowIdentity.KWin.ScriptRole,
+			KWinPlacement:             windowIdentity.KWin.Placement,
+			WindowManagerPolicyOnly:   windowIdentity.KWin.WindowManagerPolicyOnly,
+			RuntimeOwnsBackendPolicy:  windowIdentity.KWin.RuntimeOwnsBackendPolicy,
+			TaskManagerEntryActive:    false,
+			KWinRuleApplied:           false,
+			HostRootModified:          windowIdentity.HostRootModified,
+			BackendDetailsExposed:     windowIdentity.BackendDetailsExposed,
+			Summary:                   windowIdentity.Summary,
+		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
 			DeckType:              deck.DeckType,
@@ -603,7 +657,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		BackendDetailsExposed:      false,
 		BlockedActions:             []string{"persist KDE center page from preview state", "enable center page action buttons from preview state", "persist KDE action card deck from center page preview", "persist compatibility settings from center page preview", "record review receipts from center page preview", "create Runtime request objects from center page preview", "grant desktop resources from center page preview", "send desktop notifications from center page preview", "start compatibility profile from center page preview", "mutate host root during KDE center page preview", "expose raw backend command to desktop shell"},
 		UserFacingSettings:         settings.UserFacingSettings,
-		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
+		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, window identity, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
 	}
 	if err := validateNoBackendTerms(preview, "KDE center page preview"); err != nil {
 		return KDECenterPagePreview{}, err
@@ -781,6 +835,7 @@ func kdeCenterPageNavigation() []KDECenterPageNavigation {
 		kdeCenterPageNavigationItem("activation", "Activation", "compatibility-activation-status"),
 		kdeCenterPageNavigationItem("execution", "Execution", "compatibility-execution-readiness"),
 		kdeCenterPageNavigationItem("launch", "Launch", "compatibility-launch-intent"),
+		kdeCenterPageNavigationItem("window", "Window", "compatibility-window-identity"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
 		kdeCenterPageNavigationItem("diagnostics", "Diagnostics", "compatibility-diagnostics"),
@@ -806,6 +861,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit", "Activation reads Runtime-owned KDE desktop activation status while commit, launch, and host mutation gates remain closed."),
 		kdeCenterPageSection("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", "blocked", "Execution reads Runtime-owned launch readiness while request creation, launch, and backend process gates remain closed."),
 		kdeCenterPageSection("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked", "Launch reads Runtime-owned desktop-launch intent while Launch request creation, permission grants, execution, and backend process gates remain closed."),
+		kdeCenterPageSection("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned", "Window reads Runtime-owned task-manager and KWin identity hints while task-manager activation, KWin rule application, execution, and backend policy stay closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
 		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),

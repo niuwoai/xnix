@@ -1478,6 +1478,21 @@ build_kde_center_page(const gchar *application_id, const gchar *decision)
   g_variant_builder_add(&page, "{sv}", "launch_intent_allowed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "launch_intent_enabled", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "launch_intent_request_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_runtime_method", g_variant_new_string("GetTaskManagerIdentityPlan"));
+  g_variant_builder_add(&page, "{sv}", "window_identity_desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&page, "{sv}", "window_identity_grouping_key", g_variant_new_string(application_id));
+  g_variant_builder_add(&page, "{sv}", "window_identity_launcher_url", g_variant_new_string("applications:xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&page, "{sv}", "window_identity_pinning_allowed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_restore_allowed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_skip_taskbar", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_show_in_switcher", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_prefer_existing_window", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_kwin_role", g_variant_new_string("identity-and-layout"));
+  g_variant_builder_add(&page, "{sv}", "window_identity_kwin_placement", g_variant_new_string("normal-window"));
+  g_variant_builder_add(&page, "{sv}", "window_identity_policy_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_backend_policy_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_task_manager_active", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "window_identity_kwin_rule_applied", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "action_deck_request_type", g_variant_new_string("kde-action-card-deck-preview"));
   g_variant_builder_add(&page, "{sv}", "card_count", g_variant_new_int32(7));
   g_variant_builder_add(&page, "{sv}", "waiting_card_count", g_variant_new_int32(decision_allowed ? 7 : 0));
@@ -1554,6 +1569,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "activation",
     "execution",
     "launch",
+    "window",
     "actions",
     "settings",
     "diagnostics"
@@ -1564,6 +1580,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "GetDesktopActivationStatus",
     "GetExecutionReadiness",
     "GetLaunchIntent",
+    "GetTaskManagerIdentityPlan",
     "GetCompatibilityActionQueue",
     "GetCompatibilitySettings",
     "GetDiagnostics"
@@ -1574,6 +1591,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "desktop-activation-status-preview",
     "execution-readiness-preview",
     "launch-intent-preview",
+    "window-identity-preview",
     "compatibility-center-action-queue",
     "settings-model",
     "runtime-diagnostics"
@@ -1584,6 +1602,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "ready-for-runtime-commit",
     "blocked",
     "blocked",
+    "planned",
     "waiting-for-runtime-gates",
     "planned",
     "planned"
@@ -1597,6 +1616,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   add_kde_center_page_section(&sections, "activation", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit");
   add_kde_center_page_section(&sections, "execution", "GetExecutionReadiness", "execution-readiness-preview", "blocked");
   add_kde_center_page_section(&sections, "launch", "GetLaunchIntent", "launch-intent-preview", "blocked");
+  add_kde_center_page_section(&sections, "window", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned");
   add_kde_center_page_section(&sections, "actions", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates");
   add_kde_center_page_section(&sections, "settings", "GetCompatibilitySettings", "settings-model", "planned");
   add_kde_center_page_section(&sections, "diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned");
@@ -1608,15 +1628,15 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   g_variant_builder_add(&model, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSections"));
   g_variant_builder_add(&model, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-sections-preview"));
   g_variant_builder_add(&model, "{sv}", "application_id", g_variant_new_string(application_id));
-  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(8));
-  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(8));
-  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(8));
+  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(9));
+  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(9));
+  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(9));
   g_variant_builder_add(&model, "{sv}", "executable_section_count", g_variant_new_int32(0));
   g_variant_builder_add(&model, "{sv}", "primary_section_id", g_variant_new_string("overview"));
-  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 8));
-  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 8));
-  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 8));
-  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 8));
+  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 9));
+  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 9));
+  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 9));
+  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 9));
   g_variant_builder_add(&model, "{sv}", "sections", g_variant_builder_end(&sections));
   g_variant_builder_add(&model, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&model, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
@@ -1693,6 +1713,14 @@ kde_center_page_section_detail(const gchar *section_id,
     *state = "blocked";
     return TRUE;
   }
+  if (g_strcmp0(section_id, "window") == 0) {
+    *label = "Window";
+    *target = "compatibility-window-identity";
+    *runtime_method = "GetTaskManagerIdentityPlan";
+    *read_model = "window-identity-preview";
+    *state = "planned";
+    return TRUE;
+  }
   if (g_strcmp0(section_id, "actions") == 0) {
     *label = "Actions";
     *target = "compatibility-center-gates";
@@ -1733,6 +1761,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
     "activation",
     "execution",
     "launch",
+    "window",
     "actions",
     "settings",
     "diagnostics"
@@ -1761,7 +1790,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
   g_variant_builder_add(&detail, "{sv}", "section_state", g_variant_new_string(state));
   g_variant_builder_add(&detail, "{sv}", "section_runtime_method", g_variant_new_string(runtime_method));
   g_variant_builder_add(&detail, "{sv}", "section_read_model", g_variant_new_string(read_model));
-  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 8));
+  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 9));
   g_variant_builder_add(&detail, "{sv}", "read_only_navigation", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_preview_created", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_persisted", g_variant_new_boolean(FALSE));

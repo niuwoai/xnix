@@ -730,6 +730,8 @@ module Xnix
         activation_status = desktop_activation_status(recipe.id)
         execution_readiness = execution_readiness(recipe.id)
         launch_intent = launch_intent_summary(recipe)
+        task_manager_identity = task_manager_identity_plan(recipe.id)
+        kwin_rule = kwin_window_rule_plan(recipe.id)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -777,6 +779,21 @@ module Xnix
           "launch_intent_allowed" => launch_intent.fetch("launch_allowed"),
           "launch_intent_enabled" => launch_intent.fetch("launch_enabled"),
           "launch_intent_request_created" => launch_intent.fetch("execution_request_created"),
+          "window_identity_runtime_method" => "GetTaskManagerIdentityPlan",
+          "window_identity_desktop_file" => task_manager_identity.fetch("desktop_file"),
+          "window_identity_grouping_key" => task_manager_identity.fetch("task_manager").fetch("grouping_key"),
+          "window_identity_launcher_url" => task_manager_identity.fetch("task_manager").fetch("launcher_url"),
+          "window_identity_pinning_allowed" => task_manager_identity.fetch("task_manager").fetch("pinning_allowed"),
+          "window_identity_restore_allowed" => task_manager_identity.fetch("restore").fetch("restore_allowed"),
+          "window_identity_skip_taskbar" => task_manager_identity.fetch("task_manager").fetch("skip_taskbar"),
+          "window_identity_show_in_switcher" => task_manager_identity.fetch("task_manager").fetch("show_in_switcher"),
+          "window_identity_prefer_existing_window" => task_manager_identity.fetch("restore").fetch("prefer_existing_window"),
+          "window_identity_kwin_role" => kwin_rule.fetch("script_role"),
+          "window_identity_kwin_placement" => task_manager_identity.fetch("kwin").fetch("placement"),
+          "window_identity_policy_only" => task_manager_identity.fetch("safety").fetch("window_manager_policy_only"),
+          "window_identity_backend_policy_owned" => task_manager_identity.fetch("safety").fetch("runtime_owns_backend_policy"),
+          "window_identity_task_manager_active" => false,
+          "window_identity_kwin_rule_applied" => false,
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -827,6 +844,7 @@ module Xnix
           kde_center_page_section("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", page.fetch("activation_state")),
           kde_center_page_section("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", page.fetch("execution_state")),
           kde_center_page_section("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked"),
+          kde_center_page_section("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned"),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1534,6 +1552,21 @@ module Xnix
           "launch_intent_allowed" => page.fetch("launch_intent_allowed"),
           "launch_intent_enabled" => page.fetch("launch_intent_enabled"),
           "launch_intent_request_created" => page.fetch("launch_intent_request_created"),
+          "window_identity_runtime_method" => page.fetch("window_identity_runtime_method"),
+          "window_identity_desktop_file" => page.fetch("window_identity_desktop_file"),
+          "window_identity_grouping_key" => page.fetch("window_identity_grouping_key"),
+          "window_identity_launcher_url" => page.fetch("window_identity_launcher_url"),
+          "window_identity_pinning_allowed" => page.fetch("window_identity_pinning_allowed"),
+          "window_identity_restore_allowed" => page.fetch("window_identity_restore_allowed"),
+          "window_identity_skip_taskbar" => page.fetch("window_identity_skip_taskbar"),
+          "window_identity_show_in_switcher" => page.fetch("window_identity_show_in_switcher"),
+          "window_identity_prefer_existing_window" => page.fetch("window_identity_prefer_existing_window"),
+          "window_identity_kwin_role" => page.fetch("window_identity_kwin_role"),
+          "window_identity_kwin_placement" => page.fetch("window_identity_kwin_placement"),
+          "window_identity_policy_only" => page.fetch("window_identity_policy_only"),
+          "window_identity_backend_policy_owned" => page.fetch("window_identity_backend_policy_owned"),
+          "window_identity_task_manager_active" => page.fetch("window_identity_task_manager_active"),
+          "window_identity_kwin_rule_applied" => page.fetch("window_identity_kwin_rule_applied"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),
