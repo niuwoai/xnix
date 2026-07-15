@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.179"
+EXPECTED_VERSION = "0.2.180"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -159,6 +159,7 @@ REQUIRED_FILES = %w[
   runtime/dbus/xnix_compatd_smoke.c
   runtime/dbus/xnix_compatd_introspection.inc
   runtime/dbus/xnix_compatd_kde_center.inc
+  runtime/dbus/xnix_compatd_runtime_models.inc
   runtime/core/xnix_runtime_core.h
   runtime/core/xnix_runtime_core.c
   runtime/core/xnix_runtime_core_action_review.inc
@@ -857,7 +858,7 @@ assert(runtime_service_binding_source.include?("\"privileged_container_required\
 assert(runtime_service_binding_source.include?("\"backend_details_exposed\" => false"), "Runtime service binding must hide backend details")
 
 runtime_activation_installer_source = read_project_file("scripts/install_runtime_activation.rb")
-%w[SOURCE_RUNTIME_LIB SOURCE_RECIPE_DIR SOURCE_DBUS_CONTRACT SOURCE_DBUS_SMOKE SOURCE_DBUS_SMOKE_INTROSPECTION SOURCE_DBUS_SMOKE_KDE_CENTER SOURCE_SESSION_SMOKE usr/lib/xnix usr/runtime/recipes].each do |token|
+%w[SOURCE_RUNTIME_LIB SOURCE_RECIPE_DIR SOURCE_DBUS_CONTRACT SOURCE_DBUS_SMOKE SOURCE_DBUS_SMOKE_INTROSPECTION SOURCE_DBUS_SMOKE_KDE_CENTER SOURCE_DBUS_SMOKE_RUNTIME_MODELS SOURCE_SESSION_SMOKE usr/lib/xnix usr/runtime/recipes].each do |token|
   assert(runtime_activation_installer_source.include?(token), "Runtime activation installer must include #{token}")
 end
 
@@ -1048,7 +1049,8 @@ assert(runtime_daemon_source.include?("\"compatibility_launch_intents\""), "Runt
 dbus_smoke_source = [
   read_project_file("runtime/dbus/xnix_compatd_smoke.c"),
   read_project_file("runtime/dbus/xnix_compatd_introspection.inc"),
-  read_project_file("runtime/dbus/xnix_compatd_kde_center.inc")
+  read_project_file("runtime/dbus/xnix_compatd_kde_center.inc"),
+  read_project_file("runtime/dbus/xnix_compatd_runtime_models.inc")
 ].join("\n")
 %w[GetEngineCatalog GetRunPlan GetDesktopActivationManifest GetKDEIntegrationStatus GetKDEShellIntegrationPlan GetKDEApplicationSurfacePlan GetDesktopResourceBridgePlan GetCompatibilityModeSwitchPlan GetCompatibilityPermissionReviewPlan GetCompatibilityReviewFlowPlan GetDesktopEntryPlan GetDesktopIconPlan GetTaskManagerIdentityPlan GetKWinWindowRulePlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetPortalRequestPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityCenterSummary GetKDECenterPage GetKDECenterPageSections GetKDECenterPageSectionDetail GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetBackendCapabilityMatrix GetBackendSelectionPlan GetBackendLifecycle GetBackendEnvironmentPlan GetRepairPlan GetTestPlan GetTestResult GetExecutionReadiness GetLaunchIntent GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeWriteGate GetCompatibilitySettings GetCompatibilitySettingsChangePlan].each do |method_name|
   assert(runtime_daemon_source.include?("\"#{method_name}\""), "Runtime daemon dispatch must include #{method_name}")

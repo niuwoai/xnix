@@ -28,6 +28,7 @@ Dir.mktmpdir("xnix-runtime-root") do |root|
   dbus_smoke = root_path.join("usr/runtime/dbus/xnix_compatd_smoke.c")
   dbus_introspection = root_path.join("usr/runtime/dbus/xnix_compatd_introspection.inc")
   dbus_kde_center = root_path.join("usr/runtime/dbus/xnix_compatd_kde_center.inc")
+  dbus_runtime_models = root_path.join("usr/runtime/dbus/xnix_compatd_runtime_models.inc")
 
   assert(libexec.file?, "activation installer must install libexec wrapper")
   assert((libexec.stat.mode & 0o111) != 0, "activation installer must keep libexec wrapper executable mode bits")
@@ -37,7 +38,9 @@ Dir.mktmpdir("xnix-runtime-root") do |root|
   assert(dbus_smoke.file?, "activation installer must install the D-Bus smoke adapter source")
   assert(dbus_introspection.file?, "activation installer must install the D-Bus introspection include")
   assert(dbus_kde_center.file?, "activation installer must install the D-Bus KDE Center include")
+  assert(dbus_runtime_models.file?, "activation installer must install the D-Bus Runtime models include")
   assert(dbus_smoke.read.include?("xnix_compatd_kde_center.inc"), "installed D-Bus smoke adapter must include KDE Center read models")
+  assert(dbus_smoke.read.include?("xnix_compatd_runtime_models.inc"), "installed D-Bus smoke adapter must include Runtime read models")
   assert(dbus_service.read.include?("SystemdService=xnix-compatd.service"), "D-Bus service must delegate to systemd")
   assert(systemd_unit.read.include?("BusName=org.xnix.Compatibility1"), "systemd unit must own the runtime bus name")
 

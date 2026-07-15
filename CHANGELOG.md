@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.180] - 2026-07-15
+
+### Changed
+
+- Split Portal, package-source, backend, execution, settings, action queue, Compatibility Center summary, Runtime service binding, owner-gate, method-parity, and write-gate builders out of the Linux D-Bus smoke adapter into `runtime/dbus/xnix_compatd_runtime_models.inc`, reducing `xnix_compatd_smoke.c` below the 2,000-line review threshold while preserving the existing session-bus read-model behavior.
+- Updated layout verification, Runtime method parity, activation packaging, activation install tests, and D-Bus smoke-script tests so the dispatcher, introspection include, KDE Center include, and Runtime read-model include are all treated as one smoke adapter contract.
+
 ## [0.2.179] - 2026-07-15
 
 ### Changed
