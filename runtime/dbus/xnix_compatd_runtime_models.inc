@@ -7,6 +7,7 @@ build_portal_request_plan(const gchar *application_id, const gchar *operation)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "request_type", g_variant_new_string("portal-request-plan"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetPortalRequestPlan", application_id, operation);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "operation", g_variant_new_string(operation));
   g_variant_builder_add(&plan, "{sv}", "decision", g_variant_new_string(denied ? "deny" : "ask"));

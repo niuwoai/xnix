@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.225] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so second-ring KDE and Portal resource reads carry Go owner read-dispatch payload evidence: desktop icons, desktop resource bridges, KWin window rules, KRunner queries, and Portal request plans.
+- Added restricted session smoke assertions that prove those second-ring KDE and Portal reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without enabling desktop writes, KWin rule application, query execution, Portal request creation, backend launch, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track the second-ring KDE resource bridge as a Go-owned payload handoff through low-level C D-Bus transport.
+
 ## [0.2.224] - 2026-07-16
 
 ### Added

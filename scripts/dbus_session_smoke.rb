@@ -149,6 +149,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetDesktopIconPlan: #{stderr}")
   assert(stdout.include?("desktop-icon-plan"), "runtime smoke adapter must expose desktop icon plans over D-Bus")
   assert(stdout.include?("xdg-desktop-dir"), "runtime smoke adapter must keep desktop icon target abstract")
+  assert_go_owner_bridge(stdout, "GetDesktopIconPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -210,6 +211,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetDesktopResourceBridgePlan: #{stderr}")
   assert(stdout.include?("desktop-resource-bridge-plan"), "runtime smoke adapter must expose desktop resource bridge plans over D-Bus")
   assert(stdout.include?("portal_mediated"), "runtime smoke adapter must keep bridge access Portal-mediated")
+  assert_go_owner_bridge(stdout, "GetDesktopResourceBridgePlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -275,6 +277,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetKWinWindowRulePlan: #{stderr}")
   assert(stdout.include?("kwin-window-rule"), "runtime smoke adapter must expose KWin window rule plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetKWinWindowRulePlan")
 
   stdout, stderr, status = Open3.capture3(
     "ruby",
@@ -337,6 +340,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetKRunnerQueryPlan: #{stderr}")
   assert(stdout.include?("krunner-query-plan"), "runtime smoke adapter must expose KRunner query plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetKRunnerQueryPlan")
 
   stdout, stderr, status = Open3.capture3(
     "ruby",
@@ -364,6 +368,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetPortalRequestPlan: #{stderr}")
   assert(stdout.include?("portal-request-plan"), "runtime smoke adapter must expose Portal request plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetPortalRequestPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

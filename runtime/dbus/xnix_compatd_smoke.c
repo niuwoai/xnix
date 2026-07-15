@@ -463,6 +463,7 @@ build_desktop_resource_bridge_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-resource-bridge-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetDesktopResourceBridgePlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetDesktopResourceBridgePlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "bridge_state", g_variant_new_string("planned"));
@@ -523,6 +524,7 @@ build_desktop_icon_plan(const gchar *application_id)
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "request_type", g_variant_new_string("desktop-icon-plan"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-icon-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetDesktopIconPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetDesktopIconPlan"));
@@ -586,6 +588,7 @@ build_kwin_window_rule_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "request_type", g_variant_new_string("kwin-window-rule"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetKWinWindowRulePlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
@@ -714,6 +717,7 @@ build_krunner_query_plan(const gchar *query)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "query_type", g_variant_new_string("krunner-query-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetKRunnerQueryPlan", query == NULL ? "" : query);
   g_variant_builder_add(&plan, "{sv}", "entry_point", g_variant_new_string("krunner"));
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "query", g_variant_new_string(query == NULL ? "" : query));
