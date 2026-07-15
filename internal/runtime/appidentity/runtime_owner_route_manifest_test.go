@@ -12,7 +12,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("NewRuntimeOwnerRouteManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.189" ||
+	if preview.Version != "0.2.190" ||
 		preview.SchemaVersion != "xnix.runtime.owner_route_manifest.v1" ||
 		preview.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.ManifestType != "runtime-owner-route-manifest" ||
@@ -73,6 +73,8 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 	}
 
 	assertRuntimeOwnerRoute(t, preview, "GetRuntimeServiceBinding", "go-runtime-cli", "runtime-service-binding-preview", "go-preview-ready")
+	assertRuntimeOwnerRoute(t, preview, "ListApplications", "go-runtime-cli", "applications-preview", "go-preview-ready")
+	assertRuntimeOwnerRoute(t, preview, "GetApplication", "go-runtime-cli", "application-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetRunPlan", "c-runtime-core", "compatibility-run-plan", "c-adapter-pending")
 	assertRuntimeOwnerRoute(t, preview, "GetDiagnostics", "go-runtime-cli", "diagnostics-preview", "go-preview-ready")
 
@@ -82,7 +84,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		preview.NextRequirements[0] != "Complete native Go owner handlers or owner adapters for every non-Go read-only route." {
 		t.Fatalf("unexpected blocked actions or next requirements: actions=%#v next=%#v", preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated diagnostics and current Go previews, with C adapter migration still pending." {
+	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated application catalog, diagnostics, and current Go previews, with C adapter migration still pending." {
 		t.Fatalf("unexpected route manifest summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner route manifest preview test"); err != nil {
@@ -92,7 +94,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 
 func TestRuntimeOwnerRouteManifestPreviewBlocksMissingRouteSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.189\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.190\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

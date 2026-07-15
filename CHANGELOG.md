@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.190] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `applications-preview` and `application-preview` for `ListApplications` and `GetApplication`, rendering registry-verified compatibility applications as normal KDE/Linux application identities without exposing backend terminology, raw executable details, or host paths.
+
+### Changed
+
+- Migrated `ListApplications` and `GetApplication` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to native Go preview routes, increasing Go-routed read-only owner methods while keeping C-backed policy routes explicit.
+- Updated owner route summaries, CLI coverage, unit tests, layout verification, and product documentation for the Go application catalog migration.
+
 ## [0.2.189] - 2026-07-15
 
 ### Added
