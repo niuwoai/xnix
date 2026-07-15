@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 binding = Xnix::Compatibility::CompatibilityBackendBinding.new(recipe: recipe).to_h
 preflight_ids = binding.fetch("required_preflight").map { |item| item.fetch("id") }
 
-assert(binding["version"] == "0.2.211", "compatibility backend binding must expose the current version")
+assert(binding["version"] == "0.2.212", "compatibility backend binding must expose the current version")
 assert(binding["binding_type"] == "compatibility-backend-binding", "compatibility backend binding must identify the binding type")
 assert(binding["application"]["id"] == "org.xnix.sample.notepad", "compatibility backend binding must preserve the application id")
 assert(binding["runtime_owned"], "Runtime must own compatibility backend binding")

@@ -59,6 +59,35 @@ func runDiagnosticRunRecord(args []string, stdout io.Writer) error {
 	return encoder.Encode(record)
 }
 
+func runDiagnosticRunHistory(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("diagnostic-run-history", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	stateRoot := flags.String("state-root", "", "Runtime state root used for diagnostic run records")
+	applicationID := flags.String("app", "", "optional application id filter")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" {
+		return errors.New("diagnostic-run-history requires --state-root")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("diagnostic-run-history does not accept positional arguments")
+	}
+
+	store, err := diagnostics.NewRunRecordStore(*stateRoot)
+	if err != nil {
+		return err
+	}
+	history, err := store.History(*applicationID)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(history)
+}
+
 func readDiagnosticFixture(path string) (diagnostics.Fixture, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

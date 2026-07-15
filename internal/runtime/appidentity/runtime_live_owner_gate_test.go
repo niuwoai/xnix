@@ -12,7 +12,7 @@ func TestRuntimeLiveOwnerGatePreviewKeepsProductionOwnershipGated(t *testing.T) 
 		t.Fatalf("NewRuntimeLiveOwnerGatePreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.211" ||
+	if preview.Version != "0.2.212" ||
 		preview.SchemaVersion != "xnix.runtime.live_owner_gate.v1" ||
 		preview.RequestType != "runtime-live-owner-gate-preview" ||
 		preview.GateType != "runtime-live-owner-gate" ||
@@ -91,7 +91,7 @@ func TestRuntimeLiveOwnerGatePreviewKeepsProductionOwnershipGated(t *testing.T) 
 
 func TestRuntimeLiveOwnerGatePreviewBlocksWhenActivationIsMissing(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.211\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.212\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

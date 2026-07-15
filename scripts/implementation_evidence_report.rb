@@ -212,15 +212,17 @@ DOMAIN_DEFINITIONS = [
     ],
     state_files: %w[
       internal/runtime/diagnostics/record.go
+      internal/runtime/diagnostics/history.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/diagnostics/ai.go" => %w[DisabledProvider FakeProvider],
       "internal/runtime/diagnostics/record.go" => %w[xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed],
-      "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record state-root fixture run-id],
+      "internal/runtime/diagnostics/history.go" => %w[xnix.runtime.diagnostic_run_history.v1 diagnostic-run-history go-runtime-state-root-diagnostic-run-history state_root_path_exposed ai_provider_called repair_executed],
+      "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record diagnostic-run-history state-root fixture run-id],
       "internal/runtime/appidentity/ai_diagnostics.go" => %w[AIProviderCalled AutoExecutionAllowed]
     },
-    summary: "Fixture diagnostics can persist state-root run records with review-first repair recommendations; real provider calls and auto-repair remain disabled."
+    summary: "Fixture diagnostics can persist state-root run records and expose KDE-safe history summaries with review-first repair recommendations; real provider calls and auto-repair remain disabled."
   },
   {
     id: "atomic-kde-image-qemu-acceptance",

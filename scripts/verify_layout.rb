@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.211"
+EXPECTED_VERSION = "0.2.212"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -207,6 +207,7 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/ledger.go
   internal/runtime/execution/ledger_test.go
   internal/runtime/diagnostics/record.go
+  internal/runtime/diagnostics/history.go
   internal/runtime/artifact/stage.go
   internal/runtime/owner/candidate.go
   internal/runtime/owner/candidate_test.go
@@ -1348,12 +1349,23 @@ end
 end
 assert(go_runtime_diagnostic_record_source.include?("refusing to use filesystem root"), "Go Runtime diagnostic run records must reject filesystem root state roots")
 
+go_runtime_diagnostic_history_source = read_project_file("internal/runtime/diagnostics/history.go")
+%w[RunHistory RunHistoryRecord RunHistoryCounts xnix.runtime.diagnostic_run_history.v1 diagnostic-run-history go-runtime-state-root-diagnostic-run-history latest failing_ids repair_issue snapshot_required].each do |token|
+  assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StateRootPathExposed BackendStarted AIProviderCalled RealAIProviderEnabled AutoRepairAllowed RepairExecuted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed FileContentsIncluded].each do |token|
+  assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must expose #{token}")
+end
+%w[History historyRecord runHistorySummary applicationIDPattern].each do |token|
+  assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must implement #{token}")
+end
+
 go_runtime_diagnostic_record_cli_source = [
   read_project_file("cmd/xnix-runtime-go/diagnostic_record_commands.go"),
   read_project_file("cmd/xnix-runtime-go/diagnostic_record_cli_test.go"),
   read_project_file("cmd/xnix-runtime-go/main.go")
 ].join("\n")
-%w[diagnostic-run-record state-root fixture run-id NewRunRecordStore RunRecordRequest xnix.runtime.diagnostic_run_record.v1 state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
+%w[diagnostic-run-record diagnostic-run-history state-root fixture run-id NewRunRecordStore RunRecordRequest xnix.runtime.diagnostic_run_record.v1 xnix.runtime.diagnostic_run_history.v1 state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
   assert(go_runtime_diagnostic_record_cli_source.include?(token), "Go Runtime diagnostic run record CLI must include #{token}")
 end
 

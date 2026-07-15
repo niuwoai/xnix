@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.212] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime diagnostic run history summary under `internal/runtime/diagnostics`, allowing Compatibility Center consumers to read persisted diagnostic run counts, latest run state, failing signal IDs, and review-first repair issue summaries from the controlled Runtime state root.
+- Added `xnix-runtime-go diagnostic-run-history`, a constrained CLI that reads diagnostic run records with an optional application filter while keeping state-root paths, file contents, backend details, AI provider calls, auto-repair, backend launch, network access, and host-root mutation disabled.
+- Added Go unit and CLI coverage for diagnostic history filtering, outcome counts, latest-run selection, safe relative receipt paths, required state-root arguments, and disabled AI/backend/repair side-effect flags.
+
+### Changed
+
+- Updated layout verification to require diagnostic run history source, CLI command, tests, schema, KDE-safe record projections, and disabled AI/backend/repair gates.
+- Updated product documentation so Runtime diagnostics now include both state-root run recording and state-root diagnostic history reads.
+
 ## [0.2.211] - 2026-07-16
 
 ### Added

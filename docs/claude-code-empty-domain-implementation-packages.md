@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.211
+> Last updated: 2026-07-16 | Baseline: v0.2.212
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -49,14 +49,14 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.211 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.212 | What remains useful to implement |
 | --- | --- | --- |
 | Runtime owner | Owner candidate, read dispatch previews, route manifests, service binding previews, and write gates exist. | Constrained long-running session-bus owner, lifecycle logs, broader read-route coverage, and smoke-owned readiness. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |
 | KDE activation | Desktop activation previews and a target-root staging writer exist for desktop entries, MIME, Dolphin service menus, activation manifests, and rollback receipts. | Drift checks against live materialized state, optional digest-verified icons, KDE status consumption of receipt state, and stricter transaction rollback UX. |
 | Execution | Execution previews and `execution-ledger-record` exist for reviewed/preflighted state-root transaction records without backend launch. | Fake commit/list/inspect flows, joined dependency gates from trust/environment/Portal/snapshot state, and session-status records. |
 | Portal and snapshots | Fake Portal model previews and constrained snapshot store evidence exist. | Durable Portal request state machine, disabled real transport boundary, joined safety view, and rollback receipt integration. |
-| Diagnostics, repair, and AI | Fixture diagnostics, fake/disabled AI provider boundaries, and `diagnostic-run-record` state-root receipts exist. | Broader repair workflows, approval receipt integration, provider configuration policy, and Compatibility Center consumption of diagnostic run history. |
+| Diagnostics, repair, and AI | Fixture diagnostics, fake/disabled AI provider boundaries, `diagnostic-run-record` state-root receipts, and `diagnostic-run-history` summaries exist. | Broader repair workflows, approval receipt integration, provider configuration policy, and deeper Compatibility Center consumption of diagnostic history. |
 | Developer gates | Contract drift and implementation evidence reports exist. | Stronger orphan-preview detection, CI-friendly package ownership checks, and evidence regression guards. |
 
 When a package overlaps existing evidence, extend the current package instead of replacing the surface. The preferred path is to add one new durable state transition, receipt, or smoke-owned behavior per branch.
