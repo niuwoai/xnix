@@ -12,7 +12,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 		t.Fatalf("NewRuntimeMethodParityManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.206" ||
+	if preview.Version != "0.2.207" ||
 		preview.SchemaVersion != "xnix.runtime.method_parity_manifest.v1" ||
 		preview.RequestType != "runtime-method-parity-manifest-preview" ||
 		preview.ManifestType != "runtime-method-parity-manifest" ||
@@ -92,7 +92,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 
 func TestRuntimeMethodParityManifestPreviewBlocksMissingSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.206\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.207\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

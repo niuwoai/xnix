@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.207] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime desktop activation staging writer under `internal/runtime/activation`, allowing KDE desktop-entry, Dolphin service-menu, MIME association, manifest, and rollback receipt files to be materialized inside an explicit staging root.
+- Added `xnix-runtime-go desktop-activation-stage`, a constrained CLI that requires `--staging-root`, refuses filesystem-root staging, refuses existing-file overwrites, and emits a safe JSON receipt without exposing the staging root path.
+- Added Go unit and CLI coverage for staged file digests, rollback receipts, conflict rejection, blocked production mode, and disabled launch/backend/host-root gates.
+
+### Changed
+
+- Updated layout verification to require the Go activation staging writer, CLI command, tests, relative-path materialization, and staging safety flags.
+
 ## [0.2.206] - 2026-07-16
 
 ### Added

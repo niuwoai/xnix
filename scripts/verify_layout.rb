@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.206"
+EXPECTED_VERSION = "0.2.207"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -149,6 +149,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
+  cmd/xnix-runtime-go/desktop_activation_stage_commands.go
+  cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go
   cmd/xnix-runtime-go/install_plan_commands.go
   cmd/xnix-runtime-go/install_plan_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
@@ -167,6 +169,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/run_plan.go
   internal/runtime/appidentity/desktop_activation_manifest.go
   internal/runtime/appidentity/desktop_activation_manifest_test.go
+  internal/runtime/activation/stage.go
+  internal/runtime/activation/stage_test.go
   internal/runtime/appidentity/install_plan.go
   internal/runtime/appidentity/install_plan_test.go
   internal/runtime/appidentity/kde_shell_surface.go
@@ -1131,6 +1135,24 @@ assert(go_runtime_desktop_activation_manifest_source.include?("validateNoBackend
 go_runtime_desktop_activation_manifest_cli_source = read_project_file("cmd/xnix-runtime-go/desktop_activation_manifest_commands.go")
 %w[runDesktopActivationManifestPreview desktop-activation-manifest-preview DesktopActivationManifestPreview].each do |token|
   assert(go_runtime_desktop_activation_manifest_cli_source.include?(token), "Go Runtime desktop activation manifest CLI must include #{token}")
+end
+
+go_runtime_activation_stage_source = read_project_file("internal/runtime/activation/stage.go")
+%w[StageRequest StageResult StagedFile desktop-activation-stage xnix.runtime.desktop_activation_stage.v1 kde-desktop-activation-test-root-stage go-runtime-controlled-staging-writer usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts xnix-open-with-compatibility.desktop RenderDesktopEntry xnix-compat-open requires_matching_sha256 refusing to stage desktop activation into filesystem root refusing to overwrite existing staged file].each do |token|
+  assert(go_runtime_activation_stage_source.include?(token), "Go Runtime activation stage writer must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StagingRootRequired StagingRootPathExposed HostRootAllowed FileWritesPerformed DesktopFilesWritten MIMEAppsWritten ManifestWritten ReceiptWritten RollbackReceiptWritten SettingsPersisted NotificationsSent TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled LaunchEnabled BackendLaunchEnabled ExecutionStarted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_activation_stage_source.include?(token), "Go Runtime activation stage writer must expose safety flag #{token}")
+end
+
+go_runtime_activation_stage_cli_source = read_project_file("cmd/xnix-runtime-go/desktop_activation_stage_commands.go")
+%w[runDesktopActivationStage desktop-activation-stage --staging-root activation.Stage NewPlanWithProvenance].each do |token|
+  assert(go_runtime_activation_stage_cli_source.include?(token), "Go Runtime activation stage CLI must include #{token}")
+end
+
+go_runtime_activation_stage_cli_test_source = read_project_file("cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go")
+%w[desktop-activation-stage staging_root_path_exposed host_root_modified backend_details_exposed xnix-org.example.ledger.desktop requires_matching_sha256].each do |token|
+  assert(go_runtime_activation_stage_cli_test_source.include?(token), "Go Runtime activation stage CLI test must include #{token}")
 end
 
 go_runtime_window_identity_source = read_project_file("internal/runtime/appidentity/window_identity_routes.go")
