@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.169] - 2026-07-15
+
+### Added
+
+- Added `GetDesktopActivationStatus(application_id, mode)` to the Runtime D-Bus contract, Ruby daemon dispatch, KDE-facing D-Bus client, C smoke adapter, C Runtime method-parity policy, and Linux session smoke so KDE can read the Go-owned desktop activation status through the standard Runtime boundary.
+- Added D-Bus client, daemon, contract, C Runtime, and session-smoke coverage proving the activation status read model remains Go-backed, read-only, non-committing, non-launching, and blocked from host-root mutation, network access, privileged containers, and backend detail exposure.
+
 ## [0.2.168] - 2026-07-15
 
 ### Changed

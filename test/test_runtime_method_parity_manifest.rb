@@ -17,16 +17,17 @@ project_root = Pathname.new(__dir__).join("..").realpath
 manifest = Xnix::Compatibility::RuntimeMethodParityManifest.new.to_h
 check_ids = manifest.fetch("parity_checks").map { |item| item.fetch("id") }
 
-assert(manifest["version"] == "0.2.168", "Runtime method parity manifest must expose the current version")
+assert(manifest["version"] == "0.2.169", "Runtime method parity manifest must expose the current version")
 assert(manifest["manifest_type"] == "runtime-method-parity-manifest", "Runtime method parity manifest must identify the manifest type")
 assert(manifest["runtime_owned"], "Runtime must own method parity")
 assert(!manifest["kde_policy_owner"], "KDE must not own method parity")
 assert(manifest["bus_name"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable bus name")
 assert(manifest["object_path"] == "/org/xnix/Compatibility1", "Runtime method parity manifest must expose the stable object path")
 assert(manifest["interface"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable interface")
-assert(manifest["method_count"] == 56, "Runtime method parity manifest must count read-only methods")
+assert(manifest["method_count"] == 57, "Runtime method parity manifest must count read-only methods")
 assert(manifest["read_only_methods"].include?("GetDesktopActivationManifest"), "Runtime method parity manifest must include desktop activation manifest reads")
 assert(manifest["read_only_methods"].include?("GetDesktopActivationTransactionPreview"), "Runtime method parity manifest must include desktop activation transaction preview reads")
+assert(manifest["read_only_methods"].include?("GetDesktopActivationStatus"), "Runtime method parity manifest must include desktop activation status reads")
 assert(manifest["read_only_methods"].include?("GetKDEIntegrationStatus"), "Runtime method parity manifest must include KDE integration status reads")
 assert(manifest["read_only_methods"].include?("GetKDEShellIntegrationPlan"), "Runtime method parity manifest must include KDE shell integration plan reads")
 assert(manifest["read_only_methods"].include?("GetDesktopEntryPlan"), "Runtime method parity manifest must include desktop entry plan reads")

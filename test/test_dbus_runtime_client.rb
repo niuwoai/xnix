@@ -61,6 +61,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetDesktopActivationStatus"
+      [
+        "({'request_type': <'desktop-activation-status-preview'>, 'status_type': <'kde-desktop-activation-status'>, 'activation_state': <'ready-for-runtime-commit'>, 'runtime_method': <'GetDesktopActivationStatus'>, 'read_model_source': <'xnix-runtime-go desktop-activation-status-preview'>, 'application_id': <'org.xnix.sample.notepad'>, 'install_mode': <'development'>, 'transaction_state': <'transaction-ready'>, 'planned_file_count': <5>, 'transaction_step_count': <9>, 'rollback_step_count': <7>, 'status_signal_count': <5>, 'blocked_reason_count': <4>, 'next_safe_action_count': <5>, 'runtime_owned': <true>, 'go_runtime_backed': <true>, 'kde_policy_owner': <false>, 'activation_ready': <true>, 'activation_committed': <false>, 'commit_enabled': <false>, 'launch_enabled': <false>, 'backend_launch_enabled': <false>, 'host_root_modified': <false>, 'network_required': <false>, 'privileged_container_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetDesktopEntryPlan"
       [
         "({'plan_type': <'desktop-entry-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'name': <'Sample Notepad'>, 'exec': <'xnix-compat-launch --app org.xnix.sample.notepad %U'>, 'standard_desktop_entry': <true>, 'launch_uses_runtime': <true>, 'accepts_file_uris': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_command_exposed': <false>, 'raw_windows_executable_exposed': <false>, 'compatibility_storage_path_exposed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -297,7 +303,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <56>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <57>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -425,6 +431,28 @@ assert(!activation_transaction["host_root_modified"], "D-Bus client must parse a
 assert(!activation_transaction["network_required"], "D-Bus client must parse activation transaction network safety")
 assert(!activation_transaction["privileged_container_required"], "D-Bus client must parse activation transaction container safety")
 assert(!activation_transaction["backend_details_exposed"], "D-Bus client must parse activation transaction backend detail status")
+
+activation_status = client.desktop_activation_status("org.xnix.sample.notepad", "development")
+assert(activation_status["request_type"] == "desktop-activation-status-preview", "D-Bus client must parse desktop activation status previews")
+assert(activation_status["status_type"] == "kde-desktop-activation-status", "D-Bus client must parse desktop activation status types")
+assert(activation_status["runtime_method"] == "GetDesktopActivationStatus", "D-Bus client must parse activation status Runtime methods")
+assert(activation_status["read_model_source"] == "xnix-runtime-go desktop-activation-status-preview", "D-Bus client must parse activation status Go source")
+assert(activation_status["activation_state"] == "ready-for-runtime-commit", "D-Bus client must parse activation status state")
+assert(activation_status["transaction_state"] == "transaction-ready", "D-Bus client must parse activation status transaction state")
+assert(activation_status["status_signal_count"] == 5, "D-Bus client must parse activation status signal counts")
+assert(activation_status["blocked_reason_count"] == 4, "D-Bus client must parse activation status blocked reason counts")
+assert(activation_status["next_safe_action_count"] == 5, "D-Bus client must parse activation status next action counts")
+assert(activation_status["go_runtime_backed"], "D-Bus client must parse activation status Go backing")
+assert(!activation_status["kde_policy_owner"], "D-Bus client must parse activation status KDE ownership")
+assert(activation_status["activation_ready"], "D-Bus client must parse activation status readiness")
+assert(!activation_status["activation_committed"], "D-Bus client must parse activation status commit state")
+assert(!activation_status["commit_enabled"], "D-Bus client must parse activation status commit gate")
+assert(!activation_status["launch_enabled"], "D-Bus client must parse activation status launch gate")
+assert(!activation_status["backend_launch_enabled"], "D-Bus client must parse activation status backend launch gate")
+assert(!activation_status["host_root_modified"], "D-Bus client must parse activation status host-root safety")
+assert(!activation_status["network_required"], "D-Bus client must parse activation status network safety")
+assert(!activation_status["privileged_container_required"], "D-Bus client must parse activation status container safety")
+assert(!activation_status["backend_details_exposed"], "D-Bus client must parse activation status backend detail status")
 
 desktop_entry_plan = client.desktop_entry_plan("org.xnix.sample.notepad")
 assert(desktop_entry_plan["plan_type"] == "desktop-entry-plan", "D-Bus client must parse desktop entry plans")
@@ -883,7 +911,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 56, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 57, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

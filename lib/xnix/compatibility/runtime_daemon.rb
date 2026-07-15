@@ -101,6 +101,7 @@ module Xnix
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
             "desktop_activation_transaction_previews" => true,
+            "desktop_activation_status_previews" => true,
             "kde_integration_status" => true,
             "kde_shell_integration_plans" => true,
             "kde_application_surface_plans" => true,
@@ -177,6 +178,7 @@ module Xnix
           "kde_center_page_section_detail" => kde_center_page_section_detail_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "desktop_activation_transaction_preview" => desktop_activation_transaction_preview_summary(recipe),
+          "desktop_activation_status" => desktop_activation_status_summary(recipe),
           "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
           "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(recipe),
@@ -276,6 +278,60 @@ module Xnix
           "privileged_container_required" => false,
           "backend_details_exposed" => false,
           "desktop_safe_summary" => "KDE can request the Go Runtime desktop activation transaction preview over D-Bus while all commit and host mutation gates remain closed."
+        }
+      end
+
+      def desktop_activation_status(application_id, mode = "development")
+        transaction = desktop_activation_transaction_preview(application_id, mode)
+        activation_ready = transaction.fetch("transaction_ready") &&
+                           transaction.fetch("transaction_state") == "transaction-ready"
+
+        {
+          "version" => VERSION,
+          "schema_version" => "xnix.runtime.desktop_activation_status.v1",
+          "request_type" => "desktop-activation-status-preview",
+          "status_type" => "kde-desktop-activation-status",
+          "activation_state" => activation_ready ? "ready-for-runtime-commit" : "blocked-before-runtime-commit",
+          "source" => "desktop-activation-transaction-preview",
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetDesktopActivationStatus",
+          "read_model_source" => "xnix-runtime-go desktop-activation-status-preview",
+          "write_method" => "ActivateDesktopIntegration",
+          "application_id" => transaction.fetch("application_id"),
+          "display_name" => transaction.fetch("display_name"),
+          "desktop_file" => transaction.fetch("desktop_file"),
+          "install_mode" => mode,
+          "preflight_decision" => activation_ready ? "development-staging-ready" : "activation-blocked",
+          "transaction_state" => transaction.fetch("transaction_state"),
+          "planned_file_count" => transaction.fetch("planned_file_count"),
+          "transaction_step_count" => transaction.fetch("transaction_step_count"),
+          "rollback_step_count" => transaction.fetch("rollback_step_count"),
+          "status_signal_count" => 5,
+          "blocked_reason_count" => activation_ready ? 4 : 5,
+          "next_safe_action_count" => 5,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "user_visible" => true,
+          "activation_ready" => activation_ready,
+          "activation_committed" => false,
+          "commit_enabled" => false,
+          "installer_may_proceed" => transaction.fetch("transaction_ready"),
+          "staging_plan_ready" => transaction.fetch("transaction_ready"),
+          "rollback_planned" => transaction.fetch("rollback_receipt_planned"),
+          "rollback_available" => false,
+          "host_root_modified" => false,
+          "file_writes_performed" => false,
+          "desktop_files_written" => false,
+          "mimeapps_written" => false,
+          "kde_service_cache_refreshed" => false,
+          "launch_enabled" => false,
+          "backend_launch_enabled" => false,
+          "execution_started" => false,
+          "network_required" => false,
+          "privileged_container_required" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KDE can show desktop activation status over D-Bus while Runtime commit, launch, and host mutation gates remain closed."
         }
       end
 
@@ -1012,6 +1068,11 @@ module Xnix
             required_parameter(method_name, parameters, 0),
             parameters[1] || "development"
           )
+        when "GetDesktopActivationStatus"
+          desktop_activation_status(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || "development"
+          )
         when "GetKDEIntegrationStatus"
           kde_integration_status
         when "GetKDEShellIntegrationPlan"
@@ -1490,6 +1551,27 @@ module Xnix
           "host_root_modified" => transaction.fetch("host_root_modified"),
           "backend_details_exposed" => transaction.fetch("backend_details_exposed"),
           "summary" => transaction.fetch("desktop_safe_summary")
+        }
+      end
+
+      def desktop_activation_status_summary(recipe)
+        status = desktop_activation_status(recipe.id)
+        {
+          "request_type" => status.fetch("request_type"),
+          "status_type" => status.fetch("status_type"),
+          "runtime_method" => status.fetch("runtime_method"),
+          "read_model_source" => status.fetch("read_model_source"),
+          "activation_state" => status.fetch("activation_state"),
+          "transaction_state" => status.fetch("transaction_state"),
+          "status_signal_count" => status.fetch("status_signal_count"),
+          "blocked_reason_count" => status.fetch("blocked_reason_count"),
+          "next_safe_action_count" => status.fetch("next_safe_action_count"),
+          "activation_committed" => status.fetch("activation_committed"),
+          "commit_enabled" => status.fetch("commit_enabled"),
+          "launch_enabled" => status.fetch("launch_enabled"),
+          "host_root_modified" => status.fetch("host_root_modified"),
+          "backend_details_exposed" => status.fetch("backend_details_exposed"),
+          "summary" => status.fetch("desktop_safe_summary")
         }
       end
 

@@ -132,6 +132,58 @@ build_desktop_activation_transaction_preview(const gchar *application_id, const 
 }
 
 static GVariant *
+build_desktop_activation_status(const gchar *application_id, const gchar *mode)
+{
+  GVariantBuilder status;
+  gboolean activation_ready = g_strcmp0(mode, "development") == 0;
+
+  g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&status, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.desktop_activation_status.v1"));
+  g_variant_builder_add(&status, "{sv}", "request_type", g_variant_new_string("desktop-activation-status-preview"));
+  g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("kde-desktop-activation-status"));
+  g_variant_builder_add(&status, "{sv}", "activation_state", g_variant_new_string(activation_ready ? "ready-for-runtime-commit" : "blocked-before-runtime-commit"));
+  g_variant_builder_add(&status, "{sv}", "source", g_variant_new_string("desktop-activation-transaction-preview"));
+  g_variant_builder_add(&status, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&status, "{sv}", "runtime_method", g_variant_new_string("GetDesktopActivationStatus"));
+  g_variant_builder_add(&status, "{sv}", "read_model_source", g_variant_new_string("xnix-runtime-go desktop-activation-status-preview"));
+  g_variant_builder_add(&status, "{sv}", "write_method", g_variant_new_string("ActivateDesktopIntegration"));
+  g_variant_builder_add(&status, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&status, "{sv}", "install_mode", g_variant_new_string(mode));
+  g_variant_builder_add(&status, "{sv}", "preflight_decision", g_variant_new_string(activation_ready ? "development-staging-ready" : "activation-blocked"));
+  g_variant_builder_add(&status, "{sv}", "transaction_state", g_variant_new_string(activation_ready ? "transaction-ready" : "transaction-blocked"));
+  g_variant_builder_add(&status, "{sv}", "planned_file_count", g_variant_new_int32(5));
+  g_variant_builder_add(&status, "{sv}", "transaction_step_count", g_variant_new_int32(9));
+  g_variant_builder_add(&status, "{sv}", "rollback_step_count", g_variant_new_int32(7));
+  g_variant_builder_add(&status, "{sv}", "status_signal_count", g_variant_new_int32(5));
+  g_variant_builder_add(&status, "{sv}", "blocked_reason_count", g_variant_new_int32(activation_ready ? 4 : 5));
+  g_variant_builder_add(&status, "{sv}", "next_safe_action_count", g_variant_new_int32(5));
+  g_variant_builder_add(&status, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "activation_ready", g_variant_new_boolean(activation_ready));
+  g_variant_builder_add(&status, "{sv}", "activation_committed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "commit_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "installer_may_proceed", g_variant_new_boolean(activation_ready));
+  g_variant_builder_add(&status, "{sv}", "staging_plan_ready", g_variant_new_boolean(activation_ready));
+  g_variant_builder_add(&status, "{sv}", "rollback_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&status, "{sv}", "rollback_available", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "file_writes_performed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "desktop_files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "mimeapps_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "kde_service_cache_refreshed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&status, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&status);
+}
+
+static GVariant *
 build_kde_integration_status(void)
 {
   static const gchar *entry_point_ids[] = {
@@ -1714,7 +1766,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(56));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(57));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -1867,6 +1919,23 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_activation_transaction_preview(application_id, mode))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDesktopActivationStatus") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *mode = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &mode);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_desktop_activation_status(application_id, mode))
     );
     return;
   }

@@ -25,6 +25,7 @@ module Xnix
         GetRunPlan
         GetDesktopActivationManifest
         GetDesktopActivationTransactionPreview
+        GetDesktopActivationStatus
         GetDesktopEntryPlan
         GetDesktopIconPlan
         GetTaskManagerIdentityPlan
@@ -91,6 +92,7 @@ module Xnix
         "GetRunPlan" => "run_plan",
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetDesktopActivationTransactionPreview" => "desktop_activation_transaction_preview",
+        "GetDesktopActivationStatus" => "desktop_activation_status",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetDesktopIconPlan" => "desktop_icon_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
