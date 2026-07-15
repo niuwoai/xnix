@@ -734,6 +734,7 @@ module Xnix
         kwin_rule = kwin_window_rule_plan(recipe.id)
         file_association = file_association_plan_summary(recipe)
         tray_status = tray_status_summary
+        notification = notification_plan_summary(recipe)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -821,6 +822,20 @@ module Xnix
           "tray_status_live_bridge_enabled" => tray_status.fetch("live_backend_bridge_enabled"),
           "tray_status_bridge_configuration_persisted" => tray_status.fetch("bridge_configuration_persisted"),
           "tray_status_ready" => true,
+          "notification_runtime_method" => "GetNotificationPlan",
+          "notification_plan_type" => notification.fetch("plan_type"),
+          "notification_event_type" => notification.fetch("event_type"),
+          "notification_id" => notification.fetch("notification_id"),
+          "notification_urgency" => notification.fetch("urgency"),
+          "notification_category" => notification.fetch("category"),
+          "notification_title" => notification.fetch("title"),
+          "notification_action_count" => notification.fetch("action_count"),
+          "notification_requires_user_review" => notification.fetch("requires_user_review"),
+          "notification_action_execution_enabled" => notification.fetch("action_execution_enabled"),
+          "notification_repair_execution_enabled" => notification.fetch("repair_execution_enabled"),
+          "notification_settings_persistence_enabled" => notification.fetch("settings_persistence_enabled"),
+          "notification_sent" => false,
+          "notification_ready" => true,
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -874,6 +889,7 @@ module Xnix
           kde_center_page_section("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned"),
           kde_center_page_section("files", "Files", "compatibility-file-association", "GetFileAssociationPlan", "file-association-plan", "planned"),
           kde_center_page_section("tray", "Tray", "compatibility-tray-status", "GetTrayStatus", "tray-status-preview", "planned"),
+          kde_center_page_section("notifications", "Notifications", "compatibility-notification-plan", "GetNotificationPlan", "notification-preview", "planned"),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1621,6 +1637,20 @@ module Xnix
           "tray_status_live_bridge_enabled" => page.fetch("tray_status_live_bridge_enabled"),
           "tray_status_bridge_configuration_persisted" => page.fetch("tray_status_bridge_configuration_persisted"),
           "tray_status_ready" => page.fetch("tray_status_ready"),
+          "notification_runtime_method" => page.fetch("notification_runtime_method"),
+          "notification_plan_type" => page.fetch("notification_plan_type"),
+          "notification_event_type" => page.fetch("notification_event_type"),
+          "notification_id" => page.fetch("notification_id"),
+          "notification_urgency" => page.fetch("notification_urgency"),
+          "notification_category" => page.fetch("notification_category"),
+          "notification_title" => page.fetch("notification_title"),
+          "notification_action_count" => page.fetch("notification_action_count"),
+          "notification_requires_user_review" => page.fetch("notification_requires_user_review"),
+          "notification_action_execution_enabled" => page.fetch("notification_action_execution_enabled"),
+          "notification_repair_execution_enabled" => page.fetch("notification_repair_execution_enabled"),
+          "notification_settings_persistence_enabled" => page.fetch("notification_settings_persistence_enabled"),
+          "notification_sent" => page.fetch("notification_sent"),
+          "notification_ready" => page.fetch("notification_ready"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),
@@ -1859,6 +1889,8 @@ module Xnix
           "event_type" => plan.fetch("event_type"),
           "notification_id" => plan.fetch("notification").fetch("id"),
           "urgency" => plan.fetch("notification").fetch("urgency"),
+          "category" => plan.fetch("notification").fetch("category"),
+          "title" => plan.fetch("notification").fetch("title"),
           "action_count" => plan.fetch("notification").fetch("action_count"),
           "requires_user_review" => plan.fetch("safety").fetch("requires_user_review"),
           "action_execution_enabled" => plan.fetch("safety").fetch("action_execution_enabled"),

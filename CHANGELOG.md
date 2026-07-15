@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.178] - 2026-07-15
+
+### Added
+
+- Added a Go-backed notification plan snapshot to KDE Compatibility Center page previews so Plasma can show approval-required Runtime events, urgency, categories, and safe notification actions without sending notifications, enabling action execution, enabling repair execution, persisting settings, mutating the host root, or exposing backend details.
+- Added a read-only Notifications section to KDE Compatibility Center page navigation and section-detail routing, backed by `GetNotificationPlan`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the twelve-section page model.
+
 ## [0.2.177] - 2026-07-15
 
 ### Added

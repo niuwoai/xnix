@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -247,8 +247,30 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.TrayStatusSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected tray status snapshot: %#v", preview.TrayStatusSnapshot)
 	}
-	if preview.NavigationCount != 11 ||
-		len(preview.Navigation) != 11 ||
+	if preview.NotificationSnapshot.RequestType != "desktop-notification-preview" ||
+		preview.NotificationSnapshot.RuntimeMethod != "GetNotificationPlan" ||
+		preview.NotificationSnapshot.Source != "runtime-event" ||
+		preview.NotificationSnapshot.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.NotificationSnapshot.EventType != "approval-required" ||
+		preview.NotificationSnapshot.NotificationID != "org.example.ledger.approval-required" ||
+		preview.NotificationSnapshot.Urgency != "critical" ||
+		preview.NotificationSnapshot.Category != "compatibility.approval" ||
+		preview.NotificationSnapshot.Title != "Example Ledger needs approval" ||
+		preview.NotificationSnapshot.ActionCount != 2 ||
+		!sameStrings(preview.NotificationSnapshot.Actions, []string{"open-compatibility-center", "review-request"}) ||
+		!preview.NotificationSnapshot.RequiresUserReview ||
+		!preview.NotificationSnapshot.UserVisible ||
+		!preview.NotificationSnapshot.NotificationReady ||
+		preview.NotificationSnapshot.ActionExecutionEnabled ||
+		preview.NotificationSnapshot.RepairExecutionEnabled ||
+		preview.NotificationSnapshot.SettingsPersistenceEnabled ||
+		preview.NotificationSnapshot.NotificationsSent ||
+		preview.NotificationSnapshot.HostRootModified ||
+		preview.NotificationSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected notification snapshot: %#v", preview.NotificationSnapshot)
+	}
+	if preview.NavigationCount != 12 ||
+		len(preview.Navigation) != 12 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
@@ -258,9 +280,10 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.Navigation[5].ID != "window" ||
 		preview.Navigation[6].ID != "files" ||
 		preview.Navigation[7].ID != "tray" ||
-		preview.Navigation[8].ID != "actions" ||
-		preview.Navigation[9].ID != "settings" ||
-		preview.Navigation[10].ID != "diagnostics" {
+		preview.Navigation[8].ID != "notifications" ||
+		preview.Navigation[9].ID != "actions" ||
+		preview.Navigation[10].ID != "settings" ||
+		preview.Navigation[11].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -374,9 +397,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 11 ||
-		preview.ReadOnlySectionCount != 11 ||
-		preview.NavigationOnlySectionCount != 11 ||
+		preview.SectionCount != 12 ||
+		preview.ReadOnlySectionCount != 12 ||
+		preview.NavigationOnlySectionCount != 12 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -396,30 +419,32 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		t.Fatalf("unexpected sections AI analysis link: %#v", preview.AIAnalysis)
 	}
 	wantMethods := map[string]string{
-		"overview":    "GetCompatibilityCenterSummary",
-		"backend":     "GetBackendSelectionPlan",
-		"activation":  "GetDesktopActivationStatus",
-		"execution":   "GetExecutionReadiness",
-		"launch":      "GetLaunchIntent",
-		"window":      "GetTaskManagerIdentityPlan",
-		"files":       "GetFileAssociationPlan",
-		"tray":        "GetTrayStatus",
-		"actions":     "GetCompatibilityActionQueue",
-		"settings":    "GetCompatibilitySettings",
-		"diagnostics": "GetAIDiagnosticInput",
+		"overview":      "GetCompatibilityCenterSummary",
+		"backend":       "GetBackendSelectionPlan",
+		"activation":    "GetDesktopActivationStatus",
+		"execution":     "GetExecutionReadiness",
+		"launch":        "GetLaunchIntent",
+		"window":        "GetTaskManagerIdentityPlan",
+		"files":         "GetFileAssociationPlan",
+		"tray":          "GetTrayStatus",
+		"notifications": "GetNotificationPlan",
+		"actions":       "GetCompatibilityActionQueue",
+		"settings":      "GetCompatibilitySettings",
+		"diagnostics":   "GetAIDiagnosticInput",
 	}
 	wantModels := map[string]string{
-		"overview":    "compatibility-center-summary",
-		"backend":     "backend-selection-preview",
-		"activation":  "desktop-activation-status-preview",
-		"execution":   "execution-readiness-preview",
-		"launch":      "launch-intent-preview",
-		"window":      "window-identity-preview",
-		"files":       "file-association-plan",
-		"tray":        "tray-status-preview",
-		"actions":     "compatibility-center-action-queue",
-		"settings":    "settings-model",
-		"diagnostics": "ai-diagnostic-input",
+		"overview":      "compatibility-center-summary",
+		"backend":       "backend-selection-preview",
+		"activation":    "desktop-activation-status-preview",
+		"execution":     "execution-readiness-preview",
+		"launch":        "launch-intent-preview",
+		"window":        "window-identity-preview",
+		"files":         "file-association-plan",
+		"tray":          "tray-status-preview",
+		"notifications": "notification-preview",
+		"actions":       "compatibility-center-action-queue",
+		"settings":      "settings-model",
+		"diagnostics":   "ai-diagnostic-input",
 	}
 	for _, section := range preview.Sections {
 		if section.RuntimeMethod != wantMethods[section.ID] ||
@@ -501,7 +526,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,tray,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,tray,notifications,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
@@ -599,6 +624,27 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		trayPreview.HostRootModified ||
 		trayPreview.BackendDetailsExposed {
 		t.Fatalf("unexpected tray section detail: %#v", trayPreview)
+	}
+	notificationsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "notifications", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("notifications NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if notificationsPreview.SectionID != "notifications" ||
+		notificationsPreview.SectionLabel != "Notifications" ||
+		notificationsPreview.SectionTarget != "compatibility-notification-plan" ||
+		notificationsPreview.SectionState != "planned" ||
+		notificationsPreview.SectionRuntimeMethod != "GetNotificationPlan" ||
+		notificationsPreview.SectionReadModel != "notification-preview" ||
+		!notificationsPreview.ReadOnlyNavigation ||
+		notificationsPreview.SectionActionsEnabled ||
+		notificationsPreview.RequestObjectsCreated ||
+		notificationsPreview.PermissionGrantCreated ||
+		notificationsPreview.LaunchEnabled ||
+		notificationsPreview.NotificationsSent ||
+		notificationsPreview.ExecutionStarted ||
+		notificationsPreview.HostRootModified ||
+		notificationsPreview.BackendDetailsExposed {
+		t.Fatalf("unexpected notifications section detail: %#v", notificationsPreview)
 	}
 	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
 	if err != nil {

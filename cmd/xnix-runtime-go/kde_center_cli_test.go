@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -236,7 +236,33 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		tray["backend_details_exposed"] != false {
 		t.Fatalf("unexpected tray status snapshot: %#v", tray)
 	}
-	if payload["navigation_count"] != float64(11) ||
+	notification := payload["notification_snapshot"].(map[string]any)
+	notificationActions := notification["actions"].([]any)
+	if notification["request_type"] != "desktop-notification-preview" ||
+		notification["runtime_method"] != "GetNotificationPlan" ||
+		notification["source"] != "runtime-event" ||
+		notification["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		notification["event_type"] != "approval-required" ||
+		notification["notification_id"] != "org.example.ledger.approval-required" ||
+		notification["urgency"] != "critical" ||
+		notification["category"] != "compatibility.approval" ||
+		notification["title"] != "Example Ledger needs approval" ||
+		notification["action_count"] != float64(2) ||
+		len(notificationActions) != 2 ||
+		notificationActions[0] != "open-compatibility-center" ||
+		notificationActions[1] != "review-request" ||
+		notification["requires_user_review"] != true ||
+		notification["user_visible"] != true ||
+		notification["notification_ready"] != true ||
+		notification["action_execution_enabled"] != false ||
+		notification["repair_execution_enabled"] != false ||
+		notification["settings_persistence_enabled"] != false ||
+		notification["notifications_sent"] != false ||
+		notification["host_root_modified"] != false ||
+		notification["backend_details_exposed"] != false {
+		t.Fatalf("unexpected notification snapshot: %#v", notification)
+	}
+	if payload["navigation_count"] != float64(12) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
 		navigation[1].(map[string]any)["id"] != "backend" ||
@@ -246,9 +272,10 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		navigation[5].(map[string]any)["id"] != "window" ||
 		navigation[6].(map[string]any)["id"] != "files" ||
 		navigation[7].(map[string]any)["id"] != "tray" ||
-		navigation[8].(map[string]any)["id"] != "actions" ||
-		navigation[9].(map[string]any)["id"] != "settings" ||
-		navigation[10].(map[string]any)["id"] != "diagnostics" {
+		navigation[8].(map[string]any)["id"] != "notifications" ||
+		navigation[9].(map[string]any)["id"] != "actions" ||
+		navigation[10].(map[string]any)["id"] != "settings" ||
+		navigation[11].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

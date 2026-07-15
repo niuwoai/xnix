@@ -24,6 +24,7 @@ type KDECenterPagePreview struct {
 	WindowIdentitySnapshot     KDECenterPageWindow       `json:"window_identity_snapshot"`
 	FileAssociationSnapshot    KDECenterPageFiles        `json:"file_association_snapshot"`
 	TrayStatusSnapshot         KDECenterPageTray         `json:"tray_status_snapshot"`
+	NotificationSnapshot       KDECenterPageNotification `json:"notification_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -252,6 +253,30 @@ type KDECenterPageTray struct {
 	HostRootModified             bool     `json:"host_root_modified"`
 	BackendDetailsExposed        bool     `json:"backend_details_exposed"`
 	Summary                      string   `json:"summary"`
+}
+
+type KDECenterPageNotification struct {
+	RequestType                string   `json:"request_type"`
+	RuntimeMethod              string   `json:"runtime_method"`
+	Source                     string   `json:"source"`
+	DesktopFile                string   `json:"desktop_file"`
+	EventType                  string   `json:"event_type"`
+	NotificationID             string   `json:"notification_id"`
+	Urgency                    string   `json:"urgency"`
+	Category                   string   `json:"category"`
+	Title                      string   `json:"title"`
+	ActionCount                int      `json:"action_count"`
+	Actions                    []string `json:"actions"`
+	RequiresUserReview         bool     `json:"requires_user_review"`
+	UserVisible                bool     `json:"user_visible"`
+	NotificationReady          bool     `json:"notification_ready"`
+	ActionExecutionEnabled     bool     `json:"action_execution_enabled"`
+	RepairExecutionEnabled     bool     `json:"repair_execution_enabled"`
+	SettingsPersistenceEnabled bool     `json:"settings_persistence_enabled"`
+	NotificationsSent          bool     `json:"notifications_sent"`
+	HostRootModified           bool     `json:"host_root_modified"`
+	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
+	Summary                    string   `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -495,6 +520,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	notification, err := plan.NotificationPreview("approval-required")
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -502,7 +531,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -695,6 +724,29 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			BackendDetailsExposed:        trayStatus.BackendDetailsExposed,
 			Summary:                      trayStatus.Summary,
 		},
+		NotificationSnapshot: KDECenterPageNotification{
+			RequestType:                notification.RequestType,
+			RuntimeMethod:              "GetNotificationPlan",
+			Source:                     notification.Source,
+			DesktopFile:                notification.DesktopFile,
+			EventType:                  notification.EventType,
+			NotificationID:             notification.NotificationID,
+			Urgency:                    notification.Urgency,
+			Category:                   notification.Category,
+			Title:                      notification.Title,
+			ActionCount:                len(notification.Actions),
+			Actions:                    notification.Actions,
+			RequiresUserReview:         notification.RequiresUserReview,
+			UserVisible:                notification.UserVisible,
+			NotificationReady:          true,
+			ActionExecutionEnabled:     notification.ActionExecutionEnabled,
+			RepairExecutionEnabled:     notification.RepairExecutionEnabled,
+			SettingsPersistenceEnabled: notification.SettingsPersistenceEnabled,
+			NotificationsSent:          false,
+			HostRootModified:           notification.HostRootModified,
+			BackendDetailsExposed:      notification.BackendDetailsExposed,
+			Summary:                    notification.Summary,
+		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
 			DeckType:              deck.DeckType,
@@ -762,7 +814,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		BackendDetailsExposed:      false,
 		BlockedActions:             []string{"persist KDE center page from preview state", "enable center page action buttons from preview state", "persist KDE action card deck from center page preview", "persist compatibility settings from center page preview", "record review receipts from center page preview", "create Runtime request objects from center page preview", "grant desktop resources from center page preview", "send desktop notifications from center page preview", "enable live tray bridge from center page preview", "start compatibility profile from center page preview", "mutate host root during KDE center page preview", "expose raw backend command to desktop shell"},
 		UserFacingSettings:         settings.UserFacingSettings,
-		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, window identity, file association, tray status, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, bridge, notify, or start execution.",
+		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, window identity, file association, tray status, notification, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, bridge, notify, or start execution.",
 	}
 	if err := validateNoBackendTerms(preview, "KDE center page preview"); err != nil {
 		return KDECenterPagePreview{}, err
@@ -943,6 +995,7 @@ func kdeCenterPageNavigation() []KDECenterPageNavigation {
 		kdeCenterPageNavigationItem("window", "Window", "compatibility-window-identity"),
 		kdeCenterPageNavigationItem("files", "Files", "compatibility-file-association"),
 		kdeCenterPageNavigationItem("tray", "Tray", "compatibility-tray-status"),
+		kdeCenterPageNavigationItem("notifications", "Notifications", "compatibility-notification-plan"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
 		kdeCenterPageNavigationItem("diagnostics", "Diagnostics", "compatibility-diagnostics"),
@@ -971,6 +1024,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned", "Window reads Runtime-owned task-manager and KWin identity hints while task-manager activation, KWin rule application, execution, and backend policy stay closed."),
 		kdeCenterPageSection("files", "Files", "compatibility-file-association", "GetFileAssociationPlan", "file-association-plan", "planned", "Files read Runtime-owned MIME association and Dolphin open-action plans while MIME writes, direct host-file access, permission grants, and execution stay closed."),
 		kdeCenterPageSection("tray", "Tray", "compatibility-tray-status", "GetTrayStatus", "tray-status-preview", "planned", "Tray reads Runtime-owned compatibility and tray bridge status while live backend tray bridging, persistence, notifications, and execution stay closed."),
+		kdeCenterPageSection("notifications", "Notifications", "compatibility-notification-plan", "GetNotificationPlan", "notification-preview", "planned", "Notifications read Runtime-owned event plans while notification delivery, action execution, repair execution, settings persistence, and host mutation stay closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
 		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),
