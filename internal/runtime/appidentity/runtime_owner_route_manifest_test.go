@@ -12,7 +12,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("NewRuntimeOwnerRouteManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.194" ||
+	if preview.Version != "0.2.195" ||
 		preview.SchemaVersion != "xnix.runtime.owner_route_manifest.v1" ||
 		preview.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.ManifestType != "runtime-owner-route-manifest" ||
@@ -86,7 +86,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		preview.NextRequirements[0] != "Complete native Go owner handlers or owner adapters for every non-Go read-only route." {
 		t.Fatalf("unexpected blocked actions or next requirements: actions=%#v next=%#v", preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, diagnostics, and current Go previews, with C adapter migration still pending." {
+	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, repair and test planning, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending." {
 		t.Fatalf("unexpected route manifest summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner route manifest preview test"); err != nil {
@@ -96,7 +96,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 
 func TestRuntimeOwnerRouteManifestPreviewBlocksMissingRouteSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.194\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.195\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

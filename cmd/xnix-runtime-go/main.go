@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {acquisition-preflight-preview|application-preview|applications-preview|artifact-manifest-preview|backend-binding-preview|backend-capability-matrix-preview|backend-environment-preview|backend-lifecycle-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|package-source-preview|permission-review-preview|portal-request-preview|review-flow-preview|run-plan-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {acquisition-preflight-preview|application-preview|applications-preview|artifact-manifest-preview|backend-binding-preview|backend-capability-matrix-preview|backend-environment-preview|backend-lifecycle-preview|backend-selection-preview|compatibility-center-preview|desktop-activation-bundle-preview|desktop-activation-preflight-preview|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|package-source-preview|permission-review-preview|portal-request-preview|repair-plan-preview|review-flow-preview|run-plan-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|runtime-write-gate-preview|settings-change-preview|settings-preview|test-plan-preview|test-result-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -130,6 +130,8 @@ func run(args []string, stdout io.Writer) error {
 		return runPermissionReviewPreview(args[1:], stdout)
 	case "portal-request-preview":
 		return runPortalRequestPreview(args[1:], stdout)
+	case "repair-plan-preview":
+		return runRepairPlanPreview(args[1:], stdout)
 	case "review-flow-preview":
 		return runReviewFlowPreview(args[1:], stdout)
 	case "run-plan-preview":
@@ -150,10 +152,16 @@ func run(args []string, stdout io.Writer) error {
 		return runRuntimeOwnerSmokePlanPreview(args[1:], stdout)
 	case "runtime-service-binding-preview":
 		return runRuntimeServiceBindingPreview(args[1:], stdout)
+	case "runtime-write-gate-preview":
+		return runRuntimeWriteGatePreview(args[1:], stdout)
 	case "settings-change-preview":
 		return runSettingsChangePreview(args[1:], stdout)
 	case "settings-preview":
 		return runSettingsPreview(args[1:], stdout)
+	case "test-plan-preview":
+		return runTestPlanPreview(args[1:], stdout)
+	case "test-result-preview":
+		return runTestResultPreview(args[1:], stdout)
 	case "tray-status-preview":
 		return runTrayStatusPreview(args[1:], stdout)
 	case "window-identity-preview":
@@ -277,6 +285,122 @@ func runBackendBindingPreview(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(preview)
+}
+
+func runRepairPlanPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, issue, err := parseRepairPlanPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.RepairPlanPreview(issue)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runTestPlanPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, testType, err := parseTestPreviewSource("test-plan-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.TestPlanPreview(testType)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runTestResultPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, testType, err := parseTestPreviewSource("test-result-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.TestResultPreview(testType)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func parseRepairPlanPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+	flags := flag.NewFlagSet("repair-plan-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	issue := flags.String("issue", "", "repair issue type")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+	}
+	if *issue == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("repair-plan-preview requires --issue")
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("repair-plan-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("repair-plan-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("repair-plan-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("repair-plan-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *issue, err
+}
+
+func parseTestPreviewSource(command string, args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+	flags := flag.NewFlagSet(command, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	testType := flags.String("test-type", "preflight", "test type: preflight, smoke, or repair-readiness")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New(command + " requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New(command + " requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New(command + " --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New(command + " does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *testType, err
 }
 
 func runRunPlanPreview(args []string, stdout io.Writer) error {

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.195] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `repair-plan-preview`, `test-plan-preview`, `test-result-preview`, and `runtime-write-gate-preview` for `GetRepairPlan`, `GetTestPlan`, `GetTestResult`, and `GetRuntimeWriteGate`, rendering repair, test, and write-gate planning from Runtime-owned models without executing repairs, starting tests, creating request objects, enabling write dispatch, requiring network access, exposing backend details, or mutating the host root.
+
+### Changed
+
+- Migrated `GetRepairPlan`, `GetTestPlan`, `GetTestResult`, and `GetRuntimeWriteGate` in `runtime-owner-route-manifest-preview` from C Runtime adapter routes to native Go preview routes, reducing the remaining C-backed read-only owner route count.
+- Extended the KDE-first presence smoke to execute the Go `runtime-write-gate-preview --method Launch` path and assert that write dispatch, request creation, execution, network access, privileged containers, and host-root mutation remain disabled.
+
 ## [0.2.194] - 2026-07-15
 
 ### Added

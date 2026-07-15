@@ -156,7 +156,8 @@ def collect_payloads(options)
     "notification-preview" => go_preview(options, "notification-preview", *base_args(options), "--event", "approval-required"),
     "settings-preview" => go_preview(options, "settings-preview", *base_args(options)),
     "runtime-owner-route-manifest-preview" => go_preview(options, "runtime-owner-route-manifest-preview", "--root", "."),
-    "runtime-method-parity-manifest-preview" => go_preview(options, "runtime-method-parity-manifest-preview", "--root", ".")
+    "runtime-method-parity-manifest-preview" => go_preview(options, "runtime-method-parity-manifest-preview", "--root", "."),
+    "runtime-write-gate-preview" => go_preview(options, "runtime-write-gate-preview", "--root", ".", "--method", "Launch")
   }
 end
 
@@ -261,6 +262,18 @@ def assert_method_parity(payload)
   assert(payload.fetch("write_method_dispatch_enabled") == false, "method_parity.write_dispatch", "write dispatch must remain disabled")
 end
 
+def assert_write_gate(payload)
+  assert(payload.fetch("request_type") == "runtime-write-gate-preview", "write_gate.request_type", "write gate preview required")
+  assert(payload.fetch("runtime_method") == "GetRuntimeWriteGate", "write_gate.runtime_method", "write gate must map to Runtime method")
+  assert(payload.fetch("method_name") == "Launch", "write_gate.method", "Launch gate must be evaluated")
+  assert(payload.fetch("write_method_enabled") == false, "write_gate.disabled", "Launch must remain disabled")
+  assert(payload.fetch("dispatch_enabled") == false, "write_gate.dispatch", "write dispatch must remain disabled")
+  assert(payload.fetch("request_object_created") == false, "write_gate.request_object", "write gate preview must not create requests")
+  assert(payload.fetch("execution_started") == false, "write_gate.execution", "write gate preview must not start execution")
+  assert(payload.fetch("denial_error_name") == "org.xnix.Compatibility1.Error.WriteMethodDisabled", "write_gate.error", "write gate error must be explicit")
+  assert(payload.fetch("go_runtime_backed") == true, "write_gate.go_owner", "write gate must be Go Runtime backed")
+end
+
 def run_smoke(options)
   payloads = collect_payloads(options)
   payloads.each_value { |payload| safe_payload?(payload, options.fetch(:file_uri)) }
@@ -282,6 +295,7 @@ def run_smoke(options)
   )
   assert_route_baseline(payloads.fetch("runtime-owner-route-manifest-preview"))
   assert_method_parity(payloads.fetch("runtime-method-parity-manifest-preview"))
+  assert_write_gate(payloads.fetch("runtime-write-gate-preview"))
 
   route_counts = payloads.fetch("runtime-owner-route-manifest-preview").fetch("route_counts")
   puts "PASS: KDE-first presence smoke"

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.194"
+EXPECTED_VERSION = "0.2.195"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -145,12 +145,15 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
+  cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
   internal/runtime/appidentity/engine_catalog.go
   internal/runtime/appidentity/run_plan.go
   internal/runtime/appidentity/identity.go
   internal/runtime/appidentity/identity_test.go
   internal/runtime/appidentity/registry.go
   internal/runtime/appidentity/registry_test.go
+  internal/runtime/appidentity/runtime_write_gate.go
+  internal/runtime/appidentity/runtime_write_gate_test.go
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -906,7 +909,7 @@ runtime_activation_smoke_source = read_project_file("scripts/runtime_activation_
 end
 
 kde_first_presence_smoke_source = read_project_file("scripts/kde_first_presence_smoke.rb")
-%w[desktop-identity-plan desktop-entry-preview mimeapps-preview desktop-activation-bundle-preview desktop-activation-staging-preview desktop-activation-transaction-preview desktop-activation-status-preview kde-entrypoints-preview kde-action-card-deck-preview kde-center-page-preview kde-center-page-sections-preview kde-center-page-section-detail-preview file-open-preview dolphin-drop-preview dolphin-ai-analysis-preview window-identity-preview tray-status-preview notification-preview settings-preview runtime-owner-route-manifest-preview runtime-method-parity-manifest-preview].each do |token|
+%w[desktop-identity-plan desktop-entry-preview mimeapps-preview desktop-activation-bundle-preview desktop-activation-staging-preview desktop-activation-transaction-preview desktop-activation-status-preview kde-entrypoints-preview kde-action-card-deck-preview kde-center-page-preview kde-center-page-sections-preview kde-center-page-section-detail-preview file-open-preview dolphin-drop-preview dolphin-ai-analysis-preview window-identity-preview tray-status-preview notification-preview settings-preview runtime-owner-route-manifest-preview runtime-method-parity-manifest-preview runtime-write-gate-preview].each do |token|
   assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must inspect #{token}")
 end
 %w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |token|
@@ -1023,12 +1026,12 @@ go_runtime_owner_commands_source = read_project_file("cmd/xnix-runtime-go/runtim
 end
 assert(go_runtime_owner_commands_source.include?("runtime-owner-process-preview"), "Go Runtime owner commands must expose Runtime owner process preview")
 assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-preview"), "Go Runtime owner commands must expose Runtime owner route manifest preview")
-%w[NewRuntimeServiceBindingPreview NewRuntimeLiveOwnerGatePreview NewRuntimeOwnerProcessPreview NewRuntimeOwnerSmokePlanPreview NewRuntimeMethodParityManifestPreview NewRuntimeOwnerReadinessPreview NewRuntimeOwnerRouteManifestPreview NewRuntimeOwnerRecipeTrustPreview].each do |token|
+%w[NewRuntimeServiceBindingPreview NewRuntimeLiveOwnerGatePreview NewRuntimeOwnerProcessPreview NewRuntimeOwnerSmokePlanPreview NewRuntimeMethodParityManifestPreview NewRuntimeOwnerReadinessPreview NewRuntimeOwnerRouteManifestPreview NewRuntimeWriteGatePreview NewRuntimeOwnerRecipeTrustPreview].each do |token|
   assert(go_runtime_owner_commands_source.include?(token), "Go Runtime owner commands must call #{token}")
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview runtime-write-gate-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1128,6 +1131,20 @@ assert(runtime_write_gate_source.include?("\"request_object_created\" => false")
 assert(runtime_write_gate_source.include?("\"execution_started\" => false"), "Runtime write gate must not start execution")
 assert(runtime_write_gate_source.include?("\"host_root_modified\" => false"), "Runtime write gate must not mutate the host root")
 assert(runtime_write_gate_source.include?("\"backend_details_exposed\" => false"), "Runtime write gate must hide backend details")
+
+go_runtime_write_gate_source = read_project_file("internal/runtime/appidentity/runtime_write_gate.go")
+%w[RuntimeWriteGatePreview RuntimeWriteGateCheck runtime-write-gate-preview xnix.runtime.write_gate.v1 go-runtime-write-gate GetRuntimeWriteGate GetRuntimeWriteGatePreview InstallRecipe Launch CreateSnapshot RestoreSnapshot blocked-until-production-backend WriteMethodDisabled production-runtime-owner backend-binding-ready recipe-trust-production user-action-review portal-approval-if-sensitive snapshot-preflight-for-risky-change].each do |token|
+  assert(go_runtime_write_gate_source.include?(token), "Go Runtime write gate preview must include #{token}")
+end
+%w[WriteMethodEnabled DispatchEnabled RequestObjectCreated ExecutionStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_write_gate_source.include?(token), "Go Runtime write gate preview must expose safety flag #{token}")
+end
+assert(go_runtime_write_gate_source.include?("validateNoBackendTerms"), "Go Runtime write gate preview must hide backend terms")
+
+go_runtime_write_gate_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_write_gate_cli_test.go")
+%w[runtime-write-gate-preview GetRuntimeWriteGate GetRuntimeWriteGatePreview WriteMethodDisabled].each do |token|
+  assert(go_runtime_write_gate_cli_source.include?(token), "Go Runtime write gate CLI test must include #{token}")
+end
 
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")
 %w[install-failed repair-applied mode-changed approval-required].each do |event_type|

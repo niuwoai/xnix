@@ -87,6 +87,9 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetCompatibilityArtifactManifest":       "artifact-manifest-preview",
 	"GetBackendCapabilityMatrix":             "backend-capability-matrix-preview",
 	"GetBackendLifecycle":                    "backend-lifecycle-preview",
+	"GetRepairPlan":                          "repair-plan-preview",
+	"GetTestPlan":                            "test-plan-preview",
+	"GetTestResult":                          "test-result-preview",
 	"GetDiagnostics":                         "diagnostics-preview",
 	"GetDesktopActivationTransactionPreview": "desktop-activation-transaction-preview",
 	"GetDesktopActivationStatus":             "desktop-activation-status-preview",
@@ -107,6 +110,7 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetRuntimeLiveOwnerGate":                "runtime-live-owner-gate-preview",
 	"GetRuntimeOwnerSmokePlan":               "runtime-owner-smoke-plan-preview",
 	"GetRuntimeMethodParityManifest":         "runtime-method-parity-manifest-preview",
+	"GetRuntimeWriteGate":                    "runtime-write-gate-preview",
 	"GetCompatibilitySettings":               "settings-preview",
 	"GetCompatibilitySettingsChangePlan":     "settings-change-preview",
 	"GetCompatibilityModeSwitchPlan":         "mode-switch-preview",
@@ -129,15 +133,11 @@ var runtimeOwnerRouteCCoreCommands = map[string]string{
 	"GetKWinWindowRulePlan":         "kwin-window-rule-plan",
 	"GetApplicationStateRoot":       "state-root-policy",
 	"GetCompatibilityInstallPlan":   "compatibility-install-plan",
-	"GetRepairPlan":                 "compatibility-repair-plan",
-	"GetTestPlan":                   "compatibility-test-plan",
-	"GetTestResult":                 "compatibility-test-result",
 	"GetAIDiagnosticInput":          "ai-diagnostic-input",
 	"GetAIDiagnosticRecommendation": "ai-diagnostic-recommendation",
 	"GetAIRepairApprovalGate":       "ai-repair-approval-gate",
 	"GetSnapshotPlan":               "compatibility-snapshot-plan",
 	"GetPortalAccessPolicy":         "portal-policy",
-	"GetRuntimeWriteGate":           "write-gate",
 }
 
 func NewRuntimeOwnerRouteManifestPreview(root string) (RuntimeOwnerRouteManifestPreview, error) {
@@ -376,7 +376,7 @@ func runtimeOwnerRouteManifestSummary(routeCounts RuntimeOwnerRouteCounts) strin
 		return "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending."
 	}
 	if routeCounts.CCoreBacked > 0 {
-		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, diagnostics, and current Go previews, with C adapter migration still pending."
+		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, repair and test planning, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending."
 	}
 	return "Runtime owner routes are fully native to the Go owner preview, but production bus ownership remains gated."
 }

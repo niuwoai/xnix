@@ -143,6 +143,29 @@ func runRuntimeOwnerRouteManifestPreview(args []string, stdout io.Writer) error 
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runRuntimeWriteGatePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("runtime-write-gate-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime write gate inputs")
+	methodName := flags.String("method", "", "reserved Runtime write method to evaluate")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *methodName == "" {
+		return errors.New("runtime-write-gate-preview requires --method")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("runtime-write-gate-preview does not accept positional arguments")
+	}
+
+	preview, err := appidentity.NewRuntimeWriteGatePreview(*root, *methodName)
+	if err != nil {
+		return err
+	}
+
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runRuntimeOwnerRecipeTrustPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("runtime-owner-recipe-trust-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
