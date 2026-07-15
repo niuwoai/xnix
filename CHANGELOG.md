@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.206] - 2026-07-16
+
+### Added
+
+- Added `scripts/runtime_contract_drift_report.rb`, a read-only Runtime contract drift gate that compares the D-Bus XML contract, Go method parity list, Go owner route manifest, owner read dispatch methods, Runtime dispatch, D-Bus client, smoke adapter, session smoke, and Go CLI route commands.
+- Added JSON and Markdown contract drift report output plus targeted tests for the stable check set and safety flags.
+
+### Changed
+
+- Updated layout verification to require the Runtime contract drift report, its tests, JSON/Markdown output support, the ten drift checks, and disabled write-method safety fields.
+
 ## [0.2.205] - 2026-07-16
 
 ### Added

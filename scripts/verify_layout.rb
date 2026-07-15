@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.205"
+EXPECTED_VERSION = "0.2.206"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -211,6 +211,7 @@ REQUIRED_FILES = %w[
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
+  scripts/runtime_contract_drift_report.rb
   scripts/runtime_owner_candidate_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
@@ -349,6 +350,7 @@ REQUIRED_FILES = %w[
   test/test_portal_request_model.rb
   test/test_runtime_contract.rb
   test/test_runtime_core.rb
+  test/test_runtime_contract_drift_report.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
@@ -1507,6 +1509,38 @@ assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime c
 runtime_owner_candidate_smoke_source = read_project_file("scripts/runtime_owner_candidate_smoke.rb")
 %w[dbus-run-session xnix-runtime-owner smoke-owner dispatch-read xnix.runtime.owner_candidate.v1 xnix.runtime.owner_read_dispatch.v1 org.xnix.Compatibility1.Error.WriteMethodDisabled session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed].each do |token|
   assert(runtime_owner_candidate_smoke_source.include?(token), "Runtime owner candidate smoke must include #{token}")
+end
+
+runtime_contract_drift_report_source = read_project_file("scripts/runtime_contract_drift_report.rb")
+%w[
+  runtime-contract-drift-report
+  xnix.runtime.contract_drift_report.v1
+  parity-read-methods
+  owner-route-go-methods
+  dbus-client-method-map
+  owner-read-dispatch-local-methods
+  owner-read-dispatch-contract-subset
+  runtime-dispatch
+  dbus-client-definitions
+  smoke-adapter
+  session-smoke
+  go-cli-route-commands
+  json
+  markdown
+  drift_detected
+  write_methods_supported
+  write_method_dispatch_enabled
+  network_required
+  host_root_modified
+  privileged_container_required
+  backend_details_exposed
+].each do |token|
+  assert(runtime_contract_drift_report_source.include?(token), "Runtime contract drift report must include #{token}")
+end
+
+runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
+%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods drift_detected host_root_modified backend_details_exposed].each do |token|
+  assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
 end
 
 settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")
