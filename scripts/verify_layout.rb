@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.197"
+EXPECTED_VERSION = "0.2.198"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -147,10 +147,16 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/main_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
+  cmd/xnix-runtime-go/runtime_safety_commands.go
+  cmd/xnix-runtime-go/runtime_safety_cli_test.go
   cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
   cmd/xnix-runtime-go/test_repair_group_cli_test.go
   internal/runtime/appidentity/engine_catalog.go
   internal/runtime/appidentity/run_plan.go
+  internal/runtime/appidentity/state_root.go
+  internal/runtime/appidentity/snapshot_plan.go
+  internal/runtime/appidentity/portal_access_policy.go
+  internal/runtime/appidentity/runtime_safety_plans_test.go
   internal/runtime/appidentity/identity.go
   internal/runtime/appidentity/identity_test.go
   internal/runtime/appidentity/registry.go
@@ -165,6 +171,12 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/test_plan_test.go
   internal/runtime/appidentity/test_result.go
   internal/runtime/appidentity/test_result_test.go
+  internal/runtime/portal/broker.go
+  internal/runtime/portal/broker_test.go
+  internal/runtime/portal/request.go
+  internal/runtime/portal/request_test.go
+  internal/runtime/snapshot/store.go
+  internal/runtime/snapshot/store_test.go
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -1042,7 +1054,7 @@ assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-p
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview state-root-preview snapshot-plan-preview portal-access-policy-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1171,6 +1183,61 @@ assert(go_runtime_write_gate_source.include?("validateNoBackendTerms"), "Go Runt
 go_runtime_write_gate_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_write_gate_cli_test.go")
 %w[runtime-write-gate-preview GetRuntimeWriteGate GetRuntimeWriteGatePreview WriteMethodDisabled].each do |token|
   assert(go_runtime_write_gate_cli_source.include?(token), "Go Runtime write gate CLI test must include #{token}")
+end
+
+go_runtime_safety_source = [
+  read_project_file("internal/runtime/appidentity/state_root.go"),
+  read_project_file("internal/runtime/appidentity/snapshot_plan.go"),
+  read_project_file("internal/runtime/appidentity/portal_access_policy.go")
+].join("\n")
+%w[ApplicationStateRootPreview SnapshotPlanPreview PortalAccessPolicyPreview state-root-preview snapshot-plan-preview portal-access-policy-preview xnix.runtime.state_root.v1 xnix.runtime.snapshot_plan.v1 xnix.runtime.portal_access_policy.v1 GetApplicationStateRoot GetApplicationStateRootPreview GetSnapshotPlan GetSnapshotPlanPreview GetPortalAccessPolicy GetPortalAccessPolicyPreview go-runtime-state-root go-runtime-snapshot-plan go-runtime-portal-access-policy application-data runtime-metadata diagnostic-cache desktop-activation-receipts before-repair before-engine-change manual file-open camera remote-desktop].each do |token|
+  assert(go_runtime_safety_source.include?(token), "Go Runtime safety previews must include #{token}")
+end
+%w[DirectoriesCreated HostRootModified UserDocumentsIncluded PortalRequiredForUserFiles SnapshotEligible RestoreRequiresConfirm SnapshotRequestCreated SnapshotCreated RestoreRequested RestoreExecuted DirectAccessAllowed RequestObjectCreated PermissionGranted HostPermissionChanged NetworkRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_safety_source.include?(token), "Go Runtime safety previews must expose safety flag #{token}")
+end
+assert(go_runtime_safety_source.include?("validateNoBackendTerms"), "Go Runtime safety previews must hide backend terms")
+
+go_runtime_safety_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_safety_commands.go")
+%w[runStateRootPreview runSnapshotPlanPreview runPortalAccessPolicyPreview state-root-preview snapshot-plan-preview portal-access-policy-preview].each do |token|
+  assert(go_runtime_safety_cli_source.include?(token), "Go Runtime safety CLI must include #{token}")
+end
+
+snapshot_store_source = read_project_file("internal/runtime/snapshot/store.go")
+%w[Package snapshot Store Manifest RollbackReceipt New Create List Verify Restore .xnix-snapshots host_root_touched filepath.Rel sha256].each do |token|
+  assert(snapshot_store_source.include?(token), "Snapshot store must include #{token}")
+end
+%w[validSnapshotID within manifestContentHash writeObject load objectPath manifestPath].each do |token|
+  assert(snapshot_store_source.include?(token), "Snapshot store must implement #{token}")
+end
+assert(snapshot_store_source.include?("filepath.SkipDir"), "Snapshot store must skip its private metadata directory")
+assert(snapshot_store_source.include?("d.Type().IsRegular()"), "Snapshot store must snapshot only regular files")
+assert(snapshot_store_source.include?("HostRootTouched: false"), "Snapshot rollback receipts must keep host-root mutation false")
+
+snapshot_store_test_source = read_project_file("internal/runtime/snapshot/store_test.go")
+%w[TestCreateVerifyList TestRestoreRollsBackFixtureState TestVerifyDetectsCorruption TestStoreRefusesPathsOutsideRoot TestMissingStateRootFails].each do |token|
+  assert(snapshot_store_test_source.include?(token), "Snapshot store tests must include #{token}")
+end
+
+portal_broker_source = [
+  read_project_file("internal/runtime/portal/request.go"),
+  read_project_file("internal/runtime/portal/broker.go")
+].join("\n")
+%w[Package portal Broker FakeBroker NewFakeBroker CreateRequest Resolve Complete Cancel Get List RequestSpec Request RequestState PermissionState PortalDestination PortalObjectPath SupportedOperations pending-user-mediation granted denied cancelled failed completed org.freedesktop.portal.Desktop org.freedesktop.portal.FileChooser org.freedesktop.portal.OpenURI org.freedesktop.portal.Print org.freedesktop.portal.Screenshot org.freedesktop.portal.Clipboard org.freedesktop.portal.Camera org.freedesktop.portal.RemoteDesktop file-open uri-open print screenshot clipboard camera remote-desktop].each do |token|
+  assert(portal_broker_source.include?(token), "Portal broker must include #{token}")
+end
+%w[UserMediationRequired RequestObjectRequired DirectAccessAllowed Recoverable HostPermissionChanged BackendDetailsExposed PermissionPending PermissionGranted PermissionDenied PermissionNotGranted OutcomeGranted OutcomeDenied OutcomeCancelled OutcomeFailed].each do |token|
+  assert(portal_broker_source.include?(token), "Portal broker must expose #{token}")
+end
+assert(portal_broker_source.include?("applicationIDPattern"), "Portal broker must validate application ids")
+assert(portal_broker_source.include?("handleToken"), "Portal broker must create deterministic request handles")
+
+portal_broker_test_source = [
+  read_project_file("internal/runtime/portal/request_test.go"),
+  read_project_file("internal/runtime/portal/broker_test.go")
+].join("\n")
+%w[TestNewRequestAskOperationStartsPending TestNewRequestDenyOperationIsTerminal TestNewRequestRejectsBadInput TestSupportedOperationsSorted TestFakeBrokerGrantThenCompleteFlow TestFakeBrokerFailedIsRecoverableThenRetried TestFakeBrokerCompleteRequiresGrant TestFakeBrokerCancelPending TestFakeBrokerListAndGetTrackInCreationOrder].each do |token|
+  assert(portal_broker_test_source.include?(token), "Portal broker tests must include #{token}")
 end
 
 notification_source = read_project_file("lib/xnix/compatibility/notification_request.rb")

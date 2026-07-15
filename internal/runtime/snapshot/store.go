@@ -249,7 +249,7 @@ func (s *Store) Restore(id string) (RollbackReceipt, error) {
 		want[file.Path] = file
 	}
 
-	receipt := RollbackReceipt{SnapshotID: id}
+	receipt := RollbackReceipt{SnapshotID: id, HostRootTouched: false}
 
 	// Remove currently-captured files that the snapshot does not contain.
 	current, err := s.currentFiles()

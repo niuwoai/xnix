@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.198] - 2026-07-15
+
+### Added
+
+- Added a constrained Go content-addressed snapshot store for Runtime-owned state roots, with create, list, verify, and rollback operations confined to the configured state root and guarded against host-root mutation.
+- Added a Go Runtime Portal request broker package with explicit request creation, fake test transport, recoverable failure states, permission-state tracking, and deterministic request handles for future XDG Desktop Portal integration.
+
+### Changed
+
+- Aligned repository version metadata and product documentation with the current P7/P8 Runtime implementation commits while keeping production backend launch, real Portal calls, privileged operations, and host-root writes disabled.
+
 ## [0.2.197] - 2026-07-15
 
 ### Added
