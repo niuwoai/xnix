@@ -560,6 +560,7 @@ build_settings_change_plan(const gchar *application_id,
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("settings-change-plan"));
+  add_go_owner_dispatch_bridge_fields5(&plan, "GetCompatibilitySettingsChangePlan", application_id, section_id, field_id, value, NULL);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "section_id", g_variant_new_string(section_id));
   g_variant_builder_add(&plan, "{sv}", "field_id", g_variant_new_string(field_id));
@@ -604,6 +605,7 @@ build_compatibility_mode_switch_plan(const gchar *application_id,
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-mode-switch-plan"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetCompatibilityModeSwitchPlan", application_id, requested_mode);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityModeSwitchPlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "current_mode", g_variant_new_string("automatic"));
@@ -652,6 +654,7 @@ build_compatibility_permission_review_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-permission-review-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetCompatibilityPermissionReviewPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityPermissionReviewPlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "review_state", g_variant_new_string("planned"));
@@ -704,6 +707,7 @@ build_compatibility_review_flow_plan(
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-review-flow-plan"));
+  add_go_owner_dispatch_bridge_fields5(&plan, "GetCompatibilityReviewFlowPlan", application_id, section_id, field_id, value, operation);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetCompatibilityReviewFlowPlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "review_state", g_variant_new_string("planned"));
@@ -744,6 +748,7 @@ build_action_queue(const gchar *application_id)
 
   g_variant_builder_init(&queue, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&queue, "{sv}", "queue_type", g_variant_new_string("compatibility-center-action-queue"));
+  add_go_owner_dispatch_bridge_fields(&queue, "GetCompatibilityActionQueue", application_id);
   g_variant_builder_add(&queue, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&queue, "{sv}", "surface", g_variant_new_string("Compatibility Center"));
   g_variant_builder_add(&queue, "{sv}", "action_count", g_variant_new_int32(5));
@@ -765,6 +770,7 @@ build_action_review_receipt(const gchar *application_id, const gchar *action_id,
 
   g_variant_builder_init(&receipt, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&receipt, "{sv}", "receipt_type", g_variant_new_string("compatibility-center-action-review-receipt"));
+  add_go_owner_dispatch_bridge_fields3(&receipt, "GetCompatibilityActionReviewReceipt", application_id, action_id, decision);
   g_variant_builder_add(&receipt, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&receipt, "{sv}", "action_id", g_variant_new_string(action_id));
   g_variant_builder_add(&receipt, "{sv}", "decision", g_variant_new_string(decision));

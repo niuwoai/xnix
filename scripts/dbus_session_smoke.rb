@@ -229,6 +229,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityModeSwitchPlan: #{stderr}")
   assert(stdout.include?("compatibility-mode-switch-plan"), "runtime smoke adapter must expose compatibility mode switch plans over D-Bus")
   assert(stdout.include?("settings_persistence_enabled"), "runtime smoke adapter must keep mode switch persistence gated")
+  assert_go_owner_bridge(stdout, "GetCompatibilityModeSwitchPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -241,6 +242,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityPermissionReviewPlan: #{stderr}")
   assert(stdout.include?("compatibility-permission-review-plan"), "runtime smoke adapter must expose compatibility permission review plans over D-Bus")
   assert(stdout.include?("permissions_granted"), "runtime smoke adapter must keep permission grants gated")
+  assert_go_owner_bridge(stdout, "GetCompatibilityPermissionReviewPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -257,6 +259,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityReviewFlowPlan: #{stderr}")
   assert(stdout.include?("compatibility-review-flow-plan"), "runtime smoke adapter must expose compatibility review flow plans over D-Bus")
   assert(stdout.include?("request_object_created"), "runtime smoke adapter must keep review flow request creation gated")
+  assert_go_owner_bridge(stdout, "GetCompatibilityReviewFlowPlan")
 
   stdout, stderr, status = Open3.capture3(
     "ruby",
@@ -707,6 +710,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilitySettingsChangePlan: #{stderr}")
   assert(stdout.include?("settings-change-plan"), "runtime smoke adapter must expose settings change plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilitySettingsChangePlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -718,6 +722,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityActionQueue: #{stderr}")
   assert(stdout.include?("compatibility-center-action-queue"), "runtime smoke adapter must expose Compatibility Center action queues over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityActionQueue")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -726,11 +731,12 @@ begin
     "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetCompatibilityActionReviewReceipt",
     "org.xnix.sample.notepad",
-    "review-ai-repair",
+    "review-file-manager-action",
     "approved"
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityActionReviewReceipt: #{stderr}")
   assert(stdout.include?("compatibility-center-action-review-receipt"), "runtime smoke adapter must expose action review receipts over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityActionReviewReceipt")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

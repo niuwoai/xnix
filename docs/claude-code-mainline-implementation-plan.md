@@ -1,6 +1,6 @@
 # Claude Code Mainline Implementation Plan
 
-> Last updated: 2026-07-16 | Baseline: v0.2.231
+> Last updated: 2026-07-16 | Baseline: v0.2.232
 
 This document is the mainline handoff plan for giving large, relatively independent Xnix implementation packages to Claude Code.
 
@@ -9,6 +9,7 @@ Use it when the goal is to convert contract-only or preview-heavy domains into d
 This file is intentionally shorter than the detailed package catalogs:
 
 - `docs/claude-code-domain-dispatch.md`
+- `docs/claude-code-contract-to-implementation-task-board.md`
 - `docs/claude-code-large-empty-domain-assignments.md`
 - `docs/claude-code-empty-domain-implementation-packages.md`
 - `docs/claude-code-contract-gap-work-packages.md`

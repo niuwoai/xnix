@@ -1,6 +1,6 @@
 # Claude Code Domain Dispatch
 
-> Last updated: 2026-07-16 | Baseline: v0.2.231
+> Last updated: 2026-07-16 | Baseline: v0.2.232
 
 This document is the dispatch board for assigning large, relatively independent Xnix implementation domains to Claude Code.
 
@@ -10,6 +10,7 @@ Use this when the repository has contracts, previews, or read models for a domai
 
 - `docs/claude-code-mainline-implementation-plan.md` gives the strategic sequence.
 - `docs/claude-code-next-implementation-assignments.md` is the short copyable board for handing the next large implementation packages to Claude Code.
+- `docs/claude-code-contract-to-implementation-task-board.md` is the practical task board for converting empty or thin contract domains into durable implementation evidence.
 - `docs/claude-code-large-empty-domain-assignments.md` gives branch-sized empty-domain assignments.
 - `docs/claude-code-empty-domain-implementation-packages.md` defines evidence levels and completion rules.
 - `docs/claude-code-contract-gap-work-packages.md` lists finer contract gaps.

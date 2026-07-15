@@ -1,6 +1,6 @@
 # Claude Code Next Implementation Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.231
+> Last updated: 2026-07-16 | Baseline: v0.2.232
 
 This document is a short assignment board for giving Claude Code large, relatively independent Xnix implementation work.
 
@@ -9,6 +9,7 @@ Use it when the current problem is: "the contract exists, but durable implementa
 This document does not replace or modify `docs/claude-code-implementation-packages.md`. For deeper background, read:
 
 - `docs/claude-code-domain-dispatch.md`
+- `docs/claude-code-contract-to-implementation-task-board.md`
 - `docs/claude-code-large-empty-domain-assignments.md`
 - `docs/claude-code-empty-domain-implementation-packages.md`
 - `docs/claude-code-contract-gap-work-packages.md`

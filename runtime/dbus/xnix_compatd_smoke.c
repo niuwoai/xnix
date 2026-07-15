@@ -6,16 +6,18 @@
 static GDBusNodeInfo *introspection_data = NULL;
 
 static gchar *
-go_owner_read_dispatch3(const gchar *method_name,
+go_owner_read_dispatch5(const gchar *method_name,
                         const gchar *dispatch_arg,
                         const gchar *second_dispatch_arg,
-                        const gchar *third_dispatch_arg)
+                        const gchar *third_dispatch_arg,
+                        const gchar *fourth_dispatch_arg,
+                        const gchar *fifth_dispatch_arg)
 {
   gchar *stdout_data = NULL;
   gchar *stderr_data = NULL;
   GError *error = NULL;
   gint wait_status = 0;
-  gchar *argv[9] = {0};
+  gchar *argv[11] = {0};
 
   argv[0] = "xnix-runtime-owner";
   argv[1] = "--root";
@@ -25,7 +27,9 @@ go_owner_read_dispatch3(const gchar *method_name,
   argv[5] = (gchar *)dispatch_arg;
   argv[6] = (gchar *)second_dispatch_arg;
   argv[7] = (gchar *)third_dispatch_arg;
-  argv[8] = NULL;
+  argv[8] = (gchar *)fourth_dispatch_arg;
+  argv[9] = (gchar *)fifth_dispatch_arg;
+  argv[10] = NULL;
 
   if (!g_spawn_sync(NULL,
                     argv,
@@ -58,6 +62,15 @@ go_owner_read_dispatch3(const gchar *method_name,
 }
 
 static gchar *
+go_owner_read_dispatch3(const gchar *method_name,
+                        const gchar *dispatch_arg,
+                        const gchar *second_dispatch_arg,
+                        const gchar *third_dispatch_arg)
+{
+  return go_owner_read_dispatch5(method_name, dispatch_arg, second_dispatch_arg, third_dispatch_arg, NULL, NULL);
+}
+
+static gchar *
 go_owner_read_dispatch(const gchar *method_name,
                        const gchar *dispatch_arg,
                        const gchar *second_dispatch_arg)
@@ -72,10 +85,13 @@ go_owner_write_gate_dispatch(const gchar *method_name)
 }
 
 static void
-add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
+add_go_owner_dispatch_bridge_fields5(GVariantBuilder *builder,
                                      const gchar *method_name,
                                      const gchar *dispatch_arg,
-                                     const gchar *second_dispatch_arg)
+                                     const gchar *second_dispatch_arg,
+                                     const gchar *third_dispatch_arg,
+                                     const gchar *fourth_dispatch_arg,
+                                     const gchar *fifth_dispatch_arg)
 {
   gchar *go_owner_dispatch_json = NULL;
   gboolean go_owner_dispatch_available = FALSE;
@@ -83,7 +99,12 @@ add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
   if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
     go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
   } else {
-    go_owner_dispatch_json = go_owner_read_dispatch(method_name, dispatch_arg, second_dispatch_arg);
+    go_owner_dispatch_json = go_owner_read_dispatch5(method_name,
+                                                    dispatch_arg,
+                                                    second_dispatch_arg,
+                                                    third_dispatch_arg,
+                                                    fourth_dispatch_arg,
+                                                    fifth_dispatch_arg);
   }
   go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
 
@@ -95,27 +116,22 @@ add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
 }
 
 static void
+add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
+                                     const gchar *method_name,
+                                     const gchar *dispatch_arg,
+                                     const gchar *second_dispatch_arg)
+{
+  add_go_owner_dispatch_bridge_fields5(builder, method_name, dispatch_arg, second_dispatch_arg, NULL, NULL, NULL);
+}
+
+static void
 add_go_owner_dispatch_bridge_fields3(GVariantBuilder *builder,
                                      const gchar *method_name,
                                      const gchar *dispatch_arg,
                                      const gchar *second_dispatch_arg,
                                      const gchar *third_dispatch_arg)
 {
-  gchar *go_owner_dispatch_json = NULL;
-  gboolean go_owner_dispatch_available = FALSE;
-
-  if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
-    go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
-  } else {
-    go_owner_dispatch_json = go_owner_read_dispatch3(method_name, dispatch_arg, second_dispatch_arg, third_dispatch_arg);
-  }
-  go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
-
-  g_variant_builder_add(builder, "{sv}", "read_model_source", g_variant_new_string("go-runtime-owner-dispatch+c-smoke-bridge"));
-  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
-  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
-  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
-  g_free(go_owner_dispatch_json);
+  add_go_owner_dispatch_bridge_fields5(builder, method_name, dispatch_arg, second_dispatch_arg, third_dispatch_arg, NULL, NULL);
 }
 
 static void

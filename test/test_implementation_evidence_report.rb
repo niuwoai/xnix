@@ -82,6 +82,13 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("install
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("backend lifecycle payloads"), "Runtime owner service summary must mention backend lifecycle bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("execution readiness payloads"), "Runtime owner service summary must mention execution readiness bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("AI safety payloads"), "Runtime owner service summary must mention AI safety bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("settings/review payloads"), "Runtime owner service summary must mention settings/review bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("Compatibility Center action payloads"), "Runtime owner service summary must mention Compatibility Center action bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
+    entry.fetch("token") == "add_go_owner_dispatch_bridge_fields5" &&
+    entry.fetch("present")
+}, "Runtime owner service must track five-argument C bridge helper evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "state-root-implemented", "recipe and artifact trust pipeline must show state-root implementation evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("mainline_package") == "M2", "recipe and artifact trust pipeline must map to M2")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")

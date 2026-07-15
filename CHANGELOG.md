@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.232] - 2026-07-16
+
+### Added
+
+- Added `docs/claude-code-contract-to-implementation-task-board.md`, a practical Claude Code task board for converting thin contract domains into durable implementation evidence without touching the existing implementation package guide.
+- Extended the constrained C D-Bus smoke bridge so settings and review reads carry Go owner read-dispatch payload evidence: settings change plan, compatibility mode switch plan, permission review plan, review flow plan, Compatibility Center action queue, and action review receipt.
+- Added restricted session smoke assertions that prove settings, review, and Compatibility Center action reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without persisting settings, granting permissions, creating Portal requests, executing actions, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Extended the C D-Bus Go owner bridge helper to support five-argument read dispatch for review-flow routes while preserving existing one-, two-, and three-argument bridges.
+- Linked the contract-to-implementation task board from the Claude Code dispatch, next-assignment, and mainline handoff documents.
+- Updated Runtime contract drift and implementation evidence reports to track settings/review and Compatibility Center action reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.231] - 2026-07-16
 
 ### Added
