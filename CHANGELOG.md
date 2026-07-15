@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.227] - 2026-07-16
+
+### Added
+
+- Added `docs/claude-code-domain-dispatch.md`, a first-stop dispatch board for assigning large independent Claude Code implementation domains when Runtime contracts exist but durable implementation evidence is still thin.
+- Added D1 through D10 dispatch prompts covering Runtime owner process boundaries, recipe/artifact/install trust, state-root lifecycle, Portal/snapshot safety, KDE activation, execution transactions, diagnostics/repair/AI, developer evidence gates, KDE/QEMU acceptance, and Runtime packaging/service binding.
+
+### Changed
+
+- Linked the new dispatch board from the mainline handoff, large empty-domain assignment map, README, Product Overview, and layout verification so future Claude Code branches can start from a convergent task index instead of wandering through overlapping package catalogs.
+
 ## [0.2.226] - 2026-07-16
 
 ### Added

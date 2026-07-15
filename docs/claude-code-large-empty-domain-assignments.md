@@ -1,6 +1,6 @@
 # Claude Code Large Empty-Domain Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.226
+> Last updated: 2026-07-16 | Baseline: v0.2.227
 
 This document is a coarse assignment map for handing large, relatively independent Xnix domains to Claude Code.
 
@@ -8,6 +8,7 @@ Use it when the current problem is: "the contract exists, but the domain still h
 
 ## Relationship to Other Handoff Documents
 
+- `docs/claude-code-domain-dispatch.md` is the first dispatch board for choosing large independent domains.
 - `docs/claude-code-mainline-implementation-plan.md` is the strategic mainline plan.
 - `docs/claude-code-contract-gap-work-packages.md` is the finer contract-gap package list.
 - `docs/claude-code-empty-domain-implementation-packages.md` defines evidence levels and completion rules.
