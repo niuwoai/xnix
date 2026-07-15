@@ -3,6 +3,7 @@ package owner
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
@@ -43,7 +44,373 @@ type ReadDispatch struct {
 
 type ownerReadPayloadBuilder func(root string, args []string) (any, error)
 
+const (
+	defaultOwnerApplicationID = "org.xnix.sample.notepad"
+	ownerDispatchReason       = "runtime-owner-dispatch"
+	ownerDispatchDecision     = "reviewed"
+)
+
+var ownerReadDispatchMethodOrder = []string{
+	"ListApplications",
+	"GetApplication",
+	"GetDiagnostics",
+	"GetEngineCatalog",
+	"GetRunPlan",
+	"GetDesktopActivationManifest",
+	"GetDesktopActivationTransactionPreview",
+	"GetDesktopActivationStatus",
+	"GetDesktopEntryPlan",
+	"GetDesktopIconPlan",
+	"GetTaskManagerIdentityPlan",
+	"GetKDEIntegrationStatus",
+	"GetKDEShellIntegrationPlan",
+	"GetKDEApplicationSurfacePlan",
+	"GetDesktopResourceBridgePlan",
+	"GetKWinWindowRulePlan",
+	"GetFileAssociationPlan",
+	"GetNotificationPlan",
+	"GetTrayStatus",
+	"GetKRunnerQueryPlan",
+	"GetPortalRequestPlan",
+	"GetApplicationStateRoot",
+	"GetCompatibilityPackageSource",
+	"GetCompatibilityAcquisitionPreflight",
+	"GetCompatibilityArtifactManifest",
+	"GetCompatibilityInstallPlan",
+	"GetBackendBinding",
+	"GetBackendCapabilityMatrix",
+	"GetBackendSelectionPlan",
+	"GetBackendLifecycle",
+	"GetBackendEnvironmentPlan",
+	"GetRepairPlan",
+	"GetTestPlan",
+	"GetTestResult",
+	"GetExecutionReadiness",
+	"GetLaunchIntent",
+	"GetAIDiagnosticInput",
+	"GetAIDiagnosticRecommendation",
+	"GetAIRepairApprovalGate",
+	"GetSnapshotPlan",
+	"GetPortalAccessPolicy",
+	"GetRuntimeServiceBinding",
+	"GetRuntimeLiveOwnerGate",
+	"GetRuntimeOwnerSmokePlan",
+	"GetRuntimeMethodParityManifest",
+	"GetRuntimeWriteGate",
+	"GetCompatibilitySettings",
+	"GetCompatibilitySettingsChangePlan",
+	"GetCompatibilityModeSwitchPlan",
+	"GetCompatibilityPermissionReviewPlan",
+	"GetCompatibilityReviewFlowPlan",
+	"GetCompatibilityActionQueue",
+	"GetCompatibilityActionReviewReceipt",
+	"GetCompatibilityCenterSummary",
+	"GetKDECenterPage",
+	"GetKDECenterPageSections",
+	"GetKDECenterPageSectionDetail",
+	"GetRuntimeOwnerProcess",
+	"GetRuntimeOwnerRouteManifest",
+	"GetRuntimeOwnerRecipeTrust",
+	"GetRuntimeOwnerReadiness",
+}
+
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
+	"ListApplications": func(root string, args []string) (any, error) {
+		if err := requireArgCount("ListApplications", args, 0); err != nil {
+			return nil, err
+		}
+		recipes, provenance, err := ownerRecipes(root)
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewApplicationsPreview(recipes, provenance)
+	},
+	"GetApplication": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetApplication", args, 1); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewApplicationPreview(recipe, provenance)
+	},
+	"GetDiagnostics": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetDiagnostics", args, 1); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewDiagnosticsPreview(recipe, provenance)
+	},
+	"GetEngineCatalog": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetEngineCatalog", args, 0); err != nil {
+			return nil, err
+		}
+		return appidentity.NewEngineCatalogPreview()
+	},
+	"GetRunPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetRunPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.RunPlanPreview()
+	},
+	"GetDesktopActivationManifest": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopActivationManifest", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.DesktopActivationManifestPreview()
+	},
+	"GetDesktopActivationTransactionPreview": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopActivationTransactionPreview", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.DesktopActivationTransactionPreview(args[1])
+	},
+	"GetDesktopActivationStatus": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopActivationStatus", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.DesktopActivationStatusPreview(args[1])
+	},
+	"GetDesktopEntryPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopEntryPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.RenderDesktopEntry()
+	},
+	"GetDesktopIconPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopIconPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.DesktopIconPreview()
+	},
+	"GetTaskManagerIdentityPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetTaskManagerIdentityPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.TaskManagerIdentityPlanPreview()
+	},
+	"GetKDEIntegrationStatus": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDEIntegrationStatus", args, 0); err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDEIntegrationStatusPreview()
+	},
+	"GetKDEShellIntegrationPlan": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDEShellIntegrationPlan", args, 0); err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDEShellIntegrationPlanPreview()
+	},
+	"GetKDEApplicationSurfacePlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetKDEApplicationSurfacePlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.KDEApplicationSurfacePlanPreview()
+	},
+	"GetDesktopResourceBridgePlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetDesktopResourceBridgePlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.DesktopResourceBridgePreview()
+	},
+	"GetKWinWindowRulePlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetKWinWindowRulePlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.KWinWindowRulePlanPreview()
+	},
+	"GetFileAssociationPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetFileAssociationPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.RenderMIMEApps()
+	},
+	"GetNotificationPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetNotificationPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.NotificationPreview(args[1])
+	},
+	"GetTrayStatus": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetTrayStatus", args, 0); err != nil {
+			return nil, err
+		}
+		plan, err := ownerPlan(root, defaultOwnerApplicationID)
+		if err != nil {
+			return nil, err
+		}
+		return plan.TrayStatusPreview()
+	},
+	"GetKRunnerQueryPlan": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKRunnerQueryPlan", args, 1); err != nil {
+			return nil, err
+		}
+		recipes, provenance, err := ownerRecipes(root)
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewKRunnerQueryPreview(recipes, provenance, args[0])
+	},
+	"GetPortalRequestPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetPortalRequestPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.PortalRequestPreview(args[1], ownerDispatchReason)
+	},
+	"GetApplicationStateRoot": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetApplicationStateRoot", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.ApplicationStateRootPreview()
+	},
+	"GetCompatibilityPackageSource": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityPackageSource", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.PackageSourcePreview()
+	},
+	"GetCompatibilityAcquisitionPreflight": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityAcquisitionPreflight", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.AcquisitionPreflightPreview()
+	},
+	"GetCompatibilityArtifactManifest": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityArtifactManifest", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.ArtifactManifestPreview()
+	},
+	"GetCompatibilityInstallPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityInstallPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.CompatibilityInstallPlanPreview(args[1])
+	},
+	"GetBackendBinding": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetBackendBinding", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.BackendBindingPreview()
+	},
+	"GetBackendCapabilityMatrix": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetBackendCapabilityMatrix", args, 0); err != nil {
+			return nil, err
+		}
+		return appidentity.NewBackendCapabilityMatrixPreview()
+	},
+	"GetBackendSelectionPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetBackendSelectionPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.BackendSelectionPreview()
+	},
+	"GetBackendLifecycle": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetBackendLifecycle", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.BackendLifecyclePreview()
+	},
+	"GetBackendEnvironmentPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetBackendEnvironmentPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.BackendEnvironmentPreview()
+	},
+	"GetRepairPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetRepairPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.RepairPlanPreview(args[1])
+	},
+	"GetTestPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetTestPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.TestPlanPreview(args[1])
+	},
+	"GetTestResult": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetTestResult", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.TestResultPreview(args[1])
+	},
+	"GetExecutionReadiness": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetExecutionReadiness", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.ExecutionReadinessPreview()
+	},
+	"GetLaunchIntent": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetLaunchIntent", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.LaunchIntentPreview(nil)
+	},
+	"GetAIDiagnosticInput": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetAIDiagnosticInput", args, 3)
+		if err != nil {
+			return nil, err
+		}
+		return plan.AIDiagnosticInputPreview(args[1], args[2])
+	},
+	"GetAIDiagnosticRecommendation": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetAIDiagnosticRecommendation", args, 3)
+		if err != nil {
+			return nil, err
+		}
+		return plan.AIDiagnosticRecommendationPreview(args[1], args[2])
+	},
+	"GetAIRepairApprovalGate": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetAIRepairApprovalGate", args, 3)
+		if err != nil {
+			return nil, err
+		}
+		return plan.AIRepairApprovalGatePreview(args[1], args[2])
+	},
+	"GetSnapshotPlan": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetSnapshotPlan", args, 2); err != nil {
+			return nil, err
+		}
+		return appidentity.NewSnapshotPlanPreview(args[0], args[1])
+	},
+	"GetPortalAccessPolicy": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetPortalAccessPolicy", args, 2); err != nil {
+			return nil, err
+		}
+		return appidentity.NewPortalAccessPolicyPreview(args[0], args[1])
+	},
 	"GetRuntimeServiceBinding": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeServiceBinding", args, 0); err != nil {
 			return nil, err
@@ -97,6 +464,95 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 			return nil, err
 		}
 		return appidentity.NewRuntimeWriteGatePreview(root, args[0])
+	},
+	"GetCompatibilitySettings": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilitySettings", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.SettingsPreview()
+	},
+	"GetCompatibilitySettingsChangePlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilitySettingsChangePlan", args, 4)
+		if err != nil {
+			return nil, err
+		}
+		return plan.SettingsChangePreview(args[1], args[2], args[3])
+	},
+	"GetCompatibilityModeSwitchPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityModeSwitchPlan", args, 2)
+		if err != nil {
+			return nil, err
+		}
+		return plan.ModeSwitchPreview(args[1])
+	},
+	"GetCompatibilityPermissionReviewPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityPermissionReviewPlan", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.PermissionReviewPreview()
+	},
+	"GetCompatibilityReviewFlowPlan": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityReviewFlowPlan", args, 5)
+		if err != nil {
+			return nil, err
+		}
+		return plan.ReviewFlowPreview(args[1], args[2], args[3], args[4])
+	},
+	"GetCompatibilityActionQueue": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityActionQueue", args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return plan.KDEActionQueuePreview(ownerDispatchDecision, nil)
+	},
+	"GetCompatibilityActionReviewReceipt": func(root string, args []string) (any, error) {
+		plan, err := ownerPlanFromArgs(root, "GetCompatibilityActionReviewReceipt", args, 3)
+		if err != nil {
+			return nil, err
+		}
+		return plan.KDEActionReceiptPreview(args[1], args[2], nil)
+	},
+	"GetCompatibilityCenterSummary": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetCompatibilityCenterSummary", args, 1); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewCompatibilityCenterPreview([]appidentity.Recipe{recipe}, provenance)
+	},
+	"GetKDECenterPage": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDECenterPage", args, 2); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDECenterPagePreview(recipe, provenance, args[1], nil)
+	},
+	"GetKDECenterPageSections": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDECenterPageSections", args, 2); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDECenterPageSectionsPreview(recipe, provenance, args[1], nil)
+	},
+	"GetKDECenterPageSectionDetail": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDECenterPageSectionDetail", args, 3); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDECenterPageSectionDetailPreview(recipe, provenance, args[1], args[2], nil)
 	},
 }
 
@@ -167,18 +623,7 @@ func DispatchRead(root string, method string, args []string) (ReadDispatch, erro
 }
 
 func SupportedReadDispatchMethods() []string {
-	methods := []string{
-		"GetRuntimeServiceBinding",
-		"GetRuntimeLiveOwnerGate",
-		"GetRuntimeOwnerProcess",
-		"GetRuntimeOwnerSmokePlan",
-		"GetRuntimeMethodParityManifest",
-		"GetRuntimeOwnerRouteManifest",
-		"GetRuntimeOwnerRecipeTrust",
-		"GetRuntimeOwnerReadiness",
-		"GetRuntimeWriteGate",
-	}
-	return append([]string(nil), methods...)
+	return append([]string(nil), ownerReadDispatchMethodOrder...)
 }
 
 func requireArgCount(method string, args []string, expected int) error {
@@ -186,6 +631,33 @@ func requireArgCount(method string, args []string, expected int) error {
 		return fmt.Errorf("%s requires %d argument(s), got %d", method, expected, len(args))
 	}
 	return nil
+}
+
+func ownerDefaultRegistry(root string) string {
+	return filepath.Join(root, "runtime", "recipes", "registry.json")
+}
+
+func ownerRecipes(root string) ([]appidentity.Recipe, appidentity.Provenance, error) {
+	return appidentity.LoadRecipesFromRegistry(ownerDefaultRegistry(root), "")
+}
+
+func ownerRecipe(root string, applicationID string) (appidentity.Recipe, appidentity.Provenance, error) {
+	return appidentity.LoadRecipeFromRegistry(ownerDefaultRegistry(root), "", applicationID)
+}
+
+func ownerPlan(root string, applicationID string) (appidentity.Plan, error) {
+	recipe, provenance, err := ownerRecipe(root, applicationID)
+	if err != nil {
+		return appidentity.Plan{}, err
+	}
+	return appidentity.NewPlanWithProvenance(recipe, provenance)
+}
+
+func ownerPlanFromArgs(root string, method string, args []string, expected int) (appidentity.Plan, error) {
+	if err := requireArgCount(method, args, expected); err != nil {
+		return appidentity.Plan{}, err
+	}
+	return ownerPlan(root, args[0])
 }
 
 func ownerReadRoute(routes []appidentity.RuntimeOwnerRoute, method string) appidentity.RuntimeOwnerRoute {

@@ -12,7 +12,7 @@ func TestDispatchReadRendersOwnerReadinessWithoutBusOwnership(t *testing.T) {
 		t.Fatalf("DispatchRead returned error: %v", err)
 	}
 
-	if dispatch.Version != "0.2.218" ||
+	if dispatch.Version != "0.2.219" ||
 		dispatch.SchemaVersion != "xnix.runtime.owner_read_dispatch.v1" ||
 		dispatch.RequestType != "runtime-owner-read-dispatch" ||
 		dispatch.DispatchType != "go-owner-read-dispatch" ||
@@ -92,25 +92,172 @@ func TestDispatchReadRejectsWriteMethodsAndBadArity(t *testing.T) {
 	if _, err := DispatchRead(projectRoot(t), "GetRuntimeWriteGate", nil); err == nil || !strings.Contains(err.Error(), "requires 1 argument") {
 		t.Fatalf("DispatchRead must reject bad arity, got %v", err)
 	}
-	if _, err := DispatchRead(projectRoot(t), "GetApplication", []string{"org.xnix.sample.notepad"}); err == nil || !strings.Contains(err.Error(), "unsupported owner read dispatch method") {
+	if _, err := DispatchRead(projectRoot(t), "GetUnknownRuntimeMethod", nil); err == nil || !strings.Contains(err.Error(), "unsupported owner read dispatch method") {
 		t.Fatalf("DispatchRead must reject unsupported methods, got %v", err)
+	}
+}
+
+func TestDispatchReadRendersApplicationPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetApplication", []string{"org.xnix.sample.notepad"})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetApplication" ||
+		dispatch.GoCommand != "application-preview" ||
+		dispatch.RouteSource != "go-runtime-cli" ||
+		dispatch.RouteStatus != "go-preview-ready" ||
+		!dispatch.RouteReady ||
+		dispatch.EventLoopStarted ||
+		dispatch.SessionBusClaimed {
+		t.Fatalf("unexpected application dispatch metadata: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "application-preview" ||
+		payload["runtime_method"] != "GetApplication" ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected application dispatch payload: %#v", payload)
+	}
+}
+
+func TestSupportedReadDispatchMethodsRenderPayloads(t *testing.T) {
+	root := projectRoot(t)
+	for _, method := range SupportedReadDispatchMethods() {
+		dispatch, err := DispatchRead(root, method, sampleReadDispatchArgs(method))
+		if err != nil {
+			t.Fatalf("DispatchRead(%s) returned error: %v", method, err)
+		}
+		if dispatch.Method != method ||
+			!dispatch.ReadOnlyDispatch ||
+			dispatch.WriteMethod ||
+			dispatch.WriteMethodsEnabled ||
+			dispatch.EventLoopStarted ||
+			dispatch.SessionBusClaimed ||
+			dispatch.ProductionBusClaimed ||
+			dispatch.HostRootModified ||
+			dispatch.BackendDetailsExposed ||
+			len(dispatch.Payload) == 0 {
+			t.Fatalf("unexpected dispatch for %s: %#v", method, dispatch)
+		}
 	}
 }
 
 func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 	methods := SupportedReadDispatchMethods()
 	want := []string{
+		"ListApplications",
+		"GetApplication",
+		"GetDiagnostics",
+		"GetEngineCatalog",
+		"GetRunPlan",
+		"GetDesktopActivationManifest",
+		"GetDesktopActivationTransactionPreview",
+		"GetDesktopActivationStatus",
+		"GetDesktopEntryPlan",
+		"GetDesktopIconPlan",
+		"GetTaskManagerIdentityPlan",
+		"GetKDEIntegrationStatus",
+		"GetKDEShellIntegrationPlan",
+		"GetKDEApplicationSurfacePlan",
+		"GetDesktopResourceBridgePlan",
+		"GetKWinWindowRulePlan",
+		"GetFileAssociationPlan",
+		"GetNotificationPlan",
+		"GetTrayStatus",
+		"GetKRunnerQueryPlan",
+		"GetPortalRequestPlan",
+		"GetApplicationStateRoot",
+		"GetCompatibilityPackageSource",
+		"GetCompatibilityAcquisitionPreflight",
+		"GetCompatibilityArtifactManifest",
+		"GetCompatibilityInstallPlan",
+		"GetBackendBinding",
+		"GetBackendCapabilityMatrix",
+		"GetBackendSelectionPlan",
+		"GetBackendLifecycle",
+		"GetBackendEnvironmentPlan",
+		"GetRepairPlan",
+		"GetTestPlan",
+		"GetTestResult",
+		"GetExecutionReadiness",
+		"GetLaunchIntent",
+		"GetAIDiagnosticInput",
+		"GetAIDiagnosticRecommendation",
+		"GetAIRepairApprovalGate",
+		"GetSnapshotPlan",
+		"GetPortalAccessPolicy",
 		"GetRuntimeServiceBinding",
 		"GetRuntimeLiveOwnerGate",
-		"GetRuntimeOwnerProcess",
 		"GetRuntimeOwnerSmokePlan",
 		"GetRuntimeMethodParityManifest",
+		"GetRuntimeWriteGate",
+		"GetCompatibilitySettings",
+		"GetCompatibilitySettingsChangePlan",
+		"GetCompatibilityModeSwitchPlan",
+		"GetCompatibilityPermissionReviewPlan",
+		"GetCompatibilityReviewFlowPlan",
+		"GetCompatibilityActionQueue",
+		"GetCompatibilityActionReviewReceipt",
+		"GetCompatibilityCenterSummary",
+		"GetKDECenterPage",
+		"GetKDECenterPageSections",
+		"GetKDECenterPageSectionDetail",
+		"GetRuntimeOwnerProcess",
 		"GetRuntimeOwnerRouteManifest",
 		"GetRuntimeOwnerRecipeTrust",
 		"GetRuntimeOwnerReadiness",
-		"GetRuntimeWriteGate",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
+	}
+}
+
+func sampleReadDispatchArgs(method string) []string {
+	const appID = "org.xnix.sample.notepad"
+	switch method {
+	case "ListApplications", "GetEngineCatalog", "GetKDEIntegrationStatus", "GetKDEShellIntegrationPlan",
+		"GetTrayStatus", "GetBackendCapabilityMatrix", "GetRuntimeServiceBinding", "GetRuntimeLiveOwnerGate",
+		"GetRuntimeOwnerSmokePlan", "GetRuntimeMethodParityManifest", "GetRuntimeOwnerProcess",
+		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness":
+		return nil
+	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
+		return []string{appID, "development"}
+	case "GetNotificationPlan":
+		return []string{appID, "install-failed"}
+	case "GetKRunnerQueryPlan":
+		return []string{"notepad"}
+	case "GetPortalRequestPlan", "GetPortalAccessPolicy":
+		return []string{appID, "file-open"}
+	case "GetCompatibilityInstallPlan":
+		return []string{appID, "development"}
+	case "GetRepairPlan":
+		return []string{appID, "engine-binding-pending"}
+	case "GetTestPlan", "GetTestResult":
+		return []string{appID, "preflight"}
+	case "GetAIDiagnosticInput", "GetAIDiagnosticRecommendation", "GetAIRepairApprovalGate":
+		return []string{appID, "engine-binding-pending", "preflight"}
+	case "GetSnapshotPlan":
+		return []string{appID, "manual"}
+	case "GetRuntimeWriteGate":
+		return []string{"Launch"}
+	case "GetCompatibilitySettingsChangePlan":
+		return []string{appID, "run-mode", "mode", "automatic"}
+	case "GetCompatibilityModeSwitchPlan":
+		return []string{appID, "automatic"}
+	case "GetCompatibilityReviewFlowPlan":
+		return []string{appID, "run-mode", "mode", "automatic", "file-open"}
+	case "GetCompatibilityActionReviewReceipt":
+		return []string{appID, "review-file-manager-action", "reviewed"}
+	case "GetKDECenterPage":
+		return []string{appID, "reviewed"}
+	case "GetKDECenterPageSections":
+		return []string{appID, "reviewed"}
+	case "GetKDECenterPageSectionDetail":
+		return []string{appID, "overview", "reviewed"}
+	default:
+		return []string{appID}
 	}
 }

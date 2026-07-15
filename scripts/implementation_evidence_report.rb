@@ -12,7 +12,7 @@ MAINLINE_FIRST_WAVE = [
     mainline_package: "M1",
     suggested_branch: "codex/runtime-owner-read-service",
     reason: "Runtime-owned read paths should replace preview-only dispatch before broader product ownership advances.",
-    minimal_mergeable_outcome: "A constrained session-bus owner serves representative read methods and fails every write method closed."
+    minimal_mergeable_outcome: "A constrained session-bus owner serves the Go owner read dispatch table for every D-Bus read-only Runtime method and fails every write method closed."
   },
   {
     mainline_package: "M2",
@@ -79,7 +79,7 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has read dispatch, lifecycle JSONL, and constrained smoke evidence; production ownership remains gated."
+    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, and constrained smoke evidence; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",

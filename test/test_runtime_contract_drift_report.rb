@@ -28,6 +28,7 @@ assert(!report.fetch("kde_policy_owner"), "Runtime contract drift report must no
 assert(report.fetch("read_only_method_count") == 57, "Runtime contract drift report must count read-only methods")
 assert(report.fetch("read_only_methods").include?("GetRuntimeMethodParityManifest"), "Runtime contract drift report must include method parity")
 assert(report.fetch("read_only_methods").include?("GetRuntimeWriteGate"), "Runtime contract drift report must include write gate reads")
+assert(report.fetch("owner_read_dispatch_method_count") >= 57, "Runtime contract drift report must count owner read dispatch methods")
 assert(report.fetch("owner_local_methods").include?("GetRuntimeOwnerReadiness"), "Runtime contract drift report must include owner-local readiness")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "Runtime contract drift report must list gated write methods")
 assert(!report.fetch("write_methods_supported"), "Runtime contract drift report must not support write methods")
@@ -37,7 +38,7 @@ assert(!report.fetch("network_required"), "Runtime contract drift report must no
 assert(!report.fetch("host_root_modified"), "Runtime contract drift report must not mutate the host root")
 assert(!report.fetch("privileged_container_required"), "Runtime contract drift report must not require privileged containers")
 assert(!report.fetch("backend_details_exposed"), "Runtime contract drift report must not expose backend details")
-assert(report.fetch("counts") == { "total" => 10, "passed" => 10, "failed" => 0 }, "Runtime contract drift report must count checks")
+assert(report.fetch("counts") == { "total" => 11, "passed" => 11, "failed" => 0 }, "Runtime contract drift report must count checks")
 
 check_ids = report.fetch("checks").map { |check| check.fetch("id") }
 expected_checks = %w[
@@ -45,6 +46,7 @@ expected_checks = %w[
   owner-route-go-methods
   dbus-client-method-map
   owner-read-dispatch-local-methods
+  owner-read-dispatch-all-read-methods
   owner-read-dispatch-contract-subset
   runtime-dispatch
   dbus-client-definitions

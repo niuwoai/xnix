@@ -66,7 +66,7 @@ assert(domains.keys == expected_domains, "implementation evidence report must ex
 assert(domains.fetch("runtime-owner-service").fetch("status") == "smoke-owned", "Runtime owner service must show smoke-owned evidence")
 assert(domains.fetch("runtime-owner-service").fetch("mainline_package") == "M1", "Runtime owner service must map to M1")
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/lifecycle.go"), "Runtime owner service must include lifecycle evidence")
-assert(domains.fetch("runtime-owner-service").fetch("summary").include?("lifecycle JSONL"), "Runtime owner service summary must mention lifecycle evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("full D-Bus read dispatch coverage"), "Runtime owner service summary must mention full read dispatch evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "state-root-implemented", "recipe and artifact trust pipeline must show state-root implementation evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("mainline_package") == "M2", "recipe and artifact trust pipeline must map to M2")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")

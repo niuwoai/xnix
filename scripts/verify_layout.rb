@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.218"
+EXPECTED_VERSION = "0.2.219"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1112,13 +1112,15 @@ go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owne
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetRuntimeWriteGate].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must expose #{token}")
 end
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeOwnerReadinessPreview"), "Go Runtime owner read dispatch must call owner readiness preview")
+assert(go_runtime_owner_dispatch_source.include?("LoadRecipeFromRegistry"), "Go Runtime owner read dispatch must load registry recipes directly")
+assert(go_runtime_owner_dispatch_source.include?("NewApplicationsPreview"), "Go Runtime owner read dispatch must render application catalog payloads")
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeWriteGatePreview"), "Go Runtime owner read dispatch must call write gate preview")
 assert(go_runtime_owner_dispatch_source.include?("validateNoBackendTerms"), "Go Runtime owner read dispatch must hide backend terms")
 
@@ -1618,6 +1620,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
   owner-route-go-methods
   dbus-client-method-map
   owner-read-dispatch-local-methods
+  owner-read-dispatch-all-read-methods
   owner-read-dispatch-contract-subset
   runtime-dispatch
   dbus-client-definitions
@@ -1638,7 +1641,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
 end
 
 runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
-%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods drift_detected host_root_modified backend_details_exposed].each do |token|
+%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner_read_dispatch_method_count drift_detected host_root_modified backend_details_exposed].each do |token|
   assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
 end
 
@@ -1648,6 +1651,7 @@ implementation_evidence_report_source = read_project_file("scripts/implementatio
   xnix.runtime.implementation_evidence_report.v1
   runtime-owner-service
   xnix.runtime.owner_lifecycle_event.v1
+  full D-Bus read dispatch coverage
   lifecycle JSONL
   recipe-artifact-trust-pipeline
   environment-lifecycle-state
@@ -1700,7 +1704,7 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   markdown
   runtime-owner-service
   lifecycle.go
-  lifecycle JSONL
+  full D-Bus read dispatch coverage
   mainline_document
   mainline_package
   mainline_first_wave

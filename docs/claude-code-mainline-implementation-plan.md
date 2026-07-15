@@ -1,6 +1,6 @@
 # Claude Code Mainline Implementation Plan
 
-> Last updated: 2026-07-16 | Baseline: v0.2.218
+> Last updated: 2026-07-16 | Baseline: v0.2.219
 
 This document is the mainline handoff plan for giving large, relatively independent Xnix implementation packages to Claude Code.
 
@@ -71,7 +71,7 @@ Start with these four packages. They create the foundation without enabling unsa
 
 | Order | Package | Suggested branch | Why now | Minimal mergeable result |
 | --- | --- | --- | --- | --- |
-| 1 | M1 Runtime Owner Read Service | `codex/runtime-owner-read-service` | Most other work needs a Runtime-owned read path rather than preview-only commands. | A constrained session-bus owner serves representative read methods and fails all write methods closed. |
+| 1 | M1 Runtime Owner Read Service | `codex/runtime-owner-read-service` | Most other work needs a Runtime-owned read path rather than preview-only commands. | A constrained session-bus owner serves the existing read dispatch table and fails all write methods closed. |
 | 2 | M2 Recipe and Artifact Trust Pipeline | `codex/recipe-artifact-trust-pipeline` | Install, environment, activation, and execution must start from trusted local inputs. | Local recipes and fixture artifacts verify digests, stage under a controlled root, and produce blocked receipts for invalid inputs. |
 | 3 | M3 Runtime State Root and Environment Lifecycle | `codex/environment-lifecycle-state` | Execution readiness needs durable state before any launch path becomes meaningful. | A state-root lifecycle store records missing, planned, staged, ready, repair-required, and blocked states. |
 | 4 | M8 Developer Verification Harness | `codex/implementation-evidence-harness` | The repository already has many contracts; this prevents more contract-only surfaces from accumulating silently. | JSON and Markdown reports classify domain evidence and fail on orphan contract-only surfaces. |
@@ -115,7 +115,7 @@ Turn the Runtime owner from preview/adapters into a constrained Go owner process
 ### Acceptance
 
 - A constrained container can start the owner on a private session bus.
-- Representative read methods return safe Go Runtime read models.
+- Representative bus calls return safe Go Runtime read models while in-process coverage remains complete for every D-Bus read-only Runtime method.
 - Every write method returns a stable disabled error.
 - Runtime contract drift reporting remains clean.
 
@@ -135,7 +135,7 @@ ruby scripts/verify_layout.rb
 Implement M1 from docs/claude-code-mainline-implementation-plan.md.
 
 Target outcome:
-- Add a constrained Go Runtime owner service that can claim a private test session bus, serve representative read-only Runtime methods, and fail every write method closed.
+- Add a constrained Go Runtime owner service that can claim a private test session bus, serve the existing D-Bus read-only Runtime method dispatch table, and fail every write method closed.
 
 Hard constraints:
 - No production bus ownership, system service installation, backend launch, host-root writes, privileged containers, broad host mounts, Docker socket mounts, or host networking.

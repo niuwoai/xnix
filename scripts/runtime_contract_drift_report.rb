@@ -170,12 +170,18 @@ def build_report(root)
       actual: client_method_map_keys,
       summary: "D-Bus client method map covers every D-Bus read-only method."
     ),
-    compare_lists(
+    source_coverage_check(
       id: "owner-read-dispatch-local-methods",
       expected: OWNER_LOCAL_READ_METHODS,
-      actual: dispatch_methods,
+      source: owner_dispatch_source,
       summary: "Owner read dispatch covers the local owner method group."
-    ),
+    ) { |source, method| source.include?("\"#{method}\"") },
+    source_coverage_check(
+      id: "owner-read-dispatch-all-read-methods",
+      expected: read_only_methods,
+      source: owner_dispatch_source,
+      summary: "Owner read dispatch covers every D-Bus read-only method."
+    ) { |source, method| source.include?("\"#{method}\"") },
     source_coverage_check(
       id: "owner-read-dispatch-contract-subset",
       expected: owner_contract_methods,
@@ -225,6 +231,7 @@ def build_report(root)
     "kde_policy_owner" => false,
     "read_only_method_count" => read_only_methods.length,
     "read_only_methods" => read_only_methods,
+    "owner_read_dispatch_method_count" => dispatch_methods.length,
     "write_methods" => WRITE_METHODS,
     "write_methods_supported" => false,
     "write_method_dispatch_enabled" => false,

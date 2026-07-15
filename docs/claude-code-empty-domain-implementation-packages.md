@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.218
+> Last updated: 2026-07-16 | Baseline: v0.2.219
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -49,9 +49,9 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.218 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.219 | What remains useful to implement |
 | --- | --- | --- |
-| Runtime owner | Owner candidate, read dispatch previews, route manifests, service binding previews, and write gates exist. | Constrained long-running session-bus owner, lifecycle logs, broader read-route coverage, and smoke-owned readiness. |
+| Runtime owner | Owner candidate, full in-process read dispatch coverage for every D-Bus read-only Runtime method, owner-local probes, route manifests, service binding previews, lifecycle JSONL, and write gates exist. | Constrained long-running session-bus event loop, smoke-owned readiness, bus-call parity, and closed write-method evidence through the owner process. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |
 | KDE activation | Desktop activation previews and a target-root staging writer exist for desktop entries, MIME, Dolphin service menus, activation manifests, and rollback receipts. | Drift checks against live materialized state, optional digest-verified icons, KDE status consumption of receipt state, and stricter transaction rollback UX. |
 | Execution | Execution previews and `execution-ledger-record` exist for reviewed/preflighted state-root transaction records without backend launch. | Fake commit/list/inspect flows, joined dependency gates from trust/environment/Portal/snapshot state, and session-status records. |
@@ -111,7 +111,7 @@ Turn the Runtime owner from preview/adapters into a constrained Go owner process
 ### Deliver
 
 - A smoke-owner mode that can run inside the constrained container session bus.
-- A route table that maps D-Bus read methods to Go handlers or explicit unsupported-read markers.
+- A route table that serves the existing full D-Bus read-only method set through Go handlers or explicit unsupported-read markers.
 - Deterministic `WriteMethodDisabled` responses for all write methods.
 - Owner readiness evidence that distinguishes `preview-only`, `smoke-owner`, and `production-owner`.
 - Logs for startup, route-table version, bus mode, dispatch result, and shutdown reason.
@@ -127,7 +127,7 @@ Turn the Runtime owner from preview/adapters into a constrained Go owner process
 
 ### Acceptance
 
-- A constrained container can start the owner and call at least representative read-only methods.
+- A constrained container can start the owner and call representative read-only methods while in-process coverage remains complete for every D-Bus read-only Runtime method.
 - The owner returns the same safe shapes as the existing Go preview routes or a stable unsupported-read marker.
 - Every write method returns a stable disabled error.
 - Runtime contract drift reporting remains clean.
@@ -632,7 +632,7 @@ Use this wave when the goal is to convert the largest empty domains into impleme
 
 | Slot | Package | Suggested branch | Why this is first-wave work | Minimal mergeable outcome |
 | --- | --- | --- | --- | --- |
-| 1 | P1 Runtime Owner Service | `codex/runtime-owner-smoke-service` | Most later work depends on a Runtime-owned read path instead of preview-only commands. | A constrained session-bus owner serves representative read methods and fails every write method closed. |
+| 1 | P1 Runtime Owner Service | `codex/runtime-owner-smoke-service` | Most later work depends on a Runtime-owned read path instead of preview-only commands. | A constrained session-bus owner serves the existing read dispatch table and fails every write method closed. |
 | 2 | P2 Recipe and Artifact Trust Pipeline | `codex/recipe-artifact-trust-pipeline` | Install, environment, and execution work need trusted local inputs before they can be meaningful. | Local recipes and fixture artifacts verify digests, stage into a state/test root, and produce blocked receipts for invalid inputs. |
 | 3 | P3 Environment Lifecycle State | `codex/environment-lifecycle-state` | Backend readiness is currently mostly declarative; execution should not advance until readiness is persistent. | A state-root lifecycle store records missing, planned, staged, ready, repair-required, and blocked states. |
 | 4 | P9 Developer Verification Harness | `codex/implementation-evidence-report` | The project is adding contracts quickly; this keeps empty domains visible and prevents drift. | JSON and Markdown reports classify each domain by evidence level and fail on orphan contract-only surfaces. |
@@ -647,7 +647,7 @@ Do not assign P6 execution transactions until P2, P3, and P4 have enough state e
 Implement P1 from docs/claude-code-empty-domain-implementation-packages.md.
 
 Target outcome:
-- Add a constrained Go Runtime owner service that can claim a private test session bus, serve representative read-only Runtime methods, and fail every write method closed.
+- Add a constrained Go Runtime owner service that can claim a private test session bus, serve the existing D-Bus read-only Runtime method dispatch table, and fail every write method closed.
 
 Hard constraints:
 - No production bus ownership, system service installation, backend launch, host-root writes, privileged containers, broad host mounts, Docker socket mounts, or host networking.

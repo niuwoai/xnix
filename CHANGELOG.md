@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.219] - 2026-07-16
+
+### Added
+
+- Extended Runtime owner in-process read dispatch to cover every D-Bus read-only Runtime method while preserving owner-local readiness probes.
+- Added Go coverage that renders every supported owner read dispatch payload through the shared owner handler table without starting an event loop, claiming a bus name, enabling write methods, requiring network, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated Runtime contract drift reporting to verify full owner read dispatch coverage for all D-Bus read-only methods plus the owner-local method group.
+- Updated Runtime owner dispatch evidence to keep the future D-Bus event loop path aligned with Go-native handler coverage.
+
 ## [0.2.218] - 2026-07-16
 
 ### Added
