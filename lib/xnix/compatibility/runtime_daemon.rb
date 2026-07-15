@@ -84,6 +84,7 @@ module Xnix
             "compatibility_action_review_receipts" => true,
             "compatibility_center_summaries" => true,
             "kde_center_pages" => true,
+            "kde_center_page_sections" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -169,6 +170,7 @@ module Xnix
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "kde_center_page" => kde_center_page_summary(recipe),
+          "kde_center_page_sections" => kde_center_page_sections_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
@@ -624,6 +626,79 @@ module Xnix
         }
       end
 
+      def kde_center_page_sections(application_id, decision)
+        recipe = require_recipe(application_id)
+        page = kde_center_page(recipe.id, decision)
+        sections = [
+          kde_center_page_section("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready"),
+          kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
+          kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
+          kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
+        ]
+
+        {
+          "version" => VERSION,
+          "request_type" => "kde-center-page-sections",
+          "page_type" => page.fetch("page_type"),
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetKDECenterPageSections",
+          "read_model_source" => "go-kde-center-page-sections-preview",
+          "application_id" => recipe.id,
+          "application_name" => recipe.name,
+          "section_count" => sections.length,
+          "read_only_section_count" => sections.count { |section| section.fetch("read_only") },
+          "navigation_only_section_count" => sections.count { |section| section.fetch("navigation_only") },
+          "executable_section_count" => sections.count { |section| section.fetch("starts_program") },
+          "primary_section_id" => "overview",
+          "section_ids" => sections.map { |section| section.fetch("id") },
+          "runtime_methods" => sections.map { |section| section.fetch("runtime_method") },
+          "read_models" => sections.map { |section| section.fetch("read_model") },
+          "section_states" => sections.map { |section| section.fetch("state") },
+          "sections" => sections,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "official_desktop_only" => true,
+          "user_visible" => true,
+          "safe_for_ai_diagnostics" => true,
+          "user_decision_captured" => true,
+          "user_decision_allows_launch" => page.fetch("user_decision_allows_launch"),
+          "sections_preview_created" => true,
+          "sections_persisted" => false,
+          "section_actions_enabled" => false,
+          "settings_persisted" => false,
+          "settings_persistence_enabled" => false,
+          "notifications_sent" => false,
+          "resource_grant_created" => false,
+          "runtime_launch_approval" => false,
+          "launch_enabled" => false,
+          "execution_started" => false,
+          "request_objects_created" => false,
+          "permission_grant_created" => false,
+          "host_root_modified" => false,
+          "network_required" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KDE can navigate Runtime-owned Compatibility Center page sections over D-Bus, but the sections cannot persist, grant, notify, or start execution."
+        }
+      end
+
+      def kde_center_page_section(id, label, target, runtime_method, read_model, state)
+        {
+          "id" => id,
+          "label" => label,
+          "target" => target,
+          "runtime_method" => runtime_method,
+          "read_model" => read_model,
+          "state" => state,
+          "navigation_only" => true,
+          "read_only" => true,
+          "mutates_runtime" => false,
+          "starts_program" => false,
+          "settings_persisted" => false,
+          "backend_details_exposed" => false
+        }
+      end
+
       def artifact_manifest(application_id)
         recipe = require_recipe(application_id)
         CompatibilityArtifactManifest.new(recipe: recipe).to_h
@@ -825,6 +900,11 @@ module Xnix
           compatibility_center_summary(required_parameter(method_name, parameters, 0))
         when "GetKDECenterPage"
           kde_center_page(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
+        when "GetKDECenterPageSections"
+          kde_center_page_sections(
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
           )
@@ -1175,6 +1255,27 @@ module Xnix
           "execution_started" => page.fetch("execution_started"),
           "backend_details_exposed" => page.fetch("backend_details_exposed"),
           "summary" => page.fetch("desktop_safe_summary")
+        }
+      end
+
+      def kde_center_page_sections_summary(recipe)
+        sections = kde_center_page_sections(recipe.id, "approved")
+        {
+          "request_type" => sections.fetch("request_type"),
+          "runtime_method" => sections.fetch("runtime_method"),
+          "section_count" => sections.fetch("section_count"),
+          "read_only_section_count" => sections.fetch("read_only_section_count"),
+          "navigation_only_section_count" => sections.fetch("navigation_only_section_count"),
+          "executable_section_count" => sections.fetch("executable_section_count"),
+          "primary_section_id" => sections.fetch("primary_section_id"),
+          "section_ids" => sections.fetch("section_ids"),
+          "runtime_methods" => sections.fetch("runtime_methods"),
+          "sections_preview_created" => sections.fetch("sections_preview_created"),
+          "sections_persisted" => sections.fetch("sections_persisted"),
+          "section_actions_enabled" => sections.fetch("section_actions_enabled"),
+          "execution_started" => sections.fetch("execution_started"),
+          "backend_details_exposed" => sections.fetch("backend_details_exposed"),
+          "summary" => sections.fetch("desktop_safe_summary")
         }
       end
 

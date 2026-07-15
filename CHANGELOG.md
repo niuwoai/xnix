@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.151] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `kde-center-page-sections-preview` for read-only KDE Compatibility Center page section navigation.
+- Added the read-only `GetKDECenterPageSections` Runtime D-Bus method so KDE can discover the Overview, Actions, Settings, and Diagnostics page sections and their backing Runtime read methods.
+- Added daemon, D-Bus client, C smoke-adapter, session-smoke, dispatch, contract, and method-parity coverage for KDE center page section reads.
+
+### Changed
+
+- Increased the Runtime read-only method parity count from 52 to 53.
+
 ## [0.2.150] - 2026-07-15
 
 ### Added

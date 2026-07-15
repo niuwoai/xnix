@@ -21,7 +21,7 @@ runtime = Xnix::Compatibility::RuntimeDaemon.new(
 )
 model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 
-assert(model["version"] == "0.2.150", "KDE center model must expose the current version")
+assert(model["version"] == "0.2.151", "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
@@ -191,7 +191,7 @@ assert(application["runtime_owner_smoke_plan"]["pending_step_count"] == 6, "KDE 
 assert(!application["runtime_owner_smoke_plan"]["system_service_started"], "KDE center model must not claim started system services")
 assert(!application["runtime_owner_smoke_plan"]["production_bus_claimed"], "KDE center model must not claim production bus ownership")
 assert(application["runtime_method_parity_manifest"]["manifest_type"] == "runtime-method-parity-manifest", "KDE center model must expose Runtime method parity manifests")
-assert(application["runtime_method_parity_manifest"]["method_count"] == 52, "KDE center model must expose Runtime method counts")
+assert(application["runtime_method_parity_manifest"]["method_count"] == 53, "KDE center model must expose Runtime method counts")
 assert(application["runtime_method_parity_manifest"]["read_only_method_parity_ready"], "KDE center model must expose Runtime method parity readiness")
 assert(application["runtime_method_parity_manifest"]["passed_check_count"] == 5, "KDE center model must expose Runtime method parity pass counts")
 assert(application["runtime_method_parity_manifest"]["blocked_check_count"].zero?, "KDE center model must expose Runtime method parity blocked counts")

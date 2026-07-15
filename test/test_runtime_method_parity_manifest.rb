@@ -17,14 +17,14 @@ project_root = Pathname.new(__dir__).join("..").realpath
 manifest = Xnix::Compatibility::RuntimeMethodParityManifest.new.to_h
 check_ids = manifest.fetch("parity_checks").map { |item| item.fetch("id") }
 
-assert(manifest["version"] == "0.2.150", "Runtime method parity manifest must expose the current version")
+assert(manifest["version"] == "0.2.151", "Runtime method parity manifest must expose the current version")
 assert(manifest["manifest_type"] == "runtime-method-parity-manifest", "Runtime method parity manifest must identify the manifest type")
 assert(manifest["runtime_owned"], "Runtime must own method parity")
 assert(!manifest["kde_policy_owner"], "KDE must not own method parity")
 assert(manifest["bus_name"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable bus name")
 assert(manifest["object_path"] == "/org/xnix/Compatibility1", "Runtime method parity manifest must expose the stable object path")
 assert(manifest["interface"] == "org.xnix.Compatibility1", "Runtime method parity manifest must expose the stable interface")
-assert(manifest["method_count"] == 52, "Runtime method parity manifest must count read-only methods")
+assert(manifest["method_count"] == 53, "Runtime method parity manifest must count read-only methods")
 assert(manifest["read_only_methods"].include?("GetDesktopActivationManifest"), "Runtime method parity manifest must include desktop activation manifest reads")
 assert(manifest["read_only_methods"].include?("GetKDEIntegrationStatus"), "Runtime method parity manifest must include KDE integration status reads")
 assert(manifest["read_only_methods"].include?("GetKDEShellIntegrationPlan"), "Runtime method parity manifest must include KDE shell integration plan reads")
@@ -43,6 +43,7 @@ assert(manifest["read_only_methods"].include?("GetBackendCapabilityMatrix"), "Ru
 assert(manifest["read_only_methods"].include?("GetBackendSelectionPlan"), "Runtime method parity manifest must include backend selection plan reads")
 assert(manifest["read_only_methods"].include?("GetCompatibilityCenterSummary"), "Runtime method parity manifest must include Compatibility Center summary reads")
 assert(manifest["read_only_methods"].include?("GetKDECenterPage"), "Runtime method parity manifest must include KDE center page reads")
+assert(manifest["read_only_methods"].include?("GetKDECenterPageSections"), "Runtime method parity manifest must include KDE center page section reads")
 assert(manifest["read_only_methods"].include?("GetKDEApplicationSurfacePlan"), "Runtime method parity manifest must include KDE application surface plan reads")
 assert(manifest["read_only_methods"].include?("GetDesktopResourceBridgePlan"), "Runtime method parity manifest must include desktop resource bridge plan reads")
 assert(manifest["read_only_methods"].include?("GetCompatibilityModeSwitchPlan"), "Runtime method parity manifest must include compatibility mode switch plan reads")

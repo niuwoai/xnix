@@ -195,3 +195,88 @@ func TestKDECenterPagePreviewValidationAndDecisionStates(t *testing.T) {
 		}
 	}
 }
+
+func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}
+	preview, err := NewKDECenterPageSectionsPreview(recipe, Provenance{}, "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("NewKDECenterPageSectionsPreview returned error: %v", err)
+	}
+
+	if preview.SchemaVersion != "xnix.runtime.kde_center_page_sections.v1" ||
+		preview.RequestType != "kde-center-page-sections-preview" ||
+		preview.PageType != "compatibility-center-application-page" ||
+		preview.Source != "kde-center-page-preview" ||
+		preview.RuntimeMethod != "GetKDECenterPageSections" ||
+		preview.ReadMethod != "GetKDECenterPageSectionsPreview" {
+		t.Fatalf("unexpected KDE center page sections schema: %#v", preview)
+	}
+	if preview.ApplicationID != "org.example.ledger" ||
+		preview.ApplicationName != "Example Ledger" ||
+		preview.SectionCount != 4 ||
+		preview.ReadOnlySectionCount != 4 ||
+		preview.NavigationOnlySectionCount != 4 ||
+		preview.ExecutableSectionCount != 0 ||
+		preview.PrimarySectionID != "overview" {
+		t.Fatalf("unexpected KDE center page sections identity: %#v", preview)
+	}
+	wantMethods := map[string]string{
+		"overview":    "GetCompatibilityCenterSummary",
+		"actions":     "GetCompatibilityActionQueue",
+		"settings":    "GetCompatibilitySettings",
+		"diagnostics": "GetDiagnostics",
+	}
+	wantModels := map[string]string{
+		"overview":    "compatibility-center-summary",
+		"actions":     "compatibility-center-action-queue",
+		"settings":    "settings-model",
+		"diagnostics": "runtime-diagnostics",
+	}
+	for _, section := range preview.Sections {
+		if section.RuntimeMethod != wantMethods[section.ID] ||
+			section.ReadModel != wantModels[section.ID] ||
+			!section.NavigationOnly ||
+			!section.ReadOnly ||
+			section.MutatesRuntime ||
+			section.StartsProgram ||
+			section.SettingsPersisted ||
+			section.BackendDetailsExposed {
+			t.Fatalf("unexpected section contract: %#v", section)
+		}
+	}
+	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
+		!preview.OfficialDesktopOnly || !preview.UserVisible ||
+		!preview.SafeForAIDiagnostics || !preview.UserDecisionCaptured ||
+		!preview.UserDecisionAllowsLaunch || !preview.SectionsPreviewCreated ||
+		preview.SectionsPersisted || preview.SectionActionsEnabled ||
+		preview.SettingsPersisted || preview.SettingsPersistenceEnabled ||
+		preview.NotificationsSent || preview.ResourceGrantCreated ||
+		preview.RuntimeLaunchApproval || preview.LaunchEnabled ||
+		preview.ExecutionStarted || preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated || preview.HostRootModified ||
+		preview.NetworkRequired || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected section safety flags: %#v", preview)
+	}
+	if !containsString(preview.BlockedActions, "persist KDE center page sections from preview state") ||
+		!containsString(preview.BlockedActions, "create Runtime request objects from page sections") ||
+		!containsString(preview.BlockedActions, "start compatibility profile from page sections") {
+		t.Fatalf("unexpected section blocked actions: %#v", preview.BlockedActions)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KDE center page sections preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
