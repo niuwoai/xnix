@@ -1,10 +1,27 @@
 # Claude Code Next Implementation Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.240
+> Last updated: 2026-07-16 | Baseline: v0.2.241
 
 This document is a short assignment board for giving Claude Code large, relatively independent Xnix implementation work.
 
 Use it when the current problem is: "the contract exists, but durable implementation evidence is still thin." It is intentionally shorter than the full package maps so one assignment can be copied into Claude Code without handing it the whole roadmap.
+
+## Recommended Use
+
+Use this document as the main handoff artifact when asking Claude Code to turn empty or contract-only domains into implementation.
+
+Do not ask one Claude Code branch to "implement Xnix compatibility" as a broad product task. Pick one assignment, copy its prompt, and require a small shippable result with tests. The assignments are intentionally large enough to be meaningful, but independent enough that failure in one branch should not block review of the others.
+
+The best first wave is:
+
+| Order | Assignment | Why it should go first |
+| --- | --- | --- |
+| 1 | `A1` Runtime owner process boundary | It gives every later Runtime route a real process boundary instead of more previews. |
+| 2 | `A2` Trust, artifact, cache, and install pipeline | It makes install inputs verifiable before desktop or execution work depends on them. |
+| 3 | `A3` Runtime state root and backend lifecycle | It gives later launch, diagnostics, and KDE views durable state to consume. |
+| 4 | `A8` Developer evidence and drift harness | It prevents the repository from growing more contract-only surfaces without evidence. |
+
+After that, move to `A4` safety state, `A5` KDE materialization, and only then `A6` execution transactions. Keep `A9` product image acceptance for the point where QEMU can validate real Runtime evidence instead of static contracts.
 
 ## Default Handoff Flow
 

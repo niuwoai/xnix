@@ -131,6 +131,13 @@ assert(domains.fetch("execution-transaction-ledger").fetch("mainline_package") =
 assert(domains.fetch("developer-verification-harness").fetch("status") == "fixture-implemented", "developer verification harness must show fixture implementation evidence")
 assert(domains.fetch("developer-verification-harness").fetch("mainline_package") == "M8", "developer verification harness must map to M8")
 assert(domains.fetch("atomic-kde-image-qemu-acceptance").fetch("mainline_package") == "M9", "atomic KDE image and QEMU acceptance must map to M9")
+assert(domains.fetch("atomic-kde-image-qemu-acceptance").fetch("fixture_files_present").include?("lib/xnix/full_smoke_report.rb"), "atomic KDE image and QEMU acceptance must include full smoke report evidence")
+assert(domains.fetch("atomic-kde-image-qemu-acceptance").fetch("smoke_files_present").include?("test/test_full_smoke_report.rb"), "atomic KDE image and QEMU acceptance must test full smoke reports")
+assert(domains.fetch("atomic-kde-image-qemu-acceptance").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "lib/xnix/full_smoke_report.rb" &&
+    entry.fetch("token") == "qemu_network_restricted" &&
+    entry.fetch("present")
+}, "atomic KDE image and QEMU acceptance must track QEMU network restrictions")
 assert(domains.values.all? { |domain| domain.fetch("mainline_document") == "docs/claude-code-mainline-implementation-plan.md" }, "all implementation domains must link to the mainline document")
 assert(domains.values.all? { |domain| domain.fetch("production_gate_evidence") }, "all implementation domains must expose production gate evidence")
 assert(domains.values.all? { |domain| domain.fetch("contract_files_missing").empty? }, "all implementation domains must have their contract files")

@@ -2,6 +2,15 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.241] - 2026-07-16
+
+### Changed
+
+- Included the full build and QEMU smoke report writer in the atomic KDE image and QEMU acceptance implementation-evidence domain.
+- Added implementation-evidence checks for full-smoke JSON/Markdown report generation, persisted serial-log evidence, QEMU network restriction, and host-safety gates.
+- Strengthened implementation-evidence tests so the M9 image/QEMU domain cannot regress to image scaffolding without the milestone smoke report evidence.
+- Clarified the short Claude Code assignment board with a recommended first wave for large, independent contract-to-implementation domains.
+
 ## [0.2.240] - 2026-07-16
 
 ### Added

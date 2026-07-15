@@ -290,20 +290,26 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/image/manifest.go
       internal/runtime/image/smoke.go
       internal/runtime/image/smoke_test.go
+      lib/xnix/full_smoke_report.rb
       scripts/build_kde_image.rb
       scripts/boot_kde_image.rb
+      scripts/full_smoke.rb
     ],
     state_files: [],
     smoke_files: %w[
       scripts/boot_kde_image.rb
       test/test_kde_image.rb
       test/test_qemu.rb
+      test/test_full_smoke_report.rb
+      test/test_full_smoke_script.rb
     ],
     gate_tokens: {
       "image/kinoite/Containerfile" => %w[org.xnix.image org.xnix.flagship],
-      "internal/runtime/image/smoke.go" => %w[SerialMarkers RuntimeReady]
+      "internal/runtime/image/smoke.go" => %w[SerialMarkers RuntimeReady],
+      "lib/xnix/full_smoke_report.rb" => %w[xnix.full_smoke_report.v1 full-build-qemu-smoke-report qemu_network_restricted host_root_modified privileged_container_required docker_socket_mounted host_network_enabled],
+      "scripts/full_smoke.rb" => %w[FullSmokeReport full-smoke-report.json full-smoke-report.md serial.log boot-system]
     },
-    summary: "KDE image validation and QEMU smoke scaffolding exists; full product image proof remains a gated milestone."
+    summary: "KDE image validation, constrained QEMU smoke scaffolding, and full milestone smoke reports exist; full product image proof remains gated."
   },
   {
     id: "developer-verification-harness",
