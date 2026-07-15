@@ -3,9 +3,9 @@ package owner
 import (
 	"encoding/json"
 	"fmt"
-
-	"xnix.local/xnix/internal/runtime/appidentity"
 )
+
+const smokeBatchServiceCallRequestType = "runtime-owner-service-call"
 
 type SmokeBatchRecord struct {
 	Version                     string          `json:"version"`
@@ -41,43 +41,43 @@ type SmokeBatchRecord struct {
 }
 
 func NewSmokeBatchRecords(root string) ([]SmokeBatchRecord, error) {
-	writeGate, err := appidentity.NewRuntimeWriteGatePreview(root, "Launch")
+	service, err := NewService(root, ModeSmokeOwner)
 	if err != nil {
 		return nil, err
 	}
 	methods := SupportedReadDispatchMethods()
-	records := make([]SmokeBatchRecord, 0, len(methods)+len(writeGate.SupportedWriteMethods))
+	records := make([]SmokeBatchRecord, 0, len(methods)+service.candidate.WriteMethodCount)
 	sequence := 1
 	for _, method := range methods {
 		args := smokeBatchArgs(method)
-		dispatch, err := DispatchRead(root, method, args)
+		call, err := service.Call(method, args)
 		if err != nil {
-			return nil, fmt.Errorf("smoke batch dispatch %s: %w", method, err)
+			return nil, fmt.Errorf("smoke batch service read %s: %w", method, err)
 		}
-		payload, err := json.Marshal(dispatch)
-		if err != nil {
-			return nil, fmt.Errorf("encode smoke batch dispatch %s: %w", method, err)
-		}
-		record := newSmokeBatchRecord(dispatch.Version, sequence, "read-dispatch", method, args, payload, len(methods), len(writeGate.SupportedWriteMethods))
-		record.ReadOnlyDispatch = true
-		record.RouteReady = dispatch.RouteReady
-		record.DispatchReady = dispatch.ReadOnlyDispatch && dispatch.RouteReady && !dispatch.WriteMethodsEnabled
-		records = append(records, record)
-		sequence++
-	}
-	for _, method := range writeGate.SupportedWriteMethods {
-		response, err := DisabledWriteResponse(method)
+		payload, err := marshalSmokeBatchServiceCall(call, method)
 		if err != nil {
 			return nil, err
 		}
-		payload, err := json.Marshal(response)
+		record := newSmokeBatchRecord(call.Version, sequence, "read-dispatch", method, args, payload, len(methods), service.candidate.WriteMethodCount)
+		record.ReadOnlyDispatch = true
+		record.RouteReady = call.DispatchReady
+		record.DispatchReady = call.ReadOnlyDispatch && call.DispatchReady && !call.WriteMethodsEnabled
+		records = append(records, record)
+		sequence++
+	}
+	for _, writeMethod := range service.candidate.WriteMethods {
+		call, err := service.Call(writeMethod.Method, nil)
 		if err != nil {
-			return nil, fmt.Errorf("encode smoke batch write denial %s: %w", method, err)
+			return nil, err
 		}
-		record := newSmokeBatchRecord(writeGate.Version, sequence, "write-denial", method, nil, payload, len(methods), len(writeGate.SupportedWriteMethods))
+		payload, err := marshalSmokeBatchServiceCall(call, writeMethod.Method)
+		if err != nil {
+			return nil, err
+		}
+		record := newSmokeBatchRecord(call.Version, sequence, "write-denial", writeMethod.Method, nil, payload, len(methods), service.candidate.WriteMethodCount)
 		record.WriteMethod = true
-		record.ErrorName = response.ErrorName
-		record.DispatchReady = !response.DispatchEnabled && !response.RequestCreated
+		record.ErrorName = call.ErrorName
+		record.DispatchReady = call.DispatchReady
 		records = append(records, record)
 		sequence++
 	}
@@ -89,13 +89,24 @@ func NewSmokeBatchRecords(root string) ([]SmokeBatchRecord, error) {
 	return records, nil
 }
 
+func marshalSmokeBatchServiceCall(call ServiceCall, method string) (json.RawMessage, error) {
+	if call.RequestType != smokeBatchServiceCallRequestType {
+		return nil, fmt.Errorf("smoke batch service call %s used request type %s", method, call.RequestType)
+	}
+	payload, err := json.Marshal(call)
+	if err != nil {
+		return nil, fmt.Errorf("encode smoke batch service call %s: %w", method, err)
+	}
+	return payload, nil
+}
+
 func newSmokeBatchRecord(version string, sequence int, recordType string, method string, args []string, payload json.RawMessage, readMethodCount int, writeMethodCount int) SmokeBatchRecord {
 	return SmokeBatchRecord{
 		Version:                     version,
 		SchemaVersion:               "xnix.runtime.owner_smoke_batch.v1",
 		RequestType:                 "runtime-owner-smoke-batch-record",
 		BatchType:                   "restricted-session-owner-call-batch",
-		Source:                      "go-runtime-owner-candidate+in-process-read-dispatch+write-gate",
+		Source:                      "go-runtime-owner-service+service-call-batch",
 		Sequence:                    sequence,
 		RecordType:                  recordType,
 		Method:                      method,
@@ -115,7 +126,7 @@ func newSmokeBatchRecord(version string, sequence int, recordType string, method
 		PrivilegedContainerRequired: false,
 		BackendDetailsExposed:       false,
 		Payload:                     payload,
-		DesktopSafeSummary:          "Runtime owner smoke batch renders read and write-gate evidence without claiming D-Bus ownership.",
+		DesktopSafeSummary:          "Runtime owner smoke batch renders service-call read and write-gate evidence without claiming D-Bus ownership.",
 	}
 }
 

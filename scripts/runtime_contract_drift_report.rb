@@ -191,9 +191,9 @@ def build_report(root)
     ) { |source, method| source.include?("\"#{method}\"") },
     source_coverage_check(
       id: "owner-smoke-batch-source",
-      expected: ["SupportedReadDispatchMethods", "DisabledWriteResponse", "xnix.runtime.owner_smoke_batch.v1", "restricted-session-owner-call-batch"],
+      expected: ["SupportedReadDispatchMethods", "NewService", "service.Call", "runtime-owner-service-call", "xnix.runtime.owner_smoke_batch.v1", "restricted-session-owner-call-batch"],
       source: owner_smoke_batch_source,
-      summary: "Owner smoke batch derives read coverage from the owner dispatch table and write denials from the write gate."
+      summary: "Owner smoke batch derives read/write coverage from the owner service-call boundary."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "go-owner-smoke-bridge",

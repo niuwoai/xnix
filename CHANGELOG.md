@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.238] - 2026-07-16
+
+### Changed
+
+- Routed Runtime owner smoke-batch read and write records through the in-process Go owner `Service.Call` boundary instead of calling read dispatch and disabled-write helpers directly.
+- Updated owner smoke-batch JSONL payloads so each record now carries a `xnix.runtime.owner_service_call.v1` envelope with nested read-dispatch or write-denial evidence.
+- Strengthened contract drift, implementation evidence, layout, CLI, and restricted session smoke assertions to keep smoke-batch coverage aligned with the service-call boundary.
+
 ## [0.2.237] - 2026-07-16
 
 ### Added

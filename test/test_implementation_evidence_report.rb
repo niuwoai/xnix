@@ -75,7 +75,7 @@ assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").inclu
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("in-process service-call boundary"), "Runtime owner service summary must mention the owner service-call boundary")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("D-Bus service-call bridge evidence"), "Runtime owner service summary must mention D-Bus service-call bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("full D-Bus read dispatch coverage"), "Runtime owner service summary must mention full read dispatch evidence")
-assert(domains.fetch("runtime-owner-service").fetch("summary").include?("smoke-batch read/write evidence"), "Runtime owner service summary must mention smoke batch evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("service-call smoke-batch read/write evidence"), "Runtime owner service summary must mention service-call smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields" &&

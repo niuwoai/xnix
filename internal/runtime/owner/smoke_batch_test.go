@@ -17,11 +17,11 @@ func TestSmokeBatchRecordsCoverReadDispatchAndWriteDenials(t *testing.T) {
 	seenReads := map[string]bool{}
 	seenWrites := map[string]bool{}
 	for index, record := range records {
-		if record.Version != "0.2.237" ||
+		if record.Version != "0.2.238" ||
 			record.SchemaVersion != "xnix.runtime.owner_smoke_batch.v1" ||
 			record.RequestType != "runtime-owner-smoke-batch-record" ||
 			record.BatchType != "restricted-session-owner-call-batch" ||
-			record.Source != "go-runtime-owner-candidate+in-process-read-dispatch+write-gate" ||
+			record.Source != "go-runtime-owner-service+service-call-batch" ||
 			record.Sequence != index+1 ||
 			record.ReadDispatchMethodCount != len(readMethods) ||
 			record.WriteMethodCount != 4 ||
@@ -50,12 +50,19 @@ func TestSmokeBatchRecordsCoverReadDispatchAndWriteDenials(t *testing.T) {
 			if err := json.Unmarshal(record.Payload, &payload); err != nil {
 				t.Fatalf("read payload %s unmarshal returned error: %v", record.Method, err)
 			}
-			if payload["request_type"] != "runtime-owner-read-dispatch" ||
+			if payload["request_type"] != "runtime-owner-service-call" ||
 				payload["method"] != record.Method ||
+				payload["call_type"] != "read-dispatch" ||
 				payload["read_only_dispatch"] != true ||
 				payload["session_bus_claimed"] != false ||
 				payload["production_bus_claimed"] != false {
 				t.Fatalf("unexpected read payload for %s: %#v", record.Method, payload)
+			}
+			nested, ok := payload["payload"].(map[string]any)
+			if !ok ||
+				nested["request_type"] != "runtime-owner-read-dispatch" ||
+				nested["method"] != record.Method {
+				t.Fatalf("unexpected nested read payload for %s: %#v", record.Method, payload["payload"])
 			}
 		case "write-denial":
 			seenWrites[record.Method] = true
@@ -67,10 +74,19 @@ func TestSmokeBatchRecordsCoverReadDispatchAndWriteDenials(t *testing.T) {
 			if err := json.Unmarshal(record.Payload, &payload); err != nil {
 				t.Fatalf("write payload %s unmarshal returned error: %v", record.Method, err)
 			}
-			if payload["method"] != record.Method ||
-				payload["dispatch_enabled"] != false ||
-				payload["request_created"] != false {
+			if payload["request_type"] != "runtime-owner-service-call" ||
+				payload["method"] != record.Method ||
+				payload["call_type"] != "write-denial" ||
+				payload["write_method"] != true ||
+				payload["dispatch_ready"] != true {
 				t.Fatalf("unexpected write payload for %s: %#v", record.Method, payload)
+			}
+			nested, ok := payload["payload"].(map[string]any)
+			if !ok ||
+				nested["method"] != record.Method ||
+				nested["dispatch_enabled"] != false ||
+				nested["request_created"] != false {
+				t.Fatalf("unexpected nested write payload for %s: %#v", record.Method, payload["payload"])
 			}
 		default:
 			t.Fatalf("unexpected smoke batch record type: %s", record.RecordType)

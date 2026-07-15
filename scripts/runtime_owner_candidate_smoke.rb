@@ -196,9 +196,16 @@ smoke_batch_records.each_with_index do |record, index|
   assert(!record.fetch("host_root_modified"), "Runtime owner smoke batch must not mutate the host root")
   assert(!record.fetch("backend_details_exposed"), "Runtime owner smoke batch must not expose backend details")
   assert(record.fetch("dispatch_ready"), "Runtime owner smoke batch records must be dispatch-ready")
+  payload = record.fetch("payload")
+  assert(payload.fetch("schema_version") == "xnix.runtime.owner_service_call.v1", "Runtime owner smoke batch payloads must use service-call schema")
+  assert(payload.fetch("request_type") == "runtime-owner-service-call", "Runtime owner smoke batch payloads must use service-call request type")
+  assert(!payload.fetch("session_bus_claimed"), "Runtime owner smoke batch service calls must not claim the session bus")
+  assert(!payload.fetch("production_bus_claimed"), "Runtime owner smoke batch service calls must not claim the production bus")
 end
 assert(read_records.all? { |record| record.fetch("read_only_dispatch") && !record.fetch("write_method") }, "Runtime owner smoke batch read records must remain read-only")
 assert(write_records.all? { |record| !record.fetch("read_only_dispatch") && record.fetch("write_method") }, "Runtime owner smoke batch write records must be explicit denials")
 assert(write_records.all? { |record| record.fetch("error_name") == "org.xnix.Compatibility1.Error.WriteMethodDisabled" }, "Runtime owner smoke batch write records must use stable disabled-write errors")
+assert(read_records.all? { |record| record.fetch("payload").fetch("call_type") == "read-dispatch" }, "Runtime owner smoke batch read records must use service-call read dispatch")
+assert(write_records.all? { |record| record.fetch("payload").fetch("call_type") == "write-denial" }, "Runtime owner smoke batch write records must use service-call write denials")
 
 puts "PASS: Runtime owner candidate restricted session smoke"

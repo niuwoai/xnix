@@ -17,7 +17,7 @@ func TestRuntimeOwnerCommandRendersSmokeCandidate(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.237" ||
+	if payload["version"] != "0.2.238" ||
 		payload["schema_version"] != "xnix.runtime.owner_candidate.v1" ||
 		payload["request_type"] != "runtime-owner-candidate" ||
 		payload["owner_type"] != "go-runtime-owner-candidate" ||
@@ -76,7 +76,7 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.237" ||
+	if payload["version"] != "0.2.238" ||
 		payload["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
 		payload["request_type"] != "runtime-owner-read-dispatch" ||
 		payload["dispatch_type"] != "go-owner-read-dispatch" ||
@@ -107,7 +107,7 @@ func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.237" ||
+	if payload["version"] != "0.2.238" ||
 		payload["schema_version"] != "xnix.runtime.owner_service_call.v1" ||
 		payload["request_type"] != "runtime-owner-service-call" ||
 		payload["service_type"] != "go-runtime-owner-in-process-service" ||
@@ -146,7 +146,7 @@ func TestRuntimeOwnerCommandRendersLifecycleJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.237" ||
+		if payload["version"] != "0.2.238" ||
 			payload["schema_version"] != "xnix.runtime.owner_lifecycle_event.v1" ||
 			payload["request_type"] != "runtime-owner-lifecycle-event" ||
 			payload["event_type"] != wantTypes[index] ||
@@ -185,7 +185,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.237" ||
+		if payload["version"] != "0.2.238" ||
 			payload["schema_version"] != "xnix.runtime.owner_smoke_batch.v1" ||
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
@@ -209,6 +209,12 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 				payload["dispatch_ready"] != true {
 				t.Fatalf("unexpected read smoke batch record %d: %#v", index, payload)
 			}
+			nested := payload["payload"].(map[string]any)
+			if nested["request_type"] != "runtime-owner-service-call" ||
+				nested["call_type"] != "read-dispatch" ||
+				nested["read_only_dispatch"] != true {
+				t.Fatalf("unexpected read smoke batch payload %d: %#v", index, nested)
+			}
 		case "write-denial":
 			writeCount++
 			if payload["read_only_dispatch"] != false ||
@@ -216,6 +222,12 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 				payload["dispatch_ready"] != true ||
 				payload["error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" {
 				t.Fatalf("unexpected write smoke batch record %d: %#v", index, payload)
+			}
+			nested := payload["payload"].(map[string]any)
+			if nested["request_type"] != "runtime-owner-service-call" ||
+				nested["call_type"] != "write-denial" ||
+				nested["write_method"] != true {
+				t.Fatalf("unexpected write smoke batch payload %d: %#v", index, nested)
 			}
 		default:
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)

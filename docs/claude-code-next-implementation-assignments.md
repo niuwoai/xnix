@@ -1,10 +1,30 @@
 # Claude Code Next Implementation Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.237
+> Last updated: 2026-07-16 | Baseline: v0.2.238
 
 This document is a short assignment board for giving Claude Code large, relatively independent Xnix implementation work.
 
 Use it when the current problem is: "the contract exists, but durable implementation evidence is still thin." It is intentionally shorter than the full package maps so one assignment can be copied into Claude Code without handing it the whole roadmap.
+
+## Default Handoff Flow
+
+Use this document as the default entry point for Claude Code implementation work.
+
+For each Claude Code session:
+
+1. Pick exactly one assignment from `A1` through `A9`.
+2. Copy only that assignment's prompt and the global rules into Claude Code.
+3. Tell Claude Code to stay inside the listed files and stop on unsafe behavior.
+4. Require the completion template from the end of this document.
+
+If the goal is to make the mainline converge, start with the first wave in this order:
+
+1. `A1` Runtime owner process boundary.
+2. `A2` Trust, artifact, cache, and install pipeline.
+3. `A3` Runtime state root and backend lifecycle.
+4. `A8` Developer evidence and drift harness.
+
+Do not assign `A6` execution launch work before `A2`, `A3`, and `A4` can produce blocking safety evidence. Do not assign `A9` product image acceptance until the smoke can validate real Runtime evidence rather than only static previews.
 
 This document does not replace or modify `docs/claude-code-implementation-packages.md`. For deeper background, read:
 

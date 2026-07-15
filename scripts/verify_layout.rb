@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.237"
+EXPECTED_VERSION = "0.2.238"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1137,7 +1137,7 @@ end
 end
 
 go_runtime_owner_smoke_batch_source = read_project_file("internal/runtime/owner/smoke_batch.go")
-%w[SmokeBatchRecord runtime-owner-smoke-batch-record xnix.runtime.owner_smoke_batch.v1 restricted-session-owner-call-batch NewSmokeBatchRecords read-dispatch write-denial DispatchRead DisabledWriteResponse SupportedReadDispatchMethods].each do |token|
+%w[SmokeBatchRecord runtime-owner-smoke-batch-record xnix.runtime.owner_smoke_batch.v1 restricted-session-owner-call-batch NewSmokeBatchRecords read-dispatch write-denial NewService service.Call runtime-owner-service-call SupportedReadDispatchMethods].each do |token|
   assert(go_runtime_owner_smoke_batch_source.include?(token), "Go Runtime owner smoke batch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod RouteReady DispatchReady ReadDispatchMethodCount WriteMethodCount RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
