@@ -44,6 +44,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='manifest' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetDesktopActivationTransactionPreview'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='mode' type='s' direction='in'/>"
+  "      <arg name='transaction' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetDesktopEntryPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -347,6 +352,55 @@ build_desktop_activation_manifest(const gchar *application_id)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_desktop_activation_transaction_preview(const gchar *application_id, const gchar *mode)
+{
+  GVariantBuilder transaction;
+  gboolean transaction_ready = g_strcmp0(mode, "development") == 0;
+
+  g_variant_builder_init(&transaction, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&transaction, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.desktop_activation_transaction.v1"));
+  g_variant_builder_add(&transaction, "{sv}", "request_type", g_variant_new_string("desktop-activation-transaction-preview"));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_type", g_variant_new_string("kde-desktop-activation-transaction"));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_state", g_variant_new_string(transaction_ready ? "transaction-ready" : "transaction-blocked"));
+  g_variant_builder_add(&transaction, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&transaction, "{sv}", "runtime_method", g_variant_new_string("GetDesktopActivationTransactionPreview"));
+  g_variant_builder_add(&transaction, "{sv}", "read_model_source", g_variant_new_string("xnix-runtime-go desktop-activation-transaction-preview"));
+  g_variant_builder_add(&transaction, "{sv}", "write_method", g_variant_new_string("ActivateDesktopIntegration"));
+  g_variant_builder_add(&transaction, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&transaction, "{sv}", "install_mode", g_variant_new_string(mode));
+  g_variant_builder_add(&transaction, "{sv}", "planned_file_count", g_variant_new_int32(5));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_step_count", g_variant_new_int32(9));
+  g_variant_builder_add(&transaction, "{sv}", "rollback_step_count", g_variant_new_int32(7));
+  g_variant_builder_add(&transaction, "{sv}", "staged_file_digests_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "staged_file_digests_verified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_plan_created", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_ready", g_variant_new_boolean(transaction_ready));
+  g_variant_builder_add(&transaction, "{sv}", "transaction_committed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "write_method_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "dispatch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "file_writes_performed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "desktop_files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "mimeapps_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "receipt_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "rollback_receipt_required", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "rollback_receipt_planned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&transaction, "{sv}", "rollback_available", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "kde_service_cache_refreshed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&transaction, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&transaction);
 }
 
 static GVariant *
@@ -1932,7 +1986,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(55));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(56));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -2068,6 +2122,23 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_activation_manifest(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDesktopActivationTransactionPreview") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *mode = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &mode);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_desktop_activation_transaction_preview(application_id, mode))
     );
     return;
   }

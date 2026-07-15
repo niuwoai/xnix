@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.166] - 2026-07-15
+
+### Added
+
+- Added `GetDesktopActivationTransactionPreview` to the Runtime D-Bus contract, method parity manifest, Ruby daemon dispatch, KDE-facing D-Bus client, C smoke adapter, session smoke, and C Runtime parity policy so KDE can consume the Go-owned desktop activation transaction read model through the standard Runtime boundary.
+- Added D-Bus client, daemon, contract, C Runtime, and session-smoke coverage proving the activation transaction preview remains read-only, Go-backed, non-committing, and blocked from desktop writes, MIME writes, KDE cache refresh, launch, execution, networking, privileged containers, host-root mutation, and backend detail exposure.
+
 ## [0.2.165] - 2026-07-15
 
 ### Added

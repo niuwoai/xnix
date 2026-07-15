@@ -98,6 +98,19 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetDesktopActivationTransactionPreview",
+    "org.xnix.sample.notepad",
+    "development"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetDesktopActivationTransactionPreview: #{stderr}")
+  assert(stdout.include?("desktop-activation-transaction-preview"), "runtime smoke adapter must expose desktop activation transaction previews over D-Bus")
+  assert(stdout.include?("xnix-runtime-go desktop-activation-transaction-preview"), "runtime smoke adapter must point activation transaction previews at the Go read model")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetDesktopEntryPlan",
     "org.xnix.sample.notepad"
   )

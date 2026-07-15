@@ -100,6 +100,7 @@ module Xnix
             "compatibility_backend_lifecycle" => true,
             "compatibility_run_planning" => true,
             "desktop_activation_manifests" => true,
+            "desktop_activation_transaction_previews" => true,
             "kde_integration_status" => true,
             "kde_shell_integration_plans" => true,
             "kde_application_surface_plans" => true,
@@ -175,6 +176,7 @@ module Xnix
           "kde_center_page_sections" => kde_center_page_sections_summary(recipe),
           "kde_center_page_section_detail" => kde_center_page_section_detail_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
+          "desktop_activation_transaction_preview" => desktop_activation_transaction_preview_summary(recipe),
           "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
           "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(recipe),
@@ -224,6 +226,57 @@ module Xnix
       def desktop_activation_manifest(application_id)
         recipe = require_recipe(application_id)
         DesktopIntegrationManifest.new(recipe: recipe).to_h
+      end
+
+      def desktop_activation_transaction_preview(application_id, mode = "development")
+        recipe = require_recipe(application_id)
+        entry = DesktopEntry.new(recipe)
+        transaction_ready = mode == "development"
+
+        {
+          "version" => VERSION,
+          "schema_version" => "xnix.runtime.desktop_activation_transaction.v1",
+          "request_type" => "desktop-activation-transaction-preview",
+          "transaction_type" => "kde-desktop-activation-transaction",
+          "transaction_state" => transaction_ready ? "transaction-ready" : "transaction-blocked",
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetDesktopActivationTransactionPreview",
+          "read_model_source" => "xnix-runtime-go desktop-activation-transaction-preview",
+          "write_method" => "ActivateDesktopIntegration",
+          "application_id" => recipe.id,
+          "display_name" => recipe.name,
+          "desktop_file" => entry.file_name,
+          "install_mode" => mode,
+          "planned_file_count" => 5,
+          "transaction_step_count" => 9,
+          "rollback_step_count" => 7,
+          "staged_file_digests_required" => true,
+          "staged_file_digests_verified" => false,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "transaction_plan_created" => true,
+          "transaction_ready" => transaction_ready,
+          "transaction_committed" => false,
+          "write_method_enabled" => false,
+          "dispatch_enabled" => false,
+          "file_writes_performed" => false,
+          "desktop_files_written" => false,
+          "mimeapps_written" => false,
+          "receipt_written" => false,
+          "rollback_receipt_required" => true,
+          "rollback_receipt_planned" => true,
+          "rollback_available" => false,
+          "kde_service_cache_refreshed" => false,
+          "launch_enabled" => false,
+          "backend_launch_enabled" => false,
+          "execution_started" => false,
+          "host_root_modified" => false,
+          "network_required" => false,
+          "privileged_container_required" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KDE can request the Go Runtime desktop activation transaction preview over D-Bus while all commit and host mutation gates remain closed."
+        }
       end
 
       def kde_integration_status
@@ -954,6 +1007,11 @@ module Xnix
           run_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopActivationManifest"
           desktop_activation_manifest(required_parameter(method_name, parameters, 0))
+        when "GetDesktopActivationTransactionPreview"
+          desktop_activation_transaction_preview(
+            required_parameter(method_name, parameters, 0),
+            parameters[1] || "development"
+          )
         when "GetKDEIntegrationStatus"
           kde_integration_status
         when "GetKDEShellIntegrationPlan"
@@ -1414,6 +1472,24 @@ module Xnix
           "backend_commands_exposed" => manifest.fetch("safety").fetch("backend_commands_exposed"),
           "portal_required_for_file_access" => manifest.fetch("safety").fetch("portal_required_for_file_access"),
           "host_privilege_required" => manifest.fetch("safety").fetch("host_privilege_required")
+        }
+      end
+
+      def desktop_activation_transaction_preview_summary(recipe)
+        transaction = desktop_activation_transaction_preview(recipe.id)
+        {
+          "request_type" => transaction.fetch("request_type"),
+          "runtime_method" => transaction.fetch("runtime_method"),
+          "read_model_source" => transaction.fetch("read_model_source"),
+          "transaction_state" => transaction.fetch("transaction_state"),
+          "planned_file_count" => transaction.fetch("planned_file_count"),
+          "transaction_step_count" => transaction.fetch("transaction_step_count"),
+          "rollback_step_count" => transaction.fetch("rollback_step_count"),
+          "write_method_enabled" => transaction.fetch("write_method_enabled"),
+          "transaction_committed" => transaction.fetch("transaction_committed"),
+          "host_root_modified" => transaction.fetch("host_root_modified"),
+          "backend_details_exposed" => transaction.fetch("backend_details_exposed"),
+          "summary" => transaction.fetch("desktop_safe_summary")
         }
       end
 

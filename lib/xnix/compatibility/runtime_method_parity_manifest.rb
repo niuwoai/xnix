@@ -23,6 +23,7 @@ module Xnix
         GetEngineCatalog
         GetRunPlan
         GetDesktopActivationManifest
+        GetDesktopActivationTransactionPreview
         GetDesktopEntryPlan
         GetDesktopIconPlan
         GetTaskManagerIdentityPlan
@@ -88,6 +89,7 @@ module Xnix
         "GetEngineCatalog" => "engine_catalog",
         "GetRunPlan" => "run_plan",
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
+        "GetDesktopActivationTransactionPreview" => "desktop_activation_transaction_preview",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
         "GetDesktopIconPlan" => "desktop_icon_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",

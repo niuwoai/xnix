@@ -27,6 +27,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetEngineCatalog
   GetRunPlan
   GetDesktopActivationManifest
+  GetDesktopActivationTransactionPreview
   GetKDEIntegrationStatus
   GetKDEShellIntegrationPlan
   GetKDEApplicationSurfacePlan

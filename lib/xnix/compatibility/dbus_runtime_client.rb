@@ -61,6 +61,10 @@ module Xnix
         parse_dictionary(call("GetDesktopActivationManifest", application_id))
       end
 
+      def desktop_activation_transaction_preview(application_id, mode = "development")
+        parse_dictionary(call("GetDesktopActivationTransactionPreview", application_id, mode))
+      end
+
       def desktop_entry_plan(application_id)
         parse_dictionary(call("GetDesktopEntryPlan", application_id))
       end

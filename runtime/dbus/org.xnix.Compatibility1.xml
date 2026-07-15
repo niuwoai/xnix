@@ -41,6 +41,11 @@
       <arg name="application_id" type="s" direction="in"/>
       <arg name="manifest" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetDesktopActivationTransactionPreview">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="mode" type="s" direction="in"/>
+      <arg name="transaction" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetDesktopEntryPlan">
       <arg name="application_id" type="s" direction="in"/>
       <arg name="plan" type="a{sv}" direction="out"/>
