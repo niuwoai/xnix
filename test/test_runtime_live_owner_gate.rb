@@ -18,7 +18,7 @@ gate = Xnix::Compatibility::RuntimeLiveOwnerGate.new.to_h
 gate_ids = gate.fetch("required_gates").map { |item| item.fetch("id") }
 gate_statuses = gate.fetch("required_gates").map { |item| item.fetch("status") }
 
-assert(gate["version"] == "0.2.145", "Runtime live owner gate must expose the current version")
+assert(gate["version"] == "0.2.146", "Runtime live owner gate must expose the current version")
 assert(gate["gate_type"] == "runtime-live-owner-gate", "Runtime live owner gate must identify the gate type")
 assert(gate["runtime_owned"], "Runtime must own live owner readiness")
 assert(!gate["kde_policy_owner"], "KDE must not own live owner readiness")

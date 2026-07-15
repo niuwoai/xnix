@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.146] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-status-preview --registry <path> --app <id> --action <id> --decision <decision> [file://...]` for read-only Runtime previews of user-visible Compatibility Center action status after receipt preview.
+- Added Go Runtime KDE action status modeling that maps approved, reviewed, deferred, and rejected action decisions into KDE-safe waiting, deferred, or rejected states without persisting status.
+- Added Go and Ruby harness coverage that verifies KDE action status previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about status persistence, review receipts, queue mutation, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center queue flow from receipt shape toward user-visible status cards while keeping Runtime write and execution gates closed.
+
 ## [0.2.145] - 2026-07-15
 
 ### Added

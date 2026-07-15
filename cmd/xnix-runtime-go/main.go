@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -62,6 +62,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKDEActionReceiptPreview(args[1:], stdout)
 	case "kde-action-review-preview":
 		return runKDEActionReviewPreview(args[1:], stdout)
+	case "kde-action-status-preview":
+		return runKDEActionStatusPreview(args[1:], stdout)
 	case "kde-entrypoint-action-preview":
 		return runKDEEntryPointActionPreview(args[1:], stdout)
 	case "kde-entrypoints-preview":
@@ -439,6 +441,25 @@ func runKDEActionReceiptPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.KDEActionReceiptPreview(actionID, decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDEActionStatusPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, actionID, decision, fileURIs, err := parseKDEActionStatusPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.KDEActionStatusPreview(actionID, decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -1062,6 +1083,38 @@ func parseKDEActionReceiptPreviewSource(args []string) (appidentity.Recipe, appi
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-receipt-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *actionID, *decision, flags.Args(), err
+}
+
+func parseKDEActionStatusPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, []string, error) {
+	flags := flag.NewFlagSet("kde-action-status-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	actionID := flags.String("action", "", "KDE action queue item id")
+	decision := flags.String("decision", "", "review decision: reviewed, approved, deferred, or rejected")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-status-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-status-preview requires --app when --registry is used")
+	}
+	if *actionID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-status-preview requires --action")
+	}
+	if *decision == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-status-preview requires --decision")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-action-status-preview --recipe cannot be combined with --app or --recipe-root")
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
