@@ -75,6 +75,89 @@ func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
 	}
 }
 
+func TestDesktopActivationBundlePreviewCommandAggregatesKDEMaterials(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-bundle-preview", "--registry", registryPath, "--app", "org.example.ledger"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_bundle.v1" ||
+		payload["request_type"] != "desktop-activation-bundle-preview" ||
+		payload["plan_type"] != "normal-linux-application-activation" ||
+		payload["runtime_method"] != "GetDesktopActivationBundlePreview" {
+		t.Fatalf("unexpected desktop activation bundle schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["launcher_url"] != "applications:xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected desktop activation bundle identity: %#v", payload)
+	}
+	if payload["material_count"] != float64(9) {
+		t.Fatalf("unexpected material count: %#v", payload)
+	}
+	materialIDs := payload["material_ids"].([]any)
+	expectedIDs := []string{"launcher", "file-association", "desktop-icon", "task-manager", "kwin-window-rule", "system-tray", "notification-center", "unified-settings", "compatibility-center"}
+	for index, expected := range expectedIDs {
+		if materialIDs[index] != expected {
+			t.Fatalf("material_ids[%d] = %#v, want %q", index, materialIDs[index], expected)
+		}
+	}
+	if !bytes.Contains(output.Bytes(), []byte("Exec=xnix-compat-launch --app org.example.ledger %U")) ||
+		!bytes.Contains(output.Bytes(), []byte("application/x-xnix-abc=xnix-org.example.ledger.desktop")) ||
+		!bytes.Contains(output.Bytes(), []byte("application/x-xnix-log=xnix-org.example.ledger.desktop")) {
+		t.Fatalf("activation bundle is missing launcher or MIME material:\n%s", output.String())
+	}
+	windowIdentity := payload["window_identity"].(map[string]any)
+	if windowIdentity["schema_version"] != "xnix.runtime.window_identity.v1" ||
+		windowIdentity["launcher_url"] != "applications:xnix-org.example.ledger.desktop" {
+		t.Fatalf("unexpected window identity summary: %#v", windowIdentity)
+	}
+	notification := payload["notification"].(map[string]any)
+	if notification["request_type"] != "desktop-notification-preview" ||
+		notification["event_type"] != "approval-required" {
+		t.Fatalf("unexpected notification summary: %#v", notification)
+	}
+	settings := payload["settings"].(map[string]any)
+	if settings["request_type"] != "settings-preview" ||
+		settings["settings_persisted"] != false {
+		t.Fatalf("unexpected settings summary: %#v", settings)
+	}
+	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false || payload["normal_application_surface"] != true ||
+		payload["standard_desktop_entry"] != true || payload["file_association_ready"] != true ||
+		payload["task_manager_identity_ready"] != true || payload["kwin_identity_ready"] != true ||
+		payload["tray_status_ready"] != true || payload["notification_ready"] != true ||
+		payload["settings_ready"] != true || payload["compatibility_center_ready"] != true ||
+		payload["desktop_files_written"] != false || payload["mimeapps_written"] != false ||
+		payload["settings_persisted"] != false || payload["notifications_sent"] != false ||
+		payload["task_manager_entry_active"] != false || payload["kwin_rule_applied"] != false ||
+		payload["live_tray_bridge_enabled"] != false || payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false || payload["execution_started"] != false ||
+		payload["host_root_modified"] != false || payload["backend_details_exposed"] != false ||
+		payload["raw_windows_executable_exposed"] != false || payload["compatibility_storage_exposed"] != false {
+		t.Fatalf("unexpected desktop activation bundle safety flags: %#v", payload)
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

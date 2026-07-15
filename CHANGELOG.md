@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.160] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-bundle-preview` to aggregate launcher, MIME, desktop icon, task-manager, KWin, tray, notification, settings, and Compatibility Center materials for presenting a compatibility application as a normal Linux application.
+- Added Go unit and CLI coverage proving the activation bundle keeps desktop writes, MIME writes, settings persistence, notifications, task-manager activation, KWin rule application, live tray bridging, backend launch, execution, host-root mutation, raw executable exposure, compatibility storage exposure, and backend details disabled.
+
 ## [0.2.159] - 2026-07-15
 
 ### Added
