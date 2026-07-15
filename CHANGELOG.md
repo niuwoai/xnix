@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.217] - 2026-07-16
+
+### Changed
+
+- Extended `scripts/implementation_evidence_report.rb` with a machine-readable first-wave dispatch plan for `M1`, `M2`, `M3`, and `M8`, including suggested branch names, current evidence status, rationale, and minimal mergeable outcomes.
+- Updated Markdown evidence output to include a First-Wave Dispatch section so Claude Code handoffs can be selected from the repository evidence report directly.
+- Updated layout and evidence-report tests to guard the next-dispatch package list and keep Docker, QEMU, network, privileged containers, backend launch, and host-root mutation disabled for default reporting.
+
 ## [0.2.216] - 2026-07-16
 
 ### Changed

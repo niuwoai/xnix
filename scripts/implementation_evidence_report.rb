@@ -7,6 +7,32 @@ require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 MAINLINE_DOCUMENT = "docs/claude-code-mainline-implementation-plan.md"
+MAINLINE_FIRST_WAVE = [
+  {
+    mainline_package: "M1",
+    suggested_branch: "codex/runtime-owner-read-service",
+    reason: "Runtime-owned read paths should replace preview-only dispatch before broader product ownership advances.",
+    minimal_mergeable_outcome: "A constrained session-bus owner serves representative read methods and fails every write method closed."
+  },
+  {
+    mainline_package: "M2",
+    suggested_branch: "codex/recipe-artifact-trust-pipeline",
+    reason: "Install, environment, activation, and execution work need trusted local inputs first.",
+    minimal_mergeable_outcome: "Local recipes and fixture artifacts verify digests, stage under a controlled root, and produce blocked receipts for invalid inputs."
+  },
+  {
+    mainline_package: "M3",
+    suggested_branch: "codex/environment-lifecycle-state",
+    reason: "Execution readiness needs durable environment state before launch paths become meaningful.",
+    minimal_mergeable_outcome: "A state-root lifecycle store records missing, planned, staged, ready, repair-required, and blocked states."
+  },
+  {
+    mainline_package: "M8",
+    suggested_branch: "codex/implementation-evidence-harness",
+    reason: "Contract-heavy work needs an evidence harness that keeps empty domains visible.",
+    minimal_mergeable_outcome: "JSON and Markdown reports classify domain evidence and fail on orphan contract-only surfaces."
+  }
+].freeze
 WRITE_METHODS = %w[
   InstallRecipe
   Launch
@@ -428,9 +454,35 @@ def counts_for(domains)
   }
 end
 
+def mainline_first_wave(domains)
+  domains_by_mainline = domains.to_h { |domain| [domain.fetch("mainline_package"), domain] }
+
+  MAINLINE_FIRST_WAVE.filter_map do |entry|
+    domain = domains_by_mainline[entry.fetch(:mainline_package)]
+    next unless domain
+
+    {
+      "mainline_package" => entry.fetch(:mainline_package),
+      "package" => domain.fetch("package"),
+      "domain_id" => domain.fetch("id"),
+      "domain_name" => domain.fetch("name"),
+      "status" => domain.fetch("status"),
+      "rank" => domain.fetch("rank"),
+      "suggested_branch" => entry.fetch(:suggested_branch),
+      "reason" => entry.fetch(:reason),
+      "minimal_mergeable_outcome" => entry.fetch(:minimal_mergeable_outcome),
+      "host_root_modified" => false,
+      "network_required" => false,
+      "privileged_container_required" => false,
+      "backend_launch_enabled" => false
+    }
+  end
+end
+
 def build_report(root)
   version = read_project_file(root, "VERSION").strip
   domains = DOMAIN_DEFINITIONS.map { |definition| domain_report(root, definition) }
+  first_wave = mainline_first_wave(domains)
   read_methods = dbus_contract_methods(root) - WRITE_METHODS
   route_methods = owner_route_methods(root)
   orphan_read_methods = read_methods - route_methods
@@ -448,6 +500,9 @@ def build_report(root)
     "mainline_document" => MAINLINE_DOCUMENT,
     "mainline_plan_present" => file_present?(root, MAINLINE_DOCUMENT),
     "mainline_package_count" => domains.map { |domain| domain.fetch("mainline_package") }.uniq.length,
+    "mainline_first_wave" => first_wave,
+    "next_dispatch_packages" => first_wave,
+    "next_dispatch_summary" => "First-wave mainline dispatch recommends M1, M2, M3, and M8 before execution or image acceptance.",
     "domain_status_order" => STATUS_ORDER.keys,
     "domains" => domains,
     "counts" => counts,
@@ -478,6 +533,7 @@ def render_markdown(report)
     "- Highest evidence status: #{report.fetch("highest_evidence_status")}",
     "- Mainline document: #{report.fetch("mainline_document")}",
     "- Mainline plan present: #{report.fetch("mainline_plan_present")}",
+    "- Next dispatch: #{report.fetch("next_dispatch_summary")}",
     "- Orphan read methods detected: #{report.fetch("orphan_preview_methods_detected")}",
     "- Production ready: #{report.fetch("production_ready")}",
     "- Host root modified: #{report.fetch("host_root_modified")}",
@@ -490,6 +546,15 @@ def render_markdown(report)
     missing_fixtures = domain.fetch("fixture_files_missing").empty? ? "-" : domain.fetch("fixture_files_missing").join(", ")
     missing_gates = domain.fetch("gate_tokens_missing").empty? ? "-" : domain.fetch("gate_tokens_missing").map { |item| "#{item.fetch("file")}:#{item.fetch("token")}" }.join(", ")
     lines << "| #{domain.fetch("mainline_package")} | #{domain.fetch("package")} | #{domain.fetch("name")} | #{domain.fetch("status")} | #{missing_fixtures} | #{missing_gates} |"
+  end
+
+  lines << ""
+  lines << "## First-Wave Dispatch"
+  lines << ""
+  lines << "| Mainline | Branch | Status | Minimal mergeable outcome |"
+  lines << "| --- | --- | --- | --- |"
+  report.fetch("mainline_first_wave").each do |entry|
+    lines << "| #{entry.fetch("mainline_package")} | `#{entry.fetch("suggested_branch")}` | #{entry.fetch("status")} | #{entry.fetch("minimal_mergeable_outcome")} |"
   end
 
   lines << ""

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.216"
+EXPECTED_VERSION = "0.2.217"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1651,6 +1651,13 @@ implementation_evidence_report_source = read_project_file("scripts/implementatio
   mainline_document
   mainline_plan_present
   mainline_package_count
+  mainline_first_wave
+  next_dispatch_packages
+  next_dispatch_summary
+  codex/runtime-owner-read-service
+  codex/recipe-artifact-trust-pipeline
+  codex/environment-lifecycle-state
+  codex/implementation-evidence-harness
   M1
   M9
   contract-only
@@ -1682,6 +1689,10 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   runtime-owner-service
   mainline_document
   mainline_package
+  mainline_first_wave
+  next_dispatch_packages
+  suggested_branch
+  codex/runtime-owner-read-service
   M1
   M9
   smoke-owned

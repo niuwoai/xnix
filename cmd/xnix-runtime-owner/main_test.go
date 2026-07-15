@@ -16,7 +16,7 @@ func TestRuntimeOwnerCommandRendersSmokeCandidate(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.216" ||
+	if payload["version"] != "0.2.217" ||
 		payload["schema_version"] != "xnix.runtime.owner_candidate.v1" ||
 		payload["request_type"] != "runtime-owner-candidate" ||
 		payload["owner_type"] != "go-runtime-owner-candidate" ||
@@ -75,7 +75,7 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.216" ||
+	if payload["version"] != "0.2.217" ||
 		payload["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
 		payload["request_type"] != "runtime-owner-read-dispatch" ||
 		payload["dispatch_type"] != "go-owner-read-dispatch" ||
