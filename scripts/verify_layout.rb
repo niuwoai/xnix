@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.180"
+EXPECTED_VERSION = "0.2.181"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -856,6 +856,20 @@ assert(runtime_service_binding_source.include?("\"network_required\" => false"),
 assert(runtime_service_binding_source.include?("\"host_root_modified\" => false"), "Runtime service binding must not mutate the host root")
 assert(runtime_service_binding_source.include?("\"privileged_container_required\" => false"), "Runtime service binding must not require privileged containers")
 assert(runtime_service_binding_source.include?("\"backend_details_exposed\" => false"), "Runtime service binding must hide backend details")
+
+go_runtime_service_binding_source = read_project_file("internal/runtime/appidentity/runtime_service_binding.go")
+%w[RuntimeServiceBindingPreview runtime-service-binding-preview xnix.runtime.service_binding.v1 GetRuntimeServiceBinding GetRuntimeServiceBindingPreview dbus-service-activation systemd-service-hardening live-dbus-owner].each do |token|
+  assert(go_runtime_service_binding_source.include?(token), "Go Runtime service binding preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked ActivationBindingReady LiveDBusOwnerReady SmokeAdapterAvailable ServiceStarted ProductionBusClaimed KDEMayClaimRuntimeOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_service_binding_source.include?(token), "Go Runtime service binding preview must expose #{token}")
+end
+assert(go_runtime_service_binding_source.include?("validateNoBackendTerms"), "Go Runtime service binding preview must hide backend terms")
+assert(go_runtime_service_binding_source.include?("runtimeServiceBindingPackagedWrapper"), "Go Runtime service binding preview must track the packaged wrapper")
+
+go_runtime_service_binding_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_service_binding_cli_source.include?("runtime-service-binding-preview"), "Go Runtime CLI must expose Runtime service binding preview")
+assert(go_runtime_service_binding_cli_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime CLI must call the Runtime service binding preview model")
 
 runtime_activation_installer_source = read_project_file("scripts/install_runtime_activation.rb")
 %w[SOURCE_RUNTIME_LIB SOURCE_RECIPE_DIR SOURCE_DBUS_CONTRACT SOURCE_DBUS_SMOKE SOURCE_DBUS_SMOKE_INTROSPECTION SOURCE_DBUS_SMOKE_KDE_CENTER SOURCE_DBUS_SMOKE_RUNTIME_MODELS SOURCE_SESSION_SMOKE usr/lib/xnix usr/runtime/recipes].each do |token|

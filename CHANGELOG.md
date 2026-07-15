@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.181] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-service-binding-preview` to report D-Bus activation, systemd hardening, libexec wrapper, contract, smoke-adapter, and live-owner readiness without starting services, claiming the production bus, mutating the host root, requiring network access, or exposing backend details.
+- Added Go unit, CLI, and layout verification coverage for the service binding preview so KDE can consume a Go-backed read model while the existing Ruby and C service binding surfaces remain compatible.
+
 ## [0.2.180] - 2026-07-15
 
 ### Changed
