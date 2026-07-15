@@ -12,14 +12,14 @@ func TestNewLifecycleEventsExposeSafeSmokeOwnerJSONLEvents(t *testing.T) {
 	}
 	wantTypes := []string{"startup", "route-table", "readiness", "shutdown"}
 	for index, event := range events {
-		if event.Version != "0.2.227" ||
+		if event.Version != "0.2.228" ||
 			event.SchemaVersion != "xnix.runtime.owner_lifecycle_event.v1" ||
 			event.RequestType != "runtime-owner-lifecycle-event" ||
 			event.EventType != wantTypes[index] ||
 			event.Sequence != index+1 ||
 			event.Mode != "smoke-owner" ||
 			event.BusName != "org.xnix.Compatibility1" ||
-			event.RouteTableVersion != "0.2.227" ||
+			event.RouteTableVersion != "0.2.228" ||
 			event.RouteCount != 57 ||
 			event.GoRouteCount != 57 ||
 			event.WriteMethodCount != 4 ||

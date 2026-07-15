@@ -46,6 +46,7 @@ build_compatibility_package_source(const gchar *application_id)
 
   g_variant_builder_init(&source, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&source, "{sv}", "source_type", g_variant_new_string("compatibility-package-source"));
+  add_go_owner_dispatch_bridge_fields(&source, "GetCompatibilityPackageSource", application_id);
   g_variant_builder_add(&source, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&source, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
   g_variant_builder_add(&source, "{sv}", "source_selection_state", g_variant_new_string("planned"));
@@ -63,6 +64,7 @@ build_compatibility_acquisition_preflight(const gchar *application_id)
 
   g_variant_builder_init(&preflight, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&preflight, "{sv}", "preflight_type", g_variant_new_string("compatibility-acquisition-preflight"));
+  add_go_owner_dispatch_bridge_fields(&preflight, "GetCompatibilityAcquisitionPreflight", application_id);
   g_variant_builder_add(&preflight, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&preflight, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
   g_variant_builder_add(&preflight, "{sv}", "preflight_state", g_variant_new_string("planned"));
@@ -81,6 +83,7 @@ build_compatibility_artifact_manifest(const gchar *application_id)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("compatibility-artifact-manifest"));
+  add_go_owner_dispatch_bridge_fields(&manifest, "GetCompatibilityArtifactManifest", application_id);
   g_variant_builder_add(&manifest, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&manifest, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_state", g_variant_new_string("planned"));
@@ -99,6 +102,7 @@ build_compatibility_install_plan(const gchar *application_id, const gchar *envir
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-install-plan"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetCompatibilityInstallPlan", application_id, environment);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "environment", g_variant_new_string(environment));
   g_variant_builder_add(&plan, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));

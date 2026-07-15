@@ -394,6 +394,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityPackageSource: #{stderr}")
   assert(stdout.include?("compatibility-package-source"), "runtime smoke adapter must expose compatibility package sources over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityPackageSource")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -405,6 +406,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityAcquisitionPreflight: #{stderr}")
   assert(stdout.include?("compatibility-acquisition-preflight"), "runtime smoke adapter must expose compatibility acquisition preflight over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityAcquisitionPreflight")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -416,6 +418,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityArtifactManifest: #{stderr}")
   assert(stdout.include?("compatibility-artifact-manifest"), "runtime smoke adapter must expose compatibility artifact manifests over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityArtifactManifest")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -428,6 +431,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityInstallPlan: #{stderr}")
   assert(stdout.include?("compatibility-install-plan"), "runtime smoke adapter must expose compatibility install plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetCompatibilityInstallPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

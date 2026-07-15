@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.228] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so install-input reads carry Go owner read-dispatch payload evidence: package source, acquisition preflight, artifact manifest, and compatibility install plan.
+- Added restricted session smoke assertions that prove install-input reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without enabling downloads, package-manager calls, desktop activation writes, backend launch, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track install-input reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.227] - 2026-07-16
 
 ### Added

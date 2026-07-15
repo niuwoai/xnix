@@ -220,11 +220,15 @@ def build_report(root)
         "add_go_owner_dispatch_bridge_fields(&status, \"GetTrayStatus\"",
         "add_go_owner_dispatch_bridge_fields(&plan, \"GetKRunnerQueryPlan\"",
         "add_go_owner_dispatch_bridge_fields2(&plan, \"GetPortalRequestPlan\"",
+        "add_go_owner_dispatch_bridge_fields(&source, \"GetCompatibilityPackageSource\"",
+        "add_go_owner_dispatch_bridge_fields(&preflight, \"GetCompatibilityAcquisitionPreflight\"",
+        "add_go_owner_dispatch_bridge_fields(&manifest, \"GetCompatibilityArtifactManifest\"",
+        "add_go_owner_dispatch_bridge_fields2(&plan, \"GetCompatibilityInstallPlan\"",
         "add_go_owner_dispatch_bridge_fields(&settings, \"GetCompatibilitySettings\"",
         "add_go_owner_dispatch_bridge_fields(&summary, \"GetCompatibilityCenterSummary\""
       ],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, and second-ring KDE resource reads through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, and install-input reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",
