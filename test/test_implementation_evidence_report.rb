@@ -81,6 +81,7 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("desktop
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("install-input payloads"), "Runtime owner service summary must mention install input bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("backend lifecycle payloads"), "Runtime owner service summary must mention backend lifecycle bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("execution readiness payloads"), "Runtime owner service summary must mention execution readiness bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("AI safety payloads"), "Runtime owner service summary must mention AI safety bridge evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "state-root-implemented", "recipe and artifact trust pipeline must show state-root implementation evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("mainline_package") == "M2", "recipe and artifact trust pipeline must map to M2")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")

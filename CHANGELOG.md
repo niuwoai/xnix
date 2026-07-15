@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.231] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so AI safety reads carry Go owner read-dispatch payload evidence: AI diagnostic input, AI diagnostic recommendation, AI repair approval gate, snapshot plan, and Portal access policy.
+- Added restricted session smoke assertions that prove AI safety reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without calling AI providers, reading file contents, executing repairs, creating snapshots, granting Portal access, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Extended the C D-Bus Go owner bridge helper to support three-argument read dispatch for AI diagnostic routes while preserving the existing one- and two-argument read bridges.
+- Updated Runtime contract drift and implementation evidence reports to track AI safety reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.230] - 2026-07-16
 
 ### Added

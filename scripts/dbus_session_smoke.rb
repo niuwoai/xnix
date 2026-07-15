@@ -570,6 +570,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetAIDiagnosticInput: #{stderr}")
   assert(stdout.include?("ai-diagnostic-input"), "runtime smoke adapter must expose AI diagnostic inputs over D-Bus")
+  assert_go_owner_bridge(stdout, "GetAIDiagnosticInput")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -583,6 +584,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetAIDiagnosticRecommendation: #{stderr}")
   assert(stdout.include?("ai-diagnostic-recommendation"), "runtime smoke adapter must expose AI diagnostic recommendations over D-Bus")
+  assert_go_owner_bridge(stdout, "GetAIDiagnosticRecommendation")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -596,6 +598,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetAIRepairApprovalGate: #{stderr}")
   assert(stdout.include?("ai-repair-approval-gate"), "runtime smoke adapter must expose AI repair approval gates over D-Bus")
+  assert_go_owner_bridge(stdout, "GetAIRepairApprovalGate")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -608,6 +611,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetSnapshotPlan: #{stderr}")
   assert(stdout.include?("compatibility-snapshot"), "runtime smoke adapter must expose snapshot plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetSnapshotPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -620,6 +624,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetPortalAccessPolicy: #{stderr}")
   assert(stdout.include?("portal-access"), "runtime smoke adapter must expose Portal policy over D-Bus")
+  assert_go_owner_bridge(stdout, "GetPortalAccessPolicy")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

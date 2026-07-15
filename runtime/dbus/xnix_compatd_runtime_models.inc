@@ -423,6 +423,7 @@ build_ai_diagnostic_input(const gchar *application_id, const gchar *issue, const
 
   g_variant_builder_init(&input, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&input, "{sv}", "input_type", g_variant_new_string("ai-diagnostic-input"));
+  add_go_owner_dispatch_bridge_fields3(&input, "GetAIDiagnosticInput", application_id, issue, test_type);
   g_variant_builder_add(&input, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&input, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&input, "{sv}", "test_type", g_variant_new_string(test_type));
@@ -444,6 +445,7 @@ build_ai_diagnostic_recommendation(const gchar *application_id, const gchar *iss
 
   g_variant_builder_init(&recommendation, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&recommendation, "{sv}", "recommendation_type", g_variant_new_string("ai-diagnostic-recommendation"));
+  add_go_owner_dispatch_bridge_fields3(&recommendation, "GetAIDiagnosticRecommendation", application_id, issue, test_type);
   g_variant_builder_add(&recommendation, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&recommendation, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&recommendation, "{sv}", "test_type", g_variant_new_string(test_type));
@@ -467,6 +469,7 @@ build_ai_repair_approval_gate(const gchar *application_id, const gchar *issue, c
 
   g_variant_builder_init(&gate, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&gate, "{sv}", "gate_type", g_variant_new_string("ai-repair-approval-gate"));
+  add_go_owner_dispatch_bridge_fields3(&gate, "GetAIRepairApprovalGate", application_id, issue, test_type);
   g_variant_builder_add(&gate, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&gate, "{sv}", "issue", g_variant_new_string(issue));
   g_variant_builder_add(&gate, "{sv}", "test_type", g_variant_new_string(test_type));
@@ -492,6 +495,7 @@ build_snapshot_plan(const gchar *application_id, const gchar *reason)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-snapshot"));
+  add_go_owner_dispatch_bridge_fields2(&plan, "GetSnapshotPlan", application_id, reason);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "reason", g_variant_new_string(reason));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetSnapshotPlan"));
@@ -518,6 +522,7 @@ build_portal_policy(const gchar *application_id, const gchar *operation)
 
   g_variant_builder_init(&policy, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&policy, "{sv}", "policy_type", g_variant_new_string("portal-access"));
+  add_go_owner_dispatch_bridge_fields2(&policy, "GetPortalAccessPolicy", application_id, operation);
   g_variant_builder_add(&policy, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&policy, "{sv}", "operation", g_variant_new_string(operation));
   g_variant_builder_add(&policy, "{sv}", "portal_required", g_variant_new_boolean(TRUE));

@@ -1,6 +1,6 @@
 # Claude Code Contract Gap Work Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.230
+> Last updated: 2026-07-16 | Baseline: v0.2.231
 
 This document is a branch-sized implementation backlog for Claude Code. It focuses on domains where Xnix already has contracts, previews, smoke scripts, or tests, but still lacks durable implementation.
 
