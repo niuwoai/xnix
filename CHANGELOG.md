@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.159] - 2026-07-15
+
+### Added
+
+- Added a privacy-safe Dolphin AI analysis input summary to KDE Diagnostics section detail previews when file selections are present.
+- Added Go coverage proving Diagnostics detail exposes only file count, extension, selection mode, and disclosure metadata while keeping file paths, file contents, AI provider calls, network access, permission grants, request creation, backend launch, and host-root mutation disabled.
+
 ## [0.2.158] - 2026-07-15
 
 ### Added

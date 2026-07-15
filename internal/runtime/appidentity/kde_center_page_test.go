@@ -375,6 +375,26 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		diagnosticsPreview.AIAnalysis == nil ||
 		diagnosticsPreview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
 		diagnosticsPreview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		diagnosticsPreview.AIAnalysisInput == nil ||
+		diagnosticsPreview.AIAnalysisInput.RequestType != "dolphin-ai-analysis-preview" ||
+		diagnosticsPreview.AIAnalysisInput.RuntimeMethod != "GetAIDiagnosticInput" ||
+		diagnosticsPreview.AIAnalysisInput.AnalysisTask != "compatibility-file-review" ||
+		diagnosticsPreview.AIAnalysisInput.AnalysisSurface != "Dolphin" ||
+		diagnosticsPreview.AIAnalysisInput.SelectionMode != "explicit-application" ||
+		diagnosticsPreview.AIAnalysisInput.FileCount != 1 ||
+		diagnosticsPreview.AIAnalysisInput.SelectedExtension != ".xls" ||
+		diagnosticsPreview.AIAnalysisInput.SelectedFileDisclosure != "count-and-extension-only" ||
+		!diagnosticsPreview.AIAnalysisInput.UserReviewRequired ||
+		!diagnosticsPreview.AIAnalysisInput.SafeForAIDiagnostics ||
+		diagnosticsPreview.AIAnalysisInput.AIProviderCallEnabled ||
+		diagnosticsPreview.AIAnalysisInput.NetworkRequired ||
+		diagnosticsPreview.AIAnalysisInput.FileContentRead ||
+		diagnosticsPreview.AIAnalysisInput.FilePathsExposed ||
+		diagnosticsPreview.AIAnalysisInput.RequestObjectCreated ||
+		diagnosticsPreview.AIAnalysisInput.PermissionGranted ||
+		diagnosticsPreview.AIAnalysisInput.BackendLaunchEnabled ||
+		diagnosticsPreview.AIAnalysisInput.HostRootModified ||
+		diagnosticsPreview.AIAnalysisInput.BackendDetailsExposed ||
 		diagnosticsPreview.AIAnalysis.AIProviderCallEnabled ||
 		diagnosticsPreview.AIAnalysis.NetworkRequired ||
 		diagnosticsPreview.AIAnalysis.FileContentRead ||
@@ -386,6 +406,16 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		diagnosticsPreview.RequestObjectsCreated ||
 		diagnosticsPreview.ExecutionStarted {
 		t.Fatalf("unexpected diagnostics section detail: %#v", diagnosticsPreview)
+	}
+	diagnosticsEncoded, err := json.Marshal(diagnosticsPreview)
+	if err != nil {
+		t.Fatalf("Marshal diagnosticsPreview returned error: %v", err)
+	}
+	diagnosticsText := strings.ToLower(string(diagnosticsEncoded))
+	for _, forbidden := range []string{"file://", "/home/test", "documents/book.xls"} {
+		if strings.Contains(diagnosticsText, forbidden) {
+			t.Fatalf("diagnostics section detail exposes forbidden term %q: %s", forbidden, diagnosticsText)
+		}
 	}
 	if !containsString(preview.BlockedActions, "persist KDE center page section detail from preview state") ||
 		!containsString(preview.BlockedActions, "create Runtime request objects from section detail") ||

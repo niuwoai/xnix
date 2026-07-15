@@ -195,50 +195,74 @@ type KDECenterPageSection struct {
 }
 
 type KDECenterPageSectionDetailPreview struct {
-	SchemaVersion              string             `json:"schema_version"`
-	RequestType                string             `json:"request_type"`
-	PageType                   string             `json:"page_type"`
-	Source                     string             `json:"source"`
-	Desktop                    string             `json:"desktop"`
-	RuntimeMethod              string             `json:"runtime_method"`
-	ReadMethod                 string             `json:"read_method"`
-	ApplicationID              string             `json:"application_id"`
-	ApplicationName            string             `json:"application_name"`
-	SectionID                  string             `json:"section_id"`
-	SectionLabel               string             `json:"section_label"`
-	SectionTarget              string             `json:"section_target"`
-	SectionState               string             `json:"section_state"`
-	SectionRuntimeMethod       string             `json:"section_runtime_method"`
-	SectionReadModel           string             `json:"section_read_model"`
-	SectionSummary             string             `json:"section_summary"`
-	AIAnalysis                 *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
-	AvailableSectionIDs        []string           `json:"available_section_ids"`
-	ReadOnlyNavigation         bool               `json:"read_only_navigation"`
-	DetailPreviewCreated       bool               `json:"detail_preview_created"`
-	DetailPersisted            bool               `json:"detail_persisted"`
-	SectionActionsEnabled      bool               `json:"section_actions_enabled"`
-	SettingsPersisted          bool               `json:"settings_persisted"`
-	SettingsPersistenceEnabled bool               `json:"settings_persistence_enabled"`
-	NotificationsSent          bool               `json:"notifications_sent"`
-	ResourceGrantCreated       bool               `json:"resource_grant_created"`
-	RuntimeLaunchApproval      bool               `json:"runtime_launch_approval"`
-	LaunchEnabled              bool               `json:"launch_enabled"`
-	ExecutionStarted           bool               `json:"execution_started"`
-	RequestObjectsCreated      bool               `json:"request_objects_created"`
-	PermissionGrantCreated     bool               `json:"permission_grant_created"`
-	HostRootModified           bool               `json:"host_root_modified"`
-	NetworkRequired            bool               `json:"network_required"`
-	BackendDetailsExposed      bool               `json:"backend_details_exposed"`
-	RuntimeOwned               bool               `json:"runtime_owned"`
-	GoRuntimeBacked            bool               `json:"go_runtime_backed"`
-	KDEPolicyOwner             bool               `json:"kde_policy_owner"`
-	OfficialDesktopOnly        bool               `json:"official_desktop_only"`
-	UserVisible                bool               `json:"user_visible"`
-	SafeForAIDiagnostics       bool               `json:"safe_for_ai_diagnostics"`
-	UserDecisionCaptured       bool               `json:"user_decision_captured"`
-	UserDecisionAllowsLaunch   bool               `json:"user_decision_allows_launch"`
-	BlockedActions             []string           `json:"blocked_actions"`
-	DesktopSafeSummary         string             `json:"desktop_safe_summary"`
+	SchemaVersion              string                        `json:"schema_version"`
+	RequestType                string                        `json:"request_type"`
+	PageType                   string                        `json:"page_type"`
+	Source                     string                        `json:"source"`
+	Desktop                    string                        `json:"desktop"`
+	RuntimeMethod              string                        `json:"runtime_method"`
+	ReadMethod                 string                        `json:"read_method"`
+	ApplicationID              string                        `json:"application_id"`
+	ApplicationName            string                        `json:"application_name"`
+	SectionID                  string                        `json:"section_id"`
+	SectionLabel               string                        `json:"section_label"`
+	SectionTarget              string                        `json:"section_target"`
+	SectionState               string                        `json:"section_state"`
+	SectionRuntimeMethod       string                        `json:"section_runtime_method"`
+	SectionReadModel           string                        `json:"section_read_model"`
+	SectionSummary             string                        `json:"section_summary"`
+	AIAnalysis                 *KDEAIAnalysisLink            `json:"ai_analysis,omitempty"`
+	AIAnalysisInput            *KDECenterPageAIAnalysisInput `json:"ai_analysis_input,omitempty"`
+	AvailableSectionIDs        []string                      `json:"available_section_ids"`
+	ReadOnlyNavigation         bool                          `json:"read_only_navigation"`
+	DetailPreviewCreated       bool                          `json:"detail_preview_created"`
+	DetailPersisted            bool                          `json:"detail_persisted"`
+	SectionActionsEnabled      bool                          `json:"section_actions_enabled"`
+	SettingsPersisted          bool                          `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool                          `json:"settings_persistence_enabled"`
+	NotificationsSent          bool                          `json:"notifications_sent"`
+	ResourceGrantCreated       bool                          `json:"resource_grant_created"`
+	RuntimeLaunchApproval      bool                          `json:"runtime_launch_approval"`
+	LaunchEnabled              bool                          `json:"launch_enabled"`
+	ExecutionStarted           bool                          `json:"execution_started"`
+	RequestObjectsCreated      bool                          `json:"request_objects_created"`
+	PermissionGrantCreated     bool                          `json:"permission_grant_created"`
+	HostRootModified           bool                          `json:"host_root_modified"`
+	NetworkRequired            bool                          `json:"network_required"`
+	BackendDetailsExposed      bool                          `json:"backend_details_exposed"`
+	RuntimeOwned               bool                          `json:"runtime_owned"`
+	GoRuntimeBacked            bool                          `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool                          `json:"kde_policy_owner"`
+	OfficialDesktopOnly        bool                          `json:"official_desktop_only"`
+	UserVisible                bool                          `json:"user_visible"`
+	SafeForAIDiagnostics       bool                          `json:"safe_for_ai_diagnostics"`
+	UserDecisionCaptured       bool                          `json:"user_decision_captured"`
+	UserDecisionAllowsLaunch   bool                          `json:"user_decision_allows_launch"`
+	BlockedActions             []string                      `json:"blocked_actions"`
+	DesktopSafeSummary         string                        `json:"desktop_safe_summary"`
+}
+
+type KDECenterPageAIAnalysisInput struct {
+	RequestType            string `json:"request_type"`
+	Source                 string `json:"source"`
+	RuntimeMethod          string `json:"runtime_method"`
+	AnalysisTask           string `json:"analysis_task"`
+	AnalysisSurface        string `json:"analysis_surface"`
+	SelectionMode          string `json:"selection_mode"`
+	FileCount              int    `json:"file_count"`
+	SelectedExtension      string `json:"selected_extension"`
+	SelectedFileDisclosure string `json:"selected_file_disclosure"`
+	UserReviewRequired     bool   `json:"user_review_required"`
+	SafeForAIDiagnostics   bool   `json:"safe_for_ai_diagnostics"`
+	AIProviderCallEnabled  bool   `json:"ai_provider_call_enabled"`
+	NetworkRequired        bool   `json:"network_required"`
+	FileContentRead        bool   `json:"file_content_read"`
+	FilePathsExposed       bool   `json:"file_paths_exposed"`
+	RequestObjectCreated   bool   `json:"request_object_created"`
+	PermissionGranted      bool   `json:"permission_granted"`
+	BackendLaunchEnabled   bool   `json:"backend_launch_enabled"`
+	HostRootModified       bool   `json:"host_root_modified"`
+	BackendDetailsExposed  bool   `json:"backend_details_exposed"`
 }
 
 func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPagePreview, error) {
@@ -395,6 +419,39 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	return preview, nil
 }
 
+func kdeCenterPageAIAnalysisInput(recipe Recipe, provenance Provenance, sectionID string, fileURIs []string) (*KDECenterPageAIAnalysisInput, error) {
+	if sectionID != "diagnostics" || len(fileURIs) == 0 {
+		return nil, nil
+	}
+	preview, err := NewDolphinAIAnalysisPreview([]Recipe{recipe}, provenance, fileURIs, recipe.ID)
+	if err != nil {
+		return nil, err
+	}
+	input := KDECenterPageAIAnalysisInput{
+		RequestType:            preview.RequestType,
+		Source:                 preview.Source,
+		RuntimeMethod:          preview.RuntimeMethod,
+		AnalysisTask:           preview.AnalysisTask,
+		AnalysisSurface:        preview.AnalysisSurface,
+		SelectionMode:          preview.SelectionMode,
+		FileCount:              preview.FileCount,
+		SelectedExtension:      preview.SelectedExtension,
+		SelectedFileDisclosure: preview.SelectedFileDisclosure,
+		UserReviewRequired:     preview.UserReviewRequired,
+		SafeForAIDiagnostics:   preview.SafeForAIDiagnostics,
+		AIProviderCallEnabled:  preview.AIProviderCallEnabled,
+		NetworkRequired:        preview.NetworkRequired,
+		FileContentRead:        preview.FileContentRead,
+		FilePathsExposed:       preview.FilePathsExposed,
+		RequestObjectCreated:   preview.RequestObjectCreated,
+		PermissionGranted:      preview.PermissionGranted,
+		BackendLaunchEnabled:   preview.BackendLaunchEnabled,
+		HostRootModified:       preview.HostRootModified,
+		BackendDetailsExposed:  preview.BackendDetailsExposed,
+	}
+	return &input, nil
+}
+
 func NewKDECenterPageSectionsPreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPageSectionsPreview, error) {
 	page, err := NewKDECenterPagePreview(recipe, provenance, decision, fileURIs)
 	if err != nil {
@@ -467,6 +524,10 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 	if !ok {
 		return KDECenterPageSectionDetailPreview{}, errors.New("KDE center page section detail preview requires a known section id")
 	}
+	aiAnalysisInput, err := kdeCenterPageAIAnalysisInput(recipe, provenance, section.ID, fileURIs)
+	if err != nil {
+		return KDECenterPageSectionDetailPreview{}, err
+	}
 
 	preview := KDECenterPageSectionDetailPreview{
 		SchemaVersion:              "xnix.runtime.kde_center_page_section_detail.v1",
@@ -486,6 +547,7 @@ func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, 
 		SectionReadModel:           section.ReadModel,
 		SectionSummary:             section.Summary,
 		AIAnalysis:                 section.AIAnalysis,
+		AIAnalysisInput:            aiAnalysisInput,
 		AvailableSectionIDs:        kdeCenterPageSectionIDs(sections.Sections),
 		ReadOnlyNavigation:         true,
 		DetailPreviewCreated:       true,
