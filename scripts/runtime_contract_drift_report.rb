@@ -224,11 +224,16 @@ def build_report(root)
         "add_go_owner_dispatch_bridge_fields(&preflight, \"GetCompatibilityAcquisitionPreflight\"",
         "add_go_owner_dispatch_bridge_fields(&manifest, \"GetCompatibilityArtifactManifest\"",
         "add_go_owner_dispatch_bridge_fields2(&plan, \"GetCompatibilityInstallPlan\"",
+        "add_go_owner_dispatch_bridge_fields(&binding, \"GetBackendBinding\"",
+        "add_go_owner_dispatch_bridge_fields(&matrix, \"GetBackendCapabilityMatrix\"",
+        "add_go_owner_dispatch_bridge_fields(&plan, \"GetBackendSelectionPlan\"",
+        "add_go_owner_dispatch_bridge_fields(&lifecycle, \"GetBackendLifecycle\"",
+        "add_go_owner_dispatch_bridge_fields(&plan, \"GetBackendEnvironmentPlan\"",
         "add_go_owner_dispatch_bridge_fields(&settings, \"GetCompatibilitySettings\"",
         "add_go_owner_dispatch_bridge_fields(&summary, \"GetCompatibilityCenterSummary\""
       ],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, and install-input reads through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, and backend lifecycle reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",

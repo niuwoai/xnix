@@ -443,6 +443,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetBackendBinding: #{stderr}")
   assert(stdout.include?("compatibility-backend-binding"), "runtime smoke adapter must expose backend binding over D-Bus")
+  assert_go_owner_bridge(stdout, "GetBackendBinding")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -454,6 +455,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetBackendCapabilityMatrix: #{stderr}")
   assert(stdout.include?("compatibility-backend-capability-matrix"), "runtime smoke adapter must expose backend capability matrix over D-Bus")
   assert(stdout.include?("backend_launch_enabled"), "runtime smoke adapter must keep backend launch gated")
+  assert_go_owner_bridge(stdout, "GetBackendCapabilityMatrix")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -466,6 +468,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetBackendSelectionPlan: #{stderr}")
   assert(stdout.include?("compatibility-backend-selection-plan"), "runtime smoke adapter must expose backend selection plans over D-Bus")
   assert(stdout.include?("selection_committed"), "runtime smoke adapter must keep backend selection uncommitted")
+  assert_go_owner_bridge(stdout, "GetBackendSelectionPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -477,6 +480,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetBackendLifecycle: #{stderr}")
   assert(stdout.include?("compatibility-backend-lifecycle"), "runtime smoke adapter must expose backend lifecycle over D-Bus")
+  assert_go_owner_bridge(stdout, "GetBackendLifecycle")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -488,6 +492,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetBackendEnvironmentPlan: #{stderr}")
   assert(stdout.include?("compatibility-backend-environment-plan"), "runtime smoke adapter must expose backend environment plans over D-Bus")
+  assert_go_owner_bridge(stdout, "GetBackendEnvironmentPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

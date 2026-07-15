@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.229] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so backend lifecycle reads carry Go owner read-dispatch payload evidence: backend binding, backend capability matrix, backend selection plan, backend lifecycle, and backend environment plan.
+- Added restricted session smoke assertions that prove backend lifecycle reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without creating environments, starting Wine/VM backends, enabling launch, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track backend lifecycle reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.228] - 2026-07-16
 
 ### Added

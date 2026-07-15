@@ -123,6 +123,7 @@ build_backend_binding(const gchar *application_id)
 
   g_variant_builder_init(&binding, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&binding, "{sv}", "binding_type", g_variant_new_string("compatibility-backend-binding"));
+  add_go_owner_dispatch_bridge_fields(&binding, "GetBackendBinding", application_id);
   g_variant_builder_add(&binding, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&binding, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
   g_variant_builder_add(&binding, "{sv}", "managed_binding_ready", g_variant_new_boolean(FALSE));
@@ -152,6 +153,7 @@ build_backend_capability_matrix(void)
 
   g_variant_builder_init(&matrix, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&matrix, "{sv}", "matrix_type", g_variant_new_string("compatibility-backend-capability-matrix"));
+  add_go_owner_dispatch_bridge_fields(&matrix, "GetBackendCapabilityMatrix", NULL);
   g_variant_builder_add(&matrix, "{sv}", "runtime_method", g_variant_new_string("GetBackendCapabilityMatrix"));
   g_variant_builder_add(&matrix, "{sv}", "profile_ids", g_variant_new_strv(profile_ids, 2));
   g_variant_builder_add(&matrix, "{sv}", "capability_ids", g_variant_new_strv(capability_ids, 7));
@@ -194,6 +196,7 @@ build_backend_selection_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-backend-selection-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetBackendSelectionPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetBackendSelectionPlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
@@ -228,6 +231,7 @@ build_backend_lifecycle(const gchar *application_id)
 
   g_variant_builder_init(&lifecycle, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&lifecycle, "{sv}", "lifecycle_type", g_variant_new_string("compatibility-backend-lifecycle"));
+  add_go_owner_dispatch_bridge_fields(&lifecycle, "GetBackendLifecycle", application_id);
   g_variant_builder_add(&lifecycle, "{sv}", "runtime_method", g_variant_new_string("GetBackendLifecycle"));
   g_variant_builder_add(&lifecycle, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&lifecycle, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));
@@ -256,6 +260,7 @@ build_backend_environment_plan(const gchar *application_id)
 
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("compatibility-backend-environment-plan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetBackendEnvironmentPlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetBackendEnvironmentPlan"));
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "selected_strategy", g_variant_new_string("automatic-managed"));

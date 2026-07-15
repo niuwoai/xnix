@@ -57,7 +57,7 @@ production_gate = Xnix::Compatibility::RecipeInstallGate.new(
   registry_report: registry_report,
   application_id: "org.xnix.sample.notepad"
 ).to_h
-assert(production_gate["version"] == "0.2.228", "recipe install gate must expose the current version")
+assert(production_gate["version"] == "0.2.229", "recipe install gate must expose the current version")
 assert(production_gate["gate_type"] == "recipe-install", "recipe install gate must identify the model type")
 assert(production_gate["mode"] == "production", "recipe install gate must default to production mode")
 assert(production_gate["decision"] == "block", "production mode must block development-only registries")
