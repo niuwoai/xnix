@@ -116,6 +116,55 @@ add_go_owner_dispatch_bridge_fields5(GVariantBuilder *builder,
 }
 
 static void
+add_go_owner_dispatch_payload_fields5(GVariantBuilder *builder,
+                                      const gchar *method_name,
+                                      const gchar *dispatch_arg,
+                                      const gchar *second_dispatch_arg,
+                                      const gchar *third_dispatch_arg,
+                                      const gchar *fourth_dispatch_arg,
+                                      const gchar *fifth_dispatch_arg)
+{
+  gchar *go_owner_dispatch_json = NULL;
+  gboolean go_owner_dispatch_available = FALSE;
+
+  if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
+    go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
+  } else {
+    go_owner_dispatch_json = go_owner_read_dispatch5(method_name,
+                                                    dispatch_arg,
+                                                    second_dispatch_arg,
+                                                    third_dispatch_arg,
+                                                    fourth_dispatch_arg,
+                                                    fifth_dispatch_arg);
+  }
+  go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
+
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
+  g_free(go_owner_dispatch_json);
+}
+
+static void
+add_go_owner_dispatch_payload_fields2(GVariantBuilder *builder,
+                                      const gchar *method_name,
+                                      const gchar *dispatch_arg,
+                                      const gchar *second_dispatch_arg)
+{
+  add_go_owner_dispatch_payload_fields5(builder, method_name, dispatch_arg, second_dispatch_arg, NULL, NULL, NULL);
+}
+
+static void
+add_go_owner_dispatch_payload_fields3(GVariantBuilder *builder,
+                                      const gchar *method_name,
+                                      const gchar *dispatch_arg,
+                                      const gchar *second_dispatch_arg,
+                                      const gchar *third_dispatch_arg)
+{
+  add_go_owner_dispatch_payload_fields5(builder, method_name, dispatch_arg, second_dispatch_arg, third_dispatch_arg, NULL, NULL);
+}
+
+static void
 add_go_owner_dispatch_bridge_fields2(GVariantBuilder *builder,
                                      const gchar *method_name,
                                      const gchar *dispatch_arg,

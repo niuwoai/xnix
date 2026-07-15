@@ -200,6 +200,7 @@ def build_report(root)
       expected: [
         "go_owner_read_dispatch",
         "add_go_owner_dispatch_bridge_fields",
+        "add_go_owner_dispatch_payload_fields",
         "add_go_owner_dispatch_bridge_fields5",
         "go_owner_dispatch_available",
         "go_owner_dispatch_schema",
@@ -248,10 +249,13 @@ def build_report(root)
         "add_go_owner_dispatch_bridge_fields5(&plan, \"GetCompatibilityReviewFlowPlan\"",
         "add_go_owner_dispatch_bridge_fields(&queue, \"GetCompatibilityActionQueue\"",
         "add_go_owner_dispatch_bridge_fields3(&receipt, \"GetCompatibilityActionReviewReceipt\"",
-        "add_go_owner_dispatch_bridge_fields(&summary, \"GetCompatibilityCenterSummary\""
+        "add_go_owner_dispatch_bridge_fields(&summary, \"GetCompatibilityCenterSummary\"",
+        "add_go_owner_dispatch_payload_fields2(&page, \"GetKDECenterPage\"",
+        "add_go_owner_dispatch_payload_fields2(&model, \"GetKDECenterPageSections\"",
+        "add_go_owner_dispatch_payload_fields3(&detail, \"GetKDECenterPageSectionDetail\""
       ],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, execution readiness reads, AI safety reads, settings/review reads, and Compatibility Center action reads through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, execution readiness reads, AI safety reads, settings/review reads, Compatibility Center action reads, and KDE Compatibility Center page reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",

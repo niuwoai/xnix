@@ -69,6 +69,7 @@ assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").inc
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/smoke_batch.go"), "Runtime owner service must include smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_smoke.c"), "Runtime owner service must include C D-Bus bridge smoke evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_runtime_models.inc"), "Runtime owner service must include C D-Bus bridge model evidence")
+assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_kde_center.inc"), "Runtime owner service must include KDE Center C bridge model evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("full D-Bus read dispatch coverage"), "Runtime owner service summary must mention full read dispatch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("smoke-batch read/write evidence"), "Runtime owner service summary must mention smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
@@ -84,11 +85,17 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("executi
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("AI safety payloads"), "Runtime owner service summary must mention AI safety bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("settings/review payloads"), "Runtime owner service summary must mention settings/review bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("Compatibility Center action payloads"), "Runtime owner service summary must mention Compatibility Center action bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("KDE Compatibility Center page payloads"), "Runtime owner service summary must mention KDE Compatibility Center page bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields5" &&
     entry.fetch("present")
 }, "Runtime owner service must track five-argument C bridge helper evidence")
+assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "runtime/dbus/xnix_compatd_kde_center.inc" &&
+    entry.fetch("token") == "GetKDECenterPageSectionDetail" &&
+    entry.fetch("present")
+}, "Runtime owner service must track KDE Center detail bridge evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "state-root-implemented", "recipe and artifact trust pipeline must show state-root implementation evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("mainline_package") == "M2", "recipe and artifact trust pipeline must map to M2")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")

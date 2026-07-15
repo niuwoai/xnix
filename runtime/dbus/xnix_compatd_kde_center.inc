@@ -11,6 +11,7 @@ build_kde_center_page(const gchar *application_id, const gchar *decision)
   g_variant_builder_add(&page, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&page, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPage"));
   g_variant_builder_add(&page, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-preview"));
+  add_go_owner_dispatch_payload_fields2(&page, "GetKDECenterPage", application_id, decision);
   g_variant_builder_add(&page, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&page, "{sv}", "application_name", g_variant_new_string("Sample Notepad"));
   g_variant_builder_add(&page, "{sv}", "compatibility_state", g_variant_new_string("review-required"));
@@ -252,6 +253,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   g_variant_builder_add(&model, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&model, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSections"));
   g_variant_builder_add(&model, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-sections-preview"));
+  add_go_owner_dispatch_payload_fields2(&model, "GetKDECenterPageSections", application_id, decision);
   g_variant_builder_add(&model, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(12));
   g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(12));
@@ -435,6 +437,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
   g_variant_builder_add(&detail, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&detail, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSectionDetail"));
   g_variant_builder_add(&detail, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-section-detail-preview"));
+  add_go_owner_dispatch_payload_fields3(&detail, "GetKDECenterPageSectionDetail", application_id, section_id, decision);
   g_variant_builder_add(&detail, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&detail, "{sv}", "section_id", g_variant_new_string(section_id));
   g_variant_builder_add(&detail, "{sv}", "section_label", g_variant_new_string(label));

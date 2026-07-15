@@ -1,6 +1,6 @@
 # Claude Code Domain Dispatch
 
-> Last updated: 2026-07-16 | Baseline: v0.2.232
+> Last updated: 2026-07-16 | Baseline: v0.2.233
 
 This document is the dispatch board for assigning large, relatively independent Xnix implementation domains to Claude Code.
 

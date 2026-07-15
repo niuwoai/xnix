@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.233] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so KDE Compatibility Center page reads carry Go owner read-dispatch payload evidence: full page, page sections, and section detail.
+- Added restricted session smoke assertions that prove KDE Compatibility Center page reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without persisting pages, enabling section actions, sending notifications, granting resources, approving launches, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Added payload-only Go owner dispatch bridge helpers for C D-Bus builders that already own a specific KDE read-model source, preserving `go-kde-center-*` source labels while exposing owner dispatch JSON.
+- Updated Runtime contract drift and implementation evidence reports to track KDE Compatibility Center page reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.232] - 2026-07-16
 
 ### Added

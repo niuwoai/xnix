@@ -762,6 +762,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDECenterPage: #{stderr}")
   assert(stdout.include?("kde-center-page"), "runtime smoke adapter must expose KDE center pages over D-Bus")
   assert(stdout.include?("card_count"), "runtime smoke adapter must expose KDE center page card counts over D-Bus")
+  assert_go_owner_bridge(stdout, "GetKDECenterPage")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -775,6 +776,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDECenterPageSections: #{stderr}")
   assert(stdout.include?("kde-center-page-sections"), "runtime smoke adapter must expose KDE center page sections over D-Bus")
   assert(stdout.include?("GetCompatibilitySettings"), "runtime smoke adapter must expose section Runtime read methods over D-Bus")
+  assert_go_owner_bridge(stdout, "GetKDECenterPageSections")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -789,6 +791,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDECenterPageSectionDetail: #{stderr}")
   assert(stdout.include?("kde-center-page-section-detail"), "runtime smoke adapter must expose KDE center page section details over D-Bus")
   assert(stdout.include?("settings-model"), "runtime smoke adapter must expose selected section read models over D-Bus")
+  assert_go_owner_bridge(stdout, "GetKDECenterPageSectionDetail")
 
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
