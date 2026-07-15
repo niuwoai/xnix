@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-preview"), "Go Runtime CLI must render KDE action card previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-preflight-preview"), "Go Runtime CLI must render KDE action preflight previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-receipt-preview"), "Go Runtime CLI must render KDE action receipt previews")
@@ -1467,6 +1468,50 @@ if go_available
   assert(!kde_action_status.downcase.include?("prefix"), "KDE action status preview must not expose implementation storage")
   assert(!kde_action_status.include?(".exe"), "KDE action status preview must not expose a Windows executable")
   assert(!kde_action_status.downcase.include?("virtual machine"), "KDE action status preview must not expose implementation labels")
+
+  kde_action_card, kde_action_card_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-action-card-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--action",
+    "review-file-manager-action",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_action_card_status.success?, "Go KDE action card preview CLI must run successfully")
+  kde_action_card_payload = JSON.parse(kde_action_card)
+  assert(kde_action_card_payload.fetch("schema_version") == "xnix.runtime.kde_action_card.v1", "KDE action card preview schema version must be stable")
+  assert(kde_action_card_payload.fetch("request_type") == "kde-action-card-preview", "KDE action card preview must identify its request type")
+  assert(kde_action_card_payload.fetch("card_type") == "compatibility-center-kde-action-card", "KDE action card preview must identify its card type")
+  assert(kde_action_card_payload.fetch("source") == "kde-action-status-preview", "KDE action card preview must derive from action status previews")
+  assert(kde_action_card_payload.fetch("card_state") == "waiting-for-runtime-gates", "KDE action card preview must keep approved actions waiting for Runtime gates")
+  assert(kde_action_card_payload.fetch("status").fetch("request_type") == "kde-action-status-preview", "KDE action card preview must summarize status previews")
+  assert(kde_action_card_payload.fetch("card").fetch("title") == recipe.name, "KDE action card preview must expose the application title")
+  assert(kde_action_card_payload.fetch("card").fetch("subtitle") == "Waiting for desktop access review", "KDE action card preview must expose user-facing waiting copy")
+  assert(kde_action_card_payload.fetch("card").fetch("badge") == "Waiting", "KDE action card preview must expose a waiting badge")
+  assert(kde_action_card_payload.fetch("card").fetch("badge_tone") == "warning", "KDE action card preview must expose a warning badge tone")
+  assert(kde_action_card_payload.fetch("card").fetch("primary_action").fetch("id") == "review-required-gates", "KDE action card preview must expose the gate review primary action")
+  assert(kde_action_card_payload.fetch("card").fetch("primary_action").fetch("navigation_only") == true, "KDE action card primary action must remain navigation-only")
+  assert(kde_action_card_payload.fetch("card").fetch("primary_action").fetch("mutates_runtime") == false, "KDE action card primary action must not mutate Runtime state")
+  assert(kde_action_card_payload.fetch("card").fetch("primary_action").fetch("starts_program") == false, "KDE action card primary action must not start programs")
+  assert(kde_action_card_payload.fetch("card").fetch("disabled_actions").map { |action| action.fetch("id") } == %w[start-application record-review-receipt grant-resource-access], "KDE action card preview must disable execution and grant actions")
+  assert(kde_action_card_payload.fetch("card_preview_created") == true, "KDE action card preview must create a read model")
+  assert(kde_action_card_payload.fetch("card_persisted") == false, "KDE action card preview must not persist cards")
+  assert(kde_action_card_payload.fetch("status_persisted") == false, "KDE action card preview must not persist status")
+  assert(kde_action_card_payload.fetch("notifications_sent") == false, "KDE action card preview must not send notifications")
+  assert(kde_action_card_payload.fetch("resource_grant_created") == false, "KDE action card preview must not grant resources")
+  assert(kde_action_card_payload.fetch("request_objects_created") == false, "KDE action card preview must not create Runtime request objects")
+  assert(kde_action_card_payload.fetch("execution_started") == false, "KDE action card preview must not start execution")
+  assert(kde_action_card_payload.fetch("host_root_modified") == false, "KDE action card preview must not mutate the host root")
+  assert(!kde_action_card.downcase.include?("prefix"), "KDE action card preview must not expose implementation storage")
+  assert(!kde_action_card.include?(".exe"), "KDE action card preview must not expose a Windows executable")
+  assert(!kde_action_card.downcase.include?("virtual machine"), "KDE action card preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

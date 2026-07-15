@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.147] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-card-preview --registry <path> --app <id> --action <id> --decision <decision> [file://...]` for read-only Runtime previews of KDE Compatibility Center action cards derived from action status.
+- Added Go Runtime KDE action card modeling with user-facing title, subtitle, badge, badge tone, navigation-only actions, disabled execution/grant actions, and safe detail rows for Plasma rendering.
+- Added Go and Ruby harness coverage that verifies KDE action card previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about card persistence, status persistence, review receipts, queue mutation, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center queue flow from raw status previews toward renderable user cards while keeping Runtime write and execution gates closed.
+
 ## [0.2.146] - 2026-07-15
 
 ### Added
