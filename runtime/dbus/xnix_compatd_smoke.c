@@ -1507,6 +1507,17 @@ build_kde_center_page(const gchar *application_id, const gchar *decision)
   g_variant_builder_add(&page, "{sv}", "file_association_request_object_created", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "file_association_permission_granted", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "file_association_files_written", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "tray_status_runtime_method", g_variant_new_string("GetTrayStatus"));
+  g_variant_builder_add(&page, "{sv}", "tray_status_type", g_variant_new_string("tray-status-plan"));
+  g_variant_builder_add(&page, "{sv}", "tray_status_active_application_count", g_variant_new_int32(1));
+  g_variant_builder_add(&page, "{sv}", "tray_status_attention_required_count", g_variant_new_int32(1));
+  g_variant_builder_add(&page, "{sv}", "tray_status_registered_application_count", g_variant_new_int32(1));
+  g_variant_builder_add(&page, "{sv}", "tray_status_compatibility_state", g_variant_new_string("attention-required"));
+  g_variant_builder_add(&page, "{sv}", "tray_status_bridge_state", g_variant_new_string("planned"));
+  g_variant_builder_add(&page, "{sv}", "tray_status_bridged_application_count", g_variant_new_int32(0));
+  g_variant_builder_add(&page, "{sv}", "tray_status_live_bridge_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "tray_status_bridge_configuration_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "tray_status_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&page, "{sv}", "action_deck_request_type", g_variant_new_string("kde-action-card-deck-preview"));
   g_variant_builder_add(&page, "{sv}", "card_count", g_variant_new_int32(7));
   g_variant_builder_add(&page, "{sv}", "waiting_card_count", g_variant_new_int32(decision_allowed ? 7 : 0));
@@ -1585,6 +1596,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "launch",
     "window",
     "files",
+    "tray",
     "actions",
     "settings",
     "diagnostics"
@@ -1597,6 +1609,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "GetLaunchIntent",
     "GetTaskManagerIdentityPlan",
     "GetFileAssociationPlan",
+    "GetTrayStatus",
     "GetCompatibilityActionQueue",
     "GetCompatibilitySettings",
     "GetDiagnostics"
@@ -1609,6 +1622,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "launch-intent-preview",
     "window-identity-preview",
     "file-association-plan",
+    "tray-status-preview",
     "compatibility-center-action-queue",
     "settings-model",
     "runtime-diagnostics"
@@ -1619,6 +1633,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
     "ready-for-runtime-commit",
     "blocked",
     "blocked",
+    "planned",
     "planned",
     "planned",
     "waiting-for-runtime-gates",
@@ -1636,6 +1651,7 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   add_kde_center_page_section(&sections, "launch", "GetLaunchIntent", "launch-intent-preview", "blocked");
   add_kde_center_page_section(&sections, "window", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned");
   add_kde_center_page_section(&sections, "files", "GetFileAssociationPlan", "file-association-plan", "planned");
+  add_kde_center_page_section(&sections, "tray", "GetTrayStatus", "tray-status-preview", "planned");
   add_kde_center_page_section(&sections, "actions", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates");
   add_kde_center_page_section(&sections, "settings", "GetCompatibilitySettings", "settings-model", "planned");
   add_kde_center_page_section(&sections, "diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned");
@@ -1647,15 +1663,15 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   g_variant_builder_add(&model, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSections"));
   g_variant_builder_add(&model, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-sections-preview"));
   g_variant_builder_add(&model, "{sv}", "application_id", g_variant_new_string(application_id));
-  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(10));
-  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(10));
-  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(10));
+  g_variant_builder_add(&model, "{sv}", "section_count", g_variant_new_int32(11));
+  g_variant_builder_add(&model, "{sv}", "read_only_section_count", g_variant_new_int32(11));
+  g_variant_builder_add(&model, "{sv}", "navigation_only_section_count", g_variant_new_int32(11));
   g_variant_builder_add(&model, "{sv}", "executable_section_count", g_variant_new_int32(0));
   g_variant_builder_add(&model, "{sv}", "primary_section_id", g_variant_new_string("overview"));
-  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 10));
-  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 10));
-  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 10));
-  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 10));
+  g_variant_builder_add(&model, "{sv}", "section_ids", g_variant_new_strv(section_ids, 11));
+  g_variant_builder_add(&model, "{sv}", "runtime_methods", g_variant_new_strv(runtime_methods, 11));
+  g_variant_builder_add(&model, "{sv}", "read_models", g_variant_new_strv(read_models, 11));
+  g_variant_builder_add(&model, "{sv}", "section_states", g_variant_new_strv(section_states, 11));
   g_variant_builder_add(&model, "{sv}", "sections", g_variant_builder_end(&sections));
   g_variant_builder_add(&model, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&model, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
@@ -1748,6 +1764,14 @@ kde_center_page_section_detail(const gchar *section_id,
     *state = "planned";
     return TRUE;
   }
+  if (g_strcmp0(section_id, "tray") == 0) {
+    *label = "Tray";
+    *target = "compatibility-tray-status";
+    *runtime_method = "GetTrayStatus";
+    *read_model = "tray-status-preview";
+    *state = "planned";
+    return TRUE;
+  }
   if (g_strcmp0(section_id, "actions") == 0) {
     *label = "Actions";
     *target = "compatibility-center-gates";
@@ -1790,6 +1814,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
     "launch",
     "window",
     "files",
+    "tray",
     "actions",
     "settings",
     "diagnostics"
@@ -1818,7 +1843,7 @@ build_kde_center_page_section_detail(const gchar *application_id,
   g_variant_builder_add(&detail, "{sv}", "section_state", g_variant_new_string(state));
   g_variant_builder_add(&detail, "{sv}", "section_runtime_method", g_variant_new_string(runtime_method));
   g_variant_builder_add(&detail, "{sv}", "section_read_model", g_variant_new_string(read_model));
-  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 10));
+  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 11));
   g_variant_builder_add(&detail, "{sv}", "read_only_navigation", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_preview_created", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&detail, "{sv}", "detail_persisted", g_variant_new_boolean(FALSE));

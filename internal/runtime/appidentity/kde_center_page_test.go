@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -226,8 +226,29 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.FileAssociationSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected file association snapshot: %#v", preview.FileAssociationSnapshot)
 	}
-	if preview.NavigationCount != 10 ||
-		len(preview.Navigation) != 10 ||
+	if preview.TrayStatusSnapshot.StatusType != "tray-status-preview" ||
+		preview.TrayStatusSnapshot.RuntimeMethod != "GetTrayStatus" ||
+		preview.TrayStatusSnapshot.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.TrayStatusSnapshot.RegisteredApplicationCount != 1 ||
+		preview.TrayStatusSnapshot.ActiveApplicationCount != 0 ||
+		preview.TrayStatusSnapshot.AttentionRequiredCount != 0 ||
+		preview.TrayStatusSnapshot.CompatibilityState != "ready" ||
+		preview.TrayStatusSnapshot.CompatibilityLabel != "Ready" ||
+		preview.TrayStatusSnapshot.TrayBridgeState != "planned" ||
+		preview.TrayStatusSnapshot.TrayBridgeLabel != "Tray bridge is planned" ||
+		preview.TrayStatusSnapshot.BridgedTrayApplicationCount != 0 ||
+		preview.TrayStatusSnapshot.ActionCount != 2 ||
+		!sameStrings(preview.TrayStatusSnapshot.Actions, []string{"open-compatibility-center", "open-settings"}) ||
+		!preview.TrayStatusSnapshot.UserVisible ||
+		!preview.TrayStatusSnapshot.TrayStatusReady ||
+		preview.TrayStatusSnapshot.LiveBackendBridgeEnabled ||
+		preview.TrayStatusSnapshot.BridgeConfigurationPersisted ||
+		preview.TrayStatusSnapshot.HostRootModified ||
+		preview.TrayStatusSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected tray status snapshot: %#v", preview.TrayStatusSnapshot)
+	}
+	if preview.NavigationCount != 11 ||
+		len(preview.Navigation) != 11 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
@@ -236,9 +257,10 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.Navigation[4].ID != "launch" ||
 		preview.Navigation[5].ID != "window" ||
 		preview.Navigation[6].ID != "files" ||
-		preview.Navigation[7].ID != "actions" ||
-		preview.Navigation[8].ID != "settings" ||
-		preview.Navigation[9].ID != "diagnostics" {
+		preview.Navigation[7].ID != "tray" ||
+		preview.Navigation[8].ID != "actions" ||
+		preview.Navigation[9].ID != "settings" ||
+		preview.Navigation[10].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -352,9 +374,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 10 ||
-		preview.ReadOnlySectionCount != 10 ||
-		preview.NavigationOnlySectionCount != 10 ||
+		preview.SectionCount != 11 ||
+		preview.ReadOnlySectionCount != 11 ||
+		preview.NavigationOnlySectionCount != 11 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -381,6 +403,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"launch":      "GetLaunchIntent",
 		"window":      "GetTaskManagerIdentityPlan",
 		"files":       "GetFileAssociationPlan",
+		"tray":        "GetTrayStatus",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
@@ -393,6 +416,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"launch":      "launch-intent-preview",
 		"window":      "window-identity-preview",
 		"files":       "file-association-plan",
+		"tray":        "tray-status-preview",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -477,7 +501,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,tray,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
@@ -555,6 +579,26 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		filesPreview.HostRootModified ||
 		filesPreview.BackendDetailsExposed {
 		t.Fatalf("unexpected files section detail: %#v", filesPreview)
+	}
+	trayPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "tray", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("tray NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if trayPreview.SectionID != "tray" ||
+		trayPreview.SectionLabel != "Tray" ||
+		trayPreview.SectionTarget != "compatibility-tray-status" ||
+		trayPreview.SectionState != "planned" ||
+		trayPreview.SectionRuntimeMethod != "GetTrayStatus" ||
+		trayPreview.SectionReadModel != "tray-status-preview" ||
+		!trayPreview.ReadOnlyNavigation ||
+		trayPreview.SectionActionsEnabled ||
+		trayPreview.RequestObjectsCreated ||
+		trayPreview.PermissionGrantCreated ||
+		trayPreview.LaunchEnabled ||
+		trayPreview.ExecutionStarted ||
+		trayPreview.HostRootModified ||
+		trayPreview.BackendDetailsExposed {
+		t.Fatalf("unexpected tray section detail: %#v", trayPreview)
 	}
 	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
 	if err != nil {

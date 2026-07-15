@@ -733,6 +733,7 @@ module Xnix
         task_manager_identity = task_manager_identity_plan(recipe.id)
         kwin_rule = kwin_window_rule_plan(recipe.id)
         file_association = file_association_plan_summary(recipe)
+        tray_status = tray_status_summary
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -809,6 +810,17 @@ module Xnix
           "file_association_request_object_created" => false,
           "file_association_permission_granted" => false,
           "file_association_files_written" => false,
+          "tray_status_runtime_method" => "GetTrayStatus",
+          "tray_status_type" => tray_status.fetch("status_type"),
+          "tray_status_active_application_count" => tray_status.fetch("active_application_count"),
+          "tray_status_attention_required_count" => tray_status.fetch("attention_required_count"),
+          "tray_status_registered_application_count" => tray_status.fetch("registered_application_count"),
+          "tray_status_compatibility_state" => tray_status.fetch("compatibility_state"),
+          "tray_status_bridge_state" => tray_status.fetch("tray_bridge_state"),
+          "tray_status_bridged_application_count" => tray_status.fetch("bridged_tray_application_count"),
+          "tray_status_live_bridge_enabled" => tray_status.fetch("live_backend_bridge_enabled"),
+          "tray_status_bridge_configuration_persisted" => tray_status.fetch("bridge_configuration_persisted"),
+          "tray_status_ready" => true,
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -861,6 +873,7 @@ module Xnix
           kde_center_page_section("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked"),
           kde_center_page_section("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned"),
           kde_center_page_section("files", "Files", "compatibility-file-association", "GetFileAssociationPlan", "file-association-plan", "planned"),
+          kde_center_page_section("tray", "Tray", "compatibility-tray-status", "GetTrayStatus", "tray-status-preview", "planned"),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1597,6 +1610,17 @@ module Xnix
           "file_association_request_object_created" => page.fetch("file_association_request_object_created"),
           "file_association_permission_granted" => page.fetch("file_association_permission_granted"),
           "file_association_files_written" => page.fetch("file_association_files_written"),
+          "tray_status_runtime_method" => page.fetch("tray_status_runtime_method"),
+          "tray_status_type" => page.fetch("tray_status_type"),
+          "tray_status_active_application_count" => page.fetch("tray_status_active_application_count"),
+          "tray_status_attention_required_count" => page.fetch("tray_status_attention_required_count"),
+          "tray_status_registered_application_count" => page.fetch("tray_status_registered_application_count"),
+          "tray_status_compatibility_state" => page.fetch("tray_status_compatibility_state"),
+          "tray_status_bridge_state" => page.fetch("tray_status_bridge_state"),
+          "tray_status_bridged_application_count" => page.fetch("tray_status_bridged_application_count"),
+          "tray_status_live_bridge_enabled" => page.fetch("tray_status_live_bridge_enabled"),
+          "tray_status_bridge_configuration_persisted" => page.fetch("tray_status_bridge_configuration_persisted"),
+          "tray_status_ready" => page.fetch("tray_status_ready"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),
@@ -1851,6 +1875,7 @@ module Xnix
           "status_type" => status.fetch("status_type"),
           "active_application_count" => status.fetch("runtime_activity").fetch("active_application_count"),
           "attention_required_count" => status.fetch("runtime_activity").fetch("attention_required_count"),
+          "registered_application_count" => status.fetch("runtime_activity").fetch("registered_application_count"),
           "compatibility_state" => status.fetch("compatibility_status").fetch("state"),
           "tray_bridge_state" => status.fetch("tray_bridge").fetch("state"),
           "bridged_tray_application_count" => status.fetch("tray_bridge").fetch("bridged_tray_application_count"),

@@ -20,11 +20,12 @@ model = Xnix::Compatibility::TrayStatusModel.new(
   bridged_tray_count: 1
 ).to_h
 
-assert(model["version"] == "0.2.176", "tray status model must expose the current version")
+assert(model["version"] == "0.2.177", "tray status model must expose the current version")
 assert(model["request_type"] == "tray-status-model", "tray status model must identify the model type")
 assert(model["desktop"] == "KDE Plasma", "tray status model must target KDE Plasma")
 assert(model["runtime_activity"]["active_application_count"] == 2, "tray status model must expose active applications")
 assert(model["runtime_activity"]["attention_required_count"] == 1, "tray status model must expose attention count")
+assert(model["runtime_activity"]["registered_application_count"] == 2, "tray status model must cover active registered applications")
 assert(model["compatibility_status"]["state"] == "attention-required", "tray status model must flag attention state")
 assert(model["tray_bridge"]["state"] == "active", "tray status model must expose tray bridge state")
 assert(model["actions"].include?("open-compatibility-center"), "tray status model must offer Compatibility Center navigation")
@@ -46,6 +47,7 @@ stdout, stderr, result = Open3.capture3(
 assert(result.success?, "tray status CLI must exit successfully: #{stderr}")
 cli_model = JSON.parse(stdout)
 assert(cli_model["compatibility_status"]["state"] == "ready", "tray status CLI must emit ready state")
+assert(cli_model["runtime_activity"]["registered_application_count"] == 1, "tray status CLI must expose registered applications")
 assert(cli_model["runtime_activity"]["summary"] == "1 compatibility application active", "tray status CLI must summarize one active app")
 
 _stdout, stderr, result = Open3.capture3(

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.177] - 2026-07-15
+
+### Added
+
+- Added a Go-backed tray status snapshot to KDE Compatibility Center page previews so Plasma can show registered compatibility applications, attention state, tray bridge state, and safe navigation actions without enabling live tray bridging, persisting bridge configuration, mutating the host root, or exposing backend details.
+- Added a read-only Tray section to KDE Compatibility Center page navigation and section-detail routing, backed by `GetTrayStatus`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the eleven-section page model.
+
 ## [0.2.176] - 2026-07-15
 
 ### Added

@@ -9,10 +9,12 @@ module Xnix
       PROJECT_ROOT = Pathname.new(__dir__).join("../../..").realpath
       VERSION = PROJECT_ROOT.join("VERSION").read.strip
 
-      def initialize(active_count:, attention_count:, bridged_tray_count:)
+      def initialize(active_count:, attention_count:, bridged_tray_count:, registered_count: nil)
         @active_count = integer_count(active_count, "active count")
         @attention_count = integer_count(attention_count, "attention count")
         @bridged_tray_count = integer_count(bridged_tray_count, "bridged tray count")
+        @registered_count = registered_count.nil? ? [@active_count, 1].max : integer_count(registered_count, "registered count")
+        raise ArgumentError, "registered count must cover active applications" if @registered_count < @active_count
       end
 
       def to_h
@@ -37,6 +39,7 @@ module Xnix
         {
           "active_application_count" => @active_count,
           "attention_required_count" => @attention_count,
+          "registered_application_count" => @registered_count,
           "summary" => runtime_summary
         }
       end
