@@ -160,6 +160,72 @@ func TestCacheRefusesEscapeAndBadDigest(t *testing.T) {
 	if err := cache.Put("ns", "not-a-digest", []byte("x")); err == nil {
 		t.Fatalf("bad digest must be refused")
 	}
+	if _, err := NewCache(string(os.PathSeparator)); err == nil {
+		t.Fatalf("filesystem root cache must be refused")
+	}
+}
+
+func TestStageFromFixtureWritesReceiptUnderCacheRoot(t *testing.T) {
+	manifest := sampleManifest(t)
+	fixtureDir := t.TempDir()
+	writeFixture(t, fixtureDir, sha("launch-bytes"), "launch-bytes")
+	writeFixture(t, fixtureDir, sha("payload-bytes"), "payload-bytes")
+	cacheRoot := t.TempDir()
+
+	receipt, err := StageFromFixture(StageRequest{Manifest: manifest, CacheRoot: cacheRoot, FixtureDir: fixtureDir})
+	if err != nil {
+		t.Fatalf("StageFromFixture: %v", err)
+	}
+	if receipt.SchemaVersion != "xnix.runtime.artifact_stage_receipt.v1" ||
+		receipt.RecordType != "compatibility-artifact-stage-receipt" ||
+		receipt.Source != "go-runtime-local-fixture-artifact-staging" ||
+		receipt.ApplicationID != manifest.ApplicationID ||
+		receipt.RelativePath != "artifact-ledger/receipts/org.example.ledger.json" ||
+		receipt.SHA256 == "" ||
+		receipt.Plan.ApplicationID != manifest.ApplicationID ||
+		len(receipt.Plan.StagedKeys) != 2 {
+		t.Fatalf("unexpected stage receipt: %#v", receipt)
+	}
+	if !receipt.RuntimeOwned ||
+		!receipt.GoRuntimeBacked ||
+		receipt.KDEPolicyOwner ||
+		receipt.CacheRootPathExposed ||
+		receipt.FixtureRootPathExposed ||
+		receipt.NetworkRequired ||
+		receipt.NetworkFetchEnabled ||
+		receipt.PackageManagerInvoked ||
+		receipt.HostRootModified ||
+		receipt.PrivilegedContainerRequired ||
+		receipt.BackendLaunchEnabled ||
+		receipt.BackendDetailsExposed {
+		t.Fatalf("unexpected stage receipt safety flags: %#v", receipt)
+	}
+	if _, err := os.Stat(filepath.Join(cacheRoot, filepath.FromSlash(receipt.RelativePath))); err != nil {
+		t.Fatalf("stage receipt was not written under cache root: %v", err)
+	}
+	if filepath.IsAbs(receipt.RelativePath) {
+		t.Fatalf("stage receipt must expose only a relative path: %#v", receipt)
+	}
+}
+
+func TestStageFromFixtureBlocksDigestMismatch(t *testing.T) {
+	manifest := sampleManifest(t)
+	fixtureDir := t.TempDir()
+	writeFixture(t, fixtureDir, sha("launch-bytes"), "tampered-content")
+	_, err := StageFromFixture(StageRequest{Manifest: manifest, CacheRoot: t.TempDir(), FixtureDir: fixtureDir})
+	if err == nil {
+		t.Fatalf("StageFromFixture must block digest mismatches")
+	}
+}
+
+func TestStageFromFixtureRequiresExplicitRoots(t *testing.T) {
+	manifest := sampleManifest(t)
+	if _, err := StageFromFixture(StageRequest{Manifest: manifest, FixtureDir: t.TempDir()}); err == nil {
+		t.Fatalf("missing cache root must be rejected")
+	}
+	if _, err := StageFromFixture(StageRequest{Manifest: manifest, CacheRoot: t.TempDir()}); err == nil {
+		t.Fatalf("missing fixture root must be rejected")
+	}
 }
 
 func writeFixture(t *testing.T, dir, name, content string) {

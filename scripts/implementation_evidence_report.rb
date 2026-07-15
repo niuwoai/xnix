@@ -68,14 +68,20 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/artifact/acquire.go
       internal/runtime/artifact/cache.go
       internal/runtime/artifact/artifact_test.go
+      cmd/xnix-runtime-go/artifact_stage_commands.go
+      cmd/xnix-runtime-go/artifact_stage_cli_test.go
     ],
-    state_files: [],
+    state_files: %w[
+      internal/runtime/artifact/stage.go
+    ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/artifact/acquire.go" => %w[ErrNetworkDisabled NewNetworkSource],
+      "internal/runtime/artifact/stage.go" => %w[xnix.runtime.artifact_stage_receipt.v1 go-runtime-local-fixture-artifact-staging artifact-ledger cache_root_path_exposed fixture_root_path_exposed package_manager_invoked],
+      "cmd/xnix-runtime-go/artifact_stage_commands.go" => %w[artifact-stage-record cache-root fixture-root],
       "internal/runtime/appidentity/runtime_owner_recipe_trust.go" => %w[ProductionRecipeTrustReady SignedRecipeValidation]
     },
-    summary: "Local recipe and artifact code exists with digest and disabled-network evidence; production signing is still gated."
+    summary: "Local recipe and artifact staging persists receipts under a controlled cache root; production signing and network fetch remain gated."
   },
   {
     id: "environment-lifecycle-state",

@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-16 | Current version: v0.2.209
+> Last updated: 2026-07-16 | Current version: v0.2.210
 
 ## Summary
 
@@ -57,6 +57,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - The Go Runtime Portal broker under `internal/runtime/portal` owns fake-mode request objects and completion state for desktop-sensitive operations. It keeps request creation explicit, separates permission state from execution approval, models granted, denied, cancelled, failed, and completed states, and treats transport failures as recoverable diagnostics without making real Portal calls by default.
 - The Go Runtime execution ledger under `internal/runtime/execution` persists reviewed and preflighted execution transactions inside a configured Runtime state root. `xnix-runtime-go execution-ledger-record --state-root <path> --app <id>` records KDE-safe transaction JSON with relative paths, disabled launch/backend/permission flags, and no state-root path exposure while the production `Launch` write method remains disabled.
 - Compatibility artifact manifests delegate to `xnix-compat-artifact-manifest`, which plans signed manifests, artifact groups, digest verification, cache namespaces, and rollback references without downloading artifacts, exposing cache paths, or enabling installation.
+- Go Runtime local artifact staging delegates to `xnix-runtime-go artifact-stage-record --manifest <path> --fixture-root <path> --cache-root <path>`, which verifies manifest SHA-256 references, stages local fixture artifacts into the controlled cache root, writes a relative-path stage receipt, and keeps network fetch, package-manager invocation, cache-root exposure, backend launch, privileged containers, and host-root mutation disabled.
 - Go Runtime compatibility install previews delegate to `xnix-runtime-go compatibility-install-preview --registry <path> --app <id> --mode <development|production>` and `GetCompatibilityInstallPlan`, joining artifact manifest, acquisition preflight, package source, state root, and recipe install gate readiness before any artifact download, desktop activation, host-root mutation, or backend launch is enabled. The existing `xnix-compat-install-plan` and `xnix-runtime-core compatibility-install-plan` records remain lower-level compatibility policy layers, not the owner route.
 - Compatibility acquisition preflight delegates to `xnix-compat-acquisition-preflight`, which checks package-source readiness, signed artifact manifests, Runtime cache capacity, network policy review, and rollback markers without downloading artifacts or enabling installation.
 - Compatibility Center action queues delegate to `xnix-compat-action-queue` and `xnix-runtime-core compatibility-action-queue`, which group install readiness, settings changes, AI repair review, Runtime service ownership, and Portal policy review into non-executing task cards for KDE.

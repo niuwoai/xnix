@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.209
+> Last updated: 2026-07-16 | Baseline: v0.2.210
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -44,6 +44,52 @@ Each branch must:
 | 7 | P7 Diagnostics, repair, and AI boundary | Replacing diagnostic previews with reproducible records | Fixture test runs, repair recommendations, provider-gated AI output |
 | 8 | P8 Atomic KDE image and QEMU acceptance | Proving the product shape boots and can be tested | Buildable image manifest, constrained QEMU/KDE smoke reports |
 | 9 | P9 Developer verification harness | Preventing contract drift and empty implementations from returning | JSON/Markdown reports and CI-friendly gates |
+
+## Current Baseline Evidence
+
+Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
+
+| Domain | Baseline evidence at v0.2.210 | What remains useful to implement |
+| --- | --- | --- |
+| Runtime owner | Owner candidate, read dispatch previews, route manifests, service binding previews, and write gates exist. | Constrained long-running session-bus owner, lifecycle logs, broader read-route coverage, and smoke-owned readiness. |
+| Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |
+| KDE activation | Desktop activation previews and a target-root staging writer exist for desktop entries, MIME, Dolphin service menus, activation manifests, and rollback receipts. | Drift checks against live materialized state, optional digest-verified icons, KDE status consumption of receipt state, and stricter transaction rollback UX. |
+| Execution | Execution previews and `execution-ledger-record` exist for reviewed/preflighted state-root transaction records without backend launch. | Fake commit/list/inspect flows, joined dependency gates from trust/environment/Portal/snapshot state, and session-status records. |
+| Portal and snapshots | Fake Portal model previews and constrained snapshot store evidence exist. | Durable Portal request state machine, disabled real transport boundary, joined safety view, and rollback receipt integration. |
+| Developer gates | Contract drift and implementation evidence reports exist. | Stronger orphan-preview detection, CI-friendly package ownership checks, and evidence regression guards. |
+
+When a package overlaps existing evidence, extend the current package instead of replacing the surface. The preferred path is to add one new durable state transition, receipt, or smoke-owned behavior per branch.
+
+## Assignment Protocol
+
+Use this protocol when handing a package to Claude Code:
+
+1. Assign exactly one package ID and one short outcome.
+2. Name the existing files to start from.
+3. State the unsafe actions that must remain disabled.
+4. Ask for a small semantic version bump, changelog entry, product overview update, targeted tests, and layout verification.
+5. Ask Claude Code to stop and report blockers if the package would require network fetch, host-root writes, production D-Bus ownership, real Portal calls, or backend launch.
+
+Copyable template:
+
+```text
+Implement <PACKAGE_ID> from docs/claude-code-empty-domain-implementation-packages.md.
+
+Target outcome:
+- <one durable implementation outcome>
+
+Constraints:
+- Keep production D-Bus ownership, real backend launch, real Portal calls, network fetch, privileged containers, broad host mounts, Docker socket mounts, and host-root mutation disabled unless this exact package explicitly enables a gated test-only path.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+- Prefer Go for durable Runtime behavior and Ruby for tests/tooling.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add success, failure, and blocked-state tests.
+- Run the package tests and ruby scripts/verify_layout.rb.
+- Run runtime contract drift reporting if Runtime routes, D-Bus XML, owner dispatch, smoke adapters, or CLI route commands change.
+- Do not touch unrelated packages or docs/claude-code-implementation-packages.md unless explicitly asked.
+```
 
 ## P1: Runtime Owner Service
 

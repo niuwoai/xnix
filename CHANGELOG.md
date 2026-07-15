@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.210] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime artifact stage receipt under `internal/runtime/artifact`, persisting local fixture artifact staging results inside the controlled cache root after digest verification.
+- Added `xnix-runtime-go artifact-stage-record`, a constrained CLI that reads an artifact manifest, stages artifacts from a local fixture source, writes a receipt under the cache root, and keeps network fetch, package-manager calls, backend launch, root-path exposure, and host-root mutation disabled.
+- Added Go unit and CLI coverage for artifact stage receipts, digest mismatch blocking, explicit cache/fixture root requirements, filesystem-root cache rejection, and disabled side-effect flags.
+- Added Claude Code empty-domain handoff guidance that records current baseline evidence and provides a one-package assignment template for contract-to-implementation work.
+
+### Changed
+
+- Updated implementation evidence reporting so the recipe and artifact trust pipeline domain now reports state-root implementation evidence.
+- Updated layout verification to require the artifact stage receipt package, CLI command, tests, schema, cache-root safety flags, and disabled network/package-manager/backend gates.
+
 ## [0.2.209] - 2026-07-16
 
 ### Added

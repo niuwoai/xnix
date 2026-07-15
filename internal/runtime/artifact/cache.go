@@ -25,6 +25,9 @@ func NewCache(root string) (*Cache, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve cache root: %w", err)
 	}
+	if filepath.Clean(abs) == string(os.PathSeparator) {
+		return nil, errors.New("refusing to use filesystem root as artifact cache root")
+	}
 	if err := os.MkdirAll(abs, 0o700); err != nil {
 		return nil, fmt.Errorf("initialize artifact cache: %w", err)
 	}

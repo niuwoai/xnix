@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.209"
+EXPECTED_VERSION = "0.2.210"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -149,6 +149,8 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
+  cmd/xnix-runtime-go/artifact_stage_commands.go
+  cmd/xnix-runtime-go/artifact_stage_cli_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go
@@ -202,6 +204,7 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/execution_test.go
   internal/runtime/execution/ledger.go
   internal/runtime/execution/ledger_test.go
+  internal/runtime/artifact/stage.go
   internal/runtime/owner/candidate.go
   internal/runtime/owner/candidate_test.go
   internal/runtime/owner/dispatch.go
@@ -1672,6 +1675,49 @@ execution_ledger_cli_test_source = read_project_file("cmd/xnix-runtime-go/execut
   backend_details_exposed
 ].each do |token|
   assert(execution_ledger_cli_test_source.include?(token), "Execution ledger CLI test must include #{token}")
+end
+
+artifact_stage_source = read_project_file("internal/runtime/artifact/stage.go")
+%w[
+  xnix.runtime.artifact_stage_receipt.v1
+  compatibility-artifact-stage-receipt
+  go-runtime-local-fixture-artifact-staging
+  artifact-ledger
+  receipts
+  cache_root_path_exposed
+  fixture_root_path_exposed
+  network_fetch_enabled
+  package_manager_invoked
+  host_root_modified
+  backend_launch_enabled
+  backend_details_exposed
+].each do |token|
+  assert(artifact_stage_source.include?(token), "Artifact stage receipt must include #{token}")
+end
+
+artifact_stage_cli_source = read_project_file("cmd/xnix-runtime-go/artifact_stage_commands.go")
+%w[
+  artifact-stage-record
+  manifest
+  cache-root
+  fixture-root
+  StageFromFixture
+].each do |token|
+  assert(artifact_stage_cli_source.include?(token), "Artifact stage CLI must include #{token}")
+end
+
+artifact_stage_cli_test_source = read_project_file("cmd/xnix-runtime-go/artifact_stage_cli_test.go")
+%w[
+  artifact-stage-record
+  xnix.runtime.artifact_stage_receipt.v1
+  cache_root_path_exposed
+  fixture_root_path_exposed
+  network_fetch_enabled
+  package_manager_invoked
+  host_root_modified
+  backend_launch_enabled
+].each do |token|
+  assert(artifact_stage_cli_test_source.include?(token), "Artifact stage CLI test must include #{token}")
 end
 
 settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")
