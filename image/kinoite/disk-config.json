@@ -1,0 +1,31 @@
+{
+  "schema": "xnix.image.disk/v1",
+  "summary": "Turns the xnix-kinoite bootc container image into a bootable disk image via bootc-image-builder.",
+  "source_image": "xnix-kinoite",
+  "builder_image": "quay.io/centos-bootc/bootc-image-builder:latest",
+  "output_basename": "xnix-kinoite",
+  "output_types": [
+    "qcow2"
+  ],
+  "supported_output_types": [
+    "qcow2",
+    "raw",
+    "iso"
+  ],
+  "blueprint": {
+    "customizations": {
+      "user": [
+        {
+          "name": "xnix",
+          "password": "xnix",
+          "groups": [
+            "wheel"
+          ]
+        }
+      ],
+      "kernel": {
+        "append": "console=ttyS0,115200"
+      }
+    }
+  }
+}
