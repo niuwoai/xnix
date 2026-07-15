@@ -20,7 +20,7 @@ model = Xnix::Compatibility::TrayStatusModel.new(
   bridged_tray_count: 1
 ).to_h
 
-assert(model["version"] == "0.2.185", "tray status model must expose the current version")
+assert(model["version"] == "0.2.186", "tray status model must expose the current version")
 assert(model["request_type"] == "tray-status-model", "tray status model must identify the model type")
 assert(model["desktop"] == "KDE Plasma", "tray status model must target KDE Plasma")
 assert(model["runtime_activity"]["active_application_count"] == 2, "tray status model must expose active applications")

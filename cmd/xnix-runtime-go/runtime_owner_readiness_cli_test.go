@@ -18,11 +18,11 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.185" ||
+	if payload["version"] != "0.2.186" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
-		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview" ||
 		payload["runtime_method"] != "GetRuntimeOwnerReadiness" ||
 		payload["read_method"] != "GetRuntimeOwnerReadinessPreview" {
 		t.Fatalf("unexpected Runtime owner readiness CLI schema: %#v", payload)
@@ -67,6 +67,18 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 		methodParity["write_methods_supported"] != false ||
 		methodParity["write_method_dispatch_enabled"] != false {
 		t.Fatalf("unexpected method parity summary: %#v", methodParity)
+	}
+	recipeTrust := payload["recipe_trust"].(map[string]any)
+	if recipeTrust["request_type"] != "runtime-owner-recipe-trust-preview" ||
+		recipeTrust["trust_type"] != "runtime-owner-recipe-trust" ||
+		recipeTrust["registry_name"] != "xnix-local-development" ||
+		recipeTrust["recipe_count"] != float64(1) ||
+		recipeTrust["digest_verified"] != true ||
+		recipeTrust["signed_recipe_validation"] != false ||
+		recipeTrust["development_registry"] != true ||
+		recipeTrust["unsigned_recipes_present"] != false ||
+		recipeTrust["production_recipe_trust_ready"] != false {
+		t.Fatalf("unexpected recipe trust summary: %#v", recipeTrust)
 	}
 	checks := payload["readiness_checks"].([]any)
 	checkIDs := payload["check_ids"].([]any)

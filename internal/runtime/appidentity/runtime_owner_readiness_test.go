@@ -12,11 +12,11 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerReadinessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.185" ||
+	if preview.Version != "0.2.186" ||
 		preview.SchemaVersion != "xnix.runtime.owner_readiness.v1" ||
 		preview.RequestType != "runtime-owner-readiness-preview" ||
 		preview.ReadinessType != "runtime-owner-readiness" ||
-		preview.Source != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview" ||
+		preview.Source != "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview" ||
 		preview.RuntimeMethod != "GetRuntimeOwnerReadiness" ||
 		preview.ReadMethod != "GetRuntimeOwnerReadinessPreview" {
 		t.Fatalf("unexpected Runtime owner readiness schema: %#v", preview)
@@ -64,6 +64,19 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		preview.MethodParityManifest.WriteMethodDispatchEnabled ||
 		preview.MethodParityManifest.Counts.Passed != 5 {
 		t.Fatalf("unexpected method parity summary: %#v", preview.MethodParityManifest)
+	}
+	if preview.RecipeTrust.RequestType != "runtime-owner-recipe-trust-preview" ||
+		preview.RecipeTrust.TrustType != "runtime-owner-recipe-trust" ||
+		preview.RecipeTrust.RegistryName != "xnix-local-development" ||
+		preview.RecipeTrust.RecipeCount != 1 ||
+		!preview.RecipeTrust.DigestVerified ||
+		preview.RecipeTrust.SignedRecipeValidation ||
+		!preview.RecipeTrust.DevelopmentRegistry ||
+		preview.RecipeTrust.UnsignedRecipesPresent ||
+		preview.RecipeTrust.ProductionRecipeTrustReady ||
+		preview.RecipeTrust.Counts.Passed != 3 ||
+		preview.RecipeTrust.Counts.Pending != 2 {
+		t.Fatalf("unexpected recipe trust summary: %#v", preview.RecipeTrust)
 	}
 
 	expectedIDs := []string{
@@ -120,7 +133,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		preview.BlockedActions[0] != "start production Runtime owner from readiness preview" {
 		t.Fatalf("unexpected blocked readiness metadata: reasons=%#v actions=%#v", preview.BlockedReasons, preview.BlockedActions)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner readiness has aligned activation and method parity; live production ownership, bus claim, and signed recipe trust remain pending." {
+	if preview.DesktopSafeSummary != "Runtime owner readiness has aligned activation and method parity; live production ownership, bus claim, and production-signed recipe trust remain pending." {
 		t.Fatalf("unexpected desktop-safe summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner readiness preview test"); err != nil {
@@ -130,7 +143,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 
 func TestRuntimeOwnerReadinessPreviewBlocksMissingActivationAndParity(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.185\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.186\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 
@@ -160,13 +173,14 @@ func TestRuntimeOwnerReadinessPreviewBlocksMissingActivationAndParity(t *testing
 	}
 	if preview.Counts.Total != 9 ||
 		preview.Counts.Passed != 4 ||
-		preview.Counts.Pending != 3 ||
-		preview.Counts.Blocked != 2 {
+		preview.Counts.Pending != 2 ||
+		preview.Counts.Blocked != 3 {
 		t.Fatalf("unexpected missing-source readiness counts: %#v", preview.Counts)
 	}
 	if preview.ServiceBinding.Counts.Blocked != 4 ||
-		preview.MethodParityManifest.Counts.Blocked != 5 {
-		t.Fatalf("unexpected missing-source child counts: service=%#v method=%#v", preview.ServiceBinding.Counts, preview.MethodParityManifest.Counts)
+		preview.MethodParityManifest.Counts.Blocked != 5 ||
+		preview.RecipeTrust.Counts.Blocked != 3 {
+		t.Fatalf("unexpected missing-source child counts: service=%#v method=%#v trust=%#v", preview.ServiceBinding.Counts, preview.MethodParityManifest.Counts, preview.RecipeTrust.Counts)
 	}
 	if preview.DesktopSafeSummary != "Runtime owner readiness is blocked by activation or method parity defects." {
 		t.Fatalf("unexpected missing-source summary: %q", preview.DesktopSafeSummary)

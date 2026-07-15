@@ -15,6 +15,7 @@ type RuntimeOwnerReadinessPreview struct {
 	LiveOwnerGate               RuntimeOwnerReadinessLiveGate     `json:"live_owner_gate"`
 	OwnerSmokePlan              RuntimeOwnerReadinessSmokePlan    `json:"owner_smoke_plan"`
 	MethodParityManifest        RuntimeOwnerReadinessMethodParity `json:"method_parity_manifest"`
+	RecipeTrust                 RuntimeOwnerReadinessRecipeTrust  `json:"recipe_trust"`
 	ReadinessChecks             []RuntimeOwnerReadinessCheck      `json:"readiness_checks"`
 	CheckIDs                    []string                          `json:"check_ids"`
 	Counts                      RuntimeOwnerReadinessCounts       `json:"counts"`
@@ -81,6 +82,19 @@ type RuntimeOwnerReadinessMethodParity struct {
 	Counts                     RuntimeMethodParityCounts `json:"counts"`
 }
 
+type RuntimeOwnerReadinessRecipeTrust struct {
+	RequestType                string                        `json:"request_type"`
+	TrustType                  string                        `json:"trust_type"`
+	RegistryName               string                        `json:"registry_name"`
+	RecipeCount                int                           `json:"recipe_count"`
+	DigestVerified             bool                          `json:"digest_verified"`
+	SignedRecipeValidation     bool                          `json:"signed_recipe_validation"`
+	DevelopmentRegistry        bool                          `json:"development_registry"`
+	UnsignedRecipesPresent     bool                          `json:"unsigned_recipes_present"`
+	ProductionRecipeTrustReady bool                          `json:"production_recipe_trust_ready"`
+	Counts                     RuntimeOwnerRecipeTrustCounts `json:"counts"`
+}
+
 type RuntimeOwnerReadinessCheck struct {
 	ID      string `json:"id"`
 	Status  string `json:"status"`
@@ -111,8 +125,12 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 	if err != nil {
 		return RuntimeOwnerReadinessPreview{}, err
 	}
+	recipeTrust, err := NewRuntimeOwnerRecipeTrustPreview(root)
+	if err != nil {
+		return RuntimeOwnerReadinessPreview{}, err
+	}
 
-	checks := runtimeOwnerReadinessChecks(serviceBinding, liveOwnerGate, ownerSmokePlan, methodParityManifest)
+	checks := runtimeOwnerReadinessChecks(serviceBinding, liveOwnerGate, ownerSmokePlan, methodParityManifest, recipeTrust)
 	counts := countRuntimeOwnerReadinessChecks(checks)
 
 	preview := RuntimeOwnerReadinessPreview{
@@ -120,7 +138,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 		SchemaVersion: "xnix.runtime.owner_readiness.v1",
 		RequestType:   "runtime-owner-readiness-preview",
 		ReadinessType: "runtime-owner-readiness",
-		Source:        "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview",
+		Source:        "runtime-service-binding-preview+runtime-live-owner-gate-preview+runtime-owner-smoke-plan-preview+runtime-method-parity-manifest-preview+runtime-owner-recipe-trust-preview",
 		RuntimeMethod: "GetRuntimeOwnerReadiness",
 		ReadMethod:    "GetRuntimeOwnerReadinessPreview",
 		BusName:       serviceBinding.BusName,
@@ -162,6 +180,18 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 			WriteMethodDispatchEnabled: methodParityManifest.WriteMethodDispatchEnabled,
 			Counts:                     methodParityManifest.Counts,
 		},
+		RecipeTrust: RuntimeOwnerReadinessRecipeTrust{
+			RequestType:                recipeTrust.RequestType,
+			TrustType:                  recipeTrust.TrustType,
+			RegistryName:               recipeTrust.RegistryName,
+			RecipeCount:                recipeTrust.RecipeCount,
+			DigestVerified:             recipeTrust.DigestVerified,
+			SignedRecipeValidation:     recipeTrust.SignedRecipeValidation,
+			DevelopmentRegistry:        recipeTrust.DevelopmentRegistry,
+			UnsignedRecipesPresent:     recipeTrust.UnsignedRecipesPresent,
+			ProductionRecipeTrustReady: recipeTrust.ProductionRecipeTrustReady,
+			Counts:                     recipeTrust.Counts,
+		},
 		ReadinessChecks:             checks,
 		CheckIDs:                    runtimeOwnerReadinessCheckIDs(checks),
 		Counts:                      counts,
@@ -171,7 +201,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 		LiveDBusOwnerReady:          false,
 		ProductionOwnerEnabled:      false,
 		OwnerTransitionReady:        false,
-		ProductionRecipeTrustReady:  false,
+		ProductionRecipeTrustReady:  recipeTrust.ProductionRecipeTrustReady,
 		RuntimeOwned:                true,
 		GoRuntimeBacked:             true,
 		KDEPolicyOwner:              false,
@@ -185,7 +215,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 		BackendDetailsExposed:       false,
 		BlockedReasons:              runtimeOwnerReadinessBlockedReasons(),
 		BlockedActions:              runtimeOwnerReadinessBlockedActions(),
-		DesktopSafeSummary:          runtimeOwnerReadinessSummary(serviceBinding.ActivationBindingReady, methodParityManifest.ReadOnlyMethodParityReady),
+		DesktopSafeSummary:          runtimeOwnerReadinessSummary(serviceBinding.ActivationBindingReady, methodParityManifest.ReadOnlyMethodParityReady, recipeTrust.ProductionRecipeTrustReady),
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner readiness preview"); err != nil {
 		return RuntimeOwnerReadinessPreview{}, err
@@ -193,7 +223,7 @@ func NewRuntimeOwnerReadinessPreview(root string) (RuntimeOwnerReadinessPreview,
 	return preview, nil
 }
 
-func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, liveOwnerGate RuntimeLiveOwnerGatePreview, ownerSmokePlan RuntimeOwnerSmokePlanPreview, methodParityManifest RuntimeMethodParityManifestPreview) []RuntimeOwnerReadinessCheck {
+func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, liveOwnerGate RuntimeLiveOwnerGatePreview, ownerSmokePlan RuntimeOwnerSmokePlanPreview, methodParityManifest RuntimeMethodParityManifestPreview, recipeTrust RuntimeOwnerRecipeTrustPreview) []RuntimeOwnerReadinessCheck {
 	return []RuntimeOwnerReadinessCheck{
 		runtimeOwnerReadinessCheck("activation-binding", runtimeOwnerReadinessPassBlocked(serviceBinding.ActivationBindingReady), "D-Bus activation files, systemd unit, libexec wrapper, and contract must be aligned."),
 		runtimeOwnerReadinessCheck("read-only-method-parity", runtimeOwnerReadinessPassBlocked(methodParityManifest.ReadOnlyMethodParityReady), "The production owner must cover every read-only Runtime method required by KDE."),
@@ -203,8 +233,18 @@ func runtimeOwnerReadinessChecks(serviceBinding RuntimeServiceBindingPreview, li
 		runtimeOwnerReadinessCheck("host-safety-boundary", "pass", "Readiness preview must not start services, claim bus names, require network, or mutate the host root."),
 		runtimeOwnerReadinessCheck("long-running-runtime-owner", "pending", "A packaged long-running Runtime owner still needs implementation before production ownership."),
 		runtimeOwnerReadinessCheck("production-bus-claim", "pending", "A production smoke must prove the packaged Runtime owner owns org.xnix.Compatibility1."),
-		runtimeOwnerReadinessCheck("production-recipe-trust", "pending", "Production owner readiness still requires signed recipe trust instead of development registry trust."),
+		runtimeOwnerReadinessCheck("production-recipe-trust", runtimeOwnerRecipeTrustReadinessStatus(recipeTrust), "Production owner readiness requires digest-verified and production-signed recipes."),
 	}
+}
+
+func runtimeOwnerRecipeTrustReadinessStatus(recipeTrust RuntimeOwnerRecipeTrustPreview) string {
+	if recipeTrust.ProductionRecipeTrustReady {
+		return "pass"
+	}
+	if recipeTrust.Counts.Blocked > 0 {
+		return "blocked"
+	}
+	return "pending"
 }
 
 func runtimeOwnerReadinessCheck(id string, status string, summary string) RuntimeOwnerReadinessCheck {
@@ -266,9 +306,12 @@ func runtimeOwnerReadinessBlockedActions() []string {
 	}
 }
 
-func runtimeOwnerReadinessSummary(activationBindingReady bool, methodParityReady bool) string {
+func runtimeOwnerReadinessSummary(activationBindingReady bool, methodParityReady bool, recipeTrustReady bool) string {
 	if !activationBindingReady || !methodParityReady {
 		return "Runtime owner readiness is blocked by activation or method parity defects."
 	}
-	return "Runtime owner readiness has aligned activation and method parity; live production ownership, bus claim, and signed recipe trust remain pending."
+	if !recipeTrustReady {
+		return "Runtime owner readiness has aligned activation and method parity; live production ownership, bus claim, and production-signed recipe trust remain pending."
+	}
+	return "Runtime owner readiness has aligned activation, method parity, and recipe trust; live production ownership and bus claim remain pending."
 }

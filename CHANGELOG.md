@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.186] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-owner-recipe-trust-preview` to read the Runtime recipe registry, verify recipe SHA-256 digests, summarize signature status counts, and gate production owner promotion on production-signed recipes without enabling installation or host mutation.
+- Wired owner recipe trust evidence into `runtime-owner-readiness-preview` so production owner readiness now reports recipe trust as pass, pending, or blocked from registry evidence instead of a hard-coded pending gate.
+- Added Go unit, CLI, and layout verification coverage for development-only, signed, and missing-registry trust states plus owner-readiness aggregation.
+
 ## [0.2.185] - 2026-07-15
 
 ### Added
