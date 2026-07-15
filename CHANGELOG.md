@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.208] - 2026-07-16
+
+### Added
+
+- Added `scripts/implementation_evidence_report.rb`, a local JSON/Markdown evidence report that classifies the main empty-domain implementation packages by current implementation depth and flags orphan Runtime read methods.
+- Added targeted tests for the implementation evidence report schema, domain coverage, production-gate evidence, disabled write-method flags, and Markdown output.
+- Added `docs/claude-code-empty-domain-implementation-packages.md`, a large-package Claude Code handoff guide for contract-heavy domains that still need durable implementation evidence.
+
+### Changed
+
+- Updated the Claude Code handoff index documents to reference the new empty-domain implementation package guide.
+- Updated layout verification to require the implementation evidence report, its tests, the empty-domain guide, stable domain identifiers, evidence statuses, and safety flags.
+
 ## [0.2.207] - 2026-07-16
 
 ### Added

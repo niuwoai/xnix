@@ -4,12 +4,13 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.207"
+EXPECTED_VERSION = "0.2.208"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
   docs/claude-code-implementation-packages.md
   docs/claude-code-contract-implementation-handoff.md
+  docs/claude-code-empty-domain-implementation-packages.md
   docs/claude-code-independent-implementation-briefs.md
   docs/claude-code-open-domain-work-packages.md
   docs/kde-first-compatibility-acceptance.md
@@ -216,6 +217,7 @@ REQUIRED_FILES = %w[
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
   scripts/runtime_contract_drift_report.rb
+  scripts/implementation_evidence_report.rb
   scripts/runtime_owner_candidate_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
@@ -355,6 +357,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_contract.rb
   test/test_runtime_core.rb
   test/test_runtime_contract_drift_report.rb
+  test/test_implementation_evidence_report.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
@@ -1563,6 +1566,58 @@ end
 runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
 %w[--format json markdown parity-read-methods owner-read-dispatch-local-methods drift_detected host_root_modified backend_details_exposed].each do |token|
   assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
+end
+
+implementation_evidence_report_source = read_project_file("scripts/implementation_evidence_report.rb")
+%w[
+  implementation-evidence-report
+  xnix.runtime.implementation_evidence_report.v1
+  runtime-owner-service
+  recipe-artifact-trust-pipeline
+  environment-lifecycle-state
+  portal-snapshot-control-plane
+  kde-activation-shell-materialization
+  execution-transaction-ledger
+  diagnostics-repair-ai-boundary
+  atomic-kde-image-qemu-acceptance
+  developer-verification-harness
+  contract-only
+  fixture-implemented
+  state-root-implemented
+  smoke-owned
+  production-gated
+  production_gate_evidence
+  orphan_read_methods
+  orphan_preview_methods_detected
+  write_methods_supported
+  write_method_dispatch_enabled
+  network_required
+  host_root_modified
+  privileged_container_required
+  backend_launch_enabled
+  production_ready
+  json
+  markdown
+].each do |token|
+  assert(implementation_evidence_report_source.include?(token), "Implementation evidence report must include #{token}")
+end
+
+implementation_evidence_report_test_source = read_project_file("test/test_implementation_evidence_report.rb")
+%w[
+  --format
+  json
+  markdown
+  runtime-owner-service
+  smoke-owned
+  fixture-implemented
+  state-root-implemented
+  production_gate_evidence
+  orphan_preview_methods_detected
+  production_ready
+  host_root_modified
+  backend_launch_enabled
+].each do |token|
+  assert(implementation_evidence_report_test_source.include?(token), "Implementation evidence report test must include #{token}")
 end
 
 settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")

@@ -1,6 +1,6 @@
 # Claude Code Contract Implementation Handoff
 
-> Last updated: 2026-07-16 | Baseline: v0.2.207
+> Last updated: 2026-07-16 | Baseline: v0.2.208
 
 This document splits Xnix's contract-heavy roadmap into coarse, independently implementable workstreams for Claude Code.
 
@@ -9,6 +9,7 @@ Use this when a domain already has contracts, previews, smoke tests, or document
 This document complements:
 
 - `docs/claude-code-open-domain-work-packages.md` for the broad backlog map.
+- `docs/claude-code-empty-domain-implementation-packages.md` for large empty-domain packages where contracts need durable implementation evidence.
 - `docs/claude-code-independent-implementation-briefs.md` for smaller prompt-ready briefs.
 - `docs/claude-code-implementation-packages.md` for the original implementation package guide.
 
@@ -574,4 +575,3 @@ These packages should wait for or coordinate with another package:
 - H5 should wait for enough of H2 to decide production versus development activation.
 - H6 should consume H5 and H7 read models, but can start with fixture adapters.
 - H9 should wait until H1 and H5 have enough Runtime/KDE materialization to make image smoke meaningful.
-

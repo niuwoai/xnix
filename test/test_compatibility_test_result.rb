@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 result = Xnix::Compatibility::CompatibilityTestResult.new(recipe: recipe).to_h
 step_ids = result.fetch("step_results").map { |step| step.fetch("id") }
 
-assert(result["version"] == "0.2.207", "compatibility test result must expose the current version")
+assert(result["version"] == "0.2.208", "compatibility test result must expose the current version")
 assert(result["result_type"] == "compatibility-test-result", "compatibility test result must identify result type")
 assert(result["plan_type"] == "compatibility-test", "compatibility test result must reference the test plan")
 assert(result["test_type"] == "preflight", "compatibility test result must default to preflight")
