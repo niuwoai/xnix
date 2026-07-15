@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.183"
+EXPECTED_VERSION = "0.2.184"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -941,6 +941,20 @@ assert(runtime_method_parity_source.include?("\"write_methods_supported\" => fal
 assert(runtime_method_parity_source.include?("\"write_method_dispatch_enabled\" => false"), "Runtime method parity manifest must not enable write method dispatch")
 assert(runtime_method_parity_source.include?("\"host_root_modified\" => false"), "Runtime method parity manifest must not mutate the host root")
 assert(runtime_method_parity_source.include?("\"backend_details_exposed\" => false"), "Runtime method parity manifest must hide backend details")
+
+go_runtime_method_parity_source = read_project_file("internal/runtime/appidentity/runtime_method_parity_manifest.go")
+%w[RuntimeMethodParityManifestPreview runtime-method-parity-manifest-preview xnix.runtime.method_parity_manifest.v1 GetRuntimeMethodParityManifest GetRuntimeMethodParityManifestPreview dbus-contract runtime-dispatch dbus-client smoke-adapter session-smoke ListApplications GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+  assert(go_runtime_method_parity_source.include?(token), "Go Runtime method parity manifest preview must include #{token}")
+end
+%w[ReadOnlyMethodParityReady WriteMethodsSupported WriteMethodDispatchEnabled RuntimeOwned GoRuntimeBacked NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_method_parity_source.include?(token), "Go Runtime method parity manifest preview must expose #{token}")
+end
+assert(go_runtime_method_parity_source.include?("InstallRecipe"), "Go Runtime method parity manifest preview must list gated write methods")
+assert(go_runtime_method_parity_source.include?("validateNoBackendTerms"), "Go Runtime method parity manifest preview must hide backend terms")
+
+go_runtime_method_parity_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_method_parity_cli_source.include?("runtime-method-parity-manifest-preview"), "Go Runtime CLI must expose Runtime method parity manifest preview")
+assert(go_runtime_method_parity_cli_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime CLI must call the Runtime method parity manifest preview model")
 
 runtime_write_gate_source = read_project_file("lib/xnix/compatibility/runtime_write_gate.rb")
 assert(runtime_write_gate_source.include?("xnix-runtime-write-gate"), "Runtime write gate must expose a CLI command")

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.184] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-method-parity-manifest-preview` to verify read-only Runtime D-Bus method coverage across the XML contract, Runtime dispatch, KDE-facing D-Bus client, split smoke adapter files, and session smoke script without enabling write dispatch.
+- Added Go unit, CLI, and layout verification coverage for method parity readiness, gated write methods, missing-source blocking, and desktop-safe reporting before production owner smoke.
+
 ## [0.2.183] - 2026-07-15
 
 ### Added
