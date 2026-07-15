@@ -24,7 +24,7 @@ plan = Xnix::Compatibility::CompatibilityModeSwitchPlan.new(
   requested_mode: "prefer-compatibility"
 ).to_h
 
-assert(plan["version"] == "0.2.215", "compatibility mode switch plan must expose the current version")
+assert(plan["version"] == "0.2.216", "compatibility mode switch plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-mode-switch-plan", "compatibility mode switch plan must identify the plan type")
 assert(plan["runtime_method"] == "GetCompatibilityModeSwitchPlan", "compatibility mode switch plan must identify the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "compatibility mode switch plan must preserve the application id")

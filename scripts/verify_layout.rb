@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.215"
+EXPECTED_VERSION = "0.2.216"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -12,6 +12,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-contract-implementation-handoff.md
   docs/claude-code-empty-domain-implementation-packages.md
   docs/claude-code-independent-implementation-briefs.md
+  docs/claude-code-mainline-implementation-plan.md
   docs/claude-code-open-domain-work-packages.md
   docs/kde-first-compatibility-acceptance.md
   docs/kde-first-current-gap-audit.md
@@ -1644,6 +1645,14 @@ implementation_evidence_report_source = read_project_file("scripts/implementatio
   diagnostics-repair-ai-boundary
   atomic-kde-image-qemu-acceptance
   developer-verification-harness
+  docs/claude-code-mainline-implementation-plan.md
+  mainline-implementation-plan
+  mainline_package
+  mainline_document
+  mainline_plan_present
+  mainline_package_count
+  M1
+  M9
   contract-only
   fixture-implemented
   state-root-implemented
@@ -1671,6 +1680,10 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   json
   markdown
   runtime-owner-service
+  mainline_document
+  mainline_package
+  M1
+  M9
   smoke-owned
   fixture-implemented
   state-root-implemented

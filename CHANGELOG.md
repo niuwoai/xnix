@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.216] - 2026-07-16
+
+### Changed
+
+- Extended `scripts/implementation_evidence_report.rb` so every implementation domain now reports both its legacy package id and its `M1`-through-`M9` mainline package id from `docs/claude-code-mainline-implementation-plan.md`.
+- Updated JSON and Markdown implementation evidence output to expose the mainline handoff document, prove the mainline plan is present, and show mainline package mappings for Claude Code dispatch.
+- Updated layout and evidence-report tests to guard the new mainline implementation-plan mapping without requiring Docker, QEMU, network, privileged containers, backend launch, or host-root access.
+
 ## [0.2.215] - 2026-07-16
 
 ### Added

@@ -6,6 +6,7 @@ require "optparse"
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
+MAINLINE_DOCUMENT = "docs/claude-code-mainline-implementation-plan.md"
 WRITE_METHODS = %w[
   InstallRecipe
   Launch
@@ -27,6 +28,7 @@ DOMAIN_DEFINITIONS = [
     id: "runtime-owner-service",
     name: "Runtime owner service",
     package: "P1",
+    mainline_package: "M1",
     contract_files: %w[
       runtime/dbus/org.xnix.Compatibility1.xml
       internal/runtime/appidentity/runtime_owner_readiness.go
@@ -54,6 +56,7 @@ DOMAIN_DEFINITIONS = [
     id: "recipe-artifact-trust-pipeline",
     name: "Recipe and artifact trust pipeline",
     package: "P2",
+    mainline_package: "M2",
     contract_files: %w[
       runtime/recipes/registry.json
       internal/runtime/appidentity/runtime_owner_recipe_trust.go
@@ -87,6 +90,7 @@ DOMAIN_DEFINITIONS = [
     id: "environment-lifecycle-state",
     name: "Environment lifecycle state",
     package: "P3",
+    mainline_package: "M3",
     contract_files: %w[
       internal/runtime/appidentity/backend_environment.go
       internal/runtime/appidentity/backend_binding.go
@@ -112,6 +116,7 @@ DOMAIN_DEFINITIONS = [
     id: "portal-snapshot-control-plane",
     name: "Portal and snapshot control plane",
     package: "P4",
+    mainline_package: "M4",
     contract_files: %w[
       internal/runtime/appidentity/portal_access_policy.go
       internal/runtime/appidentity/snapshot_plan.go
@@ -137,6 +142,7 @@ DOMAIN_DEFINITIONS = [
     id: "kde-activation-shell-materialization",
     name: "KDE activation and shell materialization",
     package: "P5",
+    mainline_package: "M5",
     contract_files: %w[
       internal/runtime/appidentity/desktop_activation_bundle.go
       internal/runtime/appidentity/desktop_activation_status.go
@@ -166,6 +172,7 @@ DOMAIN_DEFINITIONS = [
     id: "execution-transaction-ledger",
     name: "Execution transaction ledger",
     package: "P6",
+    mainline_package: "M6",
     contract_files: %w[
       internal/runtime/appidentity/launch_intent.go
       internal/runtime/appidentity/execution_request.go
@@ -196,6 +203,7 @@ DOMAIN_DEFINITIONS = [
     id: "diagnostics-repair-ai-boundary",
     name: "Diagnostics, repair, and AI boundary",
     package: "P7",
+    mainline_package: "M7",
     contract_files: %w[
       internal/runtime/appidentity/test_plan.go
       internal/runtime/appidentity/test_result.go
@@ -231,6 +239,7 @@ DOMAIN_DEFINITIONS = [
     id: "atomic-kde-image-qemu-acceptance",
     name: "Atomic KDE image and QEMU acceptance",
     package: "P8",
+    mainline_package: "M9",
     contract_files: %w[
       image/kinoite/manifest.json
       image/kinoite/Containerfile
@@ -259,6 +268,7 @@ DOMAIN_DEFINITIONS = [
     id: "developer-verification-harness",
     name: "Developer verification harness",
     package: "P9",
+    mainline_package: "M8",
     contract_files: %w[
       scripts/verify_layout.rb
       scripts/runtime_contract_drift_report.rb
@@ -365,6 +375,8 @@ def domain_report(root, definition)
     "id" => definition.fetch(:id),
     "name" => definition.fetch(:name),
     "package" => definition.fetch(:package),
+    "mainline_package" => definition.fetch(:mainline_package),
+    "mainline_document" => MAINLINE_DOCUMENT,
     "status" => status,
     "rank" => STATUS_ORDER.fetch(status),
     "contract_files_present" => present_files(root, definition.fetch(:contract_files)),
@@ -429,10 +441,13 @@ def build_report(root)
     "version" => version,
     "schema_version" => "xnix.runtime.implementation_evidence_report.v1",
     "report_type" => "implementation-evidence-report",
-    "source" => "filesystem+runtime-contract+owner-route-manifest+empty-domain-packages",
+    "source" => "filesystem+runtime-contract+owner-route-manifest+empty-domain-packages+mainline-implementation-plan",
     "runtime_owned" => true,
     "go_runtime_backed" => true,
     "kde_policy_owner" => false,
+    "mainline_document" => MAINLINE_DOCUMENT,
+    "mainline_plan_present" => file_present?(root, MAINLINE_DOCUMENT),
+    "mainline_package_count" => domains.map { |domain| domain.fetch("mainline_package") }.uniq.length,
     "domain_status_order" => STATUS_ORDER.keys,
     "domains" => domains,
     "counts" => counts,
@@ -461,18 +476,20 @@ def render_markdown(report)
     "- Schema: #{report.fetch("schema_version")}",
     "- Domains: #{report.fetch("counts").fetch("total")}",
     "- Highest evidence status: #{report.fetch("highest_evidence_status")}",
+    "- Mainline document: #{report.fetch("mainline_document")}",
+    "- Mainline plan present: #{report.fetch("mainline_plan_present")}",
     "- Orphan read methods detected: #{report.fetch("orphan_preview_methods_detected")}",
     "- Production ready: #{report.fetch("production_ready")}",
     "- Host root modified: #{report.fetch("host_root_modified")}",
     "",
-    "| Package | Domain | Status | Missing fixtures | Missing gates |",
-    "| --- | --- | --- | --- | --- |"
+    "| Mainline | Package | Domain | Status | Missing fixtures | Missing gates |",
+    "| --- | --- | --- | --- | --- | --- |"
   ]
 
   report.fetch("domains").each do |domain|
     missing_fixtures = domain.fetch("fixture_files_missing").empty? ? "-" : domain.fetch("fixture_files_missing").join(", ")
     missing_gates = domain.fetch("gate_tokens_missing").empty? ? "-" : domain.fetch("gate_tokens_missing").map { |item| "#{item.fetch("file")}:#{item.fetch("token")}" }.join(", ")
-    lines << "| #{domain.fetch("package")} | #{domain.fetch("name")} | #{domain.fetch("status")} | #{missing_fixtures} | #{missing_gates} |"
+    lines << "| #{domain.fetch("mainline_package")} | #{domain.fetch("package")} | #{domain.fetch("name")} | #{domain.fetch("status")} | #{missing_fixtures} | #{missing_gates} |"
   end
 
   lines << ""
