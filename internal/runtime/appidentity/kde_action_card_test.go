@@ -63,6 +63,13 @@ func TestKDEActionCardPreviewRendersCompatibilityCenterCard(t *testing.T) {
 		!preview.Card.PrimaryAction.NavigationOnly ||
 		preview.Card.PrimaryAction.MutatesRuntime ||
 		preview.Card.PrimaryAction.StartsProgram ||
+		preview.Card.AIAnalysisAction == nil ||
+		preview.Card.AIAnalysisAction.ID != "preview-dolphin-ai-analysis" ||
+		preview.Card.AIAnalysisAction.Target != "dolphin-ai-analysis-preview" ||
+		!preview.Card.AIAnalysisAction.Enabled ||
+		!preview.Card.AIAnalysisAction.NavigationOnly ||
+		preview.Card.AIAnalysisAction.MutatesRuntime ||
+		preview.Card.AIAnalysisAction.StartsProgram ||
 		preview.Card.Footer != "This card is a read-only preview; execution remains blocked." ||
 		preview.Card.BackendDetailsExposed {
 		t.Fatalf("unexpected card visual state: %#v", preview.Card)
@@ -91,6 +98,22 @@ func TestKDEActionCardPreviewRendersCompatibilityCenterCard(t *testing.T) {
 		preview.Receipt.RequestType != "kde-action-receipt-preview" ||
 		preview.RequiredRuntimeGate != "portal-file-open-review" {
 		t.Fatalf("unexpected action pipeline summaries: %#v", preview)
+	}
+	if preview.AIAnalysis == nil ||
+		preview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		preview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!preview.AIAnalysis.SafeForAIDiagnostics ||
+		preview.AIAnalysis.AIProviderCallEnabled ||
+		preview.AIAnalysis.NetworkRequired ||
+		preview.AIAnalysis.FileContentRead ||
+		preview.AIAnalysis.FilePathsExposed ||
+		preview.AIAnalysis.RequestObjectCreated ||
+		preview.AIAnalysis.PermissionGranted ||
+		preview.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected card AI analysis link: %#v", preview.AIAnalysis)
+	}
+	if !containsKDEActionCardDetail(preview.Card.DetailRows, "AI analysis disclosure", "count-and-extension-only") {
+		t.Fatalf("card should include AI analysis disclosure row: %#v", preview.Card.DetailRows)
 	}
 	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
 		!preview.OfficialDesktopOnly || !preview.CompatibilityCenterCard ||
@@ -151,6 +174,8 @@ func TestKDEActionCardPreviewValidationAndDecisionStates(t *testing.T) {
 		deferredPreview.Card.Badge != "Deferred" ||
 		deferredPreview.Card.BadgeTone != "neutral" ||
 		deferredPreview.Card.PrimaryAction.ID != "resume-review" ||
+		deferredPreview.AIAnalysis != nil ||
+		deferredPreview.Card.AIAnalysisAction != nil ||
 		deferredPreview.CardPersisted ||
 		deferredPreview.ReviewReceiptRecorded ||
 		deferredPreview.QueueStateChanged {
@@ -184,4 +209,13 @@ func TestKDEActionCardPreviewValidationAndDecisionStates(t *testing.T) {
 			t.Fatalf("KDE action card preview exposes forbidden term %q: %s", forbidden, text)
 		}
 	}
+}
+
+func containsKDEActionCardDetail(rows []KDEActionCardDetail, label string, value string) bool {
+	for _, row := range rows {
+		if row.Label == label && row.Value == value {
+			return true
+		}
+	}
+	return false
 }

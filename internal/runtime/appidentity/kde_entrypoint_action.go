@@ -17,6 +17,7 @@ type KDEEntryPointActionPreview struct {
 	RuntimeSource            string                           `json:"runtime_source"`
 	RuntimeMethod            string                           `json:"runtime_method"`
 	ReadMethod               string                           `json:"read_method"`
+	AIAnalysis               *KDEAIAnalysisLink               `json:"ai_analysis,omitempty"`
 	ApplicationID            string                           `json:"application_id"`
 	ApplicationName          string                           `json:"application_name"`
 	Icon                     string                           `json:"icon"`
@@ -62,34 +63,36 @@ type KDEEntryPointActionPreview struct {
 }
 
 type KDEEntryPointActionSummary struct {
-	Intent                   string `json:"intent"`
-	UserAction               string `json:"user_action"`
-	SafeResult               string `json:"safe_result"`
-	RequiresPortal           bool   `json:"requires_portal"`
-	RequiresRuntimeGate      bool   `json:"requires_runtime_gate"`
-	BlockedByRuntimeGate     bool   `json:"blocked_by_runtime_gate"`
-	OpensCompatibilityCenter bool   `json:"opens_compatibility_center"`
-	OpensSettings            bool   `json:"opens_settings"`
-	CreatesRequestObject     bool   `json:"creates_request_object"`
-	StartsBackend            bool   `json:"starts_backend"`
-	MutatesHost              bool   `json:"mutates_host"`
-	BackendDetailsExposed    bool   `json:"backend_details_exposed"`
+	Intent                   string             `json:"intent"`
+	UserAction               string             `json:"user_action"`
+	SafeResult               string             `json:"safe_result"`
+	AIAnalysis               *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	RequiresPortal           bool               `json:"requires_portal"`
+	RequiresRuntimeGate      bool               `json:"requires_runtime_gate"`
+	BlockedByRuntimeGate     bool               `json:"blocked_by_runtime_gate"`
+	OpensCompatibilityCenter bool               `json:"opens_compatibility_center"`
+	OpensSettings            bool               `json:"opens_settings"`
+	CreatesRequestObject     bool               `json:"creates_request_object"`
+	StartsBackend            bool               `json:"starts_backend"`
+	MutatesHost              bool               `json:"mutates_host"`
+	BackendDetailsExposed    bool               `json:"backend_details_exposed"`
 }
 
 type KDEEntryPointActionEntry struct {
-	ID                    string `json:"id"`
-	Label                 string `json:"label"`
-	KDEComponent          string `json:"kde_component"`
-	State                 string `json:"state"`
-	Visible               bool   `json:"visible"`
-	Planned               bool   `json:"planned"`
-	Active                bool   `json:"active"`
-	RequiresPortal        bool   `json:"requires_portal"`
-	RequiresRuntimeGate   bool   `json:"requires_runtime_gate"`
-	BlockedByRuntimeGate  bool   `json:"blocked_by_runtime_gate"`
-	WritesHost            bool   `json:"writes_host"`
-	StartsBackend         bool   `json:"starts_backend"`
-	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+	ID                    string             `json:"id"`
+	Label                 string             `json:"label"`
+	KDEComponent          string             `json:"kde_component"`
+	State                 string             `json:"state"`
+	AIAnalysis            *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	Visible               bool               `json:"visible"`
+	Planned               bool               `json:"planned"`
+	Active                bool               `json:"active"`
+	RequiresPortal        bool               `json:"requires_portal"`
+	RequiresRuntimeGate   bool               `json:"requires_runtime_gate"`
+	BlockedByRuntimeGate  bool               `json:"blocked_by_runtime_gate"`
+	WritesHost            bool               `json:"writes_host"`
+	StartsBackend         bool               `json:"starts_backend"`
+	BackendDetailsExposed bool               `json:"backend_details_exposed"`
 }
 
 type KDEEntryPointActionSessionStatus struct {
@@ -153,6 +156,7 @@ func (plan Plan) KDEEntryPointActionPreview(entryPointID string, decision string
 		RuntimeSource:   entryPoint.RuntimeSource,
 		RuntimeMethod:   entryPoint.RuntimeMethod,
 		ReadMethod:      "GetKDEEntryPointActionPreview",
+		AIAnalysis:      entryPoint.AIAnalysis,
 		ApplicationID:   entryPoints.ApplicationID,
 		ApplicationName: entryPoints.ApplicationName,
 		Icon:            entryPoints.Icon,
@@ -164,6 +168,7 @@ func (plan Plan) KDEEntryPointActionPreview(entryPointID string, decision string
 			Label:                 entryPoint.Label,
 			KDEComponent:          entryPoint.KDEComponent,
 			State:                 entryPoint.State,
+			AIAnalysis:            entryPoint.AIAnalysis,
 			Visible:               entryPoint.Visible,
 			Planned:               entryPoint.Planned,
 			Active:                entryPoint.Active,
@@ -252,6 +257,7 @@ func kdeEntryPointActionSummary(entryPoint KDEEntryPointPreview) KDEEntryPointAc
 		Intent:                   "open-application",
 		UserAction:               entryPoint.UserAction,
 		SafeResult:               "show Compatibility Center launch review",
+		AIAnalysis:               entryPoint.AIAnalysis,
 		RequiresPortal:           entryPoint.RequiresPortal,
 		RequiresRuntimeGate:      entryPoint.RequiresRuntimeGate,
 		BlockedByRuntimeGate:     entryPoint.BlockedByRuntimeGate,

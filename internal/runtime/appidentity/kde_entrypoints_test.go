@@ -80,11 +80,32 @@ func TestKDEEntryPointsPreviewCoversSevenEntryPointsWithoutActivating(t *testing
 		!fileManager.RequiresPortal {
 		t.Fatalf("unexpected file-manager entrypoint: %#v", fileManager)
 	}
+	if fileManager.AIAnalysis == nil ||
+		fileManager.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		fileManager.AIAnalysis.RuntimeMethod != "GetAIDiagnosticInput" ||
+		fileManager.AIAnalysis.Surface != "Dolphin" ||
+		fileManager.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!fileManager.AIAnalysis.Available ||
+		!fileManager.AIAnalysis.UserVisible ||
+		!fileManager.AIAnalysis.RequiresPortal ||
+		!fileManager.AIAnalysis.SafeForAIDiagnostics ||
+		fileManager.AIAnalysis.AIProviderCallEnabled ||
+		fileManager.AIAnalysis.NetworkRequired ||
+		fileManager.AIAnalysis.FileContentRead ||
+		fileManager.AIAnalysis.FilePathsExposed ||
+		fileManager.AIAnalysis.RequestObjectCreated ||
+		fileManager.AIAnalysis.PermissionGranted ||
+		fileManager.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected file-manager AI analysis link: %#v", fileManager.AIAnalysis)
+	}
 	taskManager := findKDEEntryPoint(preview.EntryPoints, "task-manager")
 	if taskManager.KDEComponent != "Plasma task manager" ||
 		taskManager.RuntimeSource != "execution-session-status-preview" ||
 		taskManager.State != "planned" {
 		t.Fatalf("unexpected task-manager entrypoint: %#v", taskManager)
+	}
+	if taskManager.AIAnalysis != nil {
+		t.Fatalf("task-manager should not expose Dolphin AI analysis: %#v", taskManager.AIAnalysis)
 	}
 	settings := findKDEEntryPoint(preview.EntryPoints, "settings")
 	if settings.RuntimeMethod != "GetCompatibilitySettings" ||

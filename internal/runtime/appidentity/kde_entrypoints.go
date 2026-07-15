@@ -73,22 +73,23 @@ type KDEEntryPointsSessionStatus struct {
 }
 
 type KDEEntryPointPreview struct {
-	ID                    string `json:"id"`
-	Label                 string `json:"label"`
-	KDEComponent          string `json:"kde_component"`
-	RuntimeSource         string `json:"runtime_source"`
-	RuntimeMethod         string `json:"runtime_method"`
-	State                 string `json:"state"`
-	UserAction            string `json:"user_action"`
-	Visible               bool   `json:"visible"`
-	Planned               bool   `json:"planned"`
-	Active                bool   `json:"active"`
-	RequiresPortal        bool   `json:"requires_portal"`
-	RequiresRuntimeGate   bool   `json:"requires_runtime_gate"`
-	BlockedByRuntimeGate  bool   `json:"blocked_by_runtime_gate"`
-	WritesHost            bool   `json:"writes_host"`
-	StartsBackend         bool   `json:"starts_backend"`
-	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+	ID                    string             `json:"id"`
+	Label                 string             `json:"label"`
+	KDEComponent          string             `json:"kde_component"`
+	RuntimeSource         string             `json:"runtime_source"`
+	RuntimeMethod         string             `json:"runtime_method"`
+	State                 string             `json:"state"`
+	UserAction            string             `json:"user_action"`
+	AIAnalysis            *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	Visible               bool               `json:"visible"`
+	Planned               bool               `json:"planned"`
+	Active                bool               `json:"active"`
+	RequiresPortal        bool               `json:"requires_portal"`
+	RequiresRuntimeGate   bool               `json:"requires_runtime_gate"`
+	BlockedByRuntimeGate  bool               `json:"blocked_by_runtime_gate"`
+	WritesHost            bool               `json:"writes_host"`
+	StartsBackend         bool               `json:"starts_backend"`
+	BackendDetailsExposed bool               `json:"backend_details_exposed"`
 }
 
 func (plan Plan) KDEEntryPointsPreview(decision string, fileURIs []string) (KDEEntryPointsPreview, error) {
@@ -205,6 +206,7 @@ func kdeEntryPointPreview(id string, label string, component string, source stri
 		RuntimeMethod:         method,
 		State:                 state,
 		UserAction:            action,
+		AIAnalysis:            kdeAIAnalysisLinkForEntryPoint(id),
 		Visible:               true,
 		Planned:               true,
 		Active:                false,

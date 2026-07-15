@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.156] - 2026-07-15
+
+### Added
+
+- Added a shared KDE Dolphin AI analysis link for the file-manager entry point, entrypoint action preview, and Compatibility Center action card preview.
+- Added Go coverage proving the linked Dolphin AI action is navigation-only and keeps AI provider calls, network access, file content reads, file path exposure, request-object creation, permission grants, backend launch, and host-root mutation disabled.
+
 ## [0.2.155] - 2026-07-15
 
 ### Added

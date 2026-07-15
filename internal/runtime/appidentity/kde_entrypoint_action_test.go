@@ -37,6 +37,20 @@ func TestKDEEntryPointActionPreviewMapsFileManagerWithoutSideEffects(t *testing.
 		preview.RuntimeMethod != "Launch" {
 		t.Fatalf("unexpected KDE entrypoint action routing: %#v", preview)
 	}
+	if preview.AIAnalysis == nil ||
+		preview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		preview.AIAnalysis.RuntimeMethod != "GetAIDiagnosticInput" ||
+		preview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!preview.AIAnalysis.SafeForAIDiagnostics ||
+		preview.AIAnalysis.AIProviderCallEnabled ||
+		preview.AIAnalysis.NetworkRequired ||
+		preview.AIAnalysis.FileContentRead ||
+		preview.AIAnalysis.FilePathsExposed ||
+		preview.AIAnalysis.RequestObjectCreated ||
+		preview.AIAnalysis.PermissionGranted ||
+		preview.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected action AI analysis link: %#v", preview.AIAnalysis)
+	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
 		preview.Icon != "office-chart-area" ||
@@ -48,6 +62,8 @@ func TestKDEEntryPointActionPreviewMapsFileManagerWithoutSideEffects(t *testing.
 	if preview.Action.Intent != "open-files" ||
 		preview.Action.UserAction != "Open selected files through Runtime" ||
 		preview.Action.SafeResult != "show file access review" ||
+		preview.Action.AIAnalysis == nil ||
+		preview.Action.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
 		!preview.Action.RequiresPortal ||
 		!preview.Action.RequiresRuntimeGate ||
 		!preview.Action.BlockedByRuntimeGate ||
@@ -62,6 +78,8 @@ func TestKDEEntryPointActionPreviewMapsFileManagerWithoutSideEffects(t *testing.
 	if preview.EntryPoint.ID != "file-manager" ||
 		preview.EntryPoint.Label != "File manager" ||
 		preview.EntryPoint.KDEComponent != "Dolphin" ||
+		preview.EntryPoint.AIAnalysis == nil ||
+		preview.EntryPoint.AIAnalysis.Disclosure != "count-and-extension-only" ||
 		!preview.EntryPoint.Visible ||
 		!preview.EntryPoint.Planned ||
 		preview.EntryPoint.Active ||
@@ -158,6 +176,12 @@ func TestKDEEntryPointActionPreviewCoversEntryActionsAndValidation(t *testing.T)
 			preview.Action.StartsBackend ||
 			preview.Action.MutatesHost {
 			t.Fatalf("unexpected action for %s: %#v", entryPointID, preview.Action)
+		}
+		if entryPointID == "file-manager" && preview.Action.AIAnalysis == nil {
+			t.Fatalf("file-manager action should expose Dolphin AI analysis")
+		}
+		if entryPointID != "file-manager" && preview.Action.AIAnalysis != nil {
+			t.Fatalf("%s action should not expose Dolphin AI analysis: %#v", entryPointID, preview.Action.AIAnalysis)
 		}
 	}
 

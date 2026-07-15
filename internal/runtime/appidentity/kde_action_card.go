@@ -11,6 +11,7 @@ type KDEActionCardPreview struct {
 	Desktop                  string                           `json:"desktop"`
 	RuntimeMethod            string                           `json:"runtime_method"`
 	ReadMethod               string                           `json:"read_method"`
+	AIAnalysis               *KDEAIAnalysisLink               `json:"ai_analysis,omitempty"`
 	ApplicationID            string                           `json:"application_id"`
 	ApplicationName          string                           `json:"application_name"`
 	Icon                     string                           `json:"icon"`
@@ -82,6 +83,7 @@ type KDEActionCardVisualState struct {
 	Badge                 string                `json:"badge"`
 	BadgeTone             string                `json:"badge_tone"`
 	PrimaryAction         KDEActionCardAction   `json:"primary_action"`
+	AIAnalysisAction      *KDEActionCardAction  `json:"ai_analysis_action,omitempty"`
 	SecondaryActions      []KDEActionCardAction `json:"secondary_actions"`
 	DisabledActions       []KDEActionCardAction `json:"disabled_actions"`
 	DetailRows            []KDEActionCardDetail `json:"detail_rows"`
@@ -133,6 +135,7 @@ func (plan Plan) KDEActionCardPreview(actionID string, decision string, fileURIs
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDEActionCard",
 		ReadMethod:      "GetKDEActionCardPreview",
+		AIAnalysis:      kdeAIAnalysisLinkForEntryPoint(status.Action.EntryPointID),
 		ApplicationID:   status.ApplicationID,
 		ApplicationName: status.ApplicationName,
 		Icon:            status.Icon,
@@ -208,6 +211,7 @@ func kdeActionCardVisualState(status KDEActionStatusPreview) KDEActionCardVisual
 		Badge:                 status.UserVisibleState.Badge,
 		BadgeTone:             kdeActionCardBadgeTone(status.StatusState),
 		PrimaryAction:         kdeActionCardPrimaryAction(status.StatusState),
+		AIAnalysisAction:      kdeActionCardAIAnalysisAction(status.Action.EntryPointID),
 		SecondaryActions:      kdeActionCardSecondaryActions(status.StatusState),
 		DisabledActions:       kdeActionCardDisabledActions(),
 		DetailRows:            kdeActionCardDetailRows(status),
@@ -216,6 +220,14 @@ func kdeActionCardVisualState(status KDEActionStatusPreview) KDEActionCardVisual
 		UserFacingAccess:      status.UserVisibleState.UserFacingAccess,
 		BackendDetailsExposed: false,
 	}
+}
+
+func kdeActionCardAIAnalysisAction(entryPointID string) *KDEActionCardAction {
+	if entryPointID != "file-manager" {
+		return nil
+	}
+	action := kdeActionCardAction("preview-dolphin-ai-analysis", "Preview AI-safe file review", "dolphin-ai-analysis-preview", true)
+	return &action
 }
 
 func kdeActionCardSubtitle(state string) string {
@@ -283,12 +295,16 @@ func kdeActionCardAction(id string, label string, target string, enabled bool) K
 }
 
 func kdeActionCardDetailRows(status KDEActionStatusPreview) []KDEActionCardDetail {
-	return []KDEActionCardDetail{
+	rows := []KDEActionCardDetail{
 		{Label: "Application", Value: status.ApplicationName},
 		{Label: "KDE surface", Value: status.Action.KDEComponent},
 		{Label: "Current state", Value: status.UserVisibleState.ActionStateLabel},
 		{Label: "Next step", Value: kdeActionCardNextStep(status.StatusState)},
 	}
+	if link := kdeAIAnalysisLinkForEntryPoint(status.Action.EntryPointID); link != nil {
+		rows = append(rows, KDEActionCardDetail{Label: "AI analysis disclosure", Value: link.Disclosure})
+	}
+	return rows
 }
 
 func kdeActionCardNextStep(state string) string {
