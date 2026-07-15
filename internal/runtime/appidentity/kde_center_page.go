@@ -19,6 +19,7 @@ type KDECenterPagePreview struct {
 	ApplicationSummary         KDECenterPageApplication  `json:"application_summary"`
 	BackendSelectionSnapshot   KDECenterPageBackend      `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot   KDECenterPageActivation   `json:"activation_status_snapshot"`
+	ExecutionReadinessSnapshot KDECenterPageExecution    `json:"execution_readiness_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -124,6 +125,31 @@ type KDECenterPageActivation struct {
 	HostRootModified      bool   `json:"host_root_modified"`
 	BackendDetailsExposed bool   `json:"backend_details_exposed"`
 	Summary               string `json:"summary"`
+}
+
+type KDECenterPageExecution struct {
+	RequestType               string `json:"request_type"`
+	ReadinessType             string `json:"readiness_type"`
+	RuntimeMethod             string `json:"runtime_method"`
+	ExecutionState            string `json:"execution_state"`
+	OverallStatus             string `json:"overall_status"`
+	RecommendedAction         string `json:"recommended_action"`
+	GateCount                 int    `json:"gate_count"`
+	RequiredGateCount         int    `json:"required_gate_count"`
+	PendingGateCount          int    `json:"pending_gate_count"`
+	BlockedGateCount          int    `json:"blocked_gate_count"`
+	DesktopEntryLaunchVisible bool   `json:"desktop_entry_launch_visible"`
+	LaunchAllowed             bool   `json:"launch_allowed"`
+	LaunchEnabled             bool   `json:"launch_enabled"`
+	ExecutionRequestCreated   bool   `json:"execution_request_created"`
+	BackendBindingReady       bool   `json:"backend_binding_ready"`
+	PortalPolicyRequired      bool   `json:"portal_policy_required"`
+	SnapshotRequired          bool   `json:"snapshot_required"`
+	UserActionRequired        bool   `json:"user_action_required"`
+	HostRootModified          bool   `json:"host_root_modified"`
+	NetworkRequired           bool   `json:"network_required"`
+	BackendDetailsExposed     bool   `json:"backend_details_exposed"`
+	Summary                   string `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -348,6 +374,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	executionReadiness, err := plan.ExecutionReadinessPreview()
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -355,7 +385,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+backend-selection-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -429,6 +459,30 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			HostRootModified:      activationStatus.HostRootModified,
 			BackendDetailsExposed: activationStatus.BackendDetailsExposed,
 			Summary:               activationStatus.DesktopSafeSummary,
+		},
+		ExecutionReadinessSnapshot: KDECenterPageExecution{
+			RequestType:               executionReadiness.RequestType,
+			ReadinessType:             executionReadiness.ReadinessType,
+			RuntimeMethod:             executionReadiness.RuntimeMethod,
+			ExecutionState:            executionReadiness.ExecutionState,
+			OverallStatus:             executionReadiness.OverallStatus,
+			RecommendedAction:         executionReadiness.RecommendedAction,
+			GateCount:                 executionReadiness.GateCount,
+			RequiredGateCount:         executionReadiness.RequiredGateCount,
+			PendingGateCount:          executionReadiness.PendingGateCount,
+			BlockedGateCount:          executionReadiness.BlockedGateCount,
+			DesktopEntryLaunchVisible: executionReadiness.DesktopEntryLaunchVisible,
+			LaunchAllowed:             executionReadiness.LaunchAllowed,
+			LaunchEnabled:             executionReadiness.LaunchEnabled,
+			ExecutionRequestCreated:   executionReadiness.ExecutionRequestCreated,
+			BackendBindingReady:       executionReadiness.BackendBindingReady,
+			PortalPolicyRequired:      executionReadiness.PortalPolicyRequired,
+			SnapshotRequired:          executionReadiness.SnapshotRequired,
+			UserActionRequired:        executionReadiness.UserActionRequired,
+			HostRootModified:          executionReadiness.HostRootModified,
+			NetworkRequired:           executionReadiness.NetworkRequired,
+			BackendDetailsExposed:     executionReadiness.BackendDetailsExposed,
+			Summary:                   executionReadiness.DesktopSafeSummary,
 		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
@@ -673,6 +727,7 @@ func kdeCenterPageNavigation() []KDECenterPageNavigation {
 		kdeCenterPageNavigationItem("overview", "Overview", "compatibility-center-overview"),
 		kdeCenterPageNavigationItem("backend", "Backend", "compatibility-backend-selection"),
 		kdeCenterPageNavigationItem("activation", "Activation", "compatibility-activation-status"),
+		kdeCenterPageNavigationItem("execution", "Execution", "compatibility-execution-readiness"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
 		kdeCenterPageNavigationItem("diagnostics", "Diagnostics", "compatibility-diagnostics"),
@@ -696,6 +751,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready", "Overview reads Runtime-owned application state, known issue counts, and repair record state."),
 		kdeCenterPageSection("backend", "Backend", "compatibility-backend-selection", "GetBackendSelectionPlan", "backend-selection-preview", "selection-pending", "Backend reads Runtime-owned recommended compatibility profile while selection commit, environment creation, and launch remain closed."),
 		kdeCenterPageSection("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", "ready-for-runtime-commit", "Activation reads Runtime-owned KDE desktop activation status while commit, launch, and host mutation gates remain closed."),
+		kdeCenterPageSection("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", "blocked", "Execution reads Runtime-owned launch readiness while request creation, launch, and backend process gates remain closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
 		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),

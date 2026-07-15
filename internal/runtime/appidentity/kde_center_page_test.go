@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -135,15 +135,37 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.ActivationStatusSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected activation status snapshot: %#v", preview.ActivationStatusSnapshot)
 	}
-	if preview.NavigationCount != 6 ||
-		len(preview.Navigation) != 6 ||
+	if preview.ExecutionReadinessSnapshot.RequestType != "execution-readiness-preview" ||
+		preview.ExecutionReadinessSnapshot.RuntimeMethod != "GetExecutionReadiness" ||
+		preview.ExecutionReadinessSnapshot.ExecutionState != "blocked" ||
+		preview.ExecutionReadinessSnapshot.OverallStatus != "not-ready" ||
+		preview.ExecutionReadinessSnapshot.GateCount != 5 ||
+		preview.ExecutionReadinessSnapshot.RequiredGateCount != 2 ||
+		preview.ExecutionReadinessSnapshot.PendingGateCount != 1 ||
+		preview.ExecutionReadinessSnapshot.BlockedGateCount != 1 ||
+		!preview.ExecutionReadinessSnapshot.DesktopEntryLaunchVisible ||
+		preview.ExecutionReadinessSnapshot.LaunchAllowed ||
+		preview.ExecutionReadinessSnapshot.LaunchEnabled ||
+		preview.ExecutionReadinessSnapshot.ExecutionRequestCreated ||
+		preview.ExecutionReadinessSnapshot.BackendBindingReady ||
+		!preview.ExecutionReadinessSnapshot.PortalPolicyRequired ||
+		!preview.ExecutionReadinessSnapshot.SnapshotRequired ||
+		!preview.ExecutionReadinessSnapshot.UserActionRequired ||
+		preview.ExecutionReadinessSnapshot.HostRootModified ||
+		preview.ExecutionReadinessSnapshot.NetworkRequired ||
+		preview.ExecutionReadinessSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected execution readiness snapshot: %#v", preview.ExecutionReadinessSnapshot)
+	}
+	if preview.NavigationCount != 7 ||
+		len(preview.Navigation) != 7 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
 		preview.Navigation[2].ID != "activation" ||
-		preview.Navigation[3].ID != "actions" ||
-		preview.Navigation[4].ID != "settings" ||
-		preview.Navigation[5].ID != "diagnostics" {
+		preview.Navigation[3].ID != "execution" ||
+		preview.Navigation[4].ID != "actions" ||
+		preview.Navigation[5].ID != "settings" ||
+		preview.Navigation[6].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -257,9 +279,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 6 ||
-		preview.ReadOnlySectionCount != 6 ||
-		preview.NavigationOnlySectionCount != 6 ||
+		preview.SectionCount != 7 ||
+		preview.ReadOnlySectionCount != 7 ||
+		preview.NavigationOnlySectionCount != 7 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -282,6 +304,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"overview":    "GetCompatibilityCenterSummary",
 		"backend":     "GetBackendSelectionPlan",
 		"activation":  "GetDesktopActivationStatus",
+		"execution":   "GetExecutionReadiness",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
@@ -290,6 +313,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"overview":    "compatibility-center-summary",
 		"backend":     "backend-selection-preview",
 		"activation":  "desktop-activation-status-preview",
+		"execution":   "execution-readiness-preview",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -374,7 +398,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||

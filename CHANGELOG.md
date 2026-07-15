@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.172] - 2026-07-15
+
+### Added
+
+- Added a Go-backed execution readiness snapshot to the KDE Compatibility Center page preview so Plasma can show desktop-entry visibility, launch-readiness gates, blocked execution state, and closed launch/request/backend-binding gates without starting a compatibility backend.
+- Added a read-only Execution section to KDE Compatibility Center page sections and section-detail routing, backed by `GetExecutionReadiness`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the seven-section page model.
+
 ## [0.2.171] - 2026-07-15
 
 ### Added

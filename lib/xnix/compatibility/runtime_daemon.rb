@@ -728,6 +728,7 @@ module Xnix
         settings_model = settings(recipe.id)
         backend_selection = backend_selection_plan_summary(recipe)
         activation_status = desktop_activation_status(recipe.id)
+        execution_readiness = execution_readiness(recipe.id)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -759,6 +760,15 @@ module Xnix
           "activation_status_next_action_count" => activation_status.fetch("next_safe_action_count"),
           "activation_commit_enabled" => activation_status.fetch("commit_enabled"),
           "activation_launch_enabled" => activation_status.fetch("launch_enabled"),
+          "execution_readiness_type" => execution_readiness.fetch("readiness_type"),
+          "execution_readiness_runtime_method" => execution_readiness.fetch("runtime_method"),
+          "execution_state" => execution_readiness.fetch("execution_state"),
+          "execution_overall_status" => execution_readiness.fetch("overall_status"),
+          "execution_launch_allowed" => execution_readiness.fetch("launch_allowed"),
+          "execution_launch_enabled" => execution_readiness.fetch("launch_enabled"),
+          "execution_request_created" => execution_readiness.fetch("execution_request_created"),
+          "execution_backend_binding_ready" => execution_readiness.fetch("backend_binding_ready"),
+          "desktop_entry_launch_visible" => execution_readiness.fetch("desktop_entry_launch_visible"),
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -807,6 +817,7 @@ module Xnix
           kde_center_page_section("overview", "Overview", "compatibility-center-overview", "GetCompatibilityCenterSummary", "compatibility-center-summary", "ready"),
           kde_center_page_section("backend", "Backend", "compatibility-backend-selection", "GetBackendSelectionPlan", "backend-selection-preview", "selection-pending"),
           kde_center_page_section("activation", "Activation", "compatibility-activation-status", "GetDesktopActivationStatus", "desktop-activation-status-preview", page.fetch("activation_state")),
+          kde_center_page_section("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", page.fetch("execution_state")),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1500,6 +1511,14 @@ module Xnix
           "activation_state" => page.fetch("activation_state"),
           "activation_commit_enabled" => page.fetch("activation_commit_enabled"),
           "activation_launch_enabled" => page.fetch("activation_launch_enabled"),
+          "execution_readiness_runtime_method" => page.fetch("execution_readiness_runtime_method"),
+          "execution_state" => page.fetch("execution_state"),
+          "execution_overall_status" => page.fetch("execution_overall_status"),
+          "execution_launch_allowed" => page.fetch("execution_launch_allowed"),
+          "execution_launch_enabled" => page.fetch("execution_launch_enabled"),
+          "execution_request_created" => page.fetch("execution_request_created"),
+          "execution_backend_binding_ready" => page.fetch("execution_backend_binding_ready"),
+          "desktop_entry_launch_visible" => page.fetch("desktop_entry_launch_visible"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),

@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -122,14 +122,30 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		activation["backend_details_exposed"] != false {
 		t.Fatalf("unexpected activation status snapshot: %#v", activation)
 	}
-	if payload["navigation_count"] != float64(6) ||
+	execution := payload["execution_readiness_snapshot"].(map[string]any)
+	if execution["request_type"] != "execution-readiness-preview" ||
+		execution["runtime_method"] != "GetExecutionReadiness" ||
+		execution["execution_state"] != "blocked" ||
+		execution["overall_status"] != "not-ready" ||
+		execution["gate_count"] != float64(5) ||
+		execution["desktop_entry_launch_visible"] != true ||
+		execution["launch_allowed"] != false ||
+		execution["launch_enabled"] != false ||
+		execution["execution_request_created"] != false ||
+		execution["backend_binding_ready"] != false ||
+		execution["host_root_modified"] != false ||
+		execution["backend_details_exposed"] != false {
+		t.Fatalf("unexpected execution readiness snapshot: %#v", execution)
+	}
+	if payload["navigation_count"] != float64(7) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
 		navigation[1].(map[string]any)["id"] != "backend" ||
 		navigation[2].(map[string]any)["id"] != "activation" ||
-		navigation[3].(map[string]any)["id"] != "actions" ||
-		navigation[4].(map[string]any)["id"] != "settings" ||
-		navigation[5].(map[string]any)["id"] != "diagnostics" {
+		navigation[3].(map[string]any)["id"] != "execution" ||
+		navigation[4].(map[string]any)["id"] != "actions" ||
+		navigation[5].(map[string]any)["id"] != "settings" ||
+		navigation[6].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||
