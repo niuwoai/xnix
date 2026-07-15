@@ -82,11 +82,11 @@ DOMAIN_DEFINITIONS = [
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch],
-      "runtime/dbus/xnix_compatd_smoke.c" => %w[go_owner_read_dispatch add_go_owner_dispatch_bridge_fields go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_json go-runtime-owner-dispatch+c-smoke-bridge],
+      "runtime/dbus/xnix_compatd_smoke.c" => %w[go_owner_read_dispatch add_go_owner_dispatch_bridge_fields go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_json go-runtime-owner-dispatch+c-smoke-bridge GetKDEIntegrationStatus GetKDEShellIntegrationPlan GetKDEApplicationSurfacePlan],
       "runtime/dbus/xnix_compatd_runtime_models.inc" => %w[GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description payloads; production ownership remains gated."
+    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description and KDE shell payloads; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",

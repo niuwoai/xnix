@@ -301,6 +301,7 @@ build_kde_integration_status(void)
 
   g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("kde-integration-status"));
+  add_go_owner_dispatch_bridge_fields(&status, "GetKDEIntegrationStatus", NULL);
   g_variant_builder_add(&status, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&status, "{sv}", "entry_point_count", g_variant_new_int32(7));
   g_variant_builder_add(&status, "{sv}", "initial_count", g_variant_new_int32(7));
@@ -339,6 +340,7 @@ build_kde_shell_integration_plan(void)
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("kde-shell-integration-plan"));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetKDEShellIntegrationPlan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetKDEShellIntegrationPlan", NULL);
   g_variant_builder_add(&plan, "{sv}", "desktop_shell", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "component_ids", g_variant_new_strv(component_ids, 9));
   g_variant_builder_add(&plan, "{sv}", "component_count", g_variant_new_int32(9));
@@ -395,6 +397,7 @@ build_kde_application_surface_plan(const gchar *application_id)
   g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("kde-application-surface-plan"));
   g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetKDEApplicationSurfacePlan"));
+  add_go_owner_dispatch_bridge_fields(&plan, "GetKDEApplicationSurfacePlan", application_id);
   g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&plan, "{sv}", "surface_state", g_variant_new_string("planned"));
   g_variant_builder_add(&plan, "{sv}", "desktop_shell", g_variant_new_string("KDE Plasma"));

@@ -292,9 +292,52 @@ module Xnix
       end
 
       def parse_dictionaries(output)
-        output.scan(/\{([^{}]*)\}/).map do |match|
-          parse_dictionary_body(match.first)
+        dictionary_bodies(output).map do |body|
+          parse_dictionary_body(body)
         end
+      end
+
+      def dictionary_bodies(output)
+        bodies = []
+        start_index = nil
+        depth = 0
+        in_string = false
+        escaped = false
+
+        output.each_char.with_index do |char, index|
+          if in_string
+            escaped = !escaped && char == "\\"
+            if char == "'" && !escaped
+              in_string = false
+            elsif char != "\\"
+              escaped = false
+            end
+            next
+          end
+
+          if char == "'"
+            in_string = true
+            escaped = false
+            next
+          end
+
+          if char == "{"
+            start_index = index + 1 if depth.zero?
+            depth += 1
+            next
+          end
+
+          next unless char == "}"
+          next if depth.zero?
+
+          depth -= 1
+          if depth.zero? && start_index
+            bodies << output[start_index...index]
+            start_index = nil
+          end
+        end
+
+        bodies
       end
 
       def parse_dictionary_body(body)

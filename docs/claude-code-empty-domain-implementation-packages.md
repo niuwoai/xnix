@@ -1,6 +1,6 @@
 # Claude Code Empty-Domain Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.222
+> Last updated: 2026-07-16 | Baseline: v0.2.223
 
 This document splits the contract-heavy parts of Xnix into larger, relatively independent implementation packages that can be handed to Claude Code one branch at a time.
 
@@ -49,7 +49,7 @@ Each branch must:
 
 Claude Code should treat the following as already-started implementation evidence, not as greenfield work:
 
-| Domain | Baseline evidence at v0.2.222 | What remains useful to implement |
+| Domain | Baseline evidence at v0.2.223 | What remains useful to implement |
 | --- | --- | --- |
 | Runtime owner | Owner candidate, full in-process read dispatch coverage for every D-Bus read-only Runtime method, owner-local probes, route manifests, service binding previews, lifecycle JSONL, and write gates exist. | Constrained long-running session-bus event loop, smoke-owned readiness, bus-call parity, and closed write-method evidence through the owner process. |
 | Recipe and artifacts | Recipe registry/trust previews exist. Local artifact manifest parsing, digest verification, cache acquisition, and `artifact-stage-record` stage receipts exist for fixture artifacts. | Production-shaped trust-store boundary, signature verifier interface, state-root namespace integration, and richer install-gate diagnostics. |

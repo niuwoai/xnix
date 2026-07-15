@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.223] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so `GetKDEIntegrationStatus`, `GetKDEShellIntegrationPlan`, and `GetKDEApplicationSurfacePlan` carry Go owner read-dispatch payload evidence alongside their stable KDE shell fields.
+- Added restricted session smoke assertions that prove KDE shell and application-surface reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without forking Plasma, enabling writes, launching backends, or mutating the host root.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track KDE shell bridge coverage as a Go-owned payload handoff through low-level C D-Bus transport.
+- Hardened the temporary Ruby D-Bus client parser so Go owner JSON bridge fields do not hide the outer KDE read model consumed by smoke clients.
+
 ## [0.2.222] - 2026-07-16
 
 ### Added

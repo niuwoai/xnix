@@ -170,6 +170,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDEIntegrationStatus: #{stderr}")
   assert(stdout.include?("kde-integration-status"), "runtime smoke adapter must expose KDE integration status over D-Bus")
   assert(stdout.include?("GetDesktopEntryPlan"), "runtime smoke adapter KDE status must expose Runtime method coverage")
+  assert_go_owner_bridge(stdout, "GetKDEIntegrationStatus")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -181,6 +182,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDEShellIntegrationPlan: #{stderr}")
   assert(stdout.include?("kde-shell-integration-plan"), "runtime smoke adapter must expose KDE shell integration plans over D-Bus")
   assert(stdout.include?("shell_configuration_written"), "runtime smoke adapter KDE shell plan must keep shell writes observable")
+  assert_go_owner_bridge(stdout, "GetKDEShellIntegrationPlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -193,6 +195,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetKDEApplicationSurfacePlan: #{stderr}")
   assert(stdout.include?("kde-application-surface-plan"), "runtime smoke adapter must expose KDE application surface plans over D-Bus")
   assert(stdout.include?("normal_linux_application_surface"), "runtime smoke adapter must keep Windows applications desktop-native")
+  assert_go_owner_bridge(stdout, "GetKDEApplicationSurfacePlan")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
