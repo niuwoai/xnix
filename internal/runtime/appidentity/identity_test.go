@@ -1177,6 +1177,75 @@ func TestFileOpenPreviewRequiresPortalAndSelectsByExtension(t *testing.T) {
 	}
 }
 
+func TestDolphinDropPreviewWrapsPortalMediatedFileOpen(t *testing.T) {
+	preview, err := NewDolphinDropPreview([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".abc", ".xls"},
+	}}, Provenance{Source: "registry", RegistryName: "test-registry"}, []string{"file:///home/test/Documents/book.xls", "file:///home/test/Documents/tax.xls"}, "")
+	if err != nil {
+		t.Fatalf("NewDolphinDropPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.dolphin_drop.v1" ||
+		preview.RequestType != "dolphin-drop-preview" ||
+		preview.Source != "dolphin-drag-and-drop" ||
+		preview.DropSurface != "Dolphin" {
+		t.Fatalf("unexpected Dolphin drop schema: %#v", preview)
+	}
+	if preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.SelectedExtension != ".xls" ||
+		preview.SelectionMode != "extension-match" ||
+		preview.FileCount != 2 {
+		t.Fatalf("unexpected Dolphin drop identity: %#v", preview)
+	}
+	if preview.DropOperation != "open-selected-files" ||
+		!preview.DropAccepted ||
+		preview.Action.Type != "runtime-file-open" ||
+		!sameStrings(preview.Action.Argv, []string{"xnix-compat-open", "--app", "org.example.ledger", "%U"}) {
+		t.Fatalf("unexpected Dolphin drop action: %#v", preview)
+	}
+	if !preview.PortalRequired ||
+		preview.PortalInterface != "org.freedesktop.portal.FileChooser" ||
+		preview.PortalMethod != "OpenFile" {
+		t.Fatalf("unexpected Dolphin drop Portal metadata: %#v", preview)
+	}
+	if !preview.RuntimeOwned ||
+		!preview.GoRuntimeBacked ||
+		preview.KDEPolicyOwner ||
+		preview.RequestObjectCreated ||
+		preview.PermissionGranted ||
+		preview.BackendLaunchEnabled ||
+		preview.DirectHostFileAccess ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("unexpected Dolphin drop safety flags: %#v", preview)
+	}
+	if !sameStrings(preview.BlockedActions, []string{
+		"create Portal request objects from a drag preview",
+		"grant file permissions from a drag preview",
+		"read selected files directly from Dolphin",
+		"start compatibility backends from a drag preview",
+		"mutate the host root from a drag preview",
+		"expose backend implementation details in drag targets",
+	}) {
+		t.Fatalf("Dolphin drop preview must block direct file reads: %#v", preview.BlockedActions)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Dolphin drop preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestRecipeValidationRejectsUnsafeIdentityInput(t *testing.T) {
 	cases := []Recipe{
 		{ID: "not-reverse-dns", Name: "Example", Icon: "icon", Mode: "automatic"},

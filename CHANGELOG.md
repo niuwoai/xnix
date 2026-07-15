@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.154] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `dolphin-drop-preview` for read-only Dolphin drag-and-drop file routing through the Runtime.
+- Added Go unit and CLI coverage proving Dolphin drops stay Portal-mediated and do not create request objects, grant file permissions, read files directly, launch backends, mutate the host root, or expose backend details.
+
 ## [0.2.153] - 2026-07-15
 
 ### Added

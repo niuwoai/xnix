@@ -814,6 +814,42 @@ type FileOpenSummary struct {
 	Detail   string `json:"detail"`
 }
 
+type DolphinDropPreview struct {
+	SchemaVersion         string            `json:"schema_version"`
+	RequestType           string            `json:"request_type"`
+	Source                string            `json:"source"`
+	Desktop               string            `json:"desktop"`
+	ApplicationID         string            `json:"application_id"`
+	DisplayName           string            `json:"display_name"`
+	DesktopFile           string            `json:"desktop_file"`
+	RuntimeMethod         string            `json:"runtime_method"`
+	DropOperation         string            `json:"drop_operation"`
+	DropSurface           string            `json:"drop_surface"`
+	SelectionMode         string            `json:"selection_mode"`
+	FileCount             int               `json:"file_count"`
+	FileURIs              []string          `json:"file_uris"`
+	SelectedExtension     string            `json:"selected_extension"`
+	PortalRequired        bool              `json:"portal_required"`
+	PortalInterface       string            `json:"portal_interface"`
+	PortalMethod          string            `json:"portal_method"`
+	Action                FileOpenAction    `json:"action"`
+	RuntimeOwned          bool              `json:"runtime_owned"`
+	GoRuntimeBacked       bool              `json:"go_runtime_backed"`
+	KDEPolicyOwner        bool              `json:"kde_policy_owner"`
+	UserVisible           bool              `json:"user_visible"`
+	DropAccepted          bool              `json:"drop_accepted"`
+	RequestObjectCreated  bool              `json:"request_object_created"`
+	PermissionGranted     bool              `json:"permission_granted"`
+	BackendLaunchEnabled  bool              `json:"backend_launch_enabled"`
+	DirectHostFileAccess  bool              `json:"direct_host_file_access"`
+	HostRootModified      bool              `json:"host_root_modified"`
+	BackendDetailsExposed bool              `json:"backend_details_exposed"`
+	SupportedExtensions   []string          `json:"supported_extensions"`
+	UserFacingSettings    map[string]string `json:"user_facing_settings"`
+	BlockedActions        []string          `json:"blocked_actions"`
+	Summary               FileOpenSummary   `json:"summary"`
+}
+
 func NewPlan(recipe Recipe) (Plan, error) {
 	return NewPlanWithProvenance(recipe, Provenance{Source: "direct-file"})
 }
@@ -2348,6 +2384,63 @@ func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []stri
 	}
 	if err := validateNoBackendTerms(preview, "file-open preview"); err != nil {
 		return FileOpenPreview{}, err
+	}
+	return preview, nil
+}
+
+func NewDolphinDropPreview(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string) (DolphinDropPreview, error) {
+	fileOpen, err := NewFileOpenPreview(recipes, provenance, fileURIs, applicationID)
+	if err != nil {
+		return DolphinDropPreview{}, err
+	}
+
+	preview := DolphinDropPreview{
+		SchemaVersion:         "xnix.runtime.dolphin_drop.v1",
+		RequestType:           "dolphin-drop-preview",
+		Source:                "dolphin-drag-and-drop",
+		Desktop:               fileOpen.Desktop,
+		ApplicationID:         fileOpen.ApplicationID,
+		DisplayName:           fileOpen.DisplayName,
+		DesktopFile:           fileOpen.DesktopFile,
+		RuntimeMethod:         "Launch",
+		DropOperation:         "open-selected-files",
+		DropSurface:           "Dolphin",
+		SelectionMode:         fileOpen.SelectionMode,
+		FileCount:             fileOpen.FileCount,
+		FileURIs:              fileOpen.FileURIs,
+		SelectedExtension:     fileOpen.SelectedExtension,
+		PortalRequired:        fileOpen.PortalRequired,
+		PortalInterface:       fileOpen.PortalInterface,
+		PortalMethod:          fileOpen.PortalMethod,
+		Action:                fileOpen.Action,
+		RuntimeOwned:          true,
+		GoRuntimeBacked:       true,
+		KDEPolicyOwner:        false,
+		UserVisible:           true,
+		DropAccepted:          true,
+		RequestObjectCreated:  false,
+		PermissionGranted:     false,
+		BackendLaunchEnabled:  false,
+		DirectHostFileAccess:  false,
+		HostRootModified:      false,
+		BackendDetailsExposed: false,
+		SupportedExtensions:   fileOpen.SupportedExtensions,
+		UserFacingSettings:    fileOpen.UserFacingSettings,
+		BlockedActions: []string{
+			"create Portal request objects from a drag preview",
+			"grant file permissions from a drag preview",
+			"read selected files directly from Dolphin",
+			"start compatibility backends from a drag preview",
+			"mutate the host root from a drag preview",
+			"expose backend implementation details in drag targets",
+		},
+		Summary: FileOpenSummary{
+			Headline: "Dolphin drag-and-drop can route selected files through the Runtime.",
+			Detail:   "The drop is accepted as a preview only; Portal mediation, user review, and Runtime launch gates still block execution.",
+		},
+	}
+	if err := validateNoBackendTerms(preview, "Dolphin drop preview"); err != nil {
+		return DolphinDropPreview{}, err
 	}
 	return preview, nil
 }

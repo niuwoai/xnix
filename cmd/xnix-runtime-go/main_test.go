@@ -2078,6 +2078,70 @@ func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	}
 }
 
+func TestDolphinDropPreviewCommandRendersDropPlan(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"dolphin-drop-preview", "--registry", registryPath, "file:///home/test/Documents/book.xls", "file:///home/test/Documents/tax.xls"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.dolphin_drop.v1" ||
+		payload["request_type"] != "dolphin-drop-preview" ||
+		payload["source"] != "dolphin-drag-and-drop" ||
+		payload["drop_surface"] != "Dolphin" {
+		t.Fatalf("unexpected Dolphin drop schema: %#v", payload)
+	}
+	if payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["runtime_method"] != "Launch" ||
+		payload["drop_operation"] != "open-selected-files" {
+		t.Fatalf("unexpected Dolphin drop identity: %#v", payload)
+	}
+	if payload["file_count"] != float64(2) ||
+		payload["selected_extension"] != ".xls" ||
+		payload["selection_mode"] != "extension-match" {
+		t.Fatalf("unexpected Dolphin drop selection: %#v", payload)
+	}
+	if payload["portal_required"] != true ||
+		payload["portal_interface"] != "org.freedesktop.portal.FileChooser" ||
+		payload["portal_method"] != "OpenFile" {
+		t.Fatalf("unexpected Dolphin drop Portal metadata: %#v", payload)
+	}
+	action := payload["action"].(map[string]any)
+	if action["type"] != "runtime-file-open" {
+		t.Fatalf("unexpected Dolphin drop action: %#v", action)
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["drop_accepted"] != true ||
+		payload["request_object_created"] != false ||
+		payload["permission_granted"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["direct_host_file_access"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Dolphin drop safety flags: %#v", payload)
+	}
+}
+
 func TestKRunnerQueryPreviewCommandSearchesRegistry(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"wine","supported_extensions":[".abc",".xls"]}`)

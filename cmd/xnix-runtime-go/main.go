@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|dolphin-drop-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -36,6 +36,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopIdentityPlan(args[1:], stdout)
 	case "desktop-resource-bridge-preview":
 		return runDesktopResourceBridgePreview(args[1:], stdout)
+	case "dolphin-drop-preview":
+		return runDolphinDropPreview(args[1:], stdout)
 	case "execution-decision-preview":
 		return runExecutionDecisionPreview(args[1:], stdout)
 	case "execution-preflight-preview":
@@ -339,6 +341,21 @@ func runFileOpenPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := appidentity.NewFileOpenPreview(recipes, provenance, fileURIs, applicationID)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runDolphinDropPreview(args []string, stdout io.Writer) error {
+	recipes, provenance, applicationID, fileURIs, err := parseDolphinDropPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewDolphinDropPreview(recipes, provenance, fileURIs, applicationID)
 	if err != nil {
 		return err
 	}
@@ -1057,6 +1074,27 @@ func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentit
 	fileURIs := flags.Args()
 	if len(fileURIs) == 0 {
 		return nil, appidentity.Provenance{}, "", nil, errors.New("file-open-preview requires at least one file URI")
+	}
+
+	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+	return recipes, provenance, *applicationID, fileURIs, err
+}
+
+func parseDolphinDropPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	flags := flag.NewFlagSet("dolphin-drop-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to use for the Dolphin drop preview")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	if err := flags.Parse(args); err != nil {
+		return nil, appidentity.Provenance{}, "", nil, err
+	}
+	if *registryPath == "" {
+		return nil, appidentity.Provenance{}, "", nil, errors.New("dolphin-drop-preview requires --registry")
+	}
+	fileURIs := flags.Args()
+	if len(fileURIs) == 0 {
+		return nil, appidentity.Provenance{}, "", nil, errors.New("dolphin-drop-preview requires at least one file URI")
 	}
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)

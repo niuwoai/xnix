@@ -43,6 +43,8 @@ File association generation delegates to `xnix-file-association-model`. The mode
 
 File association planning delegates to `xnix-runtime-core file-association-plan` and `GetFileAssociationPlan`. The C Runtime record describes the generated desktop file, supported MIME types, standard `mimeapps.list` sections, and `xnix-compat-open %U` portal-mediated file-open command before any file is staged. It does not overwrite existing associations, mutate the host root, or expose backend details.
 
+Dolphin drag-and-drop previews delegate to `xnix-runtime-go dolphin-drop-preview --registry <path> [--app <id>] file://...`. The Go Runtime resolves the selected files through the same Portal-mediated file-open path and presents a Dolphin drop target contract, but it does not create Portal request objects, grant file permissions, read files directly, start compatibility backends, mutate the host root, or expose backend details.
+
 The Dolphin service menu delegates selected files to `xnix-compat-open`. That entry point accepts only `file://` URIs, resolves a Runtime recipe by extension unless an explicit application id is supplied, and emits a portal-required Runtime `Launch` request model. It does not start Wine, a virtual machine, or a backend-specific executable.
 
 `xnix-kde-integration-status`, `xnix-runtime-core kde-integration-status`, and `GetKDEIntegrationStatus` record the first-release KDE entry-point scope. Launcher, task manager, file manager, system tray, notifications, Compatibility Center, and settings are marked as initial because each entry point now has a Runtime-backed request, read-model, or identity model. The KDE-facing status model consumes Runtime-owned status first and only keeps local data as an offline fallback.
