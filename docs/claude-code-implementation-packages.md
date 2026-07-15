@@ -1,6 +1,6 @@
 # Claude Code Implementation Packages
 
-> Last updated: 2026-07-15 | Current version: v0.2.192
+> Last updated: 2026-07-15 | Current version: v0.2.193
 
 This document splits the contract-heavy Xnix Runtime roadmap into implementation packages that are large enough to matter but isolated enough for Claude Code to complete without owning the whole product at once.
 

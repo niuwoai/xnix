@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.193] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `package-source-preview`, `acquisition-preflight-preview`, and `artifact-manifest-preview` for `GetCompatibilityPackageSource`, `GetCompatibilityAcquisitionPreflight`, and `GetCompatibilityArtifactManifest`, rendering the desktop-safe compatibility package acquisition chain (Runtime-owned source channels, acquisition checks, and artifact groups) from registry recipes without downloading artifacts, installing packages, requiring network access, exposing raw commands or cache paths, or mutating the host root.
+
+### Changed
+
+- Migrated `GetCompatibilityPackageSource`, `GetCompatibilityAcquisitionPreflight`, and `GetCompatibilityArtifactManifest` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to native Go preview routes, advancing the acquisition slice while keeping the remaining C-backed policy routes explicit.
+- Updated CLI coverage, unit tests, layout verification, and product documentation for the Go package acquisition migration.
+
 ## [0.2.192] - 2026-07-15
 
 ### Added

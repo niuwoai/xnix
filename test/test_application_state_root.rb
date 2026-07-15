@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 state_root = Xnix::Compatibility::ApplicationStateRoot.new(recipe: recipe).to_h
 scope_ids = state_root.fetch("managed_scopes").map { |item| item.fetch("id") }
 
-assert(state_root["version"] == "0.2.192", "application state root must expose the current version")
+assert(state_root["version"] == "0.2.193", "application state root must expose the current version")
 assert(state_root["root_type"] == "compatibility-application-state-root", "application state root must identify the root type")
 assert(state_root["application"]["id"] == "org.xnix.sample.notepad", "application state root must preserve the application id")
 assert(state_root["runtime_owned"], "Runtime must own application state roots")
