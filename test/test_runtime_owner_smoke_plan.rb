@@ -17,7 +17,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 plan = Xnix::Compatibility::RuntimeOwnerSmokePlan.new.to_h
 step_ids = plan.fetch("steps").map { |item| item.fetch("id") }
 
-assert(plan["version"] == "0.2.239", "Runtime owner smoke plan must expose the current version")
+assert(plan["version"] == "0.2.240", "Runtime owner smoke plan must expose the current version")
 assert(plan["plan_type"] == "runtime-owner-smoke-plan", "Runtime owner smoke plan must identify the plan type")
 assert(plan["runtime_owned"], "Runtime must own production owner smoke planning")
 assert(!plan["kde_policy_owner"], "KDE must not own production owner smoke planning")

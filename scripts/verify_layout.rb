@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.239"
+EXPECTED_VERSION = "0.2.240"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -31,6 +31,7 @@ REQUIRED_FILES = %w[
   lib/xnix/container.rb
   lib/xnix/buildroot.rb
   lib/xnix/qemu.rb
+  lib/xnix/full_smoke_report.rb
   lib/xnix/serial_log.rb
   lib/xnix/sshd.rb
   lib/xnix/ssh_probe.rb
@@ -371,6 +372,7 @@ REQUIRED_FILES = %w[
   test/test_file_association_model.rb
   test/test_go_desktop_identity_plan.rb
   test/test_file_open_request.rb
+  test/test_full_smoke_report.rb
   test/test_full_smoke_script.rb
   test/test_launch_request.rb
   test/test_notification_request.rb

@@ -18,7 +18,7 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.239" ||
+	if payload["version"] != "0.2.240" ||
 		payload["schema_version"] != "xnix.runtime.write_gate.v1" ||
 		payload["request_type"] != "runtime-write-gate-preview" ||
 		payload["gate_type"] != "runtime-write-gate" ||

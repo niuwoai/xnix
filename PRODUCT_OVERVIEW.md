@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-16 | Current version: v0.2.239
+> Last updated: 2026-07-16 | Current version: v0.2.240
 
 ## Summary
 
@@ -260,6 +260,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 
 - A complete constrained Buildroot build exits successfully and produces the x86_64 kernel and initramfs.
 - The QEMU serial console shows Linux booting, running `/init`, and reaching the `xnix login:` prompt.
+- Full milestone smoke runs persist `output/serial.log`, `output/full-smoke-report.json`, and `output/full-smoke-report.md` as ignored local evidence for boot markers, ordered build steps, and host-safety gates.
 - The QEMU user-mode NIC obtains `10.0.2.15` through DHCP.
 - OpenSSH `sshd` accepts a non-interactive key-authenticated connection through the container-only loopback forwarding rule.
 

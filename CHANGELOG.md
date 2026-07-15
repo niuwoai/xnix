@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.240] - 2026-07-16
+
+### Added
+
+- Added a structured full build and QEMU smoke report writer that emits ignored JSON and Markdown artifacts under `output/` after the milestone boot attempt.
+- Recorded full-smoke report fields for version, ordered build steps, persisted serial-log path, boot markers, host-safety gates, QEMU network restriction, and source-download network use.
+- Added unit coverage and layout requirements for the full-smoke report so tenth-version QEMU milestone runs leave auditable evidence.
+
 ## [0.2.239] - 2026-07-16
 
 ### Changed
