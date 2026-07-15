@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.200] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `task-manager-identity-preview` and `kwin-window-rule-preview` for `GetTaskManagerIdentityPlan` and `GetKWinWindowRulePlan`, deriving KDE task-manager grouping, pinning, restore hints, and KWin identity/layout hints from the shared Go window identity model without observing windows, applying KWin rules, activating task-manager entries, enabling launch or execution, exposing backend details, or mutating the host root.
+- Added `docs/claude-code-open-domain-work-packages.md` as a higher-level Claude Code work-package backlog for the mostly contract-only Runtime, KDE, execution, AI, and image domains.
+
+### Changed
+
+- Migrated the task-manager identity and KWin window-rule route group in `runtime-owner-route-manifest-preview` from C Runtime adapter routes to native Go preview routes, reducing the remaining C-backed read-only owner route count.
+- Increased the constrained QEMU boot-system timeout used by the full smoke gate so the serial-login marker can appear on slower containerized boots.
+
 ## [0.2.199] - 2026-07-15
 
 ### Added

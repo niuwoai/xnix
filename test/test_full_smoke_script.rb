@@ -30,5 +30,6 @@ assert(configure_index < download_index, "full smoke must configure before downl
 assert(download_index < build_system_index, "full smoke must download package sources before building")
 assert(build_system_index < boot_index, "full smoke must build the system before booting QEMU")
 assert(script.include?("Xnix::Milestone.full_build_required?"), "full smoke must remain gated to tenth versions")
+assert(project_root.join("scripts/container.rb").read.include?("\"90s\""), "container boot-system must allow enough time for QEMU login markers")
 
 puts "PASS: full smoke script unit tests"
