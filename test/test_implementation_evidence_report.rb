@@ -86,11 +86,17 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("AI safe
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("settings/review payloads"), "Runtime owner service summary must mention settings/review bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("Compatibility Center action payloads"), "Runtime owner service summary must mention Compatibility Center action bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("KDE Compatibility Center page payloads"), "Runtime owner service summary must mention KDE Compatibility Center page bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("foundation catalog/status payloads"), "Runtime owner service summary must mention foundation catalog/status bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields5" &&
     entry.fetch("present")
 }, "Runtime owner service must track five-argument C bridge helper evidence")
+assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
+    entry.fetch("token") == "GetEngineCatalog" &&
+    entry.fetch("present")
+}, "Runtime owner service must track foundation engine catalog bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_kde_center.inc" &&
     entry.fetch("token") == "GetKDECenterPageSectionDetail" &&

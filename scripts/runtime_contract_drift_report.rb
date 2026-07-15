@@ -206,6 +206,11 @@ def build_report(root)
         "go_owner_dispatch_schema",
         "go_owner_dispatch_json",
         "go-runtime-owner-dispatch+c-smoke-bridge",
+        "add_go_owner_dispatch_payload_fields(&builder,",
+        "build_application(\"ListApplications\")",
+        "build_application(\"GetApplication\")",
+        "add_go_owner_dispatch_bridge_fields(&diagnostics, \"GetDiagnostics\"",
+        "add_go_owner_dispatch_bridge_fields(&catalog, \"GetEngineCatalog\"",
         "add_go_owner_dispatch_bridge_fields(&plan, \"GetRunPlan\"",
         "add_go_owner_dispatch_bridge_fields(&manifest, \"GetDesktopActivationManifest\"",
         "add_go_owner_dispatch_bridge_fields2(&transaction, \"GetDesktopActivationTransactionPreview\"",
@@ -242,6 +247,7 @@ def build_report(root)
         "add_go_owner_dispatch_bridge_fields3(&gate, \"GetAIRepairApprovalGate\"",
         "add_go_owner_dispatch_bridge_fields2(&plan, \"GetSnapshotPlan\"",
         "add_go_owner_dispatch_bridge_fields2(&policy, \"GetPortalAccessPolicy\"",
+        "add_go_owner_dispatch_bridge_fields(&state_root, \"GetApplicationStateRoot\"",
         "add_go_owner_dispatch_bridge_fields(&settings, \"GetCompatibilitySettings\"",
         "add_go_owner_dispatch_bridge_fields5(&plan, \"GetCompatibilitySettingsChangePlan\"",
         "add_go_owner_dispatch_bridge_fields2(&plan, \"GetCompatibilityModeSwitchPlan\"",
@@ -255,7 +261,7 @@ def build_report(root)
         "add_go_owner_dispatch_payload_fields3(&detail, \"GetKDECenterPageSectionDetail\""
       ],
       source: smoke_adapter_source,
-      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, execution readiness reads, AI safety reads, settings/review reads, Compatibility Center action reads, and KDE Compatibility Center page reads through the low-level C bridge."
+      summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, foundation catalog/status reads, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, execution readiness reads, AI safety reads, settings/review reads, Compatibility Center action reads, and KDE Compatibility Center page reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "runtime-dispatch",

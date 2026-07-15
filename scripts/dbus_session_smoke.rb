@@ -55,6 +55,19 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer ListApplications: #{stderr}")
   assert(stdout.include?("org.xnix.sample.notepad"), "runtime smoke adapter must expose the sample recipe over D-Bus")
+  assert_go_owner_bridge(stdout, "ListApplications")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetApplication",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetApplication: #{stderr}")
+  assert(stdout.include?("Sample Notepad"), "runtime smoke adapter must expose application details over D-Bus")
+  assert_go_owner_bridge(stdout, "GetApplication")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -66,6 +79,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetDiagnostics: #{stderr}")
   assert(stdout.include?("known"), "runtime smoke adapter diagnostics must identify known applications")
+  assert_go_owner_bridge(stdout, "GetDiagnostics")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -76,6 +90,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetEngineCatalog: #{stderr}")
   assert(stdout.include?("compatibility-engine"), "runtime smoke adapter must expose engine catalog over D-Bus")
+  assert_go_owner_bridge(stdout, "GetEngineCatalog")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -387,6 +402,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetApplicationStateRoot: #{stderr}")
   assert(stdout.include?("compatibility-application-state-root"), "runtime smoke adapter must expose application state roots over D-Bus")
+  assert_go_owner_bridge(stdout, "GetApplicationStateRoot")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

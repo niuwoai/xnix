@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.234] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so foundation catalog and status reads carry Go owner read-dispatch payload evidence: application list, application detail, diagnostics, engine catalog, and application state root.
+- Added restricted session smoke assertions that prove foundation catalog and status reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without production D-Bus ownership, backend launch, state-root creation, network access, privileged containers, or host-root mutation.
+
+### Changed
+
+- Added a single-argument payload-only Go owner dispatch bridge helper for C D-Bus application dictionaries, allowing `ListApplications` and `GetApplication` to preserve their existing low-level shape while exposing owner dispatch JSON.
+- Updated Runtime contract drift and implementation evidence reports to track foundation catalog and status reads as Go-owned payload handoffs through low-level C D-Bus transport.
+- Clarified the Claude Code large empty-domain assignment handoff protocol so independent branches convert contract-only areas into verifiable implementation evidence instead of adding new empty contracts.
+
 ## [0.2.233] - 2026-07-16
 
 ### Added

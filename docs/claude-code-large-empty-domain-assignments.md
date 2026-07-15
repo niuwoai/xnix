@@ -1,6 +1,6 @@
 # Claude Code Large Empty-Domain Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.233
+> Last updated: 2026-07-16 | Baseline: v0.2.234
 
 This document is a coarse assignment map for handing large, relatively independent Xnix domains to Claude Code.
 
@@ -14,6 +14,41 @@ Use it when the current problem is: "the contract exists, but the domain still h
 - `docs/claude-code-empty-domain-implementation-packages.md` defines evidence levels and completion rules.
 - `docs/claude-code-independent-implementation-briefs.md` contains smaller prompt-ready briefs.
 - This file is the coarse dispatcher: pick one large assignment here, then let Claude Code drill down into the referenced finer packages.
+
+## Single-Document Handoff Protocol
+
+When handing work to Claude Code, start from this document unless a smaller referenced package is already chosen.
+
+Use this protocol:
+
+1. Pick exactly one assignment from `L1` through `L8`.
+2. Copy the assignment's prompt into Claude Code.
+3. Tell Claude Code to read the referenced finer packages, but not to expand scope beyond the selected assignment.
+4. Require Claude Code to stop and report if completing the assignment would need a forbidden host operation, production write path, production bus ownership, real backend launch, or network fetch.
+5. Require a final handoff using the completion statement template at the end of this file.
+
+Parallel work is allowed only when assignments do not touch the same ownership boundary:
+
+| Safe to run in parallel | Avoid running in parallel |
+| --- | --- |
+| `L2` with `L5`, if `L5` only consumes existing receipts | `L1` with any branch changing D-Bus owner routing |
+| `L4` with `L7`, if report contracts are explicitly coordinated | `L2` with `L3`, when both change install-readiness semantics |
+| `L6` with `L8`, if `L8` does not depend on new diagnostics | `L4` with `L8`, when both change QEMU or smoke safety gates |
+
+If there is only one Claude Code runner available, use the first recommended wave order: `L1`, `L2`, `L3`, then `L7`.
+
+## Evidence Targets
+
+Each assignment should convert contract-only surfaces into at least one durable evidence level:
+
+| Evidence level | Meaning | Example |
+| --- | --- | --- |
+| Fixture implemented | Logic runs against deterministic fixture data. | Recipe digest mismatch fails closed. |
+| State-root implemented | Logic persists safe records under an explicit Runtime or test root. | Environment lifecycle state survives a restart inside a test root. |
+| Smoke owned | A constrained smoke exercises the Runtime boundary. | A private session bus read is served by the Go owner. |
+| Production gated | Production behavior is represented, observable, and disabled until prerequisites exist. | Write methods return stable disabled errors. |
+
+Do not accept a branch that only adds new previews, new documentation, or new contract surfaces unless the selected assignment is `L7` and the branch adds evidence gates that prevent future empty contracts.
 
 ## Assignment Rules
 

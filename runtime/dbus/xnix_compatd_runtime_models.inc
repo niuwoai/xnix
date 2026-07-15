@@ -29,6 +29,7 @@ build_application_state_root(const gchar *application_id)
 
   g_variant_builder_init(&state_root, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&state_root, "{sv}", "root_type", g_variant_new_string("compatibility-application-state-root"));
+  add_go_owner_dispatch_bridge_fields(&state_root, "GetApplicationStateRoot", application_id);
   g_variant_builder_add(&state_root, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&state_root, "{sv}", "state_namespace", g_variant_new_string(application_id));
   g_variant_builder_add(&state_root, "{sv}", "allocation_state", g_variant_new_string("planned"));

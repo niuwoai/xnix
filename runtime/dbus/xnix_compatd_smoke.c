@@ -155,6 +155,14 @@ add_go_owner_dispatch_payload_fields2(GVariantBuilder *builder,
 }
 
 static void
+add_go_owner_dispatch_payload_fields(GVariantBuilder *builder,
+                                     const gchar *method_name,
+                                     const gchar *dispatch_arg)
+{
+  add_go_owner_dispatch_payload_fields2(builder, method_name, dispatch_arg, NULL);
+}
+
+static void
 add_go_owner_dispatch_payload_fields3(GVariantBuilder *builder,
                                       const gchar *method_name,
                                       const gchar *dispatch_arg,
@@ -192,11 +200,14 @@ add_go_owner_dispatch_bridge_fields(GVariantBuilder *builder,
 }
 
 static GVariant *
-build_application(void)
+build_application(const gchar *method_name)
 {
   GVariantBuilder builder;
 
   g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sv}"));
+  add_go_owner_dispatch_payload_fields(&builder,
+                                       method_name,
+                                       g_strcmp0(method_name, "ListApplications") == 0 ? NULL : "org.xnix.sample.notepad");
   g_variant_builder_add(&builder, "{sv}", "id", g_variant_new_string("org.xnix.sample.notepad"));
   g_variant_builder_add(&builder, "{sv}", "name", g_variant_new_string("Sample Notepad"));
   g_variant_builder_add(&builder, "{sv}", "icon", g_variant_new_string("accessories-text-editor"));
@@ -228,6 +239,7 @@ build_engine_catalog(void)
 
   g_variant_builder_init(&catalog, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&catalog, "{sv}", "catalog_type", g_variant_new_string("compatibility-engine"));
+  add_go_owner_dispatch_bridge_fields(&catalog, "GetEngineCatalog", NULL);
   g_variant_builder_add(&catalog, "{sv}", "runtime_policy_owner", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&catalog, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
@@ -873,7 +885,7 @@ handle_method_call(GDBusConnection *connection,
     GVariantBuilder applications;
 
     g_variant_builder_init(&applications, G_VARIANT_TYPE("aa{sv}"));
-    g_variant_builder_add_value(&applications, build_application());
+    g_variant_builder_add_value(&applications, build_application("ListApplications"));
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(aa{sv})", &applications));
     return;
   }
@@ -887,7 +899,7 @@ handle_method_call(GDBusConnection *connection,
       return;
     }
 
-    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_application()));
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_application("GetApplication")));
     return;
   }
 
@@ -902,6 +914,7 @@ handle_method_call(GDBusConnection *connection,
     }
 
     g_variant_builder_init(&diagnostics, G_VARIANT_TYPE("a{sv}"));
+    add_go_owner_dispatch_bridge_fields(&diagnostics, "GetDiagnostics", application_id);
     g_variant_builder_add(&diagnostics, "{sv}", "application_id", g_variant_new_string(application_id));
     g_variant_builder_add(&diagnostics, "{sv}", "status", g_variant_new_string("known"));
     g_variant_builder_add(&diagnostics, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
