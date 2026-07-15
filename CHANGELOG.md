@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.237] - 2026-07-16
+
+### Added
+
+- Added Go owner service-call bridge evidence to the constrained C D-Bus smoke adapter, alongside the existing owner read-dispatch evidence.
+- Extended restricted D-Bus session smoke assertions so every Go-owner-backed read verifies `xnix.runtime.owner_service_call.v1` payload evidence from `xnix-runtime-owner --service-call`.
+
+### Changed
+
+- Updated Runtime contract drift, implementation evidence, layout, and D-Bus smoke-script gates to prevent regressions from the service-call bridge back to dispatch-only D-Bus evidence.
+- Kept the existing `go_owner_dispatch_*` D-Bus fields for compatibility while adding `go_owner_service_call_*` fields for the next Runtime owner service transition.
+
 ## [0.2.236] - 2026-07-16
 
 ### Added

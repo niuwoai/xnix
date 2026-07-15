@@ -19,6 +19,9 @@ def assert_go_owner_bridge(stdout, method_name)
   assert(stdout.include?("go_owner_dispatch_available"), "#{method_name} must report Go owner dispatch availability")
   assert(stdout.include?("xnix.runtime.owner_read_dispatch.v1"), "#{method_name} must include Go owner dispatch schema evidence")
   assert(stdout.include?("runtime-owner-read-dispatch"), "#{method_name} must include Go owner read dispatch payload evidence")
+  assert(stdout.include?("go_owner_service_call_available"), "#{method_name} must report Go owner service-call availability")
+  assert(stdout.include?("xnix.runtime.owner_service_call.v1"), "#{method_name} must include Go owner service-call schema evidence")
+  assert(stdout.include?("runtime-owner-service-call"), "#{method_name} must include Go owner service-call payload evidence")
 end
 
 unless ENV["DBUS_SESSION_BUS_ADDRESS"]

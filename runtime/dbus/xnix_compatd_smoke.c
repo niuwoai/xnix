@@ -62,6 +62,64 @@ go_owner_read_dispatch5(const gchar *method_name,
 }
 
 static gchar *
+go_owner_service_call5(const gchar *method_name,
+                       const gchar *dispatch_arg,
+                       const gchar *second_dispatch_arg,
+                       const gchar *third_dispatch_arg,
+                       const gchar *fourth_dispatch_arg,
+                       const gchar *fifth_dispatch_arg)
+{
+  gchar *stdout_data = NULL;
+  gchar *stderr_data = NULL;
+  GError *error = NULL;
+  gint wait_status = 0;
+  gchar *argv[13] = {0};
+
+  argv[0] = "xnix-runtime-owner";
+  argv[1] = "--root";
+  argv[2] = ".";
+  argv[3] = "--mode";
+  argv[4] = "smoke-owner";
+  argv[5] = "--service-call";
+  argv[6] = (gchar *)method_name;
+  argv[7] = (gchar *)dispatch_arg;
+  argv[8] = (gchar *)second_dispatch_arg;
+  argv[9] = (gchar *)third_dispatch_arg;
+  argv[10] = (gchar *)fourth_dispatch_arg;
+  argv[11] = (gchar *)fifth_dispatch_arg;
+  argv[12] = NULL;
+
+  if (!g_spawn_sync(NULL,
+                    argv,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH,
+                    NULL,
+                    NULL,
+                    &stdout_data,
+                    &stderr_data,
+                    &wait_status,
+                    &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  if (!g_spawn_check_wait_status(wait_status, &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  g_free(stderr_data);
+  if (stdout_data == NULL || stdout_data[0] == '\0') {
+    g_free(stdout_data);
+    return NULL;
+  }
+  g_strchomp(stdout_data);
+  return stdout_data;
+}
+
+static gchar *
 go_owner_read_dispatch3(const gchar *method_name,
                         const gchar *dispatch_arg,
                         const gchar *second_dispatch_arg,
@@ -94,7 +152,9 @@ add_go_owner_dispatch_bridge_fields5(GVariantBuilder *builder,
                                      const gchar *fifth_dispatch_arg)
 {
   gchar *go_owner_dispatch_json = NULL;
+  gchar *go_owner_service_call_json = NULL;
   gboolean go_owner_dispatch_available = FALSE;
+  gboolean go_owner_service_call_available = FALSE;
 
   if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
     go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
@@ -106,13 +166,25 @@ add_go_owner_dispatch_bridge_fields5(GVariantBuilder *builder,
                                                     fourth_dispatch_arg,
                                                     fifth_dispatch_arg);
   }
+  go_owner_service_call_json = go_owner_service_call5(method_name,
+                                                      dispatch_arg,
+                                                      second_dispatch_arg,
+                                                      third_dispatch_arg,
+                                                      fourth_dispatch_arg,
+                                                      fifth_dispatch_arg);
   go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
+  go_owner_service_call_available = go_owner_service_call_json != NULL && go_owner_service_call_json[0] != '\0';
 
   g_variant_builder_add(builder, "{sv}", "read_model_source", g_variant_new_string("go-runtime-owner-dispatch+c-smoke-bridge"));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_available", g_variant_new_boolean(go_owner_service_call_available));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_schema", g_variant_new_string(go_owner_service_call_available ? "xnix.runtime.owner_service_call.v1" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_request_type", g_variant_new_string(go_owner_service_call_available ? "runtime-owner-service-call" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_json", g_variant_new_string(go_owner_service_call_available ? go_owner_service_call_json : ""));
   g_free(go_owner_dispatch_json);
+  g_free(go_owner_service_call_json);
 }
 
 static void
@@ -125,7 +197,9 @@ add_go_owner_dispatch_payload_fields5(GVariantBuilder *builder,
                                       const gchar *fifth_dispatch_arg)
 {
   gchar *go_owner_dispatch_json = NULL;
+  gchar *go_owner_service_call_json = NULL;
   gboolean go_owner_dispatch_available = FALSE;
+  gboolean go_owner_service_call_available = FALSE;
 
   if (g_strcmp0(method_name, "GetRuntimeWriteGate") == 0) {
     go_owner_dispatch_json = go_owner_write_gate_dispatch(dispatch_arg);
@@ -137,12 +211,24 @@ add_go_owner_dispatch_payload_fields5(GVariantBuilder *builder,
                                                     fourth_dispatch_arg,
                                                     fifth_dispatch_arg);
   }
+  go_owner_service_call_json = go_owner_service_call5(method_name,
+                                                      dispatch_arg,
+                                                      second_dispatch_arg,
+                                                      third_dispatch_arg,
+                                                      fourth_dispatch_arg,
+                                                      fifth_dispatch_arg);
   go_owner_dispatch_available = go_owner_dispatch_json != NULL && go_owner_dispatch_json[0] != '\0';
+  go_owner_service_call_available = go_owner_service_call_json != NULL && go_owner_service_call_json[0] != '\0';
 
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_available", g_variant_new_boolean(go_owner_dispatch_available));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_schema", g_variant_new_string(go_owner_dispatch_available ? "xnix.runtime.owner_read_dispatch.v1" : ""));
   g_variant_builder_add(builder, "{sv}", "go_owner_dispatch_json", g_variant_new_string(go_owner_dispatch_available ? go_owner_dispatch_json : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_available", g_variant_new_boolean(go_owner_service_call_available));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_schema", g_variant_new_string(go_owner_service_call_available ? "xnix.runtime.owner_service_call.v1" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_request_type", g_variant_new_string(go_owner_service_call_available ? "runtime-owner-service-call" : ""));
+  g_variant_builder_add(builder, "{sv}", "go_owner_service_call_json", g_variant_new_string(go_owner_service_call_available ? go_owner_service_call_json : ""));
   g_free(go_owner_dispatch_json);
+  g_free(go_owner_service_call_json);
 }
 
 static void
