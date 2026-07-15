@@ -2,20 +2,21 @@
 
 Xnix follows Semantic Versioning.
 
-## [Unreleased]
-
-> Parallel feature branch `worktree-kde-image-pipeline`. VERSION is intentionally
-> left at `0.2.189` to avoid breaking the version-locked test suite maintained on
-> the runtime-owner branch; the version bump is assigned at integration time.
+## [0.2.190] - 2026-07-15
 
 ### Added
 
+- Added Go Runtime `applications-preview` and `application-preview` for `ListApplications` and `GetApplication`, rendering registry-verified compatibility applications as normal KDE/Linux application identities without exposing backend terminology, raw executable details, or host paths.
 - Added the **KDE Plasma atomic image pipeline** (Delivery Sequence step 1): `image/kinoite/manifest.json` as the single source of truth for a Fedora Kinoite-compatible KDE Plasma 6 image, `lib/xnix/image/kde_image.rb` to validate the manifest against on-disk artifacts and render a bootc `Containerfile` from it, and `lib/xnix/image/boot_smoke.rb` to model the graphical-login boot check.
 - Added `scripts/build_kde_image.rb` (validate + Containerfile drift guard + honest podman/buildah toolchain detection; never reports an unperformed build) and `scripts/boot_kde_image.rb` (QEMU disk-image boot smoke scanning for manifest-declared serial markers, loopback-only networking).
 - Added image config overlays (SDDM Plasma-Wayland greeter, xdg-desktop-portal KDE backend, os-release branding, systemd presets), `test/test_kde_image.rb`, layout verification coverage, and `docs/kde-image-pipeline.md`.
-- Kept `runtime_owned: true` / `kde_policy_owner: false`: the image lays down KDE entry points and the Runtime's D-Bus activation without embedding compatibility policy.
 - Added the **disk-image production step** linking the container build to the boot smoke: `image/kinoite/disk-config.json` (bootc-image-builder source of truth, cross-checked against the image manifest name), `lib/xnix/image/disk_build.rb` to validate it and render the exact privileged `bootc-image-builder` podman command per output type (qcow2/raw/iso), and `scripts/build_kde_disk.rb` (validate + honest podman toolchain detection; writes the bib blueprint and never fakes a build).
-- Wired `scripts/boot_kde_image.rb` to default its `--disk` to the disk-build qcow2 output so the pipeline connects end-to-end (manifest → Containerfile → container → qcow2 → boot smoke), added `test/test_kde_disk.rb`, and extended layout verification. The blueprint sets `console=ttyS0` so the boot-smoke serial markers surface.
+- Wired `scripts/boot_kde_image.rb` to default its `--disk` to the disk-build qcow2 output so the pipeline connects end-to-end (manifest → Containerfile → container → qcow2 → boot smoke), added `test/test_kde_disk.rb`, and extended layout verification. The blueprint sets `console=ttyS0` so the boot-smoke serial markers surface. The image keeps `runtime_owned: true` / `kde_policy_owner: false` — it lays down KDE entry points and the Runtime's D-Bus activation without embedding compatibility policy.
+
+### Changed
+
+- Migrated `ListApplications` and `GetApplication` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to native Go preview routes, increasing Go-routed read-only owner methods while keeping C-backed policy routes explicit.
+- Updated owner route summaries, CLI coverage, unit tests, layout verification, and product documentation for the Go application catalog migration.
 
 ## [0.2.189] - 2026-07-15
 
