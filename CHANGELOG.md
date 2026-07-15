@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.236] - 2026-07-16
+
+### Added
+
+- Added an in-process Go Runtime owner service-call boundary that routes read-only Runtime methods through the existing owner read dispatch table and routes reserved write methods to deterministic disabled-write responses.
+- Added `xnix-runtime-owner --service-call <method> [args...]` so the owner process can render service-call evidence for read dispatch and write denial without claiming D-Bus ownership.
+- Extended the Runtime owner candidate smoke to verify service-call read dispatch and service-call write denial inside the restricted session-bus harness.
+
+### Changed
+
+- Updated Runtime owner implementation evidence reporting to track the new service-call boundary as M1 Runtime owner service evidence while keeping production bus ownership, system service start, write dispatch, network access, privileged containers, and host-root mutation disabled.
+
 ## [0.2.235] - 2026-07-16
 
 ### Added

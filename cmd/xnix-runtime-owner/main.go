@@ -25,24 +25,25 @@ func run(args []string, stdout io.Writer) error {
 	mode := flags.String("mode", string(owner.ModePreview), "owner mode: preview or smoke-owner")
 	writeMethod := flags.String("deny-write", "", "render a deterministic disabled write-method response")
 	readMethod := flags.String("dispatch-read", "", "render a read-only Runtime owner method dispatch response")
+	serviceCallMethod := flags.String("service-call", "", "render an in-process Runtime owner service call response")
 	lifecycleLog := flags.Bool("lifecycle-log", false, "render smoke-owner lifecycle events as JSON Lines")
 	smokeBatch := flags.Bool("smoke-batch", false, "render restricted smoke-owner read/write call evidence as JSON Lines")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if *readMethod == "" && flags.NArg() != 0 {
+	if *readMethod == "" && *serviceCallMethod == "" && flags.NArg() != 0 {
 		return errors.New("xnix-runtime-owner does not accept positional arguments")
 	}
 
 	var payload any
 	selectedOperations := 0
-	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *lifecycleLog, *smokeBatch} {
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch} {
 		if selected {
 			selectedOperations++
 		}
 	}
 	if selectedOperations > 1 {
-		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, --lifecycle-log, or --smoke-batch")
+		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, --service-call, --lifecycle-log, or --smoke-batch")
 	}
 	if *writeMethod != "" {
 		response, err := owner.DisabledWriteResponse(*writeMethod)
@@ -56,6 +57,16 @@ func run(args []string, stdout io.Writer) error {
 			return err
 		}
 		payload = dispatch
+	} else if *serviceCallMethod != "" {
+		service, err := owner.NewService(*root, owner.CandidateMode(*mode))
+		if err != nil {
+			return err
+		}
+		call, err := service.Call(*serviceCallMethod, flags.Args())
+		if err != nil {
+			return err
+		}
+		payload = call
 	} else if *lifecycleLog {
 		events, err := owner.NewLifecycleEvents(*root, owner.CandidateMode(*mode))
 		if err != nil {

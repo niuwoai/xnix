@@ -65,11 +65,14 @@ assert(domains.keys == expected_domains, "implementation evidence report must ex
 
 assert(domains.fetch("runtime-owner-service").fetch("status") == "smoke-owned", "Runtime owner service must show smoke-owned evidence")
 assert(domains.fetch("runtime-owner-service").fetch("mainline_package") == "M1", "Runtime owner service must map to M1")
+assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/service.go"), "Runtime owner service must include in-process service boundary evidence")
+assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/service_test.go"), "Runtime owner service must include in-process service boundary tests")
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/lifecycle.go"), "Runtime owner service must include lifecycle evidence")
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/smoke_batch.go"), "Runtime owner service must include smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_smoke.c"), "Runtime owner service must include C D-Bus bridge smoke evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_runtime_models.inc"), "Runtime owner service must include C D-Bus bridge model evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_kde_center.inc"), "Runtime owner service must include KDE Center C bridge model evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("in-process service-call boundary"), "Runtime owner service summary must mention the owner service-call boundary")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("full D-Bus read dispatch coverage"), "Runtime owner service summary must mention full read dispatch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("smoke-batch read/write evidence"), "Runtime owner service summary must mention smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
@@ -77,6 +80,11 @@ assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields" &&
     entry.fetch("present")
 }, "Runtime owner service must track generic C bridge helper evidence")
+assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "internal/runtime/owner/service.go" &&
+    entry.fetch("token") == "xnix.runtime.owner_service_call.v1" &&
+    entry.fetch("present")
+}, "Runtime owner service must track owner service-call schema evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("second-ring KDE resource payloads"), "Runtime owner service summary must mention second-ring KDE resource bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("desktop activation payloads"), "Runtime owner service summary must mention desktop activation bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("install-input payloads"), "Runtime owner service summary must mention install input bridge evidence")

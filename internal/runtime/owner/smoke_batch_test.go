@@ -17,7 +17,7 @@ func TestSmokeBatchRecordsCoverReadDispatchAndWriteDenials(t *testing.T) {
 	seenReads := map[string]bool{}
 	seenWrites := map[string]bool{}
 	for index, record := range records {
-		if record.Version != "0.2.235" ||
+		if record.Version != "0.2.236" ||
 			record.SchemaVersion != "xnix.runtime.owner_smoke_batch.v1" ||
 			record.RequestType != "runtime-owner-smoke-batch-record" ||
 			record.BatchType != "restricted-session-owner-call-batch" ||

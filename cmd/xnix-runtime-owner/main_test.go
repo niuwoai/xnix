@@ -17,7 +17,7 @@ func TestRuntimeOwnerCommandRendersSmokeCandidate(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.235" ||
+	if payload["version"] != "0.2.236" ||
 		payload["schema_version"] != "xnix.runtime.owner_candidate.v1" ||
 		payload["request_type"] != "runtime-owner-candidate" ||
 		payload["owner_type"] != "go-runtime-owner-candidate" ||
@@ -76,7 +76,7 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.235" ||
+	if payload["version"] != "0.2.236" ||
 		payload["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
 		payload["request_type"] != "runtime-owner-read-dispatch" ||
 		payload["dispatch_type"] != "go-owner-read-dispatch" ||
@@ -97,6 +97,39 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	}
 }
 
+func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"--root", "../..", "--mode", "smoke-owner", "--service-call", "GetRuntimeWriteGate", "Launch"}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != "0.2.236" ||
+		payload["schema_version"] != "xnix.runtime.owner_service_call.v1" ||
+		payload["request_type"] != "runtime-owner-service-call" ||
+		payload["service_type"] != "go-runtime-owner-in-process-service" ||
+		payload["method"] != "GetRuntimeWriteGate" ||
+		payload["call_type"] != "read-dispatch" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_method"] != false ||
+		payload["dispatch_ready"] != true ||
+		payload["in_process_service_ready"] != true ||
+		payload["event_loop_started"] != false ||
+		payload["session_bus_claimed"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected service call response: %#v", payload)
+	}
+	nested := payload["payload"].(map[string]any)
+	if nested["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
+		nested["method"] != "GetRuntimeWriteGate" {
+		t.Fatalf("unexpected nested service call payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersLifecycleJSONL(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"--root", "../..", "--mode", "smoke-owner", "--lifecycle-log"}, &output); err != nil {
@@ -113,7 +146,7 @@ func TestRuntimeOwnerCommandRendersLifecycleJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.235" ||
+		if payload["version"] != "0.2.236" ||
 			payload["schema_version"] != "xnix.runtime.owner_lifecycle_event.v1" ||
 			payload["request_type"] != "runtime-owner-lifecycle-event" ||
 			payload["event_type"] != wantTypes[index] ||
@@ -152,7 +185,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.235" ||
+		if payload["version"] != "0.2.236" ||
 			payload["schema_version"] != "xnix.runtime.owner_smoke_batch.v1" ||
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||

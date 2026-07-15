@@ -12,7 +12,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("NewRuntimeOwnerRouteManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.235" ||
+	if preview.Version != "0.2.236" ||
 		preview.SchemaVersion != "xnix.runtime.owner_route_manifest.v1" ||
 		preview.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.ManifestType != "runtime-owner-route-manifest" ||
@@ -108,7 +108,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 
 func TestRuntimeOwnerRouteManifestPreviewBlocksMissingRouteSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.235\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.236\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

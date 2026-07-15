@@ -65,6 +65,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/owner/candidate.go
       internal/runtime/owner/dispatch.go
       internal/runtime/owner/dispatch_test.go
+      internal/runtime/owner/service.go
+      internal/runtime/owner/service_test.go
       internal/runtime/owner/lifecycle.go
       internal/runtime/owner/lifecycle_test.go
       internal/runtime/owner/smoke_batch.go
@@ -81,6 +83,7 @@ DOMAIN_DEFINITIONS = [
     ],
     gate_tokens: {
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
+      "internal/runtime/owner/service.go" => %w[xnix.runtime.owner_service_call.v1 runtime-owner-service-call go-runtime-owner-in-process-service Service],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch],
       "runtime/dbus/xnix_compatd_smoke.c" => %w[go_owner_read_dispatch add_go_owner_dispatch_bridge_fields add_go_owner_dispatch_bridge_fields2 add_go_owner_dispatch_bridge_fields3 add_go_owner_dispatch_bridge_fields5 add_go_owner_dispatch_payload_fields add_go_owner_dispatch_payload_fields2 add_go_owner_dispatch_payload_fields3 go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_json go-runtime-owner-dispatch+c-smoke-bridge ListApplications GetApplication GetDiagnostics GetEngineCatalog GetRunPlan GetDesktopActivationManifest GetDesktopActivationTransactionPreview GetDesktopActivationStatus GetKDEIntegrationStatus GetKDEShellIntegrationPlan GetKDEApplicationSurfacePlan GetDesktopEntryPlan GetDesktopIconPlan GetTaskManagerIdentityPlan GetDesktopResourceBridgePlan GetKWinWindowRulePlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetCompatibilitySettingsChangePlan GetCompatibilityModeSwitchPlan GetCompatibilityPermissionReviewPlan GetCompatibilityReviewFlowPlan GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt],
@@ -88,7 +91,7 @@ DOMAIN_DEFINITIONS = [
       "runtime/dbus/xnix_compatd_kde_center.inc" => %w[GetKDECenterPage GetKDECenterPageSections GetKDECenterPageSectionDetail add_go_owner_dispatch_payload_fields2 add_go_owner_dispatch_payload_fields3 go-kde-center-page-preview go-kde-center-page-sections-preview go-kde-center-page-section-detail-preview],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description, Runtime owner readiness payloads, foundation catalog/status payloads, KDE shell, desktop activation payloads, seven-entry-point payloads, second-ring KDE resource payloads, install-input payloads, backend lifecycle payloads, execution readiness payloads, AI safety payloads, settings/review payloads, Compatibility Center action payloads, and KDE Compatibility Center page payloads; production ownership remains gated."
+    summary: "The Go owner candidate has an in-process service-call boundary, full D-Bus read dispatch coverage, lifecycle JSONL, smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description, Runtime owner readiness payloads, foundation catalog/status payloads, KDE shell, desktop activation payloads, seven-entry-point payloads, second-ring KDE resource payloads, install-input payloads, backend lifecycle payloads, execution readiness payloads, AI safety payloads, settings/review payloads, Compatibility Center action payloads, and KDE Compatibility Center page payloads; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",
