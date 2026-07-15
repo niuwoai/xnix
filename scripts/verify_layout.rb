@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.210"
+EXPECTED_VERSION = "0.2.211"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -158,6 +158,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/install_plan_cli_test.go
   cmd/xnix-runtime-go/execution_ledger_commands.go
   cmd/xnix-runtime-go/execution_ledger_cli_test.go
+  cmd/xnix-runtime-go/diagnostic_record_commands.go
+  cmd/xnix-runtime-go/diagnostic_record_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
   cmd/xnix-runtime-go/kde_shell_commands.go
@@ -204,6 +206,7 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/execution_test.go
   internal/runtime/execution/ledger.go
   internal/runtime/execution/ledger_test.go
+  internal/runtime/diagnostics/record.go
   internal/runtime/artifact/stage.go
   internal/runtime/owner/candidate.go
   internal/runtime/owner/candidate_test.go
@@ -1331,6 +1334,27 @@ assert(go_runtime_safety_source.include?("validateNoBackendTerms"), "Go Runtime 
 go_runtime_safety_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_safety_commands.go")
 %w[runStateRootPreview runSnapshotPlanPreview runPortalAccessPolicyPreview state-root-preview snapshot-plan-preview portal-access-policy-preview].each do |token|
   assert(go_runtime_safety_cli_source.include?(token), "Go Runtime safety CLI must include #{token}")
+end
+
+go_runtime_diagnostic_record_source = read_project_file("internal/runtime/diagnostics/record.go")
+%w[RunRecordStore RunRecordRequest RunRecord xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger runs result diagnostic_input repair_recommendation].each do |token|
+  assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StateRootPathExposed FixturePathExposed BackendStarted AIProviderCalled RealAIProviderEnabled AutoRepairAllowed RepairExecuted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed FileContentsIncluded].each do |token|
+  assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must expose #{token}")
+end
+%w[NewRunRecordStore safeDiagnosticRecordRoot validateDiagnosticRecordID BuildDiagnosticInput Recommend NewResultStore].each do |token|
+  assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must implement #{token}")
+end
+assert(go_runtime_diagnostic_record_source.include?("refusing to use filesystem root"), "Go Runtime diagnostic run records must reject filesystem root state roots")
+
+go_runtime_diagnostic_record_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/diagnostic_record_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/diagnostic_record_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[diagnostic-run-record state-root fixture run-id NewRunRecordStore RunRecordRequest xnix.runtime.diagnostic_run_record.v1 state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
+  assert(go_runtime_diagnostic_record_cli_source.include?(token), "Go Runtime diagnostic run record CLI must include #{token}")
 end
 
 go_runtime_kde_shell_source = read_project_file("internal/runtime/appidentity/kde_shell_surface.go")

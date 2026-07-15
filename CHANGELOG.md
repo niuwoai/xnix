@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.211] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime diagnostic run record store under `internal/runtime/diagnostics`, persisting fixture-driven diagnostic run receipts and latest test results inside a controlled Runtime state root.
+- Added `xnix-runtime-go diagnostic-run-record`, a constrained CLI that reads a diagnostic fixture, records safe test signals, derives review-first repair recommendations, builds privacy-filtered AI diagnostic input, and keeps real AI provider calls, auto-repair, backend launch, root-path exposure, and host-root mutation disabled.
+- Added Go unit and CLI coverage for diagnostic run receipt persistence, relative-path records, latest-result persistence, unsafe root rejection, unsafe run-id rejection, required CLI arguments, and disabled AI/backend/repair side-effect flags.
+
+### Changed
+
+- Updated implementation evidence reporting so the diagnostics, repair, and AI boundary domain now reports state-root implementation evidence.
+- Updated layout verification to require diagnostic run record source, CLI command, tests, schema, state-root safety flags, fixture-path safety flags, and disabled AI/backend/repair gates.
+
 ## [0.2.210] - 2026-07-16
 
 ### Added

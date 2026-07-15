@@ -108,3 +108,94 @@ func TestRecommendFromFailingSignals(t *testing.T) {
 		t.Fatalf("blocked result should map to portal issue: %#v", brec)
 	}
 }
+
+func TestRunRecordStorePersistsSafeDiagnosticReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	store, err := NewRunRecordStore(stateRoot)
+	if err != nil {
+		t.Fatalf("NewRunRecordStore: %v", err)
+	}
+
+	record, err := store.Record(RunRecordRequest{
+		ApplicationID: app,
+		RunID:         "run-001",
+		Fixture:       failFixture(),
+	})
+	if err != nil {
+		t.Fatalf("Record: %v", err)
+	}
+	if record.SchemaVersion != "xnix.runtime.diagnostic_run_record.v1" ||
+		record.RecordType != "diagnostic-run-record" ||
+		record.Source != "go-runtime-state-root-diagnostic-run-record" ||
+		record.RelativePath != "diagnostics-ledger/runs/run-001.json" ||
+		record.SHA256 == "" ||
+		!record.RuntimeOwned ||
+		!record.GoRuntimeBacked ||
+		record.KDEPolicyOwner ||
+		record.StateRootPathExposed ||
+		record.FixturePathExposed ||
+		record.BackendStarted ||
+		record.AIProviderCalled ||
+		record.RealAIProviderEnabled ||
+		record.AutoRepairAllowed ||
+		record.RepairExecuted ||
+		record.HostRootModified ||
+		record.NetworkRequired ||
+		record.PrivilegedContainerRequired ||
+		record.BackendDetailsExposed ||
+		record.FileContentsIncluded {
+		t.Fatalf("unsafe or unexpected diagnostic run record: %#v", record)
+	}
+	if record.Result.Overall != OutcomeFail ||
+		record.DiagnosticInput.NetworkRequired ||
+		record.DiagnosticInput.FileContentsIncluded ||
+		record.RepairRecommendation == nil ||
+		record.RepairRecommendation.Issue != "engine-binding-pending" ||
+		!record.RepairRecommendation.SnapshotRequired ||
+		record.RepairRecommendation.AutoApplyAllowed {
+		t.Fatalf("unexpected diagnostic payload: %#v", record)
+	}
+
+	loaded, err := store.Load("run-001")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.RunID != "run-001" || loaded.Result.ApplicationID != app {
+		t.Fatalf("loaded record mismatch: %#v", loaded)
+	}
+	records, err := store.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(records) != 1 || records[0].RunID != "run-001" {
+		t.Fatalf("unexpected record list: %#v", records)
+	}
+
+	resultStore, err := NewResultStore(stateRoot)
+	if err != nil {
+		t.Fatalf("NewResultStore: %v", err)
+	}
+	result, err := resultStore.Load(app, "smoke")
+	if err != nil {
+		t.Fatalf("Load persisted result: %v", err)
+	}
+	if result.Overall != OutcomeFail {
+		t.Fatalf("persisted result mismatch: %#v", result)
+	}
+}
+
+func TestRunRecordStoreRejectsUnsafeRootsAndIDs(t *testing.T) {
+	if _, err := NewRunRecordStore(""); err == nil {
+		t.Fatalf("empty state root must be rejected")
+	}
+	if _, err := NewRunRecordStore("/"); err == nil {
+		t.Fatalf("filesystem root must be rejected")
+	}
+	store, err := NewRunRecordStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewRunRecordStore: %v", err)
+	}
+	if _, err := store.Record(RunRecordRequest{ApplicationID: app, RunID: "../escape", Fixture: passFixture()}); err == nil {
+		t.Fatalf("path traversal run id must be rejected")
+	}
+}
