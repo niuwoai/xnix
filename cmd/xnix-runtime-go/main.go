@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -68,6 +68,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKDEActionReviewPreview(args[1:], stdout)
 	case "kde-action-status-preview":
 		return runKDEActionStatusPreview(args[1:], stdout)
+	case "kde-center-page-preview":
+		return runKDECenterPagePreview(args[1:], stdout)
 	case "kde-entrypoint-action-preview":
 		return runKDEEntryPointActionPreview(args[1:], stdout)
 	case "kde-entrypoints-preview":
@@ -407,6 +409,21 @@ func runKDEActionCardDeckPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.KDEActionCardDeckPreview(decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDECenterPagePreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, err := parseKDECenterPagePreviewSource(args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewKDECenterPagePreview(recipe, provenance, decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -1037,6 +1054,10 @@ func parseKDEActionQueuePreviewSource(args []string) (appidentity.Recipe, appide
 
 func parseKDEActionCardDeckPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
 	return parseLaunchDecisionPreviewSource("kde-action-card-deck-preview", args)
+}
+
+func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	return parseLaunchDecisionPreviewSource("kde-center-page-preview", args)
 }
 
 func parseKDEActionReviewPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, []string, error) {

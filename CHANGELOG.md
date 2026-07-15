@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.149] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-center-page-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime previews of a single KDE Compatibility Center application page.
+- Added Go Runtime KDE center page modeling that composes the registry Compatibility Center summary, seven-card KDE action deck, unified settings snapshot, page header, and navigation targets for Plasma rendering.
+- Added Go and Ruby harness coverage that verifies KDE center page previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about page persistence, deck persistence, card action enablement, settings persistence, review receipts, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center flow from a renderable action deck toward a renderable per-application page while keeping Runtime write and execution gates closed.
+
 ## [0.2.148] - 2026-07-15
 
 ### Added

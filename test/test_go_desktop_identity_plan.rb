@@ -70,6 +70,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-deck-preview"), "Go Runtime CLI must render KDE action card deck previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-preview"), "Go Runtime CLI must render KDE action card previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-center-page-preview"), "Go Runtime CLI must render KDE Compatibility Center page previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-preflight-preview"), "Go Runtime CLI must render KDE action preflight previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-receipt-preview"), "Go Runtime CLI must render KDE action receipt previews")
@@ -1568,6 +1569,53 @@ if go_available
   assert(!kde_action_card_deck.downcase.include?("prefix"), "KDE action card deck preview must not expose implementation storage")
   assert(!kde_action_card_deck.include?(".exe"), "KDE action card deck preview must not expose a Windows executable")
   assert(!kde_action_card_deck.downcase.include?("virtual machine"), "KDE action card deck preview must not expose implementation labels")
+
+  kde_center_page, kde_center_page_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-center-page-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_center_page_status.success?, "Go KDE center page preview CLI must run successfully")
+  kde_center_page_payload = JSON.parse(kde_center_page)
+  assert(kde_center_page_payload.fetch("schema_version") == "xnix.runtime.kde_center_page.v1", "KDE center page preview schema version must be stable")
+  assert(kde_center_page_payload.fetch("request_type") == "kde-center-page-preview", "KDE center page preview must identify its request type")
+  assert(kde_center_page_payload.fetch("page_type") == "compatibility-center-application-page", "KDE center page preview must identify the application page")
+  assert(kde_center_page_payload.fetch("source") == "compatibility-center-preview+kde-action-card-deck-preview+settings-preview", "KDE center page preview must compose existing Runtime read models")
+  assert(kde_center_page_payload.fetch("runtime_method") == "GetKDECenterPage", "KDE center page preview must expose the Runtime method")
+  assert(kde_center_page_payload.fetch("read_method") == "GetKDECenterPagePreview", "KDE center page preview must expose the read method")
+  assert(kde_center_page_payload.fetch("header").fetch("title") == recipe.name, "KDE center page header must expose the app name")
+  assert(kde_center_page_payload.fetch("header").fetch("badge") == "Review ready", "KDE center page header must expose review-ready state")
+  assert(kde_center_page_payload.fetch("application_summary").fetch("compatibility_state") == "registered", "KDE center page must include the Compatibility Center application summary")
+  assert(kde_center_page_payload.fetch("action_deck").fetch("request_type") == "kde-action-card-deck-preview", "KDE center page must include the action deck summary")
+  assert(kde_center_page_payload.fetch("action_deck").fetch("card_count") == 7, "KDE center page must include all seven first-release action cards")
+  assert(kde_center_page_payload.fetch("action_deck").fetch("waiting_card_count") == 7, "KDE center page must keep cards waiting for Runtime gates")
+  assert(kde_center_page_payload.fetch("settings_snapshot").fetch("request_type") == "settings-preview", "KDE center page must include the settings snapshot")
+  assert(kde_center_page_payload.fetch("settings_snapshot").fetch("section_count") == 5, "KDE center page settings snapshot must include all user-facing sections")
+  assert(kde_center_page_payload.fetch("navigation_count") == 4, "KDE center page must expose navigation sections")
+  assert(kde_center_page_payload.fetch("primary_navigation_target") == "compatibility-center-gates", "KDE center page must route primary review to gates")
+  assert(kde_center_page_payload.fetch("runtime_owned") == true, "KDE center page must remain Runtime-owned")
+  assert(kde_center_page_payload.fetch("go_runtime_backed") == true, "KDE center page must be backed by Go Runtime product logic")
+  assert(kde_center_page_payload.fetch("kde_policy_owner") == false, "KDE center page must not make KDE own policy")
+  assert(kde_center_page_payload.fetch("page_preview_created") == true, "KDE center page must create a read model")
+  assert(kde_center_page_payload.fetch("page_persisted") == false, "KDE center page must not persist page state")
+  assert(kde_center_page_payload.fetch("card_actions_enabled") == false, "KDE center page must not enable card actions")
+  assert(kde_center_page_payload.fetch("settings_persisted") == false, "KDE center page must not persist settings")
+  assert(kde_center_page_payload.fetch("request_objects_created") == false, "KDE center page must not create Runtime request objects")
+  assert(kde_center_page_payload.fetch("resource_grant_created") == false, "KDE center page must not grant resources")
+  assert(kde_center_page_payload.fetch("notifications_sent") == false, "KDE center page must not send notifications")
+  assert(kde_center_page_payload.fetch("execution_started") == false, "KDE center page must not start execution")
+  assert(kde_center_page_payload.fetch("host_root_modified") == false, "KDE center page must not mutate the host root")
+  assert(!kde_center_page.downcase.include?("prefix"), "KDE center page preview must not expose implementation storage")
+  assert(!kde_center_page.include?(".exe"), "KDE center page preview must not expose a Windows executable")
+  assert(!kde_center_page.downcase.include?("virtual machine"), "KDE center page preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,
