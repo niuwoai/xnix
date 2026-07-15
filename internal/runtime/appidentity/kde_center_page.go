@@ -20,6 +20,7 @@ type KDECenterPagePreview struct {
 	BackendSelectionSnapshot   KDECenterPageBackend      `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot   KDECenterPageActivation   `json:"activation_status_snapshot"`
 	ExecutionReadinessSnapshot KDECenterPageExecution    `json:"execution_readiness_snapshot"`
+	LaunchIntentSnapshot       KDECenterPageLaunchIntent `json:"launch_intent_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -150,6 +151,30 @@ type KDECenterPageExecution struct {
 	NetworkRequired           bool   `json:"network_required"`
 	BackendDetailsExposed     bool   `json:"backend_details_exposed"`
 	Summary                   string `json:"summary"`
+}
+
+type KDECenterPageLaunchIntent struct {
+	RequestType             string `json:"request_type"`
+	IntentType              string `json:"intent_type"`
+	Source                  string `json:"source"`
+	RuntimeMethod           string `json:"runtime_method"`
+	ReadMethod              string `json:"read_method"`
+	FileCount               int    `json:"file_count"`
+	PortalRequired          bool   `json:"portal_required"`
+	SnapshotRequired        bool   `json:"snapshot_required"`
+	StandardDesktopEntry    bool   `json:"standard_desktop_entry"`
+	LaunchUsesRuntime       bool   `json:"launch_uses_runtime"`
+	LaunchAllowed           bool   `json:"launch_allowed"`
+	LaunchEnabled           bool   `json:"launch_enabled"`
+	ExecutionRequestCreated bool   `json:"execution_request_created"`
+	ExecutionStarted        bool   `json:"execution_started"`
+	BackendBindingReady     bool   `json:"backend_binding_ready"`
+	RequestObjectCreated    bool   `json:"request_object_created"`
+	PermissionGranted       bool   `json:"permission_granted"`
+	HostRootModified        bool   `json:"host_root_modified"`
+	NetworkRequired         bool   `json:"network_required"`
+	BackendDetailsExposed   bool   `json:"backend_details_exposed"`
+	Summary                 string `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -378,6 +403,10 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	launchIntent, err := plan.LaunchIntentPreview(fileURIs)
+	if err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -385,7 +414,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -484,6 +513,29 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			BackendDetailsExposed:     executionReadiness.BackendDetailsExposed,
 			Summary:                   executionReadiness.DesktopSafeSummary,
 		},
+		LaunchIntentSnapshot: KDECenterPageLaunchIntent{
+			RequestType:             launchIntent.RequestType,
+			IntentType:              launchIntent.IntentType,
+			Source:                  launchIntent.Source,
+			RuntimeMethod:           launchIntent.RuntimeMethod,
+			ReadMethod:              launchIntent.ReadMethod,
+			FileCount:               launchIntent.FileCount,
+			PortalRequired:          launchIntent.PortalRequired,
+			SnapshotRequired:        launchIntent.SnapshotRequired,
+			StandardDesktopEntry:    launchIntent.StandardDesktopEntry,
+			LaunchUsesRuntime:       launchIntent.LaunchUsesRuntime,
+			LaunchAllowed:           launchIntent.LaunchAllowed,
+			LaunchEnabled:           launchIntent.LaunchEnabled,
+			ExecutionRequestCreated: launchIntent.ExecutionRequestCreated,
+			ExecutionStarted:        launchIntent.ExecutionStarted,
+			BackendBindingReady:     launchIntent.BackendBindingReady,
+			RequestObjectCreated:    launchIntent.RequestObjectCreated,
+			PermissionGranted:       launchIntent.PermissionGranted,
+			HostRootModified:        launchIntent.HostRootModified,
+			NetworkRequired:         launchIntent.NetworkRequired,
+			BackendDetailsExposed:   launchIntent.BackendDetailsExposed,
+			Summary:                 launchIntent.DesktopSafeSummary,
+		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
 			DeckType:              deck.DeckType,
@@ -551,7 +603,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		BackendDetailsExposed:      false,
 		BlockedActions:             []string{"persist KDE center page from preview state", "enable center page action buttons from preview state", "persist KDE action card deck from center page preview", "persist compatibility settings from center page preview", "record review receipts from center page preview", "create Runtime request objects from center page preview", "grant desktop resources from center page preview", "send desktop notifications from center page preview", "start compatibility profile from center page preview", "mutate host root during KDE center page preview", "expose raw backend command to desktop shell"},
 		UserFacingSettings:         settings.UserFacingSettings,
-		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
+		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
 	}
 	if err := validateNoBackendTerms(preview, "KDE center page preview"); err != nil {
 		return KDECenterPagePreview{}, err

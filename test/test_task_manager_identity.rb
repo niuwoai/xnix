@@ -19,7 +19,7 @@ identity = Xnix::Compatibility::TaskManagerIdentity.new(
   name: "Sample Notepad"
 ).to_h
 
-assert(identity["version"] == "0.2.172", "task manager identity must expose the current version")
+assert(identity["version"] == "0.2.173", "task manager identity must expose the current version")
 assert(identity["request_type"] == "task-manager-identity", "task manager identity must identify the model type")
 assert(identity["desktop"] == "KDE Plasma", "task manager identity must target KDE Plasma")
 assert(identity["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "task manager identity must use generated desktop files")

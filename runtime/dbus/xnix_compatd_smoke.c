@@ -1471,6 +1471,13 @@ build_kde_center_page(const gchar *application_id, const gchar *decision)
   g_variant_builder_add(&page, "{sv}", "execution_request_created", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "execution_backend_binding_ready", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "desktop_entry_launch_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_type", g_variant_new_string("runtime-launch-intent"));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_source", g_variant_new_string("desktop-launcher"));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_runtime_method", g_variant_new_string("Launch"));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_read_method", g_variant_new_string("GetLaunchIntent"));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_allowed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "launch_intent_request_created", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&page, "{sv}", "action_deck_request_type", g_variant_new_string("kde-action-card-deck-preview"));
   g_variant_builder_add(&page, "{sv}", "card_count", g_variant_new_int32(7));
   g_variant_builder_add(&page, "{sv}", "waiting_card_count", g_variant_new_int32(decision_allowed ? 7 : 0));

@@ -729,6 +729,7 @@ module Xnix
         backend_selection = backend_selection_plan_summary(recipe)
         activation_status = desktop_activation_status(recipe.id)
         execution_readiness = execution_readiness(recipe.id)
+        launch_intent = launch_intent_summary(recipe)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -769,6 +770,13 @@ module Xnix
           "execution_request_created" => execution_readiness.fetch("execution_request_created"),
           "execution_backend_binding_ready" => execution_readiness.fetch("backend_binding_ready"),
           "desktop_entry_launch_visible" => execution_readiness.fetch("desktop_entry_launch_visible"),
+          "launch_intent_type" => launch_intent.fetch("intent_type"),
+          "launch_intent_source" => launch_intent.fetch("source"),
+          "launch_intent_runtime_method" => launch_intent.fetch("runtime_method"),
+          "launch_intent_read_method" => launch_intent.fetch("read_method"),
+          "launch_intent_allowed" => launch_intent.fetch("launch_allowed"),
+          "launch_intent_enabled" => launch_intent.fetch("launch_enabled"),
+          "launch_intent_request_created" => launch_intent.fetch("execution_request_created"),
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -1519,6 +1527,12 @@ module Xnix
           "execution_request_created" => page.fetch("execution_request_created"),
           "execution_backend_binding_ready" => page.fetch("execution_backend_binding_ready"),
           "desktop_entry_launch_visible" => page.fetch("desktop_entry_launch_visible"),
+          "launch_intent_type" => page.fetch("launch_intent_type"),
+          "launch_intent_runtime_method" => page.fetch("launch_intent_runtime_method"),
+          "launch_intent_read_method" => page.fetch("launch_intent_read_method"),
+          "launch_intent_allowed" => page.fetch("launch_intent_allowed"),
+          "launch_intent_enabled" => page.fetch("launch_intent_enabled"),
+          "launch_intent_request_created" => page.fetch("launch_intent_request_created"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),

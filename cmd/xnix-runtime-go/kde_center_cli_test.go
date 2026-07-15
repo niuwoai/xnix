@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -136,6 +136,29 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		execution["host_root_modified"] != false ||
 		execution["backend_details_exposed"] != false {
 		t.Fatalf("unexpected execution readiness snapshot: %#v", execution)
+	}
+	launchIntent := payload["launch_intent_snapshot"].(map[string]any)
+	if launchIntent["request_type"] != "launch-intent-preview" ||
+		launchIntent["intent_type"] != "runtime-launch-intent" ||
+		launchIntent["source"] != "desktop-launcher" ||
+		launchIntent["runtime_method"] != "Launch" ||
+		launchIntent["read_method"] != "GetLaunchIntent" ||
+		launchIntent["file_count"] != float64(1) ||
+		launchIntent["portal_required"] != true ||
+		launchIntent["snapshot_required"] != true ||
+		launchIntent["standard_desktop_entry"] != true ||
+		launchIntent["launch_uses_runtime"] != true ||
+		launchIntent["launch_allowed"] != false ||
+		launchIntent["launch_enabled"] != false ||
+		launchIntent["execution_request_created"] != false ||
+		launchIntent["execution_started"] != false ||
+		launchIntent["backend_binding_ready"] != false ||
+		launchIntent["request_object_created"] != false ||
+		launchIntent["permission_granted"] != false ||
+		launchIntent["host_root_modified"] != false ||
+		launchIntent["network_required"] != false ||
+		launchIntent["backend_details_exposed"] != false {
+		t.Fatalf("unexpected launch intent snapshot: %#v", launchIntent)
 	}
 	if payload["navigation_count"] != float64(7) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||

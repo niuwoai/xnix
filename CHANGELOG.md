@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.173] - 2026-07-15
+
+### Added
+
+- Added a Go-backed launch intent snapshot to the KDE Compatibility Center page preview so Plasma can explain managed desktop-entry launches without creating Launch requests, request objects, permission grants, or backend processes.
+- Added Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage proving the page-level launch intent remains Runtime-owned, non-executing, and hidden from backend implementation details.
+
 ## [0.2.172] - 2026-07-15
 
 ### Added

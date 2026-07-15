@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -155,6 +155,28 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.ExecutionReadinessSnapshot.NetworkRequired ||
 		preview.ExecutionReadinessSnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected execution readiness snapshot: %#v", preview.ExecutionReadinessSnapshot)
+	}
+	if preview.LaunchIntentSnapshot.RequestType != "launch-intent-preview" ||
+		preview.LaunchIntentSnapshot.IntentType != "runtime-launch-intent" ||
+		preview.LaunchIntentSnapshot.Source != "desktop-launcher" ||
+		preview.LaunchIntentSnapshot.RuntimeMethod != "Launch" ||
+		preview.LaunchIntentSnapshot.ReadMethod != "GetLaunchIntent" ||
+		preview.LaunchIntentSnapshot.FileCount != 1 ||
+		!preview.LaunchIntentSnapshot.PortalRequired ||
+		!preview.LaunchIntentSnapshot.SnapshotRequired ||
+		!preview.LaunchIntentSnapshot.StandardDesktopEntry ||
+		!preview.LaunchIntentSnapshot.LaunchUsesRuntime ||
+		preview.LaunchIntentSnapshot.LaunchAllowed ||
+		preview.LaunchIntentSnapshot.LaunchEnabled ||
+		preview.LaunchIntentSnapshot.ExecutionRequestCreated ||
+		preview.LaunchIntentSnapshot.ExecutionStarted ||
+		preview.LaunchIntentSnapshot.BackendBindingReady ||
+		preview.LaunchIntentSnapshot.RequestObjectCreated ||
+		preview.LaunchIntentSnapshot.PermissionGranted ||
+		preview.LaunchIntentSnapshot.HostRootModified ||
+		preview.LaunchIntentSnapshot.NetworkRequired ||
+		preview.LaunchIntentSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected launch intent snapshot: %#v", preview.LaunchIntentSnapshot)
 	}
 	if preview.NavigationCount != 7 ||
 		len(preview.Navigation) != 7 ||
