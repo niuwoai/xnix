@@ -6,6 +6,8 @@ This document breaks the current contract-heavy Xnix roadmap into large, indepen
 
 It intentionally does not replace `docs/claude-code-implementation-packages.md`. Treat this file as a higher-level backlog map for empty or mostly contract-only areas.
 
+For prompt-ready task cards that can be copied directly into Claude Code, use `docs/claude-code-independent-implementation-briefs.md`.
+
 ## Operating Rules
 
 - Use one branch per package.

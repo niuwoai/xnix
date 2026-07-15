@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.201] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `compatibility-install-preview` for `GetCompatibilityInstallPlan`, aggregating artifact manifest, acquisition preflight, package source, state-root, and recipe install-gate readiness without downloading artifacts, installing packages, staging desktop activation, launching backends, exposing backend details, or mutating the host root.
+- Added `docs/claude-code-independent-implementation-briefs.md` as a prompt-ready set of large, independent Claude Code implementation briefs for the contract-heavy Runtime, KDE, execution, AI, and product-image domains.
+
+### Changed
+
+- Migrated `GetCompatibilityInstallPlan` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to a native Go preview route, leaving only the desktop activation manifest as C-backed route evidence.
+- Updated the Claude Code open-domain work-package map and product overview to point at the new prompt-ready implementation briefs.
+
 ## [0.2.200] - 2026-07-15
 
 ### Added
