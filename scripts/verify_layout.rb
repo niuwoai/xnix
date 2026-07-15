@@ -4,10 +4,11 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.190"
+EXPECTED_VERSION = "0.2.191"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
+  docs/claude-code-implementation-packages.md
   go.mod
   buildroot/Config.in
   buildroot/external.desc
@@ -140,6 +141,7 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
+  internal/runtime/appidentity/engine_catalog.go
   internal/runtime/appidentity/identity.go
   internal/runtime/appidentity/identity_test.go
   internal/runtime/appidentity/registry.go
@@ -1003,7 +1005,7 @@ assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-p
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1013,6 +1015,19 @@ assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteGoComma
 assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteCCoreCommands"), "Go Runtime owner route manifest must classify C Runtime routes")
 assert(go_runtime_owner_route_manifest_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime owner route manifest must derive from method parity")
 assert(go_runtime_owner_route_manifest_source.include?("validateNoBackendTerms"), "Go Runtime owner route manifest must hide backend terms")
+
+go_runtime_engine_catalog_source = read_project_file("internal/runtime/appidentity/engine_catalog.go")
+%w[EngineCatalogPreview CompatibilityEnginePreview engine-catalog-preview xnix.runtime.engine_catalog.v1 GetEngineCatalog GetEngineCatalogPreview go-runtime-engine-catalog automatic local-compatible isolated-compatible].each do |token|
+  assert(go_runtime_engine_catalog_source.include?(token), "Go Runtime engine catalog preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible BackendTerminologyHidden SelectionPersisted BackendInstalled BackendLaunchEnabled ExecutionStarted HostRootModified NetworkRequired BackendDetailsExposed RawCommandExposed].each do |token|
+  assert(go_runtime_engine_catalog_source.include?(token), "Go Runtime engine catalog preview must expose #{token}")
+end
+assert(go_runtime_engine_catalog_source.include?("validateNoBackendTerms"), "Go Runtime engine catalog preview must hide backend terms")
+
+go_runtime_engine_catalog_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_engine_catalog_cli_source.include?("engine-catalog-preview"), "Go Runtime CLI must expose engine catalog preview")
+assert(go_runtime_engine_catalog_cli_source.include?("NewEngineCatalogPreview"), "Go Runtime CLI must call engine catalog preview")
 
 go_runtime_applications_source = read_project_file("internal/runtime/appidentity/applications.go")
 %w[ApplicationsPreview ApplicationPreview RuntimeApplicationPreview applications-preview application-preview xnix.runtime.applications.v1 xnix.runtime.application.v1 ListApplications GetApplication registry+go-runtime-desktop-identity start-menu task-manager file-manager system-tray notification-center compatibility-center unified-settings].each do |token|

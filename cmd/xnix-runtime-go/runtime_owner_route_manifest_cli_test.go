@@ -18,7 +18,7 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.190" ||
+	if payload["version"] != "0.2.191" ||
 		payload["schema_version"] != "xnix.runtime.owner_route_manifest.v1" ||
 		payload["request_type"] != "runtime-owner-route-manifest-preview" ||
 		payload["manifest_type"] != "runtime-owner-route-manifest" ||

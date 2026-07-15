@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.191] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `engine-catalog-preview` for `GetEngineCatalog`, exposing Automatic, Local compatibility, and Isolated compatibility choices as desktop-safe Runtime metadata without installing engines, launching backends, persisting selection, or exposing raw commands.
+- Added a Claude Code implementation package guide that splits contract-only Runtime domains into independently scoped work packages with boundaries, acceptance criteria, and required tests.
+
+### Changed
+
+- Migrated `GetEngineCatalog` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to a native Go preview route, reducing remaining C-backed read-only owner routes.
+- Updated CLI coverage, unit tests, layout verification, and product documentation for the Go engine catalog migration.
+
 ## [0.2.190] - 2026-07-15
 
 ### Added
