@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.176] - 2026-07-15
+
+### Added
+
+- Added a Go-backed file association snapshot to KDE Compatibility Center page previews so Plasma can explain MIME associations, Dolphin file-open routing, and Portal requirements without writing MIME defaults, reading host files directly, granting permissions, or starting execution.
+- Added a read-only Files section to KDE Compatibility Center page navigation and section-detail routing, backed by `GetFileAssociationPlan`, with Ruby daemon, C smoke adapter, D-Bus client, Go, and Ruby coverage updated for the ten-section page model.
+
 ## [0.2.175] - 2026-07-15
 
 ### Added

@@ -22,6 +22,7 @@ type KDECenterPagePreview struct {
 	ExecutionReadinessSnapshot KDECenterPageExecution    `json:"execution_readiness_snapshot"`
 	LaunchIntentSnapshot       KDECenterPageLaunchIntent `json:"launch_intent_snapshot"`
 	WindowIdentitySnapshot     KDECenterPageWindow       `json:"window_identity_snapshot"`
+	FileAssociationSnapshot    KDECenterPageFiles        `json:"file_association_snapshot"`
 	ActionDeck                 KDECenterPageActionDeck   `json:"action_deck"`
 	SettingsSnapshot           KDECenterPageSettings     `json:"settings_snapshot"`
 	Navigation                 []KDECenterPageNavigation `json:"navigation"`
@@ -201,6 +202,32 @@ type KDECenterPageWindow struct {
 	HostRootModified          bool   `json:"host_root_modified"`
 	BackendDetailsExposed     bool   `json:"backend_details_exposed"`
 	Summary                   string `json:"summary"`
+}
+
+type KDECenterPageFiles struct {
+	PlanType                  string   `json:"plan_type"`
+	AssociationType           string   `json:"association_type"`
+	RuntimeMethod             string   `json:"runtime_method"`
+	DesktopFile               string   `json:"desktop_file"`
+	MIMEAppsPath              string   `json:"mimeapps_path"`
+	MIMETypes                 []string `json:"mime_types"`
+	MIMETypeCount             int      `json:"mime_type_count"`
+	FileOpenCommand           string   `json:"file_open_command"`
+	FileOpenArgument          string   `json:"file_open_argument"`
+	StandardMIMEAppsList      bool     `json:"standard_mimeapps_list"`
+	StagedRootOnly            bool     `json:"staged_root_only"`
+	OverwriteExistingMIMEApps bool     `json:"overwrite_existing_mimeapps"`
+	PortalRequiredForFileOpen bool     `json:"portal_required_for_file_open"`
+	FileAssociationReady      bool     `json:"file_association_ready"`
+	FileOpenPreviewAvailable  bool     `json:"file_open_preview_available"`
+	DirectHostFileAccess      bool     `json:"direct_host_file_access"`
+	RequestObjectCreated      bool     `json:"request_object_created"`
+	PermissionGranted         bool     `json:"permission_granted"`
+	FilesWritten              bool     `json:"files_written"`
+	MIMEAppsWritten           bool     `json:"mimeapps_written"`
+	HostRootModified          bool     `json:"host_root_modified"`
+	BackendDetailsExposed     bool     `json:"backend_details_exposed"`
+	Summary                   string   `json:"summary"`
 }
 
 type KDECenterPageActionDeck struct {
@@ -437,6 +464,9 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
+	if _, err := plan.RenderMIMEApps(); err != nil {
+		return KDECenterPagePreview{}, err
+	}
 
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
@@ -444,7 +474,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
 		RequestType:     "kde-center-page-preview",
 		PageType:        "compatibility-center-application-page",
-		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview",
+		Source:          "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+kde-action-card-deck-preview+settings-preview",
 		Desktop:         "KDE Plasma",
 		RuntimeMethod:   "GetKDECenterPage",
 		ReadMethod:      "GetKDECenterPagePreview",
@@ -590,6 +620,31 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			BackendDetailsExposed:     windowIdentity.BackendDetailsExposed,
 			Summary:                   windowIdentity.Summary,
 		},
+		FileAssociationSnapshot: KDECenterPageFiles{
+			PlanType:                  "file-association-plan",
+			AssociationType:           "desktop-file-association",
+			RuntimeMethod:             "GetFileAssociationPlan",
+			DesktopFile:               plan.DesktopFile,
+			MIMEAppsPath:              "usr/share/applications/mimeapps.list",
+			MIMETypes:                 plan.MIMETypes,
+			MIMETypeCount:             len(plan.MIMETypes),
+			FileOpenCommand:           "xnix-compat-open",
+			FileOpenArgument:          "%U",
+			StandardMIMEAppsList:      true,
+			StagedRootOnly:            true,
+			OverwriteExistingMIMEApps: false,
+			PortalRequiredForFileOpen: true,
+			FileAssociationReady:      true,
+			FileOpenPreviewAvailable:  true,
+			DirectHostFileAccess:      false,
+			RequestObjectCreated:      false,
+			PermissionGranted:         false,
+			FilesWritten:              false,
+			MIMEAppsWritten:           false,
+			HostRootModified:          false,
+			BackendDetailsExposed:     false,
+			Summary:                   "Dolphin can show Runtime-owned file associations and portal-mediated open actions without writing MIME defaults or reading host files.",
+		},
 		ActionDeck: KDECenterPageActionDeck{
 			RequestType:           deck.RequestType,
 			DeckType:              deck.DeckType,
@@ -657,7 +712,7 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 		BackendDetailsExposed:      false,
 		BlockedActions:             []string{"persist KDE center page from preview state", "enable center page action buttons from preview state", "persist KDE action card deck from center page preview", "persist compatibility settings from center page preview", "record review receipts from center page preview", "create Runtime request objects from center page preview", "grant desktop resources from center page preview", "send desktop notifications from center page preview", "start compatibility profile from center page preview", "mutate host root during KDE center page preview", "expose raw backend command to desktop shell"},
 		UserFacingSettings:         settings.UserFacingSettings,
-		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, window identity, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
+		DesktopSafeSummary:         "KDE can render an application page from Runtime-owned summary, execution readiness, launch intent, window identity, file association, action deck, and settings previews, but the page remains read-only and cannot approve, persist, grant, notify, or start execution.",
 	}
 	if err := validateNoBackendTerms(preview, "KDE center page preview"); err != nil {
 		return KDECenterPagePreview{}, err
@@ -836,6 +891,7 @@ func kdeCenterPageNavigation() []KDECenterPageNavigation {
 		kdeCenterPageNavigationItem("execution", "Execution", "compatibility-execution-readiness"),
 		kdeCenterPageNavigationItem("launch", "Launch", "compatibility-launch-intent"),
 		kdeCenterPageNavigationItem("window", "Window", "compatibility-window-identity"),
+		kdeCenterPageNavigationItem("files", "Files", "compatibility-file-association"),
 		kdeCenterPageNavigationItem("actions", "Actions", "compatibility-center-gates"),
 		kdeCenterPageNavigationItem("settings", "Settings", "compatibility-settings"),
 		kdeCenterPageNavigationItem("diagnostics", "Diagnostics", "compatibility-diagnostics"),
@@ -862,6 +918,7 @@ func kdeCenterPageSections() []KDECenterPageSection {
 		kdeCenterPageSection("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", "blocked", "Execution reads Runtime-owned launch readiness while request creation, launch, and backend process gates remain closed."),
 		kdeCenterPageSection("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked", "Launch reads Runtime-owned desktop-launch intent while Launch request creation, permission grants, execution, and backend process gates remain closed."),
 		kdeCenterPageSection("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned", "Window reads Runtime-owned task-manager and KWin identity hints while task-manager activation, KWin rule application, execution, and backend policy stay closed."),
+		kdeCenterPageSection("files", "Files", "compatibility-file-association", "GetFileAssociationPlan", "file-association-plan", "planned", "Files read Runtime-owned MIME association and Dolphin open-action plans while MIME writes, direct host-file access, permission grants, and execution stay closed."),
 		kdeCenterPageSection("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates", "Actions read queued review cards while all execution and mutation gates remain closed."),
 		kdeCenterPageSection("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned", "Settings read user-facing Runtime policy without persisting changes from KDE."),
 		kdeCenterPageSection("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetAIDiagnosticInput", "ai-diagnostic-input", "planned", "Diagnostics read AI-safe Runtime status and Dolphin file analysis metadata without exposing backend implementation details."),

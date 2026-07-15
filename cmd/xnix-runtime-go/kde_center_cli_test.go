@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+kde-action-card-deck-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -184,7 +184,34 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		window["backend_details_exposed"] != false {
 		t.Fatalf("unexpected window identity snapshot: %#v", window)
 	}
-	if payload["navigation_count"] != float64(9) ||
+	files := payload["file_association_snapshot"].(map[string]any)
+	mimeTypes := files["mime_types"].([]any)
+	if files["plan_type"] != "file-association-plan" ||
+		files["association_type"] != "desktop-file-association" ||
+		files["runtime_method"] != "GetFileAssociationPlan" ||
+		files["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		files["mimeapps_path"] != "usr/share/applications/mimeapps.list" ||
+		files["mime_type_count"] != float64(1) ||
+		len(mimeTypes) != 1 ||
+		mimeTypes[0] != "application/x-xnix-abc" ||
+		files["file_open_command"] != "xnix-compat-open" ||
+		files["file_open_argument"] != "%U" ||
+		files["standard_mimeapps_list"] != true ||
+		files["staged_root_only"] != true ||
+		files["overwrite_existing_mimeapps"] != false ||
+		files["portal_required_for_file_open"] != true ||
+		files["file_association_ready"] != true ||
+		files["file_open_preview_available"] != true ||
+		files["direct_host_file_access"] != false ||
+		files["request_object_created"] != false ||
+		files["permission_granted"] != false ||
+		files["files_written"] != false ||
+		files["mimeapps_written"] != false ||
+		files["host_root_modified"] != false ||
+		files["backend_details_exposed"] != false {
+		t.Fatalf("unexpected file association snapshot: %#v", files)
+	}
+	if payload["navigation_count"] != float64(10) ||
 		payload["primary_navigation_target"] != "compatibility-center-gates" ||
 		navigation[0].(map[string]any)["id"] != "overview" ||
 		navigation[1].(map[string]any)["id"] != "backend" ||
@@ -192,9 +219,10 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		navigation[3].(map[string]any)["id"] != "execution" ||
 		navigation[4].(map[string]any)["id"] != "launch" ||
 		navigation[5].(map[string]any)["id"] != "window" ||
-		navigation[6].(map[string]any)["id"] != "actions" ||
-		navigation[7].(map[string]any)["id"] != "settings" ||
-		navigation[8].(map[string]any)["id"] != "diagnostics" {
+		navigation[6].(map[string]any)["id"] != "files" ||
+		navigation[7].(map[string]any)["id"] != "actions" ||
+		navigation[8].(map[string]any)["id"] != "settings" ||
+		navigation[9].(map[string]any)["id"] != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", payload)
 	}
 	if payload["runtime_owned"] != true || payload["go_runtime_backed"] != true ||

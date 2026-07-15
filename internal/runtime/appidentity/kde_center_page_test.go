@@ -27,7 +27,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+kde-action-card-deck-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -201,8 +201,33 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.WindowIdentitySnapshot.BackendDetailsExposed {
 		t.Fatalf("unexpected window identity snapshot: %#v", preview.WindowIdentitySnapshot)
 	}
-	if preview.NavigationCount != 9 ||
-		len(preview.Navigation) != 9 ||
+	if preview.FileAssociationSnapshot.PlanType != "file-association-plan" ||
+		preview.FileAssociationSnapshot.AssociationType != "desktop-file-association" ||
+		preview.FileAssociationSnapshot.RuntimeMethod != "GetFileAssociationPlan" ||
+		preview.FileAssociationSnapshot.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.FileAssociationSnapshot.MIMEAppsPath != "usr/share/applications/mimeapps.list" ||
+		preview.FileAssociationSnapshot.MIMETypeCount != 1 ||
+		len(preview.FileAssociationSnapshot.MIMETypes) != 1 ||
+		preview.FileAssociationSnapshot.MIMETypes[0] != "application/x-xnix-xls" ||
+		preview.FileAssociationSnapshot.FileOpenCommand != "xnix-compat-open" ||
+		preview.FileAssociationSnapshot.FileOpenArgument != "%U" ||
+		!preview.FileAssociationSnapshot.StandardMIMEAppsList ||
+		!preview.FileAssociationSnapshot.StagedRootOnly ||
+		preview.FileAssociationSnapshot.OverwriteExistingMIMEApps ||
+		!preview.FileAssociationSnapshot.PortalRequiredForFileOpen ||
+		!preview.FileAssociationSnapshot.FileAssociationReady ||
+		!preview.FileAssociationSnapshot.FileOpenPreviewAvailable ||
+		preview.FileAssociationSnapshot.DirectHostFileAccess ||
+		preview.FileAssociationSnapshot.RequestObjectCreated ||
+		preview.FileAssociationSnapshot.PermissionGranted ||
+		preview.FileAssociationSnapshot.FilesWritten ||
+		preview.FileAssociationSnapshot.MIMEAppsWritten ||
+		preview.FileAssociationSnapshot.HostRootModified ||
+		preview.FileAssociationSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected file association snapshot: %#v", preview.FileAssociationSnapshot)
+	}
+	if preview.NavigationCount != 10 ||
+		len(preview.Navigation) != 10 ||
 		preview.PrimaryNavigationTarget != "compatibility-center-gates" ||
 		preview.Navigation[0].ID != "overview" ||
 		preview.Navigation[1].ID != "backend" ||
@@ -210,9 +235,10 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.Navigation[3].ID != "execution" ||
 		preview.Navigation[4].ID != "launch" ||
 		preview.Navigation[5].ID != "window" ||
-		preview.Navigation[6].ID != "actions" ||
-		preview.Navigation[7].ID != "settings" ||
-		preview.Navigation[8].ID != "diagnostics" {
+		preview.Navigation[6].ID != "files" ||
+		preview.Navigation[7].ID != "actions" ||
+		preview.Navigation[8].ID != "settings" ||
+		preview.Navigation[9].ID != "diagnostics" {
 		t.Fatalf("unexpected navigation: %#v", preview.Navigation)
 	}
 	for _, item := range preview.Navigation {
@@ -326,9 +352,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	}
 	if preview.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationName != "Example Ledger" ||
-		preview.SectionCount != 9 ||
-		preview.ReadOnlySectionCount != 9 ||
-		preview.NavigationOnlySectionCount != 9 ||
+		preview.SectionCount != 10 ||
+		preview.ReadOnlySectionCount != 10 ||
+		preview.NavigationOnlySectionCount != 10 ||
 		preview.ExecutableSectionCount != 0 ||
 		preview.AIAnalysisSectionCount != 1 ||
 		preview.PrimarySectionID != "overview" {
@@ -354,6 +380,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"execution":   "GetExecutionReadiness",
 		"launch":      "GetLaunchIntent",
 		"window":      "GetTaskManagerIdentityPlan",
+		"files":       "GetFileAssociationPlan",
 		"actions":     "GetCompatibilityActionQueue",
 		"settings":    "GetCompatibilitySettings",
 		"diagnostics": "GetAIDiagnosticInput",
@@ -365,6 +392,7 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		"execution":   "execution-readiness-preview",
 		"launch":      "launch-intent-preview",
 		"window":      "window-identity-preview",
+		"files":       "file-association-plan",
 		"actions":     "compatibility-center-action-queue",
 		"settings":    "settings-model",
 		"diagnostics": "ai-diagnostic-input",
@@ -449,7 +477,7 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
-	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,actions,settings,diagnostics" {
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
 	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
@@ -507,6 +535,26 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		windowPreview.HostRootModified ||
 		windowPreview.BackendDetailsExposed {
 		t.Fatalf("unexpected window section detail: %#v", windowPreview)
+	}
+	filesPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "files", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("files NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+	if filesPreview.SectionID != "files" ||
+		filesPreview.SectionLabel != "Files" ||
+		filesPreview.SectionTarget != "compatibility-file-association" ||
+		filesPreview.SectionState != "planned" ||
+		filesPreview.SectionRuntimeMethod != "GetFileAssociationPlan" ||
+		filesPreview.SectionReadModel != "file-association-plan" ||
+		!filesPreview.ReadOnlyNavigation ||
+		filesPreview.SectionActionsEnabled ||
+		filesPreview.RequestObjectsCreated ||
+		filesPreview.PermissionGrantCreated ||
+		filesPreview.LaunchEnabled ||
+		filesPreview.ExecutionStarted ||
+		filesPreview.HostRootModified ||
+		filesPreview.BackendDetailsExposed {
+		t.Fatalf("unexpected files section detail: %#v", filesPreview)
 	}
 	diagnosticsPreview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "diagnostics", "approved", []string{"file:///home/test/Documents/book.xls"})
 	if err != nil {

@@ -732,6 +732,7 @@ module Xnix
         launch_intent = launch_intent_summary(recipe)
         task_manager_identity = task_manager_identity_plan(recipe.id)
         kwin_rule = kwin_window_rule_plan(recipe.id)
+        file_association = file_association_plan_summary(recipe)
         decision_allowed = %w[approved reviewed].include?(decision)
 
         {
@@ -794,6 +795,20 @@ module Xnix
           "window_identity_backend_policy_owned" => task_manager_identity.fetch("safety").fetch("runtime_owns_backend_policy"),
           "window_identity_task_manager_active" => false,
           "window_identity_kwin_rule_applied" => false,
+          "file_association_runtime_method" => "GetFileAssociationPlan",
+          "file_association_plan_type" => file_association.fetch("plan_type"),
+          "file_association_type" => file_association.fetch("association_type"),
+          "file_association_desktop_file" => file_association.fetch("desktop_file"),
+          "file_association_mimeapps_path" => file_association.fetch("mimeapps_path"),
+          "file_association_count" => file_association.fetch("association_count"),
+          "file_association_standard_mimeapps" => file_association.fetch("standard_mimeapps_list"),
+          "file_association_staged_root_only" => file_association.fetch("staged_root_only"),
+          "file_association_overwrite_existing" => file_association.fetch("overwrite_existing_mimeapps"),
+          "file_association_portal_required" => file_association.fetch("portal_required_for_file_open"),
+          "file_association_direct_host_file_access" => false,
+          "file_association_request_object_created" => false,
+          "file_association_permission_granted" => false,
+          "file_association_files_written" => false,
           "action_deck_request_type" => "kde-action-card-deck-preview",
           "card_count" => 7,
           "waiting_card_count" => decision_allowed ? 7 : 0,
@@ -845,6 +860,7 @@ module Xnix
           kde_center_page_section("execution", "Execution", "compatibility-execution-readiness", "GetExecutionReadiness", "execution-readiness-preview", page.fetch("execution_state")),
           kde_center_page_section("launch", "Launch", "compatibility-launch-intent", "GetLaunchIntent", "launch-intent-preview", "blocked"),
           kde_center_page_section("window", "Window", "compatibility-window-identity", "GetTaskManagerIdentityPlan", "window-identity-preview", "planned"),
+          kde_center_page_section("files", "Files", "compatibility-file-association", "GetFileAssociationPlan", "file-association-plan", "planned"),
           kde_center_page_section("actions", "Actions", "compatibility-center-gates", "GetCompatibilityActionQueue", "compatibility-center-action-queue", "waiting-for-runtime-gates"),
           kde_center_page_section("settings", "Settings", "compatibility-settings", "GetCompatibilitySettings", "settings-model", "planned"),
           kde_center_page_section("diagnostics", "Diagnostics", "compatibility-diagnostics", "GetDiagnostics", "runtime-diagnostics", "planned")
@@ -1567,6 +1583,20 @@ module Xnix
           "window_identity_backend_policy_owned" => page.fetch("window_identity_backend_policy_owned"),
           "window_identity_task_manager_active" => page.fetch("window_identity_task_manager_active"),
           "window_identity_kwin_rule_applied" => page.fetch("window_identity_kwin_rule_applied"),
+          "file_association_runtime_method" => page.fetch("file_association_runtime_method"),
+          "file_association_plan_type" => page.fetch("file_association_plan_type"),
+          "file_association_type" => page.fetch("file_association_type"),
+          "file_association_desktop_file" => page.fetch("file_association_desktop_file"),
+          "file_association_mimeapps_path" => page.fetch("file_association_mimeapps_path"),
+          "file_association_count" => page.fetch("file_association_count"),
+          "file_association_standard_mimeapps" => page.fetch("file_association_standard_mimeapps"),
+          "file_association_staged_root_only" => page.fetch("file_association_staged_root_only"),
+          "file_association_overwrite_existing" => page.fetch("file_association_overwrite_existing"),
+          "file_association_portal_required" => page.fetch("file_association_portal_required"),
+          "file_association_direct_host_file_access" => page.fetch("file_association_direct_host_file_access"),
+          "file_association_request_object_created" => page.fetch("file_association_request_object_created"),
+          "file_association_permission_granted" => page.fetch("file_association_permission_granted"),
+          "file_association_files_written" => page.fetch("file_association_files_written"),
           "card_count" => page.fetch("card_count"),
           "settings_section_count" => page.fetch("settings_section_count"),
           "page_preview_created" => page.fetch("page_preview_created"),
