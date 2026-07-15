@@ -15,6 +15,7 @@ module Xnix
       DBUS_CLIENT_FILE = PROJECT_ROOT.join("lib/xnix/compatibility/dbus_runtime_client.rb")
       SMOKE_ADAPTER_FILE = PROJECT_ROOT.join("runtime/dbus/xnix_compatd_smoke.c")
       SMOKE_INTROSPECTION_FILE = PROJECT_ROOT.join("runtime/dbus/xnix_compatd_introspection.inc")
+      SMOKE_KDE_CENTER_FILE = PROJECT_ROOT.join("runtime/dbus/xnix_compatd_kde_center.inc")
       SESSION_SMOKE_FILE = PROJECT_ROOT.join("scripts/dbus_session_smoke.rb")
 
       READ_ONLY_METHODS = %w[
@@ -182,7 +183,7 @@ module Xnix
           source_check("dbus-contract", CONTRACT_FILE) { |source, method| source.include?("name=\"#{method}\"") },
           source_check("runtime-dispatch", RUNTIME_DAEMON_FILE) { |source, method| source.include?("\"#{method}\"") },
           source_check("dbus-client", DBUS_CLIENT_FILE) { |source, method| source.include?("def #{CLIENT_METHODS.fetch(method)}") },
-          source_check("smoke-adapter", [SMOKE_ADAPTER_FILE, SMOKE_INTROSPECTION_FILE]) { |source, method| source.include?(method) },
+          source_check("smoke-adapter", [SMOKE_ADAPTER_FILE, SMOKE_INTROSPECTION_FILE, SMOKE_KDE_CENTER_FILE]) { |source, method| source.include?(method) },
           source_check("session-smoke", SESSION_SMOKE_FILE) { |source, method| source.include?(method) }
         ]
       end

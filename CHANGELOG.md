@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.179] - 2026-07-15
+
+### Changed
+
+- Split KDE Compatibility Center page, section, and section-detail builders out of the Linux D-Bus smoke adapter into `runtime/dbus/xnix_compatd_kde_center.inc`, reducing `xnix_compatd_smoke.c` away from the 3,000-line hard limit while preserving the existing session-bus read-model behavior.
+- Updated layout verification and D-Bus smoke-script unit coverage so Runtime method parity checks include the new KDE Center smoke adapter include alongside the dispatcher and introspection include.
+
 ## [0.2.178] - 2026-07-15
 
 ### Added

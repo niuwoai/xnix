@@ -17,7 +17,7 @@ project_root = Pathname.new(__dir__).join("..").realpath
 manifest = Xnix::Compatibility::RuntimeMethodParityManifest.new.to_h
 check_ids = manifest.fetch("parity_checks").map { |item| item.fetch("id") }
 
-assert(manifest["version"] == "0.2.178", "Runtime method parity manifest must expose the current version")
+assert(manifest["version"] == "0.2.179", "Runtime method parity manifest must expose the current version")
 assert(manifest["manifest_type"] == "runtime-method-parity-manifest", "Runtime method parity manifest must identify the manifest type")
 assert(manifest["runtime_owned"], "Runtime must own method parity")
 assert(!manifest["kde_policy_owner"], "KDE must not own method parity")
