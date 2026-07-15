@@ -17,7 +17,7 @@ func TestServiceCallServesReadDispatchInProcess(t *testing.T) {
 		t.Fatalf("Call returned error: %v", err)
 	}
 
-	if call.Version != "0.2.238" ||
+	if call.Version != "0.2.239" ||
 		call.SchemaVersion != "xnix.runtime.owner_service_call.v1" ||
 		call.RequestType != "runtime-owner-service-call" ||
 		call.ServiceType != "go-runtime-owner-in-process-service" ||

@@ -275,6 +275,27 @@ def build_report(root)
       summary: "D-Bus smoke adapter exposes Go owner dispatch payload evidence for Runtime owner self-description, Runtime owner readiness reads, foundation catalog/status reads, KDE shell, desktop activation, seven-entry-point reads, second-ring KDE resource reads, install-input reads, backend lifecycle reads, execution readiness reads, AI safety reads, settings/review reads, Compatibility Center action reads, and KDE Compatibility Center page reads through the low-level C bridge."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
+      id: "session-smoke-service-call-envelope",
+      expected: [
+        "variant_string_field",
+        "assert_go_owner_service_call_envelope",
+        "go_owner_service_call_json",
+        "xnix.runtime.owner_service_call.v1",
+        "runtime-owner-service-call",
+        "go-runtime-owner-in-process-service",
+        '"method": "#{method_name}"',
+        "\"call_type\": \"read-dispatch\"",
+        "\"dispatch_ready\": true",
+        "\"write_methods_enabled\": false",
+        "\"kde_policy_owner\": false",
+        "\"backend_details_exposed\": false",
+        "\"host_root_modified\": false",
+        "\"network_required\": false"
+      ],
+      source: session_smoke_source,
+      summary: "Restricted session smoke extracts and verifies Go owner service-call envelopes for D-Bus read methods."
+    ) { |source, token| source.include?(token) },
+    source_coverage_check(
       id: "runtime-dispatch",
       expected: read_only_methods,
       source: runtime_dispatch_source,

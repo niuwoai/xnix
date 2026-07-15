@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.239] - 2026-07-16
+
+### Changed
+
+- Strengthened the restricted D-Bus session smoke so every read-only Runtime method must expose a parseable Go owner service-call envelope, not only string-level service-call evidence.
+- Added contract drift coverage for session smoke service-call envelope assertions, including method preservation, dispatch readiness, write-gate status, KDE policy ownership, host mutation, network, and backend-detail gates.
+- Updated D-Bus smoke script unit and layout checks to keep future D-Bus bridge work aligned with the in-process Go owner service boundary.
+
 ## [0.2.238] - 2026-07-16
 
 ### Changed

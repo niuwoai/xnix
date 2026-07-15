@@ -15,6 +15,32 @@ def assert(condition, message)
   exit 1
 end
 
+def variant_string_field(stdout, key)
+  marker = "'#{key}': <'"
+  start = stdout.index(marker)
+  assert(start, "D-Bus response must include #{key}")
+  value_start = start + marker.length
+  value_end = stdout.index("'>", value_start)
+  assert(value_end, "D-Bus response must terminate #{key}")
+  stdout[value_start...value_end].gsub("\\n", "\n")
+end
+
+def assert_go_owner_service_call_envelope(stdout, method_name)
+  payload = variant_string_field(stdout, "go_owner_service_call_json")
+  assert(payload.include?('"schema_version": "xnix.runtime.owner_service_call.v1"'), "#{method_name} service call must expose the service-call schema")
+  assert(payload.include?('"request_type": "runtime-owner-service-call"'), "#{method_name} service call must expose the service-call request type")
+  assert(payload.include?('"service_type": "go-runtime-owner-in-process-service"'), "#{method_name} service call must expose the in-process service type")
+  assert(payload.include?(%("method": "#{method_name}")), "#{method_name} service call must preserve the D-Bus method name")
+  assert(payload.include?('"call_type": "read-dispatch"'), "#{method_name} service call must route through read dispatch")
+  assert(payload.include?('"dispatch_ready": true'), "#{method_name} service call must be dispatch-ready")
+  assert(payload.include?('"read_only_dispatch": true'), "#{method_name} service call must stay read-only")
+  assert(payload.include?('"write_methods_enabled": false'), "#{method_name} service call must keep write methods disabled")
+  assert(payload.include?('"kde_policy_owner": false'), "#{method_name} service call must not make KDE the Runtime policy owner")
+  assert(payload.include?('"backend_details_exposed": false'), "#{method_name} service call must hide backend details")
+  assert(payload.include?('"host_root_modified": false'), "#{method_name} service call must not mutate the host root")
+  assert(payload.include?('"network_required": false'), "#{method_name} service call must not require network access")
+end
+
 def assert_go_owner_bridge(stdout, method_name)
   assert(stdout.include?("go_owner_dispatch_available"), "#{method_name} must report Go owner dispatch availability")
   assert(stdout.include?("xnix.runtime.owner_read_dispatch.v1"), "#{method_name} must include Go owner dispatch schema evidence")
@@ -22,6 +48,7 @@ def assert_go_owner_bridge(stdout, method_name)
   assert(stdout.include?("go_owner_service_call_available"), "#{method_name} must report Go owner service-call availability")
   assert(stdout.include?("xnix.runtime.owner_service_call.v1"), "#{method_name} must include Go owner service-call schema evidence")
   assert(stdout.include?("runtime-owner-service-call"), "#{method_name} must include Go owner service-call payload evidence")
+  assert_go_owner_service_call_envelope(stdout, method_name)
 end
 
 unless ENV["DBUS_SESSION_BUS_ADDRESS"]

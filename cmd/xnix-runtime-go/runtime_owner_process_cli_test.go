@@ -18,7 +18,7 @@ func TestRuntimeOwnerProcessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.238" ||
+	if payload["version"] != "0.2.239" ||
 		payload["schema_version"] != "xnix.runtime.owner_process.v1" ||
 		payload["request_type"] != "runtime-owner-process-preview" ||
 		payload["process_type"] != "runtime-owner-process" ||
