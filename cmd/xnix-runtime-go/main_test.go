@@ -197,7 +197,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if deck["request_type"] != "kde-action-card-deck-preview" ||
 		deck["card_count"] != float64(7) ||
 		deck["waiting_card_count"] != float64(7) ||
-		deck["navigation_action_count"] != float64(28) ||
+		deck["navigation_action_count"] != float64(29) ||
 		deck["disabled_action_count"] != float64(21) ||
 		deck["primary_card_id"] != "org.example.ledger:review-launcher-action:card" ||
 		deck["action_queue_created"] != true ||
@@ -1995,7 +1995,7 @@ func TestKDEActionCardDeckPreviewCommandRendersDeck(t *testing.T) {
 		payload["waiting_card_count"] != float64(7) ||
 		payload["deferred_card_count"] != float64(0) ||
 		payload["rejected_card_count"] != float64(0) ||
-		payload["navigation_action_count"] != float64(28) ||
+		payload["navigation_action_count"] != float64(29) ||
 		payload["disabled_action_count"] != float64(21) ||
 		payload["primary_card_id"] != "org.example.ledger:review-launcher-action:card" ||
 		first["action_id"] != "review-launcher-action" ||

@@ -86,26 +86,28 @@ type KDECenterPageApplication struct {
 }
 
 type KDECenterPageActionDeck struct {
-	RequestType           string   `json:"request_type"`
-	DeckType              string   `json:"deck_type"`
-	CardCount             int      `json:"card_count"`
-	WaitingCardCount      int      `json:"waiting_card_count"`
-	DeferredCardCount     int      `json:"deferred_card_count"`
-	RejectedCardCount     int      `json:"rejected_card_count"`
-	NavigationActionCount int      `json:"navigation_action_count"`
-	DisabledActionCount   int      `json:"disabled_action_count"`
-	PrimaryCardID         string   `json:"primary_card_id"`
-	CardIDs               []string `json:"card_ids"`
-	ActionQueueCreated    bool     `json:"action_queue_created"`
-	ActionQueuePersisted  bool     `json:"action_queue_persisted"`
-	DeckPreviewCreated    bool     `json:"deck_preview_created"`
-	DeckPersisted         bool     `json:"deck_persisted"`
-	CardsPersisted        bool     `json:"cards_persisted"`
-	CardActionsEnabled    bool     `json:"card_actions_enabled"`
-	RuntimeLaunchApproval bool     `json:"runtime_launch_approval"`
-	LaunchAllowed         bool     `json:"launch_allowed"`
-	ExecutionStarted      bool     `json:"execution_started"`
-	BackendDetailsExposed bool     `json:"backend_details_exposed"`
+	RequestType           string             `json:"request_type"`
+	DeckType              string             `json:"deck_type"`
+	CardCount             int                `json:"card_count"`
+	WaitingCardCount      int                `json:"waiting_card_count"`
+	DeferredCardCount     int                `json:"deferred_card_count"`
+	RejectedCardCount     int                `json:"rejected_card_count"`
+	AIAnalysis            *KDEAIAnalysisLink `json:"ai_analysis,omitempty"`
+	AIAnalysisCardCount   int                `json:"ai_analysis_card_count"`
+	NavigationActionCount int                `json:"navigation_action_count"`
+	DisabledActionCount   int                `json:"disabled_action_count"`
+	PrimaryCardID         string             `json:"primary_card_id"`
+	CardIDs               []string           `json:"card_ids"`
+	ActionQueueCreated    bool               `json:"action_queue_created"`
+	ActionQueuePersisted  bool               `json:"action_queue_persisted"`
+	DeckPreviewCreated    bool               `json:"deck_preview_created"`
+	DeckPersisted         bool               `json:"deck_persisted"`
+	CardsPersisted        bool               `json:"cards_persisted"`
+	CardActionsEnabled    bool               `json:"card_actions_enabled"`
+	RuntimeLaunchApproval bool               `json:"runtime_launch_approval"`
+	LaunchAllowed         bool               `json:"launch_allowed"`
+	ExecutionStarted      bool               `json:"execution_started"`
+	BackendDetailsExposed bool               `json:"backend_details_exposed"`
 }
 
 type KDECenterPageSettings struct {
@@ -321,6 +323,8 @@ func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision stri
 			WaitingCardCount:      deck.WaitingCardCount,
 			DeferredCardCount:     deck.DeferredCardCount,
 			RejectedCardCount:     deck.RejectedCardCount,
+			AIAnalysis:            deck.AIAnalysis,
+			AIAnalysisCardCount:   deck.AIAnalysisCardCount,
 			NavigationActionCount: deck.NavigationActionCount,
 			DisabledActionCount:   deck.DisabledActionCount,
 			PrimaryCardID:         deck.PrimaryCardID,

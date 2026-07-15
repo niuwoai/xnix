@@ -23,6 +23,8 @@ type KDEActionCardDeckPreview struct {
 	WaitingCardCount         int                     `json:"waiting_card_count"`
 	DeferredCardCount        int                     `json:"deferred_card_count"`
 	RejectedCardCount        int                     `json:"rejected_card_count"`
+	AIAnalysis               *KDEAIAnalysisLink      `json:"ai_analysis,omitempty"`
+	AIAnalysisCardCount      int                     `json:"ai_analysis_card_count"`
 	NavigationActionCount    int                     `json:"navigation_action_count"`
 	DisabledActionCount      int                     `json:"disabled_action_count"`
 	FileCount                int                     `json:"file_count"`
@@ -95,6 +97,8 @@ type KDEActionCardDeckItem struct {
 	RequiresRuntimeGate   bool                     `json:"requires_runtime_gate"`
 	Card                  KDEActionCardVisualState `json:"card"`
 	PrimaryAction         KDEActionCardAction      `json:"primary_action"`
+	AIAnalysis            *KDEAIAnalysisLink       `json:"ai_analysis,omitempty"`
+	AIAnalysisAction      *KDEActionCardAction     `json:"ai_analysis_action,omitempty"`
 	SecondaryActions      []KDEActionCardAction    `json:"secondary_actions"`
 	DisabledActions       []KDEActionCardAction    `json:"disabled_actions"`
 	DetailRows            []KDEActionCardDetail    `json:"detail_rows"`
@@ -135,7 +139,7 @@ func (plan Plan) KDEActionCardDeckPreview(decision string, fileURIs []string) (K
 		}
 		cards = append(cards, kdeActionCardDeckItem(card))
 	}
-	cardIDs, waitingCount, deferredCount, rejectedCount, navigationCount, disabledCount := summarizeKDEActionCardDeck(cards)
+	cardIDs, waitingCount, deferredCount, rejectedCount, aiAnalysisCount, navigationCount, disabledCount := summarizeKDEActionCardDeck(cards)
 
 	preview := KDEActionCardDeckPreview{
 		SchemaVersion:   "xnix.runtime.kde_action_card_deck.v1",
@@ -174,6 +178,8 @@ func (plan Plan) KDEActionCardDeckPreview(decision string, fileURIs []string) (K
 		WaitingCardCount:         waitingCount,
 		DeferredCardCount:        deferredCount,
 		RejectedCardCount:        rejectedCount,
+		AIAnalysis:               firstKDEActionCardDeckAIAnalysis(cards),
+		AIAnalysisCardCount:      aiAnalysisCount,
 		NavigationActionCount:    navigationCount,
 		DisabledActionCount:      disabledCount,
 		FileCount:                queue.FileCount,
@@ -234,6 +240,8 @@ func kdeActionCardDeckItem(card KDEActionCardPreview) KDEActionCardDeckItem {
 		RequiresRuntimeGate:   card.Action.RequiresRuntimeGate,
 		Card:                  card.Card,
 		PrimaryAction:         card.Card.PrimaryAction,
+		AIAnalysis:            card.AIAnalysis,
+		AIAnalysisAction:      card.Card.AIAnalysisAction,
 		SecondaryActions:      card.Card.SecondaryActions,
 		DisabledActions:       card.Card.DisabledActions,
 		DetailRows:            card.Card.DetailRows,
@@ -261,6 +269,9 @@ func kdeActionCardNavigationActionCount(card KDEActionCardVisualState) int {
 	if card.PrimaryAction.NavigationOnly {
 		count++
 	}
+	if card.AIAnalysisAction != nil && card.AIAnalysisAction.NavigationOnly {
+		count++
+	}
 	for _, action := range card.SecondaryActions {
 		if action.NavigationOnly {
 			count++
@@ -269,11 +280,12 @@ func kdeActionCardNavigationActionCount(card KDEActionCardVisualState) int {
 	return count
 }
 
-func summarizeKDEActionCardDeck(cards []KDEActionCardDeckItem) ([]string, int, int, int, int, int) {
+func summarizeKDEActionCardDeck(cards []KDEActionCardDeckItem) ([]string, int, int, int, int, int, int) {
 	cardIDs := make([]string, 0, len(cards))
 	waitingCount := 0
 	deferredCount := 0
 	rejectedCount := 0
+	aiAnalysisCount := 0
 	navigationCount := 0
 	disabledCount := 0
 	for _, card := range cards {
@@ -286,10 +298,13 @@ func summarizeKDEActionCardDeck(cards []KDEActionCardDeckItem) ([]string, int, i
 		default:
 			waitingCount++
 		}
+		if card.AIAnalysis != nil {
+			aiAnalysisCount++
+		}
 		navigationCount += card.NavigationActionCount
 		disabledCount += card.DisabledActionCount
 	}
-	return cardIDs, waitingCount, deferredCount, rejectedCount, navigationCount, disabledCount
+	return cardIDs, waitingCount, deferredCount, rejectedCount, aiAnalysisCount, navigationCount, disabledCount
 }
 
 func primaryKDEActionCardID(cardIDs []string) string {
@@ -297,4 +312,13 @@ func primaryKDEActionCardID(cardIDs []string) string {
 		return ""
 	}
 	return cardIDs[0]
+}
+
+func firstKDEActionCardDeckAIAnalysis(cards []KDEActionCardDeckItem) *KDEAIAnalysisLink {
+	for _, card := range cards {
+		if card.AIAnalysis != nil {
+			return card.AIAnalysis
+		}
+	}
+	return nil
 }

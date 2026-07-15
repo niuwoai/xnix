@@ -73,7 +73,8 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.ActionDeck.WaitingCardCount != 7 ||
 		preview.ActionDeck.DeferredCardCount != 0 ||
 		preview.ActionDeck.RejectedCardCount != 0 ||
-		preview.ActionDeck.NavigationActionCount != 28 ||
+		preview.ActionDeck.AIAnalysisCardCount != 1 ||
+		preview.ActionDeck.NavigationActionCount != 29 ||
 		preview.ActionDeck.DisabledActionCount != 21 ||
 		preview.ActionDeck.PrimaryCardID != "org.example.ledger:review-launcher-action:card" ||
 		len(preview.ActionDeck.CardIDs) != 7 ||
@@ -88,6 +89,19 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.ActionDeck.ExecutionStarted ||
 		preview.ActionDeck.BackendDetailsExposed {
 		t.Fatalf("unexpected action deck summary: %#v", preview.ActionDeck)
+	}
+	if preview.ActionDeck.AIAnalysis == nil ||
+		preview.ActionDeck.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		preview.ActionDeck.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!preview.ActionDeck.AIAnalysis.SafeForAIDiagnostics ||
+		preview.ActionDeck.AIAnalysis.AIProviderCallEnabled ||
+		preview.ActionDeck.AIAnalysis.NetworkRequired ||
+		preview.ActionDeck.AIAnalysis.FileContentRead ||
+		preview.ActionDeck.AIAnalysis.FilePathsExposed ||
+		preview.ActionDeck.AIAnalysis.RequestObjectCreated ||
+		preview.ActionDeck.AIAnalysis.PermissionGranted ||
+		preview.ActionDeck.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected center page AI analysis link: %#v", preview.ActionDeck.AIAnalysis)
 	}
 	if preview.SettingsSnapshot.RequestType != "settings-preview" ||
 		preview.SettingsSnapshot.SettingsState != "planned" ||

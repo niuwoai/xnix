@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.157] - 2026-07-15
+
+### Added
+
+- Added Dolphin AI analysis aggregation to KDE action card deck and KDE Compatibility Center page summaries.
+- Added Go and CLI coverage proving only the Dolphin file-manager card contributes the AI-safe link and that the aggregated page/deck metadata remains navigation-only with provider calls, network access, file reads, path exposure, permission grants, request creation, backend launch, and host-root mutation disabled.
+
 ## [0.2.156] - 2026-07-15
 
 ### Added

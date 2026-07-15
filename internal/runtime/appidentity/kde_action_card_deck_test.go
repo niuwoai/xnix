@@ -61,10 +61,24 @@ func TestKDEActionCardDeckPreviewRendersSevenCards(t *testing.T) {
 		preview.WaitingCardCount != 7 ||
 		preview.DeferredCardCount != 0 ||
 		preview.RejectedCardCount != 0 ||
-		preview.NavigationActionCount != 28 ||
+		preview.AIAnalysisCardCount != 1 ||
+		preview.NavigationActionCount != 29 ||
 		preview.DisabledActionCount != 21 ||
 		preview.PrimaryCardID != "org.example.ledger:review-launcher-action:card" {
 		t.Fatalf("unexpected deck counts: %#v", preview)
+	}
+	if preview.AIAnalysis == nil ||
+		preview.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		preview.AIAnalysis.Disclosure != "count-and-extension-only" ||
+		!preview.AIAnalysis.SafeForAIDiagnostics ||
+		preview.AIAnalysis.AIProviderCallEnabled ||
+		preview.AIAnalysis.NetworkRequired ||
+		preview.AIAnalysis.FileContentRead ||
+		preview.AIAnalysis.FilePathsExposed ||
+		preview.AIAnalysis.RequestObjectCreated ||
+		preview.AIAnalysis.PermissionGranted ||
+		preview.AIAnalysis.BackendLaunchEnabled {
+		t.Fatalf("unexpected deck AI analysis link: %#v", preview.AIAnalysis)
 	}
 	first := preview.Cards[0]
 	if first.CardID != "org.example.ledger:review-launcher-action:card" ||
@@ -83,6 +97,8 @@ func TestKDEActionCardDeckPreviewRendersSevenCards(t *testing.T) {
 		!first.PrimaryAction.NavigationOnly ||
 		first.PrimaryAction.MutatesRuntime ||
 		first.PrimaryAction.StartsProgram ||
+		first.AIAnalysis != nil ||
+		first.AIAnalysisAction != nil ||
 		first.NavigationActionCount != 4 ||
 		first.DisabledActionCount != 3 ||
 		!first.CardPreviewCreated ||
@@ -103,7 +119,15 @@ func TestKDEActionCardDeckPreviewRendersSevenCards(t *testing.T) {
 		fileCard.KDEComponent != "Dolphin" ||
 		fileCard.RequiredRuntimeGate != "portal-file-open-review" ||
 		!fileCard.RequiresPortal ||
-		!fileCard.UserReviewRequired {
+		!fileCard.UserReviewRequired ||
+		fileCard.AIAnalysis == nil ||
+		fileCard.AIAnalysis.Source != "dolphin-ai-analysis-preview" ||
+		fileCard.AIAnalysisAction == nil ||
+		fileCard.AIAnalysisAction.Target != "dolphin-ai-analysis-preview" ||
+		!fileCard.AIAnalysisAction.NavigationOnly ||
+		fileCard.AIAnalysisAction.MutatesRuntime ||
+		fileCard.AIAnalysisAction.StartsProgram ||
+		fileCard.NavigationActionCount != 5 {
 		t.Fatalf("unexpected file-manager deck card: %#v", fileCard)
 	}
 	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
