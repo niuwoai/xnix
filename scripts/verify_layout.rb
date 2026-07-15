@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.198"
+EXPECTED_VERSION = "0.2.199"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -147,12 +147,16 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/main_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
+  cmd/xnix-runtime-go/kde_shell_commands.go
+  cmd/xnix-runtime-go/kde_shell_cli_test.go
   cmd/xnix-runtime-go/runtime_safety_commands.go
   cmd/xnix-runtime-go/runtime_safety_cli_test.go
   cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
   cmd/xnix-runtime-go/test_repair_group_cli_test.go
   internal/runtime/appidentity/engine_catalog.go
   internal/runtime/appidentity/run_plan.go
+  internal/runtime/appidentity/kde_shell_surface.go
+  internal/runtime/appidentity/kde_shell_surface_test.go
   internal/runtime/appidentity/state_root.go
   internal/runtime/appidentity/snapshot_plan.go
   internal/runtime/appidentity/portal_access_policy.go
@@ -1054,7 +1058,7 @@ assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-p
 end
 
 go_runtime_owner_route_manifest_source = read_project_file("internal/runtime/appidentity/runtime_owner_route_manifest.go")
-%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview state-root-preview snapshot-plan-preview portal-access-policy-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
+%w[RuntimeOwnerRouteManifestPreview runtime-owner-route-manifest-preview xnix.runtime.owner_route_manifest.v1 GetRuntimeOwnerRouteManifest GetRuntimeOwnerRouteManifestPreview runtime-method-parity-manifest-preview+go-runtime-cli+c-runtime-core+runtime-dispatch applications-preview application-preview engine-catalog-preview run-plan-preview state-root-preview snapshot-plan-preview portal-access-policy-preview kde-integration-status-preview kde-shell-integration-preview kde-application-surface-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview diagnostics-preview go-runtime-cli c-runtime-core ruby-runtime-dispatch go-owner-native go-owner-c-adapter go-preview-ready c-adapter-pending legacy-dispatch-pending method-parity go-route-coverage c-core-adapter-boundary ruby-legacy-dispatch write-route-gate host-safety-boundary].each do |token|
   assert(go_runtime_owner_route_manifest_source.include?(token), "Go Runtime owner route manifest preview must include #{token}")
 end
 %w[RouteCounts MethodParityReady GoOwnerRouteCoverageReady CCoreAdapterRequired LegacyRuntimeRoutesPresent ProductionOwnerRoutesReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1201,6 +1205,20 @@ assert(go_runtime_safety_source.include?("validateNoBackendTerms"), "Go Runtime 
 go_runtime_safety_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_safety_commands.go")
 %w[runStateRootPreview runSnapshotPlanPreview runPortalAccessPolicyPreview state-root-preview snapshot-plan-preview portal-access-policy-preview].each do |token|
   assert(go_runtime_safety_cli_source.include?(token), "Go Runtime safety CLI must include #{token}")
+end
+
+go_runtime_kde_shell_source = read_project_file("internal/runtime/appidentity/kde_shell_surface.go")
+%w[KDEIntegrationStatusPreview KDEShellIntegrationPlanPreview KDEApplicationSurfacePlanPreview kde-integration-status-preview kde-shell-integration-preview kde-application-surface-preview xnix.runtime.kde_integration_status.v1 xnix.runtime.kde_shell_integration.v1 xnix.runtime.kde_application_surface.v1 GetKDEIntegrationStatus GetKDEIntegrationStatusPreview GetKDEShellIntegrationPlan GetKDEShellIntegrationPlanPreview GetKDEApplicationSurfacePlan GetKDEApplicationSurfacePlanPreview go-runtime-kde-integration-status go-runtime-kde-shell-integration go-runtime-kde-application-surface launcher task-manager file-manager system-tray notifications compatibility-center settings krunner-search kwin-window-management].each do |token|
+  assert(go_runtime_kde_shell_source.include?(token), "Go Runtime KDE shell previews must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner OfficialDesktopOnly StableDesktopContract FallbackDesktopsSupported PlasmaForkRequired PlasmaSourceModified ShellConfigurationWritten ComponentActivationEnabled BackendLaunchEnabled HostRootModified PrivilegedContainerRequired BackendDetailsExposed StandardLauncherVisible TaskManagerIdentityReady FileAssociationsPlanned DolphinActionPlanned KRunnerQueryPlanned TrayStatusPlanned NotificationRoutePlanned SettingsSurfacePlanned PortalReviewRequired ExecutionReady LaunchEnabled BackendProcessStarted DesktopFilesWritten MIMEAppsWritten BackendCommandExposed RawWindowsExecutableExposed].each do |token|
+  assert(go_runtime_kde_shell_source.include?(token), "Go Runtime KDE shell previews must expose safety flag #{token}")
+end
+assert(go_runtime_kde_shell_source.include?("validateNoBackendTerms"), "Go Runtime KDE shell previews must hide backend terms")
+
+go_runtime_kde_shell_cli_source = read_project_file("cmd/xnix-runtime-go/kde_shell_commands.go")
+%w[runKDEIntegrationStatusPreview runKDEShellIntegrationPreview runKDEApplicationSurfacePreview kde-integration-status-preview kde-shell-integration-preview kde-application-surface-preview NewKDEIntegrationStatusPreview NewKDEShellIntegrationPlanPreview KDEApplicationSurfacePlanPreview].each do |token|
+  assert(go_runtime_kde_shell_cli_source.include?(token), "Go Runtime KDE shell CLI must include #{token}")
 end
 
 snapshot_store_source = read_project_file("internal/runtime/snapshot/store.go")

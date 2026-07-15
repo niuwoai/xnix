@@ -2,6 +2,16 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.199] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `kde-integration-status-preview`, `kde-shell-integration-preview`, and `kde-application-surface-preview` for `GetKDEIntegrationStatus`, `GetKDEShellIntegrationPlan`, and `GetKDEApplicationSurfacePlan`, rendering KDE-first shell status, replaceable-shell integration, and per-application KDE surface plans without forking Plasma, writing shell configuration, enabling component activation, starting compatibility profiles, exposing implementation details, or mutating the host root.
+
+### Changed
+
+- Migrated the KDE shell status, shell integration, and application surface route group in `runtime-owner-route-manifest-preview` from C Runtime adapter routes to native Go preview routes, reducing the remaining C-backed read-only owner route count.
+
 ## [0.2.198] - 2026-07-15
 
 ### Added
