@@ -1,6 +1,6 @@
 # Claude Code Mainline Implementation Plan
 
-> Last updated: 2026-07-16 | Baseline: v0.2.217
+> Last updated: 2026-07-16 | Baseline: v0.2.218
 
 This document is the mainline handoff plan for giving large, relatively independent Xnix implementation packages to Claude Code.
 
@@ -343,6 +343,25 @@ ruby -Ilib test/test_compatibility_execution_readiness.rb
 ruby scripts/verify_layout.rb
 ```
 
+### Copyable Claude Code prompt
+
+```text
+Implement M4 from docs/claude-code-mainline-implementation-plan.md.
+
+Target outcome:
+- Add a fake-first Portal request state machine and state-root-scoped snapshot/rollback safety plane that execution readiness can consume without starting execution.
+
+Hard constraints:
+- Do not enable real XDG Desktop Portal calls by default.
+- Do not access user documents directly, create system snapshots, perform host-root rollback, mutate the host root, or launch compatibility backends.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add Portal completion, denial, cancellation, expiration, snapshot-create, snapshot-verify, rollback, and path-escape blocked tests.
+- Run the M4 required tests plus ruby scripts/verify_layout.rb.
+```
+
 ## M5: KDE Activation Materialization
 
 ### Mission
@@ -393,6 +412,25 @@ ruby -Ilib test/test_desktop_integration_manifest.rb
 ruby -Ilib test/test_file_association_model.rb
 ruby scripts/container.rb runtime-activation-smoke
 ruby scripts/verify_layout.rb
+```
+
+### Copyable Claude Code prompt
+
+```text
+Implement M5 from docs/claude-code-mainline-implementation-plan.md.
+
+Target outcome:
+- Add or strengthen target-root-scoped KDE activation materialization for desktop entries, MIME associations, Dolphin service menus, manifests, and rollback receipts.
+
+Hard constraints:
+- Do not write to the host root, enable production desktop activation by default, launch compatibility backends from generated desktop files, apply live KWin rules, or enable live tray bridges.
+- Keep generated user-facing output free of raw backend commands, executable paths, storage paths, and profile terminology.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add deterministic write, no-overwrite, manifest-digest, rollback, and path-escape blocked tests.
+- Run the M5 required tests plus ruby scripts/verify_layout.rb.
 ```
 
 ## M6: Execution Transaction Ledger
@@ -449,6 +487,25 @@ ruby scripts/kde_first_presence_smoke.rb
 ruby scripts/verify_layout.rb
 ```
 
+### Copyable Claude Code prompt
+
+```text
+Implement M6 from docs/claude-code-mainline-implementation-plan.md.
+
+Target outcome:
+- Add a state-root-scoped execution transaction ledger that records request, review, preflight, grant proposal, transaction state, and fake committed session identity without launching real backends.
+
+Hard constraints:
+- Do not start Wine, Proton, VM, or any compatibility backend by default.
+- Do not expose raw launch commands, enable production Launch writes, grant real Portal permissions, or mutate the host root.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add request, review-required, blocked, ready, fake-commit, failed, cancelled, missing-permission, missing-snapshot, untrusted-recipe, and blocked-backend tests.
+- Run the M6 required tests plus ruby scripts/verify_layout.rb.
+```
+
 ## M7: Diagnostics, Repair, and AI Boundary
 
 ### Mission
@@ -499,6 +556,25 @@ ruby -Ilib test/test_ai_diagnostic_input.rb
 ruby -Ilib test/test_ai_diagnostic_recommendation.rb
 ruby -Ilib test/test_ai_repair_approval_gate.rb
 ruby scripts/verify_layout.rb
+```
+
+### Copyable Claude Code prompt
+
+```text
+Implement M7 from docs/claude-code-mainline-implementation-plan.md.
+
+Target outcome:
+- Add fixture-driven diagnostic records, repair recommendation records, and a disabled-by-default AI provider boundary that can feed Compatibility Center history and execution readiness.
+
+Hard constraints:
+- Do not call real AI providers by default.
+- Do not read arbitrary user file contents, execute automatic repairs, launch compatibility backends, require network access, or expose secrets, host paths, backend commands, or file contents.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add diagnostic fixture, failing result, repair recommendation, provider-disabled, provider-fake, approval-required, snapshot-required, and redaction tests.
+- Run the M7 required tests plus ruby scripts/verify_layout.rb.
 ```
 
 ## M8: Developer Verification Harness
@@ -623,6 +699,25 @@ ruby -Ilib test/test_kde_disk.rb
 ruby -Ilib test/test_qemu.rb
 ruby -Ilib test/test_serial_log.rb
 ruby scripts/verify_layout.rb
+```
+
+### Copyable Claude Code prompt
+
+```text
+Implement M9 from docs/claude-code-mainline-implementation-plan.md.
+
+Target outcome:
+- Add a safe product-image validation and constrained QEMU smoke path that can prove KDE, Runtime owner, activation, SSH loopback, and serial-log evidence without endangering the host.
+
+Hard constraints:
+- Do not use privileged containers, host networking, Docker socket mounts, broad host-directory mounts, unpinned base inputs, or host system changes.
+- Keep QEMU logs under a controlled output directory and keep SSH forwarding loopback-only.
+- Keep all source, comments, tests, fixtures, CLI output, and documentation in English.
+
+Required handoff:
+- Update VERSION, CHANGELOG.md, and PRODUCT_OVERVIEW.md.
+- Add image-manifest validation, unsafe-Docker-option blocked, unsafe-QEMU-option blocked, serial-log, loopback-SSH, and report-format tests.
+- Run the M9 required tests plus ruby scripts/verify_layout.rb.
 ```
 
 ## Per-Branch Handoff Checklist

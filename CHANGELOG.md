@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.218] - 2026-07-16
+
+### Added
+
+- Added Runtime owner lifecycle events under `internal/runtime/owner`, projecting smoke-owner startup, route-table, readiness, and shutdown milestones as safe JSONL records.
+- Added `xnix-runtime-owner --lifecycle-log`, which renders the owner smoke lifecycle without starting an event loop, claiming a D-Bus name, enabling write methods, requiring network, mutating the host root, or exposing backend details.
+- Added Go and restricted-session smoke coverage for lifecycle JSONL ordering, route counts, shutdown reason, and disabled side-effect flags.
+
+### Changed
+
+- Updated layout verification to require Runtime owner lifecycle sources, tests, CLI routing, and restricted-session smoke coverage.
+- Expanded the mainline Claude Code handoff plan with copyable prompts for Portal/snapshot safety, KDE activation materialization, execution transactions, diagnostics/repair/AI, and atomic KDE/QEMU acceptance packages.
+
 ## [0.2.217] - 2026-07-16
 
 ### Changed

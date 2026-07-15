@@ -25,6 +25,7 @@ func run(args []string, stdout io.Writer) error {
 	mode := flags.String("mode", string(owner.ModePreview), "owner mode: preview or smoke-owner")
 	writeMethod := flags.String("deny-write", "", "render a deterministic disabled write-method response")
 	readMethod := flags.String("dispatch-read", "", "render a read-only Runtime owner method dispatch response")
+	lifecycleLog := flags.Bool("lifecycle-log", false, "render smoke-owner lifecycle events as JSON Lines")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -33,8 +34,14 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	var payload any
-	if *writeMethod != "" && *readMethod != "" {
-		return errors.New("xnix-runtime-owner accepts only one of --deny-write or --dispatch-read")
+	selectedOperations := 0
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *lifecycleLog} {
+		if selected {
+			selectedOperations++
+		}
+	}
+	if selectedOperations > 1 {
+		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, or --lifecycle-log")
 	}
 	if *writeMethod != "" {
 		response, err := owner.DisabledWriteResponse(*writeMethod)
@@ -48,6 +55,18 @@ func run(args []string, stdout io.Writer) error {
 			return err
 		}
 		payload = dispatch
+	} else if *lifecycleLog {
+		events, err := owner.NewLifecycleEvents(*root, owner.CandidateMode(*mode))
+		if err != nil {
+			return err
+		}
+		encoder := json.NewEncoder(stdout)
+		for _, event := range events {
+			if err := encoder.Encode(event); err != nil {
+				return err
+			}
+		}
+		return nil
 	} else {
 		candidate, err := owner.NewCandidate(*root, owner.CandidateMode(*mode))
 		if err != nil {

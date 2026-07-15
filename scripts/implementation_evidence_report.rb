@@ -65,6 +65,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/owner/candidate.go
       internal/runtime/owner/dispatch.go
       internal/runtime/owner/dispatch_test.go
+      internal/runtime/owner/lifecycle.go
+      internal/runtime/owner/lifecycle_test.go
     ],
     state_files: [],
     smoke_files: %w[
@@ -74,9 +76,10 @@ DOMAIN_DEFINITIONS = [
     ],
     gate_tokens: {
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
+      "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has read dispatch and constrained smoke evidence; production ownership remains gated."
+    summary: "The Go owner candidate has read dispatch, lifecycle JSONL, and constrained smoke evidence; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",

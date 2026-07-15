@@ -100,4 +100,30 @@ assert(dispatch_payload.fetch("request_type") == "runtime-write-gate-preview", "
 assert(dispatch_payload.fetch("method_name") == "Launch", "Runtime owner candidate smoke must pass read dispatch arguments")
 assert(!dispatch_payload.fetch("dispatch_enabled"), "Runtime owner candidate smoke must preserve nested write dispatch gates")
 
+stdout, stderr, status = Open3.capture3(*owner_command, "--root", ".", "--mode", "smoke-owner", "--lifecycle-log")
+assert(status.success?, "Runtime owner candidate smoke must render lifecycle JSONL: #{stderr}")
+lifecycle_events = stdout.lines.map { |line| JSON.parse(line) }
+assert(lifecycle_events.length == 4, "Runtime owner candidate smoke must emit four lifecycle events")
+assert(lifecycle_events.map { |event| event.fetch("event_type") } == %w[startup route-table readiness shutdown], "Runtime owner candidate smoke must emit stable lifecycle event types")
+lifecycle_events.each_with_index do |event, index|
+  assert(event.fetch("schema_version") == "xnix.runtime.owner_lifecycle_event.v1", "Runtime owner candidate smoke must expose lifecycle event schema")
+  assert(event.fetch("request_type") == "runtime-owner-lifecycle-event", "Runtime owner candidate smoke must expose lifecycle request type")
+  assert(event.fetch("sequence") == index + 1, "Runtime owner candidate smoke must emit ordered lifecycle events")
+  assert(event.fetch("mode") == "smoke-owner", "Runtime owner candidate smoke lifecycle must stay in smoke-owner mode")
+  assert(event.fetch("route_count") == 57, "Runtime owner candidate smoke lifecycle must expose route count")
+  assert(event.fetch("go_route_count") == 57, "Runtime owner candidate smoke lifecycle must expose Go route count")
+  assert(event.fetch("write_method_count") == 4, "Runtime owner candidate smoke lifecycle must expose write method count")
+  assert(event.fetch("read_only_serve_ready"), "Runtime owner candidate smoke lifecycle must show read-only serve readiness")
+  assert(!event.fetch("write_methods_enabled"), "Runtime owner candidate smoke lifecycle must keep write methods disabled")
+  assert(!event.fetch("event_loop_started"), "Runtime owner candidate smoke lifecycle must not start an event loop")
+  assert(!event.fetch("session_bus_claimed"), "Runtime owner candidate smoke lifecycle must not claim the session bus")
+  assert(!event.fetch("production_bus_claimed"), "Runtime owner candidate smoke lifecycle must not claim the production bus")
+  assert(!event.fetch("system_service_started"), "Runtime owner candidate smoke lifecycle must not start a system service")
+  assert(!event.fetch("network_required"), "Runtime owner candidate smoke lifecycle must not require network")
+  assert(!event.fetch("host_root_modified"), "Runtime owner candidate smoke lifecycle must not mutate the host root")
+  assert(!event.fetch("privileged_container_required"), "Runtime owner candidate smoke lifecycle must not require privileged containers")
+  assert(!event.fetch("backend_details_exposed"), "Runtime owner candidate smoke lifecycle must not expose backend details")
+end
+assert(lifecycle_events.last.fetch("shutdown_reason") == "preview-complete", "Runtime owner candidate smoke lifecycle must expose a safe shutdown reason")
+
 puts "PASS: Runtime owner candidate restricted session smoke"

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.217"
+EXPECTED_VERSION = "0.2.218"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -216,6 +216,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/candidate_test.go
   internal/runtime/owner/dispatch.go
   internal/runtime/owner/dispatch_test.go
+  internal/runtime/owner/lifecycle.go
+  internal/runtime/owner/lifecycle_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -1105,7 +1107,7 @@ end
 end
 
 go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owner/main.go")
-%w[xnix-runtime-owner mode deny-write dispatch-read NewCandidate DisabledWriteResponse DispatchRead smoke-owner].each do |token|
+%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents smoke-owner].each do |token|
   assert(go_runtime_owner_candidate_cli_source.include?(token), "Go Runtime owner candidate CLI must include #{token}")
 end
 
@@ -1119,6 +1121,14 @@ end
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeOwnerReadinessPreview"), "Go Runtime owner read dispatch must call owner readiness preview")
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeWriteGatePreview"), "Go Runtime owner read dispatch must call write gate preview")
 assert(go_runtime_owner_dispatch_source.include?("validateNoBackendTerms"), "Go Runtime owner read dispatch must hide backend terms")
+
+go_runtime_owner_lifecycle_source = read_project_file("internal/runtime/owner/lifecycle.go")
+%w[LifecycleEvent runtime-owner-lifecycle-event xnix.runtime.owner_lifecycle_event.v1 NewLifecycleEvents startup route-table readiness shutdown preview-complete RouteTableVersion ShutdownReason DesktopSafeSummary].each do |token|
+  assert(go_runtime_owner_lifecycle_source.include?(token), "Go Runtime owner lifecycle events must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed WriteMethodsEnabled].each do |token|
+  assert(go_runtime_owner_lifecycle_source.include?(token), "Go Runtime owner lifecycle events must expose #{token}")
+end
 
 go_runtime_owner_commands_source = read_project_file("cmd/xnix-runtime-go/runtime_owner_commands.go")
 %w[runRuntimeServiceBindingPreview runRuntimeLiveOwnerGatePreview runRuntimeOwnerProcessPreview runRuntimeOwnerSmokePlanPreview runRuntimeMethodParityManifestPreview runRuntimeOwnerReadinessPreview runRuntimeOwnerRouteManifestPreview runRuntimeOwnerRecipeTrustPreview encodeIndentedJSON].each do |token|
@@ -1596,7 +1606,7 @@ assert(dbus_client_source.include?("value.to_i"), "D-Bus Runtime client must par
 assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime client must parse string arrays")
 
 runtime_owner_candidate_smoke_source = read_project_file("scripts/runtime_owner_candidate_smoke.rb")
-%w[dbus-run-session xnix-runtime-owner smoke-owner dispatch-read xnix.runtime.owner_candidate.v1 xnix.runtime.owner_read_dispatch.v1 org.xnix.Compatibility1.Error.WriteMethodDisabled session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed].each do |token|
+%w[dbus-run-session xnix-runtime-owner smoke-owner dispatch-read lifecycle-log xnix.runtime.owner_candidate.v1 xnix.runtime.owner_read_dispatch.v1 xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event org.xnix.Compatibility1.Error.WriteMethodDisabled session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed preview-complete].each do |token|
   assert(runtime_owner_candidate_smoke_source.include?(token), "Runtime owner candidate smoke must include #{token}")
 end
 
@@ -1637,6 +1647,8 @@ implementation_evidence_report_source = read_project_file("scripts/implementatio
   implementation-evidence-report
   xnix.runtime.implementation_evidence_report.v1
   runtime-owner-service
+  xnix.runtime.owner_lifecycle_event.v1
+  lifecycle JSONL
   recipe-artifact-trust-pipeline
   environment-lifecycle-state
   portal-snapshot-control-plane
@@ -1687,6 +1699,8 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   json
   markdown
   runtime-owner-service
+  lifecycle.go
+  lifecycle JSONL
   mainline_document
   mainline_package
   mainline_first_wave
