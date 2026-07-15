@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.168] - 2026-07-15
+
+### Changed
+
+- Split the Linux D-Bus smoke adapter introspection XML into `runtime/dbus/xnix_compatd_introspection.inc`, reducing `xnix_compatd_smoke.c` below the repository line-count warning zone while preserving the existing Runtime session-bus contract behavior.
+- Updated Runtime method parity, layout verification, activation packaging, and D-Bus smoke-script unit checks so the split smoke adapter still proves method coverage across both the C dispatcher and introspection include.
+
 ## [0.2.167] - 2026-07-15
 
 ### Added

@@ -13,12 +13,16 @@ end
 project_root = Pathname.new(__dir__).join("..").realpath
 script = project_root.join("scripts/dbus_session_smoke.rb")
 source = project_root.join("runtime/dbus/xnix_compatd_smoke.c")
+introspection = project_root.join("runtime/dbus/xnix_compatd_introspection.inc")
 dockerfile = project_root.join("Dockerfile").read
 contents = script.read
 
 assert(script.file?, "D-Bus smoke script must exist")
 assert(script.executable?, "D-Bus smoke script must be executable")
 assert(source.file?, "D-Bus smoke adapter source must exist")
+assert(introspection.file?, "D-Bus smoke adapter introspection include must exist")
+assert(source.read.include?("xnix_compatd_introspection.inc"), "D-Bus smoke adapter must include its introspection XML")
+assert(introspection.read.include?("GetDesktopActivationTransactionPreview"), "D-Bus smoke adapter introspection must expose activation transaction previews")
 assert(dockerfile.include?("libglib2.0-dev"), "Dockerfile must install GIO headers for the smoke adapter")
 assert(dockerfile.include?("pkg-config"), "Dockerfile must install pkg-config for the smoke adapter build")
 assert(dockerfile.include?("xnix_compatd_smoke.c"), "Dockerfile must compile the smoke adapter")
