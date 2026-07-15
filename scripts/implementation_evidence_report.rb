@@ -170,14 +170,21 @@ DOMAIN_DEFINITIONS = [
     fixture_files: %w[
       internal/runtime/execution/execution.go
       internal/runtime/execution/execution_test.go
+      internal/runtime/execution/ledger_test.go
+      cmd/xnix-runtime-go/execution_ledger_commands.go
+      cmd/xnix-runtime-go/execution_ledger_cli_test.go
     ],
-    state_files: [],
+    state_files: %w[
+      internal/runtime/execution/ledger.go
+    ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/execution/execution.go" => %w[blocked runtimeWriteGate],
+      "internal/runtime/execution/ledger.go" => %w[execution-transaction-ledger-record go-runtime-state-root-execution-ledger state_root_path_exposed],
+      "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record state-root],
       "internal/runtime/appidentity/runtime_write_gate.go" => %w[Launch WriteMethodDisabled]
     },
-    summary: "Execution transaction code exists for fake commits and blocked states; real Launch remains disabled."
+    summary: "Execution transaction records persist under a controlled state root; real Launch remains disabled."
   },
   {
     id: "diagnostics-repair-ai-boundary",

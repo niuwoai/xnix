@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.209] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime execution ledger under `internal/runtime/execution`, persisting blocked-by-default execution transaction records inside a caller-supplied Runtime state root.
+- Added `xnix-runtime-go execution-ledger-record`, a constrained CLI that creates, reviews, preflights, and records an execution transaction without launching backends, granting permissions, exposing the state root path, or mutating the host root.
+- Added Go unit and CLI coverage for execution ledger persistence, relative-path receipts, sorted listing, unsafe root and request-id rejection, and disabled launch/backend/permission gates.
+
+### Changed
+
+- Updated implementation evidence reporting so the execution transaction ledger domain now reports state-root implementation evidence.
+- Updated layout verification to require the execution ledger package, CLI command, tests, schema, state-root safety flags, and disabled launch/backend gates.
+
 ## [0.2.208] - 2026-07-16
 
 ### Added

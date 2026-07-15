@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.208"
+EXPECTED_VERSION = "0.2.209"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -154,6 +154,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go
   cmd/xnix-runtime-go/install_plan_commands.go
   cmd/xnix-runtime-go/install_plan_cli_test.go
+  cmd/xnix-runtime-go/execution_ledger_commands.go
+  cmd/xnix-runtime-go/execution_ledger_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
   cmd/xnix-runtime-go/kde_shell_commands.go
@@ -196,6 +198,10 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/test_plan_test.go
   internal/runtime/appidentity/test_result.go
   internal/runtime/appidentity/test_result_test.go
+  internal/runtime/execution/execution.go
+  internal/runtime/execution/execution_test.go
+  internal/runtime/execution/ledger.go
+  internal/runtime/execution/ledger_test.go
   internal/runtime/owner/candidate.go
   internal/runtime/owner/candidate_test.go
   internal/runtime/owner/dispatch.go
@@ -1618,6 +1624,54 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   backend_launch_enabled
 ].each do |token|
   assert(implementation_evidence_report_test_source.include?(token), "Implementation evidence report test must include #{token}")
+end
+
+execution_ledger_source = read_project_file("internal/runtime/execution/ledger.go")
+%w[
+  xnix.runtime.execution_ledger.v1
+  execution-transaction-ledger-record
+  go-runtime-state-root-execution-ledger
+  execution-ledger
+  transactions
+  state_root_path_exposed
+  LaunchAllowed
+  LaunchEnabled
+  BackendStarted
+  PermissionGranted
+  HostRootModified
+  NetworkRequired
+  PrivilegedContainerRequired
+  BackendDetailsExposed
+  refusing\ to\ use\ filesystem\ root
+  path\ traversal
+].each do |token|
+  assert(execution_ledger_source.include?(token.gsub("\\ ", " ")), "Execution ledger must include #{token}")
+end
+
+execution_ledger_cli_source = read_project_file("cmd/xnix-runtime-go/execution_ledger_commands.go")
+%w[
+  execution-ledger-record
+  state-root
+  recipe-trust
+  snapshot-baseline
+  portal-required
+  portal-granted
+  NewLedger
+  Record
+].each do |token|
+  assert(execution_ledger_cli_source.include?(token), "Execution ledger CLI must include #{token}")
+end
+
+execution_ledger_cli_test_source = read_project_file("cmd/xnix-runtime-go/execution_ledger_cli_test.go")
+%w[
+  execution-ledger-record
+  state-root
+  xnix.runtime.execution_ledger.v1
+  state_root_path_exposed
+  host_root_modified
+  backend_details_exposed
+].each do |token|
+  assert(execution_ledger_cli_test_source.include?(token), "Execution ledger CLI test must include #{token}")
 end
 
 settings_change_source = read_project_file("lib/xnix/compatibility/settings_change_plan.rb")

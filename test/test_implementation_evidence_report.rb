@@ -59,6 +59,7 @@ assert(domains.keys == expected_domains, "implementation evidence report must ex
 assert(domains.fetch("runtime-owner-service").fetch("status") == "smoke-owned", "Runtime owner service must show smoke-owned evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "fixture-implemented", "recipe and artifact trust pipeline must show fixture implementation evidence")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")
+assert(domains.fetch("execution-transaction-ledger").fetch("status") == "state-root-implemented", "execution transaction ledger must show state-root implementation evidence")
 assert(domains.fetch("developer-verification-harness").fetch("status") == "fixture-implemented", "developer verification harness must show fixture implementation evidence")
 assert(domains.values.all? { |domain| domain.fetch("production_gate_evidence") }, "all implementation domains must expose production gate evidence")
 assert(domains.values.all? { |domain| domain.fetch("contract_files_missing").empty? }, "all implementation domains must have their contract files")

@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-16 | Current version: v0.2.208
+> Last updated: 2026-07-16 | Current version: v0.2.209
 
 ## Summary
 
@@ -55,6 +55,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Go Runtime safety previews delegate to `xnix-runtime-go state-root-preview`, `xnix-runtime-go snapshot-plan-preview`, and `xnix-runtime-go portal-access-policy-preview` for `GetApplicationStateRoot`, `GetSnapshotPlan`, and `GetPortalAccessPolicy`. They render per-application state scopes, restore-point planning, and XDG Desktop Portal policy while keeping directory creation, snapshot creation, restore execution, Portal request creation, permission grants, direct access, user-document inclusion, network access, host-root mutation, and backend details disabled.
 - The constrained Go snapshot store under `internal/runtime/snapshot` can create, list, verify, and roll back content-addressed snapshots inside a configured Runtime state root. It refuses invalid snapshot identifiers, skips its own metadata directory, snapshots only regular files, stores SHA-256-addressed objects, and records rollback receipts without touching the host root.
 - The Go Runtime Portal broker under `internal/runtime/portal` owns fake-mode request objects and completion state for desktop-sensitive operations. It keeps request creation explicit, separates permission state from execution approval, models granted, denied, cancelled, failed, and completed states, and treats transport failures as recoverable diagnostics without making real Portal calls by default.
+- The Go Runtime execution ledger under `internal/runtime/execution` persists reviewed and preflighted execution transactions inside a configured Runtime state root. `xnix-runtime-go execution-ledger-record --state-root <path> --app <id>` records KDE-safe transaction JSON with relative paths, disabled launch/backend/permission flags, and no state-root path exposure while the production `Launch` write method remains disabled.
 - Compatibility artifact manifests delegate to `xnix-compat-artifact-manifest`, which plans signed manifests, artifact groups, digest verification, cache namespaces, and rollback references without downloading artifacts, exposing cache paths, or enabling installation.
 - Go Runtime compatibility install previews delegate to `xnix-runtime-go compatibility-install-preview --registry <path> --app <id> --mode <development|production>` and `GetCompatibilityInstallPlan`, joining artifact manifest, acquisition preflight, package source, state root, and recipe install gate readiness before any artifact download, desktop activation, host-root mutation, or backend launch is enabled. The existing `xnix-compat-install-plan` and `xnix-runtime-core compatibility-install-plan` records remain lower-level compatibility policy layers, not the owner route.
 - Compatibility acquisition preflight delegates to `xnix-compat-acquisition-preflight`, which checks package-source readiness, signed artifact manifests, Runtime cache capacity, network policy review, and rollback markers without downloading artifacts or enabling installation.
