@@ -116,6 +116,9 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetCompatibilityModeSwitchPlan":         "mode-switch-preview",
 	"GetCompatibilityPermissionReviewPlan":   "permission-review-preview",
 	"GetCompatibilityReviewFlowPlan":         "review-flow-preview",
+	"GetAIDiagnosticInput":                   "ai-diagnostic-input-preview",
+	"GetAIDiagnosticRecommendation":          "ai-diagnostic-recommendation-preview",
+	"GetAIRepairApprovalGate":                "ai-repair-approval-gate-preview",
 	"GetCompatibilityActionQueue":            "kde-action-queue-preview",
 	"GetCompatibilityActionReviewReceipt":    "kde-action-receipt-preview",
 	"GetCompatibilityCenterSummary":          "compatibility-center-preview",
@@ -125,19 +128,16 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 }
 
 var runtimeOwnerRouteCCoreCommands = map[string]string{
-	"GetDesktopActivationManifest":  "desktop-activation-manifest",
-	"GetTaskManagerIdentityPlan":    "task-manager-identity-plan",
-	"GetKDEIntegrationStatus":       "kde-integration-status",
-	"GetKDEShellIntegrationPlan":    "kde-shell-integration-plan",
-	"GetKDEApplicationSurfacePlan":  "kde-application-surface-plan",
-	"GetKWinWindowRulePlan":         "kwin-window-rule-plan",
-	"GetApplicationStateRoot":       "state-root-policy",
-	"GetCompatibilityInstallPlan":   "compatibility-install-plan",
-	"GetAIDiagnosticInput":          "ai-diagnostic-input",
-	"GetAIDiagnosticRecommendation": "ai-diagnostic-recommendation",
-	"GetAIRepairApprovalGate":       "ai-repair-approval-gate",
-	"GetSnapshotPlan":               "compatibility-snapshot-plan",
-	"GetPortalAccessPolicy":         "portal-policy",
+	"GetDesktopActivationManifest": "desktop-activation-manifest",
+	"GetTaskManagerIdentityPlan":   "task-manager-identity-plan",
+	"GetKDEIntegrationStatus":      "kde-integration-status",
+	"GetKDEShellIntegrationPlan":   "kde-shell-integration-plan",
+	"GetKDEApplicationSurfacePlan": "kde-application-surface-plan",
+	"GetKWinWindowRulePlan":        "kwin-window-rule-plan",
+	"GetApplicationStateRoot":      "state-root-policy",
+	"GetCompatibilityInstallPlan":  "compatibility-install-plan",
+	"GetSnapshotPlan":              "compatibility-snapshot-plan",
+	"GetPortalAccessPolicy":        "portal-policy",
 }
 
 func NewRuntimeOwnerRouteManifestPreview(root string) (RuntimeOwnerRouteManifestPreview, error) {
@@ -376,7 +376,7 @@ func runtimeOwnerRouteManifestSummary(routeCounts RuntimeOwnerRouteCounts) strin
 		return "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending."
 	}
 	if routeCounts.CCoreBacked > 0 {
-		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, repair and test planning, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending."
+		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, repair and test planning, AI diagnostics, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending."
 	}
 	return "Runtime owner routes are fully native to the Go owner preview, but production bus ownership remains gated."
 }

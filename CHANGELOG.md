@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.196] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `ai-diagnostic-input-preview`, `ai-diagnostic-recommendation-preview`, and `ai-repair-approval-gate-preview` for `GetAIDiagnosticInput`, `GetAIDiagnosticRecommendation`, and `GetAIRepairApprovalGate`, composing Runtime-safe recipe, run-plan, test-result, and repair-plan metadata without calling an AI provider, reading user files, creating request objects, executing repairs, requiring network access, exposing backend details, or mutating the host root.
+
+### Changed
+
+- Migrated the AI diagnostics route group in `runtime-owner-route-manifest-preview` from C Runtime adapter routes to native Go preview routes, reducing the remaining C-backed read-only owner route count.
+- Extended the KDE-first presence smoke to inspect the Go AI diagnostics previews and assert that AI explanation, recommendation, and repair approval flows remain review-only and non-executing.
+
 ## [0.2.195] - 2026-07-15
 
 ### Added

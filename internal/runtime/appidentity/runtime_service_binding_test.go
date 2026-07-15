@@ -13,7 +13,7 @@ func TestRuntimeServiceBindingPreviewReportsActivationReadiness(t *testing.T) {
 		t.Fatalf("NewRuntimeServiceBindingPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.195" ||
+	if preview.Version != "0.2.196" ||
 		preview.SchemaVersion != "xnix.runtime.service_binding.v1" ||
 		preview.RequestType != "runtime-service-binding-preview" ||
 		preview.BindingType != "runtime-service-binding" ||
@@ -97,7 +97,7 @@ func TestRuntimeServiceBindingPreviewReportsActivationReadiness(t *testing.T) {
 
 func TestRuntimeServiceBindingPreviewBlocksMissingActivationFiles(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.195\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.196\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

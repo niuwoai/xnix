@@ -157,7 +157,10 @@ def collect_payloads(options)
     "settings-preview" => go_preview(options, "settings-preview", *base_args(options)),
     "runtime-owner-route-manifest-preview" => go_preview(options, "runtime-owner-route-manifest-preview", "--root", "."),
     "runtime-method-parity-manifest-preview" => go_preview(options, "runtime-method-parity-manifest-preview", "--root", "."),
-    "runtime-write-gate-preview" => go_preview(options, "runtime-write-gate-preview", "--root", ".", "--method", "Launch")
+    "runtime-write-gate-preview" => go_preview(options, "runtime-write-gate-preview", "--root", ".", "--method", "Launch"),
+    "ai-diagnostic-input-preview" => go_preview(options, "ai-diagnostic-input-preview", *base_args(options)),
+    "ai-diagnostic-recommendation-preview" => go_preview(options, "ai-diagnostic-recommendation-preview", *base_args(options)),
+    "ai-repair-approval-gate-preview" => go_preview(options, "ai-repair-approval-gate-preview", *base_args(options))
   }
 end
 
@@ -274,6 +277,19 @@ def assert_write_gate(payload)
   assert(payload.fetch("go_runtime_backed") == true, "write_gate.go_owner", "write gate must be Go Runtime backed")
 end
 
+def assert_ai_diagnostics(input, recommendation, gate)
+  assert(input.fetch("request_type") == "ai-diagnostic-input-preview", "ai.input", "AI diagnostic input preview required")
+  assert(input.fetch("runtime_method") == "GetAIDiagnosticInput", "ai.input_method", "AI input must map to Runtime method")
+  assert(input.fetch("ai_provider_call_enabled") == false, "ai.no_provider", "AI input must not call a provider")
+  assert(input.fetch("file_content_read") == false, "ai.no_file_content", "AI input must not read file contents")
+  assert(input.fetch("file_paths_exposed") == false, "ai.no_file_paths", "AI input must not expose file paths")
+  assert(recommendation.fetch("request_type") == "ai-diagnostic-recommendation-preview", "ai.recommendation", "AI recommendation preview required")
+  assert(recommendation.fetch("auto_execution_allowed") == false, "ai.no_auto_exec", "AI recommendations must not auto-execute")
+  assert(gate.fetch("request_type") == "ai-repair-approval-gate-preview", "ai.repair_gate", "AI repair approval gate preview required")
+  assert(gate.fetch("gate_decision") == "blocked-until-approval", "ai.repair_blocked", "AI repair must remain approval-gated")
+  assert(gate.fetch("repair_executed") == false, "ai.repair_not_executed", "AI repair gate must not execute repairs")
+end
+
 def run_smoke(options)
   payloads = collect_payloads(options)
   payloads.each_value { |payload| safe_payload?(payload, options.fetch(:file_uri)) }
@@ -296,6 +312,11 @@ def run_smoke(options)
   assert_route_baseline(payloads.fetch("runtime-owner-route-manifest-preview"))
   assert_method_parity(payloads.fetch("runtime-method-parity-manifest-preview"))
   assert_write_gate(payloads.fetch("runtime-write-gate-preview"))
+  assert_ai_diagnostics(
+    payloads.fetch("ai-diagnostic-input-preview"),
+    payloads.fetch("ai-diagnostic-recommendation-preview"),
+    payloads.fetch("ai-repair-approval-gate-preview")
+  )
 
   route_counts = payloads.fetch("runtime-owner-route-manifest-preview").fetch("route_counts")
   puts "PASS: KDE-first presence smoke"

@@ -37,6 +37,9 @@ script = script_path.read
   runtime-owner-route-manifest-preview
   runtime-method-parity-manifest-preview
   runtime-write-gate-preview
+  ai-diagnostic-input-preview
+  ai-diagnostic-recommendation-preview
+  ai-repair-approval-gate-preview
 ].each do |preview|
   assert(script.include?(preview), "KDE-first presence smoke must inspect #{preview}")
 end
