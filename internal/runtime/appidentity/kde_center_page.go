@@ -189,6 +189,52 @@ type KDECenterPageSection struct {
 	Summary               string `json:"summary"`
 }
 
+type KDECenterPageSectionDetailPreview struct {
+	SchemaVersion              string   `json:"schema_version"`
+	RequestType                string   `json:"request_type"`
+	PageType                   string   `json:"page_type"`
+	Source                     string   `json:"source"`
+	Desktop                    string   `json:"desktop"`
+	RuntimeMethod              string   `json:"runtime_method"`
+	ReadMethod                 string   `json:"read_method"`
+	ApplicationID              string   `json:"application_id"`
+	ApplicationName            string   `json:"application_name"`
+	SectionID                  string   `json:"section_id"`
+	SectionLabel               string   `json:"section_label"`
+	SectionTarget              string   `json:"section_target"`
+	SectionState               string   `json:"section_state"`
+	SectionRuntimeMethod       string   `json:"section_runtime_method"`
+	SectionReadModel           string   `json:"section_read_model"`
+	SectionSummary             string   `json:"section_summary"`
+	AvailableSectionIDs        []string `json:"available_section_ids"`
+	ReadOnlyNavigation         bool     `json:"read_only_navigation"`
+	DetailPreviewCreated       bool     `json:"detail_preview_created"`
+	DetailPersisted            bool     `json:"detail_persisted"`
+	SectionActionsEnabled      bool     `json:"section_actions_enabled"`
+	SettingsPersisted          bool     `json:"settings_persisted"`
+	SettingsPersistenceEnabled bool     `json:"settings_persistence_enabled"`
+	NotificationsSent          bool     `json:"notifications_sent"`
+	ResourceGrantCreated       bool     `json:"resource_grant_created"`
+	RuntimeLaunchApproval      bool     `json:"runtime_launch_approval"`
+	LaunchEnabled              bool     `json:"launch_enabled"`
+	ExecutionStarted           bool     `json:"execution_started"`
+	RequestObjectsCreated      bool     `json:"request_objects_created"`
+	PermissionGrantCreated     bool     `json:"permission_grant_created"`
+	HostRootModified           bool     `json:"host_root_modified"`
+	NetworkRequired            bool     `json:"network_required"`
+	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
+	RuntimeOwned               bool     `json:"runtime_owned"`
+	GoRuntimeBacked            bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
+	OfficialDesktopOnly        bool     `json:"official_desktop_only"`
+	UserVisible                bool     `json:"user_visible"`
+	SafeForAIDiagnostics       bool     `json:"safe_for_ai_diagnostics"`
+	UserDecisionCaptured       bool     `json:"user_decision_captured"`
+	UserDecisionAllowsLaunch   bool     `json:"user_decision_allows_launch"`
+	BlockedActions             []string `json:"blocked_actions"`
+	DesktopSafeSummary         string   `json:"desktop_safe_summary"`
+}
+
 func NewKDECenterPagePreview(recipe Recipe, provenance Provenance, decision string, fileURIs []string) (KDECenterPagePreview, error) {
 	if !singleLine(decision) {
 		return KDECenterPagePreview{}, errors.New("KDE center page preview requires a single-line decision")
@@ -396,6 +442,72 @@ func NewKDECenterPageSectionsPreview(recipe Recipe, provenance Provenance, decis
 	return preview, nil
 }
 
+func NewKDECenterPageSectionDetailPreview(recipe Recipe, provenance Provenance, sectionID string, decision string, fileURIs []string) (KDECenterPageSectionDetailPreview, error) {
+	if !singleLine(sectionID) {
+		return KDECenterPageSectionDetailPreview{}, errors.New("KDE center page section detail preview requires a single-line section id")
+	}
+
+	sections, err := NewKDECenterPageSectionsPreview(recipe, provenance, decision, fileURIs)
+	if err != nil {
+		return KDECenterPageSectionDetailPreview{}, err
+	}
+
+	section, ok := findKDECenterPageSection(sections.Sections, sectionID)
+	if !ok {
+		return KDECenterPageSectionDetailPreview{}, errors.New("KDE center page section detail preview requires a known section id")
+	}
+
+	preview := KDECenterPageSectionDetailPreview{
+		SchemaVersion:              "xnix.runtime.kde_center_page_section_detail.v1",
+		RequestType:                "kde-center-page-section-detail-preview",
+		PageType:                   sections.PageType,
+		Source:                     "kde-center-page-sections-preview",
+		Desktop:                    "KDE Plasma",
+		RuntimeMethod:              "GetKDECenterPageSectionDetail",
+		ReadMethod:                 "GetKDECenterPageSectionDetailPreview",
+		ApplicationID:              sections.ApplicationID,
+		ApplicationName:            sections.ApplicationName,
+		SectionID:                  section.ID,
+		SectionLabel:               section.Label,
+		SectionTarget:              section.Target,
+		SectionState:               section.State,
+		SectionRuntimeMethod:       section.RuntimeMethod,
+		SectionReadModel:           section.ReadModel,
+		SectionSummary:             section.Summary,
+		AvailableSectionIDs:        kdeCenterPageSectionIDs(sections.Sections),
+		ReadOnlyNavigation:         true,
+		DetailPreviewCreated:       true,
+		DetailPersisted:            false,
+		SectionActionsEnabled:      false,
+		SettingsPersisted:          false,
+		SettingsPersistenceEnabled: false,
+		NotificationsSent:          false,
+		ResourceGrantCreated:       false,
+		RuntimeLaunchApproval:      false,
+		LaunchEnabled:              false,
+		ExecutionStarted:           false,
+		RequestObjectsCreated:      false,
+		PermissionGrantCreated:     false,
+		HostRootModified:           false,
+		NetworkRequired:            false,
+		BackendDetailsExposed:      false,
+		RuntimeOwned:               true,
+		GoRuntimeBacked:            true,
+		KDEPolicyOwner:             false,
+		OfficialDesktopOnly:        true,
+		UserVisible:                true,
+		SafeForAIDiagnostics:       true,
+		UserDecisionCaptured:       sections.UserDecisionCaptured,
+		UserDecisionAllowsLaunch:   sections.UserDecisionAllowsLaunch,
+		BlockedActions:             []string{"persist KDE center page section detail from preview state", "enable section action buttons from detail preview", "persist compatibility settings from section detail", "record review receipts from section detail", "create Runtime request objects from section detail", "grant desktop resources from section detail", "send desktop notifications from section detail", "start compatibility profile from section detail", "mutate host root during KDE center page section detail preview", "expose raw backend command to desktop shell"},
+		DesktopSafeSummary:         "KDE can open a selected Compatibility Center section and route it to a Runtime read model, but the detail remains read-only and cannot persist, grant, notify, or start execution.",
+	}
+	if err := validateNoBackendTerms(preview, "KDE center page section detail preview"); err != nil {
+		return KDECenterPageSectionDetailPreview{}, err
+	}
+	return preview, nil
+}
+
 func kdeCenterPageNavigation() []KDECenterPageNavigation {
 	return []KDECenterPageNavigation{
 		kdeCenterPageNavigationItem("overview", "Overview", "compatibility-center-overview"),
@@ -442,6 +554,23 @@ func kdeCenterPageSection(id string, label string, target string, runtimeMethod 
 		BackendDetailsExposed: false,
 		Summary:               summary,
 	}
+}
+
+func findKDECenterPageSection(sections []KDECenterPageSection, sectionID string) (KDECenterPageSection, bool) {
+	for _, section := range sections {
+		if section.ID == sectionID {
+			return section, true
+		}
+	}
+	return KDECenterPageSection{}, false
+}
+
+func kdeCenterPageSectionIDs(sections []KDECenterPageSection) []string {
+	ids := make([]string, 0, len(sections))
+	for _, section := range sections {
+		ids = append(ids, section.ID)
+	}
+	return ids
 }
 
 func kdeCenterPageBadge(deck KDEActionCardDeckPreview) string {

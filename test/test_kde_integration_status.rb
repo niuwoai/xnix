@@ -101,7 +101,7 @@ expected_ids = %w[
   settings
 ]
 
-assert(status["version"] == "0.2.151", "KDE integration status must expose the current version")
+assert(status["version"] == "0.2.152", "KDE integration status must expose the current version")
 assert(status["status_type"] == "kde-integration-status", "KDE integration status must identify the status type")
 assert(status["desktop"] == "KDE Plasma", "KDE integration status must keep KDE as the official desktop")
 assert(status["source"]["kind"] == "runtime-local-read-model", "KDE integration status must describe the local Runtime read model")

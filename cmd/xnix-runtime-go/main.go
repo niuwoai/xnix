@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -70,6 +70,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKDEActionStatusPreview(args[1:], stdout)
 	case "kde-center-page-preview":
 		return runKDECenterPagePreview(args[1:], stdout)
+	case "kde-center-page-section-detail-preview":
+		return runKDECenterPageSectionDetailPreview(args[1:], stdout)
 	case "kde-center-page-sections-preview":
 		return runKDECenterPageSectionsPreview(args[1:], stdout)
 	case "kde-entrypoint-action-preview":
@@ -441,6 +443,21 @@ func runKDECenterPageSectionsPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := appidentity.NewKDECenterPageSectionsPreview(recipe, provenance, decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDECenterPageSectionDetailPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, sectionID, decision, fileURIs, err := parseKDECenterPageSectionDetailPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewKDECenterPageSectionDetailPreview(recipe, provenance, sectionID, decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -1079,6 +1096,38 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 
 func parseKDECenterPageSectionsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
 	return parseLaunchDecisionPreviewSource("kde-center-page-sections-preview", args)
+}
+
+func parseKDECenterPageSectionDetailPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, []string, error) {
+	flags := flag.NewFlagSet("kde-center-page-section-detail-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	sectionID := flags.String("section", "", "KDE Compatibility Center section id")
+	decision := flags.String("decision", "", "review decision: reviewed, approved, deferred, or rejected")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-center-page-section-detail-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-center-page-section-detail-preview requires --app when --registry is used")
+	}
+	if *sectionID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-center-page-section-detail-preview requires --section")
+	}
+	if *decision == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-center-page-section-detail-preview requires --decision")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", nil, errors.New("kde-center-page-section-detail-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *sectionID, *decision, flags.Args(), err
 }
 
 func parseKDEActionReviewPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, []string, error) {

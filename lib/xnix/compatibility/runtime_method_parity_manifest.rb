@@ -70,6 +70,7 @@ module Xnix
         GetCompatibilityCenterSummary
         GetKDECenterPage
         GetKDECenterPageSections
+        GetKDECenterPageSectionDetail
       ].freeze
 
       WRITE_METHODS = %w[
@@ -132,7 +133,8 @@ module Xnix
         "GetCompatibilityActionReviewReceipt" => "action_review_receipt",
         "GetCompatibilityCenterSummary" => "compatibility_center_summary",
         "GetKDECenterPage" => "kde_center_page",
-        "GetKDECenterPageSections" => "kde_center_page_sections"
+        "GetKDECenterPageSections" => "kde_center_page_sections",
+        "GetKDECenterPageSectionDetail" => "kde_center_page_section_detail"
       }.freeze
 
       def to_h

@@ -137,6 +137,10 @@ module Xnix
         parse_dictionary(call("GetKDECenterPageSections", application_id, decision))
       end
 
+      def kde_center_page_section_detail(application_id, section_id, decision = "approved")
+        parse_dictionary(call("GetKDECenterPageSectionDetail", application_id, section_id, decision))
+      end
+
       def artifact_manifest(application_id)
         parse_dictionary(call("GetCompatibilityArtifactManifest", application_id))
       end

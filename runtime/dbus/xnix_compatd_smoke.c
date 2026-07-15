@@ -250,6 +250,12 @@ static const gchar introspection_xml[] =
   "      <arg name='decision' type='s' direction='in'/>"
   "      <arg name='sections' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKDECenterPageSectionDetail'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='section_id' type='s' direction='in'/>"
+  "      <arg name='decision' type='s' direction='in'/>"
+  "      <arg name='detail' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -1714,6 +1720,115 @@ build_kde_center_page_sections(const gchar *application_id, const gchar *decisio
   return g_variant_builder_end(&model);
 }
 
+static gboolean
+kde_center_page_section_detail(const gchar *section_id,
+                               const gchar **label,
+                               const gchar **target,
+                               const gchar **runtime_method,
+                               const gchar **read_model,
+                               const gchar **state)
+{
+  if (g_strcmp0(section_id, "overview") == 0) {
+    *label = "Overview";
+    *target = "compatibility-center-overview";
+    *runtime_method = "GetCompatibilityCenterSummary";
+    *read_model = "compatibility-center-summary";
+    *state = "ready";
+    return TRUE;
+  }
+  if (g_strcmp0(section_id, "actions") == 0) {
+    *label = "Actions";
+    *target = "compatibility-center-gates";
+    *runtime_method = "GetCompatibilityActionQueue";
+    *read_model = "compatibility-center-action-queue";
+    *state = "waiting-for-runtime-gates";
+    return TRUE;
+  }
+  if (g_strcmp0(section_id, "settings") == 0) {
+    *label = "Settings";
+    *target = "compatibility-settings";
+    *runtime_method = "GetCompatibilitySettings";
+    *read_model = "settings-model";
+    *state = "planned";
+    return TRUE;
+  }
+  if (g_strcmp0(section_id, "diagnostics") == 0) {
+    *label = "Diagnostics";
+    *target = "compatibility-diagnostics";
+    *runtime_method = "GetDiagnostics";
+    *read_model = "runtime-diagnostics";
+    *state = "planned";
+    return TRUE;
+  }
+  return FALSE;
+}
+
+static GVariant *
+build_kde_center_page_section_detail(const gchar *application_id,
+                                     const gchar *section_id,
+                                     const gchar *decision)
+{
+  gboolean decision_allowed = g_strcmp0(decision, "approved") == 0 ||
+                              g_strcmp0(decision, "reviewed") == 0;
+  static const gchar *available_section_ids[] = {
+    "overview",
+    "actions",
+    "settings",
+    "diagnostics"
+  };
+  const gchar *label = NULL;
+  const gchar *target = NULL;
+  const gchar *runtime_method = NULL;
+  const gchar *read_model = NULL;
+  const gchar *state = NULL;
+  GVariantBuilder detail;
+
+  if (!kde_center_page_section_detail(section_id, &label, &target, &runtime_method, &read_model, &state)) {
+    return NULL;
+  }
+
+  g_variant_builder_init(&detail, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&detail, "{sv}", "request_type", g_variant_new_string("kde-center-page-section-detail"));
+  g_variant_builder_add(&detail, "{sv}", "page_type", g_variant_new_string("compatibility-center-application-page"));
+  g_variant_builder_add(&detail, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&detail, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPageSectionDetail"));
+  g_variant_builder_add(&detail, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-section-detail-preview"));
+  g_variant_builder_add(&detail, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&detail, "{sv}", "section_id", g_variant_new_string(section_id));
+  g_variant_builder_add(&detail, "{sv}", "section_label", g_variant_new_string(label));
+  g_variant_builder_add(&detail, "{sv}", "section_target", g_variant_new_string(target));
+  g_variant_builder_add(&detail, "{sv}", "section_state", g_variant_new_string(state));
+  g_variant_builder_add(&detail, "{sv}", "section_runtime_method", g_variant_new_string(runtime_method));
+  g_variant_builder_add(&detail, "{sv}", "section_read_model", g_variant_new_string(read_model));
+  g_variant_builder_add(&detail, "{sv}", "available_section_ids", g_variant_new_strv(available_section_ids, 4));
+  g_variant_builder_add(&detail, "{sv}", "read_only_navigation", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "detail_preview_created", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "detail_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "section_actions_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "notifications_sent", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "resource_grant_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "runtime_launch_approval", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "request_objects_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "permission_grant_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&detail, "{sv}", "official_desktop_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "user_decision_captured", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&detail, "{sv}", "user_decision_allows_launch", g_variant_new_boolean(decision_allowed));
+
+  return g_variant_builder_end(&detail);
+}
+
 static GVariant *
 build_runtime_service_binding(void)
 {
@@ -1778,7 +1893,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(53));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(54));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -2556,6 +2671,35 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_kde_center_page_sections(application_id, decision))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKDECenterPageSectionDetail") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *section_id = NULL;
+    const gchar *decision = NULL;
+    GVariant *detail = NULL;
+
+    g_variant_get(parameters, "(&s&s&s)", &application_id, &section_id, &decision);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    detail = build_kde_center_page_section_detail(application_id, section_id, decision);
+    if (detail == NULL) {
+      g_dbus_method_invocation_return_error(invocation,
+                                            G_IO_ERROR,
+                                            G_IO_ERROR_INVALID_ARGUMENT,
+                                            "Unknown KDE center page section: %s",
+                                            section_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", detail)
     );
     return;
   }

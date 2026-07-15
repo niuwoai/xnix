@@ -280,3 +280,78 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		}
 	}
 }
+
+func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}
+	preview, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "settings", "approved", []string{"file:///home/test/Documents/book.xls"})
+	if err != nil {
+		t.Fatalf("NewKDECenterPageSectionDetailPreview returned error: %v", err)
+	}
+
+	if preview.SchemaVersion != "xnix.runtime.kde_center_page_section_detail.v1" ||
+		preview.RequestType != "kde-center-page-section-detail-preview" ||
+		preview.PageType != "compatibility-center-application-page" ||
+		preview.Source != "kde-center-page-sections-preview" ||
+		preview.RuntimeMethod != "GetKDECenterPageSectionDetail" ||
+		preview.ReadMethod != "GetKDECenterPageSectionDetailPreview" {
+		t.Fatalf("unexpected KDE center page section detail schema: %#v", preview)
+	}
+	if preview.ApplicationID != "org.example.ledger" ||
+		preview.ApplicationName != "Example Ledger" ||
+		preview.SectionID != "settings" ||
+		preview.SectionLabel != "Settings" ||
+		preview.SectionTarget != "compatibility-settings" ||
+		preview.SectionState != "planned" ||
+		preview.SectionRuntimeMethod != "GetCompatibilitySettings" ||
+		preview.SectionReadModel != "settings-model" {
+		t.Fatalf("unexpected section detail identity: %#v", preview)
+	}
+	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,actions,settings,diagnostics" {
+		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
+	}
+	if !preview.ReadOnlyNavigation || !preview.DetailPreviewCreated ||
+		preview.DetailPersisted || preview.SectionActionsEnabled ||
+		preview.SettingsPersisted || preview.SettingsPersistenceEnabled ||
+		preview.NotificationsSent || preview.ResourceGrantCreated ||
+		preview.RuntimeLaunchApproval || preview.LaunchEnabled ||
+		preview.ExecutionStarted || preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated || preview.HostRootModified ||
+		preview.NetworkRequired || preview.BackendDetailsExposed {
+		t.Fatalf("unexpected section detail safety flags: %#v", preview)
+	}
+	if !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
+		!preview.OfficialDesktopOnly || !preview.UserVisible ||
+		!preview.SafeForAIDiagnostics || !preview.UserDecisionCaptured ||
+		!preview.UserDecisionAllowsLaunch {
+		t.Fatalf("unexpected section detail ownership flags: %#v", preview)
+	}
+	if !containsString(preview.BlockedActions, "persist KDE center page section detail from preview state") ||
+		!containsString(preview.BlockedActions, "create Runtime request objects from section detail") ||
+		!containsString(preview.BlockedActions, "start compatibility profile from section detail") {
+		t.Fatalf("unexpected section detail blocked actions: %#v", preview.BlockedActions)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KDE center page section detail preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+
+	if _, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "unknown", "approved", nil); err == nil {
+		t.Fatalf("NewKDECenterPageSectionDetailPreview accepted an unknown section")
+	}
+	if _, err := NewKDECenterPageSectionDetailPreview(recipe, Provenance{}, "settings\nbad", "approved", nil); err == nil {
+		t.Fatalf("NewKDECenterPageSectionDetailPreview accepted a multiline section")
+	}
+}

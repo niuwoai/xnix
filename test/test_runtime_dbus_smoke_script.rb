@@ -62,6 +62,7 @@ assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script mus
 assert(contents.include?("GetCompatibilityActionReviewReceipt"), "D-Bus smoke script must call GetCompatibilityActionReviewReceipt")
 assert(contents.include?("GetKDECenterPage"), "D-Bus smoke script must call GetKDECenterPage")
 assert(contents.include?("GetKDECenterPageSections"), "D-Bus smoke script must call GetKDECenterPageSections")
+assert(contents.include?("GetKDECenterPageSectionDetail"), "D-Bus smoke script must call GetKDECenterPageSectionDetail")
 assert(contents.include?("GetKRunnerQueryPlan"), "D-Bus smoke script must call GetKRunnerQueryPlan")
 assert(contents.include?("bin/xnix-krunner-model"), "D-Bus smoke script must verify the KRunner D-Bus read model")
 assert(contents.include?("GetKDEIntegrationStatus"), "D-Bus smoke script must call GetKDEIntegrationStatus")

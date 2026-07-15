@@ -682,6 +682,20 @@ begin
   assert(stdout.include?("kde-center-page-sections"), "runtime smoke adapter must expose KDE center page sections over D-Bus")
   assert(stdout.include?("GetCompatibilitySettings"), "runtime smoke adapter must expose section Runtime read methods over D-Bus")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKDECenterPageSectionDetail",
+    "org.xnix.sample.notepad",
+    "settings",
+    "approved"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKDECenterPageSectionDetail: #{stderr}")
+  assert(stdout.include?("kde-center-page-section-detail"), "runtime smoke adapter must expose KDE center page section details over D-Bus")
+  assert(stdout.include?("settings-model"), "runtime smoke adapter must expose selected section read models over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin

@@ -276,6 +276,24 @@ assert(!kde_center_page_sections["execution_started"], "dispatch must not start 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKDECenterPageSectionDetail",
+  JSON.generate(["org.xnix.sample.notepad", "settings", "approved"])
+)
+assert(status.success?, "dispatch GetKDECenterPageSectionDetail must exit successfully: #{stderr}")
+kde_center_page_section_detail = JSON.parse(stdout)
+assert(kde_center_page_section_detail["request_type"] == "kde-center-page-section-detail", "dispatch must route GetKDECenterPageSectionDetail")
+assert(kde_center_page_section_detail["runtime_method"] == "GetKDECenterPageSectionDetail", "dispatch must expose KDE center page section detail Runtime methods")
+assert(kde_center_page_section_detail["section_id"] == "settings", "dispatch must expose selected KDE center page sections")
+assert(kde_center_page_section_detail["section_runtime_method"] == "GetCompatibilitySettings", "dispatch must expose selected section read methods")
+assert(kde_center_page_section_detail["section_read_model"] == "settings-model", "dispatch must expose selected section read models")
+assert(kde_center_page_section_detail["available_section_ids"] == %w[overview actions settings diagnostics], "dispatch must expose selected section navigation")
+assert(kde_center_page_section_detail["read_only_navigation"], "dispatch must keep section details read-only")
+assert(!kde_center_page_section_detail["section_actions_enabled"], "dispatch must not enable KDE center page section detail actions")
+assert(!kde_center_page_section_detail["execution_started"], "dispatch must not start execution from KDE center page section details")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilityArtifactManifest",
   JSON.generate(["org.xnix.sample.notepad"])
 )

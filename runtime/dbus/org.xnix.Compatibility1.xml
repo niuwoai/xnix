@@ -247,6 +247,12 @@
       <arg name="decision" type="s" direction="in"/>
       <arg name="sections" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetKDECenterPageSectionDetail">
+      <arg name="application_id" type="s" direction="in"/>
+      <arg name="section_id" type="s" direction="in"/>
+      <arg name="decision" type="s" direction="in"/>
+      <arg name="detail" type="a{sv}" direction="out"/>
+    </method>
     <signal name="ApplicationChanged">
       <arg name="application_id" type="s"/>
     </signal>

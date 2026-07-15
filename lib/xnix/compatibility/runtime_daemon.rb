@@ -85,6 +85,7 @@ module Xnix
             "compatibility_center_summaries" => true,
             "kde_center_pages" => true,
             "kde_center_page_sections" => true,
+            "kde_center_page_section_details" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -171,6 +172,7 @@ module Xnix
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
           "kde_center_page" => kde_center_page_summary(recipe),
           "kde_center_page_sections" => kde_center_page_sections_summary(recipe),
+          "kde_center_page_section_detail" => kde_center_page_section_detail_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
@@ -682,6 +684,56 @@ module Xnix
         }
       end
 
+      def kde_center_page_section_detail(application_id, section_id, decision)
+        recipe = require_recipe(application_id)
+        sections = kde_center_page_sections(recipe.id, decision)
+        section = sections.fetch("sections").find { |item| item.fetch("id") == section_id }
+        raise ArgumentError, "unknown KDE center page section: #{section_id}" unless section
+
+        {
+          "version" => VERSION,
+          "request_type" => "kde-center-page-section-detail",
+          "page_type" => sections.fetch("page_type"),
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetKDECenterPageSectionDetail",
+          "read_model_source" => "go-kde-center-page-section-detail-preview",
+          "application_id" => recipe.id,
+          "application_name" => recipe.name,
+          "section_id" => section.fetch("id"),
+          "section_label" => section.fetch("label"),
+          "section_target" => section.fetch("target"),
+          "section_state" => section.fetch("state"),
+          "section_runtime_method" => section.fetch("runtime_method"),
+          "section_read_model" => section.fetch("read_model"),
+          "available_section_ids" => sections.fetch("section_ids"),
+          "read_only_navigation" => true,
+          "detail_preview_created" => true,
+          "detail_persisted" => false,
+          "section_actions_enabled" => false,
+          "settings_persisted" => false,
+          "settings_persistence_enabled" => false,
+          "notifications_sent" => false,
+          "resource_grant_created" => false,
+          "runtime_launch_approval" => false,
+          "launch_enabled" => false,
+          "execution_started" => false,
+          "request_objects_created" => false,
+          "permission_grant_created" => false,
+          "host_root_modified" => false,
+          "network_required" => false,
+          "backend_details_exposed" => false,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "official_desktop_only" => true,
+          "user_visible" => true,
+          "safe_for_ai_diagnostics" => true,
+          "user_decision_captured" => true,
+          "user_decision_allows_launch" => sections.fetch("user_decision_allows_launch"),
+          "desktop_safe_summary" => "KDE can open a selected Runtime-owned Compatibility Center section over D-Bus, but the detail cannot persist, grant, notify, or start execution."
+        }
+      end
+
       def kde_center_page_section(id, label, target, runtime_method, read_model, state)
         {
           "id" => id,
@@ -907,6 +959,12 @@ module Xnix
           kde_center_page_sections(
             required_parameter(method_name, parameters, 0),
             required_parameter(method_name, parameters, 1)
+          )
+        when "GetKDECenterPageSectionDetail"
+          kde_center_page_section_detail(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1),
+            required_parameter(method_name, parameters, 2)
           )
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
@@ -1276,6 +1334,25 @@ module Xnix
           "execution_started" => sections.fetch("execution_started"),
           "backend_details_exposed" => sections.fetch("backend_details_exposed"),
           "summary" => sections.fetch("desktop_safe_summary")
+        }
+      end
+
+      def kde_center_page_section_detail_summary(recipe)
+        detail = kde_center_page_section_detail(recipe.id, "overview", "approved")
+        {
+          "request_type" => detail.fetch("request_type"),
+          "runtime_method" => detail.fetch("runtime_method"),
+          "section_id" => detail.fetch("section_id"),
+          "section_runtime_method" => detail.fetch("section_runtime_method"),
+          "section_read_model" => detail.fetch("section_read_model"),
+          "available_section_ids" => detail.fetch("available_section_ids"),
+          "read_only_navigation" => detail.fetch("read_only_navigation"),
+          "detail_preview_created" => detail.fetch("detail_preview_created"),
+          "detail_persisted" => detail.fetch("detail_persisted"),
+          "section_actions_enabled" => detail.fetch("section_actions_enabled"),
+          "execution_started" => detail.fetch("execution_started"),
+          "backend_details_exposed" => detail.fetch("backend_details_exposed"),
+          "summary" => detail.fetch("desktop_safe_summary")
         }
       end
 

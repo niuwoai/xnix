@@ -72,6 +72,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-preview"), "Go Runtime CLI must render KDE action card previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-center-page-preview"), "Go Runtime CLI must render KDE Compatibility Center page previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-center-page-sections-preview"), "Go Runtime CLI must render KDE Compatibility Center page section previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-center-page-section-detail-preview"), "Go Runtime CLI must render KDE Compatibility Center page section detail previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-preflight-preview"), "Go Runtime CLI must render KDE action preflight previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-receipt-preview"), "Go Runtime CLI must render KDE action receipt previews")
@@ -1658,6 +1659,47 @@ if go_available
   assert(!kde_center_page_sections.downcase.include?("prefix"), "KDE center page sections preview must not expose implementation storage")
   assert(!kde_center_page_sections.include?(".exe"), "KDE center page sections preview must not expose a Windows executable")
   assert(!kde_center_page_sections.downcase.include?("virtual machine"), "KDE center page sections preview must not expose implementation labels")
+
+  kde_center_page_section_detail, kde_center_page_section_detail_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-center-page-section-detail-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--section",
+    "settings",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_center_page_section_detail_status.success?, "Go KDE center page section detail preview CLI must run successfully")
+  kde_center_page_section_detail_payload = JSON.parse(kde_center_page_section_detail)
+  assert(kde_center_page_section_detail_payload.fetch("schema_version") == "xnix.runtime.kde_center_page_section_detail.v1", "KDE center page section detail preview schema version must be stable")
+  assert(kde_center_page_section_detail_payload.fetch("request_type") == "kde-center-page-section-detail-preview", "KDE center page section detail preview must identify its request type")
+  assert(kde_center_page_section_detail_payload.fetch("runtime_method") == "GetKDECenterPageSectionDetail", "KDE center page section detail preview must expose the Runtime method")
+  assert(kde_center_page_section_detail_payload.fetch("read_method") == "GetKDECenterPageSectionDetailPreview", "KDE center page section detail preview must expose the read method")
+  assert(kde_center_page_section_detail_payload.fetch("section_id") == "settings", "KDE center page section detail preview must preserve the selected section")
+  assert(kde_center_page_section_detail_payload.fetch("section_runtime_method") == "GetCompatibilitySettings", "KDE center page section detail preview must route settings to Runtime settings")
+  assert(kde_center_page_section_detail_payload.fetch("section_read_model") == "settings-model", "KDE center page section detail preview must expose the backing read model")
+  assert(kde_center_page_section_detail_payload.fetch("available_section_ids") == %w[overview actions settings diagnostics], "KDE center page section detail preview must expose available navigation")
+  assert(kde_center_page_section_detail_payload.fetch("read_only_navigation") == true, "KDE center page section detail preview must remain read-only navigation")
+  assert(kde_center_page_section_detail_payload.fetch("runtime_owned") == true, "KDE center page section detail must remain Runtime-owned")
+  assert(kde_center_page_section_detail_payload.fetch("go_runtime_backed") == true, "KDE center page section detail must be backed by Go Runtime product logic")
+  assert(kde_center_page_section_detail_payload.fetch("detail_preview_created") == true, "KDE center page section detail must create a read model")
+  assert(kde_center_page_section_detail_payload.fetch("detail_persisted") == false, "KDE center page section detail must not persist detail state")
+  assert(kde_center_page_section_detail_payload.fetch("section_actions_enabled") == false, "KDE center page section detail must not enable actions")
+  assert(kde_center_page_section_detail_payload.fetch("settings_persisted") == false, "KDE center page section detail must not persist settings")
+  assert(kde_center_page_section_detail_payload.fetch("request_objects_created") == false, "KDE center page section detail must not create Runtime request objects")
+  assert(kde_center_page_section_detail_payload.fetch("resource_grant_created") == false, "KDE center page section detail must not grant resources")
+  assert(kde_center_page_section_detail_payload.fetch("notifications_sent") == false, "KDE center page section detail must not send notifications")
+  assert(kde_center_page_section_detail_payload.fetch("execution_started") == false, "KDE center page section detail must not start execution")
+  assert(kde_center_page_section_detail_payload.fetch("host_root_modified") == false, "KDE center page section detail must not mutate the host root")
+  assert(!kde_center_page_section_detail.downcase.include?("prefix"), "KDE center page section detail preview must not expose implementation storage")
+  assert(!kde_center_page_section_detail.include?(".exe"), "KDE center page section detail preview must not expose a Windows executable")
+  assert(!kde_center_page_section_detail.downcase.include?("virtual machine"), "KDE center page section detail preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

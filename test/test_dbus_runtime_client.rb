@@ -285,7 +285,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <53>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <54>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -334,6 +334,12 @@ class FakeCapture
     when "org.xnix.Compatibility1.GetKDECenterPageSections"
       [
         "({'request_type': <'kde-center-page-sections'>, 'page_type': <'compatibility-center-application-page'>, 'runtime_method': <'GetKDECenterPageSections'>, 'application_id': <'org.xnix.sample.notepad'>, 'section_count': <4>, 'read_only_section_count': <4>, 'navigation_only_section_count': <4>, 'executable_section_count': <0>, 'primary_section_id': <'overview'>, 'section_ids': <['overview', 'actions', 'settings', 'diagnostics']>, 'runtime_methods': <['GetCompatibilityCenterSummary', 'GetCompatibilityActionQueue', 'GetCompatibilitySettings', 'GetDiagnostics']>, 'runtime_owned': <true>, 'go_runtime_backed': <true>, 'sections_preview_created': <true>, 'sections_persisted': <false>, 'section_actions_enabled': <false>, 'settings_persisted': <false>, 'launch_enabled': <false>, 'execution_started': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetKDECenterPageSectionDetail"
+      [
+        "({'request_type': <'kde-center-page-section-detail'>, 'page_type': <'compatibility-center-application-page'>, 'runtime_method': <'GetKDECenterPageSectionDetail'>, 'application_id': <'org.xnix.sample.notepad'>, 'section_id': <'settings'>, 'section_label': <'Settings'>, 'section_target': <'compatibility-settings'>, 'section_state': <'planned'>, 'section_runtime_method': <'GetCompatibilitySettings'>, 'section_read_model': <'settings-model'>, 'available_section_ids': <['overview', 'actions', 'settings', 'diagnostics']>, 'read_only_navigation': <true>, 'runtime_owned': <true>, 'go_runtime_backed': <true>, 'detail_preview_created': <true>, 'detail_persisted': <false>, 'section_actions_enabled': <false>, 'settings_persisted': <false>, 'launch_enabled': <false>, 'execution_started': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -816,7 +822,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 53, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 54, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
@@ -923,6 +929,26 @@ assert(!kde_center_page_sections["settings_persisted"], "D-Bus client must parse
 assert(!kde_center_page_sections["launch_enabled"], "D-Bus client must parse disabled KDE center page section launch")
 assert(!kde_center_page_sections["execution_started"], "D-Bus client must parse disabled KDE center page section execution")
 assert(!kde_center_page_sections["backend_details_exposed"], "D-Bus client must parse KDE center page section backend detail status")
+
+kde_center_page_section_detail = client.kde_center_page_section_detail("org.xnix.sample.notepad", "settings", "approved")
+assert(kde_center_page_section_detail["request_type"] == "kde-center-page-section-detail", "D-Bus client must parse KDE center page section details")
+assert(kde_center_page_section_detail["page_type"] == "compatibility-center-application-page", "D-Bus client must parse KDE center page section detail page types")
+assert(kde_center_page_section_detail["runtime_method"] == "GetKDECenterPageSectionDetail", "D-Bus client must parse KDE center page section detail Runtime methods")
+assert(kde_center_page_section_detail["section_id"] == "settings", "D-Bus client must parse selected KDE center page section ids")
+assert(kde_center_page_section_detail["section_label"] == "Settings", "D-Bus client must parse selected KDE center page section labels")
+assert(kde_center_page_section_detail["section_runtime_method"] == "GetCompatibilitySettings", "D-Bus client must parse selected section Runtime read methods")
+assert(kde_center_page_section_detail["section_read_model"] == "settings-model", "D-Bus client must parse selected section read models")
+assert(kde_center_page_section_detail["available_section_ids"] == %w[overview actions settings diagnostics], "D-Bus client must parse selected section navigation ids")
+assert(kde_center_page_section_detail["read_only_navigation"], "D-Bus client must parse selected section read-only navigation")
+assert(kde_center_page_section_detail["runtime_owned"], "D-Bus client must parse KDE center page section detail Runtime ownership")
+assert(kde_center_page_section_detail["go_runtime_backed"], "D-Bus client must parse KDE center page section detail Go backing")
+assert(kde_center_page_section_detail["detail_preview_created"], "D-Bus client must parse KDE center page section detail preview status")
+assert(!kde_center_page_section_detail["detail_persisted"], "D-Bus client must parse disabled KDE center page section detail persistence")
+assert(!kde_center_page_section_detail["section_actions_enabled"], "D-Bus client must parse disabled KDE center page section detail actions")
+assert(!kde_center_page_section_detail["settings_persisted"], "D-Bus client must parse disabled KDE center page section detail settings persistence")
+assert(!kde_center_page_section_detail["launch_enabled"], "D-Bus client must parse disabled KDE center page section detail launch")
+assert(!kde_center_page_section_detail["execution_started"], "D-Bus client must parse disabled KDE center page section detail execution")
+assert(!kde_center_page_section_detail["backend_details_exposed"], "D-Bus client must parse KDE center page section detail backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },
