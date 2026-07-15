@@ -24,20 +24,30 @@ func run(args []string, stdout io.Writer) error {
 	root := flags.String("root", ".", "project root containing Runtime owner inputs")
 	mode := flags.String("mode", string(owner.ModePreview), "owner mode: preview or smoke-owner")
 	writeMethod := flags.String("deny-write", "", "render a deterministic disabled write-method response")
+	readMethod := flags.String("dispatch-read", "", "render a read-only Runtime owner method dispatch response")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if flags.NArg() != 0 {
+	if *readMethod == "" && flags.NArg() != 0 {
 		return errors.New("xnix-runtime-owner does not accept positional arguments")
 	}
 
 	var payload any
+	if *writeMethod != "" && *readMethod != "" {
+		return errors.New("xnix-runtime-owner accepts only one of --deny-write or --dispatch-read")
+	}
 	if *writeMethod != "" {
 		response, err := owner.DisabledWriteResponse(*writeMethod)
 		if err != nil {
 			return err
 		}
 		payload = response
+	} else if *readMethod != "" {
+		dispatch, err := owner.DispatchRead(*root, *readMethod, flags.Args())
+		if err != nil {
+			return err
+		}
+		payload = dispatch
 	} else {
 		candidate, err := owner.NewCandidate(*root, owner.CandidateMode(*mode))
 		if err != nil {

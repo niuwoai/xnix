@@ -85,4 +85,19 @@ assert(write_response.fetch("error_name") == "org.xnix.Compatibility1.Error.Writ
 assert(!write_response.fetch("dispatch_enabled"), "Runtime owner candidate smoke must keep denied write dispatch disabled")
 assert(!write_response.fetch("request_created"), "Runtime owner candidate smoke must keep denied write request creation disabled")
 
+stdout, stderr, status = Open3.capture3(*owner_command, "--root", ".", "--dispatch-read", "GetRuntimeWriteGate", "Launch")
+assert(status.success?, "Runtime owner candidate smoke must render read-only owner dispatch responses: #{stderr}")
+read_dispatch = JSON.parse(stdout)
+assert(read_dispatch.fetch("schema_version") == "xnix.runtime.owner_read_dispatch.v1", "Runtime owner candidate smoke must expose the read dispatch schema")
+assert(read_dispatch.fetch("method") == "GetRuntimeWriteGate", "Runtime owner candidate smoke must dispatch the requested read method")
+assert(read_dispatch.fetch("read_only_dispatch"), "Runtime owner candidate smoke must mark owner dispatch as read-only")
+assert(!read_dispatch.fetch("write_methods_enabled"), "Runtime owner candidate smoke must keep write methods disabled during read dispatch")
+assert(!read_dispatch.fetch("event_loop_started"), "Runtime owner candidate smoke must not start an event loop for read dispatch")
+assert(!read_dispatch.fetch("session_bus_claimed"), "Runtime owner candidate smoke must not claim the session bus for read dispatch")
+assert(!read_dispatch.fetch("production_bus_claimed"), "Runtime owner candidate smoke must not claim the production bus for read dispatch")
+dispatch_payload = read_dispatch.fetch("payload")
+assert(dispatch_payload.fetch("request_type") == "runtime-write-gate-preview", "Runtime owner candidate smoke must include the dispatched Runtime payload")
+assert(dispatch_payload.fetch("method_name") == "Launch", "Runtime owner candidate smoke must pass read dispatch arguments")
+assert(!dispatch_payload.fetch("dispatch_enabled"), "Runtime owner candidate smoke must preserve nested write dispatch gates")
+
 puts "PASS: Runtime owner candidate restricted session smoke"

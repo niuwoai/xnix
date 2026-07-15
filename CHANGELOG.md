@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.205] - 2026-07-16
+
+### Added
+
+- Added Go Runtime owner read dispatch previews for the Runtime owner method group, allowing `xnix-runtime-owner --dispatch-read <method> [args...]` to render selected read-only owner payloads in-process without starting a D-Bus event loop, claiming session or production bus ownership, enabling write methods, starting services, requiring network, mutating the host root, or exposing backend details.
+- Extended the Runtime owner candidate restricted session smoke to verify `GetRuntimeWriteGate` through the new read dispatch envelope.
+- Added `docs/claude-code-contract-gap-work-packages.md`, a branch-sized Claude Code backlog for contract-heavy Runtime, KDE, Portal, snapshot, execution, AI diagnostics, and image acceptance gaps.
+
+### Changed
+
+- Updated layout verification and Runtime owner CLI tests to cover the read-only dispatch schema, safety flags, and nested write-gate payload.
+
 ## [0.2.204] - 2026-07-16
 
 ### Added

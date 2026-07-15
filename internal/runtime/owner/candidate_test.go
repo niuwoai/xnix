@@ -8,7 +8,7 @@ func TestNewCandidateExposesSafeGoOwnerCandidate(t *testing.T) {
 		t.Fatalf("NewCandidate returned error: %v", err)
 	}
 
-	if candidate.Version != "0.2.204" ||
+	if candidate.Version != "0.2.205" ||
 		candidate.SchemaVersion != "xnix.runtime.owner_candidate.v1" ||
 		candidate.RequestType != "runtime-owner-candidate" ||
 		candidate.OwnerType != "go-runtime-owner-candidate" ||

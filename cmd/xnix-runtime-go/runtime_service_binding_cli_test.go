@@ -20,7 +20,7 @@ func TestRuntimeServiceBindingPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.204" ||
+	if payload["version"] != "0.2.205" ||
 		payload["schema_version"] != "xnix.runtime.service_binding.v1" ||
 		payload["request_type"] != "runtime-service-binding-preview" ||
 		payload["binding_type"] != "runtime-service-binding" ||
