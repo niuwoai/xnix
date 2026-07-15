@@ -18,7 +18,7 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.234" ||
+	if payload["version"] != "0.2.235" ||
 		payload["schema_version"] != "xnix.runtime.owner_route_manifest.v1" ||
 		payload["request_type"] != "runtime-owner-route-manifest-preview" ||
 		payload["manifest_type"] != "runtime-owner-route-manifest" ||
@@ -34,11 +34,11 @@ func TestRuntimeOwnerRouteManifestPreviewCommandRendersGoReadModel(t *testing.T)
 	}
 
 	routeCounts := payload["route_counts"].(map[string]any)
-	if routeCounts["total"] != float64(57) ||
-		routeCounts["go_routed"] != float64(57) ||
+	if routeCounts["total"] != float64(61) ||
+		routeCounts["go_routed"] != float64(61) ||
 		routeCounts["c_core_backed"] != float64(0) ||
 		routeCounts["ruby_legacy"] != float64(0) ||
-		routeCounts["ready"] != float64(57) ||
+		routeCounts["ready"] != float64(61) ||
 		routeCounts["pending"] != float64(0) ||
 		routeCounts["blocked"] != float64(0) {
 		t.Fatalf("unexpected route counts: %#v", routeCounts)

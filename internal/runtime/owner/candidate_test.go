@@ -8,7 +8,7 @@ func TestNewCandidateExposesSafeGoOwnerCandidate(t *testing.T) {
 		t.Fatalf("NewCandidate returned error: %v", err)
 	}
 
-	if candidate.Version != "0.2.234" ||
+	if candidate.Version != "0.2.235" ||
 		candidate.SchemaVersion != "xnix.runtime.owner_candidate.v1" ||
 		candidate.RequestType != "runtime-owner-candidate" ||
 		candidate.OwnerType != "go-runtime-owner-candidate" ||
@@ -23,11 +23,11 @@ func TestNewCandidateExposesSafeGoOwnerCandidate(t *testing.T) {
 	if !candidate.ServiceActivationReady ||
 		!candidate.ReadOnlyRouteTableReady ||
 		!candidate.ReadOnlyServeReady ||
-		candidate.RouteCount != 57 ||
-		candidate.GoRouteCount != 57 ||
+		candidate.RouteCount != 61 ||
+		candidate.GoRouteCount != 61 ||
 		candidate.CCoreRouteCount != 0 ||
 		candidate.RubyLegacyRouteCount != 0 ||
-		len(candidate.Routes) != 57 {
+		len(candidate.Routes) != 61 {
 		t.Fatalf("unexpected route readiness: %#v", candidate)
 	}
 	if candidate.WriteMethodCount != 4 || len(candidate.WriteMethods) != 4 {

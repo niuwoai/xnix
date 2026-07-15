@@ -233,12 +233,28 @@ module Xnix
         parse_dictionary(call("GetRuntimeLiveOwnerGate"))
       end
 
+      def runtime_owner_process
+        parse_dictionary(call("GetRuntimeOwnerProcess"))
+      end
+
       def runtime_owner_smoke_plan
         parse_dictionary(call("GetRuntimeOwnerSmokePlan"))
       end
 
       def runtime_method_parity_manifest
         parse_dictionary(call("GetRuntimeMethodParityManifest"))
+      end
+
+      def runtime_owner_route_manifest
+        parse_dictionary(call("GetRuntimeOwnerRouteManifest"))
+      end
+
+      def runtime_owner_recipe_trust
+        parse_dictionary(call("GetRuntimeOwnerRecipeTrust"))
+      end
+
+      def runtime_owner_readiness
+        parse_dictionary(call("GetRuntimeOwnerReadiness"))
       end
 
       def runtime_write_gate(method_name)

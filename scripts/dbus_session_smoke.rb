@@ -672,6 +672,17 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeOwnerProcess"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerProcess: #{stderr}")
+  assert(stdout.include?("runtime-owner-process"), "runtime smoke adapter must expose Runtime owner process over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeOwnerProcess")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetRuntimeOwnerSmokePlan"
   )
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerSmokePlan: #{stderr}")
@@ -688,6 +699,39 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeMethodParityManifest: #{stderr}")
   assert(stdout.include?("runtime-method-parity-manifest"), "runtime smoke adapter must expose Runtime method parity manifests over D-Bus")
   assert_go_owner_bridge(stdout, "GetRuntimeMethodParityManifest")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeOwnerRouteManifest"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerRouteManifest: #{stderr}")
+  assert(stdout.include?("runtime-owner-route-manifest"), "runtime smoke adapter must expose Runtime owner route manifests over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeOwnerRouteManifest")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeOwnerRecipeTrust"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerRecipeTrust: #{stderr}")
+  assert(stdout.include?("runtime-owner-recipe-trust"), "runtime smoke adapter must expose Runtime owner recipe trust over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeOwnerRecipeTrust")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetRuntimeOwnerReadiness"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetRuntimeOwnerReadiness: #{stderr}")
+  assert(stdout.include?("runtime-owner-readiness"), "runtime smoke adapter must expose Runtime owner readiness over D-Bus")
+  assert_go_owner_bridge(stdout, "GetRuntimeOwnerReadiness")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

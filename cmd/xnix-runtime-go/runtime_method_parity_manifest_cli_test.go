@@ -18,7 +18,7 @@ func TestRuntimeMethodParityManifestPreviewCommandRendersGoReadModel(t *testing.
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.234" ||
+	if payload["version"] != "0.2.235" ||
 		payload["schema_version"] != "xnix.runtime.method_parity_manifest.v1" ||
 		payload["request_type"] != "runtime-method-parity-manifest-preview" ||
 		payload["manifest_type"] != "runtime-method-parity-manifest" ||
@@ -32,11 +32,11 @@ func TestRuntimeMethodParityManifestPreviewCommandRendersGoReadModel(t *testing.
 		payload["interface"] != "org.xnix.Compatibility1" {
 		t.Fatalf("unexpected Runtime D-Bus identity: %#v", payload)
 	}
-	if payload["method_count"] != float64(57) {
+	if payload["method_count"] != float64(61) {
 		t.Fatalf("unexpected method count: %#v", payload["method_count"])
 	}
 	methods := payload["read_only_methods"].([]any)
-	if len(methods) != 57 ||
+	if len(methods) != 61 ||
 		!containsAny(methods, "GetRuntimeOwnerSmokePlan") ||
 		!containsAny(methods, "GetRuntimeMethodParityManifest") ||
 		!containsAny(methods, "GetKDECenterPageSectionDetail") {
@@ -53,7 +53,7 @@ func TestRuntimeMethodParityManifestPreviewCommandRendersGoReadModel(t *testing.
 		if check["id"] != id ||
 			checkIDs[index] != id ||
 			check["status"] != "pass" ||
-			check["method_count"] != float64(57) ||
+			check["method_count"] != float64(61) ||
 			len(check["missing_methods"].([]any)) != 0 {
 			t.Fatalf("unexpected parity check at %d: %#v ids=%#v", index, checks, checkIDs)
 		}

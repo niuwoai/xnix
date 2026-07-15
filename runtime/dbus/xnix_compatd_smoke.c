@@ -1517,6 +1517,11 @@ handle_method_call(GDBusConnection *connection,
     return;
   }
 
+  if (g_strcmp0(method_name, "GetRuntimeOwnerProcess") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_process()));
+    return;
+  }
+
   if (g_strcmp0(method_name, "GetRuntimeOwnerSmokePlan") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_smoke_plan()));
     return;
@@ -1524,6 +1529,21 @@ handle_method_call(GDBusConnection *connection,
 
   if (g_strcmp0(method_name, "GetRuntimeMethodParityManifest") == 0) {
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_method_parity_manifest()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeOwnerRouteManifest") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_route_manifest()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeOwnerRecipeTrust") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_recipe_trust()));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetRuntimeOwnerReadiness") == 0) {
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_owner_readiness()));
     return;
   }
 

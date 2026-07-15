@@ -12,15 +12,15 @@ func TestDispatchReadRendersOwnerReadinessWithoutBusOwnership(t *testing.T) {
 		t.Fatalf("DispatchRead returned error: %v", err)
 	}
 
-	if dispatch.Version != "0.2.234" ||
+	if dispatch.Version != "0.2.235" ||
 		dispatch.SchemaVersion != "xnix.runtime.owner_read_dispatch.v1" ||
 		dispatch.RequestType != "runtime-owner-read-dispatch" ||
 		dispatch.DispatchType != "go-owner-read-dispatch" ||
 		dispatch.Source != "go-runtime-owner-candidate+in-process-read-dispatch" ||
 		dispatch.Method != "GetRuntimeOwnerReadiness" ||
-		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.RouteSource != "go-runtime-cli" ||
 		dispatch.GoCommand != "runtime-owner-readiness-preview" ||
-		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		dispatch.RouteStatus != "go-preview-ready" ||
 		!dispatch.RouteReady {
 		t.Fatalf("unexpected dispatch schema: %#v", dispatch)
 	}

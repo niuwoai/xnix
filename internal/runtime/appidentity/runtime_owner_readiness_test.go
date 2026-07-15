@@ -12,7 +12,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerReadinessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.234" ||
+	if preview.Version != "0.2.235" ||
 		preview.SchemaVersion != "xnix.runtime.owner_readiness.v1" ||
 		preview.RequestType != "runtime-owner-readiness-preview" ||
 		preview.ReadinessType != "runtime-owner-readiness" ||
@@ -71,7 +71,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 	if preview.MethodParityManifest.RequestType != "runtime-method-parity-manifest-preview" ||
 		preview.MethodParityManifest.ManifestType != "runtime-method-parity-manifest" ||
 		!preview.MethodParityManifest.ReadOnlyMethodParityReady ||
-		preview.MethodParityManifest.MethodCount != 57 ||
+		preview.MethodParityManifest.MethodCount != 61 ||
 		preview.MethodParityManifest.WriteMethodsSupported ||
 		preview.MethodParityManifest.WriteMethodDispatchEnabled ||
 		preview.MethodParityManifest.Counts.Passed != 5 {
@@ -79,7 +79,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 	}
 	if preview.OwnerRouteManifest.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.OwnerRouteManifest.ManifestType != "runtime-owner-route-manifest" ||
-		preview.OwnerRouteManifest.RouteCount != 57 ||
+		preview.OwnerRouteManifest.RouteCount != 61 ||
 		preview.OwnerRouteManifest.GoRouteCount != len(runtimeOwnerRouteGoCommands) ||
 		preview.OwnerRouteManifest.CCoreRouteCount != len(runtimeOwnerRouteCCoreCommands) ||
 		preview.OwnerRouteManifest.RubyLegacyRouteCount != 0 ||
@@ -171,7 +171,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 
 func TestRuntimeOwnerReadinessPreviewBlocksMissingActivationAndParity(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.234\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.235\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

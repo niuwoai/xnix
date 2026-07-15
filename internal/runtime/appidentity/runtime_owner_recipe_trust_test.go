@@ -14,7 +14,7 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 		t.Fatalf("NewRuntimeOwnerRecipeTrustPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.234" ||
+	if preview.Version != "0.2.235" ||
 		preview.SchemaVersion != "xnix.runtime.owner_recipe_trust.v1" ||
 		preview.RequestType != "runtime-owner-recipe-trust-preview" ||
 		preview.TrustType != "runtime-owner-recipe-trust" ||
@@ -80,7 +80,7 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 
 func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.234\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.235\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 	recipeDir := filepath.Join(root, "runtime", "recipes")
@@ -134,7 +134,7 @@ func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 
 func TestRuntimeOwnerRecipeTrustPreviewBlocksMissingRegistry(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.234\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.235\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

@@ -18,7 +18,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.234" ||
+	if payload["version"] != "0.2.235" ||
 		payload["schema_version"] != "xnix.runtime.owner_readiness.v1" ||
 		payload["request_type"] != "runtime-owner-readiness-preview" ||
 		payload["readiness_type"] != "runtime-owner-readiness" ||
@@ -74,7 +74,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if methodParity["request_type"] != "runtime-method-parity-manifest-preview" ||
 		methodParity["manifest_type"] != "runtime-method-parity-manifest" ||
 		methodParity["read_only_method_parity_ready"] != true ||
-		methodParity["method_count"] != float64(57) ||
+		methodParity["method_count"] != float64(61) ||
 		methodParity["write_methods_supported"] != false ||
 		methodParity["write_method_dispatch_enabled"] != false {
 		t.Fatalf("unexpected method parity summary: %#v", methodParity)
@@ -82,8 +82,8 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	ownerRouteManifest := payload["owner_route_manifest"].(map[string]any)
 	if ownerRouteManifest["request_type"] != "runtime-owner-route-manifest-preview" ||
 		ownerRouteManifest["manifest_type"] != "runtime-owner-route-manifest" ||
-		ownerRouteManifest["route_count"] != float64(57) ||
-		ownerRouteManifest["go_route_count"] != float64(57) ||
+		ownerRouteManifest["route_count"] != float64(61) ||
+		ownerRouteManifest["go_route_count"] != float64(61) ||
 		ownerRouteManifest["c_core_route_count"] != float64(0) ||
 		ownerRouteManifest["ruby_legacy_route_count"] != float64(0) ||
 		ownerRouteManifest["go_owner_route_coverage_ready"] != true ||

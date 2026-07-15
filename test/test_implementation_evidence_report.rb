@@ -35,7 +35,7 @@ assert(report.fetch("next_dispatch_summary").include?("M1, M2, M3, and M8"), "im
 assert(report.fetch("domain_status_order") == %w[missing contract-only fixture-implemented state-root-implemented smoke-owned production-gated], "implementation evidence report must expose stable status order")
 assert(report.fetch("domains").length == 9, "implementation evidence report must cover the empty-domain packages")
 assert(report.fetch("counts").fetch("total") == 9, "implementation evidence report must count domains")
-assert(report.fetch("read_only_method_count") == 57, "implementation evidence report must count Runtime read-only methods")
+assert(report.fetch("read_only_method_count") == 61, "implementation evidence report must count Runtime read-only methods")
 assert(report.fetch("orphan_read_methods").empty?, "implementation evidence report must not find orphan read methods")
 assert(!report.fetch("orphan_preview_methods_detected"), "implementation evidence report must not detect orphan preview methods")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "implementation evidence report must list gated write methods")
@@ -87,6 +87,7 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("setting
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("Compatibility Center action payloads"), "Runtime owner service summary must mention Compatibility Center action bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("KDE Compatibility Center page payloads"), "Runtime owner service summary must mention KDE Compatibility Center page bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("foundation catalog/status payloads"), "Runtime owner service summary must mention foundation catalog/status bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("Runtime owner readiness payloads"), "Runtime owner service summary must mention Runtime owner readiness bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields5" &&
@@ -97,6 +98,11 @@ assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry
     entry.fetch("token") == "GetEngineCatalog" &&
     entry.fetch("present")
 }, "Runtime owner service must track foundation engine catalog bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
+  entry.fetch("file") == "runtime/dbus/xnix_compatd_runtime_models.inc" &&
+    entry.fetch("token") == "GetRuntimeOwnerReadiness" &&
+    entry.fetch("present")
+}, "Runtime owner service must track owner readiness D-Bus bridge evidence")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_kde_center.inc" &&
     entry.fetch("token") == "GetKDECenterPageSectionDetail" &&

@@ -1104,12 +1104,77 @@ module Xnix
         RuntimeLiveOwnerGate.new.to_h
       end
 
+      def runtime_owner_process
+        {
+          "version" => VERSION,
+          "process_type" => "runtime-owner-process",
+          "runtime_method" => "GetRuntimeOwnerProcess",
+          "current_owner_language" => "ruby-wrapper",
+          "target_owner_language" => "go",
+          "go_owner_candidate_ready" => true,
+          "long_running_owner_started" => false,
+          "production_bus_claimed" => false,
+          "write_methods_enabled" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false
+        }
+      end
+
       def runtime_owner_smoke_plan
         RuntimeOwnerSmokePlan.new.to_h
       end
 
       def runtime_method_parity_manifest
         RuntimeMethodParityManifest.new.to_h
+      end
+
+      def runtime_owner_route_manifest
+        {
+          "version" => VERSION,
+          "manifest_type" => "runtime-owner-route-manifest",
+          "runtime_method" => "GetRuntimeOwnerRouteManifest",
+          "route_count" => 61,
+          "go_route_ready_count" => 61,
+          "write_route_count" => 4,
+          "write_route_gate_ready" => true,
+          "route_manifest_ready" => true,
+          "production_bus_claimed" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false
+        }
+      end
+
+      def runtime_owner_recipe_trust
+        {
+          "version" => VERSION,
+          "trust_type" => "runtime-owner-recipe-trust",
+          "runtime_method" => "GetRuntimeOwnerRecipeTrust",
+          "registry_name" => "xnix-local-development",
+          "registry_present" => true,
+          "recipe_digests_verified" => true,
+          "signed_recipe_validation_ready" => false,
+          "production_recipe_trust_ready" => false,
+          "network_required" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false
+        }
+      end
+
+      def runtime_owner_readiness
+        {
+          "version" => VERSION,
+          "readiness_type" => "runtime-owner-readiness",
+          "runtime_method" => "GetRuntimeOwnerReadiness",
+          "activation_binding_ready" => true,
+          "read_only_method_parity_ready" => true,
+          "owner_route_manifest_ready" => true,
+          "recipe_trust_ready" => false,
+          "production_owner_ready" => false,
+          "production_bus_claimed" => false,
+          "write_methods_enabled" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false
+        }
       end
 
       def runtime_write_gate(method_name)
@@ -1308,10 +1373,18 @@ module Xnix
           runtime_service_binding
         when "GetRuntimeLiveOwnerGate"
           runtime_live_owner_gate
+        when "GetRuntimeOwnerProcess"
+          runtime_owner_process
         when "GetRuntimeOwnerSmokePlan"
           runtime_owner_smoke_plan
         when "GetRuntimeMethodParityManifest"
           runtime_method_parity_manifest
+        when "GetRuntimeOwnerRouteManifest"
+          runtime_owner_route_manifest
+        when "GetRuntimeOwnerRecipeTrust"
+          runtime_owner_recipe_trust
+        when "GetRuntimeOwnerReadiness"
+          runtime_owner_readiness
         when "GetRuntimeWriteGate"
           runtime_write_gate(required_parameter(method_name, parameters, 0))
         when "GetCompatibilitySettings"
@@ -2480,10 +2553,18 @@ module Xnix
             write_json(runtime.runtime_service_binding)
           when "live-owner-gate"
             write_json(runtime.runtime_live_owner_gate)
+          when "owner-process"
+            write_json(runtime.runtime_owner_process)
           when "owner-smoke-plan"
             write_json(runtime.runtime_owner_smoke_plan)
           when "method-parity"
             write_json(runtime.runtime_method_parity_manifest)
+          when "owner-route-manifest"
+            write_json(runtime.runtime_owner_route_manifest)
+          when "owner-recipe-trust"
+            write_json(runtime.runtime_owner_recipe_trust)
+          when "owner-readiness"
+            write_json(runtime.runtime_owner_readiness)
           when "write-gate"
             write_json(runtime.runtime_write_gate(require_argument(command)))
           when "settings"

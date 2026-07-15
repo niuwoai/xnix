@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.235] - 2026-07-16
+
+### Added
+
+- Exposed Runtime owner readiness and self-description reads on the read-only D-Bus contract: `GetRuntimeOwnerProcess`, `GetRuntimeOwnerRouteManifest`, `GetRuntimeOwnerRecipeTrust`, and `GetRuntimeOwnerReadiness`.
+- Added constrained C D-Bus smoke read models and restricted session smoke assertions for those owner readiness reads, each carrying Go owner read-dispatch evidence while keeping production bus ownership, writes, service start, backend launch, network access, privileged containers, and host-root mutation disabled.
+
+### Changed
+
+- Expanded Runtime read-only parity, owner route, D-Bus client, C core parity, and implementation evidence gates from 57 to 61 read methods.
+- Kept Ruby RuntimeDaemon support as a thin migration surface while Go owner dispatch remains the durable source for owner readiness payload evidence.
+
 ## [0.2.234] - 2026-07-16
 
 ### Added

@@ -876,6 +876,26 @@ build_runtime_owner_smoke_plan(void)
 }
 
 static GVariant *
+build_runtime_owner_process(void)
+{
+  GVariantBuilder process;
+
+  g_variant_builder_init(&process, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&process, "{sv}", "process_type", g_variant_new_string("runtime-owner-process"));
+  add_go_owner_dispatch_bridge_fields(&process, "GetRuntimeOwnerProcess", NULL);
+  g_variant_builder_add(&process, "{sv}", "current_owner_language", g_variant_new_string("ruby-wrapper"));
+  g_variant_builder_add(&process, "{sv}", "target_owner_language", g_variant_new_string("go"));
+  g_variant_builder_add(&process, "{sv}", "go_owner_candidate_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&process, "{sv}", "long_running_owner_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&process, "{sv}", "production_bus_claimed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&process, "{sv}", "write_methods_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&process, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&process, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&process);
+}
+
+static GVariant *
 build_runtime_method_parity_manifest(void)
 {
   GVariantBuilder manifest;
@@ -883,7 +903,7 @@ build_runtime_method_parity_manifest(void)
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
   add_go_owner_dispatch_bridge_fields(&manifest, "GetRuntimeMethodParityManifest", NULL);
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(57));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(61));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -893,6 +913,67 @@ build_runtime_method_parity_manifest(void)
   g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_runtime_owner_route_manifest(void)
+{
+  GVariantBuilder manifest;
+
+  g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-owner-route-manifest"));
+  add_go_owner_dispatch_bridge_fields(&manifest, "GetRuntimeOwnerRouteManifest", NULL);
+  g_variant_builder_add(&manifest, "{sv}", "route_count", g_variant_new_int32(61));
+  g_variant_builder_add(&manifest, "{sv}", "go_route_ready_count", g_variant_new_int32(61));
+  g_variant_builder_add(&manifest, "{sv}", "write_route_count", g_variant_new_int32(4));
+  g_variant_builder_add(&manifest, "{sv}", "write_route_gate_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&manifest, "{sv}", "route_manifest_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&manifest, "{sv}", "production_bus_claimed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&manifest, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&manifest);
+}
+
+static GVariant *
+build_runtime_owner_recipe_trust(void)
+{
+  GVariantBuilder trust;
+
+  g_variant_builder_init(&trust, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&trust, "{sv}", "trust_type", g_variant_new_string("runtime-owner-recipe-trust"));
+  add_go_owner_dispatch_bridge_fields(&trust, "GetRuntimeOwnerRecipeTrust", NULL);
+  g_variant_builder_add(&trust, "{sv}", "registry_name", g_variant_new_string("xnix-local-development"));
+  g_variant_builder_add(&trust, "{sv}", "registry_present", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&trust, "{sv}", "recipe_digests_verified", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&trust, "{sv}", "signed_recipe_validation_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&trust, "{sv}", "production_recipe_trust_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&trust, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&trust, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&trust, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&trust);
+}
+
+static GVariant *
+build_runtime_owner_readiness(void)
+{
+  GVariantBuilder readiness;
+
+  g_variant_builder_init(&readiness, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&readiness, "{sv}", "readiness_type", g_variant_new_string("runtime-owner-readiness"));
+  add_go_owner_dispatch_bridge_fields(&readiness, "GetRuntimeOwnerReadiness", NULL);
+  g_variant_builder_add(&readiness, "{sv}", "activation_binding_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "owner_route_manifest_ready", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&readiness, "{sv}", "recipe_trust_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "production_owner_ready", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "production_bus_claimed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "write_methods_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&readiness, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&readiness);
 }
 
 static GVariant *

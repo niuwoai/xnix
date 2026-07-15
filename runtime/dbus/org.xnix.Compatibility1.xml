@@ -199,11 +199,23 @@
     <method name="GetRuntimeLiveOwnerGate">
       <arg name="gate" type="a{sv}" direction="out"/>
     </method>
+    <method name="GetRuntimeOwnerProcess">
+      <arg name="process" type="a{sv}" direction="out"/>
+    </method>
     <method name="GetRuntimeOwnerSmokePlan">
       <arg name="plan" type="a{sv}" direction="out"/>
     </method>
     <method name="GetRuntimeMethodParityManifest">
       <arg name="manifest" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetRuntimeOwnerRouteManifest">
+      <arg name="manifest" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetRuntimeOwnerRecipeTrust">
+      <arg name="trust" type="a{sv}" direction="out"/>
+    </method>
+    <method name="GetRuntimeOwnerReadiness">
+      <arg name="readiness" type="a{sv}" direction="out"/>
     </method>
     <method name="GetRuntimeWriteGate">
       <arg name="method_name" type="s" direction="in"/>

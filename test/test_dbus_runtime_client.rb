@@ -295,6 +295,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetRuntimeOwnerProcess"
+      [
+        "({'process_type': <'runtime-owner-process'>, 'current_owner_language': <'ruby-wrapper'>, 'target_owner_language': <'go'>, 'go_owner_candidate_ready': <true>, 'long_running_owner_started': <false>, 'production_bus_claimed': <false>, 'write_methods_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetRuntimeOwnerSmokePlan"
       [
         "({'plan_type': <'runtime-owner-smoke-plan'>, 'smoke_state': <'planned'>, 'smoke_environment': <'restricted-session'>, 'activation_binding_ready': <true>, 'live_dbus_owner_ready': <false>, 'production_owner_enabled': <false>, 'owner_transition_ready': <false>, 'pending_step_count': <6>, 'system_service_started': <false>, 'production_bus_claimed': <false>, 'backend_details_exposed': <false>},)\n",
@@ -303,7 +309,25 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <57>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <61>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRuntimeOwnerRouteManifest"
+      [
+        "({'manifest_type': <'runtime-owner-route-manifest'>, 'route_count': <61>, 'go_route_ready_count': <61>, 'write_route_count': <4>, 'write_route_gate_ready': <true>, 'route_manifest_ready': <true>, 'production_bus_claimed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRuntimeOwnerRecipeTrust"
+      [
+        "({'trust_type': <'runtime-owner-recipe-trust'>, 'registry_name': <'xnix-local-development'>, 'registry_present': <true>, 'recipe_digests_verified': <true>, 'signed_recipe_validation_ready': <false>, 'production_recipe_trust_ready': <false>, 'network_required': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetRuntimeOwnerReadiness"
+      [
+        "({'readiness_type': <'runtime-owner-readiness'>, 'activation_binding_ready': <true>, 'read_only_method_parity_ready': <true>, 'owner_route_manifest_ready': <true>, 'recipe_trust_ready': <false>, 'production_owner_ready': <false>, 'production_bus_claimed': <false>, 'write_methods_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -909,15 +933,42 @@ assert(!owner_smoke_plan["system_service_started"], "D-Bus client must parse own
 assert(!owner_smoke_plan["production_bus_claimed"], "D-Bus client must parse owner smoke bus claim state")
 assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse owner smoke backend detail status")
 
+owner_process = client.runtime_owner_process
+assert(owner_process["process_type"] == "runtime-owner-process", "D-Bus client must parse Runtime owner process reads")
+assert(owner_process["target_owner_language"] == "go", "D-Bus client must parse Runtime owner target language")
+assert(owner_process["go_owner_candidate_ready"], "D-Bus client must parse Go owner candidate readiness")
+assert(!owner_process["long_running_owner_started"], "D-Bus client must parse owner process start status")
+assert(!owner_process["production_bus_claimed"], "D-Bus client must parse owner process bus claim status")
+assert(!owner_process["write_methods_enabled"], "D-Bus client must parse owner process write gate status")
+
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 57, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 61, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
 assert(!method_parity["write_methods_supported"], "D-Bus client must parse write method support status")
 assert(!method_parity["write_method_dispatch_enabled"], "D-Bus client must parse write method dispatch status")
 assert(!method_parity["backend_details_exposed"], "D-Bus client must parse Runtime parity backend detail status")
+
+route_manifest = client.runtime_owner_route_manifest
+assert(route_manifest["manifest_type"] == "runtime-owner-route-manifest", "D-Bus client must parse Runtime owner route manifest reads")
+assert(route_manifest["route_count"] == 61, "D-Bus client must parse Runtime owner route counts")
+assert(route_manifest["go_route_ready_count"] == 61, "D-Bus client must parse Runtime owner Go route counts")
+assert(route_manifest["write_route_gate_ready"], "D-Bus client must parse Runtime owner write gate route status")
+
+recipe_trust = client.runtime_owner_recipe_trust
+assert(recipe_trust["trust_type"] == "runtime-owner-recipe-trust", "D-Bus client must parse Runtime owner recipe trust reads")
+assert(recipe_trust["registry_present"], "D-Bus client must parse Runtime owner recipe registry presence")
+assert(recipe_trust["recipe_digests_verified"], "D-Bus client must parse Runtime owner recipe digest status")
+assert(!recipe_trust["production_recipe_trust_ready"], "D-Bus client must parse Runtime owner production trust gate")
+
+owner_readiness = client.runtime_owner_readiness
+assert(owner_readiness["readiness_type"] == "runtime-owner-readiness", "D-Bus client must parse Runtime owner readiness reads")
+assert(owner_readiness["activation_binding_ready"], "D-Bus client must parse Runtime owner activation readiness")
+assert(owner_readiness["read_only_method_parity_ready"], "D-Bus client must parse Runtime owner parity readiness")
+assert(owner_readiness["owner_route_manifest_ready"], "D-Bus client must parse Runtime owner route readiness")
+assert(!owner_readiness["production_owner_ready"], "D-Bus client must parse Runtime owner production readiness gate")
 
 write_gate = client.runtime_write_gate("Launch")
 assert(write_gate["gate_type"] == "runtime-write-gate", "D-Bus client must parse Runtime write gates")

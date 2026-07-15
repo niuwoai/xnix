@@ -12,7 +12,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 		t.Fatalf("NewRuntimeMethodParityManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.234" ||
+	if preview.Version != "0.2.235" ||
 		preview.SchemaVersion != "xnix.runtime.method_parity_manifest.v1" ||
 		preview.RequestType != "runtime-method-parity-manifest-preview" ||
 		preview.ManifestType != "runtime-method-parity-manifest" ||
@@ -26,7 +26,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 		preview.Interface != "org.xnix.Compatibility1" {
 		t.Fatalf("unexpected Runtime D-Bus identity: %#v", preview)
 	}
-	if preview.MethodCount != 57 || len(preview.ReadOnlyMethods) != 57 {
+	if preview.MethodCount != 61 || len(preview.ReadOnlyMethods) != 61 {
 		t.Fatalf("unexpected read-only method count: %d len=%d", preview.MethodCount, len(preview.ReadOnlyMethods))
 	}
 	for _, method := range []string{
@@ -52,7 +52,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 		if check.ID != id ||
 			preview.CheckIDs[index] != id ||
 			check.Status != "pass" ||
-			check.MethodCount != 57 ||
+			check.MethodCount != 61 ||
 			len(check.MissingMethods) != 0 {
 			t.Fatalf("unexpected parity check at %d: %#v ids=%#v", index, preview.ParityChecks, preview.CheckIDs)
 		}
@@ -92,7 +92,7 @@ func TestRuntimeMethodParityManifestPreviewChecksProjectSources(t *testing.T) {
 
 func TestRuntimeMethodParityManifestPreviewBlocksMissingSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.234\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.235\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 
@@ -113,7 +113,7 @@ func TestRuntimeMethodParityManifestPreviewBlocksMissingSources(t *testing.T) {
 	for index, check := range preview.ParityChecks {
 		if check.Status != "blocked" ||
 			check.MethodCount != 0 ||
-			len(check.MissingMethods) != 57 {
+			len(check.MissingMethods) != 61 {
 			t.Fatalf("unexpected missing-source check at %d: %#v", index, check)
 		}
 	}

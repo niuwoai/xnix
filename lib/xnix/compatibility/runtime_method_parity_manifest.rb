@@ -63,8 +63,12 @@ module Xnix
         GetPortalAccessPolicy
         GetRuntimeServiceBinding
         GetRuntimeLiveOwnerGate
+        GetRuntimeOwnerProcess
         GetRuntimeOwnerSmokePlan
         GetRuntimeMethodParityManifest
+        GetRuntimeOwnerRouteManifest
+        GetRuntimeOwnerRecipeTrust
+        GetRuntimeOwnerReadiness
         GetRuntimeWriteGate
         GetCompatibilitySettings
         GetCompatibilitySettingsChangePlan
@@ -130,8 +134,12 @@ module Xnix
         "GetPortalAccessPolicy" => "portal_access_policy",
         "GetRuntimeServiceBinding" => "runtime_service_binding",
         "GetRuntimeLiveOwnerGate" => "runtime_live_owner_gate",
+        "GetRuntimeOwnerProcess" => "runtime_owner_process",
         "GetRuntimeOwnerSmokePlan" => "runtime_owner_smoke_plan",
         "GetRuntimeMethodParityManifest" => "runtime_method_parity_manifest",
+        "GetRuntimeOwnerRouteManifest" => "runtime_owner_route_manifest",
+        "GetRuntimeOwnerRecipeTrust" => "runtime_owner_recipe_trust",
+        "GetRuntimeOwnerReadiness" => "runtime_owner_readiness",
         "GetRuntimeWriteGate" => "runtime_write_gate",
         "GetCompatibilitySettings" => "settings",
         "GetCompatibilitySettingsChangePlan" => "settings_change_plan",
