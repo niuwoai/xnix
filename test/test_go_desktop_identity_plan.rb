@@ -68,6 +68,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-transaction-preview"), "Go Runtime CLI must render KDE execution transaction previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-preview"), "Go Runtime CLI must render KDE execution session previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-session-status-preview"), "Go Runtime CLI must render KDE execution session status previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-deck-preview"), "Go Runtime CLI must render KDE action card deck previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-card-preview"), "Go Runtime CLI must render KDE action card previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-preflight-preview"), "Go Runtime CLI must render KDE action preflight previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("kde-action-queue-preview"), "Go Runtime CLI must render KDE action queue previews")
@@ -1512,6 +1513,61 @@ if go_available
   assert(!kde_action_card.downcase.include?("prefix"), "KDE action card preview must not expose implementation storage")
   assert(!kde_action_card.include?(".exe"), "KDE action card preview must not expose a Windows executable")
   assert(!kde_action_card.downcase.include?("virtual machine"), "KDE action card preview must not expose implementation labels")
+
+  kde_action_card_deck, kde_action_card_deck_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "kde-action-card-deck-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad",
+    "--decision",
+    "approved",
+    "file:///home/test/Documents/example.txt"
+  )
+  assert(kde_action_card_deck_status.success?, "Go KDE action card deck preview CLI must run successfully")
+  kde_action_card_deck_payload = JSON.parse(kde_action_card_deck)
+  assert(kde_action_card_deck_payload.fetch("schema_version") == "xnix.runtime.kde_action_card_deck.v1", "KDE action card deck preview schema version must be stable")
+  assert(kde_action_card_deck_payload.fetch("request_type") == "kde-action-card-deck-preview", "KDE action card deck preview must identify its request type")
+  assert(kde_action_card_deck_payload.fetch("deck_type") == "compatibility-center-kde-action-card-deck", "KDE action card deck preview must identify its deck type")
+  assert(kde_action_card_deck_payload.fetch("source") == "kde-action-card-preview", "KDE action card deck preview must derive from action card previews")
+  assert(kde_action_card_deck_payload.fetch("runtime_method") == "GetKDEActionCardDeck", "KDE action card deck preview must expose the Runtime method")
+  assert(kde_action_card_deck_payload.fetch("queue").fetch("request_type") == "kde-action-queue-preview", "KDE action card deck preview must summarize action queue previews")
+  assert(kde_action_card_deck_payload.fetch("card_count") == 7, "KDE action card deck preview must render the seven first-release cards")
+  assert(kde_action_card_deck_payload.fetch("waiting_card_count") == 7, "KDE action card deck preview must keep approved cards waiting for Runtime gates")
+  assert(kde_action_card_deck_payload.fetch("deferred_card_count") == 0, "KDE action card deck preview must not defer approved cards")
+  assert(kde_action_card_deck_payload.fetch("rejected_card_count") == 0, "KDE action card deck preview must not reject approved cards")
+  assert(kde_action_card_deck_payload.fetch("navigation_action_count") == 28, "KDE action card deck preview must expose navigation-only actions")
+  assert(kde_action_card_deck_payload.fetch("disabled_action_count") == 21, "KDE action card deck preview must disable execution and grant actions on all cards")
+  assert(kde_action_card_deck_payload.fetch("primary_card_id") == "#{recipe.id}:review-launcher-action:card", "KDE action card deck preview must prefer launcher as the primary card")
+  deck_cards = kde_action_card_deck_payload.fetch("cards")
+  assert(deck_cards.length == 7, "KDE action card deck preview must include seven card records")
+  assert(deck_cards.first.fetch("action_id") == "review-launcher-action", "KDE action card deck preview must keep launcher first")
+  assert(deck_cards.first.fetch("card").fetch("badge") == "Waiting", "KDE action card deck preview must expose waiting card copy")
+  assert(deck_cards.first.fetch("primary_action").fetch("navigation_only") == true, "KDE action card deck primary actions must remain navigation-only")
+  assert(deck_cards.first.fetch("primary_action").fetch("mutates_runtime") == false, "KDE action card deck primary actions must not mutate Runtime state")
+  assert(deck_cards.first.fetch("primary_action").fetch("starts_program") == false, "KDE action card deck primary actions must not start programs")
+  file_card = deck_cards.find { |card| card.fetch("action_id") == "review-file-manager-action" }
+  assert(file_card.fetch("entry_point_id") == "file-manager", "KDE action card deck preview must include the Dolphin card")
+  assert(file_card.fetch("requires_portal") == true, "KDE action card deck preview must keep Dolphin card Portal-aware")
+  assert(file_card.fetch("required_runtime_gate") == "portal-file-open-review", "KDE action card deck preview must preserve the file-open Runtime gate")
+  assert(kde_action_card_deck_payload.fetch("deck_preview_created") == true, "KDE action card deck preview must create a read model")
+  assert(kde_action_card_deck_payload.fetch("deck_persisted") == false, "KDE action card deck preview must not persist decks")
+  assert(kde_action_card_deck_payload.fetch("cards_persisted") == false, "KDE action card deck preview must not persist cards")
+  assert(kde_action_card_deck_payload.fetch("card_actions_enabled") == false, "KDE action card deck preview must not enable card actions")
+  assert(kde_action_card_deck_payload.fetch("card_actions_persisted") == false, "KDE action card deck preview must not persist card actions")
+  assert(kde_action_card_deck_payload.fetch("status_persisted") == false, "KDE action card deck preview must not persist status")
+  assert(kde_action_card_deck_payload.fetch("review_receipt_recorded") == false, "KDE action card deck preview must not record review receipts")
+  assert(kde_action_card_deck_payload.fetch("request_objects_created") == false, "KDE action card deck preview must not create Runtime request objects")
+  assert(kde_action_card_deck_payload.fetch("resource_grant_created") == false, "KDE action card deck preview must not grant resources")
+  assert(kde_action_card_deck_payload.fetch("notifications_sent") == false, "KDE action card deck preview must not send notifications")
+  assert(kde_action_card_deck_payload.fetch("execution_started") == false, "KDE action card deck preview must not start execution")
+  assert(kde_action_card_deck_payload.fetch("host_root_modified") == false, "KDE action card deck preview must not mutate the host root")
+  assert(!kde_action_card_deck.downcase.include?("prefix"), "KDE action card deck preview must not expose implementation storage")
+  assert(!kde_action_card_deck.include?(".exe"), "KDE action card deck preview must not expose a Windows executable")
+  assert(!kde_action_card_deck.downcase.include?("virtual machine"), "KDE action card deck preview must not expose implementation labels")
 
   file_open, file_open_status = capture_runtime_go(
     project_root,

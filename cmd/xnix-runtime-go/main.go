@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -54,6 +54,8 @@ func run(args []string, stdout io.Writer) error {
 		return runExecutionTransactionPreview(args[1:], stdout)
 	case "file-open-preview":
 		return runFileOpenPreview(args[1:], stdout)
+	case "kde-action-card-deck-preview":
+		return runKDEActionCardDeckPreview(args[1:], stdout)
 	case "kde-action-card-preview":
 		return runKDEActionCardPreview(args[1:], stdout)
 	case "kde-action-queue-preview":
@@ -386,6 +388,25 @@ func runKDEActionQueuePreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.KDEActionQueuePreview(decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDEActionCardDeckPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, err := parseKDEActionCardDeckPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.KDEActionCardDeckPreview(decision, fileURIs)
 	if err != nil {
 		return err
 	}
@@ -1012,6 +1033,10 @@ func parseKDEEntryPointsPreviewSource(args []string) (appidentity.Recipe, appide
 
 func parseKDEActionQueuePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
 	return parseLaunchDecisionPreviewSource("kde-action-queue-preview", args)
+}
+
+func parseKDEActionCardDeckPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	return parseLaunchDecisionPreviewSource("kde-action-card-deck-preview", args)
 }
 
 func parseKDEActionReviewPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, []string, error) {

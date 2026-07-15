@@ -1827,6 +1827,74 @@ func TestKDEActionCardPreviewCommandRendersCard(t *testing.T) {
 	}
 }
 
+func TestKDEActionCardDeckPreviewCommandRendersDeck(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"kde-action-card-deck-preview", "--registry", registryPath, "--app", "org.example.ledger", "--decision", "approved", "file:///home/test/Documents/book.abc"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.kde_action_card_deck.v1" ||
+		payload["request_type"] != "kde-action-card-deck-preview" ||
+		payload["deck_type"] != "compatibility-center-kde-action-card-deck" ||
+		payload["source"] != "kde-action-card-preview" ||
+		payload["runtime_method"] != "GetKDEActionCardDeck" ||
+		payload["read_method"] != "GetKDEActionCardDeckPreview" {
+		t.Fatalf("unexpected KDE action card deck schema: %#v", payload)
+	}
+	queue := payload["queue"].(map[string]any)
+	cards := payload["cards"].([]any)
+	first := cards[0].(map[string]any)
+	firstCard := first["card"].(map[string]any)
+	primaryAction := first["primary_action"].(map[string]any)
+	if queue["request_type"] != "kde-action-queue-preview" ||
+		queue["action_count"] != float64(7) ||
+		queue["action_queue_persisted"] != false ||
+		len(cards) != 7 ||
+		payload["card_count"] != float64(7) ||
+		payload["waiting_card_count"] != float64(7) ||
+		payload["deferred_card_count"] != float64(0) ||
+		payload["rejected_card_count"] != float64(0) ||
+		payload["navigation_action_count"] != float64(28) ||
+		payload["disabled_action_count"] != float64(21) ||
+		payload["primary_card_id"] != "org.example.ledger:review-launcher-action:card" ||
+		first["action_id"] != "review-launcher-action" ||
+		first["entry_point_id"] != "launcher" ||
+		first["card_state"] != "waiting-for-runtime-gates" ||
+		firstCard["badge"] != "Waiting" ||
+		firstCard["badge_tone"] != "warning" ||
+		primaryAction["navigation_only"] != true ||
+		primaryAction["mutates_runtime"] != false ||
+		primaryAction["starts_program"] != false ||
+		payload["deck_preview_created"] != true ||
+		payload["deck_persisted"] != false ||
+		payload["cards_persisted"] != false ||
+		payload["card_actions_enabled"] != false ||
+		payload["card_actions_persisted"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE action card deck payload: %#v", payload)
+	}
+}
+
 func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)

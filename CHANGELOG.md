@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.148] - 2026-07-15
+
+### Added
+
+- Added `xnix-runtime-go kde-action-card-deck-preview --registry <path> --app <id> --decision <decision> [file://...]` for read-only Runtime previews of the full KDE Compatibility Center action-card deck.
+- Added Go Runtime KDE action card deck modeling that aggregates the seven first-release KDE entrypoint cards, keeps launcher first, preserves the Dolphin Portal gate, and reports waiting, deferred, rejected, navigation, and disabled-action counts for Plasma rendering.
+- Added Go and Ruby harness coverage that verifies KDE action card deck previews remain Runtime-owned, Go-backed, KDE-targeted, backend-detail-free, host-root-safe, and honest about deck persistence, card persistence, card action enablement, status persistence, review receipts, queue mutation, request objects, resource grants, notifications, Runtime launch approval, and execution remaining disabled.
+
+### Changed
+
+- Moved the first-release KDE Compatibility Center flow from single-card rendering toward a renderable card deck while keeping Runtime write and execution gates closed.
+
 ## [0.2.147] - 2026-07-15
 
 ### Added
