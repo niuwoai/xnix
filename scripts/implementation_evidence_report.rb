@@ -205,9 +205,10 @@ DOMAIN_DEFINITIONS = [
     ],
     gate_tokens: {
       "internal/runtime/activation/stage.go" => ["refusing to stage", "host_root_modified", "RollbackReceiptWritten"],
-      "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate]
+      "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate],
+      "internal/runtime/appidentity/desktop_activation_status.go" => %w[DesktopActivationStatusPreviewWithReceipt receipt_backed receipt_evidence RollbackAvailable]
     },
-    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots."
+    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status can consume staged activation receipt evidence."
   },
   {
     id: "execution-transaction-ledger",

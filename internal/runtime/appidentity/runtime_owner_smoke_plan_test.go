@@ -12,7 +12,7 @@ func TestRuntimeOwnerSmokePlanPreviewKeepsProductionSmokePlanned(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerSmokePlanPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.241" ||
+	if preview.Version != "0.2.242" ||
 		preview.SchemaVersion != "xnix.runtime.owner_smoke_plan.v1" ||
 		preview.RequestType != "runtime-owner-smoke-plan-preview" ||
 		preview.PlanType != "runtime-owner-smoke-plan" ||
@@ -95,7 +95,7 @@ func TestRuntimeOwnerSmokePlanPreviewKeepsProductionSmokePlanned(t *testing.T) {
 
 func TestRuntimeOwnerSmokePlanPreviewBlocksWhenActivationIsMissing(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.241\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.242\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

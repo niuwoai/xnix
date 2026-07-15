@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.242] - 2026-07-16
+
+### Added
+
+- Added receipt-backed desktop activation status evidence so KDE-facing activation reads can consume staged Runtime activation receipts from an explicit root.
+- Added safe receipt evidence fields for receipt schema, relative receipt path, installed file IDs, digest-gated rollback readiness, and KDE safety status without exposing the staging root.
+- Added CLI and Go coverage for `desktop-activation-status-preview --activation-root`, including receipt-present, receipt-missing, and application-mismatch failure paths.
+
+### Changed
+
+- Updated implementation evidence reporting so the KDE activation and shell materialization domain tracks receipt-backed activation status, not only staged artifact writing.
+
 ## [0.2.241] - 2026-07-16
 
 ### Changed

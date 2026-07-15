@@ -1,6 +1,13 @@
 package appidentity
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 type DesktopActivationStatusPreview struct {
 	SchemaVersion               string                                    `json:"schema_version"`
@@ -24,11 +31,13 @@ type DesktopActivationStatusPreview struct {
 	WriteGate                   DesktopActivationStatusWriteGateSummary   `json:"write_gate"`
 	CommitGate                  DesktopActivationStatusCommitGateSummary  `json:"commit_gate"`
 	KDESurface                  DesktopActivationStatusKDESurfaceSummary  `json:"kde_surface"`
+	ReceiptEvidence             DesktopActivationStatusReceiptEvidence    `json:"receipt_evidence"`
 	UserVisible                 bool                                      `json:"user_visible"`
 	RuntimeOwned                bool                                      `json:"runtime_owned"`
 	GoRuntimeBacked             bool                                      `json:"go_runtime_backed"`
 	KDEPolicyOwner              bool                                      `json:"kde_policy_owner"`
 	ActivationReady             bool                                      `json:"activation_ready"`
+	ReceiptBacked               bool                                      `json:"receipt_backed"`
 	ActivationCommitted         bool                                      `json:"activation_committed"`
 	CommitEnabled               bool                                      `json:"commit_enabled"`
 	InstallerMayProceed         bool                                      `json:"installer_may_proceed"`
@@ -109,6 +118,23 @@ type DesktopActivationStatusKDESurfaceSummary struct {
 	UnifiedSettingsReady     bool   `json:"unified_settings_ready"`
 }
 
+type DesktopActivationStatusReceiptEvidence struct {
+	EvidenceState         string   `json:"evidence_state"`
+	SchemaVersion         string   `json:"schema_version"`
+	ReceiptType           string   `json:"receipt_type"`
+	ReceiptRelativePath   string   `json:"receipt_relative_path"`
+	ApplicationID         string   `json:"application_id"`
+	InstalledFileCount    int      `json:"installed_file_count"`
+	InstalledFileIDs      []string `json:"installed_file_ids"`
+	DigestGateReady       bool     `json:"digest_gate_ready"`
+	RollbackReceiptReady  bool     `json:"rollback_receipt_ready"`
+	RuntimeOwned          bool     `json:"runtime_owned"`
+	RootPathExposed       bool     `json:"root_path_exposed"`
+	HostRootModified      bool     `json:"host_root_modified"`
+	BackendDetailsExposed bool     `json:"backend_details_exposed"`
+	SafeForKDE            bool     `json:"safe_for_kde"`
+}
+
 type DesktopActivationStatusSignal struct {
 	ID      string `json:"id"`
 	Status  string `json:"status"`
@@ -125,6 +151,35 @@ type DesktopActivationStatusNextAction struct {
 	ID      string `json:"id"`
 	Enabled bool   `json:"enabled"`
 	Summary string `json:"summary"`
+}
+
+type desktopActivationStatusReceiptFile struct {
+	SchemaVersion string                                    `json:"schema_version"`
+	ReceiptType   string                                    `json:"receipt_type"`
+	ApplicationID string                                    `json:"application_id"`
+	Installed     []desktopActivationStatusReceiptInstalled `json:"installed"`
+	Rollback      desktopActivationStatusReceiptRollback    `json:"rollback"`
+	Safety        desktopActivationStatusReceiptSafety      `json:"safety"`
+}
+
+type desktopActivationStatusReceiptInstalled struct {
+	ID                    string `json:"id"`
+	RelativePath          string `json:"relative_path"`
+	SHA256                string `json:"sha256"`
+	Written               bool   `json:"written"`
+	HostRootModified      bool   `json:"host_root_modified"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+}
+
+type desktopActivationStatusReceiptRollback struct {
+	RequiresMatchingSHA256 bool `json:"requires_matching_sha256"`
+	HostRootModified       bool `json:"host_root_modified"`
+}
+
+type desktopActivationStatusReceiptSafety struct {
+	RuntimeOwned          bool `json:"runtime_owned"`
+	HostRootModified      bool `json:"host_root_modified"`
+	BackendDetailsExposed bool `json:"backend_details_exposed"`
 }
 
 func (plan Plan) DesktopActivationStatusPreview(mode string) (DesktopActivationStatusPreview, error) {
@@ -210,11 +265,18 @@ func (plan Plan) DesktopActivationStatusPreview(mode string) (DesktopActivationS
 			CompatibilityCenterReady: true,
 			UnifiedSettingsReady:     true,
 		},
+		ReceiptEvidence: DesktopActivationStatusReceiptEvidence{
+			EvidenceState:       "not-requested",
+			ReceiptRelativePath: desktopActivationReceiptRelativePath(plan.ApplicationID),
+			RootPathExposed:     false,
+			HostRootModified:    false,
+		},
 		UserVisible:                 true,
 		RuntimeOwned:                true,
 		GoRuntimeBacked:             true,
 		KDEPolicyOwner:              false,
 		ActivationReady:             activationReady,
+		ReceiptBacked:               false,
 		ActivationCommitted:         false,
 		CommitEnabled:               false,
 		InstallerMayProceed:         transaction.InstallerMayProceed,
@@ -248,6 +310,107 @@ func (plan Plan) DesktopActivationStatusPreview(mode string) (DesktopActivationS
 	return preview, nil
 }
 
+func (plan Plan) DesktopActivationStatusPreviewWithReceipt(root string, mode string) (DesktopActivationStatusPreview, error) {
+	preview, err := plan.DesktopActivationStatusPreview(mode)
+	if err != nil {
+		return DesktopActivationStatusPreview{}, err
+	}
+	if strings.TrimSpace(root) == "" {
+		return preview, nil
+	}
+	evidence, err := plan.DesktopActivationReceiptEvidence(root)
+	if err != nil {
+		return DesktopActivationStatusPreview{}, err
+	}
+	preview.Source = preview.Source + "+desktop-activation-receipt"
+	preview.ActivationState = "receipt-backed-runtime-gated"
+	preview.ReceiptEvidence = evidence
+	preview.ReceiptBacked = evidence.SafeForKDE
+	preview.RollbackAvailable = evidence.RollbackReceiptReady
+	preview.StatusSignals = append(preview.StatusSignals, desktopActivationStatusSignal("activation-receipt", evidence.EvidenceState, "Runtime activation status consumed the staged activation receipt without exposing the staging root."))
+	preview.StatusSignalIDs = desktopActivationStatusSignalIDs(preview.StatusSignals)
+	preview.BlockedReasons = desktopActivationRemoveBlockedReason(preview.BlockedReasons, "rollback-receipt-not-written")
+	preview.BlockedReasonIDs = desktopActivationBlockedReasonIDs(preview.BlockedReasons)
+	preview.CommitGate.Summary = "Activation status consumed a staged Runtime receipt, but commit remains owned by the Runtime write gate."
+	preview.DesktopSafeSummary = "KDE can show receipt-backed desktop activation evidence while Runtime writes, launch, backend start, and host-root mutation remain disabled."
+	if err := validateNoBackendTerms(preview, "desktop activation receipt-backed status preview"); err != nil {
+		return DesktopActivationStatusPreview{}, err
+	}
+	return preview, nil
+}
+
+func (plan Plan) DesktopActivationReceiptEvidence(root string) (DesktopActivationStatusReceiptEvidence, error) {
+	root = strings.TrimSpace(root)
+	if root == "" {
+		return DesktopActivationStatusReceiptEvidence{}, errors.New("desktop activation receipt root is required")
+	}
+	cleanedRoot := filepath.Clean(root)
+	if cleanedRoot == string(filepath.Separator) {
+		return DesktopActivationStatusReceiptEvidence{}, errors.New("refusing to read desktop activation receipt from filesystem root")
+	}
+	relativePath := desktopActivationReceiptRelativePath(plan.ApplicationID)
+	if strings.HasPrefix(relativePath, "..") || filepath.IsAbs(relativePath) {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("desktop activation receipt path escapes root: %s", relativePath)
+	}
+	data, err := os.ReadFile(filepath.Join(cleanedRoot, relativePath))
+	if err != nil {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("read desktop activation receipt: %w", err)
+	}
+	var receipt desktopActivationStatusReceiptFile
+	if err := json.Unmarshal(data, &receipt); err != nil {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("parse desktop activation receipt: %w", err)
+	}
+	if receipt.SchemaVersion != "xnix.runtime.desktop_activation_receipt.v1" {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("unexpected desktop activation receipt schema: %s", receipt.SchemaVersion)
+	}
+	if receipt.ReceiptType != "desktop-activation-receipt" {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("unexpected desktop activation receipt type: %s", receipt.ReceiptType)
+	}
+	if receipt.ApplicationID != plan.ApplicationID {
+		return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("desktop activation receipt application mismatch: %s", receipt.ApplicationID)
+	}
+	ids := make([]string, 0, len(receipt.Installed))
+	for _, installed := range receipt.Installed {
+		if installed.ID == "" || !installed.Written || installed.HostRootModified || installed.BackendDetailsExposed {
+			return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("unsafe desktop activation receipt installed entry: %s", installed.ID)
+		}
+		if installed.RelativePath == "" || filepath.IsAbs(installed.RelativePath) || strings.HasPrefix(filepath.Clean(installed.RelativePath), "..") {
+			return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("unsafe desktop activation receipt relative path for %s", installed.ID)
+		}
+		if len(installed.SHA256) != 64 {
+			return DesktopActivationStatusReceiptEvidence{}, fmt.Errorf("desktop activation receipt entry lacks sha256 digest: %s", installed.ID)
+		}
+		ids = append(ids, installed.ID)
+	}
+	evidence := DesktopActivationStatusReceiptEvidence{
+		EvidenceState:         "receipt-backed",
+		SchemaVersion:         receipt.SchemaVersion,
+		ReceiptType:           receipt.ReceiptType,
+		ReceiptRelativePath:   relativePath,
+		ApplicationID:         receipt.ApplicationID,
+		InstalledFileCount:    len(receipt.Installed),
+		InstalledFileIDs:      ids,
+		DigestGateReady:       receipt.Rollback.RequiresMatchingSHA256,
+		RollbackReceiptReady:  receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified,
+		RuntimeOwned:          receipt.Safety.RuntimeOwned,
+		RootPathExposed:       false,
+		HostRootModified:      receipt.Rollback.HostRootModified || receipt.Safety.HostRootModified,
+		BackendDetailsExposed: receipt.Safety.BackendDetailsExposed,
+		SafeForKDE:            receipt.Safety.RuntimeOwned && receipt.Rollback.RequiresMatchingSHA256 && !receipt.Rollback.HostRootModified && !receipt.Safety.HostRootModified && !receipt.Safety.BackendDetailsExposed,
+	}
+	if !evidence.SafeForKDE {
+		return DesktopActivationStatusReceiptEvidence{}, errors.New("desktop activation receipt is not safe for KDE status consumption")
+	}
+	if err := validateNoBackendTerms(evidence, "desktop activation receipt evidence"); err != nil {
+		return DesktopActivationStatusReceiptEvidence{}, err
+	}
+	return evidence, nil
+}
+
+func desktopActivationReceiptRelativePath(applicationID string) string {
+	return filepath.ToSlash(filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json"))
+}
+
 func desktopActivationStatusSignals(transaction DesktopActivationTransactionPreview) []DesktopActivationStatusSignal {
 	return []DesktopActivationStatusSignal{
 		desktopActivationStatusSignal("transaction-plan", transaction.TransactionState, "Runtime has built an auditable desktop activation transaction preview."),
@@ -277,6 +440,16 @@ func desktopActivationBlockedReasons(transaction DesktopActivationTransactionPre
 
 func desktopActivationBlockedReason(id string, severity string, summary string) DesktopActivationStatusBlockedReason {
 	return DesktopActivationStatusBlockedReason{ID: id, Severity: severity, Summary: summary}
+}
+
+func desktopActivationRemoveBlockedReason(reasons []DesktopActivationStatusBlockedReason, id string) []DesktopActivationStatusBlockedReason {
+	filtered := make([]DesktopActivationStatusBlockedReason, 0, len(reasons))
+	for _, reason := range reasons {
+		if reason.ID != id {
+			filtered = append(filtered, reason)
+		}
+	}
+	return filtered
 }
 
 func desktopActivationNextActions(activationReady bool) []DesktopActivationStatusNextAction {

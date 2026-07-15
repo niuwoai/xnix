@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.241"
+EXPECTED_VERSION = "0.2.242"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION

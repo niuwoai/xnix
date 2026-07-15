@@ -19,7 +19,7 @@ recipe = Xnix::Compatibility::RecipeStore.new(path: project_root.join("runtime/r
 gate = Xnix::Compatibility::AIRepairApprovalGate.new(recipe: recipe).to_h
 gate_ids = gate.fetch("required_gates").map { |item| item.fetch("id") }
 
-assert(gate["version"] == "0.2.241", "AI repair approval gate must expose the current version")
+assert(gate["version"] == "0.2.242", "AI repair approval gate must expose the current version")
 assert(gate["gate_type"] == "ai-repair-approval-gate", "AI repair approval gate must identify the gate type")
 assert(gate["recommendation_type"] == "ai-diagnostic-recommendation", "AI repair approval gate must reference recommendations")
 assert(gate["application"]["id"] == "org.xnix.sample.notepad", "AI repair approval gate must preserve the application id")

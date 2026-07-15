@@ -668,6 +668,74 @@ func TestDesktopActivationStatusPreviewCommandRendersRegistryBackedStatus(t *tes
 	}
 }
 
+func TestDesktopActivationStatusPreviewCommandConsumesStagedReceipt(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	stageRoot := filepath.Join(root, "stage")
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-status-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--activation-root", stageRoot}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["source"] != "desktop-activation-transaction-preview+desktop-activation-receipt" ||
+		payload["activation_state"] != "receipt-backed-runtime-gated" ||
+		payload["receipt_backed"] != true ||
+		payload["rollback_available"] != true ||
+		payload["activation_committed"] != false ||
+		payload["commit_enabled"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected receipt-backed status: %#v", payload)
+	}
+	evidence := payload["receipt_evidence"].(map[string]any)
+	if evidence["evidence_state"] != "receipt-backed" ||
+		evidence["schema_version"] != "xnix.runtime.desktop_activation_receipt.v1" ||
+		evidence["receipt_type"] != "desktop-activation-receipt" ||
+		evidence["receipt_relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		evidence["application_id"] != "org.example.ledger" ||
+		evidence["installed_file_count"] != float64(4) ||
+		evidence["digest_gate_ready"] != true ||
+		evidence["rollback_receipt_ready"] != true ||
+		evidence["runtime_owned"] != true ||
+		evidence["root_path_exposed"] != false ||
+		evidence["host_root_modified"] != false ||
+		evidence["backend_details_exposed"] != false ||
+		evidence["safe_for_kde"] != true {
+		t.Fatalf("unexpected receipt evidence: %#v", evidence)
+	}
+	statusSignalIDs := payload["status_signal_ids"].([]any)
+	if statusSignalIDs[len(statusSignalIDs)-1] != "activation-receipt" {
+		t.Fatalf("receipt-backed status must append activation-receipt signal: %#v", statusSignalIDs)
+	}
+	for _, value := range payload["blocked_reason_ids"].([]any) {
+		if value == "rollback-receipt-not-written" {
+			t.Fatalf("receipt-backed status must not report an unwritten rollback receipt: %#v", payload["blocked_reason_ids"])
+		}
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

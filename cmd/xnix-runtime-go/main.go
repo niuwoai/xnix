@@ -1108,7 +1108,7 @@ func runDesktopActivationTransactionPreview(args []string, stdout io.Writer) err
 }
 
 func runDesktopActivationStatusPreview(args []string, stdout io.Writer) error {
-	recipe, provenance, mode, err := parseDesktopActivationStatusPreviewSource(args)
+	recipe, provenance, mode, activationRoot, err := parseDesktopActivationStatusPreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -1116,7 +1116,7 @@ func runDesktopActivationStatusPreview(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	preview, err := plan.DesktopActivationStatusPreview(mode)
+	preview, err := plan.DesktopActivationStatusPreviewWithReceipt(activationRoot, mode)
 	if err != nil {
 		return err
 	}
@@ -2094,7 +2094,7 @@ func parseDesktopActivationTransactionPreviewSource(args []string) (appidentity.
 	return recipe, provenance, *mode, err
 }
 
-func parseDesktopActivationStatusPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+func parseDesktopActivationStatusPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, error) {
 	flags := flag.NewFlagSet("desktop-activation-status-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to load from the recipe registry")
@@ -2102,24 +2102,25 @@ func parseDesktopActivationStatusPreviewSource(args []string) (appidentity.Recip
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	mode := flags.String("mode", "production", "activation status mode: production or development")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", err
 	}
 	if (*recipePath == "") == (*registryPath == "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-status-preview requires exactly one source: --recipe or --registry")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-status-preview requires exactly one source: --recipe or --registry")
 	}
 	if *registryPath != "" && *applicationID == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-status-preview requires --app when --registry is used")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-status-preview requires --app when --registry is used")
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-status-preview --recipe cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-status-preview --recipe cannot be combined with --app or --recipe-root")
 	}
 	if flags.NArg() != 0 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("desktop-activation-status-preview does not accept positional arguments")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-status-preview does not accept positional arguments")
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, *mode, err
+	return recipe, provenance, *mode, *activationRoot, err
 }
 
 func loadRecipe(recipePath string, registryPath string, recipeRoot string, applicationID string) (appidentity.Recipe, appidentity.Provenance, error) {
