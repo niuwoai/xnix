@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.182] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-live-owner-gate-preview` to derive production D-Bus owner transition gates from the Go service binding preview while keeping long-running owner startup, bus-name acquisition, method parity, and production recipe trust pending.
+- Added Go unit, CLI, and layout verification coverage proving the live-owner gate cannot start services, claim the production bus, treat the smoke adapter as production, let KDE own Runtime policy, mutate the host root, or expose backend details.
+
 ## [0.2.181] - 2026-07-15
 
 ### Added

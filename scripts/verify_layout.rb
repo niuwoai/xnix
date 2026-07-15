@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.181"
+EXPECTED_VERSION = "0.2.182"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -892,6 +892,20 @@ assert(runtime_live_owner_gate_source.include?("\"smoke_adapter_is_production_ow
 assert(runtime_live_owner_gate_source.include?("\"kde_may_claim_runtime_ownership\" => false"), "Runtime live owner gate must prevent KDE Runtime ownership")
 assert(runtime_live_owner_gate_source.include?("\"host_root_modified\" => false"), "Runtime live owner gate must not mutate the host root")
 assert(runtime_live_owner_gate_source.include?("\"backend_details_exposed\" => false"), "Runtime live owner gate must hide backend details")
+
+go_runtime_live_owner_gate_source = read_project_file("internal/runtime/appidentity/runtime_live_owner_gate.go")
+%w[RuntimeLiveOwnerGatePreview runtime-live-owner-gate-preview xnix.runtime.live_owner_gate.v1 GetRuntimeLiveOwnerGate GetRuntimeLiveOwnerGatePreview runtime-service-binding-preview activation-binding long-running-runtime-owner bus-name-acquisition read-only-method-parity production-recipe-trust].each do |token|
+  assert(go_runtime_live_owner_gate_source.include?(token), "Go Runtime live owner gate preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked ActivationBindingReady LiveDBusOwnerReady ProductionOwnerEnabled OwnerTransitionReady SmokeAdapterAvailable SmokeAdapterIsProduction KDEMayClaimRuntimeOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_live_owner_gate_source.include?(token), "Go Runtime live owner gate preview must expose #{token}")
+end
+assert(go_runtime_live_owner_gate_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime live owner gate preview must derive from the service binding preview")
+assert(go_runtime_live_owner_gate_source.include?("validateNoBackendTerms"), "Go Runtime live owner gate preview must hide backend terms")
+
+go_runtime_live_owner_gate_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_live_owner_gate_cli_source.include?("runtime-live-owner-gate-preview"), "Go Runtime CLI must expose Runtime live owner gate preview")
+assert(go_runtime_live_owner_gate_cli_source.include?("NewRuntimeLiveOwnerGatePreview"), "Go Runtime CLI must call the Runtime live owner gate preview model")
 
 runtime_owner_smoke_plan_source = read_project_file("lib/xnix/compatibility/runtime_owner_smoke_plan.rb")
 assert(runtime_owner_smoke_plan_source.include?("xnix-runtime-owner-smoke-plan"), "Runtime owner smoke plan must expose a CLI command")
