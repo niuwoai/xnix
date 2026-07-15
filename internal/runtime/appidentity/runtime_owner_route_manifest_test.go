@@ -12,7 +12,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		t.Fatalf("NewRuntimeOwnerRouteManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.196" ||
+	if preview.Version != "0.2.197" ||
 		preview.SchemaVersion != "xnix.runtime.owner_route_manifest.v1" ||
 		preview.RequestType != "runtime-owner-route-manifest-preview" ||
 		preview.ManifestType != "runtime-owner-route-manifest" ||
@@ -78,6 +78,9 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 	assertRuntimeOwnerRoute(t, preview, "GetEngineCatalog", "go-runtime-cli", "engine-catalog-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetRunPlan", "go-runtime-cli", "run-plan-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetDesktopActivationManifest", "c-runtime-core", "desktop-activation-manifest", "c-adapter-pending")
+	assertRuntimeOwnerRoute(t, preview, "GetApplicationStateRoot", "go-runtime-cli", "state-root-preview", "go-preview-ready")
+	assertRuntimeOwnerRoute(t, preview, "GetSnapshotPlan", "go-runtime-cli", "snapshot-plan-preview", "go-preview-ready")
+	assertRuntimeOwnerRoute(t, preview, "GetPortalAccessPolicy", "go-runtime-cli", "portal-access-policy-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetDiagnostics", "go-runtime-cli", "diagnostics-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetAIDiagnosticInput", "go-runtime-cli", "ai-diagnostic-input-preview", "go-preview-ready")
 	assertRuntimeOwnerRoute(t, preview, "GetAIDiagnosticRecommendation", "go-runtime-cli", "ai-diagnostic-recommendation-preview", "go-preview-ready")
@@ -89,7 +92,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 		preview.NextRequirements[0] != "Complete native Go owner handlers or owner adapters for every non-Go read-only route." {
 		t.Fatalf("unexpected blocked actions or next requirements: actions=%#v next=%#v", preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, repair and test planning, AI diagnostics, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending." {
+	if preview.DesktopSafeSummary != "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, state-root, snapshot, Portal access, repair and test planning, AI diagnostics, Runtime write-gate decisions, diagnostics, and current Go previews, with C adapter migration still pending." {
 		t.Fatalf("unexpected route manifest summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime owner route manifest preview test"); err != nil {
@@ -99,7 +102,7 @@ func TestRuntimeOwnerRouteManifestPreviewReportsGoAndLegacyRoutes(t *testing.T) 
 
 func TestRuntimeOwnerRouteManifestPreviewBlocksMissingRouteSources(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.196\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.197\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.197] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `state-root-preview`, `snapshot-plan-preview`, and `portal-access-policy-preview` for `GetApplicationStateRoot`, `GetSnapshotPlan`, and `GetPortalAccessPolicy`, rendering Runtime-owned state storage, snapshot/restore planning, and XDG Desktop Portal policy without creating directories, creating snapshots, creating Portal request objects, granting permissions, requiring network access, exposing backend details, or mutating the host root.
+
+### Changed
+
+- Migrated the state-root, snapshot, and Portal access route group in `runtime-owner-route-manifest-preview` from C Runtime adapter routes to native Go preview routes, reducing the remaining C-backed read-only owner route count.
+- Extended the KDE-first presence smoke to inspect the Go Runtime safety substrate previews and assert that user documents, direct desktop access, snapshot creation, restore execution, request creation, and host-root mutation remain disabled.
+
 ## [0.2.196] - 2026-07-15
 
 ### Added

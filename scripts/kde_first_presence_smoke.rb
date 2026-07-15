@@ -158,6 +158,9 @@ def collect_payloads(options)
     "runtime-owner-route-manifest-preview" => go_preview(options, "runtime-owner-route-manifest-preview", "--root", "."),
     "runtime-method-parity-manifest-preview" => go_preview(options, "runtime-method-parity-manifest-preview", "--root", "."),
     "runtime-write-gate-preview" => go_preview(options, "runtime-write-gate-preview", "--root", ".", "--method", "Launch"),
+    "state-root-preview" => go_preview(options, "state-root-preview", *base_args(options)),
+    "snapshot-plan-preview" => go_preview(options, "snapshot-plan-preview", "--app", options.fetch(:app), "--reason", "before-repair"),
+    "portal-access-policy-preview" => go_preview(options, "portal-access-policy-preview", "--app", options.fetch(:app), "--operation", "file-open"),
     "ai-diagnostic-input-preview" => go_preview(options, "ai-diagnostic-input-preview", *base_args(options)),
     "ai-diagnostic-recommendation-preview" => go_preview(options, "ai-diagnostic-recommendation-preview", *base_args(options)),
     "ai-repair-approval-gate-preview" => go_preview(options, "ai-repair-approval-gate-preview", *base_args(options))
@@ -277,6 +280,21 @@ def assert_write_gate(payload)
   assert(payload.fetch("go_runtime_backed") == true, "write_gate.go_owner", "write gate must be Go Runtime backed")
 end
 
+def assert_runtime_safety_substrate(state_root, snapshot_plan, portal_policy)
+  assert(state_root.fetch("request_type") == "state-root-preview", "state_root.request_type", "state root preview required")
+  assert(state_root.fetch("directories_created") == false, "state_root.no_dirs", "state root preview must not create directories")
+  assert(state_root.fetch("user_documents_included") == false, "state_root.no_documents", "state root must exclude user documents")
+  assert(state_root.fetch("portal_required_for_user_files") == true, "state_root.portal", "state root must require Portal grants for user files")
+  assert(snapshot_plan.fetch("request_type") == "snapshot-plan-preview", "snapshot.request_type", "snapshot plan preview required")
+  assert(snapshot_plan.fetch("snapshot_created") == false, "snapshot.not_created", "snapshot preview must not create snapshots")
+  assert(snapshot_plan.fetch("restore_executed") == false, "snapshot.no_restore", "snapshot preview must not execute restores")
+  assert(snapshot_plan.fetch("user_documents_included") == false, "snapshot.no_documents", "snapshot must exclude user documents")
+  assert(portal_policy.fetch("request_type") == "portal-access-policy-preview", "portal_policy.request_type", "Portal access policy preview required")
+  assert(portal_policy.fetch("portal_required") == true, "portal_policy.required", "Portal policy must require Portal mediation")
+  assert(portal_policy.fetch("direct_access_allowed") == false, "portal_policy.no_direct", "Portal policy must deny direct access")
+  assert(portal_policy.fetch("request_object_created") == false, "portal_policy.no_request", "Portal policy preview must not create request objects")
+end
+
 def assert_ai_diagnostics(input, recommendation, gate)
   assert(input.fetch("request_type") == "ai-diagnostic-input-preview", "ai.input", "AI diagnostic input preview required")
   assert(input.fetch("runtime_method") == "GetAIDiagnosticInput", "ai.input_method", "AI input must map to Runtime method")
@@ -312,6 +330,11 @@ def run_smoke(options)
   assert_route_baseline(payloads.fetch("runtime-owner-route-manifest-preview"))
   assert_method_parity(payloads.fetch("runtime-method-parity-manifest-preview"))
   assert_write_gate(payloads.fetch("runtime-write-gate-preview"))
+  assert_runtime_safety_substrate(
+    payloads.fetch("state-root-preview"),
+    payloads.fetch("snapshot-plan-preview"),
+    payloads.fetch("portal-access-policy-preview")
+  )
   assert_ai_diagnostics(
     payloads.fetch("ai-diagnostic-input-preview"),
     payloads.fetch("ai-diagnostic-recommendation-preview"),

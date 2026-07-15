@@ -37,6 +37,9 @@ script = script_path.read
   runtime-owner-route-manifest-preview
   runtime-method-parity-manifest-preview
   runtime-write-gate-preview
+  state-root-preview
+  snapshot-plan-preview
+  portal-access-policy-preview
   ai-diagnostic-input-preview
   ai-diagnostic-recommendation-preview
   ai-repair-approval-gate-preview

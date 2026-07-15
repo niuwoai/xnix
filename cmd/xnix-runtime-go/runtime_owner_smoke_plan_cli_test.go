@@ -18,7 +18,7 @@ func TestRuntimeOwnerSmokePlanPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.196" ||
+	if payload["version"] != "0.2.197" ||
 		payload["schema_version"] != "xnix.runtime.owner_smoke_plan.v1" ||
 		payload["request_type"] != "runtime-owner-smoke-plan-preview" ||
 		payload["plan_type"] != "runtime-owner-smoke-plan" ||
