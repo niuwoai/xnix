@@ -244,6 +244,21 @@ assert(!compatibility_center_summary["safety"]["backend_launch_enabled"], "dispa
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetKDECenterPage",
+  JSON.generate(["org.xnix.sample.notepad", "approved"])
+)
+assert(status.success?, "dispatch GetKDECenterPage must exit successfully: #{stderr}")
+kde_center_page = JSON.parse(stdout)
+assert(kde_center_page["request_type"] == "kde-center-page", "dispatch must route GetKDECenterPage")
+assert(kde_center_page["runtime_method"] == "GetKDECenterPage", "dispatch must expose KDE center page Runtime methods")
+assert(kde_center_page["card_count"] == 7, "dispatch must expose KDE center page card counts")
+assert(kde_center_page["settings_section_count"] == 5, "dispatch must expose KDE center page settings sections")
+assert(!kde_center_page["launch_enabled"], "dispatch must not enable launch from KDE center pages")
+assert(!kde_center_page["execution_started"], "dispatch must not start execution from KDE center pages")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetCompatibilityArtifactManifest",
   JSON.generate(["org.xnix.sample.notepad"])
 )

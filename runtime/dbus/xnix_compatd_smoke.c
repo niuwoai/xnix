@@ -240,6 +240,11 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='summary' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetKDECenterPage'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='decision' type='s' direction='in'/>"
+  "      <arg name='page' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <signal name='ApplicationChanged'>"
   "      <arg name='application_id' type='s'/>"
   "    </signal>"
@@ -1539,6 +1544,67 @@ build_compatibility_center_summary(const gchar *application_id)
 }
 
 static GVariant *
+build_kde_center_page(const gchar *application_id, const gchar *decision)
+{
+  gboolean decision_allowed = g_strcmp0(decision, "approved") == 0 ||
+                              g_strcmp0(decision, "reviewed") == 0;
+  GVariantBuilder page;
+
+  g_variant_builder_init(&page, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&page, "{sv}", "request_type", g_variant_new_string("kde-center-page"));
+  g_variant_builder_add(&page, "{sv}", "page_type", g_variant_new_string("compatibility-center-application-page"));
+  g_variant_builder_add(&page, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&page, "{sv}", "runtime_method", g_variant_new_string("GetKDECenterPage"));
+  g_variant_builder_add(&page, "{sv}", "read_model_source", g_variant_new_string("go-kde-center-page-preview"));
+  g_variant_builder_add(&page, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&page, "{sv}", "application_name", g_variant_new_string("Sample Notepad"));
+  g_variant_builder_add(&page, "{sv}", "compatibility_state", g_variant_new_string("review-required"));
+  g_variant_builder_add(&page, "{sv}", "runtime_mode", g_variant_new_string("automatic"));
+  g_variant_builder_add(&page, "{sv}", "known_issue_count", g_variant_new_int32(1));
+  g_variant_builder_add(&page, "{sv}", "repair_record_state", g_variant_new_string("pending-review"));
+  g_variant_builder_add(&page, "{sv}", "action_deck_request_type", g_variant_new_string("kde-action-card-deck-preview"));
+  g_variant_builder_add(&page, "{sv}", "card_count", g_variant_new_int32(7));
+  g_variant_builder_add(&page, "{sv}", "waiting_card_count", g_variant_new_int32(decision_allowed ? 7 : 0));
+  g_variant_builder_add(&page, "{sv}", "deferred_card_count", g_variant_new_int32(g_strcmp0(decision, "deferred") == 0 ? 7 : 0));
+  g_variant_builder_add(&page, "{sv}", "rejected_card_count", g_variant_new_int32(g_strcmp0(decision, "rejected") == 0 ? 7 : 0));
+  g_variant_builder_add(&page, "{sv}", "navigation_action_count", g_variant_new_int32(28));
+  g_variant_builder_add(&page, "{sv}", "disabled_action_count", g_variant_new_int32(21));
+  g_variant_builder_add(&page, "{sv}", "settings_request_type", g_variant_new_string("settings-model"));
+  g_variant_builder_add(&page, "{sv}", "settings_section_count", g_variant_new_int32(5));
+  g_variant_builder_add(&page, "{sv}", "primary_navigation_target", g_variant_new_string("compatibility-center-gates"));
+  g_variant_builder_add(&page, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "official_desktop_only", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "user_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "safe_for_ai_diagnostics", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "user_decision_captured", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "user_decision_allows_launch", g_variant_new_boolean(decision_allowed));
+  g_variant_builder_add(&page, "{sv}", "page_preview_created", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&page, "{sv}", "page_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "deck_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "cards_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "card_actions_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "settings_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "settings_persistence_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "notifications_sent", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "resource_grant_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "runtime_launch_approval", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "launch_allowed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "execution_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "backend_process_started", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "request_objects_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "permission_grant_created", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&page, "{sv}", "desktop_safe_summary", g_variant_new_string("KDE can read a Runtime-owned Compatibility Center page over D-Bus, but the page cannot approve, persist, grant, notify, or start execution."));
+
+  return g_variant_builder_end(&page);
+}
+
+static GVariant *
 build_runtime_service_binding(void)
 {
   GVariantBuilder binding;
@@ -1602,7 +1668,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(51));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(52));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -2346,6 +2412,23 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_compatibility_center_summary(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetKDECenterPage") == 0) {
+    const gchar *application_id = NULL;
+    const gchar *decision = NULL;
+
+    g_variant_get(parameters, "(&s&s)", &application_id, &decision);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_kde_center_page(application_id, decision))
     );
     return;
   }

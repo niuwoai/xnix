@@ -83,6 +83,7 @@ module Xnix
             "compatibility_action_queues" => true,
             "compatibility_action_review_receipts" => true,
             "compatibility_center_summaries" => true,
+            "kde_center_pages" => true,
             "compatibility_artifact_manifests" => true,
             "compatibility_engine_catalog" => true,
             "compatibility_install_planning" => true,
@@ -167,6 +168,7 @@ module Xnix
           "action_queue" => action_queue_summary(recipe),
           "action_review_receipt" => action_review_receipt_summary(recipe),
           "compatibility_center_summary" => compatibility_center_summary_summary(recipe),
+          "kde_center_page" => kde_center_page_summary(recipe),
           "desktop_activation_manifest" => desktop_activation_manifest_summary(recipe),
           "kde_shell_integration_plan" => kde_shell_integration_plan_summary,
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
@@ -562,6 +564,66 @@ module Xnix
         }
       end
 
+      def kde_center_page(application_id, decision)
+        recipe = require_recipe(application_id)
+        summary = compatibility_center_summary(recipe.id)
+        settings_model = settings(recipe.id)
+        decision_allowed = %w[approved reviewed].include?(decision)
+
+        {
+          "version" => VERSION,
+          "request_type" => "kde-center-page",
+          "page_type" => "compatibility-center-application-page",
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetKDECenterPage",
+          "read_model_source" => "go-kde-center-page-preview",
+          "application_id" => recipe.id,
+          "application_name" => recipe.name,
+          "compatibility_state" => summary.fetch("compatibility").fetch("state"),
+          "runtime_mode" => summary.fetch("compatibility").fetch("runtime_mode"),
+          "known_issue_count" => summary.fetch("compatibility").fetch("known_issue_count"),
+          "repair_record_state" => summary.fetch("repair_records").fetch("state"),
+          "action_deck_request_type" => "kde-action-card-deck-preview",
+          "card_count" => 7,
+          "waiting_card_count" => decision_allowed ? 7 : 0,
+          "deferred_card_count" => decision == "deferred" ? 7 : 0,
+          "rejected_card_count" => decision == "rejected" ? 7 : 0,
+          "navigation_action_count" => 28,
+          "disabled_action_count" => 21,
+          "settings_request_type" => settings_model.fetch("request_type"),
+          "settings_section_count" => settings_model.fetch("sections").length,
+          "primary_navigation_target" => "compatibility-center-gates",
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "official_desktop_only" => true,
+          "user_visible" => true,
+          "safe_for_ai_diagnostics" => true,
+          "user_decision_captured" => true,
+          "user_decision_allows_launch" => decision_allowed,
+          "page_preview_created" => true,
+          "page_persisted" => false,
+          "deck_persisted" => false,
+          "cards_persisted" => false,
+          "card_actions_enabled" => false,
+          "settings_persisted" => false,
+          "settings_persistence_enabled" => false,
+          "notifications_sent" => false,
+          "resource_grant_created" => false,
+          "runtime_launch_approval" => false,
+          "launch_allowed" => false,
+          "launch_enabled" => false,
+          "execution_started" => false,
+          "backend_process_started" => false,
+          "request_objects_created" => false,
+          "permission_grant_created" => false,
+          "host_root_modified" => false,
+          "network_required" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "KDE can read a Runtime-owned Compatibility Center page over D-Bus, but the page cannot approve, persist, grant, notify, or start execution."
+        }
+      end
+
       def artifact_manifest(application_id)
         recipe = require_recipe(application_id)
         CompatibilityArtifactManifest.new(recipe: recipe).to_h
@@ -761,6 +823,11 @@ module Xnix
           )
         when "GetCompatibilityCenterSummary"
           compatibility_center_summary(required_parameter(method_name, parameters, 0))
+        when "GetKDECenterPage"
+          kde_center_page(
+            required_parameter(method_name, parameters, 0),
+            required_parameter(method_name, parameters, 1)
+          )
         when "GetCompatibilityArtifactManifest"
           artifact_manifest(required_parameter(method_name, parameters, 0))
         when "GetCompatibilityInstallPlan"
@@ -1091,6 +1158,23 @@ module Xnix
           "backend_launch_enabled" => summary.fetch("safety").fetch("backend_launch_enabled"),
           "backend_details_exposed" => summary.fetch("backend_details_exposed"),
           "summary" => summary.fetch("desktop_safe_summary")
+        }
+      end
+
+      def kde_center_page_summary(recipe)
+        page = kde_center_page(recipe.id, "approved")
+        {
+          "page_type" => page.fetch("page_type"),
+          "runtime_method" => page.fetch("runtime_method"),
+          "card_count" => page.fetch("card_count"),
+          "settings_section_count" => page.fetch("settings_section_count"),
+          "page_preview_created" => page.fetch("page_preview_created"),
+          "page_persisted" => page.fetch("page_persisted"),
+          "card_actions_enabled" => page.fetch("card_actions_enabled"),
+          "settings_persisted" => page.fetch("settings_persisted"),
+          "execution_started" => page.fetch("execution_started"),
+          "backend_details_exposed" => page.fetch("backend_details_exposed"),
+          "summary" => page.fetch("desktop_safe_summary")
         }
       end
 

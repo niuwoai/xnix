@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.150] - 2026-07-15
+
+### Added
+
+- Added the read-only `GetKDECenterPage` Runtime D-Bus method so KDE can fetch a Runtime-owned Compatibility Center application page from the session bus.
+- Added daemon, D-Bus client, C smoke-adapter, session-smoke, dispatch, contract, and method-parity coverage for KDE center page reads.
+- Added diagnostics coverage that summarizes KDE center pages while keeping page persistence, card actions, settings persistence, grants, notifications, launch, execution, host-root mutation, and backend detail exposure disabled.
+
+### Changed
+
+- Increased the Runtime read-only method parity count from 51 to 52.
+
 ## [0.2.149] - 2026-07-15
 
 ### Added

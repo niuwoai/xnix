@@ -285,7 +285,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <51>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <52>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -322,6 +322,12 @@ class FakeCapture
     when "org.xnix.Compatibility1.GetCompatibilityCenterSummary"
       [
         "({'summary_type': <'compatibility-center-summary'>, 'compatibility_state': <'review-required'>, 'runtime_mode': <'automatic'>, 'known_issue_count': <1>, 'repair_record_state': <'pending-review'>, 'last_repair_event': <'approval-required'>, 'action_count': <4>, 'runtime_owned': <true>, 'kde_policy_owner': <false>, 'user_visible': <true>, 'action_execution_enabled': <false>, 'repair_execution_enabled': <false>, 'backend_launch_enabled': <false>, 'settings_persistence_enabled': <false>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
+    when "org.xnix.Compatibility1.GetKDECenterPage"
+      [
+        "({'request_type': <'kde-center-page'>, 'page_type': <'compatibility-center-application-page'>, 'runtime_method': <'GetKDECenterPage'>, 'application_id': <'org.xnix.sample.notepad'>, 'card_count': <7>, 'waiting_card_count': <7>, 'settings_section_count': <5>, 'runtime_owned': <true>, 'go_runtime_backed': <true>, 'user_decision_allows_launch': <true>, 'page_preview_created': <true>, 'page_persisted': <false>, 'card_actions_enabled': <false>, 'settings_persisted': <false>, 'launch_enabled': <false>, 'execution_started': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -804,7 +810,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 51, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 52, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")
@@ -873,6 +879,24 @@ assert(!compatibility_center_summary["action_execution_enabled"], "D-Bus client 
 assert(!compatibility_center_summary["repair_execution_enabled"], "D-Bus client must parse Compatibility Center repair gates")
 assert(!compatibility_center_summary["backend_launch_enabled"], "D-Bus client must parse Compatibility Center launch gates")
 assert(!compatibility_center_summary["backend_details_exposed"], "D-Bus client must parse Compatibility Center backend detail status")
+
+kde_center_page = client.kde_center_page("org.xnix.sample.notepad", "approved")
+assert(kde_center_page["request_type"] == "kde-center-page", "D-Bus client must parse KDE center pages")
+assert(kde_center_page["page_type"] == "compatibility-center-application-page", "D-Bus client must parse KDE center page types")
+assert(kde_center_page["runtime_method"] == "GetKDECenterPage", "D-Bus client must parse KDE center page Runtime methods")
+assert(kde_center_page["card_count"] == 7, "D-Bus client must parse KDE center page card counts")
+assert(kde_center_page["waiting_card_count"] == 7, "D-Bus client must parse KDE center page waiting card counts")
+assert(kde_center_page["settings_section_count"] == 5, "D-Bus client must parse KDE center page settings sections")
+assert(kde_center_page["runtime_owned"], "D-Bus client must parse KDE center page Runtime ownership")
+assert(kde_center_page["go_runtime_backed"], "D-Bus client must parse KDE center page Go backing")
+assert(kde_center_page["user_decision_allows_launch"], "D-Bus client must parse KDE center page review decisions")
+assert(kde_center_page["page_preview_created"], "D-Bus client must parse KDE center page preview status")
+assert(!kde_center_page["page_persisted"], "D-Bus client must parse disabled KDE center page persistence")
+assert(!kde_center_page["card_actions_enabled"], "D-Bus client must parse disabled KDE center page actions")
+assert(!kde_center_page["settings_persisted"], "D-Bus client must parse disabled KDE center page settings persistence")
+assert(!kde_center_page["launch_enabled"], "D-Bus client must parse disabled KDE center page launch")
+assert(!kde_center_page["execution_started"], "D-Bus client must parse disabled KDE center page execution")
+assert(!kde_center_page["backend_details_exposed"], "D-Bus client must parse KDE center page backend detail status")
 
 assert(
   capture.commands.all? { |command| command.include?("--session") },

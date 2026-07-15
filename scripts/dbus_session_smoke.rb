@@ -656,6 +656,19 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetCompatibilityCenterSummary: #{stderr}")
   assert(stdout.include?("compatibility-center-summary"), "runtime smoke adapter must expose Compatibility Center summaries over D-Bus")
 
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetKDECenterPage",
+    "org.xnix.sample.notepad",
+    "approved"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetKDECenterPage: #{stderr}")
+  assert(stdout.include?("kde-center-page"), "runtime smoke adapter must expose KDE center pages over D-Bus")
+  assert(stdout.include?("card_count"), "runtime smoke adapter must expose KDE center page card counts over D-Bus")
+
   puts "PASS: compatibility runtime D-Bus session smoke"
 ensure
   begin

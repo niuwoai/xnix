@@ -68,6 +68,7 @@ module Xnix
         GetCompatibilityActionQueue
         GetCompatibilityActionReviewReceipt
         GetCompatibilityCenterSummary
+        GetKDECenterPage
       ].freeze
 
       WRITE_METHODS = %w[
@@ -128,7 +129,8 @@ module Xnix
         "GetCompatibilityReviewFlowPlan" => "compatibility_review_flow_plan",
         "GetCompatibilityActionQueue" => "action_queue",
         "GetCompatibilityActionReviewReceipt" => "action_review_receipt",
-        "GetCompatibilityCenterSummary" => "compatibility_center_summary"
+        "GetCompatibilityCenterSummary" => "compatibility_center_summary",
+        "GetKDECenterPage" => "kde_center_page"
       }.freeze
 
       def to_h

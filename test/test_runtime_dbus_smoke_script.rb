@@ -60,6 +60,7 @@ assert(contents.include?("GetCompatibilityPermissionReviewPlan"), "D-Bus smoke s
 assert(contents.include?("GetCompatibilityReviewFlowPlan"), "D-Bus smoke script must call GetCompatibilityReviewFlowPlan")
 assert(contents.include?("GetCompatibilityActionQueue"), "D-Bus smoke script must call GetCompatibilityActionQueue")
 assert(contents.include?("GetCompatibilityActionReviewReceipt"), "D-Bus smoke script must call GetCompatibilityActionReviewReceipt")
+assert(contents.include?("GetKDECenterPage"), "D-Bus smoke script must call GetKDECenterPage")
 assert(contents.include?("GetKRunnerQueryPlan"), "D-Bus smoke script must call GetKRunnerQueryPlan")
 assert(contents.include?("bin/xnix-krunner-model"), "D-Bus smoke script must verify the KRunner D-Bus read model")
 assert(contents.include?("GetKDEIntegrationStatus"), "D-Bus smoke script must call GetKDEIntegrationStatus")
