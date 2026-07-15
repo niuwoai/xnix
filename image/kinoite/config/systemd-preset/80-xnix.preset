@@ -1,0 +1,5 @@
+# Xnix unit presets baked into the image. SDDM drives the graphical
+# login; the Compatibility Runtime daemon is enabled so its D-Bus name
+# can be owned once the backend is activated.
+enable sddm.service
+enable xnix-compatd.service

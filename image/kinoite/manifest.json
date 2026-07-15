@@ -1,0 +1,123 @@
+{
+  "schema": "xnix.image.kinoite/v1",
+  "image_name": "xnix-kinoite",
+  "summary": "Fedora Kinoite-compatible atomic base with KDE Plasma 6 and the Xnix Compatibility Runtime.",
+  "base_image": "quay.io/fedora/fedora-kinoite:41",
+  "architecture": "x86_64",
+  "build_mode": "bootc-image",
+  "desktop": {
+    "environment": "kde-plasma-6",
+    "session": "plasma",
+    "session_type": "wayland",
+    "display_manager": "sddm",
+    "compositor": "kwin-wayland"
+  },
+  "package_groups": {
+    "plasma_desktop": [
+      "plasma-desktop",
+      "plasma-workspace",
+      "plasma-workspace-wayland",
+      "kwin-wayland",
+      "sddm",
+      "sddm-kcm",
+      "plasma-systemsettings",
+      "dolphin",
+      "konsole",
+      "kde-gtk-config",
+      "plasma-nm",
+      "plasma-pa",
+      "kscreen"
+    ],
+    "xdg_portals": [
+      "xdg-desktop-portal",
+      "xdg-desktop-portal-kde"
+    ],
+    "xnix_runtime": [
+      "glib2",
+      "dbus"
+    ]
+  },
+  "layered_artifacts": [
+    {
+      "id": "compatd-system-unit",
+      "source": "runtime/systemd/xnix-compatd.service",
+      "dest": "/usr/lib/systemd/system/xnix-compatd.service",
+      "role": "runtime-service-unit"
+    },
+    {
+      "id": "compatd-dbus-service",
+      "source": "runtime/dbus/org.xnix.Compatibility1.service",
+      "dest": "/usr/share/dbus-1/services/org.xnix.Compatibility1.service",
+      "role": "runtime-dbus-activation"
+    },
+    {
+      "id": "dolphin-service-menu",
+      "source": "kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop",
+      "dest": "/usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop",
+      "role": "kde-entry-point"
+    },
+    {
+      "id": "compatibility-center-plasmoid",
+      "source": "kde/plasmoids/org.xnix.compatibilitycenter",
+      "dest": "/usr/share/plasma/plasmoids/org.xnix.compatibilitycenter",
+      "role": "kde-entry-point"
+    }
+  ],
+  "config_overlays": [
+    {
+      "id": "sddm-plasma-wayland",
+      "source": "image/kinoite/config/sddm.conf.d/10-xnix.conf",
+      "dest": "/etc/sddm.conf.d/10-xnix.conf",
+      "role": "greeter"
+    },
+    {
+      "id": "portal-backend",
+      "source": "image/kinoite/config/portal/xnix-portals.conf",
+      "dest": "/usr/share/xdg-desktop-portal/xnix-portals.conf",
+      "role": "portal-backend"
+    },
+    {
+      "id": "os-branding",
+      "source": "image/kinoite/config/os-release.d/xnix.conf",
+      "dest": "/usr/lib/os-release.d/xnix.conf",
+      "role": "branding"
+    },
+    {
+      "id": "systemd-preset",
+      "source": "image/kinoite/config/systemd-preset/80-xnix.preset",
+      "dest": "/usr/lib/systemd/system-preset/80-xnix.preset",
+      "role": "unit-preset"
+    }
+  ],
+  "enabled_units": [
+    "sddm.service",
+    "xnix-compatd.service"
+  ],
+  "first_boot": {
+    "target": "graphical.target",
+    "greeter": "sddm",
+    "autologin": false
+  },
+  "kde_entry_points": [
+    "compatibility-center",
+    "krunner",
+    "kwin",
+    "dolphin",
+    "system-tray",
+    "notifications",
+    "system-settings"
+  ],
+  "boot_smoke": {
+    "expect_serial_markers": [
+      "Reached target Graphical Interface",
+      "Started Simple Desktop Display Manager"
+    ],
+    "timeout_seconds": 180
+  },
+  "provenance": {
+    "runtime_owned": true,
+    "kde_policy_owner": false,
+    "host_root_modified": false,
+    "privileged_build_required": true
+  }
+}
