@@ -32,6 +32,7 @@ plasmoid = project_root.join("kde/plasmoids/org.xnix.compatibilitycenter/metadat
   GetKDEApplicationSurfacePlan
   GetDesktopResourceBridgePlan
   GetDesktopEntryPlan
+  GetDesktopIconPlan
   GetTaskManagerIdentityPlan
   GetKWinWindowRulePlan
   GetFileAssociationPlan

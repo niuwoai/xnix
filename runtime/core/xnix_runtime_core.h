@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define XNIX_RUNTIME_VERSION "0.2.152"
+#define XNIX_RUNTIME_VERSION "0.2.153"
 #define XNIX_RUNTIME_BUS_NAME "org.xnix.Compatibility1"
 #define XNIX_RUNTIME_OBJECT_PATH "/org/xnix/Compatibility1"
 #define XNIX_RUNTIME_INTERFACE "org.xnix.Compatibility1"
@@ -828,7 +828,7 @@ typedef struct {
 } XnixRuntimeMethodParityCounts;
 
 typedef struct {
-  const char *read_only_methods[54];
+  const char *read_only_methods[55];
   size_t read_only_method_count;
   XnixRuntimeMethodParityCheck parity_checks[5];
   size_t parity_check_count;
@@ -1389,6 +1389,36 @@ typedef struct {
 
 typedef struct {
   const XnixRuntimeApplication *application;
+  const char *plan_type;
+  const char *runtime_method;
+  const char *desktop_file;
+  const char *launcher_url;
+  const char *target_directory;
+  const char *placement;
+  const char *exec;
+  const char *icon;
+  const char *blocked_actions[6];
+  size_t blocked_action_count;
+  bool standard_desktop_entry;
+  bool desktop_icon_visible;
+  bool user_visible;
+  bool runtime_owned;
+  bool c_runtime_backed;
+  bool kde_policy_owner;
+  bool official_desktop_only;
+  bool desktop_file_copy_enabled;
+  bool desktop_file_write_enabled;
+  bool icon_placement_persisted;
+  bool launch_enabled;
+  bool backend_launch_enabled;
+  bool host_root_modified;
+  bool raw_executable_exposed;
+  bool backend_details_exposed;
+  const char *summary;
+} XnixRuntimeDesktopIconPlan;
+
+typedef struct {
+  const XnixRuntimeApplication *application;
   const char *desktop_file;
   const char *launcher_url;
   const char *window_kind;
@@ -1857,6 +1887,10 @@ bool xnix_runtime_compatibility_review_flow_plan(
 bool xnix_runtime_desktop_entry_plan(
   const char *application_id,
   XnixRuntimeDesktopEntryPlan *plan
+);
+bool xnix_runtime_desktop_icon_plan(
+  const char *application_id,
+  XnixRuntimeDesktopIconPlan *plan
 );
 bool xnix_runtime_task_manager_identity_plan(
   const char *application_id,

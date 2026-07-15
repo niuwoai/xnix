@@ -48,6 +48,10 @@ static const gchar introspection_xml[] =
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
   "    </method>"
+  "    <method name='GetDesktopIconPlan'>"
+  "      <arg name='application_id' type='s' direction='in'/>"
+  "      <arg name='plan' type='a{sv}' direction='out'/>"
+  "    </method>"
   "    <method name='GetTaskManagerIdentityPlan'>"
   "      <arg name='application_id' type='s' direction='in'/>"
   "      <arg name='plan' type='a{sv}' direction='out'/>"
@@ -581,6 +585,41 @@ build_desktop_entry_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "compatibility_storage_path_exposed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "files_written", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+
+  return g_variant_builder_end(&plan);
+}
+
+static GVariant *
+build_desktop_icon_plan(const gchar *application_id)
+{
+  GVariantBuilder plan;
+
+  g_variant_builder_init(&plan, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&plan, "{sv}", "request_type", g_variant_new_string("desktop-icon-plan"));
+  g_variant_builder_add(&plan, "{sv}", "plan_type", g_variant_new_string("desktop-icon-plan"));
+  g_variant_builder_add(&plan, "{sv}", "application_id", g_variant_new_string(application_id));
+  g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
+  g_variant_builder_add(&plan, "{sv}", "runtime_method", g_variant_new_string("GetDesktopIconPlan"));
+  g_variant_builder_add(&plan, "{sv}", "read_model_source", g_variant_new_string("go-desktop-icon-preview"));
+  g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&plan, "{sv}", "launcher_url", g_variant_new_string("applications:xnix-org.xnix.sample.notepad.desktop"));
+  g_variant_builder_add(&plan, "{sv}", "target_directory", g_variant_new_string("xdg-desktop-dir"));
+  g_variant_builder_add(&plan, "{sv}", "placement", g_variant_new_string("user-desktop"));
+  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad %U"));
+  g_variant_builder_add(&plan, "{sv}", "icon", g_variant_new_string("accessories-text-editor"));
+  g_variant_builder_add(&plan, "{sv}", "standard_desktop_entry", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "desktop_icon_visible", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&plan, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "desktop_file_copy_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "desktop_file_write_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "icon_placement_persisted", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "backend_launch_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&plan, "{sv}", "raw_executable_exposed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&plan, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
 
   return g_variant_builder_end(&plan);
@@ -1893,7 +1932,7 @@ build_runtime_method_parity_manifest(void)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("runtime-method-parity-manifest"));
-  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(54));
+  g_variant_builder_add(&manifest, "{sv}", "method_count", g_variant_new_int32(55));
   g_variant_builder_add(&manifest, "{sv}", "read_only_method_parity_ready", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&manifest, "{sv}", "passed_check_count", g_variant_new_int32(5));
   g_variant_builder_add(&manifest, "{sv}", "blocked_check_count", g_variant_new_int32(0));
@@ -2045,6 +2084,22 @@ handle_method_call(GDBusConnection *connection,
     g_dbus_method_invocation_return_value(
       invocation,
       g_variant_new("(@a{sv})", build_desktop_entry_plan(application_id))
+    );
+    return;
+  }
+
+  if (g_strcmp0(method_name, "GetDesktopIconPlan") == 0) {
+    const gchar *application_id = NULL;
+
+    g_variant_get(parameters, "(&s)", &application_id);
+    if (!known_application(application_id)) {
+      return_unknown_application(invocation, application_id);
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(
+      invocation,
+      g_variant_new("(@a{sv})", build_desktop_icon_plan(application_id))
     );
     return;
   }

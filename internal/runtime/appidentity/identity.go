@@ -81,6 +81,40 @@ type WindowIdentityPreview struct {
 	Summary               string            `json:"summary"`
 }
 
+type DesktopIconPreview struct {
+	SchemaVersion           string   `json:"schema_version"`
+	RequestType             string   `json:"request_type"`
+	PlanType                string   `json:"plan_type"`
+	Source                  string   `json:"source"`
+	Desktop                 string   `json:"desktop"`
+	RuntimeMethod           string   `json:"runtime_method"`
+	ApplicationID           string   `json:"application_id"`
+	DisplayName             string   `json:"display_name"`
+	Icon                    string   `json:"icon"`
+	DesktopFile             string   `json:"desktop_file"`
+	LauncherURL             string   `json:"launcher_url"`
+	TargetDirectory         string   `json:"target_directory"`
+	Placement               string   `json:"placement"`
+	LaunchCommand           []string `json:"launch_command"`
+	StandardDesktopEntry    bool     `json:"standard_desktop_entry"`
+	UserVisible             bool     `json:"user_visible"`
+	DesktopIconVisible      bool     `json:"desktop_icon_visible"`
+	DesktopFileCopyEnabled  bool     `json:"desktop_file_copy_enabled"`
+	DesktopFileWriteEnabled bool     `json:"desktop_file_write_enabled"`
+	IconPlacementPersisted  bool     `json:"icon_placement_persisted"`
+	LaunchEnabled           bool     `json:"launch_enabled"`
+	BackendLaunchEnabled    bool     `json:"backend_launch_enabled"`
+	HostRootModified        bool     `json:"host_root_modified"`
+	BackendDetailsExposed   bool     `json:"backend_details_exposed"`
+	RawExecutableExposed    bool     `json:"raw_executable_exposed"`
+	RuntimeOwned            bool     `json:"runtime_owned"`
+	GoRuntimeBacked         bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner          bool     `json:"kde_policy_owner"`
+	OfficialDesktopOnly     bool     `json:"official_desktop_only"`
+	BlockedActions          []string `json:"blocked_actions"`
+	Summary                 string   `json:"summary"`
+}
+
 type TaskManagerHints struct {
 	GroupingKey          string `json:"grouping_key"`
 	PinningAllowed       bool   `json:"pinning_allowed"`
@@ -1021,6 +1055,54 @@ func (plan Plan) WindowIdentityPreview() (WindowIdentityPreview, error) {
 		BackendDetailsExposed: false,
 		UserFacingSettings:    plan.UserFacingSettings,
 		Summary:               "window identity preview lets KDE group, pin, switch, and restore compatibility windows as normal Linux application windows while backend policy stays in the Runtime.",
+	}, nil
+}
+
+func (plan Plan) DesktopIconPreview() (DesktopIconPreview, error) {
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return DesktopIconPreview{}, err
+	}
+	if len(plan.LaunchCommand) != 4 {
+		return DesktopIconPreview{}, errors.New("desktop icon preview requires a complete managed launcher command")
+	}
+	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {
+		if !singleLine(value) {
+			return DesktopIconPreview{}, errors.New("desktop icon preview requires single-line identity fields")
+		}
+	}
+
+	return DesktopIconPreview{
+		SchemaVersion:           "xnix.runtime.desktop_icon.v1",
+		RequestType:             "desktop-icon-preview",
+		PlanType:                "desktop-icon-plan",
+		Source:                  "desktop-entry-preview",
+		Desktop:                 "KDE Plasma",
+		RuntimeMethod:           "GetDesktopIconPlan",
+		ApplicationID:           plan.ApplicationID,
+		DisplayName:             plan.DisplayName,
+		Icon:                    plan.Icon,
+		DesktopFile:             plan.DesktopFile,
+		LauncherURL:             "applications:" + plan.DesktopFile,
+		TargetDirectory:         "xdg-desktop-dir",
+		Placement:               "user-desktop",
+		LaunchCommand:           plan.LaunchCommand,
+		StandardDesktopEntry:    plan.StandardDesktopEntry,
+		UserVisible:             true,
+		DesktopIconVisible:      true,
+		DesktopFileCopyEnabled:  false,
+		DesktopFileWriteEnabled: false,
+		IconPlacementPersisted:  false,
+		LaunchEnabled:           false,
+		BackendLaunchEnabled:    false,
+		HostRootModified:        false,
+		BackendDetailsExposed:   false,
+		RawExecutableExposed:    false,
+		RuntimeOwned:            true,
+		GoRuntimeBacked:         true,
+		KDEPolicyOwner:          false,
+		OfficialDesktopOnly:     true,
+		BlockedActions:          []string{"copy desktop entry into user desktop from preview state", "persist desktop icon placement from preview state", "launch application from desktop icon preview", "expose raw backend command in desktop icon", "mutate host root during desktop icon preview"},
+		Summary:                 "desktop icon preview lets KDE show a standard application shortcut on the user desktop while the Runtime keeps file writes, placement persistence, backend launch, and host-root mutation disabled.",
 	}, nil
 }
 

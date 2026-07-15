@@ -109,6 +109,18 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.GetDesktopIconPlan",
+    "org.xnix.sample.notepad"
+  )
+  assert(status.success?, "runtime smoke adapter must answer GetDesktopIconPlan: #{stderr}")
+  assert(stdout.include?("desktop-icon-plan"), "runtime smoke adapter must expose desktop icon plans over D-Bus")
+  assert(stdout.include?("xdg-desktop-dir"), "runtime smoke adapter must keep desktop icon target abstract")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
     "--method", "#{INTERFACE}.GetTaskManagerIdentityPlan",
     "org.xnix.sample.notepad"
   )

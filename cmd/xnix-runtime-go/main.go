@@ -20,7 +20,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {backend-selection-preview|compatibility-center-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|execution-decision-preview|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|krunner-query-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|permission-review-preview|portal-request-preview|review-flow-preview|settings-change-preview|settings-preview|tray-status-preview|window-identity-preview}")
 	}
 
 	switch args[0] {
@@ -30,6 +30,8 @@ func run(args []string, stdout io.Writer) error {
 		return runCompatibilityCenterPreview(args[1:], stdout)
 	case "desktop-entry-preview":
 		return runDesktopEntryPreview(args[1:], stdout)
+	case "desktop-icon-preview":
+		return runDesktopIconPreview(args[1:], stdout)
 	case "desktop-identity-plan":
 		return runDesktopIdentityPlan(args[1:], stdout)
 	case "desktop-resource-bridge-preview":
@@ -610,6 +612,25 @@ func runDesktopEntryPreview(args []string, stdout io.Writer) error {
 	}
 	_, err = io.WriteString(stdout, entry)
 	return err
+}
+
+func runDesktopIconPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, err := parseRecipeSource("desktop-icon-preview", args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.DesktopIconPreview()
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
 }
 
 func runMIMEAppsPreview(args []string, stdout io.Writer) error {

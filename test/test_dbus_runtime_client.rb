@@ -61,6 +61,12 @@ class FakeCapture
         "",
         Status.new(true)
       ]
+    when "org.xnix.Compatibility1.GetDesktopIconPlan"
+      [
+        "({'plan_type': <'desktop-icon-plan'>, 'runtime_method': <'GetDesktopIconPlan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'launcher_url': <'applications:xnix-org.xnix.sample.notepad.desktop'>, 'target_directory': <'xdg-desktop-dir'>, 'placement': <'user-desktop'>, 'standard_desktop_entry': <true>, 'desktop_icon_visible': <true>, 'desktop_file_copy_enabled': <false>, 'desktop_file_write_enabled': <false>, 'icon_placement_persisted': <false>, 'launch_enabled': <false>, 'backend_launch_enabled': <false>, 'host_root_modified': <false>, 'raw_executable_exposed': <false>, 'backend_details_exposed': <false>},)\n",
+        "",
+        Status.new(true)
+      ]
     when "org.xnix.Compatibility1.GetTaskManagerIdentityPlan"
       [
         "({'plan_type': <'task-manager-identity-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'launcher_url': <'applications:xnix-org.xnix.sample.notepad.desktop'>, 'window_kind': <'compatibility-application'>, 'class_group': <'xnix-compatibility'>, 'grouping_key': <'org.xnix.sample.notepad'>, 'pinning_allowed': <true>, 'restore_allowed': <true>, 'skip_taskbar': <false>, 'show_in_switcher': <true>, 'prefer_existing_window': <true>, 'window_manager_policy_only': <true>, 'runtime_owns_backend_policy': <true>, 'host_root_modified': <false>, 'backend_details_exposed': <false>},)\n",
@@ -285,7 +291,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetRuntimeMethodParityManifest"
       [
-        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <54>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'manifest_type': <'runtime-method-parity-manifest'>, 'method_count': <55>, 'read_only_method_parity_ready': <true>, 'passed_check_count': <5>, 'blocked_check_count': <0>, 'write_methods_supported': <false>, 'write_method_dispatch_enabled': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -396,6 +402,24 @@ assert(!desktop_entry_plan["backend_command_exposed"], "D-Bus client must parse 
 assert(!desktop_entry_plan["raw_windows_executable_exposed"], "D-Bus client must parse Windows executable hiding")
 assert(!desktop_entry_plan["compatibility_storage_path_exposed"], "D-Bus client must parse prefix hiding")
 assert(!desktop_entry_plan["backend_details_exposed"], "D-Bus client must parse desktop entry backend detail status")
+
+desktop_icon_plan = client.desktop_icon_plan("org.xnix.sample.notepad")
+assert(desktop_icon_plan["plan_type"] == "desktop-icon-plan", "D-Bus client must parse desktop icon plans")
+assert(desktop_icon_plan["runtime_method"] == "GetDesktopIconPlan", "D-Bus client must parse desktop icon Runtime methods")
+assert(desktop_icon_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse desktop icon desktop files")
+assert(desktop_icon_plan["launcher_url"] == "applications:xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse desktop icon launcher URLs")
+assert(desktop_icon_plan["target_directory"] == "xdg-desktop-dir", "D-Bus client must parse abstract desktop icon target directories")
+assert(desktop_icon_plan["placement"] == "user-desktop", "D-Bus client must parse desktop icon placement")
+assert(desktop_icon_plan["standard_desktop_entry"], "D-Bus client must parse desktop icon standard entry status")
+assert(desktop_icon_plan["desktop_icon_visible"], "D-Bus client must parse desktop icon visibility")
+assert(!desktop_icon_plan["desktop_file_copy_enabled"], "D-Bus client must parse disabled desktop icon copy")
+assert(!desktop_icon_plan["desktop_file_write_enabled"], "D-Bus client must parse disabled desktop icon writes")
+assert(!desktop_icon_plan["icon_placement_persisted"], "D-Bus client must parse disabled desktop icon placement persistence")
+assert(!desktop_icon_plan["launch_enabled"], "D-Bus client must parse disabled desktop icon launch")
+assert(!desktop_icon_plan["backend_launch_enabled"], "D-Bus client must parse disabled desktop icon backend launch")
+assert(!desktop_icon_plan["host_root_modified"], "D-Bus client must parse desktop icon host-root safety")
+assert(!desktop_icon_plan["raw_executable_exposed"], "D-Bus client must parse desktop icon executable hiding")
+assert(!desktop_icon_plan["backend_details_exposed"], "D-Bus client must parse desktop icon backend detail status")
 
 task_manager_identity_plan = client.task_manager_identity_plan("org.xnix.sample.notepad")
 assert(task_manager_identity_plan["plan_type"] == "task-manager-identity-plan", "D-Bus client must parse task manager identity plans")
@@ -822,7 +846,7 @@ assert(!owner_smoke_plan["backend_details_exposed"], "D-Bus client must parse ow
 
 method_parity = client.runtime_method_parity_manifest
 assert(method_parity["manifest_type"] == "runtime-method-parity-manifest", "D-Bus client must parse Runtime method parity manifests")
-assert(method_parity["method_count"] == 54, "D-Bus client must parse Runtime method counts")
+assert(method_parity["method_count"] == 55, "D-Bus client must parse Runtime method counts")
 assert(method_parity["read_only_method_parity_ready"], "D-Bus client must parse read-only method parity readiness")
 assert(method_parity["passed_check_count"] == 5, "D-Bus client must parse Runtime parity pass counts")
 assert(method_parity["blocked_check_count"].zero?, "D-Bus client must parse Runtime parity blocked counts")

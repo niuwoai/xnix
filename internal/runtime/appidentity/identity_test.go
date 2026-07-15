@@ -183,6 +183,73 @@ func TestWindowIdentityPreviewUsesNormalDesktopWindowIdentity(t *testing.T) {
 	}
 }
 
+func TestDesktopIconPreviewUsesStandardDesktopEntry(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.DesktopIconPreview()
+	if err != nil {
+		t.Fatalf("DesktopIconPreview returned error: %v", err)
+	}
+	if preview.SchemaVersion != "xnix.runtime.desktop_icon.v1" ||
+		preview.RequestType != "desktop-icon-preview" ||
+		preview.PlanType != "desktop-icon-plan" ||
+		preview.Source != "desktop-entry-preview" ||
+		preview.Desktop != "KDE Plasma" ||
+		preview.RuntimeMethod != "GetDesktopIconPlan" {
+		t.Fatalf("unexpected desktop icon schema: %#v", preview)
+	}
+	if preview.ApplicationID != "org.example.ledger" ||
+		preview.DisplayName != "Example Ledger" ||
+		preview.Icon != "office-chart-area" ||
+		preview.DesktopFile != "xnix-org.example.ledger.desktop" ||
+		preview.LauncherURL != "applications:xnix-org.example.ledger.desktop" ||
+		preview.TargetDirectory != "xdg-desktop-dir" ||
+		preview.Placement != "user-desktop" {
+		t.Fatalf("unexpected desktop icon identity: %#v", preview)
+	}
+	if got, want := preview.LaunchCommand, []string{"xnix-compat-launch", "--app", "org.example.ledger", "%U"}; !sameStrings(got, want) {
+		t.Fatalf("LaunchCommand = %#v, want %#v", got, want)
+	}
+	if !preview.StandardDesktopEntry || !preview.UserVisible || !preview.DesktopIconVisible ||
+		preview.DesktopFileCopyEnabled || preview.DesktopFileWriteEnabled ||
+		preview.IconPlacementPersisted || preview.LaunchEnabled ||
+		preview.BackendLaunchEnabled || preview.HostRootModified ||
+		preview.BackendDetailsExposed || preview.RawExecutableExposed ||
+		!preview.RuntimeOwned || !preview.GoRuntimeBacked ||
+		preview.KDEPolicyOwner || !preview.OfficialDesktopOnly {
+		t.Fatalf("unexpected desktop icon safety flags: %#v", preview)
+	}
+	if !sameStrings(preview.BlockedActions, []string{
+		"copy desktop entry into user desktop from preview state",
+		"persist desktop icon placement from preview state",
+		"launch application from desktop icon preview",
+		"expose raw backend command in desktop icon",
+		"mutate host root during desktop icon preview",
+	}) {
+		t.Fatalf("unexpected blocked actions: %#v", preview.BlockedActions)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("desktop icon preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestTrayStatusPreviewKeepsLiveBridgeGated(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

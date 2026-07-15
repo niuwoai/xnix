@@ -24,6 +24,7 @@ module Xnix
         GetRunPlan
         GetDesktopActivationManifest
         GetDesktopEntryPlan
+        GetDesktopIconPlan
         GetTaskManagerIdentityPlan
         GetKDEIntegrationStatus
         GetKDEShellIntegrationPlan
@@ -88,6 +89,7 @@ module Xnix
         "GetRunPlan" => "run_plan",
         "GetDesktopActivationManifest" => "desktop_activation_manifest",
         "GetDesktopEntryPlan" => "desktop_entry_plan",
+        "GetDesktopIconPlan" => "desktop_icon_plan",
         "GetTaskManagerIdentityPlan" => "task_manager_identity_plan",
         "GetKDEIntegrationStatus" => "kde_integration_status",
         "GetKDEShellIntegrationPlan" => "kde_shell_integration_plan",

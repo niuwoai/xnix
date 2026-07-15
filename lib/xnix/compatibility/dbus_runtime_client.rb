@@ -65,6 +65,10 @@ module Xnix
         parse_dictionary(call("GetDesktopEntryPlan", application_id))
       end
 
+      def desktop_icon_plan(application_id)
+        parse_dictionary(call("GetDesktopIconPlan", application_id))
+      end
+
       def task_manager_identity_plan(application_id)
         parse_dictionary(call("GetTaskManagerIdentityPlan", application_id))
       end

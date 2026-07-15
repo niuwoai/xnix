@@ -71,6 +71,25 @@ assert(!desktop_entry_plan["safety"]["backend_command_exposed"], "dispatch must 
 stdout, stderr, status = Open3.capture3(
   *command,
   "dispatch",
+  "GetDesktopIconPlan",
+  JSON.generate(["org.xnix.sample.notepad"])
+)
+assert(status.success?, "dispatch GetDesktopIconPlan must exit successfully: #{stderr}")
+desktop_icon_plan = JSON.parse(stdout)
+assert(desktop_icon_plan["plan_type"] == "desktop-icon-plan", "dispatch must route GetDesktopIconPlan")
+assert(desktop_icon_plan["runtime_method"] == "GetDesktopIconPlan", "dispatch must expose desktop icon Runtime methods")
+assert(desktop_icon_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "dispatch must expose desktop icon desktop files")
+assert(desktop_icon_plan["launcher_url"] == "applications:xnix-org.xnix.sample.notepad.desktop", "dispatch must expose desktop icon launcher URLs")
+assert(desktop_icon_plan["target_directory"] == "xdg-desktop-dir", "dispatch must keep desktop icon target abstract")
+assert(desktop_icon_plan["desktop_icon_visible"], "dispatch must expose desktop icon visibility")
+assert(!desktop_icon_plan["desktop_file_copy_enabled"], "dispatch must not copy desktop icon files")
+assert(!desktop_icon_plan["desktop_file_write_enabled"], "dispatch must not write desktop icon files")
+assert(!desktop_icon_plan["launch_enabled"], "dispatch must not enable launch from desktop icon previews")
+assert(!desktop_icon_plan["backend_details_exposed"], "dispatch must keep desktop icon backend details hidden")
+
+stdout, stderr, status = Open3.capture3(
+  *command,
+  "dispatch",
   "GetTaskManagerIdentityPlan",
   JSON.generate(["org.xnix.sample.notepad"])
 )

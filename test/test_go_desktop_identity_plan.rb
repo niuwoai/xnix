@@ -55,6 +55,7 @@ assert(File.read(File.join(project_root, "internal/runtime/appidentity/registry.
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("--registry"), "Go Runtime CLI must support registry-backed recipe lookup")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("backend-selection-preview"), "Go Runtime CLI must render KDE backend selection previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-icon-preview"), "Go Runtime CLI must render desktop icon previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-resource-bridge-preview"), "Go Runtime CLI must render KDE desktop resource bridge previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-readiness-preview"), "Go Runtime CLI must render KDE execution readiness previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")
@@ -148,6 +149,41 @@ if go_available
   assert(desktop_entry.include?("X-Xnix-ApplicationId=#{recipe.id}\n"), "desktop entry preview must include the Runtime application id")
   assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
   assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")
+
+  desktop_icon, desktop_icon_status = capture_runtime_go(
+    project_root,
+    runtime_go_binary,
+    go_binary,
+    "desktop-icon-preview",
+    "--registry",
+    "runtime/recipes/registry.json",
+    "--app",
+    "org.xnix.sample.notepad"
+  )
+  assert(desktop_icon_status.success?, "Go desktop icon preview CLI must run successfully")
+  desktop_icon_payload = JSON.parse(desktop_icon)
+  assert(desktop_icon_payload.fetch("schema_version") == "xnix.runtime.desktop_icon.v1", "desktop icon preview schema version must be stable")
+  assert(desktop_icon_payload.fetch("request_type") == "desktop-icon-preview", "desktop icon preview must identify its request type")
+  assert(desktop_icon_payload.fetch("plan_type") == "desktop-icon-plan", "desktop icon preview must identify its plan type")
+  assert(desktop_icon_payload.fetch("runtime_method") == "GetDesktopIconPlan", "desktop icon preview must expose the Runtime method")
+  assert(desktop_icon_payload.fetch("desktop_file") == "xnix-#{recipe.id}.desktop", "desktop icon preview must bind generated desktop files")
+  assert(desktop_icon_payload.fetch("launcher_url") == "applications:xnix-#{recipe.id}.desktop", "desktop icon preview must expose application launcher URLs")
+  assert(desktop_icon_payload.fetch("target_directory") == "xdg-desktop-dir", "desktop icon preview must keep the target directory abstract")
+  assert(desktop_icon_payload.fetch("placement") == "user-desktop", "desktop icon preview must target the user desktop")
+  assert(desktop_icon_payload.fetch("standard_desktop_entry") == true, "desktop icon preview must reuse standard desktop entries")
+  assert(desktop_icon_payload.fetch("desktop_icon_visible") == true, "desktop icon preview must be visible to KDE")
+  assert(desktop_icon_payload.fetch("runtime_owned") == true, "desktop icon preview must remain Runtime-owned")
+  assert(desktop_icon_payload.fetch("go_runtime_backed") == true, "desktop icon preview must be backed by Go Runtime product logic")
+  assert(desktop_icon_payload.fetch("kde_policy_owner") == false, "desktop icon preview must not make KDE own policy")
+  assert(desktop_icon_payload.fetch("desktop_file_copy_enabled") == false, "desktop icon preview must not copy desktop files")
+  assert(desktop_icon_payload.fetch("desktop_file_write_enabled") == false, "desktop icon preview must not write desktop files")
+  assert(desktop_icon_payload.fetch("icon_placement_persisted") == false, "desktop icon preview must not persist placement")
+  assert(desktop_icon_payload.fetch("launch_enabled") == false, "desktop icon preview must not enable launch")
+  assert(desktop_icon_payload.fetch("host_root_modified") == false, "desktop icon preview must not mutate the host root")
+  assert(desktop_icon_payload.fetch("backend_details_exposed") == false, "desktop icon preview must not expose backend details")
+  assert(!desktop_icon.downcase.include?("prefix"), "desktop icon preview must not expose implementation storage")
+  assert(!desktop_icon.include?(".exe"), "desktop icon preview must not expose a Windows executable")
+  assert(!desktop_icon.downcase.include?("virtual machine"), "desktop icon preview must not expose implementation labels")
 
   center, center_status = capture_runtime_go(
     project_root,

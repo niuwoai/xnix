@@ -2796,6 +2796,7 @@ print_write_gate(const char *method_name)
 #include "xnix_runtime_core_cli_compatibility_mode_switch_plan.inc"
 #include "xnix_runtime_core_cli_compatibility_permission_review_plan.inc"
 #include "xnix_runtime_core_cli_desktop_entry.inc"
+#include "xnix_runtime_core_cli_desktop_icon.inc"
 #include "xnix_runtime_core_cli_task_manager_identity.inc"
 #include "xnix_runtime_core_cli_kwin_window_rule.inc"
 #include "xnix_runtime_core_cli_file_association.inc"

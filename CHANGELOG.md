@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.153] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-icon-preview` for read-only KDE desktop icon planning from the standard desktop-entry identity.
+- Added the read-only `GetDesktopIconPlan` Runtime D-Bus method so KDE can show a normal desktop shortcut without copying files, persisting placement, launching backends, or exposing backend commands.
+- Added daemon, D-Bus client, C Runtime core, C smoke-adapter, session-smoke, dispatch, contract, Go CLI, and method-parity coverage for desktop icon reads.
+
+### Changed
+
+- Increased the Runtime read-only method parity count from 54 to 55.
+
 ## [0.2.152] - 2026-07-15
 
 ### Added

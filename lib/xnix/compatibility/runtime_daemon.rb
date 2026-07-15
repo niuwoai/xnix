@@ -105,6 +105,7 @@ module Xnix
             "kde_application_surface_plans" => true,
             "desktop_resource_bridge_plans" => true,
             "desktop_entry_planning" => true,
+            "desktop_icon_planning" => true,
             "task_manager_identity_planning" => true,
             "kwin_window_rule_planning" => true,
             "file_association_planning" => true,
@@ -178,6 +179,7 @@ module Xnix
           "kde_application_surface_plan" => kde_application_surface_plan_summary(recipe),
           "desktop_resource_bridge_plan" => desktop_resource_bridge_plan_summary(recipe),
           "desktop_entry_plan" => desktop_entry_plan_summary(recipe),
+          "desktop_icon_plan" => desktop_icon_plan_summary(recipe),
           "task_manager_identity_plan" => task_manager_identity_plan_summary(recipe),
           "file_association_plan" => file_association_plan_summary(recipe),
           "notification_plan" => notification_plan_summary(recipe),
@@ -299,6 +301,49 @@ module Xnix
             "backend_details_exposed" => false
           },
           "desktop_safe_summary" => "Compatibility application desktop entries launch through the Runtime without exposing backend commands."
+        }
+      end
+
+      def desktop_icon_plan(application_id)
+        entry = desktop_entry_plan(application_id)
+        {
+          "version" => VERSION,
+          "request_type" => "desktop-icon-plan",
+          "plan_type" => "desktop-icon-plan",
+          "desktop" => "KDE Plasma",
+          "runtime_method" => "GetDesktopIconPlan",
+          "read_model_source" => "go-desktop-icon-preview",
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "official_desktop_only" => true,
+          "application_id" => entry.fetch("application_id"),
+          "name" => entry.fetch("name"),
+          "desktop_file" => entry.fetch("desktop_file"),
+          "launcher_url" => "applications:#{entry.fetch("desktop_file")}",
+          "target_directory" => "xdg-desktop-dir",
+          "placement" => "user-desktop",
+          "exec" => entry.fetch("exec"),
+          "icon" => entry.fetch("icon"),
+          "standard_desktop_entry" => entry.fetch("standard_desktop_entry"),
+          "user_visible" => true,
+          "desktop_icon_visible" => true,
+          "desktop_file_copy_enabled" => false,
+          "desktop_file_write_enabled" => false,
+          "icon_placement_persisted" => false,
+          "launch_enabled" => false,
+          "backend_launch_enabled" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "raw_executable_exposed" => false,
+          "blocked_actions" => [
+            "copy desktop entry into user desktop from preview state",
+            "persist desktop icon placement from preview state",
+            "launch application from desktop icon preview",
+            "expose raw backend command in desktop icon",
+            "mutate host root during desktop icon preview"
+          ],
+          "desktop_safe_summary" => "KDE can show a Runtime-owned application icon on the user desktop, but the preview cannot copy files, persist placement, launch, or expose backend commands."
         }
       end
 
@@ -919,6 +964,8 @@ module Xnix
           desktop_resource_bridge_plan(required_parameter(method_name, parameters, 0))
         when "GetDesktopEntryPlan"
           desktop_entry_plan(required_parameter(method_name, parameters, 0))
+        when "GetDesktopIconPlan"
+          desktop_icon_plan(required_parameter(method_name, parameters, 0))
         when "GetTaskManagerIdentityPlan"
           task_manager_identity_plan(required_parameter(method_name, parameters, 0))
         when "GetKWinWindowRulePlan"
@@ -1438,6 +1485,26 @@ module Xnix
           "raw_windows_executable_exposed" => plan.fetch("safety").fetch("raw_windows_executable_exposed"),
           "compatibility_storage_path_exposed" => plan.fetch("safety").fetch("compatibility_storage_path_exposed"),
           "host_root_modified" => plan.fetch("safety").fetch("host_root_modified"),
+          "summary" => plan.fetch("desktop_safe_summary")
+        }
+      end
+
+      def desktop_icon_plan_summary(recipe)
+        plan = desktop_icon_plan(recipe.id)
+        {
+          "plan_type" => plan.fetch("plan_type"),
+          "runtime_method" => plan.fetch("runtime_method"),
+          "desktop_file" => plan.fetch("desktop_file"),
+          "launcher_url" => plan.fetch("launcher_url"),
+          "target_directory" => plan.fetch("target_directory"),
+          "placement" => plan.fetch("placement"),
+          "standard_desktop_entry" => plan.fetch("standard_desktop_entry"),
+          "desktop_icon_visible" => plan.fetch("desktop_icon_visible"),
+          "desktop_file_copy_enabled" => plan.fetch("desktop_file_copy_enabled"),
+          "desktop_file_write_enabled" => plan.fetch("desktop_file_write_enabled"),
+          "icon_placement_persisted" => plan.fetch("icon_placement_persisted"),
+          "launch_enabled" => plan.fetch("launch_enabled"),
+          "backend_details_exposed" => plan.fetch("backend_details_exposed"),
           "summary" => plan.fetch("desktop_safe_summary")
         }
       end
