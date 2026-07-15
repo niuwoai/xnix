@@ -4,11 +4,15 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.193"
+EXPECTED_VERSION = "0.2.194"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
   docs/claude-code-implementation-packages.md
+  docs/kde-first-compatibility-acceptance.md
+  docs/kde-first-current-gap-audit.md
+  docs/kde-first-presence-smoke-spec.md
+  docs/windows-app-compatibility-implementation-brief.md
   go.mod
   buildroot/Config.in
   buildroot/external.desc
@@ -151,6 +155,7 @@ REQUIRED_FILES = %w[
   scripts/container.rb
   scripts/dbus_session_smoke.rb
   scripts/kde_center_dbus_smoke.rb
+  scripts/kde_first_presence_smoke.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
   scripts/install_runtime_activation.rb
@@ -305,6 +310,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_activation_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
+  test/test_kde_first_presence_smoke_script.rb
   test/test_kde_integration_status.rb
   test/test_kde_shell_integration_plan.rb
   test/test_kwin_window_rule.rb
@@ -898,6 +904,22 @@ runtime_activation_smoke_source = read_project_file("scripts/runtime_activation_
 %w[usr/libexec/xnix/compatd usr/lib/xnix/compatibility/runtime_daemon.rb GetRuntimeMethodParityManifest GetRuntimeWriteGate WriteMethodDisabled].each do |token|
   assert(runtime_activation_smoke_source.include?(token), "Runtime activation smoke must include #{token}")
 end
+
+kde_first_presence_smoke_source = read_project_file("scripts/kde_first_presence_smoke.rb")
+%w[desktop-identity-plan desktop-entry-preview mimeapps-preview desktop-activation-bundle-preview desktop-activation-staging-preview desktop-activation-transaction-preview desktop-activation-status-preview kde-entrypoints-preview kde-action-card-deck-preview kde-center-page-preview kde-center-page-sections-preview kde-center-page-section-detail-preview file-open-preview dolphin-drop-preview dolphin-ai-analysis-preview window-identity-preview tray-status-preview notification-preview settings-preview runtime-owner-route-manifest-preview runtime-method-parity-manifest-preview].each do |token|
+  assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must inspect #{token}")
+end
+%w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |token|
+  assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must assert #{token}")
+end
+%w[host_root_modified network_required privileged_container_required backend_details_exposed raw_command_exposed raw_windows_executable_exposed execution_started backend_launch_enabled launch_enabled request_object_created permission_granted file_content_read file_paths_exposed ai_provider_call_enabled].each do |token|
+  assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must enforce #{token}")
+end
+%w[desktop-entry dolphin-service-menu mimeapps-list desktop-integration-manifest desktop-activation-receipt GOCACHE].each do |token|
+  assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must include #{token}")
+end
+assert(!kde_first_presence_smoke_source.include?("scripts/container.rb"), "KDE-first presence smoke must not run Docker")
+assert(!kde_first_presence_smoke_source.include?("boot-system"), "KDE-first presence smoke must not boot QEMU")
 
 runtime_live_owner_gate_source = read_project_file("lib/xnix/compatibility/runtime_live_owner_gate.rb")
 assert(runtime_live_owner_gate_source.include?("xnix-runtime-live-owner-gate"), "Runtime live owner gate must expose a CLI command")

@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.194] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `backend-capability-matrix-preview` and `backend-lifecycle-preview` for `GetBackendCapabilityMatrix` and `GetBackendLifecycle`, rendering the desktop-safe backend capability matrix (local and isolated profiles across seven Runtime-owned capabilities) and the blocked backend lifecycle stages from registry recipes without enabling backend selection, starting any backend process, creating state roots or snapshots, requiring network access, exposing raw commands, or mutating the host root.
+- Added `scripts/kde_first_presence_smoke.rb` and its unit coverage as a first-milestone KDE presence smoke harness, aggregating Go Runtime previews for one recipe across the seven KDE entry points while enforcing disabled execution, disabled backend launch, project-local Go cache use, no host-root mutation, no privileged containers, no network requirement, and no raw command or file-content exposure.
+
+### Changed
+
+- Migrated `GetBackendCapabilityMatrix` and `GetBackendLifecycle` in `runtime-owner-route-manifest-preview` from the C Runtime adapter bucket to native Go preview routes, completing the recommended backend group (`GetBackendEnvironmentPlan` was already native Go) and further lowering the remaining C-backed read-only owner route count.
+- Updated CLI coverage, unit tests, layout verification, and product documentation for the Go backend capability and lifecycle migration plus the KDE-first presence smoke acceptance harness.
+
 ## [0.2.193] - 2026-07-15
 
 ### Added

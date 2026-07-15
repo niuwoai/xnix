@@ -85,6 +85,8 @@ var runtimeOwnerRouteGoCommands = map[string]string{
 	"GetCompatibilityPackageSource":          "package-source-preview",
 	"GetCompatibilityAcquisitionPreflight":   "acquisition-preflight-preview",
 	"GetCompatibilityArtifactManifest":       "artifact-manifest-preview",
+	"GetBackendCapabilityMatrix":             "backend-capability-matrix-preview",
+	"GetBackendLifecycle":                    "backend-lifecycle-preview",
 	"GetDiagnostics":                         "diagnostics-preview",
 	"GetDesktopActivationTransactionPreview": "desktop-activation-transaction-preview",
 	"GetDesktopActivationStatus":             "desktop-activation-status-preview",
@@ -127,8 +129,6 @@ var runtimeOwnerRouteCCoreCommands = map[string]string{
 	"GetKWinWindowRulePlan":         "kwin-window-rule-plan",
 	"GetApplicationStateRoot":       "state-root-policy",
 	"GetCompatibilityInstallPlan":   "compatibility-install-plan",
-	"GetBackendCapabilityMatrix":    "backend-capability-matrix",
-	"GetBackendLifecycle":           "backend-lifecycle",
 	"GetRepairPlan":                 "compatibility-repair-plan",
 	"GetTestPlan":                   "compatibility-test-plan",
 	"GetTestResult":                 "compatibility-test-result",
@@ -376,7 +376,7 @@ func runtimeOwnerRouteManifestSummary(routeCounts RuntimeOwnerRouteCounts) strin
 		return "Runtime owner routes have Go coverage for current Go previews, with C adapter and legacy dispatch migration still pending."
 	}
 	if routeCounts.CCoreBacked > 0 {
-		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, diagnostics, and current Go previews, with C adapter migration still pending."
+		return "Runtime owner routes have Go coverage for migrated application catalog, engine catalog, run planning, package acquisition, backend capability and lifecycle, diagnostics, and current Go previews, with C adapter migration still pending."
 	}
 	return "Runtime owner routes are fully native to the Go owner preview, but production bus ownership remains gated."
 }
