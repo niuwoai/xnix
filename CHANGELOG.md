@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.185] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `runtime-owner-readiness-preview` to aggregate service binding, live owner gates, owner smoke planning, and method parity evidence into one production-owner readiness view without starting services or claiming the production D-Bus name.
+- Added Go unit, CLI, and layout verification coverage for owner readiness checks, pending production owner gates, write-method closure, KDE non-ownership, host safety, and desktop-safe reporting.
+
 ## [0.2.184] - 2026-07-15
 
 ### Added
