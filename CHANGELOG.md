@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.165] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-transaction-preview` to turn desktop activation staging output into an auditable KDE activation transaction and rollback sequence without committing writes, refreshing KDE caches, exposing target paths, launching backends, or mutating the host root.
+- Split oversized Go CLI tests into focused desktop activation and KDE Compatibility Center test files so the main CLI test file stays below the repository line-count limit while preserving existing coverage.
+
 ## [0.2.164] - 2026-07-15
 
 ### Added
