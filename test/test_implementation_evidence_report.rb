@@ -77,6 +77,7 @@ assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry
     entry.fetch("present")
 }, "Runtime owner service must track generic C bridge helper evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("second-ring KDE resource payloads"), "Runtime owner service summary must mention second-ring KDE resource bridge evidence")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("desktop activation payloads"), "Runtime owner service summary must mention desktop activation bridge evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("status") == "state-root-implemented", "recipe and artifact trust pipeline must show state-root implementation evidence")
 assert(domains.fetch("recipe-artifact-trust-pipeline").fetch("mainline_package") == "M2", "recipe and artifact trust pipeline must map to M2")
 assert(domains.fetch("portal-snapshot-control-plane").fetch("status") == "state-root-implemented", "Portal and snapshot control plane must show state-root implementation evidence")

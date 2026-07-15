@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.226] - 2026-07-16
+
+### Added
+
+- Extended the constrained C D-Bus smoke bridge so desktop activation reads carry Go owner read-dispatch payload evidence: activation manifest, activation transaction preview, and activation status.
+- Added restricted session smoke assertions that prove desktop activation reads expose `xnix.runtime.owner_read_dispatch.v1` evidence without enabling activation commits, desktop writes, KDE cache refresh, backend launch, production D-Bus ownership, or host-root mutation.
+
+### Changed
+
+- Updated Runtime contract drift and implementation evidence reports to track desktop activation reads as Go-owned payload handoffs through low-level C D-Bus transport.
+
 ## [0.2.225] - 2026-07-16
 
 ### Added

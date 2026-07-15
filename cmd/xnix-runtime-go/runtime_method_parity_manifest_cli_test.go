@@ -18,7 +18,7 @@ func TestRuntimeMethodParityManifestPreviewCommandRendersGoReadModel(t *testing.
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.225" ||
+	if payload["version"] != "0.2.226" ||
 		payload["schema_version"] != "xnix.runtime.method_parity_manifest.v1" ||
 		payload["request_type"] != "runtime-method-parity-manifest-preview" ||
 		payload["manifest_type"] != "runtime-method-parity-manifest" ||

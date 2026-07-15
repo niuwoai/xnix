@@ -98,6 +98,7 @@ begin
   )
   assert(status.success?, "runtime smoke adapter must answer GetDesktopActivationManifest: #{stderr}")
   assert(stdout.include?("desktop-activation"), "runtime smoke adapter must expose desktop activation manifests over D-Bus")
+  assert_go_owner_bridge(stdout, "GetDesktopActivationManifest")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -111,6 +112,7 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetDesktopActivationTransactionPreview: #{stderr}")
   assert(stdout.include?("desktop-activation-transaction-preview"), "runtime smoke adapter must expose desktop activation transaction previews over D-Bus")
   assert(stdout.include?("xnix-runtime-go desktop-activation-transaction-preview"), "runtime smoke adapter must point activation transaction previews at the Go read model")
+  assert_go_owner_bridge(stdout, "GetDesktopActivationTransactionPreview")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -125,6 +127,7 @@ begin
   assert(stdout.include?("desktop-activation-status-preview"), "runtime smoke adapter must expose desktop activation status over D-Bus")
   assert(stdout.include?("xnix-runtime-go desktop-activation-status-preview"), "runtime smoke adapter must point activation status at the Go read model")
   assert(stdout.include?("commit_enabled"), "runtime smoke adapter must expose activation status commit gates")
+  assert_go_owner_bridge(stdout, "GetDesktopActivationStatus")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

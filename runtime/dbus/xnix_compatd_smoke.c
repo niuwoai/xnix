@@ -156,6 +156,7 @@ build_desktop_activation_manifest(const gchar *application_id)
 
   g_variant_builder_init(&manifest, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&manifest, "{sv}", "manifest_type", g_variant_new_string("desktop-activation"));
+  add_go_owner_dispatch_bridge_fields(&manifest, "GetDesktopActivationManifest", application_id);
   g_variant_builder_add(&manifest, "{sv}", "application_id", g_variant_new_string(application_id));
   g_variant_builder_add(&manifest, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&manifest, "{sv}", "artifact_count", g_variant_new_int32(7));
@@ -178,6 +179,7 @@ build_desktop_activation_transaction_preview(const gchar *application_id, const 
   g_variant_builder_init(&transaction, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&transaction, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.desktop_activation_transaction.v1"));
   g_variant_builder_add(&transaction, "{sv}", "request_type", g_variant_new_string("desktop-activation-transaction-preview"));
+  add_go_owner_dispatch_bridge_fields2(&transaction, "GetDesktopActivationTransactionPreview", application_id, mode);
   g_variant_builder_add(&transaction, "{sv}", "transaction_type", g_variant_new_string("kde-desktop-activation-transaction"));
   g_variant_builder_add(&transaction, "{sv}", "transaction_state", g_variant_new_string(transaction_ready ? "transaction-ready" : "transaction-blocked"));
   g_variant_builder_add(&transaction, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
@@ -227,6 +229,7 @@ build_desktop_activation_status(const gchar *application_id, const gchar *mode)
   g_variant_builder_init(&status, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&status, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.desktop_activation_status.v1"));
   g_variant_builder_add(&status, "{sv}", "request_type", g_variant_new_string("desktop-activation-status-preview"));
+  add_go_owner_dispatch_bridge_fields2(&status, "GetDesktopActivationStatus", application_id, mode);
   g_variant_builder_add(&status, "{sv}", "status_type", g_variant_new_string("kde-desktop-activation-status"));
   g_variant_builder_add(&status, "{sv}", "activation_state", g_variant_new_string(activation_ready ? "ready-for-runtime-commit" : "blocked-before-runtime-commit"));
   g_variant_builder_add(&status, "{sv}", "source", g_variant_new_string("desktop-activation-transaction-preview"));
