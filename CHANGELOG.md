@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.167] - 2026-07-15
+
+### Added
+
+- Added Go Runtime `desktop-activation-status-preview` to summarize desktop activation transaction readiness, staging readiness, commit gates, KDE surface readiness, blocked reasons, and next safe actions without opening commit, launch, backend, network, privileged-container, host-root, or desktop-write gates.
+- Added Go unit and CLI coverage proving the activation status preview derives from the Go-owned transaction preview, stays safe for KDE Compatibility Center display, and remains separate from the future D-Bus method until the oversized C smoke adapter is split.
+
 ## [0.2.166] - 2026-07-15
 
 ### Added

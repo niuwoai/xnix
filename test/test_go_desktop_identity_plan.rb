@@ -56,6 +56,7 @@ assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("backend-selection-preview"), "Go Runtime CLI must render KDE backend selection previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-entry-preview"), "Go Runtime CLI must render desktop entry previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-icon-preview"), "Go Runtime CLI must render desktop icon previews")
+assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-activation-status-preview"), "Go Runtime CLI must render desktop activation status previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("desktop-resource-bridge-preview"), "Go Runtime CLI must render KDE desktop resource bridge previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("execution-readiness-preview"), "Go Runtime CLI must render KDE execution readiness previews")
 assert(File.read(File.join(project_root, "cmd/xnix-runtime-go/main.go")).include?("file-open-preview"), "Go Runtime CLI must render Dolphin file-open previews")

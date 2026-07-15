@@ -494,6 +494,116 @@ func TestDesktopActivationTransactionPreviewCommandRendersCommitAndRollbackPlan(
 	}
 }
 
+func TestDesktopActivationStatusPreviewCommandRendersRegistryBackedStatus(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".log"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-activation-status-preview", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.desktop_activation_status.v1" ||
+		payload["request_type"] != "desktop-activation-status-preview" ||
+		payload["status_type"] != "kde-desktop-activation-status" ||
+		payload["source"] != "desktop-activation-transaction-preview" ||
+		payload["planned_runtime_method"] != "GetDesktopActivationStatus" ||
+		payload["current_renderer"] != "xnix-runtime-go desktop-activation-status-preview" ||
+		payload["write_method"] != "ActivateDesktopIntegration" {
+		t.Fatalf("unexpected activation status schema: %#v", payload)
+	}
+	if payload["desktop"] != "KDE Plasma" ||
+		payload["application_id"] != "org.example.ledger" ||
+		payload["desktop_file"] != "xnix-org.example.ledger.desktop" ||
+		payload["install_mode"] != "development" ||
+		payload["preflight_decision"] != "development-staging-ready" ||
+		payload["transaction_state"] != "transaction-ready" ||
+		payload["activation_state"] != "ready-for-runtime-commit" {
+		t.Fatalf("unexpected activation status identity or state: %#v", payload)
+	}
+	transaction := payload["transaction"].(map[string]any)
+	if transaction["request_type"] != "desktop-activation-transaction-preview" ||
+		transaction["transaction_state"] != "transaction-ready" ||
+		transaction["transaction_step_count"] != float64(9) ||
+		transaction["ready_step_count"] != float64(9) ||
+		transaction["blocked_step_count"] != float64(0) ||
+		transaction["rollback_step_count"] != float64(7) ||
+		transaction["transaction_ready"] != true ||
+		transaction["transaction_committed"] != false {
+		t.Fatalf("unexpected transaction summary: %#v", transaction)
+	}
+	staging := payload["staging"].(map[string]any)
+	if staging["request_type"] != "desktop-activation-staging-preview" ||
+		staging["staging_state"] != "staging-plan-ready" ||
+		staging["planned_file_count"] != float64(5) ||
+		staging["activated_entry_point_count"] != float64(7) ||
+		staging["receipt_file_id"] != "desktop-activation-receipt" ||
+		staging["staging_plan_ready"] != true ||
+		staging["installer_may_proceed"] != true ||
+		staging["host_root_allowed"] != false {
+		t.Fatalf("unexpected staging summary: %#v", staging)
+	}
+	commitGate := payload["commit_gate"].(map[string]any)
+	if commitGate["commit_state"] != "commit-gated" ||
+		commitGate["commit_enabled"] != false ||
+		commitGate["requires_digest_match"] != true ||
+		commitGate["requires_rollback_receipt"] != true ||
+		commitGate["requires_runtime_owner"] != true ||
+		commitGate["requires_user_review"] != true {
+		t.Fatalf("unexpected commit gate: %#v", commitGate)
+	}
+	statusSignalIDs := payload["status_signal_ids"].([]any)
+	expectedSignals := []string{"transaction-plan", "staging-plan", "write-gate", "rollback-plan", "kde-surface"}
+	for index, expected := range expectedSignals {
+		if statusSignalIDs[index] != expected {
+			t.Fatalf("status_signal_ids[%d] = %#v, want %q", index, statusSignalIDs[index], expected)
+		}
+	}
+	blockedReasonIDs := payload["blocked_reason_ids"].([]any)
+	expectedReasons := []string{"write-method-disabled", "digest-verification-pending", "rollback-receipt-not-written", "production-owner-not-active"}
+	for index, expected := range expectedReasons {
+		if blockedReasonIDs[index] != expected {
+			t.Fatalf("blocked_reason_ids[%d] = %#v, want %q", index, blockedReasonIDs[index], expected)
+		}
+	}
+	if payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["activation_ready"] != true ||
+		payload["activation_committed"] != false ||
+		payload["commit_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["file_writes_performed"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["kde_service_cache_refreshed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["network_required"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_windows_executable_exposed"] != false ||
+		payload["compatibility_storage_exposed"] != false {
+		t.Fatalf("unexpected activation status safety flags: %#v", payload)
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
