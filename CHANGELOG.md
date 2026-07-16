@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.252] - 2026-07-16
+
+### Added
+
+- Added receipt-gated KDE MIME association previews through `mimeapps-preview --activation-root`, so file association rendering can require staged activation evidence while preserving standard `mimeapps.list` output.
+- Added Go and CLI coverage proving MIME association previews can consume staged activation receipts without exposing the activation root, writing activation files, overwriting associations, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks MIME association consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, desktop icon, tray status, notification, settings, task-manager identity, and KWin window-rule reads.
+
 ## [0.2.251] - 2026-07-16
 
 ### Added

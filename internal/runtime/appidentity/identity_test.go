@@ -134,6 +134,45 @@ func TestRenderMIMEAppsUsesGeneratedDesktopFile(t *testing.T) {
 	}
 }
 
+func TestRenderMIMEAppsConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	mimeapps, err := plan.RenderMIMEAppsWithOptions(MIMEAppsOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("RenderMIMEAppsWithOptions returned error: %v", err)
+	}
+	required := []string{
+		"[Default Applications]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop\n",
+		"application/x-xnix-xls=xnix-org.example.ledger.desktop\n",
+		"[Added Associations]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop;\n",
+		"application/x-xnix-xls=xnix-org.example.ledger.desktop;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(mimeapps, fragment) {
+			t.Fatalf("MIME apps preview missing %q in:\n%s", fragment, mimeapps)
+		}
+	}
+	if strings.Contains(mimeapps, root) {
+		t.Fatalf("MIME apps preview exposes activation root: %s", mimeapps)
+	}
+	if _, err := plan.RenderMIMEAppsWithOptions(MIMEAppsOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("RenderMIMEAppsWithOptions accepted a missing activation receipt")
+	}
+}
+
 func TestWindowIdentityPreviewUsesNormalDesktopWindowIdentity(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

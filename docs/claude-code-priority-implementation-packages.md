@@ -1,6 +1,6 @@
 # Claude Code Priority Implementation Packages
 
-> Last updated: 2026-07-16 | Baseline: v0.2.251
+> Last updated: 2026-07-16 | Baseline: v0.2.252
 
 This document is the short, practical handoff board for assigning large Xnix implementation packages to Claude Code.
 

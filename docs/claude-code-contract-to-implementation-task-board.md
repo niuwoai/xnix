@@ -1,6 +1,6 @@
 # Claude Code Contract-to-Implementation Task Board
 
-> Last updated: 2026-07-16 | Baseline: v0.2.251
+> Last updated: 2026-07-16 | Baseline: v0.2.252
 
 This document is a practical task board for handing large, relatively independent Xnix implementation domains to Claude Code.
 

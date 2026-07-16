@@ -1,6 +1,6 @@
 # Claude Code Mainline Implementation Plan
 
-> Last updated: 2026-07-16 | Baseline: v0.2.251
+> Last updated: 2026-07-16 | Baseline: v0.2.252
 
 This document is the mainline handoff plan for giving large, relatively independent Xnix implementation packages to Claude Code.
 

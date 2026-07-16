@@ -122,6 +122,10 @@ type DesktopIconOptions struct {
 	ActivationRoot string
 }
 
+type MIMEAppsOptions struct {
+	ActivationRoot string
+}
+
 type TaskManagerHints struct {
 	GroupingKey          string `json:"grouping_key"`
 	PinningAllowed       bool   `json:"pinning_allowed"`
@@ -1056,6 +1060,10 @@ func (plan Plan) RenderDesktopEntry() (string, error) {
 }
 
 func (plan Plan) RenderMIMEApps() (string, error) {
+	return plan.RenderMIMEAppsWithOptions(MIMEAppsOptions{})
+}
+
+func (plan Plan) RenderMIMEAppsWithOptions(options MIMEAppsOptions) (string, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return "", err
 	}
@@ -1068,6 +1076,11 @@ func (plan Plan) RenderMIMEApps() (string, error) {
 	for _, mimeType := range plan.MIMETypes {
 		if !singleLine(mimeType) {
 			return "", errors.New("MIME association preview requires single-line MIME types")
+		}
+	}
+	if strings.TrimSpace(options.ActivationRoot) != "" {
+		if _, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot); err != nil {
+			return "", err
 		}
 	}
 

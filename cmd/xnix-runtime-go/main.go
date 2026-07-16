@@ -1209,7 +1209,7 @@ func parseDesktopIconPreviewSource(args []string) (appidentity.Recipe, appidenti
 }
 
 func runMIMEAppsPreview(args []string, stdout io.Writer) error {
-	recipe, provenance, err := parseRecipeSource("mimeapps-preview", args)
+	recipe, provenance, options, err := parseMIMEAppsPreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -1217,12 +1217,40 @@ func runMIMEAppsPreview(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	mimeapps, err := plan.RenderMIMEApps()
+	mimeapps, err := plan.RenderMIMEAppsWithOptions(options)
 	if err != nil {
 		return err
 	}
 	_, err = io.WriteString(stdout, mimeapps)
 	return err
+}
+
+func parseMIMEAppsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, appidentity.MIMEAppsOptions, error) {
+	flags := flag.NewFlagSet("mimeapps-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.MIMEAppsOptions{}, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.MIMEAppsOptions{}, errors.New("mimeapps-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.MIMEAppsOptions{}, errors.New("mimeapps-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.MIMEAppsOptions{}, errors.New("mimeapps-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.MIMEAppsOptions{}, errors.New("mimeapps-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, appidentity.MIMEAppsOptions{ActivationRoot: *activationRoot}, err
 }
 
 func runDesktopResourceBridgePreview(args []string, stdout io.Writer) error {

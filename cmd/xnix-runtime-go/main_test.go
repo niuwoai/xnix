@@ -2340,6 +2340,42 @@ func TestMIMEAppsPreviewCommandRendersAssociations(t *testing.T) {
 	}
 }
 
+func TestMIMEAppsPreviewCommandConsumesActivationRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	stageRoot := t.TempDir()
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", app, "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"mimeapps-preview", "--registry", registryPath, "--app", app, "--activation-root", stageRoot}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	mimeapps := output.String()
+	required := []string{
+		"[Default Applications]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop\n",
+		"[Added Associations]\n",
+		"application/x-xnix-abc=xnix-org.example.ledger.desktop;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(mimeapps, fragment) {
+			t.Fatalf("MIME apps preview missing %q in:\n%s", fragment, mimeapps)
+		}
+	}
+	if strings.Contains(mimeapps, stageRoot) {
+		t.Fatalf("MIME apps preview exposed activation root: %s", mimeapps)
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine"} {
+		if strings.Contains(strings.ToLower(mimeapps), forbidden) {
+			t.Fatalf("MIME apps preview exposes forbidden term %q: %s", forbidden, mimeapps)
+		}
+	}
+}
+
 func TestNotificationPreviewCommandRendersKDENotification(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

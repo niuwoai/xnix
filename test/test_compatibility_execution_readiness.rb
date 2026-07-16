@@ -24,7 +24,7 @@ def assert(condition, message)
   raise message unless condition
 end
 
-assert(readiness["version"] == "0.2.251", "execution readiness must expose the current version")
+assert(readiness["version"] == "0.2.252", "execution readiness must expose the current version")
 assert(readiness["readiness_type"] == "compatibility-execution-readiness", "execution readiness must identify the record type")
 assert(readiness["runtime_method"] == "GetExecutionReadiness", "execution readiness must expose the Runtime method")
 assert(readiness.fetch("application").fetch("id") == "org.xnix.sample.notepad", "execution readiness must preserve the application id")
