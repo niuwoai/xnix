@@ -1217,7 +1217,7 @@ func runDesktopResourceBridgePreview(args []string, stdout io.Writer) error {
 }
 
 func runNotificationPreview(args []string, stdout io.Writer) error {
-	recipe, provenance, eventType, err := parseNotificationPreviewSource(args)
+	recipe, provenance, eventType, options, err := parseNotificationPreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -1225,7 +1225,7 @@ func runNotificationPreview(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	preview, err := plan.NotificationPreview(eventType)
+	preview, err := plan.NotificationPreviewWithOptions(eventType, options)
 	if err != nil {
 		return err
 	}
@@ -1387,7 +1387,7 @@ func runWindowIdentityPreview(args []string, stdout io.Writer) error {
 	return encoder.Encode(preview)
 }
 
-func parseNotificationPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+func parseNotificationPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, appidentity.NotificationOptions, error) {
 	flags := flag.NewFlagSet("notification-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to load from the recipe registry")
@@ -1395,27 +1395,28 @@ func parseNotificationPreviewSource(args []string) (appidentity.Recipe, appident
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	eventType := flags.String("event", "", "notification event type")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, err
 	}
 	if *eventType == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("notification-preview requires --event")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, errors.New("notification-preview requires --event")
 	}
 	if (*recipePath == "") == (*registryPath == "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("notification-preview requires exactly one source: --recipe or --registry")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, errors.New("notification-preview requires exactly one source: --recipe or --registry")
 	}
 	if *registryPath != "" && *applicationID == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("notification-preview requires --app when --registry is used")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, errors.New("notification-preview requires --app when --registry is used")
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("notification-preview --recipe cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, errors.New("notification-preview --recipe cannot be combined with --app or --recipe-root")
 	}
 	if flags.NArg() != 0 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("notification-preview does not accept positional arguments")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", appidentity.NotificationOptions{}, errors.New("notification-preview does not accept positional arguments")
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, *eventType, err
+	return recipe, provenance, *eventType, appidentity.NotificationOptions{ActivationRoot: *activationRoot}, err
 }
 
 func parsePortalRequestPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, error) {

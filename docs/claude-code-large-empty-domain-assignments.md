@@ -1,6 +1,6 @@
 # Claude Code Large Empty-Domain Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.246
+> Last updated: 2026-07-16 | Baseline: v0.2.247
 
 This document is a coarse assignment map for handing large, relatively independent Xnix domains to Claude Code.
 

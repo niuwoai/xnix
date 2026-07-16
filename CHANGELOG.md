@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.247] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE notification previews through `notification-preview --activation-root`, so notification-center reads can prove staged activation evidence before delivery remains gated.
+- Added Go and CLI coverage proving notification previews consume staged activation receipts without exposing the activation root, sending notifications, enabling notification actions, enabling repairs, persisting settings, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks notification-center consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, and tray status reads.
+
 ## [0.2.246] - 2026-07-16
 
 ### Added

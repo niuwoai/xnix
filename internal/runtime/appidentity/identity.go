@@ -217,6 +217,9 @@ type NotificationPreview struct {
 	Body                       string   `json:"body"`
 	Actions                    []string `json:"actions"`
 	RequiresUserReview         bool     `json:"requires_user_review"`
+	ActivationReceiptRoot      bool     `json:"activation_receipt_root"`
+	ActivationReceiptBacked    bool     `json:"activation_receipt_backed"`
+	ActivationReceiptPath      string   `json:"activation_receipt_path,omitempty"`
 	RuntimeOwned               bool     `json:"runtime_owned"`
 	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
 	UserVisible                bool     `json:"user_visible"`
@@ -226,6 +229,10 @@ type NotificationPreview struct {
 	HostRootModified           bool     `json:"host_root_modified"`
 	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
 	Summary                    string   `json:"summary"`
+}
+
+type NotificationOptions struct {
+	ActivationRoot string
 }
 
 type SettingsPreview struct {
@@ -1241,6 +1248,10 @@ func (plan Plan) TrayStatusPreviewWithOptions(options TrayStatusOptions) (TraySt
 }
 
 func (plan Plan) NotificationPreview(eventType string) (NotificationPreview, error) {
+	return plan.NotificationPreviewWithOptions(eventType, NotificationOptions{})
+}
+
+func (plan Plan) NotificationPreviewWithOptions(eventType string, options NotificationOptions) (NotificationPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return NotificationPreview{}, err
 	}
@@ -1248,6 +1259,18 @@ func (plan Plan) NotificationPreview(eventType string) (NotificationPreview, err
 		if !singleLine(value) {
 			return NotificationPreview{}, errors.New("notification preview requires single-line identity fields")
 		}
+	}
+
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return NotificationPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
 	}
 
 	preview := NotificationPreview{
@@ -1260,6 +1283,9 @@ func (plan Plan) NotificationPreview(eventType string) (NotificationPreview, err
 		DesktopFile:                plan.DesktopFile,
 		EventType:                  eventType,
 		NotificationID:             plan.ApplicationID + "." + eventType,
+		ActivationReceiptRoot:      activationReceiptRoot,
+		ActivationReceiptBacked:    activationReceiptBacked,
+		ActivationReceiptPath:      activationReceiptPath,
 		RuntimeOwned:               true,
 		KDEPolicyOwner:             false,
 		UserVisible:                true,

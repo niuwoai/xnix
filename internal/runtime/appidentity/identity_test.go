@@ -408,6 +408,51 @@ func TestNotificationPreviewKeepsExecutionGatesClosed(t *testing.T) {
 	}
 }
 
+func TestNotificationPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.NotificationPreviewWithOptions("approval-required", NotificationOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("NotificationPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed notification fields: %#v", preview)
+	}
+	if preview.ActionExecutionEnabled ||
+		preview.RepairExecutionEnabled ||
+		preview.SettingsPersistenceEnabled ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed notification preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("notification preview exposed activation root: %s", encoded)
+	}
+
+	if _, err := plan.NotificationPreviewWithOptions("approval-required", NotificationOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("notification preview accepted a missing activation receipt")
+	}
+}
+
 func TestSettingsPreviewExposesUserFacingControls(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",
