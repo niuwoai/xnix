@@ -118,6 +118,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetKDENotificationDigestPreview",
 	"GetSignedRecipeVerificationPreview",
 	"GetRestrictedProductSmokePacketPreview",
+	"GetKDEOfflineApplicationIdentityPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -505,6 +506,16 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return image.PrepareRestrictedProductSmokePacket(root, "image/kinoite/manifest.json")
 	},
+	"GetKDEOfflineApplicationIdentityPreview": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDEOfflineApplicationIdentityPreview", args, 1); err != nil {
+			return nil, err
+		}
+		recipe, provenance, err := ownerRecipe(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		return appidentity.NewKDEOfflineApplicationIdentityPreview(recipe, provenance)
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -748,6 +759,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "signed-recipe-verifier-preview"
 	case "GetRestrictedProductSmokePacketPreview":
 		return "restricted-product-smoke-packet-preview"
+	case "GetKDEOfflineApplicationIdentityPreview":
+		return "kde-offline-application-identity-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:

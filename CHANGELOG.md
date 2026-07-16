@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.311] - 2026-07-17
+
+### Added
+
+- Extended the digest-verified offline KDE identity with unified-settings and Compatibility Center application-page evidence.
+- Added the owner-local `GetKDEOfflineApplicationIdentityPreview` route across Go owner dispatch, `Service.Call`, owner CLI, smoke-batch, and private session-bus transcript coverage.
+- Added settings/center identity parity, caller-path rejection, owner dispatch, service call, owner CLI, persistence, action, launch, backend-process, network, and host-mutation tests.
+
+### Changed
+
+- Increased the canonical identity from seven to nine KDE surfaces and owner smoke coverage from 65 to 66 read routes while keeping the formal production D-Bus ABI at 61 methods.
+- Increased owner-local review routes from four to five and kept the owner route checkpoint exact-count audit current.
+- Kept settings persistence, Compatibility Center persistence and actions, notification delivery, live tray bridging, production bus ownership, launch, backend process start, network access, and host-root mutation disabled.
+
 ## [0.2.310] - 2026-07-17
 
 ### Added

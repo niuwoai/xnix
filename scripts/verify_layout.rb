@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.310"
+EXPECTED_VERSION = "0.2.311"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -2018,16 +2018,24 @@ go_runtime_notification_digest_cli_test_source = read_project_file("cmd/xnix-run
 end
 
 go_runtime_offline_kde_identity_source = read_project_file("internal/runtime/appidentity/kde_offline_application_identity.go")
-%w[KDEOfflineApplicationIdentityPreview KDEOfflineDesktopEntryIdentity KDEOfflineMIMEIdentity KDEOfflineKRunnerIdentity KDEOfflineTaskManagerIdentity KDEOfflineKWinIdentity KDEOfflineTrayIdentity KDEOfflineNotificationIdentity xnix.runtime.kde_offline_application_identity.v1 kde-offline-application-identity-preview GetKDEOfflineApplicationIdentity GetKDEOfflineApplicationIdentityPreview desktop-entry mime-associations krunner task-manager kwin system-tray notification-center CrossSurfaceIdentityConsistent NotificationIDNamespace].each do |token|
+%w[KDEOfflineApplicationIdentityPreview KDEOfflineDesktopEntryIdentity KDEOfflineMIMEIdentity KDEOfflineKRunnerIdentity KDEOfflineTaskManagerIdentity KDEOfflineKWinIdentity KDEOfflineTrayIdentity KDEOfflineNotificationIdentity KDEOfflineSettingsIdentity KDEOfflineCenterIdentity xnix.runtime.kde_offline_application_identity.v1 kde-offline-application-identity-preview GetKDEOfflineApplicationIdentity GetKDEOfflineApplicationIdentityPreview desktop-entry mime-associations krunner task-manager kwin system-tray notification-center unified-settings compatibility-center CrossSurfaceIdentityConsistent NotificationIDNamespace].each do |token|
   assert(go_runtime_offline_kde_identity_source.include?(token), "Go Runtime offline KDE application identity must include #{token}")
 end
-%w[DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled NotificationActionsEnabled LaunchEnabled ExecutionStarted BackendProcessStarted NetworkRequired HostRootModified RawCommandExposed BackendDetailsExposed].each do |token|
+%w[DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled NotificationActionsEnabled SettingsPersisted SettingsPersistenceEnabled CompatibilityCenterPersisted CompatibilityCenterActionsEnabled LaunchEnabled ExecutionStarted BackendProcessStarted NetworkRequired HostRootModified RawCommandExposed BackendDetailsExposed].each do |token|
   assert(go_runtime_offline_kde_identity_source.include?(token), "Go Runtime offline KDE application identity must expose disabled gate #{token}")
 end
 
 go_runtime_offline_kde_identity_test_source = read_project_file("internal/runtime/appidentity/kde_offline_application_identity_test.go")
-%w[TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces TestKDEOfflineApplicationIdentityPreviewUsesDeterministicAttentionIdentity TestKDEOfflineApplicationIdentityPreviewRequiresVerifiedRegistryRecipe CrossSurfaceIdentityConsistent].each do |token|
+%w[TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces TestKDEOfflineApplicationIdentityPreviewUsesDeterministicAttentionIdentity TestKDEOfflineApplicationIdentityPreviewJoinsSettingsAndCenter TestKDEOfflineApplicationIdentityPreviewRequiresVerifiedRegistryRecipe CrossSurfaceIdentityConsistent].each do |token|
   assert(go_runtime_offline_kde_identity_test_source.include?(token), "Go Runtime offline KDE application identity tests must include #{token}")
+end
+
+runtime_owner_offline_kde_identity_test_source = read_project_file("internal/runtime/owner/dispatch.go") +
+                                                  read_project_file("internal/runtime/owner/dispatch_test.go") +
+                                                  read_project_file("internal/runtime/owner/service_test.go") +
+                                                  read_project_file("cmd/xnix-runtime-owner/main_test.go")
+%w[GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview NewKDEOfflineApplicationIdentityPreview TestDispatchReadRendersOfflineKDEIdentityAsOwnerLocalPayload TestServiceCallServesOwnerLocalOfflineKDEIdentity TestRuntimeOwnerCommandRendersOfflineKDEIdentityOwnerLocalReadDispatch surface_count cross_surface_identity_consistent settings_persisted compatibility_center_persisted launch_enabled host_root_modified].each do |token|
+  assert(runtime_owner_offline_kde_identity_test_source.include?(token), "Go Runtime owner offline KDE identity evidence must include #{token}")
 end
 
 go_runtime_offline_kde_identity_cli_source = read_project_file("cmd/xnix-runtime-go/kde_offline_application_identity_commands.go") +

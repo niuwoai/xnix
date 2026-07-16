@@ -8,55 +8,61 @@ import (
 )
 
 type KDEOfflineApplicationIdentityPreview struct {
-	SchemaVersion                  string                         `json:"schema_version"`
-	RequestType                    string                         `json:"request_type"`
-	IdentityType                   string                         `json:"identity_type"`
-	Source                         string                         `json:"source"`
-	RuntimeMethod                  string                         `json:"runtime_method"`
-	ReadMethod                     string                         `json:"read_method"`
-	Desktop                        string                         `json:"desktop"`
-	ApplicationID                  string                         `json:"application_id"`
-	DisplayName                    string                         `json:"display_name"`
-	Icon                           string                         `json:"icon"`
-	DesktopFile                    string                         `json:"desktop_file"`
-	LauncherURL                    string                         `json:"launcher_url"`
-	StableIdentityDigest           string                         `json:"stable_identity_digest"`
-	RegistryName                   string                         `json:"registry_name"`
-	RecipeDigestVerified           bool                           `json:"recipe_digest_verified"`
-	RecipeSignatureStatus          string                         `json:"recipe_signature_status"`
-	SurfaceIDs                     []string                       `json:"surface_ids"`
-	SurfaceCount                   int                            `json:"surface_count"`
-	DesktopEntry                   KDEOfflineDesktopEntryIdentity `json:"desktop_entry"`
-	MIMEAssociations               KDEOfflineMIMEIdentity         `json:"mime_associations"`
-	KRunner                        KDEOfflineKRunnerIdentity      `json:"krunner"`
-	TaskManager                    KDEOfflineTaskManagerIdentity  `json:"task_manager"`
-	KWin                           KDEOfflineKWinIdentity         `json:"kwin"`
-	Tray                           KDEOfflineTrayIdentity         `json:"tray"`
-	Notification                   KDEOfflineNotificationIdentity `json:"notification"`
-	CrossSurfaceIdentityConsistent bool                           `json:"cross_surface_identity_consistent"`
-	RuntimeOwned                   bool                           `json:"runtime_owned"`
-	GoRuntimeBacked                bool                           `json:"go_runtime_backed"`
-	KDEPolicyOwner                 bool                           `json:"kde_policy_owner"`
-	ReviewOnly                     bool                           `json:"review_only"`
-	Offline                        bool                           `json:"offline"`
-	DesktopFilesWritten            bool                           `json:"desktop_files_written"`
-	MIMEDefaultsWritten            bool                           `json:"mime_defaults_written"`
-	KRunnerIndexPersisted          bool                           `json:"krunner_index_persisted"`
-	TaskManagerEntryActive         bool                           `json:"task_manager_entry_active"`
-	KWinRuleApplied                bool                           `json:"kwin_rule_applied"`
-	LiveTrayBridgeEnabled          bool                           `json:"live_tray_bridge_enabled"`
-	TrayBridgePersisted            bool                           `json:"tray_bridge_persisted"`
-	NotificationSent               bool                           `json:"notification_sent"`
-	NotificationDeliveryEnabled    bool                           `json:"notification_delivery_enabled"`
-	NotificationActionsEnabled     bool                           `json:"notification_actions_enabled"`
-	LaunchEnabled                  bool                           `json:"launch_enabled"`
-	ExecutionStarted               bool                           `json:"execution_started"`
-	BackendProcessStarted          bool                           `json:"backend_process_started"`
-	NetworkRequired                bool                           `json:"network_required"`
-	HostRootModified               bool                           `json:"host_root_modified"`
-	RawCommandExposed              bool                           `json:"raw_command_exposed"`
-	BackendDetailsExposed          bool                           `json:"backend_details_exposed"`
-	DesktopSafeSummary             string                         `json:"desktop_safe_summary"`
+	SchemaVersion                     string                         `json:"schema_version"`
+	RequestType                       string                         `json:"request_type"`
+	IdentityType                      string                         `json:"identity_type"`
+	Source                            string                         `json:"source"`
+	RuntimeMethod                     string                         `json:"runtime_method"`
+	ReadMethod                        string                         `json:"read_method"`
+	Desktop                           string                         `json:"desktop"`
+	ApplicationID                     string                         `json:"application_id"`
+	DisplayName                       string                         `json:"display_name"`
+	Icon                              string                         `json:"icon"`
+	DesktopFile                       string                         `json:"desktop_file"`
+	LauncherURL                       string                         `json:"launcher_url"`
+	StableIdentityDigest              string                         `json:"stable_identity_digest"`
+	RegistryName                      string                         `json:"registry_name"`
+	RecipeDigestVerified              bool                           `json:"recipe_digest_verified"`
+	RecipeSignatureStatus             string                         `json:"recipe_signature_status"`
+	SurfaceIDs                        []string                       `json:"surface_ids"`
+	SurfaceCount                      int                            `json:"surface_count"`
+	DesktopEntry                      KDEOfflineDesktopEntryIdentity `json:"desktop_entry"`
+	MIMEAssociations                  KDEOfflineMIMEIdentity         `json:"mime_associations"`
+	KRunner                           KDEOfflineKRunnerIdentity      `json:"krunner"`
+	TaskManager                       KDEOfflineTaskManagerIdentity  `json:"task_manager"`
+	KWin                              KDEOfflineKWinIdentity         `json:"kwin"`
+	Tray                              KDEOfflineTrayIdentity         `json:"tray"`
+	Notification                      KDEOfflineNotificationIdentity `json:"notification"`
+	Settings                          KDEOfflineSettingsIdentity     `json:"settings"`
+	CompatibilityCenter               KDEOfflineCenterIdentity       `json:"compatibility_center"`
+	CrossSurfaceIdentityConsistent    bool                           `json:"cross_surface_identity_consistent"`
+	RuntimeOwned                      bool                           `json:"runtime_owned"`
+	GoRuntimeBacked                   bool                           `json:"go_runtime_backed"`
+	KDEPolicyOwner                    bool                           `json:"kde_policy_owner"`
+	ReviewOnly                        bool                           `json:"review_only"`
+	Offline                           bool                           `json:"offline"`
+	DesktopFilesWritten               bool                           `json:"desktop_files_written"`
+	MIMEDefaultsWritten               bool                           `json:"mime_defaults_written"`
+	KRunnerIndexPersisted             bool                           `json:"krunner_index_persisted"`
+	TaskManagerEntryActive            bool                           `json:"task_manager_entry_active"`
+	KWinRuleApplied                   bool                           `json:"kwin_rule_applied"`
+	LiveTrayBridgeEnabled             bool                           `json:"live_tray_bridge_enabled"`
+	TrayBridgePersisted               bool                           `json:"tray_bridge_persisted"`
+	NotificationSent                  bool                           `json:"notification_sent"`
+	NotificationDeliveryEnabled       bool                           `json:"notification_delivery_enabled"`
+	NotificationActionsEnabled        bool                           `json:"notification_actions_enabled"`
+	SettingsPersisted                 bool                           `json:"settings_persisted"`
+	SettingsPersistenceEnabled        bool                           `json:"settings_persistence_enabled"`
+	CompatibilityCenterPersisted      bool                           `json:"compatibility_center_persisted"`
+	CompatibilityCenterActionsEnabled bool                           `json:"compatibility_center_actions_enabled"`
+	LaunchEnabled                     bool                           `json:"launch_enabled"`
+	ExecutionStarted                  bool                           `json:"execution_started"`
+	BackendProcessStarted             bool                           `json:"backend_process_started"`
+	NetworkRequired                   bool                           `json:"network_required"`
+	HostRootModified                  bool                           `json:"host_root_modified"`
+	RawCommandExposed                 bool                           `json:"raw_command_exposed"`
+	BackendDetailsExposed             bool                           `json:"backend_details_exposed"`
+	DesktopSafeSummary                string                         `json:"desktop_safe_summary"`
 }
 
 type KDEOfflineDesktopEntryIdentity struct {
@@ -143,6 +149,32 @@ type KDEOfflineNotificationIdentity struct {
 	ActionExecutionEnabled  bool     `json:"action_execution_enabled"`
 }
 
+type KDEOfflineSettingsIdentity struct {
+	ApplicationID       string `json:"application_id"`
+	DisplayName         string `json:"display_name"`
+	Icon                string `json:"icon"`
+	DesktopFile         string `json:"desktop_file"`
+	SettingsState       string `json:"settings_state"`
+	SectionCount        int    `json:"section_count"`
+	IdentityFieldsMatch bool   `json:"identity_fields_match"`
+	Persisted           bool   `json:"persisted"`
+	PersistenceEnabled  bool   `json:"persistence_enabled"`
+}
+
+type KDEOfflineCenterIdentity struct {
+	ApplicationID       string `json:"application_id"`
+	DisplayName         string `json:"display_name"`
+	Icon                string `json:"icon"`
+	DesktopFile         string `json:"desktop_file"`
+	PageType            string `json:"page_type"`
+	PageTitle           string `json:"page_title"`
+	NavigationCount     int    `json:"navigation_count"`
+	IdentityFieldsMatch bool   `json:"identity_fields_match"`
+	PageCreated         bool   `json:"page_created"`
+	Persisted           bool   `json:"persisted"`
+	ActionsEnabled      bool   `json:"actions_enabled"`
+}
+
 func NewKDEOfflineApplicationIdentityPreview(recipe Recipe, provenance Provenance) (KDEOfflineApplicationIdentityPreview, error) {
 	plan, err := NewPlanWithProvenance(recipe, provenance)
 	if err != nil {
@@ -183,6 +215,14 @@ func NewKDEOfflineApplicationIdentityPreview(recipe Recipe, provenance Provenanc
 	if err != nil {
 		return KDEOfflineApplicationIdentityPreview{}, err
 	}
+	settings, err := plan.SettingsPreview()
+	if err != nil {
+		return KDEOfflineApplicationIdentityPreview{}, err
+	}
+	center, err := NewKDECenterPagePreview(recipe, provenance, "reviewed", nil)
+	if err != nil {
+		return KDEOfflineApplicationIdentityPreview{}, err
+	}
 
 	match := krunner.Matches[0]
 	desktopEntryMatches := desktopEntryIdentityMatches(plan, desktopEntry)
@@ -201,12 +241,16 @@ func NewKDEOfflineApplicationIdentityPreview(recipe Recipe, provenance Provenanc
 	notificationNamespace := plan.ApplicationID + "."
 	notificationMatches := notification.ApplicationID == plan.ApplicationID && notification.DisplayName == plan.DisplayName &&
 		notification.DesktopFile == plan.DesktopFile && strings.HasPrefix(notification.NotificationID, notificationNamespace)
+	settingsMatches := settings.ApplicationID == plan.ApplicationID && settings.DisplayName == plan.DisplayName &&
+		settings.Icon == plan.Icon && settings.DesktopFile == plan.DesktopFile
+	centerMatches := center.ApplicationID == plan.ApplicationID && center.ApplicationName == plan.DisplayName &&
+		center.Icon == plan.Icon && center.DesktopFile == plan.DesktopFile && center.Header.Title == plan.DisplayName
 
 	preview := KDEOfflineApplicationIdentityPreview{
 		SchemaVersion:         "xnix.runtime.kde_offline_application_identity.v1",
 		RequestType:           "kde-offline-application-identity-preview",
 		IdentityType:          "digest-verified-offline-kde-application",
-		Source:                "registry+desktop-entry+mimeapps+krunner+task-manager+kwin+tray+notification",
+		Source:                "registry+desktop-entry+mimeapps+krunner+task-manager+kwin+tray+notification+settings+compatibility-center",
 		RuntimeMethod:         "GetKDEOfflineApplicationIdentity",
 		ReadMethod:            "GetKDEOfflineApplicationIdentityPreview",
 		Desktop:               "KDE Plasma",
@@ -219,8 +263,8 @@ func NewKDEOfflineApplicationIdentityPreview(recipe Recipe, provenance Provenanc
 		RegistryName:          provenance.RegistryName,
 		RecipeDigestVerified:  provenance.DigestVerified,
 		RecipeSignatureStatus: provenance.SignatureStatus,
-		SurfaceIDs:            []string{"desktop-entry", "mime-associations", "krunner", "task-manager", "kwin", "system-tray", "notification-center"},
-		SurfaceCount:          7,
+		SurfaceIDs:            []string{"desktop-entry", "mime-associations", "krunner", "task-manager", "kwin", "system-tray", "notification-center", "unified-settings", "compatibility-center"},
+		SurfaceCount:          9,
 		DesktopEntry: KDEOfflineDesktopEntryIdentity{
 			ContentSHA256:       contentSHA256(desktopEntry),
 			ApplicationID:       plan.ApplicationID,
@@ -298,13 +342,37 @@ func NewKDEOfflineApplicationIdentityPreview(recipe Recipe, provenance Provenanc
 			DeliveryEnabled:         false,
 			ActionExecutionEnabled:  notification.ActionExecutionEnabled,
 		},
-		CrossSurfaceIdentityConsistent: desktopEntryMatches && mimeMatches && krunnerMatches && taskManagerMatches && kwinMatches && trayMatches && notificationMatches,
+		Settings: KDEOfflineSettingsIdentity{
+			ApplicationID:       settings.ApplicationID,
+			DisplayName:         settings.DisplayName,
+			Icon:                settings.Icon,
+			DesktopFile:         settings.DesktopFile,
+			SettingsState:       settings.SettingsState,
+			SectionCount:        settings.SectionCount,
+			IdentityFieldsMatch: settingsMatches,
+			Persisted:           settings.SettingsPersisted,
+			PersistenceEnabled:  settings.SettingsPersistenceEnabled,
+		},
+		CompatibilityCenter: KDEOfflineCenterIdentity{
+			ApplicationID:       center.ApplicationID,
+			DisplayName:         center.ApplicationName,
+			Icon:                center.Icon,
+			DesktopFile:         center.DesktopFile,
+			PageType:            center.PageType,
+			PageTitle:           center.Header.Title,
+			NavigationCount:     center.NavigationCount,
+			IdentityFieldsMatch: centerMatches,
+			PageCreated:         center.PagePreviewCreated,
+			Persisted:           center.PagePersisted,
+			ActionsEnabled:      center.CardActionsEnabled,
+		},
+		CrossSurfaceIdentityConsistent: desktopEntryMatches && mimeMatches && krunnerMatches && taskManagerMatches && kwinMatches && trayMatches && notificationMatches && settingsMatches && centerMatches,
 		RuntimeOwned:                   true,
 		GoRuntimeBacked:                true,
 		KDEPolicyOwner:                 false,
 		ReviewOnly:                     true,
 		Offline:                        true,
-		DesktopSafeSummary:             "A digest-verified registry application has one consistent offline identity across KDE launch, file association, search, task manager, window policy, tray, and notification surfaces while writes, delivery, and execution remain disabled.",
+		DesktopSafeSummary:             "A digest-verified registry application has one consistent offline identity across KDE launch, file association, search, task manager, window policy, tray, notifications, settings, and Compatibility Center while persistence, delivery, and execution remain disabled.",
 	}
 	if !preview.CrossSurfaceIdentityConsistent {
 		return KDEOfflineApplicationIdentityPreview{}, errors.New("offline KDE application identity fields disagree across surfaces")

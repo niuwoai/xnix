@@ -13,9 +13,9 @@ func TestRouteCheckpointClosesReadRouteBandWithWritesDisabled(t *testing.T) {
 		checkpoint.CheckpointType != "go-owner-read-route-band-checkpoint" ||
 		checkpoint.FormalReadRouteCount != 61 ||
 		checkpoint.GoFormalReadRouteCount != 61 ||
-		checkpoint.OwnerReadMethodCount != 65 ||
-		checkpoint.OwnerLocalReadMethodCount != 4 ||
-		checkpoint.SmokeReadRecordCount != 65 ||
+		checkpoint.OwnerReadMethodCount != 66 ||
+		checkpoint.OwnerLocalReadMethodCount != 5 ||
+		checkpoint.SmokeReadRecordCount != 66 ||
 		checkpoint.SmokeWriteDenialCount != 4 ||
 		!checkpoint.MethodParityReady ||
 		!checkpoint.FormalRouteCoverageReady ||

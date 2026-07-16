@@ -375,9 +375,42 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetKDENotificationDigestPreview",
 		"GetSignedRecipeVerificationPreview",
 		"GetRestrictedProductSmokePacketPreview",
+		"GetKDEOfflineApplicationIdentityPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
+	}
+}
+
+func TestDispatchReadRendersOfflineKDEIdentityAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetKDEOfflineApplicationIdentityPreview", []string{"org.xnix.sample.notepad"})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetKDEOfflineApplicationIdentityPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "kde-offline-application-identity-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady || !dispatch.ReadOnlyDispatch || dispatch.WriteMethodsEnabled ||
+		dispatch.ProductionBusClaimed || dispatch.NetworkRequired || dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected offline KDE identity dispatch: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "kde-offline-application-identity-preview" ||
+		payload["application_id"] != "org.xnix.sample.notepad" ||
+		payload["surface_count"] != float64(9) ||
+		payload["cross_surface_identity_consistent"] != true ||
+		payload["settings_persisted"] != false ||
+		payload["compatibility_center_persisted"] != false ||
+		payload["launch_enabled"] != false || payload["host_root_modified"] != false {
+		t.Fatalf("unexpected offline KDE identity payload: %#v", payload)
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetKDEOfflineApplicationIdentityPreview", []string{"org.xnix.sample.notepad", "/tmp/registry.json"}); err == nil {
+		t.Fatal("offline KDE identity owner route accepted a caller path")
 	}
 }
 

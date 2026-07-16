@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.310
+> Last updated: 2026-07-17 | Baseline: v0.2.311
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Offline KDE settings and center identity | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.311` | Extend the verified Sample Notepad identity into unified settings and Compatibility Center, then expose one owner-local read route. |
+| 1 | Offline KDE identity checkpoint | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.312` | Close the identity band with exact surface, owner-route, trust, parity, and disabled-side-effect checks for Sample Notepad. |
 
 ## Best First Pick
 
-Start with the offline KDE settings and center identity.
+Start with the offline KDE identity checkpoint.
 
-The v0.2.310 identity now joins desktop entry, MIME, KRunner, task manager, KWin, tray, and notifications. The next handoff should reuse that exact identity for unified settings and the Compatibility Center application page, then make the aggregate available through an owner-local read route.
+The v0.2.311 identity now joins nine KDE surfaces and is served by an owner-local route. The next handoff should close the band with one auditable checkpoint that proves fixture trust, exact surface coverage, owner service coverage, identity parity, and disabled writes, persistence, delivery, launch, execution, backend process start, and host mutation.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

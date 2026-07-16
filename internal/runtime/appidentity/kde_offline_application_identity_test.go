@@ -33,7 +33,7 @@ func TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces(t *testin
 		preview.Icon != "accessories-text-editor" ||
 		preview.DesktopFile != "xnix-org.xnix.sample.notepad.desktop" ||
 		preview.LauncherURL != "applications:xnix-org.xnix.sample.notepad.desktop" ||
-		preview.SurfaceCount != 7 || len(preview.SurfaceIDs) != 7 ||
+		preview.SurfaceCount != 9 || len(preview.SurfaceIDs) != 9 ||
 		!preview.RecipeDigestVerified || !preview.CrossSurfaceIdentityConsistent ||
 		!preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
 		!preview.ReviewOnly || !preview.Offline {
@@ -62,15 +62,45 @@ func TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces(t *testin
 		preview.Notification.DeliveryEnabled || preview.Notification.ActionExecutionEnabled {
 		t.Fatalf("unexpected attention identity evidence: %#v %#v", preview.Tray, preview.Notification)
 	}
+	if !preview.Settings.IdentityFieldsMatch || preview.Settings.ApplicationID != preview.ApplicationID ||
+		preview.Settings.Icon != preview.Icon || preview.Settings.DesktopFile != preview.DesktopFile ||
+		preview.Settings.SettingsState != "planned" || preview.Settings.SectionCount != 5 ||
+		preview.Settings.Persisted || preview.Settings.PersistenceEnabled ||
+		!preview.CompatibilityCenter.IdentityFieldsMatch || preview.CompatibilityCenter.ApplicationID != preview.ApplicationID ||
+		preview.CompatibilityCenter.DisplayName != preview.DisplayName ||
+		preview.CompatibilityCenter.PageType != "compatibility-center-application-page" ||
+		!preview.CompatibilityCenter.PageCreated || preview.CompatibilityCenter.Persisted ||
+		preview.CompatibilityCenter.ActionsEnabled {
+		t.Fatalf("unexpected settings and center identity evidence: %#v %#v", preview.Settings, preview.CompatibilityCenter)
+	}
 	if preview.DesktopFilesWritten || preview.MIMEDefaultsWritten || preview.KRunnerIndexPersisted ||
 		preview.TaskManagerEntryActive || preview.KWinRuleApplied || preview.LiveTrayBridgeEnabled ||
 		preview.TrayBridgePersisted || preview.NotificationSent || preview.NotificationDeliveryEnabled ||
-		preview.NotificationActionsEnabled || preview.LaunchEnabled ||
+		preview.NotificationActionsEnabled || preview.SettingsPersisted || preview.SettingsPersistenceEnabled ||
+		preview.CompatibilityCenterPersisted || preview.CompatibilityCenterActionsEnabled || preview.LaunchEnabled ||
 		preview.ExecutionStarted || preview.BackendProcessStarted || preview.NetworkRequired ||
 		preview.HostRootModified || preview.RawCommandExposed || preview.BackendDetailsExposed {
 		t.Fatalf("offline KDE identity opened an unsafe gate: %#v", preview)
 	}
 	assertKDEOfflineApplicationIdentitySafe(t, preview)
+}
+
+func TestKDEOfflineApplicationIdentityPreviewJoinsSettingsAndCenter(t *testing.T) {
+	preview, err := NewKDEOfflineApplicationIdentityPreview(Recipe{
+		ID: "org.example.writer", Name: "Example Writer", Icon: "accessories-text-editor", Mode: "automatic", SupportedExtensions: []string{".txt"},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true, SignatureStatus: "development-only"})
+	if err != nil {
+		t.Fatalf("NewKDEOfflineApplicationIdentityPreview: %v", err)
+	}
+	if preview.Settings.ApplicationID != preview.CompatibilityCenter.ApplicationID ||
+		preview.Settings.DisplayName != preview.CompatibilityCenter.DisplayName ||
+		preview.Settings.Icon != preview.CompatibilityCenter.Icon ||
+		preview.Settings.DesktopFile != preview.CompatibilityCenter.DesktopFile ||
+		preview.CompatibilityCenter.PageTitle != preview.DisplayName ||
+		preview.CompatibilityCenter.NavigationCount == 0 ||
+		!preview.CrossSurfaceIdentityConsistent {
+		t.Fatalf("settings and center identity differ: %#v %#v", preview.Settings, preview.CompatibilityCenter)
+	}
 }
 
 func TestKDEOfflineApplicationIdentityPreviewUsesDeterministicAttentionIdentity(t *testing.T) {
