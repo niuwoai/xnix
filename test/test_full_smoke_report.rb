@@ -13,14 +13,14 @@ end
 
 serial_log = Xnix::SerialLog.new("Welcome to Buildroot\nxnix login: ")
 report = Xnix::FullSmokeReport.new(
-  version: "0.2.250",
+  version: "0.2.251",
   steps: %w[build fetch-sources configure-system download-system build-system boot-system],
   serial_log_path: "output/serial.log",
   serial_log: serial_log
 )
 
 data = report.to_h
-assert(data.fetch("version") == "0.2.250", "full smoke report must expose the version")
+assert(data.fetch("version") == "0.2.251", "full smoke report must expose the version")
 assert(data.fetch("schema_version") == "xnix.full_smoke_report.v1", "full smoke report must expose its schema")
 assert(data.fetch("report_type") == "full-build-qemu-smoke-report", "full smoke report must identify its type")
 assert(data.fetch("step_count") == 6, "full smoke report must count smoke steps")

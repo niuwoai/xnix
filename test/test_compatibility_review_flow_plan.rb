@@ -22,7 +22,7 @@ store = Xnix::Compatibility::RecipeStore.new(path: PROJECT_ROOT.join("runtime/re
 recipe = store.find("org.xnix.sample.notepad")
 plan = Xnix::Compatibility::CompatibilityReviewFlowPlan.new(recipe: recipe).to_h
 
-assert(plan["version"] == "0.2.250", "compatibility review flow plan must expose the current version")
+assert(plan["version"] == "0.2.251", "compatibility review flow plan must expose the current version")
 assert(plan["plan_type"] == "compatibility-review-flow-plan", "compatibility review flow plan must identify the plan type")
 assert(plan["runtime_method"] == "GetCompatibilityReviewFlowPlan", "compatibility review flow plan must identify the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "compatibility review flow plan must preserve the application id")

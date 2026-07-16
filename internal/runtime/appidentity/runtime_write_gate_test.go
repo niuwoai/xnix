@@ -8,7 +8,7 @@ import (
 
 func TestRuntimeWriteGatePreviewKeepsWriteMethodsDisabled(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.250\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.251\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 
@@ -17,7 +17,7 @@ func TestRuntimeWriteGatePreviewKeepsWriteMethodsDisabled(t *testing.T) {
 		t.Fatalf("NewRuntimeWriteGatePreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.250" ||
+	if preview.Version != "0.2.251" ||
 		preview.SchemaVersion != "xnix.runtime.write_gate.v1" ||
 		preview.RequestType != "runtime-write-gate-preview" ||
 		preview.GateType != "runtime-write-gate" ||
@@ -57,7 +57,7 @@ func TestRuntimeWriteGatePreviewKeepsWriteMethodsDisabled(t *testing.T) {
 
 func TestRuntimeWriteGatePreviewRejectsUnknownMethod(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.250\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.251\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

@@ -1,6 +1,6 @@
 # Claude Code Mainline Empty-Domain Handoff
 
-> Last updated: 2026-07-16 | Baseline: v0.2.250
+> Last updated: 2026-07-16 | Baseline: v0.2.251
 
 This document is a compact handoff board for assigning large but independent Xnix implementation chunks to Claude Code.
 

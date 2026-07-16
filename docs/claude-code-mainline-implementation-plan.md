@@ -1,6 +1,6 @@
 # Claude Code Mainline Implementation Plan
 
-> Last updated: 2026-07-16 | Baseline: v0.2.250
+> Last updated: 2026-07-16 | Baseline: v0.2.251
 
 This document is the mainline handoff plan for giving large, relatively independent Xnix implementation packages to Claude Code.
 
@@ -8,6 +8,7 @@ Use it when the goal is to convert contract-only or preview-heavy domains into d
 
 This file is intentionally shorter than the detailed package catalogs:
 
+- `docs/claude-code-priority-implementation-packages.md`
 - `docs/claude-code-domain-dispatch.md`
 - `docs/claude-code-contract-to-implementation-task-board.md`
 - `docs/claude-code-large-empty-domain-assignments.md`
@@ -16,7 +17,7 @@ This file is intentionally shorter than the detailed package catalogs:
 - `docs/claude-code-open-domain-work-packages.md`
 - `docs/claude-code-independent-implementation-briefs.md`
 
-Those files provide deeper package details. `docs/claude-code-domain-dispatch.md` is the first dispatch board for choosing large independent implementation domains, and `docs/claude-code-large-empty-domain-assignments.md` remains the coarse dispatcher for branch-sized empty-domain work. This file provides the mainline dispatch order and copyable task boundaries.
+Those files provide deeper package details. `docs/claude-code-priority-implementation-packages.md` is the copy-first board for assigning the next large Claude Code implementation package, `docs/claude-code-domain-dispatch.md` provides deeper domain detail, and `docs/claude-code-large-empty-domain-assignments.md` remains the coarse dispatcher for branch-sized empty-domain work. This file provides the mainline dispatch order and copyable task boundaries.
 
 ## Non-Negotiable Rules
 

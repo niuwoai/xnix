@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.251] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE desktop icon previews through `desktop-icon-preview --activation-root`, so Plasma desktop shortcut reads can prove staged activation evidence before copy, placement, or launch actions remain gated.
+- Added Go and CLI coverage proving desktop icon previews consume staged activation receipts without exposing the activation root, copying desktop files, persisting icon placement, enabling launch, mutating the host root, or exposing backend details.
+- Added a copy-first Claude Code priority implementation package board for large independent follow-up branches covering Runtime ownership, recipe/artifact trust, environment lifecycle state, Portal/snapshot safety, KDE activation materialization, execution transactions, diagnostics/repair/AI, evidence harnesses, atomic KDE/QEMU acceptance, and Runtime packaging/service binding.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks desktop icon consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, tray status, notification, settings, task-manager identity, and KWin window-rule reads.
+- Linked the new Claude Code priority implementation package board from the domain dispatch, mainline implementation plan, and product overview.
+
 ## [0.2.250] - 2026-07-16
 
 ### Added

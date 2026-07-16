@@ -97,6 +97,9 @@ type DesktopIconPreview struct {
 	Placement               string   `json:"placement"`
 	LaunchCommand           []string `json:"launch_command"`
 	StandardDesktopEntry    bool     `json:"standard_desktop_entry"`
+	ActivationReceiptRoot   bool     `json:"activation_receipt_root"`
+	ActivationReceiptBacked bool     `json:"activation_receipt_backed"`
+	ActivationReceiptPath   string   `json:"activation_receipt_path,omitempty"`
 	UserVisible             bool     `json:"user_visible"`
 	DesktopIconVisible      bool     `json:"desktop_icon_visible"`
 	DesktopFileCopyEnabled  bool     `json:"desktop_file_copy_enabled"`
@@ -113,6 +116,10 @@ type DesktopIconPreview struct {
 	OfficialDesktopOnly     bool     `json:"official_desktop_only"`
 	BlockedActions          []string `json:"blocked_actions"`
 	Summary                 string   `json:"summary"`
+}
+
+type DesktopIconOptions struct {
+	ActivationRoot string
 }
 
 type TaskManagerHints struct {
@@ -1134,6 +1141,10 @@ func (plan Plan) WindowIdentityPreview() (WindowIdentityPreview, error) {
 }
 
 func (plan Plan) DesktopIconPreview() (DesktopIconPreview, error) {
+	return plan.DesktopIconPreviewWithOptions(DesktopIconOptions{})
+}
+
+func (plan Plan) DesktopIconPreviewWithOptions(options DesktopIconOptions) (DesktopIconPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return DesktopIconPreview{}, err
 	}
@@ -1146,11 +1157,25 @@ func (plan Plan) DesktopIconPreview() (DesktopIconPreview, error) {
 		}
 	}
 
+	source := "desktop-entry-preview"
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return DesktopIconPreview{}, err
+		}
+		source = "desktop-entry-preview+desktop-activation-receipt"
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
+	}
+
 	return DesktopIconPreview{
 		SchemaVersion:           "xnix.runtime.desktop_icon.v1",
 		RequestType:             "desktop-icon-preview",
 		PlanType:                "desktop-icon-plan",
-		Source:                  "desktop-entry-preview",
+		Source:                  source,
 		Desktop:                 "KDE Plasma",
 		RuntimeMethod:           "GetDesktopIconPlan",
 		ApplicationID:           plan.ApplicationID,
@@ -1162,6 +1187,9 @@ func (plan Plan) DesktopIconPreview() (DesktopIconPreview, error) {
 		Placement:               "user-desktop",
 		LaunchCommand:           plan.LaunchCommand,
 		StandardDesktopEntry:    plan.StandardDesktopEntry,
+		ActivationReceiptRoot:   activationReceiptRoot,
+		ActivationReceiptBacked: activationReceiptBacked,
+		ActivationReceiptPath:   activationReceiptPath,
 		UserVisible:             true,
 		DesktopIconVisible:      true,
 		DesktopFileCopyEnabled:  false,

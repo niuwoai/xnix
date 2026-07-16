@@ -1,6 +1,6 @@
 # Claude Code Domain Dispatch
 
-> Last updated: 2026-07-16 | Baseline: v0.2.250
+> Last updated: 2026-07-16 | Baseline: v0.2.251
 
 This document is the dispatch board for assigning large, relatively independent Xnix implementation domains to Claude Code.
 
@@ -8,6 +8,7 @@ Use this when the repository has contracts, previews, or read models for a domai
 
 ## Relationship to Other Claude Code Documents
 
+- `docs/claude-code-priority-implementation-packages.md` is the short, copy-first board for assigning the next large implementation package.
 - `docs/claude-code-mainline-implementation-plan.md` gives the strategic sequence.
 - `docs/claude-code-next-implementation-assignments.md` is the short copyable board for handing the next large implementation packages to Claude Code.
 - `docs/claude-code-contract-to-implementation-task-board.md` is the practical task board for converting empty or thin contract domains into durable implementation evidence.
@@ -18,7 +19,7 @@ Use this when the repository has contracts, previews, or read models for a domai
 - `docs/claude-code-independent-implementation-briefs.md` contains smaller prompt-ready briefs.
 - `docs/windows-app-compatibility-implementation-brief.md` explains the product-level Windows application compatibility direction.
 
-This file does not replace those documents. It is the first page to read when deciding what another agent should implement next.
+This file does not replace those documents. For quick handoff, start with `docs/claude-code-priority-implementation-packages.md`; use this file when the branch needs deeper domain detail.
 
 ## Global Branch Rules
 

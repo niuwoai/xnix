@@ -250,6 +250,53 @@ func TestDesktopIconPreviewUsesStandardDesktopEntry(t *testing.T) {
 	}
 }
 
+func TestDesktopIconPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.DesktopIconPreviewWithOptions(DesktopIconOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("DesktopIconPreviewWithOptions returned error: %v", err)
+	}
+	if preview.Source != "desktop-entry-preview+desktop-activation-receipt" ||
+		!preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("desktop icon preview did not consume activation receipt: %#v", preview)
+	}
+	if preview.DesktopFileCopyEnabled ||
+		preview.DesktopFileWriteEnabled ||
+		preview.IconPlacementPersisted ||
+		preview.LaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed ||
+		preview.RawExecutableExposed {
+		t.Fatalf("receipt-backed desktop icon preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("desktop icon preview exposes activation root: %s", string(encoded))
+	}
+	if _, err := plan.DesktopIconPreviewWithOptions(DesktopIconOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("DesktopIconPreviewWithOptions accepted a missing activation receipt")
+	}
+}
+
 func TestTrayStatusPreviewKeepsLiveBridgeGated(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",
