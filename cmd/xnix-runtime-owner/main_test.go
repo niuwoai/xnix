@@ -504,3 +504,25 @@ func TestRuntimeOwnerCommandRendersRouteCheckpoint(t *testing.T) {
 		t.Fatalf("unexpected route checkpoint payload: %#v", payload)
 	}
 }
+
+func TestRuntimeOwnerCommandRendersKDEOfflineIdentityCheckpoint(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"--root", "../..", "--kde-identity-checkpoint"}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.kde_offline_identity_checkpoint.v1" ||
+		payload["application_id"] != "org.xnix.sample.notepad" ||
+		payload["surface_count"] != float64(9) || payload["expected_surface_count"] != float64(9) ||
+		payload["owner_read_method_count"] != float64(66) || payload["owner_local_read_method_count"] != float64(5) ||
+		payload["offline_identity_ready"] != true || payload["production_signature_ready"] != false ||
+		payload["production_bus_claimed"] != false || payload["write_methods_enabled"] != false ||
+		payload["launch_enabled"] != false || payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected offline KDE identity checkpoint payload: %#v", payload)
+	}
+}

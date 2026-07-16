@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.312] - 2026-07-17
+
+### Added
+
+- Added `xnix-runtime-owner --kde-identity-checkpoint` and the Go `KDEOfflineIdentityCheckpoint` model to close the `0.2.309`-`0.2.312` identity band.
+- Added one checkpoint for digest-verified recipe trust, exact nine-surface coverage, cross-surface identity parity, owner-local routing, in-process `Service.Call`, 61/66/5/66/4 route counts, and deterministic write denials.
+- Added exact-count, six-check pass state, development-signature distinction, path-redaction, CLI, persistence, delivery, launch, execution, backend-process, production-owner, write-gate, network, privileged-container, and host-mutation tests.
+
+### Changed
+
+- Closed the offline KDE application identity band with `org.xnix.sample.notepad` behaving as one normal application identity across desktop entry, MIME, KRunner, task manager, KWin, tray, notifications, settings, and Compatibility Center evidence.
+- Kept offline identity readiness separate from production signature readiness and production execution readiness.
+- Kept desktop writes, MIME changes, KDE persistence, notification delivery, launch, execution, backend process start, production bus ownership, Runtime writes, network access, and host-root mutation disabled.
+
 ## [0.2.311] - 2026-07-17
 
 ### Added

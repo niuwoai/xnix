@@ -30,6 +30,7 @@ func run(args []string, stdout io.Writer) error {
 	smokeBatch := flags.Bool("smoke-batch", false, "render restricted smoke-owner read/write call evidence as JSON Lines")
 	sessionBusSmoke := flags.Bool("session-bus-smoke", false, "render restricted private session-bus owner smoke evidence as JSON Lines")
 	routeCheckpoint := flags.Bool("route-checkpoint", false, "render the Go owner read-route checkpoint")
+	kdeIdentityCheckpoint := flags.Bool("kde-identity-checkpoint", false, "render the offline KDE application identity checkpoint")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func run(args []string, stdout io.Writer) error {
 
 	var payload any
 	selectedOperations := 0
-	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke, *routeCheckpoint} {
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke, *routeCheckpoint, *kdeIdentityCheckpoint} {
 		if selected {
 			selectedOperations++
 		}
@@ -107,6 +108,12 @@ func run(args []string, stdout io.Writer) error {
 		return nil
 	} else if *routeCheckpoint {
 		checkpoint, err := owner.NewRouteCheckpoint(*root)
+		if err != nil {
+			return err
+		}
+		payload = checkpoint
+	} else if *kdeIdentityCheckpoint {
+		checkpoint, err := owner.NewKDEOfflineIdentityCheckpoint(*root)
 		if err != nil {
 			return err
 		}

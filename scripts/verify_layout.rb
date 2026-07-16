@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.311"
+EXPECTED_VERSION = "0.2.312"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -339,6 +339,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/dispatch_test.go
   internal/runtime/owner/route_checkpoint.go
   internal/runtime/owner/route_checkpoint_test.go
+  internal/runtime/owner/kde_offline_identity_checkpoint.go
+  internal/runtime/owner/kde_offline_identity_checkpoint_test.go
   internal/runtime/owner/lifecycle.go
   internal/runtime/owner/lifecycle_test.go
   internal/runtime/owner/smoke_batch.go
@@ -1453,6 +1455,21 @@ go_runtime_owner_route_checkpoint_test_source = read_project_file("internal/runt
                                                 read_project_file("cmd/xnix-runtime-owner/main_test.go")
 %w[TestRouteCheckpointClosesReadRouteBandWithWritesDisabled TestRuntimeOwnerCommandRendersRouteCheckpoint formal_read_route_count owner_read_method_count owner_local_read_method_count smoke_read_record_count smoke_write_denial_count route_band_ready write_methods_enabled production_bus_claimed host_root_modified].each do |token|
   assert(go_runtime_owner_route_checkpoint_test_source.include?(token), "Go Runtime owner route checkpoint tests must include #{token}")
+end
+
+go_runtime_kde_offline_identity_checkpoint_source = read_project_file("internal/runtime/owner/kde_offline_identity_checkpoint.go")
+%w[KDEOfflineIdentityCheckpoint KDEOfflineIdentityCheckpointCheck xnix.runtime.kde_offline_identity_checkpoint.v1 kde-offline-identity-checkpoint offline-kde-application-identity-band-checkpoint NewKDEOfflineIdentityCheckpoint recipe-trust surface-coverage identity-parity owner-route owner-service side-effects-disabled OfflineIdentityReady ProductionSignatureReady FormalReadRouteCount OwnerReadMethodCount OwnerLocalReadMethodCount SmokeReadRecordCount SmokeWriteDenialCount].each do |token|
+  assert(go_runtime_kde_offline_identity_checkpoint_source.include?(token), "Go Runtime offline KDE identity checkpoint must include #{token}")
+end
+%w[DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled NotificationSent SettingsPersisted CompatibilityCenterPersisted LaunchEnabled ExecutionStarted BackendProcessStarted ProductionBusClaimed WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_offline_identity_checkpoint_source.include?(token), "Go Runtime offline KDE identity checkpoint must expose disabled gate #{token}")
+end
+
+go_runtime_kde_offline_identity_checkpoint_test_source = read_project_file("internal/runtime/owner/kde_offline_identity_checkpoint_test.go") +
+                                                       read_project_file("cmd/xnix-runtime-owner/main_test.go") +
+                                                       read_project_file("cmd/xnix-runtime-owner/main.go")
+%w[TestKDEOfflineIdentityCheckpointClosesNineSurfaceBand TestRuntimeOwnerCommandRendersKDEOfflineIdentityCheckpoint kde-identity-checkpoint xnix.runtime.kde_offline_identity_checkpoint.v1 offline_identity_ready production_signature_ready production_bus_claimed write_methods_enabled launch_enabled backend_process_started host_root_modified].each do |token|
+  assert(go_runtime_kde_offline_identity_checkpoint_test_source.include?(token), "Go Runtime offline KDE identity checkpoint tests must include #{token}")
 end
 
 go_runtime_owner_lifecycle_source = read_project_file("internal/runtime/owner/lifecycle.go")

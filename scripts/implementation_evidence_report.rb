@@ -100,6 +100,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/owner/service_test.go
       internal/runtime/owner/route_checkpoint.go
       internal/runtime/owner/route_checkpoint_test.go
+      internal/runtime/owner/kde_offline_identity_checkpoint.go
+      internal/runtime/owner/kde_offline_identity_checkpoint_test.go
       internal/runtime/owner/lifecycle.go
       internal/runtime/owner/lifecycle_test.go
       internal/runtime/owner/smoke_batch.go
@@ -120,6 +122,7 @@ DOMAIN_DEFINITIONS = [
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
       "internal/runtime/owner/service.go" => %w[xnix.runtime.owner_service_call.v1 runtime-owner-service-call go-runtime-owner-in-process-service Service],
       "internal/runtime/owner/route_checkpoint.go" => %w[xnix.runtime.owner_route_checkpoint.v1 runtime-owner-route-checkpoint go-owner-read-route-band-checkpoint NewRouteCheckpoint FormalReadRouteCount OwnerReadMethodCount OwnerLocalReadMethodCount SmokeReadRecordCount SmokeWriteDenialCount MethodParityReady FormalRouteCoverageReady OwnerLocalRouteCoverageReady SmokeBatchCoverageReady DeterministicWriteDenialsReady RouteBandReady ProductionBusClaimed WriteMethodsEnabled HostRootModified],
+      "internal/runtime/owner/kde_offline_identity_checkpoint.go" => %w[xnix.runtime.kde_offline_identity_checkpoint.v1 kde-offline-identity-checkpoint offline-kde-application-identity-band-checkpoint NewKDEOfflineIdentityCheckpoint recipe-trust surface-coverage identity-parity owner-route owner-service side-effects-disabled OfflineIdentityReady ProductionSignatureReady SurfaceCount ExpectedSurfaceCount FormalReadRouteCount OwnerReadMethodCount OwnerLocalReadMethodCount SmokeReadRecordCount SmokeWriteDenialCount DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted LiveTrayBridgeEnabled NotificationSent SettingsPersisted CompatibilityCenterPersisted LaunchEnabled ExecutionStarted BackendProcessStarted ProductionBusClaimed WriteMethodsEnabled HostRootModified],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch NewService service.Call runtime-owner-service-call],
       "internal/runtime/owner/session_bus.go" => %w[xnix.runtime.owner_session_bus_smoke.v1 runtime-owner-session-bus-smoke-step restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript private-session-bus-smoke],
