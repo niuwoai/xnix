@@ -211,5 +211,66 @@ func (s *LocalStore) Development() (bool, error) {
 	return isDevelopmentRegistry(name), nil
 }
 
+// TrustSummary is a store-level roll-up of recipe trust for Compatibility
+// Center pages, install gates, and owner readiness. It exposes recipe ids and
+// counts only — never recipe paths, host paths, or backend details.
+type TrustSummary struct {
+	RegistryName      string   `json:"registry_name"`
+	Development       bool     `json:"development"`
+	Total             int      `json:"total"`
+	ProductionTrusted []string `json:"production_trusted"`
+	DevelopmentOnly   []string `json:"development_only"`
+	FailedClosed      []string `json:"failed_closed"`
+	AllUsable         bool     `json:"all_usable"`
+	Summary           string   `json:"summary"`
+}
+
+// TrustSummary rolls up the trust state of every registry recipe into
+// production-trusted, development-only, and fail-closed buckets. A fail-closed
+// recipe (bad digest or unknown status) is reported, not an error, so trust
+// diagnostics can surface why a recipe is unusable.
+func (s *LocalStore) TrustSummary() (TrustSummary, error) {
+	states, err := s.TrustStates()
+	if err != nil {
+		return TrustSummary{}, err
+	}
+	name, err := s.RegistryName()
+	if err != nil {
+		return TrustSummary{}, err
+	}
+
+	summary := TrustSummary{
+		RegistryName: name,
+		Development:  isDevelopmentRegistry(name),
+		Total:        len(states),
+	}
+	for _, state := range states {
+		switch {
+		case !state.Usable():
+			summary.FailedClosed = append(summary.FailedClosed, state.ID)
+		case state.ProductionTrusted:
+			summary.ProductionTrusted = append(summary.ProductionTrusted, state.ID)
+		default:
+			summary.DevelopmentOnly = append(summary.DevelopmentOnly, state.ID)
+		}
+	}
+	sort.Strings(summary.ProductionTrusted)
+	sort.Strings(summary.DevelopmentOnly)
+	sort.Strings(summary.FailedClosed)
+	summary.AllUsable = len(summary.FailedClosed) == 0
+
+	switch {
+	case summary.Total == 0:
+		summary.Summary = "The recipe registry has no recipes."
+	case len(summary.FailedClosed) > 0:
+		summary.Summary = "Some recipes failed trust verification and are not usable."
+	case len(summary.ProductionTrusted) == 0:
+		summary.Summary = "All recipes are development-only and none are production trusted."
+	default:
+		summary.Summary = "Recipe trust roll-up is available for Compatibility Center review."
+	}
+	return summary, nil
+}
+
 // compile-time assertion that LocalStore satisfies Store.
 var _ Store = (*LocalStore)(nil)
