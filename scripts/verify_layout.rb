@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.307"
+EXPECTED_VERSION = "0.2.308"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -333,6 +333,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/version_test.go
   internal/runtime/owner/dispatch.go
   internal/runtime/owner/dispatch_test.go
+  internal/runtime/owner/route_checkpoint.go
+  internal/runtime/owner/route_checkpoint_test.go
   internal/runtime/owner/lifecycle.go
   internal/runtime/owner/lifecycle_test.go
   internal/runtime/owner/smoke_batch.go
@@ -1421,7 +1423,7 @@ end
 end
 
 go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owner/main.go")
-%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript smoke-owner].each do |token|
+%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke route-checkpoint NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript NewRouteCheckpoint smoke-owner].each do |token|
   assert(go_runtime_owner_candidate_cli_source.include?(token), "Go Runtime owner candidate CLI must include #{token}")
 end
 
@@ -1438,6 +1440,16 @@ assert(go_runtime_owner_dispatch_source.include?("NewApplicationsPreview"), "Go 
 assert(go_runtime_owner_dispatch_source.include?("NewWindowsCompatibilityWorkstreamsPreview"), "Go Runtime owner read dispatch must render Windows compatibility workstream payloads")
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeWriteGatePreview"), "Go Runtime owner read dispatch must call write gate preview")
 assert(go_runtime_owner_dispatch_source.include?("validateNoBackendTerms"), "Go Runtime owner read dispatch must hide backend terms")
+
+go_runtime_owner_route_checkpoint_source = read_project_file("internal/runtime/owner/route_checkpoint.go")
+%w[RouteCheckpoint RouteCheckpointCheck xnix.runtime.owner_route_checkpoint.v1 runtime-owner-route-checkpoint go-owner-read-route-band-checkpoint NewRouteCheckpoint FormalReadRouteCount GoFormalReadRouteCount OwnerReadMethodCount OwnerLocalReadMethodCount SmokeReadRecordCount SmokeWriteDenialCount MethodParityReady FormalRouteCoverageReady OwnerLocalRouteCoverageReady SmokeBatchCoverageReady DeterministicWriteDenialsReady RouteBandReady ProductionBusClaimed WriteMethodsEnabled HostRootModified validateNoBackendTerms].each do |token|
+  assert(go_runtime_owner_route_checkpoint_source.include?(token), "Go Runtime owner route checkpoint must include #{token}")
+end
+go_runtime_owner_route_checkpoint_test_source = read_project_file("internal/runtime/owner/route_checkpoint_test.go") +
+                                                read_project_file("cmd/xnix-runtime-owner/main_test.go")
+%w[TestRouteCheckpointClosesReadRouteBandWithWritesDisabled TestRuntimeOwnerCommandRendersRouteCheckpoint formal_read_route_count owner_read_method_count owner_local_read_method_count smoke_read_record_count smoke_write_denial_count route_band_ready write_methods_enabled production_bus_claimed host_root_modified].each do |token|
+  assert(go_runtime_owner_route_checkpoint_test_source.include?(token), "Go Runtime owner route checkpoint tests must include #{token}")
+end
 
 go_runtime_owner_lifecycle_source = read_project_file("internal/runtime/owner/lifecycle.go")
 %w[LifecycleEvent runtime-owner-lifecycle-event xnix.runtime.owner_lifecycle_event.v1 NewLifecycleEvents startup route-table readiness shutdown preview-complete RouteTableVersion ShutdownReason DesktopSafeSummary].each do |token|

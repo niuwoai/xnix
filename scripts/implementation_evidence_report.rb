@@ -98,6 +98,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/owner/dispatch_test.go
       internal/runtime/owner/service.go
       internal/runtime/owner/service_test.go
+      internal/runtime/owner/route_checkpoint.go
+      internal/runtime/owner/route_checkpoint_test.go
       internal/runtime/owner/lifecycle.go
       internal/runtime/owner/lifecycle_test.go
       internal/runtime/owner/smoke_batch.go
@@ -117,6 +119,7 @@ DOMAIN_DEFINITIONS = [
     gate_tokens: {
       "cmd/xnix-runtime-owner/main.go" => %w[smoke-owner deny-write],
       "internal/runtime/owner/service.go" => %w[xnix.runtime.owner_service_call.v1 runtime-owner-service-call go-runtime-owner-in-process-service Service],
+      "internal/runtime/owner/route_checkpoint.go" => %w[xnix.runtime.owner_route_checkpoint.v1 runtime-owner-route-checkpoint go-owner-read-route-band-checkpoint NewRouteCheckpoint FormalReadRouteCount OwnerReadMethodCount OwnerLocalReadMethodCount SmokeReadRecordCount SmokeWriteDenialCount MethodParityReady FormalRouteCoverageReady OwnerLocalRouteCoverageReady SmokeBatchCoverageReady DeterministicWriteDenialsReady RouteBandReady ProductionBusClaimed WriteMethodsEnabled HostRootModified],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch NewService service.Call runtime-owner-service-call],
       "internal/runtime/owner/session_bus.go" => %w[xnix.runtime.owner_session_bus_smoke.v1 runtime-owner-session-bus-smoke-step restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript private-session-bus-smoke],

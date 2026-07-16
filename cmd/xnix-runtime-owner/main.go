@@ -29,6 +29,7 @@ func run(args []string, stdout io.Writer) error {
 	lifecycleLog := flags.Bool("lifecycle-log", false, "render smoke-owner lifecycle events as JSON Lines")
 	smokeBatch := flags.Bool("smoke-batch", false, "render restricted smoke-owner read/write call evidence as JSON Lines")
 	sessionBusSmoke := flags.Bool("session-bus-smoke", false, "render restricted private session-bus owner smoke evidence as JSON Lines")
+	routeCheckpoint := flags.Bool("route-checkpoint", false, "render the Go owner read-route checkpoint")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -38,13 +39,13 @@ func run(args []string, stdout io.Writer) error {
 
 	var payload any
 	selectedOperations := 0
-	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke} {
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke, *routeCheckpoint} {
 		if selected {
 			selectedOperations++
 		}
 	}
 	if selectedOperations > 1 {
-		return errors.New("xnix-runtime-owner accepts only one of --deny-write, --dispatch-read, --service-call, --lifecycle-log, --smoke-batch, or --session-bus-smoke")
+		return errors.New("xnix-runtime-owner accepts only one owner operation")
 	}
 	if *writeMethod != "" {
 		response, err := owner.DisabledWriteResponse(*writeMethod)
@@ -104,6 +105,12 @@ func run(args []string, stdout io.Writer) error {
 			}
 		}
 		return nil
+	} else if *routeCheckpoint {
+		checkpoint, err := owner.NewRouteCheckpoint(*root)
+		if err != nil {
+			return err
+		}
+		payload = checkpoint
 	} else {
 		candidate, err := owner.NewCandidate(*root, owner.CandidateMode(*mode))
 		if err != nil {

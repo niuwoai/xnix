@@ -448,3 +448,28 @@ func TestRuntimeOwnerCommandRejectsMixedOperations(t *testing.T) {
 		t.Fatalf("run must reject mixed lifecycle/write operations, got %v", err)
 	}
 }
+
+func TestRuntimeOwnerCommandRendersRouteCheckpoint(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"--root", "../..", "--route-checkpoint"}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.owner_route_checkpoint.v1" ||
+		payload["formal_read_route_count"] != float64(61) ||
+		payload["go_formal_read_route_count"] != float64(61) ||
+		payload["owner_read_method_count"] != float64(65) ||
+		payload["owner_local_read_method_count"] != float64(4) ||
+		payload["smoke_read_record_count"] != float64(65) ||
+		payload["smoke_write_denial_count"] != float64(4) ||
+		payload["route_band_ready"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected route checkpoint payload: %#v", payload)
+	}
+}

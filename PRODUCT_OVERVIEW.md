@@ -1,12 +1,14 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.307
+> Last updated: 2026-07-17 | Current version: v0.2.308
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.307 checkpoint routes the restricted product smoke packet through the Go Runtime owner's in-process read service as `GetRestrictedProductSmokePacketPreview`. The owner accepts no caller paths, reads the fixed Kinoite product manifest and repository evidence, and reports packet preparation separately from authorization and execution. Docker, QEMU, product smoke, serial-log persistence claims, release readiness, backend launch, production bus ownership, and host mutation remain disabled.
+The v0.2.308 checkpoint closes the owner route migration band with `xnix-runtime-owner --route-checkpoint`. It builds the full in-process smoke batch and verifies 61 formal Go owner routes, four owner-local review routes, 65 read service calls, four deterministic write denials, formal method parity, and disabled production ownership in one auditable record. No additional self-referential owner route is added; Runtime writes, production D-Bus ownership, backend launch, network access, and host mutation remain disabled.
+
+The v0.2.307 checkpoint routed the restricted product smoke packet through the Go Runtime owner's in-process read service as `GetRestrictedProductSmokePacketPreview`. The owner accepts no caller paths, reads the fixed Kinoite product manifest and repository evidence, and reports packet preparation separately from authorization and execution. Docker, QEMU, product smoke, serial-log persistence claims, release readiness, backend launch, production bus ownership, and host mutation remain disabled.
 
 The v0.2.306 checkpoint routed signed recipe verification through the Go Runtime owner's in-process read service as `GetSignedRecipeVerificationPreview`. The owner accepts only an application identity, reads the Runtime-managed recipe store, preserves digest verification, and fails closed as `production-signature-required` or `production-key-configuration-missing` without accepting caller-supplied paths or key material. Private keys, signature material exposure, production trust, recipe writes, backend launch, production bus ownership, and host mutation remain disabled.
 

@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.308] - 2026-07-17
+
+### Added
+
+- Added `xnix-runtime-owner --route-checkpoint` and the Go `RouteCheckpoint` model for the `0.2.305`-`0.2.308` owner route migration band.
+- Added a full smoke-batch audit of 61 formal Go owner routes, four owner-local review routes, 65 read service calls, four deterministic write denials, and formal method parity.
+- Added checkpoint schema, exact-count, pass-state, CLI, production-owner, service-start, Runtime-write, network, privileged-container, backend-detail, and host-mutation tests.
+
+### Changed
+
+- Closed the owner route migration band without adding a self-referential checkpoint read route or changing the 61-method production D-Bus ABI.
+- Updated implementation evidence, layout verification, product documentation, and dispatch guidance for the owner route checkpoint.
+- Kept production D-Bus ownership, system service start, Runtime writes, backend launch, Docker, QEMU, network access, privileged containers, and host-root mutation disabled.
+
 ## [0.2.307] - 2026-07-17
 
 ### Added
