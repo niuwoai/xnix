@@ -1,41 +1,33 @@
 package artifact
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
 // Cache is a content-addressed artifact cache confined to a controlled root.
 // It never writes outside that root and verifies every stored object's digest.
 type Cache struct {
-	root string
+	root *rootfs.Root
 }
 
 // NewCache opens (creating if needed) a cache under the given controlled root.
 // The root must be a project- or container-controlled directory, never the
 // host root; the caller is responsible for choosing a sandboxed path.
-func NewCache(root string) (*Cache, error) {
-	if root == "" {
-		return nil, errors.New("artifact cache requires a controlled root")
-	}
-	abs, err := filepath.Abs(root)
+func NewCache(rootDir string) (*Cache, error) {
+	root, err := rootfs.Ensure(rootDir)
 	if err != nil {
-		return nil, fmt.Errorf("resolve cache root: %w", err)
+		return nil, err
 	}
-	if filepath.Clean(abs) == string(os.PathSeparator) {
-		return nil, errors.New("refusing to use filesystem root as artifact cache root")
-	}
-	if err := os.MkdirAll(abs, 0o700); err != nil {
-		return nil, fmt.Errorf("initialize artifact cache: %w", err)
-	}
-	return &Cache{root: abs}, nil
+	return &Cache{root: root}, nil
 }
 
 // Root returns the absolute controlled cache root.
-func (c *Cache) Root() string { return c.root }
+func (c *Cache) Root() string { return c.root.Path() }
 
 // objectPath returns the content-addressed path for a namespace and digest,
 // refusing any component that could escape the cache root.
@@ -46,15 +38,7 @@ func (c *Cache) objectPath(namespace, digest string) (string, error) {
 	if namespace == "" || strings.ContainsAny(namespace, `/\`) || namespace == "." || namespace == ".." {
 		return "", fmt.Errorf("invalid cache namespace %q", namespace)
 	}
-	joined := filepath.Join(c.root, namespace, digest[:2], digest)
-	rel, err := filepath.Rel(c.root, joined)
-	if err != nil {
-		return "", err
-	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return "", fmt.Errorf("cache path escapes root: %s/%s", namespace, digest)
-	}
-	return joined, nil
+	return c.root.Resolve(namespace, digest[:2], digest)
 }
 
 // Has reports whether an artifact is already cached and intact.
