@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.304
+> Last updated: 2026-07-17 | Baseline: v0.2.305
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,15 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Runtime owner route migration | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.305` | Move the next review-only Runtime read route into the Go-owned service path with deterministic disabled-write evidence. |
+| 1 | Signed recipe owner route | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.306` | Route signed recipe verification evidence through the Go-owned service path while keeping key configuration and install writes disabled. |
 
 ## Best First Pick
 
-Start with Runtime owner route migration.
+Start with the signed recipe owner route.
 
-Runtime owner route migration is the best next handoff because the first stabilization review band is closed and canonical Go test version checks now remove release-bump drift from the remaining route work.
+The signed recipe owner route is the best next handoff because the KDE notification digest now crosses the Go owner service boundary and the next trust-critical read should follow the same in-process path.
 
-The route migration must stay read-only and must not run Docker or QEMU.
+The signed recipe route must stay read-only and must not load private keys, install recipes, run Docker, or run QEMU.
 
 ## Good Branch Shape
 

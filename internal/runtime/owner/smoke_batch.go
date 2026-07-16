@@ -143,6 +143,8 @@ func smokeBatchArgs(method string) []string {
 		return []string{appID, "development"}
 	case "GetNotificationPlan":
 		return []string{appID, "install-failed"}
+	case "GetKDENotificationDigestPreview":
+		return []string{appID, "needs-review:approval-required", "readiness-change:readiness-pending"}
 	case "GetKRunnerQueryPlan":
 		return []string{"notepad"}
 	case "GetPortalRequestPlan", "GetPortalAccessPolicy":

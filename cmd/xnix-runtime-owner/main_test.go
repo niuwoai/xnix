@@ -132,6 +132,41 @@ func TestRuntimeOwnerCommandRendersWindowsCompatibilityOwnerLocalReadDispatch(t 
 	}
 }
 
+func TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--dispatch-read", "GetKDENotificationDigestPreview",
+		"org.xnix.sample.notepad",
+		"permission-attention:permission-review",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["method"] != "GetKDENotificationDigestPreview" ||
+		payload["route_source"] != "go-owner-local-preview" ||
+		payload["go_command"] != "kde-notification-digest-preview" ||
+		payload["route_status"] != "owner-local-preview-ready" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected notification digest read dispatch response: %#v", payload)
+	}
+	nested := payload["payload"].(map[string]any)
+	if nested["request_type"] != "kde-notification-digest-preview" ||
+		nested["read_method"] != "GetKDENotificationDigestPreview" ||
+		nested["notifications_sent"] != false ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected notification digest nested payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"--root", "../..", "--mode", "smoke-owner", "--service-call", "GetRuntimeWriteGate", "Launch"}, &output); err != nil {
@@ -210,8 +245,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 66 {
-		t.Fatalf("smoke batch line count = %d, want 66", len(lines))
+	if len(lines) != 67 {
+		t.Fatalf("smoke batch line count = %d, want 67", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -225,7 +260,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(62) ||
+			payload["read_dispatch_method_count"] != float64(63) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -268,8 +303,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)
 		}
 	}
-	if readCount != 62 || writeCount != 4 {
-		t.Fatalf("smoke batch counts read=%d write=%d, want 62/4", readCount, writeCount)
+	if readCount != 63 || writeCount != 4 {
+		t.Fatalf("smoke batch counts read=%d write=%d, want 63/4", readCount, writeCount)
 	}
 }
 
@@ -280,8 +315,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 71 {
-		t.Fatalf("session bus smoke line count = %d, want 71", len(lines))
+	if len(lines) != 72 {
+		t.Fatalf("session bus smoke line count = %d, want 72", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -296,7 +331,7 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-session-bus-smoke-step" ||
 			payload["transcript_type"] != "restricted-private-session-bus-owner-smoke" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(62) ||
+			payload["read_dispatch_method_count"] != float64(63) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -332,8 +367,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			}
 		}
 	}
-	if readCount != 62 || writeCount != 4 || unsupportedCount != 1 {
-		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 62/4/1", readCount, writeCount, unsupportedCount)
+	if readCount != 63 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 63/4/1", readCount, writeCount, unsupportedCount)
 	}
 }
 

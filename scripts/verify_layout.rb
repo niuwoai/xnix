@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.304"
+EXPECTED_VERSION = "0.2.305"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1426,7 +1426,7 @@ go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owne
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1999,6 +1999,13 @@ end
 go_runtime_notification_digest_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_notification_digest_cli_test.go")
 %w[TestKDENotificationDigestPreviewCLI TestKDENotificationDigestPreviewCLIRejectsInvalidArguments xnix.runtime.kde_notification_digest.v1 notifications_sent live_tray_bridge_enabled request_objects_created permission_grant_enabled backend_launch_enabled host_root_modified].each do |token|
   assert(go_runtime_notification_digest_cli_test_source.include?(token), "Go Runtime KDE notification digest CLI tests must include #{token}")
+end
+
+runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
+                                                read_project_file("internal/runtime/owner/service_test.go") +
+                                                read_project_file("cmd/xnix-runtime-owner/main_test.go")
+%w[TestDispatchReadRendersKDENotificationDigestAsOwnerLocalPayload TestServiceCallServesOwnerLocalNotificationDigest TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch GetKDENotificationDigestPreview kde-notification-digest-preview notifications_sent backend_launch_enabled host_root_modified].each do |token|
+  assert(runtime_owner_notification_digest_test_source.include?(token), "Go Runtime owner notification digest evidence must include #{token}")
 end
 
 go_runtime_deactivation_source = read_project_file("internal/runtime/appidentity/desktop_deactivation_dry_run.go")

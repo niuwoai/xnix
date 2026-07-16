@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.305] - 2026-07-17
+
+### Added
+
+- Added the owner-local `GetKDENotificationDigestPreview` route to the Go Runtime owner dispatch and in-process `Service.Call` boundary.
+- Added owner dispatch, service-call, owner CLI, smoke-batch, restricted private session-bus, malformed-event, and disabled-side-effect evidence for the notification digest route.
+
+### Changed
+
+- Increased restricted owner smoke coverage from 62 to 63 read routes while keeping the formal production D-Bus read contract unchanged at 61 methods.
+- Updated Runtime contract drift, implementation evidence, layout verification, product documentation, and dispatch guidance for the new owner-local route.
+- Kept notification delivery, Runtime writes, production bus ownership, backend launch, Docker, QEMU, network access, privileged containers, and host-root mutation disabled.
+
 ## [0.2.304] - 2026-07-17
 
 ### Changed

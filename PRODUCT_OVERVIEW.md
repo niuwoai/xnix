@@ -1,12 +1,14 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.304
+> Last updated: 2026-07-17 | Current version: v0.2.305
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.304 checkpoint closes the first stabilization review band by making Go Runtime, owner, and CLI tests read the canonical repository `VERSION` file. Project-version assertions no longer drift across packages during the remaining train bumps; this test-only change does not enable production ownership, backend launch, Docker, QEMU, or host mutation.
+The v0.2.305 checkpoint routes the KDE notification digest through the Go Runtime owner's in-process read service as `GetKDENotificationDigestPreview`. The route participates in owner dispatch, service-call, smoke-batch, and restricted private session-bus evidence while remaining owner-local and outside the 61-method production D-Bus ABI; notification delivery, Runtime writes, backend launch, production bus ownership, and host mutation remain disabled.
+
+The v0.2.304 checkpoint closed the first stabilization review band by making Go Runtime, owner, and CLI tests read the canonical repository `VERSION` file. Project-version assertions no longer drift across packages during the remaining train bumps; this test-only change did not enable production ownership, backend launch, Docker, QEMU, or host mutation.
 
 ## Core Goals
 

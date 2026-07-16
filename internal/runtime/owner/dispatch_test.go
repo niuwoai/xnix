@@ -92,6 +92,12 @@ func TestDispatchReadRejectsWriteMethodsAndBadArity(t *testing.T) {
 	if _, err := DispatchRead(projectRoot(t), "GetRuntimeWriteGate", nil); err == nil || !strings.Contains(err.Error(), "requires 1 argument") {
 		t.Fatalf("DispatchRead must reject bad arity, got %v", err)
 	}
+	if _, err := DispatchRead(projectRoot(t), "GetKDENotificationDigestPreview", []string{"org.xnix.sample.notepad"}); err == nil || !strings.Contains(err.Error(), "at least one event") {
+		t.Fatalf("DispatchRead must reject a missing digest event, got %v", err)
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetKDENotificationDigestPreview", []string{"org.xnix.sample.notepad", "invalid"}); err == nil || !strings.Contains(err.Error(), "<group>:<event-id>") {
+		t.Fatalf("DispatchRead must reject a malformed digest event, got %v", err)
+	}
 	if _, err := DispatchRead(projectRoot(t), "GetUnknownRuntimeMethod", nil); err == nil || !strings.Contains(err.Error(), "unsupported owner read dispatch method") {
 		t.Fatalf("DispatchRead must reject unsupported methods, got %v", err)
 	}
@@ -154,6 +160,45 @@ func TestDispatchReadRendersWindowsCompatibilityWorkstreamsAsOwnerLocalPayload(t
 		payload["backend_launch_enabled"] != false ||
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected Windows compatibility dispatch payload: %#v", payload)
+	}
+}
+
+func TestDispatchReadRendersKDENotificationDigestAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetKDENotificationDigestPreview", []string{
+		"org.xnix.sample.notepad",
+		"needs-review:approval-required",
+		"readiness-change:readiness-pending",
+	})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetKDENotificationDigestPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "kde-notification-digest-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady ||
+		!dispatch.ReadOnlyDispatch ||
+		dispatch.WriteMethodsEnabled ||
+		dispatch.SessionBusClaimed ||
+		dispatch.ProductionBusClaimed ||
+		dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected notification digest dispatch metadata: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	counts := payload["counts"].(map[string]any)
+	if payload["request_type"] != "kde-notification-digest-preview" ||
+		payload["read_method"] != "GetKDENotificationDigestPreview" ||
+		payload["application_id"] != "org.xnix.sample.notepad" ||
+		counts["digest_entry_count"] != float64(2) ||
+		payload["runtime_owned"] != true ||
+		payload["notifications_sent"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected notification digest payload: %#v", payload)
 	}
 }
 
@@ -244,6 +289,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetRuntimeOwnerRecipeTrust",
 		"GetRuntimeOwnerReadiness",
 		"GetWindowsCompatibilityWorkstreamsPreview",
+		"GetKDENotificationDigestPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -263,6 +309,8 @@ func sampleReadDispatchArgs(method string) []string {
 		return []string{appID, "development"}
 	case "GetNotificationPlan":
 		return []string{appID, "install-failed"}
+	case "GetKDENotificationDigestPreview":
+		return []string{appID, "needs-review:approval-required", "readiness-change:readiness-pending"}
 	case "GetKRunnerQueryPlan":
 		return []string{"notepad"}
 	case "GetPortalRequestPlan", "GetPortalAccessPolicy":

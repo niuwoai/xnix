@@ -97,6 +97,42 @@ func TestServiceCallDeniesWriteMethods(t *testing.T) {
 	}
 }
 
+func TestServiceCallServesOwnerLocalNotificationDigest(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+
+	call, err := service.Call("GetKDENotificationDigestPreview", []string{
+		"org.xnix.sample.notepad",
+		"blocked-action:execution-blocked",
+	})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetKDENotificationDigestPreview" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.HostRootModified {
+		t.Fatalf("unexpected notification digest service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetKDENotificationDigestPreview" ||
+		dispatch["go_command"] != "kde-notification-digest-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested notification digest dispatch: %#v", dispatch)
+	}
+}
+
 func TestServiceCallRejectsUnknownMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

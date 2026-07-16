@@ -113,6 +113,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetRuntimeOwnerRecipeTrust",
 	"GetRuntimeOwnerReadiness",
 	"GetWindowsCompatibilityWorkstreamsPreview",
+	"GetKDENotificationDigestPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -466,6 +467,20 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return appidentity.NewWindowsCompatibilityWorkstreamsPreview()
 	},
+	"GetKDENotificationDigestPreview": func(root string, args []string) (any, error) {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("GetKDENotificationDigestPreview requires an application id and at least one event")
+		}
+		plan, err := ownerPlan(root, args[0])
+		if err != nil {
+			return nil, err
+		}
+		events, err := ownerNotificationDigestEvents(args[1:])
+		if err != nil {
+			return nil, err
+		}
+		return plan.KDENotificationDigestPreview(events)
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -703,11 +718,25 @@ func ownerReadDispatchCommand(method string) string {
 		return "runtime-owner-readiness-preview"
 	case "GetWindowsCompatibilityWorkstreamsPreview":
 		return "windows-compatibility-workstreams-preview"
+	case "GetKDENotificationDigestPreview":
+		return "kde-notification-digest-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:
 		return "unsupported-owner-read-preview"
 	}
+}
+
+func ownerNotificationDigestEvents(values []string) ([]appidentity.KDENotificationDigestEvent, error) {
+	events := make([]appidentity.KDENotificationDigestEvent, 0, len(values))
+	for _, value := range values {
+		group, eventID, ok := strings.Cut(value, ":")
+		if !ok || strings.TrimSpace(group) == "" || strings.TrimSpace(eventID) == "" {
+			return nil, fmt.Errorf("notification digest event must use <group>:<event-id>")
+		}
+		events = append(events, appidentity.KDENotificationDigestEvent{Group: group, EventID: eventID})
+	}
+	return events, nil
 }
 
 func isReservedWriteMethod(method string) bool {
