@@ -32,6 +32,7 @@ begin
   fixture.write(" M internal/runtime/appidentity/windows_compatibility_workstreams.go\n")
   fixture.write(" M scripts/implementation_evidence_report.rb\n")
   fixture.write(" M scripts/kde_first_presence_smoke.rb\n")
+  fixture.write(" M .dockerignore\n")
   fixture.write(" M docs/claude-code-implementation-packages.md\n")
   fixture.write("?? .gocache/00/cache-entry\n")
   fixture.write("?? tmp/runtime-output.json\n")
@@ -50,7 +51,7 @@ begin
   assert(report.fetch("protected_claude_file_modified"), "mainline integration review must flag protected Claude file changes")
   assert(report.fetch("excluded_prefixes") == [".gocache/", "tmp/"], "mainline integration review must expose excluded prefixes")
   assert(report.fetch("excluded_file_count") == 2, "mainline integration review must exclude cache and tmp files")
-  assert(report.fetch("changed_file_count") == 16, "mainline integration review must count included fixture files")
+  assert(report.fetch("changed_file_count") == 17, "mainline integration review must count included fixture files")
   assert(!report.fetch("safe_to_stage_all"), "mainline integration review must never mark a mixed tree safe to stage all")
   assert(!report.fetch("docker_or_qemu_required"), "mainline integration review must not require Docker or QEMU")
   assert(!report.fetch("host_root_modified"), "mainline integration review must not mutate the host root")
@@ -72,6 +73,7 @@ begin
     cw7-ai-diagnostic-privacy
     cw4-kde-entrypoint-consumers
     cw10-evidence-drift-harness
+    cw11-product-image-acceptance
     blocked-protected-claude-owned-file
     unclassified
   ]
@@ -89,6 +91,7 @@ begin
   assert(lanes.fetch("cw4-kde-entrypoint-consumers").fetch("paths").include?("scripts/kde_first_presence_smoke.rb"), "CW4 lane must include KDE-first presence smoke work")
   assert(lanes.fetch("cw10-evidence-drift-harness").fetch("paths").include?("scripts/implementation_evidence_report.rb"), "CW10 lane must include evidence report work")
   assert(lanes.fetch("cw10-evidence-drift-harness").fetch("paths").include?("internal/runtime/appidentity/windows_compatibility_workstreams.go"), "CW10 lane must include Windows compatibility workstream model work")
+  assert(lanes.fetch("cw11-product-image-acceptance").fetch("paths") == [".dockerignore"], "CW11 lane must classify Docker build-context safety changes")
   assert(lanes.fetch("blocked-protected-claude-owned-file").fetch("paths") == ["docs/claude-code-implementation-packages.md"], "protected lane must isolate the Claude-owned file")
   assert(lanes.fetch("unclassified").fetch("paths") == ["experiments/side-quest.txt"], "unclassified lane must isolate unmatched paths")
   assert(report.fetch("review_order").first == "planning-documents", "mainline integration review must order planning first")

@@ -24,6 +24,10 @@ runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
 runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
+dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
+
+assert(dockerignore_entries.include?(".cache/"), "Docker build context must exclude the managed Buildroot cache")
+assert(dockerignore_entries.include?(".gocache/"), "Docker build context must exclude the local Go build cache")
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
 assert(custom_build_command.first(2) == ["/tmp/xnix-docker", "build"], "build command must support a custom Docker CLI")

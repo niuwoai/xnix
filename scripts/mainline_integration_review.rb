@@ -309,6 +309,7 @@ LANES = [
     description: "Image, full-smoke, restricted Docker, and QEMU acceptance assets. This lane should not run during light review.",
     review_order: 10,
     patterns: [
+      %r{\A\.dockerignore\z},
       %r{\Aboot/},
       %r{\Abuildroot/},
       %r{\Aimage/},

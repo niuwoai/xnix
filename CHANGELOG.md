@@ -2,6 +2,24 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320] - 2026-07-17
+
+### Changed
+
+- Advanced the first Go stability train to its full test, build, smoke, and release-evidence gate.
+- Completed the six-step Buildroot build and constrained QEMU serial smoke with persisted v0.2.320 reports, successful boot markers, loopback-restricted networking, and no host-root mutation.
+- Kept remote push blocked unless the complete gate produces persisted evidence without weakening host safety.
+
+### Fixed
+
+- Excluded the local `.gocache/` directory from Docker build contexts after the full gate exposed a one-gigabyte context stall.
+- Added container and layout assertions that keep both Buildroot and Go caches outside future builder image contexts.
+- Classified root Docker build-context safety changes in the CW11 product-image acceptance review lane.
+
+### Security
+
+- Refused the flagship Kinoite compose and disk-build path on the current host because the required Podman/Buildah toolchain is absent and bootc image production requires a privileged build host.
+
 ## [0.2.319] - 2026-07-17
 
 ### Added

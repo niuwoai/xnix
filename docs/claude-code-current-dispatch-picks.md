@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.319
+> Last updated: 2026-07-17 | Baseline: v0.2.320
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Full stabilization train gate | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.320` | Run the full build, constrained QEMU smoke, serial-log checks, and release evidence audit before any remote push. |
+| 1 | Privileged Kinoite build-host handoff | `docs/kde-image-pipeline.md` | `codex/kinoite-build-host-handoff` | Run the real Kinoite compose, bootc disk build, and KDE QEMU smoke only on an approved privileged Podman host. |
 
 ## Best First Pick
 
-Start with the full stabilization train gate.
+Start with the privileged Kinoite build-host handoff.
 
-The v0.2.319 checkpoint joins the fail-closed restricted launch preflight packet to fixed Kinoite product-image metadata and five complete repository evidence groups. The next handoff must run the complete v0.2.320 gate and must not claim product boot, KDE startup, Wine/Proton/VM launch, Windows application execution, persisted serial logs, or release readiness unless the corresponding build and smoke evidence actually passes.
+The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. The real Kinoite compose and bootc disk build remain blocked because this host has no Podman/Buildah toolchain and the required privileged build mode is outside the current safety boundary. The next handoff must run on an explicitly approved build host and must not claim KDE startup, Wine/Proton/VM launch, Windows application execution, or release readiness until those exact checks pass.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

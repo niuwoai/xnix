@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.319
+> Last updated: 2026-07-17 | Current version: v0.2.320
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320 checkpoint is the first full Go stability train gate. The complete Go, layout, contract-drift, implementation-evidence, mainline-integration, release-index, and merge-readiness audits pass. The gate found and fixed an oversized Docker build context by excluding the local Go build cache and enforcing the exclusion in tests. The six-step Buildroot build and constrained QEMU serial smoke also pass with a persisted report, no missing boot markers, loopback-restricted networking, and no host-root mutation. The flagship Kinoite manifest and Containerfile pass offline consistency checks, but the real compose and disk-build path remains blocked on the current host because Podman/Buildah is unavailable and bootc image production requires a privileged build host. Xnix does not weaken the host boundary to manufacture a release-ready result.
 
 The v0.2.319 checkpoint adds `kde-restricted-product-smoke-checkpoint-record`. It joins the restricted launch preflight packet to the fixed Kinoite product-image manifest and five repository evidence groups, confirms that image metadata and KDE entry-point coverage are ready, and advances only to the v0.2.320 train gate. Product smoke still requires separate human authorization; Docker, QEMU, product smoke, persisted serial-log claims, release readiness, launch preflight, launch authorization, command materialization, backend selection and launch, compatibility process start, production bus ownership, host networking, Docker socket mounts, broad host mounts, privileged containers, path exposure, backend details, and host-root mutation remain disabled.
 

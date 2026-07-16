@@ -1,4 +1,5 @@
 .cache/
+.gocache/
 .git/
 output/
 *.img

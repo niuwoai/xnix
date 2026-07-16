@@ -4,8 +4,9 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.319"
+EXPECTED_VERSION = "0.2.320"
 REQUIRED_FILES = %w[
+  .dockerignore
   Dockerfile
   VERSION
   docs/claude-code-implementation-packages.md
@@ -609,6 +610,10 @@ end
 REQUIRED_FILES.each do |relative_path|
   assert(PROJECT_ROOT.join(relative_path).file?, "missing required file: #{relative_path}")
 end
+
+dockerignore = read_project_file(".dockerignore").lines.map(&:strip)
+assert(dockerignore.include?(".cache/"), "Docker build context must exclude the managed Buildroot cache")
+assert(dockerignore.include?(".gocache/"), "Docker build context must exclude the local Go build cache")
 
 assert(read_project_file("VERSION").strip == EXPECTED_VERSION, "VERSION must be #{EXPECTED_VERSION}")
 
