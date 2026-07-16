@@ -29,6 +29,8 @@ type SmokeReport struct {
 	DBusActivationPresent     bool        `json:"dbus_activation_present"`
 	RuntimeServiceEnabled     bool        `json:"runtime_service_enabled"`
 	KDEEntryPointCount        int         `json:"kde_entry_point_count"`
+	KDEEntryPointsCovered     bool        `json:"kde_entry_points_covered"`
+	MissingEntryPoints        []string    `json:"missing_entry_points"`
 	SerialMarkers             []string    `json:"serial_markers"`
 	AllSourcesPresent         bool        `json:"all_sources_present"`
 	RuntimeReady              bool        `json:"runtime_ready"`
@@ -82,12 +84,15 @@ func Verify(repoRoot string, manifest Manifest) (SmokeReport, error) {
 		return SmokeReport{}, errors.New("image smoke requires a repo root")
 	}
 
+	missingEntryPoints := missingEntryPoints(manifest.KDEEntryPoints)
 	report := SmokeReport{
 		ImageName:             manifest.ImageName,
 		BaseImage:             manifest.BaseImage,
 		Architecture:          manifest.Architecture,
 		RuntimeServiceEnabled: manifest.enablesRuntimeService(),
 		KDEEntryPointCount:    len(manifest.KDEEntryPoints),
+		KDEEntryPointsCovered: len(missingEntryPoints) == 0,
+		MissingEntryPoints:    missingEntryPoints,
 		SerialMarkers:         append([]string(nil), manifest.BootSmoke.ExpectSerialMarkers...),
 	}
 

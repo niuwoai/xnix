@@ -68,6 +68,38 @@ func TestVerifyRuntimeReadyWhenAllSourcesPresent(t *testing.T) {
 	}
 }
 
+func TestVerifyReportsEntryPointCoverage(t *testing.T) {
+	manifest := fixtureManifest()
+	// The fixture declares only three entry points, so coverage is incomplete.
+	manifest.KDEEntryPoints = []string{"compatibility-center", "krunner", "dolphin"}
+	root := buildImageRoot(t, manifest, nil)
+
+	report, err := Verify(root, manifest)
+	if err != nil {
+		t.Fatalf("Verify: %v", err)
+	}
+	if report.KDEEntryPointsCovered {
+		t.Fatalf("partial entry points must not be covered: %#v", report)
+	}
+	want := []string{"kwin", "notifications", "system-settings", "system-tray"}
+	if len(report.MissingEntryPoints) != len(want) {
+		t.Fatalf("unexpected missing entry points: %#v", report.MissingEntryPoints)
+	}
+	for i := range want {
+		if report.MissingEntryPoints[i] != want[i] {
+			t.Fatalf("missing entry points not sorted/expected: %#v", report.MissingEntryPoints)
+		}
+	}
+
+	// A manifest declaring all seven is fully covered.
+	full := fixtureManifest()
+	full.KDEEntryPoints = []string{"compatibility-center", "krunner", "kwin", "dolphin", "system-tray", "notifications", "system-settings"}
+	fullReport, _ := Verify(buildImageRoot(t, full, nil), full)
+	if !fullReport.KDEEntryPointsCovered || len(fullReport.MissingEntryPoints) != 0 {
+		t.Fatalf("all seven entry points must be covered: %#v", fullReport)
+	}
+}
+
 func TestVerifyReportsMissingRuntimeSource(t *testing.T) {
 	manifest := fixtureManifest()
 	// Omit the D-Bus activation source.

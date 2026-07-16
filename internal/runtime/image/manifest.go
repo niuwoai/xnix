@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -50,6 +51,37 @@ const (
 
 // runtimeServiceUnit is the systemd unit the image must enable at first boot.
 const runtimeServiceUnit = "xnix-compatd.service"
+
+// expectedKDEEntryPoints are the KDE-first integration surfaces the flagship
+// image must declare so a compatibility application is reachable across the
+// desktop: the Compatibility Center, KRunner, KWin window identity, Dolphin,
+// the system tray, notifications, and system settings.
+var expectedKDEEntryPoints = []string{
+	"compatibility-center",
+	"krunner",
+	"kwin",
+	"dolphin",
+	"system-tray",
+	"notifications",
+	"system-settings",
+}
+
+// missingEntryPoints returns the expected KDE entry points a manifest does not
+// declare, sorted, so the smoke can report coverage gaps deterministically.
+func missingEntryPoints(declared []string) []string {
+	have := make(map[string]bool, len(declared))
+	for _, e := range declared {
+		have[e] = true
+	}
+	var missing []string
+	for _, want := range expectedKDEEntryPoints {
+		if !have[want] {
+			missing = append(missing, want)
+		}
+	}
+	sort.Strings(missing)
+	return missing
+}
 
 // ParseManifest parses and validates an image manifest.
 func ParseManifest(data []byte) (Manifest, error) {
