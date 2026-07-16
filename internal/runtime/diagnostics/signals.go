@@ -11,8 +11,8 @@ package diagnostics
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
+
+	"xnix.local/xnix/internal/runtime/safety"
 )
 
 // Outcome is the result of a single test signal or an overall test run.
@@ -43,35 +43,12 @@ type Signal struct {
 	Summary  string  `json:"summary"`
 }
 
-// forbiddenPatterns match content that must never appear in diagnostics output.
-var forbiddenPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`(?i)/home/[^\s]+`),
-	regexp.MustCompile(`(?i)/users/[^\s]+`),
-	regexp.MustCompile(`(?i)[a-z]:\\`), // windows drive path
-	regexp.MustCompile(`(?i)\.exe\b`),
-	regexp.MustCompile(`(?i)\bwine\b`),
-	regexp.MustCompile(`(?i)\bproton\b`),
-	regexp.MustCompile(`(?i)qemu-system`),
-	regexp.MustCompile(`(?i)\.wine\b`),
-	regexp.MustCompile(`(?i)\bsecret\b`),
-	regexp.MustCompile(`(?i)\btoken\b`),
-	regexp.MustCompile(`(?i)\bpassword\b`),
-	regexp.MustCompile(`(?i)-----begin [a-z ]*private key-----`),
-	regexp.MustCompile(`(?i)\bsk-[a-z0-9]{8,}`), // api-key shaped
-}
-
 // validateSafe rejects text that leaks host paths, backend terms, commands,
-// secrets, or tokens. It is the privacy boundary for all diagnostics output.
+// secrets, or tokens. It is the privacy boundary for all diagnostics output and
+// delegates to the canonical safety validator, which is a strict superset of the
+// term list this package previously maintained on its own.
 func validateSafe(label, text string) error {
-	if strings.ContainsAny(text, "\r\n") {
-		return fmt.Errorf("%s must be a single line", label)
-	}
-	for _, pattern := range forbiddenPatterns {
-		if pattern.MatchString(text) {
-			return fmt.Errorf("%s exposes forbidden content", label)
-		}
-	}
-	return nil
+	return safety.ValidateLine(label, text)
 }
 
 func (s Signal) validate() error {
