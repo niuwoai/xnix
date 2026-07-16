@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.301
+> Last updated: 2026-07-17 | Baseline: v0.2.302
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,16 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Signed recipe verifier evidence | `docs/claude-code-mainline-implementation-plan.md` | `codex/recipe-signature-verifier-evidence` | Recipe and artifact trust are strong for local fixtures, but production trust still needs signed-recipe verification evidence before any real trust path advances. |
-| 2 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
+| 1 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
 
 ## Best First Pick
 
-Start with signed recipe verifier evidence.
+Start with restricted product smoke packet preparation.
 
-Signed recipe verifier evidence is the best next handoff because KDE notification digest coverage now exists, while production recipe trust still needs an explicit verifier boundary before readiness can advance.
+Restricted product smoke packet preparation is the best next handoff because KDE notification digest and signed recipe verifier evidence now exist, while Docker and QEMU execution must remain human-authorized.
 
-The verifier must use offline fixtures, commit no keys or secrets, and keep production trust closed for missing or invalid signatures.
+The packet must remain dry-run or fixture-only and must not run Docker or QEMU without explicit authorization.
 
 ## Good Branch Shape
 

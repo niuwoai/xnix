@@ -76,6 +76,8 @@ CLAIM_DEFINITIONS = [
       internal/runtime/snapshot/store.go
       internal/runtime/appidentity/permission_evidence_audit.go
       internal/runtime/appidentity/portal_permission_renewal.go
+      internal/runtime/recipe/signature.go
+      cmd/xnix-runtime-go/signed_recipe_verifier_commands.go
       internal/runtime/appidentity/snapshot_restore_candidates.go
       cmd/xnix-runtime-go/runtime_safety_cli_test.go
     ],
@@ -83,7 +85,7 @@ CLAIM_DEFINITIONS = [
       "go test ./internal/runtime/portal ./internal/runtime/snapshot ./cmd/xnix-runtime-go",
       "ruby -Ilib test/test_portal_access_policy.rb"
     ],
-    next_follow_up: "Keep live Portal renewal and revocation disabled until renewal preview evidence is reviewed with explicit user authorization."
+    next_follow_up: "Keep live Portal renewal, production recipe key configuration, and production trust disabled until reviewed with explicit user authorization."
   },
   {
     id: "kde-seven-entrypoints",

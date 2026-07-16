@@ -134,6 +134,7 @@ LANES = [
       %r{\Ainternal/runtime/appidentity/runtime_owner_recipe_trust},
       %r{\Ainternal/runtime/appidentity/recipe_conflict_audit},
       %r{\Acmd/xnix-runtime-go/recipe_conflict_audit_},
+      %r{\Acmd/xnix-runtime-go/signed_recipe_verifier_},
       %r{\Acmd/xnix-runtime-go/install_plan_},
       %r{\Acmd/xnix-runtime-go/multi_application_install_queue_},
       %r{\Acmd/xnix-runtime-go/application_upgrade_impact_},

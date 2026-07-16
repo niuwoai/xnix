@@ -12,7 +12,7 @@ func TestRuntimeRouteConvergencePreviewClassifiesReadRoutes(t *testing.T) {
 		t.Fatalf("NewRuntimeRouteConvergencePreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.301" ||
+	if preview.Version != "0.2.302" ||
 		preview.SchemaVersion != "xnix.runtime.route_convergence.v1" ||
 		preview.RequestType != "runtime-route-convergence-preview" ||
 		preview.ReportType != "runtime-route-convergence" ||
@@ -88,7 +88,7 @@ func TestRuntimeRouteConvergencePreviewClassifiesReadRoutes(t *testing.T) {
 
 func TestRuntimeRouteConvergencePreviewFailsClosedForMissingRouteEvidence(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.301\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.302\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

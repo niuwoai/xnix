@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.301"
+EXPECTED_VERSION = "0.2.302"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -221,6 +221,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
   cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go
+  cmd/xnix-runtime-go/signed_recipe_verifier_commands.go
+  cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go
   cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go
   cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go
   cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
@@ -272,6 +274,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
   internal/runtime/appidentity/recipe_conflict_audit_test.go
+  internal/runtime/recipe/signature.go
+  internal/runtime/recipe/signature_test.go
   internal/runtime/appidentity/snapshot_restore_candidates.go
   internal/runtime/appidentity/snapshot_restore_candidates_test.go
   internal/runtime/appidentity/snapshot_plan.go
@@ -2024,6 +2028,29 @@ end
 go_runtime_recipe_conflict_cli_test_source = read_project_file("cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go")
 %w[TestRecipeConflictAuditPreviewCLI TestRecipeConflictAuditPreviewCLIRequiresRegistry xnix.runtime.recipe_conflict_audit.v1].each do |token|
   assert(go_runtime_recipe_conflict_cli_test_source.include?(token), "Go Runtime recipe conflict audit CLI tests must include #{token}")
+end
+
+go_runtime_signed_recipe_verifier_source = read_project_file("internal/runtime/recipe/signature.go")
+%w[SignedMetadata SignedVerifier SigningPayload ed25519.Verify xnix.recipe.signed_metadata.v1 xnix.runtime.signed_recipe_verification.v1 signed-recipe-verifier-preview offline-signed-recipe-verifier-evidence fixture-verified missing-signature-metadata application-id-mismatch digest-mismatch unsupported-schema unsupported-algorithm invalid-public-key invalid-signature].each do |token|
+  assert(go_runtime_signed_recipe_verifier_source.include?(token), "Go Runtime signed recipe verifier must include #{token}")
+end
+%w[ProductionKeyConfigured ProductionTrustReady PrivateKeyLoaded NetworkRequired PackageManagerInvoked RecipeWritten RegistryMigrated BackendLaunchEnabled HostRootModified RecipePathExposed PublicKeyPathExposed SignatureMaterialExposed].each do |token|
+  assert(go_runtime_signed_recipe_verifier_source.include?(token), "Go Runtime signed recipe verifier must expose disabled gate #{token}")
+end
+
+go_runtime_signed_recipe_verifier_test_source = read_project_file("internal/runtime/recipe/signature_test.go")
+%w[TestSignedVerifierAcceptsValidFixture TestSignedVerifierFailsClosed TestSignedVerifierRequiresSignedStatusAndMetadata].each do |token|
+  assert(go_runtime_signed_recipe_verifier_test_source.include?(token), "Go Runtime signed recipe verifier tests must include #{token}")
+end
+
+go_runtime_signed_recipe_verifier_cli_source = read_project_file("cmd/xnix-runtime-go/signed_recipe_verifier_commands.go")
+%w[signed-recipe-verifier-preview runSignedRecipeVerifierPreview NewSignedRecipeVerificationPreview public-key metadata].each do |token|
+  assert(go_runtime_signed_recipe_verifier_cli_source.include?(token), "Go Runtime signed recipe verifier CLI must include #{token}")
+end
+
+go_runtime_signed_recipe_verifier_cli_test_source = read_project_file("cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go")
+%w[TestSignedRecipeVerifierPreviewCLI TestSignedRecipeVerifierPreviewCLIReportsInvalidSignature TestSignedRecipeVerifierPreviewCLIRejectsMissingArguments xnix.runtime.signed_recipe_verification.v1 production_key_configured production_trust_ready private_key_loaded backend_launch_enabled host_root_modified signature_material_exposed].each do |token|
+  assert(go_runtime_signed_recipe_verifier_cli_test_source.include?(token), "Go Runtime signed recipe verifier CLI tests must include #{token}")
 end
 
 go_runtime_snapshot_restore_source = read_project_file("internal/runtime/appidentity/snapshot_restore_candidates.go")

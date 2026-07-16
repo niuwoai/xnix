@@ -35,7 +35,7 @@ func TestSupportBundleManifestPreviewCommandRendersRedactedManifest(t *testing.T
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.301" ||
+	if payload["version"] != "0.2.302" ||
 		payload["schema_version"] != "xnix.runtime.support_bundle_manifest.v1" ||
 		payload["request_type"] != "support-bundle-manifest-preview" ||
 		payload["manifest_type"] != "redacted-offline-support-bundle-manifest" ||
@@ -154,7 +154,7 @@ func TestSupportBundleManifestPreviewCommandRequiresRecipeSource(t *testing.T) {
 func writeSupportBundleCLIRuntimeRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.301\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.302\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 	return root

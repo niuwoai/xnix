@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.302] - 2026-07-17
+
+### Added
+
+- Added a Go `recipe.SignedVerifier` boundary that cryptographically verifies Ed25519 signed recipe metadata against the recipe digest and application identity, with fail-closed states for missing metadata, digest drift, identity mismatch, invalid signatures, invalid public keys, unsupported schemas, and unsupported algorithms.
+- Added the offline `signed-recipe-verifier-preview` CLI evidence command plus valid-fixture, tampered-signature, digest-mismatch, identity-mismatch, invalid-key, schema, missing-metadata, unsigned, argument-validation, path-redaction, and no-side-effect tests.
+
+### Changed
+
+- Updated layout, implementation, release, product, and dispatch evidence so signed recipe verifier coverage is recognized and the next train step advances to restricted product smoke packet preparation.
+- Kept production key configuration, production trust readiness, private-key loading, network access, package-manager calls, recipe writes, registry migration, backend launch, path exposure, signature-material exposure, and host-root mutation disabled.
+
 ## [0.2.301] - 2026-07-17
 
 ### Added

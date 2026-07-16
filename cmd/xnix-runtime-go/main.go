@@ -239,6 +239,8 @@ func run(args []string, stdout io.Writer) error {
 		return runSettingsPreview(args[1:], stdout)
 	case "settings-profile-migration-preview":
 		return runSettingsProfileMigrationPreview(args[1:], stdout)
+	case "signed-recipe-verifier-preview":
+		return runSignedRecipeVerifierPreview(args[1:], stdout)
 	case "snapshot-restore-candidates-preview":
 		return runSnapshotRestoreCandidatesPreview(args[1:], stdout)
 	case "snapshot-plan-preview":

@@ -143,6 +143,8 @@ DOMAIN_DEFINITIONS = [
     fixture_files: %w[
       internal/runtime/recipe/store.go
       internal/runtime/recipe/trust.go
+      internal/runtime/recipe/signature.go
+      internal/runtime/recipe/signature_test.go
       internal/runtime/artifact/artifact.go
       internal/runtime/artifact/acquire.go
       internal/runtime/artifact/cache.go
@@ -154,6 +156,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/application_upgrade_impact_cli_test.go
       cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
       cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go
+      cmd/xnix-runtime-go/signed_recipe_verifier_commands.go
+      cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go
     ],
     state_files: %w[
       internal/runtime/artifact/stage.go
@@ -172,9 +176,12 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/runtime_owner_recipe_trust.go" => %w[ProductionRecipeTrustReady SignedRecipeValidation],
       "internal/runtime/appidentity/recipe_conflict_audit.go" => %w[xnix.runtime.recipe_conflict_audit.v1 recipe-conflict-audit-preview duplicate-app-ids stale-recipe-versions unsupported-capability-claims mismatched-package-source-pins trust-policy-blockers artifact-digest-drift RecipeWritesEnabled RegistryMigrationEnabled ArtifactStagingEnabled PackageManagerInvoked HostRootModified],
       "cmd/xnix-runtime-go/recipe_conflict_audit_commands.go" => %w[recipe-conflict-audit-preview RecipeConflictAuditOptions NewRecipeConflictAuditPreview],
-      "cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go" => %w[TestRecipeConflictAuditPreviewCLI xnix.runtime.recipe_conflict_audit.v1]
+      "cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go" => %w[TestRecipeConflictAuditPreviewCLI xnix.runtime.recipe_conflict_audit.v1],
+      "internal/runtime/recipe/signature.go" => %w[SignedMetadata SignedVerifier SigningPayload ed25519.Verify xnix.runtime.signed_recipe_verification.v1 signed-recipe-verifier-preview fixture-verified ProductionKeyConfigured ProductionTrustReady PrivateKeyLoaded NetworkRequired PackageManagerInvoked RecipeWritten RegistryMigrated BackendLaunchEnabled HostRootModified RecipePathExposed PublicKeyPathExposed SignatureMaterialExposed],
+      "cmd/xnix-runtime-go/signed_recipe_verifier_commands.go" => %w[signed-recipe-verifier-preview NewSignedRecipeVerificationPreview public-key metadata],
+      "cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go" => %w[TestSignedRecipeVerifierPreviewCLI TestSignedRecipeVerifierPreviewCLIReportsInvalidSignature TestSignedRecipeVerifierPreviewCLIRejectsMissingArguments]
     },
-    summary: "Local recipe and artifact staging persists receipts under a controlled cache root, validates receipt integrity, lets install readiness consume safe receipt diagnostics, previews application upgrade impact before registry migration or activation, and now audits a registry for duplicate ids, stale versions, unsupported capability claims, package-source pin mismatches, trust blockers, and artifact digest drift; production signing, network fetch, backend launch, recipe writes, and host mutation remain gated."
+    summary: "Local recipe and artifact staging persists receipts under a controlled cache root, validates receipt integrity, lets install readiness consume safe receipt diagnostics, previews application upgrade impact before registry migration or activation, audits a registry for trust and digest conflicts, and now verifies offline Ed25519 signed recipe metadata through a fail-closed Go boundary; production key configuration, network fetch, backend launch, recipe writes, and host mutation remain gated."
   },
   {
     id: "environment-lifecycle-state",
