@@ -12,7 +12,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 		t.Fatalf("NewRuntimeOwnerProcessPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.244" ||
+	if preview.Version != "0.2.245" ||
 		preview.SchemaVersion != "xnix.runtime.owner_process.v1" ||
 		preview.RequestType != "runtime-owner-process-preview" ||
 		preview.ProcessType != "runtime-owner-process" ||
@@ -81,7 +81,7 @@ func TestRuntimeOwnerProcessPreviewReportsCurrentWrapperAndGoTarget(t *testing.T
 
 func TestRuntimeOwnerProcessPreviewBlocksMissingActivationAndEntrypoint(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.244\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.245\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

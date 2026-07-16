@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.245] - 2026-07-16
+
+### Added
+
+- Added receipt-backed Dolphin file-open and drag-and-drop previews through explicit `--activation-root` options, so file-manager routing can prove staged activation evidence before launch remains gated.
+- Added Go and CLI coverage proving Dolphin file routing consumes staged activation receipts without exposing the activation root, granting file permissions, enabling direct host-file access, mutating the host root, or starting compatibility backends.
+- Added a compact Claude Code mainline empty-domain handoff board for branch-sized implementation packages that should convert contract-heavy domains into durable evidence.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks Dolphin file-manager consumption of staged activation receipts alongside activation status, Compatibility Center, and KRunner reads.
+
 ## [0.2.244] - 2026-07-16
 
 ### Added

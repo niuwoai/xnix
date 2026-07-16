@@ -756,11 +756,11 @@ func runExecutionSessionStatusPreview(args []string, stdout io.Writer) error {
 }
 
 func runFileOpenPreview(args []string, stdout io.Writer) error {
-	recipes, provenance, applicationID, fileURIs, err := parseFileOpenPreviewSource(args)
+	recipes, provenance, applicationID, fileURIs, options, err := parseFileOpenPreviewSource(args)
 	if err != nil {
 		return err
 	}
-	preview, err := appidentity.NewFileOpenPreview(recipes, provenance, fileURIs, applicationID)
+	preview, err := appidentity.NewFileOpenPreviewWithOptions(recipes, provenance, fileURIs, applicationID, options)
 	if err != nil {
 		return err
 	}
@@ -771,11 +771,11 @@ func runFileOpenPreview(args []string, stdout io.Writer) error {
 }
 
 func runDolphinDropPreview(args []string, stdout io.Writer) error {
-	recipes, provenance, applicationID, fileURIs, err := parseDolphinDropPreviewSource(args)
+	recipes, provenance, applicationID, fileURIs, options, err := parseDolphinDropPreviewSource(args)
 	if err != nil {
 		return err
 	}
-	preview, err := appidentity.NewDolphinDropPreview(recipes, provenance, fileURIs, applicationID)
+	preview, err := appidentity.NewDolphinDropPreviewWithOptions(recipes, provenance, fileURIs, applicationID, options)
 	if err != nil {
 		return err
 	}
@@ -1590,46 +1590,48 @@ func parseRegistryPreviewSource(commandName string, args []string) ([]appidentit
 	return appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
 }
 
-func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {
 	flags := flag.NewFlagSet("file-open-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to use for the file-open preview")
 	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
-		return nil, appidentity.Provenance{}, "", nil, err
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, err
 	}
 	if *registryPath == "" {
-		return nil, appidentity.Provenance{}, "", nil, errors.New("file-open-preview requires --registry")
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, errors.New("file-open-preview requires --registry")
 	}
 	fileURIs := flags.Args()
 	if len(fileURIs) == 0 {
-		return nil, appidentity.Provenance{}, "", nil, errors.New("file-open-preview requires at least one file URI")
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, errors.New("file-open-preview requires at least one file URI")
 	}
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
-	return recipes, provenance, *applicationID, fileURIs, err
+	return recipes, provenance, *applicationID, fileURIs, appidentity.FileOpenOptions{ActivationRoot: *activationRoot}, err
 }
 
-func parseDolphinDropPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+func parseDolphinDropPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {
 	flags := flag.NewFlagSet("dolphin-drop-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to use for the Dolphin drop preview")
 	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
-		return nil, appidentity.Provenance{}, "", nil, err
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, err
 	}
 	if *registryPath == "" {
-		return nil, appidentity.Provenance{}, "", nil, errors.New("dolphin-drop-preview requires --registry")
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, errors.New("dolphin-drop-preview requires --registry")
 	}
 	fileURIs := flags.Args()
 	if len(fileURIs) == 0 {
-		return nil, appidentity.Provenance{}, "", nil, errors.New("dolphin-drop-preview requires at least one file URI")
+		return nil, appidentity.Provenance{}, "", nil, appidentity.FileOpenOptions{}, errors.New("dolphin-drop-preview requires at least one file URI")
 	}
 
 	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
-	return recipes, provenance, *applicationID, fileURIs, err
+	return recipes, provenance, *applicationID, fileURIs, appidentity.FileOpenOptions{ActivationRoot: *activationRoot}, err
 }
 
 func parseDolphinAIAnalysisPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, error) {

@@ -1244,6 +1244,58 @@ func TestFileOpenPreviewRequiresPortalAndSelectsByExtension(t *testing.T) {
 	}
 }
 
+func TestFileOpenPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	preview, err := NewFileOpenPreviewWithOptions([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	}}, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, []string{"file:///home/test/Documents/book.xls"}, "", FileOpenOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("NewFileOpenPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed file-open fields: %#v", preview)
+	}
+	if preview.RequestObjectCreated ||
+		preview.PermissionGranted ||
+		preview.BackendLaunchEnabled ||
+		preview.DirectHostFileAccess ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed file-open preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("file-open preview exposed activation root: %s", encoded)
+	}
+
+	if _, err := NewFileOpenPreviewWithOptions([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}}, Provenance{Source: "registry"}, []string{"file:///home/test/Documents/book.xls"}, "", FileOpenOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("file-open preview accepted a missing activation receipt")
+	}
+}
+
 func TestDolphinDropPreviewWrapsPortalMediatedFileOpen(t *testing.T) {
 	preview, err := NewDolphinDropPreview([]Recipe{{
 		ID:                  "org.example.ledger",
@@ -1310,6 +1362,43 @@ func TestDolphinDropPreviewWrapsPortalMediatedFileOpen(t *testing.T) {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("Dolphin drop preview exposes forbidden term %q: %s", forbidden, text)
 		}
+	}
+}
+
+func TestDolphinDropPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	preview, err := NewDolphinDropPreviewWithOptions([]Recipe{{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	}}, Provenance{Source: "registry", RegistryName: "test-registry"}, []string{"file:///home/test/Documents/book.xls"}, "", FileOpenOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("NewDolphinDropPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed Dolphin drop fields: %#v", preview)
+	}
+	if preview.RequestObjectCreated ||
+		preview.PermissionGranted ||
+		preview.BackendLaunchEnabled ||
+		preview.DirectHostFileAccess ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed Dolphin drop preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("Dolphin drop preview exposed activation root: %s", encoded)
 	}
 }
 

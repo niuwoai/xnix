@@ -782,34 +782,37 @@ type CompatibilityCenterSummaryText struct {
 }
 
 type FileOpenPreview struct {
-	SchemaVersion         string            `json:"schema_version"`
-	RequestType           string            `json:"request_type"`
-	Source                string            `json:"source"`
-	Desktop               string            `json:"desktop"`
-	ApplicationID         string            `json:"application_id"`
-	DisplayName           string            `json:"display_name"`
-	DesktopFile           string            `json:"desktop_file"`
-	RuntimeMethod         string            `json:"runtime_method"`
-	PortalRequired        bool              `json:"portal_required"`
-	PortalInterface       string            `json:"portal_interface"`
-	PortalMethod          string            `json:"portal_method"`
-	FileCount             int               `json:"file_count"`
-	FileURIs              []string          `json:"file_uris"`
-	SelectedExtension     string            `json:"selected_extension"`
-	SelectionMode         string            `json:"selection_mode"`
-	Action                FileOpenAction    `json:"action"`
-	RuntimeOwned          bool              `json:"runtime_owned"`
-	KDEPolicyOwner        bool              `json:"kde_policy_owner"`
-	UserVisible           bool              `json:"user_visible"`
-	RequestObjectCreated  bool              `json:"request_object_created"`
-	PermissionGranted     bool              `json:"permission_granted"`
-	BackendLaunchEnabled  bool              `json:"backend_launch_enabled"`
-	DirectHostFileAccess  bool              `json:"direct_host_file_access"`
-	HostRootModified      bool              `json:"host_root_modified"`
-	BackendDetailsExposed bool              `json:"backend_details_exposed"`
-	SupportedExtensions   []string          `json:"supported_extensions"`
-	UserFacingSettings    map[string]string `json:"user_facing_settings"`
-	Summary               FileOpenSummary   `json:"summary"`
+	SchemaVersion           string            `json:"schema_version"`
+	RequestType             string            `json:"request_type"`
+	Source                  string            `json:"source"`
+	Desktop                 string            `json:"desktop"`
+	ApplicationID           string            `json:"application_id"`
+	DisplayName             string            `json:"display_name"`
+	DesktopFile             string            `json:"desktop_file"`
+	RuntimeMethod           string            `json:"runtime_method"`
+	PortalRequired          bool              `json:"portal_required"`
+	PortalInterface         string            `json:"portal_interface"`
+	PortalMethod            string            `json:"portal_method"`
+	FileCount               int               `json:"file_count"`
+	FileURIs                []string          `json:"file_uris"`
+	SelectedExtension       string            `json:"selected_extension"`
+	SelectionMode           string            `json:"selection_mode"`
+	Action                  FileOpenAction    `json:"action"`
+	ActivationReceiptRoot   bool              `json:"activation_receipt_root"`
+	ActivationReceiptBacked bool              `json:"activation_receipt_backed"`
+	ActivationReceiptPath   string            `json:"activation_receipt_path,omitempty"`
+	RuntimeOwned            bool              `json:"runtime_owned"`
+	KDEPolicyOwner          bool              `json:"kde_policy_owner"`
+	UserVisible             bool              `json:"user_visible"`
+	RequestObjectCreated    bool              `json:"request_object_created"`
+	PermissionGranted       bool              `json:"permission_granted"`
+	BackendLaunchEnabled    bool              `json:"backend_launch_enabled"`
+	DirectHostFileAccess    bool              `json:"direct_host_file_access"`
+	HostRootModified        bool              `json:"host_root_modified"`
+	BackendDetailsExposed   bool              `json:"backend_details_exposed"`
+	SupportedExtensions     []string          `json:"supported_extensions"`
+	UserFacingSettings      map[string]string `json:"user_facing_settings"`
+	Summary                 FileOpenSummary   `json:"summary"`
 }
 
 type FileOpenAction struct {
@@ -822,40 +825,47 @@ type FileOpenSummary struct {
 	Detail   string `json:"detail"`
 }
 
+type FileOpenOptions struct {
+	ActivationRoot string
+}
+
 type DolphinDropPreview struct {
-	SchemaVersion         string            `json:"schema_version"`
-	RequestType           string            `json:"request_type"`
-	Source                string            `json:"source"`
-	Desktop               string            `json:"desktop"`
-	ApplicationID         string            `json:"application_id"`
-	DisplayName           string            `json:"display_name"`
-	DesktopFile           string            `json:"desktop_file"`
-	RuntimeMethod         string            `json:"runtime_method"`
-	DropOperation         string            `json:"drop_operation"`
-	DropSurface           string            `json:"drop_surface"`
-	SelectionMode         string            `json:"selection_mode"`
-	FileCount             int               `json:"file_count"`
-	FileURIs              []string          `json:"file_uris"`
-	SelectedExtension     string            `json:"selected_extension"`
-	PortalRequired        bool              `json:"portal_required"`
-	PortalInterface       string            `json:"portal_interface"`
-	PortalMethod          string            `json:"portal_method"`
-	Action                FileOpenAction    `json:"action"`
-	RuntimeOwned          bool              `json:"runtime_owned"`
-	GoRuntimeBacked       bool              `json:"go_runtime_backed"`
-	KDEPolicyOwner        bool              `json:"kde_policy_owner"`
-	UserVisible           bool              `json:"user_visible"`
-	DropAccepted          bool              `json:"drop_accepted"`
-	RequestObjectCreated  bool              `json:"request_object_created"`
-	PermissionGranted     bool              `json:"permission_granted"`
-	BackendLaunchEnabled  bool              `json:"backend_launch_enabled"`
-	DirectHostFileAccess  bool              `json:"direct_host_file_access"`
-	HostRootModified      bool              `json:"host_root_modified"`
-	BackendDetailsExposed bool              `json:"backend_details_exposed"`
-	SupportedExtensions   []string          `json:"supported_extensions"`
-	UserFacingSettings    map[string]string `json:"user_facing_settings"`
-	BlockedActions        []string          `json:"blocked_actions"`
-	Summary               FileOpenSummary   `json:"summary"`
+	SchemaVersion           string            `json:"schema_version"`
+	RequestType             string            `json:"request_type"`
+	Source                  string            `json:"source"`
+	Desktop                 string            `json:"desktop"`
+	ApplicationID           string            `json:"application_id"`
+	DisplayName             string            `json:"display_name"`
+	DesktopFile             string            `json:"desktop_file"`
+	RuntimeMethod           string            `json:"runtime_method"`
+	DropOperation           string            `json:"drop_operation"`
+	DropSurface             string            `json:"drop_surface"`
+	SelectionMode           string            `json:"selection_mode"`
+	FileCount               int               `json:"file_count"`
+	FileURIs                []string          `json:"file_uris"`
+	SelectedExtension       string            `json:"selected_extension"`
+	PortalRequired          bool              `json:"portal_required"`
+	PortalInterface         string            `json:"portal_interface"`
+	PortalMethod            string            `json:"portal_method"`
+	Action                  FileOpenAction    `json:"action"`
+	ActivationReceiptRoot   bool              `json:"activation_receipt_root"`
+	ActivationReceiptBacked bool              `json:"activation_receipt_backed"`
+	ActivationReceiptPath   string            `json:"activation_receipt_path,omitempty"`
+	RuntimeOwned            bool              `json:"runtime_owned"`
+	GoRuntimeBacked         bool              `json:"go_runtime_backed"`
+	KDEPolicyOwner          bool              `json:"kde_policy_owner"`
+	UserVisible             bool              `json:"user_visible"`
+	DropAccepted            bool              `json:"drop_accepted"`
+	RequestObjectCreated    bool              `json:"request_object_created"`
+	PermissionGranted       bool              `json:"permission_granted"`
+	BackendLaunchEnabled    bool              `json:"backend_launch_enabled"`
+	DirectHostFileAccess    bool              `json:"direct_host_file_access"`
+	HostRootModified        bool              `json:"host_root_modified"`
+	BackendDetailsExposed   bool              `json:"backend_details_exposed"`
+	SupportedExtensions     []string          `json:"supported_extensions"`
+	UserFacingSettings      map[string]string `json:"user_facing_settings"`
+	BlockedActions          []string          `json:"blocked_actions"`
+	Summary                 FileOpenSummary   `json:"summary"`
 }
 
 func NewPlan(recipe Recipe) (Plan, error) {
@@ -2356,6 +2366,10 @@ func compatibilityCenterApp(plan Plan, recipe Recipe) CompatibilityCenterApp {
 }
 
 func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string) (FileOpenPreview, error) {
+	return NewFileOpenPreviewWithOptions(recipes, provenance, fileURIs, applicationID, FileOpenOptions{})
+}
+
+func NewFileOpenPreviewWithOptions(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string, options FileOpenOptions) (FileOpenPreview, error) {
 	if len(fileURIs) == 0 {
 		return FileOpenPreview{}, errors.New("file-open preview requires at least one file URI")
 	}
@@ -2379,33 +2393,48 @@ func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []stri
 		return FileOpenPreview{}, err
 	}
 
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return FileOpenPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
+	}
+
 	preview := FileOpenPreview{
-		SchemaVersion:         "xnix.runtime.file_open.v1",
-		RequestType:           "file-open-preview",
-		Source:                "dolphin-service-menu",
-		Desktop:               "KDE Plasma",
-		ApplicationID:         plan.ApplicationID,
-		DisplayName:           plan.DisplayName,
-		DesktopFile:           plan.DesktopFile,
-		RuntimeMethod:         "Launch",
-		PortalRequired:        true,
-		PortalInterface:       "org.freedesktop.portal.FileChooser",
-		PortalMethod:          "OpenFile",
-		FileCount:             len(normalizedURIs),
-		FileURIs:              normalizedURIs,
-		SelectedExtension:     selectedExtension,
-		SelectionMode:         selectionMode,
-		RuntimeOwned:          true,
-		KDEPolicyOwner:        false,
-		UserVisible:           true,
-		RequestObjectCreated:  false,
-		PermissionGranted:     false,
-		BackendLaunchEnabled:  false,
-		DirectHostFileAccess:  false,
-		HostRootModified:      false,
-		BackendDetailsExposed: false,
-		SupportedExtensions:   normalizedExtensions(recipe.SupportedExtensions),
-		UserFacingSettings:    plan.UserFacingSettings,
+		SchemaVersion:           "xnix.runtime.file_open.v1",
+		RequestType:             "file-open-preview",
+		Source:                  "dolphin-service-menu",
+		Desktop:                 "KDE Plasma",
+		ApplicationID:           plan.ApplicationID,
+		DisplayName:             plan.DisplayName,
+		DesktopFile:             plan.DesktopFile,
+		RuntimeMethod:           "Launch",
+		PortalRequired:          true,
+		PortalInterface:         "org.freedesktop.portal.FileChooser",
+		PortalMethod:            "OpenFile",
+		FileCount:               len(normalizedURIs),
+		FileURIs:                normalizedURIs,
+		SelectedExtension:       selectedExtension,
+		SelectionMode:           selectionMode,
+		ActivationReceiptRoot:   activationReceiptRoot,
+		ActivationReceiptBacked: activationReceiptBacked,
+		ActivationReceiptPath:   activationReceiptPath,
+		RuntimeOwned:            true,
+		KDEPolicyOwner:          false,
+		UserVisible:             true,
+		RequestObjectCreated:    false,
+		PermissionGranted:       false,
+		BackendLaunchEnabled:    false,
+		DirectHostFileAccess:    false,
+		HostRootModified:        false,
+		BackendDetailsExposed:   false,
+		SupportedExtensions:     normalizedExtensions(recipe.SupportedExtensions),
+		UserFacingSettings:      plan.UserFacingSettings,
 		Action: FileOpenAction{
 			Type: "runtime-file-open",
 			Argv: []string{"xnix-compat-open", "--app", plan.ApplicationID, "%U"},
@@ -2422,43 +2451,50 @@ func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []stri
 }
 
 func NewDolphinDropPreview(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string) (DolphinDropPreview, error) {
-	fileOpen, err := NewFileOpenPreview(recipes, provenance, fileURIs, applicationID)
+	return NewDolphinDropPreviewWithOptions(recipes, provenance, fileURIs, applicationID, FileOpenOptions{})
+}
+
+func NewDolphinDropPreviewWithOptions(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string, options FileOpenOptions) (DolphinDropPreview, error) {
+	fileOpen, err := NewFileOpenPreviewWithOptions(recipes, provenance, fileURIs, applicationID, options)
 	if err != nil {
 		return DolphinDropPreview{}, err
 	}
 
 	preview := DolphinDropPreview{
-		SchemaVersion:         "xnix.runtime.dolphin_drop.v1",
-		RequestType:           "dolphin-drop-preview",
-		Source:                "dolphin-drag-and-drop",
-		Desktop:               fileOpen.Desktop,
-		ApplicationID:         fileOpen.ApplicationID,
-		DisplayName:           fileOpen.DisplayName,
-		DesktopFile:           fileOpen.DesktopFile,
-		RuntimeMethod:         "Launch",
-		DropOperation:         "open-selected-files",
-		DropSurface:           "Dolphin",
-		SelectionMode:         fileOpen.SelectionMode,
-		FileCount:             fileOpen.FileCount,
-		FileURIs:              fileOpen.FileURIs,
-		SelectedExtension:     fileOpen.SelectedExtension,
-		PortalRequired:        fileOpen.PortalRequired,
-		PortalInterface:       fileOpen.PortalInterface,
-		PortalMethod:          fileOpen.PortalMethod,
-		Action:                fileOpen.Action,
-		RuntimeOwned:          true,
-		GoRuntimeBacked:       true,
-		KDEPolicyOwner:        false,
-		UserVisible:           true,
-		DropAccepted:          true,
-		RequestObjectCreated:  false,
-		PermissionGranted:     false,
-		BackendLaunchEnabled:  false,
-		DirectHostFileAccess:  false,
-		HostRootModified:      false,
-		BackendDetailsExposed: false,
-		SupportedExtensions:   fileOpen.SupportedExtensions,
-		UserFacingSettings:    fileOpen.UserFacingSettings,
+		SchemaVersion:           "xnix.runtime.dolphin_drop.v1",
+		RequestType:             "dolphin-drop-preview",
+		Source:                  "dolphin-drag-and-drop",
+		Desktop:                 fileOpen.Desktop,
+		ApplicationID:           fileOpen.ApplicationID,
+		DisplayName:             fileOpen.DisplayName,
+		DesktopFile:             fileOpen.DesktopFile,
+		RuntimeMethod:           "Launch",
+		DropOperation:           "open-selected-files",
+		DropSurface:             "Dolphin",
+		SelectionMode:           fileOpen.SelectionMode,
+		FileCount:               fileOpen.FileCount,
+		FileURIs:                fileOpen.FileURIs,
+		SelectedExtension:       fileOpen.SelectedExtension,
+		PortalRequired:          fileOpen.PortalRequired,
+		PortalInterface:         fileOpen.PortalInterface,
+		PortalMethod:            fileOpen.PortalMethod,
+		Action:                  fileOpen.Action,
+		ActivationReceiptRoot:   fileOpen.ActivationReceiptRoot,
+		ActivationReceiptBacked: fileOpen.ActivationReceiptBacked,
+		ActivationReceiptPath:   fileOpen.ActivationReceiptPath,
+		RuntimeOwned:            true,
+		GoRuntimeBacked:         true,
+		KDEPolicyOwner:          false,
+		UserVisible:             true,
+		DropAccepted:            true,
+		RequestObjectCreated:    false,
+		PermissionGranted:       false,
+		BackendLaunchEnabled:    false,
+		DirectHostFileAccess:    false,
+		HostRootModified:        false,
+		BackendDetailsExposed:   false,
+		SupportedExtensions:     fileOpen.SupportedExtensions,
+		UserFacingSettings:      fileOpen.UserFacingSettings,
 		BlockedActions: []string{
 			"create Portal request objects from a drag preview",
 			"grant file permissions from a drag preview",

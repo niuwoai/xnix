@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -2033,6 +2034,53 @@ func TestFileOpenPreviewCommandRendersPortalRequest(t *testing.T) {
 	}
 }
 
+func TestFileOpenPreviewCommandConsumesActivationRoot(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	stageRoot := filepath.Join(root, "stage")
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"file-open-preview", "--registry", registryPath, "--activation-root", stageRoot, "file:///home/test/Documents/book.xls"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["activation_receipt_root"] != true ||
+		payload["activation_receipt_backed"] != true ||
+		payload["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed file-open payload: %#v", payload)
+	}
+	if payload["permission_granted"] != false ||
+		payload["direct_host_file_access"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("receipt-backed file-open preview must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), stageRoot) {
+		t.Fatalf("file-open preview exposed activation root: %s", output.String())
+	}
+}
+
 func TestDolphinDropPreviewCommandRendersDropPlan(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
@@ -2094,6 +2142,54 @@ func TestDolphinDropPreviewCommandRendersDropPlan(t *testing.T) {
 		payload["host_root_modified"] != false ||
 		payload["backend_details_exposed"] != false {
 		t.Fatalf("unexpected Dolphin drop safety flags: %#v", payload)
+	}
+}
+
+func TestDolphinDropPreviewCommandConsumesActivationRoot(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	stageRoot := filepath.Join(root, "stage")
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"dolphin-drop-preview", "--registry", registryPath, "--activation-root", stageRoot, "file:///home/test/Documents/book.xls"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["activation_receipt_root"] != true ||
+		payload["activation_receipt_backed"] != true ||
+		payload["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed Dolphin drop payload: %#v", payload)
+	}
+	if payload["drop_accepted"] != true ||
+		payload["permission_granted"] != false ||
+		payload["direct_host_file_access"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("receipt-backed Dolphin drop preview must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), stageRoot) {
+		t.Fatalf("Dolphin drop preview exposed activation root: %s", output.String())
 	}
 }
 
