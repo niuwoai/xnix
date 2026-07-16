@@ -175,6 +175,60 @@ func TestVerifyDetectsCorruption(t *testing.T) {
 	}
 }
 
+func TestPruneKeepsLatestAndGarbageCollectsObjects(t *testing.T) {
+	root := t.TempDir()
+	store, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	// Three snapshots of a file with distinct content, so each references a
+	// distinct content-addressed object.
+	writeFile(t, root, "app/data.txt", "content-1")
+	store.Create("snap-1", "manual")
+	writeFile(t, root, "app/data.txt", "content-2")
+	store.Create("snap-2", "manual")
+	writeFile(t, root, "app/data.txt", "content-3")
+	store.Create("snap-3", "manual")
+
+	receipt, err := store.Prune(1)
+	if err != nil {
+		t.Fatalf("Prune: %v", err)
+	}
+	if !contains(receipt.Kept, "snap-3") || len(receipt.Kept) != 1 {
+		t.Fatalf("prune must keep the latest snapshot: %#v", receipt)
+	}
+	if len(receipt.RemovedSnapshots) != 2 || receipt.RemovedObjects != 2 || receipt.HostRootTouched {
+		t.Fatalf("prune must remove two snapshots and their two now-unreferenced objects: %#v", receipt)
+	}
+
+	// The kept snapshot still verifies (its object survived GC).
+	if err := store.Verify("snap-3"); err != nil {
+		t.Fatalf("kept snapshot must still verify after prune: %v", err)
+	}
+	list, _ := store.List()
+	if len(list) != 1 || list[0].ID != "snap-3" {
+		t.Fatalf("only the kept snapshot must remain: %#v", list)
+	}
+}
+
+func TestPruneKeepingMoreThanPresentRemovesNothing(t *testing.T) {
+	root := t.TempDir()
+	store, _ := New(root)
+	writeFile(t, root, "app/data.txt", "content")
+	store.Create("snap-1", "manual")
+
+	receipt, err := store.Prune(5)
+	if err != nil {
+		t.Fatalf("Prune: %v", err)
+	}
+	if len(receipt.RemovedSnapshots) != 0 || len(receipt.Kept) != 1 {
+		t.Fatalf("nothing to prune should keep everything: %#v", receipt)
+	}
+	if _, err := store.Prune(0); err == nil {
+		t.Fatalf("keepLatest of 0 must be rejected")
+	}
+}
+
 func TestStoreRefusesPathsOutsideRoot(t *testing.T) {
 	root := t.TempDir()
 	store, err := New(root)

@@ -327,6 +327,84 @@ func (s *Store) Baseline() (BaselineStatus, error) {
 	return status, nil
 }
 
+// PruneReceipt records the effect of a retention prune for audit.
+type PruneReceipt struct {
+	Kept             []string `json:"kept"`
+	RemovedSnapshots []string `json:"removed_snapshots"`
+	RemovedObjects   int      `json:"removed_objects"`
+	HostRootTouched  bool     `json:"host_root_touched"`
+}
+
+// Prune enforces bounded retention: it keeps the keepLatest most recent
+// snapshots (by id order) and removes older snapshot manifests, then
+// garbage-collects content-addressed objects no remaining snapshot references.
+// It never touches the host root and never removes objects a kept snapshot
+// still needs. keepLatest must be at least 1.
+func (s *Store) Prune(keepLatest int) (PruneReceipt, error) {
+	if keepLatest < 1 {
+		return PruneReceipt{}, fmt.Errorf("prune keepLatest must be at least 1, got %d", keepLatest)
+	}
+	manifests, err := s.List()
+	if err != nil {
+		return PruneReceipt{}, err
+	}
+
+	receipt := PruneReceipt{}
+	keepFrom := 0
+	if len(manifests) > keepLatest {
+		keepFrom = len(manifests) - keepLatest
+	}
+	for i, manifest := range manifests {
+		if i < keepFrom {
+			if err := os.Remove(s.manifestPath(manifest.ID)); err != nil {
+				return PruneReceipt{}, fmt.Errorf("remove snapshot %q: %w", manifest.ID, err)
+			}
+			receipt.RemovedSnapshots = append(receipt.RemovedSnapshots, manifest.ID)
+		} else {
+			receipt.Kept = append(receipt.Kept, manifest.ID)
+		}
+	}
+
+	removed, err := s.gcObjects()
+	if err != nil {
+		return PruneReceipt{}, err
+	}
+	receipt.RemovedObjects = removed
+	return receipt, nil
+}
+
+// gcObjects removes content-addressed objects that no remaining snapshot
+// references and returns the number removed.
+func (s *Store) gcObjects() (int, error) {
+	remaining, err := s.List()
+	if err != nil {
+		return 0, err
+	}
+	referenced := map[string]bool{}
+	for _, manifest := range remaining {
+		for _, file := range manifest.Files {
+			referenced[file.Digest] = true
+		}
+	}
+
+	objectsDir := filepath.Join(s.metaDir, "objects")
+	entries, err := os.ReadDir(objectsDir)
+	if err != nil {
+		return 0, fmt.Errorf("list snapshot objects: %w", err)
+	}
+	removed := 0
+	for _, entry := range entries {
+		if entry.IsDir() || referenced[entry.Name()] {
+			continue
+		}
+		if err := os.Remove(filepath.Join(objectsDir, entry.Name())); err != nil {
+			return removed, fmt.Errorf("remove unreferenced object: %w", err)
+		}
+		removed++
+	}
+	return removed, nil
+}
+
 // currentFiles lists regular files under the state root (excluding store meta),
 // as slash-separated paths relative to the root.
 func (s *Store) currentFiles() ([]string, error) {
