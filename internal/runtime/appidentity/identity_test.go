@@ -98,6 +98,46 @@ func TestRenderDesktopEntryUsesManagedRuntimeLauncher(t *testing.T) {
 	}
 }
 
+func TestRenderDesktopEntryConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls", ".abc"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	entry, err := plan.RenderDesktopEntryWithOptions(DesktopEntryOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("RenderDesktopEntryWithOptions returned error: %v", err)
+	}
+	required := []string{
+		"[Desktop Entry]\n",
+		"Type=Application\n",
+		"Name=Example Ledger\n",
+		"Exec=xnix-compat-launch --app org.example.ledger %U\n",
+		"X-Xnix-ApplicationId=org.example.ledger\n",
+		"X-Xnix-RuntimeOwned=true\n",
+		"MimeType=application/x-xnix-abc;application/x-xnix-xls;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(entry, fragment) {
+			t.Fatalf("desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+	if strings.Contains(entry, root) {
+		t.Fatalf("desktop entry exposes activation root: %s", entry)
+	}
+	if _, err := plan.RenderDesktopEntryWithOptions(DesktopEntryOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("RenderDesktopEntryWithOptions accepted a missing activation receipt")
+	}
+}
+
 func TestRenderMIMEAppsUsesGeneratedDesktopFile(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

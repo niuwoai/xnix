@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -71,6 +72,44 @@ func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
 	for _, fragment := range required {
 		if !bytes.Contains(output.Bytes(), []byte(fragment)) {
 			t.Fatalf("desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+}
+
+func TestDesktopEntryPreviewCommandConsumesActivationRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	stageRoot := t.TempDir()
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", app, "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"desktop-entry-preview", "--registry", registryPath, "--app", app, "--activation-root", stageRoot}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	entry := output.String()
+	required := []string{
+		"[Desktop Entry]\n",
+		"Name=Example Ledger\n",
+		"Exec=xnix-compat-launch --app org.example.ledger %U\n",
+		"X-Xnix-ApplicationId=org.example.ledger\n",
+		"X-Xnix-RuntimeOwned=true\n",
+		"MimeType=application/x-xnix-abc;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(entry, fragment) {
+			t.Fatalf("desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+	if strings.Contains(entry, stageRoot) {
+		t.Fatalf("desktop entry exposed activation root: %s", entry)
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine"} {
+		if strings.Contains(strings.ToLower(entry), forbidden) {
+			t.Fatalf("desktop entry exposes forbidden term %q: %s", forbidden, entry)
 		}
 	}
 }

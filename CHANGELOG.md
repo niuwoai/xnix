@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.253] - 2026-07-16
+
+### Added
+
+- Added receipt-gated KDE desktop entry previews through `desktop-entry-preview --activation-root`, so launcher rendering can require staged activation evidence while preserving standard `.desktop` output.
+- Added Go and CLI coverage proving desktop entry previews can consume staged activation receipts without exposing the activation root, writing activation files, enabling launch, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks desktop entry consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, desktop icon, MIME association, tray status, notification, settings, task-manager identity, and KWin window-rule reads.
+
 ## [0.2.252] - 2026-07-16
 
 ### Added

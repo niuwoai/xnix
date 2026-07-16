@@ -122,6 +122,10 @@ type DesktopIconOptions struct {
 	ActivationRoot string
 }
 
+type DesktopEntryOptions struct {
+	ActivationRoot string
+}
+
 type MIMEAppsOptions struct {
 	ActivationRoot string
 }
@@ -1024,6 +1028,10 @@ func (plan Plan) ValidateSafeForDesktop() error {
 }
 
 func (plan Plan) RenderDesktopEntry() (string, error) {
+	return plan.RenderDesktopEntryWithOptions(DesktopEntryOptions{})
+}
+
+func (plan Plan) RenderDesktopEntryWithOptions(options DesktopEntryOptions) (string, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return "", err
 	}
@@ -1036,6 +1044,11 @@ func (plan Plan) RenderDesktopEntry() (string, error) {
 	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, plan.StartupWMClass} {
 		if !singleLine(value) {
 			return "", errors.New("desktop entry fields must be non-empty single-line strings")
+		}
+	}
+	if strings.TrimSpace(options.ActivationRoot) != "" {
+		if _, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot); err != nil {
+			return "", err
 		}
 	}
 
