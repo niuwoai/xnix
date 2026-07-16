@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/recipe"
 )
 
 type ReadDispatch struct {
@@ -114,6 +115,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetRuntimeOwnerReadiness",
 	"GetWindowsCompatibilityWorkstreamsPreview",
 	"GetKDENotificationDigestPreview",
+	"GetSignedRecipeVerificationPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -481,6 +483,20 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return plan.KDENotificationDigestPreview(events)
 	},
+	"GetSignedRecipeVerificationPreview": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetSignedRecipeVerificationPreview", args, 1); err != nil {
+			return nil, err
+		}
+		store, err := recipe.NewLocalStore(filepath.Join(root, "runtime", "recipes"), nil)
+		if err != nil {
+			return nil, err
+		}
+		loaded, err := store.Find(args[0])
+		if err != nil {
+			return nil, err
+		}
+		return recipe.NewRegistrySignedRecipeVerificationPreview(loaded), nil
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -720,6 +736,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "windows-compatibility-workstreams-preview"
 	case "GetKDENotificationDigestPreview":
 		return "kde-notification-digest-preview"
+	case "GetSignedRecipeVerificationPreview":
+		return "signed-recipe-verifier-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:

@@ -98,6 +98,9 @@ func TestDispatchReadRejectsWriteMethodsAndBadArity(t *testing.T) {
 	if _, err := DispatchRead(projectRoot(t), "GetKDENotificationDigestPreview", []string{"org.xnix.sample.notepad", "invalid"}); err == nil || !strings.Contains(err.Error(), "<group>:<event-id>") {
 		t.Fatalf("DispatchRead must reject a malformed digest event, got %v", err)
 	}
+	if _, err := DispatchRead(projectRoot(t), "GetSignedRecipeVerificationPreview", nil); err == nil || !strings.Contains(err.Error(), "requires 1 argument") {
+		t.Fatalf("DispatchRead must reject missing signed recipe arguments, got %v", err)
+	}
 	if _, err := DispatchRead(projectRoot(t), "GetUnknownRuntimeMethod", nil); err == nil || !strings.Contains(err.Error(), "unsupported owner read dispatch method") {
 		t.Fatalf("DispatchRead must reject unsupported methods, got %v", err)
 	}
@@ -202,6 +205,45 @@ func TestDispatchReadRendersKDENotificationDigestAsOwnerLocalPayload(t *testing.
 	}
 }
 
+func TestDispatchReadRendersSignedRecipeVerificationAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetSignedRecipeVerificationPreview", []string{"org.xnix.sample.notepad"})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetSignedRecipeVerificationPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "signed-recipe-verifier-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady ||
+		!dispatch.ReadOnlyDispatch ||
+		dispatch.WriteMethodsEnabled ||
+		dispatch.SessionBusClaimed ||
+		dispatch.ProductionBusClaimed ||
+		dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected signed recipe dispatch metadata: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "signed-recipe-verifier-preview" ||
+		payload["evidence_type"] != "owner-registry-signed-recipe-verifier-evidence" ||
+		payload["application_id"] != "org.xnix.sample.notepad" ||
+		payload["verification_state"] != "production-signature-required" ||
+		payload["recipe_digest_verified"] != true ||
+		payload["signature_verified"] != false ||
+		payload["production_key_configured"] != false ||
+		payload["private_key_loaded"] != false ||
+		payload["recipe_path_exposed"] != false ||
+		payload["public_key_path_exposed"] != false ||
+		payload["signature_material_exposed"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected signed recipe payload: %#v", payload)
+	}
+}
+
 func TestSupportedReadDispatchMethodsRenderPayloads(t *testing.T) {
 	root := projectRoot(t)
 	for _, method := range SupportedReadDispatchMethods() {
@@ -290,6 +332,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetRuntimeOwnerReadiness",
 		"GetWindowsCompatibilityWorkstreamsPreview",
 		"GetKDENotificationDigestPreview",
+		"GetSignedRecipeVerificationPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -311,6 +354,8 @@ func sampleReadDispatchArgs(method string) []string {
 		return []string{appID, "install-failed"}
 	case "GetKDENotificationDigestPreview":
 		return []string{appID, "needs-review:approval-required", "readiness-change:readiness-pending"}
+	case "GetSignedRecipeVerificationPreview":
+		return []string{appID}
 	case "GetKRunnerQueryPlan":
 		return []string{"notepad"}
 	case "GetPortalRequestPlan", "GetPortalAccessPolicy":

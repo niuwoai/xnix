@@ -91,3 +91,39 @@ func TestSignedVerifierRequiresSignedStatusAndMetadata(t *testing.T) {
 		t.Fatalf("missing metadata must fail closed: %+v", state)
 	}
 }
+
+func TestRegistrySignedRecipeVerificationPreviewFailsClosedWithoutProductionKey(t *testing.T) {
+	preview := NewRegistrySignedRecipeVerificationPreview(Recipe{
+		ID: "org.example.signed",
+		Trust: TrustState{
+			ID: "org.example.signed", DigestVerified: true, SignatureStatus: SignatureSigned,
+			Reason: "digest verified; production signature not confirmed by this verifier",
+		},
+	})
+	if preview.VerificationState != "production-key-configuration-missing" ||
+		!preview.RecipeDigestVerified ||
+		!preview.VerifierBoundaryReady ||
+		preview.SignatureVerified ||
+		preview.ProductionKeyConfigured ||
+		preview.ProductionTrustReady ||
+		preview.FixtureMode ||
+		preview.PrivateKeyLoaded ||
+		preview.RecipePathExposed ||
+		preview.PublicKeyPathExposed ||
+		preview.SignatureMaterialExposed ||
+		preview.BackendLaunchEnabled ||
+		preview.HostRootModified {
+		t.Fatalf("unexpected registry signature preview: %+v", preview)
+	}
+
+	preview = NewRegistrySignedRecipeVerificationPreview(Recipe{
+		ID: "org.example.development",
+		Trust: TrustState{
+			ID: "org.example.development", DigestVerified: true, SignatureStatus: SignatureDevelopmentOnly,
+			DevelopmentOnly: true, Reason: "digest verified; development-only, never production trusted",
+		},
+	})
+	if preview.VerificationState != "production-signature-required" || !preview.RecipeDigestVerified || preview.SignatureVerified {
+		t.Fatalf("development recipe must remain blocked: %+v", preview)
+	}
+}

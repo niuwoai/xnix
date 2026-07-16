@@ -135,6 +135,32 @@ type SignedRecipeVerificationPreview struct {
 	DesktopSafeSummary       string   `json:"desktop_safe_summary"`
 }
 
+// NewRegistrySignedRecipeVerificationPreview projects verified store trust into
+// owner-safe signature evidence without accepting paths or key material from a caller.
+func NewRegistrySignedRecipeVerificationPreview(loaded Recipe) SignedRecipeVerificationPreview {
+	state := "production-signature-required"
+	blockingReasons := []string{
+		"the registry recipe is not production signed",
+		"production key configuration is not enabled",
+	}
+	if loaded.Trust.SignatureStatus == SignatureSigned {
+		state = "production-key-configuration-missing"
+		blockingReasons = []string{"production key configuration is not enabled"}
+	}
+	if !loaded.Trust.DigestVerified || loaded.Trust.FailedClosed {
+		state = "digest-mismatch"
+		blockingReasons = []string{loaded.Trust.Reason, "production key configuration is not enabled"}
+	}
+
+	return SignedRecipeVerificationPreview{
+		SchemaVersion: "xnix.runtime.signed_recipe_verification.v1", RequestType: "signed-recipe-verifier-preview",
+		EvidenceType: "owner-registry-signed-recipe-verifier-evidence", ApplicationID: loaded.ID,
+		VerificationState: state, RecipeDigestVerified: loaded.Trust.DigestVerified,
+		VerifierBoundaryReady: true, BlockingReasons: blockingReasons,
+		DesktopSafeSummary: "Runtime recipe digest evidence is available while production signature and key configuration remain disabled.",
+	}
+}
+
 func NewSignedRecipeVerificationPreview(entry Entry, recipeData []byte, metadata SignedMetadata, publicKey ed25519.PublicKey) SignedRecipeVerificationPreview {
 	trust := (SignedVerifier{
 		Metadata:   map[string]SignedMetadata{entry.ID: metadata},

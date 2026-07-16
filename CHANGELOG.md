@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.306] - 2026-07-17
+
+### Added
+
+- Added `NewRegistrySignedRecipeVerificationPreview`, which projects verified Runtime recipe-store trust into owner-safe signature evidence without accepting paths or key material from callers.
+- Added the owner-local `GetSignedRecipeVerificationPreview` route across Go owner dispatch, `Service.Call`, owner CLI, smoke-batch, and restricted private session-bus coverage.
+- Added development-only, signed-without-production-key, malformed-argument, path-redaction, signature-material, private-key, network, write, backend-launch, and host-mutation gate tests.
+
+### Changed
+
+- Increased restricted owner smoke coverage from 63 to 64 read routes while keeping the formal production D-Bus read contract unchanged at 61 methods.
+- Updated Runtime contract drift, implementation evidence, layout verification, product documentation, and dispatch guidance for owner-managed signed recipe verification.
+- Kept production key configuration, production trust, private-key loading, recipe writes, Runtime writes, production bus ownership, backend launch, Docker, QEMU, and host-root mutation disabled.
+
 ## [0.2.305] - 2026-07-17
 
 ### Added

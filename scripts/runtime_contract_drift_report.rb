@@ -23,6 +23,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetRuntimeOwnerReadiness
   GetWindowsCompatibilityWorkstreamsPreview
   GetKDENotificationDigestPreview
+  GetSignedRecipeVerificationPreview
   GetRuntimeWriteGate
 ].freeze
 

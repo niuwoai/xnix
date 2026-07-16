@@ -133,6 +133,41 @@ func TestServiceCallServesOwnerLocalNotificationDigest(t *testing.T) {
 	}
 }
 
+func TestServiceCallServesOwnerLocalSignedRecipeVerification(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+
+	call, err := service.Call("GetSignedRecipeVerificationPreview", []string{"org.xnix.sample.notepad"})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetSignedRecipeVerificationPreview" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected signed recipe service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetSignedRecipeVerificationPreview" ||
+		dispatch["go_command"] != "signed-recipe-verifier-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested signed recipe dispatch: %#v", dispatch)
+	}
+}
+
 func TestServiceCallRejectsUnknownMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

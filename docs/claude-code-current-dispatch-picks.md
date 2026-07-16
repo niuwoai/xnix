@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.305
+> Last updated: 2026-07-17 | Baseline: v0.2.306
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,15 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Signed recipe owner route | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.306` | Route signed recipe verification evidence through the Go-owned service path while keeping key configuration and install writes disabled. |
+| 1 | Restricted smoke owner route | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.307` | Route the restricted product smoke packet through the Go-owned service path without executing Docker, QEMU, or product launch. |
 
 ## Best First Pick
 
-Start with the signed recipe owner route.
+Start with the restricted smoke owner route.
 
-The signed recipe owner route is the best next handoff because the KDE notification digest now crosses the Go owner service boundary and the next trust-critical read should follow the same in-process path.
+The restricted smoke owner route is the best next handoff because notification and signed recipe evidence now cross the Go owner service boundary and the product acceptance packet should use the same in-process read path.
 
-The signed recipe route must stay read-only and must not load private keys, install recipes, run Docker, or run QEMU.
+The restricted smoke route must stay read-only and must not authorize or execute Docker, QEMU, backend launch, or host mutation.
 
 ## Good Branch Shape
 

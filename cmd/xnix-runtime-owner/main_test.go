@@ -167,6 +167,40 @@ func TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch(t *t
 	}
 }
 
+func TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--service-call", "GetSignedRecipeVerificationPreview",
+		"org.xnix.sample.notepad",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["method"] != "GetSignedRecipeVerificationPreview" ||
+		payload["call_type"] != "read-dispatch" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["network_required"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected signed recipe service response: %#v", payload)
+	}
+	dispatch := payload["payload"].(map[string]any)
+	nested := dispatch["payload"].(map[string]any)
+	if dispatch["go_command"] != "signed-recipe-verifier-preview" ||
+		nested["verification_state"] != "production-signature-required" ||
+		nested["recipe_digest_verified"] != true ||
+		nested["signature_verified"] != false ||
+		nested["signature_material_exposed"] != false {
+		t.Fatalf("unexpected signed recipe nested payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"--root", "../..", "--mode", "smoke-owner", "--service-call", "GetRuntimeWriteGate", "Launch"}, &output); err != nil {
@@ -245,8 +279,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 67 {
-		t.Fatalf("smoke batch line count = %d, want 67", len(lines))
+	if len(lines) != 68 {
+		t.Fatalf("smoke batch line count = %d, want 68", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -260,7 +294,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(63) ||
+			payload["read_dispatch_method_count"] != float64(64) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -303,8 +337,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)
 		}
 	}
-	if readCount != 63 || writeCount != 4 {
-		t.Fatalf("smoke batch counts read=%d write=%d, want 63/4", readCount, writeCount)
+	if readCount != 64 || writeCount != 4 {
+		t.Fatalf("smoke batch counts read=%d write=%d, want 64/4", readCount, writeCount)
 	}
 }
 
@@ -315,8 +349,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 72 {
-		t.Fatalf("session bus smoke line count = %d, want 72", len(lines))
+	if len(lines) != 73 {
+		t.Fatalf("session bus smoke line count = %d, want 73", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -331,7 +365,7 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-session-bus-smoke-step" ||
 			payload["transcript_type"] != "restricted-private-session-bus-owner-smoke" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(63) ||
+			payload["read_dispatch_method_count"] != float64(64) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -367,8 +401,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			}
 		}
 	}
-	if readCount != 63 || writeCount != 4 || unsupportedCount != 1 {
-		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 63/4/1", readCount, writeCount, unsupportedCount)
+	if readCount != 64 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 64/4/1", readCount, writeCount, unsupportedCount)
 	}
 }
 
