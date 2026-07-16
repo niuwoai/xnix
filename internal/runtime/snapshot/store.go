@@ -14,7 +14,6 @@ package snapshot
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -22,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	"xnix.local/xnix/internal/runtime/record"
 	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
@@ -31,8 +31,9 @@ const metaDirName = ".xnix-snapshots"
 
 // Store manages snapshots of a single state root directory.
 type Store struct {
-	root    string // absolute path to the state root
-	metaDir string // absolute path to the store's private metadata dir
+	root    string       // absolute path to the state root
+	rootObj *rootfs.Root // controlled-root handle for the state root
+	metaDir string       // absolute path to the store's private metadata dir
 }
 
 // FileEntry records one captured file: its path relative to the state root and
@@ -76,20 +77,21 @@ func New(stateRoot string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Join(metaDir, "manifests"), 0o700); err != nil {
 		return nil, fmt.Errorf("initialize snapshot store: %w", err)
 	}
-	return &Store{root: abs, metaDir: metaDir}, nil
+	return &Store{root: abs, rootObj: root, metaDir: metaDir}, nil
 }
 
 // Root returns the absolute state-root path the store is confined to.
 func (s *Store) Root() string { return s.root }
 
+// manifestRel is the state-root-relative path of a snapshot manifest.
+func (s *Store) manifestRel(id string) string {
+	return filepath.ToSlash(filepath.Join(metaDirName, "manifests", id+".json"))
+}
+
 // within reports whether abs is inside the state root (and not the store's own
 // metadata directory). It is the guard that keeps every operation sandboxed.
 func (s *Store) within(abs string) bool {
-	root, err := rootfs.Open(s.root)
-	if err != nil {
-		return false
-	}
-	return root.Contains(abs)
+	return s.rootObj.Contains(abs)
 }
 
 func validSnapshotID(id string) bool {
@@ -366,24 +368,17 @@ func (s *Store) writeObject(digest string, data []byte) error {
 }
 
 func (s *Store) writeManifest(manifest Manifest) error {
-	data, err := json.MarshalIndent(manifest, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.manifestPath(manifest.ID), data, 0o600)
+	_, err := record.Save(s.rootObj, s.manifestRel(manifest.ID), manifest)
+	return err
 }
 
 func (s *Store) load(id string) (Manifest, error) {
 	if !validSnapshotID(id) {
 		return Manifest{}, fmt.Errorf("invalid snapshot id %q", id)
 	}
-	data, err := os.ReadFile(s.manifestPath(id))
-	if err != nil {
-		return Manifest{}, fmt.Errorf("unknown snapshot %q: %w", id, err)
-	}
 	var manifest Manifest
-	if err := json.Unmarshal(data, &manifest); err != nil {
-		return Manifest{}, fmt.Errorf("snapshot %q manifest is corrupt: %w", id, err)
+	if err := record.Load(s.rootObj, s.manifestRel(id), &manifest); err != nil {
+		return Manifest{}, fmt.Errorf("snapshot %q: %w", id, err)
 	}
 	return manifest, nil
 }
