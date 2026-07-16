@@ -15,13 +15,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
 // metaDirName is the store's private subdirectory inside the state root. It is
@@ -63,20 +64,11 @@ type RollbackReceipt struct {
 // root. The root must be an existing directory; the store keeps its metadata in
 // a private subdirectory of the root.
 func New(stateRoot string) (*Store, error) {
-	if stateRoot == "" {
-		return nil, errors.New("snapshot store requires a state root")
-	}
-	abs, err := filepath.Abs(stateRoot)
+	root, err := rootfs.Open(stateRoot)
 	if err != nil {
-		return nil, fmt.Errorf("resolve state root: %w", err)
+		return nil, err
 	}
-	info, err := os.Stat(abs)
-	if err != nil {
-		return nil, fmt.Errorf("state root must exist: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("state root %q is not a directory", abs)
-	}
+	abs := root.Path()
 	metaDir := filepath.Join(abs, metaDirName)
 	if err := os.MkdirAll(filepath.Join(metaDir, "objects"), 0o700); err != nil {
 		return nil, fmt.Errorf("initialize snapshot store: %w", err)
@@ -93,17 +85,11 @@ func (s *Store) Root() string { return s.root }
 // within reports whether abs is inside the state root (and not the store's own
 // metadata directory). It is the guard that keeps every operation sandboxed.
 func (s *Store) within(abs string) bool {
-	rel, err := filepath.Rel(s.root, abs)
+	root, err := rootfs.Open(s.root)
 	if err != nil {
 		return false
 	}
-	if rel == "." {
-		return true
-	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return false
-	}
-	return true
+	return root.Contains(abs)
 }
 
 func validSnapshotID(id string) bool {

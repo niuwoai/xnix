@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
-	"strings"
+
+	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
 // FileCheck is the presence result for one manifest artifact source.
@@ -51,18 +51,11 @@ func LoadManifest(path string) (Manifest, error) {
 // safeSource resolves a manifest source path inside repoRoot and refuses any
 // path that escapes it. Sources must be relative.
 func safeSource(repoRoot, source string) (string, error) {
-	if source == "" || filepath.IsAbs(source) {
-		return "", fmt.Errorf("image source must be a relative path: %q", source)
-	}
-	joined := filepath.Join(repoRoot, filepath.FromSlash(source))
-	rel, err := filepath.Rel(repoRoot, joined)
+	root, err := rootfs.Open(repoRoot)
 	if err != nil {
 		return "", err
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return "", fmt.Errorf("image source escapes repo root: %q", source)
-	}
-	return joined, nil
+	return root.Resolve(source)
 }
 
 // sourceExists reports whether a manifest source file or directory exists.

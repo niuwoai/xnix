@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appid"
+	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
 // Registry is the signed manifest describing a recipe root's contents.
@@ -59,7 +60,7 @@ type Store interface {
 // file. It resolves recipe paths safely inside the root and verifies every
 // recipe through the configured Verifier.
 type LocalStore struct {
-	root         string
+	root         *rootfs.Root
 	registryPath string
 	verifier     Verifier
 }
@@ -73,25 +74,15 @@ func isDevelopmentRegistry(name string) bool {
 // NewLocalStore opens a read-only recipe store. The recipe root must contain a
 // registry.json (or registryFile if named). A nil verifier defaults to a
 // fail-closed DigestVerifier.
-func NewLocalStore(root string, verifier Verifier) (*LocalStore, error) {
-	if root == "" {
-		return nil, errors.New("recipe store requires a recipe root")
-	}
-	abs, err := filepath.Abs(root)
+func NewLocalStore(rootDir string, verifier Verifier) (*LocalStore, error) {
+	root, err := rootfs.Open(rootDir)
 	if err != nil {
-		return nil, fmt.Errorf("resolve recipe root: %w", err)
-	}
-	info, err := os.Stat(abs)
-	if err != nil {
-		return nil, fmt.Errorf("recipe root must exist: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("recipe root %q is not a directory", abs)
+		return nil, err
 	}
 	if verifier == nil {
 		verifier = DigestVerifier{}
 	}
-	return &LocalStore{root: abs, registryPath: filepath.Join(abs, "registry.json"), verifier: verifier}, nil
+	return &LocalStore{root: root, registryPath: filepath.Join(root.Path(), "registry.json"), verifier: verifier}, nil
 }
 
 func (s *LocalStore) loadRegistry() (Registry, error) {
@@ -121,18 +112,7 @@ func (s *LocalStore) loadRegistry() (Registry, error) {
 
 // safeRecipePath resolves entryPath inside the recipe root and refuses escapes.
 func (s *LocalStore) safeRecipePath(entryPath string) (string, error) {
-	if entryPath == "" || filepath.IsAbs(entryPath) {
-		return "", fmt.Errorf("registry recipe path must be relative: %q", entryPath)
-	}
-	joined := filepath.Join(s.root, filepath.FromSlash(entryPath))
-	rel, err := filepath.Rel(s.root, joined)
-	if err != nil {
-		return "", err
-	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return "", fmt.Errorf("registry recipe path escapes recipe root: %q", entryPath)
-	}
-	return joined, nil
+	return s.root.Resolve(entryPath)
 }
 
 func (s *LocalStore) loadEntry(entry Entry) (Recipe, error) {
