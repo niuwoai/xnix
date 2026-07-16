@@ -132,6 +132,25 @@ func ValidateLine(label, text string) error {
 	return Validate(label, text)
 }
 
+// ValidateLines validates every label→value pair with ValidateLine. It checks
+// fields in sorted label order so the surfaced error is deterministic across
+// runs (Go map iteration order is not), and returns the first offending field's
+// error. It replaces the per-package "range over a map of fields, validate each"
+// loop several Runtime domains reimplemented.
+func ValidateLines(fields map[string]string) error {
+	labels := make([]string, 0, len(fields))
+	for label := range fields {
+		labels = append(labels, label)
+	}
+	sort.Strings(labels)
+	for _, label := range labels {
+		if err := ValidateLine(label, fields[label]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ValidatePayload marshals v to JSON and validates the encoded form. It is the
 // canonical replacement for the per-package "validateNoBackendTerms" helpers:
 // it catches forbidden content anywhere in a KDE-facing payload.

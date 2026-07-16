@@ -71,6 +71,34 @@ func TestValidateNamesCategoriesWithoutLeakingValue(t *testing.T) {
 	}
 }
 
+func TestValidateLinesChecksEveryFieldDeterministically(t *testing.T) {
+	// All-safe fields pass.
+	if err := ValidateLines(map[string]string{
+		"name":    "Ledger",
+		"summary": "ready to launch",
+	}); err != nil {
+		t.Fatalf("all-safe fields rejected: %v", err)
+	}
+	// An offending field is caught and named, without echoing its value.
+	err := ValidateLines(map[string]string{
+		"name":    "Ledger",
+		"summary": "stored at /home/rocky/.wine",
+	})
+	if err == nil {
+		t.Fatalf("forbidden field must be caught")
+	}
+	if !strings.Contains(err.Error(), "summary") {
+		t.Fatalf("error should name the offending field: %q", err)
+	}
+	if strings.Contains(err.Error(), "/home/rocky") {
+		t.Fatalf("error must not echo the offending value: %q", err)
+	}
+	// A multi-line field is rejected too.
+	if err := ValidateLines(map[string]string{"note": "line one\nline two"}); err == nil {
+		t.Fatalf("multi-line field must be rejected")
+	}
+}
+
 func TestValidateLineRequiresSingleLine(t *testing.T) {
 	if err := ValidateLine("id", "safe text"); err != nil {
 		t.Fatalf("single-line safe text rejected: %v", err)
