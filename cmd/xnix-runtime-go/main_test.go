@@ -3009,6 +3009,52 @@ func TestTrayStatusPreviewCommandRendersKDETrayStatus(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewCommandConsumesActivationRoot(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	stageRoot := filepath.Join(root, "stage")
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", "org.example.ledger", "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"tray-status-preview", "--registry", registryPath, "--app", "org.example.ledger", "--activation-root", stageRoot}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["activation_receipt_root"] != true ||
+		payload["activation_receipt_backed"] != true ||
+		payload["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed tray payload: %#v", payload)
+	}
+	if payload["live_backend_bridge_enabled"] != false ||
+		payload["bridge_configuration_persisted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("receipt-backed tray preview must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), stageRoot) {
+		t.Fatalf("tray preview exposed activation root: %s", output.String())
+	}
+}
+
 func TestWindowIdentityPreviewCommandRendersKDEWindowIdentity(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

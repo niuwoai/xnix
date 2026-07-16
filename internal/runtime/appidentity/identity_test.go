@@ -302,6 +302,50 @@ func TestTrayStatusPreviewKeepsLiveBridgeGated(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.TrayStatusPreviewWithOptions(TrayStatusOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("TrayStatusPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("unexpected receipt-backed tray fields: %#v", preview)
+	}
+	if preview.LiveBackendBridgeEnabled ||
+		preview.BridgeConfigurationPersisted ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed tray preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("tray preview exposed activation root: %s", encoded)
+	}
+
+	if _, err := plan.TrayStatusPreviewWithOptions(TrayStatusOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("tray preview accepted a missing activation receipt")
+	}
+}
+
 func TestNotificationPreviewKeepsExecutionGatesClosed(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

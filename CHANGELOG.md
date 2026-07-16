@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.246] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE tray status previews through `tray-status-preview --activation-root`, so system tray reads can prove staged activation evidence before live tray bridging remains gated.
+- Added Go and CLI coverage proving tray status consumes staged activation receipts without exposing the activation root, persisting bridge configuration, mutating the host root, enabling live tray bridging, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks system tray consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, and Dolphin file-manager reads.
+
 ## [0.2.245] - 2026-07-16
 
 ### Added

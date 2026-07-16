@@ -156,6 +156,9 @@ type TrayStatusPreview struct {
 	TrayBridge                   TrayBridgeStatus     `json:"tray_bridge"`
 	ApplicationEntry             TrayApplicationEntry `json:"application_entry"`
 	Actions                      []string             `json:"actions"`
+	ActivationReceiptRoot        bool                 `json:"activation_receipt_root"`
+	ActivationReceiptBacked      bool                 `json:"activation_receipt_backed"`
+	ActivationReceiptPath        string               `json:"activation_receipt_path,omitempty"`
 	RuntimeOwned                 bool                 `json:"runtime_owned"`
 	KDEPolicyOwner               bool                 `json:"kde_policy_owner"`
 	UserVisible                  bool                 `json:"user_visible"`
@@ -164,6 +167,10 @@ type TrayStatusPreview struct {
 	HostRootModified             bool                 `json:"host_root_modified"`
 	BackendDetailsExposed        bool                 `json:"backend_details_exposed"`
 	Summary                      string               `json:"summary"`
+}
+
+type TrayStatusOptions struct {
+	ActivationRoot string
 }
 
 type TrayRuntimeActivity struct {
@@ -1161,6 +1168,10 @@ func (plan Plan) DesktopIconPreview() (DesktopIconPreview, error) {
 }
 
 func (plan Plan) TrayStatusPreview() (TrayStatusPreview, error) {
+	return plan.TrayStatusPreviewWithOptions(TrayStatusOptions{})
+}
+
+func (plan Plan) TrayStatusPreviewWithOptions(options TrayStatusOptions) (TrayStatusPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return TrayStatusPreview{}, err
 	}
@@ -1168,6 +1179,18 @@ func (plan Plan) TrayStatusPreview() (TrayStatusPreview, error) {
 		if !singleLine(value) {
 			return TrayStatusPreview{}, errors.New("tray status preview requires single-line identity fields")
 		}
+	}
+
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return TrayStatusPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
 	}
 
 	return TrayStatusPreview{
@@ -1203,6 +1226,9 @@ func (plan Plan) TrayStatusPreview() (TrayStatusPreview, error) {
 			UserVisible:        true,
 		},
 		Actions:                      []string{"open-compatibility-center", "open-settings"},
+		ActivationReceiptRoot:        activationReceiptRoot,
+		ActivationReceiptBacked:      activationReceiptBacked,
+		ActivationReceiptPath:        activationReceiptPath,
 		RuntimeOwned:                 true,
 		KDEPolicyOwner:               false,
 		UserVisible:                  true,
