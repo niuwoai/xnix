@@ -95,13 +95,16 @@ CLAIM_DEFINITIONS = [
       internal/runtime/appidentity/runtime_policy_explanation_cards.go
       internal/runtime/appidentity/settings_profile_migration.go
       internal/runtime/appidentity/kde_search_visibility.go
+      internal/runtime/appidentity/kde_notification_digest.go
+      cmd/xnix-runtime-go/kde_notification_digest_commands.go
       kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
     ],
     verification_commands: [
       "ruby scripts/kde_first_presence_smoke.rb --format json",
+      "go test ./internal/runtime/appidentity ./cmd/xnix-runtime-go",
       "ruby -Ilib test/test_kde_first_presence_smoke_script.rb"
     ],
-    next_follow_up: "Add KDE notification digest evidence before UI breadth grows beyond current search-visibility previews."
+    next_follow_up: "Add signed recipe verifier evidence before production recipe trust can advance."
   },
   {
     id: "execution-session-evidence",

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.300"
+EXPECTED_VERSION = "0.2.301"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -215,6 +215,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go
   cmd/xnix-runtime-go/kde_search_visibility_commands.go
   cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
+  cmd/xnix-runtime-go/kde_notification_digest_commands.go
+  cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -264,6 +266,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/compatibility_backend_fallback_test.go
   internal/runtime/appidentity/kde_search_visibility.go
   internal/runtime/appidentity/kde_search_visibility_test.go
+  internal/runtime/appidentity/kde_notification_digest.go
+  internal/runtime/appidentity/kde_notification_digest_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -1946,6 +1950,29 @@ end
 go_runtime_search_visibility_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_search_visibility_cli_test.go")
 %w[TestKDESearchVisibilityPlanPreviewCLI TestKDESearchVisibilityPlanPreviewCLIRejectsMissingApp xnix.runtime.kde_search_visibility.v1].each do |token|
   assert(go_runtime_search_visibility_cli_test_source.include?(token), "Go Runtime KDE search visibility CLI tests must include #{token}")
+end
+
+go_runtime_notification_digest_source = read_project_file("internal/runtime/appidentity/kde_notification_digest.go")
+%w[KDENotificationDigestPreview KDENotificationDigestEntry KDENotificationDigestCounts kde-notification-digest-preview review-only-runtime-event-digest xnix.runtime.kde_notification_digest.v1 GetKDENotificationDigest GetKDENotificationDigestPreview needs-review blocked-action permission-attention diagnostic-issue snapshot-warning readiness-change].each do |token|
+  assert(go_runtime_notification_digest_source.include?(token), "Go Runtime KDE notification digest must include #{token}")
+end
+%w[NotificationsSent LiveTrayBridgeEnabled RequestObjectsCreated PermissionGrantEnabled BackendLaunchEnabled BackendProcessStarted StateRootPathExposed RawCommandExposed BackendDetailsExposed HostRootModified].each do |token|
+  assert(go_runtime_notification_digest_source.include?(token), "Go Runtime KDE notification digest must expose disabled gate #{token}")
+end
+
+go_runtime_notification_digest_test_source = read_project_file("internal/runtime/appidentity/kde_notification_digest_test.go")
+%w[TestKDENotificationDigestCoversSixGroups TestKDENotificationDigestDeduplicatesEvents TestKDENotificationDigestRejectsUnsupportedAndUnsafeInput TestKDENotificationDigestRejectsUnsafeIdentity].each do |token|
+  assert(go_runtime_notification_digest_test_source.include?(token), "Go Runtime KDE notification digest tests must include #{token}")
+end
+
+go_runtime_notification_digest_cli_source = read_project_file("cmd/xnix-runtime-go/kde_notification_digest_commands.go")
+%w[kde-notification-digest-preview runKDENotificationDigestPreview parseKDENotificationDigestPreviewSource repeatedNotificationDigestEvents].each do |token|
+  assert(go_runtime_notification_digest_cli_source.include?(token), "Go Runtime KDE notification digest CLI must include #{token}")
+end
+
+go_runtime_notification_digest_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_notification_digest_cli_test.go")
+%w[TestKDENotificationDigestPreviewCLI TestKDENotificationDigestPreviewCLIRejectsInvalidArguments xnix.runtime.kde_notification_digest.v1 notifications_sent live_tray_bridge_enabled request_objects_created permission_grant_enabled backend_launch_enabled host_root_modified].each do |token|
+  assert(go_runtime_notification_digest_cli_test_source.include?(token), "Go Runtime KDE notification digest CLI tests must include #{token}")
 end
 
 go_runtime_deactivation_source = read_project_file("internal/runtime/appidentity/desktop_deactivation_dry_run.go")

@@ -1,12 +1,12 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.300
+> Last updated: 2026-07-17 | Baseline: v0.2.301
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
 Use `docs/claude-code-stability-release-train.md` as the cadence authority for the next Go-first stabilization train: one coherent small version per local commit, targeted tests on every small version, and full build plus remote push only at each twentieth-version train gate.
 
-Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, and `S6W8`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
+Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, `S6W8`, and `F5W7`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
 
 Do not modify `docs/claude-code-implementation-packages.md` from any task listed here.
 
@@ -25,17 +25,16 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | KDE notification digest preview | `docs/claude-code-fifth-wave-task-batch.md` | `codex/f5w7-kde-notification-digest` | KDE search visibility exists, but notification breadth still lacks a digest surface that summarizes pending review-only notifications without sending them. |
-| 2 | Signed recipe verifier evidence | `docs/claude-code-mainline-implementation-plan.md` | `codex/recipe-signature-verifier-evidence` | Recipe and artifact trust are strong for local fixtures, but production trust still needs signed-recipe verification evidence before any real trust path advances. |
-| 3 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
+| 1 | Signed recipe verifier evidence | `docs/claude-code-mainline-implementation-plan.md` | `codex/recipe-signature-verifier-evidence` | Recipe and artifact trust are strong for local fixtures, but production trust still needs signed-recipe verification evidence before any real trust path advances. |
+| 2 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
 
 ## Best First Pick
 
-Start with KDE notification digest evidence.
+Start with signed recipe verifier evidence.
 
-KDE notification digest evidence is the best next handoff because the merge readiness packet now exists and reviewers can inspect layout, contract drift, implementation evidence, release evidence, KDE-first presence, fixture matrix, and mainline review results without running Docker, QEMU, backend launch, package managers, network fetch, or host-root mutation.
+Signed recipe verifier evidence is the best next handoff because KDE notification digest coverage now exists, while production recipe trust still needs an explicit verifier boundary before readiness can advance.
 
-The digest should remain review-only and must not send notifications.
+The verifier must use offline fixtures, commit no keys or secrets, and keep production trust closed for missing or invalid signatures.
 
 ## Good Branch Shape
 

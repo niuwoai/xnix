@@ -305,6 +305,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/settings_profile_migration_test.go
       internal/runtime/appidentity/window_identity_routes_test.go
       internal/runtime/appidentity/kde_search_visibility_test.go
+      internal/runtime/appidentity/kde_notification_digest.go
+      internal/runtime/appidentity/kde_notification_digest_test.go
       internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
       cmd/xnix-runtime-go/desktop_safety_policy_commands.go
       cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
@@ -314,6 +316,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/settings_profile_migration_cli_test.go
       cmd/xnix-runtime-go/kde_search_visibility_commands.go
       cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
+      cmd/xnix-runtime-go/kde_notification_digest_commands.go
+      cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
@@ -337,6 +341,9 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/kde_search_visibility.go" => %w[xnix.runtime.kde_search_visibility.v1 kde-search-visibility-plan-preview receipt-required no-mime-association application-hidden DesktopFilesWritten MIMEDefaultsWritten KDECacheRefreshed HostFilesIndexed SearchIndexPersisted HostRootModified],
       "cmd/xnix-runtime-go/kde_search_visibility_commands.go" => %w[kde-search-visibility-plan-preview KDESearchVisibilityPlanPreview activation-root],
       "cmd/xnix-runtime-go/kde_search_visibility_cli_test.go" => %w[TestKDESearchVisibilityPlanPreviewCLI xnix.runtime.kde_search_visibility.v1],
+      "internal/runtime/appidentity/kde_notification_digest.go" => %w[xnix.runtime.kde_notification_digest.v1 kde-notification-digest-preview review-only-runtime-event-digest GetKDENotificationDigestPreview needs-review blocked-action permission-attention diagnostic-issue snapshot-warning readiness-change NotificationsSent LiveTrayBridgeEnabled RequestObjectsCreated PermissionGrantEnabled BackendLaunchEnabled HostRootModified],
+      "cmd/xnix-runtime-go/kde_notification_digest_commands.go" => %w[kde-notification-digest-preview repeatedNotificationDigestEvents KDENotificationDigestPreview],
+      "cmd/xnix-runtime-go/kde_notification_digest_cli_test.go" => %w[TestKDENotificationDigestPreviewCLI TestKDENotificationDigestPreviewCLIRejectsInvalidArguments xnix.runtime.kde_notification_digest.v1 notifications_sent live_tray_bridge_enabled backend_launch_enabled host_root_modified],
       "internal/runtime/appidentity/desktop_deactivation_dry_run.go" => %w[xnix.runtime.desktop_deactivation_dry_run.v1 desktop-deactivation-dry-run-preview missing-activation-receipt installed-file-digest-mismatch unknown-file-owner shared-mime-association active-session-evidence FileDeletionEnabled MIMEDefaultsWritten KDECacheRefreshed ReceiptsRewritten SessionTerminated TargetPathExposed HostRootModified],
       "cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go" => %w[desktop-deactivation-dry-run-preview DesktopDeactivationDryRunPreview active-session shared-mime],
       "cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go" => %w[TestDesktopDeactivationDryRunPreviewCLIReceiptBackedRemovable TestDesktopDeactivationDryRunPreviewCLIActiveSessionAndSharedMIMEBlock xnix.runtime.desktop_deactivation_dry_run.v1],
@@ -358,7 +365,7 @@ DOMAIN_DEFINITIONS = [
       "scripts/kde_first_presence_smoke.rb" => %w[xnix.kde_first_presence_smoke.v1 kde-first-presence-smoke --format preview_commands route_baseline entrypoint_count settings_field_ids forbidden_user_terms desktop-safety-policy-preview runtime-policy-explanation-cards-preview xnix.runtime.desktop_safety_policy.v1 xnix.runtime.policy_explanation_cards.v1 assert_desktop_safety_policy assert_runtime_policy_explanation_cards safety_false_keys prefix bottle backend_launch_enabled host_root_modified privileged_container_required real_portal_transport_enabled ai_provider_call_enabled],
       "test/test_kde_first_presence_smoke_script.rb" => %w[kde-first-presence-smoke xnix.kde_first_presence_smoke.v1 JSON.pretty_generate render_markdown settings_field_ids forbidden_user_terms desktop-safety-policy-preview xnix.runtime.desktop_safety_policy.v1 safety_false_keys]
     },
-    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots; KDE task-manager, KWin, tray status, and Compatibility Center page previews can consume durable execution session evidence while staying blocked by Runtime gates; KDE status, KDE application surface previews, Compatibility Center pages, desktop entry previews, KRunner query previews, Dolphin file-manager previews, desktop icon previews, MIME association previews, notification previews, settings previews, settings profile migration previews, task-manager identity previews, KWin window-rule previews, and Runtime policy explanation cards can consume shared Runtime evidence and present KDE-safe blocked, review-only, missing-evidence, and not-yet-implemented explanations; and the KDE-first presence smoke now emits text, JSON, and Markdown evidence that one digest-verified recipe appears across all seven KDE entry points while execution, backend launch, real Portal transport, network, privileged containers, AI provider calls, card persistence, request creation, permission grants, settings persistence, and host-root mutation remain disabled."
+    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots; KDE task-manager, KWin, tray status, and Compatibility Center page previews can consume durable execution session evidence while staying blocked by Runtime gates; KDE status, KDE application surface previews, Compatibility Center pages, desktop entry previews, KRunner query previews, Dolphin file-manager previews, desktop icon previews, MIME association previews, notification previews, notification digest previews, settings previews, settings profile migration previews, task-manager identity previews, KWin window-rule previews, and Runtime policy explanation cards can consume shared Runtime evidence and present KDE-safe blocked, review-only, missing-evidence, and not-yet-implemented explanations; and the KDE-first presence smoke now emits text, JSON, and Markdown evidence that one digest-verified recipe appears across all seven KDE entry points while execution, backend launch, real Portal transport, network, privileged containers, AI provider calls, card persistence, request creation, permission grants, settings persistence, and host-root mutation remain disabled."
   },
   {
     id: "execution-transaction-ledger",

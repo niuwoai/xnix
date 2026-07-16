@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.301] - 2026-07-17
+
+### Added
+
+- Added the Go Runtime `kde-notification-digest-preview` read model and CLI command for F5W7. The digest covers needs-review, blocked-action, permission-attention, diagnostic-issue, snapshot-warning, and readiness-change groups with deterministic deduplication keys, severity, user-safe labels, and next safe read-only routes.
+- Added digest-group, deduplication, malformed-input, blocked-route, redaction, CLI, notification-disabled, live-tray-disabled, request-disabled, permission-disabled, backend-disabled, and no-host-mutation tests.
+
+### Changed
+
+- Updated layout, implementation, release, product, and dispatch evidence so KDE notification digest coverage is recognized and the next train step advances to signed recipe verifier evidence.
+- Kept real notification delivery, live tray bridging, request creation, permission grants, backend launch, raw command exposure, state-root path exposure, and host-root mutation disabled.
+
 ## [0.2.300] - 2026-07-17
 
 ### Added
