@@ -18,7 +18,7 @@ func TestRuntimeRouteConvergencePreviewCommandRendersMigrationEvidence(t *testin
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.303" ||
+	if payload["version"] != currentProjectVersion(t) ||
 		payload["schema_version"] != "xnix.runtime.route_convergence.v1" ||
 		payload["request_type"] != "runtime-route-convergence-preview" ||
 		payload["report_type"] != "runtime-route-convergence" ||

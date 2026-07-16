@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.303
+> Last updated: 2026-07-17 | Baseline: v0.2.304
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,15 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | First-band review closure | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.304` | Consolidate the v0.2.301-v0.2.303 evidence into one deterministic Go train checkpoint before Runtime owner route migration begins. |
+| 1 | Runtime owner route migration | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.305` | Move the next review-only Runtime read route into the Go-owned service path with deterministic disabled-write evidence. |
 
 ## Best First Pick
 
-Start with first-band review closure.
+Start with Runtime owner route migration.
 
-First-band review closure is the best next handoff because KDE notification digest, signed recipe verifier, and restricted smoke packet evidence now exist and should be joined into one deterministic train checkpoint before route migration begins.
+Runtime owner route migration is the best next handoff because the first stabilization review band is closed and canonical Go test version checks now remove release-bump drift from the remaining route work.
 
-The checkpoint must stay read-only and must not run Docker or QEMU.
+The route migration must stay read-only and must not run Docker or QEMU.
 
 ## Good Branch Shape
 

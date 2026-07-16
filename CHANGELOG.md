@@ -2,6 +2,15 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.304] - 2026-07-17
+
+### Changed
+
+- Added a shared Go test-version reader and migrated Runtime app identity, Runtime CLI, owner, and owner CLI assertions to the canonical repository `VERSION` file.
+- Updated the full smoke report test to use the canonical version, added layout enforcement that rejects hardcoded Xnix train versions in Go tests, and classified the shared test-version files in mainline review.
+- Closed the first `0.2.301`-`0.2.304` stabilization review band and advanced the current dispatch recommendation to Runtime owner route migration at `0.2.305`.
+- Kept production D-Bus ownership, Runtime writes, backend launch, Docker, QEMU, network access, privileged containers, and host-root mutation disabled.
+
 ## [0.2.303] - 2026-07-17
 
 ### Added

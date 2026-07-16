@@ -17,7 +17,7 @@ func TestSessionBusSmokeTranscriptWrapsFullOwnerCallBatch(t *testing.T) {
 	writeCount := 0
 	unsupportedCount := 0
 	for index, step := range steps {
-		if step.Version != "0.2.300" ||
+		if step.Version != currentProjectVersion(t) ||
 			step.SchemaVersion != "xnix.runtime.owner_session_bus_smoke.v1" ||
 			step.RequestType != "runtime-owner-session-bus-smoke-step" ||
 			step.TranscriptType != "restricted-private-session-bus-owner-smoke" ||

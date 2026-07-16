@@ -18,7 +18,7 @@ func TestApplicationReadinessPreviewCommand(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.303" ||
+	if payload["version"] != currentProjectVersion(t) ||
 		payload["schema_version"] != "xnix.runtime.application_readiness.v1" ||
 		payload["request_type"] != "application-readiness-preview" ||
 		payload["graph_type"] != "runtime-application-readiness-evidence-graph" ||

@@ -24,7 +24,7 @@ func TestSupportBundleManifestPreviewSummarizesRedactedEvidence(t *testing.T) {
 		t.Fatalf("SupportBundleManifestPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.303" ||
+	if preview.Version != currentProjectVersion(t) ||
 		preview.SchemaVersion != "xnix.runtime.support_bundle_manifest.v1" ||
 		preview.RequestType != "support-bundle-manifest-preview" ||
 		preview.ManifestType != "redacted-offline-support-bundle-manifest" ||
@@ -164,7 +164,7 @@ func supportBundleTestHistory() diagnostics.RunHistory {
 func writeSupportBundleRuntimeRoot(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.303\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte(currentProjectVersion(t)+"\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 	return root

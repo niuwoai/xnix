@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.303
+> Last updated: 2026-07-17 | Current version: v0.2.304
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.304 checkpoint closes the first stabilization review band by making Go Runtime, owner, and CLI tests read the canonical repository `VERSION` file. Project-version assertions no longer drift across packages during the remaining train bumps; this test-only change does not enable production ownership, backend launch, Docker, QEMU, or host mutation.
 
 ## Core Goals
 

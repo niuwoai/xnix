@@ -26,7 +26,7 @@ func TestRuntimePolicyExplanationCardsPreviewCommand(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.303" ||
+	if payload["version"] != currentProjectVersion(t) ||
 		payload["schema_version"] != "xnix.runtime.policy_explanation_cards.v1" ||
 		payload["request_type"] != "runtime-policy-explanation-cards-preview" ||
 		payload["card_deck_type"] != "kde-runtime-policy-explanation-card-deck" ||

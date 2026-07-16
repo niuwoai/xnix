@@ -18,7 +18,7 @@ func TestRuntimeLiveOwnerGatePreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.303" ||
+	if payload["version"] != currentProjectVersion(t) ||
 		payload["schema_version"] != "xnix.runtime.live_owner_gate.v1" ||
 		payload["request_type"] != "runtime-live-owner-gate-preview" ||
 		payload["gate_type"] != "runtime-live-owner-gate" ||

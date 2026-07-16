@@ -105,8 +105,11 @@ LANES = [
     patterns: [
       %r{\Acmd/xnix-runtime-go/main\.go\z},
       %r{\Acmd/xnix-runtime-go/main_test\.go\z},
+      %r{\Acmd/xnix-runtime-go/version_test\.go\z},
       %r{\Ainternal/runtime/appidentity/identity\.go\z},
       %r{\Ainternal/runtime/appidentity/identity_test\.go\z},
+      %r{\Ainternal/runtime/appidentity/version_test\.go\z},
+      %r{\Ainternal/testversion/},
       %r{\Atest/test_runtime_core\.rb\z},
       %r{\Atest/test_runtime_daemon\.rb\z},
       %r{\Atest/test_runtime_live_owner_gate\.rb\z},

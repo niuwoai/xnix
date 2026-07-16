@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.303"
+EXPECTED_VERSION = "0.2.304"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -164,6 +164,7 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
+  cmd/xnix-runtime-go/version_test.go
   cmd/xnix-runtime-go/application_readiness_commands.go
   cmd/xnix-runtime-go/application_readiness_cli_test.go
   cmd/xnix-runtime-go/application_upgrade_impact_commands.go
@@ -231,7 +232,9 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/test_repair_group_cli_test.go
   cmd/xnix-runtime-owner/main.go
   cmd/xnix-runtime-owner/main_test.go
+  cmd/xnix-runtime-owner/version_test.go
   internal/runtime/appidentity/engine_catalog.go
+  internal/runtime/appidentity/version_test.go
   internal/runtime/appidentity/run_plan.go
   internal/runtime/appidentity/application_readiness.go
   internal/runtime/appidentity/application_readiness_test.go
@@ -327,6 +330,7 @@ REQUIRED_FILES = %w[
   internal/runtime/artifact/stage.go
   internal/runtime/owner/candidate.go
   internal/runtime/owner/candidate_test.go
+  internal/runtime/owner/version_test.go
   internal/runtime/owner/dispatch.go
   internal/runtime/owner/dispatch_test.go
   internal/runtime/owner/lifecycle.go
@@ -341,6 +345,8 @@ REQUIRED_FILES = %w[
   internal/runtime/portal/read_test.go
   internal/runtime/snapshot/store.go
   internal/runtime/snapshot/store_test.go
+  internal/testversion/version.go
+  internal/testversion/version_test.go
   libexec/xnix/compatd
   scripts/container.rb
   scripts/dbus_session_smoke.rb
@@ -579,6 +585,16 @@ assert(read_project_file("VERSION").strip == EXPECTED_VERSION, "VERSION must be 
 REQUIRED_VERSION_MARKERS.each do |relative_path, marker|
   assert(read_project_file(relative_path).include?(marker), "#{relative_path} must reference #{EXPECTED_VERSION}")
 end
+
+test_version_source = read_project_file("internal/testversion/version.go")
+%w[Current ReadFrom VERSION os.ReadFile].each do |token|
+  assert(test_version_source.include?(token), "Go test version helper must include #{token}")
+end
+hardcoded_go_test_versions = Dir.glob(PROJECT_ROOT.join("{cmd,internal}/**/*_test.go").to_s).select do |path|
+  File.read(path).match?(/\b0\.2\.\d+\b/)
+end
+assert(hardcoded_go_test_versions.empty?,
+       "Go tests must read the canonical VERSION file instead of hardcoding project versions: #{hardcoded_go_test_versions.join(', ')}")
 
 windows_workstreams = read_project_file("docs/claude-code-windows-compatibility-workstreams.md")
 %w[CW1 CW2 CW3 CW4 CW5 CW6 CW7 CW8 CW9 CW10 CW11].each do |workstream_id|
