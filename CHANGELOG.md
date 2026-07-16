@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.313] - 2026-07-17
+
+### Added
+
+- Added `kde-fake-execution-evidence-record` and the Go `KDEFakeExecutionEvidenceRecord` orchestration model for the digest-verified `org.xnix.sample.notepad` fixture.
+- Added controlled test-root persistence and readback for one staged lifecycle receipt, one blocked execution transaction, and one blocked session status record.
+- Added six evidence checks for recipe identity, lifecycle readiness, transaction readback, session readback, four-surface KDE fan-out, and closed unsafe gates.
+
+### Changed
+
+- Started the `0.2.313`-`0.2.316` evidence-join band with an explicit `--mode test-only` write boundary and relative receipt paths that do not expose the configured state root.
+- Preserved development-signature, staged lifecycle, missing Portal receipt, missing snapshot baseline, and Runtime write-gate blocked reasons for the next train slices.
+- Kept real Portal calls, launch, execution, compatibility process start, production bus ownership, network access, privileged containers, backend detail exposure, and host-root mutation disabled.
+
 ## [0.2.312] - 2026-07-17
 
 ### Added

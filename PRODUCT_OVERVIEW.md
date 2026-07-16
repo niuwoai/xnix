@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.312
+> Last updated: 2026-07-17 | Current version: v0.2.313
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.313 checkpoint starts the fake-execution evidence band with `kde-fake-execution-evidence-record`. Under an existing explicit state root and mandatory `--mode test-only`, the Go Runtime stages the digest-verified `org.xnix.sample.notepad` lifecycle with Portal and snapshot evidence still pending, persists a blocked execution transaction and blocked session status, reads all three relative receipts back, and fans the session state out to task manager, KWin, tray, and Compatibility Center. Six checks pass while development-signature trust, lifecycle readiness, Portal permission, snapshot baseline, and Runtime write-gate reasons remain visible; absolute state-root paths, real Portal calls, launch, execution, compatibility process start, production bus ownership, network access, privileged containers, backend details, and host-root mutation remain disabled.
 
 The v0.2.312 checkpoint closes the offline KDE identity band with `xnix-runtime-owner --kde-identity-checkpoint`. One record proves the digest-verified `org.xnix.sample.notepad` recipe, exact nine-surface identity coverage, cross-surface parity, owner-local routing, in-process service handling, 61 formal routes, 66 owner reads, five owner-local reads, 66 smoke reads, and four write denials. All six identity checks pass while production signature readiness, production bus ownership, Runtime writes, desktop persistence, notification delivery, launch, execution, backend process start, network access, and host mutation remain disabled.
 

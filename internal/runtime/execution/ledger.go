@@ -145,7 +145,7 @@ func portalPermissionReceiptStates(receipts []PortalPermissionReceipt) []string 
 
 // Load returns one persisted transaction record by request id.
 func (l *Ledger) Load(requestID string) (LedgerRecord, error) {
-	_, path, err := l.recordPath(requestID)
+	relativePath, path, err := l.recordPath(requestID)
 	if err != nil {
 		return LedgerRecord{}, err
 	}
@@ -159,6 +159,26 @@ func (l *Ledger) Load(requestID string) (LedgerRecord, error) {
 	}
 	if record.RequestID != requestID {
 		return LedgerRecord{}, fmt.Errorf("execution ledger record id mismatch: %q", record.RequestID)
+	}
+	if record.SchemaVersion != ledgerSchemaVersion || record.RecordType != "execution-transaction-ledger-record" || record.Source != "go-runtime-state-root-execution-ledger" {
+		return LedgerRecord{}, errors.New("execution ledger record has unsupported schema")
+	}
+	if record.RelativePath != relativePath || record.ApplicationID == "" || record.Transaction.ApplicationID != record.ApplicationID || record.Transaction.RequestID != requestID {
+		return LedgerRecord{}, errors.New("execution ledger record identity or path mismatch")
+	}
+	storedDigest := record.SHA256
+	record.SHA256 = ""
+	_, expectedDigest, err := marshalRecord(record)
+	if err != nil {
+		return LedgerRecord{}, err
+	}
+	if storedDigest == "" || storedDigest != expectedDigest {
+		return LedgerRecord{}, errors.New("execution ledger record digest mismatch")
+	}
+	record.SHA256 = storedDigest
+	if record.StateRootPathExposed || record.LaunchAllowed || record.LaunchEnabled || record.BackendStarted || record.PermissionGranted || record.HostRootModified || record.NetworkRequired || record.PrivilegedContainerRequired || record.BackendDetailsExposed ||
+		record.Transaction.LaunchAllowed || record.Transaction.LaunchEnabled || record.Transaction.BackendStarted || record.Transaction.PermissionGranted || record.Transaction.HostRootModified || record.Transaction.NetworkRequired {
+		return LedgerRecord{}, errors.New("execution ledger record has unsafe enabled gates")
 	}
 	return record, nil
 }

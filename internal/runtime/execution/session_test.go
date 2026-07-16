@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -118,5 +119,33 @@ func TestRecordSessionRejectsMissingTransaction(t *testing.T) {
 		if _, err := ledger.RecordSession(requestID); err == nil {
 			t.Fatalf("unsafe request id %q must be rejected", requestID)
 		}
+	}
+}
+
+func TestLoadSessionRejectsTamperedReceipt(t *testing.T) {
+	root := t.TempDir()
+	ledger, err := NewLedger(root)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	transaction, err := ledger.Record(readyLedgerTransaction(t))
+	if err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	session, err := ledger.RecordSession(transaction.RequestID)
+	if err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(session.RelativePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read session receipt: %v", err)
+	}
+	tampered := bytes.Replace(data, []byte(`"desktop_safe_summary": "`), []byte(`"desktop_safe_summary": "tampered `), 1)
+	if err := os.WriteFile(path, tampered, 0o600); err != nil {
+		t.Fatalf("tamper session receipt: %v", err)
+	}
+	if _, err := ledger.LoadSession(session.RequestID); err == nil {
+		t.Fatal("expected digest mismatch for tampered session receipt")
 	}
 }

@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -121,6 +122,30 @@ func TestLedgerGuardsUnsafeRootsAndIDs(t *testing.T) {
 	}
 	if _, err := ledger.Record(Transaction{RequestID: "txn-empty-app"}); err == nil {
 		t.Fatalf("empty application id must be rejected")
+	}
+}
+
+func TestLedgerLoadRejectsTamperedReceipt(t *testing.T) {
+	root := t.TempDir()
+	ledger, err := NewLedger(root)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	record, err := ledger.Record(readyLedgerTransaction(t))
+	if err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(record.RelativePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read receipt: %v", err)
+	}
+	tampered := bytes.Replace(data, []byte(`"summary": "`), []byte(`"summary": "tampered `), 1)
+	if err := os.WriteFile(path, tampered, 0o600); err != nil {
+		t.Fatalf("tamper receipt: %v", err)
+	}
+	if _, err := ledger.Load(record.RequestID); err == nil {
+		t.Fatal("expected digest mismatch for tampered execution receipt")
 	}
 }
 

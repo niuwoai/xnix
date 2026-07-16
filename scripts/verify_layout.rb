@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.312"
+EXPECTED_VERSION = "0.2.313"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -220,6 +220,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
   cmd/xnix-runtime-go/kde_offline_application_identity_commands.go
   cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
+  cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go
+  cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -279,6 +281,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_notification_digest_test.go
   internal/runtime/appidentity/kde_offline_application_identity.go
   internal/runtime/appidentity/kde_offline_application_identity_test.go
+  internal/runtime/appidentity/kde_fake_execution_evidence.go
+  internal/runtime/appidentity/kde_fake_execution_evidence_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -2062,6 +2066,26 @@ go_runtime_offline_kde_identity_cli_source = read_project_file("cmd/xnix-runtime
   assert(go_runtime_offline_kde_identity_cli_source.include?(token), "Go Runtime offline KDE application identity CLI must include #{token}")
 end
 
+go_runtime_kde_fake_execution_source = read_project_file("internal/runtime/appidentity/kde_fake_execution_evidence.go")
+%w[KDEFakeExecutionEvidenceRecord KDEFakeExecutionEvidenceOptions NewKDEFakeExecutionEvidenceRecord xnix.runtime.kde_fake_execution_evidence.v1 kde-fake-execution-evidence-record test-only explicit-test-root-only prepareFakeExecutionLifecycle execution-ledger execution-session-record lifecycle-staged StateRootWritesEnabled StateRootRecordCount FakeExecutionRecorded AllChecksPassed].each do |token|
+  assert(go_runtime_kde_fake_execution_source.include?(token), "Go Runtime KDE fake execution evidence must include #{token}")
+end
+%w[StateRootPathExposed LaunchAllowed LaunchEnabled ExecutionStarted BackendProcessStarted RealPortalCallEnabled ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_fake_execution_source.include?(token), "Go Runtime KDE fake execution evidence must expose safety gate #{token}")
+end
+
+go_runtime_kde_fake_execution_test_source = read_project_file("internal/runtime/appidentity/kde_fake_execution_evidence_test.go")
+%w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs staged blocked explicit-test-root-only].each do |token|
+  assert(go_runtime_kde_fake_execution_test_source.include?(token), "Go Runtime KDE fake execution tests must include #{token}")
+end
+
+go_runtime_kde_fake_execution_cli_source = read_project_file("cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go") +
+                                             read_project_file("cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go") +
+                                             read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-fake-execution-evidence-record runKDEFakeExecutionEvidenceRecord LoadRecipeFromRegistry NewKDEFakeExecutionEvidenceRecord test-only TestKDEFakeExecutionEvidenceRecordCommandWritesControlledEvidence TestKDEFakeExecutionEvidenceRecordCommandRequiresExplicitTestBoundary all_checks_passed state_root_writes_enabled launch_enabled backend_process_started host_root_modified].each do |token|
+  assert(go_runtime_kde_fake_execution_cli_source.include?(token), "Go Runtime KDE fake execution CLI must include #{token}")
+end
+
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
                                                 read_project_file("internal/runtime/owner/service_test.go") +
                                                 read_project_file("cmd/xnix-runtime-owner/main_test.go")
@@ -3172,6 +3196,8 @@ execution_ledger_source = read_project_file("internal/runtime/execution/ledger.g
   BackendDetailsExposed
   refusing\ to\ use\ filesystem\ root
   path\ traversal
+  execution\ ledger\ record\ digest\ mismatch
+  execution\ ledger\ record\ has\ unsafe\ enabled\ gates
 ].each do |token|
   assert(execution_ledger_source.include?(token.gsub("\\ ", " ")), "Execution ledger must include #{token}")
 end
@@ -3196,8 +3222,17 @@ execution_session_source = read_project_file("internal/runtime/execution/session
   BackendProcessStarted
   HostRootModified
   BackendDetailsExposed
+  LoadSession
+  execution\ session\ record\ digest\ mismatch
+  execution\ session\ record\ has\ unsafe\ enabled\ gates
 ].each do |token|
-  assert(execution_session_source.include?(token), "Execution session record must include #{token}")
+  assert(execution_session_source.include?(token.gsub("\\ ", " ")), "Execution session record must include #{token}")
+end
+
+execution_receipt_integrity_test_source = read_project_file("internal/runtime/execution/ledger_test.go") +
+                                          read_project_file("internal/runtime/execution/session_test.go")
+%w[TestLedgerLoadRejectsTamperedReceipt TestLoadSessionRejectsTamperedReceipt tampered\ execution\ receipt tampered\ session\ receipt].each do |token|
+  assert(execution_receipt_integrity_test_source.include?(token.gsub("\\ ", " ")), "Execution receipt integrity tests must include #{token}")
 end
 
 execution_ledger_cli_source = read_project_file("cmd/xnix-runtime-go/execution_ledger_commands.go")

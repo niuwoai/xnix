@@ -322,6 +322,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_notification_digest_test.go
       internal/runtime/appidentity/kde_offline_application_identity.go
       internal/runtime/appidentity/kde_offline_application_identity_test.go
+      internal/runtime/appidentity/kde_fake_execution_evidence.go
+      internal/runtime/appidentity/kde_fake_execution_evidence_test.go
       internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
       cmd/xnix-runtime-go/desktop_safety_policy_commands.go
       cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
@@ -335,6 +337,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
       cmd/xnix-runtime-go/kde_offline_application_identity_commands.go
       cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
+      cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go
+      cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
@@ -345,6 +349,7 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_search_visibility.go
       internal/runtime/appidentity/desktop_deactivation_dry_run.go
       internal/runtime/appidentity/settings_profile_migration.go
+      internal/runtime/appidentity/kde_fake_execution_evidence.go
     ],
     smoke_files: %w[
       scripts/runtime_activation_smoke.rb
@@ -364,6 +369,10 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/kde_offline_application_identity.go" => %w[xnix.runtime.kde_offline_application_identity.v1 kde-offline-application-identity-preview GetKDEOfflineApplicationIdentity GetKDEOfflineApplicationIdentityPreview DesktopEntry MIMEAssociations KRunner TaskManager KWin Tray Notification Settings CompatibilityCenter CrossSurfaceIdentityConsistent NotificationIDNamespace DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled NotificationActionsEnabled SettingsPersisted SettingsPersistenceEnabled CompatibilityCenterPersisted CompatibilityCenterActionsEnabled LaunchEnabled ExecutionStarted BackendProcessStarted HostRootModified],
       "cmd/xnix-runtime-go/kde_offline_application_identity_commands.go" => %w[kde-offline-application-identity-preview runKDEOfflineApplicationIdentityPreview parseKDEOfflineApplicationIdentityPreviewSource LoadRecipeFromRegistry],
       "cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go" => %w[TestKDEOfflineApplicationIdentityPreviewCommandUsesSampleFixture TestKDEOfflineApplicationIdentityPreviewCommandRejectsIncompleteArguments xnix.runtime.kde_offline_application_identity.v1 cross_surface_identity_consistent launch_enabled execution_started host_root_modified],
+      "internal/runtime/appidentity/kde_fake_execution_evidence.go" => %w[xnix.runtime.kde_fake_execution_evidence.v1 kde-fake-execution-evidence-record test-only explicit-test-root-only NewKDEFakeExecutionEvidenceRecord prepareFakeExecutionLifecycle execution-ledger execution-session-record StateRootWritesEnabled StateRootPathExposed FakeExecutionRecorded LaunchAllowed LaunchEnabled ExecutionStarted BackendProcessStarted RealPortalCallEnabled ProductionBusOwnership HostRootModified],
+      "internal/runtime/appidentity/kde_fake_execution_evidence_test.go" => %w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs staged blocked explicit-test-root-only],
+      "cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go" => %w[kde-fake-execution-evidence-record runKDEFakeExecutionEvidenceRecord test-only LoadRecipeFromRegistry NewKDEFakeExecutionEvidenceRecord],
+      "cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go" => %w[TestKDEFakeExecutionEvidenceRecordCommandWritesControlledEvidence TestKDEFakeExecutionEvidenceRecordCommandRequiresExplicitTestBoundary all_checks_passed state_root_writes_enabled launch_enabled backend_process_started host_root_modified],
       "internal/runtime/owner/dispatch.go" => %w[GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents KDENotificationDigestPreview GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview NewKDEOfflineApplicationIdentityPreview],
       "internal/runtime/owner/service_test.go" => %w[TestServiceCallServesOwnerLocalNotificationDigest GetKDENotificationDigestPreview TestServiceCallServesOwnerLocalSignedRecipeVerification GetSignedRecipeVerificationPreview TestServiceCallServesOwnerLocalRestrictedSmokePacket GetRestrictedProductSmokePacketPreview TestServiceCallServesOwnerLocalOfflineKDEIdentity GetKDEOfflineApplicationIdentityPreview read-dispatch],
       "cmd/xnix-runtime-owner/main_test.go" => %w[TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch GetKDENotificationDigestPreview kde-notification-digest-preview TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch GetSignedRecipeVerificationPreview signed-recipe-verifier-preview TestRuntimeOwnerCommandRendersRestrictedSmokeOwnerLocalReadDispatch GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview TestRuntimeOwnerCommandRendersOfflineKDEIdentityOwnerLocalReadDispatch GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview],
@@ -422,8 +431,10 @@ DOMAIN_DEFINITIONS = [
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/execution/execution.go" => %w[blocked runtimeWriteGate],
-      "internal/runtime/execution/ledger.go" => %w[execution-transaction-ledger-record go-runtime-state-root-execution-ledger state_root_path_exposed portal_permission_receipt_relative_paths portal_permission_receipt_consumed],
-      "internal/runtime/execution/session.go" => %w[xnix.runtime.execution_session_record.v1 execution-session-status-record go-runtime-state-root-execution-session StatusPersisted SessionActive TaskManagerEntryActive LiveTrayBridgeEnabled],
+      "internal/runtime/execution/ledger.go" => %w[execution-transaction-ledger-record go-runtime-state-root-execution-ledger state_root_path_exposed portal_permission_receipt_relative_paths portal_permission_receipt_consumed] + ["execution ledger record digest mismatch", "execution ledger record has unsafe enabled gates"],
+      "internal/runtime/execution/ledger_test.go" => %w[TestLedgerLoadRejectsTamperedReceipt] + ["tampered execution receipt"],
+      "internal/runtime/execution/session.go" => %w[xnix.runtime.execution_session_record.v1 execution-session-status-record go-runtime-state-root-execution-session LoadSession StatusPersisted SessionActive TaskManagerEntryActive LiveTrayBridgeEnabled] + ["execution session record digest mismatch", "execution session record has unsafe enabled gates"],
+      "internal/runtime/execution/session_test.go" => %w[TestLoadSessionRejectsTamperedReceipt] + ["tampered session receipt"],
       "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record execution-session-record state-root portal-request executionLedgerPortalReceipts RecordSession],
       "cmd/xnix-runtime-go/execution_ledger_cli_test.go" => %w[TestExecutionLedgerRecordCommandConsumesPortalReceipt TestExecutionLedgerRecordCommandBlocksDeniedPortalReceipt TestExecutionSessionRecordCommandPersistsStatusFromLedger portal_permission_receipt_count],
       "internal/runtime/appidentity/application_readiness.go" => %w[xnix.runtime.application_readiness.v1 application-readiness-preview runtime-application-readiness-evidence-graph RecipeTrustDecision WriteGateDecision RealPortalTransportEnabled BackendLaunchEnabled StateRootPathExposed RawCommandExposed],

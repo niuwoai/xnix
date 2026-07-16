@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,6 +133,42 @@ func (l *Ledger) RecordSession(requestID string) (SessionRecord, error) {
 	}
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return SessionRecord{}, fmt.Errorf("write execution session record: %w", err)
+	}
+	return record, nil
+}
+
+// LoadSession reads and verifies one persisted session status record.
+func (l *Ledger) LoadSession(requestID string) (SessionRecord, error) {
+	relativePath, path, err := l.sessionRecordPath(requestID)
+	if err != nil {
+		return SessionRecord{}, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return SessionRecord{}, fmt.Errorf("read execution session record: %w", err)
+	}
+	var record SessionRecord
+	if err := json.Unmarshal(data, &record); err != nil {
+		return SessionRecord{}, fmt.Errorf("parse execution session record: %w", err)
+	}
+	if record.SchemaVersion != sessionRecordSchemaVersion || record.RecordType != "execution-session-status-record" || record.Source != "go-runtime-state-root-execution-session" {
+		return SessionRecord{}, errors.New("execution session record has unsupported schema")
+	}
+	if record.RequestID != requestID || record.ApplicationID == "" || record.RelativePath != relativePath {
+		return SessionRecord{}, errors.New("execution session record identity or path mismatch")
+	}
+	storedDigest := record.SHA256
+	record.SHA256 = ""
+	_, expectedDigest, err := marshalSessionRecord(record)
+	if err != nil {
+		return SessionRecord{}, err
+	}
+	if storedDigest == "" || storedDigest != expectedDigest {
+		return SessionRecord{}, errors.New("execution session record digest mismatch")
+	}
+	record.SHA256 = storedDigest
+	if record.StateRootPathExposed || record.SessionCreated || record.SessionRegistered || record.SessionActive || record.LiveStateObserved || record.WindowObserved || record.TaskManagerEntryActive || record.KWinRuleApplied || record.LiveTrayBridgeEnabled || record.LaunchAllowed || record.LaunchEnabled || record.ExecutionStarted || record.BackendProcessStarted || record.PermissionGranted || record.HostRootModified || record.NetworkRequired || record.PrivilegedContainerRequired || record.BackendDetailsExposed {
+		return SessionRecord{}, errors.New("execution session record has unsafe enabled gates")
 	}
 	return record, nil
 }
