@@ -195,6 +195,17 @@ func (l *Lifecycle) Block(applicationID string, profile Profile, reason string) 
 	})
 }
 
+// Retire decommissions an environment. A retired environment holds no satisfied
+// gates, repair hints, or block reason, and can be reactivated by planning it
+// again. It launches nothing and mutates no host state.
+func (l *Lifecycle) Retire(applicationID string, profile Profile) (Record, error) {
+	return l.transition(applicationID, profile, StateRetired, func(r *Record) {
+		r.SatisfiedGates = []string{}
+		r.RepairHints = []string{}
+		r.BlockReason = ""
+	})
+}
+
 // List returns every persisted environment record, sorted by key.
 func (l *Lifecycle) List() ([]Record, error) {
 	entries, err := os.ReadDir(l.dir)

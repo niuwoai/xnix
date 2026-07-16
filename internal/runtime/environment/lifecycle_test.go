@@ -119,6 +119,44 @@ func TestBlockAndReset(t *testing.T) {
 	}
 }
 
+func TestRetireDecommissionsAndReactivates(t *testing.T) {
+	lc, _ := New(t.TempDir())
+	lc.Plan(app, ProfileLocal)
+	lc.Stage(app, ProfileLocal)
+	lc.SatisfyGate(app, ProfileLocal, "recipe-trust")
+
+	retired, err := lc.Retire(app, ProfileLocal)
+	if err != nil {
+		t.Fatalf("Retire: %v", err)
+	}
+	if retired.State != StateRetired || len(retired.SatisfiedGates) != 0 || retired.LaunchEnabled {
+		t.Fatalf("retired environment wrong: %#v", retired)
+	}
+
+	// A retired environment survives reload.
+	got, err := lc.Get(app, ProfileLocal)
+	if err != nil || got.State != StateRetired {
+		t.Fatalf("retired state must persist: %#v err=%v", got, err)
+	}
+
+	// retired -> planned reactivates.
+	planned, err := lc.Plan(app, ProfileLocal)
+	if err != nil {
+		t.Fatalf("reactivate via Plan: %v", err)
+	}
+	if planned.State != StatePlanned {
+		t.Fatalf("reactivation did not plan: %#v", planned)
+	}
+}
+
+func TestRetireRejectedFromMissing(t *testing.T) {
+	lc, _ := New(t.TempDir())
+	// missing -> retired is not an allowed transition.
+	if _, err := lc.Retire(app, ProfileLocal); err == nil {
+		t.Fatalf("retiring a missing environment must be rejected")
+	}
+}
+
 func TestGatesOnlyWhileStagedOrReadyAndUnknownRejected(t *testing.T) {
 	lc, _ := New(t.TempDir())
 	lc.Plan(app, ProfileLocal)

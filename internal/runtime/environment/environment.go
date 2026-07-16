@@ -35,11 +35,14 @@ const (
 	StateRepairRequired State = "repair-required"
 	// StateBlocked means the environment is held closed (policy or safety).
 	StateBlocked State = "blocked"
+	// StateRetired means the environment was decommissioned. It holds no gates
+	// and can be reactivated by planning it again.
+	StateRetired State = "retired"
 )
 
 func (s State) valid() bool {
 	switch s {
-	case StateMissing, StatePlanned, StateStaged, StateReady, StateRepairRequired, StateBlocked:
+	case StateMissing, StatePlanned, StateStaged, StateReady, StateRepairRequired, StateBlocked, StateRetired:
 		return true
 	default:
 		return false
@@ -134,11 +137,12 @@ func newRecord(applicationID string, profile Profile) (Record, error) {
 // allowedTransitions maps each state to the states it may move to.
 var allowedTransitions = map[State][]State{
 	StateMissing:        {StatePlanned, StateBlocked},
-	StatePlanned:        {StateStaged, StateRepairRequired, StateBlocked},
-	StateStaged:         {StateReady, StateRepairRequired, StateBlocked},
-	StateReady:          {StateRepairRequired, StateBlocked},
-	StateRepairRequired: {StateStaged, StateBlocked},
-	StateBlocked:        {StatePlanned},
+	StatePlanned:        {StateStaged, StateRepairRequired, StateBlocked, StateRetired},
+	StateStaged:         {StateReady, StateRepairRequired, StateBlocked, StateRetired},
+	StateReady:          {StateRepairRequired, StateBlocked, StateRetired},
+	StateRepairRequired: {StateStaged, StateBlocked, StateRetired},
+	StateBlocked:        {StatePlanned, StateRetired},
+	StateRetired:        {StatePlanned},
 }
 
 func canTransition(from, to State) bool {
