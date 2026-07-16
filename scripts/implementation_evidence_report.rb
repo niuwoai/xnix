@@ -317,6 +317,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_search_visibility_test.go
       internal/runtime/appidentity/kde_notification_digest.go
       internal/runtime/appidentity/kde_notification_digest_test.go
+      internal/runtime/appidentity/kde_offline_application_identity.go
+      internal/runtime/appidentity/kde_offline_application_identity_test.go
       internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
       cmd/xnix-runtime-go/desktop_safety_policy_commands.go
       cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
@@ -328,6 +330,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
       cmd/xnix-runtime-go/kde_notification_digest_commands.go
       cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
+      cmd/xnix-runtime-go/kde_offline_application_identity_commands.go
+      cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
@@ -354,6 +358,9 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/kde_notification_digest.go" => %w[xnix.runtime.kde_notification_digest.v1 kde-notification-digest-preview review-only-runtime-event-digest GetKDENotificationDigestPreview needs-review blocked-action permission-attention diagnostic-issue snapshot-warning readiness-change NotificationsSent LiveTrayBridgeEnabled RequestObjectsCreated PermissionGrantEnabled BackendLaunchEnabled HostRootModified],
       "cmd/xnix-runtime-go/kde_notification_digest_commands.go" => %w[kde-notification-digest-preview repeatedNotificationDigestEvents KDENotificationDigestPreview],
       "cmd/xnix-runtime-go/kde_notification_digest_cli_test.go" => %w[TestKDENotificationDigestPreviewCLI TestKDENotificationDigestPreviewCLIRejectsInvalidArguments xnix.runtime.kde_notification_digest.v1 notifications_sent live_tray_bridge_enabled backend_launch_enabled host_root_modified],
+      "internal/runtime/appidentity/kde_offline_application_identity.go" => %w[xnix.runtime.kde_offline_application_identity.v1 kde-offline-application-identity-preview GetKDEOfflineApplicationIdentity GetKDEOfflineApplicationIdentityPreview DesktopEntry MIMEAssociations KRunner TaskManager KWin CrossSurfaceIdentityConsistent DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LaunchEnabled ExecutionStarted BackendProcessStarted HostRootModified],
+      "cmd/xnix-runtime-go/kde_offline_application_identity_commands.go" => %w[kde-offline-application-identity-preview runKDEOfflineApplicationIdentityPreview parseKDEOfflineApplicationIdentityPreviewSource LoadRecipeFromRegistry],
+      "cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go" => %w[TestKDEOfflineApplicationIdentityPreviewCommandUsesSampleFixture TestKDEOfflineApplicationIdentityPreviewCommandRejectsIncompleteArguments xnix.runtime.kde_offline_application_identity.v1 cross_surface_identity_consistent launch_enabled execution_started host_root_modified],
       "internal/runtime/owner/dispatch.go" => %w[GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents KDENotificationDigestPreview GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket],
       "internal/runtime/owner/service_test.go" => %w[TestServiceCallServesOwnerLocalNotificationDigest GetKDENotificationDigestPreview TestServiceCallServesOwnerLocalSignedRecipeVerification GetSignedRecipeVerificationPreview TestServiceCallServesOwnerLocalRestrictedSmokePacket GetRestrictedProductSmokePacketPreview read-dispatch],
       "cmd/xnix-runtime-owner/main_test.go" => %w[TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch GetKDENotificationDigestPreview kde-notification-digest-preview TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch GetSignedRecipeVerificationPreview signed-recipe-verifier-preview TestRuntimeOwnerCommandRendersRestrictedSmokeOwnerLocalReadDispatch GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview],

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.308"
+EXPECTED_VERSION = "0.2.309"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -218,6 +218,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
   cmd/xnix-runtime-go/kde_notification_digest_commands.go
   cmd/xnix-runtime-go/kde_notification_digest_cli_test.go
+  cmd/xnix-runtime-go/kde_offline_application_identity_commands.go
+  cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -275,6 +277,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_search_visibility_test.go
   internal/runtime/appidentity/kde_notification_digest.go
   internal/runtime/appidentity/kde_notification_digest_test.go
+  internal/runtime/appidentity/kde_offline_application_identity.go
+  internal/runtime/appidentity/kde_offline_application_identity_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -2011,6 +2015,26 @@ end
 go_runtime_notification_digest_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_notification_digest_cli_test.go")
 %w[TestKDENotificationDigestPreviewCLI TestKDENotificationDigestPreviewCLIRejectsInvalidArguments xnix.runtime.kde_notification_digest.v1 notifications_sent live_tray_bridge_enabled request_objects_created permission_grant_enabled backend_launch_enabled host_root_modified].each do |token|
   assert(go_runtime_notification_digest_cli_test_source.include?(token), "Go Runtime KDE notification digest CLI tests must include #{token}")
+end
+
+go_runtime_offline_kde_identity_source = read_project_file("internal/runtime/appidentity/kde_offline_application_identity.go")
+%w[KDEOfflineApplicationIdentityPreview KDEOfflineDesktopEntryIdentity KDEOfflineMIMEIdentity KDEOfflineKRunnerIdentity KDEOfflineTaskManagerIdentity KDEOfflineKWinIdentity xnix.runtime.kde_offline_application_identity.v1 kde-offline-application-identity-preview GetKDEOfflineApplicationIdentity GetKDEOfflineApplicationIdentityPreview desktop-entry mime-associations krunner task-manager kwin CrossSurfaceIdentityConsistent].each do |token|
+  assert(go_runtime_offline_kde_identity_source.include?(token), "Go Runtime offline KDE application identity must include #{token}")
+end
+%w[DesktopFilesWritten MIMEDefaultsWritten KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LaunchEnabled ExecutionStarted BackendProcessStarted NetworkRequired HostRootModified RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_offline_kde_identity_source.include?(token), "Go Runtime offline KDE application identity must expose disabled gate #{token}")
+end
+
+go_runtime_offline_kde_identity_test_source = read_project_file("internal/runtime/appidentity/kde_offline_application_identity_test.go")
+%w[TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces TestKDEOfflineApplicationIdentityPreviewRequiresVerifiedRegistryRecipe CrossSurfaceIdentityConsistent].each do |token|
+  assert(go_runtime_offline_kde_identity_test_source.include?(token), "Go Runtime offline KDE application identity tests must include #{token}")
+end
+
+go_runtime_offline_kde_identity_cli_source = read_project_file("cmd/xnix-runtime-go/kde_offline_application_identity_commands.go") +
+                                         read_project_file("cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go") +
+                                         read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-offline-application-identity-preview runKDEOfflineApplicationIdentityPreview parseKDEOfflineApplicationIdentityPreviewSource LoadRecipeFromRegistry TestKDEOfflineApplicationIdentityPreviewCommandUsesSampleFixture TestKDEOfflineApplicationIdentityPreviewCommandRejectsIncompleteArguments xnix.runtime.kde_offline_application_identity.v1].each do |token|
+  assert(go_runtime_offline_kde_identity_cli_source.include?(token), "Go Runtime offline KDE application identity CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +

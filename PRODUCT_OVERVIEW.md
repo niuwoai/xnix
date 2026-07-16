@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.308
+> Last updated: 2026-07-17 | Current version: v0.2.309
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.309 checkpoint starts the offline KDE application identity band with `kde-offline-application-identity-preview`. It loads the digest-verified `org.xnix.sample.notepad` registry fixture, renders its standard desktop entry and MIME associations in memory, and verifies that desktop entry, MIME, KRunner, task-manager, and KWin surfaces share one application id, name, icon, desktop file, launcher URL, and grouping identity. The read model exposes content digests instead of raw commands or host paths; desktop writes, MIME changes, KRunner persistence, task-manager activation, KWin rule application, launch, execution, backend process start, network access, and host mutation remain disabled.
 
 The v0.2.308 checkpoint closes the owner route migration band with `xnix-runtime-owner --route-checkpoint`. It builds the full in-process smoke batch and verifies 61 formal Go owner routes, four owner-local review routes, 65 read service calls, four deterministic write denials, formal method parity, and disabled production ownership in one auditable record. No additional self-referential owner route is added; Runtime writes, production D-Bus ownership, backend launch, network access, and host mutation remain disabled.
 

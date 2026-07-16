@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.308
+> Last updated: 2026-07-17 | Baseline: v0.2.309
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Offline KDE application identity | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.309` | Join one offline application fixture across desktop entry, MIME, KRunner, task manager, tray, notifications, settings, and Compatibility Center without launch. |
+| 1 | Offline KDE attention identity | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.310` | Extend the verified Sample Notepad identity into tray and notification surfaces without live delivery. |
 
 ## Best First Pick
 
-Start with the offline KDE application identity.
+Start with the offline KDE attention identity.
 
-The offline KDE application identity is the best next handoff because the owner route band now passes a unified checkpoint and one fixture should consume those Runtime reads as a coherent desktop identity.
+The v0.2.309 identity spine already joins desktop entry, MIME, KRunner, task manager, and KWin. The next handoff should reuse that exact identity for tray and notification evidence, including deterministic notification ids and disabled delivery.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

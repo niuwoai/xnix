@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.309] - 2026-07-17
+
+### Added
+
+- Added a Go `kde-offline-application-identity-preview` model and CLI for the digest-verified `org.xnix.sample.notepad` registry fixture.
+- Added actual desktop-entry and MIME rendering evidence plus KRunner, task-manager, and KWin identity joins with content digests and cross-surface consistency checks.
+- Added verified-registry, malformed-argument, identity-parity, path-redaction, raw-command, write, execution, network, backend-process, and host-mutation tests.
+
+### Changed
+
+- Started the `0.2.309`-`0.2.312` offline KDE application identity band with one canonical identity across five KDE surfaces.
+- Updated implementation evidence, layout verification, product documentation, and dispatch guidance for the offline identity spine.
+- Kept desktop writes, MIME default changes, KRunner index persistence, task-manager activation, KWin rule application, launch, execution, backend process start, network access, and host-root mutation disabled.
+
 ## [0.2.308] - 2026-07-17
 
 ### Added
