@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.315
+> Last updated: 2026-07-17 | Current version: v0.2.316
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.316 checkpoint closes the fake execution, Portal, snapshot, diagnostics, and backend lifecycle join band with `kde-backend-lifecycle-evidence-record`. The Go Runtime persists and digest-verifies one backend-manager inventory, joins its three internal managed entries and three user-facing modes to the ready Sample Notepad lifecycle, then reads the blocked execution and session receipts back for four KDE consumers. All eight checks pass while backend kinds stay hidden from KDE-facing output and every compatibility process remains stopped. Backend install, download, launch, process and VM start, raw commands, profile paths, real Portal transport, restore, live diagnostics, AI calls, repair, production bus ownership, network access, privileged containers, secrets, backend details, and host-root mutation remain disabled.
 
 The v0.2.315 checkpoint adds `kde-snapshot-diagnostics-evidence-record` to the same controlled Sample Notepad state root. The Go Runtime writes and digest-verifies one redacted three-signal diagnostic receipt, creates or reuses one content-addressed snapshot baseline, satisfies the final lifecycle evidence gate, marks the environment `ready-with-launch-disabled`, and recomputes the blocked execution and session records. All eight checks pass and environment, snapshot, and Portal gates now pass, while development-only recipe trust and the Runtime write gate continue to block launch. Snapshot restore and deletion, live diagnostics, AI provider calls, repair, real Portal transport, execution, compatibility process start, production bus ownership, network access, privileged containers, backend details, file contents, and host-root mutation remain disabled.
 

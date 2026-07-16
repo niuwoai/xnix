@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.315
+> Last updated: 2026-07-17 | Baseline: v0.2.316
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Backend lifecycle evidence convergence | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.316` | Join the ready lifecycle to a persisted backend-manager inventory and prove that no compatibility process starts. |
+| 1 | Restricted launch authorization boundary | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.317` | Persist a test-only launch authorization receipt that cannot start a process or satisfy production trust by itself. |
 
 ## Best First Pick
 
-Start with backend lifecycle evidence convergence.
+Start with the restricted launch authorization boundary.
 
-The v0.2.315 checkpoint records and consumes one completed fake Portal receipt, one redacted diagnostic receipt, and one verified content-addressed snapshot baseline. The next handoff should reconcile that ready lifecycle with a persisted backend-manager inventory and execution/session readback without enabling package acquisition, backend process start, launch, or execution.
+The v0.2.316 checkpoint joins the ready lifecycle, verified backend inventory, blocked execution transaction, blocked session, and four KDE consumers without starting a compatibility process. The next handoff should persist an explicit test-only authorization receipt and prove that authorization remains distinct from production trust, Runtime write enablement, and process launch.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

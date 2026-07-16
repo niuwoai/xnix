@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.316] - 2026-07-17
+
+### Added
+
+- Added `kde-backend-lifecycle-evidence-record` and the Go `KDEBackendLifecycleEvidenceRecord` model for the Sample Notepad controlled state root.
+- Added digest-verified backend-manager inventory readback and eight checks joining prerequisite, inventory, lifecycle, execution, session, KDE fan-out, backend ownership, and closed unsafe gates.
+- Added backend-manager schema, fixed relative-path, count, SHA-256, disabled-gate, tamper, and managed-directory symlink validation.
+
+### Changed
+
+- Joined three internal managed-backend entries and three user-facing compatibility profiles to the ready lifecycle while keeping backend kinds hidden from KDE-facing output.
+- Kept the execution and session receipts blocked by development recipe trust and the Runtime write gate even though environment, snapshot, and Portal evidence pass.
+- Kept backend install, download, launch, process and VM start, raw commands, profile paths, real Portal transport, restore, live diagnostics, AI calls, repair, production bus ownership, network access, privileged containers, secrets, backend details, and host-root mutation disabled.
+
 ## [0.2.315] - 2026-07-17
 
 ### Added

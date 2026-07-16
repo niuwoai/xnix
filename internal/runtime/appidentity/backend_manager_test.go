@@ -1,6 +1,7 @@
 package appidentity
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -134,10 +135,57 @@ func TestRecordBackendManagerPreviewPersistsStateRootInventory(t *testing.T) {
 		persisted.BackendLaunchEnabled {
 		t.Fatalf("unexpected persisted backend manager record: %#v", persisted)
 	}
+	loaded, err := LoadBackendManagerRecord(stateRoot)
+	if err != nil {
+		t.Fatalf("LoadBackendManagerRecord returned error: %v", err)
+	}
+	if loaded.SHA256 != record.SHA256 || loaded.RelativePath != record.RelativePath || loaded.Preview.BackendCount != 3 {
+		t.Fatalf("unexpected loaded backend manager record: %#v", loaded)
+	}
 }
 
 func TestRecordBackendManagerPreviewRejectsFilesystemRoot(t *testing.T) {
 	if _, err := RecordBackendManagerPreview(string(os.PathSeparator)); err == nil {
 		t.Fatalf("RecordBackendManagerPreview must reject filesystem root")
 	}
+}
+
+func TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink(t *testing.T) {
+	t.Run("tampered receipt", func(t *testing.T) {
+		stateRoot := t.TempDir()
+		record, err := RecordBackendManagerPreview(stateRoot)
+		if err != nil {
+			t.Fatalf("RecordBackendManagerPreview returned error: %v", err)
+		}
+		path := filepath.Join(stateRoot, filepath.FromSlash(record.RelativePath))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read backend manager record: %v", err)
+		}
+		tampered := bytes.Replace(data, []byte(`"backend_count": 3`), []byte(`"backend_count": 4`), 1)
+		if err := os.WriteFile(path, tampered, 0o600); err != nil {
+			t.Fatalf("tamper backend manager record: %v", err)
+		}
+		if _, err := LoadBackendManagerRecord(stateRoot); err == nil {
+			t.Fatal("expected tampered backend manager record to be rejected")
+		}
+	})
+
+	t.Run("managed path symlink", func(t *testing.T) {
+		stateRoot := t.TempDir()
+		outside := t.TempDir()
+		if err := os.Symlink(outside, filepath.Join(stateRoot, "backend-manager")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+		if _, err := RecordBackendManagerPreview(stateRoot); err == nil {
+			t.Fatal("expected backend manager directory symlink to be rejected")
+		}
+		entries, err := os.ReadDir(outside)
+		if err != nil {
+			t.Fatalf("inspect outside directory: %v", err)
+		}
+		if len(entries) != 0 {
+			t.Fatalf("backend manager record wrote through managed path symlink: %+v", entries)
+		}
+	})
 }

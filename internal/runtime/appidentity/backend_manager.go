@@ -164,14 +164,9 @@ func RecordBackendManagerPreview(stateRoot string) (BackendManagerRecord, error)
 	if err != nil {
 		return BackendManagerRecord{}, err
 	}
-	relativePath := filepath.ToSlash(filepath.Join("backend-manager", "inventory.json"))
-	path := filepath.Join(root, filepath.FromSlash(relativePath))
-	rel, err := filepath.Rel(root, path)
+	relativePath, path, err := backendManagerRecordPath(root, true)
 	if err != nil {
 		return BackendManagerRecord{}, err
-	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return BackendManagerRecord{}, fmt.Errorf("backend manager record path escapes state root: %s", relativePath)
 	}
 
 	record := BackendManagerRecord{
@@ -207,11 +202,33 @@ func RecordBackendManagerPreview(stateRoot string) (BackendManagerRecord, error)
 	if err != nil {
 		return BackendManagerRecord{}, err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return BackendManagerRecord{}, fmt.Errorf("prepare backend manager record directory: %w", err)
-	}
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return BackendManagerRecord{}, fmt.Errorf("write backend manager record: %w", err)
+	}
+	return record, nil
+}
+
+// LoadBackendManagerRecord reads and validates the persisted Runtime backend
+// inventory without creating directories or exposing the configured state root.
+func LoadBackendManagerRecord(stateRoot string) (BackendManagerRecord, error) {
+	root, err := openBackendManagerRoot(stateRoot)
+	if err != nil {
+		return BackendManagerRecord{}, err
+	}
+	relativePath, path, err := backendManagerRecordPath(root, false)
+	if err != nil {
+		return BackendManagerRecord{}, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return BackendManagerRecord{}, fmt.Errorf("read backend manager record: %w", err)
+	}
+	var record BackendManagerRecord
+	if err := json.Unmarshal(data, &record); err != nil {
+		return BackendManagerRecord{}, fmt.Errorf("parse backend manager record: %w", err)
+	}
+	if err := validateBackendManagerRecord(record, relativePath); err != nil {
+		return BackendManagerRecord{}, err
 	}
 	return record, nil
 }
@@ -267,17 +284,116 @@ func userFacingBackendProfileIDs(profiles []UserFacingBackendProfile) []string {
 }
 
 func safeBackendManagerRoot(root string) (string, error) {
-	if root == "" {
-		return "", errors.New("backend manager record requires an explicit state root")
-	}
-	clean := filepath.Clean(root)
-	if clean == string(os.PathSeparator) {
-		return "", errors.New("refusing to use filesystem root as backend manager state root")
+	clean, err := normalizeBackendManagerRoot(root)
+	if err != nil {
+		return "", err
 	}
 	if err := os.MkdirAll(clean, 0o700); err != nil {
 		return "", fmt.Errorf("prepare backend manager state root: %w", err)
 	}
 	return clean, nil
+}
+
+func openBackendManagerRoot(root string) (string, error) {
+	clean, err := normalizeBackendManagerRoot(root)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Stat(clean)
+	if err != nil {
+		return "", fmt.Errorf("backend manager state root must exist: %w", err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("backend manager state root is not a directory: %s", clean)
+	}
+	return clean, nil
+}
+
+func normalizeBackendManagerRoot(root string) (string, error) {
+	if root == "" {
+		return "", errors.New("backend manager record requires an explicit state root")
+	}
+	clean, err := filepath.Abs(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve backend manager state root: %w", err)
+	}
+	clean = filepath.Clean(clean)
+	if clean == string(os.PathSeparator) {
+		return "", errors.New("refusing to use filesystem root as backend manager state root")
+	}
+	return clean, nil
+}
+
+func backendManagerRecordPath(root string, createDirectory bool) (string, string, error) {
+	relativePath := filepath.ToSlash(filepath.Join("backend-manager", "inventory.json"))
+	directory := filepath.Join(root, "backend-manager")
+	info, err := os.Lstat(directory)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return "", "", fmt.Errorf("inspect backend manager record directory: %w", err)
+		}
+		if createDirectory {
+			if err := os.Mkdir(directory, 0o700); err != nil {
+				return "", "", fmt.Errorf("prepare backend manager record directory: %w", err)
+			}
+		} else {
+			return "", "", fmt.Errorf("backend manager record directory does not exist: %s", filepath.Base(directory))
+		}
+	} else if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+		return "", "", errors.New("backend manager record directory must be a real directory")
+	}
+	path := filepath.Join(root, filepath.FromSlash(relativePath))
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return "", "", err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return "", "", fmt.Errorf("backend manager record path escapes state root: %s", relativePath)
+	}
+	return relativePath, path, nil
+}
+
+func validateBackendManagerRecord(record BackendManagerRecord, relativePath string) error {
+	if record.SchemaVersion != "xnix.runtime.backend_manager_record.v1" || record.RecordType != "backend-manager-inventory-record" || record.Source != "go-runtime-state-root-backend-manager" {
+		return errors.New("backend manager record has unsupported schema")
+	}
+	if record.RelativePath != relativePath || record.Preview.SchemaVersion != "xnix.runtime.backend_manager.v1" || record.Preview.BackendCount != len(record.Preview.Backends) || record.Preview.UserFacingProfileCount != len(record.Preview.UserFacingProfiles) {
+		return errors.New("backend manager record identity, path, or count mismatch")
+	}
+	storedDigest := record.SHA256
+	record.SHA256 = ""
+	_, expectedDigest, err := marshalBackendManagerRecord(record)
+	if err != nil {
+		return err
+	}
+	if storedDigest == "" || storedDigest != expectedDigest {
+		return errors.New("backend manager record digest mismatch")
+	}
+	if backendManagerRecordUnsafe(record) {
+		return errors.New("backend manager record has unsafe enabled gates")
+	}
+	return nil
+}
+
+func backendManagerRecordUnsafe(record BackendManagerRecord) bool {
+	if record.StateRootPathExposed || record.BackendInstallEnabled || record.BackendDownloadEnabled || record.BackendLaunchEnabled || record.BackendProcessStarted || record.VMProcessStarted || record.RawCommandExposed || record.ProfilePathExposed || record.BackendDetailsExposedToKDE || record.HostRootModified || record.NetworkRequired || record.PrivilegedContainerRequired || record.SecretsExposed {
+		return true
+	}
+	preview := record.Preview
+	if preview.KDEVisible || preview.BackendInstallEnabled || preview.BackendDownloadEnabled || preview.BackendLaunchEnabled || preview.BackendProcessStarted || preview.VMProcessStarted || preview.RawCommandExposed || preview.ProfilePathExposed || preview.BackendDetailsExposedToKDE || preview.HostRootModified || preview.NetworkRequired || preview.PrivilegedContainerRequired || preview.SecretsExposed {
+		return true
+	}
+	for _, backend := range preview.Backends {
+		if backend.InstallEnabled || backend.DownloadEnabled || backend.LaunchEnabled || backend.ProcessStarted || backend.RawCommandExposed || backend.ProfilePathExposed || backend.BackendDetailsExposedToKDE || backend.HostRootModified || backend.NetworkRequired {
+			return true
+		}
+	}
+	for _, profile := range preview.UserFacingProfiles {
+		if profile.KDEPolicyOwner || profile.BackendDetailsExposed || profile.LaunchEnabled {
+			return true
+		}
+	}
+	return false
 }
 
 func marshalBackendManagerRecord(record BackendManagerRecord) ([]byte, string, error) {

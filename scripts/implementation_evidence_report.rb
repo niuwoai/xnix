@@ -207,9 +207,13 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/backend_manager.go
       internal/runtime/appidentity/backend_manager_test.go
       internal/runtime/appidentity/backend_lifecycle_test.go
+      internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
+      internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
       internal/runtime/appidentity/state_root_quota_retention_test.go
       internal/runtime/appidentity/compatibility_backend_fallback_test.go
       cmd/xnix-runtime-go/backend_group_cli_test.go
+      cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go
+      cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
       cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go
       cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go
       cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go
@@ -218,12 +222,17 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/state_root.go
       internal/runtime/appidentity/state_root_quota_retention.go
       internal/runtime/appidentity/compatibility_backend_fallback.go
+      internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/environment/lifecycle.go" => %w[repair-required StateBlocked],
-      "internal/runtime/appidentity/backend_manager.go" => %w[xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-state-root-backend-manager wine proton windows-vm BackendDetailsExposedToKDE BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled StateRootPathExposed],
-      "internal/runtime/appidentity/backend_manager_test.go" => %w[TestBackendManagerPreviewTracksRuntimeBackendsWithoutStartingThem TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe TestRecordBackendManagerPreviewPersistsStateRootInventory],
+      "internal/runtime/appidentity/backend_manager.go" => %w[xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-state-root-backend-manager wine proton windows-vm BackendDetailsExposedToKDE BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled StateRootPathExposed LoadBackendManagerRecord validateBackendManagerRecord backendManagerRecordUnsafe digest\ mismatch unsafe\ enabled\ gates],
+      "internal/runtime/appidentity/backend_manager_test.go" => %w[TestBackendManagerPreviewTracksRuntimeBackendsWithoutStartingThem TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe TestRecordBackendManagerPreviewPersistsStateRootInventory TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink],
+      "internal/runtime/appidentity/kde_backend_lifecycle_evidence.go" => %w[xnix.runtime.kde_backend_lifecycle_evidence.v1 kde-backend-lifecycle-evidence-record NewKDEBackendLifecycleEvidenceRecord prerequisite-convergence inventory-readback backend-state lifecycle-join execution-readback session-readback backend-boundary unsafe-gates-closed BackendStateJoined BackendKindsExposedToKDE BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted RawCommandExposed ProfilePathExposed HostRootModified SecretsExposed],
+      "internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go" => %w[TestKDEBackendLifecycleEvidenceJoinsInventoryWithoutStartingProcess TestKDEBackendLifecycleEvidenceRejectsUnsafeBoundary explicit-test-root-only backend-manager],
+      "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go" => %w[kde-backend-lifecycle-evidence-record runKDEBackendLifecycleEvidenceRecord test-only LoadRecipeFromRegistry NewKDEBackendLifecycleEvidenceRecord],
+      "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go" => %w[TestKDEBackendLifecycleEvidenceRecordCommandJoinsInventory TestKDEBackendLifecycleEvidenceRecordCommandRequiresTestOnlyBoundary backend_kinds_exposed_to_kde backend_process_started host_root_modified secrets_exposed],
       "cmd/xnix-runtime-go/main.go" => %w[backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
       "internal/runtime/appidentity/backend_lifecycle.go" => %w[BackendLifecyclePreviewWithStateRoot RecordBackendLifecycleState BackendLifecycleRecord xnix.runtime.backend_lifecycle_record.v1 go-runtime-state-root-backend-lifecycle environment-state-root StateRootBacked StateRootPathExposed SatisfiedGates PendingGates RepairHints BlockReason],
       "internal/runtime/appidentity/backend_lifecycle_test.go" => %w[TestBackendLifecyclePreviewConsumesEnvironmentStateRoot TestRecordBackendLifecycleStatePersistsActionsAndPreview BackendLifecyclePreviewWithStateRoot state-root],

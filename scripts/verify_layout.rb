@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.315"
+EXPECTED_VERSION = "0.2.316"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -226,6 +226,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go
   cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_commands.go
   cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go
+  cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go
+  cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -291,6 +293,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_fake_portal_evidence_test.go
   internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go
   internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go
+  internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
+  internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -1175,14 +1179,18 @@ end
 assert(read_project_file("cmd/xnix-runtime-go/backend_group_cli_test.go").include?("TestBackendLifecycleRecordCommandPersistsStateTransitions"), "Go Runtime backend lifecycle CLI tests must persist state-root transitions")
 
 go_backend_manager_source = read_project_file("internal/runtime/appidentity/backend_manager.go")
-%w[BackendManagerPreview BackendManagerRecord ManagedCompatibilityBackend UserFacingBackendProfile xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-backend-manager go-runtime-state-root-backend-manager wine proton windows-vm WineManaged ProtonManaged WindowsVMManaged BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted BackendDetailsExposedToKDE StateRootPathExposed HostRootModified PrivilegedContainerRequired].each do |token|
+%w[BackendManagerPreview BackendManagerRecord ManagedCompatibilityBackend UserFacingBackendProfile xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-backend-manager go-runtime-state-root-backend-manager wine proton windows-vm WineManaged ProtonManaged WindowsVMManaged BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted BackendDetailsExposedToKDE StateRootPathExposed HostRootModified PrivilegedContainerRequired LoadBackendManagerRecord validateBackendManagerRecord backendManagerRecordUnsafe].each do |token|
   assert(go_backend_manager_source.include?(token), "Go Runtime backend manager preview must include #{token}")
+end
+%w[unsupported\ schema identity,\ path,\ or\ count\ mismatch digest\ mismatch unsafe\ enabled\ gates record\ directory\ must\ be\ a\ real\ directory].each do |token|
+  assert(go_backend_manager_source.include?(token), "Go Runtime backend manager readback must validate #{token}")
 end
 %w[backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord].each do |token|
   assert(read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime backend manager CLI must include #{token}")
 end
 assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe"), "Go Runtime backend manager tests must keep user-facing profiles backend-safe")
 assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestRecordBackendManagerPreviewPersistsStateRootInventory"), "Go Runtime backend manager tests must persist state-root inventory")
+assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink"), "Go Runtime backend manager tests must reject tampering and managed-path symlinks")
 
 backend_capability_matrix_source = read_project_file("lib/xnix/compatibility/compatibility_backend_capability_matrix.rb")
 assert(backend_capability_matrix_source.include?("xnix-compat-backend-capability-matrix"), "Compatibility backend capability matrix must expose a CLI command")
@@ -2132,6 +2140,26 @@ go_runtime_kde_snapshot_diagnostics_cli_source = read_project_file("cmd/xnix-run
                                                   read_project_file("cmd/xnix-runtime-go/main.go")
 %w[kde-snapshot-diagnostics-evidence-record runKDESnapshotDiagnosticsEvidenceRecord LoadRecipeFromRegistry NewKDESnapshotDiagnosticsEvidenceRecord test-only TestKDESnapshotDiagnosticsEvidenceRecordCommandConvergesEvidence TestKDESnapshotDiagnosticsEvidenceRecordCommandRequiresTestOnlyBoundary snapshot_restore_enabled diagnostic_execution_enabled ai_provider_call_enabled repair_execution_enabled launch_enabled backend_process_started host_root_modified file_contents_exposed].each do |token|
   assert(go_runtime_kde_snapshot_diagnostics_cli_source.include?(token), "Go Runtime KDE snapshot diagnostics CLI must include #{token}")
+end
+
+go_runtime_kde_backend_lifecycle_source = read_project_file("internal/runtime/appidentity/kde_backend_lifecycle_evidence.go")
+%w[KDEBackendLifecycleEvidenceRecord NewKDEBackendLifecycleEvidenceRecord xnix.runtime.kde_backend_lifecycle_evidence.v1 kde-backend-lifecycle-evidence-record prerequisite-convergence inventory-readback backend-state lifecycle-join execution-readback session-readback backend-boundary unsafe-gates-closed BackendStateJoined CoreReceiptCount AllChecksPassed].each do |token|
+  assert(go_runtime_kde_backend_lifecycle_source.include?(token), "Go Runtime KDE backend lifecycle evidence must include #{token}")
+end
+%w[StateRootPathExposed BackendKindsExposedToKDE BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted RawCommandExposed ProfilePathExposed RealPortalCallEnabled SnapshotRestoreEnabled DiagnosticExecutionEnabled AIProviderCallEnabled RepairExecutionEnabled ExecutionApproved LaunchAllowed LaunchEnabled ExecutionStarted ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed SecretsExposed].each do |token|
+  assert(go_runtime_kde_backend_lifecycle_source.include?(token), "Go Runtime KDE backend lifecycle evidence must expose safety gate #{token}")
+end
+
+go_runtime_kde_backend_lifecycle_test_source = read_project_file("internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go")
+%w[TestKDEBackendLifecycleEvidenceJoinsInventoryWithoutStartingProcess TestKDEBackendLifecycleEvidenceRejectsUnsafeBoundary ready blocked explicit-test-root-only backend-manager].each do |token|
+  assert(go_runtime_kde_backend_lifecycle_test_source.include?(token), "Go Runtime KDE backend lifecycle tests must include #{token}")
+end
+
+go_runtime_kde_backend_lifecycle_cli_source = read_project_file("cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go") +
+                                              read_project_file("cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go") +
+                                              read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-backend-lifecycle-evidence-record runKDEBackendLifecycleEvidenceRecord LoadRecipeFromRegistry NewKDEBackendLifecycleEvidenceRecord test-only TestKDEBackendLifecycleEvidenceRecordCommandJoinsInventory TestKDEBackendLifecycleEvidenceRecordCommandRequiresTestOnlyBoundary backend_kinds_exposed_to_kde backend_process_started host_root_modified secrets_exposed].each do |token|
+  assert(go_runtime_kde_backend_lifecycle_cli_source.include?(token), "Go Runtime KDE backend lifecycle CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
