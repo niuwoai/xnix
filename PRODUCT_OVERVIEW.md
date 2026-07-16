@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.314
+> Last updated: 2026-07-17 | Current version: v0.2.315
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.315 checkpoint adds `kde-snapshot-diagnostics-evidence-record` to the same controlled Sample Notepad state root. The Go Runtime writes and digest-verifies one redacted three-signal diagnostic receipt, creates or reuses one content-addressed snapshot baseline, satisfies the final lifecycle evidence gate, marks the environment `ready-with-launch-disabled`, and recomputes the blocked execution and session records. All eight checks pass and environment, snapshot, and Portal gates now pass, while development-only recipe trust and the Runtime write gate continue to block launch. Snapshot restore and deletion, live diagnostics, AI provider calls, repair, real Portal transport, execution, compatibility process start, production bus ownership, network access, privileged containers, backend details, file contents, and host-root mutation remain disabled.
 
 The v0.2.314 checkpoint adds `kde-fake-portal-evidence-record` to the Sample Notepad controlled state root. The Go Runtime creates, grants, completes, hashes, and reads back one fake `file-open` Portal receipt, records `portal-policy-review` in the staged lifecycle, recomputes the blocked execution and session receipts, and proves that only the execution Portal gate changes from pending to pass. The completed receipt is reused on repeated runs, snapshot evidence remains pending, and all seven checks pass while real Portal transport, host permission changes, execution approval, launch, execution, compatibility process start, production bus ownership, network access, privileged containers, backend details, and host-root mutation remain disabled.
 

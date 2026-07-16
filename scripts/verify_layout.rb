@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.314"
+EXPECTED_VERSION = "0.2.315"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -224,6 +224,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
   cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go
   cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go
+  cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_commands.go
+  cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -287,6 +289,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_fake_execution_evidence_test.go
   internal/runtime/appidentity/kde_fake_portal_evidence.go
   internal/runtime/appidentity/kde_fake_portal_evidence_test.go
+  internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go
+  internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -2110,6 +2114,26 @@ go_runtime_kde_fake_portal_cli_source = read_project_file("cmd/xnix-runtime-go/k
   assert(go_runtime_kde_fake_portal_cli_source.include?(token), "Go Runtime KDE fake Portal CLI must include #{token}")
 end
 
+go_runtime_kde_snapshot_diagnostics_source = read_project_file("internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go")
+%w[KDESnapshotDiagnosticsEvidenceRecord NewKDESnapshotDiagnosticsEvidenceRecord xnix.runtime.kde_snapshot_diagnostics_evidence.v1 kde-snapshot-diagnostics-evidence-record stability-diagnostics-v0.2.315 stability-baseline-v0.2.315 recordStabilityDiagnostic ensureStabilitySnapshot portal-evidence diagnostic-readback diagnostic-redaction snapshot-baseline lifecycle-ready execution-readiness session-readback unsafe-gates-closed CoreReceiptCount AllChecksPassed].each do |token|
+  assert(go_runtime_kde_snapshot_diagnostics_source.include?(token), "Go Runtime KDE snapshot diagnostics evidence must include #{token}")
+end
+%w[StateRootPathExposed SnapshotCreationEnabled SnapshotRestoreEnabled SnapshotDeletionEnabled DiagnosticExecutionEnabled AIProviderCallEnabled RepairExecutionEnabled RealPortalCallEnabled HostPermissionChanged ExecutionApproved LaunchAllowed LaunchEnabled ExecutionStarted BackendProcessStarted ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed FileContentsExposed].each do |token|
+  assert(go_runtime_kde_snapshot_diagnostics_source.include?(token), "Go Runtime KDE snapshot diagnostics evidence must expose safety gate #{token}")
+end
+
+go_runtime_kde_snapshot_diagnostics_test_source = read_project_file("internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go")
+%w[TestKDESnapshotDiagnosticsEvidenceConvergesControlledState TestKDESnapshotDiagnosticsEvidenceRejectsUnsafeBoundaries ready blocked explicit-test-root-only .xnix-snapshots diagnostics-ledger test-results].each do |token|
+  assert(go_runtime_kde_snapshot_diagnostics_test_source.include?(token), "Go Runtime KDE snapshot diagnostics tests must include #{token}")
+end
+
+go_runtime_kde_snapshot_diagnostics_cli_source = read_project_file("cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_commands.go") +
+                                                  read_project_file("cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go") +
+                                                  read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-snapshot-diagnostics-evidence-record runKDESnapshotDiagnosticsEvidenceRecord LoadRecipeFromRegistry NewKDESnapshotDiagnosticsEvidenceRecord test-only TestKDESnapshotDiagnosticsEvidenceRecordCommandConvergesEvidence TestKDESnapshotDiagnosticsEvidenceRecordCommandRequiresTestOnlyBoundary snapshot_restore_enabled diagnostic_execution_enabled ai_provider_call_enabled repair_execution_enabled launch_enabled backend_process_started host_root_modified file_contents_exposed].each do |token|
+  assert(go_runtime_kde_snapshot_diagnostics_cli_source.include?(token), "Go Runtime KDE snapshot diagnostics CLI must include #{token}")
+end
+
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
                                                 read_project_file("internal/runtime/owner/service_test.go") +
                                                 read_project_file("cmd/xnix-runtime-owner/main_test.go")
@@ -2275,6 +2299,13 @@ end
 end
 %w[NewRunRecordStore OpenRunRecordStoreReadOnly safeDiagnosticRecordRoot safeDiagnosticReadOnlyRoot validateDiagnosticRecordID BuildDiagnosticInput Recommend NewResultStore].each do |token|
   assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must implement #{token}")
+end
+%w[unsupported\ schema identity\ or\ path\ mismatch digest\ mismatch unsafe\ enabled\ gates marshalDiagnosticRunRecord].each do |token|
+  assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run record readback must validate #{token}")
+end
+go_runtime_diagnostic_record_test_source = read_project_file("internal/runtime/diagnostics/diagnostics_test.go")
+%w[TestRunRecordStoreLoadRejectsTamperedReceipt tamper-check digest\ mismatch].each do |token|
+  assert(go_runtime_diagnostic_record_test_source.include?(token), "Go Runtime diagnostic run record integrity tests must include #{token}")
 end
 assert(go_runtime_diagnostic_record_source.include?("refusing to use filesystem root"), "Go Runtime diagnostic run records must reject filesystem root state roots")
 

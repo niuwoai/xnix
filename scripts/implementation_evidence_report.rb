@@ -326,6 +326,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_fake_execution_evidence_test.go
       internal/runtime/appidentity/kde_fake_portal_evidence.go
       internal/runtime/appidentity/kde_fake_portal_evidence_test.go
+      internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go
+      internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go
       internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
       cmd/xnix-runtime-go/desktop_safety_policy_commands.go
       cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
@@ -343,6 +345,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
       cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go
       cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go
+      cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_commands.go
+      cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
@@ -355,6 +359,7 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/settings_profile_migration.go
       internal/runtime/appidentity/kde_fake_execution_evidence.go
       internal/runtime/appidentity/kde_fake_portal_evidence.go
+      internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go
     ],
     smoke_files: %w[
       scripts/runtime_activation_smoke.rb
@@ -382,6 +387,10 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/kde_fake_portal_evidence_test.go" => %w[TestKDEFakePortalEvidenceChangesOnlyPortalGate TestKDEFakePortalEvidenceRejectsManagedPathSymlink pending-user-mediation granted completed explicit-test-root-only],
       "cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go" => %w[kde-fake-portal-evidence-record runKDEFakePortalEvidenceRecord test-only LoadRecipeFromRegistry NewKDEFakePortalEvidenceRecord],
       "cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go" => %w[TestKDEFakePortalEvidenceRecordCommandJoinsPortalReceipt TestKDEFakePortalEvidenceRecordCommandRequiresTestOnlyBoundary portal_gate_changed_only portal_evidence_recorded real_portal_call_enabled host_permission_changed execution_approved],
+      "internal/runtime/appidentity/kde_snapshot_diagnostics_evidence.go" => %w[xnix.runtime.kde_snapshot_diagnostics_evidence.v1 kde-snapshot-diagnostics-evidence-record NewKDESnapshotDiagnosticsEvidenceRecord stability-diagnostics-v0.2.315 stability-baseline-v0.2.315 recordStabilityDiagnostic ensureStabilitySnapshot portal-evidence diagnostic-readback diagnostic-redaction snapshot-baseline lifecycle-ready execution-readiness session-readback unsafe-gates-closed SnapshotCreationEnabled SnapshotRestoreEnabled DiagnosticExecutionEnabled AIProviderCallEnabled RepairExecutionEnabled LaunchEnabled BackendProcessStarted HostRootModified FileContentsExposed],
+      "internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go" => %w[TestKDESnapshotDiagnosticsEvidenceConvergesControlledState TestKDESnapshotDiagnosticsEvidenceRejectsUnsafeBoundaries ready blocked explicit-test-root-only .xnix-snapshots diagnostics-ledger test-results],
+      "cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_commands.go" => %w[kde-snapshot-diagnostics-evidence-record runKDESnapshotDiagnosticsEvidenceRecord test-only LoadRecipeFromRegistry NewKDESnapshotDiagnosticsEvidenceRecord],
+      "cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go" => %w[TestKDESnapshotDiagnosticsEvidenceRecordCommandConvergesEvidence TestKDESnapshotDiagnosticsEvidenceRecordCommandRequiresTestOnlyBoundary snapshot_restore_enabled diagnostic_execution_enabled ai_provider_call_enabled repair_execution_enabled launch_enabled backend_process_started host_root_modified file_contents_exposed],
       "internal/runtime/owner/dispatch.go" => %w[GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents KDENotificationDigestPreview GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview NewKDEOfflineApplicationIdentityPreview],
       "internal/runtime/owner/service_test.go" => %w[TestServiceCallServesOwnerLocalNotificationDigest GetKDENotificationDigestPreview TestServiceCallServesOwnerLocalSignedRecipeVerification GetSignedRecipeVerificationPreview TestServiceCallServesOwnerLocalRestrictedSmokePacket GetRestrictedProductSmokePacketPreview TestServiceCallServesOwnerLocalOfflineKDEIdentity GetKDEOfflineApplicationIdentityPreview read-dispatch],
       "cmd/xnix-runtime-owner/main_test.go" => %w[TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch GetKDENotificationDigestPreview kde-notification-digest-preview TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch GetSignedRecipeVerificationPreview signed-recipe-verifier-preview TestRuntimeOwnerCommandRendersRestrictedSmokeOwnerLocalReadDispatch GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview TestRuntimeOwnerCommandRendersOfflineKDEIdentityOwnerLocalReadDispatch GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview],
@@ -495,7 +504,7 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/support_case_timeline.go" => %w[xnix.runtime.support_case_timeline.v1 support-case-timeline-preview GetSupportCaseTimelinePreview diagnostic-runs blocked-actions repair-recommendations onboarding-gaps kde-entrypoint-state TicketCreated BundleExported AIProviderCalled RepairExecuted ActionExecuted BackendProcessStarted StateRootPathExposed HostRootModified],
       "cmd/xnix-runtime-go/support_case_timeline_commands.go" => %w[support-case-timeline-preview LenientHistory OpenRunRecordStoreReadOnly],
       "cmd/xnix-runtime-go/support_case_timeline_cli_test.go" => %w[TestSupportCaseTimelinePreviewCLI TestSupportCaseTimelinePreviewCLIMalformedRecordIsBlocked TestSupportCaseTimelinePreviewCLIMissingStateRootDoesNotCreate],
-      "internal/runtime/diagnostics/record.go" => %w[xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed],
+      "internal/runtime/diagnostics/record.go" => %w[xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed unsupported\ schema identity\ or\ path\ mismatch digest\ mismatch unsafe\ enabled\ gates marshalDiagnosticRunRecord],
       "internal/runtime/diagnostics/history.go" => %w[xnix.runtime.diagnostic_run_history.v1 diagnostic-run-history go-runtime-state-root-diagnostic-run-history state_root_path_exposed ai_provider_called repair_executed],
       "internal/runtime/appidentity/diagnostic_history.go" => %w[xnix.runtime.diagnostic_history_preview.v1 diagnostic-history-preview go-runtime-state-root-diagnostic-run-history+kde-read-model compatibility_center_card safe_for_ai_diagnostics ai_provider_call_enabled repair_execution_enabled backend_details_exposed],
       "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record diagnostic-run-history diagnostic-history-preview state-root fixture run-id],

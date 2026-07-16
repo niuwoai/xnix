@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.315] - 2026-07-17
+
+### Added
+
+- Added `kde-snapshot-diagnostics-evidence-record` and the Go `KDESnapshotDiagnosticsEvidenceRecord` model for the Sample Notepad controlled state root.
+- Added one deterministic redacted diagnostic receipt, one content-addressed snapshot baseline, digest-verified readback, and eight convergence checks.
+- Added diagnostic receipt schema, identity, relative-path, digest, and disabled-safety-gate validation with tamper rejection coverage.
+
+### Changed
+
+- Advanced the backend lifecycle from `staged` to `ready-with-launch-disabled` after Portal and snapshot evidence gates are satisfied.
+- Recomputed the blocked execution and session receipts so environment, snapshot, and Portal gates pass while development recipe trust and the Runtime write gate remain closed.
+- Kept snapshot restore and deletion, live diagnostic execution, AI provider calls, repair, real Portal transport, launch, compatibility process start, production bus ownership, network access, privileged containers, backend details, file contents, and host-root mutation disabled.
+
 ## [0.2.314] - 2026-07-17
 
 ### Added

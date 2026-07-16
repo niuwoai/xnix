@@ -139,18 +139,7 @@ func NewKDEFakePortalEvidenceRecord(recipeRecord Recipe, provenance Provenance, 
 		return KDEFakePortalEvidenceRecord{}, err
 	}
 
-	portalReceipt := execution.PortalPermissionReceipt{
-		HandleToken:           portalRecord.Request.HandleToken,
-		Operation:             portalRecord.Request.Operation,
-		RelativePath:          portalRecord.RelativePath,
-		RequestState:          string(portalRecord.Request.State),
-		PermissionState:       string(portalRecord.Request.PermissionState),
-		PermissionGranted:     portalRecord.PermissionGranted,
-		ExecutionApproved:     false,
-		RealPortalCallEnabled: false,
-		StateRootPathExposed:  false,
-		HostPermissionChanged: false,
-	}
+	portalReceipt := fakePortalExecutionReceipt(portalRecord)
 	inputs := execution.Inputs{
 		Trust:                    trust,
 		Environment:              lifecycleRecord.EnvironmentRecord,
@@ -163,21 +152,7 @@ func NewKDEFakePortalEvidenceRecord(recipeRecord Recipe, provenance Provenance, 
 	if err != nil {
 		return KDEFakePortalEvidenceRecord{}, err
 	}
-	ledger, err := execution.NewLedger(options.StateRoot)
-	if err != nil {
-		return KDEFakePortalEvidenceRecord{}, err
-	}
-	if _, err := ledger.Record(tx); err != nil {
-		return KDEFakePortalEvidenceRecord{}, err
-	}
-	if _, err := ledger.RecordSession(tx.RequestID); err != nil {
-		return KDEFakePortalEvidenceRecord{}, err
-	}
-	transactionRecord, err := ledger.Load(tx.RequestID)
-	if err != nil {
-		return KDEFakePortalEvidenceRecord{}, err
-	}
-	sessionRecord, err := ledger.LoadSession(tx.RequestID)
+	transactionRecord, sessionRecord, err := persistFakeExecutionTransaction(options.StateRoot, tx)
 	if err != nil {
 		return KDEFakePortalEvidenceRecord{}, err
 	}
@@ -384,6 +359,43 @@ func reviewedFakeExecutionTransaction(applicationID string, inputs execution.Inp
 		return execution.Transaction{}, err
 	}
 	return transaction.Preflight(inputs), nil
+}
+
+func fakePortalExecutionReceipt(record portal.Record) execution.PortalPermissionReceipt {
+	return execution.PortalPermissionReceipt{
+		HandleToken:           record.Request.HandleToken,
+		Operation:             record.Request.Operation,
+		RelativePath:          record.RelativePath,
+		RequestState:          string(record.Request.State),
+		PermissionState:       string(record.Request.PermissionState),
+		PermissionGranted:     record.PermissionGranted,
+		ExecutionApproved:     false,
+		RealPortalCallEnabled: false,
+		StateRootPathExposed:  false,
+		HostPermissionChanged: false,
+	}
+}
+
+func persistFakeExecutionTransaction(root string, transaction execution.Transaction) (execution.LedgerRecord, execution.SessionRecord, error) {
+	ledger, err := execution.NewLedger(root)
+	if err != nil {
+		return execution.LedgerRecord{}, execution.SessionRecord{}, err
+	}
+	if _, err := ledger.Record(transaction); err != nil {
+		return execution.LedgerRecord{}, execution.SessionRecord{}, err
+	}
+	if _, err := ledger.RecordSession(transaction.RequestID); err != nil {
+		return execution.LedgerRecord{}, execution.SessionRecord{}, err
+	}
+	transactionRecord, err := ledger.Load(transaction.RequestID)
+	if err != nil {
+		return execution.LedgerRecord{}, execution.SessionRecord{}, err
+	}
+	sessionRecord, err := ledger.LoadSession(transaction.RequestID)
+	if err != nil {
+		return execution.LedgerRecord{}, execution.SessionRecord{}, err
+	}
+	return transactionRecord, sessionRecord, nil
 }
 
 func fakeExecutionGateStatus(gates []execution.Gate, gateID string) string {

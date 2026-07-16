@@ -1,6 +1,11 @@
 package diagnostics
 
-import "testing"
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 const app = "org.example.ledger"
 
@@ -197,6 +202,30 @@ func TestRunRecordStoreRejectsUnsafeRootsAndIDs(t *testing.T) {
 	}
 	if _, err := store.Record(RunRecordRequest{ApplicationID: app, RunID: "../escape", Fixture: passFixture()}); err == nil {
 		t.Fatalf("path traversal run id must be rejected")
+	}
+}
+
+func TestRunRecordStoreLoadRejectsTamperedReceipt(t *testing.T) {
+	root := t.TempDir()
+	store, err := NewRunRecordStore(root)
+	if err != nil {
+		t.Fatalf("NewRunRecordStore: %v", err)
+	}
+	record, err := store.Record(RunRecordRequest{ApplicationID: app, RunID: "tamper-check", Fixture: passFixture()})
+	if err != nil {
+		t.Fatalf("Record: %v", err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(record.RelativePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read diagnostic receipt: %v", err)
+	}
+	tampered := bytes.Replace(data, []byte(`"summary": "`), []byte(`"summary": "tampered `), 1)
+	if err := os.WriteFile(path, tampered, 0o600); err != nil {
+		t.Fatalf("tamper diagnostic receipt: %v", err)
+	}
+	if _, err := store.Load(record.RunID); err == nil {
+		t.Fatal("expected digest mismatch for tampered diagnostic receipt")
 	}
 }
 

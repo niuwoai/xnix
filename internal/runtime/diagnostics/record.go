@@ -165,7 +165,7 @@ func (s *RunRecordStore) Record(request RunRecordRequest) (RunRecord, error) {
 
 // Load returns one diagnostic run record by run id.
 func (s *RunRecordStore) Load(runID string) (RunRecord, error) {
-	_, path, err := s.recordPath(runID)
+	relativePath, path, err := s.recordPath(runID)
 	if err != nil {
 		return RunRecord{}, err
 	}
@@ -179,6 +179,25 @@ func (s *RunRecordStore) Load(runID string) (RunRecord, error) {
 	}
 	if record.RunID != runID {
 		return RunRecord{}, fmt.Errorf("diagnostic run record id mismatch: %q", record.RunID)
+	}
+	if record.SchemaVersion != runRecordSchemaVersion || record.RecordType != "diagnostic-run-record" || record.Source != "go-runtime-state-root-diagnostic-run-record" {
+		return RunRecord{}, errors.New("diagnostic run record has unsupported schema")
+	}
+	if record.RelativePath != relativePath || record.ApplicationID == "" || record.Result.ApplicationID != record.ApplicationID {
+		return RunRecord{}, errors.New("diagnostic run record identity or path mismatch")
+	}
+	storedDigest := record.SHA256
+	record.SHA256 = ""
+	_, expectedDigest, err := marshalDiagnosticRunRecord(record)
+	if err != nil {
+		return RunRecord{}, err
+	}
+	if storedDigest == "" || storedDigest != expectedDigest {
+		return RunRecord{}, errors.New("diagnostic run record digest mismatch")
+	}
+	record.SHA256 = storedDigest
+	if record.StateRootPathExposed || record.FixturePathExposed || record.BackendStarted || record.AIProviderCalled || record.RealAIProviderEnabled || record.AutoRepairAllowed || record.RepairExecuted || record.HostRootModified || record.NetworkRequired || record.PrivilegedContainerRequired || record.BackendDetailsExposed || record.FileContentsIncluded || record.Result.BackendStarted || record.Result.HostRootModified || record.DiagnosticInput.NetworkRequired || record.DiagnosticInput.FileContentsIncluded {
+		return RunRecord{}, errors.New("diagnostic run record has unsafe enabled gates")
 	}
 	return record, nil
 }
