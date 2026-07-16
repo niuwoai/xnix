@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.314] - 2026-07-17
+
+### Added
+
+- Added `kde-fake-portal-evidence-record` and the Go `KDEFakePortalEvidenceRecord` model for the Sample Notepad controlled state root.
+- Added deterministic fake Portal create, grant, complete, readback, content-digest, execution-ledger, session-record, and four-surface KDE fan-out evidence.
+- Added seven checks proving the blocked no-receipt baseline, completed receipt readback, Portal-only gate delta, lifecycle join, execution join, session join, and closed unsafe gates.
+
+### Changed
+
+- Advanced the staged lifecycle by satisfying only `portal-policy-review`; `snapshot-baseline` remains pending and the execution environment remains not ready.
+- Made repeated Portal evidence recording reuse the completed fake receipt instead of adding duplicate permission records.
+- Kept real Portal transport, host permission changes, execution approval, launch, execution, compatibility process start, production bus ownership, network access, privileged containers, backend details, and host-root mutation disabled.
+
 ## [0.2.313] - 2026-07-17
 
 ### Added

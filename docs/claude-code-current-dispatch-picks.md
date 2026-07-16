@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.313
+> Last updated: 2026-07-17 | Baseline: v0.2.314
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Fake Portal evidence join | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.314` | Record and consume a fake Portal request receipt for Sample Notepad under the same controlled state root while keeping real Portal transport and permission changes disabled. |
+| 1 | Snapshot and diagnostics evidence join | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.315` | Create and consume a controlled snapshot baseline plus redacted diagnostic evidence for Sample Notepad while keeping restore, repair, and execution disabled. |
 
 ## Best First Pick
 
-Start with the fake Portal evidence join.
+Start with the snapshot and diagnostics evidence join.
 
-The v0.2.313 checkpoint persists and reads back controlled lifecycle, blocked execution, and blocked session evidence for the nine-surface Sample Notepad identity. The next handoff should add one fake Portal request receipt to that same evidence chain and prove that only the Portal gate changes while real transport and execution remain disabled.
+The v0.2.314 checkpoint records and consumes one completed fake Portal receipt while proving that only the Portal execution gate changes. The next handoff should add one content-addressed snapshot baseline and one redacted diagnostic record to the same state root, then advance lifecycle readiness without enabling restore, repair, or execution.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

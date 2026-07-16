@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.313"
+EXPECTED_VERSION = "0.2.314"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -222,6 +222,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
   cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go
   cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
+  cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go
+  cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -283,6 +285,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_offline_application_identity_test.go
   internal/runtime/appidentity/kde_fake_execution_evidence.go
   internal/runtime/appidentity/kde_fake_execution_evidence_test.go
+  internal/runtime/appidentity/kde_fake_portal_evidence.go
+  internal/runtime/appidentity/kde_fake_portal_evidence_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -2075,7 +2079,7 @@ end
 end
 
 go_runtime_kde_fake_execution_test_source = read_project_file("internal/runtime/appidentity/kde_fake_execution_evidence_test.go")
-%w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs staged blocked explicit-test-root-only].each do |token|
+%w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs TestKDEFakeExecutionEvidenceRejectsManagedPathSymlink staged blocked explicit-test-root-only].each do |token|
   assert(go_runtime_kde_fake_execution_test_source.include?(token), "Go Runtime KDE fake execution tests must include #{token}")
 end
 
@@ -2084,6 +2088,26 @@ go_runtime_kde_fake_execution_cli_source = read_project_file("cmd/xnix-runtime-g
                                              read_project_file("cmd/xnix-runtime-go/main.go")
 %w[kde-fake-execution-evidence-record runKDEFakeExecutionEvidenceRecord LoadRecipeFromRegistry NewKDEFakeExecutionEvidenceRecord test-only TestKDEFakeExecutionEvidenceRecordCommandWritesControlledEvidence TestKDEFakeExecutionEvidenceRecordCommandRequiresExplicitTestBoundary all_checks_passed state_root_writes_enabled launch_enabled backend_process_started host_root_modified].each do |token|
   assert(go_runtime_kde_fake_execution_cli_source.include?(token), "Go Runtime KDE fake execution CLI must include #{token}")
+end
+
+go_runtime_kde_fake_portal_source = read_project_file("internal/runtime/appidentity/kde_fake_portal_evidence.go")
+%w[KDEFakePortalEvidenceRecord NewKDEFakePortalEvidenceRecord xnix.runtime.kde_fake_portal_evidence.v1 kde-fake-portal-evidence-record ensureCompletedFakePortalReceipt reviewedFakeExecutionTransaction portal-gate-delta portal-policy-review snapshot-baseline PortalEvidenceRecorded PortalGateChangedOnly StateRootRecordCount].each do |token|
+  assert(go_runtime_kde_fake_portal_source.include?(token), "Go Runtime KDE fake Portal evidence must include #{token}")
+end
+%w[StateRootPathExposed RealPortalCallEnabled HostPermissionChanged ExecutionApproved LaunchAllowed LaunchEnabled ExecutionStarted BackendProcessStarted ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_fake_portal_source.include?(token), "Go Runtime KDE fake Portal evidence must expose safety gate #{token}")
+end
+
+go_runtime_kde_fake_portal_test_source = read_project_file("internal/runtime/appidentity/kde_fake_portal_evidence_test.go")
+%w[TestKDEFakePortalEvidenceChangesOnlyPortalGate TestKDEFakePortalEvidenceRejectsManagedPathSymlink pending-user-mediation granted completed explicit-test-root-only].each do |token|
+  assert(go_runtime_kde_fake_portal_test_source.include?(token), "Go Runtime KDE fake Portal tests must include #{token}")
+end
+
+go_runtime_kde_fake_portal_cli_source = read_project_file("cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go") +
+                                          read_project_file("cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go") +
+                                          read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-fake-portal-evidence-record runKDEFakePortalEvidenceRecord LoadRecipeFromRegistry NewKDEFakePortalEvidenceRecord test-only TestKDEFakePortalEvidenceRecordCommandJoinsPortalReceipt TestKDEFakePortalEvidenceRecordCommandRequiresTestOnlyBoundary portal_gate_changed_only portal_evidence_recorded real_portal_call_enabled host_permission_changed execution_approved].each do |token|
+  assert(go_runtime_kde_fake_portal_cli_source.include?(token), "Go Runtime KDE fake Portal CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +

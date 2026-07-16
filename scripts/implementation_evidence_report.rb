@@ -324,6 +324,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_offline_application_identity_test.go
       internal/runtime/appidentity/kde_fake_execution_evidence.go
       internal/runtime/appidentity/kde_fake_execution_evidence_test.go
+      internal/runtime/appidentity/kde_fake_portal_evidence.go
+      internal/runtime/appidentity/kde_fake_portal_evidence_test.go
       internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
       cmd/xnix-runtime-go/desktop_safety_policy_commands.go
       cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
@@ -339,6 +341,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go
       cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go
       cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go
+      cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go
+      cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
       cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
@@ -350,6 +354,7 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/desktop_deactivation_dry_run.go
       internal/runtime/appidentity/settings_profile_migration.go
       internal/runtime/appidentity/kde_fake_execution_evidence.go
+      internal/runtime/appidentity/kde_fake_portal_evidence.go
     ],
     smoke_files: %w[
       scripts/runtime_activation_smoke.rb
@@ -370,9 +375,13 @@ DOMAIN_DEFINITIONS = [
       "cmd/xnix-runtime-go/kde_offline_application_identity_commands.go" => %w[kde-offline-application-identity-preview runKDEOfflineApplicationIdentityPreview parseKDEOfflineApplicationIdentityPreviewSource LoadRecipeFromRegistry],
       "cmd/xnix-runtime-go/kde_offline_application_identity_cli_test.go" => %w[TestKDEOfflineApplicationIdentityPreviewCommandUsesSampleFixture TestKDEOfflineApplicationIdentityPreviewCommandRejectsIncompleteArguments xnix.runtime.kde_offline_application_identity.v1 cross_surface_identity_consistent launch_enabled execution_started host_root_modified],
       "internal/runtime/appidentity/kde_fake_execution_evidence.go" => %w[xnix.runtime.kde_fake_execution_evidence.v1 kde-fake-execution-evidence-record test-only explicit-test-root-only NewKDEFakeExecutionEvidenceRecord prepareFakeExecutionLifecycle execution-ledger execution-session-record StateRootWritesEnabled StateRootPathExposed FakeExecutionRecorded LaunchAllowed LaunchEnabled ExecutionStarted BackendProcessStarted RealPortalCallEnabled ProductionBusOwnership HostRootModified],
-      "internal/runtime/appidentity/kde_fake_execution_evidence_test.go" => %w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs staged blocked explicit-test-root-only],
+      "internal/runtime/appidentity/kde_fake_execution_evidence_test.go" => %w[TestKDEFakeExecutionEvidencePersistsAndReadsBackControlledRecords TestKDEFakeExecutionEvidenceRejectsUnsafeInputs TestKDEFakeExecutionEvidenceRejectsManagedPathSymlink staged blocked explicit-test-root-only],
       "cmd/xnix-runtime-go/kde_fake_execution_evidence_commands.go" => %w[kde-fake-execution-evidence-record runKDEFakeExecutionEvidenceRecord test-only LoadRecipeFromRegistry NewKDEFakeExecutionEvidenceRecord],
       "cmd/xnix-runtime-go/kde_fake_execution_evidence_cli_test.go" => %w[TestKDEFakeExecutionEvidenceRecordCommandWritesControlledEvidence TestKDEFakeExecutionEvidenceRecordCommandRequiresExplicitTestBoundary all_checks_passed state_root_writes_enabled launch_enabled backend_process_started host_root_modified],
+      "internal/runtime/appidentity/kde_fake_portal_evidence.go" => %w[xnix.runtime.kde_fake_portal_evidence.v1 kde-fake-portal-evidence-record NewKDEFakePortalEvidenceRecord ensureCompletedFakePortalReceipt reviewedFakeExecutionTransaction portal-gate-delta portal-policy-review snapshot-baseline PortalEvidenceRecorded PortalGateChangedOnly RealPortalCallEnabled HostPermissionChanged ExecutionApproved LaunchEnabled BackendProcessStarted HostRootModified],
+      "internal/runtime/appidentity/kde_fake_portal_evidence_test.go" => %w[TestKDEFakePortalEvidenceChangesOnlyPortalGate TestKDEFakePortalEvidenceRejectsManagedPathSymlink pending-user-mediation granted completed explicit-test-root-only],
+      "cmd/xnix-runtime-go/kde_fake_portal_evidence_commands.go" => %w[kde-fake-portal-evidence-record runKDEFakePortalEvidenceRecord test-only LoadRecipeFromRegistry NewKDEFakePortalEvidenceRecord],
+      "cmd/xnix-runtime-go/kde_fake_portal_evidence_cli_test.go" => %w[TestKDEFakePortalEvidenceRecordCommandJoinsPortalReceipt TestKDEFakePortalEvidenceRecordCommandRequiresTestOnlyBoundary portal_gate_changed_only portal_evidence_recorded real_portal_call_enabled host_permission_changed execution_approved],
       "internal/runtime/owner/dispatch.go" => %w[GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents KDENotificationDigestPreview GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview NewKDEOfflineApplicationIdentityPreview],
       "internal/runtime/owner/service_test.go" => %w[TestServiceCallServesOwnerLocalNotificationDigest GetKDENotificationDigestPreview TestServiceCallServesOwnerLocalSignedRecipeVerification GetSignedRecipeVerificationPreview TestServiceCallServesOwnerLocalRestrictedSmokePacket GetRestrictedProductSmokePacketPreview TestServiceCallServesOwnerLocalOfflineKDEIdentity GetKDEOfflineApplicationIdentityPreview read-dispatch],
       "cmd/xnix-runtime-owner/main_test.go" => %w[TestRuntimeOwnerCommandRendersNotificationDigestOwnerLocalReadDispatch GetKDENotificationDigestPreview kde-notification-digest-preview TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch GetSignedRecipeVerificationPreview signed-recipe-verifier-preview TestRuntimeOwnerCommandRendersRestrictedSmokeOwnerLocalReadDispatch GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview TestRuntimeOwnerCommandRendersOfflineKDEIdentityOwnerLocalReadDispatch GetKDEOfflineApplicationIdentityPreview kde-offline-application-identity-preview],
