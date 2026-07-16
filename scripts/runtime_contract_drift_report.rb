@@ -24,6 +24,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetWindowsCompatibilityWorkstreamsPreview
   GetKDENotificationDigestPreview
   GetSignedRecipeVerificationPreview
+  GetRestrictedProductSmokePacketPreview
   GetRuntimeWriteGate
 ].freeze
 

@@ -1,12 +1,14 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.306
+> Last updated: 2026-07-17 | Current version: v0.2.307
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.306 checkpoint routes signed recipe verification through the Go Runtime owner's in-process read service as `GetSignedRecipeVerificationPreview`. The owner accepts only an application identity, reads the Runtime-managed recipe store, preserves digest verification, and fails closed as `production-signature-required` or `production-key-configuration-missing` without accepting caller-supplied paths or key material. Private keys, signature material exposure, production trust, recipe writes, backend launch, production bus ownership, and host mutation remain disabled.
+The v0.2.307 checkpoint routes the restricted product smoke packet through the Go Runtime owner's in-process read service as `GetRestrictedProductSmokePacketPreview`. The owner accepts no caller paths, reads the fixed Kinoite product manifest and repository evidence, and reports packet preparation separately from authorization and execution. Docker, QEMU, product smoke, serial-log persistence claims, release readiness, backend launch, production bus ownership, and host mutation remain disabled.
+
+The v0.2.306 checkpoint routed signed recipe verification through the Go Runtime owner's in-process read service as `GetSignedRecipeVerificationPreview`. The owner accepts only an application identity, reads the Runtime-managed recipe store, preserves digest verification, and fails closed as `production-signature-required` or `production-key-configuration-missing` without accepting caller-supplied paths or key material. Private keys, signature material exposure, production trust, recipe writes, backend launch, production bus ownership, and host mutation remain disabled.
 
 The v0.2.305 checkpoint routed the KDE notification digest through the Go Runtime owner's in-process read service as `GetKDENotificationDigestPreview`. The route participates in owner dispatch, service-call, smoke-batch, and restricted private session-bus evidence while remaining owner-local and outside the 61-method production D-Bus ABI; notification delivery, Runtime writes, backend launch, production bus ownership, and host mutation remain disabled.
 

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.306"
+EXPECTED_VERSION = "0.2.307"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -1426,7 +1426,7 @@ go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owne
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -2014,6 +2014,13 @@ runtime_owner_signed_recipe_test_source = read_project_file("internal/runtime/re
                                           read_project_file("cmd/xnix-runtime-owner/main_test.go")
 %w[TestRegistrySignedRecipeVerificationPreviewFailsClosedWithoutProductionKey TestDispatchReadRendersSignedRecipeVerificationAsOwnerLocalPayload TestServiceCallServesOwnerLocalSignedRecipeVerification TestRuntimeOwnerCommandRendersSignedRecipeOwnerLocalReadDispatch GetSignedRecipeVerificationPreview signed-recipe-verifier-preview production-signature-required recipe_digest_verified signature_verified signature_material_exposed].each do |token|
   assert(runtime_owner_signed_recipe_test_source.include?(token), "Go Runtime owner signed recipe evidence must include #{token}")
+end
+
+runtime_owner_restricted_smoke_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
+                                             read_project_file("internal/runtime/owner/service_test.go") +
+                                             read_project_file("cmd/xnix-runtime-owner/main_test.go")
+%w[TestDispatchReadRendersRestrictedProductSmokePacketAsOwnerLocalPayload TestServiceCallServesOwnerLocalRestrictedSmokePacket TestRuntimeOwnerCommandRendersRestrictedSmokeOwnerLocalReadDispatch GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview human_authorization_required execution_authorized docker_executed qemu_executed release_ready].each do |token|
+  assert(runtime_owner_restricted_smoke_test_source.include?(token), "Go Runtime owner restricted smoke evidence must include #{token}")
 end
 
 go_runtime_deactivation_source = read_project_file("internal/runtime/appidentity/desktop_deactivation_dry_run.go")

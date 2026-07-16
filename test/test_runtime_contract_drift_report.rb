@@ -34,6 +34,7 @@ assert(report.fetch("owner_session_bus_smoke_step_count") >= 66, "Runtime contra
 assert(report.fetch("owner_local_methods").include?("GetRuntimeOwnerReadiness"), "Runtime contract drift report must include owner-local readiness")
 assert(report.fetch("owner_local_methods").include?("GetKDENotificationDigestPreview"), "Runtime contract drift report must include the owner-local KDE notification digest")
 assert(report.fetch("owner_local_methods").include?("GetSignedRecipeVerificationPreview"), "Runtime contract drift report must include owner-local signed recipe verification")
+assert(report.fetch("owner_local_methods").include?("GetRestrictedProductSmokePacketPreview"), "Runtime contract drift report must include the owner-local restricted smoke packet")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "Runtime contract drift report must list gated write methods")
 assert(!report.fetch("write_methods_supported"), "Runtime contract drift report must not support write methods")
 assert(!report.fetch("write_method_dispatch_enabled"), "Runtime contract drift report must not enable write dispatch")

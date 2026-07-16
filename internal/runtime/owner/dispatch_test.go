@@ -101,6 +101,9 @@ func TestDispatchReadRejectsWriteMethodsAndBadArity(t *testing.T) {
 	if _, err := DispatchRead(projectRoot(t), "GetSignedRecipeVerificationPreview", nil); err == nil || !strings.Contains(err.Error(), "requires 1 argument") {
 		t.Fatalf("DispatchRead must reject missing signed recipe arguments, got %v", err)
 	}
+	if _, err := DispatchRead(projectRoot(t), "GetRestrictedProductSmokePacketPreview", []string{"unexpected"}); err == nil || !strings.Contains(err.Error(), "requires 0 argument") {
+		t.Fatalf("DispatchRead must reject restricted smoke packet arguments, got %v", err)
+	}
 	if _, err := DispatchRead(projectRoot(t), "GetUnknownRuntimeMethod", nil); err == nil || !strings.Contains(err.Error(), "unsupported owner read dispatch method") {
 		t.Fatalf("DispatchRead must reject unsupported methods, got %v", err)
 	}
@@ -244,6 +247,44 @@ func TestDispatchReadRendersSignedRecipeVerificationAsOwnerLocalPayload(t *testi
 	}
 }
 
+func TestDispatchReadRendersRestrictedProductSmokePacketAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetRestrictedProductSmokePacketPreview", nil)
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetRestrictedProductSmokePacketPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "restricted-product-smoke-packet-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady ||
+		!dispatch.ReadOnlyDispatch ||
+		dispatch.WriteMethodsEnabled ||
+		dispatch.SessionBusClaimed ||
+		dispatch.ProductionBusClaimed ||
+		dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected restricted smoke dispatch metadata: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "restricted-product-smoke-packet-preview" ||
+		payload["packet_prepared"] != true ||
+		payload["ready_for_authorized_smoke"] != true ||
+		payload["human_authorization_required"] != true ||
+		payload["execution_authorized"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["product_smoke_executed"] != false ||
+		payload["serial_log_persisted"] != false ||
+		payload["release_ready"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected restricted smoke payload: %#v", payload)
+	}
+}
+
 func TestSupportedReadDispatchMethodsRenderPayloads(t *testing.T) {
 	root := projectRoot(t)
 	for _, method := range SupportedReadDispatchMethods() {
@@ -333,6 +374,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetWindowsCompatibilityWorkstreamsPreview",
 		"GetKDENotificationDigestPreview",
 		"GetSignedRecipeVerificationPreview",
+		"GetRestrictedProductSmokePacketPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -346,7 +388,7 @@ func sampleReadDispatchArgs(method string) []string {
 		"GetTrayStatus", "GetBackendCapabilityMatrix", "GetRuntimeServiceBinding", "GetRuntimeLiveOwnerGate",
 		"GetRuntimeOwnerSmokePlan", "GetRuntimeMethodParityManifest", "GetRuntimeOwnerProcess",
 		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness",
-		"GetWindowsCompatibilityWorkstreamsPreview":
+		"GetWindowsCompatibilityWorkstreamsPreview", "GetRestrictedProductSmokePacketPreview":
 		return nil
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/image"
 	"xnix.local/xnix/internal/runtime/recipe"
 )
 
@@ -116,6 +117,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetWindowsCompatibilityWorkstreamsPreview",
 	"GetKDENotificationDigestPreview",
 	"GetSignedRecipeVerificationPreview",
+	"GetRestrictedProductSmokePacketPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -497,6 +499,12 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return recipe.NewRegistrySignedRecipeVerificationPreview(loaded), nil
 	},
+	"GetRestrictedProductSmokePacketPreview": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetRestrictedProductSmokePacketPreview", args, 0); err != nil {
+			return nil, err
+		}
+		return image.PrepareRestrictedProductSmokePacket(root, "image/kinoite/manifest.json")
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -738,6 +746,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "kde-notification-digest-preview"
 	case "GetSignedRecipeVerificationPreview":
 		return "signed-recipe-verifier-preview"
+	case "GetRestrictedProductSmokePacketPreview":
+		return "restricted-product-smoke-packet-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:

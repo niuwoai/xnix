@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.306
+> Last updated: 2026-07-17 | Baseline: v0.2.307
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,15 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Restricted smoke owner route | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.307` | Route the restricted product smoke packet through the Go-owned service path without executing Docker, QEMU, or product launch. |
+| 1 | Owner route checkpoint | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.308` | Close the owner route band with route-count, method-parity, smoke-batch, and deterministic disabled-write evidence. |
 
 ## Best First Pick
 
-Start with the restricted smoke owner route.
+Start with the owner route checkpoint.
 
-The restricted smoke owner route is the best next handoff because notification and signed recipe evidence now cross the Go owner service boundary and the product acceptance packet should use the same in-process read path.
+The owner route checkpoint is the best next handoff because notification, signed recipe, and restricted product smoke evidence now cross the Go owner service boundary and should be audited together before offline application identity work begins.
 
-The restricted smoke route must stay read-only and must not authorize or execute Docker, QEMU, backend launch, or host mutation.
+The checkpoint must stay read-only and must not enable production D-Bus ownership, Runtime writes, Docker, QEMU, backend launch, or host mutation.
 
 ## Good Branch Shape
 

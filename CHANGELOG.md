@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.307] - 2026-07-17
+
+### Added
+
+- Added the owner-local `GetRestrictedProductSmokePacketPreview` route across Go owner dispatch, `Service.Call`, owner CLI, smoke-batch, and restricted private session-bus coverage.
+- Added no-argument enforcement so owner callers cannot supply repository or manifest paths to the restricted product smoke packet.
+- Added packet-prepared, human-authorization, Docker, QEMU, product-smoke, serial-log, release-readiness, backend-launch, production-owner, and host-mutation gate tests.
+
+### Changed
+
+- Increased restricted owner smoke coverage from 64 to 65 read routes while keeping the formal production D-Bus read contract unchanged at 61 methods.
+- Updated Runtime contract drift, implementation evidence, layout verification, product documentation, and dispatch guidance for the owner-managed restricted smoke packet.
+- Kept execution authorization, Docker, QEMU, product smoke, release readiness, Runtime writes, production bus ownership, backend launch, and host-root mutation disabled.
+
 ## [0.2.306] - 2026-07-17
 
 ### Added
