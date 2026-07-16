@@ -105,6 +105,59 @@ func TestLoadMissingAndCorrupt(t *testing.T) {
 	}
 }
 
+func TestLoadAllOrdersSkipsAndToleratesMissingDir(t *testing.T) {
+	dir := t.TempDir()
+	root, _ := rootfs.Ensure(dir)
+
+	// A missing directory yields an empty slice, not an error.
+	empty, err := LoadAll[sample](root, "records")
+	if err != nil {
+		t.Fatalf("LoadAll on missing dir: %v", err)
+	}
+	if len(empty) != 0 {
+		t.Fatalf("missing dir must yield no records: %#v", empty)
+	}
+
+	// Filenames are returned in sorted order regardless of write order.
+	Save(root, "records/b.json", sample{ID: "second", Count: 2})
+	Save(root, "records/a.json", sample{ID: "first", Count: 1})
+	Save(root, "records/c.json", sample{ID: "third", Count: 3})
+
+	// A subdirectory, a non-.json file, and a lingering temp file must be
+	// skipped rather than decoded.
+	if err := os.MkdirAll(filepath.Join(dir, "records", "nested"), 0o700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	os.WriteFile(filepath.Join(dir, "records", "notes.txt"), []byte("ignore"), 0o600)
+	os.WriteFile(filepath.Join(dir, "records", "d.json"+tempSuffix), []byte("{partial"), 0o600)
+
+	all, err := LoadAll[sample](root, "records")
+	if err != nil {
+		t.Fatalf("LoadAll: %v", err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("expected three records, got %#v", all)
+	}
+	if all[0].ID != "first" || all[1].ID != "second" || all[2].ID != "third" {
+		t.Fatalf("records not ordered by filename: %#v", all)
+	}
+}
+
+func TestLoadAllReportsCorruptRecordAndNilRoot(t *testing.T) {
+	dir := t.TempDir()
+	root, _ := rootfs.Ensure(dir)
+	if err := os.MkdirAll(filepath.Join(dir, "records"), 0o700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	os.WriteFile(filepath.Join(dir, "records", "bad.json"), []byte("{not json"), 0o600)
+	if _, err := LoadAll[sample](root, "records"); err == nil {
+		t.Fatalf("a corrupt record must surface an error")
+	}
+	if _, err := LoadAll[sample](nil, "records"); err == nil {
+		t.Fatalf("nil root must be refused")
+	}
+}
+
 func TestExists(t *testing.T) {
 	root, _ := rootfs.Ensure(t.TempDir())
 	ok, err := Exists(root, "r.json")

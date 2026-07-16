@@ -15,7 +15,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"xnix.local/xnix/internal/runtime/rootfs"
 )
@@ -94,6 +97,48 @@ func Load(root *rootfs.Root, rel string, v any) error {
 		return fmt.Errorf("record %q is corrupt: %w", rel, err)
 	}
 	return nil
+}
+
+// LoadAll reads and decodes every ".json" record directly under a root-relative
+// directory into a slice of T, ordered by filename. Subdirectories and
+// non-".json" entries are skipped, and the temporary files of an in-flight
+// atomic Save (which carry tempSuffix) are ignored so a concurrent write is
+// never decoded as a record. A missing directory yields an empty slice, not an
+// error, so a store can list before its first write. This consolidates the
+// "ReadDir + Load each + sort" idiom every Runtime store reimplemented.
+func LoadAll[T any](root *rootfs.Root, dir string) ([]T, error) {
+	if root == nil {
+		return nil, fmt.Errorf("record load-all requires a controlled root")
+	}
+	abs, err := root.Resolve(dir)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(abs)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("list records in %q: %w", dir, err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".json") || strings.HasSuffix(name, tempSuffix) {
+			continue
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	out := make([]T, 0, len(names))
+	for _, name := range names {
+		var v T
+		if err := Load(root, path.Join(dir, name), &v); err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, nil
 }
 
 // Exists reports whether a record exists at a root-relative path.
