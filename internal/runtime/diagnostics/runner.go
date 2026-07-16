@@ -1,14 +1,13 @@
 package diagnostics
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 
 	"xnix.local/xnix/internal/runtime/appid"
+	"xnix.local/xnix/internal/runtime/record"
+	"xnix.local/xnix/internal/runtime/rootfs"
 )
 
 // supportedTestTypes enumerates the fixture-runnable test types.
@@ -84,34 +83,25 @@ func Run(applicationID string, fixture Fixture) (TestResult, error) {
 
 // ResultStore persists test results under a controlled state root.
 type ResultStore struct {
-	dir string
+	root *rootfs.Root
 }
 
-// NewResultStore opens (creating if needed) a result store under the state root.
+// NewResultStore opens a result store under the state root.
 func NewResultStore(stateRoot string) (*ResultStore, error) {
-	if stateRoot == "" {
-		return nil, errors.New("result store requires a state root")
-	}
-	abs, err := filepath.Abs(stateRoot)
+	root, err := rootfs.Open(stateRoot)
 	if err != nil {
-		return nil, fmt.Errorf("resolve state root: %w", err)
+		return nil, err
 	}
-	info, err := os.Stat(abs)
-	if err != nil {
-		return nil, fmt.Errorf("state root must exist: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("state root %q is not a directory", abs)
-	}
-	dir := filepath.Join(abs, "test-results")
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return nil, fmt.Errorf("initialize result store: %w", err)
-	}
-	return &ResultStore{dir: dir}, nil
+	return &ResultStore{root: root}, nil
 }
 
 func resultKey(applicationID, testType string) string {
 	return sanitizeKey(applicationID) + "__" + sanitizeKey(testType)
+}
+
+// resultRel is the state-root-relative path of a persisted test result.
+func resultRel(applicationID, testType string) string {
+	return "test-results/" + resultKey(applicationID, testType) + ".json"
 }
 
 func sanitizeKey(value string) string {
@@ -127,24 +117,17 @@ func sanitizeKey(value string) string {
 	return string(out)
 }
 
-// Save persists a test result (latest wins per application/test-type).
+// Save atomically persists a test result (latest wins per application/test-type).
 func (s *ResultStore) Save(result TestResult) error {
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(s.dir, resultKey(result.ApplicationID, result.TestType)+".json"), data, 0o600)
+	_, err := record.Save(s.root, resultRel(result.ApplicationID, result.TestType), result)
+	return err
 }
 
 // Load returns the persisted result for an application/test-type.
 func (s *ResultStore) Load(applicationID, testType string) (TestResult, error) {
-	data, err := os.ReadFile(filepath.Join(s.dir, resultKey(applicationID, testType)+".json"))
-	if err != nil {
-		return TestResult{}, fmt.Errorf("no persisted result for %s/%s: %w", applicationID, testType, err)
-	}
 	var result TestResult
-	if err := json.Unmarshal(data, &result); err != nil {
-		return TestResult{}, fmt.Errorf("persisted result is corrupt: %w", err)
+	if err := record.Load(s.root, resultRel(applicationID, testType), &result); err != nil {
+		return TestResult{}, err
 	}
 	return result, nil
 }
