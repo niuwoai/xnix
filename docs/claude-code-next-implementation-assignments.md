@@ -1,6 +1,6 @@
 # Claude Code Next Implementation Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.249
+> Last updated: 2026-07-16 | Baseline: v0.2.250
 
 This document is a short assignment board for giving Claude Code large, relatively independent Xnix implementation work.
 

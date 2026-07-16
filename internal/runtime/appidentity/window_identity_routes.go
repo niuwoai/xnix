@@ -66,6 +66,9 @@ type KWinWindowRulePlanPreview struct {
 	KDEPolicyOwner           bool          `json:"kde_policy_owner"`
 	WindowManagerPolicyOnly  bool          `json:"window_manager_policy_only"`
 	RuntimeOwnsBackendPolicy bool          `json:"runtime_owns_backend_policy"`
+	ActivationReceiptRoot    bool          `json:"activation_receipt_root"`
+	ActivationReceiptBacked  bool          `json:"activation_receipt_backed"`
+	ActivationReceiptPath    string        `json:"activation_receipt_path,omitempty"`
 	KWinRuleApplied          bool          `json:"kwin_rule_applied"`
 	TaskManagerEntryActive   bool          `json:"task_manager_entry_active"`
 	WindowObservationStarted bool          `json:"window_observation_started"`
@@ -74,6 +77,10 @@ type KWinWindowRulePlanPreview struct {
 	HostRootModified         bool          `json:"host_root_modified"`
 	BackendDetailsExposed    bool          `json:"backend_details_exposed"`
 	DesktopSafeSummary       string        `json:"desktop_safe_summary"`
+}
+
+type KWinWindowRuleOptions struct {
+	ActivationRoot string
 }
 
 type KWinRuleMatch struct {
@@ -164,6 +171,10 @@ func (plan Plan) TaskManagerIdentityPlanPreviewWithOptions(options TaskManagerId
 }
 
 func (plan Plan) KWinWindowRulePlanPreview() (KWinWindowRulePlanPreview, error) {
+	return plan.KWinWindowRulePlanPreviewWithOptions(KWinWindowRuleOptions{})
+}
+
+func (plan Plan) KWinWindowRulePlanPreviewWithOptions(options KWinWindowRuleOptions) (KWinWindowRulePlanPreview, error) {
 	windowIdentity, err := plan.WindowIdentityPreview()
 	if err != nil {
 		return KWinWindowRulePlanPreview{}, err
@@ -175,11 +186,25 @@ func (plan Plan) KWinWindowRulePlanPreview() (KWinWindowRulePlanPreview, error) 
 		return KWinWindowRulePlanPreview{}, errors.New("KWin window rule preview requires single-line identity fields")
 	}
 
+	source := "window-identity-preview"
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return KWinWindowRulePlanPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
+		source = "window-identity-preview+desktop-activation-receipt"
+	}
+
 	preview := KWinWindowRulePlanPreview{
 		SchemaVersion: "xnix.runtime.kwin_window_rule.v1",
 		RequestType:   "kwin-window-rule-preview",
 		PlanType:      "kwin-window-rule-plan",
-		Source:        "window-identity-preview",
+		Source:        source,
 		RuntimeMethod: "GetKWinWindowRulePlan",
 		ReadMethod:    "GetKWinWindowRulePlanPreview",
 		Desktop:       windowIdentity.Desktop,
@@ -208,6 +233,9 @@ func (plan Plan) KWinWindowRulePlanPreview() (KWinWindowRulePlanPreview, error) 
 		KDEPolicyOwner:           false,
 		WindowManagerPolicyOnly:  windowIdentity.KWin.WindowManagerPolicyOnly,
 		RuntimeOwnsBackendPolicy: windowIdentity.KWin.RuntimeOwnsBackendPolicy,
+		ActivationReceiptRoot:    activationReceiptRoot,
+		ActivationReceiptBacked:  activationReceiptBacked,
+		ActivationReceiptPath:    activationReceiptPath,
 		KWinRuleApplied:          false,
 		TaskManagerEntryActive:   false,
 		WindowObservationStarted: false,

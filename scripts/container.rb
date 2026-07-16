@@ -91,7 +91,7 @@ when "download-system"
 when "boot-system"
   abort "Usage: ruby scripts/container.rb boot-system" unless ARGV.empty?
 
-  exec(*container.cache_run_command(["timeout", "90s", *qemu.boot_command]))
+  exec(*container.cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
   abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system}"
 end

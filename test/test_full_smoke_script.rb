@@ -34,6 +34,6 @@ assert(script.include?("Xnix::FullSmokeReport"), "full smoke must emit a structu
 assert(script.include?("full-smoke-report.json"), "full smoke must write a JSON report")
 assert(script.include?("full-smoke-report.md"), "full smoke must write a Markdown report")
 assert(script.include?("JSON.pretty_generate"), "full smoke JSON report must be pretty generated")
-assert(project_root.join("scripts/container.rb").read.include?("\"90s\""), "container boot-system must allow enough time for QEMU login markers")
+assert(project_root.join("scripts/container.rb").read.include?("\"180s\""), "container boot-system must allow enough time for QEMU login markers")
 
 puts "PASS: full smoke script unit tests"

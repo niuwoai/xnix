@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.250] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE KWin window-rule previews through `kwin-window-rule-preview --activation-root`, so KWin identity and layout reads can prove staged activation evidence before rule application remains gated.
+- Added Go and CLI coverage proving KWin window-rule previews consume staged activation receipts without exposing the activation root, applying KWin rules, observing windows, enabling launch or execution, activating task-manager entries, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks KWin window-rule consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, task-manager identity, tray status, notification, and settings reads.
+- Extended the constrained QEMU boot-system timeout to 180 seconds so tenth-version full smoke can reach the same serial login markers on slower TCG hosts without weakening host-safety gates.
+
 ## [0.2.249] - 2026-07-16
 
 ### Added

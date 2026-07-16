@@ -1,6 +1,6 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-16 | Current version: v0.2.249
+> Last updated: 2026-07-16 | Current version: v0.2.250
 
 ## Summary
 
@@ -161,7 +161,7 @@ Xnix is an atomic Linux desktop designed to make existing Windows applications f
 - Desktop activation staging can now use the Runtime Go desktop-entry renderer through `xnix-install-desktop-integration --desktop-entry-source runtime-go`, validating the rendered launcher text before writing it under the staging root.
 - Desktop activation staging can now use the Runtime Go MIME association renderer through `xnix-install-desktop-integration --file-association-source runtime-go`, validating the rendered `mimeapps.list` text before writing it under the staging root.
 - Go task-manager identity previews delegate to `xnix-runtime-go task-manager-identity-preview --registry <path> --app <id> [--activation-root <root>]` and `GetTaskManagerIdentityPlan`, deriving taskbar grouping, pinning, switcher visibility, and restore hints from the shared Runtime window identity model, optionally consuming staged activation receipt evidence from an explicit root, while keeping task-manager activation, window observation, launch, execution, activation-root path exposure, backend detail exposure, and host-root mutation disabled.
-- Go KWin window-rule previews delegate to `xnix-runtime-go kwin-window-rule-preview --registry <path> --app <id>` and `GetKWinWindowRulePlan`, deriving identity matching and layout hints from the shared Runtime window identity model while keeping KWin rule application, task-manager activation, window observation, launch, execution, backend detail exposure, and host-root mutation disabled.
+- Go KWin window-rule previews delegate to `xnix-runtime-go kwin-window-rule-preview --registry <path> --app <id> [--activation-root <root>]` and `GetKWinWindowRulePlan`, deriving identity matching and layout hints from the shared Runtime window identity model, optionally consuming staged activation receipt evidence from an explicit root, while keeping KWin rule application, task-manager activation, window observation, launch, execution, activation-root path exposure, backend detail exposure, and host-root mutation disabled.
 - File association generation delegates to `xnix-file-association-model` by default or `xnix-runtime-go mimeapps-preview` when the Runtime Go source is selected, mapping recipe MIME types to generated desktop files and standard `mimeapps.list` defaults inside a staging root without overwriting existing associations.
 - File association planning delegates to `xnix-runtime-core file-association-plan` and `GetFileAssociationPlan`, which describe generated desktop-file defaults, `mimeapps.list` sections, and portal-mediated file-open commands without writing files or overwriting existing associations.
 - Dolphin service menus delegate selected files to `xnix-compat-open`, which validates file URIs, resolves a Runtime application recipe by file extension, and models a portal-required `Launch` request without directly invoking Wine or a VM.

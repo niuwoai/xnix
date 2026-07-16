@@ -96,6 +96,42 @@ func TestKWinWindowRulePreviewCommand(t *testing.T) {
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestKWinWindowRulePreviewCommandConsumesActivationRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	stageRoot := t.TempDir()
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", app, "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{"kwin-window-rule-preview", "--registry", registryPath, "--app", app, "--activation-root", stageRoot}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	payload := decodeWindowIdentityPayload(t, output.Bytes())
+	if payload["source"] != "window-identity-preview+desktop-activation-receipt" ||
+		payload["activation_receipt_root"] != true ||
+		payload["activation_receipt_backed"] != true ||
+		payload["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("KWin window rule did not consume activation receipt: %#v", payload)
+	}
+	if payload["kwin_rule_applied"] != false ||
+		payload["task_manager_entry_active"] != false ||
+		payload["window_observation_started"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("receipt-backed KWin window rule must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), stageRoot) {
+		t.Fatalf("KWin window rule exposed activation root: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func decodeWindowIdentityPayload(t *testing.T, data []byte) map[string]any {
 	t.Helper()
 	var payload map[string]any
