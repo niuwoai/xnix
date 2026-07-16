@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.302
+> Last updated: 2026-07-17 | Baseline: v0.2.303
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,15 +25,15 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
+| 1 | First-band review closure | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.304` | Consolidate the v0.2.301-v0.2.303 evidence into one deterministic Go train checkpoint before Runtime owner route migration begins. |
 
 ## Best First Pick
 
-Start with restricted product smoke packet preparation.
+Start with first-band review closure.
 
-Restricted product smoke packet preparation is the best next handoff because KDE notification digest and signed recipe verifier evidence now exist, while Docker and QEMU execution must remain human-authorized.
+First-band review closure is the best next handoff because KDE notification digest, signed recipe verifier, and restricted smoke packet evidence now exist and should be joined into one deterministic train checkpoint before route migration begins.
 
-The packet must remain dry-run or fixture-only and must not run Docker or QEMU without explicit authorization.
+The checkpoint must stay read-only and must not run Docker or QEMU.
 
 ## Good Branch Shape
 

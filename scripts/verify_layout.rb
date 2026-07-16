@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.302"
+EXPECTED_VERSION = "0.2.303"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -223,6 +223,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go
   cmd/xnix-runtime-go/signed_recipe_verifier_commands.go
   cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go
+  cmd/xnix-runtime-go/restricted_product_smoke_packet_commands.go
+  cmd/xnix-runtime-go/restricted_product_smoke_packet_cli_test.go
   cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go
   cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go
   cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
@@ -276,6 +278,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/recipe_conflict_audit_test.go
   internal/runtime/recipe/signature.go
   internal/runtime/recipe/signature_test.go
+  internal/runtime/image/restricted_smoke_packet.go
+  internal/runtime/image/restricted_smoke_packet_test.go
   internal/runtime/appidentity/snapshot_restore_candidates.go
   internal/runtime/appidentity/snapshot_restore_candidates_test.go
   internal/runtime/appidentity/snapshot_plan.go
@@ -345,6 +349,7 @@ REQUIRED_FILES = %w[
   scripts/offline_application_fixture_matrix.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
+  scripts/restricted_product_smoke_packet.rb
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
@@ -486,6 +491,7 @@ REQUIRED_FILES = %w[
   test/test_file_open_request.rb
   test/test_full_smoke_report.rb
   test/test_full_smoke_script.rb
+  test/test_restricted_product_smoke_packet.rb
   test/test_launch_request.rb
   test/test_notification_request.rb
   test/test_portal_access_policy.rb
@@ -2051,6 +2057,36 @@ end
 go_runtime_signed_recipe_verifier_cli_test_source = read_project_file("cmd/xnix-runtime-go/signed_recipe_verifier_cli_test.go")
 %w[TestSignedRecipeVerifierPreviewCLI TestSignedRecipeVerifierPreviewCLIReportsInvalidSignature TestSignedRecipeVerifierPreviewCLIRejectsMissingArguments xnix.runtime.signed_recipe_verification.v1 production_key_configured production_trust_ready private_key_loaded backend_launch_enabled host_root_modified signature_material_exposed].each do |token|
   assert(go_runtime_signed_recipe_verifier_cli_test_source.include?(token), "Go Runtime signed recipe verifier CLI tests must include #{token}")
+end
+
+go_runtime_restricted_smoke_packet_source = read_project_file("internal/runtime/image/restricted_smoke_packet.go")
+%w[RestrictedProductSmokePacket RestrictedSmokeEvidence PrepareRestrictedProductSmokePacket xnix.runtime.restricted_product_smoke_packet.v1 restricted-product-smoke-packet-preview dry-run-product-image-smoke-readiness runtime-owner artifact-trust backend-lifecycle portal-safety kde-entrypoints].each do |token|
+  assert(go_runtime_restricted_smoke_packet_source.include?(token), "Go Runtime restricted product smoke packet must include #{token}")
+end
+%w[ReadyForAuthorizedSmoke HumanAuthorizationRequired ExecutionAuthorized DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersistenceRequired SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady].each do |token|
+  assert(go_runtime_restricted_smoke_packet_source.include?(token), "Go Runtime restricted product smoke packet must expose gate #{token}")
+end
+
+go_runtime_restricted_smoke_packet_test_source = read_project_file("internal/runtime/image/restricted_smoke_packet_test.go")
+%w[TestPrepareRestrictedProductSmokePacketRealRepo TestPrepareRestrictedProductSmokePacketReportsMissingEvidence TestPrepareRestrictedProductSmokePacketRejectsManifestEscape].each do |token|
+  assert(go_runtime_restricted_smoke_packet_test_source.include?(token), "Go Runtime restricted product smoke packet tests must include #{token}")
+end
+
+restricted_smoke_packet_cli_source = read_project_file("cmd/xnix-runtime-go/restricted_product_smoke_packet_commands.go")
+%w[restricted-product-smoke-packet-preview runRestrictedProductSmokePacketPreview PrepareRestrictedProductSmokePacket repo-root manifest].each do |token|
+  assert(restricted_smoke_packet_cli_source.include?(token), "Restricted product smoke packet CLI must include #{token}")
+end
+
+restricted_smoke_packet_script_source = read_project_file("scripts/restricted_product_smoke_packet.rb")
+%w[restricted-product-smoke-packet-preview JSON.pretty_generate render_markdown GOCACHE human_authorization_required docker_executed qemu_executed serial_log_persisted loopback_only_networking docker_socket_mounted host_network_enabled broad_host_mount_enabled host_root_modified].each do |token|
+  assert(restricted_smoke_packet_script_source.include?(token), "Restricted product smoke packet report must include #{token}")
+end
+assert(!restricted_smoke_packet_script_source.include?("scripts/container.rb"), "Restricted product smoke packet must not run Docker")
+assert(!restricted_smoke_packet_script_source.include?("boot-system"), "Restricted product smoke packet must not boot QEMU")
+
+restricted_smoke_packet_test_source = read_project_file("test/test_restricted_product_smoke_packet.rb")
+%w[xnix.runtime.restricted_product_smoke_packet.v1 ready_for_authorized_smoke human_authorization_required docker_executed qemu_executed release_ready].each do |token|
+  assert(restricted_smoke_packet_test_source.include?(token), "Restricted product smoke packet tests must include #{token}")
 end
 
 go_runtime_snapshot_restore_source = read_project_file("internal/runtime/appidentity/snapshot_restore_candidates.go")

@@ -309,8 +309,12 @@ LANES = [
       %r{\Aboot/},
       %r{\Abuildroot/},
       %r{\Aimage/},
+      %r{\Ainternal/runtime/image/},
+      %r{\Acmd/xnix-runtime-go/restricted_product_smoke_packet_},
       %r{\Ascripts/full_smoke\.rb\z},
+      %r{\Ascripts/restricted_product_smoke_packet\.rb\z},
       %r{\Atest/test_full_smoke},
+      %r{\Atest/test_restricted_product_smoke_packet\.rb\z},
       %r{\Atest/test_container\.rb\z}
     ]
   }

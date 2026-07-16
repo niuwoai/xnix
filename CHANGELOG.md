@@ -2,6 +2,18 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.303] - 2026-07-17
+
+### Added
+
+- Added the Go `restricted-product-smoke-packet-preview` model and CLI command. The packet joins Runtime owner, signed recipe and artifact trust, backend lifecycle, fake-mode Portal safety, KDE seven-entry-point, and image-manifest evidence into a dry-run readiness decision.
+- Added the offline `scripts/restricted_product_smoke_packet.rb` JSON/Markdown wrapper plus ready, missing-evidence, manifest-escape, CLI, report-format, authorization-gate, loopback-networking, serial-log-requirement, and no-execution tests.
+
+### Changed
+
+- Updated layout, implementation, release, product, and dispatch evidence so restricted smoke packet preparation is recognized and the next train step closes the `0.2.301`-`0.2.304` review band.
+- Kept Docker execution, QEMU execution, product smoke execution, live backend launch, privileged containers, Docker socket mounts, host networking, broad host mounts, serial-log claims, release readiness, and host-root mutation disabled.
+
 ## [0.2.302] - 2026-07-17
 
 ### Added

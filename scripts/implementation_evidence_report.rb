@@ -480,10 +480,16 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/image/manifest.go
       internal/runtime/image/smoke.go
       internal/runtime/image/smoke_test.go
+      internal/runtime/image/restricted_smoke_packet.go
+      internal/runtime/image/restricted_smoke_packet_test.go
+      cmd/xnix-runtime-go/restricted_product_smoke_packet_commands.go
+      cmd/xnix-runtime-go/restricted_product_smoke_packet_cli_test.go
       lib/xnix/full_smoke_report.rb
       scripts/build_kde_image.rb
       scripts/boot_kde_image.rb
       scripts/full_smoke.rb
+      scripts/restricted_product_smoke_packet.rb
+      test/test_restricted_product_smoke_packet.rb
     ],
     state_files: [],
     smoke_files: %w[
@@ -496,10 +502,14 @@ DOMAIN_DEFINITIONS = [
     gate_tokens: {
       "image/kinoite/Containerfile" => %w[org.xnix.image org.xnix.flagship],
       "internal/runtime/image/smoke.go" => %w[SerialMarkers RuntimeReady],
+      "internal/runtime/image/restricted_smoke_packet.go" => %w[xnix.runtime.restricted_product_smoke_packet.v1 restricted-product-smoke-packet-preview dry-run-product-image-smoke-readiness runtime-owner artifact-trust backend-lifecycle portal-safety kde-entrypoints ReadyForAuthorizedSmoke HumanAuthorizationRequired DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady],
+      "cmd/xnix-runtime-go/restricted_product_smoke_packet_commands.go" => %w[restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket repo-root manifest],
+      "scripts/restricted_product_smoke_packet.rb" => %w[restricted-product-smoke-packet-preview JSON.pretty_generate render_markdown GOCACHE human_authorization_required docker_executed qemu_executed serial_log_persisted loopback_only_networking docker_socket_mounted host_network_enabled broad_host_mount_enabled host_root_modified],
+      "test/test_restricted_product_smoke_packet.rb" => %w[xnix.runtime.restricted_product_smoke_packet.v1 ready_for_authorized_smoke human_authorization_required docker_executed qemu_executed release_ready],
       "lib/xnix/full_smoke_report.rb" => %w[xnix.full_smoke_report.v1 full-build-qemu-smoke-report qemu_network_restricted host_root_modified privileged_container_required docker_socket_mounted host_network_enabled],
       "scripts/full_smoke.rb" => %w[FullSmokeReport full-smoke-report.json full-smoke-report.md serial.log boot-system]
     },
-    summary: "KDE image validation, constrained QEMU smoke scaffolding, and full milestone smoke reports exist; full product image proof remains gated."
+    summary: "KDE image validation, a Go-owned restricted product smoke packet, offline JSON and Markdown packet rendering, constrained QEMU smoke scaffolding, and full milestone smoke reports exist; Docker and QEMU execution plus persisted serial-log proof remain human-authorized."
   },
   {
     id: "developer-verification-harness",

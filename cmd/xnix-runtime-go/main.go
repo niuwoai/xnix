@@ -207,6 +207,8 @@ func run(args []string, stdout io.Writer) error {
 		return runRecipeConflictAuditPreview(args[1:], stdout)
 	case "repair-plan-preview":
 		return runRepairPlanPreview(args[1:], stdout)
+	case "restricted-product-smoke-packet-preview":
+		return runRestrictedProductSmokePacketPreview(args[1:], stdout)
 	case "review-flow-preview":
 		return runReviewFlowPreview(args[1:], stdout)
 	case "run-plan-preview":
