@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.248] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE settings previews through `settings-preview --activation-root`, so unified settings reads can prove staged activation evidence before settings persistence remains gated.
+- Added Go and CLI coverage proving settings previews consume staged activation receipts without exposing the activation root, persisting settings, changing permissions, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks unified settings consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, tray status, and notification reads.
+
 ## [0.2.247] - 2026-07-16
 
 ### Added

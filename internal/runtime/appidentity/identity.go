@@ -249,12 +249,19 @@ type SettingsPreview struct {
 	SettingsState              string            `json:"settings_state"`
 	SettingsPersisted          bool              `json:"settings_persisted"`
 	SettingsPersistenceEnabled bool              `json:"settings_persistence_enabled"`
+	ActivationReceiptRoot      bool              `json:"activation_receipt_root"`
+	ActivationReceiptBacked    bool              `json:"activation_receipt_backed"`
+	ActivationReceiptPath      string            `json:"activation_receipt_path,omitempty"`
 	HostRootModified           bool              `json:"host_root_modified"`
 	BackendDetailsExposed      bool              `json:"backend_details_exposed"`
 	SectionCount               int               `json:"section_count"`
 	Sections                   []SettingsSection `json:"sections"`
 	UserFacingSettings         map[string]string `json:"user_facing_settings"`
 	Summary                    string            `json:"summary"`
+}
+
+type SettingsOptions struct {
+	ActivationRoot string
 }
 
 type SettingsChangePreview struct {
@@ -1337,6 +1344,10 @@ func (plan Plan) NotificationPreviewWithOptions(eventType string, options Notifi
 }
 
 func (plan Plan) SettingsPreview() (SettingsPreview, error) {
+	return plan.SettingsPreviewWithOptions(SettingsOptions{})
+}
+
+func (plan Plan) SettingsPreviewWithOptions(options SettingsOptions) (SettingsPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return SettingsPreview{}, err
 	}
@@ -1344,6 +1355,18 @@ func (plan Plan) SettingsPreview() (SettingsPreview, error) {
 		if !singleLine(value) {
 			return SettingsPreview{}, errors.New("settings preview requires single-line identity fields")
 		}
+	}
+
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return SettingsPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
 	}
 
 	sections := []SettingsSection{
@@ -1380,6 +1403,9 @@ func (plan Plan) SettingsPreview() (SettingsPreview, error) {
 		SettingsState:              "planned",
 		SettingsPersisted:          false,
 		SettingsPersistenceEnabled: false,
+		ActivationReceiptRoot:      activationReceiptRoot,
+		ActivationReceiptBacked:    activationReceiptBacked,
+		ActivationReceiptPath:      activationReceiptPath,
 		HostRootModified:           false,
 		BackendDetailsExposed:      false,
 		SectionCount:               len(sections),

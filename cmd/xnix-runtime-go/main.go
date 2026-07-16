@@ -1236,7 +1236,7 @@ func runNotificationPreview(args []string, stdout io.Writer) error {
 }
 
 func runSettingsPreview(args []string, stdout io.Writer) error {
-	recipe, provenance, err := parseRecipeSource("settings-preview", args)
+	recipe, provenance, options, err := parseSettingsPreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -1244,7 +1244,7 @@ func runSettingsPreview(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	preview, err := plan.SettingsPreview()
+	preview, err := plan.SettingsPreviewWithOptions(options)
 	if err != nil {
 		return err
 	}
@@ -1385,6 +1385,34 @@ func runWindowIdentityPreview(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(preview)
+}
+
+func parseSettingsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, appidentity.SettingsOptions, error) {
+	flags := flag.NewFlagSet("settings-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.SettingsOptions{}, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.SettingsOptions{}, errors.New("settings-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.SettingsOptions{}, errors.New("settings-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.SettingsOptions{}, errors.New("settings-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.SettingsOptions{}, errors.New("settings-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, appidentity.SettingsOptions{ActivationRoot: *activationRoot}, err
 }
 
 func parseNotificationPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, appidentity.NotificationOptions, error) {

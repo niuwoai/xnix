@@ -16,7 +16,7 @@ store = Xnix::Compatibility::RecipeStore.new(path: PROJECT_ROOT.join("runtime/re
 recipe = store.find("org.xnix.sample.notepad")
 plan = Xnix::Compatibility::DesktopResourceBridgePlan.new(recipe: recipe).to_h
 
-assert(plan["version"] == "0.2.247", "desktop resource bridge plan must expose the current version")
+assert(plan["version"] == "0.2.248", "desktop resource bridge plan must expose the current version")
 assert(plan["plan_type"] == "desktop-resource-bridge-plan", "desktop resource bridge plan must identify the plan type")
 assert(plan["runtime_method"] == "GetDesktopResourceBridgePlan", "desktop resource bridge plan must identify the Runtime method")
 assert(plan["application"]["id"] == "org.xnix.sample.notepad", "desktop resource bridge plan must preserve the application id")

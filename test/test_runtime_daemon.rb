@@ -18,7 +18,7 @@ command = ["ruby", project_root.join("bin/xnix-compatd").to_s]
 stdout, stderr, status = Open3.capture3(*command, "probe")
 assert(status.success?, "runtime daemon probe must exit successfully: #{stderr}")
 probe = JSON.parse(stdout)
-assert(probe["version"] == "0.2.247", "runtime daemon probe must report the current version")
+assert(probe["version"] == "0.2.248", "runtime daemon probe must report the current version")
 assert(probe["bus_name"] == "org.xnix.Compatibility1", "runtime daemon probe must keep the stable bus name")
 assert(probe["capabilities"]["recipe_store"], "runtime daemon probe must expose recipe store capability")
 assert(probe["capabilities"]["registry_backed_recipe_store"], "runtime daemon probe must expose registry-backed recipe loading")
