@@ -25,10 +25,13 @@ func TestKDEOfflineApplicationIdentityPreviewCommandUsesSampleFixture(t *testing
 	if payload["schema_version"] != "xnix.runtime.kde_offline_application_identity.v1" ||
 		payload["application_id"] != "org.xnix.sample.notepad" ||
 		payload["display_name"] != "Sample Notepad" ||
-		payload["surface_count"] != float64(5) ||
+		payload["surface_count"] != float64(7) ||
 		payload["recipe_digest_verified"] != true ||
 		payload["cross_surface_identity_consistent"] != true ||
 		payload["launch_enabled"] != false ||
+		payload["live_tray_bridge_enabled"] != false ||
+		payload["notification_sent"] != false ||
+		payload["notification_delivery_enabled"] != false ||
 		payload["execution_started"] != false ||
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected command payload: %#v", payload)

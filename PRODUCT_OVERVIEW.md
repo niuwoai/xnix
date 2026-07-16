@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.309
+> Last updated: 2026-07-17 | Current version: v0.2.310
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.310 checkpoint extends the digest-verified `org.xnix.sample.notepad` identity into KDE tray and notification-center evidence. The same application id, display name, icon, and desktop file now drive a registered tray entry and a deterministic approval notification namespace alongside the five v0.2.309 surfaces. Live tray bridging, bridge persistence, notification delivery, action execution, launch, backend process start, network access, and host mutation remain disabled.
 
 The v0.2.309 checkpoint starts the offline KDE application identity band with `kde-offline-application-identity-preview`. It loads the digest-verified `org.xnix.sample.notepad` registry fixture, renders its standard desktop entry and MIME associations in memory, and verifies that desktop entry, MIME, KRunner, task-manager, and KWin surfaces share one application id, name, icon, desktop file, launcher URL, and grouping identity. The read model exposes content digests instead of raw commands or host paths; desktop writes, MIME changes, KRunner persistence, task-manager activation, KWin rule application, launch, execution, backend process start, network access, and host mutation remain disabled.
 

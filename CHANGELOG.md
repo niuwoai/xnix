@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.310] - 2026-07-17
+
+### Added
+
+- Extended the verified offline KDE application identity with tray and notification-center surfaces for `org.xnix.sample.notepad`.
+- Added deterministic notification namespace, event, category, action, and application-identity evidence plus tray registration and navigation evidence.
+- Added tray/notification parity, deterministic notification id, disabled delivery, disabled action execution, disabled live bridge, and disabled persistence tests.
+
+### Changed
+
+- Increased the canonical offline identity from five to seven KDE surfaces while preserving one application id, display name, icon, desktop file, launcher URL, and grouping identity.
+- Updated implementation evidence, layout verification, product documentation, and dispatch guidance for attention-surface identity.
+- Kept live tray bridging, tray configuration persistence, notification delivery, notification action execution, launch, backend process start, network access, and host-root mutation disabled.
+
 ## [0.2.309] - 2026-07-17
 
 ### Added

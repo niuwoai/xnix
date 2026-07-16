@@ -33,7 +33,7 @@ func TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces(t *testin
 		preview.Icon != "accessories-text-editor" ||
 		preview.DesktopFile != "xnix-org.xnix.sample.notepad.desktop" ||
 		preview.LauncherURL != "applications:xnix-org.xnix.sample.notepad.desktop" ||
-		preview.SurfaceCount != 5 || len(preview.SurfaceIDs) != 5 ||
+		preview.SurfaceCount != 7 || len(preview.SurfaceIDs) != 7 ||
 		!preview.RecipeDigestVerified || !preview.CrossSurfaceIdentityConsistent ||
 		!preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner ||
 		!preview.ReviewOnly || !preview.Offline {
@@ -52,13 +52,46 @@ func TestKDEOfflineApplicationIdentityPreviewJoinsCanonicalKDESurfaces(t *testin
 		!preview.KWin.IdentityFieldsMatch || preview.KWin.ResourceName != preview.ApplicationID || preview.KWin.RuleApplied {
 		t.Fatalf("unexpected KDE surface evidence: %#v %#v %#v", preview.KRunner, preview.TaskManager, preview.KWin)
 	}
+	if !preview.Tray.IdentityFieldsMatch || preview.Tray.ApplicationID != preview.ApplicationID ||
+		preview.Tray.Icon != preview.Icon || preview.Tray.DesktopFile != preview.DesktopFile ||
+		preview.Tray.RegisteredAppCount != 1 || preview.Tray.LiveBridgeEnabled || preview.Tray.BridgePersisted ||
+		!preview.Notification.IdentityFieldsMatch || preview.Notification.ApplicationID != preview.ApplicationID ||
+		preview.Notification.DesktopFile != preview.DesktopFile ||
+		preview.Notification.NotificationIDNamespace != preview.ApplicationID+"." ||
+		!strings.HasPrefix(preview.Notification.NotificationID, preview.Notification.NotificationIDNamespace) ||
+		preview.Notification.DeliveryEnabled || preview.Notification.ActionExecutionEnabled {
+		t.Fatalf("unexpected attention identity evidence: %#v %#v", preview.Tray, preview.Notification)
+	}
 	if preview.DesktopFilesWritten || preview.MIMEDefaultsWritten || preview.KRunnerIndexPersisted ||
-		preview.TaskManagerEntryActive || preview.KWinRuleApplied || preview.LaunchEnabled ||
+		preview.TaskManagerEntryActive || preview.KWinRuleApplied || preview.LiveTrayBridgeEnabled ||
+		preview.TrayBridgePersisted || preview.NotificationSent || preview.NotificationDeliveryEnabled ||
+		preview.NotificationActionsEnabled || preview.LaunchEnabled ||
 		preview.ExecutionStarted || preview.BackendProcessStarted || preview.NetworkRequired ||
 		preview.HostRootModified || preview.RawCommandExposed || preview.BackendDetailsExposed {
 		t.Fatalf("offline KDE identity opened an unsafe gate: %#v", preview)
 	}
 	assertKDEOfflineApplicationIdentitySafe(t, preview)
+}
+
+func TestKDEOfflineApplicationIdentityPreviewUsesDeterministicAttentionIdentity(t *testing.T) {
+	preview, err := NewKDEOfflineApplicationIdentityPreview(Recipe{
+		ID:                  "org.example.notes",
+		Name:                "Example Notes",
+		Icon:                "accessories-text-editor",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".txt"},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true, SignatureStatus: "development-only"})
+	if err != nil {
+		t.Fatalf("NewKDEOfflineApplicationIdentityPreview: %v", err)
+	}
+	if preview.Tray.ApplicationID != "org.example.notes" ||
+		preview.Tray.CompatibilityState != "ready" ||
+		preview.Notification.EventType != "approval-required" ||
+		preview.Notification.NotificationID != "org.example.notes.approval-required" ||
+		preview.Notification.Category != "compatibility.approval" ||
+		!preview.CrossSurfaceIdentityConsistent {
+		t.Fatalf("attention identity is not deterministic: %#v %#v", preview.Tray, preview.Notification)
+	}
 }
 
 func TestKDEOfflineApplicationIdentityPreviewRequiresVerifiedRegistryRecipe(t *testing.T) {
