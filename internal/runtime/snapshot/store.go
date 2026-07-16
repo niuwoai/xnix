@@ -283,6 +283,48 @@ func (s *Store) Restore(id string) (RollbackReceipt, error) {
 	return receipt, nil
 }
 
+// BaselineStatus reports whether a verified restore point exists, for repair
+// and execution preflight to require before a risky compatibility change. It
+// performs no restore and exposes no host paths or backend details.
+type BaselineStatus struct {
+	Present               bool   `json:"present"`
+	Verified              bool   `json:"verified"`
+	SnapshotID            string `json:"snapshot_id,omitempty"`
+	SnapshotCount         int    `json:"snapshot_count"`
+	HostRootModified      bool   `json:"host_root_modified"`
+	BackendDetailsExposed bool   `json:"backend_details_exposed"`
+	Summary               string `json:"summary"`
+}
+
+// Baseline reports the restore-point baseline: whether the store holds at least
+// one snapshot that verifies intact. It is what repair and execution preflight
+// consult to require a restore point, without performing a restore. The most
+// recent verifying snapshot (by id order) is reported as the baseline.
+func (s *Store) Baseline() (BaselineStatus, error) {
+	manifests, err := s.List()
+	if err != nil {
+		return BaselineStatus{}, err
+	}
+	status := BaselineStatus{SnapshotCount: len(manifests)}
+	for i := len(manifests) - 1; i >= 0; i-- {
+		if s.Verify(manifests[i].ID) == nil {
+			status.Present = true
+			status.Verified = true
+			status.SnapshotID = manifests[i].ID
+			break
+		}
+	}
+	switch {
+	case status.Verified:
+		status.Summary = "A verified restore point is available before risky compatibility changes."
+	case status.SnapshotCount > 0:
+		status.Summary = "Restore points exist but none verify intact; create a new restore point."
+	default:
+		status.Summary = "No restore point exists yet; create one before risky compatibility changes."
+	}
+	return status, nil
+}
+
 // currentFiles lists regular files under the state root (excluding store meta),
 // as slash-separated paths relative to the root.
 func (s *Store) currentFiles() ([]string, error) {

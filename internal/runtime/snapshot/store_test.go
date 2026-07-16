@@ -100,6 +100,60 @@ func TestRestoreRollsBackFixtureState(t *testing.T) {
 	}
 }
 
+func TestBaselineReportsVerifiedRestorePoint(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, "app/data.txt", "content")
+	store, err := New(root)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	// No snapshots yet: no baseline.
+	empty, err := store.Baseline()
+	if err != nil {
+		t.Fatalf("Baseline empty: %v", err)
+	}
+	if empty.Present || empty.Verified || empty.SnapshotCount != 0 || empty.HostRootModified {
+		t.Fatalf("empty store must report no baseline: %#v", empty)
+	}
+
+	// After a snapshot: a verified baseline exists.
+	if _, err := store.Create("baseline-1", "manual"); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	present, err := store.Baseline()
+	if err != nil {
+		t.Fatalf("Baseline present: %v", err)
+	}
+	if !present.Present || !present.Verified || present.SnapshotID != "baseline-1" || present.SnapshotCount != 1 {
+		t.Fatalf("expected a verified baseline: %#v", present)
+	}
+	if present.BackendDetailsExposed || present.HostRootModified {
+		t.Fatalf("baseline must not expose backend details or mutate host: %#v", present)
+	}
+}
+
+func TestBaselineFailsWhenAllSnapshotsCorrupt(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, "app/data.txt", "content")
+	store, _ := New(root)
+	manifest, err := store.Create("snap", "manual")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	// Corrupt the only snapshot's object.
+	if err := os.WriteFile(store.objectPath(manifest.Files[0].Digest), []byte("tampered"), 0o600); err != nil {
+		t.Fatalf("tamper: %v", err)
+	}
+	status, err := store.Baseline()
+	if err != nil {
+		t.Fatalf("Baseline: %v", err)
+	}
+	if status.Present || status.Verified || status.SnapshotCount != 1 {
+		t.Fatalf("corrupt-only store must have no usable baseline: %#v", status)
+	}
+}
+
 func TestVerifyDetectsCorruption(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, root, "app/data.txt", "content")
