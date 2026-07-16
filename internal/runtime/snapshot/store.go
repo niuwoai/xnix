@@ -88,6 +88,11 @@ func (s *Store) manifestRel(id string) string {
 	return filepath.ToSlash(filepath.Join(metaDirName, "manifests", id+".json"))
 }
 
+// manifestsRel is the state-root-relative path of the manifests directory.
+func (s *Store) manifestsRel() string {
+	return filepath.ToSlash(filepath.Join(metaDirName, "manifests"))
+}
+
 // within reports whether abs is inside the state root (and not the store's own
 // metadata directory). It is the guard that keeps every operation sandboxed.
 func (s *Store) within(abs string) bool {
@@ -177,24 +182,9 @@ func (s *Store) Create(id string, reason string) (Manifest, error) {
 
 // List returns all snapshot manifests sorted by id.
 func (s *Store) List() ([]Manifest, error) {
-	entries, err := os.ReadDir(filepath.Join(s.metaDir, "manifests"))
-	if err != nil {
-		return nil, fmt.Errorf("list snapshots: %w", err)
-	}
-	var out []Manifest
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-		id := strings.TrimSuffix(entry.Name(), ".json")
-		manifest, loadErr := s.load(id)
-		if loadErr != nil {
-			return nil, loadErr
-		}
-		out = append(out, manifest)
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
-	return out, nil
+	// Manifest filenames are "<id>.json", so LoadAll's by-filename ordering is
+	// the by-id ordering callers (Prune, Baseline, gcObjects) rely on.
+	return record.LoadAll[Manifest](s.rootObj, s.manifestsRel())
 }
 
 // Verify checks that every object referenced by the snapshot exists and hashes
