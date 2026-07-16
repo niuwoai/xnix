@@ -3,6 +3,8 @@ package diagnostics
 import (
 	"errors"
 	"sort"
+
+	"xnix.local/xnix/internal/runtime/appid"
 )
 
 const runHistorySchemaVersion = "xnix.runtime.diagnostic_run_history.v1"
@@ -66,7 +68,7 @@ type RunHistoryCounts struct {
 // History returns a KDE-safe summary of diagnostic run records. If
 // applicationID is empty, it summarizes every stored run.
 func (s *RunRecordStore) History(applicationID string) (RunHistory, error) {
-	if applicationID != "" && !applicationIDPattern.MatchString(applicationID) {
+	if applicationID != "" && !appid.Valid(applicationID) {
 		return RunHistory{}, errBadHistoryApplicationID
 	}
 	records, err := s.List()

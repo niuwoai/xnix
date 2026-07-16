@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
-)
 
-// applicationIDPattern matches reverse-DNS application identifiers.
-var applicationIDPattern = regexp.MustCompile(`^[A-Za-z0-9]+(\.[A-Za-z0-9-]+)+$`)
+	"xnix.local/xnix/internal/runtime/appid"
+)
 
 // Registry is the signed manifest describing a recipe root's contents.
 type Registry struct {
@@ -110,7 +108,7 @@ func (s *LocalStore) loadRegistry() (Registry, error) {
 	}
 	seen := map[string]bool{}
 	for _, entry := range registry.Recipes {
-		if !applicationIDPattern.MatchString(entry.ID) {
+		if !appid.Valid(entry.ID) {
 			return Registry{}, fmt.Errorf("registry entry id %q is not a reverse-DNS identifier", entry.ID)
 		}
 		if seen[entry.ID] {
@@ -156,7 +154,7 @@ func (s *LocalStore) loadEntry(entry Entry) (Recipe, error) {
 
 // Find loads and verifies a single recipe by application id.
 func (s *LocalStore) Find(applicationID string) (Recipe, error) {
-	if !applicationIDPattern.MatchString(applicationID) {
+	if !appid.Valid(applicationID) {
 		return Recipe{}, errors.New("application id must be a reverse-DNS identifier")
 	}
 	registry, err := s.loadRegistry()

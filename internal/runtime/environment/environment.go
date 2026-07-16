@@ -13,12 +13,10 @@ package environment
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
-)
 
-// applicationIDPattern matches reverse-DNS application identifiers.
-var applicationIDPattern = regexp.MustCompile(`^[A-Za-z0-9]+(\.[A-Za-z0-9-]+)+$`)
+	"xnix.local/xnix/internal/runtime/appid"
+)
 
 // State is a lifecycle state of a compatibility environment.
 type State string
@@ -118,7 +116,7 @@ func (r Record) PendingGates() []string {
 }
 
 func newRecord(applicationID string, profile Profile) (Record, error) {
-	if !applicationIDPattern.MatchString(applicationID) {
+	if !appid.Valid(applicationID) {
 		return Record{}, errors.New("application id must be a reverse-DNS identifier")
 	}
 	if !profile.valid() {

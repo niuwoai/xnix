@@ -14,10 +14,9 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-)
 
-// applicationIDPattern matches reverse-DNS application identifiers.
-var applicationIDPattern = regexp.MustCompile(`^[A-Za-z0-9]+(\.[A-Za-z0-9-]+)+$`)
+	"xnix.local/xnix/internal/runtime/appid"
+)
 
 // digestPattern matches a lowercase hex SHA-256 digest.
 var digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
@@ -56,7 +55,7 @@ func ParseManifest(data []byte) (Manifest, error) {
 }
 
 func (m Manifest) validate() error {
-	if !applicationIDPattern.MatchString(m.ApplicationID) {
+	if !appid.Valid(m.ApplicationID) {
 		return errors.New("artifact manifest application id must be a reverse-DNS identifier")
 	}
 	if len(m.Groups) == 0 {

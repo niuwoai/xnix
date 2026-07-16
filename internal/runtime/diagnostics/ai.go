@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"xnix.local/xnix/internal/runtime/appid"
 )
 
 // ErrAIProviderDisabled is returned by the disabled default provider. AI
@@ -25,7 +27,7 @@ type DiagnosticInput struct {
 // BuildDiagnosticInput constructs a privacy-filtered AI input from a result.
 // It re-validates every summary so unsafe content cannot reach a provider.
 func BuildDiagnosticInput(result TestResult) (DiagnosticInput, error) {
-	if !applicationIDPattern.MatchString(result.ApplicationID) {
+	if !appid.Valid(result.ApplicationID) {
 		return DiagnosticInput{}, errors.New("application id must be a reverse-DNS identifier")
 	}
 	summaries := make([]string, 0, len(result.Signals))

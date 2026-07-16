@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
-)
 
-// applicationIDPattern matches reverse-DNS application identifiers.
-var applicationIDPattern = regexp.MustCompile(`^[A-Za-z0-9]+(\.[A-Za-z0-9-]+)+$`)
+	"xnix.local/xnix/internal/runtime/appid"
+)
 
 // supportedTestTypes enumerates the fixture-runnable test types.
 var supportedTestTypes = map[string]bool{"preflight": true, "smoke": true, "repair-readiness": true}
@@ -38,7 +36,7 @@ type TestResult struct {
 
 // Run evaluates a fixture into a TestResult without starting any backend.
 func Run(applicationID string, fixture Fixture) (TestResult, error) {
-	if !applicationIDPattern.MatchString(applicationID) {
+	if !appid.Valid(applicationID) {
 		return TestResult{}, errors.New("application id must be a reverse-DNS identifier")
 	}
 	if !supportedTestTypes[fixture.TestType] {

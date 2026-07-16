@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"xnix.local/xnix/internal/runtime/appid"
 )
 
 const stageReceiptSchemaVersion = "xnix.runtime.artifact_stage_receipt.v1"
@@ -113,7 +115,7 @@ func StageFromFixture(req StageRequest) (StageReceipt, error) {
 }
 
 func receiptPath(cacheRoot, applicationID string) (string, string, error) {
-	if !applicationIDPattern.MatchString(applicationID) {
+	if !appid.Valid(applicationID) {
 		return "", "", errors.New("artifact stage receipt application id must be a reverse-DNS identifier")
 	}
 	relativePath := filepath.ToSlash(filepath.Join("artifact-ledger", "receipts", sanitizeNamespace(applicationID)+".json"))

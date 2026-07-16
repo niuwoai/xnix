@@ -11,8 +11,9 @@ package portal
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"xnix.local/xnix/internal/runtime/appid"
 )
 
 // PortalDestination is the well-known XDG Desktop Portal bus name.
@@ -20,9 +21,6 @@ const PortalDestination = "org.freedesktop.portal.Desktop"
 
 // PortalObjectPath is the well-known XDG Desktop Portal object path.
 const PortalObjectPath = "/org/freedesktop/portal/desktop"
-
-// applicationIDPattern matches reverse-DNS application identifiers.
-var applicationIDPattern = regexp.MustCompile(`^[A-Za-z0-9]+(\.[A-Za-z0-9-]+)+$`)
 
 // RequestState is the lifecycle state of a portal request object.
 type RequestState string
@@ -160,7 +158,7 @@ func (r *Request) Terminal() bool {
 }
 
 func newRequest(spec RequestSpec, sequence int) (*Request, error) {
-	if !applicationIDPattern.MatchString(spec.ApplicationID) {
+	if !appid.Valid(spec.ApplicationID) {
 		return nil, errors.New("application id must be a reverse-DNS identifier")
 	}
 	op, ok := operationCatalog[spec.Operation]
