@@ -12,7 +12,7 @@ func TestDispatchReadRendersOwnerReadinessWithoutBusOwnership(t *testing.T) {
 		t.Fatalf("DispatchRead returned error: %v", err)
 	}
 
-	if dispatch.Version != "0.2.253" ||
+	if dispatch.Version != "0.2.294" ||
 		dispatch.SchemaVersion != "xnix.runtime.owner_read_dispatch.v1" ||
 		dispatch.RequestType != "runtime-owner-read-dispatch" ||
 		dispatch.DispatchType != "go-owner-read-dispatch" ||
@@ -123,6 +123,40 @@ func TestDispatchReadRendersApplicationPayload(t *testing.T) {
 	}
 }
 
+func TestDispatchReadRendersWindowsCompatibilityWorkstreamsAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetWindowsCompatibilityWorkstreamsPreview", nil)
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetWindowsCompatibilityWorkstreamsPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "windows-compatibility-workstreams-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady ||
+		len(dispatch.Args) != 0 ||
+		dispatch.SessionBusClaimed ||
+		dispatch.ProductionBusClaimed ||
+		dispatch.WriteMethodsEnabled ||
+		dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected Windows compatibility dispatch metadata: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "windows-compatibility-workstreams-preview" ||
+		payload["read_method"] != "GetWindowsCompatibilityWorkstreamsPreview" ||
+		payload["official_desktop"] != "KDE Plasma" ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected Windows compatibility dispatch payload: %#v", payload)
+	}
+}
+
 func TestSupportedReadDispatchMethodsRenderPayloads(t *testing.T) {
 	root := projectRoot(t)
 	for _, method := range SupportedReadDispatchMethods() {
@@ -209,6 +243,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetRuntimeOwnerRouteManifest",
 		"GetRuntimeOwnerRecipeTrust",
 		"GetRuntimeOwnerReadiness",
+		"GetWindowsCompatibilityWorkstreamsPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -221,7 +256,8 @@ func sampleReadDispatchArgs(method string) []string {
 	case "ListApplications", "GetEngineCatalog", "GetKDEIntegrationStatus", "GetKDEShellIntegrationPlan",
 		"GetTrayStatus", "GetBackendCapabilityMatrix", "GetRuntimeServiceBinding", "GetRuntimeLiveOwnerGate",
 		"GetRuntimeOwnerSmokePlan", "GetRuntimeMethodParityManifest", "GetRuntimeOwnerProcess",
-		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness":
+		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness",
+		"GetWindowsCompatibilityWorkstreamsPreview":
 		return nil
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}

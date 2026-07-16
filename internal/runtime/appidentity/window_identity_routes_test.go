@@ -2,6 +2,8 @@ package appidentity
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -113,6 +115,128 @@ func TestTaskManagerIdentityPlanPreviewConsumesActivationReceipt(t *testing.T) {
 	}
 }
 
+func TestTaskManagerIdentityPlanPreviewConsumesExecutionSessionRecord(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+	root := t.TempDir()
+	writeExecutionSessionRecord(t, root, "xnix-exec-org-example-ledger-1", "org.example.ledger")
+
+	preview, err := plan.TaskManagerIdentityPlanPreviewWithOptions(TaskManagerIdentityOptions{
+		ExecutionSessionRoot:      root,
+		ExecutionSessionRequestID: "xnix-exec-org-example-ledger-1",
+	})
+	if err != nil {
+		t.Fatalf("TaskManagerIdentityPlanPreviewWithOptions returned error: %v", err)
+	}
+	if preview.Source != "window-identity-preview+execution-session-record" ||
+		!preview.ExecutionSessionRoot ||
+		!preview.ExecutionSessionBacked ||
+		preview.ExecutionSessionPath != "execution-ledger/sessions/xnix-exec-org-example-ledger-1.json" ||
+		preview.ExecutionSessionState != "blocked" {
+		t.Fatalf("task manager identity did not consume execution session record: %#v", preview)
+	}
+	if preview.TaskManagerEntryActive ||
+		preview.WindowObservationStarted ||
+		preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("session-backed task manager identity must remain gated: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("task manager identity exposed session root: %s", encoded)
+	}
+	if _, err := plan.TaskManagerIdentityPlanPreviewWithOptions(TaskManagerIdentityOptions{ExecutionSessionRoot: root, ExecutionSessionRequestID: "missing"}); err == nil {
+		t.Fatalf("task manager identity accepted missing execution session record")
+	}
+}
+
+func TestExecutionSessionFanOutEvidenceSharesOneRecordAcrossKDESurfaces(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+	root := t.TempDir()
+	requestID := "xnix-exec-org-example-ledger-1"
+	writeExecutionSessionRecord(t, root, requestID, "org.example.ledger")
+
+	fanOut, err := plan.ExecutionSessionFanOutEvidence(root, requestID)
+	if err != nil {
+		t.Fatalf("ExecutionSessionFanOutEvidence returned error: %v", err)
+	}
+
+	if fanOut.SchemaVersion != "xnix.runtime.session_fanout.v1" ||
+		fanOut.RequestType != "execution-session-fanout-evidence" ||
+		fanOut.Source != "execution-session-record" ||
+		fanOut.RuntimeMethod != "GetExecutionSessionFanOutEvidence" ||
+		fanOut.ReadMethod != "GetExecutionSessionFanOutEvidence" ||
+		fanOut.ReceiptRelativePath != "execution-ledger/sessions/"+requestID+".json" ||
+		fanOut.RequestID != requestID ||
+		fanOut.SessionState != "blocked" ||
+		fanOut.SurfaceCount != 4 ||
+		len(fanOut.Surfaces) != 4 {
+		t.Fatalf("unexpected fan-out identity: %#v", fanOut)
+	}
+	if fanOut.TaskManager.ID != "task-manager" ||
+		fanOut.TaskManager.State != "blocked" ||
+		fanOut.KWin.ID != "kwin" ||
+		fanOut.KWin.State != "blocked" ||
+		fanOut.Tray.ID != "tray" ||
+		fanOut.Tray.State != "blocked" ||
+		fanOut.CompatibilityCenter.ID != "compatibility-center" ||
+		fanOut.CompatibilityCenter.State != "waiting-for-runtime-gates" {
+		t.Fatalf("unexpected fan-out surface states: %#v", fanOut)
+	}
+	for _, surface := range fanOut.Surfaces {
+		if surface.ReceiptRelativePath != fanOut.ReceiptRelativePath ||
+			!surface.NavigationOnly ||
+			!surface.ReadOnly ||
+			surface.MutatesRuntime ||
+			surface.StartsProgram ||
+			!surface.SafeForKDE {
+			t.Fatalf("unexpected fan-out surface safety: %#v", surface)
+		}
+	}
+	if !fanOut.SafeForKDE ||
+		!fanOut.RuntimeOwned ||
+		!fanOut.GoRuntimeBacked ||
+		fanOut.KDEPolicyOwner ||
+		fanOut.StateRootPathExposed ||
+		fanOut.LiveStateObserved ||
+		fanOut.WindowObserved ||
+		fanOut.TaskManagerEntryActive ||
+		fanOut.KWinRuleApplied ||
+		fanOut.LiveTrayBridgeEnabled ||
+		fanOut.LaunchEnabled ||
+		fanOut.ExecutionStarted ||
+		fanOut.BackendProcessStarted ||
+		fanOut.PermissionGranted ||
+		fanOut.HostRootModified ||
+		fanOut.NetworkRequired ||
+		fanOut.BackendDetailsExposed {
+		t.Fatalf("fan-out evidence opened an unsafe gate: %#v", fanOut)
+	}
+	assertNoWindowRouteBackendTerms(t, fanOut)
+}
+
 func TestKWinWindowRulePlanPreviewUsesWindowIdentityWithoutApplyingRule(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",
@@ -222,6 +346,52 @@ func TestKWinWindowRulePlanPreviewConsumesActivationReceipt(t *testing.T) {
 	}
 }
 
+func TestKWinWindowRulePlanPreviewConsumesExecutionSessionRecord(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+	root := t.TempDir()
+	writeExecutionSessionRecord(t, root, "xnix-exec-org-example-ledger-1", "org.example.ledger")
+
+	preview, err := plan.KWinWindowRulePlanPreviewWithOptions(KWinWindowRuleOptions{
+		ExecutionSessionRoot:      root,
+		ExecutionSessionRequestID: "xnix-exec-org-example-ledger-1",
+	})
+	if err != nil {
+		t.Fatalf("KWinWindowRulePlanPreviewWithOptions returned error: %v", err)
+	}
+	if preview.Source != "window-identity-preview+execution-session-record" ||
+		!preview.ExecutionSessionRoot ||
+		!preview.ExecutionSessionBacked ||
+		preview.ExecutionSessionPath != "execution-ledger/sessions/xnix-exec-org-example-ledger-1.json" ||
+		preview.ExecutionSessionState != "blocked" {
+		t.Fatalf("KWin rule did not consume execution session record: %#v", preview)
+	}
+	if preview.KWinRuleApplied ||
+		preview.TaskManagerEntryActive ||
+		preview.WindowObservationStarted ||
+		preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("session-backed KWin rule must remain gated: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("KWin rule exposed session root: %s", encoded)
+	}
+}
+
 func assertNoWindowRouteBackendTerms(t *testing.T, value any) {
 	t.Helper()
 	encoded, err := json.Marshal(value)
@@ -233,5 +403,44 @@ func assertNoWindowRouteBackendTerms(t *testing.T, value any) {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("window route preview exposes forbidden term %q: %s", forbidden, text)
 		}
+	}
+}
+
+func writeExecutionSessionRecord(t *testing.T, root string, requestID string, applicationID string) {
+	t.Helper()
+	dir := filepath.Join(root, "execution-ledger", "sessions")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	relativePath := "execution-ledger/sessions/" + requestID + ".json"
+	data := []byte(`{
+  "schema_version": "xnix.runtime.execution_session_record.v1",
+  "record_type": "execution-session-status-record",
+  "request_id": "` + requestID + `",
+  "application_id": "` + applicationID + `",
+  "relative_path": "` + relativePath + `",
+  "session_state": "blocked",
+  "task_manager_state": "blocked",
+  "tray_state": "blocked",
+  "kwin_state": "blocked",
+  "compatibility_center_state": "waiting-for-runtime-gates",
+  "state_root_path_exposed": false,
+  "status_persisted": true,
+  "session_active": false,
+  "live_state_observed": false,
+  "window_observed": false,
+  "task_manager_entry_active": false,
+  "kwin_rule_applied": false,
+  "live_tray_bridge_enabled": false,
+  "launch_enabled": false,
+  "execution_started": false,
+  "backend_process_started": false,
+  "permission_granted": false,
+  "host_root_modified": false,
+  "network_required": false,
+  "backend_details_exposed": false
+}`)
+	if err := os.WriteFile(filepath.Join(dir, requestID+".json"), data, 0o600); err != nil {
+		t.Fatalf("WriteFile session record returned error: %v", err)
 	}
 }

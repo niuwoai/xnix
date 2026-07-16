@@ -533,6 +533,34 @@ func TestDesktopActivationTransactionPreviewCommandRendersCommitAndRollbackPlan(
 		writeGate["dispatch_enabled"] != false {
 		t.Fatalf("unexpected transaction write gate: %#v", writeGate)
 	}
+	receiptEvidence := payload["receipt_evidence"].(map[string]any)
+	if receiptEvidence["evidence_type"] != "desktop-activation-transaction-receipt-evidence" ||
+		receiptEvidence["evidence_state"] != "planned-runtime-gated" ||
+		receiptEvidence["receipt_schema_version"] != "xnix.runtime.desktop_activation_receipt.v1" ||
+		receiptEvidence["commit_receipt_type"] != "desktop-activation-receipt" ||
+		receiptEvidence["rollback_receipt_type"] != "desktop-activation-rollback-receipt" ||
+		receiptEvidence["receipt_relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		receiptEvidence["required_file_count"] != float64(5) ||
+		receiptEvidence["installed_file_digest_required"] != true ||
+		receiptEvidence["rollback_digest_required"] != true ||
+		receiptEvidence["commit_receipt_required"] != true ||
+		receiptEvidence["commit_receipt_planned"] != true ||
+		receiptEvidence["commit_receipt_written"] != false ||
+		receiptEvidence["rollback_receipt_required"] != true ||
+		receiptEvidence["rollback_receipt_planned"] != true ||
+		receiptEvidence["rollback_receipt_written"] != false ||
+		receiptEvidence["digest_gate_ready"] != false ||
+		receiptEvidence["commit_available"] != false ||
+		receiptEvidence["rollback_available"] != false ||
+		receiptEvidence["runtime_owned"] != true ||
+		receiptEvidence["kde_policy_owner"] != false ||
+		receiptEvidence["root_path_exposed"] != false ||
+		receiptEvidence["target_root_path_exposed"] != false ||
+		receiptEvidence["host_root_modified"] != false ||
+		receiptEvidence["file_writes_performed"] != false ||
+		receiptEvidence["backend_details_exposed"] != false {
+		t.Fatalf("unexpected transaction receipt evidence: %#v", receiptEvidence)
+	}
 	stepIDs := payload["transaction_step_ids"].([]any)
 	expectedSteps := []string{"validate-preflight", "prepare-staging-root", "verify-staged-file-digests", "install-desktop-entry", "install-dolphin-service-menu", "merge-mimeapps-associations", "install-desktop-integration-manifest", "write-rollback-receipt", "refresh-kde-service-cache"}
 	for index, expected := range expectedSteps {

@@ -472,6 +472,55 @@ func TestTrayStatusPreviewConsumesActivationReceipt(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewConsumesExecutionSessionRecord(t *testing.T) {
+	root := t.TempDir()
+	writeExecutionSessionRecord(t, root, "xnix-exec-org-example-ledger-1", "org.example.ledger")
+
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.TrayStatusPreviewWithOptions(TrayStatusOptions{
+		ExecutionSessionRoot:      root,
+		ExecutionSessionRequestID: "xnix-exec-org-example-ledger-1",
+	})
+	if err != nil {
+		t.Fatalf("TrayStatusPreviewWithOptions returned error: %v", err)
+	}
+	if !preview.ExecutionSessionRoot ||
+		!preview.ExecutionSessionBacked ||
+		preview.ExecutionSessionPath != "execution-ledger/sessions/xnix-exec-org-example-ledger-1.json" ||
+		preview.ExecutionSessionState != "blocked" ||
+		preview.CompatibilityStatus.State != "waiting-for-runtime-gates" ||
+		preview.CompatibilityStatus.Label != "Runtime gates required" {
+		t.Fatalf("tray did not consume execution session record: %#v", preview)
+	}
+	if preview.LiveBackendBridgeEnabled ||
+		preview.BridgeConfigurationPersisted ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("session-backed tray preview must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("tray preview exposed session root: %s", encoded)
+	}
+	if _, err := plan.TrayStatusPreviewWithOptions(TrayStatusOptions{ExecutionSessionRoot: root, ExecutionSessionRequestID: "missing"}); err == nil {
+		t.Fatalf("tray preview accepted a missing execution session record")
+	}
+}
+
 func TestNotificationPreviewKeepsExecutionGatesClosed(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

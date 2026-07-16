@@ -75,6 +75,42 @@ func TestKDEApplicationSurfacePreviewCommand(t *testing.T) {
 	assertKDEShellPayloadSafe(t, output.String())
 }
 
+func TestKDEApplicationSurfacePreviewCommandConsumesActivationRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	stageRoot := t.TempDir()
+
+	var stageOutput bytes.Buffer
+	if err := run([]string{"desktop-activation-stage", "--registry", registryPath, "--app", app, "--mode", "development", "--staging-root", stageRoot}, &stageOutput); err != nil {
+		t.Fatalf("stage run returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{"kde-application-surface-preview", "--registry", registryPath, "--app", app, "--activation-root", stageRoot}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	payload := decodeKDEShellPayload(t, output.Bytes())
+	if payload["source"] != "go-runtime-kde-application-surface+desktop-activation-receipt" ||
+		payload["activation_receipt_root"] != true ||
+		payload["activation_receipt_backed"] != true ||
+		payload["activation_receipt_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("KDE application surface did not consume activation receipt: %#v", payload)
+	}
+	if payload["launch_enabled"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_command_exposed"] != false ||
+		payload["raw_windows_executable_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("receipt-backed KDE application surface must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), stageRoot) {
+		t.Fatalf("KDE application surface exposed activation root: %s", output.String())
+	}
+	assertKDEShellPayloadSafe(t, output.String())
+}
+
 func decodeKDEShellPayload(t *testing.T, data []byte) map[string]any {
 	t.Helper()
 	var payload map[string]any

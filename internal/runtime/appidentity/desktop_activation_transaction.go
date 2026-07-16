@@ -3,73 +3,74 @@ package appidentity
 import "errors"
 
 type DesktopActivationTransactionPreview struct {
-	SchemaVersion               string                                `json:"schema_version"`
-	RequestType                 string                                `json:"request_type"`
-	TransactionType             string                                `json:"transaction_type"`
-	TransactionState            string                                `json:"transaction_state"`
-	Source                      string                                `json:"source"`
-	Desktop                     string                                `json:"desktop"`
-	ReadMethod                  string                                `json:"read_method"`
-	WriteMethod                 string                                `json:"write_method"`
-	ApplicationID               string                                `json:"application_id"`
-	DisplayName                 string                                `json:"display_name"`
-	Icon                        string                                `json:"icon"`
-	DesktopFile                 string                                `json:"desktop_file"`
-	InstallMode                 string                                `json:"install_mode"`
-	PreflightDecision           string                                `json:"preflight_decision"`
-	Staging                     DesktopActivationTransactionStaging   `json:"staging"`
-	WriteGate                   DesktopActivationTransactionWriteGate `json:"write_gate"`
-	TransactionSteps            []DesktopActivationTransactionStep    `json:"transaction_steps"`
-	TransactionStepIDs          []string                              `json:"transaction_step_ids"`
-	TransactionStepCount        int                                   `json:"transaction_step_count"`
-	ReadyStepCount              int                                   `json:"ready_step_count"`
-	BlockedStepCount            int                                   `json:"blocked_step_count"`
-	RollbackSteps               []DesktopActivationRollbackStep       `json:"rollback_steps"`
-	RollbackStepIDs             []string                              `json:"rollback_step_ids"`
-	RollbackStepCount           int                                   `json:"rollback_step_count"`
-	ActivationCommandPreview    []string                              `json:"activation_command_preview"`
-	RollbackCommandPreview      []string                              `json:"rollback_command_preview"`
-	RuntimeOwned                bool                                  `json:"runtime_owned"`
-	GoRuntimeBacked             bool                                  `json:"go_runtime_backed"`
-	KDEPolicyOwner              bool                                  `json:"kde_policy_owner"`
-	UserVisible                 bool                                  `json:"user_visible"`
-	InstallerMayProceed         bool                                  `json:"installer_may_proceed"`
-	TransactionPlanCreated      bool                                  `json:"transaction_plan_created"`
-	TransactionReady            bool                                  `json:"transaction_ready"`
-	TransactionCommitted        bool                                  `json:"transaction_committed"`
-	StagingPlanReady            bool                                  `json:"staging_plan_ready"`
-	StagedFileDigestsRequired   bool                                  `json:"staged_file_digests_required"`
-	StagedFileDigestsVerified   bool                                  `json:"staged_file_digests_verified"`
-	StagingRootRequired         bool                                  `json:"staging_root_required"`
-	StagingRootPathExposed      bool                                  `json:"staging_root_path_exposed"`
-	TargetRootPathExposed       bool                                  `json:"target_root_path_exposed"`
-	HostRootAllowed             bool                                  `json:"host_root_allowed"`
-	FileWritesPerformed         bool                                  `json:"file_writes_performed"`
-	DesktopFilesWritten         bool                                  `json:"desktop_files_written"`
-	MIMEAppsWritten             bool                                  `json:"mimeapps_written"`
-	ManifestWritten             bool                                  `json:"manifest_written"`
-	ReceiptWritten              bool                                  `json:"receipt_written"`
-	RollbackReceiptRequired     bool                                  `json:"rollback_receipt_required"`
-	RollbackReceiptPlanned      bool                                  `json:"rollback_receipt_planned"`
-	RollbackReceiptWritten      bool                                  `json:"rollback_receipt_written"`
-	RollbackAvailable           bool                                  `json:"rollback_available"`
-	KDEServiceCacheRefreshed    bool                                  `json:"kde_service_cache_refreshed"`
-	SettingsPersisted           bool                                  `json:"settings_persisted"`
-	NotificationsSent           bool                                  `json:"notifications_sent"`
-	TaskManagerEntryActive      bool                                  `json:"task_manager_entry_active"`
-	KWinRuleApplied             bool                                  `json:"kwin_rule_applied"`
-	LiveTrayBridgeEnabled       bool                                  `json:"live_tray_bridge_enabled"`
-	LaunchEnabled               bool                                  `json:"launch_enabled"`
-	BackendLaunchEnabled        bool                                  `json:"backend_launch_enabled"`
-	ExecutionStarted            bool                                  `json:"execution_started"`
-	HostRootModified            bool                                  `json:"host_root_modified"`
-	NetworkRequired             bool                                  `json:"network_required"`
-	PrivilegedContainerRequired bool                                  `json:"privileged_container_required"`
-	BackendDetailsExposed       bool                                  `json:"backend_details_exposed"`
-	RawWindowsExecutableExposed bool                                  `json:"raw_windows_executable_exposed"`
-	CompatibilityStorageExposed bool                                  `json:"compatibility_storage_exposed"`
-	BlockedActions              []string                              `json:"blocked_actions"`
-	DesktopSafeSummary          string                                `json:"desktop_safe_summary"`
+	SchemaVersion               string                                      `json:"schema_version"`
+	RequestType                 string                                      `json:"request_type"`
+	TransactionType             string                                      `json:"transaction_type"`
+	TransactionState            string                                      `json:"transaction_state"`
+	Source                      string                                      `json:"source"`
+	Desktop                     string                                      `json:"desktop"`
+	ReadMethod                  string                                      `json:"read_method"`
+	WriteMethod                 string                                      `json:"write_method"`
+	ApplicationID               string                                      `json:"application_id"`
+	DisplayName                 string                                      `json:"display_name"`
+	Icon                        string                                      `json:"icon"`
+	DesktopFile                 string                                      `json:"desktop_file"`
+	InstallMode                 string                                      `json:"install_mode"`
+	PreflightDecision           string                                      `json:"preflight_decision"`
+	Staging                     DesktopActivationTransactionStaging         `json:"staging"`
+	WriteGate                   DesktopActivationTransactionWriteGate       `json:"write_gate"`
+	ReceiptEvidence             DesktopActivationTransactionReceiptEvidence `json:"receipt_evidence"`
+	TransactionSteps            []DesktopActivationTransactionStep          `json:"transaction_steps"`
+	TransactionStepIDs          []string                                    `json:"transaction_step_ids"`
+	TransactionStepCount        int                                         `json:"transaction_step_count"`
+	ReadyStepCount              int                                         `json:"ready_step_count"`
+	BlockedStepCount            int                                         `json:"blocked_step_count"`
+	RollbackSteps               []DesktopActivationRollbackStep             `json:"rollback_steps"`
+	RollbackStepIDs             []string                                    `json:"rollback_step_ids"`
+	RollbackStepCount           int                                         `json:"rollback_step_count"`
+	ActivationCommandPreview    []string                                    `json:"activation_command_preview"`
+	RollbackCommandPreview      []string                                    `json:"rollback_command_preview"`
+	RuntimeOwned                bool                                        `json:"runtime_owned"`
+	GoRuntimeBacked             bool                                        `json:"go_runtime_backed"`
+	KDEPolicyOwner              bool                                        `json:"kde_policy_owner"`
+	UserVisible                 bool                                        `json:"user_visible"`
+	InstallerMayProceed         bool                                        `json:"installer_may_proceed"`
+	TransactionPlanCreated      bool                                        `json:"transaction_plan_created"`
+	TransactionReady            bool                                        `json:"transaction_ready"`
+	TransactionCommitted        bool                                        `json:"transaction_committed"`
+	StagingPlanReady            bool                                        `json:"staging_plan_ready"`
+	StagedFileDigestsRequired   bool                                        `json:"staged_file_digests_required"`
+	StagedFileDigestsVerified   bool                                        `json:"staged_file_digests_verified"`
+	StagingRootRequired         bool                                        `json:"staging_root_required"`
+	StagingRootPathExposed      bool                                        `json:"staging_root_path_exposed"`
+	TargetRootPathExposed       bool                                        `json:"target_root_path_exposed"`
+	HostRootAllowed             bool                                        `json:"host_root_allowed"`
+	FileWritesPerformed         bool                                        `json:"file_writes_performed"`
+	DesktopFilesWritten         bool                                        `json:"desktop_files_written"`
+	MIMEAppsWritten             bool                                        `json:"mimeapps_written"`
+	ManifestWritten             bool                                        `json:"manifest_written"`
+	ReceiptWritten              bool                                        `json:"receipt_written"`
+	RollbackReceiptRequired     bool                                        `json:"rollback_receipt_required"`
+	RollbackReceiptPlanned      bool                                        `json:"rollback_receipt_planned"`
+	RollbackReceiptWritten      bool                                        `json:"rollback_receipt_written"`
+	RollbackAvailable           bool                                        `json:"rollback_available"`
+	KDEServiceCacheRefreshed    bool                                        `json:"kde_service_cache_refreshed"`
+	SettingsPersisted           bool                                        `json:"settings_persisted"`
+	NotificationsSent           bool                                        `json:"notifications_sent"`
+	TaskManagerEntryActive      bool                                        `json:"task_manager_entry_active"`
+	KWinRuleApplied             bool                                        `json:"kwin_rule_applied"`
+	LiveTrayBridgeEnabled       bool                                        `json:"live_tray_bridge_enabled"`
+	LaunchEnabled               bool                                        `json:"launch_enabled"`
+	BackendLaunchEnabled        bool                                        `json:"backend_launch_enabled"`
+	ExecutionStarted            bool                                        `json:"execution_started"`
+	HostRootModified            bool                                        `json:"host_root_modified"`
+	NetworkRequired             bool                                        `json:"network_required"`
+	PrivilegedContainerRequired bool                                        `json:"privileged_container_required"`
+	BackendDetailsExposed       bool                                        `json:"backend_details_exposed"`
+	RawWindowsExecutableExposed bool                                        `json:"raw_windows_executable_exposed"`
+	CompatibilityStorageExposed bool                                        `json:"compatibility_storage_exposed"`
+	BlockedActions              []string                                    `json:"blocked_actions"`
+	DesktopSafeSummary          string                                      `json:"desktop_safe_summary"`
 }
 
 type DesktopActivationTransactionStaging struct {
@@ -91,6 +92,36 @@ type DesktopActivationTransactionWriteGate struct {
 	WriteMethodEnabled   bool   `json:"write_method_enabled"`
 	DispatchEnabled      bool   `json:"dispatch_enabled"`
 	RequestObjectCreated bool   `json:"request_object_created"`
+}
+
+type DesktopActivationTransactionReceiptEvidence struct {
+	EvidenceType                string   `json:"evidence_type"`
+	EvidenceState               string   `json:"evidence_state"`
+	ReceiptSchemaVersion        string   `json:"receipt_schema_version"`
+	CommitReceiptType           string   `json:"commit_receipt_type"`
+	RollbackReceiptType         string   `json:"rollback_receipt_type"`
+	ReceiptRelativePath         string   `json:"receipt_relative_path"`
+	RequiredFileIDs             []string `json:"required_file_ids"`
+	RequiredFileCount           int      `json:"required_file_count"`
+	InstalledFileDigestRequired bool     `json:"installed_file_digest_required"`
+	RollbackDigestRequired      bool     `json:"rollback_digest_required"`
+	CommitReceiptRequired       bool     `json:"commit_receipt_required"`
+	CommitReceiptPlanned        bool     `json:"commit_receipt_planned"`
+	CommitReceiptWritten        bool     `json:"commit_receipt_written"`
+	RollbackReceiptRequired     bool     `json:"rollback_receipt_required"`
+	RollbackReceiptPlanned      bool     `json:"rollback_receipt_planned"`
+	RollbackReceiptWritten      bool     `json:"rollback_receipt_written"`
+	DigestGateReady             bool     `json:"digest_gate_ready"`
+	CommitAvailable             bool     `json:"commit_available"`
+	RollbackAvailable           bool     `json:"rollback_available"`
+	RuntimeOwned                bool     `json:"runtime_owned"`
+	KDEPolicyOwner              bool     `json:"kde_policy_owner"`
+	RootPathExposed             bool     `json:"root_path_exposed"`
+	TargetRootPathExposed       bool     `json:"target_root_path_exposed"`
+	HostRootModified            bool     `json:"host_root_modified"`
+	FileWritesPerformed         bool     `json:"file_writes_performed"`
+	BackendDetailsExposed       bool     `json:"backend_details_exposed"`
+	Summary                     string   `json:"summary"`
 }
 
 type DesktopActivationTransactionStep struct {
@@ -129,6 +160,7 @@ func (plan Plan) DesktopActivationTransactionPreview(mode string) (DesktopActiva
 	ready := staging.StagingPlanReady && staging.InstallerMayProceed
 	steps := desktopActivationTransactionSteps(ready)
 	rollbackSteps := desktopActivationRollbackSteps()
+	receiptEvidence := desktopActivationTransactionReceiptEvidence(plan.ApplicationID, staging.PlannedFileIDs, staging.RollbackReceiptPlanned)
 	readyStepCount, blockedStepCount := countDesktopActivationTransactionSteps(steps)
 	preview := DesktopActivationTransactionPreview{
 		SchemaVersion:     "xnix.runtime.desktop_activation_transaction.v1",
@@ -164,6 +196,7 @@ func (plan Plan) DesktopActivationTransactionPreview(mode string) (DesktopActiva
 			DispatchEnabled:      false,
 			RequestObjectCreated: false,
 		},
+		ReceiptEvidence:             receiptEvidence,
 		TransactionSteps:            steps,
 		TransactionStepIDs:          desktopActivationTransactionStepIDs(steps),
 		TransactionStepCount:        len(steps),
@@ -280,6 +313,39 @@ func desktopActivationRollbackStep(id string, required bool, requiresReceipt boo
 		RequiresReceipt:     requiresReceipt,
 		RequiresDigestMatch: requiresDigestMatch,
 		Summary:             summary,
+	}
+}
+
+func desktopActivationTransactionReceiptEvidence(applicationID string, plannedFileIDs []string, rollbackReceiptPlanned bool) DesktopActivationTransactionReceiptEvidence {
+	requiredFileIDs := append([]string(nil), plannedFileIDs...)
+	return DesktopActivationTransactionReceiptEvidence{
+		EvidenceType:                "desktop-activation-transaction-receipt-evidence",
+		EvidenceState:               "planned-runtime-gated",
+		ReceiptSchemaVersion:        "xnix.runtime.desktop_activation_receipt.v1",
+		CommitReceiptType:           "desktop-activation-receipt",
+		RollbackReceiptType:         "desktop-activation-rollback-receipt",
+		ReceiptRelativePath:         desktopActivationReceiptRelativePath(applicationID),
+		RequiredFileIDs:             requiredFileIDs,
+		RequiredFileCount:           len(requiredFileIDs),
+		InstalledFileDigestRequired: true,
+		RollbackDigestRequired:      true,
+		CommitReceiptRequired:       true,
+		CommitReceiptPlanned:        true,
+		CommitReceiptWritten:        false,
+		RollbackReceiptRequired:     true,
+		RollbackReceiptPlanned:      rollbackReceiptPlanned,
+		RollbackReceiptWritten:      false,
+		DigestGateReady:             false,
+		CommitAvailable:             false,
+		RollbackAvailable:           false,
+		RuntimeOwned:                true,
+		KDEPolicyOwner:              false,
+		RootPathExposed:             false,
+		TargetRootPathExposed:       false,
+		HostRootModified:            false,
+		FileWritesPerformed:         false,
+		BackendDetailsExposed:       false,
+		Summary:                     "Runtime has planned commit and rollback receipt evidence, but no receipt is written and no host root is modified by the preview.",
 	}
 }
 

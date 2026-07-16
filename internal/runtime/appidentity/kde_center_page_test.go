@@ -29,7 +29,7 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	if preview.SchemaVersion != "xnix.runtime.kde_center_page.v1" ||
 		preview.RequestType != "kde-center-page-preview" ||
 		preview.PageType != "compatibility-center-application-page" ||
-		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview" ||
+		preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview" ||
 		preview.Desktop != "KDE Plasma" ||
 		preview.RuntimeMethod != "GetKDECenterPage" ||
 		preview.ReadMethod != "GetKDECenterPagePreview" {
@@ -51,6 +51,33 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		!preview.Header.PrimaryActionEnabled ||
 		preview.Header.BackendDetailsExposed {
 		t.Fatalf("unexpected page header: %#v", preview.Header)
+	}
+	if preview.ApplicationReadinessEvidence.SchemaVersion != "xnix.runtime.application_readiness.v1" ||
+		preview.ApplicationReadinessEvidence.RequestType != "application-readiness-preview" ||
+		preview.ApplicationReadinessEvidence.GraphType != "runtime-application-readiness-evidence-graph" ||
+		preview.ApplicationReadinessEvidence.RuntimeMethod != "GetApplicationReadiness" ||
+		preview.ApplicationReadinessEvidence.Application.ID != "org.example.ledger" ||
+		preview.ApplicationReadinessEvidence.NodeCount != 7 ||
+		preview.ApplicationReadinessEvidence.Ready ||
+		preview.ApplicationReadinessEvidence.LaunchAllowed ||
+		preview.ApplicationReadinessEvidence.LaunchEnabled ||
+		preview.ApplicationReadinessEvidence.ExecutionRequestCreated ||
+		preview.ApplicationReadinessEvidence.ExecutionStarted ||
+		preview.ApplicationReadinessEvidence.BackendLaunchEnabled ||
+		preview.ApplicationReadinessEvidence.BackendProcessStarted ||
+		preview.ApplicationReadinessEvidence.RealPortalTransportEnabled ||
+		preview.ApplicationReadinessEvidence.RequestObjectCreated ||
+		preview.ApplicationReadinessEvidence.PermissionGranted ||
+		preview.ApplicationReadinessEvidence.SnapshotCreated ||
+		preview.ApplicationReadinessEvidence.RestoreExecuted ||
+		preview.ApplicationReadinessEvidence.HostRootModified ||
+		preview.ApplicationReadinessEvidence.NetworkRequired ||
+		preview.ApplicationReadinessEvidence.PrivilegedContainerRequired ||
+		preview.ApplicationReadinessEvidence.StateRootPathExposed ||
+		preview.ApplicationReadinessEvidence.BackendDetailsExposed ||
+		preview.ApplicationReadinessEvidence.RawCommandExposed ||
+		preview.ApplicationReadinessEvidence.RawExecutableExposed {
+		t.Fatalf("unexpected application readiness evidence: %#v", preview.ApplicationReadinessEvidence)
 	}
 	if preview.ApplicationSummary.ApplicationID != "org.example.ledger" ||
 		preview.ApplicationSummary.CompatibilityState != "registered" ||
@@ -104,6 +131,36 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 		preview.ActionDeck.AIAnalysis.PermissionGranted ||
 		preview.ActionDeck.AIAnalysis.BackendLaunchEnabled {
 		t.Fatalf("unexpected center page AI analysis link: %#v", preview.ActionDeck.AIAnalysis)
+	}
+	if preview.ActionDependencyGraph.RequestType != "kde-action-dependency-graph-preview" ||
+		preview.ActionDependencyGraph.GraphType != "compatibility-center-action-dependency-graph" ||
+		preview.ActionDependencyGraph.RuntimeMethod != "GetKDEActionDependencyGraph" ||
+		preview.ActionDependencyGraph.ReadMethod != "GetKDEActionDependencyGraphPreview" ||
+		preview.ActionDependencyGraph.ActionNodeCount != 7 ||
+		preview.ActionDependencyGraph.EvidenceNodeCount != 35 ||
+		preview.ActionDependencyGraph.GateNodeCount != 7 ||
+		preview.ActionDependencyGraph.NodeCount != 49 ||
+		preview.ActionDependencyGraph.EdgeCount != 42 ||
+		preview.ActionDependencyGraph.MissingEvidenceCount != 35 ||
+		preview.ActionDependencyGraph.BlockedActionCount != 7 ||
+		len(preview.ActionDependencyGraph.MissingEvidenceIDs) != 35 ||
+		!containsString(preview.ActionDependencyGraph.BlockedActions, "review-file-manager-action") ||
+		!preview.ActionDependencyGraph.ReceiptValidation.RejectsMismatchedAppID ||
+		!preview.ActionDependencyGraph.ReceiptValidation.RejectsMalformedOperation ||
+		!preview.ActionDependencyGraph.ReceiptValidation.RejectsPathEscapeEvidence ||
+		!preview.ActionDependencyGraph.ReceiptValidation.RejectsUnsafeSideEffects ||
+		!preview.ActionDependencyGraph.DependencyGraphCreated ||
+		preview.ActionDependencyGraph.DependencyGraphPersisted ||
+		preview.ActionDependencyGraph.RequestObjectsCreated ||
+		preview.ActionDependencyGraph.PermissionGrantCreated ||
+		preview.ActionDependencyGraph.SettingsPersisted ||
+		preview.ActionDependencyGraph.RuntimeLaunchApproval ||
+		preview.ActionDependencyGraph.LaunchAllowed ||
+		preview.ActionDependencyGraph.ExecutionStarted ||
+		preview.ActionDependencyGraph.BackendProcessStarted ||
+		preview.ActionDependencyGraph.HostRootModified ||
+		preview.ActionDependencyGraph.BackendDetailsExposed {
+		t.Fatalf("unexpected action dependency graph summary: %#v", preview.ActionDependencyGraph)
 	}
 	if preview.SettingsSnapshot.RequestType != "settings-preview" ||
 		preview.SettingsSnapshot.SettingsState != "planned" ||
@@ -367,6 +424,84 @@ func TestKDECenterPagePreviewConsumesActivationReceipt(t *testing.T) {
 	}
 }
 
+func TestKDECenterPagePreviewConsumesExecutionSessionRecord(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}
+	root := t.TempDir()
+	requestID := "xnix-exec-org-example-ledger-1"
+	writeExecutionSessionRecord(t, root, requestID, "org.example.ledger")
+
+	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", []string{"file:///home/test/Documents/book.xls"}, KDECenterPageOptions{
+		ExecutionSessionRoot:      root,
+		ExecutionSessionRequestID: requestID,
+	})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+
+	if preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview+execution-session-record" {
+		t.Fatalf("unexpected session-backed center page source: %s", preview.Source)
+	}
+	window := preview.WindowIdentitySnapshot
+	if !window.ExecutionSessionRoot ||
+		!window.ExecutionSessionBacked ||
+		window.ExecutionSessionPath != "execution-ledger/sessions/"+requestID+".json" ||
+		window.TaskManagerSessionState != "blocked" ||
+		window.KWinSessionState != "blocked" ||
+		window.TaskManagerEntryActive ||
+		window.KWinRuleApplied ||
+		window.HostRootModified ||
+		window.BackendDetailsExposed {
+		t.Fatalf("unexpected session-backed window snapshot: %#v", window)
+	}
+	tray := preview.TrayStatusSnapshot
+	if tray.CompatibilityState != "waiting-for-runtime-gates" ||
+		tray.CompatibilityLabel != "Runtime gates required" ||
+		!tray.ExecutionSessionRoot ||
+		!tray.ExecutionSessionBacked ||
+		tray.ExecutionSessionPath != "execution-ledger/sessions/"+requestID+".json" ||
+		tray.ExecutionSessionState != "blocked" ||
+		tray.LiveBackendBridgeEnabled ||
+		tray.BridgeConfigurationPersisted ||
+		tray.HostRootModified ||
+		tray.BackendDetailsExposed {
+		t.Fatalf("unexpected session-backed tray snapshot: %#v", tray)
+	}
+	if preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.BackendProcessStarted ||
+		preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("session-backed center page must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(root)) {
+		t.Fatalf("KDE center page exposed session root: %s", text)
+	}
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KDE center page session-backed preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func writeKDECenterActivationReceipt(t *testing.T, root string, applicationID string) {
 	t.Helper()
 	relativePath := filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json")
@@ -510,6 +645,26 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		preview.AIAnalysis.BackendLaunchEnabled {
 		t.Fatalf("unexpected sections AI analysis link: %#v", preview.AIAnalysis)
 	}
+	if preview.ApplicationReadinessEvidence.Source != "application-readiness-preview" ||
+		preview.ApplicationReadinessEvidence.GraphType != "runtime-application-readiness-evidence-graph" ||
+		preview.ApplicationReadinessEvidence.RuntimeMethod != "GetApplicationReadiness" ||
+		preview.ApplicationReadinessEvidence.NodeCount != 7 ||
+		preview.ApplicationReadinessEvidence.BlockedNodeCount != 2 ||
+		preview.ApplicationReadinessEvidence.LaunchAllowed ||
+		preview.ApplicationReadinessEvidence.LaunchEnabled ||
+		preview.ApplicationReadinessEvidence.ExecutionRequestCreated ||
+		preview.ApplicationReadinessEvidence.ExecutionStarted ||
+		preview.ApplicationReadinessEvidence.BackendProcessStarted ||
+		preview.ApplicationReadinessEvidence.RealPortalTransportEnabled ||
+		preview.ApplicationReadinessEvidence.RequestObjectCreated ||
+		preview.ApplicationReadinessEvidence.PermissionGranted ||
+		preview.ApplicationReadinessEvidence.SnapshotCreated ||
+		preview.ApplicationReadinessEvidence.RestoreExecuted ||
+		preview.ApplicationReadinessEvidence.HostRootModified ||
+		preview.ApplicationReadinessEvidence.NetworkRequired ||
+		preview.ApplicationReadinessEvidence.BackendDetailsExposed {
+		t.Fatalf("unexpected sections readiness evidence: %#v", preview.ApplicationReadinessEvidence)
+	}
 	wantMethods := map[string]string{
 		"overview":      "GetCompatibilityCenterSummary",
 		"backend":       "GetBackendSelectionPlan",
@@ -541,6 +696,9 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 	for _, section := range preview.Sections {
 		if section.RuntimeMethod != wantMethods[section.ID] ||
 			section.ReadModel != wantModels[section.ID] ||
+			len(section.ReadinessNodeIDs) == 0 ||
+			section.ReadinessStatus == "" ||
+			section.ReadinessSummary == "" ||
 			!section.NavigationOnly ||
 			!section.ReadOnly ||
 			section.MutatesRuntime ||
@@ -551,6 +709,10 @@ func TestKDECenterPageSectionsPreviewDefinesReadOnlyNavigation(t *testing.T) {
 		}
 		if section.ID == "diagnostics" && section.AIAnalysis == nil {
 			t.Fatalf("diagnostics section should expose AI analysis link")
+		}
+		if (section.ID == "execution" || section.ID == "launch" || section.ID == "actions") &&
+			(section.ReadinessStatus != "blocked" || !section.ReadinessBlocked) {
+			t.Fatalf("section should reflect blocked readiness evidence: %#v", section)
 		}
 		if section.ID != "diagnostics" && section.AIAnalysis != nil {
 			t.Fatalf("%s section should not expose AI analysis link: %#v", section.ID, section.AIAnalysis)
@@ -618,6 +780,24 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		preview.SectionReadModel != "settings-model" {
 		t.Fatalf("unexpected section detail identity: %#v", preview)
 	}
+	if strings.Join(preview.ReadinessNodeIDs, ",") != "portal-review,snapshot-baseline" ||
+		preview.ReadinessStatus != "required" ||
+		preview.ReadinessBlocked ||
+		preview.ReadinessSummary == "" ||
+		preview.ApplicationReadinessEvidence.Source != "application-readiness-preview" ||
+		preview.ApplicationReadinessEvidence.NodeCount != 2 ||
+		preview.ApplicationReadinessEvidence.BlockedNodeCount != 0 ||
+		preview.ApplicationReadinessEvidence.LaunchEnabled ||
+		preview.ApplicationReadinessEvidence.ExecutionStarted ||
+		preview.ApplicationReadinessEvidence.BackendProcessStarted ||
+		preview.ApplicationReadinessEvidence.RequestObjectCreated ||
+		preview.ApplicationReadinessEvidence.PermissionGranted ||
+		preview.ApplicationReadinessEvidence.SnapshotCreated ||
+		preview.ApplicationReadinessEvidence.HostRootModified ||
+		preview.ApplicationReadinessEvidence.NetworkRequired ||
+		preview.ApplicationReadinessEvidence.BackendDetailsExposed {
+		t.Fatalf("unexpected settings section readiness evidence: %#v", preview)
+	}
 	if got := strings.Join(preview.AvailableSectionIDs, ","); got != "overview,backend,activation,execution,launch,window,files,tray,notifications,actions,settings,diagnostics" {
 		t.Fatalf("unexpected section ids: %#v", preview.AvailableSectionIDs)
 	}
@@ -647,6 +827,11 @@ func TestKDECenterPageSectionDetailPreviewRoutesSelectedReadModel(t *testing.T) 
 		launchPreview.SectionState != "blocked" ||
 		launchPreview.SectionRuntimeMethod != "GetLaunchIntent" ||
 		launchPreview.SectionReadModel != "launch-intent-preview" ||
+		strings.Join(launchPreview.ReadinessNodeIDs, ",") != "execution-readiness,runtime-write-gate" ||
+		launchPreview.ReadinessStatus != "blocked" ||
+		!launchPreview.ReadinessBlocked ||
+		launchPreview.ApplicationReadinessEvidence.NodeCount != 2 ||
+		launchPreview.ApplicationReadinessEvidence.BlockedNodeCount != 2 ||
 		!launchPreview.ReadOnlyNavigation ||
 		launchPreview.SectionActionsEnabled ||
 		launchPreview.RequestObjectsCreated ||

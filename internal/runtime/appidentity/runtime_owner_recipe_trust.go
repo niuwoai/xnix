@@ -2,8 +2,9 @@ package appidentity
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
+
+	recipestore "xnix.local/xnix/internal/runtime/recipe"
 )
 
 const runtimeOwnerRecipeTrustDefaultRegistry = "runtime/recipes/registry.json"
@@ -77,7 +78,7 @@ func NewRuntimeOwnerRecipeTrustPreview(root string) (RuntimeOwnerRecipeTrustPrev
 		SchemaVersion:               "xnix.runtime.owner_recipe_trust.v1",
 		RequestType:                 "runtime-owner-recipe-trust-preview",
 		TrustType:                   "runtime-owner-recipe-trust",
-		Source:                      "registry-digests+recipe-signature-status",
+		Source:                      "go-recipe-store-verifier+registry-digests+recipe-signature-status",
 		RuntimeMethod:               "GetRuntimeOwnerRecipeTrust",
 		ReadMethod:                  "GetRuntimeOwnerRecipeTrustPreview",
 		RegistryPath:                runtimeOwnerRecipeTrustDefaultRegistry,
@@ -127,7 +128,7 @@ func inspectRuntimeOwnerRecipeTrust(root string) runtimeOwnerRecipeTrustState {
 		signatureCounts: make(map[string]int),
 	}
 	registryPath := runtimeServicePath(root, runtimeOwnerRecipeTrustDefaultRegistry)
-	registryData, err := os.ReadFile(registryPath)
+	store, err := recipestore.NewLocalStore(filepath.Dir(registryPath), recipestore.DigestVerifier{TreatSignedAsProduction: true})
 	if err != nil {
 		state.blockingErrors = append(state.blockingErrors, "recipe registry is not readable")
 		return state
@@ -135,54 +136,47 @@ func inspectRuntimeOwnerRecipeTrust(root string) runtimeOwnerRecipeTrustState {
 	state.registryPresent = true
 	state.registryReadable = true
 
-	registry, err := ParseRegistry(registryData)
+	registryName, err := store.RegistryName()
 	if err != nil {
 		state.blockingErrors = append(state.blockingErrors, "recipe registry metadata is invalid")
 		return state
 	}
-	state.registryName = registry.RegistryName
-	state.recipeCount = len(registry.Recipes)
+	state.registryName = registryName
 
+	development, err := store.Development()
+	if err != nil {
+		state.blockingErrors = append(state.blockingErrors, "recipe registry metadata is invalid")
+		return state
+	}
+	state.developmentRegistry = development
+
+	trustStates, err := store.TrustStates()
+	if err != nil {
+		state.blockingErrors = append(state.blockingErrors, "recipe trust state is not readable")
+		return state
+	}
+	state.recipeCount = len(trustStates)
 	allDigestsVerified := true
-	for _, entry := range registry.Recipes {
-		state.signatureCounts[entry.SignatureStatus]++
-		switch entry.SignatureStatus {
-		case "development-only":
+	allProductionTrusted := state.recipeCount > 0
+	for _, trust := range trustStates {
+		signatureStatus := string(trust.SignatureStatus)
+		state.signatureCounts[signatureStatus]++
+		switch trust.SignatureStatus {
+		case recipestore.SignatureDevelopmentOnly:
 			state.developmentRegistry = true
-		case "unsigned":
+		case recipestore.SignatureUnsigned:
 			state.unsignedRecipesPresent = true
 		}
-
-		recipePath, err := safeRecipePath(filepath.Dir(registryPath), entry.Path)
-		if err != nil {
+		if !trust.DigestVerified || trust.FailedClosed {
 			allDigestsVerified = false
-			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe path is invalid for %s", entry.ID))
-			continue
+			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe trust verification failed for %s: %s", trust.ID, trust.Reason))
 		}
-		recipeData, err := os.ReadFile(recipePath)
-		if err != nil {
-			allDigestsVerified = false
-			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe file is not readable for %s", entry.ID))
-			continue
-		}
-		if err := verifySHA256(recipeData, entry.SHA256); err != nil {
-			allDigestsVerified = false
-			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe digest mismatch for %s", entry.ID))
-			continue
-		}
-		recipe, err := ParseRecipe(recipeData)
-		if err != nil {
-			allDigestsVerified = false
-			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe metadata is invalid for %s", entry.ID))
-			continue
-		}
-		if recipe.ID != entry.ID {
-			allDigestsVerified = false
-			state.blockingErrors = append(state.blockingErrors, fmt.Sprintf("recipe id mismatch for %s", entry.ID))
+		if !trust.ProductionTrusted {
+			allProductionTrusted = false
 		}
 	}
 	state.digestVerified = state.registryPresent && state.registryReadable && allDigestsVerified
-	state.signedRecipeValidation = state.digestVerified && state.recipeCount > 0 && state.signatureCounts["signed"] == state.recipeCount
+	state.signedRecipeValidation = state.digestVerified && allProductionTrusted
 	return state
 }
 

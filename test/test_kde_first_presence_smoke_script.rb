@@ -15,6 +15,7 @@ script_path = project_root.join("scripts/kde_first_presence_smoke.rb")
 script = script_path.read
 
 %w[
+  desktop-safety-policy-preview
   desktop-identity-plan
   desktop-entry-preview
   mimeapps-preview
@@ -60,6 +61,20 @@ end
 end
 
 %w[
+  --format
+  kde-first-presence-smoke
+  xnix.kde_first_presence_smoke.v1
+  report_type
+  preview_commands
+  route_baseline
+  settings_field_ids
+  forbidden_user_terms
+  xnix.runtime.desktop_safety_policy.v1
+  assert_desktop_safety_policy
+  safety_false_keys
+  desktop_safe_summary
+  JSON.pretty_generate
+  render_markdown
   host_root_modified
   network_required
   privileged_container_required
@@ -74,6 +89,8 @@ end
   file_content_read
   file_paths_exposed
   ai_provider_call_enabled
+  prefix
+  bottle
 ].each do |flag|
   assert(script.include?(flag), "KDE-first presence smoke must enforce #{flag}")
 end

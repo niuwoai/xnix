@@ -32,6 +32,10 @@ type TaskManagerIdentityPlanPreview struct {
 	ActivationReceiptRoot    bool             `json:"activation_receipt_root"`
 	ActivationReceiptBacked  bool             `json:"activation_receipt_backed"`
 	ActivationReceiptPath    string           `json:"activation_receipt_path,omitempty"`
+	ExecutionSessionRoot     bool             `json:"execution_session_root"`
+	ExecutionSessionBacked   bool             `json:"execution_session_backed"`
+	ExecutionSessionPath     string           `json:"execution_session_path,omitempty"`
+	ExecutionSessionState    string           `json:"execution_session_state,omitempty"`
 	TaskManagerEntryActive   bool             `json:"task_manager_entry_active"`
 	WindowObservationStarted bool             `json:"window_observation_started"`
 	LaunchEnabled            bool             `json:"launch_enabled"`
@@ -42,7 +46,9 @@ type TaskManagerIdentityPlanPreview struct {
 }
 
 type TaskManagerIdentityOptions struct {
-	ActivationRoot string
+	ActivationRoot            string
+	ExecutionSessionRoot      string
+	ExecutionSessionRequestID string
 }
 
 type KWinWindowRulePlanPreview struct {
@@ -69,6 +75,10 @@ type KWinWindowRulePlanPreview struct {
 	ActivationReceiptRoot    bool          `json:"activation_receipt_root"`
 	ActivationReceiptBacked  bool          `json:"activation_receipt_backed"`
 	ActivationReceiptPath    string        `json:"activation_receipt_path,omitempty"`
+	ExecutionSessionRoot     bool          `json:"execution_session_root"`
+	ExecutionSessionBacked   bool          `json:"execution_session_backed"`
+	ExecutionSessionPath     string        `json:"execution_session_path,omitempty"`
+	ExecutionSessionState    string        `json:"execution_session_state,omitempty"`
 	KWinRuleApplied          bool          `json:"kwin_rule_applied"`
 	TaskManagerEntryActive   bool          `json:"task_manager_entry_active"`
 	WindowObservationStarted bool          `json:"window_observation_started"`
@@ -80,7 +90,9 @@ type KWinWindowRulePlanPreview struct {
 }
 
 type KWinWindowRuleOptions struct {
-	ActivationRoot string
+	ActivationRoot            string
+	ExecutionSessionRoot      string
+	ExecutionSessionRequestID string
 }
 
 type KWinRuleMatch struct {
@@ -128,6 +140,20 @@ func (plan Plan) TaskManagerIdentityPlanPreviewWithOptions(options TaskManagerId
 		activationReceiptPath = evidence.ReceiptRelativePath
 		source = "window-identity-preview+desktop-activation-receipt"
 	}
+	executionSessionRoot := strings.TrimSpace(options.ExecutionSessionRoot) != ""
+	executionSessionBacked := false
+	executionSessionPath := ""
+	executionSessionState := ""
+	if executionSessionRoot {
+		evidence, err := plan.ExecutionSessionFanOutEvidence(options.ExecutionSessionRoot, options.ExecutionSessionRequestID)
+		if err != nil {
+			return TaskManagerIdentityPlanPreview{}, err
+		}
+		executionSessionBacked = evidence.SafeForKDE
+		executionSessionPath = evidence.ReceiptRelativePath
+		executionSessionState = evidence.TaskManager.State
+		source = source + "+execution-session-record"
+	}
 
 	preview := TaskManagerIdentityPlanPreview{
 		SchemaVersion:            "xnix.runtime.task_manager_identity.v1",
@@ -156,6 +182,10 @@ func (plan Plan) TaskManagerIdentityPlanPreviewWithOptions(options TaskManagerId
 		ActivationReceiptRoot:    activationReceiptRoot,
 		ActivationReceiptBacked:  activationReceiptBacked,
 		ActivationReceiptPath:    activationReceiptPath,
+		ExecutionSessionRoot:     executionSessionRoot,
+		ExecutionSessionBacked:   executionSessionBacked,
+		ExecutionSessionPath:     executionSessionPath,
+		ExecutionSessionState:    executionSessionState,
 		TaskManagerEntryActive:   false,
 		WindowObservationStarted: false,
 		LaunchEnabled:            false,
@@ -199,6 +229,20 @@ func (plan Plan) KWinWindowRulePlanPreviewWithOptions(options KWinWindowRuleOpti
 		activationReceiptPath = evidence.ReceiptRelativePath
 		source = "window-identity-preview+desktop-activation-receipt"
 	}
+	executionSessionRoot := strings.TrimSpace(options.ExecutionSessionRoot) != ""
+	executionSessionBacked := false
+	executionSessionPath := ""
+	executionSessionState := ""
+	if executionSessionRoot {
+		evidence, err := plan.ExecutionSessionFanOutEvidence(options.ExecutionSessionRoot, options.ExecutionSessionRequestID)
+		if err != nil {
+			return KWinWindowRulePlanPreview{}, err
+		}
+		executionSessionBacked = evidence.SafeForKDE
+		executionSessionPath = evidence.ReceiptRelativePath
+		executionSessionState = evidence.KWin.State
+		source = source + "+execution-session-record"
+	}
 
 	preview := KWinWindowRulePlanPreview{
 		SchemaVersion: "xnix.runtime.kwin_window_rule.v1",
@@ -236,6 +280,10 @@ func (plan Plan) KWinWindowRulePlanPreviewWithOptions(options KWinWindowRuleOpti
 		ActivationReceiptRoot:    activationReceiptRoot,
 		ActivationReceiptBacked:  activationReceiptBacked,
 		ActivationReceiptPath:    activationReceiptPath,
+		ExecutionSessionRoot:     executionSessionRoot,
+		ExecutionSessionBacked:   executionSessionBacked,
+		ExecutionSessionPath:     executionSessionPath,
+		ExecutionSessionState:    executionSessionState,
 		KWinRuleApplied:          false,
 		TaskManagerEntryActive:   false,
 		WindowObservationStarted: false,

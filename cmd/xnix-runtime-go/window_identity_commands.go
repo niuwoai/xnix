@@ -37,6 +37,8 @@ func parseTaskManagerIdentityPreviewSource(args []string) (appidentity.Recipe, a
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
+	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.TaskManagerIdentityOptions{}, err
 	}
@@ -54,7 +56,7 @@ func parseTaskManagerIdentityPreviewSource(args []string) (appidentity.Recipe, a
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, appidentity.TaskManagerIdentityOptions{ActivationRoot: *activationRoot}, err
+	return recipe, provenance, appidentity.TaskManagerIdentityOptions{ActivationRoot: *activationRoot, ExecutionSessionRoot: *sessionRoot, ExecutionSessionRequestID: *sessionRequestID}, err
 }
 
 func runKWinWindowRulePreview(args []string, stdout io.Writer) error {
@@ -84,6 +86,8 @@ func parseKWinWindowRulePreviewSource(args []string) (appidentity.Recipe, appide
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
+	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.KWinWindowRuleOptions{}, err
 	}
@@ -101,5 +105,5 @@ func parseKWinWindowRulePreviewSource(args []string) (appidentity.Recipe, appide
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, appidentity.KWinWindowRuleOptions{ActivationRoot: *activationRoot}, err
+	return recipe, provenance, appidentity.KWinWindowRuleOptions{ActivationRoot: *activationRoot, ExecutionSessionRoot: *sessionRoot, ExecutionSessionRequestID: *sessionRequestID}, err
 }

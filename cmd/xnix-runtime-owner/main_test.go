@@ -17,7 +17,7 @@ func TestRuntimeOwnerCommandRendersSmokeCandidate(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.253" ||
+	if payload["version"] != "0.2.294" ||
 		payload["schema_version"] != "xnix.runtime.owner_candidate.v1" ||
 		payload["request_type"] != "runtime-owner-candidate" ||
 		payload["owner_type"] != "go-runtime-owner-candidate" ||
@@ -76,7 +76,7 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.253" ||
+	if payload["version"] != "0.2.294" ||
 		payload["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
 		payload["request_type"] != "runtime-owner-read-dispatch" ||
 		payload["dispatch_type"] != "go-owner-read-dispatch" ||
@@ -97,6 +97,41 @@ func TestRuntimeOwnerCommandRendersReadDispatch(t *testing.T) {
 	}
 }
 
+func TestRuntimeOwnerCommandRendersWindowsCompatibilityOwnerLocalReadDispatch(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"--root", "../..", "--dispatch-read", "GetWindowsCompatibilityWorkstreamsPreview"}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.owner_read_dispatch.v1" ||
+		payload["method"] != "GetWindowsCompatibilityWorkstreamsPreview" ||
+		payload["route_source"] != "go-owner-local-preview" ||
+		payload["go_command"] != "windows-compatibility-workstreams-preview" ||
+		payload["route_status"] != "owner-local-preview-ready" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["session_bus_claimed"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Windows compatibility read dispatch response: %#v", payload)
+	}
+	nested := payload["payload"].(map[string]any)
+	if nested["request_type"] != "windows-compatibility-workstreams-preview" ||
+		nested["read_method"] != "GetWindowsCompatibilityWorkstreamsPreview" ||
+		nested["official_desktop"] != "KDE Plasma" ||
+		nested["runtime_owned"] != true ||
+		nested["go_runtime_backed"] != true ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected Windows compatibility nested payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"--root", "../..", "--mode", "smoke-owner", "--service-call", "GetRuntimeWriteGate", "Launch"}, &output); err != nil {
@@ -107,7 +142,7 @@ func TestRuntimeOwnerCommandRendersServiceCall(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.253" ||
+	if payload["version"] != "0.2.294" ||
 		payload["schema_version"] != "xnix.runtime.owner_service_call.v1" ||
 		payload["request_type"] != "runtime-owner-service-call" ||
 		payload["service_type"] != "go-runtime-owner-in-process-service" ||
@@ -146,7 +181,7 @@ func TestRuntimeOwnerCommandRendersLifecycleJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.253" ||
+		if payload["version"] != "0.2.294" ||
 			payload["schema_version"] != "xnix.runtime.owner_lifecycle_event.v1" ||
 			payload["request_type"] != "runtime-owner-lifecycle-event" ||
 			payload["event_type"] != wantTypes[index] ||
@@ -175,8 +210,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 65 {
-		t.Fatalf("smoke batch line count = %d, want 65", len(lines))
+	if len(lines) != 66 {
+		t.Fatalf("smoke batch line count = %d, want 66", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -185,12 +220,12 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 		if err := json.Unmarshal([]byte(line), &payload); err != nil {
 			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
 		}
-		if payload["version"] != "0.2.253" ||
+		if payload["version"] != "0.2.294" ||
 			payload["schema_version"] != "xnix.runtime.owner_smoke_batch.v1" ||
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(61) ||
+			payload["read_dispatch_method_count"] != float64(62) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -233,8 +268,72 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)
 		}
 	}
-	if readCount != 61 || writeCount != 4 {
-		t.Fatalf("smoke batch counts read=%d write=%d, want 61/4", readCount, writeCount)
+	if readCount != 62 || writeCount != 4 {
+		t.Fatalf("smoke batch counts read=%d write=%d, want 62/4", readCount, writeCount)
+	}
+}
+
+func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"--root", "../..", "--session-bus-smoke"}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 71 {
+		t.Fatalf("session bus smoke line count = %d, want 71", len(lines))
+	}
+	readCount := 0
+	writeCount := 0
+	unsupportedCount := 0
+	for index, line := range lines {
+		var payload map[string]any
+		if err := json.Unmarshal([]byte(line), &payload); err != nil {
+			t.Fatalf("Unmarshal line %d returned error: %v", index, err)
+		}
+		if payload["version"] != "0.2.294" ||
+			payload["schema_version"] != "xnix.runtime.owner_session_bus_smoke.v1" ||
+			payload["request_type"] != "runtime-owner-session-bus-smoke-step" ||
+			payload["transcript_type"] != "restricted-private-session-bus-owner-smoke" ||
+			payload["sequence"] != float64(index+1) ||
+			payload["read_dispatch_method_count"] != float64(62) ||
+			payload["write_method_count"] != float64(4) ||
+			payload["runtime_owned"] != true ||
+			payload["go_runtime_backed"] != true ||
+			payload["kde_policy_owner"] != false ||
+			payload["private_session_bus"] != true ||
+			payload["event_loop_started"] != true ||
+			payload["session_bus_claimed"] != true ||
+			payload["production_bus_claimed"] != false ||
+			payload["system_service_started"] != false ||
+			payload["write_methods_enabled"] != false ||
+			payload["host_root_modified"] != false ||
+			payload["backend_details_exposed"] != false {
+			t.Fatalf("unexpected session bus smoke payload at %d: %#v", index, payload)
+		}
+		switch payload["step_type"] {
+		case "read-dispatch":
+			readCount++
+			if payload["read_only_dispatch"] != true || payload["write_method"] != false {
+				t.Fatalf("unexpected read step at %d: %#v", index, payload)
+			}
+		case "write-denial":
+			writeCount++
+			if payload["read_only_dispatch"] != false ||
+				payload["write_method"] != true ||
+				payload["error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" {
+				t.Fatalf("unexpected write step at %d: %#v", index, payload)
+			}
+		case "reject-unsupported-read":
+			unsupportedCount++
+			if payload["unsupported_read"] != true ||
+				payload["error_name"] != "org.xnix.Compatibility1.Error.UnsupportedMethod" {
+				t.Fatalf("unexpected unsupported-read step at %d: %#v", index, payload)
+			}
+		}
+	}
+	if readCount != 62 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 62/4/1", readCount, writeCount, unsupportedCount)
 	}
 }
 

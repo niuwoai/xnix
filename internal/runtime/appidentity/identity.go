@@ -16,11 +16,13 @@ import (
 var (
 	idPattern        = regexp.MustCompile(`^[a-z][a-z0-9-]*(?:\.[a-z0-9-]+)+$`)
 	extensionPattern = regexp.MustCompile(`^\.[A-Za-z0-9]{1,16}$`)
+	versionPattern   = regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$`)
 )
 
 type Recipe struct {
 	ID                  string   `json:"id"`
 	Name                string   `json:"name"`
+	Version             string   `json:"version,omitempty"`
 	Icon                string   `json:"icon"`
 	Mode                string   `json:"mode"`
 	SupportedExtensions []string `json:"supported_extensions"`
@@ -174,6 +176,10 @@ type TrayStatusPreview struct {
 	ActivationReceiptRoot        bool                 `json:"activation_receipt_root"`
 	ActivationReceiptBacked      bool                 `json:"activation_receipt_backed"`
 	ActivationReceiptPath        string               `json:"activation_receipt_path,omitempty"`
+	ExecutionSessionRoot         bool                 `json:"execution_session_root"`
+	ExecutionSessionBacked       bool                 `json:"execution_session_backed"`
+	ExecutionSessionPath         string               `json:"execution_session_path,omitempty"`
+	ExecutionSessionState        string               `json:"execution_session_state,omitempty"`
 	RuntimeOwned                 bool                 `json:"runtime_owned"`
 	KDEPolicyOwner               bool                 `json:"kde_policy_owner"`
 	UserVisible                  bool                 `json:"user_visible"`
@@ -185,7 +191,9 @@ type TrayStatusPreview struct {
 }
 
 type TrayStatusOptions struct {
-	ActivationRoot string
+	ActivationRoot            string
+	ExecutionSessionRoot      string
+	ExecutionSessionRequestID string
 }
 
 type TrayRuntimeActivity struct {
@@ -977,6 +985,9 @@ func (recipe Recipe) Validate() error {
 	if !singleLine(recipe.Icon) {
 		return errors.New("recipe icon must be a non-empty single-line string")
 	}
+	if recipe.Version != "" && !versionPattern.MatchString(recipe.Version) {
+		return errors.New("recipe version must be semantic version format")
+	}
 	switch recipe.Mode {
 	case "automatic", "wine", "vm":
 	default:
@@ -1260,6 +1271,23 @@ func (plan Plan) TrayStatusPreviewWithOptions(options TrayStatusOptions) (TraySt
 		activationReceiptBacked = evidence.SafeForKDE
 		activationReceiptPath = evidence.ReceiptRelativePath
 	}
+	executionSessionRoot := strings.TrimSpace(options.ExecutionSessionRoot) != ""
+	executionSessionBacked := false
+	executionSessionPath := ""
+	executionSessionState := ""
+	compatibilityState := "ready"
+	compatibilityLabel := "Ready"
+	if executionSessionRoot {
+		evidence, err := plan.ExecutionSessionFanOutEvidence(options.ExecutionSessionRoot, options.ExecutionSessionRequestID)
+		if err != nil {
+			return TrayStatusPreview{}, err
+		}
+		executionSessionBacked = evidence.SafeForKDE
+		executionSessionPath = evidence.ReceiptRelativePath
+		executionSessionState = evidence.Tray.State
+		compatibilityState = evidence.CompatibilityCenter.State
+		compatibilityLabel = "Runtime gates required"
+	}
 
 	return TrayStatusPreview{
 		SchemaVersion: "xnix.runtime.tray_status.v1",
@@ -1276,8 +1304,8 @@ func (plan Plan) TrayStatusPreviewWithOptions(options TrayStatusOptions) (TraySt
 			Summary:                    plan.DisplayName + " is registered for KDE tray visibility",
 		},
 		CompatibilityStatus: TrayCompatibility{
-			State: "ready",
-			Label: "Ready",
+			State: compatibilityState,
+			Label: compatibilityLabel,
 		},
 		TrayBridge: TrayBridgeStatus{
 			BridgedTrayApplicationCount: 0,
@@ -1297,6 +1325,10 @@ func (plan Plan) TrayStatusPreviewWithOptions(options TrayStatusOptions) (TraySt
 		ActivationReceiptRoot:        activationReceiptRoot,
 		ActivationReceiptBacked:      activationReceiptBacked,
 		ActivationReceiptPath:        activationReceiptPath,
+		ExecutionSessionRoot:         executionSessionRoot,
+		ExecutionSessionBacked:       executionSessionBacked,
+		ExecutionSessionPath:         executionSessionPath,
+		ExecutionSessionState:        executionSessionState,
 		RuntimeOwned:                 true,
 		KDEPolicyOwner:               false,
 		UserVisible:                  true,

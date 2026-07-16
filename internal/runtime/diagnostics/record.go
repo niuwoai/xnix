@@ -68,6 +68,18 @@ func NewRunRecordStore(stateRoot string) (*RunRecordStore, error) {
 	return &RunRecordStore{root: root}, nil
 }
 
+// OpenRunRecordStoreReadOnly opens a diagnostics run ledger for read-only
+// projections. It validates the supplied root but does not create directories
+// or files, so preview-only commands can inspect existing evidence without
+// mutating local state.
+func OpenRunRecordStoreReadOnly(stateRoot string) (*RunRecordStore, error) {
+	root, err := safeDiagnosticReadOnlyRoot(stateRoot)
+	if err != nil {
+		return nil, err
+	}
+	return &RunRecordStore{root: root}, nil
+}
+
 // Record runs the fixture, persists the result in the legacy result store, and
 // writes a full diagnostic run receipt for audit and KDE consumption.
 func (s *RunRecordStore) Record(request RunRecordRequest) (RunRecord, error) {
@@ -199,6 +211,40 @@ func (s *RunRecordStore) List() ([]RunRecord, error) {
 	return records, nil
 }
 
+// listLenient lists persisted diagnostic run records, skipping files that fail
+// to parse and returning their run ids as malformed. Unlike List it never
+// creates the ledger directory and never fails on a single corrupt receipt, so
+// it is safe for read-only previews over possibly-corrupt evidence.
+func (s *RunRecordStore) listLenient() ([]RunRecord, []string, error) {
+	dir := filepath.Join(s.root, "diagnostics-ledger", "runs")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil, nil
+		}
+		return nil, nil, fmt.Errorf("list diagnostic run records: %w", err)
+	}
+	var records []RunRecord
+	var malformed []string
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		runID := strings.TrimSuffix(entry.Name(), ".json")
+		record, err := s.Load(runID)
+		if err != nil {
+			malformed = append(malformed, runID)
+			continue
+		}
+		records = append(records, record)
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].RunID < records[j].RunID
+	})
+	sort.Strings(malformed)
+	return records, malformed, nil
+}
+
 func (s *RunRecordStore) recordPath(runID string) (string, string, error) {
 	if err := validateDiagnosticRecordID(runID); err != nil {
 		return "", "", err
@@ -226,6 +272,17 @@ func safeDiagnosticRecordRoot(root string) (string, error) {
 	}
 	if err := os.MkdirAll(clean, 0o700); err != nil {
 		return "", fmt.Errorf("prepare diagnostic run state root: %w", err)
+	}
+	return clean, nil
+}
+
+func safeDiagnosticReadOnlyRoot(root string) (string, error) {
+	if root == "" {
+		return "", errors.New("diagnostic run history read requires an explicit state root")
+	}
+	clean := filepath.Clean(root)
+	if clean == string(os.PathSeparator) {
+		return "", errors.New("refusing to use filesystem root as diagnostic run state root")
 	}
 	return clean, nil
 }

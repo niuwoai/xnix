@@ -64,6 +64,34 @@ func TestDesktopActivationTransactionPreviewPlansCommitAndRollbackWithoutWriting
 		preview.WriteGate.RequestObjectCreated {
 		t.Fatalf("unexpected write gate: %#v", preview.WriteGate)
 	}
+	if preview.ReceiptEvidence.EvidenceType != "desktop-activation-transaction-receipt-evidence" ||
+		preview.ReceiptEvidence.EvidenceState != "planned-runtime-gated" ||
+		preview.ReceiptEvidence.ReceiptSchemaVersion != "xnix.runtime.desktop_activation_receipt.v1" ||
+		preview.ReceiptEvidence.CommitReceiptType != "desktop-activation-receipt" ||
+		preview.ReceiptEvidence.RollbackReceiptType != "desktop-activation-rollback-receipt" ||
+		preview.ReceiptEvidence.ReceiptRelativePath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
+		preview.ReceiptEvidence.RequiredFileCount != 5 ||
+		!sameStrings(preview.ReceiptEvidence.RequiredFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}) ||
+		!preview.ReceiptEvidence.InstalledFileDigestRequired ||
+		!preview.ReceiptEvidence.RollbackDigestRequired ||
+		!preview.ReceiptEvidence.CommitReceiptRequired ||
+		!preview.ReceiptEvidence.CommitReceiptPlanned ||
+		preview.ReceiptEvidence.CommitReceiptWritten ||
+		!preview.ReceiptEvidence.RollbackReceiptRequired ||
+		!preview.ReceiptEvidence.RollbackReceiptPlanned ||
+		preview.ReceiptEvidence.RollbackReceiptWritten ||
+		preview.ReceiptEvidence.DigestGateReady ||
+		preview.ReceiptEvidence.CommitAvailable ||
+		preview.ReceiptEvidence.RollbackAvailable ||
+		!preview.ReceiptEvidence.RuntimeOwned ||
+		preview.ReceiptEvidence.KDEPolicyOwner ||
+		preview.ReceiptEvidence.RootPathExposed ||
+		preview.ReceiptEvidence.TargetRootPathExposed ||
+		preview.ReceiptEvidence.HostRootModified ||
+		preview.ReceiptEvidence.FileWritesPerformed ||
+		preview.ReceiptEvidence.BackendDetailsExposed {
+		t.Fatalf("unexpected transaction receipt evidence: %#v", preview.ReceiptEvidence)
+	}
 	expectedStepIDs := []string{
 		"validate-preflight",
 		"prepare-staging-root",

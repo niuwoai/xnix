@@ -80,6 +80,20 @@ func New(stateRoot string) (*Store, error) {
 	return &Store{root: abs, rootObj: root, metaDir: metaDir}, nil
 }
 
+// OpenReadOnly opens an existing snapshot store for read-only listing and
+// verification. Unlike New it never creates the store's metadata directories, so
+// preview commands can inspect snapshots without mutating the state root. List
+// tolerates a missing manifests directory (returns an empty slice), so an empty
+// state root yields no candidates rather than an error.
+func OpenReadOnly(stateRoot string) (*Store, error) {
+	root, err := rootfs.Open(stateRoot)
+	if err != nil {
+		return nil, err
+	}
+	abs := root.Path()
+	return &Store{root: abs, rootObj: root, metaDir: filepath.Join(abs, metaDirName)}, nil
+}
+
 // Root returns the absolute state-root path the store is confined to.
 func (s *Store) Root() string { return s.root }
 

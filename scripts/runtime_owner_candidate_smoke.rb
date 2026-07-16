@@ -175,17 +175,17 @@ assert(lifecycle_events.last.fetch("shutdown_reason") == "preview-complete", "Ru
 stdout, stderr, status = Open3.capture3(*owner_command, "--root", ".", "--smoke-batch")
 assert(status.success?, "Runtime owner candidate smoke must render smoke batch JSONL: #{stderr}")
 smoke_batch_records = stdout.lines.map { |line| JSON.parse(line) }
-assert(smoke_batch_records.length == 65, "Runtime owner smoke batch must include 61 read records and 4 write records")
+assert(smoke_batch_records.length == 66, "Runtime owner smoke batch must include 62 read records and 4 write records")
 read_records = smoke_batch_records.select { |record| record.fetch("record_type") == "read-dispatch" }
 write_records = smoke_batch_records.select { |record| record.fetch("record_type") == "write-denial" }
-assert(read_records.length == 61, "Runtime owner smoke batch must cover every owner read dispatch method")
+assert(read_records.length == 62, "Runtime owner smoke batch must cover every owner read dispatch method")
 assert(write_records.length == 4, "Runtime owner smoke batch must cover every disabled write method")
 smoke_batch_records.each_with_index do |record, index|
   assert(record.fetch("schema_version") == "xnix.runtime.owner_smoke_batch.v1", "Runtime owner smoke batch must expose its schema")
   assert(record.fetch("request_type") == "runtime-owner-smoke-batch-record", "Runtime owner smoke batch must expose its request type")
   assert(record.fetch("batch_type") == "restricted-session-owner-call-batch", "Runtime owner smoke batch must identify restricted session evidence")
   assert(record.fetch("sequence") == index + 1, "Runtime owner smoke batch must emit ordered records")
-  assert(record.fetch("read_dispatch_method_count") == 61, "Runtime owner smoke batch must expose read dispatch coverage")
+  assert(record.fetch("read_dispatch_method_count") == 62, "Runtime owner smoke batch must expose read dispatch coverage")
   assert(record.fetch("write_method_count") == 4, "Runtime owner smoke batch must expose write denial coverage")
   assert(record.fetch("runtime_owned"), "Runtime owner smoke batch must keep Runtime ownership in the Runtime")
   assert(record.fetch("go_runtime_backed"), "Runtime owner smoke batch must report Go backing")
@@ -207,5 +207,40 @@ assert(write_records.all? { |record| !record.fetch("read_only_dispatch") && reco
 assert(write_records.all? { |record| record.fetch("error_name") == "org.xnix.Compatibility1.Error.WriteMethodDisabled" }, "Runtime owner smoke batch write records must use stable disabled-write errors")
 assert(read_records.all? { |record| record.fetch("payload").fetch("call_type") == "read-dispatch" }, "Runtime owner smoke batch read records must use service-call read dispatch")
 assert(write_records.all? { |record| record.fetch("payload").fetch("call_type") == "write-denial" }, "Runtime owner smoke batch write records must use service-call write denials")
+
+stdout, stderr, status = Open3.capture3(*owner_command, "--root", ".", "--session-bus-smoke")
+assert(status.success?, "Runtime owner candidate smoke must render private session-bus JSONL: #{stderr}")
+session_bus_steps = stdout.lines.map { |line| JSON.parse(line) }
+assert(session_bus_steps.length == 71, "Runtime owner private session-bus smoke must include startup, claim, route table, 62 reads, 4 writes, unsupported-read, and shutdown")
+session_read_steps = session_bus_steps.select { |step| step.fetch("step_type") == "read-dispatch" }
+session_write_steps = session_bus_steps.select { |step| step.fetch("step_type") == "write-denial" }
+session_unsupported_steps = session_bus_steps.select { |step| step.fetch("step_type") == "reject-unsupported-read" }
+assert(session_read_steps.length == 62, "Runtime owner private session-bus smoke must cover every owner read dispatch method")
+assert(session_write_steps.length == 4, "Runtime owner private session-bus smoke must cover every disabled write method")
+assert(session_unsupported_steps.length == 1, "Runtime owner private session-bus smoke must prove unsupported reads fail closed")
+session_bus_steps.each_with_index do |step, index|
+  assert(step.fetch("schema_version") == "xnix.runtime.owner_session_bus_smoke.v1", "Runtime owner private session-bus smoke must expose its schema")
+  assert(step.fetch("request_type") == "runtime-owner-session-bus-smoke-step", "Runtime owner private session-bus smoke must expose its request type")
+  assert(step.fetch("transcript_type") == "restricted-private-session-bus-owner-smoke", "Runtime owner private session-bus smoke must identify restricted evidence")
+  assert(step.fetch("sequence") == index + 1, "Runtime owner private session-bus smoke must emit ordered steps")
+  assert(step.fetch("read_dispatch_method_count") == 62, "Runtime owner private session-bus smoke must expose owner read dispatch coverage")
+  assert(step.fetch("write_method_count") == 4, "Runtime owner private session-bus smoke must expose write denial coverage")
+  assert(step.fetch("runtime_owned"), "Runtime owner private session-bus smoke must keep Runtime ownership in the Runtime")
+  assert(step.fetch("go_runtime_backed"), "Runtime owner private session-bus smoke must report Go backing")
+  assert(!step.fetch("kde_policy_owner"), "Runtime owner private session-bus smoke must not make KDE the policy owner")
+  assert(step.fetch("private_session_bus"), "Runtime owner private session-bus smoke must be scoped to a private session bus")
+  assert(step.fetch("event_loop_started"), "Runtime owner private session-bus smoke must model the restricted event loop")
+  assert(step.fetch("session_bus_claimed"), "Runtime owner private session-bus smoke must claim only the private session bus")
+  assert(!step.fetch("production_bus_claimed"), "Runtime owner private session-bus smoke must not claim production bus ownership")
+  assert(!step.fetch("system_service_started"), "Runtime owner private session-bus smoke must not start a system service")
+  assert(!step.fetch("write_methods_enabled"), "Runtime owner private session-bus smoke must keep write methods disabled")
+  assert(!step.fetch("network_required"), "Runtime owner private session-bus smoke must not require network")
+  assert(!step.fetch("host_root_modified"), "Runtime owner private session-bus smoke must not mutate the host root")
+  assert(!step.fetch("privileged_container_required"), "Runtime owner private session-bus smoke must not require privileged containers")
+  assert(!step.fetch("backend_details_exposed"), "Runtime owner private session-bus smoke must not expose backend details")
+end
+assert(session_read_steps.all? { |step| step.fetch("read_only_dispatch") && !step.fetch("write_method") && step.fetch("dispatch_ready") }, "Runtime owner private session-bus read steps must remain dispatch-ready reads")
+assert(session_write_steps.all? { |step| !step.fetch("read_only_dispatch") && step.fetch("write_method") && step.fetch("error_name") == "org.xnix.Compatibility1.Error.WriteMethodDisabled" }, "Runtime owner private session-bus write steps must be stable denials")
+assert(session_unsupported_steps.first.fetch("error_name") == "org.xnix.Compatibility1.Error.UnsupportedMethod", "Runtime owner private session-bus unsupported reads must use stable unsupported-method errors")
 
 puts "PASS: Runtime owner candidate restricted session smoke"

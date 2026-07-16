@@ -1,6 +1,9 @@
 package appidentity
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type KDEIntegrationStatusPreview struct {
 	SchemaVersion         string                      `json:"schema_version"`
@@ -107,6 +110,9 @@ type KDEApplicationSurfacePlanPreview struct {
 	EntryPointIDs                 []string                      `json:"entry_point_ids"`
 	EntryPointCount               int                           `json:"entry_point_count"`
 	RequiredRuntimeGates          []string                      `json:"required_runtime_gates"`
+	ActivationReceiptRoot         bool                          `json:"activation_receipt_root"`
+	ActivationReceiptBacked       bool                          `json:"activation_receipt_backed"`
+	ActivationReceiptPath         string                        `json:"activation_receipt_path,omitempty"`
 	RuntimeOwned                  bool                          `json:"runtime_owned"`
 	GoRuntimeBacked               bool                          `json:"go_runtime_backed"`
 	KDEPolicyOwner                bool                          `json:"kde_policy_owner"`
@@ -131,6 +137,10 @@ type KDEApplicationSurfacePlanPreview struct {
 	RawWindowsExecutableExposed   bool                          `json:"raw_windows_executable_exposed"`
 	BackendDetailsExposed         bool                          `json:"backend_details_exposed"`
 	DesktopSafeSummary            string                        `json:"desktop_safe_summary"`
+}
+
+type KDEApplicationSurfaceOptions struct {
+	ActivationRoot string
 }
 
 type KDEApplicationSurfaceIdentity struct {
@@ -232,6 +242,10 @@ func NewKDEShellIntegrationPlanPreview() (KDEShellIntegrationPlanPreview, error)
 }
 
 func (plan Plan) KDEApplicationSurfacePlanPreview() (KDEApplicationSurfacePlanPreview, error) {
+	return plan.KDEApplicationSurfacePlanPreviewWithOptions(KDEApplicationSurfaceOptions{})
+}
+
+func (plan Plan) KDEApplicationSurfacePlanPreviewWithOptions(options KDEApplicationSurfaceOptions) (KDEApplicationSurfacePlanPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return KDEApplicationSurfacePlanPreview{}, err
 	}
@@ -239,11 +253,24 @@ func (plan Plan) KDEApplicationSurfacePlanPreview() (KDEApplicationSurfacePlanPr
 		return KDEApplicationSurfacePlanPreview{}, errors.New("KDE application surface preview requires single-line identity fields")
 	}
 	entries := kdeApplicationSurfaceEntries()
+	source := "go-runtime-kde-application-surface"
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return KDEApplicationSurfacePlanPreview{}, err
+		}
+		source = "go-runtime-kde-application-surface+desktop-activation-receipt"
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
+	}
 	preview := KDEApplicationSurfacePlanPreview{
 		SchemaVersion: "xnix.runtime.kde_application_surface.v1",
 		RequestType:   "kde-application-surface-preview",
 		PlanType:      "kde-application-surface-plan",
-		Source:        "go-runtime-kde-application-surface",
+		Source:        source,
 		RuntimeMethod: "GetKDEApplicationSurfacePlan",
 		ReadMethod:    "GetKDEApplicationSurfacePlanPreview",
 		Application: KDEApplicationSurfaceIdentity{
@@ -260,6 +287,9 @@ func (plan Plan) KDEApplicationSurfacePlanPreview() (KDEApplicationSurfacePlanPr
 		EntryPointIDs:                 kdeApplicationSurfaceEntryIDs(entries),
 		EntryPointCount:               len(entries),
 		RequiredRuntimeGates:          []string{"recipe-install-gate", "portal-policy-review", "snapshot-baseline", "backend-environment-plan", "backend-lifecycle-plan", "runtime-write-gate"},
+		ActivationReceiptRoot:         activationReceiptRoot,
+		ActivationReceiptBacked:       activationReceiptBacked,
+		ActivationReceiptPath:         activationReceiptPath,
 		RuntimeOwned:                  true,
 		GoRuntimeBacked:               true,
 		KDEPolicyOwner:                false,

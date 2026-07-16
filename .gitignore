@@ -4,8 +4,14 @@
 /dist/
 /downloads/
 /.cache/
+/.gocache/
+
+# Go build binaries produced at the repo root
+/xnix-runtime-go
+/xnix-runtime-owner
 
 # Local runtime artifacts
+/tmp/
 /*.img
 /*.qcow2
 /*.iso

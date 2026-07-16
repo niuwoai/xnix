@@ -14,11 +14,11 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 		t.Fatalf("NewRuntimeOwnerRecipeTrustPreview returned error: %v", err)
 	}
 
-	if preview.Version != "0.2.253" ||
+	if preview.Version != "0.2.294" ||
 		preview.SchemaVersion != "xnix.runtime.owner_recipe_trust.v1" ||
 		preview.RequestType != "runtime-owner-recipe-trust-preview" ||
 		preview.TrustType != "runtime-owner-recipe-trust" ||
-		preview.Source != "registry-digests+recipe-signature-status" ||
+		preview.Source != "go-recipe-store-verifier+registry-digests+recipe-signature-status" ||
 		preview.RuntimeMethod != "GetRuntimeOwnerRecipeTrust" ||
 		preview.ReadMethod != "GetRuntimeOwnerRecipeTrustPreview" ||
 		preview.RegistryPath != "runtime/recipes/registry.json" {
@@ -80,7 +80,7 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 
 func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.253\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.294\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 	recipeDir := filepath.Join(root, "runtime", "recipes")
@@ -93,7 +93,7 @@ func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(recipeDir, "org.example.ledger.json"), recipeData, 0o600); err != nil {
 		t.Fatalf("WriteFile recipe returned error: %v", err)
 	}
-	registryData := []byte(`{"schema_version":1,"registry_name":"signed-test","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"signed"}]}`)
+	registryData := []byte(`{"schema_version":1,"registry_name":"signed-production","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"signed"}]}`)
 	if err := os.WriteFile(filepath.Join(recipeDir, "registry.json"), registryData, 0o600); err != nil {
 		t.Fatalf("WriteFile registry returned error: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 		t.Fatalf("NewRuntimeOwnerRecipeTrustPreview returned error: %v", err)
 	}
 
-	if preview.RegistryName != "signed-test" ||
+	if preview.RegistryName != "signed-production" ||
 		preview.RecipeCount != 1 ||
 		!preview.DigestVerified ||
 		!preview.SignedRecipeValidation ||
@@ -134,7 +134,7 @@ func TestRuntimeOwnerRecipeTrustPreviewPassesSignedRegistry(t *testing.T) {
 
 func TestRuntimeOwnerRecipeTrustPreviewBlocksMissingRegistry(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.253\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte("0.2.294\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
 

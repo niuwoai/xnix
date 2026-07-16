@@ -65,6 +65,37 @@ func TestTaskManagerIdentityPreviewCommandConsumesActivationRoot(t *testing.T) {
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestTaskManagerIdentityPreviewCommandConsumesSessionRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	sessionRoot, requestID := writeExecutionSessionRecordWithCLI(t, app)
+
+	var output bytes.Buffer
+	if err := run([]string{"task-manager-identity-preview", "--registry", registryPath, "--app", app, "--session-root", sessionRoot, "--session-request-id", requestID}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	payload := decodeWindowIdentityPayload(t, output.Bytes())
+	if payload["source"] != "window-identity-preview+execution-session-record" ||
+		payload["execution_session_root"] != true ||
+		payload["execution_session_backed"] != true ||
+		payload["execution_session_path"] != "execution-ledger/sessions/"+requestID+".json" ||
+		payload["execution_session_state"] != "blocked" {
+		t.Fatalf("task manager identity did not consume session record: %#v", payload)
+	}
+	if payload["task_manager_entry_active"] != false ||
+		payload["window_observation_started"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("session-backed task manager identity must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), sessionRoot) {
+		t.Fatalf("task manager identity exposed session root: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func TestKWinWindowRulePreviewCommand(t *testing.T) {
 	registryPath, app := writeTestRepairGroupRegistry(t)
 	var output bytes.Buffer
@@ -132,6 +163,38 @@ func TestKWinWindowRulePreviewCommandConsumesActivationRoot(t *testing.T) {
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestKWinWindowRulePreviewCommandConsumesSessionRoot(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	sessionRoot, requestID := writeExecutionSessionRecordWithCLI(t, app)
+
+	var output bytes.Buffer
+	if err := run([]string{"kwin-window-rule-preview", "--registry", registryPath, "--app", app, "--session-root", sessionRoot, "--session-request-id", requestID}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	payload := decodeWindowIdentityPayload(t, output.Bytes())
+	if payload["source"] != "window-identity-preview+execution-session-record" ||
+		payload["execution_session_root"] != true ||
+		payload["execution_session_backed"] != true ||
+		payload["execution_session_path"] != "execution-ledger/sessions/"+requestID+".json" ||
+		payload["execution_session_state"] != "blocked" {
+		t.Fatalf("KWin rule did not consume session record: %#v", payload)
+	}
+	if payload["kwin_rule_applied"] != false ||
+		payload["task_manager_entry_active"] != false ||
+		payload["window_observation_started"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("session-backed KWin rule must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), sessionRoot) {
+		t.Fatalf("KWin rule exposed session root: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func decodeWindowIdentityPayload(t *testing.T, data []byte) map[string]any {
 	t.Helper()
 	var payload map[string]any
@@ -139,6 +202,21 @@ func decodeWindowIdentityPayload(t *testing.T, data []byte) map[string]any {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
 	return payload
+}
+
+func writeExecutionSessionRecordWithCLI(t *testing.T, app string) (string, string) {
+	t.Helper()
+	root := t.TempDir()
+	requestID := "xnix-exec-" + strings.ReplaceAll(app, ".", "-") + "-1"
+	var output bytes.Buffer
+	if err := run([]string{"execution-ledger-record", "--state-root", root, "--app", app}, &output); err != nil {
+		t.Fatalf("execution-ledger-record returned error: %v", err)
+	}
+	output.Reset()
+	if err := run([]string{"execution-session-record", "--state-root", root, "--request-id", requestID}, &output); err != nil {
+		t.Fatalf("execution-session-record returned error: %v", err)
+	}
+	return root, requestID
 }
 
 func assertWindowIdentityPayloadSafe(t *testing.T, text string) {

@@ -30,6 +30,7 @@ assert(report.fetch("read_only_methods").include?("GetRuntimeMethodParityManifes
 assert(report.fetch("read_only_methods").include?("GetRuntimeWriteGate"), "Runtime contract drift report must include write gate reads")
 assert(report.fetch("owner_read_dispatch_method_count") >= 61, "Runtime contract drift report must count owner read dispatch methods")
 assert(report.fetch("owner_smoke_batch_record_count") >= 61, "Runtime contract drift report must count owner smoke batch records")
+assert(report.fetch("owner_session_bus_smoke_step_count") >= 66, "Runtime contract drift report must count owner session-bus smoke steps")
 assert(report.fetch("owner_local_methods").include?("GetRuntimeOwnerReadiness"), "Runtime contract drift report must include owner-local readiness")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "Runtime contract drift report must list gated write methods")
 assert(!report.fetch("write_methods_supported"), "Runtime contract drift report must not support write methods")
@@ -39,7 +40,7 @@ assert(!report.fetch("network_required"), "Runtime contract drift report must no
 assert(!report.fetch("host_root_modified"), "Runtime contract drift report must not mutate the host root")
 assert(!report.fetch("privileged_container_required"), "Runtime contract drift report must not require privileged containers")
 assert(!report.fetch("backend_details_exposed"), "Runtime contract drift report must not expose backend details")
-assert(report.fetch("counts") == { "total" => 14, "passed" => 14, "failed" => 0 }, "Runtime contract drift report must count checks")
+assert(report.fetch("counts") == { "total" => 15, "passed" => 15, "failed" => 0 }, "Runtime contract drift report must count checks")
 
 check_ids = report.fetch("checks").map { |check| check.fetch("id") }
 expected_checks = %w[
@@ -50,6 +51,7 @@ expected_checks = %w[
   owner-read-dispatch-all-read-methods
   owner-read-dispatch-contract-subset
   owner-smoke-batch-source
+  owner-session-bus-smoke-source
   go-owner-smoke-bridge
   session-smoke-service-call-envelope
   runtime-dispatch

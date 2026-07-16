@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/artifact"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return errors.New("usage: xnix-runtime-go {acquisition-preflight-preview|ai-diagnostic-input-preview|ai-diagnostic-recommendation-preview|ai-repair-approval-gate-preview|application-preview|applications-preview|artifact-manifest-preview|artifact-stage-record|backend-binding-preview|backend-capability-matrix-preview|backend-environment-preview|backend-lifecycle-preview|backend-selection-preview|compatibility-center-preview|compatibility-install-preview|desktop-activation-bundle-preview|desktop-activation-manifest-preview|desktop-activation-preflight-preview|desktop-activation-stage|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|diagnostic-history-preview|diagnostic-run-history|diagnostic-run-record|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-ledger-record|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-application-surface-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|kde-integration-status-preview|kde-shell-integration-preview|krunner-query-preview|kwin-window-rule-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|notification-preview|package-source-preview|permission-review-preview|portal-access-policy-preview|portal-request-preview|repair-plan-preview|review-flow-preview|run-plan-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-service-binding-preview|runtime-write-gate-preview|settings-change-preview|settings-preview|snapshot-plan-preview|state-root-preview|task-manager-identity-preview|test-plan-preview|test-result-preview|tray-status-preview|window-identity-preview}")
+		return errors.New("usage: xnix-runtime-go {acquisition-preflight-preview|ai-diagnostic-input-preview|ai-diagnostic-recommendation-preview|ai-repair-approval-gate-preview|application-preview|application-readiness-preview|application-upgrade-impact-preview|applications-preview|artifact-manifest-preview|artifact-stage-record|backend-binding-preview|backend-capability-matrix-preview|backend-environment-preview|backend-lifecycle-preview|backend-lifecycle-record|backend-manager-preview|backend-manager-record|backend-selection-preview|compatibility-backend-fallback-preview|compatibility-center-preview|compatibility-install-preview|compatibility-onboarding-checklist-preview|crash-hang-signal-summary-preview|desktop-activation-bundle-preview|desktop-activation-manifest-preview|desktop-activation-preflight-preview|desktop-activation-stage|desktop-activation-staging-preview|desktop-activation-status-preview|desktop-activation-transaction-preview|desktop-deactivation-dry-run-preview|desktop-entry-preview|desktop-icon-preview|desktop-identity-plan|desktop-resource-bridge-preview|desktop-safety-policy-preview|diagnostic-history-preview|diagnostic-run-history|diagnostic-run-record|diagnostics-preview|dolphin-ai-analysis-preview|dolphin-drop-preview|engine-catalog-preview|execution-decision-preview|execution-ledger-record|execution-preflight-preview|execution-readiness-preview|execution-request-preview|execution-resource-grant-preview|execution-review-preview|execution-session-preview|execution-session-record|execution-session-status-preview|execution-transaction-preview|file-open-preview|kde-action-card-deck-preview|kde-action-card-preview|kde-action-dependency-graph-preview|kde-action-preflight-preview|kde-action-queue-preview|kde-action-receipt-preview|kde-action-review-preview|kde-action-status-preview|kde-application-surface-preview|kde-center-page-preview|kde-center-page-section-detail-preview|kde-center-page-sections-preview|kde-entrypoint-action-preview|kde-entrypoints-preview|kde-integration-status-preview|kde-journey-evidence-preview|kde-search-visibility-plan-preview|kde-shell-integration-preview|krunner-query-preview|kwin-window-rule-preview|launch-intent-preview|mimeapps-preview|mode-switch-preview|multi-application-install-queue-preview|notification-preview|package-source-preview|permission-evidence-audit-preview|permission-review-preview|portal-access-policy-preview|portal-request-preview|portal-request-record|recipe-conflict-audit-preview|repair-plan-preview|review-flow-preview|run-plan-preview|runtime-live-owner-gate-preview|runtime-method-parity-manifest-preview|runtime-owner-process-preview|runtime-owner-readiness-preview|runtime-owner-recipe-trust-preview|runtime-owner-route-manifest-preview|runtime-owner-smoke-plan-preview|runtime-policy-explanation-cards-preview|runtime-route-convergence-preview|runtime-service-binding-preview|runtime-write-gate-preview|settings-change-preview|settings-preview|snapshot-plan-preview|snapshot-restore-candidates-preview|state-root-preview|state-root-quota-retention-preview|support-bundle-manifest-preview|task-manager-identity-preview|test-plan-preview|test-result-preview|tray-status-preview|window-identity-preview|windows-compatibility-workstreams-preview}")
 	}
 
 	switch args[0] {
@@ -34,6 +35,10 @@ func run(args []string, stdout io.Writer) error {
 		return runAIRepairApprovalGatePreview(args[1:], stdout)
 	case "application-preview":
 		return runApplicationPreview(args[1:], stdout)
+	case "application-readiness-preview":
+		return runApplicationReadinessPreview(args[1:], stdout)
+	case "application-upgrade-impact-preview":
+		return runApplicationUpgradeImpactPreview(args[1:], stdout)
 	case "applications-preview":
 		return runApplicationsPreview(args[1:], stdout)
 	case "artifact-manifest-preview":
@@ -48,12 +53,24 @@ func run(args []string, stdout io.Writer) error {
 		return runBackendEnvironmentPreview(args[1:], stdout)
 	case "backend-lifecycle-preview":
 		return runBackendLifecyclePreview(args[1:], stdout)
+	case "backend-lifecycle-record":
+		return runBackendLifecycleRecord(args[1:], stdout)
+	case "backend-manager-preview":
+		return runBackendManagerPreview(args[1:], stdout)
+	case "backend-manager-record":
+		return runBackendManagerRecord(args[1:], stdout)
 	case "backend-selection-preview":
 		return runBackendSelectionPreview(args[1:], stdout)
 	case "compatibility-center-preview":
 		return runCompatibilityCenterPreview(args[1:], stdout)
 	case "compatibility-install-preview":
 		return runCompatibilityInstallPreview(args[1:], stdout)
+	case "compatibility-backend-fallback-preview":
+		return runCompatibilityBackendFallbackPreview(args[1:], stdout)
+	case "compatibility-onboarding-checklist-preview":
+		return runCompatibilityOnboardingChecklistPreview(args[1:], stdout)
+	case "crash-hang-signal-summary-preview":
+		return runCrashHangSignalSummaryPreview(args[1:], stdout)
 	case "desktop-activation-bundle-preview":
 		return runDesktopActivationBundlePreview(args[1:], stdout)
 	case "desktop-activation-manifest-preview":
@@ -66,6 +83,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopActivationStagingPreview(args[1:], stdout)
 	case "desktop-activation-status-preview":
 		return runDesktopActivationStatusPreview(args[1:], stdout)
+	case "desktop-deactivation-dry-run-preview":
+		return runDesktopDeactivationDryRunPreview(args[1:], stdout)
 	case "desktop-activation-transaction-preview":
 		return runDesktopActivationTransactionPreview(args[1:], stdout)
 	case "desktop-entry-preview":
@@ -76,6 +95,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopIdentityPlan(args[1:], stdout)
 	case "desktop-resource-bridge-preview":
 		return runDesktopResourceBridgePreview(args[1:], stdout)
+	case "desktop-safety-policy-preview":
+		return runDesktopSafetyPolicyPreview(args[1:], stdout)
 	case "diagnostic-history-preview":
 		return runDiagnosticHistoryPreview(args[1:], stdout)
 	case "diagnostic-run-history":
@@ -106,6 +127,8 @@ func run(args []string, stdout io.Writer) error {
 		return runExecutionReviewPreview(args[1:], stdout)
 	case "execution-session-preview":
 		return runExecutionSessionPreview(args[1:], stdout)
+	case "execution-session-record":
+		return runExecutionSessionRecord(args[1:], stdout)
 	case "execution-session-status-preview":
 		return runExecutionSessionStatusPreview(args[1:], stdout)
 	case "execution-transaction-preview":
@@ -116,6 +139,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKDEActionCardDeckPreview(args[1:], stdout)
 	case "kde-action-card-preview":
 		return runKDEActionCardPreview(args[1:], stdout)
+	case "kde-action-dependency-graph-preview":
+		return runKDEActionDependencyGraphPreview(args[1:], stdout)
 	case "kde-action-queue-preview":
 		return runKDEActionQueuePreview(args[1:], stdout)
 	case "kde-action-preflight-preview":
@@ -140,6 +165,10 @@ func run(args []string, stdout io.Writer) error {
 		return runKDEEntryPointsPreview(args[1:], stdout)
 	case "kde-integration-status-preview":
 		return runKDEIntegrationStatusPreview(args[1:], stdout)
+	case "kde-journey-evidence-preview":
+		return runKDEJourneyEvidencePreview(args[1:], stdout)
+	case "kde-search-visibility-plan-preview":
+		return runKDESearchVisibilityPlanPreview(args[1:], stdout)
 	case "kde-shell-integration-preview":
 		return runKDEShellIntegrationPreview(args[1:], stdout)
 	case "krunner-query-preview":
@@ -152,16 +181,24 @@ func run(args []string, stdout io.Writer) error {
 		return runMIMEAppsPreview(args[1:], stdout)
 	case "mode-switch-preview":
 		return runModeSwitchPreview(args[1:], stdout)
+	case "multi-application-install-queue-preview":
+		return runMultiApplicationInstallQueuePreview(args[1:], stdout)
 	case "notification-preview":
 		return runNotificationPreview(args[1:], stdout)
 	case "package-source-preview":
 		return runPackageSourcePreview(args[1:], stdout)
+	case "permission-evidence-audit-preview":
+		return runPermissionEvidenceAuditPreview(args[1:], stdout)
 	case "permission-review-preview":
 		return runPermissionReviewPreview(args[1:], stdout)
 	case "portal-access-policy-preview":
 		return runPortalAccessPolicyPreview(args[1:], stdout)
 	case "portal-request-preview":
 		return runPortalRequestPreview(args[1:], stdout)
+	case "portal-request-record":
+		return runPortalRequestRecord(args[1:], stdout)
+	case "recipe-conflict-audit-preview":
+		return runRecipeConflictAuditPreview(args[1:], stdout)
 	case "repair-plan-preview":
 		return runRepairPlanPreview(args[1:], stdout)
 	case "review-flow-preview":
@@ -182,6 +219,10 @@ func run(args []string, stdout io.Writer) error {
 		return runRuntimeOwnerRouteManifestPreview(args[1:], stdout)
 	case "runtime-owner-smoke-plan-preview":
 		return runRuntimeOwnerSmokePlanPreview(args[1:], stdout)
+	case "runtime-policy-explanation-cards-preview":
+		return runRuntimePolicyExplanationCardsPreview(args[1:], stdout)
+	case "runtime-route-convergence-preview":
+		return runRuntimeRouteConvergencePreview(args[1:], stdout)
 	case "runtime-service-binding-preview":
 		return runRuntimeServiceBindingPreview(args[1:], stdout)
 	case "runtime-write-gate-preview":
@@ -190,10 +231,16 @@ func run(args []string, stdout io.Writer) error {
 		return runSettingsChangePreview(args[1:], stdout)
 	case "settings-preview":
 		return runSettingsPreview(args[1:], stdout)
+	case "snapshot-restore-candidates-preview":
+		return runSnapshotRestoreCandidatesPreview(args[1:], stdout)
 	case "snapshot-plan-preview":
 		return runSnapshotPlanPreview(args[1:], stdout)
 	case "state-root-preview":
 		return runStateRootPreview(args[1:], stdout)
+	case "state-root-quota-retention-preview":
+		return runStateRootQuotaRetentionPreview(args[1:], stdout)
+	case "support-bundle-manifest-preview":
+		return runSupportBundleManifestPreview(args[1:], stdout)
 	case "task-manager-identity-preview":
 		return runTaskManagerIdentityPreview(args[1:], stdout)
 	case "test-plan-preview":
@@ -204,6 +251,8 @@ func run(args []string, stdout io.Writer) error {
 		return runTrayStatusPreview(args[1:], stdout)
 	case "window-identity-preview":
 		return runWindowIdentityPreview(args[1:], stdout)
+	case "windows-compatibility-workstreams-preview":
+		return runWindowsCompatibilityWorkstreamsPreview(args[1:], stdout)
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -512,8 +561,42 @@ func runBackendCapabilityMatrixPreview(args []string, stdout io.Writer) error {
 	return encoder.Encode(preview)
 }
 
+func runBackendManagerPreview(args []string, stdout io.Writer) error {
+	if len(args) != 0 {
+		return errors.New("backend-manager-preview does not accept arguments")
+	}
+	preview := appidentity.NewBackendManagerPreview()
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runBackendManagerRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("backend-manager-record", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	stateRoot := flags.String("state-root", "", "Runtime state root for backend manager inventory")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" {
+		return errors.New("backend-manager-record requires --state-root")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("backend-manager-record does not accept positional arguments")
+	}
+	record, err := appidentity.RecordBackendManagerPreview(*stateRoot)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(record)
+}
+
 func runBackendLifecyclePreview(args []string, stdout io.Writer) error {
-	recipe, provenance, err := parseRecipeSource("backend-lifecycle-preview", args)
+	recipe, provenance, stateRoot, err := parseBackendLifecyclePreviewSource(args)
 	if err != nil {
 		return err
 	}
@@ -521,7 +604,12 @@ func runBackendLifecyclePreview(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	preview, err := plan.BackendLifecyclePreview()
+	var preview appidentity.BackendLifecyclePreview
+	if stateRoot == "" {
+		preview, err = plan.BackendLifecyclePreview()
+	} else {
+		preview, err = plan.BackendLifecyclePreviewWithStateRoot(stateRoot)
+	}
 	if err != nil {
 		return err
 	}
@@ -529,6 +617,91 @@ func runBackendLifecyclePreview(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(preview)
+}
+
+func runBackendLifecycleRecord(args []string, stdout io.Writer) error {
+	recipe, provenance, stateRoot, action, gate, repairHint, blockReason, err := parseBackendLifecycleRecordSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	record, err := plan.RecordBackendLifecycleState(stateRoot, action, gate, repairHint, blockReason)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(record)
+}
+
+func parseBackendLifecyclePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, error) {
+	flags := flag.NewFlagSet("backend-lifecycle-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	stateRoot := flags.String("state-root", "", "optional Runtime state root containing environment lifecycle records")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("backend-lifecycle-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("backend-lifecycle-preview requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("backend-lifecycle-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", errors.New("backend-lifecycle-preview does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *stateRoot, err
+}
+
+func parseBackendLifecycleRecordSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, string, string, string, error) {
+	flags := flag.NewFlagSet("backend-lifecycle-record", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	stateRoot := flags.String("state-root", "", "Runtime state root for backend lifecycle records")
+	action := flags.String("action", "", "backend lifecycle action: inspect, plan, stage, satisfy-gate, mark-ready, flag-repair, block, or retire")
+	gate := flags.String("gate", "", "required gate to satisfy when --action=satisfy-gate")
+	repairHint := flags.String("repair-hint", "", "repair hint when --action=flag-repair")
+	blockReason := flags.String("block-reason", "", "block reason when --action=block")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record requires --app when --registry is used")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record --recipe cannot be combined with --app or --recipe-root")
+	}
+	if *stateRoot == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record requires --state-root")
+	}
+	if *action == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record requires --action")
+	}
+	if flags.NArg() != 0 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", "", "", errors.New("backend-lifecycle-record does not accept positional arguments")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *stateRoot, *action, *gate, *repairHint, *blockReason, err
 }
 
 func runArtifactManifestPreview(args []string, stdout io.Writer) error {
@@ -867,6 +1040,44 @@ func runKDEActionCardDeckPreview(args []string, stdout io.Writer) error {
 		return err
 	}
 	preview, err := plan.KDEActionCardDeckPreview(decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDEActionDependencyGraphPreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, err := parseKDEActionDependencyGraphPreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.KDEActionDependencyGraphPreview(decision, fileURIs)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}
+
+func runKDEJourneyEvidencePreview(args []string, stdout io.Writer) error {
+	recipe, provenance, decision, fileURIs, options, err := parseKDEJourneyEvidencePreviewSource(args)
+	if err != nil {
+		return err
+	}
+	plan, err := appidentity.NewPlanWithProvenance(recipe, provenance)
+	if err != nil {
+		return err
+	}
+	preview, err := plan.KDEJourneyEvidencePreviewWithOptions(decision, fileURIs, options)
 	if err != nil {
 		return err
 	}
@@ -1633,6 +1844,8 @@ func parseTrayStatusPreviewSource(args []string) (appidentity.Recipe, appidentit
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
+	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.TrayStatusOptions{}, err
 	}
@@ -1650,7 +1863,7 @@ func parseTrayStatusPreviewSource(args []string) (appidentity.Recipe, appidentit
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, appidentity.TrayStatusOptions{ActivationRoot: *activationRoot}, err
+	return recipe, provenance, appidentity.TrayStatusOptions{ActivationRoot: *activationRoot, ExecutionSessionRoot: *sessionRoot, ExecutionSessionRequestID: *sessionRequestID}, err
 }
 
 func parseSettingsChangePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, string, error) {
@@ -1844,6 +2057,39 @@ func parseKDEActionCardDeckPreviewSource(args []string) (appidentity.Recipe, app
 	return parseLaunchDecisionPreviewSource("kde-action-card-deck-preview", args)
 }
 
+func parseKDEActionDependencyGraphPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {
+	return parseLaunchDecisionPreviewSource("kde-action-dependency-graph-preview", args)
+}
+
+func parseKDEJourneyEvidencePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.KDEJourneyEvidenceOptions, error) {
+	flags := flag.NewFlagSet("kde-journey-evidence-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	decision := flags.String("decision", "", "review decision: reviewed, approved, deferred, or rejected")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	runtimeRoot := flags.String("runtime-root", ".", "Runtime repository root for journey evidence reads")
+	if err := flags.Parse(args); err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDEJourneyEvidenceOptions{}, err
+	}
+	if (*recipePath == "") == (*registryPath == "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDEJourneyEvidenceOptions{}, errors.New("kde-journey-evidence-preview requires exactly one source: --recipe or --registry")
+	}
+	if *registryPath != "" && *applicationID == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDEJourneyEvidenceOptions{}, errors.New("kde-journey-evidence-preview requires --app when --registry is used")
+	}
+	if *decision == "" {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDEJourneyEvidenceOptions{}, errors.New("kde-journey-evidence-preview requires --decision")
+	}
+	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDEJourneyEvidenceOptions{}, errors.New("kde-journey-evidence-preview --recipe cannot be combined with --app or --recipe-root")
+	}
+
+	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
+	return recipe, provenance, *decision, flags.Args(), appidentity.KDEJourneyEvidenceOptions{RuntimeRoot: *runtimeRoot}, err
+}
+
 func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.KDECenterPageOptions, error) {
 	flags := flag.NewFlagSet("kde-center-page-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -1853,6 +2099,13 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
+	sessionRoot := flags.String("session-root", "", "read execution session status record evidence from this explicit root")
+	sessionRequestID := flags.String("session-request-id", "", "execution session request id to read from --session-root")
+	readinessRoot := flags.String("readiness-root", "", "Runtime repository root for application readiness evidence reads")
+	readinessStateRoot := flags.String("readiness-state-root", "", "optional Runtime state root for application readiness evidence")
+	readinessArtifactReceipt := flags.String("readiness-artifact-receipt", "", "optional artifact stage receipt JSON file for application readiness evidence")
+	readinessPortalOperation := flags.String("readiness-portal-operation", "file-open", "Portal operation to evaluate for application readiness evidence")
+	readinessSnapshotReason := flags.String("readiness-snapshot-reason", "before-repair", "snapshot reason to evaluate for application readiness evidence")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
@@ -1871,7 +2124,24 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
-	return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{ActivationRoot: *activationRoot}, nil
+	var receipt *artifact.StageReceipt
+	if *readinessArtifactReceipt != "" {
+		loaded, err := loadArtifactStageReceipt(*readinessArtifactReceipt)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+		}
+		receipt = &loaded
+	}
+	return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
+		ActivationRoot:                      *activationRoot,
+		ExecutionSessionRoot:                *sessionRoot,
+		ExecutionSessionRequestID:           *sessionRequestID,
+		ApplicationReadinessRoot:            *readinessRoot,
+		ApplicationReadinessStateRoot:       *readinessStateRoot,
+		ApplicationReadinessArtifactReceipt: receipt,
+		ApplicationReadinessPortalOperation: *readinessPortalOperation,
+		ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
+	}, nil
 }
 
 func parseKDECenterPageSectionsPreviewSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, []string, error) {

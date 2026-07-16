@@ -18,11 +18,11 @@ func TestRuntimeOwnerRecipeTrustPreviewCommandRendersGoReadModel(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["version"] != "0.2.253" ||
+	if payload["version"] != "0.2.294" ||
 		payload["schema_version"] != "xnix.runtime.owner_recipe_trust.v1" ||
 		payload["request_type"] != "runtime-owner-recipe-trust-preview" ||
 		payload["trust_type"] != "runtime-owner-recipe-trust" ||
-		payload["source"] != "registry-digests+recipe-signature-status" ||
+		payload["source"] != "go-recipe-store-verifier+registry-digests+recipe-signature-status" ||
 		payload["runtime_method"] != "GetRuntimeOwnerRecipeTrust" ||
 		payload["read_method"] != "GetRuntimeOwnerRecipeTrustPreview" ||
 		payload["registry_path"] != "runtime/recipes/registry.json" {

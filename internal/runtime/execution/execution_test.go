@@ -113,6 +113,68 @@ func TestPendingGatesReportedForDevelopmentAndUnready(t *testing.T) {
 	}
 }
 
+func TestPortalPermissionReceiptCanSatisfyGateWithoutEnablingLaunch(t *testing.T) {
+	inputs := Inputs{
+		Trust:                   recipe.TrustState{DigestVerified: true, ProductionTrusted: true},
+		Environment:             readyEnvironment(t),
+		SnapshotBaselinePresent: true,
+		PortalRequiredOps:       []string{"file-open"},
+		PortalGrantedOps:        []string{},
+		PortalPermissionReceipts: []PortalPermissionReceipt{
+			{
+				HandleToken:       "xnix_org_example_ledger_file_open_1",
+				Operation:         "file-open",
+				RelativePath:      "portal-requests/xnix_org_example_ledger_file_open_1.json",
+				RequestState:      "completed",
+				PermissionState:   "granted",
+				PermissionGranted: true,
+			},
+		},
+	}
+	p := NewPipeline()
+	tx, _ := p.Create(app, inputs)
+	tx, _ = tx.Review(DecisionApproved)
+	tx = tx.Preflight(inputs)
+	if gateStatus(tx, "portal-permission") != GatePass {
+		t.Fatalf("granted receipt must satisfy Portal gate: %#v", tx.Gates)
+	}
+	if len(tx.PortalPermissionReceipts) != 1 ||
+		tx.PortalPermissionReceipts[0].ExecutionApproved ||
+		tx.PortalPermissionReceipts[0].RealPortalCallEnabled ||
+		tx.PortalPermissionReceipts[0].StateRootPathExposed ||
+		tx.PortalPermissionReceipts[0].HostPermissionChanged {
+		t.Fatalf("receipt must be sanitized in the transaction: %#v", tx.PortalPermissionReceipts)
+	}
+	if tx.PermissionGranted || tx.LaunchEnabled || tx.BackendStarted || tx.HostRootModified {
+		t.Fatalf("receipt must not enable launch side effects: %#v", tx)
+	}
+}
+
+func TestDeniedPortalPermissionReceiptBlocksGate(t *testing.T) {
+	inputs := Inputs{
+		Trust:                   recipe.TrustState{DigestVerified: true, ProductionTrusted: true},
+		Environment:             readyEnvironment(t),
+		SnapshotBaselinePresent: true,
+		PortalRequiredOps:       []string{"file-open"},
+		PortalPermissionReceipts: []PortalPermissionReceipt{
+			{
+				HandleToken:     "xnix_org_example_ledger_file_open_1",
+				Operation:       "file-open",
+				RelativePath:    "portal-requests/xnix_org_example_ledger_file_open_1.json",
+				RequestState:    "denied",
+				PermissionState: "denied",
+			},
+		},
+	}
+	p := NewPipeline()
+	tx, _ := p.Create(app, inputs)
+	tx, _ = tx.Review(DecisionApproved)
+	tx = tx.Preflight(inputs)
+	if gateStatus(tx, "portal-permission") != GateBlocked {
+		t.Fatalf("denied receipt must block Portal gate: %#v", tx.Gates)
+	}
+}
+
 func TestFailClosedTrustBlocks(t *testing.T) {
 	inputs := Inputs{
 		Trust:       recipe.TrustState{FailedClosed: true, Reason: "digest mismatch"},

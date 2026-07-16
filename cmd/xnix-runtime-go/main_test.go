@@ -3184,6 +3184,63 @@ func TestTrayStatusPreviewCommandConsumesActivationRoot(t *testing.T) {
 	}
 }
 
+func TestTrayStatusPreviewCommandConsumesSessionRoot(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc",".xls"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	sessionRoot := filepath.Join(root, "session-state")
+	requestID := "xnix-exec-org-example-ledger-1"
+
+	var recordOutput bytes.Buffer
+	if err := run([]string{"execution-ledger-record", "--state-root", sessionRoot, "--app", "org.example.ledger"}, &recordOutput); err != nil {
+		t.Fatalf("execution-ledger-record returned error: %v", err)
+	}
+	recordOutput.Reset()
+	if err := run([]string{"execution-session-record", "--state-root", sessionRoot, "--request-id", requestID}, &recordOutput); err != nil {
+		t.Fatalf("execution-session-record returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"tray-status-preview", "--registry", registryPath, "--app", "org.example.ledger", "--session-root", sessionRoot, "--session-request-id", requestID}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["execution_session_root"] != true ||
+		payload["execution_session_backed"] != true ||
+		payload["execution_session_path"] != "execution-ledger/sessions/"+requestID+".json" ||
+		payload["execution_session_state"] != "blocked" {
+		t.Fatalf("unexpected session-backed tray payload: %#v", payload)
+	}
+	compatibility := payload["compatibility_status"].(map[string]any)
+	if compatibility["state"] != "waiting-for-runtime-gates" ||
+		compatibility["label"] != "Runtime gates required" {
+		t.Fatalf("tray did not project session state: %#v", compatibility)
+	}
+	if payload["live_backend_bridge_enabled"] != false ||
+		payload["bridge_configuration_persisted"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("session-backed tray preview must remain gated: %#v", payload)
+	}
+	if strings.Contains(output.String(), sessionRoot) {
+		t.Fatalf("tray preview exposed session root: %s", output.String())
+	}
+}
+
 func TestWindowIdentityPreviewCommandRendersKDEWindowIdentity(t *testing.T) {
 	root := t.TempDir()
 	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)

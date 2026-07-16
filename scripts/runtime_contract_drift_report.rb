@@ -21,6 +21,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetRuntimeOwnerRouteManifest
   GetRuntimeOwnerRecipeTrust
   GetRuntimeOwnerReadiness
+  GetWindowsCompatibilityWorkstreamsPreview
   GetRuntimeWriteGate
 ].freeze
 
@@ -130,6 +131,10 @@ def build_report(root)
   route_source = read_project_file(root, "internal/runtime/appidentity/runtime_owner_route_manifest.go")
   owner_dispatch_source = read_project_file(root, "internal/runtime/owner/dispatch.go")
   owner_smoke_batch_source = read_project_file(root, "internal/runtime/owner/smoke_batch.go")
+  owner_session_bus_source = read_sources(root, [
+    "internal/runtime/owner/session_bus.go",
+    "cmd/xnix-runtime-owner/main.go"
+  ])
   go_cli_source = read_sources(root, [
     "cmd/xnix-runtime-go/main.go",
     "cmd/xnix-runtime-go/runtime_owner_commands.go"
@@ -194,6 +199,26 @@ def build_report(root)
       expected: ["SupportedReadDispatchMethods", "NewService", "service.Call", "runtime-owner-service-call", "xnix.runtime.owner_smoke_batch.v1", "restricted-session-owner-call-batch"],
       source: owner_smoke_batch_source,
       summary: "Owner smoke batch derives read/write coverage from the owner service-call boundary."
+    ) { |source, token| source.include?(token) },
+    source_coverage_check(
+      id: "owner-session-bus-smoke-source",
+      expected: [
+        "NewSessionBusSmokeTranscript",
+        "NewSmokeBatchRecords",
+        "runtime-owner-session-bus-smoke-step",
+        "xnix.runtime.owner_session_bus_smoke.v1",
+        "restricted-private-session-bus-owner-smoke",
+        "private-session-bus-smoke",
+        "reject-unsupported-read",
+        "org.xnix.Compatibility1.Error.UnsupportedMethod",
+        "session-bus-smoke",
+        "ProductionBusClaimed",
+        "HostRootModified",
+        "BackendDetailsExposed",
+        "WriteMethodsEnabled"
+      ],
+      source: owner_session_bus_source,
+      summary: "Owner private session-bus smoke wraps read dispatch, disabled writes, and unsupported-read rejection without production ownership."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
       id: "go-owner-smoke-bridge",
@@ -332,7 +357,7 @@ def build_report(root)
     "version" => version,
     "schema_version" => "xnix.runtime.contract_drift_report.v1",
     "report_type" => "runtime-contract-drift-report",
-    "source" => "dbus-contract+go-parity+go-owner-routes+owner-read-dispatch+owner-smoke-batch+runtime-dispatch+dbus-client+smoke-adapter+session-smoke",
+    "source" => "dbus-contract+go-parity+go-owner-routes+owner-read-dispatch+owner-smoke-batch+owner-session-bus-smoke+runtime-dispatch+dbus-client+smoke-adapter+session-smoke",
     "runtime_owned" => true,
     "go_runtime_backed" => true,
     "kde_policy_owner" => false,
@@ -340,6 +365,7 @@ def build_report(root)
     "read_only_methods" => read_only_methods,
     "owner_read_dispatch_method_count" => dispatch_methods.length,
     "owner_smoke_batch_record_count" => dispatch_methods.length + WRITE_METHODS.length,
+    "owner_session_bus_smoke_step_count" => dispatch_methods.length + WRITE_METHODS.length + 5,
     "write_methods" => WRITE_METHODS,
     "write_methods_supported" => false,
     "write_method_dispatch_enabled" => false,

@@ -147,3 +147,43 @@ func TestLedgerRecordsPendingEnvironmentWithoutEnablingLaunch(t *testing.T) {
 		t.Fatalf("ledger record must not enable side effects: %#v", record)
 	}
 }
+
+func TestLedgerRecordsPortalPermissionReceiptEvidence(t *testing.T) {
+	ledger, err := NewLedger(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewLedger: %v", err)
+	}
+	tx := Transaction{
+		RequestID:     "txn-portal-receipt",
+		ApplicationID: app,
+		State:         StateBlocked,
+		PortalPermissionReceipts: []PortalPermissionReceipt{
+			{
+				HandleToken:       "xnix_org_example_file_open_1",
+				Operation:         "file-open",
+				RelativePath:      "portal-requests/xnix_org_example_file_open_1.json",
+				RequestState:      "completed",
+				PermissionState:   "granted",
+				PermissionGranted: true,
+			},
+		},
+	}
+	record, err := ledger.Record(tx)
+	if err != nil {
+		t.Fatalf("Record: %v", err)
+	}
+	if record.PortalPermissionReceiptCount != 1 ||
+		!record.PortalPermissionReceiptConsumed ||
+		len(record.PortalPermissionReceiptPaths) != 1 ||
+		record.PortalPermissionReceiptPaths[0] != "portal-requests/xnix_org_example_file_open_1.json" ||
+		len(record.PortalPermissionReceiptStates) != 1 ||
+		record.PortalPermissionReceiptStates[0] != "file-open:granted/completed" ||
+		record.PermissionGranted ||
+		record.LaunchEnabled ||
+		record.BackendStarted {
+		t.Fatalf("unexpected portal receipt ledger evidence: %#v", record)
+	}
+	if filepath.IsAbs(record.PortalPermissionReceiptPaths[0]) {
+		t.Fatalf("portal receipt path must remain relative: %#v", record.PortalPermissionReceiptPaths)
+	}
+}

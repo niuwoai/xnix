@@ -46,6 +46,53 @@ type StageReceipt struct {
 	Summary                     string `json:"summary"`
 }
 
+// ValidateStageReceipt returns blocking reasons for a persisted staging
+// receipt. It verifies the schema, safety flags, relative receipt path,
+// receipt digest, and required artifact staging signal without exposing cache
+// or fixture roots.
+func ValidateStageReceipt(receipt StageReceipt) []string {
+	var reasons []string
+	if receipt.SchemaVersion != stageReceiptSchemaVersion {
+		reasons = append(reasons, "artifact stage receipt schema is not supported")
+	}
+	if receipt.RecordType != "compatibility-artifact-stage-receipt" {
+		reasons = append(reasons, "artifact stage receipt record type is not supported")
+	}
+	if !appid.Valid(receipt.ApplicationID) {
+		reasons = append(reasons, "artifact stage receipt application id is invalid")
+	}
+	if receipt.RelativePath == "" || filepath.IsAbs(receipt.RelativePath) ||
+		strings.Contains(filepath.ToSlash(receipt.RelativePath), "../") ||
+		strings.HasPrefix(filepath.ToSlash(receipt.RelativePath), "..") {
+		reasons = append(reasons, "artifact stage receipt path must be relative and scoped")
+	}
+	if receipt.SHA256 == "" || !digestPattern.MatchString(receipt.SHA256) {
+		reasons = append(reasons, "artifact stage receipt digest is invalid")
+	} else if digest, err := stageReceiptDigest(receipt); err != nil {
+		reasons = append(reasons, "artifact stage receipt digest could not be verified")
+	} else if digest != receipt.SHA256 {
+		reasons = append(reasons, "artifact stage receipt digest mismatch")
+	}
+	if receipt.Plan.ApplicationID != receipt.ApplicationID {
+		reasons = append(reasons, "artifact stage receipt plan application id mismatch")
+	}
+	if !receipt.Plan.RequiredStaged() {
+		reasons = append(reasons, "required artifacts are not staged")
+	}
+	if !receipt.RuntimeOwned || !receipt.GoRuntimeBacked || receipt.KDEPolicyOwner {
+		reasons = append(reasons, "artifact stage receipt owner flags are invalid")
+	}
+	if receipt.CacheRootPathExposed || receipt.FixtureRootPathExposed {
+		reasons = append(reasons, "artifact stage receipt exposes local roots")
+	}
+	if receipt.NetworkRequired || receipt.NetworkFetchEnabled || receipt.PackageManagerInvoked ||
+		receipt.HostRootModified || receipt.PrivilegedContainerRequired ||
+		receipt.BackendLaunchEnabled || receipt.BackendDetailsExposed {
+		reasons = append(reasons, "artifact stage receipt contains unsafe side effects")
+	}
+	return reasons
+}
+
 // StageFromFixture verifies and stages manifest artifacts from a local fixture
 // source into a controlled cache root, then persists a receipt under that root.
 func StageFromFixture(req StageRequest) (StageReceipt, error) {
@@ -138,4 +185,10 @@ func marshalStageReceipt(receipt StageReceipt) ([]byte, string, error) {
 	data = append(data, '\n')
 	sum := sha256.Sum256(data)
 	return data, hex.EncodeToString(sum[:]), nil
+}
+
+func stageReceiptDigest(receipt StageReceipt) (string, error) {
+	receipt.SHA256 = ""
+	_, digest, err := marshalStageReceipt(receipt)
+	return digest, err
 }

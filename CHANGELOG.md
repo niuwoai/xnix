@@ -2,6 +2,399 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.294] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `recipe-conflict-audit-preview` read model and CLI command (S6W3). The audit parses a recipe registry leniently (so it can surface duplicate ids and digest drift that the strict loader rejects) and reports conflict groups for duplicate application ids, stale recipe versions, unsupported capability claims, mismatched package-source pins, trust-policy blockers, and artifact digest drift, each with deterministic review-only resolution hints. Recipe writes, registry migration, artifact staging, network fetch, package-manager calls, backend launch, and host-root mutation all stay disabled. Added clean, duplicate, stale, missing-pin, unsupported-capability, digest-drift, untrusted, missing-file, and unreadable-registry tests.
+- Added the Go Runtime `snapshot-restore-candidates-preview` read model and CLI command (S6W5). The preview reads the snapshot store read-only (via the new `snapshot.OpenReadOnly`) and ranks restore candidates as latest good, latest tested, last-known-running, manual, unknown, or blocked, each with relative evidence ids, reason codes, a compatibility-risk label, digest status, and active-session or digest-mismatch blockers. Restore execution, snapshot deletion, file-content reads, session termination, backend launch, state-root path exposure, and host-root mutation all stay disabled. Added ranking/classification, active-session, no-candidates, unsafe-input, CLI, empty-store-read-only, and path-redaction tests.
+- Added the Go Runtime `compatibility-backend-fallback-preview` read model and CLI command (S7W5). The preview explains how Automatic mode would choose between Local compatibility and Isolated compatibility when evidence is missing, blocked, or risky, joining the recipe-derived recommendation, backend capability matrix, backend lifecycle status, and optional diagnostics-risk counts into per-candidate fallback states and user-safe reason codes. It keeps selection persistence, engine installation, backend launch, VM start, raw backend detail exposure, network access, and host-root mutation disabled, and never exposes backend names in KDE-facing output. Added local-primary-blocked, isolation-required, diagnostics-risk, automatic-orchestrator, CLI, and no-side-effect tests.
+- Added the Go Runtime `kde-search-visibility-plan-preview` read model and CLI command (S7W6). The preview explains how an application appears across launcher, KRunner, file association, Dolphin action, Compatibility Center, settings, and task manager, deriving stable searchable labels and safety-filtered synonyms, recording MIME/extension evidence, and reporting disabled-action reasons and activation-receipt requirements. Unsafe synonyms (such as a raw `.exe` extension) and duplicates are dropped; desktop-file writes, MIME-default writes, KDE cache refresh, host-file indexing, and search-index persistence stay disabled. Added receipt-required, unsupported-MIME, hidden-application, unsafe-synonym, unsafe-plan, CLI, and no-side-effect tests.
+- Added the Go Runtime `desktop-deactivation-dry-run-preview` read model and CLI command (S6W2). The dry run explains how a managed application would be removed from the launcher, desktop icon, MIME association, Dolphin service menu, KWin, tray, notification, Compatibility Center, and settings surfaces, reporting receipt requirements, digest checks, rollback safety, relative evidence ids, and blocked reasons for missing receipt, digest mismatch, unknown file owner, shared MIME association, and active session evidence. File deletion, MIME writes, KDE cache refresh, receipt rewriting, session termination, target-path exposure, and host-root mutation all stay disabled. Added missing-receipt, receipt-error-classification, receipt-backed-removable, active-session, shared-MIME, unsafe-plan, path-redaction, CLI, and no-side-effect tests.
+- Added the Go Runtime `permission-evidence-audit-preview` read model and CLI command (S7W7). The audit joins the Runtime permission review plan, KDE resource bridge plan, recorded Portal receipts (rolled up per operation from a read-only ledger read), and execution preflight evidence into one row per capability (documents, downloads, uris, print, clipboard, screenshot, camera, remote desktop, and network policy) with a deterministic consistency state (consistent, setting-only, receipt-only, expired, denied, missing-review, blocked-by-policy, or unsupported), review-only remediation hints, and next safe read-only checks. It tolerates missing receipts, malformed ledger records (surfaced as review evidence, not a failure), and unrecognized permissions, and keeps real Portal transport, permission grants, permission revocation, receipt writes, settings persistence, execution approval, state-root path exposure, and host-root mutation disabled.
+- Added the read-only `portal.ReadRequests` lister so audits can enumerate recorded Portal requests under a state root without creating the ledger directory or failing on a single malformed record.
+- Added consistent, setting-only, receipt-only, expired, denied, missing-review, policy-blocked, malformed-ledger, unsupported, source-join, CLI, path-redaction, and no-side-effect tests for the permission evidence audit preview and the Portal read-only lister.
+- Added the Go Runtime `crash-hang-signal-summary-preview` read model and CLI command (S7W4). The preview reads diagnostic run receipt metadata under an explicit Runtime state root and groups failing signals into crash, hang, timeout, missing-dependency, permission-denial, graphics-issue, network-issue, and regression-after-repair classes, each with occurrence counts, related diagnostic run ids, latest known state, recurrence hints, and a next safe read-only check. It tolerates missing history, malformed receipts (surfaced as blocked evidence rather than a hard failure), mixed application ids, duplicate signal ids, and privacy-sensitive fixture fields, redacting anything that resembles a host path, token, secret, or backend detail. Private log reads, file-content reads, AI provider calls, repair execution, backend launch, network access, state-root path exposure, and host-root mutation all stay disabled.
+- Added the read-only `LenientHistory`/`listLenient` diagnostics readers so previews can inspect possibly-corrupt run ledgers without creating directories or failing on a single malformed receipt.
+- Added no-history, group/recurrence, malformed-history, mixed-application, duplicate-signal-id, privacy-redaction, blocked-repair, regression, unsafe-input, CLI, and no-side-effect tests for the crash and hang signal summary preview.
+- Added the Go Runtime `state-root-quota-retention-preview` read model and CLI command. The preview scans an explicit Runtime state root in read-only dry-run mode, groups snapshots, diagnostics, execution receipts, Portal receipts, artifact receipts, activation receipts, and unknown records, reports relative evidence ids, fixture metadata byte estimates, retention reason codes, blocked cleanup reasons, and user-safe recommendations, and keeps file deletion, directory creation, log truncation, receipt rewriting, snapshot deletion, state-root path exposure, backend detail exposure, network requirements, privileged containers, and host-root mutation disabled.
+- Added missing-root, under-quota, over-quota, malformed-record, unknown-record, active-session-blocked, retention-exempt, unsafe-input, CLI, path-redaction, and no-side-effect tests for the state-root quota and retention preview.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, and mainline integration review so the recipe conflict and pin audit is verified in the CW2 recipe and artifact trust lane, and the snapshot restore candidate ranking (plus the read-only `snapshot.OpenReadOnly` lister) is verified in the snapshot and rollback receipt lane.
+- Updated the layout verifier, implementation evidence report, and mainline integration review so the compatibility backend fallback preview is verified in the CW3 backend lifecycle lane, and the KDE search visibility plan and desktop deactivation dry-run previews are verified in the CW4 KDE entry-point lane.
+- Updated the layout verifier, implementation evidence report, and mainline integration review so the permission evidence audit preview and the Portal read-only lister are verified as part of the CW5 Portal permission safety lane.
+- Updated the layout verifier, implementation evidence report, and mainline integration review so the crash and hang signal summary preview is verified as part of the CW7 diagnostics privacy lane.
+- Updated the layout verifier and product documentation so state-root quota and retention evidence is verified alongside state-root planning, snapshots, diagnostics, execution, and Portal receipt evidence.
+
+## [0.2.293] - 2026-07-16
+
+### Added
+
+- Added the offline Ruby `scripts/release_evidence_index.rb` report command for the S7W8 release evidence index. The report maps release-critical product claims to implemented, fixture-only, contract-only, blocked, skipped, or human-authorized evidence, names source files and verification commands, flags protected Claude-file and unclassified-file blockers, and keeps Docker, QEMU, network checks, package-manager calls, backend launch, automatic staging, release tagging, and host-root mutation disabled.
+- Added release evidence index JSON, Markdown, malformed-report, protected-file, unclassified-file, skipped-heavy-smoke, and human-authorization tests.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, and mainline integration review classifier so the release evidence index is verified as part of the CW10 evidence and drift harness.
+
+## [0.2.292] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `runtime-policy-explanation-cards-preview` read model and CLI command. The preview builds a shared KDE-safe explanation card deck for install, launch, execution, Portal permission, snapshot, diagnostics, repair, settings, desktop activation, backend-readiness evidence, and unsupported production routes with stable card ids, severity, audience, related evidence ids, user-facing summaries, technical summaries, next safe read-only checks, and deduplicated blocker reasons while keeping action enablement, card persistence, request-object creation, permission grants, settings persistence, AI provider calls, backend process start, launch, execution, raw command exposure, backend detail exposure, privileged containers, network requirements, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke, layout verifier, implementation evidence report, mainline integration review classifier, README, and product overview so Runtime policy explanation cards are verified alongside upgrade impact, install queue, install readiness, onboarding, support bundle manifest, KDE journey, action dependency graph, route convergence, method parity, and write-gate evidence.
+
+## [0.2.291] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `application-upgrade-impact-preview` read model and CLI command. The preview compares current and candidate registry recipes before upgrade writes, reports recipe metadata, package source, artifact digest, compatibility profile, Portal permission, snapshot, desktop activation, and diagnostics impact sections with deterministic unchanged, changed, needs-review, missing-evidence, blocked, and unsupported states, and keeps recipe writes, registry migration, artifact staging, downloads, host package-manager calls, settings persistence, desktop activation, backend process start, launch, raw command exposure, backend detail exposure, privileged containers, and host-root mutation disabled.
+- Added optional semantic `version` metadata to application recipes so upgrade previews can classify newer, same-version, older, malformed, and unversioned candidate recipes without inferring version order from display names.
+
+### Changed
+
+- Updated the layout verifier and product documentation so application upgrade impact evidence is verified alongside install queue, install readiness, onboarding, support bundle manifest, KDE journey, action dependency graph, route convergence, method parity, and write-gate evidence.
+
+## [0.2.290] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `multi-application-install-queue-preview` read model and CLI command. The preview aggregates several registry-backed compatibility install plans into one review-only queue with deterministic application ordering, missing-evidence counts, shared blocking reasons, next safe read-only checks, and explicit disabled safety gates while keeping queue persistence, request-object creation, artifact staging, artifact downloads, network requests, host package-manager calls, desktop activation, install execution, backend process start, launch, settings persistence, raw command exposure, backend detail exposure, privileged containers, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke, layout verifier, and mainline integration review classifier so the multi-application install queue is verified alongside install readiness, onboarding, support bundle manifest, KDE journey, action dependency graph, route convergence, method parity, and write-gate evidence.
+
+## [0.2.289] - 2026-07-16
+
+### Added
+
+- Added the Claude Code seventh-wave task batch for application upgrade impact previews, Runtime policy explanation cards, state-root quota and retention previews, crash and hang signal summaries, compatibility backend fallback previews, KDE search visibility plans, permission evidence audits, and release evidence indexes while keeping Docker, QEMU, Runtime writes, backend launch, real Portal calls, network fetch, privileged containers, and host-root mutation disabled by default.
+
+### Changed
+
+- Updated the dispatch runbook, README, product overview, and layout verifier so the seventh-wave Claude Code task batch is a required KDE-first, Go-first handoff artifact with the protected `docs/claude-code-implementation-packages.md` boundary preserved.
+
+## [0.2.288] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `support-bundle-manifest-preview` read model and CLI command. The preview joins diagnostic history, AI-safe diagnostic input, and review-only recommendation evidence into a redacted offline support bundle manifest with diagnostic run summaries, failing signal ids, recommendation categories, privacy redaction status, and explicit omitted-evidence counts while keeping archive creation, file-content reads, file-path exposure, AI provider calls, automatic repair, backend process start, raw command exposure, backend detail exposure, network access, privileged containers, and host-root mutation disabled.
+- Added a read-only diagnostic run store opener so support previews can inspect existing diagnostic history without creating a missing Runtime state root.
+
+### Changed
+
+- Updated the KDE-first presence smoke, layout verifier, and mainline integration review classifier so support bundle manifest evidence is checked alongside onboarding, KDE journey, diagnostic, AI safety, route convergence, method parity, and write-gate evidence.
+- Added the Claude Code sixth-wave task batch to the dispatch and layout-verification handoff set for support timelines, deactivation dry-runs, recipe conflict audits, Portal renewal previews, restore ranking, settings migration previews, fixture matrices, and merge readiness packets.
+
+## [0.2.287] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `compatibility-onboarding-checklist-preview` read model and CLI command. The preview aggregates Runtime owner readiness, recipe trust, artifact staging, backend lifecycle, Portal review, snapshot baseline, diagnostics privacy, KDE entry-point, and production-activation evidence into a first-run checklist with ready, needs-review, missing-evidence, blocked, and not-yet-implemented states while keeping request creation, artifact staging, settings persistence, backend process start, launch, network fetch, host package-manager calls, AI provider calls, raw command exposure, file-content reads, backend detail exposure, privileged containers, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke and layout verifier so compatibility onboarding evidence is checked alongside KDE journey evidence, action dependency graph evidence, route convergence, method parity, and write-gate evidence.
+
+## [0.2.286] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `kde-journey-evidence-preview` read model and CLI command. The preview stitches application readiness, KDE action dependency graph, task-manager identity, KWin window rules, tray status, notification, Compatibility Center, and unified-settings evidence into one Runtime-owned seven-entrypoint journey summary while keeping write methods, request creation, permission grants, settings persistence, launch, execution, KWin rule application, tray bridge activation, notification sending, state-root path exposure, raw command exposure, file-content reads, backend detail exposure, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke and layout verifier so KDE journey evidence is checked alongside action dependency graph evidence, Center page evidence, route convergence, method parity, and write-gate evidence.
+
+## [0.2.285] - 2026-07-16
+
+### Added
+
+- Added the Claude Code fifth-wave task batch for KDE journey evidence stitching, compatibility onboarding checklists, offline support bundle manifests, multi-application install queue previews, Runtime state maintenance planning, recipe update migration previews, KDE notification digests, and restricted acceptance fixture suites while keeping Docker, QEMU, Runtime writes, backend launch, real Portal calls, network fetch, privileged containers, and host-root mutation disabled by default.
+
+### Changed
+
+- Updated the dispatch runbook and layout verifier so the fifth-wave Claude Code task batch is a required handoff artifact with the protected `docs/claude-code-implementation-packages.md` boundary preserved.
+
+## [0.2.284] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `kde-action-dependency-graph-preview` read model and CLI command. The preview turns KDE Compatibility Center action queues into explicit Runtime evidence dependency graphs with action nodes, evidence nodes, gate nodes, missing-evidence ids, receipt-validation rules, and next safe read-only checks while keeping dependency graph persistence, settings persistence, permission grants, request creation, Runtime launch approval, execution, backend process start, state-root path exposure, raw command exposure, file-content reads, network access, backend detail exposure, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke and layout verifier so KDE action dependency graph evidence is inspected alongside action card decks, Runtime route convergence, method parity, and write-gate evidence.
+
+## [0.2.283] - 2026-07-16
+
+### Added
+
+- Added the Claude Code fourth-wave task batch for Runtime evidence audit timelines, Portal permission lifecycle dashboards, snapshot restore rehearsal, backend capability fixture probes, settings change dependency reviews, diagnostics repair playbooks, desktop activation materialization audits, and restricted release-readiness packets while keeping Docker, QEMU, Runtime writes, backend launch, real Portal calls, network fetch, privileged containers, and host-root mutation disabled by default.
+
+### Changed
+
+- Updated the dispatch runbook and layout verifier so the fourth-wave Claude Code task batch is a required handoff artifact with the protected `docs/claude-code-implementation-packages.md` boundary preserved.
+
+## [0.2.282] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `runtime-route-convergence-preview` read model and CLI command. The preview classifies every Runtime read route as Go product logic, C policy bridge, Ruby smoke bridge, fixture-only, contract-only, deprecated, unsupported, or unclassified, emits migration groups and next migration order, fails closed on missing route evidence, and keeps production D-Bus ownership, Runtime write methods, backend launch, Docker, QEMU, network access, privileged containers, backend detail exposure, and host-root mutation disabled.
+
+### Changed
+
+- Updated the KDE-first presence smoke and scaffold verifier so Runtime route convergence evidence is inspected alongside owner route manifest, method parity, and write-gate evidence.
+
+## [0.2.281] - 2026-07-16
+
+### Added
+
+- Added the Claude Code third-wave task batch for Runtime route convergence, action dependency receipts, Portal-to-execution preflight evidence, snapshot baseline readiness, AI diagnostics privacy, KDE action-card decks, unsupported-route hardening, and restricted acceptance dashboards while keeping Docker, QEMU, Runtime writes, backend launch, real Portal calls, network fetch, privileged containers, and host-root mutation disabled by default.
+
+### Changed
+
+- Updated the dispatch runbook and layout verifier so the second-wave and third-wave Claude Code task batches are required handoff artifacts with the protected `docs/claude-code-implementation-packages.md` boundary preserved.
+
+## [0.2.280] - 2026-07-16
+
+### Changed
+
+- Added Runtime execution session fan-out evidence so task manager, KWin, tray, and Compatibility Center consumers share one KDE-safe session record projection. The fan-out keeps live window observation, task-manager activation, KWin rule application, live tray bridging, launch, execution, backend process start, permission grants, state-root path exposure, network access, backend detail exposure, and host-root mutation disabled.
+
+## [0.2.279] - 2026-07-16
+
+### Changed
+
+- Added structured Runtime receipt evidence to the desktop activation transaction preview. The transaction now reports planned commit and rollback receipt schemas, required file IDs, digest gates, commit and rollback availability, and safe path-exposure flags while keeping activation commit, receipt writes, rollback execution, KDE cache refresh, backend launch, execution, network access, privileged containers, and host-root mutation disabled.
+- Strengthened layout, KDE-first smoke, implementation evidence, and mainline classification gates so desktop activation transaction receipt evidence remains visible to review tooling without enabling host writes or backend launch.
+
+## [0.2.278] - 2026-07-16
+
+### Changed
+
+- Updated KDE Compatibility Center page sections and section details so they consume Runtime application readiness evidence. Each section now reports the readiness node IDs, readiness status, blocked state, and a safe readiness summary for its backing Runtime evidence while keeping section actions, request creation, launch, execution, backend process start, real Portal transport, snapshot creation, permission grants, network access, backend detail exposure, and host-root mutation disabled.
+
+## [0.2.277] - 2026-07-16
+
+### Changed
+
+- Updated the KDE Compatibility Center page preview so it consumes the Go Runtime `application-readiness-preview` evidence graph directly. The page now exposes Runtime-owned install, backend lifecycle, Portal, snapshot, execution, and Launch write-gate evidence while keeping page persistence, request creation, launch approval, execution, backend process start, real Portal transport, snapshot creation, state-root path exposure, raw command exposure, network access, privileged containers, and host-root mutation disabled.
+
+## [0.2.276] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `application-readiness-preview` model and CLI command. The preview joins install readiness, backend lifecycle, Portal policy, snapshot planning, execution readiness, and Launch write-gate evidence into one KDE-safe application readiness graph while keeping launch, backend process start, real Portal transport, snapshot creation, network access, privileged containers, raw command exposure, state-root exposure, and host-root mutation disabled.
+
+## [0.2.275] - 2026-07-16
+
+### Added
+
+- Added the Go Runtime `desktop-safety-policy-preview` model and CLI command. The policy owns the KDE-first seven-entrypoint list, user-facing settings field ids, forbidden backend terminology, and disabled safety keys consumed by the KDE-first presence smoke.
+
+### Changed
+
+- Updated `scripts/kde_first_presence_smoke.rb` so Ruby remains the test harness while Go Runtime owns the desktop safety policy used to reject Wine, Prefix, backend command, host-path, Portal, execution, network, privileged-container, and host-root safety regressions.
+
+## [0.2.274] - 2026-07-16
+
+### Changed
+
+- Strengthened the KDE-first presence smoke user-facing safety gate. The smoke now verifies the unified settings fields for run mode, priority, documents, downloads, camera, network, and snapshots, reports those fields in JSON/Markdown, and rejects user-visible Prefix, bottle, Wine, Proton, `.exe`, Program Files, QEMU, and host-path terminology across inspected KDE Runtime previews.
+
+## [0.2.273] - 2026-07-16
+
+### Changed
+
+- Promoted the KDE-first presence smoke into the KDE activation and shell materialization implementation evidence domain. `scripts/implementation_evidence_report.rb` now treats `scripts/kde_first_presence_smoke.rb` and its tests as `M5` smoke-owned evidence and verifies the report schema, route baseline, seven-entry-point coverage, and disabled execution, backend launch, Portal transport, AI provider, privileged-container, and host-root gates.
+
+## [0.2.272] - 2026-07-16
+
+### Added
+
+- Added JSON and Markdown report modes to `scripts/kde_first_presence_smoke.rb`. The KDE-first presence smoke now emits machine-readable and human-reviewable evidence for the seven KDE entry points, Runtime route baseline, disabled execution gates, disabled backend launch, host-root safety, network safety, and privileged-container safety while keeping the default text PASS output.
+
+## [0.2.271] - 2026-07-16
+
+### Added
+
+- Added lane-level review matrix output to `scripts/mainline_integration_review.rb`. The report now includes required verification commands, required evidence, and safety guards for each changed mainline lane so Claude and Codex branches can be staged by explicit KDE-first Runtime-owned acceptance criteria instead of broad worktree guesses.
+
+## [0.2.270] - 2026-07-16
+
+### Added
+
+- Added a Claude Code dispatch runbook that explains how to assign the `CB1` through `CB9` mainline task batch, review returned branches by lane, protect `docs/claude-code-implementation-packages.md`, avoid `git add .`, and keep Docker, QEMU, backend launch, real Portal calls, host package-manager calls, privileged containers, and host-root mutation disabled unless explicitly authorized.
+
+## [0.2.269] - 2026-07-16
+
+### Changed
+
+- Strengthened the mainline integration review classifier so shared Runtime CLI plumbing, Windows compatibility workstream models, snapshot/rollback evidence, and AI diagnostic privacy files are assigned to explicit review lanes instead of remaining unclassified.
+
+## [0.2.268] - 2026-07-16
+
+### Added
+
+- Added a copy-first Claude Code mainline task batch for the KDE-first Windows compatibility strategy. The task batch splits follow-up work into focused `CB1` through `CB9` assignments covering Runtime owner reads, recipe and artifact trust, backend lifecycle state, Portal permission reviews, snapshots, KDE evidence consumers, AI diagnostics, integration review gates, and later restricted product smoke readiness.
+- Added the mainline integration review script and fixture-driven tests. `scripts/mainline_integration_review.rb` classifies the current worktree by checkpoint lane, excludes `.gocache/` and `tmp/`, flags protected Claude-owned file changes, emits JSON and Markdown, and never stages files, runs Docker, runs QEMU, launches backends, or mutates the host root.
+
+## [0.2.267] - 2026-07-16
+
+### Added
+
+- Added the mainline integration checkpoint for merging Claude Code output against the KDE-first Windows compatibility goal. The checkpoint groups the current mixed worktree into review lanes for Runtime owner reads, trust and artifacts, state roots, Portal safety, execution evidence, KDE consumers, evidence gates, and later product-image acceptance while keeping unsafe behavior disabled.
+- Added artifact staging receipt validation and install-readiness consumption. `compatibility-install-preview --artifact-receipt <path>` now reads a Go Runtime artifact staging receipt, verifies schema, relative path scope, receipt digest, required artifact staging, ownership flags, root-hiding flags, and unsafe side-effect gates before exposing desktop-safe receipt diagnostics.
+
+### Changed
+
+- Strengthened M2/CW2 recipe and artifact trust behavior so tampered or unsafe artifact receipts fail closed in install readiness while valid local fixture receipts can prove required artifacts are staged without enabling downloads, package-manager calls, desktop activation writes, backend launch, host-root mutation, or path exposure.
+
+## [0.2.266] - 2026-07-16
+
+### Added
+
+- Added Runtime contract drift coverage for the Go Runtime owner private session-bus smoke transcript. The drift report now verifies `NewSessionBusSmokeTranscript`, `--session-bus-smoke`, the private session-bus schema, unsupported-read rejection, production-bus denial, host-root safety, backend-detail hiding, and write-method gating.
+
+### Changed
+
+- Strengthened the Runtime owner candidate restricted smoke script so it executes `xnix-runtime-owner --session-bus-smoke` and verifies the 71-step transcript covering startup, private bus claim, route-table readiness, 62 read dispatches, 4 disabled write methods, unsupported-read failure, and shutdown.
+
+## [0.2.265] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime owner private session-bus smoke transcript. `xnix-runtime-owner --session-bus-smoke` now emits JSONL evidence that wraps the full owner read-dispatch table, all disabled write-method responses, and unsupported-read rejection inside a restricted private session-bus event-loop model while keeping production bus ownership, system service startup, write dispatch enablement, network access, backend detail exposure, and host-root mutation disabled.
+
+### Changed
+
+- Strengthened M1/CW1 implementation evidence so the Runtime owner service domain requires private session-bus smoke transcript files and tokens in addition to in-process service-call, lifecycle, and smoke-batch evidence.
+
+## [0.2.264] - 2026-07-16
+
+### Added
+
+- Added execution-session-record consumption to the Go KDE Compatibility Center page preview. `xnix-runtime-go kde-center-page-preview --session-root <path> --session-request-id <id>` now composes safe session evidence into the window and tray snapshots while exposing only relative evidence paths and keeping page persistence, request creation, task-manager activation, KWin rule application, live tray bridging, launch, backend processes, state-root path exposure, and host-root mutation disabled.
+
+### Changed
+
+- Strengthened M5 implementation evidence and scaffold verification so KDE Compatibility Center page previews require session-root CLI coverage and session-backed window/tray snapshot safety evidence.
+
+## [0.2.263] - 2026-07-16
+
+### Added
+
+- Added KDE-facing execution session evidence consumption for task-manager identity, KWin window-rule, and tray-status Go read models. These previews can now read a safe `execution-session-record` from an explicit state root and expose only relative session evidence paths and blocked session state, without activating task-manager entries, applying KWin rules, enabling live tray bridges, observing windows, launching backends, exposing state-root paths, or mutating the host root.
+
+### Changed
+
+- Strengthened M5 implementation evidence and scaffold verification so KDE shell materialization requires execution-session-record evidence validation plus task-manager, KWin, and tray consumption tests.
+
+## [0.2.262] - 2026-07-16
+
+### Added
+
+- Added a state-root-scoped Go Runtime execution session status record and `xnix-runtime-go execution-session-record --state-root <path> --request-id <id>`, deriving KDE-safe task-manager, tray, KWin, and Compatibility Center session evidence from an existing execution ledger transaction without creating a live session, observing windows, launching backends, applying KWin rules, activating tray bridges, exposing state-root paths, or mutating the host root.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M6 requires execution session record schema, CLI coverage, and session safety tests in addition to transaction ledger and Portal receipt evidence.
+
+## [0.2.261] - 2026-07-16
+
+### Added
+
+- Added optional Portal permission receipt consumption to the Go Runtime execution ledger. `xnix-runtime-go execution-ledger-record --portal-request <handle>` now reads a recorded Portal request from the same state root, uses granted/completed receipts to satisfy the Portal preflight gate, and records denied or not-granted receipts as blocking evidence without enabling launch, backend start, execution approval, host permission changes, real Portal calls, state-root path exposure, or host-root mutation.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M6 requires execution ledger Portal receipt fields, CLI consumption coverage, and granted/denied receipt tests in addition to state-root transaction persistence.
+
+## [0.2.260] - 2026-07-16
+
+### Added
+
+- Added a state-root-scoped Go Runtime Portal request ledger and `xnix-runtime-go portal-request-record`, allowing fake-mode Portal permission requests to be created, inspected, resolved, completed, cancelled, and expired under an explicit state root without making real Portal calls, approving execution, exposing state-root paths, changing host permissions, or mutating the host root.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M4 requires Portal request record schema, state-root ledger implementation, CLI coverage, and permission-flow tests in addition to fake broker and snapshot-store evidence.
+
+## [0.2.259] - 2026-07-16
+
+### Added
+
+- Added `xnix-runtime-go backend-lifecycle-record`, a Go Runtime CLI that can inspect, plan, stage, satisfy lifecycle gates, mark ready, flag repair, block, and retire backend lifecycle records under an explicit state root without launching backends, exposing state-root paths, requiring network, or mutating the host root.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M3/CW3 requires state-root backend lifecycle record schema, Go implementation, CLI coverage, and transition tests in addition to backend manager inventory evidence.
+
+## [0.2.258] - 2026-07-16
+
+### Added
+
+- Added a state-root-backed Go Runtime backend manager inventory record and `backend-manager-record --state-root <path>` CLI, persisting Wine, Proton, and Windows VM backend inventory under an explicit state root without installing, downloading, launching, starting VM processes, exposing paths or commands, requiring network, or mutating the host root.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M3/CW3 requires backend manager state-root inventory persistence in addition to backend manager preview and lifecycle state-root evidence.
+
+## [0.2.257] - 2026-07-16
+
+### Added
+
+- Added a Go Runtime backend manager preview and CLI command that tracks Wine, Proton, and Windows VM backends as internal Runtime-managed inventory while keeping installs, downloads, launches, backend processes, VM starts, raw commands, profile paths, network requirements, privileged containers, and host-root mutation disabled.
+
+### Changed
+
+- Strengthened implementation evidence and scaffold verification so M3/CW3 now requires backend manager inventory evidence, backend-safe user-facing profile tests, and CLI coverage in addition to state-root-backed backend lifecycle evidence.
+
+## [0.2.256] - 2026-07-16
+
+### Changed
+
+- Strengthened implementation evidence reporting so M3/CW3 now requires Go backend lifecycle state-root preview methods, hidden state-root path safety fields, package tests, and CLI `--state-root` coverage before the environment lifecycle domain can remain marked state-root implemented.
+- Updated version metadata and product documentation to `v0.2.256` while keeping production D-Bus ownership, write methods, backend launch, real Portal calls, network fetch, privileged containers, and host-root mutation disabled.
+
+## [0.2.255] - 2026-07-16
+
+### Added
+
+- Added a copy-first Claude Code Windows compatibility workstream board that maps the KDE-first product target into `CW1` through `CW11` implementation streams with Go-first Runtime ownership, KDE seven-entry-point integration, safety gates, and verification commands.
+- Added the Go Runtime `windows-compatibility-workstreams-preview` read model and CLI command so KDE-first Windows compatibility dispatch can be consumed as structured JSON without starting backends, enabling write methods, mutating the host root, or exposing backend details.
+- Added owner-local Runtime read dispatch and service-call coverage for `GetWindowsCompatibilityWorkstreamsPreview`, so the Go owner can serve the KDE-first Windows compatibility workstream model without adding a production D-Bus method or expanding the formal read-only ABI.
+- Added recipe trust diagnostics to the Go compatibility install readiness model, so install plans now expose stable `recipe_trust_diagnostics_ready` and `recipe_trust_blocking_reasons` fields for production-blocked development recipes without enabling downloads, installs, backend launch, or host-root writes.
+- Added optional state-root backed Go backend lifecycle previews, so `backend-lifecycle-preview --state-root <path>` can project persisted environment lifecycle records, satisfied gates, pending gates, repair hints, and blocked reasons without exposing state-root paths, enabling launch, starting backends, or mutating the host root.
+- Added Windows compatibility first-wave workstream guidance to the implementation evidence report, so JSON and Markdown outputs now expose `CW1`, `CW2`, `CW3`, and `CW10` next-dispatch evidence alongside the existing mainline dispatch.
+
+### Changed
+
+- Linked the Windows compatibility workstream board from the Windows application compatibility brief, the next-implementation assignment board, and the scaffold layout verifier so the KDE-first Claude Code handoff path remains discoverable and required.
+- Updated Runtime contract drift reporting so D-Bus read-only method coverage remains fixed at the formal contract while owner-local read dispatch separately tracks the Windows compatibility workstream preview and smoke-batch evidence.
+- Updated Runtime owner recipe trust previews to consume the Go recipe `Store` and replaceable `DigestVerifier` boundary instead of duplicating registry digest checks in the owner read model.
+- Strengthened compatibility install plan tests and scaffold verification so recipe trust diagnostics must remain visible through both Go package and CLI output.
+- Strengthened backend lifecycle tests and scaffold verification so Go lifecycle previews must keep their environment state-root projection and launch/backend/host-root safety gates.
+- Strengthened scaffold verification so the Windows compatibility workstream board and Go Runtime preview must retain KDE-first shell selection, Go-first Runtime ownership, the `CW1` through `CW11` workstream set, the `CW1`/`CW2`/`CW3`/`CW10` first wave, seven KDE entry points, and the protected `docs/claude-code-implementation-packages.md` boundary.
+
+## [0.2.254] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE application surface previews through `kde-application-surface-preview --activation-root`, so the seven-entry-point KDE surface overview can prove staged activation evidence before any shell materialization remains gated.
+- Added Go and CLI coverage proving KDE application surface previews consume staged activation receipts without exposing the activation root, enabling launch, writing desktop files or MIME data, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks KDE application surface consumption of staged activation receipts alongside activation status, Compatibility Center, desktop entry, KRunner, Dolphin file-manager, desktop icon, MIME association, tray status, notification, settings, task-manager identity, and KWin window-rule reads.
+
 ## [0.2.253] - 2026-07-16
 
 ### Added

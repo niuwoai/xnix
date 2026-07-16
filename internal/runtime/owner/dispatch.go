@@ -112,6 +112,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetRuntimeOwnerRouteManifest",
 	"GetRuntimeOwnerRecipeTrust",
 	"GetRuntimeOwnerReadiness",
+	"GetWindowsCompatibilityWorkstreamsPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -459,6 +460,12 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return appidentity.NewRuntimeOwnerReadinessPreview(root)
 	},
+	"GetWindowsCompatibilityWorkstreamsPreview": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetWindowsCompatibilityWorkstreamsPreview", args, 0); err != nil {
+			return nil, err
+		}
+		return appidentity.NewWindowsCompatibilityWorkstreamsPreview()
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -694,6 +701,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "runtime-owner-recipe-trust-preview"
 	case "GetRuntimeOwnerReadiness":
 		return "runtime-owner-readiness-preview"
+	case "GetWindowsCompatibilityWorkstreamsPreview":
+		return "windows-compatibility-workstreams-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:

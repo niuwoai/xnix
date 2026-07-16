@@ -23,27 +23,31 @@ type Ledger struct {
 
 // LedgerRecord is the persisted, KDE-safe transaction record.
 type LedgerRecord struct {
-	SchemaVersion               string      `json:"schema_version"`
-	RecordType                  string      `json:"record_type"`
-	Source                      string      `json:"source"`
-	RequestID                   string      `json:"request_id"`
-	ApplicationID               string      `json:"application_id"`
-	RelativePath                string      `json:"relative_path"`
-	Transaction                 Transaction `json:"transaction"`
-	SHA256                      string      `json:"sha256"`
-	RuntimeOwned                bool        `json:"runtime_owned"`
-	GoRuntimeBacked             bool        `json:"go_runtime_backed"`
-	KDEPolicyOwner              bool        `json:"kde_policy_owner"`
-	StateRootPathExposed        bool        `json:"state_root_path_exposed"`
-	LaunchAllowed               bool        `json:"launch_allowed"`
-	LaunchEnabled               bool        `json:"launch_enabled"`
-	BackendStarted              bool        `json:"backend_started"`
-	PermissionGranted           bool        `json:"permission_granted"`
-	HostRootModified            bool        `json:"host_root_modified"`
-	NetworkRequired             bool        `json:"network_required"`
-	PrivilegedContainerRequired bool        `json:"privileged_container_required"`
-	BackendDetailsExposed       bool        `json:"backend_details_exposed"`
-	Summary                     string      `json:"summary"`
+	SchemaVersion                   string      `json:"schema_version"`
+	RecordType                      string      `json:"record_type"`
+	Source                          string      `json:"source"`
+	RequestID                       string      `json:"request_id"`
+	ApplicationID                   string      `json:"application_id"`
+	RelativePath                    string      `json:"relative_path"`
+	Transaction                     Transaction `json:"transaction"`
+	SHA256                          string      `json:"sha256"`
+	PortalPermissionReceiptCount    int         `json:"portal_permission_receipt_count"`
+	PortalPermissionReceiptPaths    []string    `json:"portal_permission_receipt_relative_paths"`
+	PortalPermissionReceiptStates   []string    `json:"portal_permission_receipt_states"`
+	PortalPermissionReceiptConsumed bool        `json:"portal_permission_receipt_consumed"`
+	RuntimeOwned                    bool        `json:"runtime_owned"`
+	GoRuntimeBacked                 bool        `json:"go_runtime_backed"`
+	KDEPolicyOwner                  bool        `json:"kde_policy_owner"`
+	StateRootPathExposed            bool        `json:"state_root_path_exposed"`
+	LaunchAllowed                   bool        `json:"launch_allowed"`
+	LaunchEnabled                   bool        `json:"launch_enabled"`
+	BackendStarted                  bool        `json:"backend_started"`
+	PermissionGranted               bool        `json:"permission_granted"`
+	HostRootModified                bool        `json:"host_root_modified"`
+	NetworkRequired                 bool        `json:"network_required"`
+	PrivilegedContainerRequired     bool        `json:"privileged_container_required"`
+	BackendDetailsExposed           bool        `json:"backend_details_exposed"`
+	Summary                         string      `json:"summary"`
 }
 
 // NewLedger opens a ledger rooted under stateRoot.
@@ -68,26 +72,30 @@ func (l *Ledger) Record(tx Transaction) (LedgerRecord, error) {
 		return LedgerRecord{}, err
 	}
 	record := LedgerRecord{
-		SchemaVersion:               ledgerSchemaVersion,
-		RecordType:                  "execution-transaction-ledger-record",
-		Source:                      "go-runtime-state-root-execution-ledger",
-		RequestID:                   tx.RequestID,
-		ApplicationID:               tx.ApplicationID,
-		RelativePath:                relativePath,
-		Transaction:                 tx,
-		RuntimeOwned:                true,
-		GoRuntimeBacked:             true,
-		KDEPolicyOwner:              false,
-		StateRootPathExposed:        false,
-		LaunchAllowed:               false,
-		LaunchEnabled:               false,
-		BackendStarted:              false,
-		PermissionGranted:           false,
-		HostRootModified:            false,
-		NetworkRequired:             false,
-		PrivilegedContainerRequired: false,
-		BackendDetailsExposed:       false,
-		Summary:                     "Runtime recorded a blocked-by-default execution transaction under the configured state root without launching a backend.",
+		SchemaVersion:                   ledgerSchemaVersion,
+		RecordType:                      "execution-transaction-ledger-record",
+		Source:                          "go-runtime-state-root-execution-ledger",
+		RequestID:                       tx.RequestID,
+		ApplicationID:                   tx.ApplicationID,
+		RelativePath:                    relativePath,
+		Transaction:                     tx,
+		PortalPermissionReceiptCount:    len(tx.PortalPermissionReceipts),
+		PortalPermissionReceiptPaths:    portalPermissionReceiptPaths(tx.PortalPermissionReceipts),
+		PortalPermissionReceiptStates:   portalPermissionReceiptStates(tx.PortalPermissionReceipts),
+		PortalPermissionReceiptConsumed: len(tx.PortalPermissionReceipts) > 0,
+		RuntimeOwned:                    true,
+		GoRuntimeBacked:                 true,
+		KDEPolicyOwner:                  false,
+		StateRootPathExposed:            false,
+		LaunchAllowed:                   false,
+		LaunchEnabled:                   false,
+		BackendStarted:                  false,
+		PermissionGranted:               false,
+		HostRootModified:                false,
+		NetworkRequired:                 false,
+		PrivilegedContainerRequired:     false,
+		BackendDetailsExposed:           false,
+		Summary:                         "Runtime recorded a blocked-by-default execution transaction under the configured state root without launching a backend.",
 	}
 	data, digest, err := marshalRecord(record)
 	if err != nil {
@@ -106,6 +114,33 @@ func (l *Ledger) Record(tx Transaction) (LedgerRecord, error) {
 		return LedgerRecord{}, fmt.Errorf("write execution ledger record: %w", err)
 	}
 	return record, nil
+}
+
+func portalPermissionReceiptPaths(receipts []PortalPermissionReceipt) []string {
+	paths := make([]string, 0, len(receipts))
+	for _, receipt := range receipts {
+		if receipt.RelativePath != "" && !filepath.IsAbs(receipt.RelativePath) && !strings.Contains(receipt.RelativePath, "..") {
+			paths = append(paths, filepath.ToSlash(receipt.RelativePath))
+		}
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func portalPermissionReceiptStates(receipts []PortalPermissionReceipt) []string {
+	states := make([]string, 0, len(receipts))
+	for _, receipt := range receipts {
+		if receipt.PermissionState == "" {
+			continue
+		}
+		state := receipt.Operation + ":" + receipt.PermissionState
+		if receipt.RequestState != "" {
+			state += "/" + receipt.RequestState
+		}
+		states = append(states, state)
+	}
+	sort.Strings(states)
+	return states
 }
 
 // Load returns one persisted transaction record by request id.

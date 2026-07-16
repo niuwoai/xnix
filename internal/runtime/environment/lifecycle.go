@@ -46,6 +46,16 @@ func recordKey(applicationID string, profile Profile) string {
 	return sanitize(applicationID) + "__" + sanitize(string(profile))
 }
 
+// RecordRelativePath returns the store-relative path for an environment
+// lifecycle record. It exposes only the relative receipt location; callers must
+// keep the absolute state root private.
+func RecordRelativePath(applicationID string, profile Profile) (string, error) {
+	if _, err := newRecord(applicationID, profile); err != nil {
+		return "", err
+	}
+	return filepath.ToSlash(filepath.Join("environments", recordKey(applicationID, profile)+".json")), nil
+}
+
 func sanitize(value string) string {
 	sanitized := make([]rune, 0, len(value))
 	for _, r := range value {

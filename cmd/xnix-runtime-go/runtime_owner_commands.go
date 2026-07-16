@@ -143,6 +143,25 @@ func runRuntimeOwnerRouteManifestPreview(args []string, stdout io.Writer) error 
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runRuntimeRouteConvergencePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("runtime-route-convergence-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime route convergence inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("runtime-route-convergence-preview does not accept positional arguments")
+	}
+
+	preview, err := appidentity.NewRuntimeRouteConvergencePreview(*root)
+	if err != nil {
+		return err
+	}
+
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runRuntimeWriteGatePreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("runtime-write-gate-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

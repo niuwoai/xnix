@@ -20,6 +20,22 @@ func TestFreshEnvironmentIsMissing(t *testing.T) {
 	}
 }
 
+func TestRecordRelativePathIsStoreScoped(t *testing.T) {
+	relativePath, err := RecordRelativePath(app, ProfileLocal)
+	if err != nil {
+		t.Fatalf("RecordRelativePath: %v", err)
+	}
+	if relativePath != "environments/org.example.ledger__local-compatibility.json" {
+		t.Fatalf("unexpected relative record path: %s", relativePath)
+	}
+	if _, err := RecordRelativePath("bad id", ProfileLocal); err == nil {
+		t.Fatalf("bad application id must be rejected")
+	}
+	if _, err := RecordRelativePath(app, Profile("bogus")); err == nil {
+		t.Fatalf("bad profile must be rejected")
+	}
+}
+
 func TestHappyPathToReadySurvivesReload(t *testing.T) {
 	root := t.TempDir()
 	lc, _ := New(root)

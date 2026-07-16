@@ -75,6 +75,25 @@ func (s *RunRecordStore) History(applicationID string) (RunHistory, error) {
 	if err != nil {
 		return RunHistory{}, err
 	}
+	return s.buildHistory(applicationID, records), nil
+}
+
+// LenientHistory is History for read-only previews over possibly-corrupt
+// evidence: records that fail to parse are skipped and their run ids are
+// returned as malformed instead of failing the whole read. It never creates the
+// ledger directory or mutates state.
+func (s *RunRecordStore) LenientHistory(applicationID string) (RunHistory, []string, error) {
+	if applicationID != "" && !appid.Valid(applicationID) {
+		return RunHistory{}, nil, errBadHistoryApplicationID
+	}
+	records, malformed, err := s.listLenient()
+	if err != nil {
+		return RunHistory{}, nil, err
+	}
+	return s.buildHistory(applicationID, records), malformed, nil
+}
+
+func (s *RunRecordStore) buildHistory(applicationID string, records []RunRecord) RunHistory {
 	historyRecords := make([]RunHistoryRecord, 0, len(records))
 	var counts RunHistoryCounts
 	for _, record := range records {
@@ -127,7 +146,7 @@ func (s *RunRecordStore) History(applicationID string) (RunHistory, error) {
 		BackendDetailsExposed:       false,
 		FileContentsIncluded:        false,
 		Summary:                     runHistorySummary(counts),
-	}, nil
+	}
 }
 
 func historyRecord(record RunRecord) RunHistoryRecord {

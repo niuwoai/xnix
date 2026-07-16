@@ -56,29 +56,47 @@ const (
 // Inputs are the subsystem facts a transaction is evaluated against. They are
 // produced by the recipe, environment, snapshot, and portal subsystems.
 type Inputs struct {
-	Trust                   recipe.TrustState
-	Environment             environment.Record
-	SnapshotBaselinePresent bool
-	PortalRequiredOps       []string
-	PortalGrantedOps        []string
+	Trust                    recipe.TrustState
+	Environment              environment.Record
+	SnapshotBaselinePresent  bool
+	PortalRequiredOps        []string
+	PortalGrantedOps         []string
+	PortalPermissionReceipts []PortalPermissionReceipt
+}
+
+// PortalPermissionReceipt is a sanitized, state-root-relative Portal request
+// receipt that can satisfy or block the portal-permission gate without
+// exposing state-root paths or approving execution.
+type PortalPermissionReceipt struct {
+	HandleToken           string `json:"handle_token"`
+	Operation             string `json:"operation"`
+	RelativePath          string `json:"relative_path"`
+	RequestState          string `json:"request_state"`
+	PermissionState       string `json:"permission_state"`
+	PermissionGranted     bool   `json:"permission_granted"`
+	ExecutionApproved     bool   `json:"execution_approved"`
+	RealPortalCallEnabled bool   `json:"real_portal_call_enabled"`
+	StateRootPathExposed  bool   `json:"state_root_path_exposed"`
+	HostPermissionChanged bool   `json:"host_permission_changed"`
 }
 
 // Transaction is a non-persistent, blocked-by-default execution request.
 type Transaction struct {
-	RequestID         string   `json:"request_id"`
-	ApplicationID     string   `json:"application_id"`
-	Profile           string   `json:"profile"`
-	State             State    `json:"state"`
-	ReviewDecision    Decision `json:"review_decision"`
-	Gates             []Gate   `json:"gates"`
-	BlockedReasons    []string `json:"blocked_reasons"`
-	LaunchAllowed     bool     `json:"launch_allowed"`
-	LaunchEnabled     bool     `json:"launch_enabled"`
-	BackendStarted    bool     `json:"backend_started"`
-	PermissionGranted bool     `json:"permission_granted"`
-	HostRootModified  bool     `json:"host_root_modified"`
-	NetworkRequired   bool     `json:"network_required"`
-	Summary           string   `json:"summary"`
+	RequestID                string                    `json:"request_id"`
+	ApplicationID            string                    `json:"application_id"`
+	Profile                  string                    `json:"profile"`
+	State                    State                     `json:"state"`
+	ReviewDecision           Decision                  `json:"review_decision"`
+	Gates                    []Gate                    `json:"gates"`
+	BlockedReasons           []string                  `json:"blocked_reasons"`
+	PortalPermissionReceipts []PortalPermissionReceipt `json:"portal_permission_receipts"`
+	LaunchAllowed            bool                      `json:"launch_allowed"`
+	LaunchEnabled            bool                      `json:"launch_enabled"`
+	BackendStarted           bool                      `json:"backend_started"`
+	PermissionGranted        bool                      `json:"permission_granted"`
+	HostRootModified         bool                      `json:"host_root_modified"`
+	NetworkRequired          bool                      `json:"network_required"`
+	Summary                  string                    `json:"summary"`
 }
 
 // Pipeline creates deterministic execution transactions. Request ids use a
@@ -129,7 +147,7 @@ func (t Transaction) Preflight(inputs Inputs) Transaction {
 		reviewGate(t.ReviewDecision),
 		environmentGate(inputs.Environment),
 		snapshotGate(inputs.SnapshotBaselinePresent),
-		portalGate(inputs.PortalRequiredOps, inputs.PortalGrantedOps),
+		portalGate(inputs.PortalRequiredOps, inputs.PortalGrantedOps, inputs.PortalPermissionReceipts),
 		runtimeWriteGate(),
 	}
 
@@ -143,6 +161,7 @@ func (t Transaction) Preflight(inputs Inputs) Transaction {
 
 	t.Gates = gates
 	t.BlockedReasons = blocked
+	t.PortalPermissionReceipts = sanitizePortalPermissionReceipts(inputs.PortalPermissionReceipts)
 	t.State = StatePreflight
 	// Launch is unconditionally disabled in this pipeline.
 	t.LaunchAllowed = false
@@ -202,22 +221,57 @@ func snapshotGate(present bool) Gate {
 	return Gate{ID: "snapshot-baseline", Status: GatePending, Reason: "no restore point exists yet"}
 }
 
-func portalGate(required, granted []string) Gate {
+func portalGate(required, granted []string, receipts []PortalPermissionReceipt) Gate {
 	grantedSet := map[string]bool{}
 	for _, op := range granted {
 		grantedSet[op] = true
 	}
+	deniedSet := map[string]bool{}
+	for _, receipt := range receipts {
+		if receipt.Operation == "" {
+			continue
+		}
+		if receipt.PermissionGranted && receipt.PermissionState == "granted" && !receipt.ExecutionApproved {
+			grantedSet[receipt.Operation] = true
+			continue
+		}
+		switch receipt.PermissionState {
+		case "denied", "not-granted":
+			deniedSet[receipt.Operation] = true
+		}
+	}
 	var missing []string
+	var denied []string
 	for _, op := range required {
+		if deniedSet[op] {
+			denied = append(denied, op)
+			continue
+		}
 		if !grantedSet[op] {
 			missing = append(missing, op)
 		}
+	}
+	if len(denied) > 0 {
+		sort.Strings(denied)
+		return Gate{ID: "portal-permission", Status: GateBlocked, Reason: fmt.Sprintf("desktop permission was not granted for: %v", denied)}
 	}
 	if len(missing) == 0 {
 		return Gate{ID: "portal-permission", Status: GatePass, Reason: "all required desktop permissions are granted"}
 	}
 	sort.Strings(missing)
 	return Gate{ID: "portal-permission", Status: GatePending, Reason: fmt.Sprintf("awaiting desktop permission for: %v", missing)}
+}
+
+func sanitizePortalPermissionReceipts(receipts []PortalPermissionReceipt) []PortalPermissionReceipt {
+	out := make([]PortalPermissionReceipt, 0, len(receipts))
+	for _, receipt := range receipts {
+		receipt.StateRootPathExposed = false
+		receipt.HostPermissionChanged = false
+		receipt.RealPortalCallEnabled = false
+		receipt.ExecutionApproved = false
+		out = append(out, receipt)
+	}
+	return out
 }
 
 func runtimeWriteGate() Gate {

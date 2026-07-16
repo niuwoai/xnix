@@ -181,6 +181,46 @@ func TestKDEApplicationSurfacePlanPreviewKeepsApplicationNormalAndBlocked(t *tes
 	assertNoKDEPreviewBackendTerms(t, preview)
 }
 
+func TestKDEApplicationSurfacePlanPreviewConsumesActivationReceipt(t *testing.T) {
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.KDEApplicationSurfacePlanPreviewWithOptions(KDEApplicationSurfaceOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("KDEApplicationSurfacePlanPreviewWithOptions returned error: %v", err)
+	}
+	if preview.Source != "go-runtime-kde-application-surface+desktop-activation-receipt" ||
+		!preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("KDE application surface did not consume activation receipt: %#v", preview)
+	}
+	if preview.LaunchEnabled ||
+		preview.BackendProcessStarted ||
+		preview.DesktopFilesWritten ||
+		preview.MIMEAppsWritten ||
+		preview.HostRootModified ||
+		preview.BackendCommandExposed ||
+		preview.RawWindowsExecutableExposed ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed KDE application surface must remain gated: %#v", preview)
+	}
+	assertNoKDEPreviewBackendTerms(t, preview)
+	if _, err := plan.KDEApplicationSurfacePlanPreviewWithOptions(KDEApplicationSurfaceOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("KDEApplicationSurfacePlanPreviewWithOptions accepted a missing activation receipt")
+	}
+}
+
 func assertNoKDEPreviewBackendTerms(t *testing.T, value any) {
 	t.Helper()
 	encoded, err := json.Marshal(value)

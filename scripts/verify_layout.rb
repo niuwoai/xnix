@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.253"
+EXPECTED_VERSION = "0.2.294"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -15,7 +15,17 @@ REQUIRED_FILES = %w[
   docs/claude-code-empty-domain-implementation-packages.md
   docs/claude-code-independent-implementation-briefs.md
   docs/claude-code-mainline-implementation-plan.md
+  docs/claude-code-mainline-task-batch.md
+  docs/claude-code-second-wave-task-batch.md
+  docs/claude-code-third-wave-task-batch.md
+  docs/claude-code-fourth-wave-task-batch.md
+  docs/claude-code-fifth-wave-task-batch.md
+  docs/claude-code-sixth-wave-task-batch.md
+  docs/claude-code-seventh-wave-task-batch.md
+  docs/claude-code-dispatch-runbook.md
   docs/claude-code-open-domain-work-packages.md
+  docs/claude-code-windows-compatibility-workstreams.md
+  docs/mainline-integration-checkpoint.md
   docs/kde-first-compatibility-acceptance.md
   docs/kde-first-current-gap-audit.md
   docs/kde-first-presence-smoke-spec.md
@@ -153,6 +163,14 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-write-gate
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
+  cmd/xnix-runtime-go/application_readiness_commands.go
+  cmd/xnix-runtime-go/application_readiness_cli_test.go
+  cmd/xnix-runtime-go/application_upgrade_impact_commands.go
+  cmd/xnix-runtime-go/application_upgrade_impact_cli_test.go
+  cmd/xnix-runtime-go/runtime_policy_explanation_cards_commands.go
+  cmd/xnix-runtime-go/runtime_policy_explanation_cards_cli_test.go
+  cmd/xnix-runtime-go/compatibility_onboarding_commands.go
+  cmd/xnix-runtime-go/compatibility_onboarding_cli_test.go
   cmd/xnix-runtime-go/artifact_stage_commands.go
   cmd/xnix-runtime-go/artifact_stage_cli_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
@@ -164,22 +182,56 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/execution_ledger_cli_test.go
   cmd/xnix-runtime-go/diagnostic_record_commands.go
   cmd/xnix-runtime-go/diagnostic_record_cli_test.go
+  cmd/xnix-runtime-go/support_bundle_manifest_commands.go
+  cmd/xnix-runtime-go/support_bundle_manifest_cli_test.go
+  cmd/xnix-runtime-go/multi_application_install_queue_commands.go
+  cmd/xnix-runtime-go/multi_application_install_queue_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
+  cmd/xnix-runtime-go/desktop_safety_policy_commands.go
+  cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
   cmd/xnix-runtime-go/kde_shell_commands.go
   cmd/xnix-runtime-go/kde_shell_cli_test.go
   cmd/xnix-runtime-go/window_identity_commands.go
   cmd/xnix-runtime-go/window_identity_cli_test.go
+  cmd/xnix-runtime-go/windows_compatibility_commands.go
+  cmd/xnix-runtime-go/windows_compatibility_cli_test.go
   cmd/xnix-runtime-go/runtime_safety_commands.go
   cmd/xnix-runtime-go/runtime_safety_cli_test.go
+  cmd/xnix-runtime-go/state_root_quota_retention_commands.go
+  cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go
+  cmd/xnix-runtime-go/crash_hang_signal_summary_commands.go
+  cmd/xnix-runtime-go/crash_hang_signal_summary_cli_test.go
+  cmd/xnix-runtime-go/permission_evidence_audit_commands.go
+  cmd/xnix-runtime-go/permission_evidence_audit_cli_test.go
+  cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go
+  cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go
+  cmd/xnix-runtime-go/kde_search_visibility_commands.go
+  cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
+  cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
+  cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
+  cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
+  cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go
+  cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go
+  cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go
   cmd/xnix-runtime-go/runtime_write_gate_cli_test.go
   cmd/xnix-runtime-go/test_repair_group_cli_test.go
   cmd/xnix-runtime-owner/main.go
   cmd/xnix-runtime-owner/main_test.go
   internal/runtime/appidentity/engine_catalog.go
   internal/runtime/appidentity/run_plan.go
+  internal/runtime/appidentity/application_readiness.go
+  internal/runtime/appidentity/application_readiness_test.go
+  internal/runtime/appidentity/application_upgrade_impact.go
+  internal/runtime/appidentity/application_upgrade_impact_test.go
+  internal/runtime/appidentity/runtime_policy_explanation_cards.go
+  internal/runtime/appidentity/runtime_policy_explanation_cards_test.go
+  internal/runtime/appidentity/compatibility_onboarding_checklist.go
+  internal/runtime/appidentity/compatibility_onboarding_checklist_test.go
   internal/runtime/appidentity/desktop_activation_manifest.go
   internal/runtime/appidentity/desktop_activation_manifest_test.go
+  internal/runtime/appidentity/desktop_safety_policy.go
+  internal/runtime/appidentity/desktop_safety_policy_test.go
   internal/runtime/activation/stage.go
   internal/runtime/activation/stage_test.go
   internal/runtime/appidentity/install_plan.go
@@ -188,7 +240,25 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_shell_surface_test.go
   internal/runtime/appidentity/window_identity_routes.go
   internal/runtime/appidentity/window_identity_routes_test.go
+  internal/runtime/appidentity/windows_compatibility_workstreams.go
+  internal/runtime/appidentity/windows_compatibility_workstreams_test.go
   internal/runtime/appidentity/state_root.go
+  internal/runtime/appidentity/state_root_quota_retention.go
+  internal/runtime/appidentity/state_root_quota_retention_test.go
+  internal/runtime/appidentity/crash_hang_signal_summary.go
+  internal/runtime/appidentity/crash_hang_signal_summary_test.go
+  internal/runtime/appidentity/permission_evidence_audit.go
+  internal/runtime/appidentity/permission_evidence_audit_test.go
+  internal/runtime/appidentity/compatibility_backend_fallback.go
+  internal/runtime/appidentity/compatibility_backend_fallback_test.go
+  internal/runtime/appidentity/kde_search_visibility.go
+  internal/runtime/appidentity/kde_search_visibility_test.go
+  internal/runtime/appidentity/desktop_deactivation_dry_run.go
+  internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
+  internal/runtime/appidentity/recipe_conflict_audit.go
+  internal/runtime/appidentity/recipe_conflict_audit_test.go
+  internal/runtime/appidentity/snapshot_restore_candidates.go
+  internal/runtime/appidentity/snapshot_restore_candidates_test.go
   internal/runtime/appidentity/snapshot_plan.go
   internal/runtime/appidentity/portal_access_policy.go
   internal/runtime/appidentity/runtime_safety_plans_test.go
@@ -200,10 +270,23 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/ai_diagnostics_test.go
   internal/runtime/appidentity/diagnostic_history.go
   internal/runtime/appidentity/diagnostic_history_test.go
+  internal/runtime/appidentity/support_bundle_manifest.go
+  internal/runtime/appidentity/support_bundle_manifest_test.go
+  internal/runtime/appidentity/multi_application_install_queue.go
+  internal/runtime/appidentity/multi_application_install_queue_test.go
+  internal/runtime/appidentity/execution_session_record_evidence.go
   internal/runtime/appidentity/repair_plan.go
   internal/runtime/appidentity/repair_plan_test.go
   internal/runtime/appidentity/runtime_write_gate.go
   internal/runtime/appidentity/runtime_write_gate_test.go
+  internal/runtime/appidentity/runtime_route_convergence.go
+  internal/runtime/appidentity/runtime_route_convergence_test.go
+  internal/runtime/appidentity/kde_action_dependency_graph.go
+  internal/runtime/appidentity/kde_action_dependency_graph_test.go
+  cmd/xnix-runtime-go/kde_action_dependency_graph_cli_test.go
+  internal/runtime/appidentity/kde_journey_evidence.go
+  internal/runtime/appidentity/kde_journey_evidence_test.go
+  cmd/xnix-runtime-go/kde_journey_evidence_cli_test.go
   internal/runtime/appidentity/test_plan.go
   internal/runtime/appidentity/test_plan_test.go
   internal/runtime/appidentity/test_result.go
@@ -212,6 +295,8 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/execution_test.go
   internal/runtime/execution/ledger.go
   internal/runtime/execution/ledger_test.go
+  internal/runtime/execution/session.go
+  internal/runtime/execution/session_test.go
   internal/runtime/diagnostics/record.go
   internal/runtime/diagnostics/history.go
   internal/runtime/artifact/stage.go
@@ -227,6 +312,8 @@ REQUIRED_FILES = %w[
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
   internal/runtime/portal/request_test.go
+  internal/runtime/portal/read.go
+  internal/runtime/portal/read_test.go
   internal/runtime/snapshot/store.go
   internal/runtime/snapshot/store_test.go
   libexec/xnix/compatd
@@ -241,6 +328,8 @@ REQUIRED_FILES = %w[
   scripts/runtime_activation_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
+  scripts/mainline_integration_review.rb
+  scripts/release_evidence_index.rb
   scripts/runtime_owner_candidate_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
@@ -382,6 +471,8 @@ REQUIRED_FILES = %w[
   test/test_runtime_core.rb
   test/test_runtime_contract_drift_report.rb
   test/test_implementation_evidence_report.rb
+  test/test_mainline_integration_review.rb
+  test/test_release_evidence_index.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
@@ -457,6 +548,67 @@ assert(read_project_file("VERSION").strip == EXPECTED_VERSION, "VERSION must be 
 REQUIRED_VERSION_MARKERS.each do |relative_path, marker|
   assert(read_project_file(relative_path).include?(marker), "#{relative_path} must reference #{EXPECTED_VERSION}")
 end
+
+windows_workstreams = read_project_file("docs/claude-code-windows-compatibility-workstreams.md")
+%w[CW1 CW2 CW3 CW4 CW5 CW6 CW7 CW8 CW9 CW10 CW11].each do |workstream_id|
+  assert(windows_workstreams.include?("`#{workstream_id}`") || windows_workstreams.include?("## #{workstream_id}:"),
+         "Windows compatibility workstreams must include #{workstream_id}")
+end
+[
+  "Product target: best Linux desktop for existing Windows applications",
+  "The first official shell is KDE Plasma",
+  "KDE is the replaceable user shell. The Runtime is the product core.",
+  "Go owns durable Runtime product logic",
+  "Ruby is for tests, smoke scripts, reports, and lightweight developer tooling.",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Production D-Bus ownership",
+  "Runtime write methods",
+  "Real Wine, Proton, VM, or backend launch",
+  "Host-root mutation",
+  "KDE-owned compatibility policy",
+  "Start menu.",
+  "Task manager.",
+  "File manager.",
+  "System tray.",
+  "Notification center.",
+  "AI Compatibility Center.",
+  "Unified settings."
+].each do |token|
+  assert(windows_workstreams.include?(token), "Windows compatibility workstreams must include #{token}")
+end
+assert(windows_workstreams.include?("## Recommended First Wave"),
+       "Windows compatibility workstreams must include a recommended first wave")
+%w[CW1 CW2 CW3 CW10].each do |workstream_id|
+  assert(windows_workstreams.include?("`#{workstream_id}`"),
+         "Windows compatibility first wave must include #{workstream_id}")
+end
+
+windows_workstreams_go = read_project_file("internal/runtime/appidentity/windows_compatibility_workstreams.go")
+[
+  "xnix.runtime.windows_compatibility_workstreams.v1",
+  "windows-compatibility-workstreams-preview",
+  "GetWindowsCompatibilityWorkstreamsPreview",
+  "KDE Plasma",
+  "CW1",
+  "CW2",
+  "CW3",
+  "CW10",
+  "RuntimeOwned",
+  "GoRuntimeBacked",
+  "RubyCoreLogicAllowed",
+  "KDEPolicyOwner",
+  "BackendLaunchEnabled",
+  "HostRootModified",
+  "docs/claude-code-implementation-packages.md"
+].each do |token|
+  assert(windows_workstreams_go.include?(token), "Go Windows compatibility workstreams preview must include #{token}")
+end
+
+windows_workstreams_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")
+assert(windows_workstreams_cli.include?("windows-compatibility-workstreams-preview"),
+       "Windows compatibility workstreams CLI must expose its preview command")
+assert(windows_workstreams_cli.include?("NewWindowsCompatibilityWorkstreamsPreview"),
+       "Windows compatibility workstreams CLI must use the Go Runtime read model")
 
 source_lock = read_project_file("buildroot/sources.lock")
 assert(source_lock.include?("buildroot.version=2025.02.15"), "source lock must pin Buildroot 2025.02.15")
@@ -940,6 +1092,31 @@ assert(backend_binding_source.include?("\"host_root_modified\" => false"), "Comp
 assert(backend_binding_source.include?("\"privileged_container_required\" => false"), "Compatibility backend binding must not require privileged containers")
 assert(backend_binding_source.include?("\"backend_details_exposed\" => false"), "Compatibility backend binding must hide backend details")
 
+go_backend_lifecycle_source = read_project_file("internal/runtime/appidentity/backend_lifecycle.go")
+%w[BackendLifecyclePreview BackendLifecyclePreviewWithStateRoot BackendLifecycleRecord RecordBackendLifecycleState backend-lifecycle-preview xnix.runtime.backend_lifecycle.v1 xnix.runtime.backend_lifecycle_record.v1 GetBackendLifecycle GetBackendLifecyclePreview go-runtime-state-root-backend-lifecycle environment-state-root StateRootBacked StateRootPathExposed EnvironmentProfile SatisfiedGates PendingGates RepairHints BlockReason RelativePath].each do |token|
+  assert(go_backend_lifecycle_source.include?(token), "Go Runtime backend lifecycle preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner BackendBindingReady LaunchEnabled ExecutionRequestCreated BackendProcessStarted LocalBackendStarted IsolatedBackendStarted StateRootReady PortalReviewRequired SnapshotRequired HostRootModified NetworkRequired BackendDetailsExposed].each do |token|
+  assert(go_backend_lifecycle_source.include?(token), "Go Runtime backend lifecycle preview must expose #{token}")
+end
+assert(go_backend_lifecycle_source.include?("environment.New"), "Go Runtime backend lifecycle preview must consume the environment state-root store")
+assert(go_backend_lifecycle_source.include?("RequiredGates"), "Go Runtime backend lifecycle preview must expose pending environment gates")
+assert(go_backend_lifecycle_source.include?("validateNoBackendTerms"), "Go Runtime backend lifecycle preview must hide backend terms")
+%w[backend-lifecycle-record runBackendLifecycleRecord].each do |token|
+  assert(read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime backend lifecycle record CLI must include #{token}")
+end
+assert(read_project_file("cmd/xnix-runtime-go/backend_group_cli_test.go").include?("TestBackendLifecycleRecordCommandPersistsStateTransitions"), "Go Runtime backend lifecycle CLI tests must persist state-root transitions")
+
+go_backend_manager_source = read_project_file("internal/runtime/appidentity/backend_manager.go")
+%w[BackendManagerPreview BackendManagerRecord ManagedCompatibilityBackend UserFacingBackendProfile xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-backend-manager go-runtime-state-root-backend-manager wine proton windows-vm WineManaged ProtonManaged WindowsVMManaged BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted BackendDetailsExposedToKDE StateRootPathExposed HostRootModified PrivilegedContainerRequired].each do |token|
+  assert(go_backend_manager_source.include?(token), "Go Runtime backend manager preview must include #{token}")
+end
+%w[backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord].each do |token|
+  assert(read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime backend manager CLI must include #{token}")
+end
+assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe"), "Go Runtime backend manager tests must keep user-facing profiles backend-safe")
+assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestRecordBackendManagerPreviewPersistsStateRootInventory"), "Go Runtime backend manager tests must persist state-root inventory")
+
 backend_capability_matrix_source = read_project_file("lib/xnix/compatibility/compatibility_backend_capability_matrix.rb")
 assert(backend_capability_matrix_source.include?("xnix-compat-backend-capability-matrix"), "Compatibility backend capability matrix must expose a CLI command")
 %w[compatibility-backend-capability-matrix GetBackendCapabilityMatrix local-compatibility isolated-compatibility application-launch package-management file-bridge clipboard-bridge print-bridge snapshot-restore diagnostics].each do |token|
@@ -992,7 +1169,7 @@ runtime_activation_smoke_source = read_project_file("scripts/runtime_activation_
 end
 
 kde_first_presence_smoke_source = read_project_file("scripts/kde_first_presence_smoke.rb")
-%w[desktop-identity-plan desktop-entry-preview mimeapps-preview desktop-activation-bundle-preview desktop-activation-staging-preview desktop-activation-transaction-preview desktop-activation-status-preview kde-entrypoints-preview kde-action-card-deck-preview kde-center-page-preview kde-center-page-sections-preview kde-center-page-section-detail-preview file-open-preview dolphin-drop-preview dolphin-ai-analysis-preview window-identity-preview tray-status-preview notification-preview settings-preview runtime-owner-route-manifest-preview runtime-method-parity-manifest-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview].each do |token|
+%w[desktop-safety-policy-preview desktop-identity-plan desktop-entry-preview mimeapps-preview desktop-activation-bundle-preview desktop-activation-staging-preview desktop-activation-transaction-preview desktop-activation-status-preview kde-entrypoints-preview kde-action-card-deck-preview kde-action-dependency-graph-preview kde-journey-evidence-preview compatibility-onboarding-checklist-preview support-bundle-manifest-preview multi-application-install-queue-preview runtime-policy-explanation-cards-preview kde-center-page-preview kde-center-page-sections-preview kde-center-page-section-detail-preview file-open-preview dolphin-drop-preview dolphin-ai-analysis-preview window-identity-preview tray-status-preview notification-preview settings-preview runtime-owner-route-manifest-preview runtime-route-convergence-preview runtime-method-parity-manifest-preview runtime-write-gate-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview ai-repair-approval-gate-preview].each do |token|
   assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must inspect #{token}")
 end
 %w[launcher task-manager file-manager system-tray notifications compatibility-center settings].each do |token|
@@ -1001,11 +1178,95 @@ end
 %w[host_root_modified network_required privileged_container_required backend_details_exposed raw_command_exposed raw_windows_executable_exposed execution_started backend_launch_enabled launch_enabled request_object_created permission_granted file_content_read file_paths_exposed ai_provider_call_enabled].each do |token|
   assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must enforce #{token}")
 end
-%w[desktop-entry dolphin-service-menu mimeapps-list desktop-integration-manifest desktop-activation-receipt GOCACHE].each do |token|
+%w[
+  desktop-entry
+  dolphin-service-menu
+  mimeapps-list
+  desktop-integration-manifest
+  desktop-activation-receipt
+  GOCACHE
+  --format
+  kde-first-presence-smoke
+  xnix.kde_first_presence_smoke.v1
+  report_type
+  preview_commands
+  route_baseline
+  settings_field_ids
+  forbidden_user_terms
+  xnix.runtime.desktop_safety_policy.v1
+  assert_desktop_safety_policy
+  assert_onboarding_checklist
+  safety_false_keys
+  prefix
+  bottle
+  JSON.pretty_generate
+  render_markdown
+].each do |token|
   assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must include #{token}")
 end
 assert(!kde_first_presence_smoke_source.include?("scripts/container.rb"), "KDE-first presence smoke must not run Docker")
 assert(!kde_first_presence_smoke_source.include?("boot-system"), "KDE-first presence smoke must not boot QEMU")
+
+desktop_safety_policy_source = read_project_file("internal/runtime/appidentity/desktop_safety_policy.go")
+%w[xnix.runtime.desktop_safety_policy.v1 kde-first-user-facing-safety-policy forbidden_user_terms settings_field_ids BackendTerminologyHidden WriteMethodsEnabled RealPortalTransport AIProviderCallEnabled].each do |token|
+  assert(desktop_safety_policy_source.include?(token), "Runtime desktop safety policy must include #{token}")
+end
+desktop_safety_policy_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") + read_project_file("cmd/xnix-runtime-go/desktop_safety_policy_commands.go")
+%w[desktop-safety-policy-preview NewDesktopSafetyPolicyPreview].each do |token|
+  assert(desktop_safety_policy_cli_source.include?(token), "Runtime desktop safety policy CLI must include #{token}")
+end
+
+application_readiness_source = read_project_file("internal/runtime/appidentity/application_readiness.go")
+%w[xnix.runtime.application_readiness.v1 application-readiness-preview runtime-application-readiness-evidence-graph RecipeTrustDecision WriteGateDecision RealPortalTransportEnabled BackendLaunchEnabled StateRootPathExposed RawCommandExposed].each do |token|
+  assert(application_readiness_source.include?(token), "Runtime application readiness graph must include #{token}")
+end
+application_readiness_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") + read_project_file("cmd/xnix-runtime-go/application_readiness_commands.go")
+%w[application-readiness-preview ApplicationReadinessPreview artifact-receipt portal-operation snapshot-reason].each do |token|
+  assert(application_readiness_cli_source.include?(token), "Runtime application readiness CLI must include #{token}")
+end
+
+compatibility_onboarding_source = read_project_file("internal/runtime/appidentity/compatibility_onboarding_checklist.go")
+%w[CompatibilityOnboardingChecklistPreview compatibility-onboarding-checklist-preview xnix.runtime.compatibility_onboarding_checklist.v1 first-run-compatibility-onboarding GetCompatibilityOnboardingChecklist GetCompatibilityOnboardingChecklistPreview runtime-owner-readiness recipe-trust artifact-staging backend-lifecycle portal-review snapshot-baseline diagnostics-privacy kde-entry-points production-activation ready needs-review missing-evidence blocked not-yet-implemented RuntimeWriteMethodsEnabled RequestObjectsCreated PermissionGrantsCreated ArtifactStaged SettingsPersisted BackendProcessStarted LaunchEnabled NetworkRequired HostPackageManagerInvoked HostRootModified PrivilegedContainerRequired AIProviderCalled StateRootPathExposed RawExecutableExposed RawCommandExposed FileContentRead BackendDetailsExposed].each do |token|
+  assert(compatibility_onboarding_source.include?(token), "Runtime compatibility onboarding checklist must include #{token}")
+end
+%w[NewRuntimeOwnerReadinessPreview ApplicationReadinessPreview NewPortalAccessPolicyPreview NewSnapshotPlanPreview AIDiagnosticInputPreview NewDesktopSafetyPolicyPreview validateNoBackendTerms].each do |token|
+  assert(compatibility_onboarding_source.include?(token), "Runtime compatibility onboarding checklist must derive evidence from #{token}")
+end
+compatibility_onboarding_test_source = read_project_file("internal/runtime/appidentity/compatibility_onboarding_checklist_test.go")
+%w[TestCompatibilityOnboardingChecklistPreviewAggregatesFirstRunEvidence TestCompatibilityOnboardingChecklistPreviewRejectsMalformedInput runtime-owner-readiness recipe-trust artifact-staging backend-lifecycle portal-review snapshot-baseline diagnostics-privacy kde-entry-points production-activation not-yet-implemented program files].each do |token|
+  assert(compatibility_onboarding_test_source.include?(token), "Runtime compatibility onboarding checklist tests must include #{token}")
+end
+compatibility_onboarding_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") + read_project_file("cmd/xnix-runtime-go/compatibility_onboarding_commands.go")
+%w[compatibility-onboarding-checklist-preview runCompatibilityOnboardingChecklistPreview CompatibilityOnboardingChecklistPreview artifact-receipt portal-operation snapshot-reason].each do |token|
+  assert(compatibility_onboarding_cli_source.include?(token), "Runtime compatibility onboarding CLI must include #{token}")
+end
+compatibility_onboarding_cli_test_source = read_project_file("cmd/xnix-runtime-go/compatibility_onboarding_cli_test.go")
+%w[TestCompatibilityOnboardingChecklistPreviewCommand compatibility-onboarding-checklist-preview xnix.runtime.compatibility_onboarding_checklist.v1 GetCompatibilityOnboardingChecklist GetCompatibilityOnboardingChecklistPreview runtime_write_methods_enabled request_objects_created permission_grants_created artifact_staged settings_persisted backend_process_started launch_enabled host_package_manager_invoked state_root_path_exposed raw_command_exposed file_content_read].each do |token|
+  assert(compatibility_onboarding_cli_test_source.include?(token), "Runtime compatibility onboarding CLI tests must include #{token}")
+end
+
+runtime_policy_explanation_cards_source = read_project_file("internal/runtime/appidentity/runtime_policy_explanation_cards.go")
+%w[RuntimePolicyExplanationCardsPreview RuntimePolicyExplanationCard RuntimePolicyExplanationCounts runtime-policy-explanation-cards-preview kde-runtime-policy-explanation-card-deck xnix.runtime.policy_explanation_cards.v1 GetRuntimePolicyExplanationCards GetRuntimePolicyExplanationCardsPreview install launch execution portal-permission snapshot diagnostics repair settings desktop-activation backend-readiness unsupported-production-route].each do |token|
+  assert(runtime_policy_explanation_cards_source.include?(token), "Runtime policy explanation cards must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly CardsPersisted ActionEnablementChanged RequestObjectsCreated PermissionGrantsCreated SettingsPersisted AIProviderCalled AIProviderCallEnabled BackendProcessStarted LaunchEnabled ExecutionStarted HostRootModified NetworkRequired PrivilegedContainerRequired StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(runtime_policy_explanation_cards_source.include?(token), "Runtime policy explanation cards must expose #{token}")
+end
+%w[ApplicationReadinessPreview RepairPlanPreview NewDesktopSafetyPolicyPreview validateNoBackendTerms uniqueSortedStrings runtimePolicyExplanationCard countRuntimePolicyExplanationCards].each do |token|
+  assert(runtime_policy_explanation_cards_source.include?(token), "Runtime policy explanation cards must derive or validate evidence through #{token}")
+end
+runtime_policy_explanation_cards_test_source = read_project_file("internal/runtime/appidentity/runtime_policy_explanation_cards_test.go")
+%w[TestRuntimePolicyExplanationCardsPreviewBuildsConsistentDeck TestRuntimePolicyExplanationCardsPreviewDeduplicatesBlockers TestRuntimePolicyExplanationCardsPreviewRejectsBadMode TestRuntimePolicyExplanationCardsPreviewRejectsBadRepairIssue runtime-policy-explanation-cards-preview kde-runtime-policy-explanation-card-deck cards_persisted action_enablement_changed request_objects_created permission_grants_created ai_provider_called backend_process_started host_root_modified raw_command_exposed].each do |token|
+  assert(runtime_policy_explanation_cards_test_source.include?(token), "Runtime policy explanation card tests must include #{token}")
+end
+runtime_policy_explanation_cards_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") + read_project_file("cmd/xnix-runtime-go/runtime_policy_explanation_cards_commands.go")
+%w[runtime-policy-explanation-cards-preview runRuntimePolicyExplanationCardsPreview parseRuntimePolicyExplanationCardsSource RuntimePolicyExplanationCardsPreview runtime-root portal-operation snapshot-reason].each do |token|
+  assert(runtime_policy_explanation_cards_cli_source.include?(token), "Runtime policy explanation card CLI must include #{token}")
+end
+runtime_policy_explanation_cards_cli_test_source = read_project_file("cmd/xnix-runtime-go/runtime_policy_explanation_cards_cli_test.go")
+%w[TestRuntimePolicyExplanationCardsPreviewCommand TestRuntimePolicyExplanationCardsPreviewCommandRejectsAmbiguousSource TestRuntimePolicyExplanationCardsPreviewCommandRejectsPositionalArguments xnix.runtime.policy_explanation_cards.v1 GetRuntimePolicyExplanationCards GetRuntimePolicyExplanationCardsPreview kde-runtime-policy-explanation-card-deck cards_persisted action_enablement_changed request_objects_created host_root_modified backend_details_exposed].each do |token|
+  assert(runtime_policy_explanation_cards_cli_test_source.include?(token), "Runtime policy explanation card CLI tests must include #{token}")
+end
 
 runtime_live_owner_gate_source = read_project_file("lib/xnix/compatibility/runtime_live_owner_gate.rb")
 assert(runtime_live_owner_gate_source.include?("xnix-runtime-live-owner-gate"), "Runtime live owner gate must expose a CLI command")
@@ -1080,14 +1341,14 @@ go_runtime_method_parity_cli_source = read_project_file("cmd/xnix-runtime-go/mai
 assert(go_runtime_method_parity_cli_source.include?("runtime-method-parity-manifest-preview"), "Go Runtime CLI must expose Runtime method parity manifest preview")
 
 go_runtime_owner_recipe_trust_source = read_project_file("internal/runtime/appidentity/runtime_owner_recipe_trust.go")
-%w[RuntimeOwnerRecipeTrustPreview runtime-owner-recipe-trust-preview xnix.runtime.owner_recipe_trust.v1 GetRuntimeOwnerRecipeTrust GetRuntimeOwnerRecipeTrustPreview registry-digests+recipe-signature-status registry-present recipe-digests signed-recipe-validation development-registry unsigned-recipes runtime/recipes/registry.json].each do |token|
+%w[RuntimeOwnerRecipeTrustPreview runtime-owner-recipe-trust-preview xnix.runtime.owner_recipe_trust.v1 GetRuntimeOwnerRecipeTrust GetRuntimeOwnerRecipeTrustPreview go-recipe-store-verifier registry-digests+recipe-signature-status registry-present recipe-digests signed-recipe-validation development-registry unsigned-recipes runtime/recipes/registry.json].each do |token|
   assert(go_runtime_owner_recipe_trust_source.include?(token), "Go Runtime owner recipe trust preview must include #{token}")
 end
 %w[DigestVerified SignedRecipeValidation DevelopmentRegistry UnsignedRecipesPresent ProductionRecipeTrustReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
   assert(go_runtime_owner_recipe_trust_source.include?(token), "Go Runtime owner recipe trust preview must expose #{token}")
 end
-assert(go_runtime_owner_recipe_trust_source.include?("ParseRegistry"), "Go Runtime owner recipe trust preview must parse registry metadata")
-assert(go_runtime_owner_recipe_trust_source.include?("verifySHA256"), "Go Runtime owner recipe trust preview must verify recipe digests")
+assert(go_runtime_owner_recipe_trust_source.include?("NewLocalStore"), "Go Runtime owner recipe trust preview must consume the recipe Store boundary")
+assert(go_runtime_owner_recipe_trust_source.include?("DigestVerifier"), "Go Runtime owner recipe trust preview must consume the recipe Verifier boundary")
 assert(go_runtime_owner_recipe_trust_source.include?("validateNoBackendTerms"), "Go Runtime owner recipe trust preview must hide backend terms")
 
 go_runtime_owner_recipe_trust_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
@@ -1113,12 +1374,12 @@ end
 end
 
 go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owner/main.go")
-%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords smoke-owner].each do |token|
+%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript smoke-owner].each do |token|
   assert(go_runtime_owner_candidate_cli_source.include?(token), "Go Runtime owner candidate CLI must include #{token}")
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -1127,6 +1388,7 @@ end
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeOwnerReadinessPreview"), "Go Runtime owner read dispatch must call owner readiness preview")
 assert(go_runtime_owner_dispatch_source.include?("LoadRecipeFromRegistry"), "Go Runtime owner read dispatch must load registry recipes directly")
 assert(go_runtime_owner_dispatch_source.include?("NewApplicationsPreview"), "Go Runtime owner read dispatch must render application catalog payloads")
+assert(go_runtime_owner_dispatch_source.include?("NewWindowsCompatibilityWorkstreamsPreview"), "Go Runtime owner read dispatch must render Windows compatibility workstream payloads")
 assert(go_runtime_owner_dispatch_source.include?("NewRuntimeWriteGatePreview"), "Go Runtime owner read dispatch must call write gate preview")
 assert(go_runtime_owner_dispatch_source.include?("validateNoBackendTerms"), "Go Runtime owner read dispatch must hide backend terms")
 
@@ -1147,13 +1409,23 @@ end
 end
 assert(go_runtime_owner_smoke_batch_source.include?("validateNoBackendTerms"), "Go Runtime owner smoke batch must hide backend terms")
 
+go_runtime_owner_session_bus_source = read_project_file("internal/runtime/owner/session_bus.go")
+%w[SessionBusSmokeStep runtime-owner-session-bus-smoke-step xnix.runtime.owner_session_bus_smoke.v1 restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript NewSmokeBatchRecords record.RecordType reject-unsupported-read org.xnix.Compatibility1.Error.UnsupportedMethod private-session-bus-smoke].each do |token|
+  assert(go_runtime_owner_session_bus_source.include?(token), "Go Runtime owner private session-bus smoke must include #{token}")
+end
+%w[ReadOnlyDispatch WriteMethod UnsupportedRead RouteReady DispatchReady ReadDispatchMethodCount WriteMethodCount RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership PrivateSessionBus EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+  assert(go_runtime_owner_session_bus_source.include?(token), "Go Runtime owner private session-bus smoke must expose #{token}")
+end
+assert(go_runtime_owner_session_bus_source.include?("validateNoBackendTerms"), "Go Runtime owner private session-bus smoke must hide backend terms")
+
 go_runtime_owner_commands_source = read_project_file("cmd/xnix-runtime-go/runtime_owner_commands.go")
-%w[runRuntimeServiceBindingPreview runRuntimeLiveOwnerGatePreview runRuntimeOwnerProcessPreview runRuntimeOwnerSmokePlanPreview runRuntimeMethodParityManifestPreview runRuntimeOwnerReadinessPreview runRuntimeOwnerRouteManifestPreview runRuntimeOwnerRecipeTrustPreview encodeIndentedJSON].each do |token|
+%w[runRuntimeServiceBindingPreview runRuntimeLiveOwnerGatePreview runRuntimeOwnerProcessPreview runRuntimeOwnerSmokePlanPreview runRuntimeMethodParityManifestPreview runRuntimeOwnerReadinessPreview runRuntimeOwnerRouteManifestPreview runRuntimeRouteConvergencePreview runRuntimeOwnerRecipeTrustPreview encodeIndentedJSON].each do |token|
   assert(go_runtime_owner_commands_source.include?(token), "Go Runtime owner commands must include #{token}")
 end
 assert(go_runtime_owner_commands_source.include?("runtime-owner-process-preview"), "Go Runtime owner commands must expose Runtime owner process preview")
 assert(go_runtime_owner_commands_source.include?("runtime-owner-route-manifest-preview"), "Go Runtime owner commands must expose Runtime owner route manifest preview")
-%w[NewRuntimeServiceBindingPreview NewRuntimeLiveOwnerGatePreview NewRuntimeOwnerProcessPreview NewRuntimeOwnerSmokePlanPreview NewRuntimeMethodParityManifestPreview NewRuntimeOwnerReadinessPreview NewRuntimeOwnerRouteManifestPreview NewRuntimeWriteGatePreview NewRuntimeOwnerRecipeTrustPreview].each do |token|
+assert(go_runtime_owner_commands_source.include?("runtime-route-convergence-preview"), "Go Runtime owner commands must expose Runtime route convergence preview")
+%w[NewRuntimeServiceBindingPreview NewRuntimeLiveOwnerGatePreview NewRuntimeOwnerProcessPreview NewRuntimeOwnerSmokePlanPreview NewRuntimeMethodParityManifestPreview NewRuntimeOwnerReadinessPreview NewRuntimeOwnerRouteManifestPreview NewRuntimeRouteConvergencePreview NewRuntimeWriteGatePreview NewRuntimeOwnerRecipeTrustPreview].each do |token|
   assert(go_runtime_owner_commands_source.include?(token), "Go Runtime owner commands must call #{token}")
 end
 
@@ -1168,6 +1440,69 @@ assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteGoComma
 assert(go_runtime_owner_route_manifest_source.include?("runtimeOwnerRouteCCoreCommands"), "Go Runtime owner route manifest must classify C Runtime routes")
 assert(go_runtime_owner_route_manifest_source.include?("NewRuntimeMethodParityManifestPreview"), "Go Runtime owner route manifest must derive from method parity")
 assert(go_runtime_owner_route_manifest_source.include?("validateNoBackendTerms"), "Go Runtime owner route manifest must hide backend terms")
+
+go_runtime_route_convergence_source = read_project_file("internal/runtime/appidentity/runtime_route_convergence.go")
+%w[RuntimeRouteConvergencePreview runtime-route-convergence-preview xnix.runtime.route_convergence.v1 runtime-route-convergence GetRuntimeOwnerRouteManifest GetRuntimeRouteConvergencePreview runtime-owner-route-manifest-preview+runtime-method-parity-manifest-preview go-product-logic c-policy-bridge ruby-smoke-bridge fixture-only contract-only deprecated unsupported unclassified owner-route-manifest-ready all-routes-classified native-go-route-coverage write-gate-disabled host-safety-boundary].each do |token|
+  assert(go_runtime_route_convergence_source.include?(token), "Go Runtime route convergence preview must include #{token}")
+end
+%w[ClassificationCounts MigrationGroups AllRoutesClassified NativeGoCoverageReady ProductionOwnerReady RuntimeOwned GoRuntimeBacked KDEPolicyOwner WriteMethodsEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendLaunchEnabled BackendDetailsExposed UnclassifiedRoutes NextMigrationOrder].each do |token|
+  assert(go_runtime_route_convergence_source.include?(token), "Go Runtime route convergence preview must expose #{token}")
+end
+assert(go_runtime_route_convergence_source.include?("NewRuntimeOwnerRouteManifestPreview"), "Go Runtime route convergence preview must derive from owner route manifest")
+assert(go_runtime_route_convergence_source.include?("validateNoBackendTerms"), "Go Runtime route convergence preview must hide backend terms")
+
+go_kde_action_dependency_graph_source = read_project_file("internal/runtime/appidentity/kde_action_dependency_graph.go")
+%w[KDEActionDependencyGraphPreview kde-action-dependency-graph-preview xnix.runtime.kde_action_dependency_graph.v1 compatibility-center-action-dependency-graph GetKDEActionDependencyGraph GetKDEActionDependencyGraphPreview kde-action-queue-preview runtime-evidence-prerequisites runtime-write-gate-preview application-readiness action-review-receipt portal-file-access-receipt settings-change-review review-flow RejectsMismatchedAppID RejectsMalformedOperation RejectsPathEscapeEvidence RejectsUnsafeSideEffects DependencyGraphPersisted PermissionGrantCreated RequestObjectsCreated RuntimeLaunchApproval LaunchAllowed ExecutionStarted BackendProcessStarted StateRootPathExposed RawCommandExposed FileContentRead BackendDetailsExposed].each do |token|
+  assert(go_kde_action_dependency_graph_source.include?(token), "Go Runtime KDE action dependency graph preview must include #{token}")
+end
+%w[SettingsPersisted HostRootModified NetworkRequired validateNoBackendTerms].each do |token|
+  assert(go_kde_action_dependency_graph_source.include?(token), "Go Runtime KDE action dependency graph preview must expose safety token #{token}")
+end
+
+go_kde_action_dependency_graph_test_source = read_project_file("internal/runtime/appidentity/kde_action_dependency_graph_test.go")
+%w[TestKDEActionDependencyGraphPreviewMapsActionEvidence TestKDEActionDependencyGraphPreviewValidationAndSafeText MissingEvidenceCount BlockedActionCount portal-file-access-receipt runtime-write-gate-preview RejectsMismatchedAppID RejectsMalformedOperation RejectsPathEscapeEvidence RejectsUnsafeSideEffects validateNoBackendTerms].each do |token|
+  assert(go_kde_action_dependency_graph_test_source.include?(token), "Go Runtime KDE action dependency graph tests must include #{token}")
+end
+
+go_kde_action_dependency_graph_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_action_dependency_graph_cli_test.go")
+%w[TestKDEActionDependencyGraphPreviewCommand kde-action-dependency-graph-preview xnix.runtime.kde_action_dependency_graph.v1 GetKDEActionDependencyGraph GetKDEActionDependencyGraphPreview permission_grant_created state_root_path_exposed raw_command_exposed file_content_read].each do |token|
+  assert(go_kde_action_dependency_graph_cli_test_source.include?(token), "Go Runtime KDE action dependency graph CLI tests must include #{token}")
+end
+
+go_runtime_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+assert(go_runtime_cli_source.include?("kde-action-dependency-graph-preview"), "Go Runtime CLI must expose KDE action dependency graph preview")
+assert(go_runtime_cli_source.include?("runKDEActionDependencyGraphPreview"), "Go Runtime CLI must call KDE action dependency graph preview")
+
+go_runtime_kde_journey_source = read_project_file("internal/runtime/appidentity/kde_journey_evidence.go")
+%w[KDEJourneyEvidencePreview kde-journey-evidence-preview xnix.runtime.kde_journey_evidence.v1 kde-seven-entrypoint-runtime-evidence GetKDEJourneyEvidence GetKDEJourneyEvidencePreview application-readiness-preview kde-action-dependency-graph-preview task-manager-identity-preview kwin-window-rule-preview tray-status-preview notification-preview kde-center-page-preview settings-preview JourneyEvidencePersisted RuntimeWriteMethodsEnabled RequestObjectsCreated PermissionGrantCreated SettingsPersisted LaunchEnabled ExecutionStarted KWinRuleApplied TrayBridgeActivated NotificationSent HostRootModified StateRootPathExposed RawExecutableExposed RawCommandExposed FileContentRead BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_journey_source.include?(token), "Go Runtime KDE journey evidence preview must include #{token}")
+end
+
+go_runtime_kde_journey_test_source = read_project_file("internal/runtime/appidentity/kde_journey_evidence_test.go")
+[
+  "TestKDEJourneyEvidencePreviewStitchesSevenEntryPoints",
+  "TestKDEJourneyEvidencePreviewRejectsMalformedInput",
+  "launcher",
+  "task-manager",
+  "file-manager",
+  "system-tray",
+  "notification-center",
+  "ai-compatibility-center",
+  "unified-settings",
+  "MissingEvidenceCount",
+  "BlockedActionCount",
+  "program files"
+].each do |token|
+  assert(go_runtime_kde_journey_test_source.include?(token), "Go Runtime KDE journey evidence tests must include #{token}")
+end
+
+go_runtime_kde_journey_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_journey_evidence_cli_test.go")
+%w[TestKDEJourneyEvidencePreviewCommand kde-journey-evidence-preview xnix.runtime.kde_journey_evidence.v1 GetKDEJourneyEvidence GetKDEJourneyEvidencePreview entry_point_count missing_evidence_count runtime_write_methods_enabled request_objects_created permission_grant_created state_root_path_exposed raw_command_exposed].each do |token|
+  assert(go_runtime_kde_journey_cli_test_source.include?(token), "Go Runtime KDE journey evidence CLI tests must include #{token}")
+end
+
+assert(go_runtime_cli_source.include?("kde-journey-evidence-preview"), "Go Runtime CLI must expose KDE journey evidence preview")
+assert(go_runtime_cli_source.include?("runKDEJourneyEvidencePreview"), "Go Runtime CLI must call KDE journey evidence preview")
 
 go_runtime_desktop_activation_manifest_source = read_project_file("internal/runtime/appidentity/desktop_activation_manifest.go")
 %w[DesktopActivationManifestPreview DesktopActivationManifestBundle desktop-activation-manifest-preview xnix.runtime.desktop_activation_manifest.v1 GetDesktopActivationManifest GetDesktopActivationManifestPreview desktop-activation-bundle-preview kde-entrypoints-preview launcher task-manager file-manager system-tray notifications compatibility-center unified-settings].each do |token|
@@ -1191,6 +1526,11 @@ end
   assert(go_runtime_activation_stage_source.include?(token), "Go Runtime activation stage writer must expose safety flag #{token}")
 end
 
+go_runtime_activation_transaction_source = read_project_file("internal/runtime/appidentity/desktop_activation_transaction.go")
+%w[DesktopActivationTransactionPreview desktop-activation-transaction-preview xnix.runtime.desktop_activation_transaction.v1 GetDesktopActivationTransactionPreview ReceiptEvidence CommitReceiptPlanned RollbackReceiptPlanned CommitAvailable RollbackAvailable CommitReceiptWritten RollbackReceiptWritten DigestGateReady HostRootModified BackendDetailsExposed].each do |token|
+  assert(go_runtime_activation_transaction_source.include?(token), "Go Runtime activation transaction preview must include #{token}")
+end
+
 go_runtime_activation_stage_cli_source = read_project_file("cmd/xnix-runtime-go/desktop_activation_stage_commands.go")
 %w[runDesktopActivationStage desktop-activation-stage --staging-root activation.Stage NewPlanWithProvenance].each do |token|
   assert(go_runtime_activation_stage_cli_source.include?(token), "Go Runtime activation stage CLI must include #{token}")
@@ -1202,21 +1542,56 @@ go_runtime_activation_stage_cli_test_source = read_project_file("cmd/xnix-runtim
 end
 
 go_runtime_window_identity_source = read_project_file("internal/runtime/appidentity/window_identity_routes.go")
-%w[TaskManagerIdentityPlanPreview KWinWindowRulePlanPreview task-manager-identity-preview kwin-window-rule-preview xnix.runtime.task_manager_identity.v1 xnix.runtime.kwin_window_rule.v1 GetTaskManagerIdentityPlan GetTaskManagerIdentityPlanPreview GetKWinWindowRulePlan GetKWinWindowRulePlanPreview window-identity-preview].each do |token|
+%w[TaskManagerIdentityPlanPreview KWinWindowRulePlanPreview task-manager-identity-preview kwin-window-rule-preview xnix.runtime.task_manager_identity.v1 xnix.runtime.kwin_window_rule.v1 GetTaskManagerIdentityPlan GetTaskManagerIdentityPlanPreview GetKWinWindowRulePlan GetKWinWindowRulePlanPreview window-identity-preview execution-session-record ExecutionSessionBacked ExecutionSessionPath].each do |token|
   assert(go_runtime_window_identity_source.include?(token), "Go Runtime window identity route previews must include #{token}")
 end
-%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner PinningAllowed RestoreAllowed PreferExistingWindow SkipTaskbar ShowInSwitcher TaskManagerEntryActive WindowObservationStarted LaunchEnabled ExecutionStarted HostRootModified BackendDetailsExposed WindowManagerPolicyOnly RuntimeOwnsBackendPolicy KWinRuleApplied].each do |token|
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner PinningAllowed RestoreAllowed PreferExistingWindow SkipTaskbar ShowInSwitcher TaskManagerEntryActive WindowObservationStarted LaunchEnabled ExecutionStarted HostRootModified BackendDetailsExposed WindowManagerPolicyOnly RuntimeOwnsBackendPolicy KWinRuleApplied ExecutionSessionRoot ExecutionSessionBacked].each do |token|
   assert(go_runtime_window_identity_source.include?(token), "Go Runtime window identity route previews must expose safety flag #{token}")
 end
 assert(go_runtime_window_identity_source.include?("validateNoBackendTerms"), "Go Runtime window identity route previews must hide backend terms")
 
+go_runtime_execution_session_evidence_source = read_project_file("internal/runtime/appidentity/execution_session_record_evidence.go")
+%w[ExecutionSessionRecordEvidence ExecutionSessionFanOutEvidence xnix.runtime.execution_session_record.v1 xnix.runtime.session_fanout.v1 execution-session-status-record execution-session-fanout-evidence GetExecutionSessionFanOutEvidence task-manager kwin tray compatibility-center SafeForKDE state_root_path_exposed status_persisted session_active live_state_observed window_observed task_manager_entry_active kwin_rule_applied live_tray_bridge_enabled launch_enabled execution_started backend_process_started host_root_modified backend_details_exposed].each do |token|
+  assert(go_runtime_execution_session_evidence_source.include?(token), "Go Runtime execution session evidence must include #{token}")
+end
+
 go_runtime_window_identity_cli_source = read_project_file("cmd/xnix-runtime-go/window_identity_commands.go")
-%w[runTaskManagerIdentityPreview runKWinWindowRulePreview task-manager-identity-preview kwin-window-rule-preview TaskManagerIdentityPlanPreview KWinWindowRulePlanPreview].each do |token|
+%w[runTaskManagerIdentityPreview runKWinWindowRulePreview task-manager-identity-preview kwin-window-rule-preview TaskManagerIdentityPlanPreview KWinWindowRulePlanPreview session-root session-request-id].each do |token|
   assert(go_runtime_window_identity_cli_source.include?(token), "Go Runtime window identity CLI must include #{token}")
 end
 
+go_runtime_window_identity_cli_test_source = read_project_file("cmd/xnix-runtime-go/window_identity_cli_test.go")
+%w[TestTaskManagerIdentityPreviewCommandConsumesSessionRoot TestKWinWindowRulePreviewCommandConsumesSessionRoot execution_session_backed execution_session_path].each do |token|
+  assert(go_runtime_window_identity_cli_test_source.include?(token), "Go Runtime window identity CLI tests must include #{token}")
+end
+
+go_runtime_tray_source = read_project_file("internal/runtime/appidentity/identity.go")
+%w[TrayStatusOptions ExecutionSessionBacked ExecutionSessionPath ExecutionSessionFanOutEvidence CompatibilityCenter State compatibilityState].each do |token|
+  assert(go_runtime_tray_source.include?(token), "Go Runtime tray status preview must include #{token}")
+end
+
+go_runtime_kde_center_page_source = read_project_file("internal/runtime/appidentity/kde_center_page.go")
+%w[KDECenterPageOptions ExecutionSessionRoot ExecutionSessionBacked ExecutionSessionPath TaskManagerSessionState KWinSessionState TrayStatusPreviewWithOptions TaskManagerIdentityPlanPreviewWithOptions KWinWindowRulePlanPreviewWithOptions KDECenterPageActionGraph ActionDependencyGraph kde-action-dependency-graph-preview DependencyGraphPersisted MissingEvidenceCount BlockedActionCount ReceiptValidation execution-session-record].each do |token|
+  assert(go_runtime_kde_center_page_source.include?(token), "Go Runtime KDE center page preview must include #{token}")
+end
+
+go_runtime_kde_center_page_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-center-page-preview session-root session-request-id KDECenterPageOptions].each do |token|
+  assert(go_runtime_kde_center_page_cli_source.include?(token), "Go Runtime KDE center page CLI must include #{token}")
+end
+
+go_runtime_kde_center_page_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_center_page_cli_test.go")
+%w[TestKDECenterPagePreviewCommandConsumesSessionRoot execution_session_backed execution_session_path waiting-for-runtime-gates].each do |token|
+  assert(go_runtime_kde_center_page_cli_test_source.include?(token), "Go Runtime KDE center page CLI tests must include #{token}")
+end
+
+go_runtime_kde_center_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_center_cli_test.go")
+%w[action_dependency_graph kde-action-dependency-graph-preview missing_evidence_count blocked_action_count dependency_graph_persisted permission_grant_created settings_persisted].each do |token|
+  assert(go_runtime_kde_center_cli_test_source.include?(token), "Go Runtime KDE center CLI tests must include action graph token #{token}")
+end
+
 go_runtime_install_plan_source = read_project_file("internal/runtime/appidentity/install_plan.go")
-%w[CompatibilityInstallPlanPreview CompatibilityInstallReadiness CompatibilityInstallPhase compatibility-install-preview xnix.runtime.compatibility_install_plan.v1 GetCompatibilityInstallPlan GetCompatibilityInstallPlanPreview artifact-manifest-preview acquisition-preflight-preview package-source-preview state-root-preview recipe-install-gate resolve-artifact-manifest verify-artifact-digests prepare-package-source allocate-application-state review-recipe-install-gate stage-desktop-integration enable-launch-binding].each do |token|
+%w[CompatibilityInstallPlanPreview CompatibilityInstallPlanPreviewWithArtifactReceipt CompatibilityInstallReadiness CompatibilityInstallArtifactStageReceipt CompatibilityInstallPhase compatibility-install-preview xnix.runtime.compatibility_install_plan.v1 GetCompatibilityInstallPlan GetCompatibilityInstallPlanPreview artifact-manifest-preview acquisition-preflight-preview package-source-preview state-root-preview recipe-install-gate artifact-stage-receipt RecipeTrustDiagnosticsReady RecipeTrustBlockingReasons ArtifactStageReceiptReady ArtifactStageDigestVerified RequiredArtifactsStaged ArtifactStageBlockingReasons recipe_trust_diagnostics_ready recipe_trust_blocking_reasons artifact_stage_receipt_ready artifact_stage_digest_verified required_artifacts_staged artifact_stage_blocking_reasons resolve-artifact-manifest verify-artifact-digests consume-artifact-stage-receipt prepare-package-source allocate-application-state review-recipe-install-gate stage-desktop-integration enable-launch-binding].each do |token|
   assert(go_runtime_install_plan_source.include?(token), "Go Runtime compatibility install preview must include #{token}")
 end
 %w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible InstallReady DesktopActivationReady DownloadEnabled InstallEnabled NetworkRequestCreated ArtifactsDownloaded HostRootModified PrivilegedContainerRequired DesktopShellCommandExposed BackendLaunchEnabled ExecutionStarted BackendDetailsExposed].each do |token|
@@ -1225,7 +1600,7 @@ end
 assert(go_runtime_install_plan_source.include?("validateNoBackendTerms"), "Go Runtime compatibility install preview must hide backend terms")
 
 go_runtime_install_plan_cli_source = read_project_file("cmd/xnix-runtime-go/install_plan_commands.go")
-%w[runCompatibilityInstallPreview parseCompatibilityInstallPreviewSource compatibility-install-preview CompatibilityInstallPlanPreview].each do |token|
+%w[runCompatibilityInstallPreview parseCompatibilityInstallPreviewSource compatibility-install-preview artifact-receipt loadArtifactStageReceipt CompatibilityInstallPlanPreviewWithArtifactReceipt].each do |token|
   assert(go_runtime_install_plan_cli_source.include?(token), "Go Runtime compatibility install CLI must include #{token}")
 end
 
@@ -1367,9 +1742,226 @@ end
 end
 assert(go_runtime_safety_source.include?("validateNoBackendTerms"), "Go Runtime safety previews must hide backend terms")
 
-go_runtime_safety_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_safety_commands.go")
-%w[runStateRootPreview runSnapshotPlanPreview runPortalAccessPolicyPreview state-root-preview snapshot-plan-preview portal-access-policy-preview].each do |token|
+go_runtime_safety_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_safety_commands.go") +
+                               read_project_file("cmd/xnix-runtime-go/main.go")
+%w[runStateRootPreview runSnapshotPlanPreview runPortalAccessPolicyPreview runPortalRequestRecord state-root-preview snapshot-plan-preview portal-access-policy-preview portal-request-record].each do |token|
   assert(go_runtime_safety_cli_source.include?(token), "Go Runtime safety CLI must include #{token}")
+end
+
+go_runtime_state_root_quota_source = read_project_file("internal/runtime/appidentity/state_root_quota_retention.go")
+%w[StateRootQuotaRetentionPreview StateRootQuotaRetentionSection StateRootQuotaRetentionCounts state-root-quota-retention-preview xnix.runtime.state_root_quota_retention.v1 GetStateRootQuotaRetention GetStateRootQuotaRetentionPreview go-runtime-state-root-quota-retention-preview snapshots diagnostics execution-receipts portal-receipts artifact-receipts activation-receipts unknown-records cleanup-candidate-over-quota retain-under-quota retain-malformed-record retain-unknown-record-review retain-active-session retain-retention-exempt].each do |token|
+  assert(go_runtime_state_root_quota_source.include?(token), "Go Runtime state-root quota retention preview must include #{token}")
+end
+%w[FileDeletionEnabled DirectoriesCreated LogTruncationEnabled ReceiptsRewritten SnapshotDeletionEnabled StateRootPathExposed HostRootModified BackendDetailsExposed NetworkRequired PrivilegedContainerRequired].each do |token|
+  assert(go_runtime_state_root_quota_source.include?(token), "Go Runtime state-root quota retention preview must expose #{token}")
+end
+%w[WalkDir ReadFile Stat validateNoBackendTerms refusing\ to\ inspect\ filesystem\ root].each do |token|
+  assert(go_runtime_state_root_quota_source.include?(token), "Go Runtime state-root quota retention preview must implement #{token}")
+end
+
+go_runtime_state_root_quota_test_source = read_project_file("internal/runtime/appidentity/state_root_quota_retention_test.go")
+%w[TestStateRootQuotaRetentionPreviewMissingRootDoesNotCreateDirectories TestStateRootQuotaRetentionPreviewUnderQuotaClassifiesKnownSections TestStateRootQuotaRetentionPreviewOverQuotaAndMalformedUnknownEvidence TestStateRootQuotaRetentionPreviewActiveSessionBlocksExecutionReceipts TestStateRootQuotaRetentionPreviewRetentionExemptEvidenceIsKept TestStateRootQuotaRetentionPreviewRejectsUnsafeInputs retain-missing-state-root cleanup-candidate-over-quota malformed-record-review-required unknown-record-review-required active-session-blocked retention-exempt].each do |token|
+  assert(go_runtime_state_root_quota_test_source.include?(token), "Go Runtime state-root quota retention tests must include #{token}")
+end
+
+go_runtime_state_root_quota_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                         read_project_file("cmd/xnix-runtime-go/state_root_quota_retention_commands.go")
+%w[runStateRootQuotaRetentionPreview parseStateRootQuotaRetentionPreviewSource state-root-quota-retention-preview quota-bytes active-session StateRootQuotaRetentionOptions].each do |token|
+  assert(go_runtime_state_root_quota_cli_source.include?(token), "Go Runtime state-root quota retention CLI must include #{token}")
+end
+
+go_runtime_state_root_quota_cli_test_source = read_project_file("cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go")
+%w[TestStateRootQuotaRetentionPreviewCLI TestStateRootQuotaRetentionPreviewCLIMissingRootIsReadOnly TestStateRootQuotaRetentionPreviewCLIRequiresFlags xnix.runtime.state_root_quota_retention.v1 retain-missing-state-root state_root_path_exposed host_root_modified].each do |token|
+  assert(go_runtime_state_root_quota_cli_test_source.include?(token), "Go Runtime state-root quota retention CLI tests must include #{token}")
+end
+
+go_runtime_crash_hang_source = read_project_file("internal/runtime/appidentity/crash_hang_signal_summary.go")
+%w[CrashHangSignalSummaryPreview CrashHangSignalGroup CrashHangSignalSummaryCounts CrashHangSignalPrivacyRedaction crash-hang-signal-summary-preview xnix.runtime.crash_hang_signal_summary.v1 GetCrashHangSignalSummary GetCrashHangSignalSummaryPreview crash hang timeout missing-dependency permission-denial graphics-issue network-issue regression-after-repair].each do |token|
+  assert(go_runtime_crash_hang_source.include?(token), "Go Runtime crash-hang signal summary preview must include #{token}")
+end
+%w[PrivateLogRead FileContentRead AIProviderCallEnabled RepairExecuted BackendProcessStarted HostRootModified StateRootPathExposed BackendDetailsExposed crashHangGroupForSignal crashHangPrivacySensitive].each do |token|
+  assert(go_runtime_crash_hang_source.include?(token), "Go Runtime crash-hang signal summary preview must expose #{token}")
+end
+%w[validateNoBackendTerms safety.ValidatePayload].each do |token|
+  assert(go_runtime_crash_hang_source.include?(token), "Go Runtime crash-hang signal summary preview must validate through #{token}")
+end
+
+go_runtime_crash_hang_test_source = read_project_file("internal/runtime/appidentity/crash_hang_signal_summary_test.go")
+%w[TestCrashHangSignalSummaryNoHistoryIsSafe TestCrashHangSignalSummaryGroupsAndRecurrence TestCrashHangSignalSummaryMalformedHistoryIsBlocked TestCrashHangSignalSummaryMixedApplicationIDsAreFiltered TestCrashHangSignalSummaryDuplicateSignalIDsAreCounted TestCrashHangSignalSummaryPrivacySensitiveFieldsAreOmitted TestCrashHangSignalSummaryBlockedRepairEvidenceIsCounted TestCrashHangSignalSummaryRegressionAfterRepair TestCrashHangSignalSummaryRejectsUnsafeInputs].each do |token|
+  assert(go_runtime_crash_hang_test_source.include?(token), "Go Runtime crash-hang signal summary tests must include #{token}")
+end
+
+go_runtime_crash_hang_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                   read_project_file("cmd/xnix-runtime-go/crash_hang_signal_summary_commands.go")
+%w[runCrashHangSignalSummaryPreview crash-hang-signal-summary-preview LenientHistory NewCrashHangSignalSummaryPreview OpenRunRecordStoreReadOnly].each do |token|
+  assert(go_runtime_crash_hang_cli_source.include?(token), "Go Runtime crash-hang signal summary CLI must include #{token}")
+end
+
+go_runtime_crash_hang_cli_test_source = read_project_file("cmd/xnix-runtime-go/crash_hang_signal_summary_cli_test.go")
+%w[TestCrashHangSignalSummaryPreviewCLI TestCrashHangSignalSummaryPreviewCLIMalformedRecordIsBlocked TestCrashHangSignalSummaryPreviewCLIMissingRootIsReadOnly TestCrashHangSignalSummaryPreviewCLIRequiresFlags xnix.runtime.crash_hang_signal_summary.v1 blocked-malformed-history state_root_path_exposed].each do |token|
+  assert(go_runtime_crash_hang_cli_test_source.include?(token), "Go Runtime crash-hang signal summary CLI tests must include #{token}")
+end
+
+go_runtime_diagnostic_history_source = read_project_file("internal/runtime/diagnostics/history.go")
+%w[LenientHistory buildHistory].each do |token|
+  assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic history must implement #{token}")
+end
+assert(read_project_file("internal/runtime/diagnostics/record.go").include?("listLenient"), "Go Runtime diagnostic records must implement listLenient")
+
+go_runtime_permission_audit_source = read_project_file("internal/runtime/appidentity/permission_evidence_audit.go")
+%w[PermissionEvidenceAuditPreview PermissionEvidenceAuditRow PermissionEvidenceAuditCounts PermissionEvidenceRowInput permission-evidence-audit-preview xnix.runtime.permission_evidence_audit.v1 GetPermissionEvidenceAudit GetPermissionEvidenceAuditPreview documents downloads uris print clipboard screenshot camera remote-desktop network].each do |token|
+  assert(go_runtime_permission_audit_source.include?(token), "Go Runtime permission evidence audit preview must include #{token}")
+end
+%w[consistent setting-only receipt-only expired denied missing-review blocked-by-policy unsupported].each do |token|
+  assert(go_runtime_permission_audit_source.include?(token), "Go Runtime permission evidence audit preview must classify #{token}")
+end
+%w[RealPortalCallEnabled PermissionGrantEnabled PermissionRevokeEnabled ReceiptWriteEnabled SettingsPersisted ExecutionApproved StateRootPathExposed HostRootModified validateNoBackendTerms safety.ValidatePayload PermissionReviewPreview DesktopResourceBridgePreview ExecutionPreflightPreview].each do |token|
+  assert(go_runtime_permission_audit_source.include?(token), "Go Runtime permission evidence audit preview must expose #{token}")
+end
+
+go_runtime_permission_audit_test_source = read_project_file("internal/runtime/appidentity/permission_evidence_audit_test.go")
+%w[TestPermissionEvidenceAuditConsistencyStates TestPermissionEvidenceAuditAllConsistentIsClean TestPermissionEvidenceAuditMalformedReceiptsAreSurfaced TestPermissionEvidenceAuditUnsupportedResourceIsFlagged TestPermissionEvidenceAuditRejectsUnsafeInputs TestPlanPermissionEvidenceAuditPreviewJoinsSources].each do |token|
+  assert(go_runtime_permission_audit_test_source.include?(token), "Go Runtime permission evidence audit tests must include #{token}")
+end
+
+go_runtime_permission_audit_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                         read_project_file("cmd/xnix-runtime-go/permission_evidence_audit_commands.go")
+%w[runPermissionEvidenceAuditPreview permission-evidence-audit-preview PermissionEvidenceAuditPreview ReadRequests Summarize loadRecipe].each do |token|
+  assert(go_runtime_permission_audit_cli_source.include?(token), "Go Runtime permission evidence audit CLI must include #{token}")
+end
+
+go_runtime_permission_audit_cli_test_source = read_project_file("cmd/xnix-runtime-go/permission_evidence_audit_cli_test.go")
+%w[TestPermissionEvidenceAuditPreviewCLINoReceipts TestPermissionEvidenceAuditPreviewCLIWithReceipts TestPermissionEvidenceAuditPreviewCLIMalformedLedgerIsSurfaced TestPermissionEvidenceAuditPreviewCLIRequiresSource xnix.runtime.permission_evidence_audit.v1 state_root_path_exposed].each do |token|
+  assert(go_runtime_permission_audit_cli_test_source.include?(token), "Go Runtime permission evidence audit CLI tests must include #{token}")
+end
+
+go_runtime_backend_fallback_source = read_project_file("internal/runtime/appidentity/compatibility_backend_fallback.go")
+%w[CompatibilityBackendFallbackPreview CompatibilityBackendFallbackCandidate compatibility-backend-fallback-preview xnix.runtime.compatibility_backend_fallback.v1 GetCompatibilityBackendFallback GetCompatibilityBackendFallbackPreview local-compatibility isolated-compatibility automatic recipe-requests-isolation local-selected-by-default capability-not-ready diagnostics-regressions-present blocked-missing-evidence blocked-by-policy].each do |token|
+  assert(go_runtime_backend_fallback_source.include?(token), "Go Runtime compatibility backend fallback preview must include #{token}")
+end
+%w[SelectionPersisted EngineInstallEnabled BackendLaunchEnabled VMStartEnabled BackendDetailsExposed StateRootPathExposed HostRootModified validateNoBackendTerms safety.ValidatePayload recommendedCompatibilityProfileID BackendLifecyclePreview NewBackendCapabilityMatrixPreview].each do |token|
+  assert(go_runtime_backend_fallback_source.include?(token), "Go Runtime compatibility backend fallback preview must expose #{token}")
+end
+
+go_runtime_backend_fallback_test_source = read_project_file("internal/runtime/appidentity/compatibility_backend_fallback_test.go")
+%w[TestCompatibilityBackendFallbackLocalPrimaryStaysBlocked TestCompatibilityBackendFallbackIsolationRequiredForbidsLocal TestCompatibilityBackendFallbackDiagnosticsRiskIsSurfaced TestCompatibilityBackendFallbackAutomaticExplainsBlocked].each do |token|
+  assert(go_runtime_backend_fallback_test_source.include?(token), "Go Runtime compatibility backend fallback tests must include #{token}")
+end
+
+go_runtime_backend_fallback_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                         read_project_file("cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go")
+%w[runCompatibilityBackendFallbackPreview compatibility-backend-fallback-preview CompatibilityBackendFallbackPreview loadRecipe].each do |token|
+  assert(go_runtime_backend_fallback_cli_source.include?(token), "Go Runtime compatibility backend fallback CLI must include #{token}")
+end
+
+go_runtime_backend_fallback_cli_test_source = read_project_file("cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go")
+%w[TestCompatibilityBackendFallbackPreviewCLI TestCompatibilityBackendFallbackPreviewCLIRequiresSource xnix.runtime.compatibility_backend_fallback.v1].each do |token|
+  assert(go_runtime_backend_fallback_cli_test_source.include?(token), "Go Runtime compatibility backend fallback CLI tests must include #{token}")
+end
+
+go_runtime_search_visibility_source = read_project_file("internal/runtime/appidentity/kde_search_visibility.go")
+%w[KDESearchVisibilityPlanPreview KDESearchVisibilityRow KDESearchVisibilityCounts kde-search-visibility-plan-preview xnix.runtime.kde_search_visibility.v1 GetKDESearchVisibilityPlan GetKDESearchVisibilityPlanPreview launcher krunner file-association dolphin-action compatibility-center settings task-manager receipt-required no-mime-association application-hidden].each do |token|
+  assert(go_runtime_search_visibility_source.include?(token), "Go Runtime KDE search visibility plan preview must include #{token}")
+end
+%w[DesktopFilesWritten MIMEDefaultsWritten KDECacheRefreshed HostFilesIndexed SearchIndexPersisted BackendLaunchEnabled HostRootModified kdeSearchSafeSynonyms validateNoBackendTerms safety.ValidatePayload DesktopActivationReceiptEvidence].each do |token|
+  assert(go_runtime_search_visibility_source.include?(token), "Go Runtime KDE search visibility plan preview must expose #{token}")
+end
+
+go_runtime_search_visibility_test_source = read_project_file("internal/runtime/appidentity/kde_search_visibility_test.go")
+%w[TestKDESearchVisibilityReceiptRequiredWithoutActivation TestKDESearchVisibilityUnsupportedMIME TestKDESearchVisibilityHiddenApplication TestKDESearchSafeSynonymsDropUnsafeAndDuplicates TestKDESearchVisibilityRejectsUnsafePlan].each do |token|
+  assert(go_runtime_search_visibility_test_source.include?(token), "Go Runtime KDE search visibility tests must include #{token}")
+end
+
+go_runtime_search_visibility_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                          read_project_file("cmd/xnix-runtime-go/kde_search_visibility_commands.go")
+%w[runKDESearchVisibilityPlanPreview kde-search-visibility-plan-preview KDESearchVisibilityPlanPreview loadRecipe].each do |token|
+  assert(go_runtime_search_visibility_cli_source.include?(token), "Go Runtime KDE search visibility CLI must include #{token}")
+end
+
+go_runtime_search_visibility_cli_test_source = read_project_file("cmd/xnix-runtime-go/kde_search_visibility_cli_test.go")
+%w[TestKDESearchVisibilityPlanPreviewCLI TestKDESearchVisibilityPlanPreviewCLIRejectsMissingApp xnix.runtime.kde_search_visibility.v1].each do |token|
+  assert(go_runtime_search_visibility_cli_test_source.include?(token), "Go Runtime KDE search visibility CLI tests must include #{token}")
+end
+
+go_runtime_deactivation_source = read_project_file("internal/runtime/appidentity/desktop_deactivation_dry_run.go")
+%w[DesktopDeactivationDryRunPreview DesktopDeactivationSurface DesktopDeactivationCounts desktop-deactivation-dry-run-preview xnix.runtime.desktop_deactivation_dry_run.v1 GetDesktopDeactivationDryRun GetDesktopDeactivationDryRunPreview launcher desktop-icon mime-association dolphin-service-menu kwin system-tray notification compatibility-center settings].each do |token|
+  assert(go_runtime_deactivation_source.include?(token), "Go Runtime desktop deactivation dry run preview must include #{token}")
+end
+%w[missing-activation-receipt installed-file-digest-mismatch unknown-file-owner shared-mime-association active-session-evidence no-host-artifact removable].each do |token|
+  assert(go_runtime_deactivation_source.include?(token), "Go Runtime desktop deactivation dry run preview must classify #{token}")
+end
+%w[FileDeletionEnabled MIMEDefaultsWritten KDECacheRefreshed ReceiptsRewritten SessionTerminated TargetPathExposed HostRootModified validateNoBackendTerms safety.ValidatePayload DesktopActivationReceiptEvidence DesktopActivationTransactionPreview].each do |token|
+  assert(go_runtime_deactivation_source.include?(token), "Go Runtime desktop deactivation dry run preview must expose #{token}")
+end
+
+go_runtime_deactivation_test_source = read_project_file("internal/runtime/appidentity/desktop_deactivation_dry_run_test.go")
+%w[TestDesktopDeactivationDryRunMissingReceiptIsBlocked TestDesktopDeactivationDryRunClassifiesReceiptErrors TestDesktopDeactivationDryRunRejectsUnsafePlan].each do |token|
+  assert(go_runtime_deactivation_test_source.include?(token), "Go Runtime desktop deactivation dry run tests must include #{token}")
+end
+
+go_runtime_deactivation_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                     read_project_file("cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go")
+%w[runDesktopDeactivationDryRunPreview desktop-deactivation-dry-run-preview DesktopDeactivationDryRunPreview active-session shared-mime loadRecipe].each do |token|
+  assert(go_runtime_deactivation_cli_source.include?(token), "Go Runtime desktop deactivation dry run CLI must include #{token}")
+end
+
+go_runtime_deactivation_cli_test_source = read_project_file("cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go")
+%w[TestDesktopDeactivationDryRunPreviewCLIMissingReceipt TestDesktopDeactivationDryRunPreviewCLIReceiptBackedRemovable TestDesktopDeactivationDryRunPreviewCLIActiveSessionAndSharedMIMEBlock TestDesktopDeactivationDryRunPreviewCLIRequiresSource xnix.runtime.desktop_deactivation_dry_run.v1].each do |token|
+  assert(go_runtime_deactivation_cli_test_source.include?(token), "Go Runtime desktop deactivation dry run CLI tests must include #{token}")
+end
+
+go_runtime_recipe_conflict_source = read_project_file("internal/runtime/appidentity/recipe_conflict_audit.go")
+%w[RecipeConflictAuditPreview RecipeConflictGroup RecipeConflictFinding RecipeConflictCounts recipe-conflict-audit-preview xnix.runtime.recipe_conflict_audit.v1 GetRecipeConflictAudit GetRecipeConflictAuditPreview duplicate-app-ids stale-recipe-versions unsupported-capability-claims mismatched-package-source-pins trust-policy-blockers artifact-digest-drift].each do |token|
+  assert(go_runtime_recipe_conflict_source.include?(token), "Go Runtime recipe conflict audit preview must include #{token}")
+end
+%w[RecipeWritesEnabled RegistryMigrationEnabled ArtifactStagingEnabled NetworkRequired PackageManagerInvoked BackendLaunchEnabled HostRootModified validateNoBackendTerms safety.ValidatePayload compareSemanticVersions ParseRecipe].each do |token|
+  assert(go_runtime_recipe_conflict_source.include?(token), "Go Runtime recipe conflict audit preview must expose #{token}")
+end
+
+go_runtime_recipe_conflict_test_source = read_project_file("internal/runtime/appidentity/recipe_conflict_audit_test.go")
+%w[TestRecipeConflictAuditCleanRegistry TestRecipeConflictAuditDetectsEveryConflictClass TestRecipeConflictAuditFlagsMissingRecipeFile TestRecipeConflictAuditRejectsMissingRegistry].each do |token|
+  assert(go_runtime_recipe_conflict_test_source.include?(token), "Go Runtime recipe conflict audit tests must include #{token}")
+end
+
+go_runtime_recipe_conflict_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                        read_project_file("cmd/xnix-runtime-go/recipe_conflict_audit_commands.go")
+%w[runRecipeConflictAuditPreview recipe-conflict-audit-preview NewRecipeConflictAuditPreview RecipeConflictAuditOptions].each do |token|
+  assert(go_runtime_recipe_conflict_cli_source.include?(token), "Go Runtime recipe conflict audit CLI must include #{token}")
+end
+
+go_runtime_recipe_conflict_cli_test_source = read_project_file("cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go")
+%w[TestRecipeConflictAuditPreviewCLI TestRecipeConflictAuditPreviewCLIRequiresRegistry xnix.runtime.recipe_conflict_audit.v1].each do |token|
+  assert(go_runtime_recipe_conflict_cli_test_source.include?(token), "Go Runtime recipe conflict audit CLI tests must include #{token}")
+end
+
+go_runtime_snapshot_restore_source = read_project_file("internal/runtime/appidentity/snapshot_restore_candidates.go")
+%w[SnapshotRestoreCandidatesPreview SnapshotRestoreCandidate SnapshotRestoreCounts SnapshotCandidateInput snapshot-restore-candidates-preview xnix.runtime.snapshot_restore_candidates.v1 GetSnapshotRestoreCandidates GetSnapshotRestoreCandidatesPreview latest-good latest-tested last-known-running blocked unknown active-session digest-mismatch].each do |token|
+  assert(go_runtime_snapshot_restore_source.include?(token), "Go Runtime snapshot restore candidates preview must include #{token}")
+end
+%w[RestoreExecuted SnapshotDeletionEnabled FileContentRead SessionTerminated BackendLaunchEnabled StateRootPathExposed HostRootModified validateNoBackendTerms safety.ValidatePayload CompatibilityRisk].each do |token|
+  assert(go_runtime_snapshot_restore_source.include?(token), "Go Runtime snapshot restore candidates preview must expose #{token}")
+end
+
+go_runtime_snapshot_restore_test_source = read_project_file("internal/runtime/appidentity/snapshot_restore_candidates_test.go")
+%w[TestSnapshotRestoreCandidatesRankAndClassify TestSnapshotRestoreCandidatesActiveSessionBlocksAll TestSnapshotRestoreCandidatesNoCandidates TestSnapshotRestoreCandidatesRejectsUnsafeInputs].each do |token|
+  assert(go_runtime_snapshot_restore_test_source.include?(token), "Go Runtime snapshot restore candidates tests must include #{token}")
+end
+
+go_runtime_snapshot_restore_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                         read_project_file("cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go")
+%w[runSnapshotRestoreCandidatesPreview snapshot-restore-candidates-preview OpenReadOnly NewSnapshotRestoreCandidatesPreview active-session].each do |token|
+  assert(go_runtime_snapshot_restore_cli_source.include?(token), "Go Runtime snapshot restore candidates CLI must include #{token}")
+end
+
+go_runtime_snapshot_restore_cli_test_source = read_project_file("cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go")
+%w[TestSnapshotRestoreCandidatesPreviewCLI TestSnapshotRestoreCandidatesPreviewCLIEmptyStateRoot TestSnapshotRestoreCandidatesPreviewCLIRequiresFlags xnix.runtime.snapshot_restore_candidates.v1].each do |token|
+  assert(go_runtime_snapshot_restore_cli_test_source.include?(token), "Go Runtime snapshot restore candidates CLI tests must include #{token}")
+end
+assert(read_project_file("internal/runtime/snapshot/store.go").include?("OpenReadOnly"), "Go Runtime snapshot store must implement OpenReadOnly")
+
+go_runtime_portal_read_source = read_project_file("internal/runtime/portal/read.go")
+%w[ReadRequests portal-requests malformed].each do |token|
+  assert(go_runtime_portal_read_source.include?(token), "Go Runtime portal read-only lister must include #{token}")
 end
 
 go_runtime_diagnostic_record_source = read_project_file("internal/runtime/diagnostics/record.go")
@@ -1379,7 +1971,7 @@ end
 %w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StateRootPathExposed FixturePathExposed BackendStarted AIProviderCalled RealAIProviderEnabled AutoRepairAllowed RepairExecuted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed FileContentsIncluded].each do |token|
   assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must expose #{token}")
 end
-%w[NewRunRecordStore safeDiagnosticRecordRoot validateDiagnosticRecordID BuildDiagnosticInput Recommend NewResultStore].each do |token|
+%w[NewRunRecordStore OpenRunRecordStoreReadOnly safeDiagnosticRecordRoot safeDiagnosticReadOnlyRoot validateDiagnosticRecordID BuildDiagnosticInput Recommend NewResultStore].each do |token|
   assert(go_runtime_diagnostic_record_source.include?(token), "Go Runtime diagnostic run records must implement #{token}")
 end
 assert(go_runtime_diagnostic_record_source.include?("refusing to use filesystem root"), "Go Runtime diagnostic run records must reject filesystem root state roots")
@@ -1391,9 +1983,14 @@ end
 %w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StateRootPathExposed BackendStarted AIProviderCalled RealAIProviderEnabled AutoRepairAllowed RepairExecuted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed FileContentsIncluded].each do |token|
   assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must expose #{token}")
 end
-%w[History historyRecord runHistorySummary applicationIDPattern].each do |token|
+%w[History historyRecord runHistorySummary].each do |token|
   assert(go_runtime_diagnostic_history_source.include?(token), "Go Runtime diagnostic run history must implement #{token}")
 end
+assert(
+  go_runtime_diagnostic_history_source.include?("applicationIDPattern") ||
+    go_runtime_diagnostic_history_source.include?("appid.Valid"),
+  "Go Runtime diagnostic run history must validate application ids"
+)
 
 go_runtime_diagnostic_history_preview_source = read_project_file("internal/runtime/appidentity/diagnostic_history.go")
 %w[DiagnosticHistoryPreview DiagnosticHistoryCenterSummary xnix.runtime.diagnostic_history_preview.v1 diagnostic-history-preview go-runtime-state-root-diagnostic-run-history+kde-read-model KDE\ Plasma GetDiagnostics GetDiagnosticHistoryPreview compatibility_center not-run needs-review blocked healthy].each do |token|
@@ -1413,6 +2010,81 @@ go_runtime_diagnostic_record_cli_source = [
 ].join("\n")
 %w[diagnostic-run-record diagnostic-run-history diagnostic-history-preview state-root fixture run-id NewRunRecordStore RunRecordRequest NewDiagnosticHistoryPreview xnix.runtime.diagnostic_run_record.v1 xnix.runtime.diagnostic_run_history.v1 xnix.runtime.diagnostic_history_preview.v1 compatibility_center state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed].each do |token|
   assert(go_runtime_diagnostic_record_cli_source.include?(token), "Go Runtime diagnostic run record CLI must include #{token}")
+end
+
+go_runtime_support_bundle_source = read_project_file("internal/runtime/appidentity/support_bundle_manifest.go")
+%w[SupportBundleManifestPreview SupportBundleManifestOptions SupportBundlePrivacyRedaction SupportBundleOmittedEvidenceCounts support-bundle-manifest-preview redacted-offline-support-bundle-manifest xnix.runtime.support_bundle_manifest.v1 GetSupportBundleManifest GetSupportBundleManifestPreview diagnostic-history-preview ai-diagnostic-input-preview ai-diagnostic-recommendation-preview runtime-version application-identity diagnostic-summaries failing-signals repair-recommendations ai-diagnostic-boundary omitted-evidence].each do |token|
+  assert(go_runtime_support_bundle_source.include?(token), "Go Runtime support bundle manifest must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible OfflineOnly ArchiveCreated FileContentRead FilePathsExposed AIProviderCalled AIProviderCallEnabled AutoRepairRequested AutoRepairExecuted BackendProcessStarted HostRootModified StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed NetworkRequired PrivilegedContainerRequired].each do |token|
+  assert(go_runtime_support_bundle_source.include?(token), "Go Runtime support bundle manifest must expose #{token}")
+end
+%w[SupportBundleManifestPreview NewDiagnosticHistoryPreview AIDiagnosticInputPreview AIDiagnosticRecommendationPreview validateNoBackendTerms supportBundleOmittedEvidence supportBundleFailingSignalIDs supportBundleRecommendationCategories].each do |token|
+  assert(go_runtime_support_bundle_source.include?(token), "Go Runtime support bundle manifest must implement #{token}")
+end
+
+go_runtime_support_bundle_test_source = read_project_file("internal/runtime/appidentity/support_bundle_manifest_test.go")
+%w[TestSupportBundleManifestPreviewSummarizesRedactedEvidence TestSupportBundleManifestPreviewHandlesEmptyHistory TestSupportBundleManifestPreviewRejectsMismatchedHistory support-bundle-manifest-preview redacted-offline-support-bundle-manifest archive_created file_content_read ai_provider_called host_root_modified state_root_path_exposed raw_command_exposed].each do |token|
+  assert(go_runtime_support_bundle_test_source.include?(token), "Go Runtime support bundle manifest tests must include #{token}")
+end
+
+go_runtime_support_bundle_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/support_bundle_manifest_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/support_bundle_manifest_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[support-bundle-manifest-preview runSupportBundleManifestPreview parseSupportBundleManifestPreviewSource OpenRunRecordStoreReadOnly runtime-root state-root xnix.runtime.support_bundle_manifest.v1 GetSupportBundleManifest GetSupportBundleManifestPreview redacted-offline-support-bundle-manifest archive_created file_content_read ai_provider_called host_root_modified].each do |token|
+  assert(go_runtime_support_bundle_cli_source.include?(token), "Go Runtime support bundle manifest CLI must include #{token}")
+end
+
+go_runtime_multi_application_install_queue_source = read_project_file("internal/runtime/appidentity/multi_application_install_queue.go")
+%w[MultiApplicationInstallQueuePreview MultiApplicationInstallItem MultiApplicationInstallCounts multi-application-install-queue-preview review-only-multi-application-install-queue xnix.runtime.multi_application_install_queue.v1 GetMultiApplicationInstallQueue GetMultiApplicationInstallQueuePreview registry+compatibility-install-preview].each do |token|
+  assert(go_runtime_multi_application_install_queue_source.include?(token), "Go Runtime multi-application install queue must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly QueuePersisted RequestObjectsCreated ArtifactsStaged ArtifactsDownloaded NetworkRequestCreated HostPackageManagerInvoked DesktopActivationStarted InstallStarted BackendProcessStarted LaunchEnabled ExecutionStarted SettingsPersisted HostRootModified PrivilegedContainerRequired StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_multi_application_install_queue_source.include?(token), "Go Runtime multi-application install queue must expose #{token}")
+end
+%w[CompatibilityInstallPlanPreview validateNoBackendTerms multiApplicationInstallItemState multiApplicationInstallQueueStatus uniqueSortedStrings].each do |token|
+  assert(go_runtime_multi_application_install_queue_source.include?(token), "Go Runtime multi-application install queue must implement #{token}")
+end
+
+go_runtime_multi_application_install_queue_test_source = read_project_file("internal/runtime/appidentity/multi_application_install_queue_test.go")
+%w[TestMultiApplicationInstallQueuePreviewAggregatesInstallPlans TestMultiApplicationInstallQueuePreviewRejectsEmptyQueue TestMultiApplicationInstallQueuePreviewRejectsBadMode multi-application-install-queue-preview review-only-multi-application-install-queue request_objects_created artifacts_staged network_request_created host_package_manager_invoked backend_process_started host_root_modified raw_command_exposed].each do |token|
+  assert(go_runtime_multi_application_install_queue_test_source.include?(token), "Go Runtime multi-application install queue tests must include #{token}")
+end
+
+go_runtime_multi_application_install_queue_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/multi_application_install_queue_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/multi_application_install_queue_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[multi-application-install-queue-preview runMultiApplicationInstallQueuePreview parseMultiApplicationInstallQueueSource repeatedAppIDs LoadRecipeFromRegistry ParseRegistry xnix.runtime.multi_application_install_queue.v1 GetMultiApplicationInstallQueue GetMultiApplicationInstallQueuePreview review-only-multi-application-install-queue request_objects_created artifacts_staged host_root_modified backend_details_exposed].each do |token|
+  assert(go_runtime_multi_application_install_queue_cli_source.include?(token), "Go Runtime multi-application install queue CLI must include #{token}")
+end
+
+go_runtime_application_upgrade_impact_source = read_project_file("internal/runtime/appidentity/application_upgrade_impact.go")
+%w[ApplicationUpgradeImpactPreview ApplicationUpgradeImpactSection ApplicationUpgradeImpactCounts application-upgrade-impact-preview review-only-application-upgrade-impact xnix.runtime.application_upgrade_impact.v1 GetApplicationUpgradeImpact GetApplicationUpgradeImpactPreview registry+compatibility-install-preview+desktop-activation-evidence recipe-metadata package-source artifact-digests backend-profile portal-permissions snapshot-requirements desktop-activation diagnostics candidate-newer same-version candidate-older changed-without-version].each do |token|
+  assert(go_runtime_application_upgrade_impact_source.include?(token), "Go Runtime application upgrade impact must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly RecipeWritten RegistryMigrated RequestObjectsCreated ArtifactsStaged ArtifactsDownloaded NetworkRequestCreated HostPackageManagerInvoked SettingsPersisted DesktopActivationStarted DesktopFilesWritten BackendProcessStarted LaunchEnabled ExecutionStarted HostRootModified PrivilegedContainerRequired StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_application_upgrade_impact_source.include?(token), "Go Runtime application upgrade impact must expose #{token}")
+end
+%w[CompatibilityInstallPlanPreview validateNoBackendTerms recipeVersionRelation compareSemanticVersions applicationUpgradeImpactOverallState applicationUpgradeArtifactState].each do |token|
+  assert(go_runtime_application_upgrade_impact_source.include?(token), "Go Runtime application upgrade impact must implement #{token}")
+end
+
+go_runtime_application_upgrade_impact_test_source = read_project_file("internal/runtime/appidentity/application_upgrade_impact_test.go")
+%w[TestApplicationUpgradeImpactPreviewClassifiesNewerCandidate TestApplicationUpgradeImpactPreviewClassifiesSameAndOlderCandidates TestApplicationUpgradeImpactPreviewBlocksUntrustedProductionCandidate TestApplicationUpgradeImpactPreviewRejectsMalformedCandidate TestApplicationUpgradeImpactPreviewBlocksCandidateIdentityDrift application-upgrade-impact-preview review-only-application-upgrade-impact recipe_written registry_migrated artifacts_staged network_request_created host_package_manager_invoked backend_process_started host_root_modified raw_command_exposed].each do |token|
+  assert(go_runtime_application_upgrade_impact_test_source.include?(token), "Go Runtime application upgrade impact tests must include #{token}")
+end
+
+go_runtime_application_upgrade_impact_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/application_upgrade_impact_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/application_upgrade_impact_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[application-upgrade-impact-preview runApplicationUpgradeImpactPreview parseApplicationUpgradeImpactPreviewSource candidate-registry candidate-app LoadRecipeFromRegistry xnix.runtime.application_upgrade_impact.v1 GetApplicationUpgradeImpact GetApplicationUpgradeImpactPreview review-only-application-upgrade-impact recipe_written registry_migrated artifacts_staged host_root_modified backend_details_exposed recipe digest mismatch].each do |token|
+  assert(go_runtime_application_upgrade_impact_cli_source.include?(token), "Go Runtime application upgrade impact CLI must include #{token}")
 end
 
 go_runtime_kde_shell_source = read_project_file("internal/runtime/appidentity/kde_shell_surface.go")
@@ -1447,22 +2119,32 @@ end
 
 portal_broker_source = [
   read_project_file("internal/runtime/portal/request.go"),
-  read_project_file("internal/runtime/portal/broker.go")
+  read_project_file("internal/runtime/portal/broker.go"),
+  read_project_file("internal/runtime/portal/ledger.go")
 ].join("\n")
 %w[Package portal Broker FakeBroker NewFakeBroker CreateRequest Resolve Complete Cancel Get List RequestSpec Request RequestState PermissionState PortalDestination PortalObjectPath SupportedOperations pending-user-mediation granted denied cancelled failed completed org.freedesktop.portal.Desktop org.freedesktop.portal.FileChooser org.freedesktop.portal.OpenURI org.freedesktop.portal.Print org.freedesktop.portal.Screenshot org.freedesktop.portal.Clipboard org.freedesktop.portal.Camera org.freedesktop.portal.RemoteDesktop file-open uri-open print screenshot clipboard camera remote-desktop].each do |token|
   assert(portal_broker_source.include?(token), "Portal broker must include #{token}")
 end
+%w[Ledger NewLedger Record xnix.runtime.portal_request_record.v1 portal-permission-request-record go-runtime-state-root-portal-broker RequestRelativePath RealPortalCallEnabled RequestObjectCreated PermissionGranted ExecutionApproved StateRootPathExposed HostRootModified BackendDetailsExposed PrivilegedContainerRequired].each do |token|
+  assert(portal_broker_source.include?(token), "Portal request ledger must include #{token}")
+end
 %w[UserMediationRequired RequestObjectRequired DirectAccessAllowed Recoverable HostPermissionChanged BackendDetailsExposed PermissionPending PermissionGranted PermissionDenied PermissionNotGranted OutcomeGranted OutcomeDenied OutcomeCancelled OutcomeFailed].each do |token|
   assert(portal_broker_source.include?(token), "Portal broker must expose #{token}")
 end
-assert(portal_broker_source.include?("applicationIDPattern"), "Portal broker must validate application ids")
+assert(
+  portal_broker_source.include?("applicationIDPattern") ||
+    portal_broker_source.include?("appid.Valid"),
+  "Portal broker must validate application ids"
+)
 assert(portal_broker_source.include?("handleToken"), "Portal broker must create deterministic request handles")
 
 portal_broker_test_source = [
   read_project_file("internal/runtime/portal/request_test.go"),
-  read_project_file("internal/runtime/portal/broker_test.go")
+  read_project_file("internal/runtime/portal/broker_test.go"),
+  read_project_file("internal/runtime/portal/ledger_test.go"),
+  read_project_file("cmd/xnix-runtime-go/runtime_safety_cli_test.go")
 ].join("\n")
-%w[TestNewRequestAskOperationStartsPending TestNewRequestDenyOperationIsTerminal TestNewRequestRejectsBadInput TestSupportedOperationsSorted TestFakeBrokerGrantThenCompleteFlow TestFakeBrokerFailedIsRecoverableThenRetried TestFakeBrokerCompleteRequiresGrant TestFakeBrokerCancelPending TestFakeBrokerListAndGetTrackInCreationOrder].each do |token|
+%w[TestNewRequestAskOperationStartsPending TestNewRequestDenyOperationIsTerminal TestNewRequestRejectsBadInput TestSupportedOperationsSorted TestFakeBrokerGrantThenCompleteFlow TestFakeBrokerFailedIsRecoverableThenRetried TestFakeBrokerCompleteRequiresGrant TestFakeBrokerCancelPending TestFakeBrokerListAndGetTrackInCreationOrder TestLedgerPersistsGrantAndCompletionWithoutRealPortal TestPortalRequestRecordCommandPersistsPermissionFlow].each do |token|
   assert(portal_broker_test_source.include?(token), "Portal broker tests must include #{token}")
 end
 
@@ -1626,7 +2308,7 @@ assert(dbus_client_source.include?("value.to_i"), "D-Bus Runtime client must par
 assert(dbus_client_source.include?("value.start_with?(\"[\")"), "D-Bus Runtime client must parse string arrays")
 
 runtime_owner_candidate_smoke_source = read_project_file("scripts/runtime_owner_candidate_smoke.rb")
-%w[dbus-run-session xnix-runtime-owner smoke-owner dispatch-read service-call lifecycle-log smoke-batch xnix.runtime.owner_candidate.v1 xnix.runtime.owner_read_dispatch.v1 xnix.runtime.owner_service_call.v1 xnix.runtime.owner_lifecycle_event.v1 xnix.runtime.owner_smoke_batch.v1 runtime-owner-lifecycle-event runtime-owner-service-call runtime-owner-smoke-batch-record org.xnix.Compatibility1.Error.WriteMethodDisabled session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed preview-complete].each do |token|
+%w[dbus-run-session xnix-runtime-owner smoke-owner dispatch-read service-call lifecycle-log smoke-batch session-bus-smoke xnix.runtime.owner_candidate.v1 xnix.runtime.owner_read_dispatch.v1 xnix.runtime.owner_service_call.v1 xnix.runtime.owner_lifecycle_event.v1 xnix.runtime.owner_smoke_batch.v1 xnix.runtime.owner_session_bus_smoke.v1 runtime-owner-lifecycle-event runtime-owner-service-call runtime-owner-smoke-batch-record runtime-owner-session-bus-smoke-step restricted-private-session-bus-owner-smoke org.xnix.Compatibility1.Error.WriteMethodDisabled org.xnix.Compatibility1.Error.UnsupportedMethod session_bus_claimed production_bus_claimed system_service_started network_required host_root_modified privileged_container_required backend_details_exposed preview-complete].each do |token|
   assert(runtime_owner_candidate_smoke_source.include?(token), "Runtime owner candidate smoke must include #{token}")
 end
 
@@ -1641,6 +2323,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
   owner-read-dispatch-all-read-methods
   owner-read-dispatch-contract-subset
   owner-smoke-batch-source
+  owner-session-bus-smoke-source
   go-owner-smoke-bridge
   runtime-dispatch
   dbus-client-definitions
@@ -1661,7 +2344,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
 end
 
 runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
-%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner_read_dispatch_method_count drift_detected host_root_modified backend_details_exposed].each do |token|
+%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner-session-bus-smoke-source owner_read_dispatch_method_count owner_session_bus_smoke_step_count drift_detected host_root_modified backend_details_exposed].each do |token|
   assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
 end
 
@@ -1695,7 +2378,19 @@ implementation_evidence_report_source = read_project_file("scripts/implementatio
   codex/environment-lifecycle-state
   codex/implementation-evidence-harness
   M1
+  M5
   M9
+  kde_first_presence_smoke.rb
+  desktop_safety_policy.go
+  desktop-safety-policy-preview
+  xnix.runtime.desktop_safety_policy.v1
+  xnix.kde_first_presence_smoke.v1
+  kde-first-presence-smoke
+  route_baseline
+  entrypoint_count
+  settings_field_ids
+  forbidden_user_terms
+  safety_false_keys
   contract-only
   fixture-implemented
   state-root-implemented
@@ -1732,7 +2427,12 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   suggested_branch
   codex/runtime-owner-read-service
   M1
+  M5
   M9
+  kde-activation-shell-materialization
+  kde_first_presence_smoke.rb
+  xnix.kde_first_presence_smoke.v1
+  all seven KDE entry points
   smoke-owned
   fixture-implemented
   state-root-implemented
@@ -1743,6 +2443,323 @@ implementation_evidence_report_test_source = read_project_file("test/test_implem
   backend_launch_enabled
 ].each do |token|
   assert(implementation_evidence_report_test_source.include?(token), "Implementation evidence report test must include #{token}")
+end
+
+mainline_integration_review_source = read_project_file("scripts/mainline_integration_review.rb")
+%w[
+  mainline-integration-review
+  xnix.runtime.mainline_integration_review.v1
+  docs/mainline-integration-checkpoint.md
+  docs/claude-code-implementation-packages.md
+  planning-documents
+  version-and-product-metadata
+  cw1-runtime-owner-read-boundary
+  runtime_route_convergence
+  shared-runtime-cli-plumbing
+  cw2-recipe-artifact-trust
+  cw3-runtime-state-backend-lifecycle
+  cw5-portal-permission-safety
+  cw8-execution-ledger-session-evidence
+  cw4-kde-entrypoint-consumers
+  cw6-snapshot-rollback-store
+  cw7-ai-diagnostic-privacy
+  cw10-evidence-drift-harness
+  blocked-protected-claude-owned-file
+  unclassified
+  .gocache/
+  tmp/
+  --status-fixture
+  markdown
+  safe_to_stage_all
+  review_matrix
+  required_verification
+  required_evidence
+  safety_guards
+  never-stage-all
+  docker_or_qemu_required
+  host_root_modified
+  backend_launch_enabled
+].each do |token|
+  assert(mainline_integration_review_source.include?(token), "Mainline integration review script must include #{token}")
+end
+
+mainline_integration_review_test_source = read_project_file("test/test_mainline_integration_review.rb")
+%w[
+  --status-fixture
+  mainline-integration-review
+  protected_claude_file_modified
+  excluded_file_count
+  safe_to_stage_all
+  review_matrix
+  required_verification
+  required_evidence
+  Safety guards
+  planning-documents
+  cw1-runtime-owner-read-boundary
+  shared-runtime-cli-plumbing
+  cw2-recipe-artifact-trust
+  cw3-runtime-state-backend-lifecycle
+  cw5-portal-permission-safety
+  cw8-execution-ledger-session-evidence
+  cw4-kde-entrypoint-consumers
+  cw6-snapshot-rollback-store
+  cw7-ai-diagnostic-privacy
+  cw10-evidence-drift-harness
+  blocked-protected-claude-owned-file
+  unclassified
+  markdown
+].each do |token|
+  assert(mainline_integration_review_test_source.include?(token), "Mainline integration review test must include #{token}")
+end
+
+release_evidence_index_source = read_project_file("scripts/release_evidence_index.rb")
+%w[
+  release-evidence-index
+  xnix.runtime.release_evidence_index.v1
+  implementation-evidence+contract-drift+mainline-review+kde-first-presence
+  REPORT_COMMANDS
+  CLAIM_DEFINITIONS
+  runtime-owner-read-boundary
+  recipe-artifact-trust
+  runtime-state-backend-lifecycle
+  portal-snapshot-safety
+  kde-seven-entrypoints
+  execution-session-evidence
+  diagnostics-repair-ai-boundary
+  evidence-drift-harness
+  protected-claude-file
+  unclassified-files
+  product-image-qemu-acceptance
+  restricted-heavy-smoke-skipped
+  implemented
+  fixture-only
+  contract-only
+  blocked
+  skipped
+  human-authorized
+  malformed-report
+  docker_executed
+  qemu_executed
+  network_checks_run
+  package_manager_invoked
+  backend_launch_enabled
+  host_root_modified
+  automatic_staging_enabled
+  automatic_release_tagging_enabled
+].each do |token|
+  assert(release_evidence_index_source.include?(token), "Release evidence index script must include #{token}")
+end
+
+release_evidence_index_test_source = read_project_file("test/test_release_evidence_index.rb")
+%w[
+  release-evidence-index
+  xnix.runtime.release_evidence_index.v1
+  implemented
+  fixture-only
+  contract-only
+  blocked
+  skipped
+  malformed_report_detected
+  protected-file
+  unclassified-file
+  human-authorized
+  product-image-qemu-acceptance
+  restricted-heavy-smoke-skipped
+  docker_executed
+  qemu_executed
+  network_checks_run
+  package_manager_invoked
+  backend_launch_enabled
+  host_root_modified
+  automatic_staging_enabled
+  automatic_release_tagging_enabled
+].each do |token|
+  assert(release_evidence_index_test_source.include?(token), "Release evidence index test must include #{token}")
+end
+
+claude_code_dispatch_runbook_source = read_project_file("docs/claude-code-dispatch-runbook.md")
+[
+  "Claude Code Dispatch Runbook",
+  "docs/claude-code-mainline-task-batch.md",
+  "docs/claude-code-third-wave-task-batch.md",
+  "docs/claude-code-fourth-wave-task-batch.md",
+  "docs/claude-code-fifth-wave-task-batch.md",
+  "docs/claude-code-sixth-wave-task-batch.md",
+  "docs/claude-code-seventh-wave-task-batch.md",
+  "docs/mainline-integration-checkpoint.md",
+  "docs/claude-code-implementation-packages.md",
+  "CB1",
+  "CB2",
+  "CB3",
+  "CB4",
+  "CB5",
+  "CB6",
+  "CB7",
+  "CB8",
+  "CB9",
+  "protected_claude_file_modified",
+  "unclassified_file_count",
+  "mainline_integration_review.rb",
+  "runtime_contract_drift_report.rb",
+  "implementation_evidence_report.rb",
+  "git diff --check",
+  "Never run",
+  "git add ."
+].each do |token|
+  assert(claude_code_dispatch_runbook_source.include?(token), "Claude Code dispatch runbook must include #{token}")
+end
+
+claude_code_second_wave_source = read_project_file("docs/claude-code-second-wave-task-batch.md")
+[
+  "Claude Code Second-Wave Task Batch",
+  "SW1",
+  "SW2",
+  "SW3",
+  "SW4",
+  "SW5",
+  "SW6",
+  "SW7",
+  "SW8",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "KDE",
+  "Go",
+  "Runtime",
+  "Docker",
+  "QEMU",
+  "host-root mutation",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_second_wave_source.include?(token), "Claude Code second-wave task batch must include #{token}")
+end
+
+claude_code_third_wave_source = read_project_file("docs/claude-code-third-wave-task-batch.md")
+[
+  "Claude Code Third-Wave Task Batch",
+  "TW1",
+  "TW2",
+  "TW3",
+  "TW4",
+  "TW5",
+  "TW6",
+  "TW7",
+  "TW8",
+  "Runtime route convergence plan",
+  "Action queue receipt dependency graph",
+  "Portal-to-execution preflight join",
+  "Snapshot baseline readiness join",
+  "AI diagnostics privacy corpus",
+  "KDE action-card evidence deck",
+  "Runtime owner unsupported-route hardening",
+  "Restricted acceptance dashboard",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Docker or QEMU execution unless a human explicitly authorizes a restricted smoke",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_third_wave_source.include?(token), "Claude Code third-wave task batch must include #{token}")
+end
+
+claude_code_fourth_wave_source = read_project_file("docs/claude-code-fourth-wave-task-batch.md")
+[
+  "Claude Code Fourth-Wave Task Batch",
+  "FW1",
+  "FW2",
+  "FW3",
+  "FW4",
+  "FW5",
+  "FW6",
+  "FW7",
+  "FW8",
+  "Runtime evidence audit timeline",
+  "Portal permission lifecycle dashboard",
+  "Snapshot restore rehearsal plan",
+  "Backend capability fixture probe harness",
+  "Settings change dependency review",
+  "Diagnostics repair playbook review queue",
+  "Desktop activation materialization audit",
+  "Restricted release readiness packet",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Docker or QEMU execution unless a human explicitly authorizes a restricted smoke",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_fourth_wave_source.include?(token), "Claude Code fourth-wave task batch must include #{token}")
+end
+
+claude_code_fifth_wave_source = read_project_file("docs/claude-code-fifth-wave-task-batch.md")
+[
+  "Claude Code Fifth-Wave Task Batch",
+  "F5W1",
+  "F5W2",
+  "F5W3",
+  "F5W4",
+  "F5W5",
+  "F5W6",
+  "F5W7",
+  "F5W8",
+  "KDE journey evidence stitcher",
+  "Compatibility onboarding checklist",
+  "Offline support bundle manifest",
+  "Multi-application install queue preview",
+  "Runtime state maintenance planner",
+  "Recipe update migration preview",
+  "KDE notification digest model",
+  "Restricted acceptance fixture suite",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Docker or QEMU execution unless a human explicitly authorizes a restricted smoke",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_fifth_wave_source.include?(token), "Claude Code fifth-wave task batch must include #{token}")
+end
+
+claude_code_sixth_wave_source = read_project_file("docs/claude-code-sixth-wave-task-batch.md")
+[
+  "Claude Code Sixth-Wave Task Batch",
+  "S6W1",
+  "S6W2",
+  "S6W3",
+  "S6W4",
+  "S6W5",
+  "S6W6",
+  "S6W7",
+  "S6W8",
+  "Support case timeline preview",
+  "Desktop deactivation dry-run plan",
+  "Recipe conflict and pin audit",
+  "Portal permission renewal preview",
+  "Snapshot restore candidate ranking",
+  "Compatibility settings profile migration preview",
+  "Offline application fixture matrix",
+  "Merge readiness packet aggregator",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Docker or QEMU execution unless a human explicitly authorizes a restricted smoke",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_sixth_wave_source.include?(token), "Claude Code sixth-wave task batch must include #{token}")
+end
+
+claude_code_seventh_wave_source = read_project_file("docs/claude-code-seventh-wave-task-batch.md")
+[
+  "Claude Code Seventh-Wave Task Batch",
+  "S7W1",
+  "S7W2",
+  "S7W3",
+  "S7W4",
+  "S7W5",
+  "S7W6",
+  "S7W7",
+  "S7W8",
+  "Application upgrade impact preview",
+  "Runtime policy explanation cards",
+  "State-root quota and retention preview",
+  "Crash and hang signal summary preview",
+  "Compatibility backend fallback preview",
+  "KDE search visibility plan",
+  "Permission evidence audit preview",
+  "Release evidence index",
+  "Do not modify `docs/claude-code-implementation-packages.md`",
+  "Docker or QEMU execution unless a human explicitly authorizes a restricted smoke",
+  "Copyable Claude Code prompt"
+].each do |token|
+  assert(claude_code_seventh_wave_source.include?(token), "Claude Code seventh-wave task batch must include #{token}")
 end
 
 execution_ledger_source = read_project_file("internal/runtime/execution/ledger.go")
@@ -1757,6 +2774,9 @@ execution_ledger_source = read_project_file("internal/runtime/execution/ledger.g
   LaunchEnabled
   BackendStarted
   PermissionGranted
+  PortalPermissionReceiptCount
+  portal_permission_receipt_relative_paths
+  portal_permission_receipt_consumed
   HostRootModified
   NetworkRequired
   PrivilegedContainerRequired
@@ -1767,16 +2787,45 @@ execution_ledger_source = read_project_file("internal/runtime/execution/ledger.g
   assert(execution_ledger_source.include?(token.gsub("\\ ", " ")), "Execution ledger must include #{token}")
 end
 
+execution_session_source = read_project_file("internal/runtime/execution/session.go")
+%w[
+  xnix.runtime.execution_session_record.v1
+  execution-session-status-record
+  go-runtime-state-root-execution-session
+  execution-ledger
+  sessions
+  transaction_relative_path
+  StatusPersisted
+  SessionActive
+  LiveStateObserved
+  WindowObserved
+  TaskManagerEntryActive
+  KWinRuleApplied
+  LiveTrayBridgeEnabled
+  LaunchEnabled
+  ExecutionStarted
+  BackendProcessStarted
+  HostRootModified
+  BackendDetailsExposed
+].each do |token|
+  assert(execution_session_source.include?(token), "Execution session record must include #{token}")
+end
+
 execution_ledger_cli_source = read_project_file("cmd/xnix-runtime-go/execution_ledger_commands.go")
 %w[
   execution-ledger-record
+  execution-session-record
   state-root
+  request-id
   recipe-trust
   snapshot-baseline
   portal-required
   portal-granted
+  portal-request
+  executionLedgerPortalReceipts
   NewLedger
   Record
+  RecordSession
 ].each do |token|
   assert(execution_ledger_cli_source.include?(token), "Execution ledger CLI must include #{token}")
 end
@@ -1789,6 +2838,11 @@ execution_ledger_cli_test_source = read_project_file("cmd/xnix-runtime-go/execut
   state_root_path_exposed
   host_root_modified
   backend_details_exposed
+  TestExecutionLedgerRecordCommandConsumesPortalReceipt
+  TestExecutionLedgerRecordCommandBlocksDeniedPortalReceipt
+  TestExecutionSessionRecordCommandPersistsStatusFromLedger
+  execution-session-record
+  portal_permission_receipt_count
 ].each do |token|
   assert(execution_ledger_cli_test_source.include?(token), "Execution ledger CLI test must include #{token}")
 end
@@ -1807,6 +2861,10 @@ artifact_stage_source = read_project_file("internal/runtime/artifact/stage.go")
   host_root_modified
   backend_launch_enabled
   backend_details_exposed
+  ValidateStageReceipt
+  RequiredStaged
+  artifact stage receipt digest mismatch
+  artifact stage receipt contains unsafe side effects
 ].each do |token|
   assert(artifact_stage_source.include?(token), "Artifact stage receipt must include #{token}")
 end

@@ -7,6 +7,7 @@ require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 MAINLINE_DOCUMENT = "docs/claude-code-mainline-implementation-plan.md"
+WINDOWS_WORKSTREAM_DOCUMENT = "docs/claude-code-windows-compatibility-workstreams.md"
 MAINLINE_FIRST_WAVE = [
   {
     mainline_package: "M1",
@@ -31,6 +32,36 @@ MAINLINE_FIRST_WAVE = [
     suggested_branch: "codex/implementation-evidence-harness",
     reason: "Contract-heavy work needs an evidence harness that keeps empty domains visible.",
     minimal_mergeable_outcome: "JSON and Markdown reports classify domain evidence and fail on orphan contract-only surfaces."
+  }
+].freeze
+WINDOWS_COMPATIBILITY_FIRST_WAVE = [
+  {
+    workstream: "CW1",
+    mainline_package: "M1",
+    suggested_branch: "codex/cw-runtime-owner-read-boundary",
+    reason: "Windows compatibility needs a Go-owned Runtime read boundary before KDE and execution surfaces depend on it.",
+    minimal_mergeable_outcome: "A constrained Go Runtime owner serves read-only Runtime methods through owner routes and keeps writes disabled."
+  },
+  {
+    workstream: "CW2",
+    mainline_package: "M2",
+    suggested_branch: "codex/cw-recipe-artifact-trust",
+    reason: "KDE presentation and execution planning must consume digest-verified recipes and artifacts.",
+    minimal_mergeable_outcome: "Local recipes and fixture artifacts verify digests, stage under explicit roots, and fail closed for invalid inputs."
+  },
+  {
+    workstream: "CW3",
+    mainline_package: "M3",
+    suggested_branch: "codex/cw-runtime-state-lifecycle",
+    reason: "Windows application status, diagnostics, and future launch gates need durable state-root lifecycle evidence.",
+    minimal_mergeable_outcome: "Runtime state-root lifecycle records expose missing, planned, staged, ready, repair-required, and blocked states without backend launch."
+  },
+  {
+    workstream: "CW10",
+    mainline_package: "M8",
+    suggested_branch: "codex/cw-evidence-drift-harness",
+    reason: "The KDE-first Windows compatibility strategy needs CI-friendly evidence gates to prevent more contract-only expansion.",
+    minimal_mergeable_outcome: "Reports fail on orphan Runtime contracts, KDE entry-point drift, preview-only regressions, and missing workstream ownership."
   }
 ].freeze
 WRITE_METHODS = %w[
@@ -71,6 +102,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/owner/lifecycle_test.go
       internal/runtime/owner/smoke_batch.go
       internal/runtime/owner/smoke_batch_test.go
+      internal/runtime/owner/session_bus.go
+      internal/runtime/owner/session_bus_test.go
     ],
     state_files: [],
     smoke_files: %w[
@@ -86,12 +119,13 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/owner/service.go" => %w[xnix.runtime.owner_service_call.v1 runtime-owner-service-call go-runtime-owner-in-process-service Service],
       "internal/runtime/owner/lifecycle.go" => %w[xnix.runtime.owner_lifecycle_event.v1 runtime-owner-lifecycle-event preview-complete],
       "internal/runtime/owner/smoke_batch.go" => %w[xnix.runtime.owner_smoke_batch.v1 runtime-owner-smoke-batch-record restricted-session-owner-call-batch NewService service.Call runtime-owner-service-call],
+      "internal/runtime/owner/session_bus.go" => %w[xnix.runtime.owner_session_bus_smoke.v1 runtime-owner-session-bus-smoke-step restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript private-session-bus-smoke],
       "runtime/dbus/xnix_compatd_smoke.c" => %w[go_owner_read_dispatch go_owner_service_call5 add_go_owner_dispatch_bridge_fields add_go_owner_dispatch_bridge_fields2 add_go_owner_dispatch_bridge_fields3 add_go_owner_dispatch_bridge_fields5 add_go_owner_dispatch_payload_fields add_go_owner_dispatch_payload_fields2 add_go_owner_dispatch_payload_fields3 go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_json go_owner_service_call_available go_owner_service_call_request_type go_owner_service_call_json xnix.runtime.owner_service_call.v1 runtime-owner-service-call go-runtime-owner-dispatch+c-smoke-bridge ListApplications GetApplication GetDiagnostics GetEngineCatalog GetRunPlan GetDesktopActivationManifest GetDesktopActivationTransactionPreview GetDesktopActivationStatus GetKDEIntegrationStatus GetKDEShellIntegrationPlan GetKDEApplicationSurfacePlan GetDesktopEntryPlan GetDesktopIconPlan GetTaskManagerIdentityPlan GetDesktopResourceBridgePlan GetKWinWindowRulePlan GetFileAssociationPlan GetNotificationPlan GetTrayStatus GetKRunnerQueryPlan GetCompatibilitySettingsChangePlan GetCompatibilityModeSwitchPlan GetCompatibilityPermissionReviewPlan GetCompatibilityReviewFlowPlan GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt],
       "runtime/dbus/xnix_compatd_runtime_models.inc" => %w[GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetPortalRequestPlan GetApplicationStateRoot GetCompatibilityPackageSource GetCompatibilityAcquisitionPreflight GetCompatibilityArtifactManifest GetCompatibilityInstallPlan GetBackendBinding GetBackendCapabilityMatrix GetBackendSelectionPlan GetBackendLifecycle GetBackendEnvironmentPlan GetRepairPlan GetTestPlan GetTestResult GetExecutionReadiness GetLaunchIntent GetAIDiagnosticInput GetAIDiagnosticRecommendation GetAIRepairApprovalGate GetSnapshotPlan GetPortalAccessPolicy GetCompatibilitySettings GetCompatibilitySettingsChangePlan GetCompatibilityModeSwitchPlan GetCompatibilityPermissionReviewPlan GetCompatibilityReviewFlowPlan GetCompatibilityActionQueue GetCompatibilityActionReviewReceipt GetCompatibilityCenterSummary],
       "runtime/dbus/xnix_compatd_kde_center.inc" => %w[GetKDECenterPage GetKDECenterPageSections GetKDECenterPageSectionDetail add_go_owner_dispatch_payload_fields2 add_go_owner_dispatch_payload_fields3 go-kde-center-page-preview go-kde-center-page-sections-preview go-kde-center-page-section-detail-preview],
       "internal/runtime/appidentity/runtime_owner_readiness.go" => %w[ProductionOwnerEnabled ProductionBusClaimed WriteMethodsEnabled]
     },
-    summary: "The Go owner candidate has an in-process service-call boundary, D-Bus service-call bridge evidence, full D-Bus read dispatch coverage, lifecycle JSONL, service-call smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description, Runtime owner readiness payloads, foundation catalog/status payloads, KDE shell, desktop activation payloads, seven-entry-point payloads, second-ring KDE resource payloads, install-input payloads, backend lifecycle payloads, execution readiness payloads, AI safety payloads, settings/review payloads, Compatibility Center action payloads, and KDE Compatibility Center page payloads; production ownership remains gated."
+    summary: "The Go owner candidate has an in-process service-call boundary, private session-bus smoke transcript evidence, D-Bus service-call bridge evidence, full D-Bus read dispatch coverage, lifecycle JSONL, service-call smoke-batch read/write evidence, and C D-Bus bridge evidence for owner self-description, Runtime owner readiness payloads, foundation catalog/status payloads, KDE shell, desktop activation payloads, seven-entry-point payloads, second-ring KDE resource payloads, install-input payloads, backend lifecycle payloads, execution readiness payloads, AI safety payloads, settings/review payloads, Compatibility Center action payloads, and KDE Compatibility Center page payloads; production ownership remains gated."
   },
   {
     id: "recipe-artifact-trust-pipeline",
@@ -104,6 +138,7 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/artifact_manifest.go
       internal/runtime/appidentity/acquisition_preflight.go
       internal/runtime/appidentity/install_plan.go
+      internal/runtime/appidentity/application_upgrade_impact.go
     ],
     fixture_files: %w[
       internal/runtime/recipe/store.go
@@ -112,20 +147,34 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/artifact/acquire.go
       internal/runtime/artifact/cache.go
       internal/runtime/artifact/artifact_test.go
+      internal/runtime/appidentity/recipe_conflict_audit_test.go
       cmd/xnix-runtime-go/artifact_stage_commands.go
       cmd/xnix-runtime-go/artifact_stage_cli_test.go
+      cmd/xnix-runtime-go/application_upgrade_impact_commands.go
+      cmd/xnix-runtime-go/application_upgrade_impact_cli_test.go
+      cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
+      cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go
     ],
     state_files: %w[
       internal/runtime/artifact/stage.go
+      internal/runtime/appidentity/recipe_conflict_audit.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/artifact/acquire.go" => %w[ErrNetworkDisabled NewNetworkSource],
-      "internal/runtime/artifact/stage.go" => %w[xnix.runtime.artifact_stage_receipt.v1 go-runtime-local-fixture-artifact-staging artifact-ledger cache_root_path_exposed fixture_root_path_exposed package_manager_invoked],
+      "internal/runtime/artifact/stage.go" => %w[xnix.runtime.artifact_stage_receipt.v1 go-runtime-local-fixture-artifact-staging artifact-ledger ValidateStageReceipt required artifacts are not staged cache_root_path_exposed fixture_root_path_exposed package_manager_invoked],
       "cmd/xnix-runtime-go/artifact_stage_commands.go" => %w[artifact-stage-record cache-root fixture-root],
-      "internal/runtime/appidentity/runtime_owner_recipe_trust.go" => %w[ProductionRecipeTrustReady SignedRecipeValidation]
+      "internal/runtime/appidentity/install_plan.go" => %w[CompatibilityInstallPlanPreviewWithArtifactReceipt artifact_stage_receipt_ready artifact_stage_digest_verified required_artifacts_staged artifact_stage_blocking_reasons artifact-stage-receipt],
+      "cmd/xnix-runtime-go/install_plan_commands.go" => %w[artifact-receipt loadArtifactStageReceipt CompatibilityInstallPlanPreviewWithArtifactReceipt],
+      "internal/runtime/appidentity/application_upgrade_impact.go" => %w[xnix.runtime.application_upgrade_impact.v1 application-upgrade-impact-preview review-only-application-upgrade-impact candidate-newer same-version candidate-older RecipeWritten RegistryMigrated ArtifactsStaged HostRootModified],
+      "cmd/xnix-runtime-go/application_upgrade_impact_commands.go" => %w[application-upgrade-impact-preview candidate-registry candidate-app LoadRecipeFromRegistry],
+      "cmd/xnix-runtime-go/application_upgrade_impact_cli_test.go" => %w[TestApplicationUpgradeImpactPreviewCommandRendersCandidateRegistryImpact TestApplicationUpgradeImpactPreviewCommandRejectsDigestDrift recipe digest mismatch],
+      "internal/runtime/appidentity/runtime_owner_recipe_trust.go" => %w[ProductionRecipeTrustReady SignedRecipeValidation],
+      "internal/runtime/appidentity/recipe_conflict_audit.go" => %w[xnix.runtime.recipe_conflict_audit.v1 recipe-conflict-audit-preview duplicate-app-ids stale-recipe-versions unsupported-capability-claims mismatched-package-source-pins trust-policy-blockers artifact-digest-drift RecipeWritesEnabled RegistryMigrationEnabled ArtifactStagingEnabled PackageManagerInvoked HostRootModified],
+      "cmd/xnix-runtime-go/recipe_conflict_audit_commands.go" => %w[recipe-conflict-audit-preview RecipeConflictAuditOptions NewRecipeConflictAuditPreview],
+      "cmd/xnix-runtime-go/recipe_conflict_audit_cli_test.go" => %w[TestRecipeConflictAuditPreviewCLI xnix.runtime.recipe_conflict_audit.v1]
     },
-    summary: "Local recipe and artifact staging persists receipts under a controlled cache root; production signing and network fetch remain gated."
+    summary: "Local recipe and artifact staging persists receipts under a controlled cache root, validates receipt integrity, lets install readiness consume safe receipt diagnostics, previews application upgrade impact before registry migration or activation, and now audits a registry for duplicate ids, stale versions, unsupported capability claims, package-source pin mismatches, trust blockers, and artifact digest drift; production signing, network fetch, backend launch, recipe writes, and host mutation remain gated."
   },
   {
     id: "environment-lifecycle-state",
@@ -142,16 +191,40 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/environment/environment.go
       internal/runtime/environment/lifecycle.go
       internal/runtime/environment/lifecycle_test.go
+      internal/runtime/appidentity/backend_manager.go
+      internal/runtime/appidentity/backend_manager_test.go
+      internal/runtime/appidentity/backend_lifecycle_test.go
+      internal/runtime/appidentity/state_root_quota_retention_test.go
+      internal/runtime/appidentity/compatibility_backend_fallback_test.go
+      cmd/xnix-runtime-go/backend_group_cli_test.go
+      cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go
+      cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go
+      cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go
     ],
     state_files: %w[
       internal/runtime/appidentity/state_root.go
+      internal/runtime/appidentity/state_root_quota_retention.go
+      internal/runtime/appidentity/compatibility_backend_fallback.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/environment/lifecycle.go" => %w[repair-required StateBlocked],
+      "internal/runtime/appidentity/backend_manager.go" => %w[xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-state-root-backend-manager wine proton windows-vm BackendDetailsExposedToKDE BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled StateRootPathExposed],
+      "internal/runtime/appidentity/backend_manager_test.go" => %w[TestBackendManagerPreviewTracksRuntimeBackendsWithoutStartingThem TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe TestRecordBackendManagerPreviewPersistsStateRootInventory],
+      "cmd/xnix-runtime-go/main.go" => %w[backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
+      "internal/runtime/appidentity/backend_lifecycle.go" => %w[BackendLifecyclePreviewWithStateRoot RecordBackendLifecycleState BackendLifecycleRecord xnix.runtime.backend_lifecycle_record.v1 go-runtime-state-root-backend-lifecycle environment-state-root StateRootBacked StateRootPathExposed SatisfiedGates PendingGates RepairHints BlockReason],
+      "internal/runtime/appidentity/backend_lifecycle_test.go" => %w[TestBackendLifecyclePreviewConsumesEnvironmentStateRoot TestRecordBackendLifecycleStatePersistsActionsAndPreview BackendLifecyclePreviewWithStateRoot state-root],
+      "internal/runtime/appidentity/state_root_quota_retention.go" => %w[xnix.runtime.state_root_quota_retention.v1 state-root-quota-retention-preview go-runtime-state-root-quota-retention-preview snapshots diagnostics execution-receipts portal-receipts artifact-receipts activation-receipts unknown-records FileDeletionEnabled DirectoriesCreated LogTruncationEnabled ReceiptsRewritten SnapshotDeletionEnabled StateRootPathExposed HostRootModified],
+      "internal/runtime/appidentity/state_root_quota_retention_test.go" => %w[TestStateRootQuotaRetentionPreviewMissingRootDoesNotCreateDirectories TestStateRootQuotaRetentionPreviewOverQuotaAndMalformedUnknownEvidence TestStateRootQuotaRetentionPreviewActiveSessionBlocksExecutionReceipts TestStateRootQuotaRetentionPreviewRetentionExemptEvidenceIsKept],
+      "cmd/xnix-runtime-go/state_root_quota_retention_commands.go" => %w[state-root-quota-retention-preview quota-bytes active-session StateRootQuotaRetentionOptions],
+      "cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go" => %w[TestStateRootQuotaRetentionPreviewCLI TestStateRootQuotaRetentionPreviewCLIMissingRootIsReadOnly xnix.runtime.state_root_quota_retention.v1],
+      "cmd/xnix-runtime-go/backend_group_cli_test.go" => %w[backend-lifecycle-record TestBackendLifecycleRecordCommandPersistsStateTransitions --state-root state_root_backed environment-state-root],
+      "internal/runtime/appidentity/compatibility_backend_fallback.go" => %w[xnix.runtime.compatibility_backend_fallback.v1 compatibility-backend-fallback-preview local-compatibility isolated-compatibility recipe-requests-isolation blocked-missing-evidence SelectionPersisted EngineInstallEnabled BackendLaunchEnabled VMStartEnabled HostRootModified],
+      "cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go" => %w[compatibility-backend-fallback-preview CompatibilityBackendFallbackPreview],
+      "cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go" => %w[TestCompatibilityBackendFallbackPreviewCLI xnix.runtime.compatibility_backend_fallback.v1],
       "internal/runtime/appidentity/execution_readiness.go" => %w[LaunchAllowed BackendDetailsExposed]
     },
-    summary: "Runtime environment lifecycle logic exists with state-root integration; real backend starts remain disabled."
+    summary: "Runtime environment lifecycle logic exists with state-root integration; backend lifecycle records can be persisted and advanced through Go Runtime CLI actions under an explicit state root; state-root quota and retention previews can inspect snapshots, diagnostics, execution receipts, Portal receipts, artifact receipts, activation receipts, and unknown records in dry-run mode without deleting or rewriting anything; the Go backend manager tracks Wine, Proton, and Windows VM backends as internal Runtime-managed inventory, can persist that inventory under an explicit state root while hiding root paths, and exposes only safe compatibility profiles to KDE while real backend starts remain disabled."
   },
   {
     id: "portal-snapshot-control-plane",
@@ -165,19 +238,43 @@ DOMAIN_DEFINITIONS = [
     fixture_files: %w[
       internal/runtime/portal/broker.go
       internal/runtime/portal/request.go
+      internal/runtime/portal/ledger.go
+      internal/runtime/portal/read.go
       internal/runtime/portal/broker_test.go
       internal/runtime/portal/request_test.go
+      internal/runtime/portal/ledger_test.go
+      internal/runtime/portal/read_test.go
+      internal/runtime/appidentity/permission_evidence_audit_test.go
+      internal/runtime/appidentity/snapshot_restore_candidates_test.go
+      cmd/xnix-runtime-go/runtime_safety_cli_test.go
+      cmd/xnix-runtime-go/permission_evidence_audit_commands.go
+      cmd/xnix-runtime-go/permission_evidence_audit_cli_test.go
+      cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go
+      cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go
     ],
     state_files: %w[
+      internal/runtime/portal/ledger.go
+      internal/runtime/appidentity/permission_evidence_audit.go
+      internal/runtime/appidentity/snapshot_restore_candidates.go
       internal/runtime/snapshot/store.go
       internal/runtime/snapshot/store_test.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/portal/broker.go" => %w[FakeBroker denied cancelled failed],
-      "internal/runtime/snapshot/store.go" => %w[Rollback Verify]
+      "internal/runtime/portal/ledger.go" => %w[xnix.runtime.portal_request_record.v1 portal-permission-request-record go-runtime-state-root-portal-broker RealPortalCallEnabled ExecutionApproved StateRootPathExposed HostRootModified],
+      "internal/runtime/portal/read.go" => %w[ReadRequests portal-requests malformed],
+      "internal/runtime/appidentity/permission_evidence_audit.go" => %w[xnix.runtime.permission_evidence_audit.v1 permission-evidence-audit-preview GetPermissionEvidenceAuditPreview consistent setting-only receipt-only expired denied missing-review blocked-by-policy unsupported RealPortalCallEnabled PermissionGrantEnabled PermissionRevokeEnabled ReceiptWriteEnabled SettingsPersisted StateRootPathExposed HostRootModified],
+      "cmd/xnix-runtime-go/permission_evidence_audit_commands.go" => %w[permission-evidence-audit-preview ReadRequests Summarize PermissionEvidenceAuditPreview],
+      "cmd/xnix-runtime-go/permission_evidence_audit_cli_test.go" => %w[TestPermissionEvidenceAuditPreviewCLIWithReceipts TestPermissionEvidenceAuditPreviewCLIMalformedLedgerIsSurfaced state_root_path_exposed],
+      "cmd/xnix-runtime-go/main.go" => %w[portal-request-record runPortalRequestRecord permission-evidence-audit-preview runPermissionEvidenceAuditPreview],
+      "cmd/xnix-runtime-go/runtime_safety_cli_test.go" => %w[TestPortalRequestRecordCommandPersistsPermissionFlow portal-request-record permission_granted execution_approved],
+      "internal/runtime/snapshot/store.go" => %w[Rollback Verify OpenReadOnly],
+      "internal/runtime/appidentity/snapshot_restore_candidates.go" => %w[xnix.runtime.snapshot_restore_candidates.v1 snapshot-restore-candidates-preview latest-good latest-tested last-known-running digest-mismatch active-session RestoreExecuted SnapshotDeletionEnabled FileContentRead SessionTerminated StateRootPathExposed HostRootModified],
+      "cmd/xnix-runtime-go/snapshot_restore_candidates_commands.go" => %w[snapshot-restore-candidates-preview OpenReadOnly NewSnapshotRestoreCandidatesPreview active-session],
+      "cmd/xnix-runtime-go/snapshot_restore_candidates_cli_test.go" => %w[TestSnapshotRestoreCandidatesPreviewCLI TestSnapshotRestoreCandidatesPreviewCLIEmptyStateRoot state_root_path_exposed]
     },
-    summary: "Fake Portal records and content-addressed snapshots exist under controlled roots; real Portal and system snapshots remain gated."
+    summary: "Fake Portal records can persist state-root permission request receipts with grant, deny, cancel, expire, and complete states; a read-only permission evidence audit joins Portal access policy, recorded receipts, permission review, resource bridge, and execution preflight into consistency states without changing any permission; content-addressed snapshots exist under controlled roots and can be ranked read-only as restore candidates with latest-good, latest-tested, last-known-running, blocked, and unknown labels; real Portal calls, execution approval, snapshot restore, snapshot deletion, and system snapshots remain gated."
   },
   {
     id: "kde-activation-shell-materialization",
@@ -193,25 +290,61 @@ DOMAIN_DEFINITIONS = [
     fixture_files: %w[
       internal/runtime/activation/stage.go
       internal/runtime/activation/stage_test.go
+      internal/runtime/appidentity/execution_session_record_evidence.go
+      internal/runtime/appidentity/desktop_safety_policy.go
+      internal/runtime/appidentity/desktop_safety_policy_test.go
+      internal/runtime/appidentity/runtime_policy_explanation_cards.go
+      internal/runtime/appidentity/runtime_policy_explanation_cards_test.go
+      internal/runtime/appidentity/window_identity_routes_test.go
+      internal/runtime/appidentity/kde_search_visibility_test.go
+      internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
+      cmd/xnix-runtime-go/desktop_safety_policy_commands.go
+      cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go
+      cmd/xnix-runtime-go/runtime_policy_explanation_cards_commands.go
+      cmd/xnix-runtime-go/runtime_policy_explanation_cards_cli_test.go
+      cmd/xnix-runtime-go/kde_search_visibility_commands.go
+      cmd/xnix-runtime-go/kde_search_visibility_cli_test.go
+      cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
+      cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
       scripts/install_runtime_activation.rb
       scripts/runtime_activation_smoke.rb
     ],
     state_files: %w[
       internal/runtime/activation/stage.go
+      internal/runtime/appidentity/kde_search_visibility.go
+      internal/runtime/appidentity/desktop_deactivation_dry_run.go
     ],
     smoke_files: %w[
       scripts/runtime_activation_smoke.rb
       test/test_runtime_activation_smoke_script.rb
+      scripts/kde_first_presence_smoke.rb
+      test/test_kde_first_presence_smoke_script.rb
     ],
     gate_tokens: {
       "internal/runtime/activation/stage.go" => ["refusing to stage", "host_root_modified", "RollbackReceiptWritten"],
-      "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate],
+      "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate ReceiptEvidence CommitReceiptPlanned RollbackReceiptPlanned CommitAvailable RollbackAvailable],
+      "internal/runtime/appidentity/kde_search_visibility.go" => %w[xnix.runtime.kde_search_visibility.v1 kde-search-visibility-plan-preview receipt-required no-mime-association application-hidden DesktopFilesWritten MIMEDefaultsWritten KDECacheRefreshed HostFilesIndexed SearchIndexPersisted HostRootModified],
+      "cmd/xnix-runtime-go/kde_search_visibility_commands.go" => %w[kde-search-visibility-plan-preview KDESearchVisibilityPlanPreview activation-root],
+      "cmd/xnix-runtime-go/kde_search_visibility_cli_test.go" => %w[TestKDESearchVisibilityPlanPreviewCLI xnix.runtime.kde_search_visibility.v1],
+      "internal/runtime/appidentity/desktop_deactivation_dry_run.go" => %w[xnix.runtime.desktop_deactivation_dry_run.v1 desktop-deactivation-dry-run-preview missing-activation-receipt installed-file-digest-mismatch unknown-file-owner shared-mime-association active-session-evidence FileDeletionEnabled MIMEDefaultsWritten KDECacheRefreshed ReceiptsRewritten SessionTerminated TargetPathExposed HostRootModified],
+      "cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go" => %w[desktop-deactivation-dry-run-preview DesktopDeactivationDryRunPreview active-session shared-mime],
+      "cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go" => %w[TestDesktopDeactivationDryRunPreviewCLIReceiptBackedRemovable TestDesktopDeactivationDryRunPreviewCLIActiveSessionAndSharedMIMEBlock xnix.runtime.desktop_deactivation_dry_run.v1],
       "internal/runtime/appidentity/desktop_activation_status.go" => %w[DesktopActivationStatusPreviewWithReceipt receipt_backed receipt_evidence RollbackAvailable],
-      "internal/runtime/appidentity/kde_center_page.go" => %w[KDECenterPageOptions ActivationRoot ReceiptBacked ReceiptEvidenceState],
-      "internal/runtime/appidentity/identity.go" => %w[DesktopEntryOptions DesktopIconOptions MIMEAppsOptions KRunnerQueryOptions ActivationReceiptBacked ReceiptBackedMatchCount FileOpenOptions TrayStatusOptions NotificationOptions SettingsOptions ActivationReceiptRoot],
-      "internal/runtime/appidentity/window_identity_routes.go" => %w[TaskManagerIdentityOptions KWinWindowRuleOptions ActivationReceiptBacked ActivationReceiptPath]
+      "internal/runtime/appidentity/kde_center_page.go" => %w[KDECenterPageOptions ActivationRoot ReceiptBacked ReceiptEvidenceState ExecutionSessionRoot ExecutionSessionBacked ExecutionSessionPath TaskManagerSessionState KWinSessionState],
+      "internal/runtime/appidentity/execution_session_record_evidence.go" => %w[ExecutionSessionRecordEvidence ExecutionSessionFanOutEvidence xnix.runtime.execution_session_record.v1 xnix.runtime.session_fanout.v1 execution-session-fanout-evidence GetExecutionSessionFanOutEvidence SafeForKDE StateRootPathExposed SessionActive LiveTrayBridgeEnabled],
+      "internal/runtime/appidentity/identity.go" => %w[DesktopEntryOptions DesktopIconOptions MIMEAppsOptions KRunnerQueryOptions ActivationReceiptBacked ReceiptBackedMatchCount FileOpenOptions TrayStatusOptions NotificationOptions SettingsOptions ActivationReceiptRoot ExecutionSessionBacked ExecutionSessionPath],
+      "internal/runtime/appidentity/kde_shell_surface.go" => %w[KDEApplicationSurfaceOptions ActivationReceiptBacked ActivationReceiptPath],
+      "internal/runtime/appidentity/window_identity_routes.go" => %w[TaskManagerIdentityOptions KWinWindowRuleOptions ActivationReceiptBacked ActivationReceiptPath ExecutionSessionBacked ExecutionSessionPath],
+      "internal/runtime/appidentity/desktop_safety_policy.go" => %w[xnix.runtime.desktop_safety_policy.v1 kde-first-user-facing-safety-policy forbidden_user_terms settings_field_ids BackendTerminologyHidden WriteMethodsEnabled RealPortalTransport AIProviderCallEnabled],
+      "cmd/xnix-runtime-go/desktop_safety_policy_commands.go" => %w[desktop-safety-policy-preview NewDesktopSafetyPolicyPreview],
+      "cmd/xnix-runtime-go/desktop_safety_policy_cli_test.go" => %w[TestDesktopSafetyPolicyPreviewCommand xnix.runtime.desktop_safety_policy.v1 forbidden_user_terms settings_field_ids],
+      "internal/runtime/appidentity/runtime_policy_explanation_cards.go" => %w[xnix.runtime.policy_explanation_cards.v1 runtime-policy-explanation-cards-preview kde-runtime-policy-explanation-card-deck GetRuntimePolicyExplanationCards GetRuntimePolicyExplanationCardsPreview install launch execution portal-permission snapshot diagnostics repair settings desktop-activation backend-readiness unsupported-production-route RuntimeOwned GoRuntimeBacked KDEPolicyOwner CardsPersisted ActionEnablementChanged RequestObjectsCreated PermissionGrantsCreated SettingsPersisted AIProviderCalled BackendProcessStarted HostRootModified RawCommandExposed BackendDetailsExposed],
+      "cmd/xnix-runtime-go/runtime_policy_explanation_cards_commands.go" => %w[runtime-policy-explanation-cards-preview RuntimePolicyExplanationCardsPreview runtime-root portal-operation snapshot-reason],
+      "cmd/xnix-runtime-go/runtime_policy_explanation_cards_cli_test.go" => %w[TestRuntimePolicyExplanationCardsPreviewCommand xnix.runtime.policy_explanation_cards.v1 kde-runtime-policy-explanation-card-deck cards_persisted action_enablement_changed request_objects_created backend_details_exposed],
+      "scripts/kde_first_presence_smoke.rb" => %w[xnix.kde_first_presence_smoke.v1 kde-first-presence-smoke --format preview_commands route_baseline entrypoint_count settings_field_ids forbidden_user_terms desktop-safety-policy-preview runtime-policy-explanation-cards-preview xnix.runtime.desktop_safety_policy.v1 xnix.runtime.policy_explanation_cards.v1 assert_desktop_safety_policy assert_runtime_policy_explanation_cards safety_false_keys prefix bottle backend_launch_enabled host_root_modified privileged_container_required real_portal_transport_enabled ai_provider_call_enabled],
+      "test/test_kde_first_presence_smoke_script.rb" => %w[kde-first-presence-smoke xnix.kde_first_presence_smoke.v1 JSON.pretty_generate render_markdown settings_field_ids forbidden_user_terms desktop-safety-policy-preview xnix.runtime.desktop_safety_policy.v1 safety_false_keys]
     },
-    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status, Compatibility Center pages, desktop entry previews, KRunner query previews, Dolphin file-manager previews, desktop icon previews, MIME association previews, tray status previews, notification previews, settings previews, task-manager identity previews, and KWin window-rule previews can consume staged activation receipt evidence."
+    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots; KDE task-manager, KWin, tray status, and Compatibility Center page previews can consume durable execution session evidence while staying blocked by Runtime gates; KDE status, KDE application surface previews, Compatibility Center pages, desktop entry previews, KRunner query previews, Dolphin file-manager previews, desktop icon previews, MIME association previews, notification previews, settings previews, task-manager identity previews, KWin window-rule previews, and Runtime policy explanation cards can consume shared Runtime evidence and present KDE-safe blocked, review-only, missing-evidence, and not-yet-implemented explanations; and the KDE-first presence smoke now emits text, JSON, and Markdown evidence that one digest-verified recipe appears across all seven KDE entry points while execution, backend launch, real Portal transport, network, privileged containers, AI provider calls, card persistence, request creation, permission grants, and host-root mutation remain disabled."
   },
   {
     id: "execution-transaction-ledger",
@@ -224,25 +357,36 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/execution_preflight.go
       internal/runtime/appidentity/execution_transaction.go
       internal/runtime/appidentity/execution_session_status.go
+      internal/runtime/appidentity/application_readiness.go
     ],
     fixture_files: %w[
       internal/runtime/execution/execution.go
       internal/runtime/execution/execution_test.go
       internal/runtime/execution/ledger_test.go
+      internal/runtime/execution/session_test.go
+      internal/runtime/appidentity/application_readiness_test.go
+      cmd/xnix-runtime-go/application_readiness_commands.go
+      cmd/xnix-runtime-go/application_readiness_cli_test.go
       cmd/xnix-runtime-go/execution_ledger_commands.go
       cmd/xnix-runtime-go/execution_ledger_cli_test.go
     ],
     state_files: %w[
       internal/runtime/execution/ledger.go
+      internal/runtime/execution/session.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/execution/execution.go" => %w[blocked runtimeWriteGate],
-      "internal/runtime/execution/ledger.go" => %w[execution-transaction-ledger-record go-runtime-state-root-execution-ledger state_root_path_exposed],
-      "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record state-root],
+      "internal/runtime/execution/ledger.go" => %w[execution-transaction-ledger-record go-runtime-state-root-execution-ledger state_root_path_exposed portal_permission_receipt_relative_paths portal_permission_receipt_consumed],
+      "internal/runtime/execution/session.go" => %w[xnix.runtime.execution_session_record.v1 execution-session-status-record go-runtime-state-root-execution-session StatusPersisted SessionActive TaskManagerEntryActive LiveTrayBridgeEnabled],
+      "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record execution-session-record state-root portal-request executionLedgerPortalReceipts RecordSession],
+      "cmd/xnix-runtime-go/execution_ledger_cli_test.go" => %w[TestExecutionLedgerRecordCommandConsumesPortalReceipt TestExecutionLedgerRecordCommandBlocksDeniedPortalReceipt TestExecutionSessionRecordCommandPersistsStatusFromLedger portal_permission_receipt_count],
+      "internal/runtime/appidentity/application_readiness.go" => %w[xnix.runtime.application_readiness.v1 application-readiness-preview runtime-application-readiness-evidence-graph RecipeTrustDecision WriteGateDecision RealPortalTransportEnabled BackendLaunchEnabled StateRootPathExposed RawCommandExposed],
+      "cmd/xnix-runtime-go/application_readiness_commands.go" => %w[application-readiness-preview ApplicationReadinessPreview artifact-receipt portal-operation snapshot-reason],
+      "cmd/xnix-runtime-go/application_readiness_cli_test.go" => %w[TestApplicationReadinessPreviewCommand xnix.runtime.application_readiness.v1 runtime-application-readiness-evidence-graph backend_launch_enabled real_portal_transport_enabled],
       "internal/runtime/appidentity/runtime_write_gate.go" => %w[Launch WriteMethodDisabled]
     },
-    summary: "Execution transaction records persist under a controlled state root; real Launch remains disabled."
+    summary: "Execution transaction and session status records persist under a controlled state root, can consume state-root Portal permission receipts for preflight evidence, expose a Go Runtime application readiness evidence graph across install, backend lifecycle, Portal, snapshot, execution, and write-gate evidence, and keep real Launch disabled."
   },
   {
     id: "diagnostics-repair-ai-boundary",
@@ -263,22 +407,29 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/diagnostic_record_commands.go
       cmd/xnix-runtime-go/diagnostic_record_cli_test.go
       internal/runtime/appidentity/diagnostic_history_test.go
+      internal/runtime/appidentity/crash_hang_signal_summary_test.go
+      cmd/xnix-runtime-go/crash_hang_signal_summary_commands.go
+      cmd/xnix-runtime-go/crash_hang_signal_summary_cli_test.go
     ],
     state_files: %w[
       internal/runtime/diagnostics/record.go
       internal/runtime/diagnostics/history.go
       internal/runtime/appidentity/diagnostic_history.go
+      internal/runtime/appidentity/crash_hang_signal_summary.go
     ],
     smoke_files: [],
     gate_tokens: {
       "internal/runtime/diagnostics/ai.go" => %w[DisabledProvider FakeProvider],
+      "internal/runtime/appidentity/crash_hang_signal_summary.go" => %w[xnix.runtime.crash_hang_signal_summary.v1 crash-hang-signal-summary-preview GetCrashHangSignalSummaryPreview crash hang timeout missing-dependency permission-denial graphics-issue network-issue regression-after-repair private_log_read file_content_read ai_provider_call_enabled repair_executed backend_process_started state_root_path_exposed host_root_modified],
+      "cmd/xnix-runtime-go/crash_hang_signal_summary_commands.go" => %w[crash-hang-signal-summary-preview LenientHistory OpenRunRecordStoreReadOnly],
+      "cmd/xnix-runtime-go/crash_hang_signal_summary_cli_test.go" => %w[TestCrashHangSignalSummaryPreviewCLI TestCrashHangSignalSummaryPreviewCLIMalformedRecordIsBlocked blocked-malformed-history],
       "internal/runtime/diagnostics/record.go" => %w[xnix.runtime.diagnostic_run_record.v1 diagnostic-run-record go-runtime-state-root-diagnostic-run-record diagnostics-ledger state_root_path_exposed fixture_path_exposed ai_provider_called real_ai_provider_enabled repair_executed],
       "internal/runtime/diagnostics/history.go" => %w[xnix.runtime.diagnostic_run_history.v1 diagnostic-run-history go-runtime-state-root-diagnostic-run-history state_root_path_exposed ai_provider_called repair_executed],
       "internal/runtime/appidentity/diagnostic_history.go" => %w[xnix.runtime.diagnostic_history_preview.v1 diagnostic-history-preview go-runtime-state-root-diagnostic-run-history+kde-read-model compatibility_center_card safe_for_ai_diagnostics ai_provider_call_enabled repair_execution_enabled backend_details_exposed],
       "cmd/xnix-runtime-go/diagnostic_record_commands.go" => %w[diagnostic-run-record diagnostic-run-history diagnostic-history-preview state-root fixture run-id],
       "internal/runtime/appidentity/ai_diagnostics.go" => %w[AIProviderCalled AutoExecutionAllowed]
     },
-    summary: "Fixture diagnostics can persist state-root run records, expose KDE-safe history summaries, and project diagnostic history into a Compatibility Center read model; real provider calls, backend launch, and auto-repair remain disabled."
+    summary: "Fixture diagnostics can persist state-root run records, expose KDE-safe history summaries, project diagnostic history into a Compatibility Center read model, and summarize crash, hang, timeout, missing-dependency, permission-denial, graphics, network, and regression-after-repair signals from receipt metadata in a privacy-safe crash-and-hang preview; real provider calls, private log reads, backend launch, and auto-repair remain disabled."
   },
   {
     id: "atomic-kde-image-qemu-acceptance",
@@ -324,17 +475,26 @@ DOMAIN_DEFINITIONS = [
       scripts/verify_layout.rb
       scripts/runtime_contract_drift_report.rb
       scripts/kde_first_presence_smoke.rb
+      docs/claude-code-windows-compatibility-workstreams.md
     ],
     fixture_files: %w[
+      internal/runtime/appidentity/windows_compatibility_workstreams.go
+      internal/runtime/appidentity/windows_compatibility_workstreams_test.go
+      cmd/xnix-runtime-go/windows_compatibility_commands.go
+      cmd/xnix-runtime-go/windows_compatibility_cli_test.go
       scripts/implementation_evidence_report.rb
       test/test_implementation_evidence_report.rb
+      scripts/release_evidence_index.rb
+      test/test_release_evidence_index.rb
     ],
     state_files: [],
     smoke_files: [],
     gate_tokens: {
-      "scripts/implementation_evidence_report.rb" => %w[contract-only fixture-implemented state-root-implemented smoke-owned production-gated]
+      "scripts/implementation_evidence_report.rb" => %w[contract-only fixture-implemented state-root-implemented smoke-owned production-gated windows_compatibility_first_wave windows_workstream_document],
+      "scripts/release_evidence_index.rb" => %w[xnix.runtime.release_evidence_index.v1 release-evidence-index implementation-evidence+contract-drift+mainline-review+kde-first-presence implemented fixture-only contract-only blocked skipped human-authorized docker_executed qemu_executed automatic_release_tagging_enabled],
+      "internal/runtime/appidentity/windows_compatibility_workstreams.go" => %w[xnix.runtime.windows_compatibility_workstreams.v1 windows-compatibility-workstreams-preview CW1 CW2 CW3 CW10 RuntimeOwned GoRuntimeBacked RubyCoreLogicAllowed KDEPolicyOwner BackendLaunchEnabled HostRootModified]
     },
-    summary: "Local evidence reporting classifies implementation depth and flags orphan Runtime read methods."
+    summary: "Local evidence reporting classifies implementation depth, exposes KDE-first Windows compatibility workstream dispatch from a Go Runtime read model, flags orphan Runtime read methods, and now indexes release-critical evidence claims without running Docker, QEMU, package managers, backend launch, staging, release tagging, or host-root mutation."
   }
 ].freeze
 
@@ -504,10 +664,37 @@ def mainline_first_wave(domains)
   end
 end
 
+def windows_compatibility_first_wave(domains)
+  domains_by_mainline = domains.to_h { |domain| [domain.fetch("mainline_package"), domain] }
+
+  WINDOWS_COMPATIBILITY_FIRST_WAVE.filter_map do |entry|
+    domain = domains_by_mainline[entry.fetch(:mainline_package)]
+    next unless domain
+
+    {
+      "workstream" => entry.fetch(:workstream),
+      "mainline_package" => entry.fetch(:mainline_package),
+      "package" => domain.fetch("package"),
+      "domain_id" => domain.fetch("id"),
+      "domain_name" => domain.fetch("name"),
+      "status" => domain.fetch("status"),
+      "rank" => domain.fetch("rank"),
+      "suggested_branch" => entry.fetch(:suggested_branch),
+      "reason" => entry.fetch(:reason),
+      "minimal_mergeable_outcome" => entry.fetch(:minimal_mergeable_outcome),
+      "host_root_modified" => false,
+      "network_required" => false,
+      "privileged_container_required" => false,
+      "backend_launch_enabled" => false
+    }
+  end
+end
+
 def build_report(root)
   version = read_project_file(root, "VERSION").strip
   domains = DOMAIN_DEFINITIONS.map { |definition| domain_report(root, definition) }
   first_wave = mainline_first_wave(domains)
+  windows_first_wave = windows_compatibility_first_wave(domains)
   read_methods = dbus_contract_methods(root) - WRITE_METHODS
   route_methods = owner_route_methods(root)
   orphan_read_methods = read_methods - route_methods
@@ -518,14 +705,18 @@ def build_report(root)
     "version" => version,
     "schema_version" => "xnix.runtime.implementation_evidence_report.v1",
     "report_type" => "implementation-evidence-report",
-    "source" => "filesystem+runtime-contract+owner-route-manifest+empty-domain-packages+mainline-implementation-plan",
+    "source" => "filesystem+runtime-contract+owner-route-manifest+empty-domain-packages+mainline-implementation-plan+windows-compatibility-workstreams",
     "runtime_owned" => true,
     "go_runtime_backed" => true,
     "kde_policy_owner" => false,
     "mainline_document" => MAINLINE_DOCUMENT,
     "mainline_plan_present" => file_present?(root, MAINLINE_DOCUMENT),
+    "windows_workstream_document" => WINDOWS_WORKSTREAM_DOCUMENT,
+    "windows_workstream_board_present" => file_present?(root, WINDOWS_WORKSTREAM_DOCUMENT),
     "mainline_package_count" => domains.map { |domain| domain.fetch("mainline_package") }.uniq.length,
     "mainline_first_wave" => first_wave,
+    "windows_compatibility_first_wave" => windows_first_wave,
+    "windows_compatibility_next_dispatch_summary" => "KDE-first Windows compatibility dispatch recommends CW1, CW2, CW3, and CW10 before KDE execution or product image acceptance.",
     "next_dispatch_packages" => first_wave,
     "next_dispatch_summary" => "First-wave mainline dispatch recommends M1, M2, M3, and M8 before execution or image acceptance.",
     "domain_status_order" => STATUS_ORDER.keys,
@@ -558,7 +749,10 @@ def render_markdown(report)
     "- Highest evidence status: #{report.fetch("highest_evidence_status")}",
     "- Mainline document: #{report.fetch("mainline_document")}",
     "- Mainline plan present: #{report.fetch("mainline_plan_present")}",
+    "- Windows workstream document: #{report.fetch("windows_workstream_document")}",
+    "- Windows workstream board present: #{report.fetch("windows_workstream_board_present")}",
     "- Next dispatch: #{report.fetch("next_dispatch_summary")}",
+    "- Windows compatibility dispatch: #{report.fetch("windows_compatibility_next_dispatch_summary")}",
     "- Orphan read methods detected: #{report.fetch("orphan_preview_methods_detected")}",
     "- Production ready: #{report.fetch("production_ready")}",
     "- Host root modified: #{report.fetch("host_root_modified")}",
@@ -580,6 +774,15 @@ def render_markdown(report)
   lines << "| --- | --- | --- | --- |"
   report.fetch("mainline_first_wave").each do |entry|
     lines << "| #{entry.fetch("mainline_package")} | `#{entry.fetch("suggested_branch")}` | #{entry.fetch("status")} | #{entry.fetch("minimal_mergeable_outcome")} |"
+  end
+
+  lines << ""
+  lines << "## Windows Compatibility First-Wave Workstreams"
+  lines << ""
+  lines << "| Workstream | Mainline | Branch | Status | Minimal mergeable outcome |"
+  lines << "| --- | --- | --- | --- | --- |"
+  report.fetch("windows_compatibility_first_wave").each do |entry|
+    lines << "| #{entry.fetch("workstream")} | #{entry.fetch("mainline_package")} | `#{entry.fetch("suggested_branch")}` | #{entry.fetch("status")} | #{entry.fetch("minimal_mergeable_outcome")} |"
   end
 
   lines << ""

@@ -1,6 +1,6 @@
 # Claude Code Next Implementation Assignments
 
-> Last updated: 2026-07-16 | Baseline: v0.2.253
+> Last updated: 2026-07-16 | Baseline: v0.2.293
 
 This document is a short assignment board for giving Claude Code large, relatively independent Xnix implementation work.
 
@@ -45,6 +45,7 @@ Do not assign `A6` execution launch work before `A2`, `A3`, and `A4` can produce
 
 This document does not replace or modify `docs/claude-code-implementation-packages.md`. For deeper background, read:
 
+- `docs/claude-code-windows-compatibility-workstreams.md`
 - `docs/claude-code-domain-dispatch.md`
 - `docs/claude-code-contract-to-implementation-task-board.md`
 - `docs/claude-code-large-empty-domain-assignments.md`

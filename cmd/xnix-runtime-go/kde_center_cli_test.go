@@ -37,7 +37,7 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.kde_center_page.v1" ||
 		payload["request_type"] != "kde-center-page-preview" ||
 		payload["page_type"] != "compatibility-center-application-page" ||
-		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview" ||
+		payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview" ||
 		payload["desktop"] != "KDE Plasma" ||
 		payload["runtime_method"] != "GetKDECenterPage" ||
 		payload["read_method"] != "GetKDECenterPagePreview" {
@@ -86,6 +86,41 @@ func TestKDECenterPagePreviewCommandRendersApplicationPage(t *testing.T) {
 		deck["execution_started"] != false ||
 		deck["backend_details_exposed"] != false {
 		t.Fatalf("unexpected action deck: %#v", deck)
+	}
+	graph := payload["action_dependency_graph"].(map[string]any)
+	if graph["request_type"] != "kde-action-dependency-graph-preview" ||
+		graph["graph_type"] != "compatibility-center-action-dependency-graph" ||
+		graph["runtime_method"] != "GetKDEActionDependencyGraph" ||
+		graph["read_method"] != "GetKDEActionDependencyGraphPreview" ||
+		graph["action_node_count"] != float64(7) ||
+		graph["evidence_node_count"] != float64(35) ||
+		graph["gate_node_count"] != float64(7) ||
+		graph["node_count"] != float64(49) ||
+		graph["edge_count"] != float64(42) ||
+		graph["missing_evidence_count"] != float64(35) ||
+		graph["blocked_action_count"] != float64(7) ||
+		graph["dependency_graph_created"] != true ||
+		graph["dependency_graph_persisted"] != false ||
+		graph["request_objects_created"] != false ||
+		graph["permission_grant_created"] != false ||
+		graph["settings_persisted"] != false ||
+		graph["runtime_launch_approval"] != false ||
+		graph["launch_allowed"] != false ||
+		graph["execution_started"] != false ||
+		graph["backend_process_started"] != false ||
+		graph["host_root_modified"] != false ||
+		graph["backend_details_exposed"] != false {
+		t.Fatalf("unexpected action dependency graph: %#v", graph)
+	}
+	validation := graph["receipt_validation"].(map[string]any)
+	if validation["rejects_mismatched_app_id"] != true ||
+		validation["rejects_malformed_operation_id"] != true ||
+		validation["rejects_path_escape_evidence"] != true ||
+		validation["rejects_unsafe_side_effects"] != true ||
+		validation["receipt_recorded"] != false ||
+		validation["execution_started"] != false ||
+		validation["host_root_modified"] != false {
+		t.Fatalf("unexpected action dependency graph receipt validation: %#v", validation)
 	}
 	settings := payload["settings_snapshot"].(map[string]any)
 	if settings["request_type"] != "settings-preview" ||

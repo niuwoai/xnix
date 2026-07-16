@@ -6,6 +6,8 @@ This brief splits the Xnix product goal into large, independent implementation p
 
 The product goal is not "a KDE theme" and not "a from-scratch desktop." Xnix should become a Linux system that makes existing Windows applications feel like ordinary Linux desktop applications while an independent Runtime manages compatibility, AI diagnostics, permissions, state, snapshots, and rollback.
 
+For copy-first Claude Code workstream prompts, use `docs/claude-code-windows-compatibility-workstreams.md`. For current mainline merge review and convergence rules, use `docs/mainline-integration-checkpoint.md`.
+
 ## Product Architecture Decision
 
 Xnix should use a mature desktop environment as the user shell and keep the product core in an independent Runtime.

@@ -206,6 +206,9 @@ func TestStageFromFixtureWritesReceiptUnderCacheRoot(t *testing.T) {
 	if filepath.IsAbs(receipt.RelativePath) {
 		t.Fatalf("stage receipt must expose only a relative path: %#v", receipt)
 	}
+	if reasons := ValidateStageReceipt(receipt); len(reasons) != 0 {
+		t.Fatalf("stage receipt must validate cleanly: %#v", reasons)
+	}
 }
 
 func TestStageFromFixtureBlocksDigestMismatch(t *testing.T) {
@@ -215,6 +218,26 @@ func TestStageFromFixtureBlocksDigestMismatch(t *testing.T) {
 	_, err := StageFromFixture(StageRequest{Manifest: manifest, CacheRoot: t.TempDir(), FixtureDir: fixtureDir})
 	if err == nil {
 		t.Fatalf("StageFromFixture must block digest mismatches")
+	}
+}
+
+func TestValidateStageReceiptFailsClosedForTampering(t *testing.T) {
+	manifest := sampleManifest(t)
+	fixtureDir := t.TempDir()
+	writeFixture(t, fixtureDir, sha("launch-bytes"), "launch-bytes")
+	writeFixture(t, fixtureDir, sha("payload-bytes"), "payload-bytes")
+	receipt, err := StageFromFixture(StageRequest{Manifest: manifest, CacheRoot: t.TempDir(), FixtureDir: fixtureDir})
+	if err != nil {
+		t.Fatalf("StageFromFixture: %v", err)
+	}
+
+	tampered := receipt
+	tampered.RelativePath = "../escape.json"
+	tampered.Plan.StagedKeys = nil
+	tampered.HostRootModified = true
+	reasons := ValidateStageReceipt(tampered)
+	if len(reasons) < 3 {
+		t.Fatalf("tampered receipt must fail closed with several reasons: %#v", reasons)
 	}
 }
 
