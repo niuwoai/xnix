@@ -85,6 +85,24 @@ type Plan struct {
 	OptionalCount   int               `json:"optional_count"`
 }
 
+// RequiredStaged reports whether every required artifact in the plan is present
+// in the cache — either already cached at plan time or staged by Acquire.
+// Optional artifacts do not affect the result. It is the artifact-staging signal
+// that install readiness consults; a dry-run plan with nothing cached reports
+// false.
+func (p Plan) RequiredStaged() bool {
+	staged := make(map[string]bool, len(p.StagedKeys))
+	for _, key := range p.StagedKeys {
+		staged[key] = true
+	}
+	for _, artifact := range p.Artifacts {
+		if artifact.Required && !artifact.AlreadyCached && !staged[artifact.CacheKey] {
+			return false
+		}
+	}
+	return true
+}
+
 // Acquirer plans and (optionally) stages artifacts into a cache from a Source.
 type Acquirer struct {
 	cache  *Cache
