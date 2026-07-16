@@ -208,9 +208,10 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/desktop_activation_transaction.go" => %w[TransactionCommitted WriteGate],
       "internal/runtime/appidentity/desktop_activation_status.go" => %w[DesktopActivationStatusPreviewWithReceipt receipt_backed receipt_evidence RollbackAvailable],
       "internal/runtime/appidentity/kde_center_page.go" => %w[KDECenterPageOptions ActivationRoot ReceiptBacked ReceiptEvidenceState],
-      "internal/runtime/appidentity/identity.go" => %w[KRunnerQueryOptions ActivationReceiptBacked ReceiptBackedMatchCount FileOpenOptions TrayStatusOptions NotificationOptions SettingsOptions ActivationReceiptRoot]
+      "internal/runtime/appidentity/identity.go" => %w[KRunnerQueryOptions ActivationReceiptBacked ReceiptBackedMatchCount FileOpenOptions TrayStatusOptions NotificationOptions SettingsOptions ActivationReceiptRoot],
+      "internal/runtime/appidentity/window_identity_routes.go" => %w[TaskManagerIdentityOptions ActivationReceiptBacked ActivationReceiptPath]
     },
-    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status, Compatibility Center pages, KRunner query previews, Dolphin file-manager previews, tray status previews, notification previews, and settings previews can consume staged activation receipt evidence."
+    summary: "KDE activation can stage desktop files, MIME data, service menus, manifests, and receipts under explicit roots, and KDE status, Compatibility Center pages, KRunner query previews, Dolphin file-manager previews, tray status previews, notification previews, settings previews, and task-manager identity previews can consume staged activation receipt evidence."
   },
   {
     id: "execution-transaction-ledger",

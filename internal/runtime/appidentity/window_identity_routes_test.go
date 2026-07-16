@@ -66,6 +66,53 @@ func TestTaskManagerIdentityPlanPreviewUsesWindowIdentityWithoutActivating(t *te
 	assertNoWindowRouteBackendTerms(t, preview)
 }
 
+func TestTaskManagerIdentityPlanPreviewConsumesActivationReceipt(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	root := t.TempDir()
+	writeActivationReceipt(t, root, "org.example.ledger")
+
+	preview, err := plan.TaskManagerIdentityPlanPreviewWithOptions(TaskManagerIdentityOptions{ActivationRoot: root})
+	if err != nil {
+		t.Fatalf("TaskManagerIdentityPlanPreviewWithOptions returned error: %v", err)
+	}
+	if preview.Source != "window-identity-preview+desktop-activation-receipt" ||
+		!preview.ActivationReceiptRoot ||
+		!preview.ActivationReceiptBacked ||
+		preview.ActivationReceiptPath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
+		t.Fatalf("task manager identity did not consume activation receipt: %#v", preview)
+	}
+	if preview.TaskManagerEntryActive ||
+		preview.WindowObservationStarted ||
+		preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("receipt-backed task manager identity must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), root) {
+		t.Fatalf("task manager identity exposed activation root: %s", encoded)
+	}
+
+	if _, err := plan.TaskManagerIdentityPlanPreviewWithOptions(TaskManagerIdentityOptions{ActivationRoot: t.TempDir()}); err == nil {
+		t.Fatalf("task manager identity accepted a missing activation receipt")
+	}
+}
+
 func TestKWinWindowRulePlanPreviewUsesWindowIdentityWithoutApplyingRule(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

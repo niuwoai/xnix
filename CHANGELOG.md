@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.249] - 2026-07-16
+
+### Added
+
+- Added receipt-backed KDE task-manager identity previews through `task-manager-identity-preview --activation-root`, so Plasma taskbar grouping and restore reads can prove staged activation evidence before task-manager activation remains gated.
+- Added Go and CLI coverage proving task-manager identity previews consume staged activation receipts without exposing the activation root, observing windows, enabling launch or execution, activating task-manager entries, mutating the host root, or exposing backend details.
+
+### Changed
+
+- Updated KDE activation implementation evidence so P5 tracks task-manager identity consumption of staged activation receipts alongside activation status, Compatibility Center, KRunner, Dolphin file-manager, tray status, notification, and settings reads.
+
 ## [0.2.248] - 2026-07-16
 
 ### Added

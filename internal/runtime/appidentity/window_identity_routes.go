@@ -1,6 +1,9 @@
 package appidentity
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type TaskManagerIdentityPlanPreview struct {
 	SchemaVersion            string           `json:"schema_version"`
@@ -26,6 +29,9 @@ type TaskManagerIdentityPlanPreview struct {
 	PreferExistingWindow     bool             `json:"prefer_existing_window"`
 	SkipTaskbar              bool             `json:"skip_taskbar"`
 	ShowInSwitcher           bool             `json:"show_in_switcher"`
+	ActivationReceiptRoot    bool             `json:"activation_receipt_root"`
+	ActivationReceiptBacked  bool             `json:"activation_receipt_backed"`
+	ActivationReceiptPath    string           `json:"activation_receipt_path,omitempty"`
 	TaskManagerEntryActive   bool             `json:"task_manager_entry_active"`
 	WindowObservationStarted bool             `json:"window_observation_started"`
 	LaunchEnabled            bool             `json:"launch_enabled"`
@@ -33,6 +39,10 @@ type TaskManagerIdentityPlanPreview struct {
 	HostRootModified         bool             `json:"host_root_modified"`
 	BackendDetailsExposed    bool             `json:"backend_details_exposed"`
 	DesktopSafeSummary       string           `json:"desktop_safe_summary"`
+}
+
+type TaskManagerIdentityOptions struct {
+	ActivationRoot string
 }
 
 type KWinWindowRulePlanPreview struct {
@@ -83,6 +93,10 @@ type KWinRuleSet struct {
 }
 
 func (plan Plan) TaskManagerIdentityPlanPreview() (TaskManagerIdentityPlanPreview, error) {
+	return plan.TaskManagerIdentityPlanPreviewWithOptions(TaskManagerIdentityOptions{})
+}
+
+func (plan Plan) TaskManagerIdentityPlanPreviewWithOptions(options TaskManagerIdentityOptions) (TaskManagerIdentityPlanPreview, error) {
 	windowIdentity, err := plan.WindowIdentityPreview()
 	if err != nil {
 		return TaskManagerIdentityPlanPreview{}, err
@@ -94,11 +108,25 @@ func (plan Plan) TaskManagerIdentityPlanPreview() (TaskManagerIdentityPlanPrevie
 		return TaskManagerIdentityPlanPreview{}, errors.New("task manager identity preview requires single-line identity fields")
 	}
 
+	source := "window-identity-preview"
+	activationReceiptRoot := strings.TrimSpace(options.ActivationRoot) != ""
+	activationReceiptBacked := false
+	activationReceiptPath := ""
+	if activationReceiptRoot {
+		evidence, err := plan.DesktopActivationReceiptEvidence(options.ActivationRoot)
+		if err != nil {
+			return TaskManagerIdentityPlanPreview{}, err
+		}
+		activationReceiptBacked = evidence.SafeForKDE
+		activationReceiptPath = evidence.ReceiptRelativePath
+		source = "window-identity-preview+desktop-activation-receipt"
+	}
+
 	preview := TaskManagerIdentityPlanPreview{
 		SchemaVersion:            "xnix.runtime.task_manager_identity.v1",
 		RequestType:              "task-manager-identity-preview",
 		PlanType:                 "task-manager-identity-plan",
-		Source:                   "window-identity-preview",
+		Source:                   source,
 		RuntimeMethod:            "GetTaskManagerIdentityPlan",
 		ReadMethod:               "GetTaskManagerIdentityPlanPreview",
 		Desktop:                  windowIdentity.Desktop,
@@ -118,6 +146,9 @@ func (plan Plan) TaskManagerIdentityPlanPreview() (TaskManagerIdentityPlanPrevie
 		PreferExistingWindow:     windowIdentity.TaskManager.PreferExistingWindow,
 		SkipTaskbar:              windowIdentity.TaskManager.SkipTaskbar,
 		ShowInSwitcher:           windowIdentity.TaskManager.ShowInSwitcher,
+		ActivationReceiptRoot:    activationReceiptRoot,
+		ActivationReceiptBacked:  activationReceiptBacked,
+		ActivationReceiptPath:    activationReceiptPath,
 		TaskManagerEntryActive:   false,
 		WindowObservationStarted: false,
 		LaunchEnabled:            false,
