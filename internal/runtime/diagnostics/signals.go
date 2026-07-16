@@ -58,16 +58,11 @@ func (s Signal) validate() error {
 	if !s.Outcome.valid() {
 		return fmt.Errorf("signal %q has invalid outcome %q", s.ID, string(s.Outcome))
 	}
-	for label, value := range map[string]string{
+	return safety.ValidateLines(map[string]string{
 		"signal id":       s.ID,
 		"signal category": s.Category,
 		"signal summary":  s.Summary,
-	} {
-		if err := validateSafe(label, value); err != nil {
-			return err
-		}
-	}
-	return nil
+	})
 }
 
 // worstOutcome folds signal outcomes into an overall run outcome.
