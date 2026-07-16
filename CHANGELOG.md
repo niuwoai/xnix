@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.319] - 2026-07-17
+
+### Added
+
+- Added `kde-restricted-product-smoke-checkpoint-record` and the Go `KDERestrictedProductSmokeCheckpointRecord` model.
+- Joined the restricted launch preflight packet to the fixed Kinoite product-image manifest and five restricted smoke evidence groups.
+- Added eight checkpoint checks plus CLI authorization, path-redaction, blocked-state, and no-execution coverage.
+
+### Changed
+
+- Marked product-image metadata and the review packet ready for the v0.2.320 train gate while keeping product smoke separately human-authorized.
+- Kept Docker, QEMU, product smoke, serial-log claims, release readiness, launch preflight, launch authorization, command materialization, backend selection and launch, compatibility process start, production bus ownership, host networking, Docker socket mounts, broad host mounts, privileged containers, path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.318] - 2026-07-17
 
 ### Added

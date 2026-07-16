@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.318"
+EXPECTED_VERSION = "0.2.319"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -2345,6 +2345,26 @@ assert(!restricted_smoke_packet_script_source.include?("boot-system"), "Restrict
 restricted_smoke_packet_test_source = read_project_file("test/test_restricted_product_smoke_packet.rb")
 %w[xnix.runtime.restricted_product_smoke_packet.v1 ready_for_authorized_smoke human_authorization_required docker_executed qemu_executed release_ready].each do |token|
   assert(restricted_smoke_packet_test_source.include?(token), "Restricted product smoke packet tests must include #{token}")
+end
+
+go_runtime_kde_restricted_product_smoke_checkpoint_source = read_project_file("internal/runtime/appidentity/kde_restricted_product_smoke_checkpoint.go")
+%w[KDERestrictedProductSmokeCheckpointRecord NewKDERestrictedProductSmokeCheckpointRecord xnix.runtime.kde_restricted_product_smoke_checkpoint.v1 kde-restricted-product-smoke-checkpoint-record preflight-boundary product-image-manifest repository-evidence authorization-boundary execution-unchanged session-unchanged smoke-not-executed host-boundary CheckpointReady ReadyForTrainGate ProductImageMetadataReady ReadyForAuthorizedSmoke].each do |token|
+  assert(go_runtime_kde_restricted_product_smoke_checkpoint_source.include?(token), "Go Runtime KDE restricted product smoke checkpoint must include #{token}")
+end
+%w[HumanAuthorizationRequired ExecutionAuthorized DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersisted ReleaseReady LaunchPreflightPassed LaunchAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted ProductionBusOwnership DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired HostRootModified StateRootPathExposed RepositoryRootPathExposed ManifestSourcePathExposed RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_restricted_product_smoke_checkpoint_source.include?(token), "Go Runtime KDE restricted product smoke checkpoint must expose gate #{token}")
+end
+
+go_runtime_kde_restricted_product_smoke_checkpoint_test_source = read_project_file("internal/runtime/appidentity/kde_restricted_product_smoke_checkpoint_test.go")
+%w[TestKDERestrictedProductSmokeCheckpointJoinsMetadataWithoutExecution recipe-trust runtime-write-gate assertKDERestrictedProductSmokeCheckpointDisabled].each do |token|
+  assert(go_runtime_kde_restricted_product_smoke_checkpoint_test_source.include?(token), "Go Runtime KDE restricted product smoke checkpoint tests must include #{token}")
+end
+
+go_runtime_kde_restricted_product_smoke_checkpoint_cli_source = read_project_file("cmd/xnix-runtime-go/kde_restricted_product_smoke_checkpoint_commands.go") +
+                                                          read_project_file("cmd/xnix-runtime-go/kde_restricted_product_smoke_checkpoint_cli_test.go") +
+                                                          read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-restricted-product-smoke-checkpoint-record runKDERestrictedProductSmokeCheckpointRecord authorize-restricted-test-preparation test-only repo-root manifest TestKDERestrictedProductSmokeCheckpointRecordCommandIsReviewOnly TestKDERestrictedProductSmokeCheckpointRecordCommandRequiresAuthorization checkpoint_ready ready_for_train_gate docker_executed qemu_executed release_ready].each do |token|
+  assert(go_runtime_kde_restricted_product_smoke_checkpoint_cli_source.include?(token), "Go Runtime KDE restricted product smoke checkpoint CLI must include #{token}")
 end
 
 go_runtime_snapshot_restore_source = read_project_file("internal/runtime/appidentity/snapshot_restore_candidates.go")
