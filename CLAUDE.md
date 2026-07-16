@@ -4,7 +4,7 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.294`
+- Version: `0.2.300`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
@@ -22,9 +22,11 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 ```text
 ruby scripts/verify_layout.rb
 ruby scripts/implementation_evidence_report.rb --format json
+ruby scripts/merge_readiness_packet.rb --format json
 ruby scripts/fetch_buildroot.rb --verify-lock
 ruby -Ilib test/test_action_review_receipt.rb
 ruby -Ilib test/test_implementation_evidence_report.rb
+ruby -Ilib test/test_merge_readiness_packet.rb
 ruby -Ilib test/test_container.rb
 ruby -Ilib test/test_compatibility_artifact_manifest.rb
 ruby -Ilib test/test_compatibility_install_plan.rb

@@ -173,9 +173,11 @@ LANES = [
     patterns: [
       %r{\Ainternal/runtime/portal/},
       %r{\Ainternal/runtime/appidentity/permission_evidence_audit},
+      %r{\Ainternal/runtime/appidentity/portal_permission_renewal},
       %r{\Acmd/xnix-runtime-go/runtime_safety_},
       %r{\Acmd/xnix-runtime-go/runtime_safety_commands\.go\z},
       %r{\Acmd/xnix-runtime-go/permission_evidence_audit_},
+      %r{\Acmd/xnix-runtime-go/portal_permission_renewal_},
       %r{\Atest/test_portal_},
       %r{\Atest/test_compatibility_permission_review_plan\.rb\z}
     ]
@@ -210,6 +212,7 @@ LANES = [
       %r{\Ainternal/runtime/appidentity/desktop_deactivation_dry_run},
       %r{\Ainternal/runtime/appidentity/kde_},
       %r{\Ainternal/runtime/appidentity/runtime_policy_explanation_cards},
+      %r{\Ainternal/runtime/appidentity/settings_profile_migration},
       %r{\Ainternal/runtime/appidentity/window_identity_},
       %r{\Acmd/xnix-runtime-go/compatibility_onboarding_},
       %r{\Acmd/xnix-runtime-go/desktop_activation_cli_test\.go\z},
@@ -217,6 +220,7 @@ LANES = [
       %r{\Acmd/xnix-runtime-go/desktop_safety_policy_},
       %r{\Acmd/xnix-runtime-go/kde_},
       %r{\Acmd/xnix-runtime-go/runtime_policy_explanation_cards_},
+      %r{\Acmd/xnix-runtime-go/settings_profile_migration_},
       %r{\Acmd/xnix-runtime-go/window_identity_},
       %r{\Ascripts/kde_first_presence_smoke\.rb\z},
       %r{\Atest/test_kde_},
@@ -261,9 +265,11 @@ LANES = [
       %r{\Ainternal/runtime/appidentity/diagnostic_},
       %r{\Ainternal/runtime/appidentity/crash_hang_signal_summary},
       %r{\Ainternal/runtime/appidentity/support_bundle_},
+      %r{\Ainternal/runtime/appidentity/support_case_timeline},
       %r{\Acmd/xnix-runtime-go/diagnostic_},
       %r{\Acmd/xnix-runtime-go/crash_hang_signal_summary_},
       %r{\Acmd/xnix-runtime-go/support_bundle_},
+      %r{\Acmd/xnix-runtime-go/support_case_timeline_},
       %r{\Atest/test_ai_},
       %r{\Atest/test_compatibility_repair_plan\.rb\z}
     ]
@@ -275,13 +281,19 @@ LANES = [
     description: "Reports and tests that prevent orphan contracts, preview-only regressions, and unsafe merge drift.",
     review_order: 9,
     patterns: [
+      %r{\Ainternal/runtime/appidentity/offline_application_fixture_matrix},
+      %r{\Acmd/xnix-runtime-go/offline_application_fixture_matrix_},
       %r{\Ascripts/implementation_evidence_report\.rb\z},
       %r{\Ascripts/verify_layout\.rb\z},
       %r{\Ascripts/mainline_integration_review\.rb\z},
       %r{\Ascripts/release_evidence_index\.rb\z},
+      %r{\Ascripts/offline_application_fixture_matrix\.rb\z},
+      %r{\Ascripts/merge_readiness_packet\.rb\z},
       %r{\Atest/test_implementation_evidence_report\.rb\z},
       %r{\Atest/test_mainline_integration_review\.rb\z},
       %r{\Atest/test_release_evidence_index\.rb\z},
+      %r{\Atest/test_offline_application_fixture_matrix\.rb\z},
+      %r{\Atest/test_merge_readiness_packet\.rb\z},
       %r{\Acmd/xnix-runtime-go/windows_compatibility_},
       %r{\Ainternal/runtime/appidentity/windows_compatibility_}
     ]
@@ -519,8 +531,11 @@ LANE_REVIEW_REQUIREMENTS = {
     required_verification: [
       "ruby -Ilib test/test_implementation_evidence_report.rb",
       "ruby -Ilib test/test_mainline_integration_review.rb",
+      "ruby -Ilib test/test_offline_application_fixture_matrix.rb",
+      "ruby -Ilib test/test_merge_readiness_packet.rb",
       "ruby scripts/implementation_evidence_report.rb --format json",
       "ruby scripts/mainline_integration_review.rb --format json",
+      "ruby scripts/merge_readiness_packet.rb --format json",
       "ruby scripts/verify_layout.rb",
       "git diff --check"
     ],

@@ -8,6 +8,8 @@ The product goal is not "a KDE theme" and not "a from-scratch desktop." Xnix sho
 
 For copy-first Claude Code workstream prompts, use `docs/claude-code-windows-compatibility-workstreams.md`. For current mainline merge review and convergence rules, use `docs/mainline-integration-checkpoint.md`.
 
+For the current Go-first stabilization cadence, use `docs/claude-code-stability-release-train.md`. It defines the twenty-version train from `v0.2.301` through `v0.2.320`, targeted testing on each small version, local commits for every small version, and remote push only at the twentieth-version gate.
+
 ## Product Architecture Decision
 
 Xnix should use a mature desktop environment as the user shell and keep the product core in an independent Runtime.

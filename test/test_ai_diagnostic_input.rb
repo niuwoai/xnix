@@ -20,7 +20,7 @@ input = Xnix::Compatibility::AIDiagnosticInput.new(recipe: recipe).to_h
 section_ids = input.fetch("context_sections").map { |section| section.fetch("id") }
 signal_ids = input.fetch("diagnostic_signals").map { |signal| signal.fetch("id") }
 
-assert(input["version"] == "0.2.294", "AI diagnostic input must expose the current version")
+assert(input["version"] == "0.2.300", "AI diagnostic input must expose the current version")
 assert(input["input_type"] == "ai-diagnostic-input", "AI diagnostic input must identify the input type")
 assert(input["application"]["id"] == "org.xnix.sample.notepad", "AI diagnostic input must preserve the application id")
 assert(input["runtime_owned"], "Runtime must own AI diagnostic input")

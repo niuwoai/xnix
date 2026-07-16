@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.294"
+EXPECTED_VERSION = "0.2.300"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -22,6 +22,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-fifth-wave-task-batch.md
   docs/claude-code-sixth-wave-task-batch.md
   docs/claude-code-seventh-wave-task-batch.md
+  docs/claude-code-stability-release-train.md
   docs/claude-code-dispatch-runbook.md
   docs/claude-code-open-domain-work-packages.md
   docs/claude-code-windows-compatibility-workstreams.md
@@ -184,8 +185,12 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/diagnostic_record_cli_test.go
   cmd/xnix-runtime-go/support_bundle_manifest_commands.go
   cmd/xnix-runtime-go/support_bundle_manifest_cli_test.go
+  cmd/xnix-runtime-go/support_case_timeline_commands.go
+  cmd/xnix-runtime-go/support_case_timeline_cli_test.go
   cmd/xnix-runtime-go/multi_application_install_queue_commands.go
   cmd/xnix-runtime-go/multi_application_install_queue_cli_test.go
+  cmd/xnix-runtime-go/offline_application_fixture_matrix_commands.go
+  cmd/xnix-runtime-go/offline_application_fixture_matrix_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
   cmd/xnix-runtime-go/desktop_safety_policy_commands.go
@@ -204,6 +209,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/crash_hang_signal_summary_cli_test.go
   cmd/xnix-runtime-go/permission_evidence_audit_commands.go
   cmd/xnix-runtime-go/permission_evidence_audit_cli_test.go
+  cmd/xnix-runtime-go/portal_permission_renewal_commands.go
+  cmd/xnix-runtime-go/portal_permission_renewal_cli_test.go
   cmd/xnix-runtime-go/compatibility_backend_fallback_commands.go
   cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go
   cmd/xnix-runtime-go/kde_search_visibility_commands.go
@@ -228,6 +235,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/runtime_policy_explanation_cards_test.go
   internal/runtime/appidentity/compatibility_onboarding_checklist.go
   internal/runtime/appidentity/compatibility_onboarding_checklist_test.go
+  internal/runtime/appidentity/offline_application_fixture_matrix.go
+  internal/runtime/appidentity/offline_application_fixture_matrix_test.go
   internal/runtime/appidentity/desktop_activation_manifest.go
   internal/runtime/appidentity/desktop_activation_manifest_test.go
   internal/runtime/appidentity/desktop_safety_policy.go
@@ -249,6 +258,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/crash_hang_signal_summary_test.go
   internal/runtime/appidentity/permission_evidence_audit.go
   internal/runtime/appidentity/permission_evidence_audit_test.go
+  internal/runtime/appidentity/portal_permission_renewal.go
+  internal/runtime/appidentity/portal_permission_renewal_test.go
   internal/runtime/appidentity/compatibility_backend_fallback.go
   internal/runtime/appidentity/compatibility_backend_fallback_test.go
   internal/runtime/appidentity/kde_search_visibility.go
@@ -272,6 +283,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/diagnostic_history_test.go
   internal/runtime/appidentity/support_bundle_manifest.go
   internal/runtime/appidentity/support_bundle_manifest_test.go
+  internal/runtime/appidentity/support_case_timeline.go
+  internal/runtime/appidentity/support_case_timeline_test.go
   internal/runtime/appidentity/multi_application_install_queue.go
   internal/runtime/appidentity/multi_application_install_queue_test.go
   internal/runtime/appidentity/execution_session_record_evidence.go
@@ -321,6 +334,7 @@ REQUIRED_FILES = %w[
   scripts/dbus_session_smoke.rb
   scripts/kde_center_dbus_smoke.rb
   scripts/kde_first_presence_smoke.rb
+  scripts/offline_application_fixture_matrix.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
   scripts/install_runtime_activation.rb
@@ -330,6 +344,7 @@ REQUIRED_FILES = %w[
   scripts/implementation_evidence_report.rb
   scripts/mainline_integration_review.rb
   scripts/release_evidence_index.rb
+  scripts/merge_readiness_packet.rb
   scripts/runtime_owner_candidate_smoke.rb
   scripts/ssh_smoke.rb
   runtime/dbus/org.xnix.Compatibility1.xml
@@ -473,6 +488,8 @@ REQUIRED_FILES = %w[
   test/test_implementation_evidence_report.rb
   test/test_mainline_integration_review.rb
   test/test_release_evidence_index.rb
+  test/test_offline_application_fixture_matrix.rb
+  test/test_merge_readiness_packet.rb
   test/test_runtime_daemon.rb
   test/test_runtime_dispatch.rb
   test/test_runtime_live_owner_gate.rb
@@ -1835,6 +1852,54 @@ go_runtime_permission_audit_cli_test_source = read_project_file("cmd/xnix-runtim
   assert(go_runtime_permission_audit_cli_test_source.include?(token), "Go Runtime permission evidence audit CLI tests must include #{token}")
 end
 
+go_runtime_portal_renewal_source = read_project_file("internal/runtime/appidentity/portal_permission_renewal.go")
+%w[PortalPermissionRenewalPreview PortalPermissionRenewalRow PortalPermissionRenewalCounts PortalPermissionRenewalReceipt portal-permission-renewal-preview xnix.runtime.portal_permission_renewal.v1 GetPortalPermissionRenewal GetPortalPermissionRenewalPreview current needs-review expiring-soon denied revoked missing-receipt blocked-by-policy files uris print clipboard screen camera remote-desktop network].each do |token|
+  assert(go_runtime_portal_renewal_source.include?(token), "Go Runtime Portal permission renewal preview must include #{token}")
+end
+%w[RealPortalCallEnabled PermissionGrantEnabled PermissionRevokeEnabled ReceiptWriteEnabled SettingsPersisted ExecutionApproved StateRootPathExposed FileContentRead FilePathsExposed RawCommandExposed BackendDetailsExposed HostRootModified validateNoBackendTerms safety.ValidatePayload].each do |token|
+  assert(go_runtime_portal_renewal_source.include?(token), "Go Runtime Portal permission renewal preview must expose #{token}")
+end
+
+go_runtime_portal_renewal_test_source = read_project_file("internal/runtime/appidentity/portal_permission_renewal_test.go")
+%w[TestPortalPermissionRenewalStates TestPortalPermissionRenewalMissingReceiptAndMalformedLedger TestPortalPermissionRenewalRejectsUnsafePlan current expiring-soon needs-review denied revoked missing-receipt blocked-by-policy RealPortalCallEnabled PermissionGrantEnabled PermissionRevokeEnabled ReceiptWriteEnabled SettingsPersisted ExecutionApproved HostRootModified].each do |token|
+  assert(go_runtime_portal_renewal_test_source.include?(token), "Go Runtime Portal permission renewal tests must include #{token}")
+end
+
+go_runtime_portal_renewal_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                       read_project_file("cmd/xnix-runtime-go/portal_permission_renewal_commands.go")
+%w[runPortalPermissionRenewalPreview portal-permission-renewal-preview PortalPermissionRenewalPreview ReadRequests portalPermissionRenewalStateFromRequest StateCancelled expiring].each do |token|
+  assert(go_runtime_portal_renewal_cli_source.include?(token), "Go Runtime Portal permission renewal CLI must include #{token}")
+end
+
+go_runtime_portal_renewal_cli_test_source = read_project_file("cmd/xnix-runtime-go/portal_permission_renewal_cli_test.go")
+%w[TestPortalPermissionRenewalPreviewCLI TestPortalPermissionRenewalPreviewCLIMissingStateRootDoesNotCreate TestPortalPermissionRenewalPreviewCLIMalformedLedgerIsSurfaced TestPortalPermissionRenewalPreviewCLIRequiresRecipeSource xnix.runtime.portal_permission_renewal.v1 real_portal_call_enabled permission_grant_enabled permission_revoke_enabled receipt_write_enabled settings_persisted execution_approved host_root_modified].each do |token|
+  assert(go_runtime_portal_renewal_cli_test_source.include?(token), "Go Runtime Portal permission renewal CLI tests must include #{token}")
+end
+
+go_runtime_settings_profile_migration_source = read_project_file("internal/runtime/appidentity/settings_profile_migration.go")
+%w[SettingsProfileMigrationPreview SettingsProfileMigrationRow SettingsProfileMigrationCounts settings-profile-migration-preview xnix.runtime.settings_profile_migration.v1 GetCompatibilitySettingsProfileMigration GetCompatibilitySettingsProfileMigrationPreview old-schema current-schema future-schema run-mode.mode run-mode.preference resource-access.documents resource-access.downloads devices.camera network.network snapshots.snapshots diagnostics.privacy].each do |token|
+  assert(go_runtime_settings_profile_migration_source.include?(token), "Go Runtime settings profile migration preview must include #{token}")
+end
+%w[SettingsPersisted SettingsPersistenceEnabled ResourceGrantEnabled RealPortalCallEnabled BackendLaunchEnabled BackendProcessStarted HostRootModified StateRootPathExposed RawCommandExposed RawExecutableExposed FileContentRead BackendDetailsExposed validateNoBackendTerms settingsProfileSchemaNumber].each do |token|
+  assert(go_runtime_settings_profile_migration_source.include?(token), "Go Runtime settings profile migration preview must expose #{token}")
+end
+
+go_runtime_settings_profile_migration_test_source = read_project_file("internal/runtime/appidentity/settings_profile_migration_test.go")
+%w[TestSettingsProfileMigrationOldSchemaRequiresReview TestSettingsProfileMigrationCurrentSchemaIsUnchanged TestSettingsProfileMigrationFutureSchemaBlocksMigration TestSettingsProfileMigrationBlockedAndInvalidSetting rollback notes SettingsPersisted].each do |token|
+  assert(go_runtime_settings_profile_migration_test_source.include?(token), "Go Runtime settings profile migration tests must include #{token}")
+end
+
+go_runtime_settings_profile_migration_cli_source = read_project_file("cmd/xnix-runtime-go/main.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/settings_profile_migration_commands.go")
+%w[runSettingsProfileMigrationPreview settings-profile-migration-preview SettingsProfileMigrationPreview from-schema to-schema blocked-setting].each do |token|
+  assert(go_runtime_settings_profile_migration_cli_source.include?(token), "Go Runtime settings profile migration CLI must include #{token}")
+end
+
+go_runtime_settings_profile_migration_cli_test_source = read_project_file("cmd/xnix-runtime-go/settings_profile_migration_cli_test.go")
+%w[TestSettingsProfileMigrationPreviewCLI TestSettingsProfileMigrationPreviewCLIRejectsUnsafeArguments xnix.runtime.settings_profile_migration.v1 settings_persisted resource_grant_enabled real_portal_call_enabled backend_launch_enabled host_root_modified].each do |token|
+  assert(go_runtime_settings_profile_migration_cli_test_source.include?(token), "Go Runtime settings profile migration CLI tests must include #{token}")
+end
+
 go_runtime_backend_fallback_source = read_project_file("internal/runtime/appidentity/compatibility_backend_fallback.go")
 %w[CompatibilityBackendFallbackPreview CompatibilityBackendFallbackCandidate compatibility-backend-fallback-preview xnix.runtime.compatibility_backend_fallback.v1 GetCompatibilityBackendFallback GetCompatibilityBackendFallbackPreview local-compatibility isolated-compatibility automatic recipe-requests-isolation local-selected-by-default capability-not-ready diagnostics-regressions-present blocked-missing-evidence blocked-by-policy].each do |token|
   assert(go_runtime_backend_fallback_source.include?(token), "Go Runtime compatibility backend fallback preview must include #{token}")
@@ -2037,6 +2102,36 @@ go_runtime_support_bundle_cli_source = [
   assert(go_runtime_support_bundle_cli_source.include?(token), "Go Runtime support bundle manifest CLI must include #{token}")
 end
 
+go_runtime_support_case_timeline_source = read_project_file("internal/runtime/appidentity/support_case_timeline.go")
+%w[SupportCaseTimelinePreview SupportCaseTimelineEvent SupportCaseTimelineCounts SupportCaseTimelineRedaction support-case-timeline-preview redacted-runtime-support-case-timeline xnix.runtime.support_case_timeline.v1 GetSupportCaseTimeline GetSupportCaseTimelinePreview diagnostic-runs blocked-actions repair-recommendations onboarding-gaps kde-entrypoint-state malformed-history].each do |token|
+  assert(go_runtime_support_case_timeline_source.include?(token), "Go Runtime support case timeline preview must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly TicketCreated BundleExported AIProviderCalled AIProviderCallEnabled RepairApplied RepairExecuted ActionExecuted BackendProcessStarted FileContentRead FilePathsExposed StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed HostRootModified NetworkRequired PrivilegedContainerRequired].each do |token|
+  assert(go_runtime_support_case_timeline_source.include?(token), "Go Runtime support case timeline preview must expose #{token}")
+end
+%w[AIDiagnosticRecommendationPreview CompatibilityOnboardingChecklistPreview KDEActionDependencyGraphPreview KDEJourneyEvidencePreview validateNoBackendTerms safety.ValidatePayload supportCaseTimelineRedaction supportCaseTimelineEvents].each do |token|
+  assert(go_runtime_support_case_timeline_source.include?(token), "Go Runtime support case timeline preview must implement #{token}")
+end
+
+go_runtime_support_case_timeline_test_source = read_project_file("internal/runtime/appidentity/support_case_timeline_test.go")
+%w[TestSupportCaseTimelinePreviewNoHistory TestSupportCaseTimelinePreviewJoinsDiagnosticActionsRepairsOnboardingAndKDE TestSupportCaseTimelinePreviewMalformedMixedAndRedactedEvidence TestSupportCaseTimelineRejectsMismatchedHistoryApplication TicketCreated BundleExported AIProviderCalled RepairExecuted ActionExecuted BackendProcessStarted HostRootModified OmittedSensitiveEvidenceCount].each do |token|
+  assert(go_runtime_support_case_timeline_test_source.include?(token), "Go Runtime support case timeline tests must include #{token}")
+end
+
+go_runtime_support_case_timeline_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/support_case_timeline_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/support_case_timeline_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[support-case-timeline-preview runSupportCaseTimelinePreview parseSupportCaseTimelinePreviewSource LenientHistory OpenRunRecordStoreReadOnly runtime-root state-root xnix.runtime.support_case_timeline.v1 GetSupportCaseTimeline GetSupportCaseTimelinePreview ticket_created bundle_exported ai_provider_called repair_executed action_executed backend_process_started host_root_modified state_root_path_exposed].each do |token|
+  assert(go_runtime_support_case_timeline_cli_source.include?(token), "Go Runtime support case timeline CLI must include #{token}")
+end
+
+go_runtime_support_case_timeline_cli_test_source = read_project_file("cmd/xnix-runtime-go/support_case_timeline_cli_test.go")
+%w[TestSupportCaseTimelinePreviewCLI TestSupportCaseTimelinePreviewCLIMissingStateRootDoesNotCreate TestSupportCaseTimelinePreviewCLIMalformedRecordIsBlocked TestSupportCaseTimelinePreviewCLIRequiresRecipeSource xnix.runtime.support_case_timeline.v1].each do |token|
+  assert(go_runtime_support_case_timeline_cli_test_source.include?(token), "Go Runtime support case timeline CLI tests must include #{token}")
+end
+
 go_runtime_multi_application_install_queue_source = read_project_file("internal/runtime/appidentity/multi_application_install_queue.go")
 %w[MultiApplicationInstallQueuePreview MultiApplicationInstallItem MultiApplicationInstallCounts multi-application-install-queue-preview review-only-multi-application-install-queue xnix.runtime.multi_application_install_queue.v1 GetMultiApplicationInstallQueue GetMultiApplicationInstallQueuePreview registry+compatibility-install-preview].each do |token|
   assert(go_runtime_multi_application_install_queue_source.include?(token), "Go Runtime multi-application install queue must include #{token}")
@@ -2060,6 +2155,43 @@ go_runtime_multi_application_install_queue_cli_source = [
 ].join("\n")
 %w[multi-application-install-queue-preview runMultiApplicationInstallQueuePreview parseMultiApplicationInstallQueueSource repeatedAppIDs LoadRecipeFromRegistry ParseRegistry xnix.runtime.multi_application_install_queue.v1 GetMultiApplicationInstallQueue GetMultiApplicationInstallQueuePreview review-only-multi-application-install-queue request_objects_created artifacts_staged host_root_modified backend_details_exposed].each do |token|
   assert(go_runtime_multi_application_install_queue_cli_source.include?(token), "Go Runtime multi-application install queue CLI must include #{token}")
+end
+
+go_runtime_offline_application_fixture_matrix_source = read_project_file("internal/runtime/appidentity/offline_application_fixture_matrix.go")
+%w[OfflineApplicationFixtureMatrixPreview OfflineApplicationFixtureMatrixRow OfflineApplicationFixtureMatrixCounts offline-application-fixture-matrix-preview offline-cross-application-fixture-matrix xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview built-in-fixtures+runtime-read-models document-editor game installer launcher network-heavy tray-heavy unsupported].each do |token|
+  assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must include #{token}")
+end
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly OfflineDefault NetworkFetchEnabled PackageManagerInvoked ArtifactStagingEnabled BackendLaunchEnabled DockerRequired QEMURequired RequestObjectsCreated SettingsPersisted FileContentRead StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed HostRootModified PrivilegedContainerRequired].each do |token|
+  assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must expose #{token}")
+end
+%w[CompatibilityInstallPlanPreview BackendSelectionPreview NewSnapshotPlanPreview AIDiagnosticInputPreview KDEJourneyEvidencePreviewWithOptions validateNoBackendTerms offlineApplicationFixtureRowState countOfflineApplicationFixtureMatrixRows].each do |token|
+  assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must implement #{token}")
+end
+
+go_runtime_offline_application_fixture_matrix_test_source = read_project_file("internal/runtime/appidentity/offline_application_fixture_matrix_test.go")
+%w[TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes TestOfflineApplicationFixtureMatrixPreviewReportsMissingFixtures TestOfflineApplicationFixtureMatrixPreviewRejectsUnknownShape TestOfflineApplicationFixtureMatrixPreviewUnsupportedShapeIsBlocked TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects TestOfflineApplicationFixtureMatrixPreviewIsDesktopSafe offline-application-fixture-matrix-preview blocked-unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_process_started host_root_modified raw_command_exposed].each do |token|
+  assert(go_runtime_offline_application_fixture_matrix_test_source.include?(token), "Go Runtime offline application fixture matrix tests must include #{token}")
+end
+
+go_runtime_offline_application_fixture_matrix_cli_source = [
+  read_project_file("cmd/xnix-runtime-go/offline_application_fixture_matrix_commands.go"),
+  read_project_file("cmd/xnix-runtime-go/offline_application_fixture_matrix_cli_test.go"),
+  read_project_file("cmd/xnix-runtime-go/main.go")
+].join("\n")
+%w[offline-application-fixture-matrix-preview runOfflineApplicationFixtureMatrixPreview parseOfflineApplicationFixtureMatrixOptions repeatedFixtureShapeIDs xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview offline-cross-application-fixture-matrix network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+  assert(go_runtime_offline_application_fixture_matrix_cli_source.include?(token), "Go Runtime offline application fixture matrix CLI must include #{token}")
+end
+
+offline_application_fixture_matrix_script_source = read_project_file("scripts/offline_application_fixture_matrix.rb")
+%w[offline-application-fixture-matrix-preview --format --shape JSON.pretty_generate render_markdown GOCACHE .cache document-editor game installer launcher network-heavy tray-heavy unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+  assert(offline_application_fixture_matrix_script_source.include?(token), "Offline application fixture matrix script must include #{token}")
+end
+assert(!offline_application_fixture_matrix_script_source.include?("scripts/container.rb"), "Offline application fixture matrix must not run Docker")
+assert(!offline_application_fixture_matrix_script_source.include?("boot-system"), "Offline application fixture matrix must not boot QEMU")
+
+offline_application_fixture_matrix_script_test_source = read_project_file("test/test_offline_application_fixture_matrix.rb")
+%w[offline-application-fixture-matrix-preview JSON.parse render_markdown document-editor unsupported blocked-unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+  assert(offline_application_fixture_matrix_script_test_source.include?(token), "Offline application fixture matrix script tests must include #{token}")
 end
 
 go_runtime_application_upgrade_impact_source = read_project_file("internal/runtime/appidentity/application_upgrade_impact.go")
@@ -2575,6 +2707,74 @@ release_evidence_index_test_source = read_project_file("test/test_release_eviden
   automatic_release_tagging_enabled
 ].each do |token|
   assert(release_evidence_index_test_source.include?(token), "Release evidence index test must include #{token}")
+end
+
+merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packet.rb")
+%w[
+  merge-readiness-packet
+  xnix.runtime.merge_readiness_packet.v1
+  TOOL_DEFINITIONS
+  layout
+  implementation
+  contract_drift
+  kde_smoke
+  mainline_review
+  release_evidence
+  offline_fixture_matrix
+  --offline-only
+  --skip-tool
+  --tool-command
+  tool_statuses
+  lane_classification
+  protected_file_status
+  unsafe_operation_status
+  changed_file_counts
+  required_follow_up_commands
+  merge_blocking_reasons
+  release_blocking_reasons
+  restricted-docker-or-qemu-smoke-requires-human-authorization
+  staging
+  committing
+  tagging
+  pushing
+].each do |token|
+  assert(merge_readiness_packet_source.include?(token), "Merge readiness packet script must include #{token}")
+end
+%w[
+  docker_executed
+  qemu_executed
+  network_checks_run
+  package_manager_invoked
+  backend_launch_enabled
+  host_root_modified
+  automatic_staging_enabled
+  automatic_commit_enabled
+  automatic_release_tagging_enabled
+  automatic_push_enabled
+].each do |token|
+  assert(merge_readiness_packet_source.include?("\"#{token}\" => false"), "Merge readiness packet script must keep #{token} false")
+end
+assert(!merge_readiness_packet_source.include?("scripts/container.rb"), "Merge readiness packet must not run Docker")
+assert(!merge_readiness_packet_source.include?("boot-system"), "Merge readiness packet must not boot QEMU")
+
+merge_readiness_packet_test_source = read_project_file("test/test_merge_readiness_packet.rb")
+%w[
+  merge-readiness-packet
+  xnix.runtime.merge_readiness_packet.v1
+  malformed-json
+  missing-command
+  implementation:skipped
+  protected-claude-file-modified
+  unclassified-files-present
+  unsafe-operation-detected
+  docker_executed
+  qemu_executed
+  network_checks_run
+  package_manager_invoked
+  host_root_modified
+  markdown
+].each do |token|
+  assert(merge_readiness_packet_test_source.include?(token), "Merge readiness packet test must include #{token}")
 end
 
 claude_code_dispatch_runbook_source = read_project_file("docs/claude-code-dispatch-runbook.md")

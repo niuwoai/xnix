@@ -1,10 +1,12 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-16 | Baseline: v0.2.294
+> Last updated: 2026-07-17 | Baseline: v0.2.300
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
-Local work already contains implementation evidence for `S7W1`, `S7W2`, and `S7W8`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
+Use `docs/claude-code-stability-release-train.md` as the cadence authority for the next Go-first stabilization train: one coherent small version per local commit, targeted tests on every small version, and full build plus remote push only at each twentieth-version train gate.
+
+Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, and `S6W8`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
 
 Do not modify `docs/claude-code-implementation-packages.md` from any task listed here.
 
@@ -23,22 +25,17 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | `S7W3` State-root quota and retention preview | `docs/claude-code-seventh-wave-task-batch.md` | `codex/s7w3-state-root-retention-preview` | State-root, snapshot, diagnostic, execution, and Portal receipt models now exist. A dry-run storage pressure view is useful and can stay strictly read-only. |
-| 2 | `S7W4` Crash and hang signal summary preview | `docs/claude-code-seventh-wave-task-batch.md` | `codex/s7w4-crash-hang-summary` | Diagnostic history, test results, repair plans, and support bundle evidence exist. Claude can add a privacy-safe failure summary without reading private logs. |
-| 3 | `S7W7` Permission evidence audit preview | `docs/claude-code-seventh-wave-task-batch.md` | `codex/s7w7-permission-evidence-audit` | Portal, settings, execution, and desktop-safety evidence exist but still need one offline audit surface before renewal or revocation work becomes real. |
-| 4 | `S7W5` Compatibility backend fallback preview | `docs/claude-code-seventh-wave-task-batch.md` | `codex/s7w5-backend-fallback-preview` | Runtime backend readiness, lifecycle, safety policy, and explanation cards are in place. Automatic-mode fallback can be explained without starting Wine, Proton, or a VM. |
-| 5 | `S7W6` KDE search visibility plan | `docs/claude-code-seventh-wave-task-batch.md` | `codex/s7w6-kde-search-visibility` | KDE launcher, KRunner, Dolphin, file association, and Compatibility Center surfaces need one Runtime-owned visibility model before UI integration grows. |
-| 6 | `S6W2` Desktop deactivation dry-run plan | `docs/claude-code-sixth-wave-task-batch.md` | `codex/s6w2-desktop-deactivation-dry-run` | Activation staging and rollback receipts exist. The matching safe removal story is valuable before real activation advances. |
-| 7 | `S6W3` Recipe conflict and pin audit | `docs/claude-code-sixth-wave-task-batch.md` | `codex/s6w3-recipe-conflict-audit` | Recipe trust, upgrade impact, package-source, and install-planning lanes are active. Conflict evidence can prevent later install and upgrade ambiguity. |
-| 8 | `S6W5` Snapshot restore candidate ranking | `docs/claude-code-sixth-wave-task-batch.md` | `codex/s6w5-snapshot-restore-ranking` | Snapshot and rollback records exist. A ranked restore preview can be implemented without executing restore or modifying application state. |
+| 1 | KDE notification digest preview | `docs/claude-code-fifth-wave-task-batch.md` | `codex/f5w7-kde-notification-digest` | KDE search visibility exists, but notification breadth still lacks a digest surface that summarizes pending review-only notifications without sending them. |
+| 2 | Signed recipe verifier evidence | `docs/claude-code-mainline-implementation-plan.md` | `codex/recipe-signature-verifier-evidence` | Recipe and artifact trust are strong for local fixtures, but production trust still needs signed-recipe verification evidence before any real trust path advances. |
+| 3 | Restricted product smoke packet | `docs/claude-code-mainline-implementation-plan.md` | `codex/restricted-product-smoke-packet` | Product image and QEMU acceptance remain human-authorized. This task should only prepare the packet and skip Docker/QEMU unless the user explicitly authorizes a restricted smoke. |
 
 ## Best First Pick
 
-Start with `S7W3`.
+Start with KDE notification digest evidence.
 
-`S7W3` is the best next handoff because it turns existing state-root and receipt evidence into a user-visible storage and retention explanation. It is also low-risk: the required output is a dry-run preview, and the branch must prove it never deletes files, creates directories, truncates logs, rewrites receipts, exposes state-root paths, or mutates the host.
+KDE notification digest evidence is the best next handoff because the merge readiness packet now exists and reviewers can inspect layout, contract drift, implementation evidence, release evidence, KDE-first presence, fixture matrix, and mainline review results without running Docker, QEMU, backend launch, package managers, network fetch, or host-root mutation.
 
-If `S7W3` is already assigned, dispatch `S7W4` next. It builds directly on diagnostic evidence and improves the support story without enabling AI calls, backend launch, private log reads, or repair execution.
+The digest should remain review-only and must not send notifications.
 
 ## Good Branch Shape
 
@@ -65,6 +62,9 @@ Avoid these prompts:
 - "Call the real Portal."
 - "Add real cleanup."
 - "Delete stale state."
+- "Renew real permissions."
+- "Revoke real permissions."
+- "Send notifications."
 - "Auto-fix permissions."
 - "Download packages."
 - Any task that would require editing `docs/claude-code-implementation-packages.md`.

@@ -58,13 +58,14 @@ CLAIM_DEFINITIONS = [
       internal/runtime/environment/lifecycle.go
       internal/runtime/appidentity/backend_manager.go
       internal/runtime/appidentity/backend_lifecycle.go
+      internal/runtime/appidentity/state_root_quota_retention.go
       cmd/xnix-runtime-go/backend_group_cli_test.go
     ],
     verification_commands: [
       "go test ./internal/runtime/environment ./internal/runtime/appidentity ./cmd/xnix-runtime-go",
       "ruby scripts/implementation_evidence_report.rb --format json"
     ],
-    next_follow_up: "Connect retention and quota previews before cleanup is allowed."
+    next_follow_up: "Use quota and retention previews as review evidence; keep real cleanup disabled until deletion-specific approval evidence exists."
   },
   {
     id: "portal-snapshot-safety",
@@ -73,13 +74,16 @@ CLAIM_DEFINITIONS = [
     source_files: %w[
       internal/runtime/portal/ledger.go
       internal/runtime/snapshot/store.go
+      internal/runtime/appidentity/permission_evidence_audit.go
+      internal/runtime/appidentity/portal_permission_renewal.go
+      internal/runtime/appidentity/snapshot_restore_candidates.go
       cmd/xnix-runtime-go/runtime_safety_cli_test.go
     ],
     verification_commands: [
       "go test ./internal/runtime/portal ./internal/runtime/snapshot ./cmd/xnix-runtime-go",
       "ruby -Ilib test/test_portal_access_policy.rb"
     ],
-    next_follow_up: "Add permission evidence audit before any renewal or revocation flow becomes real."
+    next_follow_up: "Keep live Portal renewal and revocation disabled until renewal preview evidence is reviewed with explicit user authorization."
   },
   {
     id: "kde-seven-entrypoints",
@@ -89,13 +93,15 @@ CLAIM_DEFINITIONS = [
       scripts/kde_first_presence_smoke.rb
       internal/runtime/appidentity/kde_shell_surface.go
       internal/runtime/appidentity/runtime_policy_explanation_cards.go
+      internal/runtime/appidentity/settings_profile_migration.go
+      internal/runtime/appidentity/kde_search_visibility.go
       kde/plasmoids/org.xnix.compatibilitycenter/metadata.json
     ],
     verification_commands: [
       "ruby scripts/kde_first_presence_smoke.rb --format json",
       "ruby -Ilib test/test_kde_first_presence_smoke_script.rb"
     ],
-    next_follow_up: "Add KDE search visibility and notification digest evidence before UI breadth grows."
+    next_follow_up: "Add KDE notification digest evidence before UI breadth grows beyond current search-visibility previews."
   },
   {
     id: "execution-session-evidence",
@@ -121,13 +127,16 @@ CLAIM_DEFINITIONS = [
       internal/runtime/diagnostics/record.go
       internal/runtime/appidentity/ai_diagnostics.go
       internal/runtime/appidentity/diagnostic_history.go
+      internal/runtime/appidentity/crash_hang_signal_summary.go
+      internal/runtime/appidentity/support_case_timeline.go
       cmd/xnix-runtime-go/diagnostic_record_commands.go
+      cmd/xnix-runtime-go/support_case_timeline_commands.go
     ],
     verification_commands: [
       "go test ./internal/runtime/diagnostics ./internal/runtime/appidentity ./cmd/xnix-runtime-go",
       "ruby -Ilib test/test_ai_diagnostic_input.rb"
     ],
-    next_follow_up: "Add crash and hang signal summaries before enabling any broader support workflow."
+    next_follow_up: "Add a diagnostics playbook preview that explains support timeline findings without creating tickets, exporting bundles, calling providers, repairing, launching backends, or mutating the host."
   },
   {
     id: "evidence-drift-harness",
@@ -138,13 +147,18 @@ CLAIM_DEFINITIONS = [
       scripts/runtime_contract_drift_report.rb
       scripts/mainline_integration_review.rb
       scripts/release_evidence_index.rb
+      scripts/offline_application_fixture_matrix.rb
+      scripts/merge_readiness_packet.rb
+      internal/runtime/appidentity/offline_application_fixture_matrix.go
     ],
     verification_commands: [
       "ruby scripts/implementation_evidence_report.rb --format json",
       "ruby scripts/runtime_contract_drift_report.rb --format json",
-      "ruby scripts/mainline_integration_review.rb --format json"
+      "ruby scripts/mainline_integration_review.rb --format json",
+      "ruby scripts/merge_readiness_packet.rb --format json",
+      "ruby -Ilib test/test_offline_application_fixture_matrix.rb"
     ],
-    next_follow_up: "Keep one release evidence index per branch intake before staging."
+    next_follow_up: "Keep one merge readiness packet, one release evidence index, and one offline fixture matrix per branch intake before staging."
   }
 ].freeze
 

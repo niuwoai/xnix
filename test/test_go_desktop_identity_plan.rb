@@ -1627,7 +1627,7 @@ if go_available
   assert(kde_center_page_payload.fetch("schema_version") == "xnix.runtime.kde_center_page.v1", "KDE center page preview schema version must be stable")
   assert(kde_center_page_payload.fetch("request_type") == "kde-center-page-preview", "KDE center page preview must identify its request type")
   assert(kde_center_page_payload.fetch("page_type") == "compatibility-center-application-page", "KDE center page preview must identify the application page")
-  assert(kde_center_page_payload.fetch("source") == "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+settings-preview", "KDE center page preview must compose existing Runtime read models")
+  assert(kde_center_page_payload.fetch("source") == "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview", "KDE center page preview must compose existing Runtime read models")
   assert(kde_center_page_payload.fetch("runtime_method") == "GetKDECenterPage", "KDE center page preview must expose the Runtime method")
   assert(kde_center_page_payload.fetch("read_method") == "GetKDECenterPagePreview", "KDE center page preview must expose the read method")
   assert(kde_center_page_payload.fetch("header").fetch("title") == recipe.name, "KDE center page header must expose the app name")

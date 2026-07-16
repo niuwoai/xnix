@@ -2,6 +2,70 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.300] - 2026-07-17
+
+### Added
+
+- Added the offline Ruby `scripts/merge_readiness_packet.rb` report command for S6W8. The packet joins layout verification, implementation evidence, Runtime contract drift, KDE-first presence smoke, mainline integration review, release evidence indexing, and the offline application fixture matrix into one reviewer-facing JSON/Markdown artifact with tool statuses, command strings, lane classification, protected-file status, unsafe-operation status, changed-file counts, required follow-up commands, merge blockers, and release blockers.
+- Added pass, skipped, missing-command, malformed-JSON, protected-file, unclassified-file, unsafe-operation, JSON-output, and Markdown-output tests for the merge readiness packet.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, mainline integration review classifier, release evidence index, product documentation, and current Claude Code dispatch picks so S6W8 is recognized as implemented and the next recommended Claude handoff starts with KDE notification digest evidence.
+- Added the Go-first stabilization release train for `v0.2.301` through `v0.2.320`, including targeted-test cadence, local-commit cadence, twentieth-version full build gates, and twentieth-version-only remote pushes.
+- Kept staging, committing, tagging, pushing, Docker, QEMU, network fetch, package-manager calls, backend launch, and host-root mutation disabled by default in the merge readiness flow.
+
+## [0.2.299] - 2026-07-17
+
+### Added
+
+- Added the Go Runtime `offline-application-fixture-matrix-preview` read model and CLI command (S6W7). The matrix covers document editor, game, installer, launcher, network-heavy app, tray-heavy app, and unsupported app shapes using built-in offline fixtures, and records recipe trust, artifact readiness, compatibility profile mapping, Portal needs, snapshot readiness, diagnostic readiness, KDE journey coverage, missing evidence, and blocked unsafe actions. Network fetch, package-manager calls, artifact staging, backend launch, Docker, QEMU, request creation, settings persistence, file-content reads, path exposure, raw command exposure, backend detail exposure, privileged containers, and host-root mutation all stay disabled.
+- Added the offline Ruby `scripts/offline_application_fixture_matrix.rb` JSON/Markdown report wrapper plus matrix-shape, filtered-shape, unsupported-shape, unknown-shape, Markdown-output, JSON-output, and no-side-effect tests.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, mainline integration review classifier, release evidence index, product documentation, and current Claude Code dispatch picks so S6W7 is recognized as implemented and the next recommended Claude handoff starts with S6W8 merge readiness packets.
+
+## [0.2.298] - 2026-07-17
+
+### Added
+
+- Added the Go Runtime `settings-profile-migration-preview` read model and CLI command (S6W6). The preview explains how user-facing compatibility settings move from older, current, or future schema versions into the supported settings schema, including run mode, priority, document access, downloads access, camera access, network access, snapshots, diagnostics privacy, defaulting rules, blocked setting ids, user-review requirements, and rollback notes. Settings persistence, resource grants, real Portal calls, backend launch, file-content reads, backend detail exposure, state-root path exposure, and host-root mutation all stay disabled.
+- Added current-schema, old-schema, future-schema, blocked-setting, invalid-setting, review-required, rollback-note, CLI, argument-validation, redaction, and no-side-effect tests for the settings profile migration preview.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, mainline integration review classifier, release evidence index, product documentation, and current Claude Code dispatch picks so S6W6 is recognized as implemented and the next recommended Claude handoff starts with S6W7 offline application fixture matrices.
+
+## [0.2.297] - 2026-07-17
+
+### Added
+
+- Added the Go Runtime `portal-permission-renewal-preview` read model and CLI command (S6W4). The preview explains files, URI, print, clipboard, screen, camera, remote desktop, and network permission states as current, needs review, expiring soon, denied, revoked, missing receipt, or blocked by policy with KDE-safe review-only action labels. Real Portal transport, permission grants, permission revocation, receipt writes, settings persistence, execution approval, file-content reads, path exposure, raw command exposure, backend detail exposure, and host-root mutation all stay disabled.
+- Added current, expiring, denied, revoked, missing-receipt, policy-blocked, malformed-ledger, missing-state-root-read-only, CLI, argument-validation, unsafe-input, and no-side-effect tests for the Portal permission renewal preview.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, mainline integration review classifier, release evidence index, product documentation, and current Claude Code dispatch picks so S6W4 is recognized as implemented and the next recommended Claude handoff starts with S6W6 settings profile migration previews.
+
+## [0.2.296] - 2026-07-17
+
+### Added
+
+- Added the Go Runtime `support-case-timeline-preview` read model and CLI command (S6W1). The preview joins diagnostic run history, blocked action evidence, repair recommendation categories, onboarding checklist gaps, KDE action dependency evidence, and KDE journey state into one redacted support-case timeline with stable event ids, event groups, severity, user-safe summaries, and next safe read-only checks. Support ticket creation, bundle export, AI provider calls, repair execution, action execution, backend process start, file-content reads, raw command exposure, local path exposure, state-root path exposure, and host-root mutation all stay disabled.
+- Added no-history, joined-evidence, malformed-history, mixed-application, redaction, mismatched-application, CLI, missing-state-root-read-only, malformed-receipt, argument-validation, and no-side-effect tests for the support case timeline preview.
+
+### Changed
+
+- Updated the layout verifier, implementation evidence report, mainline integration review classifier, product documentation, and current Claude Code dispatch picks so S6W1 is recognized as implemented and the next recommended Claude handoff starts with S6W4 Portal permission renewal previews.
+
+## [0.2.295] - 2026-07-17
+
+### Changed
+
+- Updated the current Claude Code dispatch sheet so it reflects the actual v0.2.294 implementation baseline: all seventh-wave tasks plus S6W2, S6W3, and S6W5 are now treated as already implemented, and the recommended next safe handoffs move to S6W1 support case timelines, S6W4 Portal permission renewal previews, S6W6 settings profile migration previews, S6W7 offline fixture matrices, S6W8 merge readiness packets, KDE notification digest previews, signed-recipe verifier evidence, and restricted product smoke packets.
+- Updated the release evidence index follow-up guidance and source-file evidence lists so retention, permission audit, KDE search visibility, snapshot restore ranking, and crash/hang summaries are recognized as existing evidence instead of being recommended again. Docker, QEMU, network checks, package managers, backend launch, automatic staging, release tagging, real permission changes, notification sending, and host-root mutation remain disabled by default.
+
 ## [0.2.294] - 2026-07-16
 
 ### Added
