@@ -35,6 +35,8 @@ const (
 	CategoryPrivateKey Category = "private-key"
 	// CategoryExecutable covers raw executable file references.
 	CategoryExecutable Category = "executable"
+	// CategoryURL covers network URLs (webhook or endpoint leakage).
+	CategoryURL Category = "url"
 )
 
 type rule struct {
@@ -59,6 +61,8 @@ var rules = []rule{
 	{CategoryHostPath, regexp.MustCompile(`(?i)/users/[^\s"]+`)},
 	{CategoryHostPath, regexp.MustCompile(`/root/[^\s"]+`)},
 	{CategoryWindowsPath, regexp.MustCompile(`(?i)[a-z]:\\`)},
+	// Network URLs (a webhook or endpoint must never leak into user output).
+	{CategoryURL, regexp.MustCompile(`(?i)\b(?:https?|wss?|ftp)://\S+`)},
 	// Secrets, tokens, and credentials.
 	{CategorySecret, regexp.MustCompile(`(?i)\bsecret\b`)},
 	{CategorySecret, regexp.MustCompile(`(?i)\btoken\b`)},

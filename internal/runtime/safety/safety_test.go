@@ -26,17 +26,19 @@ func TestSafeAcceptsUserFacingText(t *testing.T) {
 
 func TestScanCatchesEachCategory(t *testing.T) {
 	cases := map[string]Category{
-		"launch via wine backend":            CategoryBackendTerm,
-		"start proton runtime":               CategoryBackendTerm,
-		"qemu-system-x86_64 started":         CategoryBackendTerm,
-		"C:\\Program Files\\app":             CategoryWindowsPath, // also windows-path; program files -> backend-term
-		"opened /home/rocky/Documents/x.txt": CategoryHostPath,
-		"read /Users/rocky/secret":           CategoryHostPath,
-		"ran notepad.exe":                    CategoryExecutable,
-		"api key sk-abcdef123456 leaked":     CategorySecret,
-		"Authorization: Bearer abcdef123456": CategorySecret,
-		"password is hunter2":                CategorySecret,
-		"-----BEGIN RSA PRIVATE KEY-----":    CategoryPrivateKey,
+		"launch via wine backend":                CategoryBackendTerm,
+		"start proton runtime":                   CategoryBackendTerm,
+		"qemu-system-x86_64 started":             CategoryBackendTerm,
+		"C:\\Program Files\\app":                 CategoryWindowsPath, // also windows-path; program files -> backend-term
+		"opened /home/rocky/Documents/x.txt":     CategoryHostPath,
+		"read /Users/rocky/secret":               CategoryHostPath,
+		"ran notepad.exe":                        CategoryExecutable,
+		"api key sk-abcdef123456 leaked":         CategorySecret,
+		"Authorization: Bearer abcdef123456":     CategorySecret,
+		"password is hunter2":                    CategorySecret,
+		"-----BEGIN RSA PRIVATE KEY-----":        CategoryPrivateKey,
+		"posting to https://hooks.example.com/x": CategoryURL,
+		"callback ws://10.0.0.1:8080/socket":     CategoryURL,
 	}
 	for text, want := range cases {
 		findings := Scan(text)
