@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.317
+> Last updated: 2026-07-17 | Current version: v0.2.318
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.318 checkpoint consumes the explicit v0.2.317 preparation authorization into a digest-verified restricted launch preflight packet. `kde-restricted-launch-preflight-record` joins ten core receipts, confirms that all safe non-launching inputs are ready, and permits only product-image evidence-packet assembly. The packet remains blocked by exactly `recipe-trust` and `runtime-write-gate`; product-image readiness, production trust, Runtime writes, launch preflight, launch authorization, execution approval, process-start authorization, command materialization, executable-path resolution, launch-backend selection, backend launch, compatibility process start, production bus ownership, network access, privileged containers, backend details, and host-root mutation remain disabled.
 
 The v0.2.317 checkpoint starts the restricted test-only launch boundary with `kde-restricted-launch-authorization-record`. The CLI requires the exact `--mode test-only --authorize authorize-restricted-test-preparation` pair, and the Go Runtime persists and digest-verifies a preparation-only authorization receipt under the controlled execution ledger. All eight checks pass while the original blocked transaction and session remain unchanged: preparation is authorized, but production trust, Runtime writes, artifact acquisition, launch authorization, process-start authorization, execution approval, backend install and launch, compatibility process start, real Portal transport, production bus ownership, network access, privileged containers, raw commands, backend details, and host-root mutation remain disabled.
 

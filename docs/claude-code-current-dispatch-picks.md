@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.317
+> Last updated: 2026-07-17 | Baseline: v0.2.318
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Restricted launch preflight packet | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.318` | Consume the preparation-only authorization and emit a fail-closed launch preflight packet with explicit trust and write-gate blockers. |
+| 1 | Restricted product-image smoke checkpoint | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.319` | Join the restricted launch preflight packet to fixed product-image and smoke metadata without running Docker, QEMU, or a compatibility backend. |
 
 ## Best First Pick
 
-Start with the restricted launch preflight packet.
+Start with the restricted product-image smoke checkpoint.
 
-The v0.2.317 checkpoint persists and verifies an explicit preparation-only authorization receipt while proving that production trust, Runtime writes, launch authorization, execution approval, and process start remain false. The next handoff should consume that receipt into a restricted launch preflight packet that names the remaining blockers and cannot emit or execute a backend command.
+The v0.2.318 checkpoint persists and verifies a fail-closed restricted launch preflight packet, names exactly the production recipe-trust and Runtime write-gate blockers, and permits only evidence-packet assembly. The next handoff should join that packet to fixed product-image and restricted smoke metadata without claiming that Docker, QEMU, KDE, Wine, Proton, a VM, or a Windows application was launched.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

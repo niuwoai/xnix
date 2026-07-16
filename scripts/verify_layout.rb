@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.317"
+EXPECTED_VERSION = "0.2.318"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -2186,6 +2186,39 @@ go_runtime_kde_restricted_authorization_cli_source = read_project_file("cmd/xnix
                                                    read_project_file("cmd/xnix-runtime-go/main.go")
 %w[kde-restricted-launch-authorization-record runKDERestrictedLaunchAuthorizationRecord authorize-restricted-test-preparation test-only TestKDERestrictedLaunchAuthorizationRecordCommandRequiresExplicitDirective TestKDERestrictedLaunchAuthorizationRecordCommandRejectsImplicitAuthorization preparation_authorized launch_authorized process_start_authorized].each do |token|
   assert(go_runtime_kde_restricted_authorization_cli_source.include?(token), "Go Runtime KDE restricted launch authorization CLI must include #{token}")
+end
+
+go_runtime_restricted_preflight_source = read_project_file("internal/runtime/execution/restricted_preflight.go")
+%w[RestrictedPreflightStore RestrictedPreflightPacket xnix.runtime.restricted_launch_preflight.v1 restricted-launch-preflight-packet go-runtime-state-root-restricted-launch-preflight blocked recipe-trust runtime-write-gate ReadyForPacketAssembly ProductImageReady LaunchPreflightPassed].each do |token|
+  assert(go_runtime_restricted_preflight_source.include?(token), "Go Runtime restricted launch preflight store must include #{token}")
+end
+%w[LaunchAuthorized ExecutionApproved ProcessStartAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted NetworkRequired HostRootModified PrivilegedContainerRequired].each do |token|
+  assert(go_runtime_restricted_preflight_source.include?(token), "Go Runtime restricted launch preflight store must expose safety gate #{token}")
+end
+
+go_runtime_restricted_preflight_test_source = read_project_file("internal/runtime/execution/restricted_preflight_test.go")
+%w[TestRestrictedPreflightStorePersistsFailClosedPacket TestRestrictedPreflightStoreRejectsTamperedPacket recipe-trust runtime-write-gate].each do |token|
+  assert(go_runtime_restricted_preflight_test_source.include?(token), "Go Runtime restricted launch preflight tests must include #{token}")
+end
+
+go_runtime_kde_restricted_preflight_source = read_project_file("internal/runtime/appidentity/kde_restricted_launch_preflight.go")
+%w[KDERestrictedLaunchPreflightRecord NewKDERestrictedLaunchPreflightRecord xnix.runtime.kde_restricted_launch_preflight.v1 kde-restricted-launch-preflight-record authorization-boundary safe-inputs preflight-readback explicit-blockers packet-assembly-boundary execution-unchanged session-unchanged unsafe-gates-closed PreflightBoundaryJoined CoreReceiptCount AllChecksPassed].each do |token|
+  assert(go_runtime_kde_restricted_preflight_source.include?(token), "Go Runtime KDE restricted launch preflight must include #{token}")
+end
+%w[ProductImageReady ProductionTrustSatisfied RuntimeWriteGateEnabled LaunchPreflightPassed LaunchAuthorized ExecutionApproved ProcessStartAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_restricted_preflight_source.include?(token), "Go Runtime KDE restricted launch preflight must expose safety gate #{token}")
+end
+
+go_runtime_kde_restricted_preflight_test_source = read_project_file("internal/runtime/appidentity/kde_restricted_launch_preflight_test.go")
+%w[TestKDERestrictedLaunchPreflightRemainsBlocked recipe-trust runtime-write-gate explicit-test-root-only].each do |token|
+  assert(go_runtime_kde_restricted_preflight_test_source.include?(token), "Go Runtime KDE restricted launch preflight tests must include #{token}")
+end
+
+go_runtime_kde_restricted_preflight_cli_source = read_project_file("cmd/xnix-runtime-go/kde_restricted_launch_preflight_commands.go") +
+                                                read_project_file("cmd/xnix-runtime-go/kde_restricted_launch_preflight_cli_test.go") +
+                                                read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-restricted-launch-preflight-record runKDERestrictedLaunchPreflightRecord authorize-restricted-test-preparation test-only TestKDERestrictedLaunchPreflightRecordCommandIsFailClosed TestKDERestrictedLaunchPreflightRecordCommandRequiresAuthorization ready_for_packet_assembly product_image_ready launch_preflight_passed].each do |token|
+  assert(go_runtime_kde_restricted_preflight_cli_source.include?(token), "Go Runtime KDE restricted launch preflight CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +

@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.318] - 2026-07-17
+
+### Added
+
+- Added the digest-verified Go `RestrictedPreflightStore` for fail-closed restricted launch preflight packets under a controlled test state root.
+- Added `kde-restricted-launch-preflight-record` and `KDERestrictedLaunchPreflightRecord` to consume the v0.2.317 preparation authorization and join ten core receipts.
+- Added packet persistence, readback, tamper rejection, exact-blocker, explicit-authorization, redaction, and no-side-effect tests.
+
+### Changed
+
+- Advanced restricted test preparation to evidence-packet assembly while naming exactly `recipe-trust` and `runtime-write-gate` as the remaining launch blockers.
+- Kept product-image readiness, production trust, Runtime writes, launch preflight, launch authorization, execution approval, process-start authorization, command materialization, executable-path resolution, launch-backend selection, backend launch, compatibility process start, production bus ownership, network access, privileged containers, backend details, and host-root mutation disabled.
+
 ## [0.2.317] - 2026-07-17
 
 ### Added
