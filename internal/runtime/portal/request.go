@@ -39,6 +39,9 @@ const (
 	// StateFailed means the Portal transport failed; the request is
 	// recoverable and can be retried.
 	StateFailed RequestState = "failed"
+	// StateExpired means the request timed out before a user response and can
+	// no longer be resolved.
+	StateExpired RequestState = "expired"
 	// StateCompleted means a granted request was consumed by the caller.
 	StateCompleted RequestState = "completed"
 )
@@ -150,7 +153,7 @@ type Request struct {
 // Terminal reports whether the request has reached a final state.
 func (r *Request) Terminal() bool {
 	switch r.State {
-	case StateDenied, StateCancelled, StateCompleted:
+	case StateDenied, StateCancelled, StateExpired, StateCompleted:
 		return true
 	default:
 		return false

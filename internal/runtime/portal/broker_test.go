@@ -70,6 +70,55 @@ func TestFakeBrokerCompleteRequiresGrant(t *testing.T) {
 	}
 }
 
+func TestFakeBrokerExpirePendingIsTerminal(t *testing.T) {
+	broker := NewFakeBroker()
+	req, _ := broker.CreateRequest(RequestSpec{ApplicationID: "org.example.ledger", Operation: "file-open"})
+
+	expired, err := broker.Expire(req.HandleToken)
+	if err != nil {
+		t.Fatalf("Expire: %v", err)
+	}
+	if expired.State != StateExpired || expired.PermissionState != PermissionNotGranted || expired.Recoverable {
+		t.Fatalf("expired request state wrong: %#v", expired)
+	}
+	if !expired.Terminal() {
+		t.Fatalf("expired request must be terminal")
+	}
+	if len(expired.Diagnostics) == 0 {
+		t.Fatalf("expiry must be visible in diagnostics")
+	}
+	// An expired request can no longer be resolved or expired again.
+	if _, err := broker.Resolve(req.HandleToken, OutcomeGranted); err == nil {
+		t.Fatalf("resolving an expired request must error")
+	}
+	if _, err := broker.Expire(req.HandleToken); err == nil {
+		t.Fatalf("re-expiring must error")
+	}
+}
+
+func TestFakeBrokerExpireViaResolveOutcome(t *testing.T) {
+	broker := NewFakeBroker()
+	req, _ := broker.CreateRequest(RequestSpec{ApplicationID: "org.example.ledger", Operation: "print"})
+	expired, err := broker.Resolve(req.HandleToken, OutcomeExpired)
+	if err != nil {
+		t.Fatalf("Resolve expired: %v", err)
+	}
+	if expired.State != StateExpired || expired.PermissionState != PermissionNotGranted {
+		t.Fatalf("resolve-expired state wrong: %#v", expired)
+	}
+}
+
+func TestFakeBrokerGrantedCannotExpire(t *testing.T) {
+	broker := NewFakeBroker()
+	req, _ := broker.CreateRequest(RequestSpec{ApplicationID: "org.example.ledger", Operation: "file-open"})
+	if _, err := broker.Resolve(req.HandleToken, OutcomeGranted); err != nil {
+		t.Fatalf("Resolve granted: %v", err)
+	}
+	if _, err := broker.Expire(req.HandleToken); err == nil {
+		t.Fatalf("a granted request must not expire")
+	}
+}
+
 func TestFakeBrokerCancelPending(t *testing.T) {
 	broker := NewFakeBroker()
 	req, _ := broker.CreateRequest(RequestSpec{ApplicationID: "org.example.ledger", Operation: "clipboard"})

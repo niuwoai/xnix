@@ -17,6 +17,8 @@ const (
 	OutcomeCancelled Outcome = "cancelled"
 	// OutcomeFailed means the Portal transport failed; recoverable.
 	OutcomeFailed Outcome = "failed"
+	// OutcomeExpired means the request timed out before a user response.
+	OutcomeExpired Outcome = "expired"
 )
 
 // Broker owns portal request objects and their completion state. A real Portal
@@ -31,6 +33,8 @@ type Broker interface {
 	Complete(handleToken string) (*Request, error)
 	// Cancel withdraws a pending request.
 	Cancel(handleToken string) (*Request, error)
+	// Expire times out a pending or failed request.
+	Expire(handleToken string) (*Request, error)
 	// Get returns a tracked request by handle token.
 	Get(handleToken string) (*Request, bool)
 	// List returns all tracked requests in creation order.
@@ -99,8 +103,15 @@ func (b *FakeBroker) Resolve(handleToken string, outcome Outcome) (*Request, err
 		req.PermissionState = PermissionPending
 		req.Recoverable = true
 		req.Diagnostics = append(req.Diagnostics, "Portal transport failed; the request can be retried.")
+	case OutcomeExpired:
+		// A timeout is terminal: no permission is granted and the request can
+		// no longer be resolved.
+		req.State = StateExpired
+		req.PermissionState = PermissionNotGranted
+		req.Recoverable = false
+		req.Diagnostics = append(req.Diagnostics, "Portal request expired before a user response.")
 	default:
-		return nil, errors.New("outcome must be one of: granted, denied, cancelled, failed")
+		return nil, errors.New("outcome must be one of: granted, denied, cancelled, failed, expired")
 	}
 	return req, nil
 }
@@ -129,6 +140,23 @@ func (b *FakeBroker) Cancel(handleToken string) (*Request, error) {
 	}
 	req.State = StateCancelled
 	req.PermissionState = PermissionNotGranted
+	return req, nil
+}
+
+// Expire times out a pending or failed request. Terminal or granted requests
+// cannot expire.
+func (b *FakeBroker) Expire(handleToken string) (*Request, error) {
+	req, ok := b.requests[handleToken]
+	if !ok {
+		return nil, fmt.Errorf("unknown portal request %q", handleToken)
+	}
+	if req.State != StatePendingUserMediation && req.State != StateFailed {
+		return nil, fmt.Errorf("portal request %q cannot expire from state %s", handleToken, req.State)
+	}
+	req.State = StateExpired
+	req.PermissionState = PermissionNotGranted
+	req.Recoverable = false
+	req.Diagnostics = append(req.Diagnostics, "Portal request expired before a user response.")
 	return req, nil
 }
 
