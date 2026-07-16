@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.316"
+EXPECTED_VERSION = "0.2.317"
 REQUIRED_FILES = %w[
   Dockerfile
   VERSION
@@ -228,6 +228,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_snapshot_diagnostics_evidence_cli_test.go
   cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go
   cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
+  cmd/xnix-runtime-go/kde_restricted_launch_authorization_commands.go
+  cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -295,6 +297,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_snapshot_diagnostics_evidence_test.go
   internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
   internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
+  internal/runtime/appidentity/kde_restricted_launch_authorization.go
+  internal/runtime/appidentity/kde_restricted_launch_authorization_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -345,6 +349,8 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/ledger_test.go
   internal/runtime/execution/session.go
   internal/runtime/execution/session_test.go
+  internal/runtime/execution/authorization.go
+  internal/runtime/execution/authorization_test.go
   internal/runtime/diagnostics/record.go
   internal/runtime/diagnostics/history.go
   internal/runtime/artifact/stage.go
@@ -2162,6 +2168,26 @@ go_runtime_kde_backend_lifecycle_cli_source = read_project_file("cmd/xnix-runtim
   assert(go_runtime_kde_backend_lifecycle_cli_source.include?(token), "Go Runtime KDE backend lifecycle CLI must include #{token}")
 end
 
+go_runtime_kde_restricted_authorization_source = read_project_file("internal/runtime/appidentity/kde_restricted_launch_authorization.go")
+%w[KDERestrictedLaunchAuthorizationRecord NewKDERestrictedLaunchAuthorizationRecord xnix.runtime.kde_restricted_launch_authorization.v1 kde-restricted-launch-authorization-record prerequisite-convergence explicit-test-boundary authorization-readback trust-independent write-gate-independent execution-unchanged session-unchanged unsafe-gates-closed AuthorizationBoundaryJoined CoreReceiptCount AllChecksPassed].each do |token|
+  assert(go_runtime_kde_restricted_authorization_source.include?(token), "Go Runtime KDE restricted launch authorization must include #{token}")
+end
+%w[StateRootPathExposed ProductionTrustSatisfied RuntimeWriteGateEnabled ArtifactAcquisitionEnabled BackendInstallEnabled BackendLaunchEnabled BackendProcessStarted RealPortalCallEnabled ExecutionApproved LaunchAuthorized LaunchAllowed LaunchEnabled ExecutionStarted ProcessStartAuthorized ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_restricted_authorization_source.include?(token), "Go Runtime KDE restricted launch authorization must expose safety gate #{token}")
+end
+
+go_runtime_kde_restricted_authorization_test_source = read_project_file("internal/runtime/appidentity/kde_restricted_launch_authorization_test.go")
+%w[TestKDERestrictedLaunchAuthorizationRecordsPreparationOnly TestKDERestrictedLaunchAuthorizationRequiresExactDirective authorized-preparation-only explicit-test-root-only].each do |token|
+  assert(go_runtime_kde_restricted_authorization_test_source.include?(token), "Go Runtime KDE restricted launch authorization tests must include #{token}")
+end
+
+go_runtime_kde_restricted_authorization_cli_source = read_project_file("cmd/xnix-runtime-go/kde_restricted_launch_authorization_commands.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-restricted-launch-authorization-record runKDERestrictedLaunchAuthorizationRecord authorize-restricted-test-preparation test-only TestKDERestrictedLaunchAuthorizationRecordCommandRequiresExplicitDirective TestKDERestrictedLaunchAuthorizationRecordCommandRejectsImplicitAuthorization preparation_authorized launch_authorized process_start_authorized].each do |token|
+  assert(go_runtime_kde_restricted_authorization_cli_source.include?(token), "Go Runtime KDE restricted launch authorization CLI must include #{token}")
+end
+
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +
                                                 read_project_file("internal/runtime/owner/service_test.go") +
                                                 read_project_file("cmd/xnix-runtime-owner/main_test.go")
@@ -3310,6 +3336,38 @@ execution_session_source = read_project_file("internal/runtime/execution/session
   execution\ session\ record\ has\ unsafe\ enabled\ gates
 ].each do |token|
   assert(execution_session_source.include?(token.gsub("\\ ", " ")), "Execution session record must include #{token}")
+end
+
+restricted_authorization_source = read_project_file("internal/runtime/execution/authorization.go")
+%w[
+  xnix.runtime.restricted_launch_authorization.v1
+  restricted-launch-authorization-receipt
+  go-runtime-state-root-restricted-launch-authorization
+  restricted-test-preparation
+  authorize-restricted-test-preparation
+  authorized-preparation-only
+  RestrictedAuthorizationStore
+  RestrictedAuthorizationRequest
+  PreparationAuthorized
+  LaunchAuthorized
+  ProcessStartAuthorized
+  ProductionTrustSatisfied
+  RuntimeWriteGateEnabled
+  ArtifactAcquisitionEnabled
+  BackendInstallEnabled
+  BackendLaunchEnabled
+  BackendProcessStarted
+  StateRootPathExposed
+  HostRootModified
+  digest\ mismatch
+  invalid\ or\ unsafe\ gates
+  managed\ path\ must\ be\ a\ real\ directory
+].each do |token|
+  assert(restricted_authorization_source.include?(token.gsub("\\ ", " ")), "Restricted launch authorization store must include #{token}")
+end
+restricted_authorization_test_source = read_project_file("internal/runtime/execution/authorization_test.go")
+%w[TestRestrictedAuthorizationStorePersistsPreparationOnlyReceipt TestRestrictedAuthorizationStoreRejectsInvalidDirectiveTamperingAndSymlink launch_authorized managed\ path\ symlink].each do |token|
+  assert(restricted_authorization_test_source.include?(token.gsub("\\ ", " ")), "Restricted launch authorization tests must include #{token}")
 end
 
 execution_receipt_integrity_test_source = read_project_file("internal/runtime/execution/ledger_test.go") +

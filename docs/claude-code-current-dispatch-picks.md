@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.316
+> Last updated: 2026-07-17 | Baseline: v0.2.317
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -25,13 +25,13 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Restricted launch authorization boundary | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.317` | Persist a test-only launch authorization receipt that cannot start a process or satisfy production trust by itself. |
+| 1 | Restricted launch preflight packet | `docs/claude-code-stability-release-train.md` | `codex/stability-train-v0.2.318` | Consume the preparation-only authorization and emit a fail-closed launch preflight packet with explicit trust and write-gate blockers. |
 
 ## Best First Pick
 
-Start with the restricted launch authorization boundary.
+Start with the restricted launch preflight packet.
 
-The v0.2.316 checkpoint joins the ready lifecycle, verified backend inventory, blocked execution transaction, blocked session, and four KDE consumers without starting a compatibility process. The next handoff should persist an explicit test-only authorization receipt and prove that authorization remains distinct from production trust, Runtime write enablement, and process launch.
+The v0.2.317 checkpoint persists and verifies an explicit preparation-only authorization receipt while proving that production trust, Runtime writes, launch authorization, execution approval, and process start remain false. The next handoff should consume that receipt into a restricted launch preflight packet that names the remaining blockers and cannot emit or execute a backend command.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

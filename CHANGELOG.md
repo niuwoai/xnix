@@ -2,6 +2,20 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.317] - 2026-07-17
+
+### Added
+
+- Added the Go `RestrictedAuthorizationStore` with an exact `test-only` preparation scope and `authorize-restricted-test-preparation` directive.
+- Added `kde-restricted-launch-authorization-record` and `KDERestrictedLaunchAuthorizationRecord` to join the explicit authorization receipt to the Sample Notepad blocked execution and session records.
+- Added digest-verified authorization readback, eight boundary checks, invalid-directive, tamper, and managed-directory symlink tests.
+
+### Changed
+
+- Authorized only restricted test preparation; launch authorization, process-start authorization, and execution approval remain separate and false.
+- Proved that recording preparation authorization does not satisfy production recipe trust, enable the Runtime write gate, or change the blocked execution/session state.
+- Kept artifact acquisition, backend install and launch, compatibility process start, real Portal transport, production bus ownership, network access, privileged containers, raw commands, backend details, and host-root mutation disabled.
+
 ## [0.2.316] - 2026-07-17
 
 ### Added
