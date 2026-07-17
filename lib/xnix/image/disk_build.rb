@@ -22,9 +22,11 @@ module Xnix
       CLI_COMMAND = "xnix-kde-disk"
 
       REQUIRED_KEYS = %w[
-        schema source_image builder_image output_basename
+        schema source_image builder_image rootfs output_basename
         output_types supported_output_types blueprint
       ].freeze
+
+      SUPPORTED_ROOTFS_TYPES = %w[btrfs ext4 xfs].freeze
 
       # bootc-image-builder writes each type to a known sub-path under the
       # output directory.
@@ -69,6 +71,7 @@ module Xnix
         issues = []
         issues.concat(REQUIRED_KEYS.reject { |k| @config.key?(k) }.map { |k| "disk config missing key: #{k}" })
         issues.concat(output_type_problems)
+        issues.concat(rootfs_problems)
         issues.concat(source_consistency_problems)
         issues
       end
@@ -98,6 +101,7 @@ module Xnix
           "-v", "#{blueprint_path}:/config.json:ro",
           @config.fetch("builder_image"),
           "--type", type,
+          "--rootfs", @config.fetch("rootfs"),
           "--local",
           "--config", "/config.json",
           source_reference
@@ -111,6 +115,7 @@ module Xnix
           "source_image" => @config.fetch("source_image"),
           "source_reference" => source_reference,
           "builder_image" => @config.fetch("builder_image"),
+          "rootfs" => @config.fetch("rootfs"),
           "output_types" => output_types,
           "output_basename" => @config.fetch("output_basename"),
           "privileged_build_required" => true,
@@ -145,6 +150,13 @@ module Xnix
 
         types.reject { |t| supported_type?(t) }
              .map { |t| "requested output type '#{t}' is not in supported_output_types" }
+      end
+
+      def rootfs_problems
+        rootfs = @config["rootfs"]
+        return [] if SUPPORTED_ROOTFS_TYPES.include?(rootfs)
+
+        ["rootfs '#{rootfs}' is not supported (expected one of: #{SUPPORTED_ROOTFS_TYPES.join(', ')})"]
       end
 
       def source_consistency_problems

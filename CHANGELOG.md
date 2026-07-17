@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc2] - 2026-07-17
+
+### Fixed
+
+- Added an explicit, validated Btrfs root filesystem to Fedora Kinoite disk builds after bootc-image-builder rejected the otherwise successful q3 container compose for missing `DefaultRootFs` metadata.
+- Added disk-model coverage that rejects unsupported root filesystems and requires `--rootfs btrfs` in the privileged builder command.
+
+### Changed
+
+- Recorded the successful q3 container compose while keeping qcow2 generation, KDE startup, and Windows application execution claims pending.
+
 ## [0.2.320-rc1] - 2026-07-17
 
 ### Fixed

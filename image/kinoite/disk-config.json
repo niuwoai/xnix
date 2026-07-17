@@ -3,6 +3,7 @@
   "summary": "Turns the xnix-kinoite bootc container image into a bootable disk image via bootc-image-builder.",
   "source_image": "xnix-kinoite",
   "builder_image": "quay.io/centos-bootc/bootc-image-builder:latest",
+  "rootfs": "btrfs",
   "output_basename": "xnix-kinoite",
   "output_types": [
     "qcow2"

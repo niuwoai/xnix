@@ -25,6 +25,7 @@ assert(report["source_image"] == "xnix-kinoite", "disk build source image must b
 assert(report["source_reference"] == "xnix-kinoite:#{report['version']}",
        "source reference must combine image name and version")
 assert(report["output_types"].include?("qcow2"), "disk build must produce a qcow2 by default")
+assert(report["rootfs"] == "btrfs", "Kinoite disk builds must select btrfs explicitly")
 assert(report["privileged_build_required"], "disk build must declare the privileged build requirement")
 assert(disk.valid?, "checked-in disk config must be valid: #{disk.problems.join('; ')}")
 
@@ -40,6 +41,7 @@ joined = command.join(" ")
 assert(command.first == "podman", "builder command must invoke podman")
 assert(joined.include?("--privileged"), "bootc-image-builder must run privileged")
 assert(joined.include?("--type qcow2"), "builder command must request the qcow2 type")
+assert(joined.include?("--rootfs btrfs"), "Fedora bootc disk builds must declare their root filesystem")
 assert(joined.include?("--local"), "builder command must use the local container image")
 assert(joined.include?("/out:/output"), "builder command must mount the output directory")
 assert(joined.include?("/tmp/bp.json:/config.json:ro"), "builder command must mount the blueprint read-only")
@@ -68,6 +70,7 @@ Tempfile.create(["broken-disk", ".json"]) do |file|
   broken = JSON.parse(project_root.join("image/kinoite/disk-config.json").read)
   broken["source_image"] = "not-the-image"
   broken["output_types"] = ["vhdx"]
+  broken["rootfs"] = "reiserfs"
   file.write(JSON.generate(broken))
   file.flush
   broken_disk = Xnix::Image::DiskBuild.new(project_root: project_root.to_s, config_path: file.path)
@@ -76,6 +79,8 @@ Tempfile.create(["broken-disk", ".json"]) do |file|
          "validation must flag the source/manifest mismatch")
   assert(broken_disk.problems.any? { |p| p.include?("not in supported_output_types") },
          "validation must flag the unsupported output type")
+  assert(broken_disk.problems.any? { |p| p.include?("rootfs 'reiserfs' is not supported") },
+         "validation must flag the unsupported root filesystem")
 end
 
 puts "PASS: KDE Plasma disk-build pipeline is consistent"

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.320-rc1
+> Last updated: 2026-07-17 | Current version: v0.2.320-rc2
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc2 disk-build checkpoint explicitly selects Btrfs for Fedora Kinoite bootc output. The first successful q3 container compose reached bootc-image-builder, whose manifest generation then failed because Fedora images intentionally omit a default root filesystem; the disk model now validates the supported filesystem and always renders `--rootfs btrfs` for the Kinoite qcow2 build.
 
 The v0.2.320-rc1 build-fix checkpoint removes the obsolete Fedora 41 `plasma-workspace-wayland` and `kwin-wayland` subpackages from the Kinoite layering transaction. Current Fedora Kinoite already provides their functionality through `plasma-workspace` and `kwin`; attempting to layer the obsolete names caused the first authorized q3 compose to fail dependency resolution. The manifest keeps Wayland and KWin as the desktop policy while the image test now rejects both obsolete package entries.
 
