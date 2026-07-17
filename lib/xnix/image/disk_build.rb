@@ -20,6 +20,7 @@ module Xnix
     # this and fails honestly rather than faking a build.
     class DiskBuild
       CLI_COMMAND = "xnix-kde-disk"
+      LOCAL_REGISTRY = "localhost"
 
       REQUIRED_KEYS = %w[
         schema source_image builder_image rootfs output_basename
@@ -56,7 +57,7 @@ module Xnix
       end
 
       def source_reference
-        "#{@config.fetch('source_image')}:#{version}"
+        "#{LOCAL_REGISTRY}/#{@config.fetch('source_image')}:#{version}"
       end
 
       def output_types

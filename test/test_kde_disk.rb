@@ -22,8 +22,8 @@ assert(report["version"] == project_root.join("VERSION").read.strip,
        "disk build must read the version from the VERSION file")
 assert(report["artifact_type"] == "kde-plasma-disk-image", "disk build must identify its artifact type")
 assert(report["source_image"] == "xnix-kinoite", "disk build source image must be xnix-kinoite")
-assert(report["source_reference"] == "xnix-kinoite:#{report['version']}",
-       "source reference must combine image name and version")
+assert(report["source_reference"] == "localhost/xnix-kinoite:#{report['version']}",
+       "source reference must use the fully qualified local image name")
 assert(report["output_types"].include?("qcow2"), "disk build must produce a qcow2 by default")
 assert(report["rootfs"] == "btrfs", "Kinoite disk builds must select btrfs explicitly")
 assert(report["privileged_build_required"], "disk build must declare the privileged build requirement")
@@ -43,6 +43,8 @@ assert(joined.include?("--privileged"), "bootc-image-builder must run privileged
 assert(joined.include?("--type qcow2"), "builder command must request the qcow2 type")
 assert(joined.include?("--rootfs btrfs"), "Fedora bootc disk builds must declare their root filesystem")
 assert(joined.include?("--local"), "builder command must use the local container image")
+assert(joined.include?("localhost/xnix-kinoite:"),
+       "builder command must not resolve the local image through docker.io/library")
 assert(joined.include?("/out:/output"), "builder command must mount the output directory")
 assert(joined.include?("/tmp/bp.json:/config.json:ro"), "builder command must mount the blueprint read-only")
 assert(joined.include?(disk.source_reference), "builder command must reference the source image tag")

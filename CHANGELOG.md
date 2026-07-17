@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc3] - 2026-07-17
+
+### Fixed
+
+- Fully qualified the bootc source as `localhost/xnix-kinoite:<version>` so the privileged builder resolves the Podman-local image through the mounted container store instead of `docker.io/library`.
+- Added disk-command coverage that keeps local image resolution explicit.
+
+### Changed
+
+- Recorded the rc2 q3 manifest-generation result while keeping qcow2 generation, KDE startup, and Windows application execution claims pending.
+
 ## [0.2.320-rc2] - 2026-07-17
 
 ### Fixed

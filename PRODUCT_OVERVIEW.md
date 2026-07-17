@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.320-rc2
+> Last updated: 2026-07-17 | Current version: v0.2.320-rc3
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc3 disk-build checkpoint fully qualifies the Podman-local source as `localhost/xnix-kinoite:<version>`. The q3 rc2 attempt passed root-filesystem selection but showed that bootc-image-builder otherwise expands the short image name to `docker.io/library`, which cannot resolve to the host's local image ID through the mounted container store.
 
 The v0.2.320-rc2 disk-build checkpoint explicitly selects Btrfs for Fedora Kinoite bootc output. The first successful q3 container compose reached bootc-image-builder, whose manifest generation then failed because Fedora images intentionally omit a default root filesystem; the disk model now validates the supported filesystem and always renders `--rootfs btrfs` for the Kinoite qcow2 build.
 
