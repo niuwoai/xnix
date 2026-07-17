@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc1] - 2026-07-17
+
+### Fixed
+
+- Removed the obsolete Fedora 41 `plasma-workspace-wayland` and `kwin-wayland` subpackages from the Kinoite layering transaction after the authorized q3 compose exposed rpm-ostree dependency conflicts.
+- Added a KDE image regression guard that rejects both obsolete package requests while preserving the Plasma Wayland and KWin desktop policy.
+
+### Changed
+
+- Updated the release evidence notes to record the real q3 compose result and keep bootc disk, KDE startup, and Windows application execution claims pending.
+
 ## [0.2.320] - 2026-07-17
 
 ### Changed

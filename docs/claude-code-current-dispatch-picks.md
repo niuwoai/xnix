@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-17 | Baseline: v0.2.320
+> Last updated: 2026-07-17 | Baseline: v0.2.320-rc1
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -31,7 +31,7 @@ A task is suitable for Claude Code now if it is:
 
 Start with the privileged Kinoite build-host handoff.
 
-The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. The real Kinoite compose and bootc disk build remain blocked because this host has no Podman/Buildah toolchain and the required privileged build mode is outside the current safety boundary. The next handoff must run on an explicitly approved build host and must not claim KDE startup, Wine/Proton/VM launch, Windows application execution, or release readiness until those exact checks pass.
+The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. The first explicitly authorized q3 compose exposed obsolete Fedora 41 `plasma-workspace-wayland` and `kwin-wayland` package requests; v0.2.320-rc1 removes those requests and adds a regression guard. The real compose, bootc disk build, and KDE startup smoke must still pass on q3 before release readiness can be claimed; Wine/Proton/VM launch and Windows application execution remain unproven.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

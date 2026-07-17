@@ -56,6 +56,10 @@ assert(containerfile.include?("FROM quay.io/fedora/fedora-kinoite:41"),
        "rendered Containerfile must pin the Kinoite base image")
 assert(containerfile.include?("rpm-ostree install"), "rendered Containerfile must layer packages via rpm-ostree")
 assert(containerfile.include?("plasma-desktop"), "rendered Containerfile must install the Plasma desktop")
+assert(!containerfile.include?("        plasma-workspace-wayland "),
+       "rendered Containerfile must not install the obsolete plasma-workspace-wayland subpackage")
+assert(!containerfile.include?("        kwin-wayland "),
+       "rendered Containerfile must not install the obsolete kwin-wayland subpackage")
 assert(containerfile.include?("xdg-desktop-portal-kde"), "rendered Containerfile must install the KDE portal backend")
 assert(containerfile.include?("systemctl preset-all"), "rendered Containerfile must apply unit presets")
 assert(containerfile.include?("COPY runtime/systemd/xnix-compatd.service"),

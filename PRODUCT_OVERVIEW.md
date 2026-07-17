@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-17 | Current version: v0.2.320
+> Last updated: 2026-07-17 | Current version: v0.2.320-rc1
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc1 build-fix checkpoint removes the obsolete Fedora 41 `plasma-workspace-wayland` and `kwin-wayland` subpackages from the Kinoite layering transaction. Current Fedora Kinoite already provides their functionality through `plasma-workspace` and `kwin`; attempting to layer the obsolete names caused the first authorized q3 compose to fail dependency resolution. The manifest keeps Wayland and KWin as the desktop policy while the image test now rejects both obsolete package entries.
 
 The v0.2.320 checkpoint is the first full Go stability train gate. The complete Go, layout, contract-drift, implementation-evidence, mainline-integration, release-index, and merge-readiness audits pass. The gate found and fixed an oversized Docker build context by excluding the local Go build cache and enforcing the exclusion in tests. The six-step Buildroot build and constrained QEMU serial smoke also pass with a persisted report, no missing boot markers, loopback-restricted networking, and no host-root mutation. The flagship Kinoite manifest and Containerfile pass offline consistency checks, but the real compose and disk-build path remains blocked on the current host because Podman/Buildah is unavailable and bootc image production requires a privileged build host. Xnix does not weaken the host boundary to manufacture a release-ready result.
 

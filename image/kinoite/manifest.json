@@ -16,8 +16,6 @@
     "plasma_desktop": [
       "plasma-desktop",
       "plasma-workspace",
-      "plasma-workspace-wayland",
-      "kwin-wayland",
       "sddm",
       "sddm-kcm",
       "plasma-systemsettings",

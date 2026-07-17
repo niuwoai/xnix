@@ -9,8 +9,6 @@ LABEL org.xnix.flagship="kde-plasma-6"
 RUN rpm-ostree install --idempotent \
         plasma-desktop \
         plasma-workspace \
-        plasma-workspace-wayland \
-        kwin-wayland \
         sddm \
         sddm-kcm \
         plasma-systemsettings \
