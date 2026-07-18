@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.327"
+EXPECTED_VERSION = "0.2.328"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -2655,18 +2655,18 @@ go_runtime_multi_application_install_queue_cli_source = [
 end
 
 go_runtime_offline_application_fixture_matrix_source = read_project_file("internal/runtime/appidentity/offline_application_fixture_matrix.go")
-%w[OfflineApplicationFixtureMatrixPreview OfflineApplicationFixtureMatrixRow OfflineApplicationFixtureMatrixCounts offline-application-fixture-matrix-preview offline-cross-application-fixture-matrix xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview built-in-fixtures+runtime-read-models document-editor game installer launcher network-heavy tray-heavy unsupported].each do |token|
+%w[OfflineApplicationFixtureMatrixPreview OfflineApplicationFixtureMatrixRow OfflineApplicationFixtureMatrixCounts OfflineApplicationFixtureBackendAdapterContract offline-application-fixture-matrix-preview offline-cross-application-fixture-matrix xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview built-in-fixtures+runtime-read-models+backend-adapter-contract-preview document-editor game installer launcher network-heavy tray-heavy unsupported backend-adapter-noop-contract noop-contract-ready].each do |token|
   assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must include #{token}")
 end
-%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner UserVisible ReviewOnly OfflineDefault NetworkFetchEnabled PackageManagerInvoked ArtifactStagingEnabled BackendLaunchEnabled DockerRequired QEMURequired RequestObjectsCreated SettingsPersisted FileContentRead StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed HostRootModified PrivilegedContainerRequired].each do |token|
+%w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner BackendAdapterContractRead BackendAdapterProfileCount BackendAdapterNoopContracts BackendAdapterAuditReady UserVisible ReviewOnly OfflineDefault NetworkFetchEnabled PackageManagerInvoked ArtifactStagingEnabled BackendLaunchEnabled DockerRequired QEMURequired RequestObjectsCreated SettingsPersisted FileContentRead StateRootPathExposed RawExecutableExposed RawCommandExposed BackendDetailsExposed HostRootModified PrivilegedContainerRequired AdapterInvocationEnabled InstallEnabled DownloadEnabled CommandMaterialized ExecutablePathResolved ProfilePathExposed].each do |token|
   assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must expose #{token}")
 end
-%w[CompatibilityInstallPlanPreview BackendSelectionPreview NewSnapshotPlanPreview AIDiagnosticInputPreview KDEJourneyEvidencePreviewWithOptions validateNoBackendTerms offlineApplicationFixtureRowState countOfflineApplicationFixtureMatrixRows].each do |token|
+%w[CompatibilityInstallPlanPreview BackendSelectionPreview NewBackendAdapterContractPreview NewSnapshotPlanPreview AIDiagnosticInputPreview KDEJourneyEvidencePreviewWithOptions validateNoBackendTerms offlineApplicationFixtureBackendAdapterContract offlineApplicationFixtureRowState countOfflineApplicationFixtureMatrixRows].each do |token|
   assert(go_runtime_offline_application_fixture_matrix_source.include?(token), "Go Runtime offline application fixture matrix must implement #{token}")
 end
 
 go_runtime_offline_application_fixture_matrix_test_source = read_project_file("internal/runtime/appidentity/offline_application_fixture_matrix_test.go")
-%w[TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes TestOfflineApplicationFixtureMatrixPreviewReportsMissingFixtures TestOfflineApplicationFixtureMatrixPreviewRejectsUnknownShape TestOfflineApplicationFixtureMatrixPreviewUnsupportedShapeIsBlocked TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects TestOfflineApplicationFixtureMatrixPreviewIsDesktopSafe offline-application-fixture-matrix-preview blocked-unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_process_started host_root_modified raw_command_exposed].each do |token|
+%w[TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes TestOfflineApplicationFixtureMatrixPreviewAuditsBackendAdapterContractMappings TestOfflineApplicationFixtureMatrixPreviewReportsMissingFixtures TestOfflineApplicationFixtureMatrixPreviewRejectsUnknownShape TestOfflineApplicationFixtureMatrixPreviewUnsupportedShapeIsBlocked TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects TestOfflineApplicationFixtureMatrixPreviewIsDesktopSafe offline-application-fixture-matrix-preview blocked-unsupported noop-contract-ready backend-adapter-noop-contract network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_process_started adapter_invocation_enabled command_materialized host_root_modified raw_command_exposed].each do |token|
   assert(go_runtime_offline_application_fixture_matrix_test_source.include?(token), "Go Runtime offline application fixture matrix tests must include #{token}")
 end
 
@@ -2675,19 +2675,19 @@ go_runtime_offline_application_fixture_matrix_cli_source = [
   read_project_file("cmd/xnix-runtime-go/offline_application_fixture_matrix_cli_test.go"),
   read_project_file("cmd/xnix-runtime-go/main.go")
 ].join("\n")
-%w[offline-application-fixture-matrix-preview runOfflineApplicationFixtureMatrixPreview parseOfflineApplicationFixtureMatrixOptions repeatedFixtureShapeIDs xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview offline-cross-application-fixture-matrix network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+%w[offline-application-fixture-matrix-preview runOfflineApplicationFixtureMatrixPreview parseOfflineApplicationFixtureMatrixOptions repeatedFixtureShapeIDs xnix.runtime.offline_application_fixture_matrix.v1 GetOfflineApplicationFixtureMatrix GetOfflineApplicationFixtureMatrixPreview offline-cross-application-fixture-matrix backend_adapter_contract_read backend_adapter_audit_ready noop-contract-ready adapter_invocation_enabled command_materialized network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
   assert(go_runtime_offline_application_fixture_matrix_cli_source.include?(token), "Go Runtime offline application fixture matrix CLI must include #{token}")
 end
 
 offline_application_fixture_matrix_script_source = read_project_file("scripts/offline_application_fixture_matrix.rb")
-%w[offline-application-fixture-matrix-preview --format --shape JSON.pretty_generate render_markdown GOCACHE .cache document-editor game installer launcher network-heavy tray-heavy unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+%w[offline-application-fixture-matrix-preview --format --shape JSON.pretty_generate render_markdown GOCACHE .cache document-editor game installer launcher network-heavy tray-heavy unsupported backend_adapter_contract_read backend_adapter_audit_ready noop-contract-ready adapter_invocation_enabled command_materialized network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
   assert(offline_application_fixture_matrix_script_source.include?(token), "Offline application fixture matrix script must include #{token}")
 end
 assert(!offline_application_fixture_matrix_script_source.include?("scripts/container.rb"), "Offline application fixture matrix must not run Docker")
 assert(!offline_application_fixture_matrix_script_source.include?("boot-system"), "Offline application fixture matrix must not boot QEMU")
 
 offline_application_fixture_matrix_script_test_source = read_project_file("test/test_offline_application_fixture_matrix.rb")
-%w[offline-application-fixture-matrix-preview JSON.parse render_markdown document-editor unsupported blocked-unsupported network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
+%w[offline-application-fixture-matrix-preview JSON.parse render_markdown document-editor unsupported blocked-unsupported noop-contract-ready backend_adapter_contract_read backend_adapter_audit_ready network_fetch_enabled package_manager_invoked artifact_staging_enabled backend_launch_enabled docker_required qemu_required host_root_modified].each do |token|
   assert(offline_application_fixture_matrix_script_test_source.include?(token), "Offline application fixture matrix script tests must include #{token}")
 end
 

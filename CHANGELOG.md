@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.328] - 2026-07-18
+
+### Added
+
+- Added no-op backend adapter contract audits to the offline application fixture matrix, letting fixture-backed readiness rows consume KDE-safe adapter profiles from `backend-adapter-contract-preview`.
+- Added Go, CLI, Ruby report, layout, and evidence coverage that keeps adapter invocation, install, download, command materialization, executable resolution, backend launch, backend process start, network access, state-root path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.327] - 2026-07-18
 
 ### Added

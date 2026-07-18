@@ -35,6 +35,12 @@ SAFETY_FALSE_KEYS = %w[
   host_root_modified
   privileged_container_required
   backend_process_started
+  adapter_invocation_enabled
+  install_enabled
+  download_enabled
+  command_materialized
+  executable_path_resolved
+  profile_path_exposed
   launch_enabled
   execution_started
 ].freeze
@@ -103,11 +109,14 @@ def assert_matrix!(payload)
   assert(payload.fetch("runtime_owned") == true, "matrix must be Runtime-owned")
   assert(payload.fetch("go_runtime_backed") == true, "matrix must be Go Runtime backed")
   assert(payload.fetch("kde_policy_owner") == false, "KDE must not own fixture policy")
+  assert(payload.fetch("backend_adapter_contract_read") == true, "matrix must read backend adapter contracts")
+  assert(payload.fetch("backend_adapter_audit_ready") == true, "matrix must audit backend adapter contracts")
 
   shape_ids = payload.fetch("shape_ids")
   missing = EXPECTED_SHAPES - shape_ids
   assert(missing.empty?, "missing expected shapes: #{missing.join(", ")}") if payload.fetch("missing_shape_ids").empty?
   assert(payload.fetch("rows").all? { |row| row.fetch("kde_journey_entry_point_count") == 7 }, "each row must cover the seven KDE entry points")
+  assert(payload.fetch("rows").all? { |row| row.fetch("backend_adapter_contract").fetch("state") == "noop-contract-ready" }, "each row must consume a no-op backend adapter contract")
   assert(payload.fetch("rows").any? { |row| row.fetch("shape_id") == "unsupported" && row.fetch("matrix_state") == "blocked-unsupported" }, "unsupported shape must be explicitly blocked")
   assert_safety_false!(payload)
 end
@@ -149,13 +158,14 @@ def render_markdown(payload)
   lines << "- Missing fixtures: #{payload.fetch("counts").fetch("missing_fixture")}"
   lines << "- Unsafe actions enabled: `false`"
   lines << ""
-  lines << "| Shape | Application | Profile | Artifact | Snapshot | Portal needs | KDE entry points | State |"
-  lines << "| --- | --- | --- | --- | --- | --- | ---: | --- |"
+  lines << "| Shape | Application | Profile | Adapter contract | Artifact | Snapshot | Portal needs | KDE entry points | State |"
+  lines << "| --- | --- | --- | --- | --- | --- | --- | ---: | --- |"
   payload.fetch("rows").each do |row|
     lines << [
       row.fetch("shape_id"),
       row.fetch("application_name"),
       row.fetch("backend_profile_mapping"),
+      row.fetch("backend_adapter_contract").fetch("state"),
       row.fetch("artifact_readiness"),
       row.fetch("snapshot_readiness"),
       row.fetch("portal_needs").join(", "),

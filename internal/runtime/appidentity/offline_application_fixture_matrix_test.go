@@ -37,7 +37,11 @@ func TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes(t *tes
 	if preview.Counts.Total != len(expectedShapes) ||
 		preview.Counts.MissingFixture != 0 ||
 		preview.Counts.Unsupported != 1 ||
-		len(preview.Rows) != len(expectedShapes) {
+		len(preview.Rows) != len(expectedShapes) ||
+		!preview.BackendAdapterContractRead ||
+		preview.BackendAdapterProfileCount != 3 ||
+		preview.BackendAdapterNoopContracts != 3 ||
+		!preview.BackendAdapterAuditReady {
 		t.Fatalf("unexpected matrix counts: %#v", preview.Counts)
 	}
 	for _, shape := range expectedShapes {
@@ -52,8 +56,18 @@ func TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes(t *tes
 			row.SnapshotReadiness != "planned-receipt-required" ||
 			row.DiagnosticReadiness != "metadata-only-ready" ||
 			row.KDEJourneyCoverageState != "seven-entrypoints-covered" ||
-			row.KDEJourneyEntryPointCount != 7 {
+			row.KDEJourneyEntryPointCount != 7 ||
+			row.BackendAdapterContract.State != "noop-contract-ready" ||
+			row.BackendAdapterContract.ContractStatus != "noop-contract" ||
+			!row.BackendAdapterContract.NoopContract ||
+			!row.BackendAdapterContract.KDEFacingProfileMatched ||
+			row.BackendAdapterContract.ProfileCount != 3 ||
+			row.BackendAdapterContract.NoopContractCount != 3 ||
+			row.BackendAdapterContract.RequiredRuntimeGateCount != 10 {
 			t.Fatalf("unexpected row evidence for %s: %#v", row.ShapeID, row)
+		}
+		if !containsString(row.RequiredEvidenceIDs, "backend-adapter-noop-contract") {
+			t.Fatalf("row missing backend adapter contract evidence requirement: %#v", row.RequiredEvidenceIDs)
 		}
 		if row.NetworkFetchEnabled ||
 			row.PackageManagerInvoked ||
@@ -68,8 +82,72 @@ func TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes(t *tes
 			row.RawExecutableExposed ||
 			row.RawCommandExposed ||
 			row.BackendDetailsExposed ||
-			row.HostRootModified {
+			row.HostRootModified ||
+			row.BackendAdapterContract.AdapterInvocationEnabled ||
+			row.BackendAdapterContract.InstallEnabled ||
+			row.BackendAdapterContract.DownloadEnabled ||
+			row.BackendAdapterContract.LaunchEnabled ||
+			row.BackendAdapterContract.ProcessStarted ||
+			row.BackendAdapterContract.VMProcessStarted ||
+			row.BackendAdapterContract.CommandMaterialized ||
+			row.BackendAdapterContract.ExecutablePathResolved ||
+			row.BackendAdapterContract.RawCommandExposed ||
+			row.BackendAdapterContract.ProfilePathExposed ||
+			row.BackendAdapterContract.StateRootPathExposed ||
+			row.BackendAdapterContract.BackendDetailsExposed ||
+			row.BackendAdapterContract.NetworkRequired ||
+			row.BackendAdapterContract.HostRootModified {
 			t.Fatalf("row enabled unsafe side effect: %#v", row)
+		}
+	}
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewAuditsBackendAdapterContractMappings(t *testing.T) {
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:    []string{"document-editor", "game"},
+		RuntimeRoot: "../../..",
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	if preview.Source != "built-in-fixtures+runtime-read-models+backend-adapter-contract-preview" ||
+		!preview.BackendAdapterContractRead ||
+		preview.BackendAdapterProfileCount != 3 ||
+		preview.BackendAdapterNoopContracts != 3 ||
+		!preview.BackendAdapterAuditReady {
+		t.Fatalf("matrix did not consume backend adapter contract safely: %#v", preview)
+	}
+	expectedProfiles := map[string]string{
+		"document-editor": "local-compatibility",
+		"game":            "isolated-compatibility",
+	}
+	for _, row := range preview.Rows {
+		evidence := row.BackendAdapterContract
+		if evidence.State != "noop-contract-ready" ||
+			evidence.ProfileID != expectedProfiles[row.ShapeID] ||
+			evidence.ProfileLabel == "" ||
+			evidence.ProfileSummary == "" ||
+			evidence.ContractStatus != "noop-contract" ||
+			!evidence.NoopContract ||
+			!evidence.KDEFacingProfileMatched ||
+			evidence.RequiredRuntimeGateCount != 10 ||
+			!containsString(evidence.RequiredRuntimeGates, "runtime-write-gate") ||
+			!containsString(evidence.RequiredRuntimeGates, "test-only-materialization") ||
+			evidence.AdapterInvocationEnabled ||
+			evidence.InstallEnabled ||
+			evidence.DownloadEnabled ||
+			evidence.LaunchEnabled ||
+			evidence.ProcessStarted ||
+			evidence.VMProcessStarted ||
+			evidence.CommandMaterialized ||
+			evidence.ExecutablePathResolved ||
+			evidence.RawCommandExposed ||
+			evidence.ProfilePathExposed ||
+			evidence.StateRootPathExposed ||
+			evidence.BackendDetailsExposed ||
+			evidence.NetworkRequired ||
+			evidence.HostRootModified {
+			t.Fatalf("unsafe or incomplete backend adapter contract evidence for %s: %#v", row.ShapeID, evidence)
 		}
 	}
 }
@@ -301,7 +379,9 @@ func TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects(t *testin
 		preview.RawCommandExposed ||
 		preview.BackendDetailsExposed ||
 		preview.HostRootModified ||
-		preview.PrivilegedContainerRequired {
+		preview.PrivilegedContainerRequired ||
+		!preview.BackendAdapterContractRead ||
+		!preview.BackendAdapterAuditReady {
 		t.Fatalf("matrix enabled unsafe side effect: %#v", preview)
 	}
 }
@@ -385,6 +465,8 @@ func TestOfflineApplicationFixtureMatrixPreviewIsDesktopSafe(t *testing.T) {
 		"package_manager_invoked",
 		"artifact_staging_enabled",
 		"backend_process_started",
+		"adapter_invocation_enabled",
+		"command_materialized",
 		"host_root_modified",
 		"raw_command_exposed",
 	} {

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.327
+> Last updated: 2026-07-18 | Current version: v0.2.328
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.328 checkpoint lets fixture-backed readiness consume the no-op backend adapter contract. The offline application fixture matrix now reads `backend-adapter-contract-preview`, attaches KDE-safe no-op profile evidence to every fixture row, and renders the adapter contract state in the Ruby report while adapter invocation, install, download, command materialization, executable resolution, backend launch, backend process start, network access, state-root path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.327 checkpoint fans the test-only launch materialization receipt out to KDE-facing surfaces. The Go Runtime now exposes `kde-test-launch-materialization-fanout-preview`, projecting the blocked review plan into Compatibility Center, task manager, tray, and notification previews while fan-out writes, task-manager activation, live tray bridging, notification delivery, Compatibility Center actions, Runtime writes, command materialization, executable resolution, backend launch, backend process start, network access, privileged containers, state-root path exposure, and host-root mutation remain disabled.
 

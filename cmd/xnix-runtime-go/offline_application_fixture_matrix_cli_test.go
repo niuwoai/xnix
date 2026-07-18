@@ -32,6 +32,10 @@ func TestOfflineApplicationFixtureMatrixPreviewCommandRendersMatrix(t *testing.T
 		payload["runtime_owned"] != true ||
 		payload["go_runtime_backed"] != true ||
 		payload["kde_policy_owner"] != false ||
+		payload["backend_adapter_contract_read"] != true ||
+		payload["backend_adapter_profile_count"] != float64(3) ||
+		payload["backend_adapter_noop_contracts"] != float64(3) ||
+		payload["backend_adapter_audit_ready"] != true ||
 		payload["review_only"] != true ||
 		payload["offline_default"] != true ||
 		payload["network_fetch_enabled"] != false ||
@@ -51,6 +55,65 @@ func TestOfflineApplicationFixtureMatrixPreviewCommandRendersMatrix(t *testing.T
 		counts["missing_fixture"] != float64(0) ||
 		len(rows) != 7 {
 		t.Fatalf("unexpected matrix counts: rows=%#v counts=%#v", rows, counts)
+	}
+	firstRow := rows[0].(map[string]any)
+	adapterContract := firstRow["backend_adapter_contract"].(map[string]any)
+	if adapterContract["state"] != "noop-contract-ready" ||
+		adapterContract["contract_status"] != "noop-contract" ||
+		adapterContract["noop_contract"] != true ||
+		adapterContract["kde_facing_profile_matched"] != true ||
+		adapterContract["profile_count"] != float64(3) ||
+		adapterContract["noop_contract_count"] != float64(3) ||
+		adapterContract["required_runtime_gate_count"] != float64(10) ||
+		adapterContract["adapter_invocation_enabled"] != false ||
+		adapterContract["install_enabled"] != false ||
+		adapterContract["download_enabled"] != false ||
+		adapterContract["launch_enabled"] != false ||
+		adapterContract["command_materialized"] != false ||
+		adapterContract["executable_path_resolved"] != false ||
+		adapterContract["raw_command_exposed"] != false ||
+		adapterContract["profile_path_exposed"] != false ||
+		adapterContract["state_root_path_exposed"] != false ||
+		adapterContract["backend_details_exposed"] != false ||
+		adapterContract["host_root_modified"] != false {
+		t.Fatalf("unexpected backend adapter contract row evidence: %#v", adapterContract)
+	}
+	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewCommandAuditsBackendAdapterContractMappings(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		"offline-application-fixture-matrix-preview",
+		"--shape", "document-editor",
+		"--shape", "game",
+		"--runtime-root", "../..",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	rows := payload["rows"].([]any)
+	expectedProfiles := map[string]string{
+		"document-editor": "local-compatibility",
+		"game":            "isolated-compatibility",
+	}
+	for _, entry := range rows {
+		row := entry.(map[string]any)
+		evidence := row["backend_adapter_contract"].(map[string]any)
+		if evidence["profile_id"] != expectedProfiles[row["shape_id"].(string)] ||
+			evidence["state"] != "noop-contract-ready" ||
+			evidence["adapter_invocation_enabled"] != false ||
+			evidence["launch_enabled"] != false ||
+			evidence["command_materialized"] != false ||
+			evidence["backend_details_exposed"] != false ||
+			evidence["host_root_modified"] != false {
+			t.Fatalf("unsafe or unexpected adapter contract mapping: row=%#v evidence=%#v", row, evidence)
+		}
 	}
 	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
 }

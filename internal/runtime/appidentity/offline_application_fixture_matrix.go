@@ -38,6 +38,10 @@ type OfflineApplicationFixtureMatrixPreview struct {
 	RuntimeOwned                bool                                  `json:"runtime_owned"`
 	GoRuntimeBacked             bool                                  `json:"go_runtime_backed"`
 	KDEPolicyOwner              bool                                  `json:"kde_policy_owner"`
+	BackendAdapterContractRead  bool                                  `json:"backend_adapter_contract_read"`
+	BackendAdapterProfileCount  int                                   `json:"backend_adapter_profile_count"`
+	BackendAdapterNoopContracts int                                   `json:"backend_adapter_noop_contracts"`
+	BackendAdapterAuditReady    bool                                  `json:"backend_adapter_audit_ready"`
 	UserVisible                 bool                                  `json:"user_visible"`
 	ReviewOnly                  bool                                  `json:"review_only"`
 	OfflineDefault              bool                                  `json:"offline_default"`
@@ -63,49 +67,50 @@ type OfflineApplicationFixtureMatrixPreview struct {
 }
 
 type OfflineApplicationFixtureMatrixRow struct {
-	Position                   int                                            `json:"position"`
-	ShapeID                    string                                         `json:"shape_id"`
-	ShapeLabel                 string                                         `json:"shape_label"`
-	ApplicationID              string                                         `json:"application_id"`
-	ApplicationName            string                                         `json:"application_name"`
-	Icon                       string                                         `json:"icon"`
-	DesktopFile                string                                         `json:"desktop_file"`
-	UserSafeRunMode            string                                         `json:"user_safe_run_mode"`
-	MatrixState                string                                         `json:"matrix_state"`
-	RecipeTrustState           string                                         `json:"recipe_trust_state"`
-	ArtifactReadiness          string                                         `json:"artifact_readiness"`
-	BackendProfileMapping      string                                         `json:"backend_profile_mapping"`
-	PortalNeeds                []string                                       `json:"portal_needs"`
-	SnapshotReadiness          string                                         `json:"snapshot_readiness"`
-	SnapshotBaselineReceipt    *OfflineApplicationFixtureSnapshotBaseline     `json:"snapshot_baseline_receipt,omitempty"`
-	DiagnosticReadiness        string                                         `json:"diagnostic_readiness"`
-	ArtifactStageReceipt       *OfflineApplicationFixtureArtifactStageReceipt `json:"artifact_stage_receipt,omitempty"`
-	KDEJourneyCoverageState    string                                         `json:"kde_journey_coverage_state"`
-	KDEJourneyEntryPointCount  int                                            `json:"kde_journey_entry_point_count"`
-	KDEJourneyBlockedNodeCount int                                            `json:"kde_journey_blocked_node_count"`
-	RequiredEvidenceIDs        []string                                       `json:"required_evidence_ids"`
-	MissingEvidenceIDs         []string                                       `json:"missing_evidence_ids"`
-	BlockedReasons             []string                                       `json:"blocked_reasons"`
-	NextSafeReadOnlyCheck      string                                         `json:"next_safe_read_only_check"`
-	UserReviewRequired         bool                                           `json:"user_review_required"`
-	UnsupportedShape           bool                                           `json:"unsupported_shape"`
-	RuntimeOwned               bool                                           `json:"runtime_owned"`
-	GoRuntimeBacked            bool                                           `json:"go_runtime_backed"`
-	KDEPolicyOwner             bool                                           `json:"kde_policy_owner"`
-	NetworkFetchEnabled        bool                                           `json:"network_fetch_enabled"`
-	PackageManagerInvoked      bool                                           `json:"package_manager_invoked"`
-	ArtifactStagingEnabled     bool                                           `json:"artifact_staging_enabled"`
-	BackendProcessStarted      bool                                           `json:"backend_process_started"`
-	LaunchEnabled              bool                                           `json:"launch_enabled"`
-	ExecutionStarted           bool                                           `json:"execution_started"`
-	RequestObjectCreated       bool                                           `json:"request_object_created"`
-	SettingsPersisted          bool                                           `json:"settings_persisted"`
-	FileContentRead            bool                                           `json:"file_content_read"`
-	StateRootPathExposed       bool                                           `json:"state_root_path_exposed"`
-	RawExecutableExposed       bool                                           `json:"raw_executable_exposed"`
-	RawCommandExposed          bool                                           `json:"raw_command_exposed"`
-	BackendDetailsExposed      bool                                           `json:"backend_details_exposed"`
-	HostRootModified           bool                                           `json:"host_root_modified"`
+	Position                   int                                             `json:"position"`
+	ShapeID                    string                                          `json:"shape_id"`
+	ShapeLabel                 string                                          `json:"shape_label"`
+	ApplicationID              string                                          `json:"application_id"`
+	ApplicationName            string                                          `json:"application_name"`
+	Icon                       string                                          `json:"icon"`
+	DesktopFile                string                                          `json:"desktop_file"`
+	UserSafeRunMode            string                                          `json:"user_safe_run_mode"`
+	MatrixState                string                                          `json:"matrix_state"`
+	RecipeTrustState           string                                          `json:"recipe_trust_state"`
+	ArtifactReadiness          string                                          `json:"artifact_readiness"`
+	BackendProfileMapping      string                                          `json:"backend_profile_mapping"`
+	BackendAdapterContract     OfflineApplicationFixtureBackendAdapterContract `json:"backend_adapter_contract"`
+	PortalNeeds                []string                                        `json:"portal_needs"`
+	SnapshotReadiness          string                                          `json:"snapshot_readiness"`
+	SnapshotBaselineReceipt    *OfflineApplicationFixtureSnapshotBaseline      `json:"snapshot_baseline_receipt,omitempty"`
+	DiagnosticReadiness        string                                          `json:"diagnostic_readiness"`
+	ArtifactStageReceipt       *OfflineApplicationFixtureArtifactStageReceipt  `json:"artifact_stage_receipt,omitempty"`
+	KDEJourneyCoverageState    string                                          `json:"kde_journey_coverage_state"`
+	KDEJourneyEntryPointCount  int                                             `json:"kde_journey_entry_point_count"`
+	KDEJourneyBlockedNodeCount int                                             `json:"kde_journey_blocked_node_count"`
+	RequiredEvidenceIDs        []string                                        `json:"required_evidence_ids"`
+	MissingEvidenceIDs         []string                                        `json:"missing_evidence_ids"`
+	BlockedReasons             []string                                        `json:"blocked_reasons"`
+	NextSafeReadOnlyCheck      string                                          `json:"next_safe_read_only_check"`
+	UserReviewRequired         bool                                            `json:"user_review_required"`
+	UnsupportedShape           bool                                            `json:"unsupported_shape"`
+	RuntimeOwned               bool                                            `json:"runtime_owned"`
+	GoRuntimeBacked            bool                                            `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool                                            `json:"kde_policy_owner"`
+	NetworkFetchEnabled        bool                                            `json:"network_fetch_enabled"`
+	PackageManagerInvoked      bool                                            `json:"package_manager_invoked"`
+	ArtifactStagingEnabled     bool                                            `json:"artifact_staging_enabled"`
+	BackendProcessStarted      bool                                            `json:"backend_process_started"`
+	LaunchEnabled              bool                                            `json:"launch_enabled"`
+	ExecutionStarted           bool                                            `json:"execution_started"`
+	RequestObjectCreated       bool                                            `json:"request_object_created"`
+	SettingsPersisted          bool                                            `json:"settings_persisted"`
+	FileContentRead            bool                                            `json:"file_content_read"`
+	StateRootPathExposed       bool                                            `json:"state_root_path_exposed"`
+	RawExecutableExposed       bool                                            `json:"raw_executable_exposed"`
+	RawCommandExposed          bool                                            `json:"raw_command_exposed"`
+	BackendDetailsExposed      bool                                            `json:"backend_details_exposed"`
+	HostRootModified           bool                                            `json:"host_root_modified"`
 }
 
 type OfflineApplicationFixtureArtifactStageReceipt struct {
@@ -148,6 +153,37 @@ type OfflineApplicationFixtureSnapshotBaseline struct {
 	BackendDetailsExposed bool     `json:"backend_details_exposed"`
 }
 
+type OfflineApplicationFixtureBackendAdapterContract struct {
+	State                    string   `json:"state"`
+	ProfileID                string   `json:"profile_id"`
+	ProfileLabel             string   `json:"profile_label"`
+	ProfileSummary           string   `json:"profile_summary"`
+	ContractStatus           string   `json:"contract_status"`
+	NoopContract             bool     `json:"noop_contract"`
+	KDEFacingProfileMatched  bool     `json:"kde_facing_profile_matched"`
+	RequiredRuntimeGates     []string `json:"required_runtime_gates"`
+	RequiredRuntimeGateCount int      `json:"required_runtime_gate_count"`
+	ProfileCount             int      `json:"profile_count"`
+	NoopContractCount        int      `json:"noop_contract_count"`
+	RuntimeOwned             bool     `json:"runtime_owned"`
+	GoRuntimeBacked          bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner           bool     `json:"kde_policy_owner"`
+	AdapterInvocationEnabled bool     `json:"adapter_invocation_enabled"`
+	InstallEnabled           bool     `json:"install_enabled"`
+	DownloadEnabled          bool     `json:"download_enabled"`
+	LaunchEnabled            bool     `json:"launch_enabled"`
+	ProcessStarted           bool     `json:"process_started"`
+	VMProcessStarted         bool     `json:"vm_process_started"`
+	CommandMaterialized      bool     `json:"command_materialized"`
+	ExecutablePathResolved   bool     `json:"executable_path_resolved"`
+	RawCommandExposed        bool     `json:"raw_command_exposed"`
+	ProfilePathExposed       bool     `json:"profile_path_exposed"`
+	StateRootPathExposed     bool     `json:"state_root_path_exposed"`
+	BackendDetailsExposed    bool     `json:"backend_details_exposed"`
+	NetworkRequired          bool     `json:"network_required"`
+	HostRootModified         bool     `json:"host_root_modified"`
+}
+
 type OfflineApplicationFixtureMatrixCounts struct {
 	Total           int `json:"total"`
 	Covered         int `json:"covered"`
@@ -176,6 +212,10 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 	if err := validateOfflineApplicationFixtureSnapshotStateRoot(options.SnapshotStateRoot); err != nil {
 		return OfflineApplicationFixtureMatrixPreview{}, err
 	}
+	adapterContract, err := NewBackendAdapterContractPreview(options.RuntimeRoot)
+	if err != nil {
+		return OfflineApplicationFixtureMatrixPreview{}, err
+	}
 	definitions := offlineApplicationFixtureDefinitions()
 	selected, missing, err := selectOfflineApplicationFixtureDefinitions(definitions, options.ShapeIDs)
 	if err != nil {
@@ -184,7 +224,7 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 
 	rows := make([]OfflineApplicationFixtureMatrixRow, 0, len(selected))
 	for index, definition := range selected {
-		row, err := offlineApplicationFixtureMatrixRow(index+1, definition, options)
+		row, err := offlineApplicationFixtureMatrixRow(index+1, definition, options, adapterContract)
 		if err != nil {
 			return OfflineApplicationFixtureMatrixPreview{}, err
 		}
@@ -195,7 +235,7 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 		SchemaVersion:               "xnix.runtime.offline_application_fixture_matrix.v1",
 		RequestType:                 "offline-application-fixture-matrix-preview",
 		MatrixType:                  "offline-cross-application-fixture-matrix",
-		Source:                      "built-in-fixtures+runtime-read-models",
+		Source:                      "built-in-fixtures+runtime-read-models+backend-adapter-contract-preview",
 		Desktop:                     "KDE Plasma",
 		RuntimeMethod:               "GetOfflineApplicationFixtureMatrix",
 		ReadMethod:                  "GetOfflineApplicationFixtureMatrixPreview",
@@ -209,6 +249,10 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 		RuntimeOwned:                true,
 		GoRuntimeBacked:             true,
 		KDEPolicyOwner:              false,
+		BackendAdapterContractRead:  true,
+		BackendAdapterProfileCount:  adapterContract.Counts.KDEFacingProfiles,
+		BackendAdapterNoopContracts: adapterContract.Counts.NoopAdapters,
+		BackendAdapterAuditReady:    adapterContract.NoopImplementation && adapterContract.Counts.EnabledInvocations == 0 && adapterContract.Counts.EnabledLaunches == 0 && adapterContract.Counts.MaterializedCommand == 0,
 		UserVisible:                 true,
 		ReviewOnly:                  true,
 		OfflineDefault:              true,
@@ -241,9 +285,10 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 		NextSafeReadOnlyChecks: []string{
 			"refresh offline fixture matrix after adding a recipe shape",
 			"compare fixture matrix with KDE-first presence smoke output",
+			"audit fixture backend profile mapping against no-op adapter contracts",
 			"include matrix results in merge-readiness packet review",
 		},
-		DesktopSafeSummary: "Offline fixture matrix covers representative application shapes with Runtime evidence while downloads, staging, launch, container smoke, machine smoke, file-content reads, and host mutation remain disabled.",
+		DesktopSafeSummary: "Offline fixture matrix covers representative application shapes with Runtime evidence and no-op adapter contract profiles while downloads, staging, adapter invocation, launch, container smoke, machine smoke, file-content reads, and host mutation remain disabled.",
 	}
 	if err := validateNoBackendTerms(preview, "offline application fixture matrix preview"); err != nil {
 		return OfflineApplicationFixtureMatrixPreview{}, err
@@ -381,7 +426,7 @@ func selectOfflineApplicationFixtureDefinitions(definitions []offlineApplication
 	return selected, missing, nil
 }
 
-func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicationFixtureDefinition, options OfflineApplicationFixtureMatrixOptions) (OfflineApplicationFixtureMatrixRow, error) {
+func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicationFixtureDefinition, options OfflineApplicationFixtureMatrixOptions, adapterContract BackendAdapterContractPreview) (OfflineApplicationFixtureMatrixRow, error) {
 	plan, err := NewPlanWithProvenance(definition.Recipe, Provenance{
 		Source:          "offline-fixture-matrix",
 		RegistryName:    "built-in-offline-fixtures",
@@ -403,6 +448,7 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
+	adapterEvidence := offlineApplicationFixtureBackendAdapterContract(selection.RecommendedProfileID, adapterContract)
 	snapshot, err := NewSnapshotPlanPreview(plan.ApplicationID, "before-repair")
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
@@ -436,6 +482,7 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 		RecipeTrustState:           offlineApplicationFixtureRecipeTrustState(install),
 		ArtifactReadiness:          offlineApplicationFixtureArtifactReadiness(install, receiptEvidence),
 		BackendProfileMapping:      selection.RecommendedProfileID,
+		BackendAdapterContract:     adapterEvidence,
 		PortalNeeds:                append([]string(nil), definition.PortalNeeds...),
 		SnapshotReadiness:          offlineApplicationFixtureSnapshotReadiness(snapshot, snapshotBaseline),
 		SnapshotBaselineReceipt:    snapshotBaseline,
@@ -448,6 +495,7 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 			"recipe-trust",
 			"artifact-readiness",
 			"backend-profile-mapping",
+			"backend-adapter-noop-contract",
 			"portal-needs",
 			"snapshot-readiness",
 			"diagnostic-readiness",
@@ -476,6 +524,50 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 		BackendDetailsExposed:  false,
 		HostRootModified:       false,
 	}, nil
+}
+
+func offlineApplicationFixtureBackendAdapterContract(profileID string, contract BackendAdapterContractPreview) OfflineApplicationFixtureBackendAdapterContract {
+	evidence := OfflineApplicationFixtureBackendAdapterContract{
+		State:                    "missing-profile-match",
+		ProfileID:                profileID,
+		ContractStatus:           "missing",
+		NoopContract:             contract.NoopImplementation,
+		RequiredRuntimeGates:     append([]string(nil), contract.RequiredRuntimeGates...),
+		RequiredRuntimeGateCount: len(contract.RequiredRuntimeGates),
+		ProfileCount:             contract.Counts.KDEFacingProfiles,
+		NoopContractCount:        contract.Counts.NoopAdapters,
+		RuntimeOwned:             true,
+		GoRuntimeBacked:          true,
+		KDEPolicyOwner:           false,
+		AdapterInvocationEnabled: false,
+		InstallEnabled:           false,
+		DownloadEnabled:          false,
+		LaunchEnabled:            false,
+		ProcessStarted:           false,
+		VMProcessStarted:         false,
+		CommandMaterialized:      false,
+		ExecutablePathResolved:   false,
+		RawCommandExposed:        false,
+		ProfilePathExposed:       false,
+		StateRootPathExposed:     false,
+		BackendDetailsExposed:    false,
+		NetworkRequired:          false,
+		HostRootModified:         false,
+	}
+	for _, profile := range contract.KDEFacingProfiles {
+		if profile.ID != profileID {
+			continue
+		}
+		evidence.State = "noop-contract-ready"
+		evidence.ProfileLabel = profile.Label
+		evidence.ProfileSummary = profile.Summary
+		evidence.ContractStatus = profile.ContractStatus
+		evidence.KDEFacingProfileMatched = true
+		evidence.BackendDetailsExposed = profile.BackendDetailsExposed
+		evidence.LaunchEnabled = profile.LaunchEnabled
+		return evidence
+	}
+	return evidence
 }
 
 func offlineApplicationFixtureRunMode(profileID string) string {

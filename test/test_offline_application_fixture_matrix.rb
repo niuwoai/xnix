@@ -37,6 +37,11 @@ script = script_path.read
   state_root_path_exposed
   raw_command_exposed
   backend_details_exposed
+  backend_adapter_contract_read
+  backend_adapter_audit_ready
+  adapter_invocation_enabled
+  command_materialized
+  executable_path_resolved
 ].each do |token|
   assert(script.include?(token), "offline fixture matrix script must include #{token}")
 end
@@ -68,7 +73,10 @@ assert(payload.fetch("request_type") == "offline-application-fixture-matrix-prev
 assert(payload.fetch("counts").fetch("total") == 7, "matrix must include seven shapes")
 assert(payload.fetch("counts").fetch("unsupported") == 1, "matrix must include one unsupported shape")
 assert(payload.fetch("missing_shape_ids").empty?, "default matrix must not miss fixtures")
+assert(payload.fetch("backend_adapter_contract_read") == true, "matrix must read backend adapter contracts")
+assert(payload.fetch("backend_adapter_audit_ready") == true, "matrix must audit backend adapter contracts")
 assert(payload.fetch("rows").all? { |row| row.fetch("kde_journey_entry_point_count") == 7 }, "each fixture row must cover seven KDE entry points")
+assert(payload.fetch("rows").all? { |row| row.fetch("backend_adapter_contract").fetch("state") == "noop-contract-ready" }, "each fixture row must consume no-op adapter contract evidence")
 assert(payload.fetch("rows").any? { |row| row.fetch("shape_id") == "unsupported" && row.fetch("matrix_state") == "blocked-unsupported" }, "unsupported row must be blocked")
 
 payload_text = json_stdout.downcase
@@ -77,6 +85,8 @@ payload_text = json_stdout.downcase
   package_manager_invoked
   artifact_staging_enabled
   backend_launch_enabled
+  adapter_invocation_enabled
+  command_materialized
   docker_required
   qemu_required
   host_root_modified
@@ -87,7 +97,8 @@ end
 markdown_stdout, markdown_stderr, markdown_status = Open3.capture3(env, "ruby", script_path.to_s, "--format", "markdown", chdir: project_root.to_s)
 assert(markdown_status.success?, "offline fixture matrix Markdown run failed: #{markdown_stderr}")
 assert(markdown_stdout.include?("# Offline Application Fixture Matrix"), "Markdown output must include title")
-assert(markdown_stdout.include?("| Shape | Application | Profile | Artifact | Snapshot | Portal needs | KDE entry points | State |"), "Markdown output must include matrix table")
+assert(markdown_stdout.include?("| Shape | Application | Profile | Adapter contract | Artifact | Snapshot | Portal needs | KDE entry points | State |"), "Markdown output must include matrix table")
+assert(markdown_stdout.include?("noop-contract-ready"), "Markdown output must include adapter contract state")
 assert(markdown_stdout.include?("unsupported"), "Markdown output must include unsupported shape")
 assert(markdown_stdout.include?("blocked-unsupported"), "Markdown output must include blocked unsupported state")
 
