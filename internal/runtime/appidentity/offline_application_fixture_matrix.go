@@ -1,14 +1,21 @@
 package appidentity
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
+
+	"xnix.local/xnix/internal/runtime/artifact"
 )
 
 type OfflineApplicationFixtureMatrixOptions struct {
-	ShapeIDs    []string
-	RuntimeRoot string
+	ShapeIDs            []string
+	RuntimeRoot         string
+	ArtifactReceiptRoot string
 }
 
 type OfflineApplicationFixtureMatrixPreview struct {
@@ -54,47 +61,66 @@ type OfflineApplicationFixtureMatrixPreview struct {
 }
 
 type OfflineApplicationFixtureMatrixRow struct {
-	Position                   int      `json:"position"`
-	ShapeID                    string   `json:"shape_id"`
-	ShapeLabel                 string   `json:"shape_label"`
-	ApplicationID              string   `json:"application_id"`
-	ApplicationName            string   `json:"application_name"`
-	Icon                       string   `json:"icon"`
-	DesktopFile                string   `json:"desktop_file"`
-	UserSafeRunMode            string   `json:"user_safe_run_mode"`
-	MatrixState                string   `json:"matrix_state"`
-	RecipeTrustState           string   `json:"recipe_trust_state"`
-	ArtifactReadiness          string   `json:"artifact_readiness"`
-	BackendProfileMapping      string   `json:"backend_profile_mapping"`
-	PortalNeeds                []string `json:"portal_needs"`
-	SnapshotReadiness          string   `json:"snapshot_readiness"`
-	DiagnosticReadiness        string   `json:"diagnostic_readiness"`
-	KDEJourneyCoverageState    string   `json:"kde_journey_coverage_state"`
-	KDEJourneyEntryPointCount  int      `json:"kde_journey_entry_point_count"`
-	KDEJourneyBlockedNodeCount int      `json:"kde_journey_blocked_node_count"`
-	RequiredEvidenceIDs        []string `json:"required_evidence_ids"`
-	MissingEvidenceIDs         []string `json:"missing_evidence_ids"`
-	BlockedReasons             []string `json:"blocked_reasons"`
-	NextSafeReadOnlyCheck      string   `json:"next_safe_read_only_check"`
-	UserReviewRequired         bool     `json:"user_review_required"`
-	UnsupportedShape           bool     `json:"unsupported_shape"`
-	RuntimeOwned               bool     `json:"runtime_owned"`
-	GoRuntimeBacked            bool     `json:"go_runtime_backed"`
-	KDEPolicyOwner             bool     `json:"kde_policy_owner"`
-	NetworkFetchEnabled        bool     `json:"network_fetch_enabled"`
-	PackageManagerInvoked      bool     `json:"package_manager_invoked"`
-	ArtifactStagingEnabled     bool     `json:"artifact_staging_enabled"`
-	BackendProcessStarted      bool     `json:"backend_process_started"`
-	LaunchEnabled              bool     `json:"launch_enabled"`
-	ExecutionStarted           bool     `json:"execution_started"`
-	RequestObjectCreated       bool     `json:"request_object_created"`
-	SettingsPersisted          bool     `json:"settings_persisted"`
-	FileContentRead            bool     `json:"file_content_read"`
-	StateRootPathExposed       bool     `json:"state_root_path_exposed"`
-	RawExecutableExposed       bool     `json:"raw_executable_exposed"`
-	RawCommandExposed          bool     `json:"raw_command_exposed"`
-	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
-	HostRootModified           bool     `json:"host_root_modified"`
+	Position                   int                                            `json:"position"`
+	ShapeID                    string                                         `json:"shape_id"`
+	ShapeLabel                 string                                         `json:"shape_label"`
+	ApplicationID              string                                         `json:"application_id"`
+	ApplicationName            string                                         `json:"application_name"`
+	Icon                       string                                         `json:"icon"`
+	DesktopFile                string                                         `json:"desktop_file"`
+	UserSafeRunMode            string                                         `json:"user_safe_run_mode"`
+	MatrixState                string                                         `json:"matrix_state"`
+	RecipeTrustState           string                                         `json:"recipe_trust_state"`
+	ArtifactReadiness          string                                         `json:"artifact_readiness"`
+	BackendProfileMapping      string                                         `json:"backend_profile_mapping"`
+	PortalNeeds                []string                                       `json:"portal_needs"`
+	SnapshotReadiness          string                                         `json:"snapshot_readiness"`
+	DiagnosticReadiness        string                                         `json:"diagnostic_readiness"`
+	ArtifactStageReceipt       *OfflineApplicationFixtureArtifactStageReceipt `json:"artifact_stage_receipt,omitempty"`
+	KDEJourneyCoverageState    string                                         `json:"kde_journey_coverage_state"`
+	KDEJourneyEntryPointCount  int                                            `json:"kde_journey_entry_point_count"`
+	KDEJourneyBlockedNodeCount int                                            `json:"kde_journey_blocked_node_count"`
+	RequiredEvidenceIDs        []string                                       `json:"required_evidence_ids"`
+	MissingEvidenceIDs         []string                                       `json:"missing_evidence_ids"`
+	BlockedReasons             []string                                       `json:"blocked_reasons"`
+	NextSafeReadOnlyCheck      string                                         `json:"next_safe_read_only_check"`
+	UserReviewRequired         bool                                           `json:"user_review_required"`
+	UnsupportedShape           bool                                           `json:"unsupported_shape"`
+	RuntimeOwned               bool                                           `json:"runtime_owned"`
+	GoRuntimeBacked            bool                                           `json:"go_runtime_backed"`
+	KDEPolicyOwner             bool                                           `json:"kde_policy_owner"`
+	NetworkFetchEnabled        bool                                           `json:"network_fetch_enabled"`
+	PackageManagerInvoked      bool                                           `json:"package_manager_invoked"`
+	ArtifactStagingEnabled     bool                                           `json:"artifact_staging_enabled"`
+	BackendProcessStarted      bool                                           `json:"backend_process_started"`
+	LaunchEnabled              bool                                           `json:"launch_enabled"`
+	ExecutionStarted           bool                                           `json:"execution_started"`
+	RequestObjectCreated       bool                                           `json:"request_object_created"`
+	SettingsPersisted          bool                                           `json:"settings_persisted"`
+	FileContentRead            bool                                           `json:"file_content_read"`
+	StateRootPathExposed       bool                                           `json:"state_root_path_exposed"`
+	RawExecutableExposed       bool                                           `json:"raw_executable_exposed"`
+	RawCommandExposed          bool                                           `json:"raw_command_exposed"`
+	BackendDetailsExposed      bool                                           `json:"backend_details_exposed"`
+	HostRootModified           bool                                           `json:"host_root_modified"`
+}
+
+type OfflineApplicationFixtureArtifactStageReceipt struct {
+	State                   string   `json:"state"`
+	RelativePath            string   `json:"relative_path,omitempty"`
+	SHA256                  string   `json:"sha256,omitempty"`
+	ArtifactCount           int      `json:"artifact_count"`
+	RequiredArtifactCount   int      `json:"required_artifact_count"`
+	RequiredArtifactsStaged bool     `json:"required_artifacts_staged"`
+	BlockingReasons         []string `json:"blocking_reasons"`
+	RuntimeOwned            bool     `json:"runtime_owned"`
+	GoRuntimeBacked         bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner          bool     `json:"kde_policy_owner"`
+	RootPathExposed         bool     `json:"root_path_exposed"`
+	NetworkFetchEnabled     bool     `json:"network_fetch_enabled"`
+	PackageManagerInvoked   bool     `json:"package_manager_invoked"`
+	BackendLaunchEnabled    bool     `json:"backend_launch_enabled"`
+	HostRootModified        bool     `json:"host_root_modified"`
 }
 
 type OfflineApplicationFixtureMatrixCounts struct {
@@ -119,6 +145,9 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 	if options.RuntimeRoot == "" {
 		options.RuntimeRoot = "."
 	}
+	if err := validateOfflineApplicationFixtureArtifactReceiptRoot(options.ArtifactReceiptRoot); err != nil {
+		return OfflineApplicationFixtureMatrixPreview{}, err
+	}
 	definitions := offlineApplicationFixtureDefinitions()
 	selected, missing, err := selectOfflineApplicationFixtureDefinitions(definitions, options.ShapeIDs)
 	if err != nil {
@@ -127,7 +156,7 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 
 	rows := make([]OfflineApplicationFixtureMatrixRow, 0, len(selected))
 	for index, definition := range selected {
-		row, err := offlineApplicationFixtureMatrixRow(index+1, definition, options.RuntimeRoot)
+		row, err := offlineApplicationFixtureMatrixRow(index+1, definition, options)
 		if err != nil {
 			return OfflineApplicationFixtureMatrixPreview{}, err
 		}
@@ -324,7 +353,7 @@ func selectOfflineApplicationFixtureDefinitions(definitions []offlineApplication
 	return selected, missing, nil
 }
 
-func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicationFixtureDefinition, runtimeRoot string) (OfflineApplicationFixtureMatrixRow, error) {
+func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicationFixtureDefinition, options OfflineApplicationFixtureMatrixOptions) (OfflineApplicationFixtureMatrixRow, error) {
 	plan, err := NewPlanWithProvenance(definition.Recipe, Provenance{
 		Source:          "offline-fixture-matrix",
 		RegistryName:    "built-in-offline-fixtures",
@@ -334,7 +363,11 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
-	install, err := plan.CompatibilityInstallPlanPreview("development")
+	receipt, receiptEvidence, err := offlineApplicationFixtureArtifactStageReceipt(plan.ApplicationID, options.ArtifactReceiptRoot)
+	if err != nil {
+		return OfflineApplicationFixtureMatrixRow{}, err
+	}
+	install, err := plan.CompatibilityInstallPlanPreviewWithArtifactReceipt("development", receipt)
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
@@ -350,13 +383,13 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
-	journey, err := plan.KDEJourneyEvidencePreviewWithOptions("approved", []string{"file:///home/xnix/Documents/fixture.dat"}, KDEJourneyEvidenceOptions{RuntimeRoot: runtimeRoot})
+	journey, err := plan.KDEJourneyEvidencePreviewWithOptions("approved", []string{"file:///home/xnix/Documents/fixture.dat"}, KDEJourneyEvidenceOptions{RuntimeRoot: options.RuntimeRoot})
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
 
-	missingEvidence := offlineApplicationFixtureMissingEvidence(install, snapshot)
-	blockedReasons := offlineApplicationFixtureBlockedReasons(definition, install, snapshot, diagnostics, journey)
+	missingEvidence := offlineApplicationFixtureMissingEvidence(install, snapshot, receiptEvidence)
+	blockedReasons := offlineApplicationFixtureBlockedReasons(definition, install, snapshot, diagnostics, journey, receiptEvidence)
 	state := offlineApplicationFixtureRowState(definition, missingEvidence)
 	return OfflineApplicationFixtureMatrixRow{
 		Position:                   position,
@@ -369,11 +402,12 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 		UserSafeRunMode:            offlineApplicationFixtureRunMode(selection.RecommendedProfileID),
 		MatrixState:                state,
 		RecipeTrustState:           offlineApplicationFixtureRecipeTrustState(install),
-		ArtifactReadiness:          offlineApplicationFixtureArtifactReadiness(install),
+		ArtifactReadiness:          offlineApplicationFixtureArtifactReadiness(install, receiptEvidence),
 		BackendProfileMapping:      selection.RecommendedProfileID,
 		PortalNeeds:                append([]string(nil), definition.PortalNeeds...),
 		SnapshotReadiness:          offlineApplicationFixtureSnapshotReadiness(snapshot),
 		DiagnosticReadiness:        offlineApplicationFixtureDiagnosticReadiness(diagnostics),
+		ArtifactStageReceipt:       receiptEvidence,
 		KDEJourneyCoverageState:    offlineApplicationFixtureJourneyState(journey),
 		KDEJourneyEntryPointCount:  journey.EntryPointCount,
 		KDEJourneyBlockedNodeCount: journey.BlockedReadinessNodeCount,
@@ -418,6 +452,87 @@ func offlineApplicationFixtureRunMode(profileID string) string {
 	return "local compatibility"
 }
 
+func validateOfflineApplicationFixtureArtifactReceiptRoot(root string) error {
+	if root == "" {
+		return nil
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return errors.New("artifact receipt root must be a valid directory")
+	}
+	clean := filepath.Clean(abs)
+	volume := filepath.VolumeName(clean)
+	if clean == string(os.PathSeparator) || clean == volume+string(os.PathSeparator) {
+		return errors.New("artifact receipt root must not be the filesystem root")
+	}
+	info, err := os.Stat(clean)
+	if err != nil {
+		return errors.New("artifact receipt root must exist")
+	}
+	if !info.IsDir() {
+		return errors.New("artifact receipt root must be a directory")
+	}
+	return nil
+}
+
+func offlineApplicationFixtureArtifactStageReceipt(applicationID string, root string) (*artifact.StageReceipt, *OfflineApplicationFixtureArtifactStageReceipt, error) {
+	if root == "" {
+		return nil, nil, nil
+	}
+	relativePath := filepath.ToSlash(filepath.Join("artifact-ledger", "receipts", applicationID+".json"))
+	path := filepath.Join(root, filepath.FromSlash(relativePath))
+	if rel, err := filepath.Rel(root, path); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return nil, nil, errors.New("artifact receipt path escapes receipt root")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, offlineApplicationFixtureArtifactStageReceiptEvidence("missing", relativePath, artifact.StageReceipt{}, []string{"artifact stage receipt is missing"}), nil
+		}
+		return nil, offlineApplicationFixtureArtifactStageReceiptEvidence("invalid", relativePath, artifact.StageReceipt{}, []string{"artifact stage receipt could not be read"}), nil
+	}
+	var receipt artifact.StageReceipt
+	if err := json.Unmarshal(data, &receipt); err != nil {
+		return nil, offlineApplicationFixtureArtifactStageReceiptEvidence("invalid", relativePath, artifact.StageReceipt{}, []string{"artifact stage receipt could not be parsed"}), nil
+	}
+	reasons := artifact.ValidateStageReceipt(receipt)
+	if receipt.ApplicationID != applicationID {
+		reasons = append(reasons, "artifact stage receipt application id mismatch")
+	}
+	if len(reasons) != 0 {
+		return nil, offlineApplicationFixtureArtifactStageReceiptEvidence("invalid", relativePath, receipt, uniqueSortedStrings(reasons)), nil
+	}
+	return &receipt, offlineApplicationFixtureArtifactStageReceiptEvidence("ready", receipt.RelativePath, receipt, []string{}), nil
+}
+
+func offlineApplicationFixtureArtifactStageReceiptEvidence(state string, relativePath string, receipt artifact.StageReceipt, reasons []string) *OfflineApplicationFixtureArtifactStageReceipt {
+	artifactCount := 0
+	requiredCount := 0
+	requiredStaged := false
+	if receipt.ApplicationID != "" {
+		artifactCount = len(receipt.Plan.Artifacts)
+		requiredCount = receipt.Plan.RequiredCount
+		requiredStaged = receipt.Plan.RequiredStaged()
+	}
+	return &OfflineApplicationFixtureArtifactStageReceipt{
+		State:                   state,
+		RelativePath:            filepath.ToSlash(relativePath),
+		SHA256:                  receipt.SHA256,
+		ArtifactCount:           artifactCount,
+		RequiredArtifactCount:   requiredCount,
+		RequiredArtifactsStaged: requiredStaged,
+		BlockingReasons:         uniqueSortedStrings(reasons),
+		RuntimeOwned:            receipt.RuntimeOwned || state == "missing",
+		GoRuntimeBacked:         receipt.GoRuntimeBacked || state == "missing",
+		KDEPolicyOwner:          receipt.KDEPolicyOwner,
+		RootPathExposed:         false,
+		NetworkFetchEnabled:     receipt.NetworkFetchEnabled,
+		PackageManagerInvoked:   receipt.PackageManagerInvoked,
+		BackendLaunchEnabled:    receipt.BackendLaunchEnabled,
+		HostRootModified:        receipt.HostRootModified,
+	}
+}
+
 func offlineApplicationFixtureRecipeTrustState(install CompatibilityInstallPlanPreview) string {
 	if install.Readiness.RecipeInstallAllowed {
 		return "development-fixture-trusted"
@@ -425,7 +540,10 @@ func offlineApplicationFixtureRecipeTrustState(install CompatibilityInstallPlanP
 	return "needs-review"
 }
 
-func offlineApplicationFixtureArtifactReadiness(install CompatibilityInstallPlanPreview) string {
+func offlineApplicationFixtureArtifactReadiness(install CompatibilityInstallPlanPreview, receipt *OfflineApplicationFixtureArtifactStageReceipt) string {
+	if receipt != nil && receipt.State == "invalid" {
+		return "invalid-local-stage-receipt"
+	}
 	if install.Readiness.ArtifactStageReceiptReady && install.Readiness.RequiredArtifactsStaged {
 		return "local-fixture-ready"
 	}
@@ -453,9 +571,9 @@ func offlineApplicationFixtureJourneyState(journey KDEJourneyEvidencePreview) st
 	return "missing-journey-evidence"
 }
 
-func offlineApplicationFixtureMissingEvidence(install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview) []string {
+func offlineApplicationFixtureMissingEvidence(install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, receipt *OfflineApplicationFixtureArtifactStageReceipt) []string {
 	var missing []string
-	if !install.Readiness.ArtifactStageReceiptReady || !install.Readiness.RequiredArtifactsStaged {
+	if receipt == nil || receipt.State != "ready" || !install.Readiness.ArtifactStageReceiptReady || !install.Readiness.RequiredArtifactsStaged {
 		missing = append(missing, "artifact-stage-receipt")
 	}
 	if !snapshot.SnapshotCreated {
@@ -464,12 +582,15 @@ func offlineApplicationFixtureMissingEvidence(install CompatibilityInstallPlanPr
 	return uniqueSortedStrings(missing)
 }
 
-func offlineApplicationFixtureBlockedReasons(definition offlineApplicationFixtureDefinition, install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, diagnostics AIDiagnosticInputPreview, journey KDEJourneyEvidencePreview) []string {
+func offlineApplicationFixtureBlockedReasons(definition offlineApplicationFixtureDefinition, install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, diagnostics AIDiagnosticInputPreview, journey KDEJourneyEvidencePreview, receipt *OfflineApplicationFixtureArtifactStageReceipt) []string {
 	var reasons []string
 	if definition.Unsupported {
 		reasons = append(reasons, "application shape requires explicit unsupported-state handling")
 	}
-	if !install.Readiness.ArtifactStageReceiptReady || !install.Readiness.RequiredArtifactsStaged {
+	if receipt != nil && receipt.State == "invalid" {
+		reasons = append(reasons, "local artifact staging receipt is invalid")
+	}
+	if receipt == nil || receipt.State == "missing" {
 		reasons = append(reasons, "local artifact staging receipt is missing")
 	}
 	if !snapshot.SnapshotCreated {

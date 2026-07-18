@@ -41,6 +41,7 @@ func parseOfflineApplicationFixtureMatrixOptions(args []string) (appidentity.Off
 	flags := flag.NewFlagSet("offline-application-fixture-matrix-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	runtimeRoot := flags.String("runtime-root", ".", "project root used only for read-only Runtime evidence checks")
+	artifactReceiptRoot := flags.String("artifact-receipt-root", "", "optional controlled root for read-only artifact stage receipt evidence")
 	var shapeIDs repeatedFixtureShapeIDs
 	flags.Var(&shapeIDs, "shape", "fixture shape id to include; may be repeated")
 	if err := flags.Parse(args); err != nil {
@@ -50,7 +51,8 @@ func parseOfflineApplicationFixtureMatrixOptions(args []string) (appidentity.Off
 		return appidentity.OfflineApplicationFixtureMatrixOptions{}, errors.New("offline-application-fixture-matrix-preview does not accept positional arguments")
 	}
 	return appidentity.OfflineApplicationFixtureMatrixOptions{
-		ShapeIDs:    append([]string(nil), shapeIDs...),
-		RuntimeRoot: *runtimeRoot,
+		ShapeIDs:            append([]string(nil), shapeIDs...),
+		RuntimeRoot:         *runtimeRoot,
+		ArtifactReceiptRoot: *artifactReceiptRoot,
 	}, nil
 }

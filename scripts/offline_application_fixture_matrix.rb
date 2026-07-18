@@ -45,6 +45,7 @@ def parse_options(argv)
   options = {
     go_bin: DEFAULT_GO_BIN,
     runtime_root: ".",
+    artifact_receipt_root: nil,
     format: "json",
     shapes: []
   }
@@ -53,6 +54,7 @@ def parse_options(argv)
     opts.banner = "Usage: ruby scripts/offline_application_fixture_matrix.rb [options]"
     opts.on("--go-bin PATH", "Go binary to use") { |value| options[:go_bin] = value }
     opts.on("--runtime-root PATH", "Project root used for read-only Runtime evidence checks") { |value| options[:runtime_root] = value }
+    opts.on("--artifact-receipt-root PATH", "Controlled root for read-only artifact stage receipt evidence") { |value| options[:artifact_receipt_root] = value }
     opts.on("--shape ID", "Fixture shape id to include; may be repeated") { |value| options[:shapes] << value }
     opts.on("--format FORMAT", "Output format: json or markdown") { |value| options[:format] = value }
   end
@@ -76,6 +78,9 @@ def collect_matrix(options)
   ]
   options.fetch(:shapes).each do |shape|
     command.concat(["--shape", shape])
+  end
+  if options[:artifact_receipt_root]
+    command.concat(["--artifact-receipt-root", options.fetch(:artifact_receipt_root)])
   end
   stdout, stderr, status = Open3.capture3(env, *command, chdir: PROJECT_ROOT.to_s)
   raise FixtureMatrixFailure, "offline fixture matrix failed: #{stderr.strip}" unless status.success?

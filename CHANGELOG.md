@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.321] - 2026-07-18
+
+### Added
+
+- Added read-only artifact stage receipt evidence to the offline application fixture matrix, allowing valid local fixture receipts to close the artifact evidence gap without downloads, package-manager calls, backend launch, root-path exposure, or host-root mutation.
+- Added `--artifact-receipt-root` to the Go Runtime fixture matrix preview and Ruby report wrapper so controlled receipt roots can be reviewed without staging artifacts from the matrix itself.
+
 ## [0.2.320-rc8] - 2026-07-18
 
 ### Changed

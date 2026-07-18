@@ -1,9 +1,15 @@
 package appidentity
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/artifact"
 )
 
 func TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes(t *testing.T) {
@@ -109,6 +115,75 @@ func TestOfflineApplicationFixtureMatrixPreviewUnsupportedShapeIsBlocked(t *test
 	}
 }
 
+func TestOfflineApplicationFixtureMatrixPreviewConsumesArtifactReceiptReadOnly(t *testing.T) {
+	receiptRoot := t.TempDir()
+	writeOfflineFixtureArtifactReceipt(t, receiptRoot, "org.xnix.fixture.document")
+
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:            []string{"document-editor"},
+		RuntimeRoot:         "../../..",
+		ArtifactReceiptRoot: receiptRoot,
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	row := preview.Rows[0]
+	if row.ArtifactReadiness != "local-fixture-ready" ||
+		row.ArtifactStageReceipt == nil ||
+		row.ArtifactStageReceipt.State != "ready" ||
+		row.ArtifactStageReceipt.RelativePath != "artifact-ledger/receipts/org.xnix.fixture.document.json" ||
+		row.ArtifactStageReceipt.RequiredArtifactCount != 1 ||
+		!row.ArtifactStageReceipt.RequiredArtifactsStaged ||
+		containsString(row.MissingEvidenceIDs, "artifact-stage-receipt") ||
+		containsString(row.BlockedReasons, "local artifact staging receipt is missing") ||
+		row.ArtifactStageReceipt.RootPathExposed ||
+		row.ArtifactStageReceipt.NetworkFetchEnabled ||
+		row.ArtifactStageReceipt.PackageManagerInvoked ||
+		row.ArtifactStageReceipt.BackendLaunchEnabled ||
+		row.ArtifactStageReceipt.HostRootModified {
+		t.Fatalf("artifact receipt evidence was not consumed safely: %#v", row)
+	}
+	if row.MatrixState != "missing-evidence" ||
+		!containsString(row.MissingEvidenceIDs, "snapshot-receipt") {
+		t.Fatalf("artifact receipt should not bypass snapshot evidence: %#v", row)
+	}
+	encoded, err := json.Marshal(row)
+	if err != nil {
+		t.Fatalf("marshal row: %v", err)
+	}
+	if strings.Contains(string(encoded), receiptRoot) {
+		t.Fatalf("artifact receipt evidence exposed receipt root: %s", string(encoded))
+	}
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewReportsInvalidArtifactReceipt(t *testing.T) {
+	receiptRoot := t.TempDir()
+	receiptDir := filepath.Join(receiptRoot, "artifact-ledger", "receipts")
+	if err := os.MkdirAll(receiptDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll receipt dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(receiptDir, "org.xnix.fixture.document.json"), []byte("{"), 0o600); err != nil {
+		t.Fatalf("WriteFile invalid receipt: %v", err)
+	}
+
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:            []string{"document-editor"},
+		RuntimeRoot:         "../../..",
+		ArtifactReceiptRoot: receiptRoot,
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	row := preview.Rows[0]
+	if row.ArtifactReadiness != "invalid-local-stage-receipt" ||
+		row.ArtifactStageReceipt == nil ||
+		row.ArtifactStageReceipt.State != "invalid" ||
+		!containsString(row.MissingEvidenceIDs, "artifact-stage-receipt") ||
+		!containsString(row.BlockedReasons, "local artifact staging receipt is invalid") {
+		t.Fatalf("invalid artifact receipt was not blocked: %#v", row)
+	}
+}
+
 func TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects(t *testing.T) {
 	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{RuntimeRoot: "../../.."})
 	if err != nil {
@@ -130,6 +205,38 @@ func TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects(t *testin
 		preview.HostRootModified ||
 		preview.PrivilegedContainerRequired {
 		t.Fatalf("matrix enabled unsafe side effect: %#v", preview)
+	}
+}
+
+func writeOfflineFixtureArtifactReceipt(t *testing.T, receiptRoot string, applicationID string) {
+	t.Helper()
+	fixtureRoot := filepath.Join(t.TempDir(), "fixtures")
+	if err := os.MkdirAll(fixtureRoot, 0o700); err != nil {
+		t.Fatalf("MkdirAll fixture root: %v", err)
+	}
+	payload := []byte("offline fixture artifact for " + applicationID)
+	sum := sha256.Sum256(payload)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(fixtureRoot, digest), payload, 0o600); err != nil {
+		t.Fatalf("WriteFile fixture artifact: %v", err)
+	}
+	_, err := artifact.StageFromFixture(artifact.StageRequest{
+		CacheRoot:  receiptRoot,
+		FixtureDir: fixtureRoot,
+		Manifest: artifact.Manifest{
+			ApplicationID: applicationID,
+			Groups: []artifact.Group{
+				{
+					ID: "runtime-launch-metadata",
+					Refs: []artifact.Ref{
+						{ID: "launch.json", Kind: "metadata", SHA256: digest, Size: int64(len(payload)), Required: true},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("StageFromFixture returned error: %v", err)
 	}
 }
 

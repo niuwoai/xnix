@@ -1,12 +1,12 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-18 | Baseline: v0.2.320-rc8
+> Last updated: 2026-07-18 | Baseline: v0.2.321
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
 Use `docs/claude-code-stability-release-train.md` as the cadence authority: one coherent small version per local commit, targeted tests on every small version, and, beginning with `v0.2.321`, a full build plus complete tests and remote push every thirty small versions, with the next gate at `v0.2.350`.
 
-Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, `S6W8`, and `F5W7`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
+Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, `S6W8`, `F5W7`, and the `v0.2.321` offline fixture artifact-receipt read model. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
 
 Do not modify `docs/claude-code-implementation-packages.md` from any task listed here.
 
@@ -25,15 +25,17 @@ A task is suitable for Claude Code now if it is:
 
 | Order | Task | Source document | Suggested branch | Why it is suitable now |
 | --- | --- | --- | --- | --- |
-| 1 | Privileged Kinoite build-host handoff | `docs/kde-image-pipeline.md` | `codex/kinoite-build-host-handoff` | Run the real Kinoite compose, bootc disk build, and KDE QEMU smoke only on an approved privileged Podman host. |
+| 1 | Offline fixture snapshot baseline receipt read model | `docs/windows-app-compatibility-implementation-brief.md` | `codex/fixture-snapshot-baseline-read-model` | Close the next fixture-matrix evidence gap after artifact receipts without enabling real snapshot creation, restore, cleanup, backend launch, QEMU, or host-root mutation. |
+| 2 | Production Runtime service activation preflight | `docs/windows-app-compatibility-implementation-brief.md` | `codex/runtime-service-activation-preflight` | Turn the remaining production Runtime blocker into reviewable systemd, D-Bus, logging, ownership, and safety checks before any production bus claim. |
+| 3 | Test-only launch write-gate materialization plan | `docs/windows-app-compatibility-implementation-brief.md` | `codex/test-only-launch-write-gate-plan` | Prepare the first controlled launch transaction path while keeping actual Wine, Proton, VM, process start, and host mutation disabled. |
 
 ## Best First Pick
 
-Start with the privileged Kinoite build-host handoff.
+Start with the offline fixture snapshot baseline receipt read model.
 
-The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes exposed obsolete package requests, Fedora's missing default root filesystem, short-name resolution through `docker.io/library`, the Fedora 41 end-of-life archive boundary, custom Podman graphroot handling, obsolete SDDM assumptions, and unreliable passive systemd serial markers. q4 produced the Fedora 44 container and clean qcow2; the rc7 KVM verifier authenticated over serial, proved `graphical.target` plus `plasmalogin.service` active, persisted the log, emitted `XNIX_BOOT_PROBE_PASS`, and left no QEMU process. Production Runtime D-Bus ownership, Wine/Proton/VM launch, and Windows application execution remain unproven.
+The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes produced the Fedora 44 container, clean qcow2, persisted KVM graphical-login evidence, and closed host-boundary proof. The v0.2.321 matrix can now consume controlled artifact stage receipts, so the next missing fixture evidence is the snapshot baseline receipt. Production Runtime D-Bus ownership, Wine/Proton/VM launch, and Windows application execution remain unproven.
 
-The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
+The next branch must stay non-launching and must not create, restore, delete, or clean snapshots; write KDE configuration; start a backend; call a real Portal; run QEMU; or mutate the host root.
 
 ## Good Branch Shape
 

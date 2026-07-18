@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.320-rc8
+> Last updated: 2026-07-18 | Current version: v0.2.321
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.321 checkpoint starts the post-gate Runtime evidence train by letting the offline application fixture matrix consume controlled artifact stage receipts. A valid local fixture receipt now moves a representative application row from missing artifact evidence to `local-fixture-ready`, while missing or invalid receipts remain blocked with explicit reasons. The matrix and wrapper only read receipt evidence from an optional root and still do not download artifacts, invoke package managers, stage artifacts from the matrix itself, start compatibility backends, expose local roots, or mutate the host.
 
 The v0.2.320-rc8 gate repair separates product-image readiness from production Runtime activation. The Fedora Kinoite manifest is ready for authorized KDE boot smoke when all declared sources, seven KDE entry points, and serial markers are present; production Runtime readiness independently requires a real service unit and D-Bus activation and remains false. Structured q4 evidence now records the successful container build, clean qcow2, KVM graphical-login pass, persisted serial-log digest, and closed host boundary without claiming Windows application execution.
 

@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -85,11 +87,73 @@ func TestOfflineApplicationFixtureMatrixPreviewCommandFiltersShapes(t *testing.T
 	}
 }
 
+func TestOfflineApplicationFixtureMatrixPreviewCommandConsumesArtifactReceiptRoot(t *testing.T) {
+	manifestPath, fixtureRoot, cacheRoot := writeOfflineMatrixArtifactStageFixture(t)
+	var stageOutput bytes.Buffer
+	if err := run([]string{"artifact-stage-record", "--manifest", manifestPath, "--fixture-root", fixtureRoot, "--cache-root", cacheRoot}, &stageOutput); err != nil {
+		t.Fatalf("artifact-stage-record returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"offline-application-fixture-matrix-preview",
+		"--shape", "document-editor",
+		"--runtime-root", "../..",
+		"--artifact-receipt-root", cacheRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	rows := payload["rows"].([]any)
+	row := rows[0].(map[string]any)
+	receipt := row["artifact_stage_receipt"].(map[string]any)
+	if row["artifact_readiness"] != "local-fixture-ready" ||
+		receipt["state"] != "ready" ||
+		receipt["relative_path"] != "artifact-ledger/receipts/org.xnix.fixture.document.json" ||
+		receipt["required_artifacts_staged"] != true ||
+		receipt["root_path_exposed"] != false ||
+		strings.Contains(output.String(), cacheRoot) ||
+		strings.Contains(output.String(), fixtureRoot) {
+		t.Fatalf("artifact receipt root was not consumed safely: %#v", row)
+	}
+	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
+}
+
 func TestOfflineApplicationFixtureMatrixPreviewCommandRejectsUnknownShape(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"offline-application-fixture-matrix-preview", "--shape", "unknown-shape"}, &output); err == nil {
 		t.Fatalf("offline-application-fixture-matrix-preview accepted unknown shape")
 	}
+}
+
+func writeOfflineMatrixArtifactStageFixture(t *testing.T) (string, string, string) {
+	t.Helper()
+	root := t.TempDir()
+	fixtureRoot := filepath.Join(root, "fixtures")
+	cacheRoot := filepath.Join(root, "cache")
+	if err := os.MkdirAll(fixtureRoot, 0o700); err != nil {
+		t.Fatalf("MkdirAll fixture root: %v", err)
+	}
+	digest := artifactDigest("fixture-document-artifact")
+	if err := os.WriteFile(filepath.Join(fixtureRoot, digest), []byte("fixture-document-artifact"), 0o600); err != nil {
+		t.Fatalf("WriteFile fixture: %v", err)
+	}
+	manifestPath := filepath.Join(root, "manifest.json")
+	manifest := `{
+  "application_id": "org.xnix.fixture.document",
+  "groups": [
+    {"id": "runtime-launch-metadata", "refs": [{"id": "launch.json", "kind": "metadata", "sha256": "` + digest + `", "size": 25, "required": true}]}
+  ]
+}`
+	if err := os.WriteFile(manifestPath, []byte(manifest), 0o600); err != nil {
+		t.Fatalf("WriteFile manifest: %v", err)
+	}
+	return manifestPath, fixtureRoot, cacheRoot
 }
 
 func TestOfflineApplicationFixtureMatrixPreviewCommandRejectsPositionalArgs(t *testing.T) {

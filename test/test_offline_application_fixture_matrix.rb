@@ -20,6 +20,7 @@ script = script_path.read
   offline-application-fixture-matrix-preview
   --format
   --shape
+  --artifact-receipt-root
   JSON.pretty_generate
   render_markdown
   GOCACHE
