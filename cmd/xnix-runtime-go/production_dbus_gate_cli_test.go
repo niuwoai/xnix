@@ -312,3 +312,89 @@ func TestProductionRollbackDiagnosticsReviewPreviewCommandRejectsPositionalArgs(
 		t.Fatalf("production-rollback-diagnostics-review-preview must reject positional arguments")
 	}
 }
+
+func TestProductionDesktopSideEffectReviewPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-desktop-side-effect-review-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-desktop-side-effect-review-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_desktop_side_effect_review.v1" ||
+		payload["request_type"] != "production-desktop-side-effect-review-preview" ||
+		payload["review_type"] != "kde-production-desktop-side-effect-review" ||
+		payload["review_decision"] != "production-desktop-side-effect-review-ready-side-effects-disabled" {
+		t.Fatalf("unexpected production desktop side-effect review command payload: %s", output.String())
+	}
+	if payload["surface_count"] != float64(7) ||
+		payload["required_surface_count"] != float64(7) ||
+		payload["reviewed_surface_count"] != float64(7) ||
+		payload["active_surface_count"] != float64(0) ||
+		payload["side_effect_surface_count"] != float64(0) ||
+		payload["production_ownership_ready"] != false ||
+		payload["official_desktop_only"] != true ||
+		payload["kde_policy_owner"] != false {
+		t.Fatalf("unexpected production desktop side-effect review counts: %s", output.String())
+	}
+	surfaces := payload["surfaces"].([]any)
+	if len(surfaces) != 7 {
+		t.Fatalf("unexpected production desktop side-effect surface count: %s", output.String())
+	}
+	for _, item := range surfaces {
+		surface := item.(map[string]any)
+		if surface["required_before_production"] != true ||
+			surface["evidence_present"] != true ||
+			surface["runtime_owned"] != true ||
+			surface["go_runtime_backed"] != true ||
+			surface["kde_policy_owner"] != false ||
+			surface["review_only"] != true ||
+			surface["active"] != false ||
+			surface["side_effects_enabled"] != false ||
+			surface["desktop_files_written"] != false ||
+			surface["mimeapps_written"] != false ||
+			surface["shell_configuration_written"] != false ||
+			surface["settings_persisted"] != false ||
+			surface["krunner_index_persisted"] != false ||
+			surface["task_manager_entry_active"] != false ||
+			surface["kwin_rule_applied"] != false ||
+			surface["live_tray_bridge_enabled"] != false ||
+			surface["notification_sent"] != false ||
+			surface["notification_delivery_enabled"] != false ||
+			surface["compatibility_center_persisted"] != false ||
+			surface["portal_request_created"] != false ||
+			surface["request_objects_created"] != false ||
+			surface["backend_launch_enabled"] != false ||
+			surface["host_root_modified"] != false ||
+			surface["backend_details_exposed"] != false ||
+			surface["review_status"] != "reviewed" {
+			t.Fatalf("unsafe desktop side-effect surface: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production desktop side-effect review checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production desktop side-effect review output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"plasma_fork_required", "plasma_source_modified", "system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "notification_sent", "notification_delivery_enabled", "compatibility_center_persisted", "portal_request_created", "request_objects_created", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe desktop side-effect gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionDesktopSideEffectReviewPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-desktop-side-effect-review-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-desktop-side-effect-review-preview must reject positional arguments")
+	}
+}

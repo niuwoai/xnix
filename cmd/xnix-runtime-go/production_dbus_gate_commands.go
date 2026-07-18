@@ -76,3 +76,20 @@ func runProductionRollbackDiagnosticsReviewPreview(args []string, stdout io.Writ
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runProductionDesktopSideEffectReviewPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-desktop-side-effect-review-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner desktop side-effect review inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-desktop-side-effect-review-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionDesktopSideEffectReviewPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

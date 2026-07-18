@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.351
+> Last updated: 2026-07-19 | Current version: v0.2.352
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.352 checkpoint adds production desktop side-effect review. `production-desktop-side-effect-review-preview` inventories the seven first-release KDE surfaces: launcher, task manager, file manager, system tray, notification center, AI Compatibility Center, and unified settings. It consumes production gate and rollback/diagnostics evidence while keeping KDE presentation-only, production ownership unready, Plasma unforked, desktop writes, MIME writes, shell configuration, settings persistence, KRunner index persistence, task-manager activation, KWin rules, live tray bridge, notification delivery, Compatibility Center persistence, Portal request creation, Runtime request creation, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.351 checkpoint adds production rollback and diagnostics review. `production-rollback-diagnostics-review-preview` consumes the production D-Bus gate review, route-by-route method review, service activation preflight, support bundle manifest, support case timeline, snapshot restore candidates, and state-root quota/retention safety surfaces before any production ownership decision. It keeps production ownership unready and disables service start, bus claim, Runtime writes, support export, support case creation, notifications, restore, cleanup, file-content reads, unsafe-data exposure, network use, privileged containers, compatibility engine launch, and host mutation.
 

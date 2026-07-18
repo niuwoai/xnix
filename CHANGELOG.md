@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.352] - 2026-07-19
+
+### Added
+
+- Added `production-desktop-side-effect-review-preview`, a read-only Go owner review that inventories the seven KDE first-release entry points before any production desktop side-effect decision.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for KDE desktop side-effect review while keeping desktop files, MIME defaults, shell configuration, settings, KRunner indexes, task-manager activation, KWin rules, tray bridges, notifications, Compatibility Center persistence, Portal requests, Runtime request objects, engine launch, unsafe data exposure, production bus ownership, and host mutation disabled.
+
 ## [0.2.351] - 2026-07-19
 
 ### Added

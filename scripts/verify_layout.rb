@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.351"
+EXPECTED_VERSION = "0.2.352"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1734,6 +1734,24 @@ go_runtime_production_rollback_diagnostics_review_test_source = read_project_fil
                                                                read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionRollbackDiagnosticsReviewPreviewConsumesSafetySurfaces TestProductionRollbackDiagnosticsReviewPreviewFailsClosedWithoutSources TestProductionRollbackDiagnosticsReviewPreviewCommand production-rollback-diagnostics-review-preview review_item_count rollback_control_count diagnostics_control_count ready_control_count side_effect_control_count production_ownership_ready snapshot_restore_executed state_cleanup_executed].each do |token|
   assert(go_runtime_production_rollback_diagnostics_review_test_source.include?(token), "Go Runtime production rollback diagnostics review tests and CLI must include #{token}")
+end
+
+go_runtime_production_desktop_side_effect_review_source = read_project_file("internal/runtime/owner/production_desktop_side_effect_review.go")
+%w[ProductionDesktopSideEffectReviewPreview ProductionDesktopSideEffectSurface ProductionDesktopSideEffectReviewCheck NewProductionDesktopSideEffectReviewPreview xnix.runtime.production_desktop_side_effect_review.v1 production-desktop-side-effect-review-preview kde-production-desktop-side-effect-review production-desktop-side-effect-review-ready-side-effects-disabled production-desktop-side-effect-review-blocked production-dbus-gate-review-preview production-rollback-diagnostics-review-preview kde-entrypoints-preview kde-action-queue-preview desktop-activation-manifest-preview kde-shell-integration-preview kde-application-surface-preview production-gate-consumed rollback-diagnostics-consumed seven-kde-surfaces-reviewed runtime-policy-owner desktop-writes-disabled live-shell-activation-disabled notifications-and-requests-disabled host-boundary-closed launcher task-manager file-manager system-tray notifications compatibility-center unified-settings].each do |token|
+  assert(go_runtime_production_desktop_side_effect_review_source.include?(token), "Go Runtime production desktop side-effect review must include #{token}")
+end
+%w[SurfaceCount RequiredSurfaceCount ReviewedSurfaceCount ActiveSurfaceCount SideEffectSurfaceCount ProductionOwnershipReady PlasmaForkRequired PlasmaSourceModified SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled CompatibilityCenterPersisted PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_desktop_side_effect_review_source.include?(token), "Go Runtime production desktop side-effect review must expose safety gate #{token}")
+end
+%w[production_dbus_gate_review.go production_rollback_diagnostics_review.go kde_entrypoints.go kde_action_queue.go desktop_activation_manifest.go kde_shell_surface.go].each do |token|
+  assert(go_runtime_production_desktop_side_effect_review_source.include?(token), "Go Runtime production desktop side-effect review must consume #{token}")
+end
+go_runtime_production_desktop_side_effect_review_test_source = read_project_file("internal/runtime/owner/production_desktop_side_effect_review_test.go") +
+                                                              read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                              read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                              read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionDesktopSideEffectReviewPreviewInventoriesKDESurfaces TestProductionDesktopSideEffectReviewPreviewFailsClosedWithoutSources TestProductionDesktopSideEffectReviewPreviewCommand production-desktop-side-effect-review-preview surface_count required_surface_count reviewed_surface_count active_surface_count side_effect_surface_count production_ownership_ready desktop_files_written settings_persisted notification_sent live_tray_bridge_enabled].each do |token|
+  assert(go_runtime_production_desktop_side_effect_review_test_source.include?(token), "Go Runtime production desktop side-effect review tests and CLI must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")
