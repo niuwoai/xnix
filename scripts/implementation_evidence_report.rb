@@ -222,6 +222,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/backend_manager_test.go
       internal/runtime/appidentity/backend_adapter_contract.go
       internal/runtime/appidentity/backend_adapter_contract_test.go
+      internal/runtime/appidentity/backend_adapter_contract_owner_route_audit.go
+      internal/runtime/appidentity/backend_adapter_contract_owner_route_audit_test.go
       internal/runtime/appidentity/backend_lifecycle_test.go
       internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
       internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
@@ -230,6 +232,7 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/backend_group_cli_test.go
       cmd/xnix-runtime-go/backend_adapter_contract_commands.go
       cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go
+      cmd/xnix-runtime-go/backend_adapter_contract_owner_route_audit_cli_test.go
       cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go
       cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
       cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go
@@ -249,13 +252,16 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/backend_manager_test.go" => %w[TestBackendManagerPreviewTracksRuntimeBackendsWithoutStartingThem TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe TestRecordBackendManagerPreviewPersistsStateRootInventory TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink],
       "internal/runtime/appidentity/backend_adapter_contract.go" => %w[xnix.runtime.backend_adapter_contract.v1 backend-adapter-contract-preview compatibility-backend-adapter-noop-contract go-runtime-backend-manager+adapter-noop-boundary GetBackendAdapterContract GetBackendAdapterContractPreview wine proton windows-vm NoopImplementation AdapterInvocationEnabled BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled BackendProcessStarted VMProcessStarted CommandMaterialized ExecutablePathResolved RawCommandExposed ProfilePathExposed StateRootPathExposed BackendDetailsExposedToKDE HostRootModified PrivilegedContainerRequired test-only-materialization],
       "internal/runtime/appidentity/backend_adapter_contract_test.go" => %w[TestBackendAdapterContractPreviewDefinesNoopBoundary TestBackendAdapterContractAdaptersStayNoop TestBackendAdapterContractKDEProjectionIsBackendSafe],
+      "internal/runtime/appidentity/backend_adapter_contract_owner_route_audit.go" => %w[xnix.runtime.backend_adapter_contract_owner_route_audit.v1 backend-adapter-contract-owner-route-audit-preview NewBackendAdapterContractOwnerRouteAuditPreview GetBackendAdapterContractOwnerRouteAudit remain-fixture-local fixture-local-audit-ready-owner-route-blocked owner-route-absent production-dbus-absent redacted-route-missing internal-detail-boundary route-decision FixtureMatrixConsumesContract OwnerDispatchRoutePresent ProductionDBusMethodPresent FullContractContainsAdapterIDs RedactedProfileRoutePresent BackendLaunchEnabled HostRootModified],
+      "internal/runtime/appidentity/backend_adapter_contract_owner_route_audit_test.go" => %w[TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal TestBackendAdapterContractOwnerRouteAuditFailsClosedWithoutSources remain-fixture-local redacted-route-missing internal-detail-boundary],
       "internal/runtime/appidentity/kde_backend_lifecycle_evidence.go" => %w[xnix.runtime.kde_backend_lifecycle_evidence.v1 kde-backend-lifecycle-evidence-record NewKDEBackendLifecycleEvidenceRecord prerequisite-convergence inventory-readback backend-state lifecycle-join execution-readback session-readback backend-boundary unsafe-gates-closed BackendStateJoined BackendKindsExposedToKDE BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted RawCommandExposed ProfilePathExposed HostRootModified SecretsExposed],
       "internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go" => %w[TestKDEBackendLifecycleEvidenceJoinsInventoryWithoutStartingProcess TestKDEBackendLifecycleEvidenceRejectsUnsafeBoundary explicit-test-root-only backend-manager],
       "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go" => %w[kde-backend-lifecycle-evidence-record runKDEBackendLifecycleEvidenceRecord test-only LoadRecipeFromRegistry NewKDEBackendLifecycleEvidenceRecord],
       "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go" => %w[TestKDEBackendLifecycleEvidenceRecordCommandJoinsInventory TestKDEBackendLifecycleEvidenceRecordCommandRequiresTestOnlyBoundary backend_kinds_exposed_to_kde backend_process_started host_root_modified secrets_exposed],
-      "cmd/xnix-runtime-go/main.go" => %w[backend-adapter-contract-preview backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
-      "cmd/xnix-runtime-go/backend_adapter_contract_commands.go" => %w[backend-adapter-contract-preview runBackendAdapterContractPreview NewBackendAdapterContractPreview],
+      "cmd/xnix-runtime-go/main.go" => %w[backend-adapter-contract-preview backend-adapter-contract-owner-route-audit-preview backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
+      "cmd/xnix-runtime-go/backend_adapter_contract_commands.go" => %w[backend-adapter-contract-preview runBackendAdapterContractPreview NewBackendAdapterContractPreview backend-adapter-contract-owner-route-audit-preview runBackendAdapterContractOwnerRouteAuditPreview],
       "cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go" => %w[TestBackendAdapterContractPreviewCommandRendersNoopBoundary TestBackendAdapterContractPreviewCommandKeepsKDEProjectionBackendSafe xnix.runtime.backend_adapter_contract.v1],
+      "cmd/xnix-runtime-go/backend_adapter_contract_owner_route_audit_cli_test.go" => %w[TestBackendAdapterContractOwnerRouteAuditPreviewCommand backend-adapter-contract-owner-route-audit-preview route_decision fixture_matrix_consumes_contract owner_dispatch_route_present production_dbus_method_present],
       "internal/runtime/appidentity/backend_lifecycle.go" => %w[BackendLifecyclePreviewWithStateRoot RecordBackendLifecycleState BackendLifecycleRecord xnix.runtime.backend_lifecycle_record.v1 go-runtime-state-root-backend-lifecycle environment-state-root StateRootBacked StateRootPathExposed SatisfiedGates PendingGates RepairHints BlockReason],
       "internal/runtime/appidentity/backend_lifecycle_test.go" => %w[TestBackendLifecyclePreviewConsumesEnvironmentStateRoot TestRecordBackendLifecycleStatePersistsActionsAndPreview BackendLifecyclePreviewWithStateRoot state-root],
       "internal/runtime/appidentity/state_root_quota_retention.go" => %w[xnix.runtime.state_root_quota_retention.v1 state-root-quota-retention-preview go-runtime-state-root-quota-retention-preview snapshots diagnostics execution-receipts portal-receipts artifact-receipts activation-receipts unknown-records FileDeletionEnabled DirectoriesCreated LogTruncationEnabled ReceiptsRewritten SnapshotDeletionEnabled StateRootPathExposed HostRootModified],

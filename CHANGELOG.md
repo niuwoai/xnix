@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.331] - 2026-07-18
+
+### Added
+
+- Added the backend adapter contract owner-route audit preview and CLI command, deciding that the v0.2.328 fixture adapter audit should remain fixture-local until a redacted owner-local adapter profile audit route exists.
+- Added Go, CLI, layout, and evidence coverage that keeps owner dispatch, production D-Bus exposure, adapter invocation, install/download, backend launch, command materialization, path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.330] - 2026-07-18
 
 ### Added
