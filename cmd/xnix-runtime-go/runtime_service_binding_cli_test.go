@@ -120,7 +120,7 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		payload["schema_version"] != "xnix.runtime.service_activation_preflight.v1" ||
 		payload["request_type"] != "runtime-service-activation-preflight-preview" ||
 		payload["preflight_type"] != "production-runtime-service-activation-preflight" ||
-		payload["source"] != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview" ||
 		payload["runtime_method"] != "GetRuntimeServiceActivationPreflight" ||
 		payload["read_method"] != "GetRuntimeServiceActivationPreflightPreview" {
 		t.Fatalf("unexpected Runtime service activation preflight CLI schema: %#v", payload)

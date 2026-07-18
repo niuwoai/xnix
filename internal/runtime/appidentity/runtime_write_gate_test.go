@@ -16,7 +16,7 @@ func TestRuntimeWriteGatePreviewKeepsWriteMethodsDisabled(t *testing.T) {
 		preview.SchemaVersion != "xnix.runtime.write_gate.v1" ||
 		preview.RequestType != "runtime-write-gate-preview" ||
 		preview.GateType != "runtime-write-gate" ||
-		preview.Source != "go-runtime-write-gate+runtime-service-activation-preflight-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
+		preview.Source != "go-runtime-write-gate+runtime-service-activation-preflight-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview" ||
 		preview.RuntimeMethod != "GetRuntimeWriteGate" ||
 		preview.ReadMethod != "GetRuntimeWriteGatePreview" ||
 		preview.MethodName != "Launch" {
@@ -64,15 +64,15 @@ func TestRuntimeWriteGatePreviewKeepsWriteMethodsDisabled(t *testing.T) {
 		len(preview.RequiredGates) != len(runtimeWriteGateRequiredGateIDs) {
 		t.Fatalf("unexpected Runtime write gate requirements: %#v", preview)
 	}
-	expectedStatuses := []string{"pass", "pass", "pending", "pending", "pending", "pending", "pending", "pending", "pending"}
+	expectedStatuses := []string{"pass", "pass", "pending", "pass", "pending", "pending", "pending", "pending", "pending", "pending"}
 	for index, status := range expectedStatuses {
 		if preview.RequiredGates[index].ID != runtimeWriteGateRequiredGateIDs[index] ||
 			preview.RequiredGates[index].Status != status {
 			t.Fatalf("unexpected Runtime write gate check at %d: %#v", index, preview.RequiredGates)
 		}
 	}
-	if preview.Counts.Total != 9 ||
-		preview.Counts.Passed != 2 ||
+	if preview.Counts.Total != 10 ||
+		preview.Counts.Passed != 3 ||
 		preview.Counts.Pending != 7 ||
 		preview.Counts.Blocked != 0 {
 		t.Fatalf("unexpected Runtime write gate counts: %#v", preview.Counts)
@@ -114,13 +114,15 @@ func TestRuntimeWriteGatePreviewBlocksMissingProductionGateSources(t *testing.T)
 		preview.RequiredGates[1].ID != "production-service-activation-preflight" ||
 		preview.RequiredGates[1].Status != "blocked" ||
 		preview.RequiredGates[2].ID != "human-authorization-receipt" ||
-		preview.RequiredGates[2].Status != "pending" {
+		preview.RequiredGates[2].Status != "pending" ||
+		preview.RequiredGates[3].ID != "production-human-authorization-receipt-consolidation" ||
+		preview.RequiredGates[3].Status != "blocked" {
 		t.Fatalf("missing sources must block production gate consumption: %#v", preview.RequiredGates)
 	}
-	if preview.Counts.Total != 9 ||
+	if preview.Counts.Total != 10 ||
 		preview.Counts.Passed != 0 ||
 		preview.Counts.Pending != 7 ||
-		preview.Counts.Blocked != 2 {
+		preview.Counts.Blocked != 3 {
 		t.Fatalf("unexpected missing-source Runtime write gate counts: %#v", preview.Counts)
 	}
 }

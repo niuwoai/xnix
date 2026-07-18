@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.354] - 2026-07-19
+
+### Added
+
+- Added `production-authorization-consumption-audit-preview`, a read-only Go owner audit that verifies production D-Bus gate review, method review, service activation preflight, Runtime write gate, rollback diagnostics review, and desktop side-effect review all consume the consolidated opaque authorization receipt boundary.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for production authorization consumption auditing while keeping authorization acceptance, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.353] - 2026-07-19
 
 ### Added

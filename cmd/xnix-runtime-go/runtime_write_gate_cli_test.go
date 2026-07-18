@@ -22,7 +22,7 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.write_gate.v1" ||
 		payload["request_type"] != "runtime-write-gate-preview" ||
 		payload["gate_type"] != "runtime-write-gate" ||
-		payload["source"] != "go-runtime-write-gate+runtime-service-activation-preflight-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
+		payload["source"] != "go-runtime-write-gate+runtime-service-activation-preflight-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview" ||
 		payload["runtime_method"] != "GetRuntimeWriteGate" ||
 		payload["read_method"] != "GetRuntimeWriteGatePreview" ||
 		payload["method_name"] != "Launch" {
@@ -68,7 +68,7 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 	if payload["denial_error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" {
 		t.Fatalf("unexpected Runtime write gate denial: %#v", payload)
 	}
-	if len(payload["required_gates"].([]any)) != 9 ||
+	if len(payload["required_gates"].([]any)) != 10 ||
 		len(payload["supported_write_methods"].([]any)) != 4 {
 		t.Fatalf("unexpected Runtime write gate requirements: %#v", payload)
 	}

@@ -16,7 +16,7 @@ func TestProductionDBusMethodReviewPreviewInventoriesRoutes(t *testing.T) {
 		preview.SchemaVersion != "xnix.runtime.production_dbus_method_review.v1" ||
 		preview.RequestType != "production-dbus-method-review-preview" ||
 		preview.ReviewType != "route-by-route-production-dbus-method-review" ||
-		preview.Source != "runtime-method-parity-manifest-preview+runtime-owner-route-manifest-preview+production-dbus-gate-review-preview+runtime-write-gate-preview" ||
+		preview.Source != "runtime-method-parity-manifest-preview+runtime-owner-route-manifest-preview+production-dbus-gate-review-preview+runtime-write-gate-preview+production-human-authorization-receipt-consolidation-preview" ||
 		preview.ReviewDecision != "production-dbus-method-review-ready-production-exposure-disabled" {
 		t.Fatalf("unexpected production D-Bus method review schema: %#v", preview)
 	}

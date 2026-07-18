@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.353
+> Last updated: 2026-07-19 | Current version: v0.2.354
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.354 checkpoint audits production authorization consumption. `production-authorization-consumption-audit-preview` verifies that production D-Bus gate review, route-by-route method review, service activation preflight, Runtime write gate, rollback diagnostics review, and desktop side-effect review all consume the consolidated owner-managed opaque authorization receipt boundary while keeping receipt acceptance, receipt writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.353 checkpoint consolidates the production human authorization receipt boundary. `production-human-authorization-receipt-consolidation-preview` consumes human authorization preflight, production D-Bus gate review, route-by-route method review, service activation preflight, Runtime write gate, rollback diagnostics review, and desktop side-effect review into one owner-managed opaque receipt boundary while keeping receipt writing, receipt acceptance, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 

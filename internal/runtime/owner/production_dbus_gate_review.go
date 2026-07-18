@@ -109,7 +109,7 @@ func NewProductionDBusGateReviewPreview(root string) (ProductionDBusGateReviewPr
 		SchemaVersion:                    "xnix.runtime.production_dbus_gate_review.v1",
 		RequestType:                      "production-dbus-gate-review-preview",
 		GateType:                         "owner-local-smoke-covered-production-dbus-gate-review",
-		Source:                           "materialization-audit+restricted-owner-smoke-fanout-audit+redacted-adapter-profile-audit+production-dbus-human-authorization-preflight-preview",
+		Source:                           "materialization-audit+restricted-owner-smoke-fanout-audit+redacted-adapter-profile-audit+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview",
 		RouteCount:                       len(routes),
 		SmokeCoveredRouteCount:           countProductionDBusGateSmokeCoveredRoutes(routes),
 		GateDecision:                     "production-dbus-gate-review-blocked",
@@ -124,6 +124,7 @@ func NewProductionDBusGateReviewPreview(root string) (ProductionDBusGateReviewPr
 		RouteIDs:                         productionDBusGateReviewRouteIDs(routes),
 		RequiredGates: []string{
 			"human-authorization",
+			"production-human-authorization-receipt-consolidation",
 			"production-service-activation-preflight",
 			"runtime-write-gate-review",
 			"route-by-route-production-dbus-method-review",
@@ -163,6 +164,7 @@ func NewProductionDBusGateReviewPreview(root string) (ProductionDBusGateReviewPr
 		},
 		NextRequirements: []string{
 			"Keep all owner-local routes smoke-covered and non-launching.",
+			"Consume the consolidated opaque human authorization receipt boundary before claiming any production bus name.",
 			"Add a separate human-authorized production service activation gate before claiming any production bus name.",
 			"Add a route-by-route production D-Bus method review before exposing owner-local routes externally.",
 			"Keep Runtime writes, adapter invocation, backend launch, support side effects, and host mutation disabled until their own gates exist.",

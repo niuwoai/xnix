@@ -143,7 +143,7 @@ func NewRuntimeServiceActivationPreflightPreview(root string) (RuntimeServiceAct
 		SchemaVersion: "xnix.runtime.service_activation_preflight.v1",
 		RequestType:   "runtime-service-activation-preflight-preview",
 		PreflightType: "production-runtime-service-activation-preflight",
-		Source:        "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview",
+		Source:        "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview",
 		RuntimeMethod: "GetRuntimeServiceActivationPreflight",
 		ReadMethod:    "GetRuntimeServiceActivationPreflightPreview",
 		BusName:       serviceBinding.BusName,
@@ -382,8 +382,8 @@ func runtimeServiceActivationPreflightBlockedActions() []string {
 func runtimeServiceActivationPreflightNextRequirements() []string {
 	return []string{
 		"Run the restricted owner smoke against a packaged Runtime owner in an isolated session.",
-		"Keep production service activation consuming production D-Bus gate review and human authorization preflight.",
-		"Accept an explicit human authorization receipt before production service activation can be committed.",
+		"Keep production service activation consuming production D-Bus gate review, human authorization preflight, and consolidated opaque authorization receipt boundary.",
+		"Accept an explicit human authorization receipt through a separate operator action before production service activation can be committed.",
 		"Prove stable bus-name ownership with the packaged Runtime owner, not the smoke adapter.",
 		"Require production-signed recipe trust before any production activation commit.",
 		"Keep service activation commit behind explicit human authorization and package-managed writes.",

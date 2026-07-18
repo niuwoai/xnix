@@ -16,7 +16,7 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 		preview.SchemaVersion != "xnix.runtime.service_activation_preflight.v1" ||
 		preview.RequestType != "runtime-service-activation-preflight-preview" ||
 		preview.PreflightType != "production-runtime-service-activation-preflight" ||
-		preview.Source != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
+		preview.Source != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview+production-human-authorization-receipt-consolidation-preview" ||
 		preview.RuntimeMethod != "GetRuntimeServiceActivationPreflight" ||
 		preview.ReadMethod != "GetRuntimeServiceActivationPreflightPreview" {
 		t.Fatalf("unexpected Runtime service activation preflight schema: %#v", preview)
