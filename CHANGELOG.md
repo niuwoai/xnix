@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.326] - 2026-07-18
+
+### Added
+
+- Added the restricted owner smoke execution receipt writer and CLI command, consuming Runtime service activation preflight and owner smoke-batch evidence into a digest-verified state-root receipt.
+- Added owner and CLI coverage that keeps production service start, session-bus claim, production D-Bus ownership, Runtime write methods, backend launch, backend details, network access, privileged containers, state-root path exposure, and host-root mutation disabled.
+
 ## [0.2.325] - 2026-07-18
 
 ### Added

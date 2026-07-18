@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.325"
+EXPECTED_VERSION = "0.2.326"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -178,6 +178,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/artifact_stage_cli_test.go
   cmd/xnix-runtime-go/backend_adapter_contract_commands.go
   cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go
+  cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go
+  cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go
@@ -378,6 +380,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/lifecycle_test.go
   internal/runtime/owner/smoke_batch.go
   internal/runtime/owner/smoke_batch_test.go
+  internal/runtime/owner/restricted_smoke_receipt.go
+  internal/runtime/owner/restricted_smoke_receipt_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -1563,6 +1567,17 @@ end
   assert(go_runtime_owner_smoke_batch_source.include?(token), "Go Runtime owner smoke batch must expose #{token}")
 end
 assert(go_runtime_owner_smoke_batch_source.include?("validateNoBackendTerms"), "Go Runtime owner smoke batch must hide backend terms")
+
+go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")
+%w[RestrictedOwnerSmokeReceipt restricted-owner-smoke-execution-receipt xnix.runtime.restricted_owner_smoke_receipt.v1 RecordRestrictedOwnerSmokeReceipt LoadRestrictedOwnerSmokeReceipt restricted-owner-smoke-receipt.json runtime-service-activation-preflight+runtime-owner-smoke-batch RestrictedOwnerSmokeMode RestrictedOwnerSmokeDirective authorize-restricted-owner-smoke restricted-owner-smoke-ready runtime-owner-smoke-batch-record StateRootWriteScope explicit-test-root-only ReceiptPersisted ReceiptReadBack ProductionActivationReady ProductionOwnerEnabled SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled BackendLaunchEnabled HostRootModified validateRestrictedOwnerSmokeReceipt].each do |token|
+  assert(go_restricted_owner_smoke_receipt_source.include?(token), "Go Runtime restricted owner smoke receipt must include #{token}")
+end
+assert(go_restricted_owner_smoke_receipt_source.include?("validateNoBackendTerms"), "Go Runtime restricted owner smoke receipt must hide backend terms")
+%w[restricted-owner-smoke-receipt-record runRestrictedOwnerSmokeReceiptRecord authorize-restricted-owner-smoke].each do |token|
+  assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go").include?(token) || read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime restricted owner smoke receipt CLI must include #{token}")
+end
+assert(read_project_file("internal/runtime/owner/restricted_smoke_receipt_test.go").include?("TestRecordRestrictedOwnerSmokeReceiptConsumesPreflightAndSmokeBatch"), "Go Runtime restricted owner smoke receipt tests must consume preflight and smoke batch")
+assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go").include?("TestRestrictedOwnerSmokeReceiptRecordCommandPersistsReceipt"), "Go Runtime restricted owner smoke receipt CLI tests must persist the receipt")
 
 go_runtime_owner_session_bus_source = read_project_file("internal/runtime/owner/session_bus.go")
 %w[SessionBusSmokeStep runtime-owner-session-bus-smoke-step xnix.runtime.owner_session_bus_smoke.v1 restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript NewSmokeBatchRecords record.RecordType reject-unsupported-read org.xnix.Compatibility1.Error.UnsupportedMethod private-session-bus-smoke].each do |token|

@@ -1,0 +1,36 @@
+package main
+
+import (
+	"errors"
+	"flag"
+	"io"
+	"os"
+
+	"xnix.local/xnix/internal/runtime/owner"
+)
+
+func runRestrictedOwnerSmokeReceiptRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("restricted-owner-smoke-receipt-record", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime activation and owner smoke inputs")
+	stateRoot := flags.String("state-root", "", "controlled state root for the restricted owner smoke receipt")
+	mode := flags.String("mode", "", "required receipt mode; must be restricted-smoke")
+	authorize := flags.String("authorize", "", "exact restricted owner smoke authorization directive")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" {
+		return errors.New("restricted-owner-smoke-receipt-record requires --state-root")
+	}
+	if *mode != owner.RestrictedOwnerSmokeMode || *authorize != owner.RestrictedOwnerSmokeDirective {
+		return errors.New("restricted-owner-smoke-receipt-record requires --mode restricted-smoke and --authorize authorize-restricted-owner-smoke")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("restricted-owner-smoke-receipt-record does not accept positional arguments")
+	}
+	receipt, err := owner.RecordRestrictedOwnerSmokeReceipt(*root, *stateRoot, *mode, *authorize)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, receipt)
+}
