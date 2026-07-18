@@ -52,7 +52,7 @@ end
 
 # --- Containerfile rendering ------------------------------------------
 containerfile = image.render_containerfile
-assert(containerfile.include?("FROM quay.io/fedora/fedora-kinoite:41"),
+assert(containerfile.include?("FROM quay.io/fedora/fedora-kinoite:44"),
        "rendered Containerfile must pin the Kinoite base image")
 assert(containerfile.include?("rpm-ostree install"), "rendered Containerfile must layer packages via rpm-ostree")
 assert(containerfile.include?("plasma-desktop"), "rendered Containerfile must install the Plasma desktop")

@@ -2,6 +2,17 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc4] - 2026-07-18
+
+### Changed
+
+- Advanced the flagship atomic desktop base from Fedora Kinoite 41 to Fedora Kinoite 44 after q4 verification confirmed that the official amd64 image is available.
+- Updated the checked-in Containerfile snapshot and KDE image test to pin the supported Fedora 44 base.
+
+### Security
+
+- Rejected Fedora 41 as a release base after its repositories moved to distant archives and its update lifecycle ended; qcow2 and KDE smoke evidence must now come from the supported Fedora 44 compose.
+
 ## [0.2.320-rc3] - 2026-07-17
 
 ### Fixed

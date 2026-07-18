@@ -2,7 +2,7 @@
   "schema": "xnix.image.kinoite/v1",
   "image_name": "xnix-kinoite",
   "summary": "Fedora Kinoite-compatible atomic base with KDE Plasma 6 and the Xnix Compatibility Runtime.",
-  "base_image": "quay.io/fedora/fedora-kinoite:41",
+  "base_image": "quay.io/fedora/fedora-kinoite:44",
   "architecture": "x86_64",
   "build_mode": "bootc-image",
   "desktop": {
