@@ -196,7 +196,9 @@ LANES = [
     patterns: [
       %r{\Ainternal/runtime/execution/},
       %r{\Ainternal/runtime/appidentity/application_readiness},
+      %r{\Ainternal/runtime/appidentity/kde_test_launch_materialization},
       %r{\Acmd/xnix-runtime-go/execution_ledger_},
+      %r{\Acmd/xnix-runtime-go/kde_test_launch_materialization_},
       %r{\Acmd/xnix-runtime-go/application_readiness_},
       %r{\Ainternal/runtime/appidentity/execution_session_record_evidence\.go\z},
       %r{\Atest/test_launch_request\.rb\z},

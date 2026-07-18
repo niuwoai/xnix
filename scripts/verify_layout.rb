@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.323"
+EXPECTED_VERSION = "0.2.324"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -231,6 +231,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
   cmd/xnix-runtime-go/kde_restricted_launch_authorization_commands.go
   cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go
+  cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go
+  cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -300,6 +302,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
   internal/runtime/appidentity/kde_restricted_launch_authorization.go
   internal/runtime/appidentity/kde_restricted_launch_authorization_test.go
+  internal/runtime/appidentity/kde_test_launch_materialization.go
+  internal/runtime/appidentity/kde_test_launch_materialization_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -352,6 +356,8 @@ REQUIRED_FILES = %w[
   internal/runtime/execution/session_test.go
   internal/runtime/execution/authorization.go
   internal/runtime/execution/authorization_test.go
+  internal/runtime/execution/restricted_materialization.go
+  internal/runtime/execution/restricted_materialization_test.go
   internal/runtime/diagnostics/record.go
   internal/runtime/diagnostics/history.go
   internal/runtime/artifact/stage.go
@@ -2249,6 +2255,36 @@ go_runtime_kde_restricted_preflight_cli_source = read_project_file("cmd/xnix-run
                                                 read_project_file("cmd/xnix-runtime-go/main.go")
 %w[kde-restricted-launch-preflight-record runKDERestrictedLaunchPreflightRecord authorize-restricted-test-preparation test-only TestKDERestrictedLaunchPreflightRecordCommandIsFailClosed TestKDERestrictedLaunchPreflightRecordCommandRequiresAuthorization ready_for_packet_assembly product_image_ready launch_preflight_passed].each do |token|
   assert(go_runtime_kde_restricted_preflight_cli_source.include?(token), "Go Runtime KDE restricted launch preflight CLI must include #{token}")
+end
+
+go_runtime_restricted_materialization_source = read_project_file("internal/runtime/execution/restricted_materialization.go")
+%w[RestrictedMaterializationStore RestrictedMaterializationPlan xnix.runtime.restricted_launch_materialization.v1 restricted-launch-materialization-plan go-runtime-state-root-restricted-launch-materialization blocked-plan-materialized test-only-review-plan PlanMaterialized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted RawExecutableExposed HostRootModified].each do |token|
+  assert(go_runtime_restricted_materialization_source.include?(token), "Go Runtime restricted launch materialization store must include #{token}")
+end
+
+go_runtime_restricted_materialization_test_source = read_project_file("internal/runtime/execution/restricted_materialization_test.go")
+%w[TestRestrictedMaterializationStorePersistsPlanOnly TestRestrictedMaterializationStoreRejectsTamperedPlan recipe-trust runtime-write-gate command_materialized].each do |token|
+  assert(go_runtime_restricted_materialization_test_source.include?(token), "Go Runtime restricted launch materialization tests must include #{token}")
+end
+
+go_runtime_kde_test_launch_materialization_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization.go")
+%w[KDETestLaunchMaterializationRecord NewKDETestLaunchMaterializationRecord xnix.runtime.kde_test_launch_materialization.v1 kde-test-launch-materialization-record preflight-boundary materialization-readback materialized-plan-only write-gate-remains-blocked command-boundary launch-boundary execution-unchanged session-unchanged unsafe-gates-closed MaterializationBoundary PlanMaterialized CoreReceiptCount AllChecksPassed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_source.include?(token), "Go Runtime KDE test launch materialization must include #{token}")
+end
+%w[ProductImageReady ProductionTrustSatisfied RuntimeWriteGateEnabled LaunchPreflightPassed LaunchAuthorized ExecutionApproved ProcessStartAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed RawExecutableExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_source.include?(token), "Go Runtime KDE test launch materialization must expose safety gate #{token}")
+end
+
+go_runtime_kde_test_launch_materialization_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_test.go")
+%w[TestKDETestLaunchMaterializationRecordMaterializesPlanOnly TestKDETestLaunchMaterializationRecordRequiresExactBoundary blocked-plan-materialized test-only-review-plan explicit-test-root-only recipe-trust runtime-write-gate].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_test_source.include?(token), "Go Runtime KDE test launch materialization tests must include #{token}")
+end
+
+go_runtime_kde_test_launch_materialization_cli_source = read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go") +
+                                                       read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go") +
+                                                       read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-test-launch-materialization-record runKDETestLaunchMaterializationRecord authorize-restricted-test-preparation test-only TestKDETestLaunchMaterializationRecordCommandMaterializesPlanOnly TestKDETestLaunchMaterializationRecordCommandRequiresAuthorization plan_materialized command_materialized raw_executable_exposed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_cli_source.include?(token), "Go Runtime KDE test launch materialization CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +

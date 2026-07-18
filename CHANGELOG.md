@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.324] - 2026-07-18
+
+### Added
+
+- Added a test-only launch materialization plan receipt under the controlled execution state root, joining restricted launch authorization, restricted preflight, and blocked execution transaction evidence.
+- Added `kde-test-launch-materialization-record` to materialize only review-plan references while keeping command materialization, executable path resolution, backend selection, backend launch, process start, Runtime writes, network access, privileged containers, raw command exposure, and host-root mutation disabled.
+
 ## [0.2.323] - 2026-07-18
 
 ### Added

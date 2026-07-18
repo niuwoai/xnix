@@ -451,10 +451,14 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/execution/authorization_test.go
       internal/runtime/execution/restricted_preflight.go
       internal/runtime/execution/restricted_preflight_test.go
+      internal/runtime/execution/restricted_materialization.go
+      internal/runtime/execution/restricted_materialization_test.go
       internal/runtime/appidentity/kde_restricted_launch_authorization.go
       internal/runtime/appidentity/kde_restricted_launch_authorization_test.go
       internal/runtime/appidentity/kde_restricted_launch_preflight.go
       internal/runtime/appidentity/kde_restricted_launch_preflight_test.go
+      internal/runtime/appidentity/kde_test_launch_materialization.go
+      internal/runtime/appidentity/kde_test_launch_materialization_test.go
       internal/runtime/appidentity/application_readiness_test.go
       cmd/xnix-runtime-go/application_readiness_commands.go
       cmd/xnix-runtime-go/application_readiness_cli_test.go
@@ -464,14 +468,18 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go
       cmd/xnix-runtime-go/kde_restricted_launch_preflight_commands.go
       cmd/xnix-runtime-go/kde_restricted_launch_preflight_cli_test.go
+      cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go
+      cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go
     ],
     state_files: %w[
       internal/runtime/execution/ledger.go
       internal/runtime/execution/session.go
       internal/runtime/execution/authorization.go
       internal/runtime/execution/restricted_preflight.go
+      internal/runtime/execution/restricted_materialization.go
       internal/runtime/appidentity/kde_restricted_launch_authorization.go
       internal/runtime/appidentity/kde_restricted_launch_preflight.go
+      internal/runtime/appidentity/kde_test_launch_materialization.go
     ],
     smoke_files: [],
     gate_tokens: {
@@ -484,14 +492,20 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/execution/authorization_test.go" => %w[TestRestrictedAuthorizationStorePersistsPreparationOnlyReceipt TestRestrictedAuthorizationStoreRejectsInvalidDirectiveTamperingAndSymlink],
       "internal/runtime/execution/restricted_preflight.go" => %w[xnix.runtime.restricted_launch_preflight.v1 restricted-launch-preflight-packet go-runtime-state-root-restricted-launch-preflight blocked recipe-trust runtime-write-gate ReadyForPacketAssembly ProductImageReady LaunchPreflightPassed LaunchAuthorized ProcessStartAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted HostRootModified],
       "internal/runtime/execution/restricted_preflight_test.go" => %w[TestRestrictedPreflightStorePersistsFailClosedPacket TestRestrictedPreflightStoreRejectsTamperedPacket],
+      "internal/runtime/execution/restricted_materialization.go" => %w[xnix.runtime.restricted_launch_materialization.v1 restricted-launch-materialization-plan go-runtime-state-root-restricted-launch-materialization blocked-plan-materialized test-only-review-plan PlanMaterialized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted RawExecutableExposed HostRootModified],
+      "internal/runtime/execution/restricted_materialization_test.go" => %w[TestRestrictedMaterializationStorePersistsPlanOnly TestRestrictedMaterializationStoreRejectsTamperedPlan],
       "internal/runtime/appidentity/kde_restricted_launch_authorization.go" => %w[xnix.runtime.kde_restricted_launch_authorization.v1 kde-restricted-launch-authorization-record NewKDERestrictedLaunchAuthorizationRecord prerequisite-convergence explicit-test-boundary authorization-readback trust-independent write-gate-independent execution-unchanged session-unchanged unsafe-gates-closed AuthorizationBoundaryJoined ProductionTrustSatisfied RuntimeWriteGateEnabled LaunchAuthorized ProcessStartAuthorized BackendProcessStarted HostRootModified],
       "internal/runtime/appidentity/kde_restricted_launch_authorization_test.go" => %w[TestKDERestrictedLaunchAuthorizationRecordsPreparationOnly TestKDERestrictedLaunchAuthorizationRequiresExactDirective authorized-preparation-only explicit-test-root-only],
       "internal/runtime/appidentity/kde_restricted_launch_preflight.go" => %w[xnix.runtime.kde_restricted_launch_preflight.v1 kde-restricted-launch-preflight-record NewKDERestrictedLaunchPreflightRecord authorization-boundary safe-inputs preflight-readback explicit-blockers packet-assembly-boundary execution-unchanged session-unchanged unsafe-gates-closed PreflightBoundaryJoined ProductImageReady LaunchPreflightPassed LaunchAuthorized ProcessStartAuthorized CommandMaterialized BackendSelectedForLaunch BackendProcessStarted HostRootModified],
       "internal/runtime/appidentity/kde_restricted_launch_preflight_test.go" => %w[TestKDERestrictedLaunchPreflightRemainsBlocked explicit-test-root-only recipe-trust runtime-write-gate],
+      "internal/runtime/appidentity/kde_test_launch_materialization.go" => %w[xnix.runtime.kde_test_launch_materialization.v1 kde-test-launch-materialization-record NewKDETestLaunchMaterializationRecord preflight-boundary materialization-readback materialized-plan-only write-gate-remains-blocked command-boundary launch-boundary execution-unchanged session-unchanged unsafe-gates-closed MaterializationBoundary PlanMaterialized CommandMaterialized RawExecutableExposed HostRootModified],
+      "internal/runtime/appidentity/kde_test_launch_materialization_test.go" => %w[TestKDETestLaunchMaterializationRecordMaterializesPlanOnly TestKDETestLaunchMaterializationRecordRequiresExactBoundary blocked-plan-materialized test-only-review-plan],
       "cmd/xnix-runtime-go/kde_restricted_launch_authorization_commands.go" => %w[kde-restricted-launch-authorization-record runKDERestrictedLaunchAuthorizationRecord authorize-restricted-test-preparation test-only],
       "cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go" => %w[TestKDERestrictedLaunchAuthorizationRecordCommandRequiresExplicitDirective TestKDERestrictedLaunchAuthorizationRecordCommandRejectsImplicitAuthorization preparation_authorized launch_authorized process_start_authorized],
       "cmd/xnix-runtime-go/kde_restricted_launch_preflight_commands.go" => %w[kde-restricted-launch-preflight-record runKDERestrictedLaunchPreflightRecord authorize-restricted-test-preparation test-only],
       "cmd/xnix-runtime-go/kde_restricted_launch_preflight_cli_test.go" => %w[TestKDERestrictedLaunchPreflightRecordCommandIsFailClosed TestKDERestrictedLaunchPreflightRecordCommandRequiresAuthorization ready_for_packet_assembly product_image_ready launch_preflight_passed],
+      "cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go" => %w[kde-test-launch-materialization-record runKDETestLaunchMaterializationRecord authorize-restricted-test-preparation test-only],
+      "cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go" => %w[TestKDETestLaunchMaterializationRecordCommandMaterializesPlanOnly TestKDETestLaunchMaterializationRecordCommandRequiresAuthorization plan_materialized command_materialized raw_executable_exposed],
       "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record execution-session-record state-root portal-request executionLedgerPortalReceipts RecordSession],
       "cmd/xnix-runtime-go/execution_ledger_cli_test.go" => %w[TestExecutionLedgerRecordCommandConsumesPortalReceipt TestExecutionLedgerRecordCommandBlocksDeniedPortalReceipt TestExecutionSessionRecordCommandPersistsStatusFromLedger portal_permission_receipt_count],
       "internal/runtime/appidentity/application_readiness.go" => %w[xnix.runtime.application_readiness.v1 application-readiness-preview runtime-application-readiness-evidence-graph RecipeTrustDecision WriteGateDecision RealPortalTransportEnabled BackendLaunchEnabled StateRootPathExposed RawCommandExposed],
