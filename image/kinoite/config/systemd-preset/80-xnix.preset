@@ -1,5 +1,4 @@
-# Xnix unit presets baked into the image. SDDM drives the graphical
-# login; the Compatibility Runtime daemon is enabled so its D-Bus name
-# can be owned once the backend is activated.
-enable sddm.service
-enable xnix-compatd.service
+# Xnix unit presets baked into the image. Fedora 44's Plasma Login
+# Manager drives the graphical login. The production Runtime D-Bus owner
+# remains gated and must not be enabled as the development CLI wrapper.
+enable plasmalogin.service

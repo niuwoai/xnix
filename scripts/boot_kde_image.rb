@@ -11,6 +11,7 @@
 #                                  --firmware /usr/share/edk2/ovmf/OVMF_CODE.fd
 
 require "open3"
+require "fileutils"
 require "pathname"
 require_relative "../lib/xnix/image/kde_image"
 require_relative "../lib/xnix/image/boot_smoke"
@@ -32,15 +33,32 @@ default_output = Pathname.new(arg_value("--output") || PROJECT_ROOT.join("output
 disk = arg_value("--disk") ||
        Xnix::Image::DiskBuild.new(project_root: PROJECT_ROOT.to_s).output_path("qcow2", default_output.to_s)
 firmware = arg_value("--firmware") || "/usr/share/edk2/ovmf/OVMF_CODE.fd"
+serial_log = Pathname.new(arg_value("--serial-log") || default_output.join("serial-smoke.log")).expand_path
+acceleration = File.readable?("/dev/kvm") && File.writable?("/dev/kvm") ? "kvm" : "tcg"
 
 abort "FAIL: disk image not found: #{disk}" unless File.file?(disk)
 abort "FAIL: UEFI firmware not found: #{firmware}" unless File.file?(firmware)
 
-command = ["timeout", "#{smoke.timeout_seconds}s", *smoke.boot_command(disk_path: disk, firmware_path: firmware)]
+command = [
+  "timeout", "#{smoke.timeout_seconds}s",
+  *smoke.boot_command(disk_path: disk, firmware_path: firmware, acceleration: acceleration)
+]
 puts "RUN: #{command.join(' ')}"
+puts "LOG: #{serial_log}"
 
-serial, _status = Open3.capture2e(*command)
-puts serial
+FileUtils.mkdir_p(serial_log.dirname)
+serial = +""
+File.open(serial_log, "w") do |log|
+  Open3.popen2e(*command) do |stdin, output, _wait_thread|
+    stdin.close
+    output.each do |chunk|
+      serial << chunk
+      log.write(chunk)
+      log.flush
+      print chunk
+    end
+  end
+end
 
 if smoke.booted?(serial)
   puts "PASS: #{smoke.summary(serial)}"

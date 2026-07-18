@@ -13,6 +13,7 @@ module Xnix
     class BootSmoke
       DEFAULT_MEMORY = "4G"
       DEFAULT_CPU_COUNT = "2"
+      ANSI_ESCAPE = /\e(?:\[[0-?]*[ -\/]*[@-~]|\][^\a]*(?:\a|\e\\))/.freeze
 
       def initialize(image)
         @image = image
@@ -29,11 +30,13 @@ module Xnix
       # Given captured serial output, report whether every expected marker
       # appeared.
       def booted?(serial_contents)
-        expected_markers.all? { |marker| serial_contents.include?(marker) }
+        normalized = normalize_serial(serial_contents)
+        expected_markers.all? { |marker| normalized.include?(marker) }
       end
 
       def missing_markers(serial_contents)
-        expected_markers.reject { |marker| serial_contents.include?(marker) }
+        normalized = normalize_serial(serial_contents)
+        expected_markers.reject { |marker| normalized.include?(marker) }
       end
 
       def summary(serial_contents)
@@ -45,13 +48,16 @@ module Xnix
       # QEMU command that boots a full disk image (qcow2/raw) with UEFI
       # firmware, headless, serial on stdio. Loopback-only networking per
       # the project's safety constraints.
-      def boot_command(disk_path:, firmware_path:, memory: DEFAULT_MEMORY, cpu_count: DEFAULT_CPU_COUNT)
+      def boot_command(disk_path:, firmware_path:, memory: DEFAULT_MEMORY, cpu_count: DEFAULT_CPU_COUNT,
+                       acceleration: "tcg")
+        cpu = acceleration == "kvm" ? "host" : "max"
         [
           "qemu-system-x86_64",
-          "-machine", "q35,accel=tcg",
-          "-cpu", "max",
+          "-machine", "q35,accel=#{acceleration}",
+          "-cpu", cpu,
           "-m", memory,
           "-smp", cpu_count,
+          "-snapshot",
           "-nographic",
           "-serial", "mon:stdio",
           "-no-reboot",
@@ -60,6 +66,12 @@ module Xnix
           "-netdev", "user,id=net0,restrict=on",
           "-device", "virtio-net-pci,netdev=net0"
         ]
+      end
+
+      private
+
+      def normalize_serial(serial_contents)
+        serial_contents.gsub(ANSI_ESCAPE, "").delete("\r")
       end
     end
   end

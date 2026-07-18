@@ -90,14 +90,33 @@ module Xnix
       # The privileged podman invocation that runs bootc-image-builder for
       # one output type. blueprint_path is a file the driver writes from the
       # config's blueprint block; output_dir receives the disk image.
-      def builder_command(type:, output_dir:, blueprint_path:)
+      def builder_command(type:, output_dir:, blueprint_path:, storage_root: nil, runroot: nil,
+                          storage_config_path: nil)
         raise ConfigError, "unsupported output type: #{type}" unless supported_type?(type)
 
-        [
-          "podman", "run", "--rm",
+        command = ["podman"]
+        if storage_root
+          command.concat(["--root", storage_root])
+          command.concat(["--runroot", runroot]) if runroot
+        end
+        command.concat([
+          "run", "--rm",
           "--privileged",
-          "--security-opt", "label=type:unconfined_t",
-          "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
+          "--security-opt", "label=type:unconfined_t"
+        ])
+        if storage_root
+          raise ConfigError, "storage_config_path is required with storage_root" unless storage_config_path
+
+          command.concat([
+            "-e", "CONTAINERS_STORAGE_CONF=/xnix-storage.conf",
+            "-v", "#{storage_root}:#{storage_root}",
+            "-v", "#{storage_root}:/var/lib/containers/storage",
+            "-v", "#{storage_config_path}:/xnix-storage.conf:ro"
+          ])
+        else
+          command.concat(["-v", "/var/lib/containers/storage:/var/lib/containers/storage"])
+        end
+        command.concat([
           "-v", "#{output_dir}:/output",
           "-v", "#{blueprint_path}:/config.json:ro",
           @config.fetch("builder_image"),
@@ -106,7 +125,8 @@ module Xnix
           "--local",
           "--config", "/config.json",
           source_reference
-        ]
+        ])
+        command
       end
 
       def to_h

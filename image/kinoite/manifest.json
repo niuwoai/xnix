@@ -1,7 +1,7 @@
 {
   "schema": "xnix.image.kinoite/v1",
   "image_name": "xnix-kinoite",
-  "summary": "Fedora Kinoite-compatible atomic base with KDE Plasma 6 and the Xnix Compatibility Runtime.",
+  "summary": "Fedora Kinoite-compatible atomic base with KDE Plasma 6 and staged Xnix desktop integration assets.",
   "base_image": "quay.io/fedora/fedora-kinoite:44",
   "architecture": "x86_64",
   "build_mode": "bootc-image",
@@ -9,15 +9,14 @@
     "environment": "kde-plasma-6",
     "session": "plasma",
     "session_type": "wayland",
-    "display_manager": "sddm",
+    "display_manager": "plasmalogin",
     "compositor": "kwin-wayland"
   },
   "package_groups": {
     "plasma_desktop": [
       "plasma-desktop",
       "plasma-workspace",
-      "sddm",
-      "sddm-kcm",
+      "plasma-login-manager",
       "plasma-systemsettings",
       "dolphin",
       "konsole",
@@ -37,18 +36,6 @@
   },
   "layered_artifacts": [
     {
-      "id": "compatd-system-unit",
-      "source": "runtime/systemd/xnix-compatd.service",
-      "dest": "/usr/lib/systemd/system/xnix-compatd.service",
-      "role": "runtime-service-unit"
-    },
-    {
-      "id": "compatd-dbus-service",
-      "source": "runtime/dbus/org.xnix.Compatibility1.service",
-      "dest": "/usr/share/dbus-1/services/org.xnix.Compatibility1.service",
-      "role": "runtime-dbus-activation"
-    },
-    {
       "id": "dolphin-service-menu",
       "source": "kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop",
       "dest": "/usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop",
@@ -62,12 +49,6 @@
     }
   ],
   "config_overlays": [
-    {
-      "id": "sddm-plasma-wayland",
-      "source": "image/kinoite/config/sddm.conf.d/10-xnix.conf",
-      "dest": "/etc/sddm.conf.d/10-xnix.conf",
-      "role": "greeter"
-    },
     {
       "id": "portal-backend",
       "source": "image/kinoite/config/portal/xnix-portals.conf",
@@ -88,12 +69,11 @@
     }
   ],
   "enabled_units": [
-    "sddm.service",
-    "xnix-compatd.service"
+    "plasmalogin.service"
   ],
   "first_boot": {
     "target": "graphical.target",
-    "greeter": "sddm",
+    "greeter": "plasmalogin",
     "autologin": false
   },
   "kde_entry_points": [
@@ -108,9 +88,9 @@
   "boot_smoke": {
     "expect_serial_markers": [
       "Reached target Graphical Interface",
-      "Started Simple Desktop Display Manager"
+      "Plasma Login Manager"
     ],
-    "timeout_seconds": 180
+    "timeout_seconds": 300
   },
   "provenance": {
     "runtime_owned": true,

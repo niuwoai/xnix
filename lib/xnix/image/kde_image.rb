@@ -87,16 +87,16 @@ module Xnix
         lines << "LABEL org.xnix.image=\"#{manifest.fetch('image_name')}\""
         lines << "LABEL org.xnix.flagship=\"#{manifest.dig('desktop', 'environment')}\""
         lines << ""
-        lines << "# --- Desktop, portal, and runtime packages -------------------------"
+        lines << "# --- Desktop, portal, and runtime support packages -----------------"
         lines << rpm_ostree_install_block
         lines << ""
-        lines << "# --- Layered Xnix runtime + KDE entry-point artifacts --------------"
+        lines << "# --- Layered Xnix KDE entry-point artifacts ------------------------"
         artifact_copy_lines.each { |line| lines << line }
         lines << ""
         lines << "# --- Image configuration overlays ----------------------------------"
         overlay_copy_lines.each { |line| lines << line }
         lines << ""
-        lines << "# --- Presets: enable the graphical login + runtime daemon ----------"
+        lines << "# --- Presets: enable the graphical login ---------------------------"
         lines << "RUN systemctl preset-all"
         lines << ""
         lines << "# bootc build validation keeps the ostree commit consistent."
@@ -180,8 +180,10 @@ module Xnix
       end
 
       def enabled_unit_problems
-        return ["manifest must enable sddm.service to reach a graphical login"] unless
-          Array(manifest["enabled_units"]).include?("sddm.service")
+        display_manager = manifest.dig("desktop", "display_manager")
+        expected_unit = "#{display_manager}.service"
+        return ["manifest must enable #{expected_unit} to reach a graphical login"] unless
+          Array(manifest["enabled_units"]).include?(expected_unit)
 
         []
       end

@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-18 | Baseline: v0.2.320-rc4
+> Last updated: 2026-07-18 | Baseline: v0.2.320-rc5
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
@@ -31,7 +31,7 @@ A task is suitable for Claude Code now if it is:
 
 Start with the privileged Kinoite build-host handoff.
 
-The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes exposed obsolete package requests, Fedora's missing default root filesystem, short-name resolution through `docker.io/library`, and the Fedora 41 end-of-life archive boundary; rc1 through rc4 fix those issues and rc4 moves the flagship base to supported Fedora Kinoite 44. The real bootc disk build and KDE startup smoke must still pass on q4 before release readiness can be claimed; Wine/Proton/VM launch and Windows application execution remain unproven.
+The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes exposed obsolete package requests, Fedora's missing default root filesystem, short-name resolution through `docker.io/library`, the Fedora 41 end-of-life archive boundary, custom Podman graphroot handling, and obsolete SDDM assumptions. q4 then produced the rc4 Fedora 44 container and qcow2, and a KVM boot proved `graphical.target` plus `plasmalogin.service` active. rc5 aligns the reproducible build and smoke pipeline with that evidence. Production Runtime D-Bus ownership, Wine/Proton/VM launch, and Windows application execution remain unproven.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

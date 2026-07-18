@@ -5,12 +5,11 @@ FROM quay.io/fedora/fedora-kinoite:44
 LABEL org.xnix.image="xnix-kinoite"
 LABEL org.xnix.flagship="kde-plasma-6"
 
-# --- Desktop, portal, and runtime packages -------------------------
+# --- Desktop, portal, and runtime support packages -----------------
 RUN rpm-ostree install --idempotent \
         plasma-desktop \
         plasma-workspace \
-        sddm \
-        sddm-kcm \
+        plasma-login-manager \
         plasma-systemsettings \
         dolphin \
         konsole \
@@ -23,19 +22,16 @@ RUN rpm-ostree install --idempotent \
         glib2 \
         dbus
 
-# --- Layered Xnix runtime + KDE entry-point artifacts --------------
-COPY runtime/systemd/xnix-compatd.service /usr/lib/systemd/system/xnix-compatd.service
-COPY runtime/dbus/org.xnix.Compatibility1.service /usr/share/dbus-1/services/org.xnix.Compatibility1.service
+# --- Layered Xnix KDE entry-point artifacts ------------------------
 COPY kde/dolphin/servicemenus/xnix-open-with-compatibility.desktop /usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop
 COPY kde/plasmoids/org.xnix.compatibilitycenter /usr/share/plasma/plasmoids/org.xnix.compatibilitycenter
 
 # --- Image configuration overlays ----------------------------------
-COPY image/kinoite/config/sddm.conf.d/10-xnix.conf /etc/sddm.conf.d/10-xnix.conf
 COPY image/kinoite/config/portal/xnix-portals.conf /usr/share/xdg-desktop-portal/xnix-portals.conf
 COPY image/kinoite/config/os-release.d/xnix.conf /usr/lib/os-release.d/xnix.conf
 COPY image/kinoite/config/systemd-preset/80-xnix.preset /usr/lib/systemd/system-preset/80-xnix.preset
 
-# --- Presets: enable the graphical login + runtime daemon ----------
+# --- Presets: enable the graphical login ---------------------------
 RUN systemctl preset-all
 
 # bootc build validation keeps the ostree commit consistent.

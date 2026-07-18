@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc5] - 2026-07-18
+
+### Changed
+
+- Aligned the Fedora 44 image with Plasma Login Manager and removed obsolete SDDM packages and configuration from the flagship build.
+- Stopped installing and enabling the development `xnix-compatd` CLI wrapper as a production system D-Bus service; production ownership remains gated until a real owner exists.
+- Recorded q4 evidence for the successful rc4 container compose, clean qcow2 validation, active graphical target, and active Plasma Login Manager while keeping Windows application execution unproven.
+
+### Fixed
+
+- Made KDE boot smoke checks ignore ANSI serial control sequences, prefer KVM when available, protect the source disk with QEMU snapshot mode, persist output incrementally, and allow five minutes for first boot.
+- Added explicit custom Podman graphroot and runroot support for bootc-image-builder, including the static graphroot and compatibility storage mounts required on q4.
+
 ## [0.2.320-rc4] - 2026-07-18
 
 ### Changed

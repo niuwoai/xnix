@@ -12,6 +12,7 @@
 #   ruby scripts/build_kde_disk.rb --check         # validate + toolchain detect only
 #   ruby scripts/build_kde_disk.rb --output DIR    # output directory (default: output/)
 #   ruby scripts/build_kde_disk.rb --type qcow2    # override output type
+#   ruby scripts/build_kde_disk.rb --storage-root DIR --runroot DIR
 
 require "fileutils"
 require "json"
@@ -36,6 +37,8 @@ end
 check_only = ARGV.delete("--check")
 output_dir = Pathname.new(arg_value("--output") || PROJECT_ROOT.join("output")).expand_path
 type_override = arg_value("--type")
+storage_root = arg_value("--storage-root")
+runroot = arg_value("--runroot")
 
 disk = Xnix::Image::DiskBuild.new(project_root: PROJECT_ROOT.to_s)
 
@@ -78,8 +81,27 @@ blueprint_path = output_dir.join("xnix-kinoite-blueprint.json")
 blueprint_path.write(JSON.pretty_generate(disk.blueprint) + "\n")
 puts "OK: wrote blueprint #{blueprint_path}"
 
+storage_config_path = nil
+if storage_root
+  storage_config_path = output_dir.join("xnix-container-storage.conf")
+  storage_config_path.write(<<~CONFIG)
+    [storage]
+    driver = "overlay"
+    runroot = "/run/containers/storage"
+    graphroot = "#{storage_root}"
+  CONFIG
+  puts "OK: wrote isolated storage config #{storage_config_path}"
+end
+
 types.each do |type|
-  command = disk.builder_command(type: type, output_dir: output_dir.to_s, blueprint_path: blueprint_path.to_s)
+  command = disk.builder_command(
+    type: type,
+    output_dir: output_dir.to_s,
+    blueprint_path: blueprint_path.to_s,
+    storage_root: storage_root,
+    runroot: runroot,
+    storage_config_path: storage_config_path&.to_s
+  )
   puts "RUN: #{command.join(' ')}"
   abort "Disk build failed for type #{type}." unless system(*command)
   puts "DONE: #{type} -> #{disk.output_path(type, output_dir.to_s)}"

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.320-rc4"
+EXPECTED_VERSION = "0.2.320-rc5"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -574,7 +574,6 @@ REQUIRED_FILES = %w[
   image/kinoite/manifest.json
   image/kinoite/Containerfile
   image/kinoite/disk-config.json
-  image/kinoite/config/sddm.conf.d/10-xnix.conf
   image/kinoite/config/portal/xnix-portals.conf
   image/kinoite/config/os-release.d/xnix.conf
   image/kinoite/config/systemd-preset/80-xnix.preset

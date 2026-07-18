@@ -8,11 +8,12 @@ Runtime later runs inside.
 ## Design: one manifest, one rendered recipe
 
 `image/kinoite/manifest.json` is the **single source of truth**. It declares
-the Fedora Kinoite base, the KDE Plasma 6 / portal / runtime package set,
-the artifacts layered on top (the Compatibility Runtime systemd unit, its
-D-Bus activation file, and the KDE entry-point assets), the image config
-overlays (SDDM greeter, portal backend, branding, unit presets), the units
-enabled at build time, and the serial markers a boot smoke expects.
+the Fedora Kinoite base, the KDE Plasma 6 / portal / runtime support package
+set, the KDE entry-point assets layered on top, the image config overlays
+(portal backend, branding, unit presets), the units enabled at build time,
+and the serial markers a boot smoke expects. Fedora 44's Plasma Login Manager
+owns the graphical login. The development Runtime CLI wrapper is deliberately
+not installed or enabled as a production D-Bus owner.
 
 `lib/xnix/image/kde_image.rb` loads that manifest, validates it against the
 files actually present in the repository, and **renders the Containerfile**
@@ -60,29 +61,31 @@ ruby scripts/build_kde_image.rb --check                            # validate + 
 ruby scripts/build_kde_image.rb                                    # build container (needs podman/buildah)
 ruby scripts/build_kde_disk.rb --check                             # validate + toolchain detect
 ruby scripts/build_kde_disk.rb --type qcow2                        # build disk (needs privileged podman)
+ruby scripts/build_kde_disk.rb --type qcow2 --storage-root DIR --runroot DIR
 ruby scripts/boot_kde_image.rb --firmware OVMF_CODE.fd             # boot smoke (defaults --disk to the qcow2 output)
 ```
 
 ## Policy ownership
 
 The manifest keeps `runtime_owned: true` / `kde_policy_owner: false`: the
-image ships the KDE entry points and the Compatibility Runtime's D-Bus
-activation, but compatibility policy stays with the Runtime. The image only
-lays down files and enables the daemon; it embeds no Wine/VM logic.
+image ships the KDE entry points, but compatibility policy stays with the
+Runtime. The image does not enable the development Ruby CLI wrapper as a
+system service. Production D-Bus activation remains gated until the Go owner
+is implemented and passes its live-owner checks.
 
 ## Regenerating the Containerfile
 
 The Containerfile is generated. After any manifest change:
 
-```text
-ruby -Ilib lib/xnix/image/kde_image.rb containerfile > image/kinoite/Containerfile
-```
+Render with `ruby -Ilib lib/xnix/image/kde_image.rb containerfile`, inspect the
+result, and update the checked-in snapshot with a patch-based edit.
 
 The drift guard (`test/test_kde_image.rb` and `scripts/build_kde_image.rb`)
 will fail until the snapshot is regenerated.
 
 ## Not yet covered
 
-- Real compose execution + published ostree/bootc image (needs a build host or CI runner with podman + privileges). The Containerfile and the `bootc-image-builder` command are rendered and validated here; only the privileged execution is external.
-- SDDM → Plasma Wayland session verified end-to-end under QEMU (needs a produced disk image + UEFI firmware). The boot-smoke harness and serial-console wiring exist; the run needs a real qcow2.
+- Published ostree/bootc artifacts. An authorized q4 build produced the rc4 container and qcow2 locally, but no image has been published.
+- Interactive Plasma desktop evidence beyond the active `graphical.target` and `plasmalogin.service` serial checks.
+- A production Runtime D-Bus owner and Windows application execution evidence.
 - A CI definition that chains container build → disk build → boot smoke on a privileged runner.

@@ -50,6 +50,39 @@ assert(joined.include?("/tmp/bp.json:/config.json:ro"), "builder command must mo
 assert(joined.include?(disk.source_reference), "builder command must reference the source image tag")
 assert(joined.include?("quay.io/centos-bootc/bootc-image-builder"), "builder command must use bootc-image-builder")
 
+# --- Isolated Podman storage used by constrained build hosts ----------
+isolated = disk.builder_command(
+  type: "qcow2",
+  output_dir: "/out",
+  blueprint_path: "/tmp/bp.json",
+  storage_root: "/home/xnix-build/containers/storage",
+  runroot: "/home/xnix-build/containers/runroot",
+  storage_config_path: "/out/xnix-container-storage.conf"
+)
+isolated_joined = isolated.join(" ")
+assert(isolated_joined.include?("--root /home/xnix-build/containers/storage"),
+       "isolated build must select the host's custom Podman graphroot")
+assert(isolated_joined.include?("--runroot /home/xnix-build/containers/runroot"),
+       "isolated build must select the host's custom Podman runroot")
+assert(isolated_joined.include?("CONTAINERS_STORAGE_CONF=/xnix-storage.conf"),
+       "builder must read the matching custom storage configuration")
+assert(isolated_joined.include?("/home/xnix-build/containers/storage:/home/xnix-build/containers/storage"),
+       "builder must preserve the graphroot's static path")
+assert(isolated_joined.include?("/home/xnix-build/containers/storage:/var/lib/containers/storage"),
+       "builder must also expose the local image store at its compatibility mount")
+
+begin
+  disk.builder_command(
+    type: "qcow2",
+    output_dir: "/out",
+    blueprint_path: "/tmp/bp.json",
+    storage_root: "/home/xnix-build/containers/storage"
+  )
+  assert(false, "custom storage without a matching config must raise")
+rescue Xnix::Image::DiskBuild::ConfigError
+  # expected
+end
+
 # --- Output path layout -----------------------------------------------
 assert(disk.output_path("qcow2", "/out") == "/out/qcow2/disk.qcow2", "qcow2 output path must follow bib layout")
 assert(disk.output_path("raw", "/out") == "/out/image/disk.raw", "raw output path must follow bib layout")
