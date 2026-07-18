@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.333] - 2026-07-19
+
+### Added
+
+- Added read-only KDE test launch materialization fan-out receipt consumption through `kde-test-launch-materialization-fanout-consume-preview`, allowing an existing materialization plan receipt to be projected to KDE surfaces without creating a new receipt.
+- Added Go, CLI, layout, and evidence coverage that keeps the legacy test-only receipt creation path separate from the read-only consumption path while leaving fan-out writes, Runtime writes, command materialization, executable resolution, backend launch, process start, path exposure, and host-root mutation disabled.
+
 ## [0.2.332] - 2026-07-19
 
 ### Added

@@ -3,7 +3,19 @@ package appidentity
 import (
 	"errors"
 	"path/filepath"
+
+	"xnix.local/xnix/internal/runtime/execution"
 )
+
+const (
+	kdeTestLaunchMaterializationFanOutWriteScope          = "explicit-test-root-materialization-only"
+	kdeTestLaunchMaterializationFanOutReadOnlyConsumeMode = "read-only-existing-materialization-receipt"
+)
+
+type KDETestLaunchMaterializationFanOutOptions struct {
+	StateRoot             string
+	MaterializationPlanID string
+}
 
 type KDETestLaunchMaterializationFanOutPreview struct {
 	SchemaVersion                      string                                   `json:"schema_version"`
@@ -107,6 +119,171 @@ func NewKDETestLaunchMaterializationFanOutPreview(recipeRecord Recipe, provenanc
 	if err != nil {
 		return KDETestLaunchMaterializationFanOutPreview{}, err
 	}
+	return newKDETestLaunchMaterializationFanOutPreviewFromEvidence(materializationRecord, fanOut, true, kdeTestLaunchMaterializationFanOutWriteScope, "kde-test-launch-materialization-record+execution-session-fanout-evidence")
+}
+
+func NewKDETestLaunchMaterializationFanOutPreviewFromReceipt(recipeRecord Recipe, provenance Provenance, options KDETestLaunchMaterializationFanOutOptions) (KDETestLaunchMaterializationFanOutPreview, error) {
+	materializationRecord, err := LoadKDETestLaunchMaterializationRecordForFanOut(recipeRecord, provenance, options.StateRoot, options.MaterializationPlanID)
+	if err != nil {
+		return KDETestLaunchMaterializationFanOutPreview{}, err
+	}
+	plan, err := NewPlanWithProvenance(recipeRecord, provenance)
+	if err != nil {
+		return KDETestLaunchMaterializationFanOutPreview{}, err
+	}
+	fanOut, err := plan.ExecutionSessionFanOutEvidence(options.StateRoot, materializationRecord.Execution.RequestID)
+	if err != nil {
+		return KDETestLaunchMaterializationFanOutPreview{}, err
+	}
+	return newKDETestLaunchMaterializationFanOutPreviewFromEvidence(materializationRecord, fanOut, false, kdeTestLaunchMaterializationFanOutReadOnlyConsumeMode, "kde-test-launch-materialization-record+execution-session-fanout-evidence+read-only-receipt-consumption")
+}
+
+func LoadKDETestLaunchMaterializationRecordForFanOut(recipeRecord Recipe, provenance Provenance, stateRoot string, planID string) (KDETestLaunchMaterializationRecord, error) {
+	plan, err := NewPlanWithProvenance(recipeRecord, provenance)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	if err := plan.ValidateSafeForDesktop(); err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	materializationStore, err := execution.NewRestrictedMaterializationStore(stateRoot)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	materialization, err := materializationStore.Load(planID)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	if materialization.ApplicationID != plan.ApplicationID {
+		return KDETestLaunchMaterializationRecord{}, errors.New("materialization fan-out receipt application mismatch")
+	}
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	transaction, err := ledger.Load(materialization.RequestID)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	session, err := ledger.LoadSession(materialization.RequestID)
+	if err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	if transaction.ApplicationID != materialization.ApplicationID || session.ApplicationID != materialization.ApplicationID {
+		return KDETestLaunchMaterializationRecord{}, errors.New("materialization fan-out receipt execution identity mismatch")
+	}
+	checks := kdeTestLaunchMaterializationReceiptConsumptionChecks(materialization, transaction, session)
+	passed := 0
+	for _, check := range checks {
+		if check.Status == "pass" {
+			passed++
+		}
+	}
+	if passed != len(checks) {
+		return KDETestLaunchMaterializationRecord{}, errors.New("materialization receipt consumption checks did not all pass")
+	}
+	record := KDETestLaunchMaterializationRecord{
+		SchemaVersion: "xnix.runtime.kde_test_launch_materialization.v1",
+		RecordType:    "kde-test-launch-materialization-record",
+		Source:        "restricted-launch-materialization-plan+execution-ledger+execution-session-record+read-only-receipt-consumption",
+		Mode:          materialization.Mode,
+		Application: KDEFakeExecutionApplication{
+			ID:             plan.ApplicationID,
+			Name:           plan.DisplayName,
+			Icon:           plan.Icon,
+			DesktopFile:    plan.DesktopFile,
+			IdentityDigest: plan.StableIdentityDigest,
+		},
+		Materialization: KDETestLaunchMaterializationEvidence{
+			PlanID:                    materialization.PlanID,
+			ReceiptRelativePath:       materialization.RelativePath,
+			ReceiptSHA256:             materialization.SHA256,
+			Status:                    materialization.Status,
+			MaterializationScope:      materialization.MaterializationScope,
+			MaterializedArtifactIDs:   append([]string{}, materialization.MaterializedArtifactIDs...),
+			MaterializedArtifactCount: len(materialization.MaterializedArtifactIDs),
+			BlockedByIDs:              append([]string{}, materialization.BlockedByIDs...),
+			BlockedByCount:            materialization.BlockedByCount,
+			ReceiptPersisted:          true,
+			ReceiptReadBack:           true,
+			SafeInputsReady:           materialization.SafeInputsReady,
+			PreparationAuthorized:     materialization.PreparationAuthorized,
+			PreflightReadBack:         materialization.PreflightReadBack,
+			PlanMaterialized:          materialization.PlanMaterialized,
+			TestOnly:                  materialization.TestOnly,
+			CommandMaterialized:       materialization.CommandMaterialized,
+			ExecutablePathResolved:    materialization.ExecutablePathResolved,
+			BackendSelectedForLaunch:  materialization.BackendSelectedForLaunch,
+			BackendLaunchEnabled:      materialization.BackendLaunchEnabled,
+		},
+		Execution: KDEFakeExecutionTransaction{
+			RequestID:           transaction.RequestID,
+			ReceiptRelativePath: transaction.RelativePath,
+			ReceiptSHA256:       transaction.SHA256,
+			State:               string(transaction.Transaction.State),
+			ReviewDecision:      string(transaction.Transaction.ReviewDecision),
+			Gates:               append([]execution.Gate{}, transaction.Transaction.Gates...),
+			GateCount:           len(transaction.Transaction.Gates),
+			PassedGateCount:     passedExecutionGateCount(transaction.Transaction.Gates),
+			BlockedReasons:      append([]string{}, transaction.Transaction.BlockedReasons...),
+			ReceiptPersisted:    true,
+			LaunchAllowed:       false,
+			LaunchEnabled:       false,
+			ExecutionStarted:    false,
+			ProcessStarted:      false,
+		},
+		Session: KDEFakeExecutionSession{
+			ReceiptRelativePath:      session.RelativePath,
+			ReceiptSHA256:            session.SHA256,
+			State:                    session.SessionState,
+			TaskManagerState:         session.TaskManagerState,
+			TrayState:                session.TrayState,
+			KWinState:                session.KWinState,
+			CompatibilityCenterState: session.CompatibilityCenterState,
+			BlockedReasons:           append([]string{}, session.BlockedReasons...),
+			ReceiptPersisted:         true,
+			LiveStateObserved:        false,
+			SessionActive:            false,
+		},
+		Checks:                      checks,
+		CheckCount:                  len(checks),
+		PassedCheckCount:            passed,
+		AllChecksPassed:             true,
+		CoreReceiptCount:            3,
+		StateRootWritesEnabled:      false,
+		StateRootWriteScope:         kdeTestLaunchMaterializationFanOutReadOnlyConsumeMode,
+		StateRootPathExposed:        false,
+		MaterializationBoundary:     true,
+		PlanMaterialized:            true,
+		TestOnly:                    true,
+		ProductImageReady:           false,
+		ProductionTrustSatisfied:    false,
+		RuntimeWriteGateEnabled:     false,
+		LaunchPreflightPassed:       false,
+		LaunchAuthorized:            false,
+		ExecutionApproved:           false,
+		ProcessStartAuthorized:      false,
+		CommandMaterialized:         false,
+		ExecutablePathResolved:      false,
+		BackendSelectedForLaunch:    false,
+		BackendLaunchEnabled:        false,
+		BackendProcessStarted:       false,
+		ProductionBusOwnership:      false,
+		NetworkRequired:             false,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		RawCommandExposed:           false,
+		RawExecutableExposed:        false,
+		BackendDetailsExposed:       false,
+		DesktopSafeSummary:          "Runtime consumed an existing test-only launch review plan while keeping command materialization, executable resolution, backend selection, launch, execution, and process start disabled.",
+	}
+	if err := validateNoBackendTerms(record, "KDE test launch materialization receipt consumption record"); err != nil {
+		return KDETestLaunchMaterializationRecord{}, err
+	}
+	return record, nil
+}
+
+func newKDETestLaunchMaterializationFanOutPreviewFromEvidence(materializationRecord KDETestLaunchMaterializationRecord, fanOut ExecutionSessionFanOutEvidence, stateRootWritesEnabled bool, stateRootWriteScope string, source string) (KDETestLaunchMaterializationFanOutPreview, error) {
 	if err := validateKDETestLaunchMaterializationFanOutInputs(materializationRecord, fanOut); err != nil {
 		return KDETestLaunchMaterializationFanOutPreview{}, err
 	}
@@ -130,10 +307,10 @@ func NewKDETestLaunchMaterializationFanOutPreview(recipeRecord Recipe, provenanc
 	preview := KDETestLaunchMaterializationFanOutPreview{
 		SchemaVersion:                      "xnix.runtime.kde_test_launch_materialization_fanout.v1",
 		RequestType:                        "kde-test-launch-materialization-fanout-preview",
-		Source:                             "kde-test-launch-materialization-record+execution-session-fanout-evidence",
+		Source:                             source,
 		RuntimeMethod:                      "GetKDETestLaunchMaterializationFanOut",
 		ReadMethod:                         "GetKDETestLaunchMaterializationFanOutPreview",
-		Mode:                               options.Mode,
+		Mode:                               materializationRecord.Mode,
 		Application:                        materializationRecord.Application,
 		MaterializationPlanID:              materializationRecord.Materialization.PlanID,
 		MaterializationReceiptRelativePath: materializationRecord.Materialization.ReceiptRelativePath,
@@ -159,8 +336,8 @@ func NewKDETestLaunchMaterializationFanOutPreview(recipeRecord Recipe, provenanc
 		MaterializationReceiptConsumed:     true,
 		ExecutionSessionFanOutConsumed:     true,
 		StateRootPathExposed:               false,
-		StateRootWritesEnabled:             true,
-		StateRootWriteScope:                "explicit-test-root-materialization-only",
+		StateRootWritesEnabled:             stateRootWritesEnabled,
+		StateRootWriteScope:                stateRootWriteScope,
 		FanOutWritesEnabled:                false,
 		TestOnly:                           true,
 		ProductImageReady:                  false,
@@ -195,6 +372,16 @@ func NewKDETestLaunchMaterializationFanOutPreview(recipeRecord Recipe, provenanc
 		return KDETestLaunchMaterializationFanOutPreview{}, err
 	}
 	return preview, nil
+}
+
+func kdeTestLaunchMaterializationReceiptConsumptionChecks(materialization execution.RestrictedMaterializationPlan, transaction execution.LedgerRecord, session execution.SessionRecord) []KDEFakeExecutionCheck {
+	return []KDEFakeExecutionCheck{
+		fakeExecutionCheck("materialization-receipt-consumed", materialization.Status == "blocked-plan-materialized" && len(materialization.SHA256) == 64 && !filepath.IsAbs(materialization.RelativePath) && materialization.PlanMaterialized && materialization.TestOnly, "The existing materialization receipt passed digest-verified readback."),
+		fakeExecutionCheck("execution-receipt-consumed", transaction.RequestID == materialization.RequestID && transaction.Transaction.State == execution.StateBlocked && !transaction.LaunchAllowed && !transaction.LaunchEnabled && !transaction.BackendStarted, "The existing execution transaction remains blocked and launch-disabled."),
+		fakeExecutionCheck("session-receipt-consumed", session.RequestID == materialization.RequestID && session.SessionState == "blocked" && !session.SessionActive && !session.ExecutionStarted && !session.BackendProcessStarted, "The existing execution session remains blocked and inactive."),
+		fakeExecutionCheck("read-only-consumption", !materialization.StateRootPathExposed && !transaction.StateRootPathExposed && !session.StateRootPathExposed, "Receipt consumption reads existing evidence without exposing state-root paths."),
+		fakeExecutionCheck("unsafe-gates-closed", !materialization.CommandMaterialized && !materialization.ExecutablePathResolved && !materialization.BackendSelectedForLaunch && !materialization.BackendLaunchEnabled && !materialization.BackendProcessStarted && !materialization.HostRootModified && !transaction.HostRootModified && !session.HostRootModified, "Existing receipts keep command, executable, backend launch, process, and host mutation gates closed."),
+	}
 }
 
 func validateKDETestLaunchMaterializationFanOutInputs(record KDETestLaunchMaterializationRecord, fanOut ExecutionSessionFanOutEvidence) error {

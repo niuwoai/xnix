@@ -42,6 +42,34 @@ func runKDETestLaunchMaterializationFanOutPreview(args []string, stdout io.Write
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runKDETestLaunchMaterializationFanOutConsumePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("kde-test-launch-materialization-fanout-consume-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	applicationID := flags.String("app", "", "application id to load from the recipe registry")
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	stateRoot := flags.String("state-root", "", "existing controlled directory containing test-only Runtime records")
+	materializationPlanID := flags.String("materialization-plan-id", "", "existing restricted materialization plan id to consume")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *registryPath == "" || *applicationID == "" || *stateRoot == "" || *materializationPlanID == "" {
+		return errors.New("kde-test-launch-materialization-fanout-consume-preview requires --registry, --app, --state-root, and --materialization-plan-id")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("kde-test-launch-materialization-fanout-consume-preview does not accept positional arguments")
+	}
+	recipeRecord, provenance, err := appidentity.LoadRecipeFromRegistry(*registryPath, *recipeRoot, *applicationID)
+	if err != nil {
+		return err
+	}
+	preview, err := appidentity.NewKDETestLaunchMaterializationFanOutPreviewFromReceipt(recipeRecord, provenance, appidentity.KDETestLaunchMaterializationFanOutOptions{StateRoot: *stateRoot, MaterializationPlanID: *materializationPlanID})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runKDETestLaunchMaterializationOwnerRouteAuditPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("kde-test-launch-materialization-owner-route-audit-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

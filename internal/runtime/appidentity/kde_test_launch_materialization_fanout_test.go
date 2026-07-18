@@ -96,6 +96,53 @@ func TestKDETestLaunchMaterializationFanOutPreviewCoversKDESurfaces(t *testing.T
 	}
 }
 
+func TestKDETestLaunchMaterializationFanOutPreviewConsumesExistingReceiptReadOnly(t *testing.T) {
+	recipeRecord := Recipe{ID: "org.xnix.sample.notepad", Name: "Sample Notepad", Version: "1.0.0", Icon: "accessories-text-editor", Mode: "automatic", SupportedExtensions: []string{".txt"}}
+	provenance := Provenance{Source: "registry", RegistryName: "xnix-offline-samples", DigestVerified: true, SignatureStatus: "development-only"}
+	stateRoot := t.TempDir()
+	record, err := NewKDETestLaunchMaterializationRecord(recipeRecord, provenance, KDERestrictedLaunchAuthorizationOptions{StateRoot: stateRoot, Mode: "test-only", Directive: execution.RestrictedTestPreparationDirective})
+	if err != nil {
+		t.Fatalf("NewKDETestLaunchMaterializationRecord returned error: %v", err)
+	}
+
+	preview, err := NewKDETestLaunchMaterializationFanOutPreviewFromReceipt(recipeRecord, provenance, KDETestLaunchMaterializationFanOutOptions{StateRoot: stateRoot, MaterializationPlanID: record.Materialization.PlanID})
+	if err != nil {
+		t.Fatalf("NewKDETestLaunchMaterializationFanOutPreviewFromReceipt returned error: %v", err)
+	}
+
+	if preview.Source != "kde-test-launch-materialization-record+execution-session-fanout-evidence+read-only-receipt-consumption" ||
+		preview.MaterializationPlanID != record.Materialization.PlanID ||
+		preview.MaterializationReceiptRelativePath != record.Materialization.ReceiptRelativePath ||
+		preview.MaterializationReceiptSHA256 != record.Materialization.ReceiptSHA256 ||
+		!preview.MaterializationReceiptConsumed ||
+		!preview.ExecutionSessionFanOutConsumed ||
+		preview.StateRootWritesEnabled ||
+		preview.StateRootWriteScope != "read-only-existing-materialization-receipt" ||
+		preview.FanOutWritesEnabled ||
+		preview.RuntimeWritesEnabled ||
+		preview.CommandMaterialized ||
+		preview.ExecutablePathResolved ||
+		preview.BackendLaunchEnabled ||
+		preview.BackendProcessStarted ||
+		preview.HostRootModified {
+		t.Fatalf("unexpected read-only materialization fan-out consumption preview: %+v", preview)
+	}
+	if preview.CheckCount != 9 || preview.PassedCheckCount != 9 || !preview.AllChecksPassed {
+		t.Fatalf("read-only materialization fan-out consumption checks must pass: %+v", preview)
+	}
+	if err := validateNoBackendTerms(preview, "KDE test launch materialization fan-out receipt consumption test"); err != nil {
+		t.Fatalf("validateNoBackendTerms returned error: %v", err)
+	}
+}
+
+func TestKDETestLaunchMaterializationFanOutPreviewFromReceiptRejectsMissingPlan(t *testing.T) {
+	recipeRecord := Recipe{ID: "org.xnix.sample.notepad", Name: "Sample Notepad", Version: "1.0.0", Icon: "accessories-text-editor", Mode: "automatic", SupportedExtensions: []string{".txt"}}
+	provenance := Provenance{Source: "registry", RegistryName: "xnix-offline-samples", DigestVerified: true, SignatureStatus: "development-only"}
+	if _, err := NewKDETestLaunchMaterializationFanOutPreviewFromReceipt(recipeRecord, provenance, KDETestLaunchMaterializationFanOutOptions{StateRoot: t.TempDir(), MaterializationPlanID: "missing-plan"}); err == nil {
+		t.Fatalf("read-only materialization fan-out consumption must require an existing plan")
+	}
+}
+
 func TestKDETestLaunchMaterializationFanOutPreviewRequiresExactBoundary(t *testing.T) {
 	recipeRecord := Recipe{ID: "org.xnix.sample.notepad", Name: "Sample Notepad", Version: "1.0.0", Icon: "accessories-text-editor", Mode: "automatic", SupportedExtensions: []string{".txt"}}
 	provenance := Provenance{Source: "registry", RegistryName: "xnix-offline-samples", DigestVerified: true, SignatureStatus: "development-only"}

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.332"
+EXPECTED_VERSION = "0.2.333"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -2378,7 +2378,7 @@ go_runtime_kde_test_launch_materialization_cli_source = read_project_file("cmd/x
 end
 
 go_runtime_kde_test_launch_materialization_fanout_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_fanout.go")
-%w[KDETestLaunchMaterializationFanOutPreview KDETestLaunchMaterializationFanSurface NewKDETestLaunchMaterializationFanOutPreview xnix.runtime.kde_test_launch_materialization_fanout.v1 kde-test-launch-materialization-fanout-preview GetKDETestLaunchMaterializationFanOut GetKDETestLaunchMaterializationFanOutPreview materialization-consumed session-fanout-consumed surface-coverage surfaces-read-only desktop-side-effects-disabled notification-not-delivered launch-boundary-closed unsafe-data-hidden host-boundary-closed compatibility-center task-manager tray notification review-plan-available].each do |token|
+%w[KDETestLaunchMaterializationFanOutPreview KDETestLaunchMaterializationFanSurface KDETestLaunchMaterializationFanOutOptions NewKDETestLaunchMaterializationFanOutPreview NewKDETestLaunchMaterializationFanOutPreviewFromReceipt LoadKDETestLaunchMaterializationRecordForFanOut xnix.runtime.kde_test_launch_materialization_fanout.v1 kde-test-launch-materialization-fanout-preview GetKDETestLaunchMaterializationFanOut GetKDETestLaunchMaterializationFanOutPreview materialization-consumed session-fanout-consumed surface-coverage surfaces-read-only desktop-side-effects-disabled notification-not-delivered launch-boundary-closed unsafe-data-hidden host-boundary-closed compatibility-center task-manager tray notification review-plan-available read-only-existing-materialization-receipt read-only-receipt-consumption materialization-receipt-consumed execution-receipt-consumed session-receipt-consumed read-only-consumption].each do |token|
   assert(go_runtime_kde_test_launch_materialization_fanout_source.include?(token), "Go Runtime KDE test launch materialization fan-out must include #{token}")
 end
 %w[MaterializationReceiptConsumed ExecutionSessionFanOutConsumed FanOutWritesEnabled StateRootPathExposed ProductImageReady ProductionTrustSatisfied RuntimeWriteGateEnabled LaunchAuthorized ExecutionApproved CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted TaskManagerEntryActive LiveTrayBridgeEnabled NotificationSent NotificationDeliveryEnabled CompatibilityCenterActionsEnabled RequestObjectsCreated RuntimeWritesEnabled ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed RawExecutableExposed BackendDetailsExposed].each do |token|
@@ -2389,7 +2389,7 @@ assert(go_runtime_kde_test_launch_materialization_fanout_source.include?("Execut
 assert(go_runtime_kde_test_launch_materialization_fanout_source.include?("validateNoBackendTerms"), "Go Runtime KDE test launch materialization fan-out must hide backend terms")
 
 go_runtime_kde_test_launch_materialization_fanout_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_fanout_test.go")
-%w[TestKDETestLaunchMaterializationFanOutPreviewCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewRequiresExactBoundary compatibility-center task-manager tray notification review-plan-available].each do |token|
+%w[TestKDETestLaunchMaterializationFanOutPreviewCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewConsumesExistingReceiptReadOnly TestKDETestLaunchMaterializationFanOutPreviewFromReceiptRejectsMissingPlan TestKDETestLaunchMaterializationFanOutPreviewRequiresExactBoundary compatibility-center task-manager tray notification review-plan-available read-only-existing-materialization-receipt].each do |token|
   assert(go_runtime_kde_test_launch_materialization_fanout_test_source.include?(token), "Go Runtime KDE test launch materialization fan-out tests must include #{token}")
 end
 
@@ -2397,7 +2397,7 @@ go_runtime_kde_test_launch_materialization_fanout_cli_source = read_project_file
                                                               read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go") +
                                                               read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_owner_route_audit_cli_test.go") +
                                                               read_project_file("cmd/xnix-runtime-go/main.go")
-%w[kde-test-launch-materialization-fanout-preview runKDETestLaunchMaterializationFanOutPreview authorize-restricted-test-preparation test-only TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled].each do |token|
+%w[kde-test-launch-materialization-fanout-preview kde-test-launch-materialization-fanout-consume-preview runKDETestLaunchMaterializationFanOutPreview runKDETestLaunchMaterializationFanOutConsumePreview authorize-restricted-test-preparation test-only materialization-plan-id TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutConsumePreviewCommandReadsExistingReceipt TestKDETestLaunchMaterializationFanOutConsumePreviewCommandRequiresExistingReceipt TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled state_root_writes_enabled read-only-existing-materialization-receipt].each do |token|
   assert(go_runtime_kde_test_launch_materialization_fanout_cli_source.include?(token), "Go Runtime KDE test launch materialization fan-out CLI must include #{token}")
 end
 
