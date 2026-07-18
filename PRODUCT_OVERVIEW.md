@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.349
+> Last updated: 2026-07-19 | Current version: v0.2.350
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.350 checkpoint adds route-by-route production D-Bus method review. `production-dbus-method-review-preview` inventories 61 read-only D-Bus contract methods, 3 owner-local candidate routes, and 4 reserved write methods, classifies their current exposure and future exposure decision, and keeps every new production method request, production exposure, bus claim, Runtime write, backend launch, notification, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.349 checkpoint lets `runtime-write-gate-preview` consume production gate state from `runtime-service-activation-preflight-preview`, including the production D-Bus gate review and human authorization preflight. The write gate now reports `production_gate`, `production_gate_decision`, and gate counts, passes only the non-committing gate-consumption checks, keeps the human authorization receipt pending, and still disables write dispatch, request creation, execution, backend launch, network use, privileged containers, host mutation, and backend detail exposure.
 

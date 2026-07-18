@@ -131,3 +131,104 @@ func TestProductionDBusHumanAuthorizationPreflightPreviewCommandRejectsPositiona
 		t.Fatalf("production-dbus-human-authorization-preflight-preview must reject positional arguments")
 	}
 }
+
+func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-dbus-method-review-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-dbus-method-review-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_dbus_method_review.v1" ||
+		payload["request_type"] != "production-dbus-method-review-preview" ||
+		payload["review_type"] != "route-by-route-production-dbus-method-review" ||
+		payload["review_decision"] != "production-dbus-method-review-ready-production-exposure-disabled" {
+		t.Fatalf("unexpected production D-Bus method review command payload: %s", output.String())
+	}
+	if payload["read_only_contract_method_count"] != float64(61) ||
+		payload["owner_local_candidate_count"] != float64(3) ||
+		payload["write_method_count"] != float64(4) ||
+		payload["reviewed_method_count"] != float64(68) ||
+		payload["production_exposure_ready_count"] != float64(0) ||
+		payload["new_production_method_request_count"] != float64(0) {
+		t.Fatalf("unexpected production D-Bus method review counts: %s", output.String())
+	}
+	readOnlyMethods := payload["read_only_methods"].([]any)
+	ownerLocalCandidates := payload["owner_local_candidates"].([]any)
+	writeMethods := payload["write_methods"].([]any)
+	if len(readOnlyMethods) != 61 || len(ownerLocalCandidates) != 3 || len(writeMethods) != 4 {
+		t.Fatalf("unexpected production D-Bus method review route lists: %s", output.String())
+	}
+	for _, item := range readOnlyMethods {
+		route := item.(map[string]any)
+		if route["route_class"] != "dbus-read-only-contract" ||
+			route["current_exposure"] != "read-only-contract-method-production-owner-disabled" ||
+			route["future_exposure_decision"] != "reviewed-read-only-contract-production-owner-disabled" ||
+			route["new_production_method_requested"] != false ||
+			route["production_exposure_ready"] != false ||
+			route["write_methods_enabled"] != false ||
+			route["runtime_writes_enabled"] != false ||
+			route["backend_launch_enabled"] != false ||
+			route["host_root_modified"] != false ||
+			route["internal_details_exposed"] != false {
+			t.Fatalf("unsafe read-only method review route: %s", output.String())
+		}
+	}
+	for _, item := range ownerLocalCandidates {
+		route := item.(map[string]any)
+		if route["route_class"] != "owner-local-candidate" ||
+			route["current_exposure"] != "owner-local-only" ||
+			route["future_exposure_decision"] != "owner-local-only-no-production-dbus-method" ||
+			route["new_production_method_requested"] != false ||
+			route["production_exposure_ready"] != false ||
+			route["write_methods_enabled"] != false ||
+			route["runtime_writes_enabled"] != false ||
+			route["backend_launch_enabled"] != false ||
+			route["host_root_modified"] != false ||
+			route["internal_details_exposed"] != false {
+			t.Fatalf("unsafe owner-local candidate review route: %s", output.String())
+		}
+	}
+	for _, item := range writeMethods {
+		route := item.(map[string]any)
+		if route["route_class"] != "reserved-write-method" ||
+			route["current_exposure"] != "write-method-disabled" ||
+			route["future_exposure_decision"] != "write-method-disabled-no-production-dispatch" ||
+			route["new_production_method_requested"] != false ||
+			route["production_exposure_ready"] != false ||
+			route["write_methods_enabled"] != false ||
+			route["runtime_writes_enabled"] != false ||
+			route["backend_launch_enabled"] != false ||
+			route["host_root_modified"] != false ||
+			route["internal_details_exposed"] != false {
+			t.Fatalf("unsafe write method review route: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(7) ||
+		counts["passed"] != float64(7) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production D-Bus method review checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production D-Bus method review output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "notification_sent", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe method review gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionDBusMethodReviewPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-dbus-method-review-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-dbus-method-review-preview must reject positional arguments")
+	}
+}

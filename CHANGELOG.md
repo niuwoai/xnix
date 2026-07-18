@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.350] - 2026-07-19
+
+### Added
+
+- Added `production-dbus-method-review-preview`, a read-only Go owner review that inventories 61 read-only D-Bus contract methods, 3 owner-local candidate routes, and 4 reserved write methods before any production D-Bus exposure decision.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for route-by-route production D-Bus method review while registering no new production methods, claiming no bus ownership, enabling no writes, launching no backend, sending no notifications, and mutating no host state.
+
 ## [0.2.349] - 2026-07-19
 
 ### Added

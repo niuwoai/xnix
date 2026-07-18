@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.349"
+EXPECTED_VERSION = "0.2.350"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1698,6 +1698,24 @@ go_runtime_production_dbus_human_authorization_preflight_test_source = read_proj
                                                                       read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionDBusHumanAuthorizationPreflightPreviewDefinesReceiptShape TestProductionDBusHumanAuthorizationPreflightPreviewFailsClosedWithoutGateReview TestProductionDBusHumanAuthorizationPreflightPreviewCommand production-dbus-human-authorization-preflight-preview authorization_receipt_required authorization_receipt_present authorization_grant_ready authorization_accepted preflight_ready production_readiness].each do |token|
   assert(go_runtime_production_dbus_human_authorization_preflight_test_source.include?(token), "Go Runtime production D-Bus human authorization preflight tests and CLI must include #{token}")
+end
+
+go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")
+%w[ProductionDBusMethodReviewPreview ProductionDBusMethodReviewRoute ProductionDBusMethodReviewCheck NewProductionDBusMethodReviewPreview xnix.runtime.production_dbus_method_review.v1 production-dbus-method-review-preview route-by-route-production-dbus-method-review runtime-method-parity-manifest-preview runtime-owner-route-manifest-preview production-dbus-gate-review-preview runtime-write-gate-preview production-dbus-method-review-ready-production-exposure-disabled production-dbus-method-review-blocked dbus-read-only-contract owner-local-candidate reserved-write-method reviewed-read-only-contract-production-owner-disabled owner-local-only-no-production-dbus-method write-method-disabled-no-production-dispatch read-only-contract-methods-reviewed owner-local-candidates-reviewed write-methods-reviewed-disabled no-new-production-methods-requested production-exposure-disabled route-manifest-consumed unsafe-gates-closed].each do |token|
+  assert(go_runtime_production_dbus_method_review_source.include?(token), "Go Runtime production D-Bus method review must include #{token}")
+end
+%w[ReadOnlyContractMethodCount OwnerLocalCandidateCount WriteMethodCount ReviewedMethodCount ProductionExposureReadyCount NewProductionMethodRequestCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted NotificationSent NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_dbus_method_review_source.include?(token), "Go Runtime production D-Bus method review must expose safety gate #{token}")
+end
+%w[NewRuntimeOwnerRouteManifestPreview NewRuntimeMethodParityManifestPreview NewProductionDBusGateReviewPreview NewRuntimeWriteGatePreview].each do |token|
+  assert(go_runtime_production_dbus_method_review_source.include?(token), "Go Runtime production D-Bus method review must consume #{token}")
+end
+go_runtime_production_dbus_method_review_test_source = read_project_file("internal/runtime/owner/production_dbus_method_review_test.go") +
+                                                      read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                      read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                      read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionDBusMethodReviewPreviewInventoriesRoutes TestProductionDBusMethodReviewPreviewFailsClosedWithoutSources TestProductionDBusMethodReviewPreviewCommand production-dbus-method-review-preview read_only_contract_method_count owner_local_candidate_count write_method_count reviewed_method_count production_exposure_ready_count new_production_method_request_count].each do |token|
+  assert(go_runtime_production_dbus_method_review_test_source.include?(token), "Go Runtime production D-Bus method review tests and CLI must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")
