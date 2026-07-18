@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.345
+> Last updated: 2026-07-19 | Current version: v0.2.346
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.346 checkpoint adds a read-only production D-Bus gate review packet. `production-dbus-gate-review-preview` inventories the three smoke-covered owner-local routes, confirms they remain non-production and non-launching, and keeps production ownership disabled until separate human authorization, production service activation preflight, Runtime write-gate review, route-by-route D-Bus method review, desktop side-effect review, and rollback/diagnostics review exist.
 
 The v0.2.345 checkpoint refreshes the backend adapter contract owner-route audit after redacted adapter profile smoke coverage landed. `backend-adapter-contract-owner-route-audit-preview` now reports `redacted-profile-route-smoke-covered`, recognizes that `backend-adapter-redacted-profile-owner-smoke-coverage-preview` proves the redacted profile owner-local route is exercised through `Service.Call`, and moves the next blocker to a separate production D-Bus gate review while the full adapter contract remains fixture-local and production D-Bus exposure, Runtime writes, adapter invocation, installation, download, command materialization, executable resolution, backend launch, raw-detail exposure, and host-root mutation remain disabled.
 

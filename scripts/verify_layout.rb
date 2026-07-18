@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.345"
+EXPECTED_VERSION = "0.2.346"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1664,6 +1664,21 @@ go_runtime_redacted_adapter_profile_owner_smoke_coverage_test_source = read_proj
                                                                       read_project_file("cmd/xnix-runtime-owner/main.go")
 %w[TestBackendAdapterRedactedProfileOwnerSmokeCoveragePreviewCoversOwnerRoute TestBackendAdapterRedactedProfileOwnerSmokeCoveragePreviewFailsClosedWithoutRecord TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerSmokeCoverage redacted-adapter-profile-owner-smoke-coverage backend-adapter-redacted-profile-owner-smoke-coverage-preview smoke_coverage_ready service_call_dispatch_ready dispatch_go_command internal_adapter_ids_redacted adapter_invocation_enabled].each do |token|
   assert(go_runtime_redacted_adapter_profile_owner_smoke_coverage_test_source.include?(token), "Go Runtime redacted adapter profile owner smoke coverage tests must include #{token}")
+end
+
+go_runtime_production_dbus_gate_review_source = read_project_file("internal/runtime/owner/production_dbus_gate_review.go")
+%w[ProductionDBusGateReviewPreview ProductionDBusGateReviewRoute ProductionDBusGateReviewCheck NewProductionDBusGateReviewPreview xnix.runtime.production_dbus_gate_review.v1 production-dbus-gate-review-preview owner-local-smoke-covered-production-dbus-gate-review materialization-fanout-owner-route restricted-smoke-fanout-owner-route redacted-adapter-profile-owner-route production-dbus-gate-review-ready production-dbus-gate-review-blocked human-authorization production-service-activation-preflight runtime-write-gate-review route-by-route-production-dbus-method-review desktop-side-effect-review rollback-and-diagnostics-review tracked-routes-present smoke-coverage-present production-dbus-disabled route-production-exposure-disabled writes-and-launch-disabled desktop-side-effects-disabled host-boundary-closed human-authorization-required].each do |token|
+  assert(go_runtime_production_dbus_gate_review_source.include?(token), "Go Runtime production D-Bus gate review must include #{token}")
+end
+%w[ProductionReadiness HumanAuthorizationRequired SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated NotificationSent NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_dbus_gate_review_source.include?(token), "Go Runtime production D-Bus gate review must expose safety gate #{token}")
+end
+go_runtime_production_dbus_gate_review_test_source = read_project_file("internal/runtime/owner/production_dbus_gate_review_test.go") +
+                                                    read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                    read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                    read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionDBusGateReviewPreviewInventoriesSmokeCoveredRoutes TestProductionDBusGateReviewPreviewFailsClosedWithoutSources TestProductionDBusGateReviewPreviewCommand production-dbus-gate-review-preview production-dbus-gate-review-ready smoke_covered_route_count human_authorization_required production_readiness production_owner_enabled production_activation_ready].each do |token|
+  assert(go_runtime_production_dbus_gate_review_test_source.include?(token), "Go Runtime production D-Bus gate review tests and CLI must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")

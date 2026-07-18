@@ -1,0 +1,27 @@
+package main
+
+import (
+	"errors"
+	"flag"
+	"io"
+	"os"
+
+	"xnix.local/xnix/internal/runtime/owner"
+)
+
+func runProductionDBusGateReviewPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-dbus-gate-review-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner gate review inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-dbus-gate-review-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionDBusGateReviewPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

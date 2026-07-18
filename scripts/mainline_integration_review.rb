@@ -89,6 +89,7 @@ LANES = [
       %r{\Atest/test_runtime_contract_drift_report\.rb\z},
       %r{\Atest/test_runtime_owner_candidate_smoke_script\.rb\z},
       %r{\Atest/test_runtime_owner_},
+      %r{\Acmd/xnix-runtime-go/production_dbus_gate_},
       %r{\Acmd/xnix-runtime-go/restricted_owner_smoke_receipt_},
       %r{\Acmd/xnix-runtime-go/runtime_owner_},
       %r{\Acmd/xnix-runtime-go/runtime_route_convergence_},
