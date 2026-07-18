@@ -25,8 +25,8 @@ func TestBackendAdapterContractOwnerRouteAuditPreviewCommand(t *testing.T) {
 		payload["read_method"] != "GetBackendAdapterContractOwnerRouteAuditPreview" ||
 		payload["subject_command"] != "backend-adapter-contract-preview" ||
 		payload["proposed_owner_method"] != "GetBackendAdapterProfileAudit" ||
-		payload["route_decision"] != "redacted-profile-route-ready" ||
-		payload["current_route_status"] != "redacted-profile-route-ready-full-contract-fixture-local" {
+		payload["route_decision"] != "redacted-profile-route-smoke-covered" ||
+		payload["current_route_status"] != "redacted-profile-route-smoke-covered-full-contract-fixture-local-production-dbus-blocked" {
 		t.Fatalf("unexpected adapter contract owner-route audit command payload: %s", output.String())
 	}
 	if payload["cli_command_registered"] != true ||
@@ -38,6 +38,7 @@ func TestBackendAdapterContractOwnerRouteAuditPreviewCommand(t *testing.T) {
 		payload["kde_facing_projection_present"] != true ||
 		payload["redacted_profile_route_present"] != true ||
 		payload["requires_caller_root"] != true ||
+		payload["owner_smoke_coverage_ready"] != true ||
 		payload["adapter_invocation_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["command_materialized"] != false ||
@@ -46,9 +47,9 @@ func TestBackendAdapterContractOwnerRouteAuditPreviewCommand(t *testing.T) {
 		t.Fatalf("unexpected adapter contract owner-route audit command decision: %s", output.String())
 	}
 	counts := payload["counts"].(map[string]any)
-	if counts["total"] != float64(9) ||
-		counts["passed"] != float64(8) ||
-		counts["pending"] != float64(1) ||
+	if counts["total"] != float64(10) ||
+		counts["passed"] != float64(10) ||
+		counts["pending"] != float64(0) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected adapter contract owner-route audit counts: %s", output.String())
 	}

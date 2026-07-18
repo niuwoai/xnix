@@ -23,6 +23,7 @@ type BackendAdapterContractOwnerRouteAuditPreview struct {
 	KDEFacingProjectionPresent     bool                                         `json:"kde_facing_projection_present"`
 	RedactedProfileRoutePresent    bool                                         `json:"redacted_profile_route_present"`
 	RequiresCallerRoot             bool                                         `json:"requires_caller_root"`
+	OwnerSmokeCoverageReady        bool                                         `json:"owner_smoke_coverage_ready"`
 	AdapterInvocationEnabled       bool                                         `json:"adapter_invocation_enabled"`
 	BackendInstallEnabled          bool                                         `json:"backend_install_enabled"`
 	BackendDownloadEnabled         bool                                         `json:"backend_download_enabled"`
@@ -80,7 +81,7 @@ func NewBackendAdapterContractOwnerRouteAuditPreview(root string) (BackendAdapte
 		SchemaVersion:                  "xnix.runtime.backend_adapter_contract_owner_route_audit.v1",
 		RequestType:                    "backend-adapter-contract-owner-route-audit-preview",
 		AuditType:                      "adapter-contract-owner-route-audit",
-		Source:                         "backend-adapter-contract-preview+offline-application-fixture-matrix+runtime-owner-dispatch+dbus-contract",
+		Source:                         "backend-adapter-contract-preview+offline-application-fixture-matrix+runtime-owner-dispatch+owner-smoke-coverage+dbus-contract",
 		RuntimeMethod:                  "GetBackendAdapterContractOwnerRouteAudit",
 		ReadMethod:                     "GetBackendAdapterContractOwnerRouteAuditPreview",
 		SubjectRequestType:             "backend-adapter-contract-preview",
@@ -98,6 +99,7 @@ func NewBackendAdapterContractOwnerRouteAuditPreview(root string) (BackendAdapte
 		KDEFacingProjectionPresent:     textHasAll(sources.GoReadModel, []string{"KDEFacingProfiles", "backendAdapterProfile("}),
 		RedactedProfileRoutePresent:    backendAdapterContractAuditHasRedactedRoute(sources.OwnerDispatch),
 		RequiresCallerRoot:             backendAdapterContractAuditHasRootFlag(sources.CLICommand),
+		OwnerSmokeCoverageReady:        backendAdapterContractAuditHasOwnerSmokeCoverage(sources.OwnerSmokeCoverage),
 		AdapterInvocationEnabled:       false,
 		BackendInstallEnabled:          false,
 		BackendDownloadEnabled:         false,
@@ -127,6 +129,7 @@ func NewBackendAdapterContractOwnerRouteAuditPreview(root string) (BackendAdapte
 		NextRequirements:               backendAdapterContractOwnerRouteAuditNextRequirements(),
 		DesktopSafeSummary:             "The no-op adapter contract remains fixture-local while a redacted owner-local profile audit exposes user-safe compatibility modes without internal adapter identifiers, production D-Bus exposure, Runtime writes, launch, or host mutation.",
 	}
+	backendAdapterContractConfigureOwnerRouteDecision(&audit)
 	checks := backendAdapterContractOwnerRouteAuditChecks(audit)
 	audit.Checks = checks
 	audit.CheckIDs = backendAdapterContractOwnerRouteAuditCheckIDs(checks)
@@ -138,22 +141,24 @@ func NewBackendAdapterContractOwnerRouteAuditPreview(root string) (BackendAdapte
 }
 
 type backendAdapterContractOwnerRouteAuditSourceSet struct {
-	GoCLI         string
-	CLICommand    string
-	GoReadModel   string
-	FixtureMatrix string
-	OwnerDispatch string
-	DBusContract  string
+	GoCLI              string
+	CLICommand         string
+	GoReadModel        string
+	FixtureMatrix      string
+	OwnerDispatch      string
+	OwnerSmokeCoverage string
+	DBusContract       string
 }
 
 func backendAdapterContractOwnerRouteAuditSources(root string) backendAdapterContractOwnerRouteAuditSourceSet {
 	return backendAdapterContractOwnerRouteAuditSourceSet{
-		GoCLI:         readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/main.go"}),
-		CLICommand:    readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/backend_adapter_contract_commands.go"}),
-		GoReadModel:   readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/backend_adapter_contract.go"}),
-		FixtureMatrix: readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/offline_application_fixture_matrix.go"}),
-		OwnerDispatch: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go"}),
-		DBusContract:  readRuntimeMethodParitySources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
+		GoCLI:              readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/main.go"}),
+		CLICommand:         readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/backend_adapter_contract_commands.go"}),
+		GoReadModel:        readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/backend_adapter_contract.go"}),
+		FixtureMatrix:      readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/offline_application_fixture_matrix.go"}),
+		OwnerDispatch:      readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go"}),
+		OwnerSmokeCoverage: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/backend_adapter_redacted_profile_owner_smoke_coverage.go"}),
+		DBusContract:       readRuntimeMethodParitySources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
 	}
 }
 
@@ -165,10 +170,59 @@ func backendAdapterContractOwnerRouteAuditChecks(audit BackendAdapterContractOwn
 		backendAdapterContractOwnerRouteAuditCheck("owner-route-absent", backendAdapterContractAuditPassBlocked(!audit.OwnerDispatchRoutePresent), "The full adapter contract is not accepted by the owner dispatch table."),
 		backendAdapterContractOwnerRouteAuditCheck("production-dbus-absent", backendAdapterContractAuditPassBlocked(!audit.ProductionDBusMethodPresent), "The full adapter contract is not exposed as a production D-Bus method."),
 		backendAdapterContractOwnerRouteAuditCheck("redacted-route-missing", backendAdapterContractAuditPendingUnless(audit.RedactedProfileRoutePresent), "Owner-local routing now uses a redacted profile audit route instead of the full internal contract."),
-		backendAdapterContractOwnerRouteAuditCheck("internal-detail-boundary", backendAdapterContractAuditPendingUnless(!audit.FullContractContainsAdapterIDs && audit.KDEFacingProjectionPresent), "The full contract includes internal adapter identifiers; only the KDE-facing profile projection is user-safe."),
-		backendAdapterContractOwnerRouteAuditCheck("route-decision", backendAdapterContractAuditPassBlocked(audit.RouteDecision == "redacted-profile-route-ready" && audit.OwnerLocalRouteCandidateReady && !audit.ProductionDBusExposureReady), "The audit routes only the redacted profile audit while keeping the full adapter contract fixture-local."),
+		backendAdapterContractOwnerRouteAuditCheck("internal-detail-boundary", backendAdapterContractAuditPassBlocked(audit.FullContractContainsAdapterIDs && audit.KDEFacingProjectionPresent && audit.RedactedProfileRoutePresent), "The full contract still contains internal adapter identifiers, so only the KDE-facing redacted projection is routed."),
+		backendAdapterContractOwnerRouteAuditCheck("owner-smoke-coverage-present", backendAdapterContractAuditPendingUnless(audit.OwnerSmokeCoverageReady), "Restricted owner smoke coverage proves the redacted profile route is exercised through Service.Call."),
+		backendAdapterContractOwnerRouteAuditCheck("route-decision", backendAdapterContractAuditPassBlocked(backendAdapterContractOwnerRouteDecisionClosed(audit)), "The audit recognizes smoke-covered owner-local redacted routing while keeping the full adapter contract fixture-local."),
 		backendAdapterContractOwnerRouteAuditCheck("unsafe-gates-closed", backendAdapterContractAuditPassBlocked(!audit.AdapterInvocationEnabled && !audit.BackendInstallEnabled && !audit.BackendDownloadEnabled && !audit.BackendLaunchEnabled && !audit.BackendProcessStarted && !audit.CommandMaterialized && !audit.ExecutablePathResolved && !audit.SystemServiceStarted && !audit.ProductionBusClaimed && !audit.WriteMethodsEnabled && !audit.HostRootModified && !audit.StateRootPathExposed && !audit.BackendDetailsExposed), "The audit does not invoke, install, download, launch, materialize commands, start services, claim buses, expose paths, or mutate the host."),
 	}
+}
+
+func backendAdapterContractConfigureOwnerRouteDecision(audit *BackendAdapterContractOwnerRouteAuditPreview) {
+	if !audit.CLICommandRegistered || !audit.GoReadModelPresent || !audit.FixtureMatrixConsumesContract {
+		audit.RouteDecision = "redacted-profile-route-sources-missing"
+		audit.RouteDecisionReason = "The adapter contract owner-route audit remains blocked until required CLI, Go read-model, and fixture-consumption evidence is present."
+		audit.CurrentRouteStatus = "fail-closed-owner-route-audit"
+		audit.RecommendedNextRoute = "restore-redacted-profile-route-sources"
+		audit.DesktopSafeSummary = "The adapter contract owner-route audit is fail-closed because required local source evidence is missing; production D-Bus exposure, Runtime writes, adapter invocation, launch, and host mutation remain disabled."
+		return
+	}
+	if !audit.RedactedProfileRoutePresent || !audit.OwnerLocalRouteCandidateReady {
+		audit.RouteDecision = "redacted-profile-route-missing"
+		audit.RouteDecisionReason = "The full adapter contract remains fixture-local, but owner-local routing still needs the redacted profile audit route."
+		audit.CurrentRouteStatus = "full-contract-fixture-local-redacted-route-missing"
+		audit.RecommendedNextRoute = "redacted-adapter-profile-owner-route"
+		audit.DesktopSafeSummary = "The no-op adapter contract remains fixture-local while the redacted profile route is missing; production D-Bus exposure, Runtime writes, launch, and host mutation remain disabled."
+		return
+	}
+	if audit.OwnerSmokeCoverageReady {
+		audit.RouteDecision = "redacted-profile-route-smoke-covered"
+		audit.RouteDecisionReason = "Restricted owner smoke coverage proves the redacted adapter profile owner-local read route is exercised through Service.Call while the full adapter contract stays fixture-local."
+		audit.CurrentRouteStatus = "redacted-profile-route-smoke-covered-full-contract-fixture-local-production-dbus-blocked"
+		audit.RecommendedNextRoute = "redacted-adapter-profile-production-dbus-gate-review"
+		audit.DesktopSafeSummary = "The redacted adapter profile owner-local read route is covered by restricted owner smoke evidence while the full adapter contract stays fixture-local and production D-Bus exposure, Runtime writes, adapter invocation, launch, raw-detail exposure, and host mutation remain disabled."
+		return
+	}
+	audit.RouteDecision = "redacted-profile-route-ready"
+	audit.RouteDecisionReason = "The no-op adapter contract remains fixture-local, while owner-local routing can expose only the redacted profile audit route; restricted owner smoke coverage is still required before production review."
+	audit.CurrentRouteStatus = "redacted-profile-route-ready-full-contract-fixture-local"
+	audit.RecommendedNextRoute = "redacted-adapter-profile-owner-smoke-coverage"
+	audit.DesktopSafeSummary = "The no-op adapter contract remains fixture-local while a redacted owner-local profile audit exposes user-safe compatibility modes without internal adapter identifiers, production D-Bus exposure, Runtime writes, launch, or host mutation."
+}
+
+func backendAdapterContractOwnerRouteDecisionClosed(audit BackendAdapterContractOwnerRouteAuditPreview) bool {
+	if audit.RouteDecision == "redacted-profile-route-ready" {
+		return audit.OwnerLocalRouteCandidateReady &&
+			audit.RedactedProfileRoutePresent &&
+			!audit.OwnerSmokeCoverageReady &&
+			!audit.ProductionDBusExposureReady
+	}
+	if audit.RouteDecision == "redacted-profile-route-smoke-covered" {
+		return audit.OwnerLocalRouteCandidateReady &&
+			audit.RedactedProfileRoutePresent &&
+			audit.OwnerSmokeCoverageReady &&
+			!audit.ProductionDBusExposureReady
+	}
+	return false
 }
 
 func backendAdapterContractOwnerRouteAuditCheck(id string, status string, summary string) BackendAdapterContractOwnerRouteAuditCheck {
@@ -236,6 +290,10 @@ func backendAdapterContractAuditHasRedactedRoute(source string) bool {
 	return textHasAll(source, []string{"GetBackendAdapterProfileAudit", "NewBackendAdapterRedactedProfileAuditPreview"})
 }
 
+func backendAdapterContractAuditHasOwnerSmokeCoverage(source string) bool {
+	return textHasAll(source, []string{"backend-adapter-redacted-profile-owner-smoke-coverage-preview", "redacted-adapter-profile-owner-smoke-coverage", "GetBackendAdapterProfileAudit", "owner-smoke-batch+runtime-owner-service-call+backend-adapter-redacted-profile-audit-owner-route", "SmokeCoverageReady"})
+}
+
 func backendAdapterContractAuditHasRootFlag(source string) bool {
 	return textHasAll(source, []string{"backend-adapter-contract-owner-route-audit-preview", "flags.String(\"root\""})
 }
@@ -247,15 +305,16 @@ func backendAdapterContractOwnerRouteAuditBlockedActions() []string {
 		"expose adapter implementation details to KDE-facing output",
 		"enable adapter invocation from owner-route audit",
 		"launch compatibility backend from owner-route audit",
+		"treat owner smoke coverage as production ownership approval",
 		"mutate host root during owner-route audit",
 	}
 }
 
 func backendAdapterContractOwnerRouteAuditNextRequirements() []string {
 	return []string{
-		"Cover the redacted adapter profile audit route in restricted owner smoke evidence.",
+		"Keep the redacted adapter profile audit route covered by restricted owner smoke evidence.",
 		"Keep routing only redacted user-safe profile states through owner-local dispatch.",
-		"Keep the full adapter contract fixture-local until owner smoke covers the redacted route.",
+		"Keep the full adapter contract fixture-local until a separate production D-Bus gate review exists.",
 		"Require production recipe trust and Runtime write-gate evidence before any adapter invocation.",
 	}
 }

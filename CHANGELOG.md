@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.345] - 2026-07-19
+
+### Added
+
+- Refreshed `backend-adapter-contract-owner-route-audit-preview` so the redacted adapter profile owner-route audit recognizes the v0.2.342 restricted owner smoke coverage evidence instead of still recommending smoke coverage as the next blocker.
+- Added Go, CLI, layout, evidence, and product metadata coverage for the `redacted-profile-route-smoke-covered` audit state while keeping the full adapter contract fixture-local and leaving production D-Bus exposure, Runtime writes, adapter invocation, installation, download, command materialization, executable resolution, backend launch, raw-detail exposure, and host-root mutation disabled.
+
 ## [0.2.344] - 2026-07-19
 
 ### Added
