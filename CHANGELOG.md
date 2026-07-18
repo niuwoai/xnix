@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.344] - 2026-07-19
+
+### Added
+
+- Refreshed `restricted-owner-smoke-receipt-fanout-owner-route-audit-preview` so the restricted owner smoke fan-out owner-route audit recognizes the v0.2.341 restricted owner smoke coverage evidence instead of still recommending smoke coverage as the next blocker.
+- Added Go, CLI, layout, evidence, and product metadata coverage for the `owner-local-route-smoke-covered` restricted fan-out audit state while leaving production D-Bus exposure, Runtime writes, support bundle export, support case creation, notifications, backend launch, backend process start, path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.343] - 2026-07-19
 
 ### Added

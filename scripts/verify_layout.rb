@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.343"
+EXPECTED_VERSION = "0.2.344"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1700,21 +1700,21 @@ assert(read_project_file("internal/runtime/owner/restricted_smoke_receipt_fanout
 assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go").include?("TestRestrictedOwnerSmokeReceiptFanOutOwnerRoutePreviewCommand"), "Go Runtime restricted owner smoke receipt fan-out owner route CLI tests must cover the owner route command")
 
 go_restricted_owner_smoke_receipt_fanout_owner_route_audit_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt_fanout_owner_route_audit.go")
-%w[RestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview xnix.runtime.restricted_owner_smoke_receipt_fanout_owner_route_audit.v1 restricted-owner-smoke-receipt-fanout-owner-route-audit-preview GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAudit GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview restricted-owner-smoke-receipt-fanout-owner-route-audit GetRestrictedOwnerSmokeReceiptFanOut owner-local-route-ready owner-local-read-route-ready-production-dbus-blocked restricted-owner-smoke-fanout-owner-smoke-coverage cli-preview-registered go-read-model-present owner-route-present production-dbus-absent receipt-consumption-present caller-state-root-boundary owner-managed-receipt-lookup route-decision unsafe-gates-closed].each do |token|
+%w[RestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview xnix.runtime.restricted_owner_smoke_receipt_fanout_owner_route_audit.v1 restricted-owner-smoke-receipt-fanout-owner-route-audit-preview GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAudit GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview restricted-owner-smoke-receipt-fanout-owner-route-audit GetRestrictedOwnerSmokeReceiptFanOut owner-local-route-ready owner-local-read-route-ready-production-dbus-blocked owner-local-route-smoke-covered owner-local-read-route-smoke-covered-production-dbus-blocked restricted-owner-smoke-fanout-owner-smoke-coverage owner-smoke-coverage-present cli-preview-registered go-read-model-present owner-route-present production-dbus-absent receipt-consumption-present caller-state-root-boundary owner-managed-receipt-lookup route-decision unsafe-gates-closed].each do |token|
   assert(go_restricted_owner_smoke_receipt_fanout_owner_route_audit_source.include?(token), "Go Runtime restricted owner smoke receipt fan-out owner-route audit must include #{token}")
 end
-%w[ConsumesExistingReceipt RequiresCallerStateRoot ReceiptLookupOwnerManaged OpaqueReceiptIDSupported FanOutWritesEnabled StateRootWritesEnabled SupportBundleExported SupportCaseCreated NotificationSent OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled BackendProcessStarted NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed BackendDetailsExposed].each do |token|
+%w[ConsumesExistingReceipt RequiresCallerStateRoot ReceiptLookupOwnerManaged OpaqueReceiptIDSupported OwnerSmokeCoverageReady FanOutWritesEnabled StateRootWritesEnabled SupportBundleExported SupportCaseCreated NotificationSent OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled BackendProcessStarted NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed BackendDetailsExposed].each do |token|
   assert(go_restricted_owner_smoke_receipt_fanout_owner_route_audit_source.include?(token), "Go Runtime restricted owner smoke receipt fan-out owner-route audit must expose safety gate #{token}")
 end
 assert(go_restricted_owner_smoke_receipt_fanout_owner_route_audit_source.include?("validateNoBackendTerms"), "Go Runtime restricted owner smoke receipt fan-out owner-route audit must hide backend terms")
 go_restricted_owner_smoke_receipt_fanout_owner_route_audit_test_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt_fanout_owner_route_audit_test.go")
-%w[TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditRecognizesOpaqueLookup TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditFailsClosedWithoutSources owner-local-route-ready caller-state-root-boundary owner-managed-receipt-lookup unsafe-gates-closed].each do |token|
+%w[TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditRecognizesOpaqueLookup TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditFailsClosedWithoutSources owner-local-route-smoke-covered caller-state-root-boundary owner-managed-receipt-lookup owner-smoke-coverage-present unsafe-gates-closed].each do |token|
   assert(go_restricted_owner_smoke_receipt_fanout_owner_route_audit_test_source.include?(token), "Go Runtime restricted owner smoke receipt fan-out owner-route audit tests must include #{token}")
 end
 go_restricted_owner_smoke_receipt_fanout_owner_route_audit_cli_source = read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go") +
                                                                  read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go") +
                                                                  read_project_file("cmd/xnix-runtime-go/main.go")
-%w[restricted-owner-smoke-receipt-fanout-owner-route-audit-preview runRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand route_decision requires_caller_state_root receipt_lookup_owner_managed opaque_receipt_id_supported].each do |token|
+%w[restricted-owner-smoke-receipt-fanout-owner-route-audit-preview runRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand route_decision requires_caller_state_root receipt_lookup_owner_managed opaque_receipt_id_supported owner_smoke_coverage_ready].each do |token|
   assert(go_restricted_owner_smoke_receipt_fanout_owner_route_audit_cli_source.include?(token), "Go Runtime restricted owner smoke receipt fan-out owner-route audit CLI must include #{token}")
 end
 %w[restricted-owner-smoke-receipt-lookup-preview runRestrictedOwnerSmokeReceiptLookupPreview TestRestrictedOwnerSmokeReceiptLookupPreviewCommand owner_managed_lookup caller_state_root_required opaque_receipt_id].each do |token|

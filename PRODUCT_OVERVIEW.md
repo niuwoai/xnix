@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.343
+> Last updated: 2026-07-19 | Current version: v0.2.344
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.344 checkpoint refreshes the restricted owner smoke receipt fan-out owner-route audit after restricted owner smoke coverage landed. `restricted-owner-smoke-receipt-fanout-owner-route-audit-preview` now reports `owner-local-route-smoke-covered`, recognizes that `restricted-owner-smoke-receipt-fanout-owner-smoke-coverage-preview` proves the owner-local fan-out route is exercised through `Service.Call`, and moves the next blocker to a separate production D-Bus gate review while missing receipts remain fail-closed and production D-Bus exposure, Runtime writes, support bundle export, support case creation, notifications, backend launch, backend process start, path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.343 checkpoint refreshes the KDE test launch materialization owner-route audit after restricted owner smoke coverage landed. `kde-test-launch-materialization-owner-route-audit-preview` now reports `owner-local-route-smoke-covered`, recognizes that `kde-test-launch-materialization-fanout-owner-smoke-coverage-preview` proves the owner-local fan-out route is exercised through `Service.Call`, and moves the next blocker to a separate production D-Bus gate review while production D-Bus exposure, Runtime writes, backend launch, backend process start, path exposure, backend details, and host-root mutation remain disabled.
 
