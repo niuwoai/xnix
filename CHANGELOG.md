@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.355] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-acceptance-propagation-preflight-preview`, a read-only Go owner preflight that models how a future accepted opaque authorization receipt would propagate across the production D-Bus gate, method review, service activation preflight, Runtime write gate, rollback diagnostics review, and desktop side-effect review while keeping real receipt acceptance, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+- Wired the propagation preflight into the Runtime CLI, layout verifier, implementation evidence report, and product documentation.
+
 ## [0.2.354] - 2026-07-19
 
 ### Added

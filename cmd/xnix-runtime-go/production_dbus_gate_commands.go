@@ -77,6 +77,23 @@ func runProductionAuthorizationConsumptionAuditPreview(args []string, stdout io.
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runProductionReceiptAcceptancePropagationPreflightPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-receipt-acceptance-propagation-preflight-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner production receipt acceptance propagation inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-receipt-acceptance-propagation-preflight-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionReceiptAcceptancePropagationPreflightPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runProductionDBusMethodReviewPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("production-dbus-method-review-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

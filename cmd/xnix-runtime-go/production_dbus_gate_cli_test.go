@@ -314,6 +314,102 @@ func TestProductionAuthorizationConsumptionAuditPreviewCommandRejectsPositionalA
 	}
 }
 
+func TestProductionReceiptAcceptancePropagationPreflightPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-acceptance-propagation-preflight-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-acceptance-propagation-preflight-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_acceptance_propagation_preflight.v1" ||
+		payload["request_type"] != "production-receipt-acceptance-propagation-preflight-preview" ||
+		payload["preflight_type"] != "future-authorization-receipt-acceptance-propagation-preflight" ||
+		payload["preflight_decision"] != "production-receipt-acceptance-propagation-ready-acceptance-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt acceptance propagation command payload: %s", output.String())
+	}
+	if payload["receipt_required"] != true ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["future_acceptance_modeled"] != true ||
+		payload["acceptance_simulation_only"] != true ||
+		payload["consumption_audit_consumed"] != true ||
+		payload["owner_managed_opaque_boundary_ready"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["propagation_preflight_ready"] != true ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt acceptance propagation decision: %s", output.String())
+	}
+	if payload["target_count"] != float64(6) ||
+		payload["required_target_count"] != float64(6) ||
+		payload["propagation_ready_target_count"] != float64(6) ||
+		payload["missing_target_count"] != float64(0) ||
+		payload["acceptance_enabled_target_count"] != float64(0) ||
+		payload["production_ready_target_count"] != float64(0) ||
+		payload["side_effect_target_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt acceptance propagation counts: %s", output.String())
+	}
+	targets := payload["targets"].([]any)
+	if len(targets) != 6 {
+		t.Fatalf("unexpected production receipt acceptance target list: %s", output.String())
+	}
+	for _, item := range targets {
+		target := item.(map[string]any)
+		if target["consumes_audit_boundary"] != true ||
+			target["propagates_future_acceptance"] != true ||
+			target["receipt_boundary_ready"] != true ||
+			target["future_acceptance_modeled"] != true ||
+			target["receipt_accepted"] != false ||
+			target["authorization_accepted"] != false ||
+			target["production_readiness"] != false ||
+			target["production_ownership_ready"] != false ||
+			target["runtime_owned"] != true ||
+			target["go_runtime_backed"] != true ||
+			target["kde_policy_owner"] != false ||
+			target["review_only"] != true ||
+			target["write_methods_enabled"] != false ||
+			target["runtime_writes_enabled"] != false ||
+			target["desktop_side_effects_enabled"] != false ||
+			target["support_side_effects_enabled"] != false ||
+			target["backend_launch_enabled"] != false ||
+			target["host_root_modified"] != false ||
+			target["internal_details_exposed"] != false ||
+			target["propagation_status"] != "future-acceptance-modeled-side-effects-disabled" {
+			t.Fatalf("unsafe production receipt acceptance propagation target: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt acceptance propagation checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt acceptance propagation output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "notification_sent", "notification_delivery_enabled", "portal_request_created", "request_objects_created", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt acceptance propagation gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptAcceptancePropagationPreflightPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-acceptance-propagation-preflight-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-acceptance-propagation-preflight-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
