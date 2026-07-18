@@ -505,6 +505,102 @@ func TestProductionReceiptWriterAuthorizationReviewPreviewCommandRejectsPosition
 	}
 }
 
+func TestProductionReceiptPersistenceThreatReviewPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-persistence-threat-review-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-persistence-threat-review-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_persistence_threat_review.v1" ||
+		payload["request_type"] != "production-receipt-persistence-threat-review-preview" ||
+		payload["review_type"] != "receipt-persistence-expiry-revocation-replay-threat-review" ||
+		payload["review_decision"] != "production-receipt-persistence-threat-review-ready-persistence-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt persistence threat review payload: %s", output.String())
+	}
+	if payload["receipt_required"] != true ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["persistence_threat_review_required"] != true ||
+		payload["persistence_threat_review_modeled"] != true ||
+		payload["writer_authorization_review_consumed"] != true ||
+		payload["owner_managed_opaque_boundary_ready"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["persistence_threat_review_ready"] != true ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt persistence threat decision: %s", output.String())
+	}
+	if payload["threat_item_count"] != float64(5) ||
+		payload["required_threat_item_count"] != float64(5) ||
+		payload["ready_threat_item_count"] != float64(5) ||
+		payload["missing_threat_item_count"] != float64(0) ||
+		payload["persistence_enabled_threat_count"] != float64(0) ||
+		payload["replay_enabled_threat_count"] != float64(0) ||
+		payload["acceptance_enabled_threat_count"] != float64(0) ||
+		payload["side_effect_threat_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt persistence threat counts: %s", output.String())
+	}
+	items := payload["threat_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected production receipt persistence threat item list: %s", output.String())
+	}
+	for _, item := range items {
+		threat := item.(map[string]any)
+		if threat["evidence_present"] != true ||
+			threat["threat_modeled"] != true ||
+			threat["receipt_persistence_enabled"] != false ||
+			threat["receipt_lookup_writes_enabled"] != false ||
+			threat["receipt_replay_enabled"] != false ||
+			threat["receipt_expiry_write_enabled"] != false ||
+			threat["receipt_revocation_write_enabled"] != false ||
+			threat["receipt_accepted"] != false ||
+			threat["authorization_accepted"] != false ||
+			threat["production_readiness"] != false ||
+			threat["production_ownership_ready"] != false ||
+			threat["runtime_owned"] != true ||
+			threat["go_runtime_backed"] != true ||
+			threat["kde_policy_owner"] != false ||
+			threat["review_only"] != true ||
+			threat["side_effects_disabled"] != true ||
+			threat["host_root_modified"] != false ||
+			threat["internal_details_exposed"] != false ||
+			threat["threat_status"] != "threat-modeled-persistence-disabled" {
+			t.Fatalf("unsafe production receipt persistence threat item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt persistence threat checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt persistence threat output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "notification_sent", "notification_delivery_enabled", "portal_request_created", "request_objects_created", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt persistence threat gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptPersistenceThreatReviewPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-persistence-threat-review-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-persistence-threat-review-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

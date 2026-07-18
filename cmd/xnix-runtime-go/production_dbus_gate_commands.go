@@ -111,6 +111,23 @@ func runProductionReceiptWriterAuthorizationReviewPreview(args []string, stdout 
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runProductionReceiptPersistenceThreatReviewPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-receipt-persistence-threat-review-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner production receipt persistence threat inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-receipt-persistence-threat-review-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionReceiptPersistenceThreatReviewPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runProductionDBusMethodReviewPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("production-dbus-method-review-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

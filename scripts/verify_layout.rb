@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.356"
+EXPECTED_VERSION = "0.2.357"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1770,6 +1770,24 @@ go_runtime_production_receipt_writer_authorization_review_test_source = read_pro
                                                                        read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionReceiptWriterAuthorizationReviewPreviewModelsWriterBoundary TestProductionReceiptWriterAuthorizationReviewPreviewFailsClosedWithoutSources TestProductionReceiptWriterAuthorizationReviewPreviewCommand production-receipt-writer-authorization-review-preview writer_authorization_required writer_authorization_modeled acceptance_propagation_consumed writer_review_ready ready_review_item_count write_enabled_review_item_count receipt_replay_enabled].each do |token|
   assert(go_runtime_production_receipt_writer_authorization_review_test_source.include?(token), "Go Runtime production receipt writer authorization review tests and CLI must include #{token}")
+end
+
+go_runtime_production_receipt_persistence_threat_review_source = read_project_file("internal/runtime/owner/production_receipt_persistence_threat_review.go")
+%w[ProductionReceiptPersistenceThreatReviewPreview ProductionReceiptPersistenceThreatReviewItem ProductionReceiptPersistenceThreatReviewCheck NewProductionReceiptPersistenceThreatReviewPreview xnix.runtime.production_receipt_persistence_threat_review.v1 production-receipt-persistence-threat-review-preview receipt-persistence-expiry-revocation-replay-threat-review production-receipt-persistence-threat-review-ready-persistence-disabled production-receipt-persistence-threat-review-blocked production-receipt-writer-authorization-review-preview production-receipt-acceptance-propagation-preflight-preview writer-authorization-review-consumed persistence-threat-modeled-only five-threat-items-present threat-items-ready-persistence-disabled receipt-persistence-disabled production-ownership-disabled runtime-side-effects-disabled host-boundary-closed storage-confidentiality expiry-policy revocation-policy replay-protection audit-visibility].each do |token|
+  assert(go_runtime_production_receipt_persistence_threat_review_source.include?(token), "Go Runtime production receipt persistence threat review must include #{token}")
+end
+%w[PersistenceThreatReviewRequired PersistenceThreatReviewModeled WriterAuthorizationReviewConsumed OwnerManagedOpaqueBoundaryReady CallerStateRootRequired AuthorizationAccepted PersistenceThreatReviewReady ProductionReadiness ProductionOwnershipReady ThreatItemCount RequiredThreatItemCount ReadyThreatItemCount MissingThreatItemCount PersistenceEnabledThreatCount ReplayEnabledThreatCount AcceptanceEnabledThreatCount SideEffectThreatCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled ReceiptWriterEnabled ReceiptPersistenceEnabled ReceiptLookupWritesEnabled ReceiptReplayEnabled ReceiptExpiryWriteEnabled ReceiptRevocationWriteEnabled DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted NotificationSent NotificationDeliveryEnabled PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_receipt_persistence_threat_review_source.include?(token), "Go Runtime production receipt persistence threat review must expose safety gate #{token}")
+end
+%w[production_receipt_writer_authorization_review.go production_receipt_acceptance_propagation_preflight.go docs/claude-code-current-dispatch-picks.md].each do |token|
+  assert(go_runtime_production_receipt_persistence_threat_review_source.include?(token), "Go Runtime production receipt persistence threat review must consume #{token}")
+end
+go_runtime_production_receipt_persistence_threat_review_test_source = read_project_file("internal/runtime/owner/production_receipt_persistence_threat_review_test.go") +
+                                                                     read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                     read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                     read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionReceiptPersistenceThreatReviewPreviewModelsThreats TestProductionReceiptPersistenceThreatReviewPreviewFailsClosedWithoutSources TestProductionReceiptPersistenceThreatReviewPreviewCommand production-receipt-persistence-threat-review-preview persistence_threat_review_required persistence_threat_review_modeled writer_authorization_review_consumed persistence_threat_review_ready ready_threat_item_count persistence_enabled_threat_count receipt_expiry_write_enabled receipt_revocation_write_enabled].each do |token|
+  assert(go_runtime_production_receipt_persistence_threat_review_test_source.include?(token), "Go Runtime production receipt persistence threat review tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")

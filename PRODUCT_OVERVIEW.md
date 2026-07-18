@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.356
+> Last updated: 2026-07-19 | Current version: v0.2.357
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.357 checkpoint adds production receipt persistence threat review. `production-receipt-persistence-threat-review-preview` models storage confidentiality, expiry, revocation, replay protection, and redacted audit visibility for future authorization receipts while keeping receipt persistence, lookup writes, replay, expiry writes, revocation writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.356 checkpoint adds production receipt writer authorization review. `production-receipt-writer-authorization-review-preview` models the separate operator action, writer authorization, persistence, replay, and host-boundary review required before any future authorization receipt can be written, persisted, accepted, or replayed while keeping receipt writes, receipt persistence, receipt replay, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 

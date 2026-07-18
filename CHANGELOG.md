@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.357] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-persistence-threat-review-preview`, a read-only Go owner review that models storage confidentiality, expiry, revocation, replay protection, and audit visibility requirements for future authorization receipts.
+- Wired the persistence threat review into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping receipt persistence, lookup writes, replay, expiry writes, revocation writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.356] - 2026-07-19
 
 ### Added
