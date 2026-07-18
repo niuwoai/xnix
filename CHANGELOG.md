@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.368] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-route-authorization-audit-preview`, a read-only Go owner audit that models the owner-local route authorization boundary required before KDE or Runtime surfaces can consume opaque dry-run result identifiers.
+- Wired the dry-run result lookup route authorization audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping route authorization grants, route enablement, route persistence, lookup enablement, lookup persistence, result persistence, dry-run execution, request creation, dispatch, Portal requests, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.367] - 2026-07-19
 
 ### Added

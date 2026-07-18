@@ -298,6 +298,23 @@ func runProductionReceiptNotificationActionDryRunResultOpaqueLookupAuditPreview(
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runProductionReceiptNotificationActionDryRunResultLookupRouteAuthorizationAuditPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-receipt-notification-action-dry-run-result-lookup-route-authorization-audit-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner production receipt notification action dry-run result lookup route authorization inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-receipt-notification-action-dry-run-result-lookup-route-authorization-audit-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionReceiptNotificationActionDryRunResultLookupRouteAuthorizationAuditPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runProductionDBusMethodReviewPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("production-dbus-method-review-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
