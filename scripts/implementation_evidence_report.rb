@@ -574,6 +574,7 @@ DOMAIN_DEFINITIONS = [
       lib/xnix/full_smoke_report.rb
       scripts/build_kde_image.rb
       scripts/boot_kde_image.rb
+      docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json
       scripts/full_smoke.rb
       scripts/restricted_product_smoke_packet.rb
       test/test_restricted_product_smoke_packet.rb
@@ -588,8 +589,8 @@ DOMAIN_DEFINITIONS = [
     ],
     gate_tokens: {
       "image/kinoite/Containerfile" => %w[org.xnix.image org.xnix.flagship],
-      "internal/runtime/image/smoke.go" => %w[SerialMarkers RuntimeReady],
-      "internal/runtime/image/restricted_smoke_packet.go" => %w[xnix.runtime.restricted_product_smoke_packet.v1 restricted-product-smoke-packet-preview dry-run-product-image-smoke-readiness runtime-owner artifact-trust backend-lifecycle portal-safety kde-entrypoints ReadyForAuthorizedSmoke HumanAuthorizationRequired DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady],
+      "internal/runtime/image/smoke.go" => %w[SerialMarkers ProductImageReady RuntimeReady],
+      "internal/runtime/image/restricted_smoke_packet.go" => %w[xnix.runtime.restricted_product_smoke_packet.v1 restricted-product-smoke-packet-preview dry-run-product-image-smoke-readiness runtime-owner artifact-trust backend-lifecycle portal-safety kde-entrypoints ReadyForAuthorizedSmoke ProductionRuntimeReady HumanAuthorizationRequired DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady],
       "internal/runtime/appidentity/kde_restricted_product_smoke_checkpoint.go" => %w[xnix.runtime.kde_restricted_product_smoke_checkpoint.v1 kde-restricted-product-smoke-checkpoint-record NewKDERestrictedProductSmokeCheckpointRecord preflight-boundary product-image-manifest repository-evidence authorization-boundary execution-unchanged session-unchanged smoke-not-executed host-boundary ProductImageMetadataReady ReadyForAuthorizedSmoke CheckpointReady ReadyForTrainGate HumanAuthorizationRequired DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersisted ReleaseReady BackendLaunchEnabled HostRootModified RepositoryRootPathExposed ManifestSourcePathExposed],
       "internal/runtime/appidentity/kde_restricted_product_smoke_checkpoint_test.go" => %w[TestKDERestrictedProductSmokeCheckpointJoinsMetadataWithoutExecution recipe-trust runtime-write-gate assertKDERestrictedProductSmokeCheckpointDisabled],
       "cmd/xnix-runtime-go/restricted_product_smoke_packet_commands.go" => %w[restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket repo-root manifest],
@@ -600,7 +601,7 @@ DOMAIN_DEFINITIONS = [
       "lib/xnix/full_smoke_report.rb" => %w[xnix.full_smoke_report.v1 full-build-qemu-smoke-report qemu_network_restricted host_root_modified privileged_container_required docker_socket_mounted host_network_enabled],
       "scripts/full_smoke.rb" => %w[FullSmokeReport full-smoke-report.json full-smoke-report.md serial.log boot-system]
     },
-    summary: "KDE image validation, a Go-owned restricted product smoke packet, a KDE-safe restricted product-image checkpoint, offline JSON and Markdown packet rendering, constrained QEMU smoke scaffolding, and full milestone smoke reports exist; Docker and QEMU execution plus persisted serial-log proof remain human-authorized."
+    summary: "KDE image validation, a Go-owned restricted product smoke packet, a KDE-safe restricted product-image checkpoint, offline JSON and Markdown packet rendering, constrained QEMU smoke tooling, and full milestone smoke reports exist. Authorized q4 evidence records the Fedora 44 container build, clean qcow2 integrity check, persisted serial log, and KVM graphical-login pass; production Runtime ownership and Windows application execution remain disabled."
   },
   {
     id: "developer-verification-harness",

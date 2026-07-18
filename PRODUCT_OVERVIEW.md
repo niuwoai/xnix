@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.320-rc7
+> Last updated: 2026-07-18 | Current version: v0.2.320-rc8
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc8 gate repair separates product-image readiness from production Runtime activation. The Fedora Kinoite manifest is ready for authorized KDE boot smoke when all declared sources, seven KDE entry points, and serial markers are present; production Runtime readiness independently requires a real service unit and D-Bus activation and remains false. Structured q4 evidence now records the successful container build, clean qcow2, KVM graphical-login pass, persisted serial-log digest, and closed host boundary without claiming Windows application execution.
 
 The v0.2.320-rc7 verification checkpoint preserves active KDE boot results adjacent to Fedora shell OSC integration sequences. The rc6 q4 build produced the Fedora 44 container and a clean qcow2, then KVM reached the serial login and returned `XNIX_BOOT_PROBE_PASS` after both `graphical.target` and `plasmalogin.service` reported active; the original ANSI cleaner mistakenly consumed that marker and waited until timeout. rc7 fixes the verifier and adds the captured control-sequence shape as regression coverage without changing the image contents.
 

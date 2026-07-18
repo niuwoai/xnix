@@ -66,6 +66,7 @@ type KDERestrictedProductImageEvidence struct {
 	ImageName                    string   `json:"image_name"`
 	Architecture                 string   `json:"architecture"`
 	ImageManifestReady           bool     `json:"image_manifest_ready"`
+	ProductionRuntimeReady       bool     `json:"production_runtime_ready"`
 	KDEEntryPointsCovered        bool     `json:"kde_entry_points_covered"`
 	EvidenceIDs                  []string `json:"evidence_ids"`
 	EvidenceCount                int      `json:"evidence_count"`
@@ -122,6 +123,7 @@ func NewKDERestrictedProductSmokeCheckpointRecord(recipeRecord Recipe, provenanc
 			ImageName:                    smokePacket.ImageName,
 			Architecture:                 smokePacket.Architecture,
 			ImageManifestReady:           smokePacket.ImageManifestReady,
+			ProductionRuntimeReady:       smokePacket.ProductionRuntimeReady,
 			KDEEntryPointsCovered:        smokePacket.KDEEntryPointsCovered,
 			EvidenceIDs:                  evidenceIDs,
 			EvidenceCount:                smokePacket.EvidenceCount,
@@ -152,7 +154,7 @@ func NewKDERestrictedProductSmokeCheckpointRecord(recipeRecord Recipe, provenanc
 func kdeRestrictedProductSmokeCheckpointChecks(preflight KDERestrictedLaunchPreflightRecord, smoke image.RestrictedProductSmokePacket) []KDEFakeExecutionCheck {
 	return []KDEFakeExecutionCheck{
 		fakeExecutionCheck("preflight-boundary", preflight.AllChecksPassed && preflight.Preflight.ReadyForPacketAssembly && !preflight.LaunchPreflightPassed, "The restricted launch preflight packet is ready only for evidence assembly."),
-		fakeExecutionCheck("product-image-manifest", smoke.ImageManifestReady && smoke.KDEEntryPointsCovered, "The fixed product-image manifest and KDE entry-point metadata are present."),
+		fakeExecutionCheck("product-image-manifest", smoke.ImageManifestReady && smoke.KDEEntryPointsCovered && !smoke.ProductionRuntimeReady, "The fixed product-image manifest and KDE entry-point metadata are present while production Runtime activation remains disabled."),
 		fakeExecutionCheck("repository-evidence", smoke.EvidenceCount == 5 && smoke.ReadyEvidenceCount == 5 && smoke.MissingEvidenceCount == 0, "All five restricted product smoke evidence groups are present."),
 		fakeExecutionCheck("authorization-boundary", smoke.HumanAuthorizationRequired && !smoke.ExecutionAuthorized, "Product smoke execution still requires separate human authorization."),
 		fakeExecutionCheck("execution-unchanged", preflight.Execution.State == "blocked" && !preflight.Execution.LaunchAllowed && !preflight.Execution.LaunchEnabled && !preflight.Execution.ExecutionStarted && !preflight.Execution.ProcessStarted, "The compatibility execution transaction remains blocked."),

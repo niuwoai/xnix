@@ -27,6 +27,9 @@ func TestRestrictedProductSmokePacketPreviewCLI(t *testing.T) {
 	if payload["human_authorization_required"] != true || payload["loopback_only_networking"] != true || payload["serial_log_persistence_required"] != true {
 		t.Fatalf("packet did not preserve restricted smoke requirements: %+v", payload)
 	}
+	if payload["production_runtime_ready"] != false {
+		t.Fatalf("packet must keep production Runtime activation disabled: %+v", payload)
+	}
 }
 
 func TestRestrictedProductSmokePacketPreviewCLIRejectsManifestEscape(t *testing.T) {

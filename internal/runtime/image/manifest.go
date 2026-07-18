@@ -1,9 +1,8 @@
-// Package image implements a product-image-root smoke: it verifies that a
-// built Xnix atomic image would contain the Compatibility Runtime files and
-// service definitions declared by an image manifest. It reads the manifest and
-// checks the on-disk source files exist; it never runs podman or QEMU, never
-// mutates the host root, and requires no network. This product smoke is
-// separate from the Buildroot/QEMU learning baseline.
+// Package image implements a product-image-root smoke. It verifies declared
+// image sources and KDE entry-point coverage independently from production
+// Runtime activation. It never runs podman or QEMU, mutates the host root, or
+// requires network access. This product smoke is separate from the
+// Buildroot/QEMU learning baseline.
 package image
 
 import (

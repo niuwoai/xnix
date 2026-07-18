@@ -24,6 +24,9 @@ func TestKDERestrictedProductSmokeCheckpointJoinsMetadataWithoutExecution(t *tes
 	if !record.ProductImage.ImageManifestReady || !record.ProductImage.KDEEntryPointsCovered || !record.ProductImage.ProductImageMetadataReady || !record.ProductImage.PacketPrepared || !record.ProductImage.ReadyForAuthorizedSmoke || record.ProductImage.EvidenceCount != 5 || record.ProductImage.ReadyEvidenceCount != 5 || record.ProductImage.MissingEvidenceCount != 0 {
 		t.Fatalf("unexpected product-image evidence: %+v", record.ProductImage)
 	}
+	if record.ProductImage.ProductionRuntimeReady {
+		t.Fatalf("checkpoint must keep production Runtime activation disabled: %+v", record.ProductImage)
+	}
 	if record.Preflight.Status != "blocked" || record.Preflight.BlockerCount != 2 || !containsString(record.Preflight.BlockerIDs, "recipe-trust") || !containsString(record.Preflight.BlockerIDs, "runtime-write-gate") || record.Execution.State != "blocked" || record.Session.State != "blocked" {
 		t.Fatalf("restricted launch state changed: %+v", record)
 	}

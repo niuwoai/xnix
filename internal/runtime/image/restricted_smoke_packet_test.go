@@ -20,6 +20,9 @@ func TestPrepareRestrictedProductSmokePacketRealRepo(t *testing.T) {
 	if !packet.RuntimeOwnerEvidenceReady || !packet.ArtifactTrustEvidenceReady || !packet.BackendLifecycleEvidenceReady || !packet.PortalSafetyEvidenceReady || !packet.KDEEntryPointEvidenceReady {
 		t.Fatalf("required evidence was not ready: %+v", packet)
 	}
+	if packet.ProductionRuntimeReady {
+		t.Fatalf("restricted smoke readiness must not claim production Runtime activation: %+v", packet)
+	}
 	assertRestrictedProductSmokePacketDisabled(t, packet)
 }
 

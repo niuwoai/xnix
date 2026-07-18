@@ -23,6 +23,9 @@ func TestKDERestrictedProductSmokeCheckpointRecordCommandIsReviewOnly(t *testing
 	if payload["checkpoint_ready"] != true || payload["ready_for_train_gate"] != true || payload["human_authorization_required"] != true || payload["core_receipt_count"] != float64(10) || productImage["product_image_metadata_ready"] != true || productImage["ready_for_authorized_smoke"] != true {
 		t.Fatalf("unexpected restricted product smoke checkpoint: %s", output.String())
 	}
+	if productImage["production_runtime_ready"] != false {
+		t.Fatalf("checkpoint must keep production Runtime activation disabled: %s", output.String())
+	}
 	for _, sensitive := range []string{stateRoot, repositoryRoot, "image/kinoite/manifest.json"} {
 		if strings.Contains(output.String(), sensitive) {
 			t.Fatalf("checkpoint output must not expose input path %q: %s", sensitive, output.String())

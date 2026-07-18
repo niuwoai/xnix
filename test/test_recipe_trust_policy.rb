@@ -21,7 +21,7 @@ registry_report = Xnix::Compatibility::RecipeRegistry.new(
 ).verify
 policy = Xnix::Compatibility::RecipeTrustPolicy.new(registry_report: registry_report).to_h
 
-assert(policy["version"] == "0.2.302", "recipe trust policy must expose the current version")
+assert(policy["version"] == File.read(File.expand_path("../VERSION", __dir__)).strip, "recipe trust policy must expose the current version")
 assert(policy["policy_type"] == "recipe-trust", "recipe trust policy must identify the model type")
 assert(policy["decision"] == "development-only", "development registry must not be production-trusted")
 assert(policy["recipe_count"] == 1, "recipe trust policy must report recipe count")

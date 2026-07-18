@@ -33,6 +33,7 @@ type SmokeReport struct {
 	MissingEntryPoints        []string    `json:"missing_entry_points"`
 	SerialMarkers             []string    `json:"serial_markers"`
 	AllSourcesPresent         bool        `json:"all_sources_present"`
+	ProductImageReady         bool        `json:"product_image_ready"`
 	RuntimeReady              bool        `json:"runtime_ready"`
 	HostRootModified          bool        `json:"host_root_modified"`
 	QEMULaunched              bool        `json:"qemu_launched"`
@@ -75,10 +76,11 @@ func sourceExists(repoRoot, source string) (bool, error) {
 	return true, nil
 }
 
-// Verify runs the product-image-root smoke against a manifest, checking that
-// every declared source exists under repoRoot and that the Runtime service and
-// D-Bus activation are provided and enabled. It performs no builds, launches no
-// QEMU, and never mutates the host root.
+// Verify runs the product-image-root smoke against a manifest. Product image
+// readiness requires complete declared sources, all KDE entry points, and at
+// least one serial marker. Runtime readiness is deliberately separate and
+// additionally requires production service and D-Bus activation artifacts.
+// Verify performs no builds, launches no QEMU, and never mutates the host root.
 func Verify(repoRoot string, manifest Manifest) (SmokeReport, error) {
 	if repoRoot == "" {
 		return SmokeReport{}, errors.New("image smoke requires a repo root")
@@ -135,6 +137,9 @@ func Verify(repoRoot string, manifest Manifest) (SmokeReport, error) {
 
 	sort.Strings(report.MissingSources)
 	report.AllSourcesPresent = len(report.MissingSources) == 0
+	report.ProductImageReady = report.AllSourcesPresent &&
+		report.KDEEntryPointsCovered &&
+		len(report.SerialMarkers) > 0
 	report.RuntimeReady = report.AllSourcesPresent &&
 		report.RuntimeServiceUnitPresent &&
 		report.DBusActivationPresent &&
@@ -144,10 +149,12 @@ func Verify(repoRoot string, manifest Manifest) (SmokeReport, error) {
 	report.NetworkRequired = false
 	report.PrivilegedRequired = false
 
-	if report.RuntimeReady {
-		report.Summary = fmt.Sprintf("Image %s provides the Compatibility Runtime service, D-Bus activation, and all %d declared sources.", manifest.ImageName, len(report.Checks))
+	if report.ProductImageReady && report.RuntimeReady {
+		report.Summary = fmt.Sprintf("Image %s is product-image ready and provides production Runtime activation with all %d declared sources.", manifest.ImageName, len(report.Checks))
+	} else if report.ProductImageReady {
+		report.Summary = fmt.Sprintf("Image %s is product-image ready; production Runtime activation remains disabled.", manifest.ImageName)
 	} else {
-		report.Summary = fmt.Sprintf("Image %s is not Runtime-ready: %d missing source(s); runtime service present=%t enabled=%t.", manifest.ImageName, len(report.MissingSources), report.RuntimeServiceUnitPresent, report.RuntimeServiceEnabled)
+		report.Summary = fmt.Sprintf("Image %s is not product-image ready: %d missing source(s), KDE coverage=%t, serial markers=%d.", manifest.ImageName, len(report.MissingSources), report.KDEEntryPointsCovered, len(report.SerialMarkers))
 	}
 	return report, nil
 }

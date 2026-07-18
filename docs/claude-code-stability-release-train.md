@@ -1,8 +1,8 @@
 # Go Stability Release Train
 
-> Last updated: 2026-07-17 | Baseline: v0.2.300 | Scope: KDE-first Windows application compatibility MVP
+> Last updated: 2026-07-18 | Baseline: v0.2.300 | Scope: KDE-first Windows application compatibility MVP
 
-This document defines the next stabilization plan for moving Xnix from preview-heavy evidence toward a runnable KDE-first Windows application MVP. It is intentionally operational: each small version must be independently reviewable, locally committed, and tested with a targeted command set. A full build and product smoke are reserved for every twentieth small version.
+This document defines the stabilization plan for moving Xnix from preview-heavy evidence toward a runnable KDE-first Windows application MVP. It is intentionally operational: each small version must be independently reviewable, locally committed, and tested with a targeted command set. The original `v0.2.301`-`v0.2.320` train closed under its historical twentieth-version gate; beginning with `v0.2.321`, full builds, complete test suites, product smoke, and remote pushes run every thirty small versions, with the next gate at `v0.2.350`.
 
 ## Policy
 
@@ -17,8 +17,8 @@ This document defines the next stabilization plan for moving Xnix from preview-h
 - Each small version is one coherent patch-level step.
 - Each small version must update `VERSION`, `CHANGELOG.md`, `PRODUCT_OVERVIEW.md`, and `scripts/verify_layout.rb` when code or required layout changes.
 - Each small version must be committed locally after its targeted tests pass.
-- Do not push every small version. Push only at the twentieth-version train gate, after the full build and bug-fix loop passes.
-- If a small version needs a tag, create it locally with `v<version>` and push accumulated tags only at the train gate.
+- Do not push every small version. Beginning with `v0.2.321`, push only at each thirtieth-version train gate after the full build and bug-fix loop passes.
+- If a small version needs a tag, create it locally with `v<version>` and push accumulated tags only at the configured full gate.
 - Do not combine unrelated workstreams in one small version just to reach the train gate faster.
 
 ## Test Cadence
@@ -30,7 +30,7 @@ Every small version runs targeted tests only:
 - `ruby scripts/verify_layout.rb`.
 - `git diff --check`.
 
-Every twentieth small version runs the full gate:
+The historical first train ran this full gate at `v0.2.320`. Beginning with `v0.2.321`, every thirtieth small version runs it; the next full gate is `v0.2.350`:
 
 - `go test ./...`.
 - `ruby scripts/verify_layout.rb`.
@@ -41,7 +41,7 @@ Every twentieth small version runs the full gate:
 - `ruby scripts/merge_readiness_packet.rb --format json`.
 - The full product build and constrained QEMU/product smoke for the train, with persisted logs and bug fixes before push.
 
-If the full gate exposes project defects, fix them in the same twentieth-version train gate before pushing. If the host environment cannot safely run the full product build or QEMU smoke, stop the push and record the missing authorization or environment blocker.
+If the full gate exposes project defects, fix them in the same full-gate release candidate before pushing. If the host environment cannot safely run the full product build or QEMU smoke, stop the push and record the missing authorization or environment blocker.
 
 ## Train Goal
 
@@ -76,7 +76,7 @@ Stop and report before continuing if a task requires:
 - Privileged containers, host networking, Docker socket mounts, or broad host mounts.
 - Host-root mutation.
 - Secrets, signing keys, credentials, private webhook URLs, or private user data.
-- Pushing before the twentieth-version train gate.
+- Pushing before the configured full-version train gate.
 
 ## Per-Version Handoff Checklist
 
@@ -90,7 +90,7 @@ Use this checklist before committing each small version:
 - `ruby scripts/verify_layout.rb` passed.
 - `git diff --check` passed.
 - The local commit message names the version and the slice.
-- The branch is not pushed unless this is the twentieth-version train gate.
+- The branch is not pushed unless this is the configured full-version train gate.
 
 ## Suggested Commit Message Shape
 

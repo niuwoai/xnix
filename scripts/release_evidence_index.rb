@@ -8,6 +8,7 @@ require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
+PRODUCT_SMOKE_EVIDENCE_PATH = PROJECT_ROOT.join("docs", "release-evidence", "v0.2.320-rc7-kde-product-smoke.json")
 
 REPORT_COMMANDS = {
   implementation: ["ruby", "scripts/implementation_evidence_report.rb", "--format", "json"],
@@ -205,6 +206,12 @@ def load_report(kind, fixture_path)
   [nil, { source: command.join(" "), error: "report-command-failed", detail: stderr.strip }]
 end
 
+def load_product_smoke_evidence
+  parse_report_json(PRODUCT_SMOKE_EVIDENCE_PATH.read, PRODUCT_SMOKE_EVIDENCE_PATH.relative_path_from(PROJECT_ROOT).to_s)
+rescue Errno::ENOENT
+  [nil, { source: PRODUCT_SMOKE_EVIDENCE_PATH.relative_path_from(PROJECT_ROOT).to_s, error: "missing-report", detail: "authorized product smoke evidence is missing" }]
+end
+
 def evidence_level_from_status(status)
   case status
   when "smoke-owned", "state-root-implemented", "production-gated"
@@ -285,6 +292,8 @@ def build_report(options)
   mainline = reports[:mainline_review] || {}
   contract_drift = reports[:contract_drift] || {}
   kde_smoke = reports[:kde_smoke] || {}
+  product_smoke_evidence, product_smoke_error = load_product_smoke_evidence
+  report_errors << product_smoke_error if product_smoke_error
 
   claims = CLAIM_DEFINITIONS.map { |definition| domain_claim(definition, domains, report_errors) }
   claims << report_integrity_claim(report_errors)
@@ -292,7 +301,7 @@ def build_report(options)
   claims << unclassified_file_claim(mainline)
   claims << contract_drift_claim(contract_drift)
   claims << kde_presence_claim(kde_smoke)
-  claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"])
+  claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error)
   claims << skipped_heavy_smoke_claim
 
   {
@@ -423,20 +432,39 @@ def kde_presence_claim(kde_smoke)
   }
 end
 
-def product_image_claim(domain)
+def product_image_claim(domain, evidence, evidence_error)
+  checks = {
+    "schema" => evidence&.fetch("schema_version", nil) == "xnix.release.kde_product_smoke_evidence.v1",
+    "container-build" => evidence&.dig("container", "build_passed") == true,
+    "disk-check" => evidence&.dig("disk", "qemu_img_check_passed") == true && evidence&.dig("disk", "corrupt") == false,
+    "kvm-boot" => evidence&.dig("boot", "passed") == true && evidence&.dig("boot", "pass_marker") == "XNIX_BOOT_PROBE_PASS",
+    "serial-log" => evidence&.dig("boot", "serial_log_persisted") == true && evidence&.dig("boot", "serial_log_sha256").to_s.match?(/\A[0-9a-f]{64}\z/),
+    "process-cleanup" => evidence&.dig("boot", "qemu_process_remaining") == false,
+    "host-boundary" => evidence&.dig("safety", "loopback_only_networking") == true &&
+      evidence&.dig("safety", "docker_socket_mounted") == false &&
+      evidence&.dig("safety", "host_network_enabled") == false &&
+      evidence&.dig("safety", "broad_host_mount_enabled") == false &&
+      evidence&.dig("safety", "backend_launch_enabled") == false &&
+      evidence&.dig("safety", "host_root_modified") == false,
+    "production-gates" => evidence&.fetch("production_runtime_ready", nil) == false && evidence&.fetch("windows_application_executed", nil) == false
+  }
+  passed = evidence_error.nil? && checks.values.all?
+  blockers = checks.reject { |_id, status| status }.keys
+  blockers.unshift(evidence_error.fetch(:error)) if evidence_error
+  level = passed ? "implemented" : "blocked"
   {
     id: "product-image-qemu-acceptance",
-    title: "Product image and QEMU acceptance remain human-authorized",
-    release_claim: "Full product image proof requires explicit restricted Docker or QEMU authorization.",
-    evidence_level: "human-authorized",
-    state: claim_state("human-authorized"),
-    evidence_source_files: %w[scripts/restricted_product_smoke_packet.rb internal/runtime/image/restricted_smoke_packet.go scripts/full_smoke.rb lib/xnix/full_smoke_report.rb buildroot/configs/xnix_x86_64_defconfig],
-    verification_commands: ["ruby scripts/restricted_product_smoke_packet.rb --format json", "ruby scripts/full_smoke.rb"],
-    current_evidence: domain ? domain.fetch("summary", "Restricted packet evidence exists but image execution is gated.") : "Restricted product smoke packet evidence exists; image execution remains gated.",
+    title: "Authorized product image and KVM smoke evidence is persisted",
+    release_claim: "The Fedora Kinoite container, qcow2 integrity check, and restricted KVM graphical-login smoke have authorized evidence.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json scripts/boot_kde_image.rb internal/runtime/image/restricted_smoke_packet.go],
+    verification_commands: ["ruby -rjson -e 'JSON.parse(File.read(\"docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json\"))'", "ruby scripts/release_evidence_index.rb --format json"],
+    current_evidence: passed ? "Authorized q4 evidence records a successful Fedora Kinoite container build, clean qcow2, persisted serial log, and KVM graphical-login pass while production Runtime and Windows application execution remain disabled." : (domain ? domain.fetch("summary", "Authorized product smoke evidence is incomplete.") : "Authorized product smoke evidence is incomplete."),
     unsafe_gates: disabled_unsafe_gates,
-    human_authorization_required: true,
-    blockers: ["requires-explicit-docker-or-qemu-authorization"],
-    next_branch_sized_follow_up: "Run restricted product smoke only after the user authorizes Docker or QEMU."
+    human_authorization_required: false,
+    blockers: blockers,
+    next_branch_sized_follow_up: "Keep future heavy smoke reruns separately authorized and implement a real production Runtime owner before Windows application execution."
   }
 end
 

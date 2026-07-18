@@ -57,6 +57,9 @@ func TestVerifyRuntimeReadyWhenAllSourcesPresent(t *testing.T) {
 	if !report.AllSourcesPresent || !report.RuntimeReady {
 		t.Fatalf("image should be runtime-ready: %#v", report)
 	}
+	if report.ProductImageReady {
+		t.Fatalf("partial KDE entry-point coverage must keep product image readiness false: %#v", report)
+	}
 	if !report.RuntimeServiceUnitPresent || !report.DBusActivationPresent || !report.RuntimeServiceEnabled {
 		t.Fatalf("runtime service/dbus/enable flags wrong: %#v", report)
 	}
@@ -109,7 +112,7 @@ func TestVerifyReportsMissingRuntimeSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Verify: %v", err)
 	}
-	if report.AllSourcesPresent || report.RuntimeReady || report.DBusActivationPresent {
+	if report.AllSourcesPresent || report.ProductImageReady || report.RuntimeReady || report.DBusActivationPresent {
 		t.Fatalf("missing dbus source must not be runtime-ready: %#v", report)
 	}
 	if len(report.MissingSources) != 1 || report.MissingSources[0] != "runtime/dbus/org.xnix.Compatibility1.service" {
@@ -128,6 +131,25 @@ func TestVerifyRequiresRuntimeServiceEnabled(t *testing.T) {
 	}
 	if report.RuntimeReady || report.RuntimeServiceEnabled {
 		t.Fatalf("runtime must not be ready when compatd is not enabled: %#v", report)
+	}
+}
+
+func TestVerifyProductImageReadyWithoutProductionRuntime(t *testing.T) {
+	manifest := fixtureManifest()
+	manifest.LayeredArtifacts = manifest.LayeredArtifacts[2:]
+	manifest.EnabledUnits = []string{"plasmalogin.service"}
+	manifest.KDEEntryPoints = append([]string(nil), expectedKDEEntryPoints...)
+	root := buildImageRoot(t, manifest, nil)
+
+	report, err := Verify(root, manifest)
+	if err != nil {
+		t.Fatalf("Verify: %v", err)
+	}
+	if !report.ProductImageReady || report.RuntimeReady {
+		t.Fatalf("product image must be ready without claiming production Runtime activation: %#v", report)
+	}
+	if report.RuntimeServiceUnitPresent || report.DBusActivationPresent || report.RuntimeServiceEnabled {
+		t.Fatalf("production Runtime activation must remain absent: %#v", report)
 	}
 }
 
@@ -156,10 +178,9 @@ func TestVerifyRefusesSourceEscape(t *testing.T) {
 	}
 }
 
-// TestRealRepoManifestIsRuntimeReady runs the product smoke against the actual
-// committed image manifest, so a clean checkout reproduces a Runtime-ready
-// result and drift is caught.
-func TestRealRepoManifestIsRuntimeReady(t *testing.T) {
+// TestRealRepoManifestIsProductImageReady runs the smoke against the committed
+// manifest while ensuring production Runtime activation is not fabricated.
+func TestRealRepoManifestIsProductImageReady(t *testing.T) {
 	repoRoot := filepath.Join("..", "..", "..")
 	manifestPath := filepath.Join(repoRoot, "image", "kinoite", "manifest.json")
 	if _, err := os.Stat(manifestPath); err != nil {
@@ -173,8 +194,8 @@ func TestRealRepoManifestIsRuntimeReady(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Verify: %v", err)
 	}
-	if !report.RuntimeReady {
+	if !report.ProductImageReady || report.RuntimeReady {
 		out, _ := json.MarshalIndent(report, "", "  ")
-		t.Fatalf("committed image manifest is not Runtime-ready:\n%s", out)
+		t.Fatalf("committed image readiness or Runtime gate is wrong:\n%s", out)
 	}
 }

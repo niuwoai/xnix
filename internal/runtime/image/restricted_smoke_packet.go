@@ -24,6 +24,7 @@ type RestrictedProductSmokePacket struct {
 	ReadyEvidenceCount            int                       `json:"ready_evidence_count"`
 	MissingEvidenceCount          int                       `json:"missing_evidence_count"`
 	ImageManifestReady            bool                      `json:"image_manifest_ready"`
+	ProductionRuntimeReady        bool                      `json:"production_runtime_ready"`
 	KDEEntryPointsCovered         bool                      `json:"kde_entry_points_covered"`
 	RuntimeOwnerEvidenceReady     bool                      `json:"runtime_owner_evidence_ready"`
 	ArtifactTrustEvidenceReady    bool                      `json:"artifact_trust_evidence_ready"`
@@ -91,12 +92,13 @@ func PrepareRestrictedProductSmokePacket(repoRoot, manifestSource string) (Restr
 		PacketType:                   "dry-run-product-image-smoke-readiness",
 		ImageName:                    manifest.ImageName,
 		Architecture:                 manifest.Architecture,
-		ImageManifestReady:           imageReport.RuntimeReady,
+		ImageManifestReady:           imageReport.ProductImageReady,
+		ProductionRuntimeReady:       imageReport.RuntimeReady,
 		KDEEntryPointsCovered:        imageReport.KDEEntryPointsCovered,
 		HumanAuthorizationRequired:   true,
 		SerialLogPersistenceRequired: true,
 		LoopbackOnlyNetworking:       true,
-		BlockingReasons:              []string{"Docker and QEMU execution require explicit human authorization.", "Persisted serial-log evidence is not available until the authorized smoke runs."},
+		BlockingReasons:              []string{"Docker and QEMU execution require explicit human authorization.", "Persisted serial-log evidence is not available until the authorized smoke runs.", "Production Runtime activation remains disabled."},
 		DesktopSafeSummary:           "The restricted product smoke packet is prepared for review while Docker, QEMU, backend launch, and host mutation remain disabled.",
 	}
 

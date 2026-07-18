@@ -22,7 +22,7 @@ operations.each do |operation|
     operation: operation
   ).to_h
 
-  assert(policy["version"] == "0.2.300", "portal access policy must expose the current version")
+  assert(policy["version"] == File.read(File.expand_path("../VERSION", __dir__)).strip, "portal access policy must expose the current version")
   assert(policy["policy_type"] == "portal-access", "portal access policy must identify the model type")
   assert(policy["desktop"] == "KDE Plasma", "portal access policy must target KDE Plasma")
   assert(policy["application_id"] == "org.xnix.sample.notepad", "portal access policy must preserve the application id")

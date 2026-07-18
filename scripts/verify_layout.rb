@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.320-rc7"
+EXPECTED_VERSION = "0.2.320-rc8"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -579,6 +579,7 @@ REQUIRED_FILES = %w[
   image/kinoite/config/os-release.d/xnix.conf
   image/kinoite/config/systemd-preset/80-xnix.preset
   docs/kde-image-pipeline.md
+  docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json
 ].freeze
 FORBIDDEN_CONTAINER_TOKENS = ["--privileged", "--network host", "docker.sock"].freeze
 REQUIRED_CONFIG_LINES = [
@@ -630,6 +631,14 @@ hardcoded_go_test_versions = Dir.glob(PROJECT_ROOT.join("{cmd,internal}/**/*_tes
 end
 assert(hardcoded_go_test_versions.empty?,
        "Go tests must read the canonical VERSION file instead of hardcoding project versions: #{hardcoded_go_test_versions.join(', ')}")
+
+hardcoded_ruby_test_versions = Dir.glob(PROJECT_ROOT.join("test/*.rb").to_s).reject do |path|
+  File.basename(path) == "test_runtime_core.rb"
+end.select do |path|
+  File.read(path).match?(/\["version"\]\s*==\s*"0\.2\./)
+end
+assert(hardcoded_ruby_test_versions.empty?,
+       "Ruby model tests must read the canonical VERSION file instead of hardcoding project versions: #{hardcoded_ruby_test_versions.join(', ')}")
 
 windows_workstreams = read_project_file("docs/claude-code-windows-compatibility-workstreams.md")
 %w[CW1 CW2 CW3 CW4 CW5 CW6 CW7 CW8 CW9 CW10 CW11].each do |workstream_id|
@@ -2326,7 +2335,7 @@ go_runtime_restricted_smoke_packet_source = read_project_file("internal/runtime/
 %w[RestrictedProductSmokePacket RestrictedSmokeEvidence PrepareRestrictedProductSmokePacket xnix.runtime.restricted_product_smoke_packet.v1 restricted-product-smoke-packet-preview dry-run-product-image-smoke-readiness runtime-owner artifact-trust backend-lifecycle portal-safety kde-entrypoints].each do |token|
   assert(go_runtime_restricted_smoke_packet_source.include?(token), "Go Runtime restricted product smoke packet must include #{token}")
 end
-%w[ReadyForAuthorizedSmoke HumanAuthorizationRequired ExecutionAuthorized DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersistenceRequired SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady].each do |token|
+%w[ReadyForAuthorizedSmoke ProductionRuntimeReady HumanAuthorizationRequired ExecutionAuthorized DockerExecuted QEMUExecuted ProductSmokeExecuted SerialLogPersistenceRequired SerialLogPersisted LoopbackOnlyNetworking DockerSocketMounted HostNetworkEnabled BroadHostMountEnabled PrivilegedContainerRequired BackendLaunchEnabled HostRootModified ReleaseReady].each do |token|
   assert(go_runtime_restricted_smoke_packet_source.include?(token), "Go Runtime restricted product smoke packet must expose gate #{token}")
 end
 

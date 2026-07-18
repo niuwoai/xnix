@@ -2,6 +2,19 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc8] - 2026-07-18
+
+### Changed
+
+- Set the post-`v0.2.320` train cadence to targeted tests per small version and one full build, complete test suite, product smoke, and remote push every thirty small versions, with the next gate at `v0.2.350`.
+
+### Fixed
+
+- Separated product-image readiness from production Runtime activation after the full Go gate exposed stale assumptions about the removed development service wrapper.
+- Kept Fedora Kinoite and KDE graphical-login smoke readiness valid without claiming a production D-Bus owner, Wine/Proton backend launch, or Windows application execution.
+- Added structured q4 evidence for the authorized container build, clean qcow2 validation, persisted serial log, KVM graphical-login pass, and closed host boundary.
+- Replaced stale hardcoded project versions in Ruby model tests with the canonical `VERSION` file and added a layout guard against future drift.
+
 ## [0.2.320-rc7] - 2026-07-18
 
 ### Fixed

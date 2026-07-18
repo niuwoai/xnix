@@ -148,7 +148,7 @@ begin
   assert(counts.fetch("contract_only").positive?, "release evidence index must include contract-only evidence")
   assert(counts.fetch("blocked").positive?, "release evidence index must include blocked evidence")
   assert(counts.fetch("skipped").positive?, "release evidence index must include skipped evidence")
-  assert(counts.fetch("human_authorized").positive?, "release evidence index must include human-authorized evidence")
+  assert(counts.fetch("human_authorized").zero?, "completed product smoke must not retain human-authorized evidence classification")
 
   claims = report.fetch("claims").to_h { |claim| [claim.fetch("id"), claim] }
   assert(claims.fetch("runtime-owner-read-boundary").fetch("evidence_level") == "implemented", "runtime owner claim must be implemented")
@@ -159,7 +159,9 @@ begin
   assert(claims.fetch("protected-claude-file").fetch("blockers").include?("protected-file"), "protected file claim must name protected-file blocker")
   assert(claims.fetch("unclassified-files").fetch("evidence_level") == "blocked", "unclassified file claim must block when files are unclassified")
   assert(claims.fetch("unclassified-files").fetch("blockers").include?("unclassified-file"), "unclassified file claim must name unclassified-file blocker")
-  assert(claims.fetch("product-image-qemu-acceptance").fetch("evidence_level") == "human-authorized", "product image claim must require human authorization")
+  assert(claims.fetch("product-image-qemu-acceptance").fetch("evidence_level") == "implemented", "product image claim must consume the authorized q4 evidence")
+  assert(!claims.fetch("product-image-qemu-acceptance").fetch("human_authorization_required"), "completed product image evidence must not require retroactive authorization")
+  assert(claims.fetch("product-image-qemu-acceptance").fetch("blockers").empty?, "completed product image evidence must have no evidence blockers")
   assert(claims.fetch("restricted-heavy-smoke-skipped").fetch("evidence_level") == "skipped", "heavy smoke claim must be skipped by default")
   assert(claims.fetch("kde-first-presence").fetch("evidence_level") == "implemented", "KDE presence claim must be implemented when seven entry points are present")
   assert(claims.fetch("contract-drift").fetch("evidence_level") == "implemented", "contract drift claim must be implemented when no drift is reported")

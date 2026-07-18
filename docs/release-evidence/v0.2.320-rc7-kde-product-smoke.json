@@ -1,0 +1,47 @@
+{
+  "schema_version": "xnix.release.kde_product_smoke_evidence.v1",
+  "release_train": "0.2.301-0.2.320",
+  "verification_version": "0.2.320-rc7",
+  "build_host_alias": "q4",
+  "container": {
+    "source_version": "0.2.320-rc6",
+    "tag": "localhost/xnix-kinoite:0.2.320-rc6",
+    "image_id": "b46386957531a7f660a111c4716c99a05194642c0bfa21d3fba91f0829510741",
+    "build_passed": true
+  },
+  "disk": {
+    "format": "qcow2",
+    "virtual_size_bytes": 16185819136,
+    "actual_size_bytes": 3880321024,
+    "sha256": "a159378aecc82c46fcf745ce0862bf4565b103c1036a6479fc1dd093aef485e8",
+    "qemu_img_check_passed": true,
+    "corrupt": false
+  },
+  "boot": {
+    "acceleration": "kvm",
+    "firmware": "OVMF_CODE_4M.fd",
+    "passed": true,
+    "summary": "graphical login reached",
+    "active_units": [
+      "graphical.target",
+      "plasmalogin.service"
+    ],
+    "pass_marker": "XNIX_BOOT_PROBE_PASS",
+    "fail_marker_observed": false,
+    "serial_log_persisted": true,
+    "serial_log_path": "/home/xnix-build/output/rc7/serial-smoke.log",
+    "serial_log_size_bytes": 99080,
+    "serial_log_sha256": "e5db839c841c6532930d6014ccac2816dc59bc722a06637aa63858b31b88c07c",
+    "qemu_process_remaining": false
+  },
+  "safety": {
+    "loopback_only_networking": true,
+    "docker_socket_mounted": false,
+    "host_network_enabled": false,
+    "broad_host_mount_enabled": false,
+    "backend_launch_enabled": false,
+    "host_root_modified": false
+  },
+  "production_runtime_ready": false,
+  "windows_application_executed": false
+}

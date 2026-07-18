@@ -69,6 +69,12 @@ mainline = write_json_fixture(
   ]
 )
 release_evidence = write_json_fixture("claims" => [], "claim_count" => 0)
+completed_release_evidence = write_json_fixture(
+  "claims" => [
+    { "id" => "product-image-qemu-acceptance", "evidence_level" => "implemented", "blockers" => [] }
+  ],
+  "claim_count" => 1
+)
 fixture_matrix = write_json_fixture("row_count" => 7, "counts" => { "blocked" => 1 })
 malformed = write_text_fixture("{not-json")
 protected_mainline = write_json_fixture(
@@ -106,6 +112,7 @@ begin
   assert(packet.fetch("merge_ready"), "packet must be merge-ready when only restricted smoke remains")
   assert(!packet.fetch("release_ready"), "packet must keep release readiness gated")
   assert(packet.fetch("release_blocking_reasons").include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "packet must keep restricted Docker/QEMU as release blocker")
+  assert(packet.fetch("release_blocking_reasons").include?("production-runtime-and-windows-execution-remain-disabled"), "packet must keep production execution as a product release blocker")
   assert(packet.fetch("merge_blocking_reasons").empty?, "packet must not merge-block the clean fixture case")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
@@ -127,6 +134,15 @@ begin
   assert(markdown.include?("# Merge Readiness Packet"), "Markdown must include title")
   assert(markdown.include?("cw10-evidence-drift-harness"), "Markdown must include lane classification")
   assert(markdown.include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "Markdown must include release blocker")
+
+  completed_args = base_args.dup
+  completed_args[completed_args.index("--release-evidence-index") + 1] = completed_release_evidence.path
+  completed_stdout, completed_stderr, completed_status = Open3.capture3("ruby", script.to_s, "--format", "json", *completed_args)
+  assert(completed_status.success?, "completed product smoke case must emit a packet: #{completed_stderr}")
+  completed_packet = JSON.parse(completed_stdout)
+  assert(!completed_packet.fetch("release_blocking_reasons").include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "persisted authorized smoke evidence must close the QEMU authorization blocker")
+  assert(completed_packet.fetch("release_blocking_reasons").include?("production-runtime-and-windows-execution-remain-disabled"), "product release must remain gated by production execution")
+  assert(completed_packet.fetch("merge_ready"), "production execution gates must not block the completed stabilization train merge")
 
   skipped_stdout, skipped_stderr, skipped_status = Open3.capture3(
     "ruby", script.to_s, "--format", "json", "--skip-tool", "implementation", *base_args
@@ -225,6 +241,7 @@ ensure
     kde_smoke,
     mainline,
     release_evidence,
+    completed_release_evidence,
     fixture_matrix,
     malformed,
     protected_mainline,

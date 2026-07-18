@@ -1,10 +1,10 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-18 | Baseline: v0.2.320-rc7
+> Last updated: 2026-07-18 | Baseline: v0.2.320-rc8
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
-Use `docs/claude-code-stability-release-train.md` as the cadence authority for the next Go-first stabilization train: one coherent small version per local commit, targeted tests on every small version, and full build plus remote push only at each twentieth-version train gate.
+Use `docs/claude-code-stability-release-train.md` as the cadence authority: one coherent small version per local commit, targeted tests on every small version, and, beginning with `v0.2.321`, a full build plus complete tests and remote push every thirty small versions, with the next gate at `v0.2.350`.
 
 Local work already contains implementation evidence for all seventh-wave tasks (`S7W1` through `S7W8`) plus `S6W1`, `S6W2`, `S6W3`, `S6W4`, `S6W5`, `S6W6`, `S6W7`, `S6W8`, and `F5W7`. Do not dispatch those again unless their local branches are discarded or a reviewer explicitly asks for a repair branch.
 
@@ -31,7 +31,7 @@ A task is suitable for Claude Code now if it is:
 
 Start with the privileged Kinoite build-host handoff.
 
-The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes exposed obsolete package requests, Fedora's missing default root filesystem, short-name resolution through `docker.io/library`, the Fedora 41 end-of-life archive boundary, custom Podman graphroot handling, obsolete SDDM assumptions, and unreliable passive systemd serial markers. q4 produced the rc5 Fedora 44 container and clean qcow2, and direct KVM inspection proved `graphical.target` plus `plasmalogin.service` active with no failed units. rc6 turns that inspection into an authenticated serial health probe and records the isolated q4 container-build controls. Production Runtime D-Bus ownership, Wine/Proton/VM launch, and Windows application execution remain unproven.
+The v0.2.320 offline and constrained-host gates pass, including the full Buildroot build and QEMU serial smoke. Authorized q3 and q4 composes exposed obsolete package requests, Fedora's missing default root filesystem, short-name resolution through `docker.io/library`, the Fedora 41 end-of-life archive boundary, custom Podman graphroot handling, obsolete SDDM assumptions, and unreliable passive systemd serial markers. q4 produced the Fedora 44 container and clean qcow2; the rc7 KVM verifier authenticated over serial, proved `graphical.target` plus `plasmalogin.service` active, persisted the log, emitted `XNIX_BOOT_PROBE_PASS`, and left no QEMU process. Production Runtime D-Bus ownership, Wine/Proton/VM launch, and Windows application execution remain unproven.
 
 The offline identity must stay non-launching and must not write KDE configuration, start a backend, call a real Portal, or mutate the host root.
 

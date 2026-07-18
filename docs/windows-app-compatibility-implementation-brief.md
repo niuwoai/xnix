@@ -8,7 +8,7 @@ The product goal is not "a KDE theme" and not "a from-scratch desktop." Xnix sho
 
 For copy-first Claude Code workstream prompts, use `docs/claude-code-windows-compatibility-workstreams.md`. For current mainline merge review and convergence rules, use `docs/mainline-integration-checkpoint.md`.
 
-For the current Go-first stabilization cadence, use `docs/claude-code-stability-release-train.md`. It defines the twenty-version train from `v0.2.301` through `v0.2.320`, targeted testing on each small version, local commits for every small version, and remote push only at the twentieth-version gate.
+For the Go-first stabilization cadence, use `docs/claude-code-stability-release-train.md`. The historical first train ran from `v0.2.301` through `v0.2.320`; beginning with `v0.2.321`, each small version runs targeted tests and commits locally, while full builds, complete tests, product smoke, and remote pushes occur every thirty small versions, with the next gate at `v0.2.350`.
 
 ## Product Architecture Decision
 

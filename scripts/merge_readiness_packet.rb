@@ -85,6 +85,11 @@ UNSAFE_KEYS = %w[
   settings_persisted
 ].freeze
 
+RELEASE_ONLY_BLOCKERS = %w[
+  restricted-docker-or-qemu-smoke-requires-human-authorization
+  production-runtime-and-windows-execution-remain-disabled
+].freeze
+
 class PacketError < StandardError; end
 
 def parse_options(argv)
@@ -311,7 +316,12 @@ def required_follow_up_commands(mainline)
     .sort
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, unsafe_findings)
+def authorized_product_smoke_complete?(release_evidence)
+  claim = release_evidence.fetch("claims", []).find { |item| item.fetch("id", "") == "product-image-qemu-acceptance" }
+  claim && claim.fetch("evidence_level", "") == "implemented" && claim.fetch("blockers", []).empty?
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, unsafe_findings)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -319,7 +329,8 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, unsafe_
   reasons << "runtime-contract-drift-detected" if contract_drift.fetch("drift_detected", false)
   reasons << "kde-seven-entrypoint-smoke-incomplete" if kde_smoke.fetch("entrypoint_count", 0).to_i != 7
   reasons << "unsafe-operation-detected" unless unsafe_findings.empty?
-  reasons << "restricted-docker-or-qemu-smoke-requires-human-authorization"
+  reasons << "restricted-docker-or-qemu-smoke-requires-human-authorization" unless authorized_product_smoke_complete?(release_evidence)
+  reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
 
@@ -331,9 +342,10 @@ def build_packet(options)
   mainline = mainline_data(tools) || {}
   contract_drift = tool_data(tools, "contract_drift") || {}
   kde_smoke = tool_data(tools, "kde_smoke") || {}
+  release_evidence = tool_data(tools, "release_evidence") || {}
   unsafe = unsafe_findings(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, unsafe)
-  merge_blockers = release_blockers - ["restricted-docker-or-qemu-smoke-requires-human-authorization"]
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, unsafe)
+  merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
     "version" => VERSION,

@@ -86,9 +86,13 @@ result, and update the checked-in snapshot with a patch-based edit.
 The drift guard (`test/test_kde_image.rb` and `scripts/build_kde_image.rb`)
 will fail until the snapshot is regenerated.
 
+## Verified release-train evidence
+
+- Authorized q4 builds produced the Fedora 44 container and qcow2. The rc7 verifier reached `graphical.target` and `plasmalogin.service`, persisted the serial log, emitted `XNIX_BOOT_PROBE_PASS`, and exited without a remaining QEMU process. The structured evidence is stored in `docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json`.
+
 ## Not yet covered
 
-- Published ostree/bootc artifacts. Authorized q4 builds produced the rc4 and rc5 containers and qcow2 images locally, but no image has been published.
+- Published ostree/bootc artifacts. The authorized q4 artifacts remain local to the build host.
 - Interactive Plasma desktop evidence beyond the active `graphical.target` and `plasmalogin.service` serial checks.
 - A production Runtime D-Bus owner and Windows application execution evidence.
 - A CI definition that chains container build → disk build → boot smoke on a privileged runner.

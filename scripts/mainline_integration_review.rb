@@ -312,6 +312,8 @@ LANES = [
       %r{\A\.dockerignore\z},
       %r{\Aboot/},
       %r{\Abuildroot/},
+      %r{\Adocs/kde-image-pipeline\.md\z},
+      %r{\Adocs/release-evidence/},
       %r{\Aimage/},
       %r{\Ainternal/runtime/image/},
       %r{\Acmd/xnix-runtime-go/restricted_product_smoke_packet_},
