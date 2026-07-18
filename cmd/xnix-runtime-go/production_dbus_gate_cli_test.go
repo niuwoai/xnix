@@ -2118,6 +2118,126 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementReceiptWriterAuthorizationAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_receipt_writer_authorization_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-ready-writes-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "dry-run-result-lookup-consumer-enablement-authorization-receipt-id" {
+		t.Fatalf("unexpected lookup consumer enablement receipt writer authorization payload: %s", output.String())
+	}
+	if payload["writer_authorization_audit_required"] != true ||
+		payload["writer_authorization_audit_modeled"] != true ||
+		payload["authorization_receipt_audit_consumed"] != true ||
+		payload["base_writer_authorization_review_consumed"] != true ||
+		payload["writer_authorization_guidance_consumed"] != true ||
+		payload["writer_authorization_boundary_ready"] != true ||
+		payload["authorization_receipt_boundary_ready"] != true ||
+		payload["consumer_enablement_receipt_writer_ready"] != true ||
+		payload["receipt_writer_authorization_ready"] != true ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["receipt_writer_enabled"] != false ||
+		payload["receipt_persistence_enabled"] != false ||
+		payload["receipt_lookup_writes_enabled"] != false ||
+		payload["receipt_replay_enabled"] != false ||
+		payload["consumer_consumption_authorized"] != false ||
+		payload["consumer_enablement_authorized"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["lookup_route_authorized"] != false ||
+		payload["lookup_route_enabled"] != false ||
+		payload["opaque_lookup_enabled"] != false ||
+		payload["raw_result_exposed"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected lookup consumer enablement receipt writer authorization decision: %s", output.String())
+	}
+	if payload["authorization_item_count"] != float64(5) ||
+		payload["required_authorization_item_count"] != float64(5) ||
+		payload["ready_authorization_item_count"] != float64(5) ||
+		payload["missing_authorization_item_count"] != float64(0) ||
+		payload["write_enabled_authorization_item_count"] != float64(0) ||
+		payload["persisted_authorization_item_count"] != float64(0) ||
+		payload["accepted_authorization_item_count"] != float64(0) ||
+		payload["enabled_consumer_item_count"] != float64(0) ||
+		payload["raw_exposed_authorization_item_count"] != float64(0) ||
+		payload["side_effect_authorization_item_count"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer enablement receipt writer authorization counts: %s", output.String())
+	}
+	items := payload["authorization_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected lookup consumer enablement receipt writer authorization item list: %s", output.String())
+	}
+	for _, item := range items {
+		authorization := item.(map[string]any)
+		if authorization["evidence_present"] != true ||
+			authorization["authorization_receipt_audit_consumed"] != true ||
+			authorization["writer_authorization_modeled"] != true ||
+			authorization["receipt_writer_authorization_ready"] != true ||
+			authorization["receipt_writer_enabled"] != false ||
+			authorization["receipt_persistence_enabled"] != false ||
+			authorization["receipt_lookup_writes_enabled"] != false ||
+			authorization["receipt_replay_enabled"] != false ||
+			authorization["receipt_accepted"] != false ||
+			authorization["consumer_enablement_authorized"] != false ||
+			authorization["kde_consumer_enabled"] != false ||
+			authorization["runtime_consumer_enabled"] != false ||
+			authorization["lookup_route_enabled"] != false ||
+			authorization["opaque_lookup_enabled"] != false ||
+			authorization["raw_result_exposed"] != false ||
+			authorization["user_visible"] != true ||
+			authorization["review_only"] != true ||
+			authorization["runtime_owned"] != true ||
+			authorization["go_runtime_backed"] != true ||
+			authorization["kde_policy_owner"] != false ||
+			authorization["state_root_path_exposed"] != false ||
+			authorization["file_paths_exposed"] != false ||
+			authorization["file_content_read"] != false ||
+			authorization["side_effects_disabled"] != true ||
+			authorization["host_root_modified"] != false ||
+			authorization["internal_details_exposed"] != false ||
+			authorization["authorization_status"] != "consumer-enablement-receipt-writer-authorization-modeled-writes-disabled" {
+			t.Fatalf("unsafe lookup consumer enablement receipt writer authorization item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer enablement receipt writer authorization checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("lookup consumer enablement receipt writer authorization output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "receipt_present", "receipt_accepted", "authorization_accepted", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe lookup consumer enablement receipt writer authorization gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementReceiptWriterAuthorizationAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-writer-authorization-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
