@@ -21,7 +21,10 @@ func TestProductionDBusGateReviewPreviewInventoriesSmokeCoveredRoutes(t *testing
 		preview.RouteCount != 3 ||
 		preview.SmokeCoveredRouteCount != 3 ||
 		preview.ProductionReadiness ||
-		!preview.HumanAuthorizationRequired {
+		!preview.HumanAuthorizationRequired ||
+		!preview.HumanAuthorizationPreflightReady ||
+		preview.HumanAuthorizationGranted ||
+		preview.AuthorizationReceiptAccepted {
 		t.Fatalf("unexpected production D-Bus gate review schema: %#v", preview)
 	}
 	if !sameStrings(preview.RouteIDs, []string{"materialization-fanout-owner-route", "restricted-smoke-fanout-owner-route", "redacted-adapter-profile-owner-route"}) {
@@ -40,11 +43,11 @@ func TestProductionDBusGateReviewPreviewInventoriesSmokeCoveredRoutes(t *testing
 			t.Fatalf("unsafe or uncovered production D-Bus gate route: %#v", route)
 		}
 	}
-	if preview.Counts.Total != 8 ||
-		preview.Counts.Passed != 8 ||
+	if preview.Counts.Total != 9 ||
+		preview.Counts.Passed != 9 ||
 		preview.Counts.Pending != 0 ||
 		preview.Counts.Blocked != 0 ||
-		!sameStrings(preview.CheckIDs, []string{"tracked-routes-present", "smoke-coverage-present", "production-dbus-disabled", "route-production-exposure-disabled", "writes-and-launch-disabled", "desktop-side-effects-disabled", "host-boundary-closed", "human-authorization-required"}) {
+		!sameStrings(preview.CheckIDs, []string{"tracked-routes-present", "smoke-coverage-present", "production-dbus-disabled", "route-production-exposure-disabled", "writes-and-launch-disabled", "desktop-side-effects-disabled", "host-boundary-closed", "human-authorization-preflight-present", "human-authorization-required"}) {
 		t.Fatalf("unexpected production D-Bus gate review checks: counts=%#v ids=%#v", preview.Counts, preview.CheckIDs)
 	}
 	if !preview.RuntimeOwned ||
@@ -91,7 +94,7 @@ func TestProductionDBusGateReviewPreviewFailsClosedWithoutSources(t *testing.T) 
 		!preview.HumanAuthorizationRequired ||
 		preview.SmokeCoveredRouteCount != 0 ||
 		preview.Counts.Pending != 1 ||
-		preview.Counts.Blocked != 0 {
+		preview.Counts.Blocked != 1 {
 		t.Fatalf("missing sources must fail closed without production readiness: %#v", preview)
 	}
 }

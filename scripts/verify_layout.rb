@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.346"
+EXPECTED_VERSION = "0.2.347"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1673,12 +1673,30 @@ end
 %w[ProductionReadiness HumanAuthorizationRequired SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated NotificationSent NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
   assert(go_runtime_production_dbus_gate_review_source.include?(token), "Go Runtime production D-Bus gate review must expose safety gate #{token}")
 end
+%w[HumanAuthorizationPreflightReady HumanAuthorizationGranted AuthorizationReceiptAccepted human-authorization-preflight-present production-dbus-human-authorization-preflight-preview].each do |token|
+  assert(go_runtime_production_dbus_gate_review_source.include?(token), "Go Runtime production D-Bus gate review must consume human authorization preflight #{token}")
+end
 go_runtime_production_dbus_gate_review_test_source = read_project_file("internal/runtime/owner/production_dbus_gate_review_test.go") +
                                                     read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
                                                     read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
                                                     read_project_file("cmd/xnix-runtime-go/main.go")
-%w[TestProductionDBusGateReviewPreviewInventoriesSmokeCoveredRoutes TestProductionDBusGateReviewPreviewFailsClosedWithoutSources TestProductionDBusGateReviewPreviewCommand production-dbus-gate-review-preview production-dbus-gate-review-ready smoke_covered_route_count human_authorization_required production_readiness production_owner_enabled production_activation_ready].each do |token|
+%w[TestProductionDBusGateReviewPreviewInventoriesSmokeCoveredRoutes TestProductionDBusGateReviewPreviewFailsClosedWithoutSources TestProductionDBusGateReviewPreviewCommand production-dbus-gate-review-preview production-dbus-human-authorization-preflight-preview production-dbus-gate-review-ready smoke_covered_route_count human_authorization_required human_authorization_preflight_ready human_authorization_granted authorization_receipt_accepted production_readiness production_owner_enabled production_activation_ready].each do |token|
   assert(go_runtime_production_dbus_gate_review_test_source.include?(token), "Go Runtime production D-Bus gate review tests and CLI must include #{token}")
+end
+
+go_runtime_production_dbus_human_authorization_preflight_source = read_project_file("internal/runtime/owner/production_dbus_human_authorization_preflight.go")
+%w[ProductionDBusHumanAuthorizationPreflightPreview NewProductionDBusHumanAuthorizationPreflightPreview xnix.runtime.production_dbus_human_authorization_preflight.v1 production-dbus-human-authorization-preflight-preview read-only-production-dbus-human-authorization-preflight xnix.runtime.production_dbus_human_authorization_receipt.v1 production-dbus-human-authorization-receipt-id gate-review-present route-inventory-present human-authorization-required receipt-shape-declared authorization-not-granted production-ownership-disabled unsafe-gates-closed PreflightReady AuthorizationReceiptRequired AuthorizationReceiptPresent AuthorizationGrantReady AuthorizationAccepted ProductionDBusGateReviewRequired].each do |token|
+  assert(go_runtime_production_dbus_human_authorization_preflight_source.include?(token), "Go Runtime production D-Bus human authorization preflight must include #{token}")
+end
+%w[ProductionReadiness SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated NotificationSent NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_dbus_human_authorization_preflight_source.include?(token), "Go Runtime production D-Bus human authorization preflight must expose safety gate #{token}")
+end
+go_runtime_production_dbus_human_authorization_preflight_test_source = read_project_file("internal/runtime/owner/production_dbus_human_authorization_preflight_test.go") +
+                                                                      read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                      read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                      read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionDBusHumanAuthorizationPreflightPreviewDefinesReceiptShape TestProductionDBusHumanAuthorizationPreflightPreviewFailsClosedWithoutGateReview TestProductionDBusHumanAuthorizationPreflightPreviewCommand production-dbus-human-authorization-preflight-preview authorization_receipt_required authorization_receipt_present authorization_grant_ready authorization_accepted preflight_ready production_readiness].each do |token|
+  assert(go_runtime_production_dbus_human_authorization_preflight_test_source.include?(token), "Go Runtime production D-Bus human authorization preflight tests and CLI must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")

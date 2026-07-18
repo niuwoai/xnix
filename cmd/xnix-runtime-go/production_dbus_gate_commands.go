@@ -25,3 +25,20 @@ func runProductionDBusGateReviewPreview(args []string, stdout io.Writer) error {
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runProductionDBusHumanAuthorizationPreflightPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-dbus-human-authorization-preflight-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner human authorization preflight inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-dbus-human-authorization-preflight-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionDBusHumanAuthorizationPreflightPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

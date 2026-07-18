@@ -10,50 +10,53 @@ import (
 )
 
 type ProductionDBusGateReviewPreview struct {
-	Version                     string                          `json:"version"`
-	SchemaVersion               string                          `json:"schema_version"`
-	RequestType                 string                          `json:"request_type"`
-	GateType                    string                          `json:"gate_type"`
-	Source                      string                          `json:"source"`
-	RouteCount                  int                             `json:"route_count"`
-	SmokeCoveredRouteCount      int                             `json:"smoke_covered_route_count"`
-	GateDecision                string                          `json:"gate_decision"`
-	GateDecisionReason          string                          `json:"gate_decision_reason"`
-	CurrentGateStatus           string                          `json:"current_gate_status"`
-	ProductionReadiness         bool                            `json:"production_readiness"`
-	HumanAuthorizationRequired  bool                            `json:"human_authorization_required"`
-	Routes                      []ProductionDBusGateReviewRoute `json:"routes"`
-	RouteIDs                    []string                        `json:"route_ids"`
-	RequiredGates               []string                        `json:"required_gates"`
-	Checks                      []ProductionDBusGateReviewCheck `json:"checks"`
-	CheckIDs                    []string                        `json:"check_ids"`
-	Counts                      ProductionDBusGateReviewCounts  `json:"counts"`
-	RuntimeOwned                bool                            `json:"runtime_owned"`
-	GoRuntimeBacked             bool                            `json:"go_runtime_backed"`
-	KDEPolicyOwner              bool                            `json:"kde_policy_owner"`
-	SystemServiceStarted        bool                            `json:"system_service_started"`
-	SessionBusClaimed           bool                            `json:"session_bus_claimed"`
-	ProductionBusClaimed        bool                            `json:"production_bus_claimed"`
-	ProductionOwnerEnabled      bool                            `json:"production_owner_enabled"`
-	ProductionActivationReady   bool                            `json:"production_activation_ready"`
-	WriteMethodsEnabled         bool                            `json:"write_methods_enabled"`
-	RuntimeWritesEnabled        bool                            `json:"runtime_writes_enabled"`
-	AdapterInvocationEnabled    bool                            `json:"adapter_invocation_enabled"`
-	BackendLaunchEnabled        bool                            `json:"backend_launch_enabled"`
-	BackendProcessStarted       bool                            `json:"backend_process_started"`
-	SupportBundleExported       bool                            `json:"support_bundle_exported"`
-	SupportCaseCreated          bool                            `json:"support_case_created"`
-	NotificationSent            bool                            `json:"notification_sent"`
-	NetworkRequired             bool                            `json:"network_required"`
-	HostRootModified            bool                            `json:"host_root_modified"`
-	PrivilegedContainerRequired bool                            `json:"privileged_container_required"`
-	StateRootPathExposed        bool                            `json:"state_root_path_exposed"`
-	RawCommandExposed           bool                            `json:"raw_command_exposed"`
-	RawExecutableExposed        bool                            `json:"raw_executable_exposed"`
-	BackendDetailsExposed       bool                            `json:"backend_details_exposed"`
-	BlockedActions              []string                        `json:"blocked_actions"`
-	NextRequirements            []string                        `json:"next_requirements"`
-	DesktopSafeSummary          string                          `json:"desktop_safe_summary"`
+	Version                          string                          `json:"version"`
+	SchemaVersion                    string                          `json:"schema_version"`
+	RequestType                      string                          `json:"request_type"`
+	GateType                         string                          `json:"gate_type"`
+	Source                           string                          `json:"source"`
+	RouteCount                       int                             `json:"route_count"`
+	SmokeCoveredRouteCount           int                             `json:"smoke_covered_route_count"`
+	GateDecision                     string                          `json:"gate_decision"`
+	GateDecisionReason               string                          `json:"gate_decision_reason"`
+	CurrentGateStatus                string                          `json:"current_gate_status"`
+	ProductionReadiness              bool                            `json:"production_readiness"`
+	HumanAuthorizationRequired       bool                            `json:"human_authorization_required"`
+	HumanAuthorizationPreflightReady bool                            `json:"human_authorization_preflight_ready"`
+	HumanAuthorizationGranted        bool                            `json:"human_authorization_granted"`
+	AuthorizationReceiptAccepted     bool                            `json:"authorization_receipt_accepted"`
+	Routes                           []ProductionDBusGateReviewRoute `json:"routes"`
+	RouteIDs                         []string                        `json:"route_ids"`
+	RequiredGates                    []string                        `json:"required_gates"`
+	Checks                           []ProductionDBusGateReviewCheck `json:"checks"`
+	CheckIDs                         []string                        `json:"check_ids"`
+	Counts                           ProductionDBusGateReviewCounts  `json:"counts"`
+	RuntimeOwned                     bool                            `json:"runtime_owned"`
+	GoRuntimeBacked                  bool                            `json:"go_runtime_backed"`
+	KDEPolicyOwner                   bool                            `json:"kde_policy_owner"`
+	SystemServiceStarted             bool                            `json:"system_service_started"`
+	SessionBusClaimed                bool                            `json:"session_bus_claimed"`
+	ProductionBusClaimed             bool                            `json:"production_bus_claimed"`
+	ProductionOwnerEnabled           bool                            `json:"production_owner_enabled"`
+	ProductionActivationReady        bool                            `json:"production_activation_ready"`
+	WriteMethodsEnabled              bool                            `json:"write_methods_enabled"`
+	RuntimeWritesEnabled             bool                            `json:"runtime_writes_enabled"`
+	AdapterInvocationEnabled         bool                            `json:"adapter_invocation_enabled"`
+	BackendLaunchEnabled             bool                            `json:"backend_launch_enabled"`
+	BackendProcessStarted            bool                            `json:"backend_process_started"`
+	SupportBundleExported            bool                            `json:"support_bundle_exported"`
+	SupportCaseCreated               bool                            `json:"support_case_created"`
+	NotificationSent                 bool                            `json:"notification_sent"`
+	NetworkRequired                  bool                            `json:"network_required"`
+	HostRootModified                 bool                            `json:"host_root_modified"`
+	PrivilegedContainerRequired      bool                            `json:"privileged_container_required"`
+	StateRootPathExposed             bool                            `json:"state_root_path_exposed"`
+	RawCommandExposed                bool                            `json:"raw_command_exposed"`
+	RawExecutableExposed             bool                            `json:"raw_executable_exposed"`
+	BackendDetailsExposed            bool                            `json:"backend_details_exposed"`
+	BlockedActions                   []string                        `json:"blocked_actions"`
+	NextRequirements                 []string                        `json:"next_requirements"`
+	DesktopSafeSummary               string                          `json:"desktop_safe_summary"`
 }
 
 type ProductionDBusGateReviewRoute struct {
@@ -97,21 +100,28 @@ func NewProductionDBusGateReviewPreview(root string) (ProductionDBusGateReviewPr
 	if err != nil {
 		return ProductionDBusGateReviewPreview{}, err
 	}
+	humanAuthorization, err := NewProductionDBusHumanAuthorizationPreflightPreview(root)
+	if err != nil {
+		return ProductionDBusGateReviewPreview{}, err
+	}
 	preview := ProductionDBusGateReviewPreview{
-		Version:                    version,
-		SchemaVersion:              "xnix.runtime.production_dbus_gate_review.v1",
-		RequestType:                "production-dbus-gate-review-preview",
-		GateType:                   "owner-local-smoke-covered-production-dbus-gate-review",
-		Source:                     "materialization-audit+restricted-owner-smoke-fanout-audit+redacted-adapter-profile-audit",
-		RouteCount:                 len(routes),
-		SmokeCoveredRouteCount:     countProductionDBusGateSmokeCoveredRoutes(routes),
-		GateDecision:               "production-dbus-gate-review-blocked",
-		GateDecisionReason:         "Production D-Bus ownership remains disabled until every owner-local route is smoke-covered and a separate human-authorized production gate exists.",
-		CurrentGateStatus:          "owner-local-smoke-covered-production-dbus-disabled",
-		ProductionReadiness:        false,
-		HumanAuthorizationRequired: true,
-		Routes:                     routes,
-		RouteIDs:                   productionDBusGateReviewRouteIDs(routes),
+		Version:                          version,
+		SchemaVersion:                    "xnix.runtime.production_dbus_gate_review.v1",
+		RequestType:                      "production-dbus-gate-review-preview",
+		GateType:                         "owner-local-smoke-covered-production-dbus-gate-review",
+		Source:                           "materialization-audit+restricted-owner-smoke-fanout-audit+redacted-adapter-profile-audit+production-dbus-human-authorization-preflight-preview",
+		RouteCount:                       len(routes),
+		SmokeCoveredRouteCount:           countProductionDBusGateSmokeCoveredRoutes(routes),
+		GateDecision:                     "production-dbus-gate-review-blocked",
+		GateDecisionReason:               "Production D-Bus ownership remains disabled until every owner-local route is smoke-covered and a separate human-authorized production gate exists.",
+		CurrentGateStatus:                "owner-local-smoke-covered-production-dbus-disabled",
+		ProductionReadiness:              false,
+		HumanAuthorizationRequired:       true,
+		HumanAuthorizationPreflightReady: humanAuthorization.PreflightReady,
+		HumanAuthorizationGranted:        humanAuthorization.AuthorizationAccepted,
+		AuthorizationReceiptAccepted:     humanAuthorization.AuthorizationReceiptPresent && humanAuthorization.AuthorizationAccepted,
+		Routes:                           routes,
+		RouteIDs:                         productionDBusGateReviewRouteIDs(routes),
 		RequiredGates: []string{
 			"human-authorization",
 			"production-service-activation-preflight",
@@ -163,9 +173,9 @@ func NewProductionDBusGateReviewPreview(root string) (ProductionDBusGateReviewPr
 	preview.Checks = checks
 	preview.CheckIDs = productionDBusGateReviewCheckIDs(checks)
 	preview.Counts = countProductionDBusGateReviewChecks(checks)
-	if preview.SmokeCoveredRouteCount == preview.RouteCount && preview.Counts.Blocked == 0 {
+	if preview.SmokeCoveredRouteCount == preview.RouteCount && preview.HumanAuthorizationPreflightReady && preview.Counts.Blocked == 0 {
 		preview.GateDecision = "production-dbus-gate-review-ready"
-		preview.GateDecisionReason = "All tracked owner-local routes are smoke-covered, but production D-Bus ownership still requires a separate human-authorized production gate."
+		preview.GateDecisionReason = "All tracked owner-local routes are smoke-covered and the human authorization preflight shape exists, but production D-Bus ownership still requires a separate accepted authorization receipt and production gate."
 	}
 	if err := validateNoBackendTerms(preview, "production D-Bus gate review preview"); err != nil {
 		return ProductionDBusGateReviewPreview{}, err
@@ -254,7 +264,8 @@ func productionDBusGateReviewChecks(preview ProductionDBusGateReviewPreview) []P
 		productionDBusGateReviewCheck("writes-and-launch-disabled", productionDBusGateReviewPassBlocked(!preview.WriteMethodsEnabled && !preview.RuntimeWritesEnabled && !preview.AdapterInvocationEnabled && !preview.BackendLaunchEnabled && !preview.BackendProcessStarted && productionDBusGateReviewRoutesKeepWritesAndLaunchDisabled(preview.Routes)), "The packet keeps writes, adapter invocation, and backend launch disabled."),
 		productionDBusGateReviewCheck("desktop-side-effects-disabled", productionDBusGateReviewPassBlocked(!preview.SupportBundleExported && !preview.SupportCaseCreated && !preview.NotificationSent), "The packet does not export support bundles, create support cases, or send notifications."),
 		productionDBusGateReviewCheck("host-boundary-closed", productionDBusGateReviewPassBlocked(!preview.NetworkRequired && !preview.HostRootModified && !preview.PrivilegedContainerRequired && !preview.StateRootPathExposed && !preview.RawCommandExposed && !preview.RawExecutableExposed && !preview.BackendDetailsExposed && productionDBusGateReviewRoutesHideInternals(preview.Routes)), "The packet does not require network, privileged containers, host mutation, or internal detail exposure."),
-		productionDBusGateReviewCheck("human-authorization-required", productionDBusGateReviewPassBlocked(preview.HumanAuthorizationRequired && !preview.ProductionReadiness), "Human authorization remains required before any production ownership claim."),
+		productionDBusGateReviewCheck("human-authorization-preflight-present", productionDBusGateReviewPassBlocked(preview.HumanAuthorizationPreflightReady && preview.HumanAuthorizationRequired), "The gate consumes a read-only human authorization preflight shape."),
+		productionDBusGateReviewCheck("human-authorization-required", productionDBusGateReviewPassBlocked(preview.HumanAuthorizationRequired && !preview.HumanAuthorizationGranted && !preview.AuthorizationReceiptAccepted && !preview.ProductionReadiness), "Human authorization remains required before any production ownership claim."),
 	}
 }
 

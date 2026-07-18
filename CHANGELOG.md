@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.347] - 2026-07-19
+
+### Added
+
+- Added `production-dbus-human-authorization-preflight-preview`, a read-only Go owner preflight that defines the future human authorization receipt shape required by the production D-Bus gate without granting authorization.
+- Wired the production D-Bus gate review to consume the preflight shape while keeping authorization ungranted, production readiness false, service start disabled, bus ownership disabled, Runtime writes disabled, backend launch disabled, support side effects disabled, and host mutation disabled.
+
 ## [0.2.346] - 2026-07-19
 
 ### Added
