@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.362] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dispatch-authorization-audit-preview`, a read-only Go owner audit that models the authorization boundary required before notification action request objects can be dispatched.
+- Wired the dispatch authorization audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping dispatch grants, request-object creation, request dispatch, request persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.361] - 2026-07-19
 
 ### Added

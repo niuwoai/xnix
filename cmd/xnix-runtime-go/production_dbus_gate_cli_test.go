@@ -1028,6 +1028,117 @@ func TestProductionReceiptNotificationActionRequestObjectAuditPreviewCommandReje
 	}
 }
 
+func TestProductionReceiptNotificationActionDispatchAuthorizationAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dispatch-authorization-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dispatch-authorization-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dispatch_authorization_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dispatch-authorization-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-request-dispatch-authorization-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dispatch-authorization-audit-ready-dispatch-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt notification action dispatch authorization payload: %s", output.String())
+	}
+	if payload["dispatch_authorization_audit_required"] != true ||
+		payload["dispatch_authorization_audit_modeled"] != true ||
+		payload["request_object_audit_consumed"] != true ||
+		payload["receipt_authorization_boundary_consumed"] != true ||
+		payload["operator_dispatch_approval_required"] != true ||
+		payload["operator_dispatch_approval_present"] != false ||
+		payload["dispatch_authorization_ready"] != true ||
+		payload["dispatch_authorization_granted"] != false ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt notification action dispatch authorization decision: %s", output.String())
+	}
+	if payload["authorization_item_count"] != float64(5) ||
+		payload["required_authorization_item_count"] != float64(5) ||
+		payload["ready_authorization_item_count"] != float64(5) ||
+		payload["missing_authorization_item_count"] != float64(0) ||
+		payload["granted_authorization_item_count"] != float64(0) ||
+		payload["dispatched_authorization_item_count"] != float64(0) ||
+		payload["created_request_object_count"] != float64(0) ||
+		payload["portal_request_created_count"] != float64(0) ||
+		payload["side_effect_authorization_item_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action dispatch authorization counts: %s", output.String())
+	}
+	items := payload["authorization_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected production receipt notification action dispatch authorization item list: %s", output.String())
+	}
+	for _, item := range items {
+		authorization := item.(map[string]any)
+		if authorization["evidence_present"] != true ||
+			authorization["dispatch_authorization_modeled"] != true ||
+			authorization["user_visible"] != true ||
+			authorization["review_only"] != true ||
+			authorization["runtime_owned"] != true ||
+			authorization["go_runtime_backed"] != true ||
+			authorization["kde_policy_owner"] != false ||
+			authorization["operator_approval_required"] != true ||
+			authorization["operator_approval_present"] != false ||
+			authorization["dispatch_authorization_granted"] != false ||
+			authorization["request_object_created"] != false ||
+			authorization["request_object_dispatched"] != false ||
+			authorization["request_object_persisted"] != false ||
+			authorization["portal_request_created"] != false ||
+			authorization["navigation_requested"] != false ||
+			authorization["notification_action_enabled"] != false ||
+			authorization["action_enabled"] != false ||
+			authorization["receipt_accepted"] != false ||
+			authorization["authorization_accepted"] != false ||
+			authorization["receipt_writer_enabled"] != false ||
+			authorization["receipt_persistence_enabled"] != false ||
+			authorization["compatibility_center_opened"] != false ||
+			authorization["compatibility_center_persisted"] != false ||
+			authorization["support_bundle_exported"] != false ||
+			authorization["support_case_created"] != false ||
+			authorization["production_readiness"] != false ||
+			authorization["production_ownership_ready"] != false ||
+			authorization["side_effects_disabled"] != true ||
+			authorization["host_root_modified"] != false ||
+			authorization["internal_details_exposed"] != false ||
+			authorization["dispatch_authorization_status"] != "dispatch-authorization-modeled-dispatch-disabled" {
+			t.Fatalf("unsafe production receipt notification action dispatch authorization item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action dispatch authorization checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt notification action dispatch authorization output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "dispatch_authorization_persisted", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "review_action_enabled", "renew_action_enabled", "open_compatibility_center_enabled", "dismiss_action_enabled", "support_info_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt notification action dispatch authorization gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDispatchAuthorizationAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dispatch-authorization-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dispatch-authorization-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

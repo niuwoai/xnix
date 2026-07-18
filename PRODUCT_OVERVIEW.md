@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.361
+> Last updated: 2026-07-19 | Current version: v0.2.362
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.362 checkpoint adds production receipt notification action dispatch authorization audit. `production-receipt-notification-action-dispatch-authorization-audit-preview` models the authorization boundary required before review, renew, open Compatibility Center, dismiss, and support-info request objects can be dispatched while keeping dispatch grants, request-object creation, dispatch, persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.361 checkpoint adds production receipt notification action request-object audit. `production-receipt-notification-action-request-object-audit-preview` maps review, renew, open Compatibility Center, dismiss, and support-info notification actions to future Runtime request-object kinds while keeping request-object creation, dispatch, persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
