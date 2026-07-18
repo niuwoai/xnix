@@ -28,6 +28,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetBackendAdapterProfileAudit
   GetRestrictedOwnerSmokeReceiptLookupPreview
   GetRestrictedOwnerSmokeReceiptFanOut
+  GetKDETestLaunchMaterializationReceiptLookupPreview
   GetRuntimeWriteGate
 ].freeze
 

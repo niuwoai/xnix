@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestServiceCallServesReadDispatchInProcess(t *testing.T) {
@@ -212,6 +214,50 @@ func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptFanOut(t *testing
 		nested["backend_launch_enabled"] != false ||
 		nested["host_root_modified"] != false {
 		t.Fatalf("unexpected nested restricted owner smoke fan-out payload: %#v", nested)
+	}
+}
+
+func TestServiceCallServesOwnerLocalKDETestLaunchMaterializationReceiptLookup(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("GetKDETestLaunchMaterializationReceiptLookupPreview", []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetKDETestLaunchMaterializationReceiptLookupPreview" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected materialization receipt lookup service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetKDETestLaunchMaterializationReceiptLookupPreview" ||
+		dispatch["go_command"] != "kde-test-launch-materialization-receipt-lookup-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested materialization receipt lookup dispatch: %#v", dispatch)
+	}
+	nested := dispatch["payload"].(map[string]any)
+	if nested["request_type"] != "kde-test-launch-materialization-receipt-lookup-preview" ||
+		nested["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		nested["requires_caller_state_root"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["materialization_writes_enabled"] != false ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected nested materialization receipt lookup payload: %#v", nested)
 	}
 }
 

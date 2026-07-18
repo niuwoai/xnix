@@ -21,8 +21,8 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditSeesConsumeSplit(t *testing.
 		preview.SubjectRequestType != "kde-test-launch-materialization-fanout-preview" ||
 		preview.SubjectCommand != "kde-test-launch-materialization-fanout-preview" ||
 		preview.ProposedOwnerMethod != "GetKDETestLaunchMaterializationFanOut" ||
-		preview.RouteDecision != "consume-ready-opaque-lookup-missing" ||
-		preview.CurrentRouteStatus != "read-only-consume-ready-owner-route-blocked" {
+		preview.RouteDecision != "opaque-lookup-ready-owner-route-blocked" ||
+		preview.CurrentRouteStatus != "owner-managed-lookup-ready-fanout-cli-only" {
 		t.Fatalf("unexpected materialization owner-route audit schema: %#v", preview)
 	}
 	if !preview.CLICommandRegistered ||
@@ -37,17 +37,17 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditSeesConsumeSplit(t *testing.
 		!preview.ReadOnlyConsumeCommandRegistered ||
 		!preview.ReadOnlyReceiptConsumptionReady ||
 		!preview.ReadOnlyConsumeRequiresCallerStateRoot ||
-		preview.OwnerManagedOpaqueReceiptLookupReady ||
-		preview.OpaqueMaterializationReceiptIDSupported ||
+		!preview.OwnerManagedOpaqueReceiptLookupReady ||
+		!preview.OpaqueMaterializationReceiptIDSupported ||
 		preview.FanOutWritesEnabled ||
 		preview.OwnerLocalRouteCandidateReady ||
 		preview.ProductionDBusExposureReady ||
-		preview.RecommendedNextRoute != "owner-managed-materialization-receipt-lookup" {
+		preview.RecommendedNextRoute != "materialization-fanout-owner-local-read-route" {
 		t.Fatalf("unexpected materialization owner-route audit decision: %#v", preview)
 	}
 	if preview.Counts.Total != 10 ||
-		preview.Counts.Passed != 8 ||
-		preview.Counts.Pending != 2 ||
+		preview.Counts.Passed != 9 ||
+		preview.Counts.Pending != 1 ||
 		preview.Counts.Blocked != 0 ||
 		!sameStrings(preview.CheckIDs, []string{"cli-preview-registered", "go-read-model-present", "read-only-consume-registered", "owner-route-absent", "production-dbus-absent", "caller-path-boundary", "receipt-creation-split", "owner-managed-opaque-lookup", "route-decision", "unsafe-gates-closed"}) {
 		t.Fatalf("unexpected materialization owner-route audit checks: counts=%#v ids=%#v", preview.Counts, preview.CheckIDs)
@@ -97,7 +97,7 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditFailsClosedWithoutSources(t 
 		preview.ProductionDBusExposureReady {
 		t.Fatalf("missing sources must not produce owner-route readiness: %#v", preview)
 	}
-	if preview.Counts.Blocked != 5 || preview.RouteDecision != "consume-ready-opaque-lookup-missing" {
-		t.Fatalf("missing sources must fail closed while keeping the split decision: %#v", preview.Counts)
+	if preview.Counts.Blocked != 5 || preview.RouteDecision != "materialization-owner-route-sources-missing" {
+		t.Fatalf("missing sources must fail closed: %#v", preview.Counts)
 	}
 }

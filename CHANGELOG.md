@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.338] - 2026-07-19
+
+### Added
+
+- Added `kde-test-launch-materialization-receipt-lookup-preview` and owner-local `GetKDETestLaunchMaterializationReceiptLookupPreview`, resolving the stable materialization opaque receipt id without accepting caller registry, application, state-root, or authorization inputs.
+- Updated materialization owner-route audit, owner dispatch, service-call, smoke-batch, contract-drift, layout, and evidence coverage while keeping missing receipts fail-closed and leaving materialization fan-out owner routing, production D-Bus exposure, Runtime writes, launch, backend process start, path exposure, and host-root mutation disabled.
+
 ## [0.2.337] - 2026-07-19
 
 ### Added

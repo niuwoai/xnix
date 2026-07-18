@@ -109,6 +109,45 @@ func TestKDETestLaunchMaterializationFanOutConsumePreviewCommandRequiresExisting
 	}
 }
 
+func TestKDETestLaunchMaterializationReceiptLookupPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"kde-test-launch-materialization-receipt-lookup-preview", "--root", root, "--receipt-id", "kde-test-launch-materialization-receipt-id"}, &output); err != nil {
+		t.Fatalf("kde-test-launch-materialization-receipt-lookup-preview returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("decode receipt lookup output: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.kde_test_launch_materialization_receipt_lookup.v1" ||
+		payload["request_type"] != "kde-test-launch-materialization-receipt-lookup-preview" ||
+		payload["lookup_type"] != "owner-managed-materialization-receipt-lookup" ||
+		payload["runtime_method"] != "GetKDETestLaunchMaterializationReceiptLookup" ||
+		payload["read_method"] != "GetKDETestLaunchMaterializationReceiptLookupPreview" ||
+		payload["opaque_materialization_receipt_id"] != "kde-test-launch-materialization-receipt-id" ||
+		payload["receipt_lookup_state"] != "missing-receipt" ||
+		payload["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		payload["requires_caller_state_root"] != false ||
+		payload["read_only_lookup"] != true ||
+		payload["all_checks_passed"] != true ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected materialization receipt lookup payload: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("receipt lookup output must not expose project root path: %s", output.String())
+	}
+}
+
+func TestKDETestLaunchMaterializationReceiptLookupPreviewCommandRejectsBadInputs(t *testing.T) {
+	if err := run([]string{"kde-test-launch-materialization-receipt-lookup-preview", "extra"}, &bytes.Buffer{}); err == nil {
+		t.Fatalf("kde-test-launch-materialization-receipt-lookup-preview must reject positional arguments")
+	}
+	if err := run([]string{"kde-test-launch-materialization-receipt-lookup-preview", "--receipt-id", "unknown-receipt"}, &bytes.Buffer{}); err == nil {
+		t.Fatalf("kde-test-launch-materialization-receipt-lookup-preview must reject unknown opaque receipt ids")
+	}
+}
+
 func TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization(t *testing.T) {
 	base := []string{"kde-test-launch-materialization-fanout-preview", "--registry", "../../runtime/recipes/registry.json", "--app", "org.xnix.sample.notepad", "--state-root", t.TempDir()}
 	for _, args := range [][]string{base, append(append([]string{}, base...), "--mode", "test-only"), append(append([]string{}, base...), "--mode", "test-only", "--authorize", "yes")} {

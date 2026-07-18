@@ -122,6 +122,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetBackendAdapterProfileAudit",
 	"GetRestrictedOwnerSmokeReceiptLookupPreview",
 	"GetRestrictedOwnerSmokeReceiptFanOut",
+	"GetKDETestLaunchMaterializationReceiptLookupPreview",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -537,6 +538,12 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return NewRestrictedOwnerSmokeReceiptFanOutOwnerRoutePreview(root, args[0])
 	},
+	"GetKDETestLaunchMaterializationReceiptLookupPreview": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetKDETestLaunchMaterializationReceiptLookupPreview", args, 1); err != nil {
+			return nil, err
+		}
+		return appidentity.ResolveKDETestLaunchMaterializationReceipt(root, args[0])
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -788,6 +795,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "restricted-owner-smoke-receipt-lookup-preview"
 	case "GetRestrictedOwnerSmokeReceiptFanOut":
 		return "restricted-owner-smoke-receipt-fanout-owner-route-preview"
+	case "GetKDETestLaunchMaterializationReceiptLookupPreview":
+		return "kde-test-launch-materialization-receipt-lookup-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:

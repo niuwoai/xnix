@@ -70,6 +70,24 @@ func runKDETestLaunchMaterializationFanOutConsumePreview(args []string, stdout i
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runKDETestLaunchMaterializationReceiptLookupPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("kde-test-launch-materialization-receipt-lookup-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner route inputs")
+	receiptID := flags.String("receipt-id", appidentity.KDETestLaunchMaterializationOpaqueReceiptID, "opaque KDE test launch materialization receipt id")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("kde-test-launch-materialization-receipt-lookup-preview does not accept positional arguments")
+	}
+	preview, err := appidentity.ResolveKDETestLaunchMaterializationReceipt(*root, *receiptID)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runKDETestLaunchMaterializationOwnerRouteAuditPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("kde-test-launch-materialization-owner-route-audit-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

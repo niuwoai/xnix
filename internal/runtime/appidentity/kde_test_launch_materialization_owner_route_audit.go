@@ -89,9 +89,9 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 		SubjectRequestType:                      "kde-test-launch-materialization-fanout-preview",
 		SubjectCommand:                          "kde-test-launch-materialization-fanout-preview",
 		ProposedOwnerMethod:                     "GetKDETestLaunchMaterializationFanOut",
-		RouteDecision:                           "consume-ready-opaque-lookup-missing",
-		RouteDecisionReason:                     "The read-only materialization fan-out consumption split exists, but owner-local routing still needs owner-managed opaque materialization receipt lookup without caller registry or state-root paths.",
-		CurrentRouteStatus:                      "read-only-consume-ready-owner-route-blocked",
+		RouteDecision:                           "materialization-owner-route-sources-missing",
+		RouteDecisionReason:                     "The materialization fan-out owner route remains blocked until required read-only fan-out, owner lookup, and owner-route evidence is present.",
+		CurrentRouteStatus:                      "fail-closed-owner-route-audit",
 		CLICommandRegistered:                    kdeTestLaunchMaterializationAuditHasCLICommand(sources.GoCLI),
 		GoReadModelPresent:                      kdeTestLaunchMaterializationAuditHasReadModel(sources.GoReadModel),
 		OwnerDispatchRoutePresent:               kdeTestLaunchMaterializationAuditHasOwnerRoute(sources.OwnerDispatch),
@@ -109,7 +109,7 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 		FanOutWritesEnabled:                     false,
 		OwnerLocalRouteCandidateReady:           false,
 		ProductionDBusExposureReady:             false,
-		RecommendedNextRoute:                    "owner-managed-materialization-receipt-lookup",
+		RecommendedNextRoute:                    "materialization-fanout-owner-local-read-route",
 		RuntimeOwned:                            true,
 		GoRuntimeBacked:                         true,
 		KDEPolicyOwner:                          false,
@@ -129,8 +129,9 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 		BackendDetailsExposed:                   false,
 		BlockedActions:                          kdeTestLaunchMaterializationOwnerRouteAuditBlockedActions(),
 		NextRequirements:                        kdeTestLaunchMaterializationOwnerRouteAuditNextRequirements(),
-		DesktopSafeSummary:                      "The test-only materialization fan-out has a read-only receipt-consumption path, but it remains CLI-only until the Runtime owner can resolve opaque materialization receipt evidence without caller paths, production D-Bus exposure, Runtime writes, launch, or host mutation.",
+		DesktopSafeSummary:                      "The materialization fan-out owner-route audit is fail-closed until the required read-only fan-out, owner lookup, and owner-route evidence exists without production D-Bus exposure, Runtime writes, launch, or host mutation.",
 	}
+	kdeTestLaunchMaterializationConfigureOwnerRouteDecision(&audit)
 	checks := kdeTestLaunchMaterializationOwnerRouteAuditChecks(audit)
 	audit.Checks = checks
 	audit.CheckIDs = kdeTestLaunchMaterializationOwnerRouteAuditCheckIDs(checks)
@@ -154,7 +155,7 @@ func kdeTestLaunchMaterializationOwnerRouteAuditSources(root string) kdeTestLaun
 		GoCLI:         readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/main.go"}),
 		CLICommand:    readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go"}),
 		GoReadModel:   readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/kde_test_launch_materialization_fanout.go"}),
-		OwnerDispatch: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go"}),
+		OwnerDispatch: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go", "internal/runtime/appidentity/kde_test_launch_materialization_receipt_lookup.go"}),
 		DBusContract:  readRuntimeMethodParitySources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
 	}
 }
@@ -169,9 +170,53 @@ func kdeTestLaunchMaterializationOwnerRouteAuditChecks(audit KDETestLaunchMateri
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("caller-path-boundary", kdeTestLaunchMaterializationAuditPendingUnless(!audit.RequiresCallerRegistryPath && !audit.RequiresCallerStateRoot && !audit.ReadOnlyConsumeRequiresCallerStateRoot), "Owner-local routes must not depend on caller-supplied registry or state-root paths."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("receipt-creation-split", kdeTestLaunchMaterializationAuditPassBlocked(audit.ReadOnlyReceiptConsumptionReady && audit.MaterializationWritesStateRoot), "The old test receipt creation path is split from the read-only consumption path."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("owner-managed-opaque-lookup", kdeTestLaunchMaterializationAuditPendingUnless(audit.OwnerManagedOpaqueReceiptLookupReady && audit.OpaqueMaterializationReceiptIDSupported), "Owner-local routing needs opaque materialization receipt identifiers resolved inside the Runtime owner."),
-		kdeTestLaunchMaterializationOwnerRouteAuditCheck("route-decision", kdeTestLaunchMaterializationAuditPassBlocked(audit.RouteDecision == "consume-ready-opaque-lookup-missing" && audit.ReadOnlyReceiptConsumptionReady && !audit.OwnerManagedOpaqueReceiptLookupReady && !audit.OwnerLocalRouteCandidateReady && !audit.ProductionDBusExposureReady), "The audit keeps the fan-out CLI-only until owner-managed opaque receipt lookup exists."),
+		kdeTestLaunchMaterializationOwnerRouteAuditCheck("route-decision", kdeTestLaunchMaterializationAuditPassBlocked(kdeTestLaunchMaterializationOwnerRouteDecisionClosed(audit)), "The audit keeps the fan-out CLI-only until owner-local fan-out routing can consume owner-managed opaque receipt lookup."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("unsafe-gates-closed", kdeTestLaunchMaterializationAuditPassBlocked(!audit.SystemServiceStarted && !audit.SessionBusClaimed && !audit.ProductionBusClaimed && !audit.WriteMethodsEnabled && !audit.BackendLaunchEnabled && !audit.HostRootModified && !audit.StateRootPathExposed && !audit.BackendDetailsExposed), "The audit does not start services, claim buses, enable writes, launch, expose paths, or mutate the host."),
 	}
+}
+
+func kdeTestLaunchMaterializationConfigureOwnerRouteDecision(audit *KDETestLaunchMaterializationOwnerRouteAuditPreview) {
+	if !audit.CLICommandRegistered || !audit.GoReadModelPresent || !audit.ReadOnlyReceiptConsumptionReady {
+		audit.RouteDecision = "materialization-owner-route-sources-missing"
+		audit.RouteDecisionReason = "The materialization fan-out owner route remains blocked until required CLI, Go read-model, and read-only receipt-consumption evidence is present."
+		audit.CurrentRouteStatus = "fail-closed-owner-route-audit"
+		audit.RecommendedNextRoute = "restore-materialization-fanout-route-sources"
+		audit.DesktopSafeSummary = "The materialization fan-out owner-route audit is fail-closed because required local source evidence is missing; production D-Bus exposure, Runtime writes, launch, and host mutation remain disabled."
+		return
+	}
+	if audit.OwnerManagedOpaqueReceiptLookupReady && audit.OpaqueMaterializationReceiptIDSupported {
+		audit.RouteDecision = "opaque-lookup-ready-owner-route-blocked"
+		audit.RouteDecisionReason = "Owner-managed opaque materialization receipt lookup exists, so the remaining blocker is an owner-local read route that consumes lookup results without caller registry or state-root paths."
+		audit.CurrentRouteStatus = "owner-managed-lookup-ready-fanout-cli-only"
+		audit.RecommendedNextRoute = "materialization-fanout-owner-local-read-route"
+		audit.DesktopSafeSummary = "The test-only materialization fan-out has read-only receipt consumption and owner-managed opaque receipt lookup, but it remains CLI-only until an owner-local fan-out route consumes that lookup without production D-Bus exposure, Runtime writes, launch, or host mutation."
+		return
+	}
+	audit.RouteDecision = "consume-ready-opaque-lookup-missing"
+	audit.RouteDecisionReason = "The read-only materialization fan-out consumption split exists, but owner-local routing still needs owner-managed opaque materialization receipt lookup without caller registry or state-root paths."
+	audit.CurrentRouteStatus = "read-only-consume-ready-owner-route-blocked"
+	audit.RecommendedNextRoute = "owner-managed-materialization-receipt-lookup"
+	audit.DesktopSafeSummary = "The test-only materialization fan-out has a read-only receipt-consumption path, but it remains CLI-only until the Runtime owner can resolve opaque materialization receipt evidence without caller paths, production D-Bus exposure, Runtime writes, launch, or host mutation."
+}
+
+func kdeTestLaunchMaterializationOwnerRouteDecisionClosed(audit KDETestLaunchMaterializationOwnerRouteAuditPreview) bool {
+	if audit.RouteDecision == "materialization-owner-route-sources-missing" {
+		return false
+	}
+	if audit.RouteDecision == "consume-ready-opaque-lookup-missing" {
+		return audit.ReadOnlyReceiptConsumptionReady &&
+			!audit.OwnerManagedOpaqueReceiptLookupReady &&
+			!audit.OwnerLocalRouteCandidateReady &&
+			!audit.ProductionDBusExposureReady
+	}
+	if audit.RouteDecision == "opaque-lookup-ready-owner-route-blocked" {
+		return audit.ReadOnlyReceiptConsumptionReady &&
+			audit.OwnerManagedOpaqueReceiptLookupReady &&
+			audit.OpaqueMaterializationReceiptIDSupported &&
+			!audit.OwnerLocalRouteCandidateReady &&
+			!audit.ProductionDBusExposureReady
+	}
+	return false
 }
 
 func kdeTestLaunchMaterializationOwnerRouteAuditCheck(id string, status string, summary string) KDETestLaunchMaterializationOwnerRouteAuditCheck {

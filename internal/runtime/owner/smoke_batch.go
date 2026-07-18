@@ -3,6 +3,8 @@ package owner
 import (
 	"encoding/json"
 	"fmt"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 const smokeBatchServiceCallRequestType = "runtime-owner-service-call"
@@ -142,6 +144,8 @@ func smokeBatchArgs(method string) []string {
 		return nil
 	case "GetRestrictedOwnerSmokeReceiptLookupPreview", "GetRestrictedOwnerSmokeReceiptFanOut":
 		return []string{RestrictedOwnerSmokeOpaqueReceiptID}
+	case "GetKDETestLaunchMaterializationReceiptLookupPreview":
+		return []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID}
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}
 	case "GetNotificationPlan":

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.337"
+EXPECTED_VERSION = "0.2.338"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1569,7 +1569,7 @@ go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owne
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetBackendAdapterProfileAudit backend-adapter-redacted-profile-audit-preview NewBackendAdapterRedactedProfileAuditPreview go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetBackendAdapterProfileAudit backend-adapter-redacted-profile-audit-preview NewBackendAdapterRedactedProfileAuditPreview GetKDETestLaunchMaterializationReceiptLookupPreview kde-test-launch-materialization-receipt-lookup-preview ResolveKDETestLaunchMaterializationReceipt go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -2439,12 +2439,24 @@ go_runtime_kde_test_launch_materialization_fanout_cli_source = read_project_file
                                                               read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go") +
                                                               read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_owner_route_audit_cli_test.go") +
                                                               read_project_file("cmd/xnix-runtime-go/main.go")
-%w[kde-test-launch-materialization-fanout-preview kde-test-launch-materialization-fanout-consume-preview runKDETestLaunchMaterializationFanOutPreview runKDETestLaunchMaterializationFanOutConsumePreview authorize-restricted-test-preparation test-only materialization-plan-id TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutConsumePreviewCommandReadsExistingReceipt TestKDETestLaunchMaterializationFanOutConsumePreviewCommandRequiresExistingReceipt TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled state_root_writes_enabled read-only-existing-materialization-receipt].each do |token|
+%w[kde-test-launch-materialization-fanout-preview kde-test-launch-materialization-fanout-consume-preview kde-test-launch-materialization-receipt-lookup-preview runKDETestLaunchMaterializationFanOutPreview runKDETestLaunchMaterializationFanOutConsumePreview runKDETestLaunchMaterializationReceiptLookupPreview authorize-restricted-test-preparation test-only materialization-plan-id TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutConsumePreviewCommandReadsExistingReceipt TestKDETestLaunchMaterializationFanOutConsumePreviewCommandRequiresExistingReceipt TestKDETestLaunchMaterializationReceiptLookupPreviewCommand TestKDETestLaunchMaterializationReceiptLookupPreviewCommandRejectsBadInputs TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled state_root_writes_enabled read-only-existing-materialization-receipt owner_managed_opaque_receipt_lookup_ready].each do |token|
   assert(go_runtime_kde_test_launch_materialization_fanout_cli_source.include?(token), "Go Runtime KDE test launch materialization fan-out CLI must include #{token}")
 end
 
+go_runtime_kde_test_launch_materialization_receipt_lookup_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_receipt_lookup.go")
+%w[KDETestLaunchMaterializationReceiptLookupPreview ResolveKDETestLaunchMaterializationReceipt KDETestLaunchMaterializationOpaqueReceiptID xnix.runtime.kde_test_launch_materialization_receipt_lookup.v1 kde-test-launch-materialization-receipt-lookup-preview owner-managed-materialization-receipt-lookup GetKDETestLaunchMaterializationReceiptLookup GetKDETestLaunchMaterializationReceiptLookupPreview opaque_materialization_receipt_id kde-test-launch-materialization-receipt-id missing-receipt opaque-materialization-receipt-id-supported owner-managed-opaque-lookup caller-paths-hidden missing-receipt-fails-closed read-only-lookup unsafe-gates-closed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_receipt_lookup_source.include?(token), "Go Runtime KDE test launch materialization receipt lookup must include #{token}")
+end
+%w[RequiresCallerRegistryPath RequiresCallerApplicationID RequiresCallerStateRoot StateRootWritesEnabled RuntimeWritesEnabled MaterializationWritesEnabled FanOutWritesEnabled ProductionBusClaimed WriteMethodsEnabled LaunchAuthorized ExecutionApproved ProcessStartAuthorized CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled HostRootModified StateRootPathExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_receipt_lookup_source.include?(token), "Go Runtime KDE test launch materialization receipt lookup must expose safety gate #{token}")
+end
+go_runtime_kde_test_launch_materialization_receipt_lookup_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_receipt_lookup_test.go")
+%w[TestResolveKDETestLaunchMaterializationReceiptReturnsOpaqueLookup TestResolveKDETestLaunchMaterializationReceiptRejectsUnknownOpaqueID owner-managed-materialization-receipt-lookup kde-test-launch-materialization-receipt-id missing-receipt].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_receipt_lookup_test_source.include?(token), "Go Runtime KDE test launch materialization receipt lookup tests must include #{token}")
+end
+
 go_runtime_kde_test_launch_materialization_owner_route_audit_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_owner_route_audit.go")
-%w[KDETestLaunchMaterializationOwnerRouteAuditPreview NewKDETestLaunchMaterializationOwnerRouteAuditPreview xnix.runtime.kde_test_launch_materialization_owner_route_audit.v1 kde-test-launch-materialization-owner-route-audit-preview GetKDETestLaunchMaterializationOwnerRouteAudit GetKDETestLaunchMaterializationOwnerRouteAuditPreview materialization-fanout-owner-route-audit GetKDETestLaunchMaterializationFanOut consume-ready-opaque-lookup-missing read-only-consume-ready-owner-route-blocked owner-managed-materialization-receipt-lookup cli-preview-registered go-read-model-present read-only-consume-registered owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup route-decision unsafe-gates-closed].each do |token|
+%w[KDETestLaunchMaterializationOwnerRouteAuditPreview NewKDETestLaunchMaterializationOwnerRouteAuditPreview xnix.runtime.kde_test_launch_materialization_owner_route_audit.v1 kde-test-launch-materialization-owner-route-audit-preview GetKDETestLaunchMaterializationOwnerRouteAudit GetKDETestLaunchMaterializationOwnerRouteAuditPreview materialization-fanout-owner-route-audit GetKDETestLaunchMaterializationFanOut consume-ready-opaque-lookup-missing read-only-consume-ready-owner-route-blocked opaque-lookup-ready-owner-route-blocked owner-managed-lookup-ready-fanout-cli-only materialization-fanout-owner-local-read-route owner-managed-materialization-receipt-lookup cli-preview-registered go-read-model-present read-only-consume-registered owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup route-decision unsafe-gates-closed].each do |token|
   assert(go_runtime_kde_test_launch_materialization_owner_route_audit_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit must include #{token}")
 end
 %w[OwnerDispatchRoutePresent ProductionDBusMethodPresent RequiresCallerRegistryPath RequiresCallerStateRoot MaterializationWritesStateRoot ReadOnlyConsumeCommandRegistered ReadOnlyReceiptConsumptionReady ReadOnlyConsumeRequiresCallerStateRoot OwnerManagedOpaqueReceiptLookupReady OpaqueMaterializationReceiptIDSupported OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled HostRootModified StateRootPathExposed BackendDetailsExposed].each do |token|
@@ -2452,7 +2464,7 @@ end
 end
 assert(go_runtime_kde_test_launch_materialization_owner_route_audit_source.include?("validateNoBackendTerms"), "Go Runtime KDE test launch materialization owner-route audit must hide backend terms")
 go_runtime_kde_test_launch_materialization_owner_route_audit_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_owner_route_audit_test.go")
-%w[TestKDETestLaunchMaterializationOwnerRouteAuditSeesConsumeSplit TestKDETestLaunchMaterializationOwnerRouteAuditFailsClosedWithoutSources consume-ready-opaque-lookup-missing owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup].each do |token|
+%w[TestKDETestLaunchMaterializationOwnerRouteAuditSeesConsumeSplit TestKDETestLaunchMaterializationOwnerRouteAuditFailsClosedWithoutSources opaque-lookup-ready-owner-route-blocked materialization-owner-route-sources-missing owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup].each do |token|
   assert(go_runtime_kde_test_launch_materialization_owner_route_audit_test_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit tests must include #{token}")
 end
 %w[kde-test-launch-materialization-owner-route-audit-preview runKDETestLaunchMaterializationOwnerRouteAuditPreview TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand route_decision read_only_receipt_consumption_ready owner_managed_opaque_receipt_lookup_ready owner_dispatch_route_present production_dbus_method_present owner_local_route_candidate_ready].each do |token|
@@ -3076,7 +3088,9 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
   session-smoke
   go-cli-route-commands
   GetBackendAdapterProfileAudit
+  GetRestrictedOwnerSmokeReceiptLookupPreview
   GetRestrictedOwnerSmokeReceiptFanOut
+  GetKDETestLaunchMaterializationReceiptLookupPreview
   json
   markdown
   drift_detected
@@ -3091,7 +3105,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
 end
 
 runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
-%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner-session-bus-smoke-source GetBackendAdapterProfileAudit GetRestrictedOwnerSmokeReceiptLookupPreview owner_read_dispatch_method_count owner_session_bus_smoke_step_count drift_detected host_root_modified backend_details_exposed].each do |token|
+%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner-session-bus-smoke-source GetBackendAdapterProfileAudit GetRestrictedOwnerSmokeReceiptLookupPreview GetKDETestLaunchMaterializationReceiptLookupPreview owner_read_dispatch_method_count owner_session_bus_smoke_step_count drift_detected host_root_modified backend_details_exposed].each do |token|
   assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
 end
 
