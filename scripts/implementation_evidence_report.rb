@@ -208,12 +208,16 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/environment/lifecycle_test.go
       internal/runtime/appidentity/backend_manager.go
       internal/runtime/appidentity/backend_manager_test.go
+      internal/runtime/appidentity/backend_adapter_contract.go
+      internal/runtime/appidentity/backend_adapter_contract_test.go
       internal/runtime/appidentity/backend_lifecycle_test.go
       internal/runtime/appidentity/kde_backend_lifecycle_evidence.go
       internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go
       internal/runtime/appidentity/state_root_quota_retention_test.go
       internal/runtime/appidentity/compatibility_backend_fallback_test.go
       cmd/xnix-runtime-go/backend_group_cli_test.go
+      cmd/xnix-runtime-go/backend_adapter_contract_commands.go
+      cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go
       cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go
       cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go
       cmd/xnix-runtime-go/state_root_quota_retention_cli_test.go
@@ -231,11 +235,15 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/environment/lifecycle.go" => %w[repair-required StateBlocked],
       "internal/runtime/appidentity/backend_manager.go" => %w[xnix.runtime.backend_manager.v1 xnix.runtime.backend_manager_record.v1 backend-manager-preview backend-manager-inventory-record go-runtime-state-root-backend-manager wine proton windows-vm BackendDetailsExposedToKDE BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled StateRootPathExposed LoadBackendManagerRecord validateBackendManagerRecord backendManagerRecordUnsafe digest\ mismatch unsafe\ enabled\ gates],
       "internal/runtime/appidentity/backend_manager_test.go" => %w[TestBackendManagerPreviewTracksRuntimeBackendsWithoutStartingThem TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe TestRecordBackendManagerPreviewPersistsStateRootInventory TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink],
+      "internal/runtime/appidentity/backend_adapter_contract.go" => %w[xnix.runtime.backend_adapter_contract.v1 backend-adapter-contract-preview compatibility-backend-adapter-noop-contract go-runtime-backend-manager+adapter-noop-boundary GetBackendAdapterContract GetBackendAdapterContractPreview wine proton windows-vm NoopImplementation AdapterInvocationEnabled BackendLaunchEnabled BackendInstallEnabled BackendDownloadEnabled BackendProcessStarted VMProcessStarted CommandMaterialized ExecutablePathResolved RawCommandExposed ProfilePathExposed StateRootPathExposed BackendDetailsExposedToKDE HostRootModified PrivilegedContainerRequired test-only-materialization],
+      "internal/runtime/appidentity/backend_adapter_contract_test.go" => %w[TestBackendAdapterContractPreviewDefinesNoopBoundary TestBackendAdapterContractAdaptersStayNoop TestBackendAdapterContractKDEProjectionIsBackendSafe],
       "internal/runtime/appidentity/kde_backend_lifecycle_evidence.go" => %w[xnix.runtime.kde_backend_lifecycle_evidence.v1 kde-backend-lifecycle-evidence-record NewKDEBackendLifecycleEvidenceRecord prerequisite-convergence inventory-readback backend-state lifecycle-join execution-readback session-readback backend-boundary unsafe-gates-closed BackendStateJoined BackendKindsExposedToKDE BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted RawCommandExposed ProfilePathExposed HostRootModified SecretsExposed],
       "internal/runtime/appidentity/kde_backend_lifecycle_evidence_test.go" => %w[TestKDEBackendLifecycleEvidenceJoinsInventoryWithoutStartingProcess TestKDEBackendLifecycleEvidenceRejectsUnsafeBoundary explicit-test-root-only backend-manager],
       "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_commands.go" => %w[kde-backend-lifecycle-evidence-record runKDEBackendLifecycleEvidenceRecord test-only LoadRecipeFromRegistry NewKDEBackendLifecycleEvidenceRecord],
       "cmd/xnix-runtime-go/kde_backend_lifecycle_evidence_cli_test.go" => %w[TestKDEBackendLifecycleEvidenceRecordCommandJoinsInventory TestKDEBackendLifecycleEvidenceRecordCommandRequiresTestOnlyBoundary backend_kinds_exposed_to_kde backend_process_started host_root_modified secrets_exposed],
-      "cmd/xnix-runtime-go/main.go" => %w[backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
+      "cmd/xnix-runtime-go/main.go" => %w[backend-adapter-contract-preview backend-manager-preview backend-manager-record runBackendManagerPreview runBackendManagerRecord backend-lifecycle-record runBackendLifecycleRecord],
+      "cmd/xnix-runtime-go/backend_adapter_contract_commands.go" => %w[backend-adapter-contract-preview runBackendAdapterContractPreview NewBackendAdapterContractPreview],
+      "cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go" => %w[TestBackendAdapterContractPreviewCommandRendersNoopBoundary TestBackendAdapterContractPreviewCommandKeepsKDEProjectionBackendSafe xnix.runtime.backend_adapter_contract.v1],
       "internal/runtime/appidentity/backend_lifecycle.go" => %w[BackendLifecyclePreviewWithStateRoot RecordBackendLifecycleState BackendLifecycleRecord xnix.runtime.backend_lifecycle_record.v1 go-runtime-state-root-backend-lifecycle environment-state-root StateRootBacked StateRootPathExposed SatisfiedGates PendingGates RepairHints BlockReason],
       "internal/runtime/appidentity/backend_lifecycle_test.go" => %w[TestBackendLifecyclePreviewConsumesEnvironmentStateRoot TestRecordBackendLifecycleStatePersistsActionsAndPreview BackendLifecyclePreviewWithStateRoot state-root],
       "internal/runtime/appidentity/state_root_quota_retention.go" => %w[xnix.runtime.state_root_quota_retention.v1 state-root-quota-retention-preview go-runtime-state-root-quota-retention-preview snapshots diagnostics execution-receipts portal-receipts artifact-receipts activation-receipts unknown-records FileDeletionEnabled DirectoriesCreated LogTruncationEnabled ReceiptsRewritten SnapshotDeletionEnabled StateRootPathExposed HostRootModified],
@@ -248,7 +256,7 @@ DOMAIN_DEFINITIONS = [
       "cmd/xnix-runtime-go/compatibility_backend_fallback_cli_test.go" => %w[TestCompatibilityBackendFallbackPreviewCLI xnix.runtime.compatibility_backend_fallback.v1],
       "internal/runtime/appidentity/execution_readiness.go" => %w[LaunchAllowed BackendDetailsExposed]
     },
-    summary: "Runtime environment lifecycle logic exists with state-root integration; backend lifecycle records can be persisted and advanced through Go Runtime CLI actions under an explicit state root; state-root quota and retention previews can inspect snapshots, diagnostics, execution receipts, Portal receipts, artifact receipts, activation receipts, and unknown records in dry-run mode without deleting or rewriting anything; the Go backend manager tracks Wine, Proton, and Windows VM backends as internal Runtime-managed inventory, can persist that inventory under an explicit state root while hiding root paths, and exposes only safe compatibility profiles to KDE while real backend starts remain disabled."
+    summary: "Runtime environment lifecycle logic exists with state-root integration; backend lifecycle records can be persisted and advanced through Go Runtime CLI actions under an explicit state root; state-root quota and retention previews can inspect snapshots, diagnostics, execution receipts, Portal receipts, artifact receipts, activation receipts, and unknown records in dry-run mode without deleting or rewriting anything; the Go backend manager tracks Wine, Proton, and Windows VM backends as internal Runtime-managed inventory, can persist that inventory under an explicit state root while hiding root paths, and now defines no-op adapter contracts for those backends while exposing only safe compatibility profiles to KDE and keeping real backend starts disabled."
   },
   {
     id: "portal-snapshot-control-plane",

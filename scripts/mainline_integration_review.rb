@@ -161,6 +161,7 @@ LANES = [
       %r{\Ainternal/runtime/appidentity/backend_},
       %r{\Ainternal/runtime/appidentity/compatibility_backend_fallback},
       %r{\Ainternal/runtime/appidentity/state_root_quota_retention},
+      %r{\Acmd/xnix-runtime-go/backend_adapter_contract_},
       %r{\Acmd/xnix-runtime-go/state_root_quota_retention_},
       %r{\Acmd/xnix-runtime-go/compatibility_backend_fallback_},
       %r{\Acmd/xnix-runtime-go/backend_group_cli_test\.go\z},

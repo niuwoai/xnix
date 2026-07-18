@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.324"
+EXPECTED_VERSION = "0.2.325"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -176,6 +176,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/compatibility_onboarding_cli_test.go
   cmd/xnix-runtime-go/artifact_stage_commands.go
   cmd/xnix-runtime-go/artifact_stage_cli_test.go
+  cmd/xnix-runtime-go/backend_adapter_contract_commands.go
+  cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_commands.go
   cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go
@@ -286,6 +288,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/portal_permission_renewal_test.go
   internal/runtime/appidentity/compatibility_backend_fallback.go
   internal/runtime/appidentity/compatibility_backend_fallback_test.go
+  internal/runtime/appidentity/backend_adapter_contract.go
+  internal/runtime/appidentity/backend_adapter_contract_test.go
   internal/runtime/appidentity/kde_search_visibility.go
   internal/runtime/appidentity/kde_search_visibility_test.go
   internal/runtime/appidentity/kde_notification_digest.go
@@ -1217,6 +1221,16 @@ end
 assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestBackendManagerPreviewKeepsUserFacingProfilesBackendSafe"), "Go Runtime backend manager tests must keep user-facing profiles backend-safe")
 assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestRecordBackendManagerPreviewPersistsStateRootInventory"), "Go Runtime backend manager tests must persist state-root inventory")
 assert(read_project_file("internal/runtime/appidentity/backend_manager_test.go").include?("TestBackendManagerRecordRejectsTamperingAndManagedPathSymlink"), "Go Runtime backend manager tests must reject tampering and managed-path symlinks")
+
+go_backend_adapter_contract_source = read_project_file("internal/runtime/appidentity/backend_adapter_contract.go")
+%w[BackendAdapterContractPreview BackendAdapterContract BackendAdapterProfile BackendAdapterCounts NewBackendAdapterContractPreview xnix.runtime.backend_adapter_contract.v1 backend-adapter-contract-preview compatibility-backend-adapter-noop-contract go-runtime-backend-manager+adapter-noop-boundary GetBackendAdapterContract GetBackendAdapterContractPreview wine proton windows-vm NoopImplementation AdapterInvocationEnabled BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted VMProcessStarted CommandMaterialized ExecutablePathResolved RawCommandExposed ProfilePathExposed StateRootPathExposed BackendDetailsExposedToKDE HostRootModified PrivilegedContainerRequired test-only-materialization].each do |token|
+  assert(go_backend_adapter_contract_source.include?(token), "Go Runtime backend adapter contract preview must include #{token}")
+end
+%w[backend-adapter-contract-preview runBackendAdapterContractPreview].each do |token|
+  assert(read_project_file("cmd/xnix-runtime-go/main.go").include?(token) || read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_commands.go").include?(token), "Go Runtime backend adapter contract CLI must include #{token}")
+end
+assert(read_project_file("internal/runtime/appidentity/backend_adapter_contract_test.go").include?("TestBackendAdapterContractKDEProjectionIsBackendSafe"), "Go Runtime backend adapter contract tests must keep KDE projection backend-safe")
+assert(read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go").include?("TestBackendAdapterContractPreviewCommandRendersNoopBoundary"), "Go Runtime backend adapter contract CLI tests must render the no-op boundary")
 
 backend_capability_matrix_source = read_project_file("lib/xnix/compatibility/compatibility_backend_capability_matrix.rb")
 assert(backend_capability_matrix_source.include?("xnix-compat-backend-capability-matrix"), "Compatibility backend capability matrix must expose a CLI command")

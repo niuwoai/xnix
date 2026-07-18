@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.325] - 2026-07-18
+
+### Added
+
+- Added the Go Runtime backend adapter no-op contract preview and CLI command, defining Wine, Proton, and Windows VM adapter boundaries as Runtime-internal no-op contracts before any real backend invocation is allowed.
+- Added adapter contract tests and evidence hooks that keep invocation, install, download, launch, process start, command materialization, executable path resolution, raw command exposure, state-root path exposure, backend details in KDE-facing output, network access, privileged containers, and host-root mutation disabled.
+
 ## [0.2.324] - 2026-07-18
 
 ### Added
