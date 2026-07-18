@@ -30,6 +30,7 @@ type KDETestLaunchMaterializationOwnerRouteAuditPreview struct {
 	ReadOnlyConsumeRequiresCallerStateRoot  bool                                               `json:"read_only_consume_requires_caller_state_root"`
 	OwnerManagedOpaqueReceiptLookupReady    bool                                               `json:"owner_managed_opaque_receipt_lookup_ready"`
 	OpaqueMaterializationReceiptIDSupported bool                                               `json:"opaque_materialization_receipt_id_supported"`
+	OwnerSmokeCoverageReady                 bool                                               `json:"owner_smoke_coverage_ready"`
 	FanOutWritesEnabled                     bool                                               `json:"fan_out_writes_enabled"`
 	OwnerLocalRouteCandidateReady           bool                                               `json:"owner_local_route_candidate_ready"`
 	ProductionDBusExposureReady             bool                                               `json:"production_dbus_exposure_ready"`
@@ -83,7 +84,7 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 		SchemaVersion:                           "xnix.runtime.kde_test_launch_materialization_owner_route_audit.v1",
 		RequestType:                             "kde-test-launch-materialization-owner-route-audit-preview",
 		AuditType:                               "materialization-fanout-owner-route-audit",
-		Source:                                  "kde-test-launch-materialization-fanout-preview+runtime-owner-dispatch+dbus-contract",
+		Source:                                  "kde-test-launch-materialization-fanout-preview+runtime-owner-dispatch+owner-smoke-coverage+dbus-contract",
 		RuntimeMethod:                           "GetKDETestLaunchMaterializationOwnerRouteAudit",
 		ReadMethod:                              "GetKDETestLaunchMaterializationOwnerRouteAuditPreview",
 		SubjectRequestType:                      "kde-test-launch-materialization-fanout-preview",
@@ -106,6 +107,7 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 		ReadOnlyConsumeRequiresCallerStateRoot:  textHasAll(sources.CLICommand, []string{"kde-test-launch-materialization-fanout-consume-preview", "--state-root", "materializationPlanID"}),
 		OwnerManagedOpaqueReceiptLookupReady:    textHasAll(sources.OwnerDispatch, []string{"ResolveKDETestLaunchMaterializationReceipt", "owner-managed-materialization-receipt-lookup"}),
 		OpaqueMaterializationReceiptIDSupported: textHasAll(sources.OwnerDispatch, []string{"opaque_materialization_receipt_id", "kde-test-launch-materialization-receipt-id"}),
+		OwnerSmokeCoverageReady:                 kdeTestLaunchMaterializationAuditHasOwnerSmokeCoverage(sources.OwnerSmokeCoverage),
 		FanOutWritesEnabled:                     false,
 		OwnerLocalRouteCandidateReady:           false,
 		ProductionDBusExposureReady:             false,
@@ -143,20 +145,22 @@ func NewKDETestLaunchMaterializationOwnerRouteAuditPreview(root string) (KDETest
 }
 
 type kdeTestLaunchMaterializationOwnerRouteAuditSourceSet struct {
-	GoCLI         string
-	CLICommand    string
-	GoReadModel   string
-	OwnerDispatch string
-	DBusContract  string
+	GoCLI              string
+	CLICommand         string
+	GoReadModel        string
+	OwnerDispatch      string
+	OwnerSmokeCoverage string
+	DBusContract       string
 }
 
 func kdeTestLaunchMaterializationOwnerRouteAuditSources(root string) kdeTestLaunchMaterializationOwnerRouteAuditSourceSet {
 	return kdeTestLaunchMaterializationOwnerRouteAuditSourceSet{
-		GoCLI:         readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/main.go"}),
-		CLICommand:    readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go"}),
-		GoReadModel:   readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/kde_test_launch_materialization_fanout.go"}),
-		OwnerDispatch: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go", "internal/runtime/appidentity/kde_test_launch_materialization_receipt_lookup.go"}),
-		DBusContract:  readRuntimeMethodParitySources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
+		GoCLI:              readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/main.go"}),
+		CLICommand:         readRuntimeMethodParitySources(root, []string{"cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go"}),
+		GoReadModel:        readRuntimeMethodParitySources(root, []string{"internal/runtime/appidentity/kde_test_launch_materialization_fanout.go"}),
+		OwnerDispatch:      readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/dispatch.go", "internal/runtime/appidentity/kde_test_launch_materialization_receipt_lookup.go"}),
+		OwnerSmokeCoverage: readRuntimeMethodParitySources(root, []string{"internal/runtime/owner/kde_test_launch_materialization_fanout_owner_smoke_coverage.go"}),
+		DBusContract:       readRuntimeMethodParitySources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
 	}
 }
 
@@ -170,7 +174,8 @@ func kdeTestLaunchMaterializationOwnerRouteAuditChecks(audit KDETestLaunchMateri
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("caller-path-boundary", kdeTestLaunchMaterializationAuditPendingUnless(audit.OwnerDispatchRoutePresent), "The owner-local route consumes opaque materialization receipt lookup instead of caller registry or state-root paths."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("receipt-creation-split", kdeTestLaunchMaterializationAuditPassBlocked(audit.ReadOnlyReceiptConsumptionReady && audit.MaterializationWritesStateRoot), "The old test receipt creation path is split from the read-only consumption path."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("owner-managed-opaque-lookup", kdeTestLaunchMaterializationAuditPendingUnless(audit.OwnerManagedOpaqueReceiptLookupReady && audit.OpaqueMaterializationReceiptIDSupported), "Owner-local routing needs opaque materialization receipt identifiers resolved inside the Runtime owner."),
-		kdeTestLaunchMaterializationOwnerRouteAuditCheck("route-decision", kdeTestLaunchMaterializationAuditPassBlocked(kdeTestLaunchMaterializationOwnerRouteDecisionClosed(audit)), "The audit keeps the fan-out CLI-only until owner-local fan-out routing can consume owner-managed opaque receipt lookup."),
+		kdeTestLaunchMaterializationOwnerRouteAuditCheck("owner-smoke-coverage-present", kdeTestLaunchMaterializationAuditPendingUnless(audit.OwnerSmokeCoverageReady), "Restricted owner smoke coverage proves the owner-local route is exercised through Service.Call."),
+		kdeTestLaunchMaterializationOwnerRouteAuditCheck("route-decision", kdeTestLaunchMaterializationAuditPassBlocked(kdeTestLaunchMaterializationOwnerRouteDecisionClosed(audit)), "The audit recognizes smoke-covered owner-local routing while keeping production D-Bus blocked."),
 		kdeTestLaunchMaterializationOwnerRouteAuditCheck("unsafe-gates-closed", kdeTestLaunchMaterializationAuditPassBlocked(!audit.SystemServiceStarted && !audit.SessionBusClaimed && !audit.ProductionBusClaimed && !audit.WriteMethodsEnabled && !audit.BackendLaunchEnabled && !audit.HostRootModified && !audit.StateRootPathExposed && !audit.BackendDetailsExposed), "The audit does not start services, claim buses, enable writes, launch, expose paths, or mutate the host."),
 	}
 }
@@ -186,6 +191,15 @@ func kdeTestLaunchMaterializationConfigureOwnerRouteDecision(audit *KDETestLaunc
 	}
 	if audit.OwnerManagedOpaqueReceiptLookupReady && audit.OpaqueMaterializationReceiptIDSupported {
 		if audit.OwnerDispatchRoutePresent {
+			if audit.OwnerSmokeCoverageReady {
+				audit.RouteDecision = "owner-local-route-smoke-covered"
+				audit.RouteDecisionReason = "Restricted owner smoke coverage proves the materialization fan-out owner-local read route is exercised through Service.Call; production D-Bus exposure remains blocked."
+				audit.CurrentRouteStatus = "owner-local-read-route-smoke-covered-production-dbus-blocked"
+				audit.OwnerLocalRouteCandidateReady = true
+				audit.RecommendedNextRoute = "materialization-fanout-production-dbus-gate-review"
+				audit.DesktopSafeSummary = "The test-only materialization fan-out owner-local read route is covered by restricted owner smoke evidence, while production D-Bus exposure, Runtime writes, launch, desktop side effects, and host mutation remain disabled."
+				return
+			}
 			audit.RouteDecision = "owner-local-route-ready"
 			audit.RouteDecisionReason = "The materialization fan-out owner-local read route consumes owner-managed opaque receipt lookup without caller registry or state-root paths; production D-Bus exposure remains blocked until owner smoke coverage exists."
 			audit.CurrentRouteStatus = "owner-local-read-route-ready-production-dbus-blocked"
@@ -231,9 +245,23 @@ func kdeTestLaunchMaterializationOwnerRouteDecisionClosed(audit KDETestLaunchMat
 			audit.OpaqueMaterializationReceiptIDSupported &&
 			audit.OwnerDispatchRoutePresent &&
 			audit.OwnerLocalRouteCandidateReady &&
+			!audit.OwnerSmokeCoverageReady &&
+			!audit.ProductionDBusExposureReady
+	}
+	if audit.RouteDecision == "owner-local-route-smoke-covered" {
+		return audit.ReadOnlyReceiptConsumptionReady &&
+			audit.OwnerManagedOpaqueReceiptLookupReady &&
+			audit.OpaqueMaterializationReceiptIDSupported &&
+			audit.OwnerDispatchRoutePresent &&
+			audit.OwnerLocalRouteCandidateReady &&
+			audit.OwnerSmokeCoverageReady &&
 			!audit.ProductionDBusExposureReady
 	}
 	return false
+}
+
+func kdeTestLaunchMaterializationAuditHasOwnerSmokeCoverage(source string) bool {
+	return textHasAll(source, []string{"kde-test-launch-materialization-fanout-owner-smoke-coverage-preview", "materialization-fanout-owner-smoke-coverage", "GetKDETestLaunchMaterializationFanOut", "owner-smoke-batch+runtime-owner-service-call+kde-test-launch-materialization-fanout-owner-route", "SmokeCoverageReady"})
 }
 
 func kdeTestLaunchMaterializationOwnerRouteAuditCheck(id string, status string, summary string) KDETestLaunchMaterializationOwnerRouteAuditCheck {

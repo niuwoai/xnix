@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.343] - 2026-07-19
+
+### Added
+
+- Refreshed `kde-test-launch-materialization-owner-route-audit-preview` so the materialization fan-out owner-route audit recognizes the v0.2.340 restricted owner smoke coverage evidence instead of still recommending smoke coverage as the next blocker.
+- Added Go, CLI, layout, evidence, and product metadata coverage for the `owner-local-route-smoke-covered` audit state while leaving production D-Bus exposure, Runtime writes, backend launch, backend process start, path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.342] - 2026-07-19
 
 ### Added
