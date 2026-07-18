@@ -170,3 +170,66 @@ func TestRestrictedOwnerSmokeReceiptFanOutPreviewCommandRequiresExistingReceipt(
 		t.Fatalf("restricted-owner-smoke-receipt-fanout-preview must require an existing receipt")
 	}
 }
+
+func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-fanout-owner-route-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("restricted-owner-smoke-receipt-fanout-owner-route-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.restricted_owner_smoke_receipt_fanout_owner_route_audit.v1" ||
+		payload["request_type"] != "restricted-owner-smoke-receipt-fanout-owner-route-audit-preview" ||
+		payload["runtime_method"] != "GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAudit" ||
+		payload["read_method"] != "GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview" ||
+		payload["subject_command"] != "restricted-owner-smoke-receipt-fanout-preview" ||
+		payload["proposed_owner_method"] != "GetRestrictedOwnerSmokeReceiptFanOut" ||
+		payload["route_decision"] != "remain-cli-only" ||
+		payload["current_route_status"] != "cli-preview-ready-owner-route-blocked" {
+		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit command payload: %s", output.String())
+	}
+	if payload["cli_command_registered"] != true ||
+		payload["go_read_model_present"] != true ||
+		payload["owner_dispatch_route_present"] != false ||
+		payload["production_dbus_method_present"] != false ||
+		payload["consumes_existing_receipt"] != true ||
+		payload["requires_caller_state_root"] != true ||
+		payload["receipt_lookup_owner_managed"] != false ||
+		payload["opaque_receipt_id_supported"] != false ||
+		payload["fan_out_writes_enabled"] != false ||
+		payload["state_root_writes_enabled"] != false ||
+		payload["support_bundle_exported"] != false ||
+		payload["support_case_created"] != false ||
+		payload["notification_sent"] != false ||
+		payload["owner_local_route_candidate_ready"] != false ||
+		payload["production_dbus_exposure_ready"] != false {
+		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit command decision: %s", output.String())
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(7) ||
+		counts["pending"] != float64(2) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit counts: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("audit command output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-fanout-owner-route-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("restricted-owner-smoke-receipt-fanout-owner-route-audit-preview must reject positional arguments")
+	}
+}

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.332] - 2026-07-19
+
+### Added
+
+- Added the restricted owner smoke receipt fan-out owner-route audit preview and CLI command, deciding that the v0.2.329 readiness/support fan-out should remain CLI-only until owner-managed opaque receipt lookup exists.
+- Added owner, CLI, layout, and evidence coverage that keeps caller state-root paths out of owner routing and keeps production D-Bus exposure, Runtime writes, support export/case/notification side effects, backend launch, path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.331] - 2026-07-18
 
 ### Added

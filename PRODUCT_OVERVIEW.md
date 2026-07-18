@@ -1,12 +1,14 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.331
+> Last updated: 2026-07-18 | Current version: v0.2.332
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.331 checkpoint audits the backend adapter contract owner route. The Go Runtime now exposes `backend-adapter-contract-owner-route-audit-preview`, deciding that the v0.2.328 adapter fixture audit must remain fixture-local until a redacted owner-local adapter profile audit route exists; owner dispatch, production D-Bus exposure, adapter invocation, install/download, backend launch, command materialization, path exposure, backend details, and host-root mutation remain disabled.
+The v0.2.332 checkpoint audits the restricted owner smoke receipt fan-out owner route. The Go Runtime now exposes `restricted-owner-smoke-receipt-fanout-owner-route-audit-preview`, deciding that the v0.2.329 readiness/support fan-out must remain CLI-only until owner-managed opaque receipt lookup exists; caller state-root paths, production D-Bus exposure, Runtime writes, support export/case/notification side effects, backend launch, state-root path exposure, backend details, and host-root mutation remain disabled.
+
+The v0.2.331 checkpoint audits the backend adapter contract owner route. The Go Runtime exposes `backend-adapter-contract-owner-route-audit-preview`, deciding that the v0.2.328 adapter fixture audit must remain fixture-local until a redacted owner-local adapter profile audit route exists; owner dispatch, production D-Bus exposure, adapter invocation, install/download, backend launch, command materialization, path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.330 checkpoint audits the KDE test launch materialization fan-out owner route. The Go Runtime now exposes `kde-test-launch-materialization-owner-route-audit-preview`, deciding that the v0.2.327 fan-out must remain CLI-only until test receipt creation is split from read-only receipt consumption and owner-managed opaque receipt identifiers exist; owner dispatch, production D-Bus exposure, service start, Runtime writes, backend launch, network access, state-root path exposure, backend details, and host-root mutation remain disabled.
 
