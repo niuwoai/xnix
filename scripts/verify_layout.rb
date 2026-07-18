@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.350"
+EXPECTED_VERSION = "0.2.351"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1716,6 +1716,24 @@ go_runtime_production_dbus_method_review_test_source = read_project_file("intern
                                                       read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionDBusMethodReviewPreviewInventoriesRoutes TestProductionDBusMethodReviewPreviewFailsClosedWithoutSources TestProductionDBusMethodReviewPreviewCommand production-dbus-method-review-preview read_only_contract_method_count owner_local_candidate_count write_method_count reviewed_method_count production_exposure_ready_count new_production_method_request_count].each do |token|
   assert(go_runtime_production_dbus_method_review_test_source.include?(token), "Go Runtime production D-Bus method review tests and CLI must include #{token}")
+end
+
+go_runtime_production_rollback_diagnostics_review_source = read_project_file("internal/runtime/owner/production_rollback_diagnostics_review.go")
+%w[ProductionRollbackDiagnosticsReviewPreview ProductionRollbackDiagnosticsReviewItem ProductionRollbackDiagnosticsReviewCheck NewProductionRollbackDiagnosticsReviewPreview xnix.runtime.production_rollback_diagnostics_review.v1 production-rollback-diagnostics-review-preview production-dbus-rollback-diagnostics-review production-rollback-diagnostics-review-ready-side-effects-disabled production-rollback-diagnostics-review-blocked production-dbus-gate-review-preview production-dbus-method-review-preview runtime-service-activation-preflight-preview support-bundle-manifest-preview support-case-timeline-preview snapshot-restore-candidates-preview state-root-quota-retention-preview production-gate-consumed method-review-consumed rollback-controls-reviewed diagnostics-controls-reviewed support-side-effects-disabled restore-and-cleanup-disabled unsafe-data-hidden host-boundary-closed].each do |token|
+  assert(go_runtime_production_rollback_diagnostics_review_source.include?(token), "Go Runtime production rollback diagnostics review must include #{token}")
+end
+%w[ReviewItemCount RollbackControlCount DiagnosticsControlCount ReadyControlCount SideEffectControlCount ProductionOwnershipReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated NotificationSent SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_rollback_diagnostics_review_source.include?(token), "Go Runtime production rollback diagnostics review must expose safety gate #{token}")
+end
+%w[production_dbus_gate_review.go production_dbus_method_review.go runtime_service_activation_preflight.go support_bundle_manifest.go support_case_timeline.go snapshot_restore_candidates.go state_root_quota_retention.go].each do |token|
+  assert(go_runtime_production_rollback_diagnostics_review_source.include?(token), "Go Runtime production rollback diagnostics review must consume #{token}")
+end
+go_runtime_production_rollback_diagnostics_review_test_source = read_project_file("internal/runtime/owner/production_rollback_diagnostics_review_test.go") +
+                                                               read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                               read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                               read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionRollbackDiagnosticsReviewPreviewConsumesSafetySurfaces TestProductionRollbackDiagnosticsReviewPreviewFailsClosedWithoutSources TestProductionRollbackDiagnosticsReviewPreviewCommand production-rollback-diagnostics-review-preview review_item_count rollback_control_count diagnostics_control_count ready_control_count side_effect_control_count production_ownership_ready snapshot_restore_executed state_cleanup_executed].each do |token|
+  assert(go_runtime_production_rollback_diagnostics_review_test_source.include?(token), "Go Runtime production rollback diagnostics review tests and CLI must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")

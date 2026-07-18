@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.351] - 2026-07-19
+
+### Added
+
+- Added `production-rollback-diagnostics-review-preview`, a read-only Go owner review that consumes production D-Bus gate, method review, service activation, support, snapshot restore, and state-retention safety surfaces before any production ownership decision.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for rollback and diagnostics review while keeping service start, bus ownership, writes, support export, support case creation, notifications, restore, cleanup, file-content reads, unsafe data exposure, network use, privileged containers, engine launch, and host mutation disabled.
+
 ## [0.2.350] - 2026-07-19
 
 ### Added

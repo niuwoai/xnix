@@ -59,3 +59,20 @@ func runProductionDBusMethodReviewPreview(args []string, stdout io.Writer) error
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runProductionRollbackDiagnosticsReviewPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-rollback-diagnostics-review-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner rollback diagnostics review inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-rollback-diagnostics-review-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionRollbackDiagnosticsReviewPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

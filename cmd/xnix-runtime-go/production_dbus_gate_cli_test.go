@@ -232,3 +232,83 @@ func TestProductionDBusMethodReviewPreviewCommandRejectsPositionalArgs(t *testin
 		t.Fatalf("production-dbus-method-review-preview must reject positional arguments")
 	}
 }
+
+func TestProductionRollbackDiagnosticsReviewPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-rollback-diagnostics-review-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-rollback-diagnostics-review-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_rollback_diagnostics_review.v1" ||
+		payload["request_type"] != "production-rollback-diagnostics-review-preview" ||
+		payload["review_type"] != "production-dbus-rollback-diagnostics-review" ||
+		payload["review_decision"] != "production-rollback-diagnostics-review-ready-side-effects-disabled" {
+		t.Fatalf("unexpected production rollback diagnostics review command payload: %s", output.String())
+	}
+	if payload["review_item_count"] != float64(8) ||
+		payload["rollback_control_count"] != float64(6) ||
+		payload["diagnostics_control_count"] != float64(4) ||
+		payload["ready_control_count"] != float64(8) ||
+		payload["side_effect_control_count"] != float64(0) ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production rollback diagnostics review counts: %s", output.String())
+	}
+	items := payload["items"].([]any)
+	if len(items) != 8 {
+		t.Fatalf("unexpected rollback diagnostics review item count: %s", output.String())
+	}
+	for _, itemValue := range items {
+		item := itemValue.(map[string]any)
+		if item["required_before_production"] != true ||
+			item["evidence_present"] != true ||
+			item["review_only"] != true ||
+			item["side_effects_enabled"] != false ||
+			item["restore_executed"] != false ||
+			item["cleanup_executed"] != false ||
+			item["support_bundle_exported"] != false ||
+			item["support_case_created"] != false ||
+			item["notification_sent"] != false ||
+			item["file_content_read"] != false ||
+			item["file_paths_exposed"] != false ||
+			item["state_root_path_exposed"] != false ||
+			item["raw_command_exposed"] != false ||
+			item["raw_executable_exposed"] != false ||
+			item["backend_details_exposed"] != false ||
+			item["host_root_modified"] != false ||
+			item["production_bus_claimed"] != false ||
+			item["write_methods_enabled"] != false ||
+			item["runtime_writes_enabled"] != false ||
+			item["backend_launch_enabled"] != false ||
+			item["review_status"] != "reviewed" {
+			t.Fatalf("unsafe rollback diagnostics review item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production rollback diagnostics review checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production rollback diagnostics review output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "notification_sent", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe rollback diagnostics gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionRollbackDiagnosticsReviewPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-rollback-diagnostics-review-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-rollback-diagnostics-review-preview must reject positional arguments")
+	}
+}
