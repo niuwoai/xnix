@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.365] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview`, a read-only Go owner audit that models the authorization boundary required before redacted dry-run result summaries can be stored.
+- Wired the dry-run result persistence authorization audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping dry-run execution, dry-run result persistence, visibility persistence, dispatch grants, request-object creation, request dispatch, request persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.364] - 2026-07-19
 
 ### Added

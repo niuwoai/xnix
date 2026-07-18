@@ -1374,6 +1374,99 @@ func TestProductionReceiptNotificationActionDryRunResultVisibilityAuditPreviewCo
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultPersistenceAuthorizationAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_persistence_authorization_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-persistence-authorization-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-persistence-authorization-audit-ready-persistence-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected dry-run result persistence authorization payload: %s", output.String())
+	}
+	if payload["persistence_authorization_audit_required"] != true ||
+		payload["persistence_authorization_audit_modeled"] != true ||
+		payload["result_visibility_audit_consumed"] != true ||
+		payload["persistence_authorization_guidance_consumed"] != true ||
+		payload["persistence_authorization_ready"] != true ||
+		payload["result_persistence_authorized"] != false ||
+		payload["dispatch_dry_run_executed"] != false ||
+		payload["dry_run_result_persisted"] != false ||
+		payload["result_visibility_persisted"] != false ||
+		payload["operator_persistence_approval_required"] != true ||
+		payload["operator_persistence_approval_present"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected dry-run result persistence authorization decision: %s", output.String())
+	}
+	if payload["authorization_item_count"] != float64(5) ||
+		payload["required_authorization_item_count"] != float64(5) ||
+		payload["ready_authorization_item_count"] != float64(5) ||
+		payload["missing_authorization_item_count"] != float64(0) ||
+		payload["granted_persistence_item_count"] != float64(0) ||
+		payload["persisted_result_item_count"] != float64(0) ||
+		payload["executed_dry_run_item_count"] != float64(0) ||
+		payload["side_effect_authorization_item_count"] != float64(0) {
+		t.Fatalf("unexpected dry-run result persistence authorization counts: %s", output.String())
+	}
+	items := payload["authorization_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected dry-run result persistence authorization item list: %s", output.String())
+	}
+	for _, item := range items {
+		authorization := item.(map[string]any)
+		if authorization["evidence_present"] != true ||
+			authorization["persistence_authorization_modeled"] != true ||
+			authorization["redacted_for_kde"] != true ||
+			authorization["runtime_diagnostics_modeled"] != true ||
+			authorization["operator_approval_required"] != true ||
+			authorization["operator_approval_present"] != false ||
+			authorization["result_persistence_authorized"] != false ||
+			authorization["dispatch_dry_run_executed"] != false ||
+			authorization["dry_run_result_persisted"] != false ||
+			authorization["result_visibility_persisted"] != false ||
+			authorization["runtime_diagnostics_persisted"] != false ||
+			authorization["side_effects_disabled"] != true ||
+			authorization["host_root_modified"] != false ||
+			authorization["internal_details_exposed"] != false ||
+			authorization["persistence_authorization_status"] != "dry-run-result-persistence-authorization-modeled-persistence-disabled" {
+			t.Fatalf("unsafe dry-run result persistence authorization item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected dry-run result persistence authorization checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("dry-run result persistence authorization output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "dispatch_authorization_persisted", "dispatch_dry_run_execution_enabled", "dry_run_result_persistence_enabled", "result_visibility_persistence_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "review_action_enabled", "renew_action_enabled", "open_compatibility_center_enabled", "dismiss_action_enabled", "support_info_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "runtime_diagnostics_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe dry-run result persistence authorization gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultPersistenceAuthorizationAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
