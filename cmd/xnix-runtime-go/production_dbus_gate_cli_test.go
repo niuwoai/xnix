@@ -1252,6 +1252,128 @@ func TestProductionReceiptNotificationActionDispatchDryRunAuditPreviewCommandRej
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultVisibilityAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-visibility-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-visibility-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_visibility_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-visibility-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-visibility-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-visibility-audit-ready-visibility-only" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt notification action dry-run result visibility payload: %s", output.String())
+	}
+	if payload["result_visibility_audit_required"] != true ||
+		payload["result_visibility_audit_modeled"] != true ||
+		payload["dispatch_dry_run_audit_consumed"] != true ||
+		payload["result_visibility_guidance_consumed"] != true ||
+		payload["result_visibility_plan_ready"] != true ||
+		payload["redacted_kde_visibility_modeled"] != true ||
+		payload["runtime_diagnostics_visibility_modeled"] != true ||
+		payload["dispatch_dry_run_executed"] != false ||
+		payload["dry_run_result_persisted"] != false ||
+		payload["dispatch_authorization_granted"] != false ||
+		payload["operator_dispatch_approval_required"] != true ||
+		payload["operator_dispatch_approval_present"] != false ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt notification action dry-run result visibility decision: %s", output.String())
+	}
+	if payload["visibility_item_count"] != float64(5) ||
+		payload["required_visibility_item_count"] != float64(5) ||
+		payload["ready_visibility_item_count"] != float64(5) ||
+		payload["missing_visibility_item_count"] != float64(0) ||
+		payload["persisted_visibility_item_count"] != float64(0) ||
+		payload["executed_dry_run_item_count"] != float64(0) ||
+		payload["dispatched_dry_run_item_count"] != float64(0) ||
+		payload["created_request_object_count"] != float64(0) ||
+		payload["portal_request_created_count"] != float64(0) ||
+		payload["side_effect_visibility_item_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action dry-run result visibility counts: %s", output.String())
+	}
+	items := payload["visibility_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected production receipt notification action dry-run result visibility item list: %s", output.String())
+	}
+	for _, item := range items {
+		visibility := item.(map[string]any)
+		if visibility["evidence_present"] != true ||
+			visibility["result_visibility_modeled"] != true ||
+			visibility["redacted_for_kde"] != true ||
+			visibility["runtime_diagnostics_modeled"] != true ||
+			visibility["user_visible"] != true ||
+			visibility["review_only"] != true ||
+			visibility["runtime_owned"] != true ||
+			visibility["go_runtime_backed"] != true ||
+			visibility["kde_policy_owner"] != false ||
+			visibility["operator_approval_required"] != true ||
+			visibility["operator_approval_present"] != false ||
+			visibility["dispatch_authorization_granted"] != false ||
+			visibility["dispatch_dry_run_executed"] != false ||
+			visibility["dry_run_result_persisted"] != false ||
+			visibility["result_visibility_persisted"] != false ||
+			visibility["request_object_created"] != false ||
+			visibility["request_object_dispatched"] != false ||
+			visibility["request_object_persisted"] != false ||
+			visibility["portal_request_created"] != false ||
+			visibility["navigation_requested"] != false ||
+			visibility["notification_action_enabled"] != false ||
+			visibility["action_enabled"] != false ||
+			visibility["receipt_accepted"] != false ||
+			visibility["authorization_accepted"] != false ||
+			visibility["receipt_writer_enabled"] != false ||
+			visibility["receipt_persistence_enabled"] != false ||
+			visibility["compatibility_center_opened"] != false ||
+			visibility["compatibility_center_persisted"] != false ||
+			visibility["runtime_diagnostics_persisted"] != false ||
+			visibility["support_bundle_exported"] != false ||
+			visibility["support_case_created"] != false ||
+			visibility["production_readiness"] != false ||
+			visibility["production_ownership_ready"] != false ||
+			visibility["side_effects_disabled"] != true ||
+			visibility["host_root_modified"] != false ||
+			visibility["internal_details_exposed"] != false ||
+			visibility["visibility_status"] != "dry-run-result-visibility-modeled-persistence-disabled" {
+			t.Fatalf("unsafe production receipt notification action dry-run result visibility item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action dry-run result visibility checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt notification action dry-run result visibility output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "dispatch_authorization_persisted", "dispatch_dry_run_execution_enabled", "dry_run_result_persistence_enabled", "result_visibility_persistence_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "review_action_enabled", "renew_action_enabled", "open_compatibility_center_enabled", "dismiss_action_enabled", "support_info_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "runtime_diagnostics_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt notification action dry-run result visibility gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultVisibilityAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-visibility-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-visibility-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
