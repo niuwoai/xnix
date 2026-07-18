@@ -1776,6 +1776,114 @@ func TestProductionReceiptNotificationActionDryRunResultLookupRouteAuthorization
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerRedactionAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_redaction_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-ready-consumers-disabled" {
+		t.Fatalf("unexpected lookup consumer redaction payload: %s", output.String())
+	}
+	if payload["consumer_redaction_audit_required"] != true ||
+		payload["consumer_redaction_audit_modeled"] != true ||
+		payload["lookup_route_authorization_audit_consumed"] != true ||
+		payload["consumer_redaction_guidance_consumed"] != true ||
+		payload["consumer_redaction_ready"] != true ||
+		payload["kde_consumer_redaction_modeled"] != true ||
+		payload["runtime_consumer_redaction_modeled"] != true ||
+		payload["opaque_result_id_supported"] != true ||
+		payload["consumer_consumption_authorized"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["lookup_route_authorized"] != false ||
+		payload["lookup_route_enabled"] != false ||
+		payload["lookup_route_persisted"] != false ||
+		payload["opaque_lookup_enabled"] != false ||
+		payload["opaque_lookup_persisted"] != false ||
+		payload["redacted_summary_persisted"] != false ||
+		payload["raw_result_exposed"] != false ||
+		payload["runtime_diagnostics_persisted"] != false ||
+		payload["dry_run_result_persisted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected lookup consumer redaction decision: %s", output.String())
+	}
+	if payload["consumer_item_count"] != float64(5) ||
+		payload["required_consumer_item_count"] != float64(5) ||
+		payload["ready_consumer_item_count"] != float64(5) ||
+		payload["missing_consumer_item_count"] != float64(0) ||
+		payload["redacted_consumer_item_count"] != float64(5) ||
+		payload["enabled_consumer_item_count"] != float64(0) ||
+		payload["raw_exposed_consumer_item_count"] != float64(0) ||
+		payload["persisted_consumer_item_count"] != float64(0) ||
+		payload["side_effect_consumer_item_count"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer redaction counts: %s", output.String())
+	}
+	items := payload["consumer_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected lookup consumer redaction item list: %s", output.String())
+	}
+	for _, item := range items {
+		consumer := item.(map[string]any)
+		if consumer["evidence_present"] != true ||
+			consumer["consumer_redaction_modeled"] != true ||
+			consumer["kde_consumer_redaction_modeled"] != true ||
+			consumer["runtime_consumer_redaction_modeled"] != true ||
+			consumer["opaque_result_id_supported"] != true ||
+			consumer["consumer_consumption_authorized"] != false ||
+			consumer["kde_consumer_enabled"] != false ||
+			consumer["runtime_consumer_enabled"] != false ||
+			consumer["lookup_route_authorized"] != false ||
+			consumer["lookup_route_enabled"] != false ||
+			consumer["lookup_route_persisted"] != false ||
+			consumer["redacted_summary_persisted"] != false ||
+			consumer["raw_result_exposed"] != false ||
+			consumer["runtime_diagnostics_persisted"] != false ||
+			consumer["dry_run_result_persisted"] != false ||
+			consumer["state_root_path_exposed"] != false ||
+			consumer["file_paths_exposed"] != false ||
+			consumer["file_content_read"] != false ||
+			consumer["side_effects_disabled"] != true ||
+			consumer["host_root_modified"] != false ||
+			consumer["internal_details_exposed"] != false ||
+			consumer["consumer_status"] != "lookup-consumer-redaction-modeled-consumers-disabled" {
+			t.Fatalf("unsafe lookup consumer redaction item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer redaction checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("lookup consumer redaction output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "runtime_diagnostics_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe lookup consumer redaction gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerRedactionAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-redaction-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
