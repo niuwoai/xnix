@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.348"
+EXPECTED_VERSION = "0.2.349"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -2066,16 +2066,17 @@ assert(runtime_write_gate_source.include?("\"host_root_modified\" => false"), "R
 assert(runtime_write_gate_source.include?("\"backend_details_exposed\" => false"), "Runtime write gate must hide backend details")
 
 go_runtime_write_gate_source = read_project_file("internal/runtime/appidentity/runtime_write_gate.go")
-%w[RuntimeWriteGatePreview RuntimeWriteGateCheck runtime-write-gate-preview xnix.runtime.write_gate.v1 go-runtime-write-gate GetRuntimeWriteGate GetRuntimeWriteGatePreview InstallRecipe Launch CreateSnapshot RestoreSnapshot blocked-until-production-backend WriteMethodDisabled production-runtime-owner backend-binding-ready recipe-trust-production user-action-review portal-approval-if-sensitive snapshot-preflight-for-risky-change].each do |token|
+%w[RuntimeWriteGatePreview RuntimeWriteGateProductionGate RuntimeWriteGateCheck RuntimeWriteGateCounts runtime-write-gate-preview xnix.runtime.write_gate.v1 go-runtime-write-gate runtime-service-activation-preflight-preview production-dbus-gate-review-preview production-dbus-human-authorization-preflight-preview GetRuntimeWriteGate GetRuntimeWriteGatePreview InstallRecipe Launch CreateSnapshot RestoreSnapshot blocked-until-production-backend production-gates-consumed-write-gate-disabled production-gate-consumption-blocked WriteMethodDisabled production-dbus-gate-review production-service-activation-preflight human-authorization-receipt production-runtime-owner backend-binding-ready recipe-trust-production user-action-review portal-approval-if-sensitive snapshot-preflight-for-risky-change].each do |token|
   assert(go_runtime_write_gate_source.include?(token), "Go Runtime write gate preview must include #{token}")
 end
-%w[WriteMethodEnabled DispatchEnabled RequestObjectCreated ExecutionStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+%w[ProductionGateDecision ServiceActivationPreflightReady ProductionDBusGateReady HumanAuthorizationPreflightReady HumanAuthorizationRequired HumanAuthorizationGranted AuthorizationReceiptAccepted ProductionActivationReady RestrictedSmokeReady SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled WriteMethodEnabled DispatchEnabled RequestObjectCreated ExecutionStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
   assert(go_runtime_write_gate_source.include?(token), "Go Runtime write gate preview must expose safety flag #{token}")
 end
+assert(go_runtime_write_gate_source.include?("NewRuntimeServiceActivationPreflightPreview"), "Go Runtime write gate preview must consume Runtime service activation preflight")
 assert(go_runtime_write_gate_source.include?("validateNoBackendTerms"), "Go Runtime write gate preview must hide backend terms")
 
 go_runtime_write_gate_cli_source = read_project_file("cmd/xnix-runtime-go/runtime_write_gate_cli_test.go")
-%w[runtime-write-gate-preview GetRuntimeWriteGate GetRuntimeWriteGatePreview WriteMethodDisabled].each do |token|
+%w[runtime-write-gate-preview GetRuntimeWriteGate GetRuntimeWriteGatePreview WriteMethodDisabled production_gate production_gate_decision production-gates-consumed-write-gate-disabled authorization_receipt_accepted].each do |token|
   assert(go_runtime_write_gate_cli_source.include?(token), "Go Runtime write gate CLI test must include #{token}")
 end
 

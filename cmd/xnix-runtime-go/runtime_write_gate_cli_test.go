@@ -22,7 +22,7 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.write_gate.v1" ||
 		payload["request_type"] != "runtime-write-gate-preview" ||
 		payload["gate_type"] != "runtime-write-gate" ||
-		payload["source"] != "go-runtime-write-gate" ||
+		payload["source"] != "go-runtime-write-gate+runtime-service-activation-preflight-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
 		payload["runtime_method"] != "GetRuntimeWriteGate" ||
 		payload["read_method"] != "GetRuntimeWriteGatePreview" ||
 		payload["method_name"] != "Launch" {
@@ -32,6 +32,7 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 		payload["go_runtime_backed"] != true ||
 		payload["kde_policy_owner"] != false ||
 		payload["gate_decision"] != "blocked-until-production-backend" ||
+		payload["production_gate_decision"] != "production-gates-consumed-write-gate-disabled" ||
 		payload["write_method_enabled"] != false ||
 		payload["dispatch_enabled"] != false ||
 		payload["request_object_created"] != false ||
@@ -42,12 +43,41 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 		payload["backend_details_exposed"] != false {
 		t.Fatalf("unexpected Runtime write gate CLI safety flags: %#v", payload)
 	}
+	productionGate := payload["production_gate"].(map[string]any)
+	if productionGate["request_type"] != "runtime-service-activation-preflight-preview" ||
+		productionGate["preflight_type"] != "production-runtime-service-activation-preflight" ||
+		productionGate["preflight_decision"] != "restricted-owner-smoke-ready" ||
+		productionGate["service_activation_preflight_ready"] != true ||
+		productionGate["production_dbus_gate_ready"] != true ||
+		productionGate["human_authorization_preflight_ready"] != true ||
+		productionGate["human_authorization_required"] != true ||
+		productionGate["human_authorization_granted"] != false ||
+		productionGate["authorization_receipt_accepted"] != false ||
+		productionGate["production_activation_ready"] != false ||
+		productionGate["restricted_smoke_ready"] != true ||
+		productionGate["system_service_started"] != false ||
+		productionGate["production_bus_claimed"] != false ||
+		productionGate["write_methods_enabled"] != false ||
+		productionGate["backend_launch_enabled"] != false ||
+		productionGate["network_required"] != false ||
+		productionGate["host_root_modified"] != false ||
+		productionGate["privileged_container_required"] != false ||
+		productionGate["backend_details_exposed"] != false {
+		t.Fatalf("unexpected production gate summary: %#v", productionGate)
+	}
 	if payload["denial_error_name"] != "org.xnix.Compatibility1.Error.WriteMethodDisabled" {
 		t.Fatalf("unexpected Runtime write gate denial: %#v", payload)
 	}
-	if len(payload["required_gates"].([]any)) != 6 ||
+	if len(payload["required_gates"].([]any)) != 9 ||
 		len(payload["supported_write_methods"].([]any)) != 4 {
 		t.Fatalf("unexpected Runtime write gate requirements: %#v", payload)
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(2) ||
+		counts["pending"] != float64(7) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected Runtime write gate counts: %#v", counts)
 	}
 
 	serialized := strings.ToLower(output.String())
