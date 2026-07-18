@@ -86,6 +86,47 @@ func TestServiceCallServesOwnerLocalOfflineKDEIdentity(t *testing.T) {
 	}
 }
 
+func TestServiceCallServesOwnerLocalRedactedBackendAdapterProfileAudit(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("GetBackendAdapterProfileAudit", nil)
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetBackendAdapterProfileAudit" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected redacted adapter profile service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetBackendAdapterProfileAudit" ||
+		dispatch["go_command"] != "backend-adapter-redacted-profile-audit-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested redacted adapter profile dispatch: %#v", dispatch)
+	}
+	nested := dispatch["payload"].(map[string]any)
+	if nested["request_type"] != "backend-adapter-redacted-profile-audit-preview" ||
+		nested["owner_local_route_candidate_ready"] != true ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected nested redacted adapter profile payload: %#v", nested)
+	}
+}
+
 func TestServiceCallDeniesWriteMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

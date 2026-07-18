@@ -1,12 +1,14 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.333
+> Last updated: 2026-07-19 | Current version: v0.2.334
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
 
-The v0.2.333 checkpoint splits KDE test launch materialization fan-out receipt creation from read-only receipt consumption. The Go Runtime now exposes `kde-test-launch-materialization-fanout-consume-preview`, which consumes an existing materialization plan receipt by id and projects it to Compatibility Center, task manager, tray, and notification previews without creating a new materialization receipt; fan-out writes, Runtime writes, command materialization, executable resolution, backend launch, process start, path exposure, backend details, and host-root mutation remain disabled.
+The v0.2.334 checkpoint creates the redacted backend adapter profile owner route. The Go Runtime now exposes `backend-adapter-redacted-profile-audit-preview` and owner-local `GetBackendAdapterProfileAudit`, allowing owner dispatch and service-call evidence to return only user-safe compatibility profile states while keeping internal adapter identifiers, profile paths, raw commands, backend details, production D-Bus exposure, Runtime writes, adapter invocation, backend launch, command materialization, networking, and host-root mutation disabled.
+
+The v0.2.333 checkpoint splits KDE test launch materialization fan-out receipt creation from read-only receipt consumption. The Go Runtime exposes `kde-test-launch-materialization-fanout-consume-preview`, which consumes an existing materialization plan receipt by id and projects it to Compatibility Center, task manager, tray, and notification previews without creating a new materialization receipt; fan-out writes, Runtime writes, command materialization, executable resolution, backend launch, process start, path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.332 checkpoint audits the restricted owner smoke receipt fan-out owner route. The Go Runtime exposes `restricted-owner-smoke-receipt-fanout-owner-route-audit-preview`, deciding that the v0.2.329 readiness/support fan-out must remain CLI-only until owner-managed opaque receipt lookup exists; caller state-root paths, production D-Bus exposure, Runtime writes, support export/case/notification side effects, backend launch, state-root path exposure, backend details, and host-root mutation remain disabled.
 

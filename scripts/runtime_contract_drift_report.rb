@@ -25,6 +25,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetKDENotificationDigestPreview
   GetSignedRecipeVerificationPreview
   GetRestrictedProductSmokePacketPreview
+  GetBackendAdapterProfileAudit
   GetRuntimeWriteGate
 ].freeze
 

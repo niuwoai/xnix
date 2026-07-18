@@ -376,6 +376,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetSignedRecipeVerificationPreview",
 		"GetRestrictedProductSmokePacketPreview",
 		"GetKDEOfflineApplicationIdentityPreview",
+		"GetBackendAdapterProfileAudit",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -414,6 +415,42 @@ func TestDispatchReadRendersOfflineKDEIdentityAsOwnerLocalPayload(t *testing.T) 
 	}
 }
 
+func TestDispatchReadRendersRedactedBackendAdapterProfileAuditAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetBackendAdapterProfileAudit", nil)
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetBackendAdapterProfileAudit" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "backend-adapter-redacted-profile-audit-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady || !dispatch.ReadOnlyDispatch || dispatch.WriteMethodsEnabled ||
+		dispatch.ProductionBusClaimed || dispatch.NetworkRequired || dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected redacted adapter profile audit dispatch: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	counts := payload["counts"].(map[string]any)
+	if payload["request_type"] != "backend-adapter-redacted-profile-audit-preview" ||
+		payload["runtime_method"] != "GetBackendAdapterProfileAudit" ||
+		payload["owner_local_route_candidate_ready"] != true ||
+		payload["full_contract_fixture_local"] != true ||
+		payload["production_dbus_exposure_ready"] != false ||
+		payload["caller_state_root_required"] != false ||
+		counts["redacted_profiles"] != float64(3) ||
+		counts["enabled_launches"] != float64(0) ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected redacted adapter profile audit payload: %#v", payload)
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetBackendAdapterProfileAudit", []string{"org.xnix.sample.notepad"}); err == nil {
+		t.Fatal("redacted adapter profile audit owner route accepted caller arguments")
+	}
+}
+
 func sampleReadDispatchArgs(method string) []string {
 	const appID = "org.xnix.sample.notepad"
 	switch method {
@@ -421,7 +458,7 @@ func sampleReadDispatchArgs(method string) []string {
 		"GetTrayStatus", "GetBackendCapabilityMatrix", "GetRuntimeServiceBinding", "GetRuntimeLiveOwnerGate",
 		"GetRuntimeOwnerSmokePlan", "GetRuntimeMethodParityManifest", "GetRuntimeOwnerProcess",
 		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness",
-		"GetWindowsCompatibilityWorkstreamsPreview", "GetRestrictedProductSmokePacketPreview":
+		"GetWindowsCompatibilityWorkstreamsPreview", "GetRestrictedProductSmokePacketPreview", "GetBackendAdapterProfileAudit":
 		return nil
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}

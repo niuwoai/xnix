@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.334] - 2026-07-19
+
+### Added
+
+- Added a redacted backend adapter profile audit through `backend-adapter-redacted-profile-audit-preview`, exposing only user-safe compatibility profile states while omitting internal adapter identifiers and profile paths.
+- Added owner-local read dispatch, service-call, smoke-batch, session-bus smoke, CLI, layout, and evidence coverage for `GetBackendAdapterProfileAudit` while keeping the full adapter contract fixture-local and leaving production D-Bus exposure, Runtime writes, adapter invocation, backend launch, command materialization, path exposure, networking, and host-root mutation disabled.
+
 ## [0.2.333] - 2026-07-19
 
 ### Added

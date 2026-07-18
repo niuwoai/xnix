@@ -20,9 +20,9 @@ func TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal(t *testi
 		preview.ReadMethod != "GetBackendAdapterContractOwnerRouteAuditPreview" ||
 		preview.SubjectRequestType != "backend-adapter-contract-preview" ||
 		preview.SubjectCommand != "backend-adapter-contract-preview" ||
-		preview.ProposedOwnerMethod != "GetBackendAdapterContract" ||
-		preview.RouteDecision != "remain-fixture-local" ||
-		preview.CurrentRouteStatus != "fixture-local-audit-ready-owner-route-blocked" {
+		preview.ProposedOwnerMethod != "GetBackendAdapterProfileAudit" ||
+		preview.RouteDecision != "redacted-profile-route-ready" ||
+		preview.CurrentRouteStatus != "redacted-profile-route-ready-full-contract-fixture-local" {
 		t.Fatalf("unexpected adapter contract owner-route audit schema: %#v", preview)
 	}
 	if !preview.CLICommandRegistered ||
@@ -32,7 +32,7 @@ func TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal(t *testi
 		preview.ProductionDBusMethodPresent ||
 		!preview.FullContractContainsAdapterIDs ||
 		!preview.KDEFacingProjectionPresent ||
-		preview.RedactedProfileRoutePresent ||
+		!preview.RedactedProfileRoutePresent ||
 		!preview.RequiresCallerRoot ||
 		preview.AdapterInvocationEnabled ||
 		preview.BackendInstallEnabled ||
@@ -41,14 +41,14 @@ func TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal(t *testi
 		preview.BackendProcessStarted ||
 		preview.CommandMaterialized ||
 		preview.ExecutablePathResolved ||
-		preview.OwnerLocalRouteCandidateReady ||
+		!preview.OwnerLocalRouteCandidateReady ||
 		preview.ProductionDBusExposureReady ||
-		preview.RecommendedNextRoute != "owner-local-redacted-adapter-profile-audit" {
+		preview.RecommendedNextRoute != "restricted-owner-smoke-redacted-adapter-profile-audit" {
 		t.Fatalf("unexpected adapter contract owner-route audit decision: %#v", preview)
 	}
 	if preview.Counts.Total != 9 ||
-		preview.Counts.Passed != 7 ||
-		preview.Counts.Pending != 2 ||
+		preview.Counts.Passed != 8 ||
+		preview.Counts.Pending != 1 ||
 		preview.Counts.Blocked != 0 ||
 		!sameStrings(preview.CheckIDs, []string{"cli-preview-registered", "go-read-model-present", "fixture-consumption-present", "owner-route-absent", "production-dbus-absent", "redacted-route-missing", "internal-detail-boundary", "route-decision", "unsafe-gates-closed"}) {
 		t.Fatalf("unexpected adapter contract owner-route audit checks: counts=%#v ids=%#v", preview.Counts, preview.CheckIDs)
@@ -94,7 +94,7 @@ func TestBackendAdapterContractOwnerRouteAuditFailsClosedWithoutSources(t *testi
 		preview.ProductionDBusExposureReady {
 		t.Fatalf("missing sources must not produce owner-route readiness: %#v", preview)
 	}
-	if preview.Counts.Blocked != 3 || preview.RouteDecision != "remain-fixture-local" {
+	if preview.Counts.Blocked != 4 || preview.RouteDecision != "redacted-profile-route-ready" {
 		t.Fatalf("missing sources must fail closed while keeping the decision fixture-local: %#v", preview.Counts)
 	}
 }

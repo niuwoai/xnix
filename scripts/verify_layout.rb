@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.333"
+EXPECTED_VERSION = "0.2.334"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -179,6 +179,7 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/backend_adapter_contract_commands.go
   cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go
   cmd/xnix-runtime-go/backend_adapter_contract_owner_route_audit_cli_test.go
+  cmd/xnix-runtime-go/backend_adapter_contract_redacted_profile_audit_cli_test.go
   cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go
   cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go
   cmd/xnix-runtime-go/desktop_activation_manifest_commands.go
@@ -298,6 +299,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/backend_adapter_contract_test.go
   internal/runtime/appidentity/backend_adapter_contract_owner_route_audit.go
   internal/runtime/appidentity/backend_adapter_contract_owner_route_audit_test.go
+  internal/runtime/appidentity/backend_adapter_contract_redacted_profile_audit.go
+  internal/runtime/appidentity/backend_adapter_contract_redacted_profile_audit_test.go
   internal/runtime/appidentity/kde_search_visibility.go
   internal/runtime/appidentity/kde_search_visibility_test.go
   internal/runtime/appidentity/kde_notification_digest.go
@@ -1250,7 +1253,7 @@ end
 assert(read_project_file("internal/runtime/appidentity/backend_adapter_contract_test.go").include?("TestBackendAdapterContractKDEProjectionIsBackendSafe"), "Go Runtime backend adapter contract tests must keep KDE projection backend-safe")
 assert(read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_cli_test.go").include?("TestBackendAdapterContractPreviewCommandRendersNoopBoundary"), "Go Runtime backend adapter contract CLI tests must render the no-op boundary")
 go_backend_adapter_contract_owner_route_audit_source = read_project_file("internal/runtime/appidentity/backend_adapter_contract_owner_route_audit.go")
-%w[BackendAdapterContractOwnerRouteAuditPreview NewBackendAdapterContractOwnerRouteAuditPreview xnix.runtime.backend_adapter_contract_owner_route_audit.v1 backend-adapter-contract-owner-route-audit-preview GetBackendAdapterContractOwnerRouteAudit GetBackendAdapterContractOwnerRouteAuditPreview adapter-contract-owner-route-audit GetBackendAdapterContract remain-fixture-local fixture-local-audit-ready-owner-route-blocked owner-local-redacted-adapter-profile-audit cli-preview-registered go-read-model-present fixture-consumption-present owner-route-absent production-dbus-absent redacted-route-missing internal-detail-boundary route-decision unsafe-gates-closed].each do |token|
+%w[BackendAdapterContractOwnerRouteAuditPreview NewBackendAdapterContractOwnerRouteAuditPreview xnix.runtime.backend_adapter_contract_owner_route_audit.v1 backend-adapter-contract-owner-route-audit-preview GetBackendAdapterContractOwnerRouteAudit GetBackendAdapterContractOwnerRouteAuditPreview adapter-contract-owner-route-audit GetBackendAdapterProfileAudit redacted-profile-route-ready redacted-profile-route-ready-full-contract-fixture-local restricted-owner-smoke-redacted-adapter-profile-audit cli-preview-registered go-read-model-present fixture-consumption-present owner-route-absent production-dbus-absent redacted-route-missing internal-detail-boundary route-decision unsafe-gates-closed].each do |token|
   assert(go_backend_adapter_contract_owner_route_audit_source.include?(token), "Go Runtime backend adapter contract owner-route audit must include #{token}")
 end
 %w[FixtureMatrixConsumesContract OwnerDispatchRoutePresent ProductionDBusMethodPresent FullContractContainsAdapterIDs KDEFacingProjectionPresent RedactedProfileRoutePresent RequiresCallerRoot AdapterInvocationEnabled BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted CommandMaterialized ExecutablePathResolved OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled HostRootModified StateRootPathExposed BackendDetailsExposed].each do |token|
@@ -1258,7 +1261,7 @@ end
 end
 assert(go_backend_adapter_contract_owner_route_audit_source.include?("validateNoBackendTerms"), "Go Runtime backend adapter contract owner-route audit must hide backend terms")
 go_backend_adapter_contract_owner_route_audit_test_source = read_project_file("internal/runtime/appidentity/backend_adapter_contract_owner_route_audit_test.go")
-%w[TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal TestBackendAdapterContractOwnerRouteAuditFailsClosedWithoutSources remain-fixture-local owner-route-absent production-dbus-absent redacted-route-missing internal-detail-boundary].each do |token|
+%w[TestBackendAdapterContractOwnerRouteAuditKeepsContractFixtureLocal TestBackendAdapterContractOwnerRouteAuditFailsClosedWithoutSources redacted-profile-route-ready owner-route-absent production-dbus-absent redacted-route-missing internal-detail-boundary].each do |token|
   assert(go_backend_adapter_contract_owner_route_audit_test_source.include?(token), "Go Runtime backend adapter contract owner-route audit tests must include #{token}")
 end
 go_backend_adapter_contract_owner_route_audit_cli_source = read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_commands.go") +
@@ -1266,6 +1269,25 @@ go_backend_adapter_contract_owner_route_audit_cli_source = read_project_file("cm
                                                           read_project_file("cmd/xnix-runtime-go/main.go")
 %w[backend-adapter-contract-owner-route-audit-preview runBackendAdapterContractOwnerRouteAuditPreview TestBackendAdapterContractOwnerRouteAuditPreviewCommand route_decision fixture_matrix_consumes_contract owner_dispatch_route_present production_dbus_method_present owner_local_route_candidate_ready].each do |token|
   assert(go_backend_adapter_contract_owner_route_audit_cli_source.include?(token), "Go Runtime backend adapter contract owner-route audit CLI must include #{token}")
+end
+
+go_backend_adapter_redacted_profile_audit_source = read_project_file("internal/runtime/appidentity/backend_adapter_contract_redacted_profile_audit.go")
+%w[BackendAdapterRedactedProfileAuditPreview BackendAdapterRedactedProfile NewBackendAdapterRedactedProfileAuditPreview xnix.runtime.backend_adapter_redacted_profile_audit.v1 backend-adapter-redacted-profile-audit-preview owner-local-redacted-adapter-profile-audit GetBackendAdapterProfileAudit GetBackendAdapterProfileAuditPreview redacted-profile-route-ready contract-profile-projection-consumed internal-adapter-ids-redacted owner-local-route-candidate full-contract-fixture-local production-dbus-not-claimed no-caller-state-root unsafe-gates-closed].each do |token|
+  assert(go_backend_adapter_redacted_profile_audit_source.include?(token), "Go Runtime backend adapter redacted profile audit must include #{token}")
+end
+%w[InternalAdapterIDsRedacted InternalProfilePathsRedacted OwnerLocalRouteCandidateReady FullContractFixtureLocal ProductionDBusExposureReady CallerStateRootRequired AdapterInvocationEnabled BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted CommandMaterialized ExecutablePathResolved HostRootModified StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed].each do |token|
+  assert(go_backend_adapter_redacted_profile_audit_source.include?(token), "Go Runtime backend adapter redacted profile audit must expose safety gate #{token}")
+end
+assert(go_backend_adapter_redacted_profile_audit_source.include?("validateNoBackendTerms"), "Go Runtime backend adapter redacted profile audit must hide backend terms")
+go_backend_adapter_redacted_profile_audit_test_source = read_project_file("internal/runtime/appidentity/backend_adapter_contract_redacted_profile_audit_test.go")
+%w[TestBackendAdapterRedactedProfileAuditPreviewDefinesOwnerRouteSplit TestBackendAdapterRedactedProfileAuditOutputIsRedacted TestBackendAdapterRedactedProfileAuditFailsClosedWithoutOwnerRouteSource automatic performance-priority compatibility-priority owner-local-route-candidate].each do |token|
+  assert(go_backend_adapter_redacted_profile_audit_test_source.include?(token), "Go Runtime backend adapter redacted profile audit tests must include #{token}")
+end
+go_backend_adapter_redacted_profile_audit_cli_source = read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_commands.go") +
+                                                      read_project_file("cmd/xnix-runtime-go/backend_adapter_contract_redacted_profile_audit_cli_test.go") +
+                                                      read_project_file("cmd/xnix-runtime-go/main.go")
+%w[backend-adapter-redacted-profile-audit-preview runBackendAdapterRedactedProfileAuditPreview TestBackendAdapterRedactedProfileAuditPreviewCommand owner_local_route_candidate_ready full_contract_fixture_local production_dbus_exposure_ready].each do |token|
+  assert(go_backend_adapter_redacted_profile_audit_cli_source.include?(token), "Go Runtime backend adapter redacted profile audit CLI must include #{token}")
 end
 
 backend_capability_matrix_source = read_project_file("lib/xnix/compatibility/compatibility_backend_capability_matrix.rb")
@@ -1545,7 +1567,7 @@ go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owne
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")
-%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
+%w[ReadDispatch runtime-owner-read-dispatch xnix.runtime.owner_read_dispatch.v1 go-owner-read-dispatch go-runtime-owner-candidate+in-process-read-dispatch DispatchRead SupportedReadDispatchMethods ListApplications GetApplication GetDiagnostics GetRunPlan GetDesktopActivationManifest GetKDEApplicationSurfacePlan GetCompatibilityInstallPlan GetRuntimeServiceBinding GetRuntimeLiveOwnerGate GetRuntimeOwnerProcess GetRuntimeOwnerSmokePlan GetRuntimeMethodParityManifest GetRuntimeOwnerRouteManifest GetRuntimeOwnerRecipeTrust GetRuntimeOwnerReadiness GetWindowsCompatibilityWorkstreamsPreview windows-compatibility-workstreams-preview GetKDENotificationDigestPreview kde-notification-digest-preview ownerNotificationDigestEvents GetSignedRecipeVerificationPreview signed-recipe-verifier-preview NewRegistrySignedRecipeVerificationPreview GetRestrictedProductSmokePacketPreview restricted-product-smoke-packet-preview PrepareRestrictedProductSmokePacket GetBackendAdapterProfileAudit backend-adapter-redacted-profile-audit-preview NewBackendAdapterRedactedProfileAuditPreview go-owner-local-preview GetRuntimeWriteGate GetKDECenterPageSectionDetail].each do |token|
   assert(go_runtime_owner_dispatch_source.include?(token), "Go Runtime owner read dispatch must include #{token}")
 end
 %w[ReadOnlyDispatch WriteMethod WriteMethodsEnabled RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership EventLoopStarted SessionBusClaimed ProductionBusClaimed SystemServiceStarted NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -3033,6 +3055,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
   smoke-adapter
   session-smoke
   go-cli-route-commands
+  GetBackendAdapterProfileAudit
   json
   markdown
   drift_detected
@@ -3047,7 +3070,7 @@ runtime_contract_drift_report_source = read_project_file("scripts/runtime_contra
 end
 
 runtime_contract_drift_report_test_source = read_project_file("test/test_runtime_contract_drift_report.rb")
-%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner-session-bus-smoke-source owner_read_dispatch_method_count owner_session_bus_smoke_step_count drift_detected host_root_modified backend_details_exposed].each do |token|
+%w[--format json markdown parity-read-methods owner-read-dispatch-local-methods owner-read-dispatch-all-read-methods owner-session-bus-smoke-source GetBackendAdapterProfileAudit owner_read_dispatch_method_count owner_session_bus_smoke_step_count drift_detected host_root_modified backend_details_exposed].each do |token|
   assert(runtime_contract_drift_report_test_source.include?(token), "Runtime contract drift report test must include #{token}")
 end
 
