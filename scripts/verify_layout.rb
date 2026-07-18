@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.357"
+EXPECTED_VERSION = "0.2.358"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1788,6 +1788,24 @@ go_runtime_production_receipt_persistence_threat_review_test_source = read_proje
                                                                      read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionReceiptPersistenceThreatReviewPreviewModelsThreats TestProductionReceiptPersistenceThreatReviewPreviewFailsClosedWithoutSources TestProductionReceiptPersistenceThreatReviewPreviewCommand production-receipt-persistence-threat-review-preview persistence_threat_review_required persistence_threat_review_modeled writer_authorization_review_consumed persistence_threat_review_ready ready_threat_item_count persistence_enabled_threat_count receipt_expiry_write_enabled receipt_revocation_write_enabled].each do |token|
   assert(go_runtime_production_receipt_persistence_threat_review_test_source.include?(token), "Go Runtime production receipt persistence threat review tests and CLI must include #{token}")
+end
+
+go_runtime_production_receipt_revocation_visibility_audit_source = read_project_file("internal/runtime/owner/production_receipt_revocation_visibility_audit.go")
+%w[ProductionReceiptRevocationVisibilityAuditPreview ProductionReceiptRevocationVisibilityAuditItem ProductionReceiptRevocationVisibilityAuditCheck NewProductionReceiptRevocationVisibilityAuditPreview xnix.runtime.production_receipt_revocation_visibility_audit.v1 production-receipt-revocation-visibility-audit-preview receipt-expiry-revocation-production-kde-visibility-audit production-receipt-revocation-visibility-audit-ready-visibility-only production-receipt-revocation-visibility-audit-blocked production-receipt-persistence-threat-review-preview production-desktop-side-effect-review-preview persistence-threat-review-consumed desktop-side-effect-review-consumed revocation-visibility-modeled-only five-visibility-items-present visibility-items-ready-writes-disabled revocation-expiry-writes-disabled notifications-and-desktop-side-effects-disabled production-ownership-disabled host-boundary-closed receipt-current-visible receipt-expiring-visible receipt-expired-visible receipt-revoked-visible receipt-missing-review-visible].each do |token|
+  assert(go_runtime_production_receipt_revocation_visibility_audit_source.include?(token), "Go Runtime production receipt revocation visibility audit must include #{token}")
+end
+%w[VisibilityAuditRequired VisibilityAuditModeled PersistenceThreatReviewConsumed DesktopSideEffectReviewConsumed ProductionGateVisibilityModeled KDEStatusVisibilityModeled CallerStateRootRequired AuthorizationAccepted RevocationVisibilityReady ProductionReadiness ProductionOwnershipReady VisibilityItemCount RequiredVisibilityItemCount ReadyVisibilityItemCount MissingVisibilityItemCount RevocationWriteEnabledItemCount ExpiryWriteEnabledItemCount NotificationEnabledItemCount SideEffectItemCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled ReceiptWriterEnabled ReceiptPersistenceEnabled ReceiptLookupWritesEnabled ReceiptReplayEnabled ReceiptExpiryWriteEnabled ReceiptRevocationWriteEnabled ReceiptRevocationVisibilityPersisted DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled CompatibilityCenterPersisted PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_receipt_revocation_visibility_audit_source.include?(token), "Go Runtime production receipt revocation visibility audit must expose safety gate #{token}")
+end
+%w[production_receipt_persistence_threat_review.go production_desktop_side_effect_review.go docs/claude-code-current-dispatch-picks.md].each do |token|
+  assert(go_runtime_production_receipt_revocation_visibility_audit_source.include?(token), "Go Runtime production receipt revocation visibility audit must consume #{token}")
+end
+go_runtime_production_receipt_revocation_visibility_audit_test_source = read_project_file("internal/runtime/owner/production_receipt_revocation_visibility_audit_test.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionReceiptRevocationVisibilityAuditPreviewModelsVisibility TestProductionReceiptRevocationVisibilityAuditPreviewFailsClosedWithoutSources TestProductionReceiptRevocationVisibilityAuditPreviewCommand production-receipt-revocation-visibility-audit-preview visibility_audit_required visibility_audit_modeled persistence_threat_review_consumed desktop_side_effect_review_consumed revocation_visibility_ready ready_visibility_item_count revocation_write_enabled_item_count expiry_write_enabled_item_count notification_enabled_item_count].each do |token|
+  assert(go_runtime_production_receipt_revocation_visibility_audit_test_source.include?(token), "Go Runtime production receipt revocation visibility audit tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")

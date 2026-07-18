@@ -601,6 +601,110 @@ func TestProductionReceiptPersistenceThreatReviewPreviewCommandRejectsPositional
 	}
 }
 
+func TestProductionReceiptRevocationVisibilityAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-revocation-visibility-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-revocation-visibility-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_revocation_visibility_audit.v1" ||
+		payload["request_type"] != "production-receipt-revocation-visibility-audit-preview" ||
+		payload["audit_type"] != "receipt-expiry-revocation-production-kde-visibility-audit" ||
+		payload["audit_decision"] != "production-receipt-revocation-visibility-audit-ready-visibility-only" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt revocation visibility payload: %s", output.String())
+	}
+	if payload["visibility_audit_required"] != true ||
+		payload["visibility_audit_modeled"] != true ||
+		payload["persistence_threat_review_consumed"] != true ||
+		payload["desktop_side_effect_review_consumed"] != true ||
+		payload["production_gate_visibility_modeled"] != true ||
+		payload["kde_status_visibility_modeled"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["revocation_visibility_ready"] != true ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt revocation visibility decision: %s", output.String())
+	}
+	if payload["visibility_item_count"] != float64(5) ||
+		payload["required_visibility_item_count"] != float64(5) ||
+		payload["ready_visibility_item_count"] != float64(5) ||
+		payload["missing_visibility_item_count"] != float64(0) ||
+		payload["revocation_write_enabled_item_count"] != float64(0) ||
+		payload["expiry_write_enabled_item_count"] != float64(0) ||
+		payload["notification_enabled_item_count"] != float64(0) ||
+		payload["side_effect_item_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt revocation visibility counts: %s", output.String())
+	}
+	items := payload["visibility_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected production receipt revocation visibility item list: %s", output.String())
+	}
+	for _, item := range items {
+		visibility := item.(map[string]any)
+		if visibility["evidence_present"] != true ||
+			visibility["visibility_modeled"] != true ||
+			visibility["user_visible"] != true ||
+			visibility["production_gate_visible"] != true ||
+			visibility["kde_status_visible"] != true ||
+			visibility["review_only"] != true ||
+			visibility["runtime_owned"] != true ||
+			visibility["go_runtime_backed"] != true ||
+			visibility["kde_policy_owner"] != false ||
+			visibility["receipt_revocation_write_enabled"] != false ||
+			visibility["receipt_expiry_write_enabled"] != false ||
+			visibility["receipt_persistence_enabled"] != false ||
+			visibility["receipt_lookup_writes_enabled"] != false ||
+			visibility["receipt_replay_enabled"] != false ||
+			visibility["receipt_accepted"] != false ||
+			visibility["authorization_accepted"] != false ||
+			visibility["notification_sent"] != false ||
+			visibility["notification_delivery_enabled"] != false ||
+			visibility["desktop_files_written"] != false ||
+			visibility["settings_persisted"] != false ||
+			visibility["production_readiness"] != false ||
+			visibility["production_ownership_ready"] != false ||
+			visibility["side_effects_disabled"] != true ||
+			visibility["host_root_modified"] != false ||
+			visibility["internal_details_exposed"] != false ||
+			visibility["visibility_status"] != "visibility-modeled-writes-disabled" {
+			t.Fatalf("unsafe production receipt revocation visibility item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt revocation visibility checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt revocation visibility output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "receipt_revocation_visibility_persisted", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "notification_sent", "notification_delivery_enabled", "compatibility_center_persisted", "portal_request_created", "request_objects_created", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt revocation visibility gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptRevocationVisibilityAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-revocation-visibility-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-revocation-visibility-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.358] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-revocation-visibility-audit-preview`, a read-only Go owner audit that models how current, expiring, expired, revoked, and missing-review authorization receipt states would surface to production gates and KDE-safe status views.
+- Wired the revocation visibility audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping receipt revocation writes, expiry writes, persistence, lookup writes, replay, notification delivery, Compatibility Center persistence, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.357] - 2026-07-19
 
 ### Added
