@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.356] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-writer-authorization-review-preview`, a read-only Go owner review that models the separate operator and writer authorization boundary required before any future authorization receipt can be written, persisted, accepted, or replayed.
+- Wired the writer authorization review into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping receipt writes, receipt persistence, receipt replay, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.355] - 2026-07-19
 
 ### Added

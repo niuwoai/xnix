@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.355"
+EXPECTED_VERSION = "0.2.356"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1752,6 +1752,24 @@ go_runtime_production_receipt_acceptance_propagation_preflight_test_source = rea
                                                                             read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionReceiptAcceptancePropagationPreflightPreviewModelsFutureAcceptance TestProductionReceiptAcceptancePropagationPreflightPreviewFailsClosedWithoutSources TestProductionReceiptAcceptancePropagationPreflightPreviewCommand production-receipt-acceptance-propagation-preflight-preview future_acceptance_modeled acceptance_simulation_only consumption_audit_consumed propagation_preflight_ready propagation_ready_target_count missing_target_count acceptance_enabled_target_count].each do |token|
   assert(go_runtime_production_receipt_acceptance_propagation_preflight_test_source.include?(token), "Go Runtime production receipt acceptance propagation preflight tests and CLI must include #{token}")
+end
+
+go_runtime_production_receipt_writer_authorization_review_source = read_project_file("internal/runtime/owner/production_receipt_writer_authorization_review.go")
+%w[ProductionReceiptWriterAuthorizationReviewPreview ProductionReceiptWriterAuthorizationReviewItem ProductionReceiptWriterAuthorizationReviewCheck NewProductionReceiptWriterAuthorizationReviewPreview xnix.runtime.production_receipt_writer_authorization_review.v1 production-receipt-writer-authorization-review-preview receipt-writer-operator-authorization-boundary-review production-receipt-writer-authorization-review-ready-writes-disabled production-receipt-writer-authorization-review-blocked production-receipt-acceptance-propagation-preflight-preview production-human-authorization-receipt-consolidation-preview production-authorization-consumption-audit-preview acceptance-propagation-consumed writer-authorization-modeled-only five-review-items-present review-items-ready-writes-disabled receipt-writes-disabled production-ownership-disabled runtime-side-effects-disabled host-boundary-closed operator-action-boundary opaque-boundary-consolidated production-gates-consume-boundary persistence-disabled].each do |token|
+  assert(go_runtime_production_receipt_writer_authorization_review_source.include?(token), "Go Runtime production receipt writer authorization review must include #{token}")
+end
+%w[WriterAuthorizationRequired WriterAuthorizationModeled OperatorActionRequired AcceptancePropagationConsumed OwnerManagedOpaqueBoundaryReady CallerStateRootRequired AuthorizationAccepted WriterReviewReady ProductionReadiness ProductionOwnershipReady ReviewItemCount RequiredReviewItemCount ReadyReviewItemCount MissingReviewItemCount WriteEnabledReviewItemCount AcceptanceEnabledReviewItemCount SideEffectReviewItemCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled ReceiptWriterEnabled ReceiptPersistenceEnabled ReceiptLookupWritesEnabled ReceiptReplayEnabled DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted NotificationSent NotificationDeliveryEnabled PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_receipt_writer_authorization_review_source.include?(token), "Go Runtime production receipt writer authorization review must expose safety gate #{token}")
+end
+%w[production_receipt_acceptance_propagation_preflight.go production_human_authorization_receipt_consolidation.go production_authorization_consumption_audit.go].each do |token|
+  assert(go_runtime_production_receipt_writer_authorization_review_source.include?(token), "Go Runtime production receipt writer authorization review must consume #{token}")
+end
+go_runtime_production_receipt_writer_authorization_review_test_source = read_project_file("internal/runtime/owner/production_receipt_writer_authorization_review_test.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                       read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionReceiptWriterAuthorizationReviewPreviewModelsWriterBoundary TestProductionReceiptWriterAuthorizationReviewPreviewFailsClosedWithoutSources TestProductionReceiptWriterAuthorizationReviewPreviewCommand production-receipt-writer-authorization-review-preview writer_authorization_required writer_authorization_modeled acceptance_propagation_consumed writer_review_ready ready_review_item_count write_enabled_review_item_count receipt_replay_enabled].each do |token|
+  assert(go_runtime_production_receipt_writer_authorization_review_test_source.include?(token), "Go Runtime production receipt writer authorization review tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")
