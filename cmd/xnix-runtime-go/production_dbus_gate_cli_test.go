@@ -1467,6 +1467,98 @@ func TestProductionReceiptNotificationActionDryRunResultPersistenceAuthorization
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultRetentionRedactionPolicyAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_retention_redaction_policy_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-retention-redaction-policy-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-ready-policy-only" {
+		t.Fatalf("unexpected retention redaction policy payload: %s", output.String())
+	}
+	if payload["retention_redaction_policy_audit_required"] != true ||
+		payload["retention_redaction_policy_audit_modeled"] != true ||
+		payload["persistence_authorization_audit_consumed"] != true ||
+		payload["retention_redaction_guidance_consumed"] != true ||
+		payload["retention_redaction_policy_ready"] != true ||
+		payload["retention_window_modeled"] != true ||
+		payload["redaction_rules_modeled"] != true ||
+		payload["result_persistence_authorized"] != false ||
+		payload["retention_enforcement_enabled"] != false ||
+		payload["redaction_enforcement_enabled"] != false ||
+		payload["dry_run_result_persisted"] != false ||
+		payload["result_visibility_persisted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected retention redaction policy decision: %s", output.String())
+	}
+	if payload["policy_item_count"] != float64(5) ||
+		payload["required_policy_item_count"] != float64(5) ||
+		payload["ready_policy_item_count"] != float64(5) ||
+		payload["missing_policy_item_count"] != float64(0) ||
+		payload["retention_enabled_item_count"] != float64(0) ||
+		payload["redaction_write_item_count"] != float64(0) ||
+		payload["persisted_result_item_count"] != float64(0) ||
+		payload["executed_dry_run_item_count"] != float64(0) ||
+		payload["side_effect_policy_item_count"] != float64(0) {
+		t.Fatalf("unexpected retention redaction policy counts: %s", output.String())
+	}
+	items := payload["policy_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected retention redaction policy item list: %s", output.String())
+	}
+	for _, item := range items {
+		policy := item.(map[string]any)
+		if policy["evidence_present"] != true ||
+			policy["retention_policy_modeled"] != true ||
+			policy["redaction_policy_modeled"] != true ||
+			policy["redacted_for_kde"] != true ||
+			policy["runtime_diagnostics_modeled"] != true ||
+			policy["retention_enforcement_enabled"] != false ||
+			policy["redaction_enforcement_enabled"] != false ||
+			policy["dry_run_result_persisted"] != false ||
+			policy["result_visibility_persisted"] != false ||
+			policy["runtime_diagnostics_persisted"] != false ||
+			policy["side_effects_disabled"] != true ||
+			policy["host_root_modified"] != false ||
+			policy["internal_details_exposed"] != false ||
+			policy["policy_status"] != "retention-redaction-policy-modeled-enforcement-disabled" {
+			t.Fatalf("unsafe retention redaction policy item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected retention redaction policy checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("retention redaction policy output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "dispatch_dry_run_execution_enabled", "dry_run_result_persistence_enabled", "result_visibility_persistence_enabled", "retention_policy_persistence_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "runtime_diagnostics_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe retention redaction policy gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultRetentionRedactionPolicyAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.365
+> Last updated: 2026-07-19 | Current version: v0.2.366
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.366 checkpoint adds production receipt notification action dry-run result retention redaction policy audit. `production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview` models retention windows and redaction rules for future stored dry-run result summaries while keeping policy persistence, retention enforcement, redaction enforcement, dry-run execution, dry-run result persistence, visibility persistence, dispatch grants, request-object creation, dispatch, persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.365 checkpoint adds production receipt notification action dry-run result persistence authorization audit. `production-receipt-notification-action-dry-run-result-persistence-authorization-audit-preview` models the authorization boundary required before redacted dry-run result summaries can be stored while keeping dry-run execution, dry-run result persistence, visibility persistence, dispatch grants, request-object creation, dispatch, persistence, notification actions, Portal requests, Compatibility Center navigation, receipt writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 

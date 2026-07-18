@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.366] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-retention-redaction-policy-audit-preview`, a read-only Go owner audit that models retention windows and redaction rules for future stored dry-run result summaries.
+- Wired the dry-run result retention redaction policy audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping policy persistence, retention enforcement, redaction enforcement, dry-run execution, dry-run result persistence, visibility persistence, request creation, dispatch, Portal requests, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.365] - 2026-07-19
 
 ### Added
