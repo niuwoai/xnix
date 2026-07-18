@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.320-rc5
+> Last updated: 2026-07-18 | Current version: v0.2.320-rc6
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc6 verification checkpoint replaces passive systemd serial-marker matching with an authenticated serial health probe. The rc5 q4 build produced the Fedora 44 container and a clean 15.1 GiB virtual qcow2; direct KVM inspection proved `graphical.target` and `plasmalogin.service` active with no failed units, while the passive serial smoke timed out because systemd did not print those target lines. rc6 signs in with the disk blueprint's development account, queries both units, emits an unambiguous pass/fail marker, and terminates QEMU early. The container driver also exposes the exact isolated Podman graphroot, runroot, `slirp4netns`, repository host pin, and proxy-clearing controls used on q4 without permitting host networking.
 
 The v0.2.320-rc5 build checkpoint incorporates the first complete q4 flagship evidence. q4 built the rc4 Fedora 44 container and a 15.3 GiB virtual qcow2, `qemu-img check` reported no errors, and a KVM boot proved `graphical.target` and Fedora 44's `plasmalogin.service` active. rc5 replaces obsolete SDDM assumptions, makes the serial smoke ANSI-aware, KVM-first, snapshot-based, and persistently logged, and automates custom Podman graphroot/runroot mounts for bootc-image-builder. The development Ruby `xnix-compatd` wrapper is no longer installed or enabled as a production service because it does not own the system D-Bus name; production Runtime ownership and Windows application execution remain explicit release blockers.
 

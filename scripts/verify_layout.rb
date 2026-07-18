@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.320-rc5"
+EXPECTED_VERSION = "0.2.320-rc6"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -565,6 +565,7 @@ REQUIRED_FILES = %w[
   test/test_tray_status_model.rb
   lib/xnix/image/kde_image.rb
   lib/xnix/image/boot_smoke.rb
+  lib/xnix/image/serial_probe.rb
   lib/xnix/image/disk_build.rb
   scripts/build_kde_image.rb
   scripts/build_kde_disk.rb

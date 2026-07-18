@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc6] - 2026-07-18
+
+### Fixed
+
+- Replaced passive graphical-target serial matching with an authenticated serial probe that queries `graphical.target` and `plasmalogin.service`, emits deterministic pass/fail markers, and terminates QEMU after a result.
+- Added isolated Podman graphroot, runroot, `slirp4netns`, repository host pin, and proxy-clearing options to the container build driver while rejecting host networking.
+- Recorded the successful rc5 container and qcow2 builds, clean `qemu-img` validation, active KDE graphical target and Plasma Login Manager, and empty failed-unit set observed under KVM on q4.
+
 ## [0.2.320-rc5] - 2026-07-18
 
 ### Changed

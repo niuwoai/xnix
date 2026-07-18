@@ -6,6 +6,7 @@ require "pathname"
 require "tempfile"
 require_relative "../lib/xnix/image/kde_image"
 require_relative "../lib/xnix/image/boot_smoke"
+require_relative "../lib/xnix/image/serial_probe"
 
 def assert(condition, message)
   return if condition
@@ -70,6 +71,29 @@ assert(containerfile.include?("systemctl preset-all"), "rendered Containerfile m
 assert(!containerfile.include?("COPY runtime/systemd/xnix-compatd.service"),
        "rendered Containerfile must not copy the development Runtime unit")
 
+# --- Container build command -----------------------------------------
+build_cmd = image.build_command(
+  builder: "/usr/bin/podman",
+  tag: "localhost/xnix-kinoite:test",
+  storage_root: "/home/xnix-build/containers/storage",
+  runroot: "/home/xnix-build/containers/runroot",
+  network: "slirp4netns",
+  add_host: "updates.example.test:192.0.2.10"
+)
+build_joined = build_cmd.join(" ")
+assert(build_joined.include?("--root /home/xnix-build/containers/storage"),
+       "container build must support an isolated Podman graphroot")
+assert(build_joined.include?("--network slirp4netns"),
+       "container build must support isolated user-mode networking")
+assert(build_joined.include?("--add-host updates.example.test:192.0.2.10"),
+       "container build must support a pinned repository host")
+begin
+  image.build_command(builder: "podman", tag: "test", network: "host")
+  assert(false, "container build must reject host networking")
+rescue Xnix::Image::KdeImage::ManifestError
+  # expected
+end
+
 # --- Drift guard: checked-in snapshot matches the render --------------
 on_disk_containerfile = project_root.join("image/kinoite/Containerfile")
 assert(on_disk_containerfile.file?, "image/kinoite/Containerfile snapshot must exist")
@@ -118,5 +142,18 @@ kvm_cmd = smoke.boot_command(
 )
 assert(kvm_cmd.include?("q35,accel=kvm"), "KVM boot command must select hardware acceleration")
 assert(kvm_cmd.include?("host"), "KVM boot command must expose the host CPU")
+assert(smoke.active_units == %w[graphical.target plasmalogin.service],
+       "boot smoke must actively probe the graphical target and login manager")
+assert(smoke.probe_command.include?("systemctl is-active --quiet graphical.target"),
+       "boot probe must query graphical.target")
+assert(!smoke.probe_command.include?(smoke.expected_markers.first),
+       "the echoed probe command must not contain the complete pass marker")
+
+# --- Serial login state machine --------------------------------------
+probe = Xnix::Image::SerialProbe.new(username: "test-user", password: "test-password", command: "probe")
+assert(probe.next_input("fedora login:") == "test-user\n", "serial probe must answer the login prompt")
+assert(probe.next_input("Password:") == "test-password\n", "serial probe must answer the password prompt")
+assert(probe.next_input("Welcome to Fedora Linux") == "probe\n", "serial probe must run the health command")
+assert(probe.next_input("Welcome to Fedora Linux") == nil, "serial probe must run each input only once")
 
 puts "PASS: KDE Plasma atomic image pipeline is consistent"

@@ -15,12 +15,20 @@
 #   ruby scripts/build_kde_image.rb            # detect + build if possible
 #   ruby scripts/build_kde_image.rb --check    # validate + drift + detect only
 #   ruby scripts/build_kde_image.rb --tag NAME # override the output image tag
+#   ruby scripts/build_kde_image.rb --storage-root DIR --runroot DIR
+#   ruby scripts/build_kde_image.rb --network slirp4netns --add-host HOST:IP --no-proxy
 
 require "pathname"
 require_relative "../lib/xnix/image/kde_image"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 CONTAINERFILE_PATH = PROJECT_ROOT.join("image/kinoite/Containerfile")
+PROXY_VARIABLES = %w[HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy].freeze
+
+def arg_value(flag)
+  index = ARGV.index(flag)
+  index ? ARGV[index + 1] : nil
+end
 
 def which(binary)
   ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |dir|
@@ -31,8 +39,12 @@ def which(binary)
 end
 
 check_only = ARGV.delete("--check")
-tag_index = ARGV.index("--tag")
-tag = tag_index ? ARGV[tag_index + 1] : nil
+no_proxy = ARGV.delete("--no-proxy")
+tag = arg_value("--tag")
+storage_root = arg_value("--storage-root")
+runroot = arg_value("--runroot")
+network = arg_value("--network")
+add_host = arg_value("--add-host")
 
 image = Xnix::Image::KdeImage.new(project_root: PROJECT_ROOT.to_s)
 tag ||= "#{image.manifest.fetch('image_name')}:#{image.version}"
@@ -74,8 +86,16 @@ if check_only
 end
 
 # 4. Build.
-command = [builder, "build", "--file", CONTAINERFILE_PATH.to_s, "--tag", tag, PROJECT_ROOT.to_s]
+command = image.build_command(
+  builder: builder,
+  tag: tag,
+  storage_root: storage_root,
+  runroot: runroot,
+  network: network,
+  add_host: add_host
+)
+build_env = no_proxy ? PROXY_VARIABLES.to_h { |name| [name, nil] } : {}
 puts "RUN: #{command.join(' ')}"
-success = system(*command)
+success = system(build_env, *command)
 abort "Image build failed (#{builder})." unless success
 puts "DONE: built #{tag}"

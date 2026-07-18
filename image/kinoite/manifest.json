@@ -87,8 +87,12 @@
   ],
   "boot_smoke": {
     "expect_serial_markers": [
-      "Reached target Graphical Interface",
-      "Plasma Login Manager"
+      "XNIX_BOOT_PROBE_PASS"
+    ],
+    "fail_marker": "XNIX_BOOT_PROBE_FAIL",
+    "active_units": [
+      "graphical.target",
+      "plasmalogin.service"
     ],
     "timeout_seconds": 300
   },

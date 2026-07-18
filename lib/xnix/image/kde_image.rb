@@ -19,6 +19,8 @@ module Xnix
     # constrained CI container.
     class KdeImage
       CLI_COMMAND = "xnix-kde-image"
+      SUPPORTED_BUILD_NETWORKS = %w[private slirp4netns].freeze
+      ADD_HOST = /\A[A-Za-z0-9.-]+:(?:\d{1,3}\.){3}\d{1,3}\z/
 
       REQUIRED_MANIFEST_KEYS = %w[
         schema image_name base_image architecture build_mode desktop
@@ -102,6 +104,28 @@ module Xnix
         lines << "# bootc build validation keeps the ostree commit consistent."
         lines << "RUN bootc container lint || true"
         lines.join("\n") + "\n"
+      end
+
+      def build_command(builder:, tag:, storage_root: nil, runroot: nil, network: nil, add_host: nil)
+        raise ManifestError, "unsupported build network: #{network}" if
+          network && !SUPPORTED_BUILD_NETWORKS.include?(network)
+        raise ManifestError, "invalid --add-host value: #{add_host}" if add_host && !add_host.match?(ADD_HOST)
+        if storage_root && File.basename(builder) != "podman"
+          raise ManifestError, "custom container storage requires podman"
+        end
+        raise ManifestError, "runroot is required with storage_root" if storage_root && !runroot
+
+        command = [builder]
+        command.concat(["--root", storage_root, "--runroot", runroot]) if storage_root
+        command << "build"
+        command.concat(["--network", network]) if network
+        command.concat(["--add-host", add_host]) if add_host
+        command.concat([
+          "--file", project_root.join("image/kinoite/Containerfile").to_s,
+          "--tag", tag,
+          project_root.to_s
+        ])
+        command
       end
 
       def to_h
@@ -191,6 +215,12 @@ module Xnix
       def boot_marker_problems
         markers = manifest.dig("boot_smoke", "expect_serial_markers")
         return ["boot_smoke must list at least one expected serial marker"] if markers.nil? || markers.empty?
+
+        active_units = Array(manifest.dig("boot_smoke", "active_units"))
+        return ["boot_smoke must list at least one active systemd unit"] if active_units.empty?
+
+        display_unit = "#{manifest.dig('desktop', 'display_manager')}.service"
+        return ["boot_smoke must probe #{display_unit}"] unless active_units.include?(display_unit)
 
         []
       end

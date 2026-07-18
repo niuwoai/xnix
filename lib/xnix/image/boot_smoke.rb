@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "kde_image"
+require "shellwords"
 
 module Xnix
   module Image
@@ -14,6 +15,7 @@ module Xnix
       DEFAULT_MEMORY = "4G"
       DEFAULT_CPU_COUNT = "2"
       ANSI_ESCAPE = /\e(?:\[[0-?]*[ -\/]*[@-~]|\][^\a]*(?:\a|\e\\))/.freeze
+      UNIT_NAME = /\A[A-Za-z0-9@_.:-]+\z/
 
       def initialize(image)
         @image = image
@@ -21,6 +23,24 @@ module Xnix
 
       def expected_markers
         Array(@image.manifest.dig("boot_smoke", "expect_serial_markers"))
+      end
+
+      def active_units
+        Array(@image.manifest.dig("boot_smoke", "active_units"))
+      end
+
+      def fail_marker
+        @image.manifest.dig("boot_smoke", "fail_marker").to_s
+      end
+
+      def probe_command
+        invalid = active_units.reject { |unit| unit.match?(UNIT_NAME) }
+        raise ArgumentError, "invalid systemd unit name: #{invalid.first}" unless invalid.empty?
+
+        checks = active_units.map { |unit| "systemctl is-active --quiet #{Shellwords.escape(unit)}" }
+        pass_output = "printf 'XNIX_BOOT_%s\\n' PROBE_PASS"
+        fail_output = "printf 'XNIX_BOOT_%s\\n' PROBE_FAIL"
+        "#{checks.join(' && ')} && #{pass_output} || #{fail_output}"
       end
 
       def timeout_seconds
@@ -40,6 +60,7 @@ module Xnix
       end
 
       def summary(serial_contents)
+        return "systemd probe reported inactive unit(s)" if normalize_serial(serial_contents).include?(fail_marker)
         return "graphical login reached" if booted?(serial_contents)
 
         "missing markers: #{missing_markers(serial_contents).join(', ')}"
