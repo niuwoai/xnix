@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.341"
+EXPECTED_VERSION = "0.2.342"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1564,7 +1564,7 @@ end
 end
 
 go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owner/main.go")
-%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke route-checkpoint materialization-fanout-owner-smoke-coverage restricted-smoke-fanout-owner-smoke-coverage NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript NewRouteCheckpoint NewKDETestLaunchMaterializationFanOutOwnerSmokeCoveragePreview NewRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreview smoke-owner].each do |token|
+%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke route-checkpoint materialization-fanout-owner-smoke-coverage restricted-smoke-fanout-owner-smoke-coverage redacted-adapter-profile-owner-smoke-coverage NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript NewRouteCheckpoint NewKDETestLaunchMaterializationFanOutOwnerSmokeCoveragePreview NewRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreview NewBackendAdapterRedactedProfileOwnerSmokeCoveragePreview smoke-owner].each do |token|
   assert(go_runtime_owner_candidate_cli_source.include?(token), "Go Runtime owner candidate CLI must include #{token}")
 end
 
@@ -1650,6 +1650,20 @@ go_runtime_restricted_smoke_fanout_owner_smoke_coverage_test_source = read_proje
                                                                      read_project_file("cmd/xnix-runtime-owner/main.go")
 %w[TestRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreviewCoversOwnerRoute TestRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreviewFailsClosedWithoutRecord TestRuntimeOwnerCommandRendersRestrictedSmokeFanOutOwnerSmokeCoverage restricted-smoke-fanout-owner-smoke-coverage restricted-owner-smoke-receipt-fanout-owner-smoke-coverage-preview smoke_coverage_ready service_call_dispatch_ready dispatch_go_command].each do |token|
   assert(go_runtime_restricted_smoke_fanout_owner_smoke_coverage_test_source.include?(token), "Go Runtime restricted owner smoke fan-out owner smoke coverage tests must include #{token}")
+end
+
+go_runtime_redacted_adapter_profile_owner_smoke_coverage_source = read_project_file("internal/runtime/owner/backend_adapter_redacted_profile_owner_smoke_coverage.go")
+%w[BackendAdapterRedactedProfileOwnerSmokeCoveragePreview BackendAdapterRedactedProfileSmokeCoverageCheck NewBackendAdapterRedactedProfileOwnerSmokeCoveragePreview NewBackendAdapterRedactedProfileOwnerSmokeCoveragePreviewFromRecords xnix.runtime.backend_adapter_redacted_profile_owner_smoke_coverage.v1 backend-adapter-redacted-profile-owner-smoke-coverage-preview redacted-adapter-profile-owner-smoke-coverage GetBackendAdapterProfileAudit GetBackendAdapterRedactedProfileOwnerSmokeCoveragePreview backend-adapter-redacted-profile-audit-preview owner-smoke-batch+runtime-owner-service-call+backend-adapter-redacted-profile-audit-owner-route smoke-record-present service-call-read-dispatch owner-route-payload-present redacted-profiles-preserved full-contract-fixture-local production-dbus-blocked caller-paths-hidden unsafe-gates-closed SmokeCoverageReady].each do |token|
+  assert(go_runtime_redacted_adapter_profile_owner_smoke_coverage_source.include?(token), "Go Runtime redacted adapter profile owner smoke coverage must include #{token}")
+end
+%w[StateRootPathExposed StateRootWritesEnabled RuntimeWritesEnabled AdapterInvocationEnabled BackendInstallEnabled BackendDownloadEnabled BackendLaunchEnabled BackendProcessStarted CommandMaterialized ExecutablePathResolved NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_redacted_adapter_profile_owner_smoke_coverage_source.include?(token), "Go Runtime redacted adapter profile owner smoke coverage must expose safety gate #{token}")
+end
+go_runtime_redacted_adapter_profile_owner_smoke_coverage_test_source = read_project_file("internal/runtime/owner/backend_adapter_redacted_profile_owner_smoke_coverage_test.go") +
+                                                                      read_project_file("cmd/xnix-runtime-owner/main_test.go") +
+                                                                      read_project_file("cmd/xnix-runtime-owner/main.go")
+%w[TestBackendAdapterRedactedProfileOwnerSmokeCoveragePreviewCoversOwnerRoute TestBackendAdapterRedactedProfileOwnerSmokeCoveragePreviewFailsClosedWithoutRecord TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerSmokeCoverage redacted-adapter-profile-owner-smoke-coverage backend-adapter-redacted-profile-owner-smoke-coverage-preview smoke_coverage_ready service_call_dispatch_ready dispatch_go_command internal_adapter_ids_redacted adapter_invocation_enabled].each do |token|
+  assert(go_runtime_redacted_adapter_profile_owner_smoke_coverage_test_source.include?(token), "Go Runtime redacted adapter profile owner smoke coverage tests must include #{token}")
 end
 
 go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt.go")

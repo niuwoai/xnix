@@ -87,6 +87,48 @@ func TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch(
 	}
 }
 
+func TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerSmokeCoverage(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--redacted-adapter-profile-owner-smoke-coverage",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "backend-adapter-redacted-profile-owner-smoke-coverage-preview" ||
+		payload["coverage_type"] != "redacted-adapter-profile-owner-smoke-coverage" ||
+		payload["runtime_method"] != "GetBackendAdapterProfileAudit" ||
+		payload["owner_route_request_type"] != "backend-adapter-redacted-profile-audit-preview" ||
+		payload["smoke_batch_record_count"] != float64(75) ||
+		payload["smoke_read_dispatch_record_count"] != float64(71) ||
+		payload["smoke_write_denial_record_count"] != float64(4) ||
+		payload["coverage_record_found"] != true ||
+		payload["service_call_dispatch_ready"] != true ||
+		payload["dispatch_route_source"] != "go-owner-local-preview" ||
+		payload["dispatch_go_command"] != "backend-adapter-redacted-profile-audit-preview" ||
+		payload["route_decision"] != "redacted-profile-route-ready" ||
+		payload["profile_count"] != float64(3) ||
+		payload["internal_adapter_ids_redacted"] != true ||
+		payload["internal_profile_paths_redacted"] != true ||
+		payload["full_contract_fixture_local"] != true ||
+		payload["smoke_coverage_ready"] != true ||
+		payload["production_dbus_exposure_ready"] != false ||
+		payload["adapter_invocation_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected redacted adapter profile owner smoke coverage payload: %#v", payload)
+	}
+	if strings.Contains(strings.ToLower(output.String()), "wine") ||
+		strings.Contains(strings.ToLower(output.String()), "proton") ||
+		strings.Contains(strings.ToLower(output.String()), "windows-vm") {
+		t.Fatalf("redacted adapter profile smoke coverage exposed internal adapter terms: %s", output.String())
+	}
+}
+
 func TestRuntimeOwnerCommandRendersRestrictedOwnerSmokeReceiptLookupReadDispatch(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{

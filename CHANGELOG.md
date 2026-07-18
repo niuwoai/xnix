@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.342] - 2026-07-19
+
+### Added
+
+- Added `backend-adapter-redacted-profile-owner-smoke-coverage-preview`, an owner smoke coverage read model that unwraps the restricted smoke-batch `GetBackendAdapterProfileAudit` service-call record and proves the v0.2.334 redacted adapter profile owner-local route is exercised through `Service.Call`.
+- Added owner CLI, Go tests, layout, evidence, and product metadata coverage while keeping the full adapter contract fixture-local, preserving redacted user-safe profile output, and leaving production D-Bus exposure, Runtime writes, adapter invocation, install, download, command materialization, executable resolution, backend launch, raw-detail exposure, and host-root mutation disabled.
+
 ## [0.2.341] - 2026-07-19
 
 ### Added
