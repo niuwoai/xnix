@@ -197,6 +197,40 @@ func TestRuntimeOwnerCommandRendersMaterializationFanOutReadDispatch(t *testing.
 	}
 }
 
+func TestRuntimeOwnerCommandRendersMaterializationFanOutOwnerSmokeCoverage(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--materialization-fanout-owner-smoke-coverage",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "kde-test-launch-materialization-fanout-owner-smoke-coverage-preview" ||
+		payload["coverage_type"] != "materialization-fanout-owner-smoke-coverage" ||
+		payload["runtime_method"] != "GetKDETestLaunchMaterializationFanOut" ||
+		payload["owner_route_request_type"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		payload["smoke_batch_record_count"] != float64(75) ||
+		payload["smoke_read_dispatch_record_count"] != float64(71) ||
+		payload["smoke_write_denial_record_count"] != float64(4) ||
+		payload["coverage_record_found"] != true ||
+		payload["service_call_dispatch_ready"] != true ||
+		payload["dispatch_route_source"] != "go-owner-local-preview" ||
+		payload["dispatch_go_command"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		payload["opaque_materialization_receipt_id"] != "kde-test-launch-materialization-receipt-id" ||
+		payload["receipt_lookup_state"] != "missing-receipt" ||
+		payload["fan_out_result_state"] != "missing-receipt-fail-closed" ||
+		payload["smoke_coverage_ready"] != true ||
+		payload["production_dbus_exposure_ready"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected materialization fan-out owner smoke coverage payload: %#v", payload)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersRestrictedOwnerSmokeReceiptFanOutReadDispatch(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{

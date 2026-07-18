@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.340] - 2026-07-19
+
+### Added
+
+- Added `kde-test-launch-materialization-fanout-owner-smoke-coverage-preview`, an owner smoke coverage read model that unwraps the restricted smoke-batch `GetKDETestLaunchMaterializationFanOut` service-call record and proves the v0.2.339 owner-local materialization fan-out route is exercised through `Service.Call`.
+- Added owner CLI, Go tests, layout, evidence, and product metadata coverage while keeping missing materialization receipts fail-closed and leaving production D-Bus exposure, Runtime writes, command materialization, executable resolution, backend launch, desktop side effects, path exposure, and host-root mutation disabled.
+
 ## [0.2.339] - 2026-07-19
 
 ### Added
