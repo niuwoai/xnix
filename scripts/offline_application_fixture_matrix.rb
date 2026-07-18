@@ -46,6 +46,7 @@ def parse_options(argv)
     go_bin: DEFAULT_GO_BIN,
     runtime_root: ".",
     artifact_receipt_root: nil,
+    snapshot_state_root: nil,
     format: "json",
     shapes: []
   }
@@ -55,6 +56,7 @@ def parse_options(argv)
     opts.on("--go-bin PATH", "Go binary to use") { |value| options[:go_bin] = value }
     opts.on("--runtime-root PATH", "Project root used for read-only Runtime evidence checks") { |value| options[:runtime_root] = value }
     opts.on("--artifact-receipt-root PATH", "Controlled root for read-only artifact stage receipt evidence") { |value| options[:artifact_receipt_root] = value }
+    opts.on("--snapshot-state-root PATH", "Controlled state root for read-only snapshot baseline evidence") { |value| options[:snapshot_state_root] = value }
     opts.on("--shape ID", "Fixture shape id to include; may be repeated") { |value| options[:shapes] << value }
     opts.on("--format FORMAT", "Output format: json or markdown") { |value| options[:format] = value }
   end
@@ -81,6 +83,9 @@ def collect_matrix(options)
   end
   if options[:artifact_receipt_root]
     command.concat(["--artifact-receipt-root", options.fetch(:artifact_receipt_root)])
+  end
+  if options[:snapshot_state_root]
+    command.concat(["--snapshot-state-root", options.fetch(:snapshot_state_root)])
   end
   stdout, stderr, status = Open3.capture3(env, *command, chdir: PROJECT_ROOT.to_s)
   raise FixtureMatrixFailure, "offline fixture matrix failed: #{stderr.strip}" unless status.success?
@@ -144,14 +149,15 @@ def render_markdown(payload)
   lines << "- Missing fixtures: #{payload.fetch("counts").fetch("missing_fixture")}"
   lines << "- Unsafe actions enabled: `false`"
   lines << ""
-  lines << "| Shape | Application | Profile | Artifact | Portal needs | KDE entry points | State |"
-  lines << "| --- | --- | --- | --- | --- | ---: | --- |"
+  lines << "| Shape | Application | Profile | Artifact | Snapshot | Portal needs | KDE entry points | State |"
+  lines << "| --- | --- | --- | --- | --- | --- | ---: | --- |"
   payload.fetch("rows").each do |row|
     lines << [
       row.fetch("shape_id"),
       row.fetch("application_name"),
       row.fetch("backend_profile_mapping"),
       row.fetch("artifact_readiness"),
+      row.fetch("snapshot_readiness"),
       row.fetch("portal_needs").join(", "),
       row.fetch("kde_journey_entry_point_count"),
       row.fetch("matrix_state")

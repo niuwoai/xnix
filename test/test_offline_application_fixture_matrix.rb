@@ -21,6 +21,7 @@ script = script_path.read
   --format
   --shape
   --artifact-receipt-root
+  --snapshot-state-root
   JSON.pretty_generate
   render_markdown
   GOCACHE
@@ -86,7 +87,7 @@ end
 markdown_stdout, markdown_stderr, markdown_status = Open3.capture3(env, "ruby", script_path.to_s, "--format", "markdown", chdir: project_root.to_s)
 assert(markdown_status.success?, "offline fixture matrix Markdown run failed: #{markdown_stderr}")
 assert(markdown_stdout.include?("# Offline Application Fixture Matrix"), "Markdown output must include title")
-assert(markdown_stdout.include?("| Shape | Application | Profile | Artifact | Portal needs | KDE entry points | State |"), "Markdown output must include matrix table")
+assert(markdown_stdout.include?("| Shape | Application | Profile | Artifact | Snapshot | Portal needs | KDE entry points | State |"), "Markdown output must include matrix table")
 assert(markdown_stdout.include?("unsupported"), "Markdown output must include unsupported shape")
 assert(markdown_stdout.include?("blocked-unsupported"), "Markdown output must include blocked unsupported state")
 

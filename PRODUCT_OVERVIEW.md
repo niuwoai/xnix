@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.321
+> Last updated: 2026-07-18 | Current version: v0.2.322
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.322 checkpoint lets the offline application fixture matrix consume verified snapshot baseline receipts from a controlled state root. A valid baseline now moves the snapshot evidence state to `baseline-receipt-ready`, and a fixture with both artifact and snapshot evidence can become `covered-review-only` while still staying non-launching. Missing or corrupt baselines remain blocked with explicit reasons; the matrix only performs read-only snapshot inspection and does not create, restore, delete, prune, expose state-root paths, launch backends, read user file contents into KDE-facing output, or mutate the host.
 
 The v0.2.321 checkpoint starts the post-gate Runtime evidence train by letting the offline application fixture matrix consume controlled artifact stage receipts. A valid local fixture receipt now moves a representative application row from missing artifact evidence to `local-fixture-ready`, while missing or invalid receipts remain blocked with explicit reasons. The matrix and wrapper only read receipt evidence from an optional root and still do not download artifacts, invoke package managers, stage artifacts from the matrix itself, start compatibility backends, expose local roots, or mutate the host.
 

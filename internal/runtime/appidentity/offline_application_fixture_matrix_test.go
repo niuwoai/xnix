@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"xnix.local/xnix/internal/runtime/artifact"
+	"xnix.local/xnix/internal/runtime/snapshot"
 )
 
 func TestOfflineApplicationFixtureMatrixPreviewCoversRepresentativeShapes(t *testing.T) {
@@ -184,6 +185,103 @@ func TestOfflineApplicationFixtureMatrixPreviewReportsInvalidArtifactReceipt(t *
 	}
 }
 
+func TestOfflineApplicationFixtureMatrixPreviewConsumesSnapshotBaselineReadOnly(t *testing.T) {
+	snapshotRoot := writeOfflineFixtureSnapshotBaseline(t, "baseline-1")
+
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:          []string{"document-editor"},
+		RuntimeRoot:       "../../..",
+		SnapshotStateRoot: snapshotRoot,
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	row := preview.Rows[0]
+	if row.SnapshotReadiness != "baseline-receipt-ready" ||
+		row.SnapshotBaselineReceipt == nil ||
+		row.SnapshotBaselineReceipt.State != "ready" ||
+		row.SnapshotBaselineReceipt.SnapshotID != "baseline-1" ||
+		row.SnapshotBaselineReceipt.Reason != "before-repair" ||
+		row.SnapshotBaselineReceipt.FileCount != 1 ||
+		row.SnapshotBaselineReceipt.SnapshotCount != 1 ||
+		!row.SnapshotBaselineReceipt.Verified ||
+		containsString(row.MissingEvidenceIDs, "snapshot-receipt") ||
+		containsString(row.BlockedReasons, "restore-point receipt is missing") ||
+		row.SnapshotBaselineReceipt.StateRootPathExposed ||
+		row.SnapshotBaselineReceipt.RestoreExecuted ||
+		row.SnapshotBaselineReceipt.SnapshotCreated ||
+		row.SnapshotBaselineReceipt.SnapshotDeleted ||
+		row.SnapshotBaselineReceipt.FileContentRead ||
+		row.SnapshotBaselineReceipt.BackendLaunchEnabled ||
+		row.SnapshotBaselineReceipt.HostRootModified ||
+		row.SnapshotBaselineReceipt.BackendDetailsExposed {
+		t.Fatalf("snapshot baseline evidence was not consumed safely: %#v", row)
+	}
+	if row.MatrixState != "missing-evidence" ||
+		!containsString(row.MissingEvidenceIDs, "artifact-stage-receipt") {
+		t.Fatalf("snapshot baseline should not bypass artifact evidence: %#v", row)
+	}
+	encoded, err := json.Marshal(row)
+	if err != nil {
+		t.Fatalf("marshal row: %v", err)
+	}
+	if strings.Contains(string(encoded), snapshotRoot) {
+		t.Fatalf("snapshot baseline evidence exposed state root: %s", string(encoded))
+	}
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewCoversReadyFixtureWithArtifactAndSnapshotEvidence(t *testing.T) {
+	artifactRoot := t.TempDir()
+	writeOfflineFixtureArtifactReceipt(t, artifactRoot, "org.xnix.fixture.document")
+	snapshotRoot := writeOfflineFixtureSnapshotBaseline(t, "baseline-2")
+
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:            []string{"document-editor"},
+		RuntimeRoot:         "../../..",
+		ArtifactReceiptRoot: artifactRoot,
+		SnapshotStateRoot:   snapshotRoot,
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	row := preview.Rows[0]
+	if row.MatrixState != "covered-review-only" ||
+		row.UserReviewRequired ||
+		len(row.MissingEvidenceIDs) != 0 ||
+		len(row.BlockedReasons) != 0 ||
+		row.ArtifactReadiness != "local-fixture-ready" ||
+		row.SnapshotReadiness != "baseline-receipt-ready" ||
+		preview.Counts.Covered != 1 ||
+		preview.Counts.MissingEvidence != 0 ||
+		preview.Counts.NeedsReview != 0 {
+		t.Fatalf("ready fixture was not covered review-only: row=%#v counts=%#v status=%s", row, preview.Counts, preview.MatrixStatus)
+	}
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewReportsInvalidSnapshotBaseline(t *testing.T) {
+	snapshotRoot := writeOfflineFixtureSnapshotBaseline(t, "baseline-corrupt")
+	if err := os.WriteFile(filepath.Join(snapshotRoot, ".xnix-snapshots", "objects", offlineFixtureSnapshotObjectDigest(t, snapshotRoot, "baseline-corrupt")), []byte("tampered"), 0o600); err != nil {
+		t.Fatalf("tamper snapshot object: %v", err)
+	}
+
+	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{
+		ShapeIDs:          []string{"document-editor"},
+		RuntimeRoot:       "../../..",
+		SnapshotStateRoot: snapshotRoot,
+	})
+	if err != nil {
+		t.Fatalf("NewOfflineApplicationFixtureMatrixPreview returned error: %v", err)
+	}
+	row := preview.Rows[0]
+	if row.SnapshotReadiness != "invalid-baseline-receipt" ||
+		row.SnapshotBaselineReceipt == nil ||
+		row.SnapshotBaselineReceipt.State != "invalid" ||
+		!containsString(row.MissingEvidenceIDs, "snapshot-receipt") ||
+		!containsString(row.BlockedReasons, "restore-point receipt is invalid") {
+		t.Fatalf("invalid snapshot baseline was not blocked: %#v", row)
+	}
+}
+
 func TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects(t *testing.T) {
 	preview, err := NewOfflineApplicationFixtureMatrixPreview(OfflineApplicationFixtureMatrixOptions{RuntimeRoot: "../../.."})
 	if err != nil {
@@ -206,6 +304,38 @@ func TestOfflineApplicationFixtureMatrixPreviewNeverEnablesSideEffects(t *testin
 		preview.PrivilegedContainerRequired {
 		t.Fatalf("matrix enabled unsafe side effect: %#v", preview)
 	}
+}
+
+func writeOfflineFixtureSnapshotBaseline(t *testing.T, snapshotID string) string {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "runtime-state.json"), []byte(`{"state":"ready"}`), 0o600); err != nil {
+		t.Fatalf("WriteFile snapshot source: %v", err)
+	}
+	store, err := snapshot.New(root)
+	if err != nil {
+		t.Fatalf("snapshot.New returned error: %v", err)
+	}
+	if _, err := store.Create(snapshotID, "before-repair"); err != nil {
+		t.Fatalf("snapshot Create returned error: %v", err)
+	}
+	return root
+}
+
+func offlineFixtureSnapshotObjectDigest(t *testing.T, root string, snapshotID string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, ".xnix-snapshots", "manifests", snapshotID+".json"))
+	if err != nil {
+		t.Fatalf("ReadFile snapshot manifest: %v", err)
+	}
+	var manifest snapshot.Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatalf("Unmarshal snapshot manifest: %v", err)
+	}
+	if len(manifest.Files) == 0 {
+		t.Fatalf("snapshot manifest has no files: %#v", manifest)
+	}
+	return manifest.Files[0].Digest
 }
 
 func writeOfflineFixtureArtifactReceipt(t *testing.T, receiptRoot string, applicationID string) {

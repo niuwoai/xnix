@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.322] - 2026-07-18
+
+### Added
+
+- Added read-only snapshot baseline receipt evidence to the offline application fixture matrix, allowing verified controlled snapshot baselines to close the snapshot evidence gap without creating, restoring, deleting, or pruning snapshots.
+- Added `--snapshot-state-root` to the Go Runtime fixture matrix preview and Ruby report wrapper so existing snapshot stores can be reviewed without exposing state roots, reading user file contents into KDE-facing output, launching backends, or mutating the host.
+
 ## [0.2.321] - 2026-07-18
 
 ### Added

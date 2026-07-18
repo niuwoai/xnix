@@ -10,12 +10,14 @@ import (
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/artifact"
+	"xnix.local/xnix/internal/runtime/snapshot"
 )
 
 type OfflineApplicationFixtureMatrixOptions struct {
 	ShapeIDs            []string
 	RuntimeRoot         string
 	ArtifactReceiptRoot string
+	SnapshotStateRoot   string
 }
 
 type OfflineApplicationFixtureMatrixPreview struct {
@@ -75,6 +77,7 @@ type OfflineApplicationFixtureMatrixRow struct {
 	BackendProfileMapping      string                                         `json:"backend_profile_mapping"`
 	PortalNeeds                []string                                       `json:"portal_needs"`
 	SnapshotReadiness          string                                         `json:"snapshot_readiness"`
+	SnapshotBaselineReceipt    *OfflineApplicationFixtureSnapshotBaseline     `json:"snapshot_baseline_receipt,omitempty"`
 	DiagnosticReadiness        string                                         `json:"diagnostic_readiness"`
 	ArtifactStageReceipt       *OfflineApplicationFixtureArtifactStageReceipt `json:"artifact_stage_receipt,omitempty"`
 	KDEJourneyCoverageState    string                                         `json:"kde_journey_coverage_state"`
@@ -123,6 +126,28 @@ type OfflineApplicationFixtureArtifactStageReceipt struct {
 	HostRootModified        bool     `json:"host_root_modified"`
 }
 
+type OfflineApplicationFixtureSnapshotBaseline struct {
+	State                 string   `json:"state"`
+	SnapshotID            string   `json:"snapshot_id,omitempty"`
+	Reason                string   `json:"reason,omitempty"`
+	FileCount             int      `json:"file_count"`
+	SnapshotCount         int      `json:"snapshot_count"`
+	ContentDigest         string   `json:"content_digest,omitempty"`
+	Verified              bool     `json:"verified"`
+	BlockingReasons       []string `json:"blocking_reasons"`
+	RuntimeOwned          bool     `json:"runtime_owned"`
+	GoRuntimeBacked       bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner        bool     `json:"kde_policy_owner"`
+	StateRootPathExposed  bool     `json:"state_root_path_exposed"`
+	RestoreExecuted       bool     `json:"restore_executed"`
+	SnapshotCreated       bool     `json:"snapshot_created"`
+	SnapshotDeleted       bool     `json:"snapshot_deleted"`
+	FileContentRead       bool     `json:"file_content_read"`
+	BackendLaunchEnabled  bool     `json:"backend_launch_enabled"`
+	HostRootModified      bool     `json:"host_root_modified"`
+	BackendDetailsExposed bool     `json:"backend_details_exposed"`
+}
+
 type OfflineApplicationFixtureMatrixCounts struct {
 	Total           int `json:"total"`
 	Covered         int `json:"covered"`
@@ -146,6 +171,9 @@ func NewOfflineApplicationFixtureMatrixPreview(options OfflineApplicationFixture
 		options.RuntimeRoot = "."
 	}
 	if err := validateOfflineApplicationFixtureArtifactReceiptRoot(options.ArtifactReceiptRoot); err != nil {
+		return OfflineApplicationFixtureMatrixPreview{}, err
+	}
+	if err := validateOfflineApplicationFixtureSnapshotStateRoot(options.SnapshotStateRoot); err != nil {
 		return OfflineApplicationFixtureMatrixPreview{}, err
 	}
 	definitions := offlineApplicationFixtureDefinitions()
@@ -379,6 +407,10 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
+	snapshotBaseline, err := offlineApplicationFixtureSnapshotBaseline(options.SnapshotStateRoot)
+	if err != nil {
+		return OfflineApplicationFixtureMatrixRow{}, err
+	}
 	diagnostics, err := plan.AIDiagnosticInputPreview("portal-approval-required", "preflight")
 	if err != nil {
 		return OfflineApplicationFixtureMatrixRow{}, err
@@ -388,8 +420,8 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 		return OfflineApplicationFixtureMatrixRow{}, err
 	}
 
-	missingEvidence := offlineApplicationFixtureMissingEvidence(install, snapshot, receiptEvidence)
-	blockedReasons := offlineApplicationFixtureBlockedReasons(definition, install, snapshot, diagnostics, journey, receiptEvidence)
+	missingEvidence := offlineApplicationFixtureMissingEvidence(install, snapshot, receiptEvidence, snapshotBaseline)
+	blockedReasons := offlineApplicationFixtureBlockedReasons(definition, install, snapshot, diagnostics, journey, receiptEvidence, snapshotBaseline)
 	state := offlineApplicationFixtureRowState(definition, missingEvidence)
 	return OfflineApplicationFixtureMatrixRow{
 		Position:                   position,
@@ -405,7 +437,8 @@ func offlineApplicationFixtureMatrixRow(position int, definition offlineApplicat
 		ArtifactReadiness:          offlineApplicationFixtureArtifactReadiness(install, receiptEvidence),
 		BackendProfileMapping:      selection.RecommendedProfileID,
 		PortalNeeds:                append([]string(nil), definition.PortalNeeds...),
-		SnapshotReadiness:          offlineApplicationFixtureSnapshotReadiness(snapshot),
+		SnapshotReadiness:          offlineApplicationFixtureSnapshotReadiness(snapshot, snapshotBaseline),
+		SnapshotBaselineReceipt:    snapshotBaseline,
 		DiagnosticReadiness:        offlineApplicationFixtureDiagnosticReadiness(diagnostics),
 		ArtifactStageReceipt:       receiptEvidence,
 		KDEJourneyCoverageState:    offlineApplicationFixtureJourneyState(journey),
@@ -475,6 +508,29 @@ func validateOfflineApplicationFixtureArtifactReceiptRoot(root string) error {
 	return nil
 }
 
+func validateOfflineApplicationFixtureSnapshotStateRoot(root string) error {
+	if root == "" {
+		return nil
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return errors.New("snapshot state root must be a valid directory")
+	}
+	clean := filepath.Clean(abs)
+	volume := filepath.VolumeName(clean)
+	if clean == string(os.PathSeparator) || clean == volume+string(os.PathSeparator) {
+		return errors.New("snapshot state root must not be the filesystem root")
+	}
+	info, err := os.Stat(clean)
+	if err != nil {
+		return errors.New("snapshot state root must exist")
+	}
+	if !info.IsDir() {
+		return errors.New("snapshot state root must be a directory")
+	}
+	return nil
+}
+
 func offlineApplicationFixtureArtifactStageReceipt(applicationID string, root string) (*artifact.StageReceipt, *OfflineApplicationFixtureArtifactStageReceipt, error) {
 	if root == "" {
 		return nil, nil, nil
@@ -533,6 +589,68 @@ func offlineApplicationFixtureArtifactStageReceiptEvidence(state string, relativ
 	}
 }
 
+func offlineApplicationFixtureSnapshotBaseline(root string) (*OfflineApplicationFixtureSnapshotBaseline, error) {
+	if root == "" {
+		return nil, nil
+	}
+	store, err := snapshot.OpenReadOnly(root)
+	if err != nil {
+		return nil, errors.New("snapshot baseline root could not be opened read-only")
+	}
+	manifests, err := store.List()
+	if err != nil {
+		return offlineApplicationFixtureSnapshotBaselineEvidence("invalid", snapshot.BaselineStatus{}, snapshot.Manifest{}, []string{"snapshot manifests could not be listed"}), nil
+	}
+	baseline, err := store.Baseline()
+	if err != nil {
+		return offlineApplicationFixtureSnapshotBaselineEvidence("invalid", snapshot.BaselineStatus{}, snapshot.Manifest{}, []string{"snapshot baseline could not be verified"}), nil
+	}
+	if !baseline.Present || !baseline.Verified {
+		state := "missing"
+		reason := "snapshot baseline receipt is missing"
+		if baseline.SnapshotCount > 0 {
+			state = "invalid"
+			reason = "snapshot baseline receipt is not verified"
+		}
+		return offlineApplicationFixtureSnapshotBaselineEvidence(state, baseline, snapshot.Manifest{}, []string{reason}), nil
+	}
+	var selected snapshot.Manifest
+	for _, manifest := range manifests {
+		if manifest.ID == baseline.SnapshotID {
+			selected = manifest
+			break
+		}
+	}
+	if selected.ID == "" {
+		return offlineApplicationFixtureSnapshotBaselineEvidence("invalid", baseline, snapshot.Manifest{}, []string{"snapshot baseline manifest is missing"}), nil
+	}
+	return offlineApplicationFixtureSnapshotBaselineEvidence("ready", baseline, selected, []string{}), nil
+}
+
+func offlineApplicationFixtureSnapshotBaselineEvidence(state string, baseline snapshot.BaselineStatus, manifest snapshot.Manifest, reasons []string) *OfflineApplicationFixtureSnapshotBaseline {
+	return &OfflineApplicationFixtureSnapshotBaseline{
+		State:                 state,
+		SnapshotID:            manifest.ID,
+		Reason:                manifest.Reason,
+		FileCount:             manifest.FileCount,
+		SnapshotCount:         baseline.SnapshotCount,
+		ContentDigest:         manifest.ContentHash,
+		Verified:              state == "ready" && baseline.Verified,
+		BlockingReasons:       uniqueSortedStrings(reasons),
+		RuntimeOwned:          true,
+		GoRuntimeBacked:       true,
+		KDEPolicyOwner:        false,
+		StateRootPathExposed:  false,
+		RestoreExecuted:       false,
+		SnapshotCreated:       false,
+		SnapshotDeleted:       false,
+		FileContentRead:       false,
+		BackendLaunchEnabled:  false,
+		HostRootModified:      baseline.HostRootModified,
+		BackendDetailsExposed: baseline.BackendDetailsExposed,
+	}
+}
+
 func offlineApplicationFixtureRecipeTrustState(install CompatibilityInstallPlanPreview) string {
 	if install.Readiness.RecipeInstallAllowed {
 		return "development-fixture-trusted"
@@ -550,7 +668,13 @@ func offlineApplicationFixtureArtifactReadiness(install CompatibilityInstallPlan
 	return "missing-local-stage-receipt"
 }
 
-func offlineApplicationFixtureSnapshotReadiness(snapshot SnapshotPlanPreview) string {
+func offlineApplicationFixtureSnapshotReadiness(snapshot SnapshotPlanPreview, baseline *OfflineApplicationFixtureSnapshotBaseline) string {
+	if baseline != nil && baseline.State == "ready" && baseline.Verified {
+		return "baseline-receipt-ready"
+	}
+	if baseline != nil && baseline.State == "invalid" {
+		return "invalid-baseline-receipt"
+	}
 	if snapshot.EnabledByDefault && !snapshot.SnapshotCreated {
 		return "planned-receipt-required"
 	}
@@ -571,18 +695,18 @@ func offlineApplicationFixtureJourneyState(journey KDEJourneyEvidencePreview) st
 	return "missing-journey-evidence"
 }
 
-func offlineApplicationFixtureMissingEvidence(install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, receipt *OfflineApplicationFixtureArtifactStageReceipt) []string {
+func offlineApplicationFixtureMissingEvidence(install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, receipt *OfflineApplicationFixtureArtifactStageReceipt, baseline *OfflineApplicationFixtureSnapshotBaseline) []string {
 	var missing []string
 	if receipt == nil || receipt.State != "ready" || !install.Readiness.ArtifactStageReceiptReady || !install.Readiness.RequiredArtifactsStaged {
 		missing = append(missing, "artifact-stage-receipt")
 	}
-	if !snapshot.SnapshotCreated {
+	if baseline == nil || baseline.State != "ready" || !baseline.Verified || snapshot.RestoreExecuted {
 		missing = append(missing, "snapshot-receipt")
 	}
 	return uniqueSortedStrings(missing)
 }
 
-func offlineApplicationFixtureBlockedReasons(definition offlineApplicationFixtureDefinition, install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, diagnostics AIDiagnosticInputPreview, journey KDEJourneyEvidencePreview, receipt *OfflineApplicationFixtureArtifactStageReceipt) []string {
+func offlineApplicationFixtureBlockedReasons(definition offlineApplicationFixtureDefinition, install CompatibilityInstallPlanPreview, snapshot SnapshotPlanPreview, diagnostics AIDiagnosticInputPreview, journey KDEJourneyEvidencePreview, receipt *OfflineApplicationFixtureArtifactStageReceipt, baseline *OfflineApplicationFixtureSnapshotBaseline) []string {
 	var reasons []string
 	if definition.Unsupported {
 		reasons = append(reasons, "application shape requires explicit unsupported-state handling")
@@ -593,7 +717,10 @@ func offlineApplicationFixtureBlockedReasons(definition offlineApplicationFixtur
 	if receipt == nil || receipt.State == "missing" {
 		reasons = append(reasons, "local artifact staging receipt is missing")
 	}
-	if !snapshot.SnapshotCreated {
+	if baseline != nil && baseline.State == "invalid" {
+		reasons = append(reasons, "restore-point receipt is invalid")
+	}
+	if baseline == nil || baseline.State == "missing" {
 		reasons = append(reasons, "restore-point receipt is missing")
 	}
 	if !diagnostics.SafeForAIDiagnostics || diagnostics.AIProviderCalled || diagnostics.FileContentRead {

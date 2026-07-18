@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/snapshot"
 )
 
 func TestOfflineApplicationFixtureMatrixPreviewCommandRendersMatrix(t *testing.T) {
@@ -124,11 +126,103 @@ func TestOfflineApplicationFixtureMatrixPreviewCommandConsumesArtifactReceiptRoo
 	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
 }
 
+func TestOfflineApplicationFixtureMatrixPreviewCommandConsumesSnapshotStateRoot(t *testing.T) {
+	snapshotRoot := writeOfflineMatrixSnapshotBaseline(t, "matrix-baseline-1")
+	var output bytes.Buffer
+	err := run([]string{
+		"offline-application-fixture-matrix-preview",
+		"--shape", "document-editor",
+		"--runtime-root", "../..",
+		"--snapshot-state-root", snapshotRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	rows := payload["rows"].([]any)
+	row := rows[0].(map[string]any)
+	baseline := row["snapshot_baseline_receipt"].(map[string]any)
+	if row["snapshot_readiness"] != "baseline-receipt-ready" ||
+		baseline["state"] != "ready" ||
+		baseline["snapshot_id"] != "matrix-baseline-1" ||
+		baseline["verified"] != true ||
+		baseline["state_root_path_exposed"] != false ||
+		baseline["restore_executed"] != false ||
+		baseline["snapshot_created"] != false ||
+		baseline["snapshot_deleted"] != false ||
+		strings.Contains(output.String(), snapshotRoot) {
+		t.Fatalf("snapshot state root was not consumed safely: %#v", row)
+	}
+	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
+}
+
+func TestOfflineApplicationFixtureMatrixPreviewCommandCoversReadyFixture(t *testing.T) {
+	manifestPath, fixtureRoot, cacheRoot := writeOfflineMatrixArtifactStageFixture(t)
+	var stageOutput bytes.Buffer
+	if err := run([]string{"artifact-stage-record", "--manifest", manifestPath, "--fixture-root", fixtureRoot, "--cache-root", cacheRoot}, &stageOutput); err != nil {
+		t.Fatalf("artifact-stage-record returned error: %v", err)
+	}
+	snapshotRoot := writeOfflineMatrixSnapshotBaseline(t, "matrix-baseline-2")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"offline-application-fixture-matrix-preview",
+		"--shape", "document-editor",
+		"--runtime-root", "../..",
+		"--artifact-receipt-root", cacheRoot,
+		"--snapshot-state-root", snapshotRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	rows := payload["rows"].([]any)
+	row := rows[0].(map[string]any)
+	if row["matrix_state"] != "covered-review-only" ||
+		row["user_review_required"] != false ||
+		jsonArrayLen(row["missing_evidence_ids"]) != 0 ||
+		jsonArrayLen(row["blocked_reasons"]) != 0 {
+		t.Fatalf("ready fixture row not covered: %#v", row)
+	}
+	assertOfflineApplicationFixtureMatrixCLISafe(t, output.String())
+}
+
+func jsonArrayLen(value any) int {
+	if value == nil {
+		return 0
+	}
+	return len(value.([]any))
+}
+
 func TestOfflineApplicationFixtureMatrixPreviewCommandRejectsUnknownShape(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"offline-application-fixture-matrix-preview", "--shape", "unknown-shape"}, &output); err == nil {
 		t.Fatalf("offline-application-fixture-matrix-preview accepted unknown shape")
 	}
+}
+
+func writeOfflineMatrixSnapshotBaseline(t *testing.T, snapshotID string) string {
+	t.Helper()
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "runtime-state.json"), []byte(`{"state":"ready"}`), 0o600); err != nil {
+		t.Fatalf("WriteFile snapshot source: %v", err)
+	}
+	store, err := snapshot.New(root)
+	if err != nil {
+		t.Fatalf("snapshot.New returned error: %v", err)
+	}
+	if _, err := store.Create(snapshotID, "before-repair"); err != nil {
+		t.Fatalf("snapshot Create returned error: %v", err)
+	}
+	return root
 }
 
 func writeOfflineMatrixArtifactStageFixture(t *testing.T) (string, string, string) {
