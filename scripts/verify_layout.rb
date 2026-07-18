@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.328"
+EXPECTED_VERSION = "0.2.329"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -386,6 +386,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/smoke_batch_test.go
   internal/runtime/owner/restricted_smoke_receipt.go
   internal/runtime/owner/restricted_smoke_receipt_test.go
+  internal/runtime/owner/restricted_smoke_receipt_fanout.go
+  internal/runtime/owner/restricted_smoke_receipt_fanout_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -1577,11 +1579,21 @@ go_restricted_owner_smoke_receipt_source = read_project_file("internal/runtime/o
   assert(go_restricted_owner_smoke_receipt_source.include?(token), "Go Runtime restricted owner smoke receipt must include #{token}")
 end
 assert(go_restricted_owner_smoke_receipt_source.include?("validateNoBackendTerms"), "Go Runtime restricted owner smoke receipt must hide backend terms")
+go_restricted_owner_smoke_receipt_fanout_source = read_project_file("internal/runtime/owner/restricted_smoke_receipt_fanout.go")
+%w[RestrictedOwnerSmokeReceiptFanOutPreview RestrictedOwnerSmokeReceiptFanSurface NewRestrictedOwnerSmokeReceiptFanOutPreview xnix.runtime.restricted_owner_smoke_receipt_fanout.v1 restricted-owner-smoke-receipt-fanout-preview GetRestrictedOwnerSmokeReceiptFanOut GetRestrictedOwnerSmokeReceiptFanOutPreview restricted-smoke-receipt-ready runtime-owner-readiness service-activation-preflight compatibility-onboarding support-bundle-manifest support-case-timeline receipt-consumed readiness-surface-coverage support-surface-coverage surfaces-read-only ownership-boundary-closed support-side-effects-disabled unsafe-data-hidden host-boundary-closed StateRootWritesEnabled FanOutWritesEnabled SupportBundleExported SupportCaseCreated NotificationSent ProductionBusClaimed WriteMethodsEnabled BackendLaunchEnabled HostRootModified].each do |token|
+  assert(go_restricted_owner_smoke_receipt_fanout_source.include?(token), "Go Runtime restricted owner smoke receipt fan-out must include #{token}")
+end
+assert(go_restricted_owner_smoke_receipt_fanout_source.include?("validateNoBackendTerms"), "Go Runtime restricted owner smoke receipt fan-out must hide backend terms")
 %w[restricted-owner-smoke-receipt-record runRestrictedOwnerSmokeReceiptRecord authorize-restricted-owner-smoke].each do |token|
   assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go").include?(token) || read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime restricted owner smoke receipt CLI must include #{token}")
 end
+%w[restricted-owner-smoke-receipt-fanout-preview runRestrictedOwnerSmokeReceiptFanOutPreview NewRestrictedOwnerSmokeReceiptFanOutPreview].each do |token|
+  assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go").include?(token) || read_project_file("cmd/xnix-runtime-go/main.go").include?(token), "Go Runtime restricted owner smoke receipt fan-out CLI must include #{token}")
+end
 assert(read_project_file("internal/runtime/owner/restricted_smoke_receipt_test.go").include?("TestRecordRestrictedOwnerSmokeReceiptConsumesPreflightAndSmokeBatch"), "Go Runtime restricted owner smoke receipt tests must consume preflight and smoke batch")
 assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go").include?("TestRestrictedOwnerSmokeReceiptRecordCommandPersistsReceipt"), "Go Runtime restricted owner smoke receipt CLI tests must persist the receipt")
+assert(read_project_file("internal/runtime/owner/restricted_smoke_receipt_fanout_test.go").include?("TestRestrictedOwnerSmokeReceiptFanOutPreviewCoversReadinessAndSupportSurfaces"), "Go Runtime restricted owner smoke receipt fan-out tests must cover readiness and support surfaces")
+assert(read_project_file("cmd/xnix-runtime-go/restricted_owner_smoke_receipt_cli_test.go").include?("TestRestrictedOwnerSmokeReceiptFanOutPreviewCommandCoversReadinessAndSupportSurfaces"), "Go Runtime restricted owner smoke receipt fan-out CLI tests must cover readiness and support surfaces")
 
 go_runtime_owner_session_bus_source = read_project_file("internal/runtime/owner/session_bus.go")
 %w[SessionBusSmokeStep runtime-owner-session-bus-smoke-step xnix.runtime.owner_session_bus_smoke.v1 restricted-private-session-bus-owner-smoke NewSessionBusSmokeTranscript NewSmokeBatchRecords record.RecordType reject-unsupported-read org.xnix.Compatibility1.Error.UnsupportedMethod private-session-bus-smoke].each do |token|

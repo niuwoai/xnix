@@ -34,3 +34,23 @@ func runRestrictedOwnerSmokeReceiptRecord(args []string, stdout io.Writer) error
 	}
 	return encodeIndentedJSON(stdout, receipt)
 }
+
+func runRestrictedOwnerSmokeReceiptFanOutPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("restricted-owner-smoke-receipt-fanout-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	stateRoot := flags.String("state-root", "", "controlled state root containing the restricted owner smoke receipt")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" {
+		return errors.New("restricted-owner-smoke-receipt-fanout-preview requires --state-root")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("restricted-owner-smoke-receipt-fanout-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewRestrictedOwnerSmokeReceiptFanOutPreview(*stateRoot)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"xnix.local/xnix/internal/runtime/owner"
@@ -92,5 +93,80 @@ func TestRestrictedOwnerSmokeReceiptRecordCommandRequiresStateRoot(t *testing.T)
 		"--authorize", owner.RestrictedOwnerSmokeDirective,
 	}, &output); err == nil {
 		t.Fatalf("restricted-owner-smoke-receipt-record must require --state-root")
+	}
+}
+
+func TestRestrictedOwnerSmokeReceiptFanOutPreviewCommandCoversReadinessAndSupportSurfaces(t *testing.T) {
+	stateRoot := t.TempDir()
+	var recordOutput bytes.Buffer
+	if err := run([]string{
+		"restricted-owner-smoke-receipt-record",
+		"--root", projectRootForRuntimeServiceBindingCommandTest(t),
+		"--state-root", stateRoot,
+		"--mode", owner.RestrictedOwnerSmokeMode,
+		"--authorize", owner.RestrictedOwnerSmokeDirective,
+	}, &recordOutput); err != nil {
+		t.Fatalf("restricted-owner-smoke-receipt-record returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-fanout-preview", "--state-root", stateRoot}, &output); err != nil {
+		t.Fatalf("restricted-owner-smoke-receipt-fanout-preview returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.restricted_owner_smoke_receipt_fanout.v1" ||
+		payload["request_type"] != "restricted-owner-smoke-receipt-fanout-preview" ||
+		payload["runtime_method"] != "GetRestrictedOwnerSmokeReceiptFanOut" ||
+		payload["read_method"] != "GetRestrictedOwnerSmokeReceiptFanOutPreview" ||
+		payload["receipt_relative_path"] != "owner-smoke/restricted-owner-smoke-receipt.json" ||
+		payload["receipt_record_type"] != "restricted-owner-smoke-execution-receipt" ||
+		payload["surface_count"] != float64(5) ||
+		payload["check_count"] != float64(8) ||
+		payload["passed_check_count"] != float64(8) ||
+		payload["all_checks_passed"] != true ||
+		payload["receipt_consumed"] != true ||
+		payload["receipt_all_checks_passed"] != true ||
+		payload["read_only_fan_out"] != true ||
+		payload["readiness_surfaces_satisfied"] != true ||
+		payload["support_surfaces_satisfied"] != true {
+		t.Fatalf("unexpected restricted owner smoke receipt fan-out payload: %s", output.String())
+	}
+	if strings.Contains(output.String(), stateRoot) {
+		t.Fatalf("fan-out command output must not expose state-root path: %s", output.String())
+	}
+	surfaces := payload["surfaces"].([]any)
+	seen := map[string]bool{}
+	for _, entry := range surfaces {
+		surface := entry.(map[string]any)
+		seen[surface["id"].(string)] = true
+		for _, key := range []string{"mutates_runtime", "starts_service", "claims_session_bus", "claims_production_bus", "enables_write_methods", "starts_backend", "exports_support_bundle", "creates_support_case", "sends_notification", "exposes_state_root_path", "exposes_backend_details"} {
+			if surface[key] != false {
+				t.Fatalf("surface gate %s must remain false: %s", key, output.String())
+			}
+		}
+	}
+	for _, id := range []string{"runtime-owner-readiness", "service-activation-preflight", "compatibility-onboarding", "support-bundle-manifest", "support-case-timeline"} {
+		if !seen[id] {
+			t.Fatalf("missing restricted owner smoke receipt fan-out surface %s: %s", id, output.String())
+		}
+	}
+	for _, key := range []string{"state_root_path_exposed", "state_root_writes_enabled", "fan_out_writes_enabled", "production_activation_ready", "production_owner_enabled", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "support_bundle_exported", "support_case_created", "notification_sent", "backend_launch_enabled", "network_required", "host_root_modified", "privileged_container_required", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestRestrictedOwnerSmokeReceiptFanOutPreviewCommandRequiresExistingReceipt(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-fanout-preview"}, &output); err == nil {
+		t.Fatalf("restricted-owner-smoke-receipt-fanout-preview must require --state-root")
+	}
+	if err := run([]string{"restricted-owner-smoke-receipt-fanout-preview", "--state-root", t.TempDir()}, &output); err == nil {
+		t.Fatalf("restricted-owner-smoke-receipt-fanout-preview must require an existing receipt")
 	}
 }

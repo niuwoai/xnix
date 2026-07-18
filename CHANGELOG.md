@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.329] - 2026-07-18
+
+### Added
+
+- Added the restricted owner smoke receipt fan-out preview and CLI command, letting Runtime readiness, service activation preflight, onboarding, support bundle, and support case surfaces consume the v0.2.326 receipt.
+- Added owner, CLI, layout, and evidence coverage that keeps fan-out writes, service start, session-bus claim, production D-Bus ownership, Runtime write methods, support bundle export, support case creation, notifications, backend launch, network access, state-root path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.328] - 2026-07-18
 
 ### Added
