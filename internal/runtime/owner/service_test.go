@@ -170,6 +170,51 @@ func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptLookup(t *testing
 	}
 }
 
+func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptFanOut(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("GetRestrictedOwnerSmokeReceiptFanOut", []string{RestrictedOwnerSmokeOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetRestrictedOwnerSmokeReceiptFanOut" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected restricted owner smoke fan-out service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetRestrictedOwnerSmokeReceiptFanOut" ||
+		dispatch["go_command"] != "restricted-owner-smoke-receipt-fanout-owner-route-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested restricted owner smoke fan-out dispatch: %#v", dispatch)
+	}
+	nested := dispatch["payload"].(map[string]any)
+	if nested["request_type"] != "restricted-owner-smoke-receipt-fanout-owner-route-preview" ||
+		nested["owner_managed_lookup"] != true ||
+		nested["caller_state_root_required"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["fan_out_result_state"] != "missing-receipt-fail-closed" ||
+		nested["owner_local_route_candidate_ready"] != true ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected nested restricted owner smoke fan-out payload: %#v", nested)
+	}
+}
+
 func TestServiceCallDeniesWriteMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

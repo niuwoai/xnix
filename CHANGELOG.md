@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.337] - 2026-07-19
+
+### Added
+
+- Added `restricted-owner-smoke-receipt-fanout-owner-route-preview` and owner-local `GetRestrictedOwnerSmokeReceiptFanOut`, routing restricted owner smoke fan-out through the opaque receipt lookup without accepting caller state-root paths.
+- Updated owner dispatch, service-call, smoke-batch, private session-bus smoke, route checkpoint, contract-drift, layout, and evidence coverage while keeping missing receipts fail-closed and leaving production D-Bus exposure, Runtime writes, support side effects, launch, backend process start, path exposure, and host-root mutation disabled.
+
 ## [0.2.336] - 2026-07-19
 
 ### Added

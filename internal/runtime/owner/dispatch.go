@@ -121,6 +121,7 @@ var ownerReadDispatchMethodOrder = []string{
 	"GetKDEOfflineApplicationIdentityPreview",
 	"GetBackendAdapterProfileAudit",
 	"GetRestrictedOwnerSmokeReceiptLookupPreview",
+	"GetRestrictedOwnerSmokeReceiptFanOut",
 }
 
 var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
@@ -530,6 +531,12 @@ var ownerReadDispatchers = map[string]ownerReadPayloadBuilder{
 		}
 		return ResolveRestrictedOwnerSmokeReceipt(root, args[0])
 	},
+	"GetRestrictedOwnerSmokeReceiptFanOut": func(root string, args []string) (any, error) {
+		if err := requireArgCount("GetRestrictedOwnerSmokeReceiptFanOut", args, 1); err != nil {
+			return nil, err
+		}
+		return NewRestrictedOwnerSmokeReceiptFanOutOwnerRoutePreview(root, args[0])
+	},
 	"GetRuntimeWriteGate": func(root string, args []string) (any, error) {
 		if err := requireArgCount("GetRuntimeWriteGate", args, 1); err != nil {
 			return nil, err
@@ -779,6 +786,8 @@ func ownerReadDispatchCommand(method string) string {
 		return "backend-adapter-redacted-profile-audit-preview"
 	case "GetRestrictedOwnerSmokeReceiptLookupPreview":
 		return "restricted-owner-smoke-receipt-lookup-preview"
+	case "GetRestrictedOwnerSmokeReceiptFanOut":
+		return "restricted-owner-smoke-receipt-fanout-owner-route-preview"
 	case "GetRuntimeWriteGate":
 		return "runtime-write-gate-preview"
 	default:
