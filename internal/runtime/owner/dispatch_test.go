@@ -382,6 +382,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetRestrictedOwnerSmokeReceiptLookupPreview",
 		"GetRestrictedOwnerSmokeReceiptFanOut",
 		"GetKDETestLaunchMaterializationReceiptLookupPreview",
+		"GetKDETestLaunchMaterializationFanOut",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -575,6 +576,52 @@ func TestDispatchReadRendersKDETestLaunchMaterializationReceiptLookupAsOwnerLoca
 	}
 }
 
+func TestDispatchReadRendersKDETestLaunchMaterializationFanOutAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetKDETestLaunchMaterializationFanOut", []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetKDETestLaunchMaterializationFanOut" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady || !dispatch.ReadOnlyDispatch || dispatch.WriteMethodsEnabled ||
+		dispatch.ProductionBusClaimed || dispatch.NetworkRequired || dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected materialization fan-out owner route dispatch: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		payload["runtime_method"] != "GetKDETestLaunchMaterializationFanOut" ||
+		payload["opaque_materialization_receipt_id"] != appidentity.KDETestLaunchMaterializationOpaqueReceiptID ||
+		payload["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		payload["opaque_materialization_receipt_id_supported"] != true ||
+		payload["requires_caller_registry_path"] != false ||
+		payload["requires_caller_application_id"] != false ||
+		payload["requires_caller_state_root"] != false ||
+		payload["receipt_lookup_state"] != "missing-receipt" ||
+		payload["receipt_available"] != false ||
+		payload["receipt_consumed"] != false ||
+		payload["fan_out_result_state"] != "missing-receipt-fail-closed" ||
+		payload["owner_local_route_candidate_ready"] != true ||
+		payload["production_dbus_exposure_ready"] != false ||
+		payload["surface_count"] != float64(4) ||
+		payload["fan_out_writes_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected materialization fan-out owner route payload: %#v", payload)
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetKDETestLaunchMaterializationFanOut", []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID, "/tmp/state"}); err == nil {
+		t.Fatal("materialization fan-out owner route accepted a caller state root")
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetKDETestLaunchMaterializationFanOut", []string{"unknown-receipt"}); err == nil {
+		t.Fatal("materialization fan-out owner route accepted an unknown opaque id")
+	}
+}
+
 func sampleReadDispatchArgs(method string) []string {
 	const appID = "org.xnix.sample.notepad"
 	switch method {
@@ -586,7 +633,7 @@ func sampleReadDispatchArgs(method string) []string {
 		return nil
 	case "GetRestrictedOwnerSmokeReceiptLookupPreview", "GetRestrictedOwnerSmokeReceiptFanOut":
 		return []string{RestrictedOwnerSmokeOpaqueReceiptID}
-	case "GetKDETestLaunchMaterializationReceiptLookupPreview":
+	case "GetKDETestLaunchMaterializationReceiptLookupPreview", "GetKDETestLaunchMaterializationFanOut":
 		return []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID}
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}

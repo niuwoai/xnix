@@ -25,13 +25,13 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand(t *testing.T)
 		payload["read_method"] != "GetKDETestLaunchMaterializationOwnerRouteAuditPreview" ||
 		payload["subject_command"] != "kde-test-launch-materialization-fanout-preview" ||
 		payload["proposed_owner_method"] != "GetKDETestLaunchMaterializationFanOut" ||
-		payload["route_decision"] != "opaque-lookup-ready-owner-route-blocked" ||
-		payload["current_route_status"] != "owner-managed-lookup-ready-fanout-cli-only" {
+		payload["route_decision"] != "owner-local-route-ready" ||
+		payload["current_route_status"] != "owner-local-read-route-ready-production-dbus-blocked" {
 		t.Fatalf("unexpected materialization owner-route audit command payload: %s", output.String())
 	}
 	if payload["cli_command_registered"] != true ||
 		payload["go_read_model_present"] != true ||
-		payload["owner_dispatch_route_present"] != false ||
+		payload["owner_dispatch_route_present"] != true ||
 		payload["production_dbus_method_present"] != false ||
 		payload["requires_caller_registry_path"] != true ||
 		payload["requires_caller_application_id"] != true ||
@@ -44,14 +44,14 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand(t *testing.T)
 		payload["owner_managed_opaque_receipt_lookup_ready"] != true ||
 		payload["opaque_materialization_receipt_id_supported"] != true ||
 		payload["fan_out_writes_enabled"] != false ||
-		payload["owner_local_route_candidate_ready"] != false ||
+		payload["owner_local_route_candidate_ready"] != true ||
 		payload["production_dbus_exposure_ready"] != false {
 		t.Fatalf("unexpected materialization owner-route audit command decision: %s", output.String())
 	}
 	counts := payload["counts"].(map[string]any)
 	if counts["total"] != float64(10) ||
-		counts["passed"] != float64(9) ||
-		counts["pending"] != float64(1) ||
+		counts["passed"] != float64(10) ||
+		counts["pending"] != float64(0) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected materialization owner-route audit counts: %s", output.String())
 	}

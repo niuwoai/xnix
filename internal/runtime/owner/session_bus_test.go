@@ -10,8 +10,8 @@ func TestSessionBusSmokeTranscriptWrapsFullOwnerCallBatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSessionBusSmokeTranscript returned error: %v", err)
 	}
-	if len(steps) != 79 {
-		t.Fatalf("session bus smoke step count = %d, want 79", len(steps))
+	if len(steps) != 80 {
+		t.Fatalf("session bus smoke step count = %d, want 80", len(steps))
 	}
 	readCount := 0
 	writeCount := 0
@@ -23,7 +23,7 @@ func TestSessionBusSmokeTranscriptWrapsFullOwnerCallBatch(t *testing.T) {
 			step.TranscriptType != "restricted-private-session-bus-owner-smoke" ||
 			step.Sequence != index+1 ||
 			step.BusName != "org.xnix.Compatibility1" ||
-			step.ReadDispatchMethodCount != 70 ||
+			step.ReadDispatchMethodCount != 71 ||
 			step.WriteMethodCount != 4 ||
 			!step.RuntimeOwned ||
 			!step.GoRuntimeBacked ||
@@ -75,7 +75,7 @@ func TestSessionBusSmokeTranscriptWrapsFullOwnerCallBatch(t *testing.T) {
 			t.Fatalf("unexpected session bus step type %q at %d", step.StepType, index)
 		}
 	}
-	if readCount != 70 || writeCount != 4 || unsupportedCount != 1 {
-		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 70/4/1", readCount, writeCount, unsupportedCount)
+	if readCount != 71 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 71/4/1", readCount, writeCount, unsupportedCount)
 	}
 }

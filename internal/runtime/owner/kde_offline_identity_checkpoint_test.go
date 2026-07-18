@@ -19,8 +19,8 @@ func TestKDEOfflineIdentityCheckpointClosesNineSurfaceBand(t *testing.T) {
 		checkpoint.SurfaceCount != 9 || checkpoint.ExpectedSurfaceCount != 9 || len(checkpoint.SurfaceIDs) != 9 ||
 		!checkpoint.RecipeDigestVerified || checkpoint.RecipeSignatureStatus != "development-only" || checkpoint.ProductionSignatureReady ||
 		!checkpoint.CrossSurfaceIdentityConsistent || !checkpoint.OwnerRouteReady || !checkpoint.OwnerServiceCallReady ||
-		checkpoint.FormalReadRouteCount != 61 || checkpoint.OwnerReadMethodCount != 70 ||
-		checkpoint.OwnerLocalReadMethodCount != 9 || checkpoint.SmokeReadRecordCount != 70 ||
+		checkpoint.FormalReadRouteCount != 61 || checkpoint.OwnerReadMethodCount != 71 ||
+		checkpoint.OwnerLocalReadMethodCount != 10 || checkpoint.SmokeReadRecordCount != 71 ||
 		checkpoint.SmokeWriteDenialCount != 4 || !checkpoint.MethodParityReady || !checkpoint.RouteBandReady ||
 		!checkpoint.OfflineIdentityReady {
 		t.Fatalf("unexpected offline KDE identity checkpoint: %#v", checkpoint)

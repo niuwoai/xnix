@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.339] - 2026-07-19
+
+### Added
+
+- Added `kde-test-launch-materialization-fanout-owner-route-preview` and owner-local `GetKDETestLaunchMaterializationFanOut`, routing materialization fan-out through the opaque materialization receipt lookup without accepting caller registry, application, authorization, or state-root inputs.
+- Updated materialization owner-route audit, owner dispatch, service-call, smoke-batch, private session-bus smoke, contract-drift, layout, and evidence coverage while keeping missing receipts fail-closed and leaving production D-Bus exposure, Runtime writes, command materialization, executable resolution, backend launch, desktop side effects, path exposure, and host-root mutation disabled.
+
 ## [0.2.338] - 2026-07-19
 
 ### Added

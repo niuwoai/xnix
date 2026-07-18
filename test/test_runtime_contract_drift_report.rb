@@ -39,6 +39,7 @@ assert(report.fetch("owner_local_methods").include?("GetBackendAdapterProfileAud
 assert(report.fetch("owner_local_methods").include?("GetRestrictedOwnerSmokeReceiptLookupPreview"), "Runtime contract drift report must include the owner-local restricted owner smoke receipt lookup")
 assert(report.fetch("owner_local_methods").include?("GetRestrictedOwnerSmokeReceiptFanOut"), "Runtime contract drift report must include the owner-local restricted owner smoke receipt fan-out")
 assert(report.fetch("owner_local_methods").include?("GetKDETestLaunchMaterializationReceiptLookupPreview"), "Runtime contract drift report must include the owner-local KDE materialization receipt lookup")
+assert(report.fetch("owner_local_methods").include?("GetKDETestLaunchMaterializationFanOut"), "Runtime contract drift report must include the owner-local KDE materialization fan-out route")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "Runtime contract drift report must list gated write methods")
 assert(!report.fetch("write_methods_supported"), "Runtime contract drift report must not support write methods")
 assert(!report.fetch("write_method_dispatch_enabled"), "Runtime contract drift report must not enable write dispatch")

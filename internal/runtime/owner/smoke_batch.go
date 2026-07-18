@@ -144,7 +144,7 @@ func smokeBatchArgs(method string) []string {
 		return nil
 	case "GetRestrictedOwnerSmokeReceiptLookupPreview", "GetRestrictedOwnerSmokeReceiptFanOut":
 		return []string{RestrictedOwnerSmokeOpaqueReceiptID}
-	case "GetKDETestLaunchMaterializationReceiptLookupPreview":
+	case "GetKDETestLaunchMaterializationReceiptLookupPreview", "GetKDETestLaunchMaterializationFanOut":
 		return []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID}
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}

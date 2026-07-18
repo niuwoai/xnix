@@ -71,13 +71,13 @@ func NewRouteCheckpoint(root string) (RouteCheckpoint, error) {
 	ownerLocalCount := ownerReadCount - manifest.RouteCounts.Total
 	methodParityReady := manifest.MethodParityReady
 	formalCoverageReady := manifest.GoOwnerRouteCoverageReady && manifest.RouteCounts.GoRouted == manifest.RouteCounts.Total
-	ownerLocalCoverageReady := ownerLocalCount == 9
+	ownerLocalCoverageReady := ownerLocalCount == 10
 	smokeCoverageReady := readRecords == ownerReadCount
 	writesReady = writesReady && writeDenials == 4
 	checks := []RouteCheckpointCheck{
 		checkpointCheck("method-parity", methodParityReady, "The formal Runtime read contract has method parity."),
 		checkpointCheck("formal-go-routes", formalCoverageReady, "Every formal Runtime read method has a Go owner route."),
-		checkpointCheck("owner-local-routes", ownerLocalCoverageReady, "Nine review-only owner-local routes are present outside the production ABI."),
+		checkpointCheck("owner-local-routes", ownerLocalCoverageReady, "Ten review-only owner-local routes are present outside the production ABI."),
 		checkpointCheck("smoke-read-coverage", smokeCoverageReady, "The smoke batch covers every owner read method through Service.Call."),
 		checkpointCheck("write-denials", writesReady, "Every reserved Runtime write method has a deterministic disabled response."),
 	}

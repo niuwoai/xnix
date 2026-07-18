@@ -261,6 +261,53 @@ func TestServiceCallServesOwnerLocalKDETestLaunchMaterializationReceiptLookup(t 
 	}
 }
 
+func TestServiceCallServesOwnerLocalKDETestLaunchMaterializationFanOut(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("GetKDETestLaunchMaterializationFanOut", []string{appidentity.KDETestLaunchMaterializationOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetKDETestLaunchMaterializationFanOut" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected materialization fan-out owner route service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetKDETestLaunchMaterializationFanOut" ||
+		dispatch["go_command"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested materialization fan-out owner route dispatch: %#v", dispatch)
+	}
+	nested := dispatch["payload"].(map[string]any)
+	if nested["request_type"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		nested["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		nested["requires_caller_state_root"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["fan_out_result_state"] != "missing-receipt-fail-closed" ||
+		nested["owner_local_route_candidate_ready"] != true ||
+		nested["production_dbus_exposure_ready"] != false ||
+		nested["fan_out_writes_enabled"] != false ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected nested materialization fan-out owner route payload: %#v", nested)
+	}
+}
+
 func TestServiceCallDeniesWriteMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

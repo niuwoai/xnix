@@ -159,6 +159,44 @@ func TestRuntimeOwnerCommandRendersMaterializationReceiptLookupReadDispatch(t *t
 	}
 }
 
+func TestRuntimeOwnerCommandRendersMaterializationFanOutReadDispatch(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--service-call", "GetKDETestLaunchMaterializationFanOut", "kde-test-launch-materialization-receipt-id",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["method"] != "GetKDETestLaunchMaterializationFanOut" ||
+		payload["call_type"] != "read-dispatch" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["network_required"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected materialization fan-out owner route service response: %#v", payload)
+	}
+	dispatch := payload["payload"].(map[string]any)
+	nested := dispatch["payload"].(map[string]any)
+	if dispatch["go_command"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" ||
+		nested["request_type"] != "kde-test-launch-materialization-fanout-owner-route-preview" ||
+		nested["opaque_materialization_receipt_id"] != "kde-test-launch-materialization-receipt-id" ||
+		nested["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		nested["requires_caller_state_root"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["fan_out_result_state"] != "missing-receipt-fail-closed" ||
+		nested["owner_local_route_candidate_ready"] != true ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected materialization fan-out owner route nested payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersRestrictedOwnerSmokeReceiptFanOutReadDispatch(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{
@@ -493,8 +531,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 74 {
-		t.Fatalf("smoke batch line count = %d, want 74", len(lines))
+	if len(lines) != 75 {
+		t.Fatalf("smoke batch line count = %d, want 75", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -508,7 +546,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(70) ||
+			payload["read_dispatch_method_count"] != float64(71) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -551,8 +589,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)
 		}
 	}
-	if readCount != 70 || writeCount != 4 {
-		t.Fatalf("smoke batch counts read=%d write=%d, want 70/4", readCount, writeCount)
+	if readCount != 71 || writeCount != 4 {
+		t.Fatalf("smoke batch counts read=%d write=%d, want 71/4", readCount, writeCount)
 	}
 }
 
@@ -563,8 +601,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 79 {
-		t.Fatalf("session bus smoke line count = %d, want 79", len(lines))
+	if len(lines) != 80 {
+		t.Fatalf("session bus smoke line count = %d, want 80", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -579,7 +617,7 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-session-bus-smoke-step" ||
 			payload["transcript_type"] != "restricted-private-session-bus-owner-smoke" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(70) ||
+			payload["read_dispatch_method_count"] != float64(71) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -615,8 +653,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			}
 		}
 	}
-	if readCount != 70 || writeCount != 4 || unsupportedCount != 1 {
-		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 70/4/1", readCount, writeCount, unsupportedCount)
+	if readCount != 71 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 71/4/1", readCount, writeCount, unsupportedCount)
 	}
 }
 
@@ -641,9 +679,9 @@ func TestRuntimeOwnerCommandRendersRouteCheckpoint(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.owner_route_checkpoint.v1" ||
 		payload["formal_read_route_count"] != float64(61) ||
 		payload["go_formal_read_route_count"] != float64(61) ||
-		payload["owner_read_method_count"] != float64(70) ||
-		payload["owner_local_read_method_count"] != float64(9) ||
-		payload["smoke_read_record_count"] != float64(70) ||
+		payload["owner_read_method_count"] != float64(71) ||
+		payload["owner_local_read_method_count"] != float64(10) ||
+		payload["smoke_read_record_count"] != float64(71) ||
 		payload["smoke_write_denial_count"] != float64(4) ||
 		payload["route_band_ready"] != true ||
 		payload["write_methods_enabled"] != false ||
@@ -666,7 +704,7 @@ func TestRuntimeOwnerCommandRendersKDEOfflineIdentityCheckpoint(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.kde_offline_identity_checkpoint.v1" ||
 		payload["application_id"] != "org.xnix.sample.notepad" ||
 		payload["surface_count"] != float64(9) || payload["expected_surface_count"] != float64(9) ||
-		payload["owner_read_method_count"] != float64(70) || payload["owner_local_read_method_count"] != float64(9) ||
+		payload["owner_read_method_count"] != float64(71) || payload["owner_local_read_method_count"] != float64(10) ||
 		payload["offline_identity_ready"] != true || payload["production_signature_ready"] != false ||
 		payload["production_bus_claimed"] != false || payload["write_methods_enabled"] != false ||
 		payload["launch_enabled"] != false || payload["backend_process_started"] != false ||
