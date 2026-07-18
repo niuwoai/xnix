@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.359
+> Last updated: 2026-07-19 | Current version: v0.2.360
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.360 checkpoint adds production receipt notification action safety audit. `production-receipt-notification-action-safety-audit-preview` models review, renew, open Compatibility Center, dismiss, and support-info actions for future receipt-related notifications while keeping notification actions, notification delivery, Portal requests, Runtime request objects, Compatibility Center navigation, receipt writes, receipt persistence, receipt lookup, replay, expiry writes, revocation writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.359 checkpoint adds production receipt notification delivery gate audit. `production-receipt-notification-delivery-gate-audit-preview` models the separate operator and desktop-side-effect gates required before expiring, expired, revoked, and missing-review receipt states can notify users while keeping notification delivery, notification actions, Portal requests, Runtime request objects, receipt writes, receipt persistence, receipt lookup, replay, expiry writes, revocation writes, service start, bus claim, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe-data exposure, and host mutation disabled.
 

@@ -809,6 +809,116 @@ func TestProductionReceiptNotificationDeliveryGateAuditPreviewCommandRejectsPosi
 	}
 }
 
+func TestProductionReceiptNotificationActionSafetyAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-safety-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-safety-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_safety_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-safety-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-request-safety-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-safety-audit-ready-actions-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt notification action payload: %s", output.String())
+	}
+	if payload["action_safety_audit_required"] != true ||
+		payload["action_safety_audit_modeled"] != true ||
+		payload["notification_delivery_gate_consumed"] != true ||
+		payload["desktop_side_effect_review_consumed"] != true ||
+		payload["operator_action_approval_required"] != true ||
+		payload["operator_action_approval_present"] != false ||
+		payload["notification_action_safety_ready"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt notification action decision: %s", output.String())
+	}
+	if payload["action_item_count"] != float64(5) ||
+		payload["required_action_item_count"] != float64(5) ||
+		payload["ready_action_item_count"] != float64(5) ||
+		payload["missing_action_item_count"] != float64(0) ||
+		payload["enabled_action_item_count"] != float64(0) ||
+		payload["request_created_item_count"] != float64(0) ||
+		payload["navigation_enabled_item_count"] != float64(0) ||
+		payload["side_effect_item_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action counts: %s", output.String())
+	}
+	items := payload["action_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected production receipt notification action item list: %s", output.String())
+	}
+	for _, item := range items {
+		action := item.(map[string]any)
+		if action["evidence_present"] != true ||
+			action["action_safety_modeled"] != true ||
+			action["user_visible"] != true ||
+			action["review_only"] != true ||
+			action["runtime_owned"] != true ||
+			action["go_runtime_backed"] != true ||
+			action["kde_policy_owner"] != false ||
+			action["operator_approval_required"] != true ||
+			action["operator_approval_present"] != false ||
+			action["action_enabled"] != false ||
+			action["navigation_enabled"] != false ||
+			action["portal_request_created"] != false ||
+			action["request_objects_created"] != false ||
+			action["notification_sent"] != false ||
+			action["notification_delivery_enabled"] != false ||
+			action["notification_action_enabled"] != false ||
+			action["receipt_accepted"] != false ||
+			action["authorization_accepted"] != false ||
+			action["receipt_revocation_write_enabled"] != false ||
+			action["receipt_expiry_write_enabled"] != false ||
+			action["receipt_persistence_enabled"] != false ||
+			action["receipt_lookup_writes_enabled"] != false ||
+			action["compatibility_center_opened"] != false ||
+			action["compatibility_center_persisted"] != false ||
+			action["support_bundle_exported"] != false ||
+			action["support_case_created"] != false ||
+			action["production_readiness"] != false ||
+			action["production_ownership_ready"] != false ||
+			action["side_effects_disabled"] != true ||
+			action["host_root_modified"] != false ||
+			action["internal_details_exposed"] != false ||
+			action["action_status"] != "notification-action-modeled-actions-disabled" {
+			t.Fatalf("unsafe production receipt notification action item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt notification action output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "notification_action_safety_persisted", "review_action_enabled", "renew_action_enabled", "open_compatibility_center_enabled", "dismiss_action_enabled", "support_info_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "portal_request_created", "request_objects_created", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt notification action gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionSafetyAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-safety-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-safety-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

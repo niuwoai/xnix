@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.360] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-safety-audit-preview`, a read-only Go owner audit that models review, renew, open Compatibility Center, dismiss, and support-info actions for future receipt-related notifications.
+- Wired the notification action safety audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping notification actions, notification delivery, Portal requests, Runtime request objects, Compatibility Center navigation, receipt writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.359] - 2026-07-19
 
 ### Added
