@@ -26,6 +26,7 @@ OWNER_LOCAL_READ_METHODS = %w[
   GetSignedRecipeVerificationPreview
   GetRestrictedProductSmokePacketPreview
   GetBackendAdapterProfileAudit
+  GetRestrictedOwnerSmokeReceiptLookupPreview
   GetRuntimeWriteGate
 ].freeze
 

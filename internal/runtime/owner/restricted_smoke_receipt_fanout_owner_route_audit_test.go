@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditKeepsFanOutCLIOnly(t *testing.T) {
+func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditRecognizesOpaqueLookup(t *testing.T) {
 	preview, err := NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview(projectRoot(t))
 	if err != nil {
 		t.Fatalf("NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview returned error: %v", err)
@@ -21,8 +21,8 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditKeepsFanOutCLIOnly(t *t
 		preview.SubjectRequestType != "restricted-owner-smoke-receipt-fanout-preview" ||
 		preview.SubjectCommand != "restricted-owner-smoke-receipt-fanout-preview" ||
 		preview.ProposedOwnerMethod != "GetRestrictedOwnerSmokeReceiptFanOut" ||
-		preview.RouteDecision != "remain-cli-only" ||
-		preview.CurrentRouteStatus != "cli-preview-ready-owner-route-blocked" {
+		preview.RouteDecision != "lookup-ready-fanout-cli-only" ||
+		preview.CurrentRouteStatus != "owner-managed-lookup-ready-fanout-cli-only" {
 		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit schema: %#v", preview)
 	}
 	if !preview.CLICommandRegistered ||
@@ -31,8 +31,8 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditKeepsFanOutCLIOnly(t *t
 		preview.ProductionDBusMethodPresent ||
 		!preview.ConsumesExistingReceipt ||
 		!preview.RequiresCallerStateRoot ||
-		preview.ReceiptLookupOwnerManaged ||
-		preview.OpaqueReceiptIDSupported ||
+		!preview.ReceiptLookupOwnerManaged ||
+		!preview.OpaqueReceiptIDSupported ||
 		preview.FanOutWritesEnabled ||
 		preview.StateRootWritesEnabled ||
 		preview.SupportBundleExported ||
@@ -40,12 +40,12 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditKeepsFanOutCLIOnly(t *t
 		preview.NotificationSent ||
 		preview.OwnerLocalRouteCandidateReady ||
 		preview.ProductionDBusExposureReady ||
-		preview.RecommendedNextRoute != "owner-local-read-route-after-opaque-receipt-lookup" {
+		preview.RecommendedNextRoute != "restricted-owner-smoke-fanout-owner-local-read-route" {
 		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit decision: %#v", preview)
 	}
 	if preview.Counts.Total != 9 ||
-		preview.Counts.Passed != 7 ||
-		preview.Counts.Pending != 2 ||
+		preview.Counts.Passed != 8 ||
+		preview.Counts.Pending != 1 ||
 		preview.Counts.Blocked != 0 ||
 		!sameStrings(preview.CheckIDs, []string{"cli-preview-registered", "go-read-model-present", "owner-route-absent", "production-dbus-absent", "receipt-consumption-present", "caller-state-root-boundary", "owner-managed-receipt-lookup", "route-decision", "unsafe-gates-closed"}) {
 		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit checks: counts=%#v ids=%#v", preview.Counts, preview.CheckIDs)
@@ -92,7 +92,7 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditFailsClosedWithoutSourc
 		preview.ProductionDBusExposureReady {
 		t.Fatalf("missing sources must not produce owner-route readiness: %#v", preview)
 	}
-	if preview.Counts.Blocked != 3 || preview.RouteDecision != "remain-cli-only" {
-		t.Fatalf("missing sources must fail closed while keeping the decision CLI-only: %#v", preview.Counts)
+	if preview.Counts.Blocked != 4 || preview.RouteDecision != "lookup-ready-fanout-cli-only" {
+		t.Fatalf("missing sources must fail closed while keeping the decision on the lookup/fan-out split: %#v", preview.Counts)
 	}
 }

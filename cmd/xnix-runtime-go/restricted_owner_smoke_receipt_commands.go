@@ -55,6 +55,24 @@ func runRestrictedOwnerSmokeReceiptFanOutPreview(args []string, stdout io.Writer
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runRestrictedOwnerSmokeReceiptLookupPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("restricted-owner-smoke-receipt-lookup-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner route inputs")
+	receiptID := flags.String("receipt-id", owner.RestrictedOwnerSmokeOpaqueReceiptID, "opaque restricted owner smoke receipt id")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("restricted-owner-smoke-receipt-lookup-preview does not accept positional arguments")
+	}
+	preview, err := owner.ResolveRestrictedOwnerSmokeReceipt(*root, *receiptID)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("restricted-owner-smoke-receipt-fanout-owner-route-audit-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

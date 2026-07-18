@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.335] - 2026-07-19
+
+### Added
+
+- Added `restricted-owner-smoke-receipt-lookup-preview`, a Go Runtime owner-managed opaque receipt lookup that resolves `restricted-owner-smoke-receipt-id` to a safe relative receipt slot without accepting caller state-root paths.
+- Added owner-local read dispatch, service-call, smoke-batch, session-bus smoke, CLI, layout, drift, and evidence coverage for `GetRestrictedOwnerSmokeReceiptLookupPreview`; the existing fan-out remains CLI-only until it consumes lookup results, and production D-Bus exposure, Runtime writes, support side effects, backend launch, path exposure, and host-root mutation remain disabled.
+
 ## [0.2.334] - 2026-07-19
 
 ### Added

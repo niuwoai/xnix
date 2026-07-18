@@ -90,9 +90,9 @@ func NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview(root string) (Re
 		SubjectRequestType:            "restricted-owner-smoke-receipt-fanout-preview",
 		SubjectCommand:                "restricted-owner-smoke-receipt-fanout-preview",
 		ProposedOwnerMethod:           "GetRestrictedOwnerSmokeReceiptFanOut",
-		RouteDecision:                 "remain-cli-only",
-		RouteDecisionReason:           "The restricted smoke receipt fan-out is read-only, but the current CLI still requires a caller-supplied state root; owner-local routing needs owner-managed opaque receipt lookup first.",
-		CurrentRouteStatus:            "cli-preview-ready-owner-route-blocked",
+		RouteDecision:                 "lookup-ready-fanout-cli-only",
+		RouteDecisionReason:           "The restricted smoke receipt fan-out is read-only and owner-managed opaque receipt lookup exists, but the fan-out still requires a caller-supplied state root until it consumes lookup results.",
+		CurrentRouteStatus:            "owner-managed-lookup-ready-fanout-cli-only",
 		CLICommandRegistered:          restrictedOwnerSmokeReceiptFanOutAuditHasCLICommand(sources.GoCLI),
 		GoReadModelPresent:            restrictedOwnerSmokeReceiptFanOutAuditHasReadModel(sources.GoReadModel),
 		OwnerDispatchRoutePresent:     restrictedOwnerSmokeReceiptFanOutAuditHasOwnerRoute(sources.OwnerDispatch),
@@ -108,7 +108,7 @@ func NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview(root string) (Re
 		NotificationSent:              false,
 		OwnerLocalRouteCandidateReady: false,
 		ProductionDBusExposureReady:   false,
-		RecommendedNextRoute:          "owner-local-read-route-after-opaque-receipt-lookup",
+		RecommendedNextRoute:          "restricted-owner-smoke-fanout-owner-local-read-route",
 		RuntimeOwned:                  true,
 		GoRuntimeBacked:               true,
 		KDEPolicyOwner:                false,
@@ -126,7 +126,7 @@ func NewRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview(root string) (Re
 		BackendDetailsExposed:         false,
 		BlockedActions:                restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditBlockedActions(),
 		NextRequirements:              restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditNextRequirements(),
-		DesktopSafeSummary:            "The restricted smoke receipt fan-out remains CLI-only until the Runtime owner can resolve opaque receipt identifiers without caller state-root paths, production D-Bus exposure, Runtime writes, support side effects, launch, or host mutation.",
+		DesktopSafeSummary:            "The restricted smoke receipt fan-out remains CLI-only after owner-managed opaque receipt lookup is introduced; the next route must consume that lookup without caller state-root paths, production D-Bus exposure, Runtime writes, support side effects, launch, or host mutation.",
 	}
 	checks := restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditChecks(audit)
 	audit.Checks = checks
@@ -151,7 +151,7 @@ func restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root string) restri
 		GoCLI:         readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"cmd/xnix-runtime-go/main.go"}),
 		CLICommand:    readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"cmd/xnix-runtime-go/restricted_owner_smoke_receipt_commands.go"}),
 		GoReadModel:   readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"internal/runtime/owner/restricted_smoke_receipt_fanout.go"}),
-		OwnerDispatch: readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"internal/runtime/owner/dispatch.go"}),
+		OwnerDispatch: readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"internal/runtime/owner/dispatch.go", "internal/runtime/owner/restricted_smoke_receipt_lookup.go"}),
 		DBusContract:  readRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditSources(root, []string{"runtime/dbus/org.xnix.Compatibility1.xml"}),
 	}
 }
@@ -165,7 +165,7 @@ func restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditChecks(audit RestrictedOwne
 		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("receipt-consumption-present", restrictedOwnerSmokeReceiptFanOutAuditPassBlocked(audit.ConsumesExistingReceipt), "The fan-out consumes an existing restricted owner smoke receipt instead of creating one."),
 		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("caller-state-root-boundary", restrictedOwnerSmokeReceiptFanOutAuditPendingUnless(!audit.RequiresCallerStateRoot), "Owner-local read routes must not require caller-supplied state-root paths."),
 		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("owner-managed-receipt-lookup", restrictedOwnerSmokeReceiptFanOutAuditPendingUnless(audit.ReceiptLookupOwnerManaged && audit.OpaqueReceiptIDSupported), "Owner-local routing needs opaque receipt identifiers resolved inside the Runtime owner."),
-		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("route-decision", restrictedOwnerSmokeReceiptFanOutAuditPassBlocked(audit.RouteDecision == "remain-cli-only" && !audit.OwnerLocalRouteCandidateReady && !audit.ProductionDBusExposureReady), "The audit keeps the fan-out CLI-only until owner-managed receipt lookup exists."),
+		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("route-decision", restrictedOwnerSmokeReceiptFanOutAuditPassBlocked(audit.RouteDecision == "lookup-ready-fanout-cli-only" && audit.ReceiptLookupOwnerManaged && audit.OpaqueReceiptIDSupported && !audit.OwnerLocalRouteCandidateReady && !audit.ProductionDBusExposureReady), "The audit keeps the fan-out CLI-only until it consumes owner-managed receipt lookup results."),
 		restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditCheck("unsafe-gates-closed", restrictedOwnerSmokeReceiptFanOutAuditPassBlocked(!audit.FanOutWritesEnabled && !audit.StateRootWritesEnabled && !audit.SupportBundleExported && !audit.SupportCaseCreated && !audit.NotificationSent && !audit.SystemServiceStarted && !audit.SessionBusClaimed && !audit.ProductionBusClaimed && !audit.WriteMethodsEnabled && !audit.RuntimeWritesEnabled && !audit.BackendLaunchEnabled && !audit.BackendProcessStarted && !audit.NetworkRequired && !audit.HostRootModified && !audit.PrivilegedContainerRequired && !audit.StateRootPathExposed && !audit.BackendDetailsExposed), "The audit does not write, export support bundles, create cases, notify, start services, claim buses, launch, expose paths, or mutate the host."),
 	}
 }
@@ -245,7 +245,7 @@ func restrictedOwnerSmokeReceiptFanOutAuditHasOpaqueReceiptID(source string) boo
 
 func restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditBlockedActions() []string {
 	return []string{
-		"add restricted smoke receipt fan-out to production D-Bus before owner-managed receipt lookup exists",
+		"add restricted smoke receipt fan-out to production D-Bus before fan-out consumes owner-managed lookup results",
 		"accept caller-supplied state-root paths through owner dispatch",
 		"export support bundles from owner-route audit",
 		"create support cases from owner-route audit",
@@ -256,9 +256,9 @@ func restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditBlockedActions() []string {
 
 func restrictedOwnerSmokeReceiptFanOutOwnerRouteAuditNextRequirements() []string {
 	return []string{
-		"Introduce owner-managed opaque restricted-smoke receipt identifiers.",
-		"Resolve receipt evidence inside the Runtime owner without caller state-root paths.",
-		"Add owner route and service-call smoke evidence for the read-only receipt lookup.",
+		"Wire restricted smoke receipt fan-out to owner-managed opaque receipt lookup results.",
+		"Resolve verified receipt evidence inside the Runtime owner without caller state-root paths.",
+		"Add owner route and service-call smoke evidence for the read-only fan-out route.",
 		"Keep production D-Bus exposure blocked until route-manifest and owner-smoke coverage prove the path.",
 	}
 }

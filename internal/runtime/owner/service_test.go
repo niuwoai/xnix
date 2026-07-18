@@ -127,6 +127,49 @@ func TestServiceCallServesOwnerLocalRedactedBackendAdapterProfileAudit(t *testin
 	}
 }
 
+func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptLookup(t *testing.T) {
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("GetRestrictedOwnerSmokeReceiptLookupPreview", []string{RestrictedOwnerSmokeOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+	if call.Method != "GetRestrictedOwnerSmokeReceiptLookupPreview" ||
+		call.CallType != "read-dispatch" ||
+		!call.ReadOnlyDispatch ||
+		call.WriteMethod ||
+		call.WriteMethodsEnabled ||
+		!call.DispatchReady ||
+		call.SessionBusClaimed ||
+		call.ProductionBusClaimed ||
+		call.NetworkRequired ||
+		call.HostRootModified ||
+		call.BackendDetailsExposed {
+		t.Fatalf("unexpected restricted owner smoke lookup service call: %#v", call)
+	}
+
+	var dispatch map[string]any
+	if err := json.Unmarshal(call.Payload, &dispatch); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if dispatch["method"] != "GetRestrictedOwnerSmokeReceiptLookupPreview" ||
+		dispatch["go_command"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" {
+		t.Fatalf("unexpected nested restricted owner smoke lookup dispatch: %#v", dispatch)
+	}
+	nested := dispatch["payload"].(map[string]any)
+	if nested["request_type"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		nested["owner_managed_lookup"] != true ||
+		nested["caller_state_root_required"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected nested restricted owner smoke lookup payload: %#v", nested)
+	}
+}
+
 func TestServiceCallDeniesWriteMethods(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {

@@ -87,6 +87,42 @@ func TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch(
 	}
 }
 
+func TestRuntimeOwnerCommandRendersRestrictedOwnerSmokeReceiptLookupReadDispatch(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--service-call", "GetRestrictedOwnerSmokeReceiptLookupPreview", "restricted-owner-smoke-receipt-id",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["method"] != "GetRestrictedOwnerSmokeReceiptLookupPreview" ||
+		payload["call_type"] != "read-dispatch" ||
+		payload["read_only_dispatch"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["network_required"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected restricted owner smoke lookup service response: %#v", payload)
+	}
+	dispatch := payload["payload"].(map[string]any)
+	nested := dispatch["payload"].(map[string]any)
+	if dispatch["go_command"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		dispatch["route_source"] != "go-owner-local-preview" ||
+		nested["request_type"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		nested["opaque_receipt_id"] != "restricted-owner-smoke-receipt-id" ||
+		nested["owner_managed_lookup"] != true ||
+		nested["caller_state_root_required"] != false ||
+		nested["receipt_lookup_state"] != "missing-receipt" ||
+		nested["backend_launch_enabled"] != false ||
+		nested["host_root_modified"] != false {
+		t.Fatalf("unexpected restricted owner smoke lookup nested payload: %#v", nested)
+	}
+}
+
 func TestRuntimeOwnerCommandRendersDisabledWrite(t *testing.T) {
 	var output bytes.Buffer
 	if err := run([]string{"--deny-write", "Launch"}, &output); err != nil {
@@ -384,8 +420,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 71 {
-		t.Fatalf("smoke batch line count = %d, want 71", len(lines))
+	if len(lines) != 72 {
+		t.Fatalf("smoke batch line count = %d, want 72", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -399,7 +435,7 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-smoke-batch-record" ||
 			payload["batch_type"] != "restricted-session-owner-call-batch" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(67) ||
+			payload["read_dispatch_method_count"] != float64(68) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -442,8 +478,8 @@ func TestRuntimeOwnerCommandRendersSmokeBatchJSONL(t *testing.T) {
 			t.Fatalf("unexpected smoke batch record type at %d: %#v", index, payload)
 		}
 	}
-	if readCount != 67 || writeCount != 4 {
-		t.Fatalf("smoke batch counts read=%d write=%d, want 67/4", readCount, writeCount)
+	if readCount != 68 || writeCount != 4 {
+		t.Fatalf("smoke batch counts read=%d write=%d, want 68/4", readCount, writeCount)
 	}
 }
 
@@ -454,8 +490,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
-	if len(lines) != 76 {
-		t.Fatalf("session bus smoke line count = %d, want 76", len(lines))
+	if len(lines) != 77 {
+		t.Fatalf("session bus smoke line count = %d, want 77", len(lines))
 	}
 	readCount := 0
 	writeCount := 0
@@ -470,7 +506,7 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			payload["request_type"] != "runtime-owner-session-bus-smoke-step" ||
 			payload["transcript_type"] != "restricted-private-session-bus-owner-smoke" ||
 			payload["sequence"] != float64(index+1) ||
-			payload["read_dispatch_method_count"] != float64(67) ||
+			payload["read_dispatch_method_count"] != float64(68) ||
 			payload["write_method_count"] != float64(4) ||
 			payload["runtime_owned"] != true ||
 			payload["go_runtime_backed"] != true ||
@@ -506,8 +542,8 @@ func TestRuntimeOwnerCommandRendersSessionBusSmokeJSONL(t *testing.T) {
 			}
 		}
 	}
-	if readCount != 67 || writeCount != 4 || unsupportedCount != 1 {
-		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 67/4/1", readCount, writeCount, unsupportedCount)
+	if readCount != 68 || writeCount != 4 || unsupportedCount != 1 {
+		t.Fatalf("session bus smoke counts read=%d write=%d unsupported=%d, want 68/4/1", readCount, writeCount, unsupportedCount)
 	}
 }
 
@@ -532,9 +568,9 @@ func TestRuntimeOwnerCommandRendersRouteCheckpoint(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.owner_route_checkpoint.v1" ||
 		payload["formal_read_route_count"] != float64(61) ||
 		payload["go_formal_read_route_count"] != float64(61) ||
-		payload["owner_read_method_count"] != float64(67) ||
-		payload["owner_local_read_method_count"] != float64(6) ||
-		payload["smoke_read_record_count"] != float64(67) ||
+		payload["owner_read_method_count"] != float64(68) ||
+		payload["owner_local_read_method_count"] != float64(7) ||
+		payload["smoke_read_record_count"] != float64(68) ||
 		payload["smoke_write_denial_count"] != float64(4) ||
 		payload["route_band_ready"] != true ||
 		payload["write_methods_enabled"] != false ||
@@ -557,7 +593,7 @@ func TestRuntimeOwnerCommandRendersKDEOfflineIdentityCheckpoint(t *testing.T) {
 		payload["schema_version"] != "xnix.runtime.kde_offline_identity_checkpoint.v1" ||
 		payload["application_id"] != "org.xnix.sample.notepad" ||
 		payload["surface_count"] != float64(9) || payload["expected_surface_count"] != float64(9) ||
-		payload["owner_read_method_count"] != float64(67) || payload["owner_local_read_method_count"] != float64(6) ||
+		payload["owner_read_method_count"] != float64(68) || payload["owner_local_read_method_count"] != float64(7) ||
 		payload["offline_identity_ready"] != true || payload["production_signature_ready"] != false ||
 		payload["production_bus_claimed"] != false || payload["write_methods_enabled"] != false ||
 		payload["launch_enabled"] != false || payload["backend_process_started"] != false ||

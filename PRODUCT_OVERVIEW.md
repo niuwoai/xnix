@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.334
+> Last updated: 2026-07-19 | Current version: v0.2.335
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.335 checkpoint splits restricted owner smoke receipt lookup from caller state-root paths. The Go Runtime now exposes `restricted-owner-smoke-receipt-lookup-preview` and owner-local `GetRestrictedOwnerSmokeReceiptLookupPreview`, resolving the stable opaque `restricted-owner-smoke-receipt-id` to a safe relative receipt slot while returning a fail-closed `missing-receipt` state until digest-verified evidence is attached; fan-out consumption, production D-Bus exposure, Runtime writes, support export/case/notification side effects, backend launch, state-root path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.334 checkpoint creates the redacted backend adapter profile owner route. The Go Runtime now exposes `backend-adapter-redacted-profile-audit-preview` and owner-local `GetBackendAdapterProfileAudit`, allowing owner dispatch and service-call evidence to return only user-safe compatibility profile states while keeping internal adapter identifiers, profile paths, raw commands, backend details, production D-Bus exposure, Runtime writes, adapter invocation, backend launch, command materialization, networking, and host-root mutation disabled.
 

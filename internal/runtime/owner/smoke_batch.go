@@ -140,6 +140,8 @@ func smokeBatchArgs(method string) []string {
 		"GetWindowsCompatibilityWorkstreamsPreview", "GetRestrictedProductSmokePacketPreview",
 		"GetBackendAdapterProfileAudit":
 		return nil
+	case "GetRestrictedOwnerSmokeReceiptLookupPreview":
+		return []string{RestrictedOwnerSmokeOpaqueReceiptID}
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}
 	case "GetNotificationPlan":

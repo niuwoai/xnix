@@ -189,8 +189,8 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand(t *testi
 		payload["read_method"] != "GetRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreview" ||
 		payload["subject_command"] != "restricted-owner-smoke-receipt-fanout-preview" ||
 		payload["proposed_owner_method"] != "GetRestrictedOwnerSmokeReceiptFanOut" ||
-		payload["route_decision"] != "remain-cli-only" ||
-		payload["current_route_status"] != "cli-preview-ready-owner-route-blocked" {
+		payload["route_decision"] != "lookup-ready-fanout-cli-only" ||
+		payload["current_route_status"] != "owner-managed-lookup-ready-fanout-cli-only" {
 		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit command payload: %s", output.String())
 	}
 	if payload["cli_command_registered"] != true ||
@@ -199,8 +199,8 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand(t *testi
 		payload["production_dbus_method_present"] != false ||
 		payload["consumes_existing_receipt"] != true ||
 		payload["requires_caller_state_root"] != true ||
-		payload["receipt_lookup_owner_managed"] != false ||
-		payload["opaque_receipt_id_supported"] != false ||
+		payload["receipt_lookup_owner_managed"] != true ||
+		payload["opaque_receipt_id_supported"] != true ||
 		payload["fan_out_writes_enabled"] != false ||
 		payload["state_root_writes_enabled"] != false ||
 		payload["support_bundle_exported"] != false ||
@@ -212,8 +212,8 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommand(t *testi
 	}
 	counts := payload["counts"].(map[string]any)
 	if counts["total"] != float64(9) ||
-		counts["passed"] != float64(7) ||
-		counts["pending"] != float64(2) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(1) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected restricted owner smoke fan-out owner-route audit counts: %s", output.String())
 	}
@@ -231,5 +231,57 @@ func TestRestrictedOwnerSmokeReceiptFanOutOwnerRouteAuditPreviewCommandRejectsPo
 	var output bytes.Buffer
 	if err := run([]string{"restricted-owner-smoke-receipt-fanout-owner-route-audit-preview", "extra"}, &output); err == nil {
 		t.Fatalf("restricted-owner-smoke-receipt-fanout-owner-route-audit-preview must reject positional arguments")
+	}
+}
+
+func TestRestrictedOwnerSmokeReceiptLookupPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-lookup-preview", "--root", root, "--receipt-id", owner.RestrictedOwnerSmokeOpaqueReceiptID}, &output); err != nil {
+		t.Fatalf("restricted-owner-smoke-receipt-lookup-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.restricted_owner_smoke_receipt_lookup.v1" ||
+		payload["request_type"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		payload["lookup_type"] != "owner-managed-receipt-lookup" ||
+		payload["runtime_method"] != "GetRestrictedOwnerSmokeReceiptLookup" ||
+		payload["read_method"] != "GetRestrictedOwnerSmokeReceiptLookupPreview" ||
+		payload["opaque_receipt_id"] != owner.RestrictedOwnerSmokeOpaqueReceiptID ||
+		payload["receipt_relative_path"] != "owner-smoke/restricted-owner-smoke-receipt.json" ||
+		payload["receipt_lookup_state"] != "missing-receipt" ||
+		payload["receipt_available"] != false ||
+		payload["receipt_consumed"] != false ||
+		payload["missing_receipt_safe"] != true ||
+		payload["owner_managed_lookup"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["opaque_receipt_id_supported"] != true ||
+		payload["read_only_lookup"] != true ||
+		payload["check_count"] != float64(6) ||
+		payload["passed_check_count"] != float64(6) ||
+		payload["all_checks_passed"] != true {
+		t.Fatalf("unexpected restricted owner smoke receipt lookup payload: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("lookup command output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"state_root_path_exposed", "state_root_writes_enabled", "runtime_writes_enabled", "fan_out_writes_enabled", "production_owner_enabled", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "support_bundle_exported", "support_case_created", "notification_sent", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestRestrictedOwnerSmokeReceiptLookupPreviewCommandRejectsBadInputs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"restricted-owner-smoke-receipt-lookup-preview", "extra"}, &output); err == nil {
+		t.Fatalf("restricted-owner-smoke-receipt-lookup-preview must reject positional arguments")
+	}
+	if err := run([]string{"restricted-owner-smoke-receipt-lookup-preview", "--receipt-id", "unknown-receipt"}, &output); err == nil {
+		t.Fatalf("restricted-owner-smoke-receipt-lookup-preview must reject unknown opaque receipt ids")
 	}
 }

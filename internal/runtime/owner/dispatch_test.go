@@ -377,6 +377,7 @@ func TestSupportedReadDispatchMethodsAreStable(t *testing.T) {
 		"GetRestrictedProductSmokePacketPreview",
 		"GetKDEOfflineApplicationIdentityPreview",
 		"GetBackendAdapterProfileAudit",
+		"GetRestrictedOwnerSmokeReceiptLookupPreview",
 	}
 	if !sameStrings(methods, want) {
 		t.Fatalf("SupportedReadDispatchMethods = %#v, want %#v", methods, want)
@@ -451,6 +452,43 @@ func TestDispatchReadRendersRedactedBackendAdapterProfileAuditAsOwnerLocalPayloa
 	}
 }
 
+func TestDispatchReadRendersRestrictedOwnerSmokeReceiptLookupAsOwnerLocalPayload(t *testing.T) {
+	dispatch, err := DispatchRead(projectRoot(t), "GetRestrictedOwnerSmokeReceiptLookupPreview", []string{RestrictedOwnerSmokeOpaqueReceiptID})
+	if err != nil {
+		t.Fatalf("DispatchRead returned error: %v", err)
+	}
+	if dispatch.Method != "GetRestrictedOwnerSmokeReceiptLookupPreview" ||
+		dispatch.RouteSource != "go-owner-local-preview" ||
+		dispatch.GoCommand != "restricted-owner-smoke-receipt-lookup-preview" ||
+		dispatch.RouteStatus != "owner-local-preview-ready" ||
+		!dispatch.RouteReady || !dispatch.ReadOnlyDispatch || dispatch.WriteMethodsEnabled ||
+		dispatch.ProductionBusClaimed || dispatch.NetworkRequired || dispatch.HostRootModified ||
+		dispatch.BackendDetailsExposed {
+		t.Fatalf("unexpected restricted owner smoke receipt lookup dispatch: %#v", dispatch)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(dispatch.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["request_type"] != "restricted-owner-smoke-receipt-lookup-preview" ||
+		payload["runtime_method"] != "GetRestrictedOwnerSmokeReceiptLookup" ||
+		payload["opaque_receipt_id"] != RestrictedOwnerSmokeOpaqueReceiptID ||
+		payload["owner_managed_lookup"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_lookup_state"] != "missing-receipt" ||
+		payload["receipt_available"] != false ||
+		payload["receipt_consumed"] != false ||
+		payload["missing_receipt_safe"] != true ||
+		payload["state_root_path_exposed"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected restricted owner smoke receipt lookup payload: %#v", payload)
+	}
+	if _, err := DispatchRead(projectRoot(t), "GetRestrictedOwnerSmokeReceiptLookupPreview", []string{"unknown-receipt"}); err == nil {
+		t.Fatal("restricted owner smoke receipt lookup accepted an unknown opaque id")
+	}
+}
+
 func sampleReadDispatchArgs(method string) []string {
 	const appID = "org.xnix.sample.notepad"
 	switch method {
@@ -460,6 +498,8 @@ func sampleReadDispatchArgs(method string) []string {
 		"GetRuntimeOwnerRouteManifest", "GetRuntimeOwnerRecipeTrust", "GetRuntimeOwnerReadiness",
 		"GetWindowsCompatibilityWorkstreamsPreview", "GetRestrictedProductSmokePacketPreview", "GetBackendAdapterProfileAudit":
 		return nil
+	case "GetRestrictedOwnerSmokeReceiptLookupPreview":
+		return []string{RestrictedOwnerSmokeOpaqueReceiptID}
 	case "GetDesktopActivationTransactionPreview", "GetDesktopActivationStatus":
 		return []string{appID, "development"}
 	case "GetNotificationPlan":
