@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.348] - 2026-07-19
+
+### Added
+
+- Added production D-Bus gate consumption to `runtime-service-activation-preflight-preview`, including a source-backed gate summary for the production D-Bus gate review and human authorization preflight.
+- Added service activation checks for production D-Bus gate review, human authorization preflight, and the still-pending human authorization receipt while keeping production activation, service start, bus ownership, Runtime writes, backend launch, network use, privileged containers, and host mutation disabled.
+
 ## [0.2.347] - 2026-07-19
 
 ### Added

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.347"
+EXPECTED_VERSION = "0.2.348"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1334,15 +1334,16 @@ go_runtime_service_binding_cli_source = read_project_file("cmd/xnix-runtime-go/m
 assert(go_runtime_service_binding_cli_source.include?("runtime-service-binding-preview"), "Go Runtime CLI must expose Runtime service binding preview")
 
 go_runtime_service_activation_preflight_source = read_project_file("internal/runtime/appidentity/runtime_service_activation_preflight.go")
-%w[RuntimeServiceActivationPreflightPreview runtime-service-activation-preflight-preview xnix.runtime.service_activation_preflight.v1 GetRuntimeServiceActivationPreflight GetRuntimeServiceActivationPreflightPreview runtime-service-binding-preview runtime-owner-readiness-preview runtime-owner-smoke-plan-preview production-runtime-service-activation-preflight activation-binding read-only-method-parity owner-smoke-plan write-method-gate kde-ownership-boundary host-safety-boundary long-running-runtime-owner restricted-owner-smoke production-bus-claim production-recipe-trust restricted-owner-smoke-ready production-activation-blocked].each do |token|
+%w[RuntimeServiceActivationPreflightPreview RuntimeServiceActivationProductionDBusGate runtime-service-activation-preflight-preview xnix.runtime.service_activation_preflight.v1 GetRuntimeServiceActivationPreflight GetRuntimeServiceActivationPreflightPreview runtime-service-binding-preview runtime-owner-readiness-preview runtime-owner-smoke-plan-preview production-dbus-gate-review-preview production-dbus-human-authorization-preflight-preview production-runtime-service-activation-preflight activation-binding read-only-method-parity owner-smoke-plan production-dbus-gate-review human-authorization-preflight human-authorization-receipt write-method-gate kde-ownership-boundary host-safety-boundary long-running-runtime-owner restricted-owner-smoke production-bus-claim production-recipe-trust restricted-owner-smoke-ready production-activation-blocked production-dbus-gate-review-consumed-activation-still-blocked production-dbus-gate-review-missing].each do |token|
   assert(go_runtime_service_activation_preflight_source.include?(token), "Go Runtime service activation preflight preview must include #{token}")
 end
-%w[ProductionActivationReady RestrictedSmokeReady HumanAuthorizationRequired RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted ProductionBusClaimed WriteMethodsEnabled BackendLaunchEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
+%w[ProductionActivationReady RestrictedSmokeReady ProductionDBusGateReady HumanAuthorizationPreflightReady HumanAuthorizationRequired HumanAuthorizationGranted AuthorizationReceiptAccepted RuntimeOwned GoRuntimeBacked KDEPolicyOwner KDEMayClaimRuntimeOwnership SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled NetworkRequired HostRootModified PrivilegedContainerRequired BackendDetailsExposed].each do |token|
   assert(go_runtime_service_activation_preflight_source.include?(token), "Go Runtime service activation preflight preview must expose #{token}")
 end
 assert(go_runtime_service_activation_preflight_source.include?("NewRuntimeServiceBindingPreview"), "Go Runtime service activation preflight must derive from the service binding preview")
 assert(go_runtime_service_activation_preflight_source.include?("NewRuntimeOwnerReadinessPreview"), "Go Runtime service activation preflight must derive from owner readiness")
 assert(go_runtime_service_activation_preflight_source.include?("NewRuntimeOwnerSmokePlanPreview"), "Go Runtime service activation preflight must derive from owner smoke planning")
+assert(go_runtime_service_activation_preflight_source.include?("runtimeServiceActivationProductionDBusGate"), "Go Runtime service activation preflight must consume production D-Bus gate sources")
 assert(go_runtime_service_activation_preflight_source.include?("validateNoBackendTerms"), "Go Runtime service activation preflight must hide backend terms")
 
 go_runtime_service_activation_preflight_cli_source = read_project_file("cmd/xnix-runtime-go/main.go")

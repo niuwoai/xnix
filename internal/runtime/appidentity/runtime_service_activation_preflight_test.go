@@ -16,7 +16,7 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 		preview.SchemaVersion != "xnix.runtime.service_activation_preflight.v1" ||
 		preview.RequestType != "runtime-service-activation-preflight-preview" ||
 		preview.PreflightType != "production-runtime-service-activation-preflight" ||
-		preview.Source != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview" ||
+		preview.Source != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
 		preview.RuntimeMethod != "GetRuntimeServiceActivationPreflight" ||
 		preview.ReadMethod != "GetRuntimeServiceActivationPreflightPreview" {
 		t.Fatalf("unexpected Runtime service activation preflight schema: %#v", preview)
@@ -62,11 +62,36 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 		preview.OwnerSmokePlan.Counts.Pending != 6 {
 		t.Fatalf("unexpected owner smoke summary: %#v", preview.OwnerSmokePlan)
 	}
+	if preview.ProductionDBusGate.RequestType != "production-dbus-gate-review-preview" ||
+		preview.ProductionDBusGate.GateType != "owner-local-smoke-covered-production-dbus-gate-review" ||
+		preview.ProductionDBusGate.GateDecision != "production-dbus-gate-review-consumed-activation-still-blocked" ||
+		!preview.ProductionDBusGate.GateReviewSourcePresent ||
+		!preview.ProductionDBusGate.HumanAuthorizationPreflightPresent ||
+		!preview.ProductionDBusGate.GateReviewReady ||
+		!preview.ProductionDBusGate.HumanAuthorizationPreflightReady ||
+		!preview.ProductionDBusGate.HumanAuthorizationRequired ||
+		preview.ProductionDBusGate.HumanAuthorizationGranted ||
+		preview.ProductionDBusGate.AuthorizationReceiptAccepted ||
+		preview.ProductionDBusGate.ProductionReadiness ||
+		preview.ProductionDBusGate.ProductionOwnerEnabled ||
+		preview.ProductionDBusGate.ProductionActivationReady ||
+		preview.ProductionDBusGate.SystemServiceStarted ||
+		preview.ProductionDBusGate.SessionBusClaimed ||
+		preview.ProductionDBusGate.ProductionBusClaimed ||
+		preview.ProductionDBusGate.WriteMethodsEnabled ||
+		preview.ProductionDBusGate.RuntimeWritesEnabled ||
+		preview.ProductionDBusGate.BackendLaunchEnabled ||
+		preview.ProductionDBusGate.HostRootModified {
+		t.Fatalf("unexpected production D-Bus gate summary: %#v", preview.ProductionDBusGate)
+	}
 
 	expectedIDs := []string{
 		"activation-binding",
 		"read-only-method-parity",
 		"owner-smoke-plan",
+		"production-dbus-gate-review",
+		"human-authorization-preflight",
+		"human-authorization-receipt",
 		"write-method-gate",
 		"kde-ownership-boundary",
 		"host-safety-boundary",
@@ -75,7 +100,7 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 		"production-bus-claim",
 		"production-recipe-trust",
 	}
-	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pending", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
 	if len(preview.PreflightChecks) != len(expectedIDs) || len(preview.CheckIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected preflight checks: %#v ids=%#v", preview.PreflightChecks, preview.CheckIDs)
 	}
@@ -86,16 +111,20 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 			t.Fatalf("unexpected preflight check at %d: %#v ids=%#v", index, preview.PreflightChecks, preview.CheckIDs)
 		}
 	}
-	if preview.Counts.Total != 10 ||
-		preview.Counts.Passed != 6 ||
-		preview.Counts.Pending != 4 ||
+	if preview.Counts.Total != 13 ||
+		preview.Counts.Passed != 8 ||
+		preview.Counts.Pending != 5 ||
 		preview.Counts.Blocked != 0 {
 		t.Fatalf("unexpected preflight counts: %#v", preview.Counts)
 	}
 	if preview.PreflightDecision != "restricted-owner-smoke-ready" ||
 		preview.ProductionActivationReady ||
 		!preview.RestrictedSmokeReady ||
+		!preview.ProductionDBusGateReady ||
+		!preview.HumanAuthorizationPreflightReady ||
 		!preview.HumanAuthorizationRequired ||
+		preview.HumanAuthorizationGranted ||
+		preview.AuthorizationReceiptAccepted ||
 		!preview.RuntimeOwned ||
 		!preview.GoRuntimeBacked ||
 		preview.KDEPolicyOwner ||
@@ -110,14 +139,15 @@ func TestRuntimeServiceActivationPreflightPreviewGatesProductionActivation(t *te
 		preview.BackendDetailsExposed {
 		t.Fatalf("unexpected Runtime service activation safety flags: %#v", preview)
 	}
-	if len(preview.BlockedReasons) != 4 ||
+	if len(preview.BlockedReasons) != 5 ||
 		preview.BlockedReasons[0] != "Live production Runtime ownership is not proven." ||
-		len(preview.BlockedActions) != 6 ||
+		preview.BlockedReasons[4] != "Production D-Bus human authorization receipt has not been accepted." ||
+		len(preview.BlockedActions) != 8 ||
 		preview.BlockedActions[0] != "start production Runtime service from preflight" ||
-		len(preview.NextRequirements) != 4 {
+		len(preview.NextRequirements) != 6 {
 		t.Fatalf("unexpected preflight blocked metadata: reasons=%#v actions=%#v next=%#v", preview.BlockedReasons, preview.BlockedActions, preview.NextRequirements)
 	}
-	if preview.DesktopSafeSummary != "Runtime service activation is ready for restricted owner smoke; production activation, bus claim, and service start remain disabled." {
+	if preview.DesktopSafeSummary != "Runtime service activation consumes production D-Bus gate preflights and is ready for restricted owner smoke; production activation, bus claim, and service start remain disabled." {
 		t.Fatalf("unexpected desktop-safe summary: %q", preview.DesktopSafeSummary)
 	}
 	if err := validateNoBackendTerms(preview, "Runtime service activation preflight test"); err != nil {
@@ -139,6 +169,10 @@ func TestRuntimeServiceActivationPreflightPreviewBlocksMissingActivationSources(
 	if preview.PreflightDecision != "production-activation-blocked" ||
 		preview.ProductionActivationReady ||
 		preview.RestrictedSmokeReady ||
+		preview.ProductionDBusGateReady ||
+		preview.HumanAuthorizationPreflightReady ||
+		preview.HumanAuthorizationGranted ||
+		preview.AuthorizationReceiptAccepted ||
 		preview.SystemServiceStarted ||
 		preview.ProductionBusClaimed ||
 		preview.WriteMethodsEnabled ||
@@ -150,13 +184,27 @@ func TestRuntimeServiceActivationPreflightPreviewBlocksMissingActivationSources(
 	if preview.PreflightChecks[0].ID != "activation-binding" ||
 		preview.PreflightChecks[0].Status != "blocked" ||
 		preview.PreflightChecks[1].ID != "read-only-method-parity" ||
-		preview.PreflightChecks[1].Status != "blocked" {
-		t.Fatalf("missing sources must block activation and method parity: %#v", preview.PreflightChecks)
+		preview.PreflightChecks[1].Status != "blocked" ||
+		preview.PreflightChecks[3].ID != "production-dbus-gate-review" ||
+		preview.PreflightChecks[3].Status != "blocked" ||
+		preview.PreflightChecks[4].ID != "human-authorization-preflight" ||
+		preview.PreflightChecks[4].Status != "blocked" ||
+		preview.PreflightChecks[5].ID != "human-authorization-receipt" ||
+		preview.PreflightChecks[5].Status != "pending" {
+		t.Fatalf("missing sources must block activation, method parity, and production D-Bus gate consumption: %#v", preview.PreflightChecks)
 	}
-	if preview.Counts.Total != 10 ||
+	if preview.ProductionDBusGate.GateDecision != "production-dbus-gate-review-missing" ||
+		preview.ProductionDBusGate.GateReviewSourcePresent ||
+		preview.ProductionDBusGate.HumanAuthorizationPreflightPresent ||
+		preview.ProductionDBusGate.GateReviewReady ||
+		preview.ProductionDBusGate.HumanAuthorizationPreflightReady ||
+		preview.ProductionDBusGate.AuthorizationReceiptAccepted {
+		t.Fatalf("missing sources must keep production D-Bus gate closed: %#v", preview.ProductionDBusGate)
+	}
+	if preview.Counts.Total != 13 ||
 		preview.Counts.Passed != 4 ||
-		preview.Counts.Pending != 4 ||
-		preview.Counts.Blocked != 2 {
+		preview.Counts.Pending != 5 ||
+		preview.Counts.Blocked != 4 {
 		t.Fatalf("unexpected missing-source preflight counts: %#v", preview.Counts)
 	}
 	if preview.DesktopSafeSummary != "Production Runtime service activation is blocked until activation, method parity, and safety defects are repaired." {

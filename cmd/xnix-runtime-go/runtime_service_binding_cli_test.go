@@ -120,7 +120,7 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		payload["schema_version"] != "xnix.runtime.service_activation_preflight.v1" ||
 		payload["request_type"] != "runtime-service-activation-preflight-preview" ||
 		payload["preflight_type"] != "production-runtime-service-activation-preflight" ||
-		payload["source"] != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview+production-dbus-gate-review-preview+production-dbus-human-authorization-preflight-preview" ||
 		payload["runtime_method"] != "GetRuntimeServiceActivationPreflight" ||
 		payload["read_method"] != "GetRuntimeServiceActivationPreflightPreview" {
 		t.Fatalf("unexpected Runtime service activation preflight CLI schema: %#v", payload)
@@ -162,6 +162,29 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		smoke["pending_step_count"] != float64(6) {
 		t.Fatalf("unexpected owner smoke plan summary: %#v", smoke)
 	}
+	productionDBusGate := payload["production_dbus_gate"].(map[string]any)
+	if productionDBusGate["request_type"] != "production-dbus-gate-review-preview" ||
+		productionDBusGate["gate_type"] != "owner-local-smoke-covered-production-dbus-gate-review" ||
+		productionDBusGate["gate_decision"] != "production-dbus-gate-review-consumed-activation-still-blocked" ||
+		productionDBusGate["gate_review_source_present"] != true ||
+		productionDBusGate["human_authorization_preflight_present"] != true ||
+		productionDBusGate["gate_review_ready"] != true ||
+		productionDBusGate["human_authorization_preflight_ready"] != true ||
+		productionDBusGate["human_authorization_required"] != true ||
+		productionDBusGate["human_authorization_granted"] != false ||
+		productionDBusGate["authorization_receipt_accepted"] != false ||
+		productionDBusGate["production_readiness"] != false ||
+		productionDBusGate["production_owner_enabled"] != false ||
+		productionDBusGate["production_activation_ready"] != false ||
+		productionDBusGate["system_service_started"] != false ||
+		productionDBusGate["session_bus_claimed"] != false ||
+		productionDBusGate["production_bus_claimed"] != false ||
+		productionDBusGate["write_methods_enabled"] != false ||
+		productionDBusGate["runtime_writes_enabled"] != false ||
+		productionDBusGate["backend_launch_enabled"] != false ||
+		productionDBusGate["host_root_modified"] != false {
+		t.Fatalf("unexpected production D-Bus gate summary: %#v", productionDBusGate)
+	}
 
 	checks := payload["preflight_checks"].([]any)
 	checkIDs := payload["check_ids"].([]any)
@@ -169,6 +192,9 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		"activation-binding",
 		"read-only-method-parity",
 		"owner-smoke-plan",
+		"production-dbus-gate-review",
+		"human-authorization-preflight",
+		"human-authorization-receipt",
 		"write-method-gate",
 		"kde-ownership-boundary",
 		"host-safety-boundary",
@@ -177,7 +203,7 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		"production-bus-claim",
 		"production-recipe-trust",
 	}
-	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
+	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pending", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
 	if len(checks) != len(expectedIDs) || len(checkIDs) != len(expectedIDs) {
 		t.Fatalf("unexpected Runtime service activation preflight checks: %#v ids=%#v", checks, checkIDs)
 	}
@@ -188,16 +214,20 @@ func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *te
 		}
 	}
 	counts := payload["counts"].(map[string]any)
-	if counts["total"] != float64(10) ||
-		counts["passed"] != float64(6) ||
-		counts["pending"] != float64(4) ||
+	if counts["total"] != float64(13) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(5) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected Runtime service activation preflight counts: %#v", counts)
 	}
 	if payload["preflight_decision"] != "restricted-owner-smoke-ready" ||
 		payload["production_activation_ready"] != false ||
 		payload["restricted_smoke_ready"] != true ||
+		payload["production_dbus_gate_ready"] != true ||
+		payload["human_authorization_preflight_ready"] != true ||
 		payload["human_authorization_required"] != true ||
+		payload["human_authorization_granted"] != false ||
+		payload["authorization_receipt_accepted"] != false ||
 		payload["runtime_owned"] != true ||
 		payload["go_runtime_backed"] != true ||
 		payload["kde_policy_owner"] != false ||
