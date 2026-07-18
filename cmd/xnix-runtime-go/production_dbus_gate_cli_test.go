@@ -919,6 +919,115 @@ func TestProductionReceiptNotificationActionSafetyAuditPreviewCommandRejectsPosi
 	}
 }
 
+func TestProductionReceiptNotificationActionRequestObjectAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-request-object-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-request-object-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_request_object_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-request-object-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-runtime-request-object-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-request-object-audit-ready-requests-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production receipt notification action request-object payload: %s", output.String())
+	}
+	if payload["request_object_audit_required"] != true ||
+		payload["request_object_audit_modeled"] != true ||
+		payload["action_safety_audit_consumed"] != true ||
+		payload["dispatch_request_boundary_consumed"] != true ||
+		payload["operator_action_approval_required"] != true ||
+		payload["operator_action_approval_present"] != false ||
+		payload["request_object_boundary_ready"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production receipt notification action request-object decision: %s", output.String())
+	}
+	if payload["request_object_count"] != float64(5) ||
+		payload["required_request_object_count"] != float64(5) ||
+		payload["ready_request_object_count"] != float64(5) ||
+		payload["missing_request_object_count"] != float64(0) ||
+		payload["created_request_object_count"] != float64(0) ||
+		payload["dispatched_request_object_count"] != float64(0) ||
+		payload["portal_request_created_count"] != float64(0) ||
+		payload["navigation_requested_count"] != float64(0) ||
+		payload["side_effect_request_object_count"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action request-object counts: %s", output.String())
+	}
+	objects := payload["request_objects"].([]any)
+	if len(objects) != 5 {
+		t.Fatalf("unexpected production receipt notification action request-object list: %s", output.String())
+	}
+	for _, object := range objects {
+		request := object.(map[string]any)
+		if request["evidence_present"] != true ||
+			request["request_object_modeled"] != true ||
+			request["user_visible"] != true ||
+			request["review_only"] != true ||
+			request["runtime_owned"] != true ||
+			request["go_runtime_backed"] != true ||
+			request["kde_policy_owner"] != false ||
+			request["operator_approval_required"] != true ||
+			request["operator_approval_present"] != false ||
+			request["request_object_created"] != false ||
+			request["request_object_dispatched"] != false ||
+			request["request_object_persisted"] != false ||
+			request["portal_request_created"] != false ||
+			request["navigation_requested"] != false ||
+			request["notification_action_enabled"] != false ||
+			request["action_enabled"] != false ||
+			request["receipt_accepted"] != false ||
+			request["authorization_accepted"] != false ||
+			request["receipt_writer_enabled"] != false ||
+			request["receipt_persistence_enabled"] != false ||
+			request["compatibility_center_opened"] != false ||
+			request["compatibility_center_persisted"] != false ||
+			request["support_bundle_exported"] != false ||
+			request["support_case_created"] != false ||
+			request["production_readiness"] != false ||
+			request["production_ownership_ready"] != false ||
+			request["side_effects_disabled"] != true ||
+			request["host_root_modified"] != false ||
+			request["internal_details_exposed"] != false ||
+			request["request_object_status"] != "request-object-modeled-creation-disabled" {
+			t.Fatalf("unsafe production receipt notification action request-object item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production receipt notification action request-object checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production receipt notification action request-object output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "review_action_enabled", "renew_action_enabled", "open_compatibility_center_enabled", "dismiss_action_enabled", "support_info_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "krunner_index_persisted", "task_manager_entry_active", "kwin_rule_applied", "live_tray_bridge_enabled", "tray_bridge_persisted", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production receipt notification action request-object gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionRequestObjectAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-request-object-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-request-object-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
