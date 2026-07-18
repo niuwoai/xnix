@@ -14,7 +14,7 @@ module Xnix
     class BootSmoke
       DEFAULT_MEMORY = "4G"
       DEFAULT_CPU_COUNT = "2"
-      ANSI_ESCAPE = /\e(?:\[[0-?]*[ -\/]*[@-~]|\][^\a]*(?:\a|\e\\))/.freeze
+      ANSI_ESCAPE = /\e(?:\[[0-?]*[ -\/]*[@-~]|\][^\a\e]*(?:\a|\e\\))/.freeze
       UNIT_NAME = /\A[A-Za-z0-9@_.:-]+\z/
 
       def initialize(image)

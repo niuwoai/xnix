@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.320-rc7] - 2026-07-18
+
+### Fixed
+
+- Corrected Fedora shell OSC stripping so a successful active KDE boot marker adjacent to a shell integration sequence remains visible to the smoke verifier.
+- Added regression coverage using the exact control-sequence shape captured during the rc6 q4 KVM run, where both `graphical.target` and `plasmalogin.service` were active but the verifier timed out.
+
 ## [0.2.320-rc6] - 2026-07-18
 
 ### Fixed

@@ -130,6 +130,10 @@ good_serial = smoke.expected_markers.join("\n... boot log ...\n")
 assert(smoke.booted?(good_serial), "boot smoke must pass when all markers are present")
 colored_serial = smoke.expected_markers.map { |marker| "\e[0;32m#{marker}\e[0m\r" }.join("\n")
 assert(smoke.booted?(colored_serial), "boot smoke must ignore ANSI control sequences in serial output")
+fedora_shell_serial = "\e]3008;start=command;cwd=/var/home/xnix\e\\XNIX_BOOT_PROBE_PASS\r\n" \
+                      "\e]3008;end=command;exit=success\e\\"
+assert(smoke.booted?(fedora_shell_serial),
+       "boot smoke must preserve markers adjacent to Fedora shell OSC sequences")
 assert(!smoke.booted?("nothing useful here"), "boot smoke must fail when markers are absent")
 boot_cmd = smoke.boot_command(disk_path: "/tmp/x.qcow2", firmware_path: "/tmp/OVMF.fd")
 assert(boot_cmd.include?("qemu-system-x86_64"), "boot command must invoke QEMU")

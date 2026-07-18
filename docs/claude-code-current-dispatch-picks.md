@@ -1,6 +1,6 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-18 | Baseline: v0.2.320-rc6
+> Last updated: 2026-07-18 | Baseline: v0.2.320-rc7
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 

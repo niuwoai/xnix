@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.320-rc6
+> Last updated: 2026-07-18 | Current version: v0.2.320-rc7
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.320-rc7 verification checkpoint preserves active KDE boot results adjacent to Fedora shell OSC integration sequences. The rc6 q4 build produced the Fedora 44 container and a clean qcow2, then KVM reached the serial login and returned `XNIX_BOOT_PROBE_PASS` after both `graphical.target` and `plasmalogin.service` reported active; the original ANSI cleaner mistakenly consumed that marker and waited until timeout. rc7 fixes the verifier and adds the captured control-sequence shape as regression coverage without changing the image contents.
 
 The v0.2.320-rc6 verification checkpoint replaces passive systemd serial-marker matching with an authenticated serial health probe. The rc5 q4 build produced the Fedora 44 container and a clean 15.1 GiB virtual qcow2; direct KVM inspection proved `graphical.target` and `plasmalogin.service` active with no failed units, while the passive serial smoke timed out because systemd did not print those target lines. rc6 signs in with the disk blueprint's development account, queries both units, emits an unambiguous pass/fail marker, and terminates QEMU early. The container driver also exposes the exact isolated Podman graphroot, runroot, `slirp4netns`, repository host pin, and proxy-clearing controls used on q4 without permitting host networking.
 
