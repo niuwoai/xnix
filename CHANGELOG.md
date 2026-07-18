@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.359] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-delivery-gate-audit-preview`, a read-only Go owner audit that models the separate gate required before expiring, expired, revoked, and missing-review receipt states can notify users.
+- Wired the notification delivery gate audit into the Runtime CLI, layout verifier, implementation evidence report, and product documentation while keeping notification delivery, notification actions, Portal requests, Runtime request objects, receipt writes, receipt persistence, receipt lookup, replay, expiry writes, revocation writes, production ownership, Runtime writes, desktop side effects, support side effects, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.358] - 2026-07-19
 
 ### Added

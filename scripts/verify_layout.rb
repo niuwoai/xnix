@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.358"
+EXPECTED_VERSION = "0.2.359"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1806,6 +1806,24 @@ go_runtime_production_receipt_revocation_visibility_audit_test_source = read_pro
                                                                        read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionReceiptRevocationVisibilityAuditPreviewModelsVisibility TestProductionReceiptRevocationVisibilityAuditPreviewFailsClosedWithoutSources TestProductionReceiptRevocationVisibilityAuditPreviewCommand production-receipt-revocation-visibility-audit-preview visibility_audit_required visibility_audit_modeled persistence_threat_review_consumed desktop_side_effect_review_consumed revocation_visibility_ready ready_visibility_item_count revocation_write_enabled_item_count expiry_write_enabled_item_count notification_enabled_item_count].each do |token|
   assert(go_runtime_production_receipt_revocation_visibility_audit_test_source.include?(token), "Go Runtime production receipt revocation visibility audit tests and CLI must include #{token}")
+end
+
+go_runtime_production_receipt_notification_delivery_gate_audit_source = read_project_file("internal/runtime/owner/production_receipt_notification_delivery_gate_audit.go")
+%w[ProductionReceiptNotificationDeliveryGateAuditPreview ProductionReceiptNotificationDeliveryGateAuditItem ProductionReceiptNotificationDeliveryGateAuditCheck NewProductionReceiptNotificationDeliveryGateAuditPreview xnix.runtime.production_receipt_notification_delivery_gate_audit.v1 production-receipt-notification-delivery-gate-audit-preview receipt-expiry-revocation-notification-delivery-gate-audit production-receipt-notification-delivery-gate-audit-ready-delivery-disabled production-receipt-notification-delivery-gate-audit-blocked production-receipt-revocation-visibility-audit-preview production-desktop-side-effect-review-preview revocation-visibility-audit-consumed desktop-side-effect-review-consumed notification-gate-modeled-only five-notification-gate-items-present gate-items-ready-delivery-disabled notification-delivery-disabled requests-and-persistence-disabled receipt-writes-disabled production-and-host-boundary-closed expiring-receipt-warning-gate expired-receipt-blocker-gate revoked-receipt-blocker-gate missing-review-reminder-gate operator-approval-gate].each do |token|
+  assert(go_runtime_production_receipt_notification_delivery_gate_audit_source.include?(token), "Go Runtime production receipt notification delivery gate audit must include #{token}")
+end
+%w[NotificationGateRequired NotificationGateModeled RevocationVisibilityAuditConsumed DesktopSideEffectReviewConsumed OperatorNotificationApprovalRequired OperatorNotificationApprovalPresent NotificationDeliveryGateReady CallerStateRootRequired AuthorizationAccepted ProductionReadiness ProductionOwnershipReady GateItemCount RequiredGateItemCount ReadyGateItemCount MissingGateItemCount DeliveryEnabledItemCount NotificationSentItemCount RequestCreatedItemCount SideEffectItemCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled ReceiptWriterEnabled ReceiptPersistenceEnabled ReceiptLookupWritesEnabled ReceiptReplayEnabled ReceiptExpiryWriteEnabled ReceiptRevocationWriteEnabled ReceiptRevocationVisibilityPersisted NotificationDeliveryGatePersisted DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted KRunnerIndexPersisted TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled TrayBridgePersisted NotificationSent NotificationDeliveryEnabled NotificationActionEnabled CompatibilityCenterPersisted PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_receipt_notification_delivery_gate_audit_source.include?(token), "Go Runtime production receipt notification delivery gate audit must expose safety gate #{token}")
+end
+%w[production_receipt_revocation_visibility_audit.go production_desktop_side_effect_review.go docs/claude-code-current-dispatch-picks.md].each do |token|
+  assert(go_runtime_production_receipt_notification_delivery_gate_audit_source.include?(token), "Go Runtime production receipt notification delivery gate audit must consume #{token}")
+end
+go_runtime_production_receipt_notification_delivery_gate_audit_test_source = read_project_file("internal/runtime/owner/production_receipt_notification_delivery_gate_audit_test.go") +
+                                                                            read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                            read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                            read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionReceiptNotificationDeliveryGateAuditPreviewModelsGate TestProductionReceiptNotificationDeliveryGateAuditPreviewFailsClosedWithoutSources TestProductionReceiptNotificationDeliveryGateAuditPreviewCommand production-receipt-notification-delivery-gate-audit-preview notification_gate_required notification_gate_modeled revocation_visibility_audit_consumed notification_delivery_gate_ready ready_gate_item_count delivery_enabled_item_count notification_sent_item_count request_created_item_count].each do |token|
+  assert(go_runtime_production_receipt_notification_delivery_gate_audit_test_source.include?(token), "Go Runtime production receipt notification delivery gate audit tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")
