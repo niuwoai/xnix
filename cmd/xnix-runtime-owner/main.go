@@ -32,6 +32,7 @@ func run(args []string, stdout io.Writer) error {
 	routeCheckpoint := flags.Bool("route-checkpoint", false, "render the Go owner read-route checkpoint")
 	kdeIdentityCheckpoint := flags.Bool("kde-identity-checkpoint", false, "render the offline KDE application identity checkpoint")
 	materializationFanOutOwnerSmokeCoverage := flags.Bool("materialization-fanout-owner-smoke-coverage", false, "render materialization fan-out owner-local route smoke coverage")
+	restrictedSmokeFanOutOwnerSmokeCoverage := flags.Bool("restricted-smoke-fanout-owner-smoke-coverage", false, "render restricted owner smoke fan-out owner-local route smoke coverage")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -41,7 +42,7 @@ func run(args []string, stdout io.Writer) error {
 
 	var payload any
 	selectedOperations := 0
-	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke, *routeCheckpoint, *kdeIdentityCheckpoint, *materializationFanOutOwnerSmokeCoverage} {
+	for _, selected := range []bool{*writeMethod != "", *readMethod != "", *serviceCallMethod != "", *lifecycleLog, *smokeBatch, *sessionBusSmoke, *routeCheckpoint, *kdeIdentityCheckpoint, *materializationFanOutOwnerSmokeCoverage, *restrictedSmokeFanOutOwnerSmokeCoverage} {
 		if selected {
 			selectedOperations++
 		}
@@ -121,6 +122,12 @@ func run(args []string, stdout io.Writer) error {
 		payload = checkpoint
 	} else if *materializationFanOutOwnerSmokeCoverage {
 		coverage, err := owner.NewKDETestLaunchMaterializationFanOutOwnerSmokeCoveragePreview(*root)
+		if err != nil {
+			return err
+		}
+		payload = coverage
+	} else if *restrictedSmokeFanOutOwnerSmokeCoverage {
+		coverage, err := owner.NewRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreview(*root)
 		if err != nil {
 			return err
 		}

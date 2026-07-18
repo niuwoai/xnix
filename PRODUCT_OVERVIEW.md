@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.340
+> Last updated: 2026-07-19 | Current version: v0.2.341
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.341 checkpoint adds restricted owner smoke coverage for the restricted owner smoke receipt fan-out owner route. The Go Runtime now exposes `restricted-owner-smoke-receipt-fanout-owner-smoke-coverage-preview`, unwrapping the smoke-batch `GetRestrictedOwnerSmokeReceiptFanOut` service-call record to prove the owner-local route is exercised through `Service.Call`; missing restricted owner smoke receipts remain fail-closed, readiness and support surfaces stay unsatisfied, and production D-Bus exposure, Runtime writes, support bundle export, support case creation, notifications, backend launch, backend process start, path exposure, backend details, and host-root mutation remain disabled.
 
 The v0.2.340 checkpoint adds restricted owner smoke coverage for the KDE test launch materialization fan-out owner route. The Go Runtime now exposes `kde-test-launch-materialization-fanout-owner-smoke-coverage-preview`, unwrapping the smoke-batch `GetKDETestLaunchMaterializationFanOut` service-call record to prove the owner-local route is exercised through `Service.Call`; missing materialization receipts remain fail-closed, KDE surfaces stay deferred and read-only, and production D-Bus exposure, Runtime writes, command materialization, executable resolution, backend launch, desktop side effects, path exposure, backend details, and host-root mutation remain disabled.
 

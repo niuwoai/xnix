@@ -76,6 +76,7 @@ assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").inc
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/lifecycle.go"), "Runtime owner service must include lifecycle evidence")
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/smoke_batch.go"), "Runtime owner service must include smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/kde_test_launch_materialization_fanout_owner_smoke_coverage.go"), "Runtime owner service must include materialization fan-out owner smoke coverage evidence")
+assert(domains.fetch("runtime-owner-service").fetch("fixture_files_present").include?("internal/runtime/owner/restricted_smoke_receipt_fanout_owner_smoke_coverage.go"), "Runtime owner service must include restricted owner smoke fan-out smoke coverage evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_smoke.c"), "Runtime owner service must include C D-Bus bridge smoke evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_runtime_models.inc"), "Runtime owner service must include C D-Bus bridge model evidence")
 assert(domains.fetch("runtime-owner-service").fetch("smoke_files_present").include?("runtime/dbus/xnix_compatd_kde_center.inc"), "Runtime owner service must include KDE Center C bridge model evidence")
@@ -84,6 +85,7 @@ assert(domains.fetch("runtime-owner-service").fetch("summary").include?("D-Bus s
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("full D-Bus read dispatch coverage"), "Runtime owner service summary must mention full read dispatch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("service-call smoke-batch read/write evidence"), "Runtime owner service summary must mention service-call smoke batch evidence")
 assert(domains.fetch("runtime-owner-service").fetch("summary").include?("explicit materialization fan-out owner smoke coverage"), "Runtime owner service summary must mention materialization fan-out owner smoke coverage")
+assert(domains.fetch("runtime-owner-service").fetch("summary").include?("explicit restricted owner smoke fan-out smoke coverage"), "Runtime owner service summary must mention restricted owner smoke fan-out smoke coverage")
 assert(domains.fetch("runtime-owner-service").fetch("gate_tokens").any? { |entry|
   entry.fetch("file") == "runtime/dbus/xnix_compatd_smoke.c" &&
     entry.fetch("token") == "add_go_owner_dispatch_bridge_fields" &&

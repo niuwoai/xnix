@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.341] - 2026-07-19
+
+### Added
+
+- Added `restricted-owner-smoke-receipt-fanout-owner-smoke-coverage-preview`, an owner smoke coverage read model that unwraps the restricted smoke-batch `GetRestrictedOwnerSmokeReceiptFanOut` service-call record and proves the v0.2.337 owner-local restricted smoke receipt fan-out route is exercised through `Service.Call`.
+- Added owner CLI, Go tests, layout, evidence, and product metadata coverage while keeping missing restricted owner smoke receipts fail-closed and leaving production D-Bus exposure, Runtime writes, support bundle export, support case creation, notifications, backend launch, backend process start, path exposure, and host-root mutation disabled.
+
 ## [0.2.340] - 2026-07-19
 
 ### Added
