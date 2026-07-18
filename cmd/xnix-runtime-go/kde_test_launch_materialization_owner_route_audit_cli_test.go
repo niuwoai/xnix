@@ -25,8 +25,8 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand(t *testing.T)
 		payload["read_method"] != "GetKDETestLaunchMaterializationOwnerRouteAuditPreview" ||
 		payload["subject_command"] != "kde-test-launch-materialization-fanout-preview" ||
 		payload["proposed_owner_method"] != "GetKDETestLaunchMaterializationFanOut" ||
-		payload["route_decision"] != "remain-cli-only" ||
-		payload["current_route_status"] != "cli-preview-ready-owner-route-blocked" {
+		payload["route_decision"] != "consume-ready-opaque-lookup-missing" ||
+		payload["current_route_status"] != "read-only-consume-ready-owner-route-blocked" {
 		t.Fatalf("unexpected materialization owner-route audit command payload: %s", output.String())
 	}
 	if payload["cli_command_registered"] != true ||
@@ -38,14 +38,19 @@ func TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand(t *testing.T)
 		payload["requires_caller_state_root"] != true ||
 		payload["requires_explicit_authorization"] != true ||
 		payload["materialization_writes_state_root"] != true ||
+		payload["read_only_consume_command_registered"] != true ||
+		payload["read_only_receipt_consumption_ready"] != true ||
+		payload["read_only_consume_requires_caller_state_root"] != true ||
+		payload["owner_managed_opaque_receipt_lookup_ready"] != false ||
+		payload["opaque_materialization_receipt_id_supported"] != false ||
 		payload["fan_out_writes_enabled"] != false ||
 		payload["owner_local_route_candidate_ready"] != false ||
 		payload["production_dbus_exposure_ready"] != false {
 		t.Fatalf("unexpected materialization owner-route audit command decision: %s", output.String())
 	}
 	counts := payload["counts"].(map[string]any)
-	if counts["total"] != float64(8) ||
-		counts["passed"] != float64(6) ||
+	if counts["total"] != float64(10) ||
+		counts["passed"] != float64(8) ||
 		counts["pending"] != float64(2) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected materialization owner-route audit counts: %s", output.String())

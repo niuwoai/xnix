@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.336] - 2026-07-19
+
+### Added
+
+- Updated `kde-test-launch-materialization-owner-route-audit-preview` to recognize the existing read-only materialization fan-out consumption split and to identify owner-managed opaque materialization receipt lookup as the remaining route blocker.
+- Added Go, CLI, layout, and evidence coverage for the updated materialization route audit while keeping fan-out owner routing, production D-Bus exposure, Runtime writes, launch, backend process start, path exposure, and host-root mutation disabled.
+
 ## [0.2.335] - 2026-07-19
 
 ### Added

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.335"
+EXPECTED_VERSION = "0.2.336"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -2436,18 +2436,18 @@ go_runtime_kde_test_launch_materialization_fanout_cli_source = read_project_file
 end
 
 go_runtime_kde_test_launch_materialization_owner_route_audit_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_owner_route_audit.go")
-%w[KDETestLaunchMaterializationOwnerRouteAuditPreview NewKDETestLaunchMaterializationOwnerRouteAuditPreview xnix.runtime.kde_test_launch_materialization_owner_route_audit.v1 kde-test-launch-materialization-owner-route-audit-preview GetKDETestLaunchMaterializationOwnerRouteAudit GetKDETestLaunchMaterializationOwnerRouteAuditPreview materialization-fanout-owner-route-audit GetKDETestLaunchMaterializationFanOut remain-cli-only cli-preview-ready-owner-route-blocked owner-local-read-route-after-opaque-receipt-consumption cli-preview-registered go-read-model-present owner-route-absent production-dbus-absent caller-path-boundary write-boundary route-decision unsafe-gates-closed].each do |token|
+%w[KDETestLaunchMaterializationOwnerRouteAuditPreview NewKDETestLaunchMaterializationOwnerRouteAuditPreview xnix.runtime.kde_test_launch_materialization_owner_route_audit.v1 kde-test-launch-materialization-owner-route-audit-preview GetKDETestLaunchMaterializationOwnerRouteAudit GetKDETestLaunchMaterializationOwnerRouteAuditPreview materialization-fanout-owner-route-audit GetKDETestLaunchMaterializationFanOut consume-ready-opaque-lookup-missing read-only-consume-ready-owner-route-blocked owner-managed-materialization-receipt-lookup cli-preview-registered go-read-model-present read-only-consume-registered owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup route-decision unsafe-gates-closed].each do |token|
   assert(go_runtime_kde_test_launch_materialization_owner_route_audit_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit must include #{token}")
 end
-%w[OwnerDispatchRoutePresent ProductionDBusMethodPresent RequiresCallerRegistryPath RequiresCallerStateRoot MaterializationWritesStateRoot OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled HostRootModified StateRootPathExposed BackendDetailsExposed].each do |token|
+%w[OwnerDispatchRoutePresent ProductionDBusMethodPresent RequiresCallerRegistryPath RequiresCallerStateRoot MaterializationWritesStateRoot ReadOnlyConsumeCommandRegistered ReadOnlyReceiptConsumptionReady ReadOnlyConsumeRequiresCallerStateRoot OwnerManagedOpaqueReceiptLookupReady OpaqueMaterializationReceiptIDSupported OwnerLocalRouteCandidateReady ProductionDBusExposureReady SystemServiceStarted SessionBusClaimed ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled BackendLaunchEnabled HostRootModified StateRootPathExposed BackendDetailsExposed].each do |token|
   assert(go_runtime_kde_test_launch_materialization_owner_route_audit_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit must expose safety gate #{token}")
 end
 assert(go_runtime_kde_test_launch_materialization_owner_route_audit_source.include?("validateNoBackendTerms"), "Go Runtime KDE test launch materialization owner-route audit must hide backend terms")
 go_runtime_kde_test_launch_materialization_owner_route_audit_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_owner_route_audit_test.go")
-%w[TestKDETestLaunchMaterializationOwnerRouteAuditKeepsFanOutCLIOnly TestKDETestLaunchMaterializationOwnerRouteAuditFailsClosedWithoutSources remain-cli-only owner-route-absent production-dbus-absent caller-path-boundary write-boundary].each do |token|
+%w[TestKDETestLaunchMaterializationOwnerRouteAuditSeesConsumeSplit TestKDETestLaunchMaterializationOwnerRouteAuditFailsClosedWithoutSources consume-ready-opaque-lookup-missing owner-route-absent production-dbus-absent caller-path-boundary receipt-creation-split owner-managed-opaque-lookup].each do |token|
   assert(go_runtime_kde_test_launch_materialization_owner_route_audit_test_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit tests must include #{token}")
 end
-%w[kde-test-launch-materialization-owner-route-audit-preview runKDETestLaunchMaterializationOwnerRouteAuditPreview TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand route_decision owner_dispatch_route_present production_dbus_method_present owner_local_route_candidate_ready].each do |token|
+%w[kde-test-launch-materialization-owner-route-audit-preview runKDETestLaunchMaterializationOwnerRouteAuditPreview TestKDETestLaunchMaterializationOwnerRouteAuditPreviewCommand route_decision read_only_receipt_consumption_ready owner_managed_opaque_receipt_lookup_ready owner_dispatch_route_present production_dbus_method_present owner_local_route_candidate_ready].each do |token|
   assert(go_runtime_kde_test_launch_materialization_fanout_cli_source.include?(token), "Go Runtime KDE test launch materialization owner-route audit CLI must include #{token}")
 end
 
