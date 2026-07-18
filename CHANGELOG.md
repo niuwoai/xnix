@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.330] - 2026-07-18
+
+### Added
+
+- Added the KDE test launch materialization owner-route audit preview and CLI command, deciding that the v0.2.327 materialization fan-out must remain CLI-only until it can consume owner-managed opaque receipt evidence.
+- Added Go, CLI, layout, and evidence coverage that keeps owner dispatch, production D-Bus exposure, service start, Runtime writes, backend launch, network access, state-root path exposure, backend details, and host-root mutation disabled.
+
 ## [0.2.329] - 2026-07-18
 
 ### Added
