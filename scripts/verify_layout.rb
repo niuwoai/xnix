@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.352"
+EXPECTED_VERSION = "0.2.353"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1698,6 +1698,24 @@ go_runtime_production_dbus_human_authorization_preflight_test_source = read_proj
                                                                       read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionDBusHumanAuthorizationPreflightPreviewDefinesReceiptShape TestProductionDBusHumanAuthorizationPreflightPreviewFailsClosedWithoutGateReview TestProductionDBusHumanAuthorizationPreflightPreviewCommand production-dbus-human-authorization-preflight-preview authorization_receipt_required authorization_receipt_present authorization_grant_ready authorization_accepted preflight_ready production_readiness].each do |token|
   assert(go_runtime_production_dbus_human_authorization_preflight_test_source.include?(token), "Go Runtime production D-Bus human authorization preflight tests and CLI must include #{token}")
+end
+
+go_runtime_production_human_authorization_receipt_consolidation_source = read_project_file("internal/runtime/owner/production_human_authorization_receipt_consolidation.go")
+%w[ProductionHumanAuthorizationReceiptConsolidationPreview ProductionHumanAuthorizationReceiptGate ProductionHumanAuthorizationReceiptConsolidationCheck NewProductionHumanAuthorizationReceiptConsolidationPreview xnix.runtime.production_human_authorization_receipt_consolidation.v1 production-human-authorization-receipt-consolidation-preview owner-managed-opaque-human-authorization-receipt-boundary production-human-authorization-receipt-consolidation-ready-authorization-disabled production-human-authorization-receipt-consolidation-blocked production-dbus-human-authorization-preflight-preview production-dbus-gate-review-preview production-dbus-method-review-preview runtime-service-activation-preflight-preview runtime-write-gate-preview production-rollback-diagnostics-review-preview production-desktop-side-effect-review-preview preflight-shape-consumed production-gate-consumed method-review-consumed service-and-write-gates-consumed rollback-and-desktop-reviews-consumed opaque-receipt-boundary authorization-not-granted unsafe-gates-closed human-authorization-preflight production-dbus-gate-review production-dbus-method-review runtime-service-activation-preflight runtime-write-gate rollback-diagnostics-review desktop-side-effect-review].each do |token|
+  assert(go_runtime_production_human_authorization_receipt_consolidation_source.include?(token), "Go Runtime production human authorization receipt consolidation must include #{token}")
+end
+%w[ReceiptBoundaryConsolidated OwnerManagedOpaqueReceiptLookupReady CallerStateRootRequired ExplicitOperatorActionRequired AuthorizationGrantReady AuthorizationAccepted ProductionReadiness ProductionOwnershipReady GateCount RequiredGateCount ConsumedGateCount MissingGateCount AuthorizationAcceptedGateCount ProductionReadyGateCount SystemServiceStarted SessionBusClaimed ProductionBusClaimed ProductionOwnerEnabled ProductionActivationReady WriteMethodsEnabled RuntimeWritesEnabled ReceiptWriterEnabled ReceiptPersistenceEnabled ReceiptLookupWritesEnabled DesktopFilesWritten MIMEAppsWritten ShellConfigurationWritten SettingsPersisted NotificationSent NotificationDeliveryEnabled PortalRequestCreated RequestObjectsCreated AdapterInvocationEnabled BackendLaunchEnabled BackendProcessStarted SupportBundleExported SupportCaseCreated SnapshotRestoreExecuted StateCleanupExecuted FileContentRead FilePathsExposed NetworkRequired HostRootModified PrivilegedContainerRequired StateRootPathExposed RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_production_human_authorization_receipt_consolidation_source.include?(token), "Go Runtime production human authorization receipt consolidation must expose safety gate #{token}")
+end
+%w[production_dbus_human_authorization_preflight.go production_dbus_gate_review.go production_dbus_method_review.go runtime_service_activation_preflight.go runtime_write_gate.go production_rollback_diagnostics_review.go production_desktop_side_effect_review.go].each do |token|
+  assert(go_runtime_production_human_authorization_receipt_consolidation_source.include?(token), "Go Runtime production human authorization receipt consolidation must consume #{token}")
+end
+go_runtime_production_human_authorization_receipt_consolidation_test_source = read_project_file("internal/runtime/owner/production_human_authorization_receipt_consolidation_test.go") +
+                                                                              read_project_file("cmd/xnix-runtime-go/production_dbus_gate_cli_test.go") +
+                                                                              read_project_file("cmd/xnix-runtime-go/production_dbus_gate_commands.go") +
+                                                                              read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestProductionHumanAuthorizationReceiptConsolidationPreviewConsumesProductionGates TestProductionHumanAuthorizationReceiptConsolidationPreviewFailsClosedWithoutSources TestProductionHumanAuthorizationReceiptConsolidationPreviewCommand production-human-authorization-receipt-consolidation-preview receipt_boundary_consolidated owner_managed_opaque_receipt_lookup_ready caller_state_root_required receipt_writer_enabled consumed_gate_count missing_gate_count authorization_accepted_gate_count production_ready_gate_count].each do |token|
+  assert(go_runtime_production_human_authorization_receipt_consolidation_test_source.include?(token), "Go Runtime production human authorization receipt consolidation tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.353] - 2026-07-19
+
+### Added
+
+- Added `production-human-authorization-receipt-consolidation-preview`, a read-only Go owner model that consolidates the production human authorization receipt boundary across production D-Bus gate, method review, service activation preflight, write gate, rollback diagnostics, and desktop side-effect reviews.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for the owner-managed opaque authorization receipt boundary while keeping receipt writes, receipt acceptance, service start, bus ownership, Runtime writes, desktop side effects, support side effects, restore, cleanup, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.352] - 2026-07-19
 
 ### Added

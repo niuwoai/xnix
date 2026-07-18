@@ -132,6 +132,96 @@ func TestProductionDBusHumanAuthorizationPreflightPreviewCommandRejectsPositiona
 	}
 }
 
+func TestProductionHumanAuthorizationReceiptConsolidationPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-human-authorization-receipt-consolidation-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-human-authorization-receipt-consolidation-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_human_authorization_receipt_consolidation.v1" ||
+		payload["request_type"] != "production-human-authorization-receipt-consolidation-preview" ||
+		payload["consolidation_type"] != "owner-managed-opaque-human-authorization-receipt-boundary" ||
+		payload["consolidation_decision"] != "production-human-authorization-receipt-consolidation-ready-authorization-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_dbus_human_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "production-dbus-human-authorization-receipt-id" {
+		t.Fatalf("unexpected production human authorization receipt consolidation command payload: %s", output.String())
+	}
+	if payload["receipt_required"] != true ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["receipt_boundary_consolidated"] != true ||
+		payload["owner_managed_opaque_receipt_lookup_ready"] != true ||
+		payload["caller_state_root_required"] != false ||
+		payload["explicit_operator_action_required"] != true ||
+		payload["authorization_grant_ready"] != false ||
+		payload["authorization_accepted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected production human authorization receipt consolidation decision: %s", output.String())
+	}
+	if payload["gate_count"] != float64(7) ||
+		payload["required_gate_count"] != float64(7) ||
+		payload["consumed_gate_count"] != float64(7) ||
+		payload["missing_gate_count"] != float64(0) ||
+		payload["authorization_accepted_gate_count"] != float64(0) ||
+		payload["production_ready_gate_count"] != float64(0) {
+		t.Fatalf("unexpected production human authorization receipt gate counts: %s", output.String())
+	}
+	gates := payload["gates"].([]any)
+	if len(gates) != 7 {
+		t.Fatalf("unexpected production human authorization receipt gate list: %s", output.String())
+	}
+	for _, item := range gates {
+		gate := item.(map[string]any)
+		if gate["evidence_present"] != true ||
+			gate["receipt_boundary_ready"] != true ||
+			gate["human_authorization_required"] != true ||
+			gate["authorization_receipt_accepted"] != false ||
+			gate["production_readiness"] != false ||
+			gate["production_ownership_ready"] != false ||
+			gate["runtime_owned"] != true ||
+			gate["go_runtime_backed"] != true ||
+			gate["kde_policy_owner"] != false ||
+			gate["review_only"] != true ||
+			gate["side_effects_disabled"] != true ||
+			gate["write_methods_enabled"] != false ||
+			gate["runtime_writes_enabled"] != false ||
+			gate["backend_launch_enabled"] != false ||
+			gate["host_root_modified"] != false ||
+			gate["internal_details_exposed"] != false {
+			t.Fatalf("unsafe production human authorization receipt gate: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) ||
+		counts["passed"] != float64(8) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected production human authorization receipt consolidation checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("production human authorization receipt consolidation output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "desktop_files_written", "mimeapps_written", "shell_configuration_written", "settings_persisted", "notification_sent", "notification_delivery_enabled", "portal_request_created", "request_objects_created", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "support_bundle_exported", "support_case_created", "snapshot_restore_executed", "state_cleanup_executed", "file_content_read", "file_paths_exposed", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe production human authorization receipt gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionHumanAuthorizationReceiptConsolidationPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-human-authorization-receipt-consolidation-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-human-authorization-receipt-consolidation-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
