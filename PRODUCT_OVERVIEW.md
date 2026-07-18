@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-18 | Current version: v0.2.322
+> Last updated: 2026-07-18 | Current version: v0.2.323
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.323 checkpoint adds a Go Runtime service activation preflight read model and CLI command. It joins Runtime service binding, owner readiness, and owner smoke evidence into a fail-closed production activation decision: current sources are ready only for restricted owner smoke, while production service start, stable bus-name claim, Runtime writes, backend launch, KDE ownership, network requirements, privileged containers, and host-root mutation remain disabled until live owner, production bus, and production recipe-trust evidence exists.
 
 The v0.2.322 checkpoint lets the offline application fixture matrix consume verified snapshot baseline receipts from a controlled state root. A valid baseline now moves the snapshot evidence state to `baseline-receipt-ready`, and a fixture with both artifact and snapshot evidence can become `covered-review-only` while still staying non-launching. Missing or corrupt baselines remain blocked with explicit reasons; the matrix only performs read-only snapshot inspection and does not create, restore, delete, prune, expose state-root paths, launch backends, read user file contents into KDE-facing output, or mutate the host.
 

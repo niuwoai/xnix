@@ -29,6 +29,25 @@ func runRuntimeServiceBindingPreview(args []string, stdout io.Writer) error {
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runRuntimeServiceActivationPreflightPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("runtime-service-activation-preflight-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime activation preflight inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("runtime-service-activation-preflight-preview does not accept positional arguments")
+	}
+
+	preview, err := appidentity.NewRuntimeServiceActivationPreflightPreview(*root)
+	if err != nil {
+		return err
+	}
+
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runRuntimeLiveOwnerGatePreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("runtime-live-owner-gate-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

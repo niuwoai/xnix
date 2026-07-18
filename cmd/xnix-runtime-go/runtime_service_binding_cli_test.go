@@ -105,6 +105,120 @@ func TestRuntimeServiceBindingPreviewCommandRendersGoReadModel(t *testing.T) {
 	}
 }
 
+func TestRuntimeServiceActivationPreflightPreviewCommandRendersGoReadModel(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"runtime-service-activation-preflight-preview", "--root", projectRootForRuntimeServiceBindingCommandTest(t)}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.service_activation_preflight.v1" ||
+		payload["request_type"] != "runtime-service-activation-preflight-preview" ||
+		payload["preflight_type"] != "production-runtime-service-activation-preflight" ||
+		payload["source"] != "runtime-service-binding-preview+runtime-owner-readiness-preview+runtime-owner-smoke-plan-preview" ||
+		payload["runtime_method"] != "GetRuntimeServiceActivationPreflight" ||
+		payload["read_method"] != "GetRuntimeServiceActivationPreflightPreview" {
+		t.Fatalf("unexpected Runtime service activation preflight CLI schema: %#v", payload)
+	}
+	if payload["bus_name"] != "org.xnix.Compatibility1" ||
+		payload["object_path"] != "/org/xnix/Compatibility1" ||
+		payload["interface"] != "org.xnix.Compatibility1" {
+		t.Fatalf("unexpected Runtime service activation D-Bus identity: %#v", payload)
+	}
+
+	binding := payload["service_binding"].(map[string]any)
+	if binding["request_type"] != "runtime-service-binding-preview" ||
+		binding["production_status"] != "pending-live-owner" ||
+		binding["activation_binding_ready"] != true ||
+		binding["live_dbus_owner_ready"] != false ||
+		binding["smoke_adapter_available"] != true {
+		t.Fatalf("unexpected service binding summary: %#v", binding)
+	}
+	readiness := payload["owner_readiness"].(map[string]any)
+	if readiness["request_type"] != "runtime-owner-readiness-preview" ||
+		readiness["readiness_type"] != "runtime-owner-readiness" ||
+		readiness["activation_binding_ready"] != true ||
+		readiness["read_only_method_parity_ready"] != true ||
+		readiness["owner_smoke_planned"] != true ||
+		readiness["live_dbus_owner_ready"] != false ||
+		readiness["production_owner_enabled"] != false ||
+		readiness["owner_transition_ready"] != false ||
+		readiness["production_recipe_trust_ready"] != false ||
+		readiness["system_service_started"] != false ||
+		readiness["production_bus_claimed"] != false ||
+		readiness["write_methods_enabled"] != false {
+		t.Fatalf("unexpected owner readiness summary: %#v", readiness)
+	}
+	smoke := payload["owner_smoke_plan"].(map[string]any)
+	if smoke["request_type"] != "runtime-owner-smoke-plan-preview" ||
+		smoke["plan_type"] != "runtime-owner-smoke-plan" ||
+		smoke["smoke_state"] != "planned" ||
+		smoke["smoke_environment"] != "restricted-session" ||
+		smoke["pending_step_count"] != float64(6) {
+		t.Fatalf("unexpected owner smoke plan summary: %#v", smoke)
+	}
+
+	checks := payload["preflight_checks"].([]any)
+	checkIDs := payload["check_ids"].([]any)
+	expectedIDs := []string{
+		"activation-binding",
+		"read-only-method-parity",
+		"owner-smoke-plan",
+		"write-method-gate",
+		"kde-ownership-boundary",
+		"host-safety-boundary",
+		"long-running-runtime-owner",
+		"restricted-owner-smoke",
+		"production-bus-claim",
+		"production-recipe-trust",
+	}
+	expectedStatuses := []string{"pass", "pass", "pass", "pass", "pass", "pass", "pending", "pending", "pending", "pending"}
+	if len(checks) != len(expectedIDs) || len(checkIDs) != len(expectedIDs) {
+		t.Fatalf("unexpected Runtime service activation preflight checks: %#v ids=%#v", checks, checkIDs)
+	}
+	for index, id := range expectedIDs {
+		check := checks[index].(map[string]any)
+		if check["id"] != id || checkIDs[index] != id || check["status"] != expectedStatuses[index] {
+			t.Fatalf("unexpected preflight check at %d: %#v ids=%#v", index, checks, checkIDs)
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(10) ||
+		counts["passed"] != float64(6) ||
+		counts["pending"] != float64(4) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected Runtime service activation preflight counts: %#v", counts)
+	}
+	if payload["preflight_decision"] != "restricted-owner-smoke-ready" ||
+		payload["production_activation_ready"] != false ||
+		payload["restricted_smoke_ready"] != true ||
+		payload["human_authorization_required"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["kde_may_claim_runtime_ownership"] != false ||
+		payload["system_service_started"] != false ||
+		payload["production_bus_claimed"] != false ||
+		payload["write_methods_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["network_required"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Runtime service activation preflight safety flags: %#v", payload)
+	}
+	if strings.Contains(strings.ToLower(output.String()), "prefix") ||
+		strings.Contains(strings.ToLower(output.String()), ".exe") ||
+		strings.Contains(strings.ToLower(output.String()), "program files") {
+		t.Fatalf("Runtime service activation preflight CLI exposed backend terms: %s", output.String())
+	}
+}
+
 func projectRootForRuntimeServiceBindingCommandTest(t *testing.T) string {
 	t.Helper()
 	workingDirectory, err := os.Getwd()

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.323] - 2026-07-18
+
+### Added
+
+- Added the Go Runtime service activation preflight preview and CLI command to aggregate service binding, owner readiness, and owner smoke evidence before any production activation attempt.
+- Added fail-closed production activation gates that allow only restricted owner smoke readiness while keeping service start, production bus claim, Runtime writes, backend launch, KDE ownership, network requirements, privileged containers, and host-root mutation disabled.
+
 ## [0.2.322] - 2026-07-18
 
 ### Added

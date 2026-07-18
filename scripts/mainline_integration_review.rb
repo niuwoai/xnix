@@ -81,6 +81,7 @@ LANES = [
       %r{\Ainternal/runtime/appidentity/runtime_live_owner_gate_},
       %r{\Ainternal/runtime/appidentity/runtime_method_parity_manifest_},
       %r{\Ainternal/runtime/appidentity/runtime_route_convergence},
+      %r{\Ainternal/runtime/appidentity/runtime_service_activation_preflight},
       %r{\Ainternal/runtime/appidentity/runtime_service_binding_},
       %r{\Ainternal/runtime/appidentity/runtime_write_gate_},
       %r{\Ascripts/runtime_contract_drift_report\.rb\z},
