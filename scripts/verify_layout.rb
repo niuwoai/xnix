@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.326"
+EXPECTED_VERSION = "0.2.327"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -237,6 +237,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go
   cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go
   cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go
+  cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go
+  cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_commands.go
   cmd/xnix-runtime-go/desktop_deactivation_dry_run_cli_test.go
   cmd/xnix-runtime-go/recipe_conflict_audit_commands.go
@@ -310,6 +312,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/kde_restricted_launch_authorization_test.go
   internal/runtime/appidentity/kde_test_launch_materialization.go
   internal/runtime/appidentity/kde_test_launch_materialization_test.go
+  internal/runtime/appidentity/kde_test_launch_materialization_fanout.go
+  internal/runtime/appidentity/kde_test_launch_materialization_fanout_test.go
   internal/runtime/appidentity/desktop_deactivation_dry_run.go
   internal/runtime/appidentity/desktop_deactivation_dry_run_test.go
   internal/runtime/appidentity/recipe_conflict_audit.go
@@ -2314,6 +2318,29 @@ go_runtime_kde_test_launch_materialization_cli_source = read_project_file("cmd/x
                                                        read_project_file("cmd/xnix-runtime-go/main.go")
 %w[kde-test-launch-materialization-record runKDETestLaunchMaterializationRecord authorize-restricted-test-preparation test-only TestKDETestLaunchMaterializationRecordCommandMaterializesPlanOnly TestKDETestLaunchMaterializationRecordCommandRequiresAuthorization plan_materialized command_materialized raw_executable_exposed].each do |token|
   assert(go_runtime_kde_test_launch_materialization_cli_source.include?(token), "Go Runtime KDE test launch materialization CLI must include #{token}")
+end
+
+go_runtime_kde_test_launch_materialization_fanout_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_fanout.go")
+%w[KDETestLaunchMaterializationFanOutPreview KDETestLaunchMaterializationFanSurface NewKDETestLaunchMaterializationFanOutPreview xnix.runtime.kde_test_launch_materialization_fanout.v1 kde-test-launch-materialization-fanout-preview GetKDETestLaunchMaterializationFanOut GetKDETestLaunchMaterializationFanOutPreview materialization-consumed session-fanout-consumed surface-coverage surfaces-read-only desktop-side-effects-disabled notification-not-delivered launch-boundary-closed unsafe-data-hidden host-boundary-closed compatibility-center task-manager tray notification review-plan-available].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_fanout_source.include?(token), "Go Runtime KDE test launch materialization fan-out must include #{token}")
+end
+%w[MaterializationReceiptConsumed ExecutionSessionFanOutConsumed FanOutWritesEnabled StateRootPathExposed ProductImageReady ProductionTrustSatisfied RuntimeWriteGateEnabled LaunchAuthorized ExecutionApproved CommandMaterialized ExecutablePathResolved BackendSelectedForLaunch BackendLaunchEnabled BackendProcessStarted TaskManagerEntryActive LiveTrayBridgeEnabled NotificationSent NotificationDeliveryEnabled CompatibilityCenterActionsEnabled RequestObjectsCreated RuntimeWritesEnabled ProductionBusOwnership NetworkRequired HostRootModified PrivilegedContainerRequired RawCommandExposed RawExecutableExposed BackendDetailsExposed].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_fanout_source.include?(token), "Go Runtime KDE test launch materialization fan-out must expose safety gate #{token}")
+end
+assert(go_runtime_kde_test_launch_materialization_fanout_source.include?("NewKDETestLaunchMaterializationRecord"), "Go Runtime KDE test launch materialization fan-out must consume the materialization record")
+assert(go_runtime_kde_test_launch_materialization_fanout_source.include?("ExecutionSessionFanOutEvidence"), "Go Runtime KDE test launch materialization fan-out must consume execution session fan-out evidence")
+assert(go_runtime_kde_test_launch_materialization_fanout_source.include?("validateNoBackendTerms"), "Go Runtime KDE test launch materialization fan-out must hide backend terms")
+
+go_runtime_kde_test_launch_materialization_fanout_test_source = read_project_file("internal/runtime/appidentity/kde_test_launch_materialization_fanout_test.go")
+%w[TestKDETestLaunchMaterializationFanOutPreviewCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewRequiresExactBoundary compatibility-center task-manager tray notification review-plan-available].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_fanout_test_source.include?(token), "Go Runtime KDE test launch materialization fan-out tests must include #{token}")
+end
+
+go_runtime_kde_test_launch_materialization_fanout_cli_source = read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go") +
+                                                              read_project_file("cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go") +
+                                                              read_project_file("cmd/xnix-runtime-go/main.go")
+%w[kde-test-launch-materialization-fanout-preview runKDETestLaunchMaterializationFanOutPreview authorize-restricted-test-preparation test-only TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled].each do |token|
+  assert(go_runtime_kde_test_launch_materialization_fanout_cli_source.include?(token), "Go Runtime KDE test launch materialization fan-out CLI must include #{token}")
 end
 
 runtime_owner_notification_digest_test_source = read_project_file("internal/runtime/owner/dispatch_test.go") +

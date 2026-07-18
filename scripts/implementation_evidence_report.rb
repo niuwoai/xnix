@@ -475,6 +475,8 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_restricted_launch_preflight_test.go
       internal/runtime/appidentity/kde_test_launch_materialization.go
       internal/runtime/appidentity/kde_test_launch_materialization_test.go
+      internal/runtime/appidentity/kde_test_launch_materialization_fanout.go
+      internal/runtime/appidentity/kde_test_launch_materialization_fanout_test.go
       internal/runtime/appidentity/application_readiness_test.go
       cmd/xnix-runtime-go/application_readiness_commands.go
       cmd/xnix-runtime-go/application_readiness_cli_test.go
@@ -486,6 +488,8 @@ DOMAIN_DEFINITIONS = [
       cmd/xnix-runtime-go/kde_restricted_launch_preflight_cli_test.go
       cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go
       cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go
+      cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go
+      cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go
     ],
     state_files: %w[
       internal/runtime/execution/ledger.go
@@ -496,6 +500,7 @@ DOMAIN_DEFINITIONS = [
       internal/runtime/appidentity/kde_restricted_launch_authorization.go
       internal/runtime/appidentity/kde_restricted_launch_preflight.go
       internal/runtime/appidentity/kde_test_launch_materialization.go
+      internal/runtime/appidentity/kde_test_launch_materialization_fanout.go
     ],
     smoke_files: [],
     gate_tokens: {
@@ -516,12 +521,16 @@ DOMAIN_DEFINITIONS = [
       "internal/runtime/appidentity/kde_restricted_launch_preflight_test.go" => %w[TestKDERestrictedLaunchPreflightRemainsBlocked explicit-test-root-only recipe-trust runtime-write-gate],
       "internal/runtime/appidentity/kde_test_launch_materialization.go" => %w[xnix.runtime.kde_test_launch_materialization.v1 kde-test-launch-materialization-record NewKDETestLaunchMaterializationRecord preflight-boundary materialization-readback materialized-plan-only write-gate-remains-blocked command-boundary launch-boundary execution-unchanged session-unchanged unsafe-gates-closed MaterializationBoundary PlanMaterialized CommandMaterialized RawExecutableExposed HostRootModified],
       "internal/runtime/appidentity/kde_test_launch_materialization_test.go" => %w[TestKDETestLaunchMaterializationRecordMaterializesPlanOnly TestKDETestLaunchMaterializationRecordRequiresExactBoundary blocked-plan-materialized test-only-review-plan],
+      "internal/runtime/appidentity/kde_test_launch_materialization_fanout.go" => %w[xnix.runtime.kde_test_launch_materialization_fanout.v1 kde-test-launch-materialization-fanout-preview NewKDETestLaunchMaterializationFanOutPreview materialization-consumed session-fanout-consumed surface-coverage surfaces-read-only desktop-side-effects-disabled notification-not-delivered launch-boundary-closed unsafe-data-hidden host-boundary-closed MaterializationReceiptConsumed ExecutionSessionFanOutConsumed FanOutWritesEnabled NotificationSent CompatibilityCenterActionsEnabled RequestObjectsCreated RuntimeWritesEnabled HostRootModified],
+      "internal/runtime/appidentity/kde_test_launch_materialization_fanout_test.go" => %w[TestKDETestLaunchMaterializationFanOutPreviewCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewRequiresExactBoundary compatibility-center task-manager tray notification review-plan-available],
       "cmd/xnix-runtime-go/kde_restricted_launch_authorization_commands.go" => %w[kde-restricted-launch-authorization-record runKDERestrictedLaunchAuthorizationRecord authorize-restricted-test-preparation test-only],
       "cmd/xnix-runtime-go/kde_restricted_launch_authorization_cli_test.go" => %w[TestKDERestrictedLaunchAuthorizationRecordCommandRequiresExplicitDirective TestKDERestrictedLaunchAuthorizationRecordCommandRejectsImplicitAuthorization preparation_authorized launch_authorized process_start_authorized],
       "cmd/xnix-runtime-go/kde_restricted_launch_preflight_commands.go" => %w[kde-restricted-launch-preflight-record runKDERestrictedLaunchPreflightRecord authorize-restricted-test-preparation test-only],
       "cmd/xnix-runtime-go/kde_restricted_launch_preflight_cli_test.go" => %w[TestKDERestrictedLaunchPreflightRecordCommandIsFailClosed TestKDERestrictedLaunchPreflightRecordCommandRequiresAuthorization ready_for_packet_assembly product_image_ready launch_preflight_passed],
       "cmd/xnix-runtime-go/kde_test_launch_materialization_commands.go" => %w[kde-test-launch-materialization-record runKDETestLaunchMaterializationRecord authorize-restricted-test-preparation test-only],
       "cmd/xnix-runtime-go/kde_test_launch_materialization_cli_test.go" => %w[TestKDETestLaunchMaterializationRecordCommandMaterializesPlanOnly TestKDETestLaunchMaterializationRecordCommandRequiresAuthorization plan_materialized command_materialized raw_executable_exposed],
+      "cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_commands.go" => %w[kde-test-launch-materialization-fanout-preview runKDETestLaunchMaterializationFanOutPreview authorize-restricted-test-preparation test-only],
+      "cmd/xnix-runtime-go/kde_test_launch_materialization_fanout_cli_test.go" => %w[TestKDETestLaunchMaterializationFanOutPreviewCommandCoversKDESurfaces TestKDETestLaunchMaterializationFanOutPreviewCommandRequiresAuthorization materialization_receipt_consumed execution_session_fan_out_consumed notification_sent fan_out_writes_enabled],
       "cmd/xnix-runtime-go/execution_ledger_commands.go" => %w[execution-ledger-record execution-session-record state-root portal-request executionLedgerPortalReceipts RecordSession],
       "cmd/xnix-runtime-go/execution_ledger_cli_test.go" => %w[TestExecutionLedgerRecordCommandConsumesPortalReceipt TestExecutionLedgerRecordCommandBlocksDeniedPortalReceipt TestExecutionSessionRecordCommandPersistsStatusFromLedger portal_permission_receipt_count],
       "internal/runtime/appidentity/application_readiness.go" => %w[xnix.runtime.application_readiness.v1 application-readiness-preview runtime-application-readiness-evidence-graph RecipeTrustDecision WriteGateDecision RealPortalTransportEnabled BackendLaunchEnabled StateRootPathExposed RawCommandExposed],

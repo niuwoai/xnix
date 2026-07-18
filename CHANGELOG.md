@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.327] - 2026-07-18
+
+### Added
+
+- Added the KDE test launch materialization fan-out preview and CLI command, projecting the test-only materialization receipt into Compatibility Center, task manager, tray, and notification read models.
+- Added fan-out coverage and evidence guards that keep fan-out writes, task-manager activation, live tray bridging, notification delivery, Compatibility Center actions, Runtime writes, command materialization, executable resolution, backend launch, backend process start, network access, privileged containers, state-root path exposure, and host-root mutation disabled.
+
 ## [0.2.326] - 2026-07-18
 
 ### Added
