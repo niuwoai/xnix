@@ -73,8 +73,8 @@ func TestRuntimeWriteGatePreviewCommandRendersGoGate(t *testing.T) {
 		t.Fatalf("unexpected Runtime write gate requirements: %#v", payload)
 	}
 	counts := payload["counts"].(map[string]any)
-	if counts["total"] != float64(9) ||
-		counts["passed"] != float64(2) ||
+	if counts["total"] != float64(10) ||
+		counts["passed"] != float64(3) ||
 		counts["pending"] != float64(7) ||
 		counts["blocked"] != float64(0) {
 		t.Fatalf("unexpected Runtime write gate counts: %#v", counts)

@@ -1559,6 +1559,109 @@ func TestProductionReceiptNotificationActionDryRunResultRetentionRedactionPolicy
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultOpaqueLookupAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-opaque-lookup-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-opaque-lookup-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_opaque_lookup_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-opaque-lookup-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-opaque-lookup-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-opaque-lookup-audit-ready-lookup-disabled" {
+		t.Fatalf("unexpected opaque lookup payload: %s", output.String())
+	}
+	if payload["opaque_lookup_audit_required"] != true ||
+		payload["opaque_lookup_audit_modeled"] != true ||
+		payload["retention_redaction_policy_audit_consumed"] != true ||
+		payload["opaque_lookup_guidance_consumed"] != true ||
+		payload["opaque_lookup_boundary_ready"] != true ||
+		payload["owner_managed_opaque_lookup_modeled"] != true ||
+		payload["opaque_result_id_supported"] != true ||
+		payload["opaque_lookup_enabled"] != false ||
+		payload["opaque_lookup_persisted"] != false ||
+		payload["caller_state_root_required"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["file_paths_exposed"] != false ||
+		payload["file_content_read"] != false ||
+		payload["result_persistence_authorized"] != false ||
+		payload["retention_enforcement_enabled"] != false ||
+		payload["redaction_enforcement_enabled"] != false ||
+		payload["dry_run_result_persisted"] != false ||
+		payload["result_visibility_persisted"] != false ||
+		payload["runtime_diagnostics_persisted"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected opaque lookup decision: %s", output.String())
+	}
+	if payload["lookup_item_count"] != float64(5) ||
+		payload["required_lookup_item_count"] != float64(5) ||
+		payload["ready_lookup_item_count"] != float64(5) ||
+		payload["missing_lookup_item_count"] != float64(0) ||
+		payload["enabled_lookup_item_count"] != float64(0) ||
+		payload["persisted_lookup_item_count"] != float64(0) ||
+		payload["path_exposed_lookup_item_count"] != float64(0) ||
+		payload["persisted_result_item_count"] != float64(0) ||
+		payload["executed_dry_run_item_count"] != float64(0) ||
+		payload["side_effect_lookup_item_count"] != float64(0) {
+		t.Fatalf("unexpected opaque lookup counts: %s", output.String())
+	}
+	items := payload["lookup_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected opaque lookup item list: %s", output.String())
+	}
+	for _, item := range items {
+		lookup := item.(map[string]any)
+		if lookup["evidence_present"] != true ||
+			lookup["opaque_lookup_modeled"] != true ||
+			lookup["owner_managed_lookup"] != true ||
+			lookup["opaque_result_id_supported"] != true ||
+			lookup["caller_state_root_required"] != false ||
+			lookup["state_root_path_exposed"] != false ||
+			lookup["file_paths_exposed"] != false ||
+			lookup["file_content_read"] != false ||
+			lookup["lookup_enabled"] != false ||
+			lookup["lookup_persisted"] != false ||
+			lookup["dry_run_result_persisted"] != false ||
+			lookup["result_visibility_persisted"] != false ||
+			lookup["runtime_diagnostics_persisted"] != false ||
+			lookup["side_effects_disabled"] != true ||
+			lookup["host_root_modified"] != false ||
+			lookup["internal_details_exposed"] != false ||
+			lookup["lookup_status"] != "opaque-lookup-modeled-lookup-disabled" {
+			t.Fatalf("unsafe opaque lookup item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(9) ||
+		counts["passed"] != float64(9) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected opaque lookup checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("opaque lookup output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "dispatch_dry_run_execution_enabled", "dry_run_result_persistence_enabled", "result_visibility_persistence_enabled", "retention_policy_persistence_enabled", "opaque_lookup_enabled", "opaque_lookup_persisted", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "runtime_diagnostics_persisted", "receipt_writer_enabled", "receipt_persistence_enabled", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe opaque lookup gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultOpaqueLookupAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-opaque-lookup-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-opaque-lookup-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
