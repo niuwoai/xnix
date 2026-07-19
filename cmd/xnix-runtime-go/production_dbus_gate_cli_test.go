@@ -2903,6 +2903,117 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeStatusPersistenceAuthorizationAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_status_persistence_authorization_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-ready-persistence-disabled" {
+		t.Fatalf("unexpected KDE-safe status persistence authorization payload: %s", output.String())
+	}
+	if payload["persistence_authorization_audit_required"] != true ||
+		payload["persistence_authorization_modeled"] != true ||
+		payload["status_fanout_audit_consumed"] != true ||
+		payload["kde_safe_status_persistence_guidance_consumed"] != true ||
+		payload["compatibility_center_persistence_authorization_modeled"] != true ||
+		payload["runtime_diagnostics_persistence_authorization_modeled"] != true ||
+		payload["persistence_authorization_boundary_ready"] != true ||
+		payload["status_fanout_ready"] != true ||
+		payload["consumer_enablement_gate_closed"] != true ||
+		payload["status_persistence_authorized"] != false ||
+		payload["kde_status_persistence_authorized"] != false ||
+		payload["runtime_diagnostics_persistence_authorized"] != false ||
+		payload["kde_status_persisted"] != false ||
+		payload["runtime_diagnostics_persisted"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["raw_result_exposed"] != false {
+		t.Fatalf("unexpected KDE-safe status persistence authorization decision: %s", output.String())
+	}
+	if payload["authorization_item_count"] != float64(10) ||
+		payload["ready_authorization_item_count"] != float64(10) ||
+		payload["missing_authorization_item_count"] != float64(0) ||
+		payload["compatibility_center_authorization_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_authorization_item_count"] != float64(5) ||
+		payload["authorized_persistence_item_count"] != float64(0) ||
+		payload["persisted_status_item_count"] != float64(0) ||
+		payload["consumer_enabled_authorization_item_count"] != float64(0) ||
+		payload["raw_exposed_authorization_item_count"] != float64(0) ||
+		payload["side_effect_authorization_item_count"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe status persistence authorization counts: %s", output.String())
+	}
+	items := payload["authorization_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe status persistence authorization item list: %s", output.String())
+	}
+	compatibilityCenterCount := 0
+	runtimeDiagnosticsCount := 0
+	for _, item := range items {
+		authorization := item.(map[string]any)
+		if authorization["evidence_present"] != true ||
+			authorization["status_fanout_consumed"] != true ||
+			authorization["persistence_authorization_modeled"] != true ||
+			authorization["kde_safe_status_only"] != true ||
+			authorization["status_persistence_authorized"] != false ||
+			authorization["kde_status_persistence_authorized"] != false ||
+			authorization["runtime_diagnostics_persistence_authorized"] != false ||
+			authorization["kde_status_persisted"] != false ||
+			authorization["runtime_diagnostics_persisted"] != false ||
+			authorization["kde_consumer_enabled"] != false ||
+			authorization["runtime_consumer_enabled"] != false ||
+			authorization["raw_result_exposed"] != false ||
+			authorization["user_visible"] != true ||
+			authorization["review_only"] != true ||
+			authorization["side_effects_disabled"] != true ||
+			authorization["authorization_status"] != "kde-safe-status-persistence-authorization-modeled-persistence-disabled" {
+			t.Fatalf("unsafe KDE-safe status persistence authorization item: %s", output.String())
+		}
+		if authorization["surface_kind"] == "compatibility-center" {
+			compatibilityCenterCount++
+			if authorization["compatibility_center_persistence_candidate"] != true || authorization["runtime_diagnostics_persistence_candidate"] != false {
+				t.Fatalf("Compatibility Center persistence authorization item must stay surface-specific: %s", output.String())
+			}
+		}
+		if authorization["surface_kind"] == "runtime-diagnostics" {
+			runtimeDiagnosticsCount++
+			if authorization["runtime_diagnostics_persistence_candidate"] != true || authorization["compatibility_center_persistence_candidate"] != false {
+				t.Fatalf("Runtime diagnostics persistence authorization item must stay surface-specific: %s", output.String())
+			}
+		}
+	}
+	if compatibilityCenterCount != 5 || runtimeDiagnosticsCount != 5 {
+		t.Fatalf("unexpected KDE-safe status persistence authorization surface split: %s", output.String())
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(10) || counts["passed"] != float64(10) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe status persistence authorization checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe status persistence authorization output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "status_persistence_authorized", "kde_status_persistence_authorized", "runtime_diagnostics_persistence_authorized", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe status persistence authorization %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeStatusPersistenceAuthorizationAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

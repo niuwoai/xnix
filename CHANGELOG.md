@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.379] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview`, a read-only Go owner audit that models the authorization boundary required before KDE-safe Compatibility Center or Runtime diagnostics status summaries can be stored durably.
+- Wired the KDE-safe status persistence authorization audit into the Runtime CLI while keeping persistence authorization grants, status persistence writes, consumer enablement, lookup route enablement, lookup enablement, dry-run execution, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.378] - 2026-07-19
 
 ### Added
