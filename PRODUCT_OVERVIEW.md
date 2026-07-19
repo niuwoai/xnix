@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.388
+> Last updated: 2026-07-19 | Current version: v0.2.389
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.389 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer persistence authorization preview. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-persistence-authorization-preview` consumes the Xnix current mainline and v0.2.388 closed writer implementation preview before modeling the persistence authorization boundary while keeping callable writers, real writer authorization grants, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.388 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status closed writer implementation preview. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-writer-implementation-preview` consumes the Xnix current mainline and v0.2.387 writer enablement audit before modeling the closed writer call shape while keeping callable writers, real writer authorization grants, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
