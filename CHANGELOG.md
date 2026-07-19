@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.415] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-delivery-authorization-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.414 notification presentation audit before modeling future KDE Notification Center delivery authorization.
+- Wired the notification delivery authorization audit into the Runtime CLI while keeping delivery grants, notification sending, Notification Center events, notification actions, action cards, explicit consent collection, receipt presence, receipt acceptance, receipt consumption, route enablement acceptance, lookup routes, lookup route dispatch authorization, dispatch calls, status persistence writes, storage writes, support side effects, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+- Captured operator-authorized restricted container heavy smoke evidence for the local `xnix-builder:0.2.415` image, Runtime owner candidate restricted session smoke, Runtime D-Bus session smoke, KDE Compatibility Center D-Bus smoke, and Runtime activation smoke while keeping formal full Buildroot/QEMU smoke gated by `scripts/full_smoke.rb`.
+
 ## [0.2.414] - 2026-07-19
 
 ### Added
