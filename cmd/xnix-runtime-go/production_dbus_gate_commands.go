@@ -587,6 +587,23 @@ func runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementK
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusWriterGrantAuditPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-grant-audit-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer grant inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-grant-audit-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusWriterGrantAuditPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runProductionDBusMethodReviewPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("production-dbus-method-review-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

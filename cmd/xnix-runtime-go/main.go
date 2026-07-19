@@ -305,6 +305,8 @@ func run(args []string, stdout io.Writer) error {
 		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusWriterAuthorizationReceiptAcceptanceAuditPreview(args[1:], stdout)
 	case "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-accepted-receipt-gate-audit-preview":
 		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusWriterAcceptedReceiptGateAuditPreview(args[1:], stdout)
+	case "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-grant-audit-preview":
+		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusWriterGrantAuditPreview(args[1:], stdout)
 	case "production-receipt-notification-delivery-gate-audit-preview":
 		return runProductionReceiptNotificationDeliveryGateAuditPreview(args[1:], stdout)
 	case "production-receipt-revocation-visibility-audit-preview":

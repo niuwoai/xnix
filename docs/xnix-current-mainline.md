@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-19 | Baseline: v0.2.385
+> Last updated: 2026-07-19 | Baseline: v0.2.386
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,9 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer grant audit.
+Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer enablement audit.
 
-This follows the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The grant audit must continue to consume the accepted receipt gate audit and this Xnix current mainline document as evidence. The next writer grant audit should model the explicit authorization boundary required before any accepted receipt gate can grant writer authorization, while keeping real persistence writes, status writers, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
+This follows the redacted status writer grant audit, the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The enablement audit must continue to consume the writer grant audit and this Xnix current mainline document as evidence. The next writer enablement audit should model the explicit boundary required before any writer grant can enable a redacted status writer, while keeping real persistence writes, status persistence, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
 
 ## Safety Gates
 
