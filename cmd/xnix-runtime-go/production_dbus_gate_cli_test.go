@@ -3014,6 +3014,125 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceWriteModelAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_persistence_write_model_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-ready-writes-disabled" {
+		t.Fatalf("unexpected KDE-safe redacted status write-model payload: %s", output.String())
+	}
+	if payload["write_model_audit_required"] != true ||
+		payload["write_model_modeled"] != true ||
+		payload["persistence_authorization_audit_consumed"] != true ||
+		payload["redacted_write_model_guidance_consumed"] != true ||
+		payload["compatibility_center_write_model_modeled"] != true ||
+		payload["runtime_diagnostics_write_model_modeled"] != true ||
+		payload["write_model_boundary_ready"] != true ||
+		payload["persistence_authorization_boundary_ready"] != true ||
+		payload["status_fanout_ready"] != true ||
+		payload["kde_safe_status_only"] != true ||
+		payload["opaque_result_id_supported"] != true ||
+		payload["redacted_summary_shape_modeled"] != true ||
+		payload["status_persistence_authorized"] != false ||
+		payload["status_persistence_write_enabled"] != false ||
+		payload["kde_status_write_enabled"] != false ||
+		payload["runtime_diagnostics_write_enabled"] != false ||
+		payload["kde_status_persisted"] != false ||
+		payload["runtime_diagnostics_persisted"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["raw_result_exposed"] != false {
+		t.Fatalf("unexpected KDE-safe redacted status write-model decision: %s", output.String())
+	}
+	if payload["write_model_item_count"] != float64(10) ||
+		payload["ready_write_model_item_count"] != float64(10) ||
+		payload["missing_write_model_item_count"] != float64(0) ||
+		payload["compatibility_center_write_model_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_write_model_item_count"] != float64(5) ||
+		payload["write_enabled_item_count"] != float64(0) ||
+		payload["persisted_status_item_count"] != float64(0) ||
+		payload["consumer_enabled_write_model_item_count"] != float64(0) ||
+		payload["raw_exposed_write_model_item_count"] != float64(0) ||
+		payload["side_effect_write_model_item_count"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status write-model counts: %s", output.String())
+	}
+	items := payload["write_model_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe redacted status write-model item list: %s", output.String())
+	}
+	compatibilityCenterCount := 0
+	runtimeDiagnosticsCount := 0
+	for _, item := range items {
+		writeModel := item.(map[string]any)
+		if writeModel["evidence_present"] != true ||
+			writeModel["persistence_authorization_consumed"] != true ||
+			writeModel["write_model_modeled"] != true ||
+			writeModel["redacted_summary_shape_modeled"] != true ||
+			writeModel["kde_safe_status_only"] != true ||
+			writeModel["status_persistence_write_enabled"] != false ||
+			writeModel["kde_status_write_enabled"] != false ||
+			writeModel["runtime_diagnostics_write_enabled"] != false ||
+			writeModel["kde_status_persisted"] != false ||
+			writeModel["runtime_diagnostics_persisted"] != false ||
+			writeModel["kde_consumer_enabled"] != false ||
+			writeModel["runtime_consumer_enabled"] != false ||
+			writeModel["raw_result_exposed"] != false ||
+			writeModel["user_visible"] != true ||
+			writeModel["review_only"] != true ||
+			writeModel["side_effects_disabled"] != true ||
+			writeModel["write_model_status"] != "kde-safe-redacted-status-write-model-modeled-writes-disabled" {
+			t.Fatalf("unsafe KDE-safe redacted status write-model item: %s", output.String())
+		}
+		if len(writeModel["redacted_fields"].([]any)) != 7 {
+			t.Fatalf("KDE-safe redacted status write-model item must expose only the modeled redacted field list: %s", output.String())
+		}
+		if writeModel["surface_kind"] == "compatibility-center" {
+			compatibilityCenterCount++
+			if writeModel["compatibility_center_write_model_candidate"] != true || writeModel["runtime_diagnostics_write_model_candidate"] != false {
+				t.Fatalf("Compatibility Center write-model item must stay surface-specific: %s", output.String())
+			}
+		}
+		if writeModel["surface_kind"] == "runtime-diagnostics" {
+			runtimeDiagnosticsCount++
+			if writeModel["runtime_diagnostics_write_model_candidate"] != true || writeModel["compatibility_center_write_model_candidate"] != false {
+				t.Fatalf("Runtime diagnostics write-model item must stay surface-specific: %s", output.String())
+			}
+		}
+	}
+	if compatibilityCenterCount != 5 || runtimeDiagnosticsCount != 5 {
+		t.Fatalf("unexpected KDE-safe redacted status write-model surface split: %s", output.String())
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(10) || counts["passed"] != float64(10) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status write-model checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe redacted status write-model output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "status_persistence_authorized", "status_persistence_write_enabled", "kde_status_write_enabled", "runtime_diagnostics_write_enabled", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe redacted status write-model %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceWriteModelAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

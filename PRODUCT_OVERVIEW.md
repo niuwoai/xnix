@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.379
+> Last updated: 2026-07-19 | Current version: v0.2.380
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.380 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status persistence write-model audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview` defines the future redacted status record shape for Compatibility Center and Runtime diagnostics while keeping status persistence authorization grants, status persistence writes, consumer enablement, lookup route grants, route enablement, lookup enablement, dry-run execution, result persistence, raw result exposure, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.379 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe status persistence authorization audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-persistence-authorization-audit-preview` models the boundary required before future Compatibility Center or Runtime diagnostics status summaries can be stored durably while keeping persistence authorization grants, status persistence writes, consumer enablement, lookup route grants, route enablement, lookup enablement, dry-run execution, result persistence, raw result exposure, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
