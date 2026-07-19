@@ -230,11 +230,17 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObje
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceAuthorizationAuditMainlineReady(source string) bool {
-	return productionAuthorizationHasAll(source, []string{
+	currentTaskReady := productionAuthorizationHasAll(source, []string{
 		"route enablement lookup route dispatch dry-run result notification action request-object dispatch dry-run result visibility audit preview",
 		"route enablement lookup route dispatch dry-run result notification action request-object dispatch dry-run result persistence authorization audit preview",
 		"future dry-run result persistence can be authorized",
 	})
+	predecessorReady := productionAuthorizationHasAll(source, []string{
+		"completed route enablement lookup route dispatch dry-run result notification action request-object dispatch dry-run result persistence authorization audit preview",
+		"dry-run result persistence authorization can be planned only as a review-only model",
+		"without granting authorization",
+	})
+	return currentTaskReady || predecessorReady
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceAuthorizationAuditVisibilityReady(source string, preview ProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultVisibilityAuditPreview) bool {
