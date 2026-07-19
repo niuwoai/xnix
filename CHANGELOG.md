@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.420] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-delivery-consent-collection-receipt-acceptance-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.419 notification delivery consent collection receipt audit before modeling future KDE Notification Center consent collection receipt acceptance readiness.
+- Wired the notification delivery consent collection receipt acceptance audit into the Runtime CLI while keeping consent collection, consent persistence, consent receipt creation, consent receipt persistence, consent receipt acceptance, consent receipt consumption, grant issuance, delivery authorization grants, notification sending, Notification Center events, notification actions, action cards, receipt presence, route enablement acceptance, lookup routes, lookup route dispatch authorization, dispatch calls, status persistence writes, storage writes, support side effects, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+- Captured operator-authorized restricted full Buildroot/QEMU serial smoke evidence for v0.2.420 in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log` while keeping privileged containers, host networking, Docker socket mounts inside containers, broad host mounts, backend launch, and host-root mutation disabled.
+
 ## [0.2.419] - 2026-07-19
 
 ### Added
