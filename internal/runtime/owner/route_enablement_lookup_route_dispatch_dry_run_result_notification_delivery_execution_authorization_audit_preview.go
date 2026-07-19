@@ -270,9 +270,7 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryExecution
 	})
 	continuityReady := productionAuthorizationHasAll(source, []string{
 		"route enablement lookup route dispatch dry-run result notification delivery execution authorization audit preview",
-		"route enablement lookup route dispatch dry-run result notification delivery grant audit preview",
-		"route enablement lookup route dispatch dry-run result notification action request-object dispatch authorization audit preview",
-		"enabling delivery execution",
+		"route enablement lookup route dispatch dry-run result notification action request-object dispatch dry-run result visibility audit preview",
 	})
 	return activeTaskReady || continuityReady
 }
