@@ -335,6 +335,8 @@ func run(args []string, stdout io.Writer) error {
 		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionEvidenceAuditPreview(args[1:], stdout)
 	case "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview":
 		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteAuthorizationEvidenceGatePreview(args[1:], stdout)
+	case "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-evidence-gate-preview":
+		return runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementEvidenceGatePreview(args[1:], stdout)
 	case "production-receipt-notification-delivery-gate-audit-preview":
 		return runProductionReceiptNotificationDeliveryGateAuditPreview(args[1:], stdout)
 	case "production-receipt-revocation-visibility-audit-preview":
