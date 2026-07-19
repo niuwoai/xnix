@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-19 | Baseline: v0.2.387
+> Last updated: 2026-07-19 | Baseline: v0.2.388
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,9 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status closed writer implementation preview.
+Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer persistence authorization preview.
 
-This follows the redacted status writer enablement audit, the redacted status writer grant audit, the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The closed writer implementation preview must continue to consume the writer enablement audit and this Xnix current mainline document as evidence. The next closed writer implementation preview should model the callable writer shape while keeping real persistence writes, status persistence, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
+This follows the redacted status closed writer implementation preview, the redacted status writer enablement audit, the redacted status writer grant audit, the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The writer persistence authorization preview must continue to consume the closed writer implementation preview and this Xnix current mainline document as evidence. The next writer persistence authorization preview should model the explicit persistence authorization required before any closed writer can store redacted status while keeping real persistence writes, status persistence, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
 
 ## Safety Gates
 
