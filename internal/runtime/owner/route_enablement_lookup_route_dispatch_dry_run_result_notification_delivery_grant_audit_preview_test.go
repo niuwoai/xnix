@@ -178,7 +178,11 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 }
 
 func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationDeliveryGrantAuditPreviewFailsClosedWithoutSources(t *testing.T) {
-	root := t.TempDir()
+	root, err := os.MkdirTemp("", "xnix-grant-*")
+	if err != nil {
+		t.Fatalf("MkdirTemp returned error: %v", err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(root) })
 	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte(currentProjectVersion(t)+"\n"), 0o644); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
