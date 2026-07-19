@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-19 | Baseline: v0.2.382
+> Last updated: 2026-07-19 | Baseline: v0.2.383
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,9 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer authorization receipt audit.
+Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer authorization receipt acceptance audit.
 
-This follows the redacted status writer authorization gate audit. The gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document as evidence. The next receipt audit should model the accepted receipt shape required before any future redacted status writer can be authorized, while keeping real persistence writes, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
+This follows the redacted status writer authorization receipt audit and the redacted status writer authorization gate audit. The gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document as evidence. The next receipt acceptance audit should model the authorization boundary required before modeled writer authorization receipts can be accepted, while keeping real persistence writes, status writers, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
 
 ## Safety Gates
 
