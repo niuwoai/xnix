@@ -236,7 +236,7 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryConsentCo
 		"route enablement lookup route dispatch dry-run result notification delivery consent collection receipt consumer authorization audit preview",
 		"route enablement lookup route dispatch dry-run result notification delivery consent collection receipt consumption gate audit preview",
 		"without sending notifications",
-		"can be consumed",
+		"without accepting or consuming receipts",
 	})
 }
 

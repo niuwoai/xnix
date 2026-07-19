@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.423] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-delivery-consent-collection-receipt-consumer-enablement-gate-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline, v0.2.422 notification delivery consent collection receipt consumer authorization audit, v0.2.421 notification delivery consent collection receipt consumption gate audit, and v0.2.420 notification delivery consent collection receipt acceptance audit before modeling future KDE Notification Center consent collection receipt consumer enablement gate readiness.
+- Wired the notification delivery consent collection receipt consumer enablement gate audit into the Runtime CLI while keeping consent collection, consent persistence, consent receipt creation, consent receipt persistence, consent receipt acceptance, consent receipt consumption, consumer authorization grants, KDE consumer authorization, Runtime consumer authorization, KDE consumer enablement, Runtime consumer enablement, grant issuance, delivery authorization grants, notification sending, Notification Center events, notification actions, action cards, route enablement acceptance, lookup routes, lookup route dispatch authorization, dispatch calls, status persistence writes, storage writes, support side effects, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+- Kept predecessor consent collection receipt consumption gate and consumer authorization audits mainline-ready after the safe next task advances by recognizing current mainline continuity anchors instead of requiring those predecessors to remain the active safe next task.
+
 ## [0.2.422] - 2026-07-19
 
 ### Added
