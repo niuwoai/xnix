@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.381] - 2026-07-19
+
+### Added
+
+- Added `docs/xnix-current-mainline.md` as the Xnix-owned current mainline source for new implementation work, replacing external-agent dispatch as the default planning source while preserving historical handoff documents as repository evidence.
+- Added `current-mainline-ownership-audit-preview`, a read-only Go owner audit and Runtime CLI command that verifies the autonomous mainline source, KDE-only first-release scope, Go-first Runtime ownership, Ruby test harness boundary, C low-level boundary, seven KDE entrypoints, explicit full-gate authorization, and closed runtime/host safety gates.
+- Classified the Xnix current mainline document and current-mainline Runtime CLI audit files in the mainline integration review so merge readiness can converge without staging unclassified side work.
+
 ## [0.2.380] - 2026-07-19
 
 ### Added

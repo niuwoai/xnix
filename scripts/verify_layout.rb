@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.380"
+EXPECTED_VERSION = "0.2.381"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -27,6 +27,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-dispatch-runbook.md
   docs/claude-code-open-domain-work-packages.md
   docs/claude-code-windows-compatibility-workstreams.md
+  docs/xnix-current-mainline.md
   docs/mainline-integration-checkpoint.md
   docs/kde-first-compatibility-acceptance.md
   docs/kde-first-current-gap-audit.md
@@ -2202,6 +2203,25 @@ go_runtime_production_receipt_notification_action_dry_run_result_lookup_consumer
                                                                                                                                                     read_project_file("cmd/xnix-runtime-go/main.go")
 %w[TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceWriteModelAuditPreviewModelsWriteShape TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceWriteModelAuditPreviewFailsClosedWithoutSources TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceWriteModelAuditPreviewCommand production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-write-model-audit-preview write_model_audit_required write_model_modeled persistence_authorization_audit_consumed redacted_write_model_guidance_consumed compatibility_center_write_model_modeled runtime_diagnostics_write_model_modeled write_model_boundary_ready redacted_summary_shape_modeled status_persistence_write_enabled kde_status_write_enabled runtime_diagnostics_write_enabled write_model_item_count ready_write_model_item_count missing_write_model_item_count write_enabled_item_count persisted_status_item_count consumer_enabled_write_model_item_count raw_exposed_write_model_item_count side_effect_write_model_item_count kde_status_persisted runtime_diagnostics_persisted state_root_path_exposed file_paths_exposed file_content_read].each do |token|
   assert(go_runtime_production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_persistence_write_model_audit_test_source.include?(token), "Go Runtime production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status persistence write-model audit tests and CLI must include #{token}")
+end
+
+xnix_current_mainline_source = read_project_file("docs/xnix-current-mainline.md")
+%w[Xnix\ Current\ Mainline Codex-owned\ current\ mainline Product\ Goal Ownership\ Rules First-Release\ KDE\ Entrypoints Current\ Safe\ Next\ Task Safety\ Gates KDE\ Plasma\ is\ the\ only\ flagship\ desktop Runtime\ business\ logic\ is\ Go-first Ruby\ is\ for\ tests C\ remains\ for\ low-level redacted\ status\ writer\ authorization\ gate\ audit].each do |token|
+  assert(xnix_current_mainline_source.include?(token.tr("\\", "")), "Xnix current mainline must include #{token}")
+end
+go_runtime_current_mainline_ownership_audit_source = read_project_file("internal/runtime/owner/current_mainline_ownership_audit.go")
+%w[CurrentMainlineOwnershipAuditPreview CurrentMainlineOwnershipAuditCheck CurrentMainlineOwnershipAuditCounts NewCurrentMainlineOwnershipAuditPreview xnix.runtime.current_mainline_ownership_audit.v1 current-mainline-ownership-audit-preview current-mainline-ownership-audit current-mainline-ownership-audit-ready-autonomous-mainline current-mainline-ownership-audit-blocked xnix-current-mainline current-mainline-document-present external-agent-dependency-removed kde-flagship-only runtime-ownership-language-split seven-kde-entrypoints-present safe-next-task-present full-gate-authorization-required unsafe-runtime-and-host-gates-closed docs/xnix-current-mainline.md].each do |token|
+  assert(go_runtime_current_mainline_ownership_audit_source.include?(token), "Go Runtime current mainline ownership audit must include #{token}")
+end
+%w[CurrentMainlineDocumentPresent CodexOwnedMainline ExternalAgentDependencyRequired HistoricalExternalAgentDocumentsAllowed KDEFlagshipOnly GNOMEFirstReleaseTarget XFCEFirstReleaseTarget GoRuntimeOwned RubyTestHarnessOnly CLowLevelOnly KDEPluginsPresentationOnly RuntimeOwnsCompatibilityDecisions SevenKDEEntrypointsPresent SafeNextTaskPresent FullGateRequiresAuthorization DockerExecuted QEMUExecuted NetworkFetchEnabled PackageManagerInvoked ProductionBusClaimed WriteMethodsEnabled RuntimeWritesEnabled KDEConfigurationWritten PortalCallExecuted BackendLaunchEnabled BackendProcessStarted HostRootModified PrivilegedContainerRequired StateRootPathExposed FilePathsExposed FileContentRead RawCommandExposed RawExecutableExposed BackendDetailsExposed validateNoBackendTerms].each do |token|
+  assert(go_runtime_current_mainline_ownership_audit_source.include?(token), "Go Runtime current mainline ownership audit must expose safety gate #{token}")
+end
+go_runtime_current_mainline_ownership_audit_test_source = read_project_file("internal/runtime/owner/current_mainline_ownership_audit_test.go") +
+                                                        read_project_file("cmd/xnix-runtime-go/current_mainline_cli_test.go") +
+                                                        read_project_file("cmd/xnix-runtime-go/current_mainline_commands.go") +
+                                                        read_project_file("cmd/xnix-runtime-go/main.go")
+%w[TestCurrentMainlineOwnershipAuditPreviewModelsAutonomousMainline TestCurrentMainlineOwnershipAuditPreviewFailsClosedWithoutMainlineDocument TestCurrentMainlineOwnershipAuditPreviewCommand current-mainline-ownership-audit-preview current_mainline_document_present codex_owned_mainline external_agent_dependency_required kde_flagship_only go_runtime_owned seven_kde_entrypoints_present full_gate_requires_authorization docker_executed qemu_executed network_fetch_enabled package_manager_invoked production_bus_claimed write_methods_enabled runtime_writes_enabled kde_configuration_written portal_call_executed backend_launch_enabled host_root_modified state_root_path_exposed file_paths_exposed file_content_read].each do |token|
+  assert(go_runtime_current_mainline_ownership_audit_test_source.include?(token), "Go Runtime current mainline ownership audit tests and CLI must include #{token}")
 end
 
 go_runtime_production_dbus_method_review_source = read_project_file("internal/runtime/owner/production_dbus_method_review.go")

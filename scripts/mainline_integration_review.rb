@@ -43,13 +43,14 @@ LANES = [
   {
     id: "planning-documents",
     workstream: "planning",
-    title: "Planning and Claude Code handoff documents",
-    description: "Roadmaps, assignment boards, and mainline convergence documents that do not by themselves enable product behavior.",
+    title: "Planning and handoff documents",
+    description: "Roadmaps, assignment boards, Xnix current mainline notes, and mainline convergence documents that do not by themselves enable product behavior.",
     review_order: 1,
     patterns: [
       %r{\Adocs/claude-code-},
       %r{\Adocs/windows-app-compatibility-implementation-brief\.md\z},
-      %r{\Adocs/mainline-integration-checkpoint\.md\z}
+      %r{\Adocs/mainline-integration-checkpoint\.md\z},
+      %r{\Adocs/xnix-current-mainline\.md\z}
     ]
   },
   {
@@ -92,6 +93,7 @@ LANES = [
       %r{\Atest/test_runtime_owner_},
       %r{\Acmd/xnix-runtime-go/production_dbus_gate_},
       %r{\Acmd/xnix-runtime-go/restricted_owner_smoke_receipt_},
+      %r{\Acmd/xnix-runtime-go/current_mainline_},
       %r{\Acmd/xnix-runtime-go/runtime_owner_},
       %r{\Acmd/xnix-runtime-go/runtime_route_convergence_},
       %r{\Acmd/xnix-runtime-go/runtime_live_owner_gate_cli_test\.go\z},
