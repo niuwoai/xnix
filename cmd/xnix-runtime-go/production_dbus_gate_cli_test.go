@@ -2792,6 +2792,117 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeStatusFanOutAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_status_fanout_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-ready-status-only-consumers-disabled" {
+		t.Fatalf("unexpected KDE-safe status fan-out payload: %s", output.String())
+	}
+	if payload["status_fanout_audit_required"] != true ||
+		payload["status_fanout_modeled"] != true ||
+		payload["consumer_enablement_gate_audit_consumed"] != true ||
+		payload["kde_safe_status_guidance_consumed"] != true ||
+		payload["compatibility_center_status_modeled"] != true ||
+		payload["runtime_diagnostics_status_modeled"] != true ||
+		payload["status_fanout_ready"] != true ||
+		payload["consumer_enablement_gate_closed"] != true ||
+		payload["consumer_consumption_authorized"] != false ||
+		payload["consumer_enablement_authorized"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["lookup_route_enabled"] != false ||
+		payload["opaque_lookup_enabled"] != false ||
+		payload["kde_status_persisted"] != false ||
+		payload["runtime_diagnostics_persisted"] != false ||
+		payload["raw_result_exposed"] != false {
+		t.Fatalf("unexpected KDE-safe status fan-out decision: %s", output.String())
+	}
+	if payload["status_item_count"] != float64(10) ||
+		payload["ready_status_item_count"] != float64(10) ||
+		payload["missing_status_item_count"] != float64(0) ||
+		payload["compatibility_center_status_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_status_item_count"] != float64(5) ||
+		payload["consumer_enabled_status_item_count"] != float64(0) ||
+		payload["persisted_status_item_count"] != float64(0) ||
+		payload["raw_exposed_status_item_count"] != float64(0) ||
+		payload["side_effect_status_item_count"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe status fan-out counts: %s", output.String())
+	}
+	items := payload["status_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe status fan-out item list: %s", output.String())
+	}
+	compatibilityCenterCount := 0
+	runtimeDiagnosticsCount := 0
+	for _, item := range items {
+		status := item.(map[string]any)
+		if status["evidence_present"] != true ||
+			status["kde_safe_status"] != true ||
+			status["consumer_enablement_gate_closed"] != true ||
+			status["consumer_enablement_gate_audit_consumed"] != true ||
+			status["consumer_consumption_authorized"] != false ||
+			status["consumer_enablement_authorized"] != false ||
+			status["kde_consumer_enabled"] != false ||
+			status["runtime_consumer_enabled"] != false ||
+			status["lookup_route_enabled"] != false ||
+			status["opaque_lookup_enabled"] != false ||
+			status["kde_status_persisted"] != false ||
+			status["runtime_diagnostics_persisted"] != false ||
+			status["raw_result_exposed"] != false ||
+			status["user_visible"] != true ||
+			status["review_only"] != true ||
+			status["side_effects_disabled"] != true ||
+			status["status"] != "kde-safe-status-fanout-modeled-consumers-disabled" {
+			t.Fatalf("unsafe KDE-safe status fan-out item: %s", output.String())
+		}
+		if status["surface_kind"] == "compatibility-center" {
+			compatibilityCenterCount++
+			if status["compatibility_center_status"] != true || status["runtime_diagnostics_status"] != false {
+				t.Fatalf("Compatibility Center fan-out item must stay surface-specific: %s", output.String())
+			}
+		}
+		if status["surface_kind"] == "runtime-diagnostics" {
+			runtimeDiagnosticsCount++
+			if status["runtime_diagnostics_status"] != true || status["compatibility_center_status"] != false {
+				t.Fatalf("Runtime diagnostics fan-out item must stay surface-specific: %s", output.String())
+			}
+		}
+	}
+	if compatibilityCenterCount != 5 || runtimeDiagnosticsCount != 5 {
+		t.Fatalf("unexpected KDE-safe status fan-out surface split: %s", output.String())
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(10) || counts["passed"] != float64(10) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe status fan-out checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe status fan-out output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe status fan-out %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeStatusFanOutAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

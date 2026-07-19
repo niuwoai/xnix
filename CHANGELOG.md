@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.378] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-status-fanout-audit-preview`, a read-only Go owner audit that projects the closed consumer enablement gate into KDE-safe Compatibility Center and Runtime diagnostics status summaries without enabling consumers.
+- Wired the KDE-safe status fan-out audit into the Runtime CLI while keeping consumer enablement, lookup route grants, route enablement, lookup enablement, status persistence, Runtime diagnostics persistence, raw result exposure, dry-run execution, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.377] - 2026-07-19
 
 ### Added
