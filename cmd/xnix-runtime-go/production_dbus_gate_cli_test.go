@@ -6440,6 +6440,95 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchAuthorizationAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	command := "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit-preview"
+	if err := run([]string{command, "--root", root}, &output); err != nil {
+		t.Fatalf("%s returned error: %v", command, err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_authorization_audit.v1" ||
+		payload["request_type"] != command ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit-ready-dispatch-disabled" {
+		t.Fatalf("unexpected notification action request-object dispatch authorization command payload: %s", output.String())
+	}
+	for _, key := range []string{
+		"current_mainline_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_audit_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_audit_ready",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_enablement_audit_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_grant_audit_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_execution_authorization_audit_consumed",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_authorization_audit_required",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_authorization_modeled",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_authorization_ready",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_authorization_ready",
+		"notification_action_request_object_dispatch_authorization_review_only",
+		"notification_action_request_object_review_only_consumed",
+		"notification_action_enablement_review_only_consumed",
+		"notification_delivery_grant_review_only_consumed",
+		"kde_notification_action_request_object_dispatch_authorization_modeled",
+		"notification_center_action_request_object_dispatch_authorization_modeled",
+		"install_failure_notification_action_request_object_dispatch_authorization_modeled",
+		"repair_suggestion_notification_action_request_object_dispatch_authorization_modeled",
+		"environment_switch_notification_action_request_object_dispatch_authorization_modeled",
+		"approval_info_notification_action_request_object_dispatch_authorization_modeled",
+		"request_object_dispatch_authorization_required",
+		"request_object_dispatch_authorization_modeled",
+		"request_object_dispatch_authorization_ready",
+		"notification_action_request_dispatch_required",
+		"dispatch_authorization_required",
+		"dispatch_authorization_modeled",
+		"dispatch_authorization_ready",
+		"kde_safe_redacted_result_only",
+		"raw_result_hidden",
+	} {
+		if payload[key] != true {
+			t.Fatalf("expected %s to be true in notification action request-object dispatch authorization payload: %s", key, output.String())
+		}
+	}
+	if payload["notification_action_request_dispatch_item_count"] != float64(4) ||
+		payload["notification_action_request_dispatch_authorization_item_count"] != float64(4) ||
+		payload["required_notification_action_request_dispatch_authorization_item_count"] != float64(4) ||
+		payload["ready_notification_action_request_dispatch_authorization_item_count"] != float64(4) ||
+		payload["missing_notification_action_request_dispatch_authorization_item_count"] != float64(0) ||
+		payload["request_object_audit_consumed_item_count"] != float64(4) ||
+		payload["action_enablement_audit_consumed_item_count"] != float64(4) ||
+		payload["notification_action_request_dispatch_authorization_modeled_item_count"] != float64(4) ||
+		payload["granted_notification_action_request_dispatch_authorization_item_count"] != float64(0) ||
+		payload["dispatched_request_object_item_count"] != float64(0) ||
+		payload["created_request_object_item_count"] != float64(0) ||
+		payload["persisted_request_object_item_count"] != float64(0) ||
+		payload["side_effect_notification_action_request_dispatch_authorization_item_count"] != float64(0) {
+		t.Fatalf("unexpected notification action request-object dispatch authorization counts: %s", output.String())
+	}
+	if !strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-install-failure") ||
+		!strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-repair-suggestion") ||
+		!strings.Contains(output.String(), "four-kde-notification-action-request-dispatch-authorizations-review-only") ||
+		!strings.Contains(output.String(), "dispatch-authorization-request-objects-actions-cards-delivery-and-events-disabled") {
+		t.Fatalf("notification action request-object dispatch authorization payload must include item and check evidence: %s", output.String())
+	}
+	for _, key := range []string{"notification_action_request_dispatch_authorized", "dispatch_authorization_granted", "request_object_creation_enabled", "request_object_dispatch_enabled", "request_object_persistence_enabled", "request_object_created", "request_objects_created", "request_object_dispatched", "request_objects_dispatched", "request_object_persisted", "dispatch_authorization_persisted", "portal_request_created", "notification_action_enabled", "action_card_enabled", "notification_delivery_enabled", "notification_sent", "notification_center_event_triggered", "receipt_present", "receipt_accepted", "receipt_consumed", "consumer_authorization_granted", "consumer_enabled", "explicit_user_consent_collected", "consent_receipt_created", "route_enablement_accepted", "lookup_route_enabled", "lookup_route_dispatch_authorized", "lookup_route_dispatch_callable", "storage_write_enabled", "status_persistence_write_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "raw_result_exposed", "dispatch_dry_run_executed", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "production_readiness", "production_ownership_ready", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "kde_configuration_written", "portal_call_executed", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("expected %s to remain false in notification action request-object dispatch authorization payload: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchAuthorizationAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationDeliveryExplicitConsentAuditPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

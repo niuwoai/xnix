@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.428] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-authorization-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline, v0.2.427 notification action request-object audit, v0.2.426 notification action enablement audit, v0.2.425 notification delivery grant audit, v0.2.424 notification delivery execution authorization audit, v0.2.423 notification delivery consent collection receipt consumer enablement gate audit, v0.2.422 notification delivery consent collection receipt consumer authorization audit, v0.2.421 notification delivery consent collection receipt consumption gate audit, and v0.2.420 notification delivery consent collection receipt acceptance audit before modeling future KDE Notification Center action request-object dispatch authorization readiness.
+- Wired the notification action request-object dispatch authorization audit into the Runtime CLI while keeping dispatch authorization grants, request object creation, request object dispatch, request object persistence, notification actions, action cards, delivery grant issuance, delivery authorization grants, delivery execution enablement, notification sending, Notification Center events, consent collection, consent receipt creation, consent receipt acceptance, consent receipt consumption, consumer authorization grants, consumer enablement, route enablement acceptance, lookup routes, lookup route dispatch authorization, dispatch calls, status persistence writes, storage writes, support side effects, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+- Captured operator-authorized restricted container heavy smoke evidence for the local `xnix-builder:0.2.428` image, Runtime owner candidate restricted session smoke, Runtime D-Bus session smoke, KDE Compatibility Center D-Bus smoke, and Runtime activation smoke while formal Buildroot/QEMU and loopback SSH smokes remain gated by `scripts/full_smoke.rb`.
+
 ## [0.2.427] - 2026-07-19
 
 ### Added
