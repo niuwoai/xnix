@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.391] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-storage-persistence-gate-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.390 closed persistence writer preview before modeling the gate that must pass before redacted status storage can write.
+- Wired the KDE-safe redacted status storage persistence gate audit into the Runtime CLI while keeping gate passage, writer calls, persistence writers, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.390] - 2026-07-19
 
 ### Added
