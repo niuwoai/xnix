@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.384] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-authorization-receipt-acceptance-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.383 writer authorization receipt audit before modeling the future acceptance authorization boundary.
+- Wired the KDE-safe redacted status writer authorization receipt acceptance audit into the Runtime CLI while keeping receipt acceptance, writer authorization grants, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.383] - 2026-07-19
 
 ### Added
