@@ -5950,6 +5950,80 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultPresentationConsentAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_dry_run_result_presentation_consent_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-ready-consent-review-only-notifications-disabled-action-cards-disabled" {
+		t.Fatalf("unexpected presentation consent command payload: %s", output.String())
+	}
+	for _, key := range []string{
+		"current_mainline_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_redacted_presentation_eligibility_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_redacted_presentation_eligibility_ready",
+		"lookup_route_dispatch_dry_run_result_presentation_consent_required",
+		"lookup_route_dispatch_dry_run_result_presentation_consent_modeled",
+		"lookup_route_dispatch_dry_run_result_presentation_consent_ready",
+		"route_enablement_lookup_route_dispatch_dry_run_result_presentation_consent_ready",
+		"eligible_redacted_presentation_consumed",
+		"kde_presentation_consent_modeled",
+		"compatibility_center_presentation_consent_modeled",
+		"notification_center_presentation_consent_modeled",
+		"settings_presentation_consent_modeled",
+		"runtime_diagnostics_presentation_consent_modeled",
+		"notification_and_action_card_consent_boundary_ready",
+		"explicit_user_consent_required",
+		"consent_review_only",
+		"notifications_remain_disabled",
+		"action_cards_remain_disabled",
+		"kde_safe_redacted_result_only",
+		"raw_result_hidden",
+	} {
+		if payload[key] != true {
+			t.Fatalf("expected %s to be true in presentation consent payload: %s", key, output.String())
+		}
+	}
+	if payload["presentation_consent_item_count"] != float64(4) ||
+		payload["required_presentation_consent_item_count"] != float64(4) ||
+		payload["ready_presentation_consent_item_count"] != float64(4) ||
+		payload["missing_presentation_consent_item_count"] != float64(0) ||
+		payload["explicit_consent_granted_item_count"] != float64(0) ||
+		payload["notification_trigger_enabled_item_count"] != float64(0) ||
+		payload["action_card_enabled_item_count"] != float64(0) ||
+		payload["side_effect_presentation_consent_item_count"] != float64(0) {
+		t.Fatalf("unexpected presentation consent counts: %s", output.String())
+	}
+	if !strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-compatibility-center") ||
+		!strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-notification-center") ||
+		!strings.Contains(output.String(), "four-kde-presentation-surfaces-consent-review-only") ||
+		!strings.Contains(output.String(), "notifications-and-action-cards-disabled") {
+		t.Fatalf("presentation consent payload must include item and check evidence: %s", output.String())
+	}
+	for _, key := range []string{"explicit_user_consent_collected", "receipt_present", "receipt_accepted", "receipt_consumed", "route_enablement_accepted", "lookup_route_enabled", "lookup_route_dispatch_authorized", "lookup_route_dispatch_dry_run_result_redaction_passed", "lookup_route_dispatch_callable", "storage_write_enabled", "status_persistence_write_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "raw_result_exposed", "dispatch_dry_run_executed", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "notification_center_event_triggered", "action_card_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "production_readiness", "production_ownership_ready", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "kde_configuration_written", "portal_call_executed", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("expected %s to remain false in presentation consent payload: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultPresentationConsentAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-presentation-consent-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
