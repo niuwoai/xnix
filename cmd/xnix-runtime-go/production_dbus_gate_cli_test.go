@@ -2497,6 +2497,124 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementReceiptConsumptionGateAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_receipt_consumption_gate_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-ready-consumption-disabled" ||
+		payload["receipt_schema"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_authorization_receipt.v1" ||
+		payload["opaque_receipt_id"] != "dry-run-result-lookup-consumer-enablement-authorization-receipt-id" {
+		t.Fatalf("unexpected lookup consumer enablement receipt consumption gate payload: %s", output.String())
+	}
+	if payload["consumption_gate_required"] != true ||
+		payload["consumption_gate_modeled"] != true ||
+		payload["acceptance_authorization_audit_consumed"] != true ||
+		payload["consumer_redaction_audit_consumed"] != true ||
+		payload["lookup_route_authorization_audit_consumed"] != true ||
+		payload["consumption_gate_guidance_consumed"] != true ||
+		payload["consumption_gate_boundary_ready"] != true ||
+		payload["receipt_acceptance_authorization_ready"] != true ||
+		payload["consumer_redaction_boundary_ready"] != true ||
+		payload["lookup_route_authorization_boundary_ready"] != true ||
+		payload["consumer_enablement_receipt_consumption_ready"] != true ||
+		payload["receipt_consumption_gate_ready"] != true ||
+		payload["receipt_accepted"] != false ||
+		payload["receipt_consumed"] != false ||
+		payload["consumer_consumption_authorized"] != false ||
+		payload["consumer_enablement_authorized"] != false ||
+		payload["kde_consumer_enabled"] != false ||
+		payload["runtime_consumer_enabled"] != false ||
+		payload["lookup_route_enabled"] != false ||
+		payload["opaque_lookup_enabled"] != false ||
+		payload["raw_result_exposed"] != false ||
+		payload["production_readiness"] != false ||
+		payload["production_ownership_ready"] != false {
+		t.Fatalf("unexpected lookup consumer enablement receipt consumption gate decision: %s", output.String())
+	}
+	if payload["gate_item_count"] != float64(5) ||
+		payload["required_gate_item_count"] != float64(5) ||
+		payload["ready_gate_item_count"] != float64(5) ||
+		payload["missing_gate_item_count"] != float64(0) ||
+		payload["accepted_receipt_item_count"] != float64(0) ||
+		payload["consumed_receipt_item_count"] != float64(0) ||
+		payload["authorized_consumer_item_count"] != float64(0) ||
+		payload["enabled_consumer_item_count"] != float64(0) ||
+		payload["lookup_enabled_gate_item_count"] != float64(0) ||
+		payload["raw_exposed_gate_item_count"] != float64(0) ||
+		payload["side_effect_gate_item_count"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer enablement receipt consumption gate counts: %s", output.String())
+	}
+	items := payload["gate_items"].([]any)
+	if len(items) != 5 {
+		t.Fatalf("unexpected lookup consumer enablement receipt consumption gate item list: %s", output.String())
+	}
+	for _, item := range items {
+		gate := item.(map[string]any)
+		if gate["evidence_present"] != true ||
+			gate["acceptance_authorization_audit_consumed"] != true ||
+			gate["consumer_redaction_audit_consumed"] != true ||
+			gate["lookup_route_authorization_audit_consumed"] != true ||
+			gate["consumption_gate_modeled"] != true ||
+			gate["receipt_consumption_gate_ready"] != true ||
+			gate["receipt_accepted"] != false ||
+			gate["receipt_consumed"] != false ||
+			gate["consumer_consumption_authorized"] != false ||
+			gate["consumer_enablement_authorized"] != false ||
+			gate["kde_consumer_enabled"] != false ||
+			gate["runtime_consumer_enabled"] != false ||
+			gate["lookup_route_enabled"] != false ||
+			gate["opaque_lookup_enabled"] != false ||
+			gate["raw_result_exposed"] != false ||
+			gate["user_visible"] != true ||
+			gate["review_only"] != true ||
+			gate["runtime_owned"] != true ||
+			gate["go_runtime_backed"] != true ||
+			gate["kde_policy_owner"] != false ||
+			gate["state_root_path_exposed"] != false ||
+			gate["file_paths_exposed"] != false ||
+			gate["file_content_read"] != false ||
+			gate["side_effects_disabled"] != true ||
+			gate["host_root_modified"] != false ||
+			gate["internal_details_exposed"] != false ||
+			gate["gate_status"] != "consumer-enablement-receipt-consumption-gate-modeled-consumption-disabled" {
+			t.Fatalf("unsafe lookup consumer enablement receipt consumption gate item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(10) ||
+		counts["passed"] != float64(10) ||
+		counts["pending"] != float64(0) ||
+		counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected lookup consumer enablement receipt consumption gate checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("lookup consumer enablement receipt consumption gate output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "production_activation_ready", "write_methods_enabled", "runtime_writes_enabled", "receipt_writer_enabled", "receipt_persistence_enabled", "receipt_lookup_writes_enabled", "receipt_replay_enabled", "receipt_expiry_write_enabled", "receipt_revocation_write_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "request_objects_created", "request_objects_dispatched", "notification_sent", "notification_delivery_enabled", "notification_action_enabled", "compatibility_center_opened", "compatibility_center_persisted", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "receipt_present", "receipt_persisted", "receipt_accepted", "receipt_consumed", "authorization_accepted", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe lookup consumer enablement receipt consumption gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementReceiptConsumptionGateAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.374
+> Last updated: 2026-07-19 | Current version: v0.2.375
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.375 checkpoint adds production receipt notification action dry-run result lookup consumer enablement receipt consumption gate audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumption-gate-audit-preview` models the final fail-closed consumption gate required before future accepted consumer enablement authorization receipts can authorize KDE or Runtime consumers while keeping receipt acceptance, receipt consumption, consumer authorization, consumer enablement, route authorization grants, route enablement, lookup enablement, lookup persistence, redacted summary persistence, raw result exposure, dry-run execution, result persistence, Runtime diagnostics persistence, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.374 checkpoint adds production receipt notification action dry-run result lookup consumer enablement receipt acceptance authorization audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-acceptance-authorization-audit-preview` models the acceptance authorization boundary required before future persisted consumer enablement authorization receipts can be accepted and consumed by consumer enablement gates while keeping receipt acceptance, receipt consumption, consumer authorization, consumer enablement, route authorization grants, route enablement, lookup enablement, lookup persistence, redacted summary persistence, raw result exposure, dry-run execution, result persistence, Runtime diagnostics persistence, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
