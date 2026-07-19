@@ -4278,6 +4278,122 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterImplementationPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_implementation.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview" ||
+		payload["preview_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-ready-writes-disabled" {
+		t.Fatalf("unexpected KDE-safe redacted status closed record writer implementation payload: %s", output.String())
+	}
+	if payload["current_mainline_consumed"] != true ||
+		payload["persistence_record_contract_consumed"] != true ||
+		payload["persistence_record_contract_ready"] != true ||
+		payload["closed_record_writer_implementation_required"] != true ||
+		payload["closed_record_writer_implementation_modeled"] != true ||
+		payload["closed_record_writer_implementation_ready"] != true ||
+		payload["record_writer_shape_modeled"] != true ||
+		payload["record_writer_input_boundary_modeled"] != true ||
+		payload["record_writer_output_boundary_modeled"] != true ||
+		payload["durable_record_contract_consumed"] != true ||
+		payload["kde_safe_redacted_status_only"] != true ||
+		payload["compatibility_center_writer_modeled"] != true ||
+		payload["runtime_diagnostics_writer_modeled"] != true ||
+		payload["writer_callable"] != false ||
+		payload["closed_record_writer_enabled"] != false ||
+		payload["storage_gate_passed"] != false ||
+		payload["storage_persistence_authorized"] != false ||
+		payload["durable_record_write_enabled"] != false ||
+		payload["status_persistence_authorized"] != false ||
+		payload["status_persistence_write_enabled"] != false ||
+		payload["status_writer_enabled"] != false ||
+		payload["kde_status_write_enabled"] != false ||
+		payload["runtime_diagnostics_write_enabled"] != false ||
+		payload["storage_write_enabled"] != false {
+		t.Fatalf("unexpected KDE-safe redacted status closed record writer implementation decision: %s", output.String())
+	}
+	if payload["implementation_item_count"] != float64(10) ||
+		payload["required_implementation_item_count"] != float64(10) ||
+		payload["ready_implementation_item_count"] != float64(10) ||
+		payload["missing_implementation_item_count"] != float64(0) ||
+		payload["callable_record_writer_item_count"] != float64(0) ||
+		payload["enabled_record_writer_item_count"] != float64(0) ||
+		payload["durable_written_record_item_count"] != float64(0) ||
+		payload["persisted_record_item_count"] != float64(0) ||
+		payload["raw_exposed_implementation_item_count"] != float64(0) ||
+		payload["side_effect_implementation_item_count"] != float64(0) ||
+		payload["compatibility_center_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_item_count"] != float64(5) {
+		t.Fatalf("unexpected KDE-safe redacted status closed record writer implementation counts: %s", output.String())
+	}
+	items := payload["implementation_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe redacted status closed record writer implementation item list: %s", output.String())
+	}
+	for _, item := range items {
+		implementation := item.(map[string]any)
+		if implementation["evidence_present"] != true ||
+			implementation["current_mainline_consumed"] != true ||
+			implementation["persistence_record_contract_consumed"] != true ||
+			implementation["persistence_record_contract_ready"] != true ||
+			implementation["closed_record_writer_implementation_modeled"] != true ||
+			implementation["record_writer_shape_modeled"] != true ||
+			implementation["record_writer_input_boundary_modeled"] != true ||
+			implementation["record_writer_output_boundary_modeled"] != true ||
+			implementation["durable_record_contract_consumed"] != true ||
+			implementation["writer_method_name"] != "PreviewRedactedStatusRecordWriter" ||
+			implementation["writer_callable"] != false ||
+			implementation["closed_record_writer_enabled"] != false ||
+			implementation["storage_gate_passed"] != false ||
+			implementation["storage_persistence_authorized"] != false ||
+			implementation["durable_record_write_enabled"] != false ||
+			implementation["status_persistence_authorized"] != false ||
+			implementation["status_persistence_write_enabled"] != false ||
+			implementation["status_writer_enabled"] != false ||
+			implementation["kde_status_write_enabled"] != false ||
+			implementation["runtime_diagnostics_write_enabled"] != false ||
+			implementation["storage_write_enabled"] != false ||
+			implementation["redacted_summary_persisted"] != false ||
+			implementation["kde_status_persisted"] != false ||
+			implementation["runtime_diagnostics_persisted"] != false ||
+			implementation["raw_result_exposed"] != false ||
+			implementation["user_visible"] != true ||
+			implementation["review_only"] != true ||
+			implementation["side_effects_disabled"] != true ||
+			implementation["closed_record_writer_implementation_status"] != "redacted-status-closed-record-writer-implementation-modeled-writes-disabled" {
+			t.Fatalf("unsafe KDE-safe redacted status closed record writer implementation item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) || counts["passed"] != float64(8) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status closed record writer implementation checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe redacted status closed record writer implementation output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "writer_callable", "closed_record_writer_enabled", "storage_gate_passed", "storage_persistence_authorized", "durable_record_write_enabled", "writer_authorization_granted", "status_writer_enabled", "status_persistence_authorized", "status_persistence_write_enabled", "kde_status_write_enabled", "runtime_diagnostics_write_enabled", "storage_write_enabled", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe redacted status closed record writer implementation %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterImplementationPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.393] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-implementation-preview`, a read-only Go owner preview that consumes the Xnix current mainline and v0.2.392 persistence record contract preview before modeling the future closed redacted status record writer implementation.
+- Wired the KDE-safe redacted status closed record writer implementation preview into the Runtime CLI while keeping writer calls, closed record writers, durable record writes, storage gate passage, storage authorization, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.392] - 2026-07-19
 
 ### Added
