@@ -5011,6 +5011,105 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteAuthorizationEvidenceGatePreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_authorization_evidence_gate.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview" ||
+		payload["gate_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-ready-routes-disabled" {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate payload: %s", output.String())
+	}
+	if payload["current_mainline_consumed"] != true ||
+		payload["result_consumer_projection_evidence_audit_consumed"] != true ||
+		payload["result_consumer_projection_evidence_audit_ready"] != true ||
+		payload["route_authorization_evidence_gate_required"] != true ||
+		payload["result_consumer_projection_route_authorization_evidence_gated"] != true ||
+		payload["route_authorization_evidence_gate_ready"] != true ||
+		payload["compatibility_center_route_authorization_evidence_gated"] != true ||
+		payload["runtime_diagnostics_route_authorization_evidence_gated"] != true ||
+		payload["redacted_projection_route_authorization_evidence_gated"] != true ||
+		payload["user_visible_route_authorization_evidence_gated"] != true ||
+		payload["failure_projection_route_authorization_evidence_gated"] != true ||
+		payload["lookup_route_authorized"] != false ||
+		payload["lookup_route_enabled"] != false ||
+		payload["receipt_present"] != false ||
+		payload["receipt_accepted"] != false ||
+		payload["receipt_consumed"] != false ||
+		payload["storage_root_policy_grant_authorized"] != false ||
+		payload["record_writer_call_authorized"] != false ||
+		payload["writer_callable"] != false ||
+		payload["storage_write_enabled"] != false {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate decision: %s", output.String())
+	}
+	if payload["evidence_item_count"] != float64(10) ||
+		payload["ready_evidence_item_count"] != float64(10) ||
+		payload["missing_evidence_item_count"] != float64(0) ||
+		payload["compatibility_center_evidence_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_evidence_item_count"] != float64(5) ||
+		payload["raw_exposed_evidence_item_count"] != float64(0) ||
+		payload["side_effect_evidence_item_count"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate counts: %s", output.String())
+	}
+	items := payload["evidence_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate item list: %s", output.String())
+	}
+	for _, item := range items {
+		evidence := item.(map[string]any)
+		if evidence["evidence_present"] != true ||
+			evidence["projection_evidence_audit_consumed"] != true ||
+			evidence["projection_evidence_audit_ready"] != true ||
+			evidence["result_consumer_projection_route_authorization_evidence_gated"] != true ||
+			evidence["redacted_projection_route_authorization_evidence_gated"] != true ||
+			evidence["user_visible_route_authorization_evidence_gated"] != true ||
+			evidence["failure_projection_route_authorization_evidence_gated"] != true ||
+			evidence["receipt_present"] != false ||
+			evidence["receipt_accepted"] != false ||
+			evidence["receipt_consumed"] != false ||
+			evidence["storage_root_policy_grant_authorized"] != false ||
+			evidence["record_writer_call_authorized"] != false ||
+			evidence["writer_callable"] != false ||
+			evidence["storage_write_enabled"] != false ||
+			evidence["lookup_route_enabled"] != false ||
+			evidence["raw_result_exposed"] != false ||
+			evidence["user_visible"] != true ||
+			evidence["review_only"] != true ||
+			evidence["side_effects_disabled"] != true ||
+			evidence["route_authorization_gate_status"] != "redacted-status-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gated-routes-disabled" {
+			t.Fatalf("unsafe KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) || counts["passed"] != float64(8) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "receipt_present", "receipt_accepted", "receipt_consumed", "storage_root_policy_grant_authorized", "record_writer_call_authorized", "writer_callable", "storage_root_resolved", "storage_write_enabled", "status_persistence_write_enabled", "consumer_dry_run_lookup_result_boundary_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_authorized", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe redacted status dry-run lookup result consumer projection route authorization evidence gate %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteAuthorizationEvidenceGatePreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-authorization-evidence-gate-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
