@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.410] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-capture-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.409 route enablement lookup route dispatch dry-run execution gate audit before modeling future lookup route dispatch dry-run result capture.
+- Wired the KDE-safe redacted status storage-root authorization receipt dry-run lookup result consumer projection route enablement lookup route dispatch dry-run result capture audit into the Runtime CLI while keeping receipt presence, receipt acceptance, receipt consumption, route enablement acceptance, lookup route enablement grants, lookup route grant authorization, lookup routes, lookup route dispatch authorization, dispatch dry-run result capture passage, dispatch calls, storage-root policy grants, record-writer call authorization, storage-root resolution, writer calls, status persistence writes, storage writes, consumer enablement, dry-run dispatch, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+- Captured operator-authorized restricted full build, QEMU serial boot, and loopback SSH smoke evidence for v0.2.410 without privileged containers, host networking, Docker socket mounts inside containers, broad host mounts, backend launch, or host-root mutation.
+
 ## [0.2.409] - 2026-07-19
 
 ### Added
