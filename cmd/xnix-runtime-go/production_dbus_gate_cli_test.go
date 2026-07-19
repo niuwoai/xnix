@@ -6196,13 +6196,13 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 	for _, key := range []string{
 		"current_mainline_consumed",
-		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_authorization_consumed",
-		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_authorization_ready",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_execution_authorization_audit_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_execution_authorization_audit_ready",
 		"lookup_route_dispatch_dry_run_result_notification_delivery_grant_audit_required",
 		"lookup_route_dispatch_dry_run_result_notification_delivery_grant_modeled",
 		"lookup_route_dispatch_dry_run_result_notification_delivery_grant_ready",
 		"route_enablement_lookup_route_dispatch_dry_run_result_notification_delivery_grant_ready",
-		"notification_delivery_authorization_review_only_consumed",
+		"notification_delivery_execution_authorization_review_only_consumed",
 		"kde_notification_delivery_grant_modeled",
 		"notification_center_delivery_grant_modeled",
 		"install_failure_delivery_grant_modeled",
@@ -6210,6 +6210,12 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		"environment_switch_delivery_grant_modeled",
 		"approval_info_delivery_grant_modeled",
 		"notification_delivery_grant_review_only",
+		"delivery_execution_authorization_ready",
+		"delivery_execution_ready",
+		"delivery_grant_required",
+		"delivery_grant_ready",
+		"grant_issuance_required",
+		"grant_issuance_ready",
 		"notification_delivery_disabled",
 		"notification_action_disabled",
 		"action_cards_remain_disabled",
@@ -6225,6 +6231,9 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		payload["required_notification_delivery_grant_item_count"] != float64(4) ||
 		payload["ready_notification_delivery_grant_item_count"] != float64(4) ||
 		payload["missing_notification_delivery_grant_item_count"] != float64(0) ||
+		payload["execution_authorization_audit_consumed_item_count"] != float64(4) ||
+		payload["delivery_grant_modeled_item_count"] != float64(4) ||
+		payload["issued_delivery_grant_item_count"] != float64(0) ||
 		payload["issued_notification_delivery_grant_item_count"] != float64(0) ||
 		payload["authorized_notification_delivery_item_count"] != float64(0) ||
 		payload["delivered_notification_item_count"] != float64(0) ||
@@ -6239,7 +6248,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		!strings.Contains(output.String(), "grant-issuance-sending-and-events-disabled") {
 		t.Fatalf("notification delivery grant payload must include item and check evidence: %s", output.String())
 	}
-	for _, key := range []string{"notification_delivery_grant_issued", "notification_delivery_authorization_granted", "explicit_user_consent_collected", "receipt_present", "receipt_accepted", "receipt_consumed", "route_enablement_accepted", "lookup_route_enabled", "lookup_route_dispatch_authorized", "lookup_route_dispatch_callable", "storage_write_enabled", "status_persistence_write_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "raw_result_exposed", "dispatch_dry_run_executed", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_delivery_enabled", "notification_sent", "notification_center_event_triggered", "notification_action_enabled", "action_card_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "production_readiness", "production_ownership_ready", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "kde_configuration_written", "portal_call_executed", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+	for _, key := range []string{"delivery_execution_authorized", "notification_delivery_execution_authorized", "notification_delivery_execution_enabled", "delivery_grant_issued", "notification_delivery_grant_issued", "notification_delivery_authorization_granted", "grant_issuance_enabled", "explicit_user_consent_collected", "receipt_present", "receipt_accepted", "receipt_consumed", "route_enablement_accepted", "lookup_route_enabled", "lookup_route_dispatch_authorized", "lookup_route_dispatch_callable", "storage_write_enabled", "status_persistence_write_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "raw_result_exposed", "dispatch_dry_run_executed", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_delivery_enabled", "notification_sent", "notification_center_event_triggered", "notification_action_enabled", "action_card_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "production_readiness", "production_ownership_ready", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "kde_configuration_written", "portal_call_executed", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
 		if payload[key] != false {
 			t.Fatalf("expected %s to remain false in notification delivery grant payload: %s", key, output.String())
 		}
