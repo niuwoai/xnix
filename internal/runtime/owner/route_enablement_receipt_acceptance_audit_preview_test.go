@@ -165,7 +165,15 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 }
 
 func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementReceiptAcceptanceAuditPreviewFailsClosedWithoutSources(t *testing.T) {
-	root := t.TempDir()
+	root, err := os.MkdirTemp("", "xnix-route-acceptance-*")
+	if err != nil {
+		t.Fatalf("MkdirTemp returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(root); err != nil {
+			t.Fatalf("RemoveAll returned error: %v", err)
+		}
+	})
 	if err := os.WriteFile(filepath.Join(root, "VERSION"), []byte(currentProjectVersion(t)+"\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile VERSION returned error: %v", err)
 	}
