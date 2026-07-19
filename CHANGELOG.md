@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.416] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-delivery-grant-audit-preview`, a read-only Go owner audit that consumes the Xnix current mainline and v0.2.415 notification delivery authorization audit before modeling future KDE Notification Center delivery grant readiness.
+- Wired the notification delivery grant audit into the Runtime CLI while keeping grant issuance, delivery authorization grants, notification sending, Notification Center events, notification actions, action cards, explicit consent collection, receipt presence, receipt acceptance, receipt consumption, route enablement acceptance, lookup routes, lookup route dispatch authorization, dispatch calls, status persistence writes, storage writes, support side effects, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.415] - 2026-07-19
 
 ### Added
