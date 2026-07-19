@@ -5530,6 +5530,77 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchGateAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-preview returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("route enablement lookup route dispatch gate audit command must emit JSON: %v\n%s", err, output.String())
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_gate_audit.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-preview" ||
+		payload["audit_type"] != "receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit" ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-ready-route-disabled-dispatch-disabled" {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit payload: %s", output.String())
+	}
+	for _, key := range []string{
+		"current_mainline_consumed",
+		"route_enablement_lookup_route_enablement_consumed",
+		"route_enablement_lookup_route_enablement_ready",
+		"lookup_route_dispatch_gate_required",
+		"lookup_route_dispatch_gate_modeled",
+		"lookup_route_dispatch_gate_ready",
+		"route_enablement_lookup_route_dispatch_gate_boundary_ready",
+		"opaque_route_enablement_receipt",
+		"kde_safe_redacted_status_only",
+		"compatibility_center_lookup_route_dispatch_gate_modeled",
+		"runtime_diagnostics_lookup_route_dispatch_gate_modeled",
+	} {
+		if payload[key] != true {
+			t.Fatalf("KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit %s must be true: %s", key, output.String())
+		}
+	}
+	if payload["dispatch_gate_item_count"] != float64(10) ||
+		payload["required_dispatch_gate_item_count"] != float64(10) ||
+		payload["ready_dispatch_gate_item_count"] != float64(10) ||
+		payload["missing_dispatch_gate_item_count"] != float64(0) ||
+		payload["passed_dispatch_gate_item_count"] != float64(0) ||
+		payload["enabled_route_item_count"] != float64(0) ||
+		payload["persisted_dispatch_gate_item_count"] != float64(0) ||
+		payload["raw_exposed_dispatch_gate_item_count"] != float64(0) ||
+		payload["side_effect_dispatch_gate_item_count"] != float64(0) ||
+		payload["compatibility_center_dispatch_gate_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_dispatch_gate_item_count"] != float64(5) {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit counts: %s", output.String())
+	}
+	if !strings.Contains(output.String(), "review-route-enablement-lookup-route-dispatch-gate-compatibility-center") ||
+		!strings.Contains(output.String(), "support-info-route-enablement-lookup-route-dispatch-gate-runtime-diagnostics") ||
+		!strings.Contains(output.String(), "route-enablement-lookup-route-enablement-consumed") ||
+		!strings.Contains(output.String(), "ten-dispatch-gate-items-ready-dispatch-disabled") {
+		t.Fatalf("unexpected KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit item list: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"receipt_present", "receipt_accepted", "receipt_consumed", "acceptance_authorized", "route_enablement_accepted", "lookup_route_enablement_granted", "lookup_route_grant_authorized", "lookup_route_enabled", "lookup_route_dispatch_authorized", "lookup_route_dispatch_gate_passed", "lookup_route_dispatch_callable", "storage_root_policy_grant_authorized", "record_writer_call_authorized", "writer_callable", "storage_root_resolved", "storage_write_enabled", "status_persistence_write_enabled", "consumer_dry_run_lookup_result_boundary_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_authorized", "lookup_route_enablement_authorized", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "raw_result_exposed", "dispatch_dry_run_executed", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "production_readiness", "production_ownership_ready", "system_service_started", "session_bus_claimed", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "desktop_files_written", "kde_configuration_written", "portal_call_executed", "adapter_invocation_enabled", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe redacted status dry-run lookup result consumer projection route enablement lookup route dispatch gate audit %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchGateAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-gate-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
