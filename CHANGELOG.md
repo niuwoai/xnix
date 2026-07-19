@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.377] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-receipt-consumer-enablement-gate-audit-preview`, a read-only Go owner audit that models the final consumer enablement gate after the receipt consumer authorization audit before KDE or Runtime consumers can be enabled.
+- Wired the dry-run result lookup consumer enablement receipt consumer enablement gate audit into the Runtime CLI while keeping consumer enablement, consumer authorization grants, lookup route grants, route enablement, lookup enablement, lookup persistence, redacted summary persistence, raw result exposure, dry-run execution, result persistence, Runtime diagnostics persistence, request creation, dispatch, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.376] - 2026-07-19
 
 ### Added
