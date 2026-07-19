@@ -224,12 +224,19 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationActionEnablementA
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationActionEnablementAuditMainlineReady(source string) bool {
-	return productionAuthorizationHasAll(source, []string{
+	activeTaskReady := productionAuthorizationHasAll(source, []string{
 		"route enablement lookup route dispatch dry-run result notification action enablement audit preview",
 		"route enablement lookup route dispatch dry-run result notification delivery grant audit preview",
 		"without sending notifications",
 		"notification actions can be enabled",
 	})
+	continuityReady := productionAuthorizationHasAll(source, []string{
+		"route enablement lookup route dispatch dry-run result notification action enablement audit preview",
+		"route enablement lookup route dispatch dry-run result notification action request-object audit preview",
+		"route enablement lookup route dispatch dry-run result notification action request-object dispatch authorization audit preview",
+		"enabling notification actions",
+	})
+	return activeTaskReady || continuityReady
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationActionEnablementAuditGrantReady(source string, preview ProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationDeliveryGrantAuditPreview) bool {

@@ -250,6 +250,7 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryGrantAudi
 		"route enablement lookup route dispatch dry-run result notification delivery grant audit preview",
 		"route enablement lookup route dispatch dry-run result notification action enablement audit preview",
 		"route enablement lookup route dispatch dry-run result notification action request-object audit preview",
+		"route enablement lookup route dispatch dry-run result notification action request-object dispatch authorization audit preview",
 		"issuing delivery grants",
 	})
 	return activeTaskReady || continuityReady

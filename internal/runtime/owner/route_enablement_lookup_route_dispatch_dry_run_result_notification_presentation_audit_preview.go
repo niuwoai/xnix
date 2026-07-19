@@ -241,11 +241,17 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationPresentationAudit
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationPresentationAuditMainlineReady(source string) bool {
-	return productionAuthorizationHasAll(source, []string{
+	activeTaskReady := productionAuthorizationHasAll(source, []string{
 		"storage-root authorization receipt dry-run lookup result consumer projection route enablement lookup route dispatch dry-run result notification presentation audit preview",
 		"storage-root authorization receipt dry-run lookup result consumer projection route enablement lookup route dispatch dry-run result presentation consent audit preview",
 		"accepting or consuming receipts",
 	})
+	continuityReady := productionAuthorizationHasAll(source, []string{
+		"route enablement lookup route dispatch dry-run result notification presentation audit preview",
+		"route enablement lookup route dispatch dry-run result notification action request-object dispatch authorization audit preview",
+		"notification presentation audit preview",
+	})
+	return activeTaskReady || continuityReady
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationPresentationAuditConsentReady(source string) bool {

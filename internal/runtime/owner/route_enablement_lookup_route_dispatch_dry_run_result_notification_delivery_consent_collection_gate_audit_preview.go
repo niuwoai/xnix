@@ -184,12 +184,18 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryConsentCo
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryConsentCollectionGateAuditMainlineReady(source string) bool {
-	return productionAuthorizationHasAll(source, []string{
+	activeTaskReady := productionAuthorizationHasAll(source, []string{
 		"route enablement lookup route dispatch dry-run result notification delivery consent collection gate audit preview",
 		"route enablement lookup route dispatch dry-run result notification delivery explicit consent audit preview",
 		"without sending notifications",
 		"collecting consent",
 	})
+	continuityReady := productionAuthorizationHasAll(source, []string{
+		"route enablement lookup route dispatch dry-run result notification delivery consent collection gate audit preview",
+		"route enablement lookup route dispatch dry-run result notification action request-object dispatch authorization audit preview",
+		"notification delivery consent collection gate audit preview",
+	})
+	return activeTaskReady || continuityReady
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationDeliveryConsentCollectionGateAuditExplicitConsentReady(source string) bool {
