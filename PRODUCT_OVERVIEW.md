@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.381
+> Last updated: 2026-07-19 | Current version: v0.2.382
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.382 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status writer authorization gate audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-writer-authorization-gate-audit-preview` consumes the Xnix current mainline and the v0.2.380 redacted status write model before modeling the future writer authorization gate while keeping writer authorization grants, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.381 checkpoint adds `docs/xnix-current-mainline.md` and `current-mainline-ownership-audit-preview` so new implementation work can use a Xnix-owned mainline source instead of depending on external-agent dispatch sheets. The audit keeps KDE Plasma as the only first-release flagship desktop, records the Go-first Runtime ownership boundary, preserves Ruby as the test/report harness, keeps C for low-level or already-owned surfaces, classifies the new mainline document and CLI audit files in the mainline integration review, and leaves Docker, QEMU, full build, production D-Bus ownership, Runtime writes, KDE configuration writes, Portal calls, backend launch, unsafe-data exposure, and host mutation disabled.
 
