@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-19 | Baseline: v0.2.393
+> Last updated: 2026-07-19 | Baseline: v0.2.394
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,9 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status closed record writer storage-root policy audit preview.
+Production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status closed record writer storage-root authorization receipt consumption audit preview.
 
-This follows the redacted status closed record writer implementation preview, the redacted status persistence record contract preview, the redacted status storage persistence gate audit, the redacted status closed persistence writer preview, the redacted status writer persistence authorization preview, the redacted status closed writer implementation preview, the redacted status writer enablement audit, the redacted status writer grant audit, the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The storage-root policy audit must continue to consume the closed record writer implementation preview and this Xnix current mainline document as evidence. The next storage-root policy audit should model the future storage-root ownership, namespace, retention, and redaction boundaries required before a closed record writer can become callable while keeping real persistence writes, status persistence, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
+This follows the redacted status closed record writer storage-root policy audit preview, the redacted status closed record writer implementation preview, the redacted status persistence record contract preview, the redacted status storage persistence gate audit, the redacted status closed persistence writer preview, the redacted status writer persistence authorization preview, the redacted status closed writer implementation preview, the redacted status writer enablement audit, the redacted status writer grant audit, the redacted status writer accepted receipt gate audit, the redacted status writer authorization receipt acceptance audit, the redacted status writer authorization receipt audit, and the redacted status writer authorization gate audit. Continuity evidence from the writer authorization gate audit must continue to consume the v0.2.380 redacted status persistence write-model audit and this Xnix current mainline document. The storage-root authorization receipt consumption audit must continue to consume the storage-root policy audit and this Xnix current mainline document as evidence. The next authorization receipt consumption audit should model the future accepted authorization receipt boundary required before storage-root policy can grant record writer calls while keeping real persistence writes, status persistence, consumer enablement, route enablement, lookup enablement, dry-run execution, dispatch, request creation, production ownership, backend launch, and host mutation disabled.
 
 ## Safety Gates
 
