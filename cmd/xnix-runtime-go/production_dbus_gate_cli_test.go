@@ -4162,6 +4162,122 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceRecordContractPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview", "--root", root}, &output); err != nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_persistence_record_contract.v1" ||
+		payload["request_type"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview" ||
+		payload["preview_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-ready-writes-disabled" {
+		t.Fatalf("unexpected KDE-safe redacted status persistence record contract payload: %s", output.String())
+	}
+	if payload["current_mainline_consumed"] != true ||
+		payload["storage_persistence_gate_consumed"] != true ||
+		payload["storage_persistence_gate_ready"] != true ||
+		payload["persistence_record_contract_required"] != true ||
+		payload["persistence_record_contract_modeled"] != true ||
+		payload["persistence_record_contract_ready"] != true ||
+		payload["record_shape_modeled"] != true ||
+		payload["record_identity_boundary_modeled"] != true ||
+		payload["record_redaction_boundary_modeled"] != true ||
+		payload["kde_safe_redacted_status_only"] != true ||
+		payload["compatibility_center_record_modeled"] != true ||
+		payload["runtime_diagnostics_record_modeled"] != true ||
+		payload["writer_callable"] != false ||
+		payload["closed_persistence_writer_enabled"] != false ||
+		payload["storage_gate_passed"] != false ||
+		payload["storage_persistence_authorized"] != false ||
+		payload["durable_record_write_enabled"] != false ||
+		payload["status_persistence_authorized"] != false ||
+		payload["status_persistence_write_enabled"] != false ||
+		payload["status_writer_enabled"] != false ||
+		payload["kde_status_write_enabled"] != false ||
+		payload["runtime_diagnostics_write_enabled"] != false ||
+		payload["storage_write_enabled"] != false {
+		t.Fatalf("unexpected KDE-safe redacted status persistence record contract decision: %s", output.String())
+	}
+	if payload["record_item_count"] != float64(10) ||
+		payload["required_record_item_count"] != float64(10) ||
+		payload["ready_record_item_count"] != float64(10) ||
+		payload["missing_record_item_count"] != float64(0) ||
+		payload["durable_record_item_count"] != float64(0) ||
+		payload["writable_record_item_count"] != float64(0) ||
+		payload["persisted_record_item_count"] != float64(0) ||
+		payload["raw_exposed_record_item_count"] != float64(0) ||
+		payload["side_effect_record_item_count"] != float64(0) ||
+		payload["compatibility_center_item_count"] != float64(5) ||
+		payload["runtime_diagnostics_item_count"] != float64(5) {
+		t.Fatalf("unexpected KDE-safe redacted status persistence record contract counts: %s", output.String())
+	}
+	items := payload["record_items"].([]any)
+	if len(items) != 10 {
+		t.Fatalf("unexpected KDE-safe redacted status persistence record contract item list: %s", output.String())
+	}
+	for _, item := range items {
+		record := item.(map[string]any)
+		if record["record_id_modeled"] != true ||
+			record["opaque_lookup_id_modeled"] != true ||
+			record["redacted_summary_modeled"] != true ||
+			record["consumer_projection_modeled"] != true ||
+			record["evidence_present"] != true ||
+			record["current_mainline_consumed"] != true ||
+			record["storage_persistence_gate_consumed"] != true ||
+			record["storage_persistence_gate_ready"] != true ||
+			record["persistence_record_contract_modeled"] != true ||
+			record["record_shape_modeled"] != true ||
+			record["record_identity_boundary_modeled"] != true ||
+			record["record_redaction_boundary_modeled"] != true ||
+			record["writer_callable"] != false ||
+			record["closed_persistence_writer_enabled"] != false ||
+			record["storage_gate_passed"] != false ||
+			record["storage_persistence_authorized"] != false ||
+			record["durable_record_write_enabled"] != false ||
+			record["status_persistence_authorized"] != false ||
+			record["status_persistence_write_enabled"] != false ||
+			record["status_writer_enabled"] != false ||
+			record["kde_status_write_enabled"] != false ||
+			record["runtime_diagnostics_write_enabled"] != false ||
+			record["storage_write_enabled"] != false ||
+			record["redacted_summary_persisted"] != false ||
+			record["kde_status_persisted"] != false ||
+			record["runtime_diagnostics_persisted"] != false ||
+			record["raw_result_exposed"] != false ||
+			record["user_visible"] != true ||
+			record["review_only"] != true ||
+			record["side_effects_disabled"] != true ||
+			record["persistence_record_contract_status"] != "redacted-status-persistence-record-contract-modeled-writes-disabled" {
+			t.Fatalf("unsafe KDE-safe redacted status persistence record contract item: %s", output.String())
+		}
+	}
+	counts := payload["counts"].(map[string]any)
+	if counts["total"] != float64(8) || counts["passed"] != float64(8) || counts["blocked"] != float64(0) {
+		t.Fatalf("unexpected KDE-safe redacted status persistence record contract checks: %s", output.String())
+	}
+	if strings.Contains(output.String(), root) {
+		t.Fatalf("KDE-safe redacted status persistence record contract output must not expose project root path: %s", output.String())
+	}
+	for _, key := range []string{"system_service_started", "session_bus_claimed", "production_bus_claimed", "production_owner_enabled", "write_methods_enabled", "runtime_writes_enabled", "request_object_creation_enabled", "request_object_dispatch_enabled", "portal_request_created", "notification_action_enabled", "compatibility_center_opened", "support_bundle_exported", "support_case_created", "backend_launch_enabled", "backend_process_started", "network_required", "host_root_modified", "privileged_container_required", "state_root_path_exposed", "file_paths_exposed", "file_content_read", "raw_command_exposed", "raw_executable_exposed", "backend_details_exposed", "raw_result_exposed", "writer_callable", "closed_persistence_writer_enabled", "storage_gate_passed", "storage_persistence_authorized", "durable_record_write_enabled", "writer_authorization_granted", "status_writer_enabled", "status_persistence_authorized", "status_persistence_write_enabled", "kde_status_write_enabled", "runtime_diagnostics_write_enabled", "storage_write_enabled", "consumer_consumption_authorized", "consumer_enablement_authorized", "kde_consumer_enabled", "runtime_consumer_enabled", "lookup_route_enabled", "opaque_lookup_enabled", "redacted_summary_persisted", "kde_status_persisted", "runtime_diagnostics_persisted", "dry_run_result_persisted", "dispatch_dry_run_executed"} {
+		if payload[key] != false {
+			t.Fatalf("unsafe KDE-safe redacted status persistence record contract %s must remain false: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusPersistenceRecordContractPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview must reject positional arguments")
+	}
+}
+
 func TestProductionDBusMethodReviewPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer

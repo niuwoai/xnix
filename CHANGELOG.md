@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.392] - 2026-07-19
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview`, a read-only Go owner preview that consumes the Xnix current mainline and v0.2.391 storage persistence gate audit before modeling the durable redacted status record contract.
+- Wired the KDE-safe redacted status persistence record contract preview into the Runtime CLI while keeping durable record writes, storage gate passage, writer calls, persistence writers, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe data exposure, and host mutation disabled.
+
 ## [0.2.391] - 2026-07-19
 
 ### Added

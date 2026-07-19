@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-19 | Current version: v0.2.391
+> Last updated: 2026-07-19 | Current version: v0.2.392
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.392 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status persistence record contract preview. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-persistence-record-contract-preview` consumes the Xnix current mainline and v0.2.391 storage persistence gate audit before modeling the durable redacted status record contract, including opaque record identity, lookup identity, redacted summary, and consumer projection boundaries, while keeping durable record writes, storage gate passage, writer calls, persistence writers, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
 The v0.2.391 checkpoint adds production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status storage persistence gate audit. `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-storage-persistence-gate-audit-preview` consumes the Xnix current mainline and v0.2.390 closed persistence writer preview before modeling the storage persistence gate that must pass before any redacted status writer can store state while keeping gate passage, writer calls, persistence writers, status writers, status persistence writes, consumer enablement, lookup routes, dry-run execution, result persistence, raw result exposure, request creation, Portal requests, notifications, Compatibility Center navigation, support writes, production ownership, Runtime writes, desktop side effects, path exposure, engine launch, unsafe-data exposure, and host mutation disabled.
 
