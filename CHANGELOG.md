@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.459] - 2026-07-21
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-preview`, a read-only Go owner preview that consumes the v0.2.458 storage record writer call authorization preview before modeling future storage record writer call authorization receipt boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization receipt preview into the Runtime CLI while keeping call authorization receipt calls disabled, writer calls disabled, storage record writes disabled, receipt persistence disabled, consumer enablement disabled, notification actions disabled, path exposure disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+- Recorded v0.2.459 as targeted-validation-only follow-up work under the current twenty-small-version testing cadence; formal full Buildroot/QEMU smoke remains gated by `scripts/full_smoke.rb` and was not rerun for this non-boundary checkpoint.
+
 ## [0.2.458] - 2026-07-20
 
 ### Added
