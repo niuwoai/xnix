@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.441] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-acceptance-gate-audit-preview`, a read-only Go owner audit that consumes the v0.2.440 notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt acceptance authorization audit before modeling future acceptance gates for persistence receipt consumer enablement receipts.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt acceptance gate audit into the Runtime CLI while keeping acceptance gates, acceptance authorization grants, receipt acceptance, enablement receipt persistence, enablement receipt writes, persistence authorization grants, writer authorization grants, consumer enablement, consumer authorization grants, receipt consumption, dry-run result persistence, result visibility persistence, dispatch execution, request-object creation, notification actions, notification delivery, production ownership, Runtime writes, desktop side effects, path exposure, backend launch, unsafe-data exposure, and host mutation disabled.
+- Recorded the operator-authorized restricted full Buildroot/QEMU serial smoke evidence for v0.2.440 in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`; v0.2.441 itself uses targeted validation only and does not rerun formal full Buildroot/QEMU smoke.
+
 ## [0.2.440] - 2026-07-20
 
 ### Added
