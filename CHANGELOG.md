@@ -2,6 +2,13 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.437] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-audit-preview`, a read-only Go owner audit that consumes the v0.2.436 notification action request-object dispatch dry-run result persistence receipt consumer enablement gate audit before modeling future persistence receipt consumer enablement receipts.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt audit into the Runtime CLI while keeping consumer enablement receipts absent, receipt writes, consumer enablement, consumer authorization grants, receipt consumption, receipt acceptance, dry-run result persistence, result visibility persistence, dispatch execution, request-object creation, notification actions, notification delivery, production ownership, Runtime writes, desktop side effects, path exposure, backend launch, unsafe-data exposure, and host mutation disabled.
+
 ## [0.2.436] - 2026-07-20
 
 ### Added

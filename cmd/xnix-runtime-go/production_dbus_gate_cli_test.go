@@ -7133,6 +7133,74 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 }
 
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptAuditPreviewCommand(t *testing.T) {
+	root := projectRootForRuntimeServiceBindingCommandTest(t)
+	var output bytes.Buffer
+	command := "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-audit-preview"
+	if err := run([]string{command, "--root", root}, &output); err != nil {
+		t.Fatalf("%s returned error: %v", command, err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_audit.v1" ||
+		payload["request_type"] != command ||
+		payload["audit_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-audit-ready-receipts-disabled" {
+		t.Fatalf("unexpected notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt command payload: %s", output.String())
+	}
+	for _, key := range []string{
+		"current_mainline_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_gate_audit_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_gate_audit_ready",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_audit_required",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_modeled",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_ready",
+		"notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_review_only",
+		"notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_gate_review_only_consumed",
+		"result_persistence_receipt_consumer_enablement_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_required",
+		"result_persistence_receipt_consumer_enablement_receipt_modeled",
+		"result_persistence_receipt_consumer_enablement_receipt_ready",
+		"kde_safe_redacted_result_only",
+		"raw_result_hidden",
+	} {
+		if payload[key] != true {
+			t.Fatalf("expected %s to be true in notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt payload: %s", key, output.String())
+		}
+	}
+	if payload["notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(4) ||
+		payload["ready_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(4) ||
+		payload["missing_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
+		payload["persistence_receipt_consumer_enablement_gate_audit_consumed_item_count"] != float64(4) ||
+		payload["persistence_receipt_consumer_enablement_receipt_modeled_item_count"] != float64(4) ||
+		payload["present_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
+		payload["accepted_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
+		payload["consumed_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
+		payload["side_effect_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) {
+		t.Fatalf("unexpected notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt counts: %s", output.String())
+	}
+	if !strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-install-failure") ||
+		!strings.Contains(output.String(), "four-kde-notification-action-request-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipts-review-only") ||
+		!strings.Contains(output.String(), "consumer-enablement-receipts-authorization-consumption-writes-visibility-persistence-and-dispatch-disabled") {
+		t.Fatalf("notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt payload must include item and check evidence: %s", output.String())
+	}
+	for _, key := range []string{"receipt_consumer_enablement_receipt_present", "receipt_consumer_enablement_receipt_written", "receipt_consumer_enablement_receipt_accepted", "receipt_consumer_enablement_receipt_consumed", "receipt_consumer_enablement_receipt_write_enabled", "receipt_consumer_authorization_enabled", "receipt_consumer_authorized", "consumer_authorization_granted", "receipt_consumer_enablement_enabled", "receipt_consumer_enabled", "consumer_enabled", "kde_consumer_enabled", "runtime_consumer_enabled", "receipt_consumption_enabled", "receipt_consumed", "receipt_acceptance_enabled", "receipt_accepted", "receipt_write_enabled", "dry_run_result_persistence_enabled", "dry_run_result_persisted", "dispatch_dry_run_execution_enabled", "dispatch_dry_run_executed", "request_object_creation_enabled", "request_object_dispatch_enabled", "notification_action_enabled", "notification_sent", "user_visible", "production_ownership_ready", "production_bus_claimed", "write_methods_enabled", "runtime_writes_enabled", "backend_launch_enabled", "host_root_modified"} {
+		if payload[key] != false {
+			t.Fatalf("expected %s to remain false in notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt payload: %s", key, output.String())
+		}
+	}
+}
+
+func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptAuditPreviewCommandRejectsPositionalArgs(t *testing.T) {
+	var output bytes.Buffer
+	if err := run([]string{"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-audit-preview", "extra"}, &output); err == nil {
+		t.Fatalf("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-audit-preview must reject positional arguments")
+	}
+}
+
 func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupRouteDispatchDryRunResultNotificationDeliveryExplicitConsentAuditPreviewCommand(t *testing.T) {
 	root := projectRootForRuntimeServiceBindingCommandTest(t)
 	var output bytes.Buffer
