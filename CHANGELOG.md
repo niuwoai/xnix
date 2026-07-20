@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.446] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-persistence-authorization-preview`, a read-only Go owner preview that consumes the v0.2.445 notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt closed implementation preview before modeling future receipt persistence authorization.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt persistence authorization preview into the Runtime CLI while keeping persistence authorization grants, receipt persistence, receipt writes, consumer enablement, consumer authorization grants, receipt consumption, dry-run result persistence, result visibility persistence, dispatch execution, request-object creation, notification actions, notification delivery, production ownership, Runtime writes, desktop side effects, path exposure, backend launch, unsafe-data exposure, and host mutation disabled.
+- Recorded v0.2.446 as targeted-validation-only follow-up work after the operator-authorized v0.2.444 restricted container heavy smoke; formal full Buildroot/QEMU smoke remains gated by `scripts/full_smoke.rb` and was not rerun for this non-boundary checkpoint.
+
 ## [0.2.445] - 2026-07-20
 
 ### Added
@@ -729,10 +737,3 @@ Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.m
 
 - Added `production-dbus-human-authorization-preflight-preview`, a read-only Go owner preflight that defines the future human authorization receipt shape required by the production D-Bus gate without granting authorization.
 - Wired the production D-Bus gate review to consume the preflight shape while keeping authorization ungranted, production readiness false, service start disabled, bus ownership disabled, Runtime writes disabled, backend launch disabled, support side effects disabled, and host mutation disabled.
-
-## [0.2.346] - 2026-07-19
-
-### Added
-
-- Added `production-dbus-gate-review-preview`, a read-only Go owner review packet that inventories the three smoke-covered owner-local routes and explicitly keeps production D-Bus ownership disabled.
-- Added CLI, Go tests, layout, evidence, and product metadata coverage for the production D-Bus gate review while requiring human authorization, production service activation preflight, Runtime write-gate review, route-by-route D-Bus method review, desktop side-effect review, and rollback/diagnostics review before any production ownership claim.

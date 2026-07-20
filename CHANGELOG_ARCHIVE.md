@@ -2,6 +2,13 @@
 
 This archive contains older Xnix release entries moved out of CHANGELOG.md. The active CHANGELOG.md keeps the latest 100 release entries.
 
+## [0.2.346] - 2026-07-19
+
+### Added
+
+- Added `production-dbus-gate-review-preview`, a read-only Go owner review packet that inventories the three smoke-covered owner-local routes and explicitly keeps production D-Bus ownership disabled.
+- Added CLI, Go tests, layout, evidence, and product metadata coverage for the production D-Bus gate review while requiring human authorization, production service activation preflight, Runtime write-gate review, route-by-route D-Bus method review, desktop side-effect review, and rollback/diagnostics review before any production ownership claim.
+
 ## [0.2.345] - 2026-07-19
 
 ### Added
