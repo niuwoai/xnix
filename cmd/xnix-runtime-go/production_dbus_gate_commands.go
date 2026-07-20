@@ -1658,6 +1658,23 @@ func runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementK
 	return encodeIndentedJSON(stdout, preview)
 }
 
+func runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptStorageRecordWriterCallAuthorizationPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	root := flags.String("root", ".", "project root containing Runtime owner production receipt notification action dry-run result lookup consumer enablement KDE-safe redacted status closed record writer storage-root authorization receipt dry-run lookup result consumer projection route enablement lookup route dispatch dry-run result notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization inputs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-preview does not accept positional arguments")
+	}
+	preview, err := owner.NewProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptStorageRecordWriterCallAuthorizationPreview(*root)
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 func runProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationDeliveryExplicitConsentAuditPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-delivery-explicit-consent-audit-preview", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
