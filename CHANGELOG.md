@@ -2,6 +2,14 @@
 
 Xnix follows Semantic Versioning.
 
+## [0.2.442] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-accepted-receipt-gate-audit-preview`, a read-only Go owner audit that consumes the v0.2.441 notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt acceptance gate audit before modeling future accepted receipt gates for persistence receipt consumer enablement receipts.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt accepted receipt gate audit into the Runtime CLI while keeping accepted receipt gates, acceptance gates, receipt acceptance, enablement receipt persistence, enablement receipt writes, consumer enablement, consumer authorization grants, receipt consumption, dry-run result persistence, result visibility persistence, dispatch execution, request-object creation, notification actions, notification delivery, production ownership, Runtime writes, desktop side effects, path exposure, backend launch, unsafe-data exposure, and host mutation disabled.
+- Captured operator-authorized restricted container heavy smoke evidence for the local `xnix-builder:0.2.442` image, Runtime owner candidate restricted session smoke, Runtime D-Bus session smoke, KDE Compatibility Center D-Bus smoke, Runtime activation smoke, and the restricted product smoke packet while keeping privileged containers, host networking, Docker socket mounts inside containers, broad host mounts, backend launch, QEMU execution, and host-root mutation disabled.
+
 ## [0.2.441] - 2026-07-20
 
 ### Added
