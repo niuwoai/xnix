@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.448] - 2026-07-20
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-persistence-gate-audit-preview`, a read-only Go owner preview that consumes the v0.2.447 notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt closed persistence implementation preview before modeling future receipt storage persistence gate boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage persistence gate audit preview into the Runtime CLI while keeping storage gate passage, storage persistence, receipt persistence, receipt writes, consumer enablement, consumer authorization grants, receipt consumption, dry-run result persistence, result visibility persistence, dispatch execution, request-object creation, notification actions, notification delivery, path exposure, production ownership, Runtime writes, desktop side effects, backend launch, unsafe-data exposure, and host mutation disabled.
+- Recorded v0.2.448 as targeted-validation-only follow-up work after the operator-authorized v0.2.444 restricted container heavy smoke; formal full Buildroot/QEMU smoke remains gated by `scripts/full_smoke.rb` and was not rerun for this non-boundary checkpoint.
+
 ## [0.2.447] - 2026-07-20
 
 ### Added
