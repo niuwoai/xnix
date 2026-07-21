@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.469] - 2026-07-21
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-preview`, a read-only Go owner preview that consumes the v0.2.468 accepted receipt gate call authorization receipt acceptance preview before modeling future accepted receipt gate call authorization receipt accepted receipt gate boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate preview into the Runtime CLI while keeping accepted receipt gate calls disabled, storage record writes disabled, receipt persistence disabled, consumer enablement disabled, notification actions disabled, path exposure disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+- Recorded v0.2.469 as targeted-validation-only follow-up work under the twenty-small-version testing cadence; formal full Buildroot/QEMU smoke was not rerun for this non-boundary checkpoint.
+
+### Fixed
+
+- Restored the accepted receipt gate call authorization receipt acceptance predecessor evidence in the current mainline so the v0.2.469 preview consumes the intended v0.2.468 boundary instead of failing closed due to missing documentation evidence.
+
 ## [0.2.468] - 2026-07-21
 
 ### Added
