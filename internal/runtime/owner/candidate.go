@@ -1,8 +1,8 @@
 package owner
 
 import (
-	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
@@ -11,6 +11,8 @@ import (
 const (
 	writeMethodDisabledError = "org.xnix.Compatibility1.Error.WriteMethodDisabled"
 )
+
+var forbiddenBackendTerms = []string{"prefix", ".exe", "wine ", "wine/", "proton", "qemu-system", "program files", ".wine"}
 
 type CandidateMode string
 
@@ -287,16 +289,70 @@ func candidateSummary(readOnlyServeReady bool, mode CandidateMode) string {
 }
 
 func validateNoBackendTerms(value any, label string) error {
-	encoded, err := json.Marshal(value)
-	if err != nil {
-		return fmt.Errorf("encode %s JSON: %w", label, err)
-	}
-	text := strings.ToLower(string(encoded))
-	forbidden := []string{"prefix", ".exe", "wine ", "wine/", "proton", "qemu-system", "program files", ".wine"}
-	for _, term := range forbidden {
-		if strings.Contains(text, term) {
-			return fmt.Errorf("%s exposes forbidden backend term: %s", label, term)
-		}
+	if term, ok := containsForbiddenBackendTerm(reflect.ValueOf(value)); ok {
+		return fmt.Errorf("%s exposes forbidden backend term: %s", label, term)
 	}
 	return nil
+}
+
+func containsForbiddenBackendTerm(value reflect.Value) (string, bool) {
+	if !value.IsValid() {
+		return "", false
+	}
+	for value.Kind() == reflect.Interface || value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return "", false
+		}
+		value = value.Elem()
+	}
+	switch value.Kind() {
+	case reflect.String:
+		return forbiddenBackendTermInString(value.String())
+	case reflect.Struct:
+		valueType := value.Type()
+		for index := 0; index < value.NumField(); index++ {
+			fieldType := valueType.Field(index)
+			if term, ok := forbiddenBackendTermInString(fieldType.Name); ok {
+				return term, true
+			}
+			if tag := fieldType.Tag.Get("json"); tag != "" {
+				if term, ok := forbiddenBackendTermInString(strings.Split(tag, ",")[0]); ok {
+					return term, true
+				}
+			}
+			field := value.Field(index)
+			if !field.CanInterface() {
+				continue
+			}
+			if term, ok := containsForbiddenBackendTerm(field); ok {
+				return term, true
+			}
+		}
+	case reflect.Map:
+		for _, key := range value.MapKeys() {
+			if term, ok := containsForbiddenBackendTerm(key); ok {
+				return term, true
+			}
+			if term, ok := containsForbiddenBackendTerm(value.MapIndex(key)); ok {
+				return term, true
+			}
+		}
+	case reflect.Slice, reflect.Array:
+		for index := 0; index < value.Len(); index++ {
+			if term, ok := containsForbiddenBackendTerm(value.Index(index)); ok {
+				return term, true
+			}
+		}
+	}
+	return "", false
+}
+
+func forbiddenBackendTermInString(value string) (string, bool) {
+	text := strings.ToLower(value)
+	for _, term := range forbiddenBackendTerms {
+		if strings.Contains(text, term) {
+			return term, true
+		}
+	}
+	return "", false
 }

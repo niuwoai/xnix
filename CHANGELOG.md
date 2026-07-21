@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.470] - 2026-07-21
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-authorization-preview`, a read-only Go owner preview that consumes the v0.2.469 accepted receipt gate call authorization receipt accepted receipt gate preview before modeling future accepted receipt gate call authorization receipt accepted receipt gate authorization boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate authorization preview into the Runtime CLI while keeping authorization calls disabled, grants absent, storage record writes disabled, receipt persistence disabled, consumer enablement disabled, notification actions disabled, path exposure disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+
+### Fixed
+
+- Raised the Docker build full Go test timeout so milestone full smoke can complete the long owner/CLI safety-gate test suite instead of failing at the default 10-minute test timeout.
+- Replaced full JSON encoding in Runtime owner backend-term validation with recursive field scanning so deeply nested safety-gate previews remain checked without exhausting the restricted full smoke test window.
+
 ## [0.2.469] - 2026-07-21
 
 ### Added

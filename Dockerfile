@@ -35,7 +35,7 @@ COPY --chown=xnix:xnix . /workspace
 RUN mkdir --parents /workspace/.cache/buildroot \
     && chown --recursive xnix:xnix /workspace/.cache
 WORKDIR /workspace
-RUN go test ./...
+RUN go test -timeout 30m ./...
 RUN go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go
 RUN go build -o /usr/local/bin/xnix-runtime-owner ./cmd/xnix-runtime-owner
 RUN gcc /workspace/runtime/dbus/xnix_compatd_smoke.c \
