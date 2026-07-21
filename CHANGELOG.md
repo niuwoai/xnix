@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.473] - 2026-07-21
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-gate-preview`, a read-only Go owner preview that consumes the v0.2.472 accepted receipt gate call authorization receipt accepted receipt gate enablement preview before modeling future accepted receipt gate call authorization receipt accepted receipt gate call-gate boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call-gate preview into the Runtime CLI while keeping call-gate calls disabled, call-gates disabled, enablement disabled, grants absent, storage record writes disabled, receipt persistence disabled, consumer enablement disabled, notification actions disabled, path exposure disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+- Advanced the Codex-owned current mainline to the next accepted receipt gate call authorization receipt accepted receipt gate call preview while preserving call-gate predecessor evidence.
+
 ## [0.2.472] - 2026-07-21
 
 ### Added
