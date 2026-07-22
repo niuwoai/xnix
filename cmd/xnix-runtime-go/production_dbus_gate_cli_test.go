@@ -8426,11 +8426,14 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	for _, key := range []string{
 		"current_mainline_consumed",
 		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_grant_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_storage_record_writer_grant_evidence_consumed",
 		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_accepted_receipt_gate_consumed",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_grant_ready",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_enablement_call_persistence_authorization_evidence_ready",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_grant_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_call_persistence_authorization_evidence_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_enablement_call_persistence_authorization_evidence_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_ready",
 		"receipt_storage_record_writer_enablement_boundary_modeled",
 		"kde_safe_redacted_result_only",
@@ -8443,6 +8446,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	if payload["notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_item_count"] != float64(4) ||
 		payload["ready_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_item_count"] != float64(4) ||
 		payload["missing_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_item_count"] != float64(0) ||
+		payload["persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_storage_record_writer_grant_evidence_consumed_item_count"] != float64(4) ||
 		payload["persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_modeled_item_count"] != float64(4) ||
 		payload["written_result_persistence_receipt_consumer_enablement_receipt_storage_record_item_count"] != float64(0) ||
 		payload["side_effect_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_item_count"] != float64(0) {
@@ -8450,6 +8454,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	}
 	if !strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-enablement-install-failure") ||
 		!strings.Contains(output.String(), "storage-record-writer-enablement-predecessor-chain-consumed") ||
+		!strings.Contains(output.String(), "persistence-receipt-consumer-enablement-receipt-storage-record-writer-enablement-enable-call-persistence-authorization-evidence-consumed") ||
 		!strings.Contains(output.String(), "consumer-enablement-receipt-storage-record-writer-enablement-writes-visibility-persistence-and-dispatch-disabled") {
 		t.Fatalf("storage record writer enablement payload must include item and check evidence: %s", output.String())
 	}
