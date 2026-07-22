@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.519] - 2026-07-22
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-closed-persistence-implementation-preview` to the v0.2.518 storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt persistence authorization predecessor.
+- Added explicit accepted receipt gate call persistence authorization evidence consumption to the closed persistence implementation preview while keeping closed persistence implementations not callable, disabled, unimplemented, ungranted, and unauthorized; persistence authorizations disabled; consumer enablement receipts absent, unpersisted, unaccepted, and disabled; receipt writes disabled; result persistence disabled; dispatch disabled; notification actions disabled; production ownership disabled; backend launch disabled; and host mutation disabled.
+
 ## [0.2.518] - 2026-07-22
 
 ### Changed
