@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.520] - 2026-07-23
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-persistence-gate-audit-preview` to the v0.2.519 closed persistence implementation predecessor.
+- Added explicit accepted receipt gate call persistence authorization evidence consumption to the storage persistence gate audit preview while keeping storage persistence gates not passed, storage persistence disabled, storage records absent, receipt writes disabled, receipt persistence disabled, consumer enablement disabled, notification actions disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+- Extended the restricted Docker image Go test timeout so the formal full checkpoint can cover the current full owner-package test volume instead of failing during the image build test stage.
+- Captured operator-authorized restricted full Buildroot/QEMU serial smoke evidence for v0.2.520 in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`, with expected boot markers present and host-root mutation, privileged containers, Docker socket mounts, host networking, and unrestricted QEMU networking disabled.
+
 ## [0.2.519] - 2026-07-22
 
 ### Changed

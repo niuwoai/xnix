@@ -7855,6 +7855,9 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	for _, key := range []string{
 		"current_mainline_consumed",
 		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_consumed",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_closed_persistence_implementation_persistence_authorization_evidence_consumed",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_audit_required",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_ready",
 		"receipt_storage_persistence_gate_boundary_modeled",
@@ -7872,6 +7875,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		payload["ready_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_item_count"] != float64(4) ||
 		payload["missing_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_item_count"] != float64(0) ||
 		payload["persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_consumed_item_count"] != float64(4) ||
+		payload["persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_closed_persistence_implementation_persistence_authorization_evidence_consumed_item_count"] != float64(4) ||
 		payload["persistence_receipt_consumer_enablement_receipt_storage_persistence_gate_modeled_item_count"] != float64(4) ||
 		payload["passed_storage_persistence_gate_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
 		payload["persisted_result_persistence_receipt_consumer_enablement_receipt_item_count"] != float64(0) ||
@@ -7879,6 +7883,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		t.Fatalf("unexpected notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage persistence gate counts: %s", output.String())
 	}
 	if !strings.Contains(output.String(), "route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-persistence-gate-install-failure") ||
+		!strings.Contains(output.String(), "persistence-receipt-consumer-enablement-receipt-storage-persistence-gate-accepted-receipt-gate-call-persistence-authorization-evidence-consumed") ||
 		!strings.Contains(output.String(), "four-kde-notification-action-request-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-persistence-gates-review-only") ||
 		!strings.Contains(output.String(), "consumer-enablement-receipt-storage-persistence-gate-writes-visibility-persistence-and-dispatch-disabled") {
 		t.Fatalf("notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage persistence gate payload must include item and check evidence: %s", output.String())
