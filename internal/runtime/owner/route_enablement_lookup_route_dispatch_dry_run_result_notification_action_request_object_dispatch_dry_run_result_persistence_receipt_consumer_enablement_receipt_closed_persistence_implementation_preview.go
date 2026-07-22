@@ -10,12 +10,8 @@ func NewProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementK
 		return nil, err
 	}
 	sources := routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationSources(root)
-	persistenceAuthorizationPreview, err := NewProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptPersistenceAuthorizationPreview(root)
-	if err != nil {
-		return nil, err
-	}
 	mainlineReady := routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationMainlineReady(sources.CurrentMainline)
-	persistenceAuthorizationReady := routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationPersistenceAuthorizationReady(sources.PersistenceReceiptConsumerEnablementReceiptPersistenceAuthorization, persistenceAuthorizationPreview)
+	persistenceAuthorizationReady := routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationPersistenceAuthorizationReady(sources.PersistenceReceiptConsumerEnablementReceiptPersistenceAuthorization)
 	items := routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationItems(mainlineReady, persistenceAuthorizationReady)
 	readyItemCount := routeEnablementLookupRouteDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationReadyCount(items)
 	ready := mainlineReady && persistenceAuthorizationReady && readyItemCount == len(items)
@@ -32,12 +28,13 @@ func NewProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementK
 		"source":                    "docs/xnix-current-mainline.md+notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-persistence-authorization",
 		"preview_decision":          decision,
 		"current_mainline_consumed": mainlineReady,
-		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_consumed": persistenceAuthorizationReady,
-		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready":    persistenceAuthorizationReady,
-		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready":                     persistenceAuthorizationPreview["lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready"] == true,
-		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_required":          true,
-		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_modeled":           true,
-		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_ready":             ready,
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_consumed":                                                     persistenceAuthorizationReady,
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready":                                                        persistenceAuthorizationReady,
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready":                                                                         persistenceAuthorizationReady,
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization_ready": persistenceAuthorizationReady,
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_required":                                                              true,
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_modeled":                                                               true,
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_persistence_implementation_ready":                                                                 ready,
 		"receipt_closed_persistence_implementation_boundary_modeled": true,
 		"receipt_storage_boundary_modeled":                           true,
 		"receipt_retention_boundary_modeled":                         true,
@@ -165,8 +162,8 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObje
 	return routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationSourceSet{
 		CurrentMainline: productionAuthorizationReadSources(root, []string{"docs/xnix-current-mainline.md"}),
 		PersistenceReceiptConsumerEnablementReceiptPersistenceAuthorization: productionAuthorizationReadSources(root, []string{
-			"internal/runtime/owner/route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_preview.go",
-			"internal/runtime/owner/route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_preview_test.go",
+			"internal/runtime/owner/call_authorization_receipt_accepted_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization_preview.go",
+			"internal/runtime/owner/call_authorization_receipt_accepted_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization_preview_test.go",
 		}),
 	}
 }
@@ -180,19 +177,19 @@ func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObje
 	})
 }
 
-func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationPersistenceAuthorizationReady(source string, preview ProductionReceiptNotificationActionDryRunResultLookupConsumerEnablementKDESafeRedactedStatusClosedRecordWriterStorageRootAuthorizationReceiptDryRunLookupResultConsumerProjectionRouteEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptPersistenceAuthorizationPreview) bool {
+func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationPersistenceAuthorizationReady(source string) bool {
 	return productionAuthorizationHasAll(source, []string{
-		"xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization.v1",
-		"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-persistence-authorization-ready-authorization-disabled",
-		"result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready",
-		"receipt_consumer_enablement_receipt_callable",
-		"notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_review_only",
-	}) && preview["lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready"] == true &&
-		preview["result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_ready"] == true &&
-		preview["receipt_consumer_enablement_receipt_callable"] == false &&
-		preview["receipt_consumer_enablement_receipt_implementation_enabled"] == false &&
-		preview["receipt_consumer_enablement_receipt_enabled"] == false &&
-		preview["consumer_enabled"] == false
+		"xnix.runtime.production_receipt_notification_action_dry_run_result_lookup_consumer_enablement_kde_safe_redacted_status_closed_record_writer_storage_root_authorization_receipt_dry_run_lookup_result_consumer_projection_route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization.v1",
+		"production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-receipt-persistence-authorization-ready-authorization-disabled",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization_ready",
+		"receipt_consumer_enablement_receipt_persistence_authorization_callable",
+		"notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_persistence_authorization_review_only",
+		"receipt_consumer_enablement_receipt_persistence_authorization_enabled",
+		"receipt_consumer_enablement_receipt_persistence_authorization_granted",
+		"receipt_consumer_enablement_receipt_persistence_authorized",
+		"receipt_consumer_enablement_receipt_persisted",
+		"consumer_enabled",
+	})
 }
 
 func routeEnablementLookupRouteDispatchDryRunResultNotificationActionRequestObjectDispatchDryRunResultPersistenceReceiptConsumerEnablementReceiptClosedPersistenceImplementationItems(mainlineReady, persistenceAuthorizationReady bool) []map[string]any {
