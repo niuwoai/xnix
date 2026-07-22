@@ -25,6 +25,9 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_persistence_authorization_consumed",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_contract_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_contract_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
+		"route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_storage_record_contract_authorization_evidence_consumed",
+		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_required",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_modeled",
 		"lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_ready",
@@ -106,6 +109,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		preview["ready_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_item_count"] != 4 ||
 		preview["missing_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_item_count"] != 0 ||
 		preview["persistence_receipt_consumer_enablement_receipt_storage_record_contract_consumed_item_count"] != 4 ||
+		preview["persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_storage_record_contract_authorization_evidence_consumed_item_count"] != 4 ||
 		preview["persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_modeled_item_count"] != 4 ||
 		preview["callable_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_item_count"] != 0 ||
 		preview["implemented_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_item_count"] != 0 ||
@@ -118,6 +122,8 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		if item["evidence_present"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_contract_consumed"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_contract_accepted_receipt_gate_call_persistence_authorization_evidence_ready"] != true ||
+			item["persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_storage_record_contract_authorization_evidence_consumed"] != true ||
+			item["persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_accepted_receipt_gate_call_persistence_authorization_evidence_ready"] != true ||
 			item["result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_ready"] != true ||
 			item["receipt_closed_storage_record_writer_implementation_boundary_modeled"] != true ||
 			item["receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_callable"] != false ||
@@ -144,7 +150,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		}
 	}
 	counts := preview["counts"].(map[string]int)
-	if counts["total"] != 8 || counts["passed"] != 8 || counts["blocked"] != 0 || counts["pending"] != 0 {
+	if counts["total"] != 9 || counts["passed"] != 9 || counts["blocked"] != 0 || counts["pending"] != 0 {
 		t.Fatalf("unexpected closed storage record writer implementation checks: %#v", counts)
 	}
 	if err := validateNoBackendTerms(preview, "KDE-safe closed storage record writer implementation test"); err != nil {
@@ -175,6 +181,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 	if preview["preview_decision"] != "production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-closed-storage-record-writer-implementation-blocked" ||
 		preview["current_mainline_consumed"] != false ||
 		preview["route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_contract_consumed"] != false ||
+		preview["route_enablement_lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_storage_record_contract_authorization_evidence_consumed"] != false ||
 		preview["lookup_route_dispatch_dry_run_result_notification_action_request_object_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_ready"] != false ||
 		preview["receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_callable"] != false ||
 		preview["receipt_consumer_enablement_receipt_closed_storage_record_writer_implemented"] != false ||
