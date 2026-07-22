@@ -40,6 +40,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_contract_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_accepted_receipt_gate_call_persistence_authorization_evidence_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_required",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_modeled",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_ready",
@@ -124,6 +125,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_contract_consumed"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_closed_storage_record_writer_implementation_ready"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_ready"] != true ||
+			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_accepted_receipt_gate_call_persistence_authorization_evidence_ready"] != true ||
 			item["result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_ready"] != true ||
 			item["receipt_storage_record_writer_authorization_receipt_boundary_modeled"] != true ||
 			item["receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_callable"] != false ||
