@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.518] - 2026-07-22
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-receipt-persistence-authorization-preview` to the v0.2.517 storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt predecessor.
+- Added explicit storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt consumer enablement gate consumer authorization consumption gate acceptance call receipt call gate enablement grant authorization acceptance call authorization receipt call authorization call gate enablement grant authorization acceptance call authorization call persistence authorization evidence consumption to the storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt persistence authorization preview while keeping persistence authorizations not callable, disabled, ungranted, and unauthorized; consumer enablement receipts absent, unpersisted, unaccepted, and disabled; consumer enablement gates disabled; consumer enablement disabled; consumer authorization disabled; receipt consumption disabled; receipt acceptance disabled; receipts unaccepted; storage record writes disabled; path exposure disabled; backend launch disabled; and host mutation disabled.
+
 ## [0.2.517] - 2026-07-22
 
 ### Changed
