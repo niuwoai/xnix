@@ -63,6 +63,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_required",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_modeled",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_call_persistence_authorization_evidence_ready",
 		"kde_safe_redacted_result_only",
 		"raw_result_hidden",
 		"runtime_owned",
@@ -153,6 +154,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_gate_ready"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_gate_call_persistence_authorization_evidence_ready"] != true ||
 			item["result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_ready"] != true ||
+			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_call_persistence_authorization_evidence_ready"] != true ||
 			item["receipt_storage_record_writer_call_authorization_boundary_modeled"] != true ||
 			item["receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_callable"] != false ||
 			item["receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_enabled"] != false ||
