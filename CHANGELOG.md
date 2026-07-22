@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.480] - 2026-07-22
+
+### Added
+
+- Added `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-gate-preview`, a read-only Go owner preview that consumes the v0.2.479 accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement preview before modeling future accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement gate boundaries.
+- Wired the notification action request-object dispatch dry-run result persistence receipt consumer enablement receipt storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement gate preview into the Runtime CLI while keeping consumer enablement gates disabled, consumer enablement disabled, KDE consumers disabled, Runtime consumers disabled, consumer authorization disabled, receipt consumption disabled, receipts unconsumed, storage record writes disabled, receipt persistence disabled, notification actions disabled, path exposure disabled, production ownership disabled, backend launch disabled, and host mutation disabled.
+
 ## [0.2.479] - 2026-07-22
 
 ### Added
