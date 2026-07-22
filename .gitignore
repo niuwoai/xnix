@@ -5,6 +5,7 @@
 /downloads/
 /.cache/
 /.gocache/
+/.local-cache/
 
 # Go build binaries produced at the repo root
 /xnix-runtime-go
