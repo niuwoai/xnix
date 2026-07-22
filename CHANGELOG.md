@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.539] - 2026-07-23
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-preview` to the v0.2.538 storage record writer call authorization receipt accepted receipt gate call authorization predecessor.
+- Added explicit accepted receipt gate call authorization evidence consumption to the storage record writer call authorization receipt accepted receipt gate call authorization receipt preview while keeping storage record writer call authorization receipt accepted receipt gate call authorization receipts not callable, disabled, ungranted, unaccepted, and unauthorized; storage record writer call authorization receipt accepted receipt gate call authorizations not callable, disabled, ungranted, unaccepted, and unauthorized; storage record writer call authorization receipt accepted receipt gate call gates not callable, disabled, ungranted, unaccepted, and unauthorized; storage record contracts not writable; storage records unwritten; receipt writes disabled; receipt persistence disabled; consumer enablement disabled; notification actions disabled; production ownership disabled; backend launch disabled; and host mutation disabled.
+- Recorded v0.2.539 as a targeted-validation-only follow-up after the v0.2.520 formal full Buildroot/QEMU checkpoint; the next formal full checkpoint remains v0.2.540 unless explicitly requested earlier.
+
 ## [0.2.538] - 2026-07-23
 
 ### Changed
