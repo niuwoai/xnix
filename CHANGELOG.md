@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.505] - 2026-07-22
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-preview` to the v0.2.504 storage record writer call authorization receipt accepted receipt gate call authorization receipt acceptance predecessor.
+- Added explicit storage record writer call authorization receipt accepted receipt gate call authorization receipt acceptance call authorization receipt call authorization call gate enablement grant authorization acceptance call authorization call persistence authorization evidence consumption to the storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate preview while keeping accepted receipt gate calls disabled, acceptance calls disabled, call authorization receipts disabled, writer calls disabled, storage record writes disabled, path exposure disabled, backend launch disabled, and host mutation disabled.
+
 ## [0.2.504] - 2026-07-22
 
 ### Changed
