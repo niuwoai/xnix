@@ -52,6 +52,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_acceptance_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_accepted_receipt_gate_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_grant_ready",
+		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_call_persistence_authorization_evidence_ready",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_required",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_modeled",
 		"result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_ready",
@@ -141,6 +142,7 @@ func TestProductionReceiptNotificationActionDryRunResultLookupConsumerEnablement
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_acceptance_ready"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_accepted_receipt_gate_ready"] != true ||
 			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_grant_ready"] != true ||
+			item["persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_call_persistence_authorization_evidence_ready"] != true ||
 			item["result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_enablement_ready"] != true ||
 			item["receipt_storage_record_writer_enablement_boundary_modeled"] != true ||
 			item["receipt_consumer_enablement_receipt_storage_record_writer_enablement_callable"] != false ||
