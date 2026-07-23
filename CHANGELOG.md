@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.566] - 2026-07-23
+
+### Added
+
+- Added a Go-owned `windows-app-run-smoke` Runtime command that runs an explicit Windows `.exe` through an isolated compatibility state root, captures redacted JSON evidence, and keeps host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+- Added a cross-compiled Windows PE smoke fixture under `test/fixtures/winapp/hello` plus `scripts/winapp_smoke.rb`, which builds the fixture with Go, stores local artifacts under ignored repository-local state, and reports `PASS` when a compatibility runner is available or `SKIP` when it is not installed.
+- Added unit and CLI coverage for the Windows app smoke runner using a fake compatibility runner so CI can verify execution, marker capture, state-root isolation, and host-path redaction without requiring Wine.
+
 ## [0.2.565] - 2026-07-23
 
 ### Changed

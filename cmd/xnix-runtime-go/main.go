@@ -601,6 +601,8 @@ func run(args []string, stdout io.Writer) error {
 		return runTrayStatusPreview(args[1:], stdout)
 	case "window-identity-preview":
 		return runWindowIdentityPreview(args[1:], stdout)
+	case "windows-app-run-smoke":
+		return runWindowsAppRunSmoke(args[1:], stdout)
 	case "windows-compatibility-workstreams-preview":
 		return runWindowsCompatibilityWorkstreamsPreview(args[1:], stdout)
 	default:

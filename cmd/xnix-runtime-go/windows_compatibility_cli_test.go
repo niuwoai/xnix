@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -84,6 +87,59 @@ func TestWindowsCompatibilityWorkstreamsPreviewCommandRejectsArguments(t *testin
 	err := run([]string{"windows-compatibility-workstreams-preview", "--registry", "ignored"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "does not accept arguments") {
 		t.Fatalf("expected argument rejection, got %v", err)
+	}
+}
+
+func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_smoke.v1" ||
+		payload["request_type"] != "windows-app-run-smoke" ||
+		payload["status"] != "passed" ||
+		payload["executable_name"] != "hello.exe" ||
+		payload["runner_available"] != true ||
+		payload["compatibility_layer"] != "windows-compatibility-layer" ||
+		payload["marker_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false {
+		t.Fatalf("unexpected smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("smoke output leaked host paths: %s", output.String())
 	}
 }
 
