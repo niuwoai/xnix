@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.600] - 2026-07-24
+
+### Changed
+
+- Completed the v0.2.600 formal full Buildroot/QEMU checkpoint after moving the managed launcher dispatch path behind the Go-owned controlled dispatch request gate.
+- Verified the full checkpoint with `PASS: staged managed launcher dispatch smoke (7zr 26.02)`, `PASS: QEMU guest real Windows app Wine smoke`, and `PASS: full build and QEMU serial smoke test`.
+
 ## [0.2.599] - 2026-07-24
 
 ### Changed
