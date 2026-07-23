@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.603] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-controlled-execution-session-consume-preview` command, which reads the persisted known-app ledger/session records, verifies the session digest, and exposes Runtime-owner and KDE read-model consumption evidence.
+- Extended the staged managed launcher dispatch smoke to consume the recorded controlled execution session before QEMU dispatch and verify fan-out readiness for task manager, KWin, tray, and Compatibility Center consumers while keeping live desktop activation, dispatch, execution, path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.602] - 2026-07-24
 
 ### Added

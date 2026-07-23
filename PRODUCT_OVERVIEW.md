@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.602
+> Last updated: 2026-07-24 | Current version: v0.2.603
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.603 checkpoint makes the durable 7zr controlled execution-session record consumable by Runtime-owner and KDE read models. `xnix-runtime-go known-app-controlled-execution-session-consume-preview --app 7zr --state-root <path> [--session-id <opaque-id>]` reads the persisted ledger transaction and session status record, verifies the session digest, rejects mismatched known-app session ids, and fans the record out to task manager, KWin, tray, and Compatibility Center consumers. The command returns only relative transaction/session evidence, digest evidence, consumer readiness, and KDE-safe state while keeping live session registration, window observation, task-manager activation, KWin rule application, tray bridge activation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.603 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.602 checkpoint makes the tested 7zr controlled execution-session handoff durable. `xnix-runtime-go known-app-controlled-execution-session-record --app 7zr --state-root <path> --receipt-id <opaque-id> --guest-boundary managed-known-app-guest-smoke` first validates the receipt, launch gate, controlled dispatch request, artifact verification, and handoff readiness, then persists a Runtime execution ledger transaction plus session status record under the explicit state root. The command returns only relative transaction/session evidence and digest evidence while keeping live session registration, window observation, task-manager activation, KWin rule application, tray bridge activation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, state-root path exposure, receipt path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.602 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

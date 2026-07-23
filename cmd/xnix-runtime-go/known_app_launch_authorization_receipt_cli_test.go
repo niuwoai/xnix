@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/execution"
 )
 
 func TestKnownAppLaunchAuthorizationReceiptPreviewCommandWritesReceipt(t *testing.T) {
@@ -309,5 +310,92 @@ func TestKnownAppControlledExecutionSessionRecordCommandBlocksUntilHandoffReady(
 	text := strings.ToLower(output.String())
 	if strings.Contains(text, strings.ToLower(stateRoot)) {
 		t.Fatalf("controlled execution session record exposed state root path: %s", text)
+	}
+}
+
+func TestKnownAppControlledExecutionSessionConsumePreviewCommandReadsPersistedRecord(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	if _, err := ledger.Record(execution.Transaction{
+		RequestID:      sessionID,
+		ApplicationID:  "7zr",
+		Profile:        "known-app-managed-guest",
+		State:          execution.StateBlocked,
+		ReviewDecision: execution.DecisionApproved,
+		Gates: []execution.Gate{
+			{ID: "controlled-execution-session-handoff", Status: execution.GatePass, Reason: "Runtime execution session handoff ready"},
+			{ID: "runtime-write-gate", Status: execution.GateBlocked, Reason: "dispatch runner must consume the recorded session before execution"},
+		},
+		BlockedReasons:   []string{"runtime-write-gate: dispatch runner must consume the recorded session before execution"},
+		LaunchAllowed:    false,
+		LaunchEnabled:    false,
+		BackendStarted:   false,
+		HostRootModified: false,
+		NetworkRequired:  false,
+		Summary:          "Runtime recorded a known application execution session handoff for later consumption.",
+	}); err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	if _, err := ledger.RecordSession(sessionID); err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"known-app-controlled-execution-session-consume-preview",
+		"--app", "7zr",
+		"--state-root", stateRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("controlled execution session consume run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal controlled execution session consume returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppControlledExecutionSessionConsumeSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppControlledExecutionSessionConsumeRequestType ||
+		payload["source"] != appidentity.KnownAppControlledExecutionSessionRecordRequestType+"+execution-session-fanout-evidence" ||
+		payload["app_id"] != "7zr" ||
+		payload["execution_session_id"] != sessionID ||
+		payload["record_consumed"] != true ||
+		payload["ledger_record_consumed"] != true ||
+		payload["session_record_consumed"] != true ||
+		payload["session_digest_verified"] != true ||
+		payload["session_state"] != "blocked" ||
+		payload["task_manager_state"] != "blocked" ||
+		payload["kwin_state"] != "blocked" ||
+		payload["tray_state"] != "blocked" ||
+		payload["compatibility_center_state"] != "waiting-for-runtime-gates" ||
+		payload["fan_out_request_type"] != "execution-session-fanout-evidence" ||
+		payload["surface_count"] != float64(4) ||
+		payload["runtime_owner_consumable"] != true ||
+		payload["kde_read_model_consumable"] != true ||
+		payload["safe_for_kde"] != true ||
+		payload["state_root_path_exposed"] != false ||
+		payload["transaction_path_exposed"] != false ||
+		payload["session_path_exposed"] != false ||
+		payload["live_state_observed"] != false ||
+		payload["session_registered"] != false ||
+		payload["window_observed"] != false ||
+		payload["task_manager_entry_active"] != false ||
+		payload["kwin_rule_applied"] != false ||
+		payload["live_tray_bridge_enabled"] != false ||
+		payload["dispatch_started"] != false ||
+		payload["execution_started"] != false ||
+		payload["direct_launch_enabled"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected controlled execution session consume payload: %#v", payload)
+	}
+	text := strings.ToLower(output.String())
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("controlled execution session consume exposed state root path: %s", text)
 	}
 }

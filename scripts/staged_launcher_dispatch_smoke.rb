@@ -298,6 +298,47 @@ assert(controlled_session_record["transaction_path_exposed"] == false, "controll
 assert(controlled_session_record["session_path_exposed"] == false, "controlled execution session record output must not expose session paths")
 assert_no_forbidden(controlled_session_record_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session record output")
 
+controlled_session_consume, controlled_session_consume_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-controlled-execution-session-consume-preview",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--session-id", controlled_session_record.fetch("execution_session_id")
+)
+assert(controlled_session_consume["request_type"] == "known-app-controlled-execution-session-consume-preview", "controlled execution session consumption request type must match")
+assert(controlled_session_consume["execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "controlled execution session consumption must read the recorded session id")
+assert(controlled_session_consume["record_consumed"] == true, "controlled execution session consumption must consume the record")
+assert(controlled_session_consume["ledger_record_consumed"] == true, "controlled execution session consumption must consume the ledger record")
+assert(controlled_session_consume["session_record_consumed"] == true, "controlled execution session consumption must consume the session record")
+assert(controlled_session_consume["session_digest_verified"] == true, "controlled execution session consumption must verify the session digest")
+assert(controlled_session_consume["session_relative_path"] == controlled_session_record.fetch("session_relative_path"), "controlled execution session consumption must preserve relative session evidence")
+assert(controlled_session_consume["session_sha256"] == controlled_session_record.fetch("session_sha256"), "controlled execution session consumption must preserve digest evidence")
+assert(controlled_session_consume["fan_out_request_type"] == "execution-session-fanout-evidence", "controlled execution session consumption must expose fan-out evidence")
+assert(controlled_session_consume["surface_count"] == 4, "controlled execution session consumption must fan out to four KDE read-model consumers")
+assert(controlled_session_consume["runtime_owner_consumable"] == true, "controlled execution session consumption must be Runtime-owner consumable")
+assert(controlled_session_consume["kde_read_model_consumable"] == true, "controlled execution session consumption must be KDE read-model consumable")
+assert(controlled_session_consume["safe_for_kde"] == true, "controlled execution session consumption must be safe for KDE")
+assert(controlled_session_consume["task_manager_state"] == "blocked", "controlled execution session consumption must expose task-manager state")
+assert(controlled_session_consume["kwin_state"] == "blocked", "controlled execution session consumption must expose KWin state")
+assert(controlled_session_consume["tray_state"] == "blocked", "controlled execution session consumption must expose tray state")
+assert(controlled_session_consume["compatibility_center_state"] == "waiting-for-runtime-gates", "controlled execution session consumption must expose Compatibility Center state")
+assert(controlled_session_consume["session_registered"] == false, "controlled execution session consumption must not register live sessions")
+assert(controlled_session_consume["window_observed"] == false, "controlled execution session consumption must not observe windows")
+assert(controlled_session_consume["task_manager_entry_active"] == false, "controlled execution session consumption must not activate task-manager entries")
+assert(controlled_session_consume["kwin_rule_applied"] == false, "controlled execution session consumption must not apply KWin rules")
+assert(controlled_session_consume["live_tray_bridge_enabled"] == false, "controlled execution session consumption must not enable live tray bridges")
+assert(controlled_session_consume["dispatch_started"] == false, "controlled execution session consumption must not start dispatch")
+assert(controlled_session_consume["execution_started"] == false, "controlled execution session consumption must not start execution")
+assert(controlled_session_consume["direct_launch_enabled"] == false, "controlled execution session consumption must not enable direct launch")
+assert(controlled_session_consume["desktop_launch_enabled"] == false, "controlled execution session consumption must not enable desktop launch")
+assert(controlled_session_consume["backend_process_started"] == false, "controlled execution session consumption must not start backend processes")
+assert(controlled_session_consume["host_root_modified"] == false, "controlled execution session consumption must not mutate the host root")
+assert(controlled_session_consume["state_root_path_exposed"] == false, "controlled execution session consumption output must not expose the state root path")
+assert(controlled_session_consume["transaction_path_exposed"] == false, "controlled execution session consumption output must not expose transaction paths")
+assert(controlled_session_consume["session_path_exposed"] == false, "controlled execution session consumption output must not expose session paths")
+assert_no_forbidden(controlled_session_consume_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session consumption output")
+
 FileUtils.rm_f(SERIAL_LOG_PATH)
 stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close
