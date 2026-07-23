@@ -278,6 +278,109 @@ func TestPreviewKnownPortableKDELauncherEnablesVisibleLauncherForVerifiedArtifac
 	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
 }
 
+func TestPreviewKnownPortableLaunchRequestConsumesKDELauncher(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PreviewKnownPortableLaunchRequest(KnownLaunchRequestRequest{
+		AppID:     "7zr",
+		CacheRoot: tempDir,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableLaunchRequest returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownLaunchRequestSchemaVersion ||
+		result.RequestType != KnownLaunchRequestType ||
+		result.Source != KnownKDELauncherRequestType ||
+		result.Status != "request-blocked" ||
+		result.RequestID != "known-app-launch-request-7zr" ||
+		result.RuntimeMethod != "LaunchKnownWindowsApp" ||
+		result.AppID != "7zr" ||
+		result.DisplayName != "7-Zip standalone console executable" ||
+		result.Desktop != "KDE Plasma" ||
+		result.EntryPointID != "launcher" ||
+		result.DesktopFile != "xnix-known-app-7zr.desktop" ||
+		result.LaunchSurfaceID != "known-app-7zr" ||
+		result.DesktopActionID != "launch-known-app-7zr" ||
+		result.ManagedLauncher != "xnix-compat-launch --app 7zr" ||
+		strings.Join(result.ManagedLauncherArgv, " ") != "xnix-compat-launch --app 7zr" ||
+		result.DispatchGate != "managed-known-app-guest-smoke" ||
+		result.CacheStatus != "missing" ||
+		result.ArtifactVerified ||
+		!result.LaunchVisible ||
+		result.LaunchAllowed ||
+		!result.LaunchRequestCreated ||
+		result.DispatchReady ||
+		!result.PreparationRequired ||
+		!result.RuntimeOwnedRequest ||
+		!result.RuntimeOwnedLaunch ||
+		!result.KDEPresentationOnly ||
+		!result.DryRun ||
+		result.ExecutionStarted ||
+		result.BackendProcessStarted ||
+		result.HostRootModified ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.RawHostPathExposed ||
+		result.RawExecutablePathExposed ||
+		result.RawCommandExposed ||
+		result.BackendDetailsExposed ||
+		result.BlockedReason != "managed application artifact must be fetched before launch" {
+		t.Fatalf("unexpected launch request preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, tempDir)
+}
+
+func TestPreviewKnownPortableLaunchRequestReadiesVerifiedArtifactForDispatch(t *testing.T) {
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	result, err := PreviewKnownPortableLaunchRequest(KnownLaunchRequestRequest{
+		AppID:     "fixture",
+		CacheRoot: cacheRoot,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableLaunchRequest returned error: %v", err)
+	}
+	if result.Status != "request-ready" ||
+		result.RequestID != "known-app-launch-request-fixture" ||
+		result.AppID != "fixture" ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.LaunchAllowed ||
+		!result.LaunchRequestCreated ||
+		!result.DispatchReady ||
+		result.PreparationRequired ||
+		result.BlockedReason != "" ||
+		result.ExecutionStarted ||
+		result.BackendProcessStarted ||
+		!strings.Contains(result.DesktopSafeSummary, "Runtime-owned launch request ready") {
+		t.Fatalf("unexpected ready launch request preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
+}
+
 func TestRunKnownPortableGuestSmokeUsesVerifiedCacheAndLoopbackGuest(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")

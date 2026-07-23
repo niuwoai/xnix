@@ -23,6 +23,8 @@ const (
 	KnownManagedLaunchRequestType   = "windows-known-app-managed-launch-preview"
 	KnownKDELauncherSchemaVersion   = "xnix.runtime.known_windows_app_kde_launcher.v1"
 	KnownKDELauncherRequestType     = "windows-known-app-kde-launcher-preview"
+	KnownLaunchRequestSchemaVersion = "xnix.runtime.known_windows_app_launch_request.v1"
+	KnownLaunchRequestType          = "windows-known-app-launch-request-preview"
 	DefaultKnownAppID               = "7zr"
 	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
 	DefaultKnownAppFetchTimeout     = 60 * time.Second
@@ -207,6 +209,55 @@ type KnownKDELauncherResult struct {
 	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
 	DesktopSafeSummary         string   `json:"desktop_safe_summary"`
 	BlockedReason              string   `json:"blocked_reason,omitempty"`
+}
+
+type KnownLaunchRequestRequest struct {
+	AppID     string
+	CacheRoot string
+}
+
+type KnownLaunchRequestResult struct {
+	SchemaVersion            string   `json:"schema_version"`
+	RequestType              string   `json:"request_type"`
+	Source                   string   `json:"source"`
+	Status                   string   `json:"status"`
+	RequestID                string   `json:"request_id"`
+	RuntimeMethod            string   `json:"runtime_method"`
+	AppID                    string   `json:"app_id"`
+	DisplayName              string   `json:"display_name"`
+	AppVersion               string   `json:"app_version"`
+	Architecture             string   `json:"architecture"`
+	Desktop                  string   `json:"desktop"`
+	EntryPointID             string   `json:"entry_point_id"`
+	DesktopFile              string   `json:"desktop_file"`
+	LaunchSurfaceID          string   `json:"launch_surface_id"`
+	DesktopActionID          string   `json:"desktop_action_id"`
+	ManagedLauncher          string   `json:"managed_launcher"`
+	ManagedLauncherArgv      []string `json:"managed_launcher_argv"`
+	DispatchGate             string   `json:"dispatch_gate"`
+	CacheStatus              string   `json:"cache_status"`
+	ArtifactVerified         bool     `json:"artifact_verified"`
+	LaunchVisible            bool     `json:"launch_visible"`
+	LaunchAllowed            bool     `json:"launch_allowed"`
+	LaunchRequestCreated     bool     `json:"launch_request_created"`
+	DispatchReady            bool     `json:"dispatch_ready"`
+	PreparationRequired      bool     `json:"preparation_required"`
+	RuntimeOwnedRequest      bool     `json:"runtime_owned_request"`
+	RuntimeOwnedLaunch       bool     `json:"runtime_owned_launch"`
+	KDEPresentationOnly      bool     `json:"kde_presentation_only"`
+	DryRun                   bool     `json:"dry_run"`
+	ExecutionStarted         bool     `json:"execution_started"`
+	BackendProcessStarted    bool     `json:"backend_process_started"`
+	HostRootModified         bool     `json:"host_root_modified"`
+	HostNetworkingRequired   bool     `json:"host_networking_required"`
+	DockerSocketMounted      bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired   bool     `json:"broad_host_mount_required"`
+	RawHostPathExposed       bool     `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed bool     `json:"raw_executable_path_exposed"`
+	RawCommandExposed        bool     `json:"raw_command_exposed"`
+	BackendDetailsExposed    bool     `json:"backend_details_exposed"`
+	DesktopSafeSummary       string   `json:"desktop_safe_summary"`
+	BlockedReason            string   `json:"blocked_reason,omitempty"`
 }
 
 var knownPortableCatalog = []KnownPortableApp{
@@ -435,6 +486,30 @@ func PreviewKnownPortableKDELauncher(request KnownKDELauncherRequest) (KnownKDEL
 	return result, nil
 }
 
+func PreviewKnownPortableLaunchRequest(request KnownLaunchRequestRequest) (KnownLaunchRequestResult, error) {
+	launcher, err := PreviewKnownPortableKDELauncher(KnownKDELauncherRequest{
+		AppID:     request.AppID,
+		CacheRoot: request.CacheRoot,
+	})
+	if err != nil {
+		return KnownLaunchRequestResult{}, err
+	}
+	result := baseKnownLaunchRequestResult(launcher)
+	if launcher.LaunchEnabled {
+		result.Status = "request-ready"
+		result.LaunchAllowed = true
+		result.DispatchReady = true
+		result.PreparationRequired = false
+		result.BlockedReason = ""
+		result.DesktopSafeSummary = launcher.DisplayName + " has a Runtime-owned launch request ready for managed dispatch."
+	} else {
+		result.Status = "request-blocked"
+		result.BlockedReason = launcher.BlockedReason
+		result.DesktopSafeSummary = launcher.DisplayName + " has a Runtime-owned launch request, but managed artifact preparation is required before dispatch."
+	}
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -457,6 +532,52 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		DockerSocketMounted:    false,
 		BroadHostMountRequired: false,
 		RawHostPathExposed:     false,
+	}
+}
+
+func baseKnownLaunchRequestResult(launcher KnownKDELauncherResult) KnownLaunchRequestResult {
+	return KnownLaunchRequestResult{
+		SchemaVersion:            KnownLaunchRequestSchemaVersion,
+		RequestType:              KnownLaunchRequestType,
+		Source:                   KnownKDELauncherRequestType,
+		Status:                   "request-blocked",
+		RequestID:                "known-app-launch-request-" + launcher.AppID,
+		RuntimeMethod:            "LaunchKnownWindowsApp",
+		AppID:                    launcher.AppID,
+		DisplayName:              launcher.DisplayName,
+		AppVersion:               launcher.AppVersion,
+		Architecture:             launcher.Architecture,
+		Desktop:                  launcher.Desktop,
+		EntryPointID:             launcher.EntryPointID,
+		DesktopFile:              launcher.DesktopFile,
+		LaunchSurfaceID:          launcher.LaunchSurfaceID,
+		DesktopActionID:          launcher.DesktopActionID,
+		ManagedLauncher:          launcher.ManagedLauncher,
+		ManagedLauncherArgv:      append([]string{}, launcher.ManagedLauncherArgv...),
+		DispatchGate:             "managed-known-app-guest-smoke",
+		CacheStatus:              launcher.CacheStatus,
+		ArtifactVerified:         launcher.ArtifactVerified,
+		LaunchVisible:            launcher.LaunchVisible,
+		LaunchAllowed:            false,
+		LaunchRequestCreated:     true,
+		DispatchReady:            false,
+		PreparationRequired:      launcher.PreparationRequired,
+		RuntimeOwnedRequest:      true,
+		RuntimeOwnedLaunch:       launcher.RuntimeOwnedLaunch,
+		KDEPresentationOnly:      launcher.KDEPresentationOnly,
+		DryRun:                   true,
+		ExecutionStarted:         false,
+		BackendProcessStarted:    false,
+		HostRootModified:         launcher.HostRootModified,
+		HostNetworkingRequired:   launcher.HostNetworkingRequired,
+		DockerSocketMounted:      launcher.DockerSocketMounted,
+		BroadHostMountRequired:   launcher.BroadHostMountRequired,
+		RawHostPathExposed:       launcher.RawHostPathExposed,
+		RawExecutablePathExposed: launcher.RawExecutablePathExposed,
+		RawCommandExposed:        launcher.RawCommandExposed,
+		BackendDetailsExposed:    launcher.BackendDetailsExposed,
+		DesktopSafeSummary:       launcher.DesktopSafeSummary,
+		BlockedReason:            launcher.BlockedReason,
 	}
 }
 

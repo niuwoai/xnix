@@ -355,6 +355,35 @@ func runWindowsKnownAppKDELauncherPreview(args []string, stdout io.Writer) error
 	return encoder.Encode(result)
 }
 
+func runWindowsKnownAppLaunchRequestPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-known-app-launch-request-preview", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appID string
+	var cacheRoot string
+	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
+	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-known-app-launch-request-preview")
+	}
+
+	result, err := winapp.PreviewKnownPortableLaunchRequest(winapp.KnownLaunchRequestRequest{
+		AppID:     appID,
+		CacheRoot: cacheRoot,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 type repeatedStringFlag []string
 
 func (flag *repeatedStringFlag) String() string {

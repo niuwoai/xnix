@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.582
+> Last updated: 2026-07-24 | Baseline: v0.2.583
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Move the v0.2.582 KDE launcher entrypoint closer to actual Runtime-owned launch flow: add the next Runtime-owned known-app launch request path that consumes the same pinned 7-Zip managed launcher identity and can later invoke the existing known-app QEMU Wine smoke runner without exposing raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths to KDE. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Move the v0.2.583 Runtime-owned launch request path closer to actual managed dispatch: add the next known-app dispatch preview that consumes the launch request object and maps it to the existing known-app guest smoke lane without exposing raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths to KDE. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.583 checkpoint turns the pinned 7-Zip KDE launcher entrypoint into a Runtime-owned launch request object. `windows-known-app-launch-request-preview` consumes `windows-known-app-kde-launcher-preview`, preserves the safe managed launcher argv, and returns a request id, Runtime method, cache readiness, dispatch readiness, and dry-run safety state. Dispatch remains blocked until the managed cache artifact checksum verifies, then becomes ready for future managed dispatch through the existing known-app guest smoke lane. The preview does not start execution, start backend processes, expose raw `.exe` paths, expose Wine/QEMU command details, expose backend internals, require host networking, mount the Docker socket, use broad host mounts, or mutate the host root.
 
 The v0.2.582 checkpoint wires the pinned 7-Zip Runtime launch surface into the first KDE-safe desktop entrypoint model. `windows-known-app-kde-launcher-preview` consumes `windows-known-app-managed-launch-preview` and exposes a Plasma launcher entry with desktop file id, icon id, managed launcher argv, cache readiness, and launch visibility. The launcher remains visible but preparation-required until the managed cache artifact checksum verifies, then becomes visible and launch-enabled. KDE stays presentation-only: desktop files are not written, MIME defaults are not mutated, backend processes are not started, raw `.exe` paths are not exposed, Wine/QEMU command details are withheld, backend internals stay hidden, and host networking, Docker socket mounts, broad host mounts, and host-root mutation remain disabled.
 

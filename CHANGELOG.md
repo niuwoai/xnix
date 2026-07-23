@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.583] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-known-app-launch-request-preview` CLI, turning the pinned 7-Zip KDE launcher entrypoint into a Runtime-owned launch request object.
+- Added launch request readiness states that block dispatch until the managed 7-Zip artifact checksum verifies, then mark the request ready for future managed dispatch through the existing known-app guest smoke lane.
+- Added targeted Go tests proving the launch request consumes the KDE launcher identity, preserves the managed launcher argv, rejects unknown apps, stays dry-run, and avoids backend process starts, raw `.exe` paths, Wine/QEMU details, backend internals, host paths, host networking, Docker socket mounts, broad host mounts, and host-root mutation.
+
 ## [0.2.582] - 2026-07-24
 
 ### Added
