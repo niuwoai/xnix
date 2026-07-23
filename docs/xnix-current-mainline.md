@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.586
+> Last updated: 2026-07-24 | Baseline: v0.2.587
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Move the v0.2.586 launch bridge closer to a real desktop launch path: add a small managed launcher executable or service-facing command path for `xnix-compat-launch --app 7zr` that calls the Go launch bridge and, when the artifact is verified and an authorized Runtime owner supplies the guest boundary, proceeds into the gated dispatch smoke path. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Move the v0.2.587 Go launcher from source-level availability to the install/staging path used by generated KDE `.desktop` files: package or stage the `xnix-compat-launch` Go binary as the desktop command while preserving compatibility for the legacy Ruby generic recipe test shim or migrating those tests safely. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.587 checkpoint adds a Go-owned `cmd/xnix-compat-launch` executable entrypoint for the managed desktop launcher path. The command accepts `xnix-compat-launch --app 7zr`, calls `PreviewKnownPortableLaunchBridge` by default, and returns redacted bridge JSON without starting execution or backend processes. When a smoke harness or future Runtime service owner supplies `--guest-boundary managed-known-app-guest-smoke` and the bridge has materialized a verified dispatch request, the same entrypoint can continue into `RunKnownPortableDispatchSmoke`. Docker build and layout verification now cover the Go launcher, while the legacy Ruby `bin/xnix-compat-launch` wrapper remains for existing generic recipe launch tests. The launcher keeps raw `.exe` paths, Wine/QEMU command details, backend internals, host paths, host networking, Docker socket mounts, broad host mounts, and host-root mutation outside the desktop path.
 
 The v0.2.586 checkpoint bridges the KDE-facing managed launcher into the gated dispatch smoke request path. `windows-known-app-launch-bridge-preview` consumes or reconstructs the managed `xnix-compat-launch --app 7zr` launcher argv, verifies that it matches the Runtime-owned launch surface, and materializes a redacted `windows-known-app-dispatch-smoke` request model only after the managed artifact checksum verifies. The bridge does not supply the guest boundary itself; a smoke harness or future Runtime service owner must still provide `managed-known-app-guest-smoke` before real execution. This connects the desktop launcher action to the Go-owned dispatch gate without starting execution, starting backend processes, exposing raw `.exe` paths, exposing Wine/QEMU command details, exposing backend internals, requiring host networking, mounting the Docker socket, using broad host mounts, or mutating the host root.
 

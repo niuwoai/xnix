@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.587] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `cmd/xnix-compat-launch` executable entrypoint for the managed desktop launcher path.
+- Wired the launcher entrypoint to `PreviewKnownPortableLaunchBridge` by default so desktop invocation returns a redacted Runtime-owned bridge result instead of Ruby product logic.
+- Added an optional `--guest-boundary managed-known-app-guest-smoke` path that continues into `RunKnownPortableDispatchSmoke` only after bridge materialization proves the managed artifact is verified.
+- Added Docker build and layout verification coverage for the Go launcher while retaining the legacy Ruby `bin/xnix-compat-launch` wrapper for existing generic recipe launch tests.
+
 ## [0.2.586] - 2026-07-24
 
 ### Added

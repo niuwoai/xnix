@@ -49,6 +49,7 @@ WORKDIR /workspace
 RUN go test -timeout 90m ./...
 RUN go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go
 RUN go build -o /usr/local/bin/xnix-runtime-owner ./cmd/xnix-runtime-owner
+RUN go build -o /usr/local/bin/xnix-compat-launch ./cmd/xnix-compat-launch
 RUN gcc /workspace/runtime/dbus/xnix_compatd_smoke.c \
         -o /usr/local/bin/xnix-dbus-smoke \
         $(pkg-config --cflags --libs gio-2.0)

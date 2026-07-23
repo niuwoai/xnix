@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.586"
+EXPECTED_VERSION = "0.2.587"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -167,6 +167,8 @@ REQUIRED_FILES = %w[
   bin/xnix-runtime-owner-smoke-plan
   bin/xnix-runtime-service-binding
   bin/xnix-runtime-write-gate
+  cmd/xnix-compat-launch/main.go
+  cmd/xnix-compat-launch/main_test.go
   cmd/xnix-runtime-go/main.go
   cmd/xnix-runtime-go/main_test.go
   cmd/xnix-runtime-go/version_test.go
@@ -6409,6 +6411,18 @@ desktop_manifest_source = read_project_file("lib/xnix/compatibility/desktop_inte
   assert(desktop_manifest_source.include?(command), "Desktop integration manifest must include #{command}")
 end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
+
+managed_launcher_source = read_project_file("cmd/xnix-compat-launch/main.go")
+%w[PreviewKnownPortableLaunchBridge RunKnownPortableDispatchSmoke guest-boundary DefaultKnownAppCacheRoot].each do |token|
+  assert(managed_launcher_source.include?(token), "Go managed launcher must include #{token}")
+end
+%w[xnix-runtime-go xnix-runtime-owner xnix-compat-launch].each do |binary|
+  assert(read_project_file("Dockerfile").include?("/usr/local/bin/#{binary}"), "Dockerfile must build #{binary}")
+end
+managed_launcher_test_source = read_project_file("cmd/xnix-compat-launch/main_test.go")
+%w[TestCompatLaunchUsesKnownAppLaunchBridge TestCompatLaunchRequiresApp TestCompatLaunchRejectsUnknownApp assertCompatLaunchCLISafe].each do |token|
+  assert(managed_launcher_test_source.include?(token), "Go managed launcher tests must include #{token}")
+end
 
 desktop_activation_source = read_project_file("lib/xnix/compatibility/desktop_activation_installer.rb")
 %w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts].each do |target|
