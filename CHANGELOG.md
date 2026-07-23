@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.601] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-controlled-execution-session-preview` command, which consumes the existing known-app launch authorization receipt, launch gate, and controlled dispatch request path before materializing a portable Runtime execution-session handoff.
+- Extended the staged managed launcher dispatch smoke to validate the controlled execution-session handoff before QEMU dispatch while keeping session registration, window observation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.600] - 2026-07-24
 
 ### Changed

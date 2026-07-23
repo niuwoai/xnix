@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.600
+> Last updated: 2026-07-24 | Baseline: v0.2.601
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from the passed v0.2.600 formal full Buildroot/QEMU checkpoint by turning the launcher-owned controlled dispatch gate into the normal Compatibility Runtime service handoff path instead of a CLI-only smoke path. The next implementation should preserve the passing staged 7zr QEMU/Wine lane while moving toward a reusable Runtime-owned launch session or execution session record that can survive beyond the smoke harness. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from v0.2.601 by turning the controlled execution-session handoff into a durable Runtime-owned execution session record or service route that can be consumed beyond the smoke harness. The next implementation should preserve the passing staged 7zr QEMU/Wine lane and keep `known-app-controlled-execution-session-preview` as the boundary object that proves receipt acceptance, launch-gate acceptance, controlled dispatch request creation, artifact verification, and handoff readiness before any runner executes. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.601 checkpoint adds the Go-owned `known-app-controlled-execution-session-preview` command and wires it into `scripts/staged_launcher_dispatch_smoke.rb` before QEMU dispatch. The handoff is created only after the Runtime accepts the opaque launch authorization receipt, accepts the `managed-known-app-guest-smoke` boundary, verifies the managed artifact, and materializes the controlled dispatch request. It keeps session registration, window observation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
 
 The v0.2.600 checkpoint completes the formal full Buildroot/QEMU validation checkpoint for the launcher-owned controlled dispatch gate. Full-smoke evidence shows `PASS: staged managed launcher dispatch smoke (7zr 26.02)`, `PASS: QEMU guest real Windows app Wine smoke`, and `PASS: full build and QEMU serial smoke test`.
 

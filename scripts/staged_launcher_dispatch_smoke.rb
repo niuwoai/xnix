@@ -232,6 +232,41 @@ assert(controlled_dispatch["receipt_path_exposed"] == false, "controlled dispatc
 assert(controlled_dispatch["state_root_path_exposed"] == false, "controlled dispatch request output must not expose the state root path")
 assert_no_forbidden(controlled_dispatch_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled dispatch request output")
 
+controlled_session, controlled_session_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-controlled-execution-session-preview",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--receipt-id", receipt_preview.fetch("receipt_id"),
+  "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+  "--guest-boundary", GUEST_BOUNDARY
+)
+assert(controlled_session["request_type"] == "known-app-controlled-execution-session-preview", "controlled execution session request type must match")
+assert(controlled_session["receipt_accepted"] == true, "controlled execution session must require accepted receipt evidence")
+assert(controlled_session["guest_boundary_accepted"] == true, "controlled execution session must require accepted guest boundary")
+assert(controlled_session["controlled_dispatch_request_created"] == true, "controlled execution session must require a controlled dispatch request")
+assert(controlled_session["runtime_owned_dispatch_request"] == true, "controlled execution session must preserve Runtime-owned dispatch evidence")
+assert(controlled_session["runtime_owned_execution_session"] == true, "controlled execution session must be Runtime-owned")
+assert(controlled_session["execution_session_request_type"] == "known-app-runtime-execution-session-handoff", "controlled execution session must expose the handoff request type")
+assert(controlled_session["execution_session_state"] == "handoff-created", "controlled execution session must create the handoff before staged dispatch")
+assert(controlled_session["execution_session_handoff_created"] == true, "controlled execution session must report handoff creation")
+assert(controlled_session["execution_session_portable"] == true, "controlled execution session must be portable")
+assert(controlled_session["session_handoff_ready"] == true, "controlled execution session must be ready for the Runtime-managed runner")
+assert(controlled_session["session_registered"] == false, "controlled execution session preview must not register live sessions")
+assert(controlled_session["window_observed"] == false, "controlled execution session preview must not observe windows")
+assert(controlled_session["dispatch_allowed"] == false, "controlled execution session preview must not allow dispatch directly")
+assert(controlled_session["dispatch_started"] == false, "controlled execution session preview must not start dispatch")
+assert(controlled_session["execution_started"] == false, "controlled execution session preview must not start execution")
+assert(controlled_session["direct_launch_enabled"] == false, "controlled execution session must not enable direct launch")
+assert(controlled_session["desktop_launch_enabled"] == false, "controlled execution session must not enable desktop launch")
+assert(controlled_session["backend_launch_enabled"] == false, "controlled execution session must not enable backend launch")
+assert(controlled_session["backend_process_started"] == false, "controlled execution session must not start backend processes")
+assert(controlled_session["host_root_modified"] == false, "controlled execution session must not mutate the host root")
+assert(controlled_session["receipt_path_exposed"] == false, "controlled execution session output must not expose receipt paths")
+assert(controlled_session["state_root_path_exposed"] == false, "controlled execution session output must not expose the state root path")
+assert_no_forbidden(controlled_session_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session output")
+
 FileUtils.rm_f(SERIAL_LOG_PATH)
 stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close

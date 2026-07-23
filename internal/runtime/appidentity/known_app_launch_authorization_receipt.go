@@ -20,6 +20,8 @@ const (
 	KnownAppLaunchGateRequestType                   = "known-app-launch-gate-preview"
 	KnownAppControlledDispatchSchemaVersion         = "xnix.runtime.known_app_controlled_dispatch_request.v1"
 	KnownAppControlledDispatchRequestType           = "known-app-controlled-dispatch-request-preview"
+	KnownAppControlledExecutionSessionSchemaVersion = "xnix.runtime.known_app_controlled_execution_session.v1"
+	KnownAppControlledExecutionSessionRequestType   = "known-app-controlled-execution-session-preview"
 	knownAppLaunchAuthorizationReceiptDir           = "runtime/authorization-receipts"
 )
 
@@ -166,6 +168,66 @@ type KnownAppControlledDispatchPreview struct {
 	ControlledDispatchRequestPortable bool     `json:"controlled_dispatch_request_portable"`
 	BlockedActions                    []string `json:"blocked_actions"`
 	DesktopSafeSummary                string   `json:"desktop_safe_summary"`
+}
+
+type KnownAppControlledExecutionSessionRequest struct {
+	AppID         string
+	StateRoot     string
+	ReceiptID     string
+	CacheRoot     string
+	GuestBoundary string
+}
+
+type KnownAppControlledExecutionSessionPreview struct {
+	SchemaVersion                    string   `json:"schema_version"`
+	RequestType                      string   `json:"request_type"`
+	Source                           string   `json:"source"`
+	RuntimeMethod                    string   `json:"runtime_method"`
+	AppID                            string   `json:"app_id"`
+	DisplayName                      string   `json:"display_name"`
+	AppVersion                       string   `json:"app_version"`
+	ReceiptID                        string   `json:"receipt_id"`
+	ReceiptAccepted                  bool     `json:"receipt_accepted"`
+	GuestBoundary                    string   `json:"guest_boundary"`
+	GuestBoundaryAccepted            bool     `json:"guest_boundary_accepted"`
+	LaunchGateState                  string   `json:"launch_gate_state"`
+	ControlledDispatchReady          bool     `json:"controlled_dispatch_ready"`
+	ControlledDispatchRequestCreated bool     `json:"controlled_dispatch_request_created"`
+	ControlledDispatchRequestState   string   `json:"controlled_dispatch_request_state"`
+	RuntimeOwnedDispatchRequest      bool     `json:"runtime_owned_dispatch_request"`
+	DispatchRequestID                string   `json:"dispatch_request_id,omitempty"`
+	DispatchID                       string   `json:"dispatch_id,omitempty"`
+	DispatchRequestType              string   `json:"dispatch_request_type"`
+	DispatchSmokeRequestType         string   `json:"dispatch_smoke_request_type"`
+	DispatchGate                     string   `json:"dispatch_gate"`
+	RunnerLane                       string   `json:"runner_lane"`
+	ArtifactVerified                 bool     `json:"artifact_verified"`
+	DispatchReady                    bool     `json:"dispatch_ready"`
+	RuntimeOwnedExecutionSession     bool     `json:"runtime_owned_execution_session"`
+	ExecutionSessionRequestType      string   `json:"execution_session_request_type"`
+	ExecutionSessionID               string   `json:"execution_session_id,omitempty"`
+	ExecutionSessionState            string   `json:"execution_session_state"`
+	ExecutionSessionHandoffCreated   bool     `json:"execution_session_handoff_created"`
+	ExecutionSessionPortable         bool     `json:"execution_session_portable"`
+	SessionHandoffReady              bool     `json:"session_handoff_ready"`
+	SessionRegistered                bool     `json:"session_registered"`
+	WindowObserved                   bool     `json:"window_observed"`
+	DispatchAllowed                  bool     `json:"dispatch_allowed"`
+	DispatchStarted                  bool     `json:"dispatch_started"`
+	ExecutionStarted                 bool     `json:"execution_started"`
+	DirectLaunchEnabled              bool     `json:"direct_launch_enabled"`
+	DesktopLaunchEnabled             bool     `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled             bool     `json:"backend_launch_enabled"`
+	BackendProcessStarted            bool     `json:"backend_process_started"`
+	HostRootModified                 bool     `json:"host_root_modified"`
+	DockerSocketMounted              bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired           bool     `json:"broad_host_mount_required"`
+	RawArtifactPathExposed           bool     `json:"raw_artifact_path_exposed"`
+	BackendDetailsExposed            bool     `json:"backend_details_exposed"`
+	ReceiptPathExposed               bool     `json:"receipt_path_exposed"`
+	StateRootPathExposed             bool     `json:"state_root_path_exposed"`
+	BlockedActions                   []string `json:"blocked_actions"`
+	DesktopSafeSummary               string   `json:"desktop_safe_summary"`
 }
 
 type knownAppLaunchAuthorizationReceiptFile struct {
@@ -442,12 +504,51 @@ func PreviewKnownAppControlledDispatchRequest(request KnownAppControlledDispatch
 	return validateKnownAppControlledDispatchPreview(preview)
 }
 
+func PreviewKnownAppControlledExecutionSession(request KnownAppControlledExecutionSessionRequest) (KnownAppControlledExecutionSessionPreview, error) {
+	dispatch, err := PreviewKnownAppControlledDispatchRequest(KnownAppControlledDispatchRequest{
+		AppID:         request.AppID,
+		StateRoot:     request.StateRoot,
+		ReceiptID:     request.ReceiptID,
+		CacheRoot:     request.CacheRoot,
+		GuestBoundary: request.GuestBoundary,
+	})
+	if err != nil {
+		return KnownAppControlledExecutionSessionPreview{}, err
+	}
+	preview := baseKnownAppControlledExecutionSessionPreview(dispatch)
+	if !dispatch.ControlledDispatchRequestCreated {
+		preview.ExecutionSessionState = "blocked"
+		preview.DesktopSafeSummary = dispatch.DisplayName + " controlled execution session handoff is blocked until the Runtime creates a controlled dispatch request."
+		return validateKnownAppControlledExecutionSessionPreview(preview)
+	}
+	preview.RuntimeOwnedExecutionSession = true
+	preview.ExecutionSessionID = KnownAppControlledExecutionSessionID(dispatch.AppID, dispatch.AppVersion)
+	preview.ExecutionSessionState = "handoff-created"
+	preview.ExecutionSessionHandoffCreated = true
+	preview.ExecutionSessionPortable = true
+	preview.SessionHandoffReady = true
+	preview.DesktopSafeSummary = dispatch.DisplayName + " has a Runtime-owned controlled execution session handoff; execution still requires the Runtime-managed dispatch runner."
+	return validateKnownAppControlledExecutionSessionPreview(preview)
+}
+
 func KnownAppLaunchAuthorizationReceiptID(appID string, version string) string {
 	id := stateRootNamespace(strings.TrimSpace(appID))
 	if id == "" {
 		id = "known-app"
 	}
 	return "known-app-launch-authorization-" + id + "-" + stateRootNamespace(strings.TrimSpace(version))
+}
+
+func KnownAppControlledExecutionSessionID(appID string, version string) string {
+	id := stateRootNamespace(strings.TrimSpace(appID))
+	if id == "" {
+		id = "known-app"
+	}
+	versionID := stateRootNamespace(strings.TrimSpace(version))
+	if versionID == "" {
+		versionID = "unknown"
+	}
+	return "known-app-controlled-execution-session-" + id + "-" + versionID
 }
 
 func KnownAppLaunchAuthorizationReceiptPath(stateRoot string, receiptID string) (string, error) {
@@ -564,6 +665,66 @@ func baseKnownAppControlledDispatchPreview(gate KnownAppLaunchGatePreview) Known
 	}
 }
 
+func baseKnownAppControlledExecutionSessionPreview(dispatch KnownAppControlledDispatchPreview) KnownAppControlledExecutionSessionPreview {
+	return KnownAppControlledExecutionSessionPreview{
+		SchemaVersion:                    KnownAppControlledExecutionSessionSchemaVersion,
+		RequestType:                      KnownAppControlledExecutionSessionRequestType,
+		Source:                           KnownAppControlledDispatchRequestType,
+		RuntimeMethod:                    "PreviewKnownAppControlledExecutionSession",
+		AppID:                            dispatch.AppID,
+		DisplayName:                      dispatch.DisplayName,
+		AppVersion:                       dispatch.AppVersion,
+		ReceiptID:                        dispatch.ReceiptID,
+		ReceiptAccepted:                  dispatch.ReceiptAccepted,
+		GuestBoundary:                    dispatch.GuestBoundary,
+		GuestBoundaryAccepted:            dispatch.GuestBoundaryAccepted,
+		LaunchGateState:                  dispatch.LaunchGateState,
+		ControlledDispatchReady:          dispatch.ControlledDispatchReady,
+		ControlledDispatchRequestCreated: dispatch.ControlledDispatchRequestCreated,
+		ControlledDispatchRequestState:   dispatch.ControlledDispatchRequestState,
+		RuntimeOwnedDispatchRequest:      dispatch.RuntimeOwnedDispatchRequest,
+		DispatchRequestID:                dispatch.DispatchRequestID,
+		DispatchID:                       dispatch.DispatchID,
+		DispatchRequestType:              dispatch.DispatchRequestType,
+		DispatchSmokeRequestType:         dispatch.DispatchSmokeRequestType,
+		DispatchGate:                     dispatch.DispatchGate,
+		RunnerLane:                       dispatch.RunnerLane,
+		ArtifactVerified:                 dispatch.ArtifactVerified,
+		DispatchReady:                    dispatch.DispatchReady,
+		RuntimeOwnedExecutionSession:     false,
+		ExecutionSessionRequestType:      "known-app-runtime-execution-session-handoff",
+		ExecutionSessionState:            "closed",
+		ExecutionSessionHandoffCreated:   false,
+		ExecutionSessionPortable:         false,
+		SessionHandoffReady:              false,
+		SessionRegistered:                false,
+		WindowObserved:                   false,
+		DispatchAllowed:                  false,
+		DispatchStarted:                  false,
+		ExecutionStarted:                 false,
+		DirectLaunchEnabled:              false,
+		DesktopLaunchEnabled:             false,
+		BackendLaunchEnabled:             false,
+		BackendProcessStarted:            false,
+		HostRootModified:                 false,
+		DockerSocketMounted:              false,
+		BroadHostMountRequired:           false,
+		RawArtifactPathExposed:           false,
+		BackendDetailsExposed:            false,
+		ReceiptPathExposed:               false,
+		StateRootPathExposed:             false,
+		BlockedActions: []string{
+			"create execution session handoff without controlled dispatch request",
+			"register live session from execution session preview",
+			"observe live window before Runtime dispatch",
+			"start dispatch from execution session preview",
+			"start execution from execution session preview",
+			"mutate host root",
+		},
+		DesktopSafeSummary: dispatch.DisplayName + " controlled execution session handoff is closed until the Runtime creates a controlled dispatch request.",
+	}
+}
+
 func rejectKnownAppLaunchAuthorizationReceipt(receipt knownAppLaunchAuthorizationReceiptFile, app winapp.KnownPortableApp, receiptID string) string {
 	switch {
 	case receipt.SchemaVersion != KnownAppLaunchAuthorizationReceiptSchemaVersion:
@@ -615,6 +776,29 @@ func validateKnownAppControlledDispatchPreview(preview KnownAppControlledDispatc
 	}
 	if err := validateNoBackendTerms(preview, "known app controlled dispatch request preview"); err != nil {
 		return KnownAppControlledDispatchPreview{}, err
+	}
+	return preview, nil
+}
+
+func validateKnownAppControlledExecutionSessionPreview(preview KnownAppControlledExecutionSessionPreview) (KnownAppControlledExecutionSessionPreview, error) {
+	if preview.ExecutionSessionHandoffCreated {
+		switch {
+		case !preview.ControlledDispatchRequestCreated:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session requires a controlled dispatch request")
+		case !preview.RuntimeOwnedDispatchRequest || !preview.RuntimeOwnedExecutionSession:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session requires Runtime-owned handoff evidence")
+		case !preview.ReceiptAccepted || !preview.GuestBoundaryAccepted:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session requires accepted receipt and guest boundary")
+		case !preview.ArtifactVerified || !preview.DispatchReady || !preview.SessionHandoffReady:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session requires verified dispatch and handoff readiness")
+		case preview.DispatchAllowed || preview.DispatchStarted || preview.ExecutionStarted || preview.BackendLaunchEnabled || preview.BackendProcessStarted:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session preview must not start dispatch, execution, or backend processes")
+		case preview.SessionRegistered || preview.WindowObserved:
+			return KnownAppControlledExecutionSessionPreview{}, errors.New("controlled execution session preview must not register live sessions or observe windows")
+		}
+	}
+	if err := validateNoBackendTerms(preview, "known app controlled execution session preview"); err != nil {
+		return KnownAppControlledExecutionSessionPreview{}, err
 	}
 	return preview, nil
 }

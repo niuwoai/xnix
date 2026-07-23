@@ -245,6 +245,74 @@ func TestPreviewKnownAppControlledDispatchRequestBlocksUntilArtifactVerified(t *
 	}
 }
 
+func TestPreviewKnownAppControlledExecutionSessionBlocksUntilControlledDispatchCreated(t *testing.T) {
+	stateRoot := t.TempDir()
+	receipt, err := RecordKnownAppLaunchAuthorizationReceipt(KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	preview, err := PreviewKnownAppControlledExecutionSession(KnownAppControlledExecutionSessionRequest{
+		AppID:         "7zr",
+		StateRoot:     stateRoot,
+		ReceiptID:     receipt.ReceiptID,
+		CacheRoot:     t.TempDir(),
+		GuestBoundary: "managed-known-app-guest-smoke",
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppControlledExecutionSession returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppControlledExecutionSessionSchemaVersion ||
+		preview.RequestType != KnownAppControlledExecutionSessionRequestType ||
+		preview.Source != KnownAppControlledDispatchRequestType ||
+		preview.AppID != "7zr" ||
+		preview.ReceiptAccepted != true ||
+		preview.GuestBoundaryAccepted != true ||
+		preview.LaunchGateState != "dispatch-preparation-required" ||
+		preview.ControlledDispatchReady ||
+		preview.ControlledDispatchRequestCreated ||
+		preview.ControlledDispatchRequestState != "blocked" ||
+		preview.RuntimeOwnedDispatchRequest ||
+		preview.RuntimeOwnedExecutionSession ||
+		preview.ExecutionSessionRequestType != "known-app-runtime-execution-session-handoff" ||
+		preview.ExecutionSessionID != "" ||
+		preview.ExecutionSessionState != "blocked" ||
+		preview.ExecutionSessionHandoffCreated ||
+		preview.ExecutionSessionPortable ||
+		preview.SessionHandoffReady ||
+		preview.SessionRegistered ||
+		preview.WindowObserved ||
+		preview.DispatchAllowed ||
+		preview.DispatchStarted ||
+		preview.ExecutionStarted ||
+		preview.DirectLaunchEnabled ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.BackendProcessStarted ||
+		preview.HostRootModified ||
+		preview.ReceiptPathExposed ||
+		preview.StateRootPathExposed {
+		t.Fatalf("unexpected controlled execution session preview: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("controlled execution session preview exposed state root path: %s", text)
+	}
+	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("controlled execution session preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestPreviewKnownAppLaunchGateFailsClosedForMissingAndMismatchedReceipts(t *testing.T) {
 	stateRoot := t.TempDir()
 	missing, err := PreviewKnownAppLaunchGate(KnownAppLaunchGateRequest{

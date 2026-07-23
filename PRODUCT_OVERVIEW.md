@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.600
+> Last updated: 2026-07-24 | Current version: v0.2.601
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.601 checkpoint turns the launcher-owned controlled dispatch gate into a reusable Runtime execution-session handoff preview for the tested 7zr lane. `xnix-runtime-go known-app-controlled-execution-session-preview --app 7zr --state-root <path> --receipt-id <opaque-id> --guest-boundary managed-known-app-guest-smoke` consumes the same receipt, launch gate, and controlled dispatch request path, then materializes `execution_session_handoff_created=true` only when the controlled dispatch request exists. `scripts/staged_launcher_dispatch_smoke.rb` now validates that handoff before QEMU dispatch while keeping session registration, window observation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.601 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.600 checkpoint completes the formal full Buildroot/QEMU validation checkpoint for the launcher-owned controlled dispatch gate. It starts from the v0.2.599 path where `xnix-compat-launch --guest-boundary managed-known-app-guest-smoke` requires `--state-root` and `--receipt-id`, consumes `PreviewKnownAppControlledDispatchRequest`, and refuses to invoke `RunKnownPortableDispatchSmoke` unless the controlled request object is created. Local full-smoke evidence shows `PASS: staged managed launcher dispatch smoke (7zr 26.02)`, `PASS: QEMU guest real Windows app Wine smoke`, and `PASS: full build and QEMU serial smoke test`.
 
@@ -849,11 +851,11 @@ The v0.2.304 checkpoint closed the first stabilization review band by making Go 
 ## Test and Release Policy
 
 - Each small code version receives focused unit tests and a Git commit.
-- Every tenth code version requires a complete build and QEMU smoke test.
+- Every twentieth code version requires a complete build and QEMU smoke test.
 - If the full milestone test exposes a defect, it must be fixed and the full test rerun before later work starts.
-- Colima is limited to 6 GiB memory and 1 CPU. Runtime containers receive explicit resource limits and no elevated privileges.
+- Colima is limited to 6 GiB memory and 2 CPUs. Runtime containers receive explicit resource limits and no elevated privileges.
 - Buildroot is configured with a single job to prevent toolchain build memory spikes in the 4 GiB container limit.
-- Xnix runtime containers are limited to 4 GiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval or Buildroot dependency-download command requires it. These commands receive bridge networking and a Docker-managed named volume only; they never mount a host directory. Image builds run inside the 6 GiB and one-CPU Colima VM limit.
+- Xnix runtime containers are limited to 4 GiB, one CPU, and 256 processes. They use a read-only root filesystem, a small temporary filesystem, no Linux capabilities, no host-directory mounts, and no network unless a dedicated source-retrieval or Buildroot dependency-download command requires it. These commands receive bridge networking and a Docker-managed named volume only; they never mount a host directory. Image builds run inside the 6 GiB and two-CPU Colima VM limit.
 - SSH verification creates an ephemeral Ed25519 keypair only in the Docker-managed cache volume, installs its public key during image assembly, forwards only container loopback `127.0.0.1:2222` to guest port 22, and deletes the private key after the test.
 
 ## Milestones
