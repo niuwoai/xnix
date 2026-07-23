@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.617
+> Last updated: 2026-07-24 | Current version: v0.2.618
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.618 checkpoint persists the Runtime-status launch projection as a Runtime-owned KDE-readable handoff artifact. `known-app-kde-runtime-status-launch-evidence-record --state-root <root> --evidence-file <projection.json>` validates `known-app-kde-runtime-status-launch-delegated-evidence`, verifies it can become normalized known-app smoke evidence, writes the projection under `runtime/kde-runtime-status-launch-evidence/`, and returns only a relative evidence path plus SHA-256 digest while keeping state-root paths, absolute evidence paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, desktop launch, backend launch, execution start, and host-root mutation disabled. The staged launcher dispatch smoke now records that handoff before feeding the projection file to Compatibility Center and KDE Center previews. v0.2.618 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.617 checkpoint makes the Runtime-status launch projection directly consumable by the Compatibility Center and KDE Center page CLI read models. Both `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-evidence-json` or `--known-app-evidence-file`, validate the Go-owned `known-app-kde-runtime-status-launch-delegated-evidence` payload, and convert it into normalized known-app smoke evidence in Go. The staged launcher dispatch smoke writes the projection once under its run cache and passes that file to both Center previews instead of rebuilding launch receipt, launch gate, controlled session, and post-review fields through Ruby flags. v0.2.617 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

@@ -600,6 +600,40 @@ begin
   assert(payload["broad_host_mount_required"] == false, "staged launcher dispatch must not require broad host mounts")
   assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "staged launcher dispatch output")
   File.write(RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH, JSON.pretty_generate(payload))
+  evidence_record, evidence_record_stdout = run_json(
+    go_env,
+    "go", "run", "./cmd/xnix-runtime-go",
+    "known-app-kde-runtime-status-launch-evidence-record",
+    "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+    "--evidence-file", RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s
+  )
+  assert(evidence_record["request_type"] == "known-app-kde-runtime-status-launch-evidence-record", "Runtime status launch evidence record must use the Go-owned record type")
+  assert(evidence_record["runtime_method"] == "RecordKnownAppKDERuntimeStatusLaunchEvidence", "Runtime status launch evidence record must be written by Go Runtime")
+  assert(evidence_record["read_method"] == "GetKnownAppKDERuntimeStatusLaunchEvidence", "Runtime status launch evidence record must expose the KDE-safe read method")
+  assert(evidence_record["evidence_state"] == "persisted", "Runtime status launch evidence record must persist the handoff")
+  assert(evidence_record["evidence_relative_path"].to_s.start_with?("runtime/kde-runtime-status-launch-evidence/"), "Runtime status launch evidence record must expose only relative evidence path")
+  assert(evidence_record["evidence_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/), "Runtime status launch evidence record must expose evidence digest")
+  assert(evidence_record["projection_type"] == "known-app-kde-runtime-status-launch-delegated-evidence", "Runtime status launch evidence record must preserve projection type")
+  assert(evidence_record["compatibility_center_projection_ready"] == true, "Runtime status launch evidence record must preserve Compatibility Center readiness")
+  assert(evidence_record["kde_center_projection_ready"] == true, "Runtime status launch evidence record must preserve KDE Center readiness")
+  assert(evidence_record["known_app_smoke_evidence_ready"] == true, "Runtime status launch evidence record must be convertible to known app smoke evidence")
+  assert(evidence_record["runtime_owned"] == true, "Runtime status launch evidence record must be Runtime-owned")
+  assert(evidence_record["runtime_owned_dispatch"] == true, "Runtime status launch evidence record must preserve Runtime-owned dispatch")
+  assert(evidence_record["go_runtime_backed"] == true, "Runtime status launch evidence record must be Go Runtime backed")
+  assert(evidence_record["kde_policy_owner"] == false, "Runtime status launch evidence record must not make KDE the policy owner")
+  assert(evidence_record["state_root_path_exposed"] == false, "Runtime status launch evidence record must not expose state-root paths")
+  assert(evidence_record["evidence_path_exposed"] == false, "Runtime status launch evidence record must not expose evidence absolute paths")
+  assert(evidence_record["managed_launcher_path_exposed"] == false, "Runtime status launch evidence record must not expose launcher paths")
+  assert(evidence_record["raw_launcher_output_exposed"] == false, "Runtime status launch evidence record must not expose launcher output")
+  assert(evidence_record["backend_details_exposed"] == false, "Runtime status launch evidence record must not expose backend details")
+  assert(evidence_record["host_root_modified"] == false, "Runtime status launch evidence record must not mutate host root")
+  assert(evidence_record["docker_socket_mounted"] == false, "Runtime status launch evidence record must not mount Docker socket")
+  assert(evidence_record["broad_host_mount_required"] == false, "Runtime status launch evidence record must not require broad host mounts")
+  assert(evidence_record["desktop_launch_enabled"] == false, "Runtime status launch evidence record must not enable desktop launch")
+  assert(evidence_record["backend_launch_enabled"] == false, "Runtime status launch evidence record must not enable backend launch")
+  assert(evidence_record["execution_started"] == false, "Runtime status launch evidence record must not start execution")
+  assert(evidence_record["backend_process_started"] == false, "Runtime status launch evidence record must not start backend processes")
+  assert_no_forbidden(evidence_record_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch evidence record output")
 
   case payload.fetch("status")
   when "passed"

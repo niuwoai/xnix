@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.617
+> Last updated: 2026-07-24 | Baseline: v0.2.618
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.617 by turning the Runtime-status launch wrapper projection into a durable service-owned handoff artifact for the user-visible launch path. The next step should keep `compatibility-center-preview` and `kde-center-page-preview` on the projection JSON/file input, then move the staged 7zr lane closer to a real desktop-triggered action while preserving Runtime ownership, Go evidence normalization, no raw launcher output, no state-root path exposure, no backend details, no Docker socket mounts, no broad host mounts, and no host-root mutation.
+Continue from v0.2.618 by making the Runtime-owned evidence handoff readable by the next desktop-triggered launch action instead of only the smoke harness. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable state-root bridge, keep `compatibility-center-preview` and `kde-center-page-preview` on the projection JSON/file input, and move the staged 7zr lane toward a real KDE action trigger while preserving Runtime ownership, Go evidence normalization, no raw launcher output, no state-root path exposure, no backend details, no Docker socket mounts, no broad host mounts, and no host-root mutation.
+
+The v0.2.618 checkpoint adds `known-app-kde-runtime-status-launch-evidence-record`, a Go-owned handoff writer for the Runtime-status launch projection. The staged launcher dispatch smoke now records the Runtime wrapper's `compatibility_center_known_app_evidence` projection under the Runtime state root as `runtime/kde-runtime-status-launch-evidence/<opaque>.json`, verifies the record returns only a relative path and SHA-256 digest, then feeds the projection file to Compatibility Center and KDE Center page previews.
 
 The v0.2.617 checkpoint lets `compatibility-center-preview` and `kde-center-page-preview` consume `known-app-kde-runtime-status-launch-delegated-evidence` directly through `--known-app-evidence-json` or `--known-app-evidence-file`. The staged launcher dispatch smoke now writes the Runtime wrapper's `compatibility_center_known_app_evidence` projection once and passes the file to both Center read models instead of reconstructing launch receipt, launch gate, controlled session, launcher session gate, and post-review dispatch fields through legacy Ruby-expanded CLI flags.
 

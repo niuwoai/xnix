@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.617`.
+The project is currently at `v0.2.618`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.617`.
 
 ## Current Checkpoint
 
-v0.2.617 lets `compatibility-center-preview` and `kde-center-page-preview` consume the Runtime-status launch evidence projection through `--known-app-evidence-json` or `--known-app-evidence-file`. The staged 7zr QEMU/Wine dispatch smoke now writes the Runtime wrapper projection once and passes that safe projection file to both Center read models instead of reconstructing legacy known-app flags in Ruby.
+v0.2.618 records the Runtime-status launch evidence projection as a Runtime-owned KDE-readable handoff artifact. The staged 7zr QEMU/Wine dispatch smoke now calls `known-app-kde-runtime-status-launch-evidence-record` after the Runtime wrapper returns `compatibility_center_known_app_evidence`, persists the projection under the Runtime state root, and verifies only relative evidence path plus digest are exposed.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -32,9 +32,8 @@ Historical `docs/claude-code-*` files remain repository evidence, but new implem
 Run targeted checks for small versions:
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPrepareKnownAppKDERuntimeStatusLaunchExecution|TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPayload|TestCompatibilityCenterPreviewSummarizesPostReviewDispatchConsumption' -count=1
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestCompatibilityCenterPreviewCommandAcceptsRuntimeProjectedKnownAppEvidenceJSON|TestKDECenterPagePreviewCommandAcceptsRuntimeProjectedKnownAppEvidenceFile|TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot' -count=1
-ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestRecordKnownAppKDERuntimeStatusLaunchEvidencePersistsSafeHandoff|TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPayload|TestPrepareKnownAppKDERuntimeStatusLaunchExecution' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchEvidenceRecordCommandPersistsProjectionFile|TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot|TestCompatibilityCenterPreviewCommandAcceptsRuntimeProjectedKnownAppEvidenceJSON|TestKDECenterPagePreviewCommandAcceptsRuntimeProjectedKnownAppEvidenceFile' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```

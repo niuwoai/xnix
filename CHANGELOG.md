@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.618] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-kde-runtime-status-launch-evidence-record` command to persist the Runtime-status launch projection as a KDE-readable handoff artifact under the Runtime state root.
+- Added `RecordKnownAppKDERuntimeStatusLaunchEvidence`, which validates the delegated evidence projection, verifies it can feed normalized known-app smoke evidence, writes only the projection JSON, and returns a relative evidence path plus SHA-256 digest.
+
+### Changed
+
+- Extended the staged launcher dispatch smoke so the Runtime wrapper's `compatibility_center_known_app_evidence` projection is recorded as a state-root handoff before Compatibility Center and KDE Center read models consume the projection file.
+
 ## [0.2.617] - 2026-07-24
 
 ### Added

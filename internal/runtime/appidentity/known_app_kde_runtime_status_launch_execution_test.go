@@ -2,6 +2,8 @@ package appidentity
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -243,6 +245,94 @@ func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPaylo
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("delegated evidence projection exposes forbidden term %q: %s", forbidden, text)
 		}
+	}
+}
+
+func TestRecordKnownAppKDERuntimeStatusLaunchEvidencePersistsSafeHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := RecordKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	if record.SchemaVersion != KnownAppKDERuntimeStatusLaunchEvidenceRecordSchemaVersion ||
+		record.RequestType != KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType ||
+		record.RuntimeMethod != "RecordKnownAppKDERuntimeStatusLaunchEvidence" ||
+		record.ReadMethod != "GetKnownAppKDERuntimeStatusLaunchEvidence" ||
+		record.EvidenceState != "persisted" ||
+		record.EvidenceRelativePath == "" ||
+		filepath.IsAbs(record.EvidenceRelativePath) ||
+		record.EvidenceSHA256 == "" ||
+		record.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		!record.CompatibilityCenterProjectionReady ||
+		!record.KDECenterProjectionReady ||
+		!record.KnownAppSmokeEvidenceReady ||
+		record.LaunchAuthorizationReceiptID != launchReceiptID ||
+		record.SessionGatedReviewReceiptID != reviewReceiptID ||
+		record.ControlledExecutionSessionID != sessionID ||
+		record.ControlledSessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
+		!record.RuntimeOwned ||
+		!record.RuntimeOwnedDispatch ||
+		!record.GoRuntimeBacked ||
+		record.KDEPolicyOwner ||
+		record.StateRootPathExposed ||
+		record.EvidencePathExposed ||
+		record.ManagedLauncherPathExposed ||
+		record.RawLauncherOutputExposed ||
+		record.BackendDetailsExposed ||
+		record.HostRootModified ||
+		record.DockerSocketMounted ||
+		record.BroadHostMountRequired ||
+		record.DesktopLaunchEnabled ||
+		record.BackendLaunchEnabled ||
+		record.ExecutionStarted ||
+		record.BackendProcessStarted {
+		t.Fatalf("unexpected Runtime-status launch evidence record: %#v", record)
+	}
+	content, err := os.ReadFile(filepath.Join(stateRoot, filepath.FromSlash(record.EvidenceRelativePath)))
+	if err != nil {
+		t.Fatalf("ReadFile persisted evidence returned error: %v", err)
+	}
+	if sha256Hex(string(content)) != record.EvidenceSHA256 {
+		t.Fatalf("record digest mismatch: %s != %s", sha256Hex(string(content)), record.EvidenceSHA256)
+	}
+	if strings.Contains(string(content), stateRoot) {
+		t.Fatalf("persisted evidence exposed state root: %s", string(content))
 	}
 }
 

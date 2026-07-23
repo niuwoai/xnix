@@ -1047,6 +1047,65 @@ func TestKnownAppSessionGatedLaunchReviewPreviewCommandConsumesSessionBeforeRevi
 	}
 }
 
+func TestKnownAppKDERuntimeStatusLaunchEvidenceRecordCommandPersistsProjectionFile(t *testing.T) {
+	stateRoot := t.TempDir()
+	evidenceFile := filepath.Join(t.TempDir(), "runtime-status-launch-evidence.json")
+	if err := os.WriteFile(evidenceFile, []byte(knownAppRuntimeStatusLaunchProjectionFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile evidence returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType,
+		"--state-root", stateRoot,
+		"--evidence-file", evidenceFile,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType ||
+		payload["runtime_method"] != "RecordKnownAppKDERuntimeStatusLaunchEvidence" ||
+		payload["read_method"] != "GetKnownAppKDERuntimeStatusLaunchEvidence" ||
+		payload["evidence_state"] != "persisted" ||
+		payload["projection_type"] != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		payload["compatibility_center_projection_ready"] != true ||
+		payload["kde_center_projection_ready"] != true ||
+		payload["known_app_smoke_evidence_ready"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["evidence_path_exposed"] != false ||
+		payload["managed_launcher_path_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false {
+		t.Fatalf("unexpected Runtime-status launch evidence record payload: %#v", payload)
+	}
+	relativePath := payload["evidence_relative_path"].(string)
+	if filepath.IsAbs(relativePath) || strings.Contains(filepath.Clean(relativePath), "..") {
+		t.Fatalf("unsafe evidence relative path: %q", relativePath)
+	}
+	if _, err := os.Stat(filepath.Join(stateRoot, filepath.FromSlash(relativePath))); err != nil {
+		t.Fatalf("expected persisted evidence file: %v", err)
+	}
+	if strings.Contains(output.String(), stateRoot) || strings.Contains(output.String(), evidenceFile) {
+		t.Fatalf("record output exposed local paths: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t *testing.T, stateRoot string) string {
 	t.Helper()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")

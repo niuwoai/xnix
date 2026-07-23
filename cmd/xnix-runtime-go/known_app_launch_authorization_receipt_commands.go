@@ -431,6 +431,35 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 	return encodeIndentedJSON(stdout, result)
 }
 
+func runKnownAppKDERuntimeStatusLaunchEvidenceRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	stateRoot := flags.String("state-root", "", "Runtime state root where the KDE-readable Runtime-status launch evidence handoff is persisted")
+	evidenceJSON := flags.String("evidence-json", "", "Runtime-projected known app KDE Runtime-status launch evidence JSON")
+	evidenceFile := flags.String("evidence-file", "", "file containing Runtime-projected known app KDE Runtime-status launch evidence JSON")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-kde-runtime-status-launch-evidence-record does not accept positional arguments")
+	}
+	if strings.TrimSpace(*stateRoot) == "" {
+		return errors.New("known-app-kde-runtime-status-launch-evidence-record requires --state-root")
+	}
+	projection, err := knownAppKDERuntimeStatusLaunchDelegatedEvidenceFromInput(*evidenceJSON, *evidenceFile)
+	if err != nil {
+		return err
+	}
+	record, err := appidentity.RecordKnownAppKDERuntimeStatusLaunchEvidence(appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  *stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, record)
+}
+
 type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan
 	CompatibilityCenterKnownAppEvidence             appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence `json:"compatibility_center_known_app_evidence"`
@@ -621,6 +650,30 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 	}
 	result.CompatibilityCenterKnownAppEvidence = projection
 	return result, nil
+}
+
+func knownAppKDERuntimeStatusLaunchDelegatedEvidenceFromInput(evidenceJSON string, evidenceFile string) (appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
+	evidenceJSON = strings.TrimSpace(evidenceJSON)
+	evidenceFile = strings.TrimSpace(evidenceFile)
+	if evidenceJSON == "" && evidenceFile == "" {
+		return appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status launch evidence requires --evidence-json or --evidence-file")
+	}
+	if evidenceJSON != "" && evidenceFile != "" {
+		return appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status launch evidence accepts only one evidence source")
+	}
+	payload := []byte(evidenceJSON)
+	if evidenceFile != "" {
+		loaded, err := os.ReadFile(evidenceFile)
+		if err != nil {
+			return appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, fmt.Errorf("read known app KDE Runtime-status launch evidence: %w", err)
+		}
+		payload = loaded
+	}
+	var projection appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence
+	if err := json.Unmarshal(payload, &projection); err != nil {
+		return appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, fmt.Errorf("parse known app KDE Runtime-status launch evidence: %w", err)
+	}
+	return projection, nil
 }
 
 func stringJSONField(payload map[string]any, key string) string {
