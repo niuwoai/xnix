@@ -129,3 +129,33 @@ func runKnownAppControlledExecutionSessionPreview(args []string, stdout io.Write
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runKnownAppControlledExecutionSessionRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("known-app-controlled-execution-session-record", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	appID := flags.String("app", "", "known Windows application id")
+	stateRoot := flags.String("state-root", "", "controlled Runtime state root containing the opaque launch authorization receipt")
+	receiptID := flags.String("receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	cacheRoot := flags.String("cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+	guestBoundary := flags.String("guest-boundary", "", "controlled managed guest boundary")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" || *receiptID == "" {
+		return errors.New("known-app-controlled-execution-session-record requires --state-root and --receipt-id")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-controlled-execution-session-record does not accept positional arguments")
+	}
+	record, err := appidentity.RecordKnownAppControlledExecutionSession(appidentity.KnownAppControlledExecutionSessionRecordRequest{
+		AppID:         *appID,
+		StateRoot:     *stateRoot,
+		ReceiptID:     *receiptID,
+		CacheRoot:     *cacheRoot,
+		GuestBoundary: *guestBoundary,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, record)
+}

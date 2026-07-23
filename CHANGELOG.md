@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.602] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-controlled-execution-session-record` command, which validates the known-app controlled execution-session handoff and persists a Runtime execution ledger transaction plus session status record under the explicit state root.
+- Extended the staged managed launcher dispatch smoke to record the controlled execution session before QEMU dispatch and verify relative transaction/session evidence, digest evidence, and disabled live-session, dispatch, execution, backend, path-exposure, Docker socket, broad host mount, and host-root mutation flags.
+
 ## [0.2.601] - 2026-07-24
 
 ### Added

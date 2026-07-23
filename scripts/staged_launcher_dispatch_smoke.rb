@@ -267,6 +267,37 @@ assert(controlled_session["receipt_path_exposed"] == false, "controlled executio
 assert(controlled_session["state_root_path_exposed"] == false, "controlled execution session output must not expose the state root path")
 assert_no_forbidden(controlled_session_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session output")
 
+controlled_session_record, controlled_session_record_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-controlled-execution-session-record",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--receipt-id", receipt_preview.fetch("receipt_id"),
+  "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+  "--guest-boundary", GUEST_BOUNDARY
+)
+assert(controlled_session_record["request_type"] == "known-app-controlled-execution-session-record", "controlled execution session record request type must match")
+assert(controlled_session_record["record_state"] == "persisted", "controlled execution session record must persist before staged dispatch")
+assert(controlled_session_record["ledger_record_written"] == true, "controlled execution session record must write the ledger transaction")
+assert(controlled_session_record["session_record_written"] == true, "controlled execution session record must write the session record")
+assert(controlled_session_record["runtime_owned_execution_session"] == true, "controlled execution session record must be Runtime-owned")
+assert(controlled_session_record["execution_session_handoff_created"] == true, "controlled execution session record must require handoff creation")
+assert(controlled_session_record["session_handoff_ready"] == true, "controlled execution session record must require handoff readiness")
+assert(controlled_session_record["transaction_relative_path"].start_with?("execution-ledger/transactions/"), "controlled execution session record must expose only relative transaction evidence")
+assert(controlled_session_record["session_relative_path"].start_with?("execution-ledger/sessions/"), "controlled execution session record must expose only relative session evidence")
+assert(controlled_session_record["session_sha256"].to_s.length == 64, "controlled execution session record must expose digest evidence")
+assert(controlled_session_record["session_registered"] == false, "controlled execution session record must not register live sessions")
+assert(controlled_session_record["window_observed"] == false, "controlled execution session record must not observe windows")
+assert(controlled_session_record["dispatch_started"] == false, "controlled execution session record must not start dispatch")
+assert(controlled_session_record["execution_started"] == false, "controlled execution session record must not start execution")
+assert(controlled_session_record["backend_process_started"] == false, "controlled execution session record must not start backend processes")
+assert(controlled_session_record["host_root_modified"] == false, "controlled execution session record must not mutate the host root")
+assert(controlled_session_record["state_root_path_exposed"] == false, "controlled execution session record output must not expose the state root path")
+assert(controlled_session_record["transaction_path_exposed"] == false, "controlled execution session record output must not expose transaction paths")
+assert(controlled_session_record["session_path_exposed"] == false, "controlled execution session record output must not expose session paths")
+assert_no_forbidden(controlled_session_record_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session record output")
+
 FileUtils.rm_f(SERIAL_LOG_PATH)
 stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close
