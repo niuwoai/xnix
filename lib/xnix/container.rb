@@ -87,6 +87,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/staged_launcher_dispatch_smoke.rb"])
     end
 
+    def runtime_status_owner_service_session_bus_smoke_command
+      tools_cache_run_command(["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"])
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end

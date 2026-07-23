@@ -117,6 +117,10 @@ when "staged-launcher-dispatch-smoke"
   abort "Usage: ruby scripts/container.rb staged-launcher-dispatch-smoke" unless ARGV.empty?
 
   exec(*container.staged_launcher_dispatch_smoke_command)
+when "runtime-status-owner-service-session-bus-smoke"
+  abort "Usage: ruby scripts/container.rb runtime-status-owner-service-session-bus-smoke" unless ARGV.empty?
+
+  exec(*container.runtime_status_owner_service_session_bus_smoke_command)
 when "start-build-system"
   abort "Usage: ruby scripts/container.rb start-build-system" unless ARGV.empty?
 
@@ -135,5 +139,5 @@ when "boot-system"
 
   exec(*container.tools_cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|download-system|download-wine-guest|fetch-known-winapp|fetch-sources|kde-center-dbus-smoke|known-winapp-guest-wine-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|runtime-status-owner-service-session-bus-smoke|ssh-smoke|staged-launcher-dispatch-smoke|start-build-ssh-wine-guest|start-build-system|winapp-guest-wine-smoke}"
 end

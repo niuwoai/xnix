@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.626
+> Last updated: 2026-07-24 | Current version: v0.2.627
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.627 checkpoint adds a private session-bus wrapper for the Runtime-status owner service launch smoke. `runtime_status_owner_service_session_bus_smoke.rb` runs under `dbus-run-session`, delegates to the staged launcher dispatch smoke, safely reports SKIP when `dbus-run-session` or staged QEMU/Wine prerequisites are unavailable, and otherwise proves the real staged 7zr `xnix-compat-launch` lane can run through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>` inside the same private-session context expected for the next KDE D-Bus bridge. The container command stays offline, read-only, capability-dropped, Docker-socket-free, and broad-host-mount-free. v0.2.627 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.626 checkpoint routes the staged 7zr Runtime-status launch smoke through the Go Runtime Owner service boundary. After the first real staged `xnix-compat-launch` pass records Runtime-status launch evidence, the second trigger-fed launch now calls `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>` instead of bypassing the owner service through the Runtime CLI action. The smoke verifies the `runtime-owner-service-call` envelope, `desktop-action-dispatch`, `ShowRuntimeControlledLaunch`, `kde-dbus-runtime-status-action`, Runtime-owned service flags, owner-supplied inputs, delegated receipt/session fields, and the same redacted Compatibility Center projection while keeping state-root paths, staged launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.626 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

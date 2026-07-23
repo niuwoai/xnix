@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.626"
+EXPECTED_VERSION = "0.2.627"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -446,6 +446,7 @@ REQUIRED_FILES = %w[
   scripts/runtime_activation_smoke.rb
   scripts/staged_launcher_smoke.rb
   scripts/staged_launcher_dispatch_smoke.rb
+  scripts/runtime_status_owner_service_session_bus_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
   scripts/mainline_integration_review.rb
@@ -609,6 +610,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_activation_install.rb
   test/test_runtime_activation_smoke_script.rb
   test/test_staged_launcher_dispatch_smoke_script.rb
+  test/test_runtime_status_owner_service_session_bus_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_first_presence_smoke_script.rb
@@ -6467,6 +6469,13 @@ end
 end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
 assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_dispatch_smoke_command"), "Container model must expose staged launcher dispatch smoke")
+runtime_status_owner_service_session_bus_smoke_source = read_project_file("scripts/runtime_status_owner_service_session_bus_smoke.rb") +
+                                                        read_project_file("test/test_runtime_status_owner_service_session_bus_smoke_script.rb") +
+                                                        read_project_file("scripts/container.rb") +
+                                                        read_project_file("lib/xnix/container.rb")
+%w[runtime-status-owner-service-session-bus-smoke Runtime-status\ owner\ service\ session-bus\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS scripts/staged_launcher_dispatch_smoke.rb PASS:\ Runtime-status\ owner\ service\ session-bus\ smoke SKIP:\ Runtime-status\ owner\ service\ session-bus\ smoke xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle runtime_owner_service_supplies_owner_inputs docker.sock --privileged --network\ host runtime_status_owner_service_session_bus_smoke_command].each do |token|
+  assert(runtime_status_owner_service_session_bus_smoke_source.include?(token.gsub("\\ ", " ")), "Runtime-status owner service session-bus smoke must include #{token}")
+end
 
 go_compatibility_center_source = read_project_file("internal/runtime/appidentity/identity.go") +
                                  read_project_file("internal/runtime/appidentity/identity_test.go") +

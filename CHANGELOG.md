@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.627] - 2026-07-24
+
+### Added
+
+- Added `runtime_status_owner_service_session_bus_smoke.rb`, a private `dbus-run-session` wrapper around the staged launcher dispatch smoke for the Runtime-status owner service launch path.
+- Added the `runtime-status-owner-service-session-bus-smoke` container command and targeted Ruby tests for its offline, read-only, Docker-socket-free execution contract.
+
+### Changed
+
+- Updated the current mainline to target a real smoke D-Bus adapter method for `ShowRuntimeControlledLaunch` after the private-session wrapper boundary.
+
 ## [0.2.626] - 2026-07-24
 
 ### Changed

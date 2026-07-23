@@ -29,6 +29,7 @@ kde_center_dbus_command = container.kde_center_dbus_smoke_command
 known_winapp_fetch_command = container.known_winapp_fetch_command
 known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
 staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
+runtime_status_owner_service_session_bus_command = container.runtime_status_owner_service_session_bus_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
 dockerfile = Pathname.new(PROJECT_ROOT).join("Dockerfile").read
 expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
@@ -120,6 +121,16 @@ assert(!staged_launcher_dispatch_mount.include?("type=bind"), "staged launcher d
 assert(!staged_launcher_dispatch_command.include?("--privileged"), "staged launcher dispatch smoke must not be privileged")
 assert(!staged_launcher_dispatch_command.any? { |argument| argument.include?("docker.sock") }, "staged launcher dispatch smoke must not mount the Docker socket")
 assert(staged_launcher_dispatch_command.last(2) == ["ruby", "scripts/staged_launcher_dispatch_smoke.rb"], "staged launcher dispatch smoke must run through the staged launcher harness")
+
+assert(runtime_status_owner_service_session_bus_command.fetch(runtime_status_owner_service_session_bus_command.index("--network") + 1) == "none", "Runtime-status owner service session-bus smoke must run without container networking")
+assert(runtime_status_owner_service_session_bus_command.include?("--read-only"), "Runtime-status owner service session-bus smoke must keep the container root read-only")
+assert(runtime_status_owner_service_session_bus_command.include?("--mount"), "Runtime-status owner service session-bus smoke must mount its managed cache volume")
+runtime_status_owner_service_session_bus_mount = runtime_status_owner_service_session_bus_command.fetch(runtime_status_owner_service_session_bus_command.index("--mount") + 1)
+assert(runtime_status_owner_service_session_bus_mount == expected_source_mount, "Runtime-status owner service session-bus smoke must use the managed source cache volume")
+assert(!runtime_status_owner_service_session_bus_mount.include?("type=bind"), "Runtime-status owner service session-bus smoke must not bind mount a host directory")
+assert(!runtime_status_owner_service_session_bus_command.include?("--privileged"), "Runtime-status owner service session-bus smoke must not be privileged")
+assert(!runtime_status_owner_service_session_bus_command.any? { |argument| argument.include?("docker.sock") }, "Runtime-status owner service session-bus smoke must not mount the Docker socket")
+assert(runtime_status_owner_service_session_bus_command.last(2) == ["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"], "Runtime-status owner service session-bus smoke must run through the session-bus harness")
 
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")

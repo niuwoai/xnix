@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.626`.
+The project is currently at `v0.2.627`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.626`.
 
 ## Current Checkpoint
 
-v0.2.626 routes the staged 7zr Runtime-status launch smoke through the Go Runtime Owner service boundary. When QEMU/Wine prerequisites are available, the second trigger-fed launch now calls `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`, so the real staged `xnix-compat-launch` artifact is exercised through the same owner-service envelope a KDE D-Bus action will use.
+v0.2.627 adds a private session-bus wrapper for the Runtime-status owner service smoke. `ruby scripts/container.rb runtime-status-owner-service-session-bus-smoke` runs the staged launcher dispatch smoke inside `dbus-run-session`, safely skips when session-bus or QEMU/Wine prerequisites are unavailable, and otherwise exercises the real staged `xnix-compat-launch` lane through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -37,6 +37,7 @@ GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -r
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner -run 'TestServiceCallDispatchesShowRuntimeControlledLaunch|TestServiceCallServesReadDispatchInProcess' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner -run 'TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall|TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
+ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```
 
