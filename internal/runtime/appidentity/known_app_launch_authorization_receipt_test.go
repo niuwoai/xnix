@@ -188,6 +188,63 @@ func TestPreviewKnownAppLaunchGateAcceptsBoundaryButKeepsDispatchPreparationGate
 	}
 }
 
+func TestPreviewKnownAppControlledDispatchRequestBlocksUntilArtifactVerified(t *testing.T) {
+	stateRoot := t.TempDir()
+	receipt, err := RecordKnownAppLaunchAuthorizationReceipt(KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	preview, err := PreviewKnownAppControlledDispatchRequest(KnownAppControlledDispatchRequest{
+		AppID:         "7zr",
+		StateRoot:     stateRoot,
+		ReceiptID:     receipt.ReceiptID,
+		CacheRoot:     t.TempDir(),
+		GuestBoundary: "managed-known-app-guest-smoke",
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppControlledDispatchRequest returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppControlledDispatchSchemaVersion ||
+		preview.RequestType != KnownAppControlledDispatchRequestType ||
+		preview.ReceiptAccepted != true ||
+		preview.GuestBoundaryAccepted != true ||
+		preview.LaunchGateState != "dispatch-preparation-required" ||
+		preview.ControlledDispatchReady ||
+		preview.ControlledDispatchRequestCreated ||
+		preview.ControlledDispatchRequestState != "blocked" ||
+		preview.DispatchReady ||
+		preview.DispatchAllowed ||
+		preview.DispatchStarted ||
+		preview.ExecutionStarted ||
+		preview.DirectLaunchEnabled ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.BackendProcessStarted ||
+		preview.HostRootModified ||
+		preview.ReceiptPathExposed ||
+		preview.StateRootPathExposed {
+		t.Fatalf("unexpected controlled dispatch request preview: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("controlled dispatch request preview exposed state root path: %s", text)
+	}
+	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("controlled dispatch request preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestPreviewKnownAppLaunchGateFailsClosedForMissingAndMismatchedReceipts(t *testing.T) {
 	stateRoot := t.TempDir()
 	missing, err := PreviewKnownAppLaunchGate(KnownAppLaunchGateRequest{

@@ -18,6 +18,8 @@ const (
 	KnownAppLaunchAuthorizationReceiptAction        = "review-launch-authorization"
 	KnownAppLaunchGateSchemaVersion                 = "xnix.runtime.known_app_launch_gate.v1"
 	KnownAppLaunchGateRequestType                   = "known-app-launch-gate-preview"
+	KnownAppControlledDispatchSchemaVersion         = "xnix.runtime.known_app_controlled_dispatch_request.v1"
+	KnownAppControlledDispatchRequestType           = "known-app-controlled-dispatch-request-preview"
 	knownAppLaunchAuthorizationReceiptDir           = "runtime/authorization-receipts"
 )
 
@@ -110,6 +112,60 @@ type KnownAppLaunchGatePreview struct {
 	BackendDetailsExposed       bool     `json:"backend_details_exposed"`
 	BlockedActions              []string `json:"blocked_actions"`
 	DesktopSafeSummary          string   `json:"desktop_safe_summary"`
+}
+
+type KnownAppControlledDispatchRequest struct {
+	AppID         string
+	StateRoot     string
+	ReceiptID     string
+	CacheRoot     string
+	GuestBoundary string
+}
+
+type KnownAppControlledDispatchPreview struct {
+	SchemaVersion                     string   `json:"schema_version"`
+	RequestType                       string   `json:"request_type"`
+	Source                            string   `json:"source"`
+	RuntimeMethod                     string   `json:"runtime_method"`
+	AppID                             string   `json:"app_id"`
+	DisplayName                       string   `json:"display_name"`
+	AppVersion                        string   `json:"app_version"`
+	ReceiptID                         string   `json:"receipt_id"`
+	ReceiptAccepted                   bool     `json:"receipt_accepted"`
+	GuestBoundary                     string   `json:"guest_boundary"`
+	GuestBoundaryAccepted             bool     `json:"guest_boundary_accepted"`
+	LaunchGateState                   string   `json:"launch_gate_state"`
+	LaunchGateBlockedReason           string   `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchReady           bool     `json:"controlled_dispatch_ready"`
+	ControlledDispatchRequestCreated  bool     `json:"controlled_dispatch_request_created"`
+	ControlledDispatchRequestState    string   `json:"controlled_dispatch_request_state"`
+	RuntimeOwnedDispatchRequest       bool     `json:"runtime_owned_dispatch_request"`
+	DispatchRequestID                 string   `json:"dispatch_request_id,omitempty"`
+	DispatchID                        string   `json:"dispatch_id,omitempty"`
+	DispatchRequestType               string   `json:"dispatch_request_type"`
+	DispatchSmokeRequestType          string   `json:"dispatch_smoke_request_type"`
+	DispatchGate                      string   `json:"dispatch_gate"`
+	RunnerLane                        string   `json:"runner_lane"`
+	CacheStatus                       string   `json:"cache_status"`
+	ArtifactVerified                  bool     `json:"artifact_verified"`
+	DispatchReady                     bool     `json:"dispatch_ready"`
+	DispatchAllowed                   bool     `json:"dispatch_allowed"`
+	DispatchStarted                   bool     `json:"dispatch_started"`
+	ExecutionStarted                  bool     `json:"execution_started"`
+	DirectLaunchEnabled               bool     `json:"direct_launch_enabled"`
+	DesktopLaunchEnabled              bool     `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled              bool     `json:"backend_launch_enabled"`
+	BackendProcessStarted             bool     `json:"backend_process_started"`
+	HostRootModified                  bool     `json:"host_root_modified"`
+	DockerSocketMounted               bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired            bool     `json:"broad_host_mount_required"`
+	RawArtifactPathExposed            bool     `json:"raw_artifact_path_exposed"`
+	BackendDetailsExposed             bool     `json:"backend_details_exposed"`
+	ReceiptPathExposed                bool     `json:"receipt_path_exposed"`
+	StateRootPathExposed              bool     `json:"state_root_path_exposed"`
+	ControlledDispatchRequestPortable bool     `json:"controlled_dispatch_request_portable"`
+	BlockedActions                    []string `json:"blocked_actions"`
+	DesktopSafeSummary                string   `json:"desktop_safe_summary"`
 }
 
 type knownAppLaunchAuthorizationReceiptFile struct {
@@ -331,6 +387,61 @@ func PreviewKnownAppLaunchGate(request KnownAppLaunchGateRequest) (KnownAppLaunc
 	return validateKnownAppLaunchGatePreview(preview)
 }
 
+func PreviewKnownAppControlledDispatchRequest(request KnownAppControlledDispatchRequest) (KnownAppControlledDispatchPreview, error) {
+	gate, err := PreviewKnownAppLaunchGate(KnownAppLaunchGateRequest{
+		AppID:         request.AppID,
+		StateRoot:     request.StateRoot,
+		ReceiptID:     request.ReceiptID,
+		CacheRoot:     request.CacheRoot,
+		GuestBoundary: request.GuestBoundary,
+	})
+	if err != nil {
+		return KnownAppControlledDispatchPreview{}, err
+	}
+	preview := baseKnownAppControlledDispatchPreview(gate)
+	if !gate.ControlledDispatchReady {
+		preview.ControlledDispatchRequestState = "blocked"
+		preview.LaunchGateBlockedReason = gate.LaunchGateBlockedReason
+		if preview.LaunchGateBlockedReason == "" {
+			preview.LaunchGateBlockedReason = gate.ReceiptRejectedReason
+		}
+		preview.DesktopSafeSummary = gate.DisplayName + " controlled dispatch request is blocked until the Runtime launch gate accepts the receipt, boundary, and managed artifact."
+		return validateKnownAppControlledDispatchPreview(preview)
+	}
+	dispatchPreview, err := winapp.PreviewKnownPortableDispatch(winapp.KnownDispatchRequest{
+		AppID:     gate.AppID,
+		CacheRoot: request.CacheRoot,
+	})
+	if err != nil {
+		return KnownAppControlledDispatchPreview{}, err
+	}
+	if !dispatchPreview.DispatchReady || !dispatchPreview.ArtifactVerified {
+		preview.ControlledDispatchRequestState = "blocked"
+		preview.LaunchGateBlockedReason = "managed artifact preparation is required before controlled dispatch request creation"
+		preview.CacheStatus = dispatchPreview.CacheStatus
+		preview.ArtifactVerified = dispatchPreview.ArtifactVerified
+		preview.DispatchReady = dispatchPreview.DispatchReady
+		preview.DesktopSafeSummary = gate.DisplayName + " controlled dispatch request remains blocked until managed artifact verification completes."
+		return validateKnownAppControlledDispatchPreview(preview)
+	}
+	preview.ControlledDispatchRequestState = "created"
+	preview.ControlledDispatchRequestCreated = true
+	preview.RuntimeOwnedDispatchRequest = true
+	preview.DispatchRequestID = dispatchPreview.RequestID
+	preview.DispatchID = dispatchPreview.DispatchID
+	preview.DispatchRequestType = dispatchPreview.RequestType
+	preview.DispatchSmokeRequestType = winapp.KnownDispatchSmokeRequestType
+	preview.DispatchGate = dispatchPreview.DispatchGate
+	preview.RunnerLane = dispatchPreview.RunnerLane
+	preview.CacheStatus = dispatchPreview.CacheStatus
+	preview.ArtifactVerified = dispatchPreview.ArtifactVerified
+	preview.DispatchReady = true
+	preview.DispatchAllowed = false
+	preview.ControlledDispatchRequestPortable = true
+	preview.DesktopSafeSummary = gate.DisplayName + " has a Runtime-owned controlled dispatch request; execution still requires the Runtime-managed dispatch runner."
+	return validateKnownAppControlledDispatchPreview(preview)
+}
+
 func KnownAppLaunchAuthorizationReceiptID(appID string, version string) string {
 	id := stateRootNamespace(strings.TrimSpace(appID))
 	if id == "" {
@@ -404,6 +515,55 @@ func baseKnownAppLaunchGatePreview(app winapp.KnownPortableApp, receiptID string
 	}
 }
 
+func baseKnownAppControlledDispatchPreview(gate KnownAppLaunchGatePreview) KnownAppControlledDispatchPreview {
+	return KnownAppControlledDispatchPreview{
+		SchemaVersion:                     KnownAppControlledDispatchSchemaVersion,
+		RequestType:                       KnownAppControlledDispatchRequestType,
+		Source:                            KnownAppLaunchGateRequestType + "+windows-known-app-dispatch-preview",
+		RuntimeMethod:                     "PreviewKnownAppControlledDispatchRequest",
+		AppID:                             gate.AppID,
+		DisplayName:                       gate.DisplayName,
+		AppVersion:                        gate.AppVersion,
+		ReceiptID:                         gate.ReceiptID,
+		ReceiptAccepted:                   gate.ReceiptAccepted,
+		GuestBoundary:                     gate.GuestBoundary,
+		GuestBoundaryAccepted:             gate.GuestBoundaryAccepted,
+		LaunchGateState:                   gate.LaunchGateState,
+		LaunchGateBlockedReason:           gate.LaunchGateBlockedReason,
+		ControlledDispatchReady:           gate.ControlledDispatchReady,
+		ControlledDispatchRequestCreated:  false,
+		ControlledDispatchRequestState:    "closed",
+		RuntimeOwnedDispatchRequest:       false,
+		DispatchRequestType:               winapp.KnownDispatchRequestType,
+		DispatchSmokeRequestType:          winapp.KnownDispatchSmokeRequestType,
+		DispatchGate:                      winapp.KnownDispatchGuestBoundary,
+		DispatchReady:                     false,
+		DispatchAllowed:                   false,
+		DispatchStarted:                   false,
+		ExecutionStarted:                  false,
+		DirectLaunchEnabled:               false,
+		DesktopLaunchEnabled:              false,
+		BackendLaunchEnabled:              false,
+		BackendProcessStarted:             false,
+		HostRootModified:                  false,
+		DockerSocketMounted:               false,
+		BroadHostMountRequired:            false,
+		RawArtifactPathExposed:            false,
+		BackendDetailsExposed:             false,
+		ReceiptPathExposed:                false,
+		StateRootPathExposed:              false,
+		ControlledDispatchRequestPortable: false,
+		BlockedActions: []string{
+			"create controlled dispatch request without accepted receipt",
+			"create controlled dispatch request without managed guest boundary",
+			"start backend from controlled dispatch request preview",
+			"expose receipt path to KDE",
+			"mutate host root",
+		},
+		DesktopSafeSummary: gate.DisplayName + " controlled dispatch request is closed until the Runtime launch gate accepts the receipt and controlled boundary.",
+	}
+}
+
 func rejectKnownAppLaunchAuthorizationReceipt(receipt knownAppLaunchAuthorizationReceiptFile, app winapp.KnownPortableApp, receiptID string) string {
 	switch {
 	case receipt.SchemaVersion != KnownAppLaunchAuthorizationReceiptSchemaVersion:
@@ -434,6 +594,27 @@ func rejectKnownAppLaunchAuthorizationReceipt(receipt knownAppLaunchAuthorizatio
 func validateKnownAppLaunchGatePreview(preview KnownAppLaunchGatePreview) (KnownAppLaunchGatePreview, error) {
 	if err := validateNoBackendTerms(preview, "known app launch gate preview"); err != nil {
 		return KnownAppLaunchGatePreview{}, err
+	}
+	return preview, nil
+}
+
+func validateKnownAppControlledDispatchPreview(preview KnownAppControlledDispatchPreview) (KnownAppControlledDispatchPreview, error) {
+	if preview.ControlledDispatchRequestCreated {
+		switch {
+		case !preview.ReceiptAccepted:
+			return KnownAppControlledDispatchPreview{}, errors.New("controlled dispatch request requires accepted receipt")
+		case !preview.GuestBoundaryAccepted:
+			return KnownAppControlledDispatchPreview{}, errors.New("controlled dispatch request requires accepted guest boundary")
+		case !preview.ControlledDispatchReady:
+			return KnownAppControlledDispatchPreview{}, errors.New("controlled dispatch request requires launch gate readiness")
+		case !preview.ArtifactVerified || !preview.DispatchReady:
+			return KnownAppControlledDispatchPreview{}, errors.New("controlled dispatch request requires verified dispatch readiness")
+		case preview.DispatchStarted || preview.ExecutionStarted || preview.BackendLaunchEnabled || preview.BackendProcessStarted:
+			return KnownAppControlledDispatchPreview{}, errors.New("controlled dispatch request preview must not start execution or backend processes")
+		}
+	}
+	if err := validateNoBackendTerms(preview, "known app controlled dispatch request preview"); err != nil {
+		return KnownAppControlledDispatchPreview{}, err
 	}
 	return preview, nil
 }

@@ -245,6 +245,41 @@ begin
     assert(launch_gate["state_root_path_exposed"] == false, "launch gate output must not expose the state root path")
     assert_no_forbidden(launch_gate_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "launch gate output")
 
+    controlled_dispatch, controlled_dispatch_stdout = run_json(
+      go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-controlled-dispatch-request-preview",
+      "--app", payload.fetch("app_id"),
+      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+      "--receipt-id", receipt_preview.fetch("receipt_id"),
+      "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+      "--guest-boundary", GUEST_BOUNDARY
+    )
+    assert(controlled_dispatch["request_type"] == "known-app-controlled-dispatch-request-preview", "controlled dispatch request type must match")
+    assert(controlled_dispatch["receipt_accepted"] == true, "controlled dispatch request must require accepted receipt evidence")
+    assert(controlled_dispatch["guest_boundary_accepted"] == true, "controlled dispatch request must require the accepted guest boundary")
+    assert(controlled_dispatch["launch_gate_state"] == "controlled-dispatch-ready", "controlled dispatch request must consume a ready launch gate")
+    assert(controlled_dispatch["controlled_dispatch_ready"] == true, "controlled dispatch request must require controlled dispatch readiness")
+    assert(controlled_dispatch["controlled_dispatch_request_created"] == true, "controlled dispatch request must be materialized after launch gate readiness")
+    assert(controlled_dispatch["controlled_dispatch_request_state"] == "created", "controlled dispatch request must report created state")
+    assert(controlled_dispatch["runtime_owned_dispatch_request"] == true, "controlled dispatch request must be Runtime-owned")
+    assert(controlled_dispatch["dispatch_request_type"] == "windows-known-app-dispatch-preview", "controlled dispatch request must preserve the dispatch preview type")
+    assert(controlled_dispatch["dispatch_smoke_request_type"] == "windows-known-app-dispatch-smoke", "controlled dispatch request must preserve the dispatch smoke request type")
+    assert(controlled_dispatch["dispatch_gate"] == GUEST_BOUNDARY, "controlled dispatch request must preserve the managed guest boundary")
+    assert(controlled_dispatch["artifact_verified"] == true, "controlled dispatch request must require verified managed artifact evidence")
+    assert(controlled_dispatch["dispatch_ready"] == true, "controlled dispatch request must require dispatch readiness")
+    assert(controlled_dispatch["dispatch_allowed"] == false, "controlled dispatch request preview must not allow dispatch directly")
+    assert(controlled_dispatch["dispatch_started"] == false, "controlled dispatch request preview must not start dispatch")
+    assert(controlled_dispatch["execution_started"] == false, "controlled dispatch request preview must not start execution")
+    assert(controlled_dispatch["direct_launch_enabled"] == false, "controlled dispatch request must not enable direct launch")
+    assert(controlled_dispatch["desktop_launch_enabled"] == false, "controlled dispatch request must not enable desktop launch")
+    assert(controlled_dispatch["backend_launch_enabled"] == false, "controlled dispatch request must not enable backend launch")
+    assert(controlled_dispatch["backend_process_started"] == false, "controlled dispatch request must not start backend processes")
+    assert(controlled_dispatch["host_root_modified"] == false, "controlled dispatch request must not mutate the host root")
+    assert(controlled_dispatch["receipt_path_exposed"] == false, "controlled dispatch request output must not expose receipt paths")
+    assert(controlled_dispatch["state_root_path_exposed"] == false, "controlled dispatch request output must not expose the state root path")
+    assert_no_forbidden(controlled_dispatch_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled dispatch request output")
+
     center_preview_args = [
       "go", "run", "./cmd/xnix-runtime-go",
       "compatibility-center-preview",
@@ -260,10 +295,10 @@ begin
     ]
     center_preview_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
     center_preview_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
-    center_preview_args << "--known-app-launch-gate-consumed" if launch_gate["receipt_accepted"]
-    center_preview_args << "--known-app-launch-gate-receipt-accepted" if launch_gate["receipt_accepted"]
-    center_preview_args << "--known-app-launch-gate-guest-boundary-accepted" if launch_gate["guest_boundary_accepted"]
-    center_preview_args << "--known-app-controlled-dispatch-ready" if launch_gate["controlled_dispatch_ready"]
+    center_preview_args << "--known-app-launch-gate-consumed" if controlled_dispatch["receipt_accepted"]
+    center_preview_args << "--known-app-launch-gate-receipt-accepted" if controlled_dispatch["receipt_accepted"]
+    center_preview_args << "--known-app-launch-gate-guest-boundary-accepted" if controlled_dispatch["guest_boundary_accepted"]
+    center_preview_args << "--known-app-controlled-dispatch-ready" if controlled_dispatch["controlled_dispatch_ready"]
     center_preview_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
     assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")

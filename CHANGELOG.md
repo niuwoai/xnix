@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.598] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-controlled-dispatch-request-preview` command, which turns an accepted Runtime launch gate into a portable controlled dispatch request object only after receipt acceptance, guest-boundary acceptance, and managed artifact verification.
+- Extended the staged launcher dispatch smoke to validate the new controlled dispatch request object after a real 7zr PASS while keeping dispatch start, execution start, direct launch, desktop launch, backend launch, backend process start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.597] - 2026-07-24
 
 ### Added
