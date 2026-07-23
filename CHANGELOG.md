@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.592] - 2026-07-24
+
+### Changed
+
+- Promoted `staged-launcher-dispatch-smoke` into the formal full-smoke known Windows app lane so the next full checkpoint validates the staged desktop launcher path instead of the older direct known-app guest harness.
+- Updated the full smoke report model and tests to treat `staged-launcher-dispatch-smoke` as known Windows app pass evidence while retaining the fixture Wine guest smoke as a lower-level regression.
+
 ## [0.2.591] - 2026-07-24
 
 ### Added

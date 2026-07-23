@@ -49,7 +49,7 @@ LOG_PATH.write(serial_output)
 abort "QEMU boot process failed" unless status.success? || status.exitstatus == 124
 
 real_app_steps = [
-  [["known-winapp-guest-wine-smoke"], "PASS: known Windows app QEMU guest Wine smoke"],
+  [["staged-launcher-dispatch-smoke"], "PASS: staged managed launcher dispatch smoke"],
   [["winapp-guest-wine-smoke"], "PASS: QEMU guest real Windows app Wine smoke"]
 ]
 real_app_steps.each do |arguments, expected_pass|

@@ -28,7 +28,7 @@ report = Xnix::FullSmokeReport.new(
     build-ssh-wine-guest
     fetch-known-winapp
     boot-system
-    known-winapp-guest-wine-smoke
+    staged-launcher-dispatch-smoke
     winapp-guest-wine-smoke
   ],
   serial_log_path: "output/serial.log",

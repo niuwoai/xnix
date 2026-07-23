@@ -80,7 +80,7 @@ module Xnix
     end
 
     def known_app_smoke_included?
-      @steps.include?("known-winapp-guest-wine-smoke")
+      @steps.include?("staged-launcher-dispatch-smoke")
     end
 
     def fixture_app_smoke_included?
