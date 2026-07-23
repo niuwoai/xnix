@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.558] - 2026-07-23
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-receipt-closed-storage-record-writer-implementation-preview` to the v0.2.557 storage record contract predecessor.
+- Added explicit storage record contract authorization evidence consumption to the closed storage record writer implementation preview while keeping closed writers not callable, not enabled, and unimplemented; storage record contracts not writable; storage records unwritten; storage persistence gates not passed; receipt persistence disabled; receipt writes disabled; receipt consumer enablement disabled; dry-run result persistence disabled; request-object dispatch disabled; notification actions disabled; path exposure disabled; production ownership disabled; backend launch disabled; and host mutation disabled.
+- Recorded v0.2.558 as a targeted-validation-only follow-up after the v0.2.540 formal full Buildroot/QEMU checkpoint; the next formal full checkpoint remains v0.2.560 unless explicitly requested earlier.
+
 ## [0.2.557] - 2026-07-23
 
 ### Changed
