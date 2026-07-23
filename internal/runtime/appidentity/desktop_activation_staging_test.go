@@ -49,10 +49,10 @@ func TestDesktopActivationStagingPreviewPlansFilesWithoutWriting(t *testing.T) {
 		preview.Preflight.HostRootAllowed {
 		t.Fatalf("unexpected preflight summary: %#v", preview)
 	}
-	if got, want := preview.PlannedFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}; !sameStrings(got, want) {
+	if got, want := preview.PlannedFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "managed-launcher-artifact", "desktop-activation-receipt"}; !sameStrings(got, want) {
 		t.Fatalf("PlannedFileIDs = %#v, want %#v", got, want)
 	}
-	if preview.PlannedFileCount != 5 || len(preview.PlannedFiles) != 5 ||
+	if preview.PlannedFileCount != 6 || len(preview.PlannedFiles) != 6 ||
 		preview.ReceiptFileID != "desktop-activation-receipt" {
 		t.Fatalf("unexpected planned file counts: %#v", preview)
 	}
@@ -61,6 +61,7 @@ func TestDesktopActivationStagingPreviewPlansFilesWithoutWriting(t *testing.T) {
 		"usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop",
 		"usr/share/applications/mimeapps.list",
 		"usr/share/xnix/compatibility/manifests/org.example.ledger.json",
+		"usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json",
 		"usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json",
 	}
 	for index, file := range preview.PlannedFiles {

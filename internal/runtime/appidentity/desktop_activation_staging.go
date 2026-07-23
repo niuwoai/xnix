@@ -12,6 +12,7 @@ const (
 	desktopActivationServiceMenusDir = "usr/share/kio/servicemenus"
 	desktopActivationManifestsDir    = "usr/share/xnix/compatibility/manifests"
 	desktopActivationReceiptsDir     = "usr/share/xnix/compatibility/activation-receipts"
+	desktopActivationLauncherDir     = "usr/share/xnix/compatibility/launcher-artifacts"
 	dolphinServiceMenuFileName       = "xnix-open-with-compatibility.desktop"
 )
 
@@ -135,6 +136,25 @@ type desktopActivationReceiptRollback struct {
 	RequiresMatchingSHA256 bool   `json:"requires_matching_sha256"`
 }
 
+type desktopActivationManagedLauncherArtifact struct {
+	SchemaVersion          string `json:"schema_version"`
+	ArtifactType           string `json:"artifact_type"`
+	Command                string `json:"command"`
+	SourcePackage          string `json:"source_package"`
+	BuildOutput            string `json:"build_output"`
+	DesktopExecUsesCommand bool   `json:"desktop_exec_uses_command"`
+	RuntimeMethod          string `json:"runtime_method"`
+	DispatchGate           string `json:"dispatch_gate"`
+	BinaryCopied           bool   `json:"binary_copied"`
+	RuntimeOwned           bool   `json:"runtime_owned"`
+	GoRuntimeBacked        bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner         bool   `json:"kde_policy_owner"`
+	ExecutionStarted       bool   `json:"execution_started"`
+	HostRootModified       bool   `json:"host_root_modified"`
+	BackendDetailsExposed  bool   `json:"backend_details_exposed"`
+	DesktopSafeSummary     string `json:"desktop_safe_summary"`
+}
+
 func (plan Plan) DesktopActivationStagingPreview(mode string) (DesktopActivationStagingPreview, error) {
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return DesktopActivationStagingPreview{}, err
@@ -243,6 +263,7 @@ func desktopActivationStagedFiles(plan Plan, bundle DesktopActivationBundlePrevi
 		desktopActivationStagedFile("dolphin-service-menu", "dolphin-service-menu", "file-manager", desktopActivationServiceMenusDir+"/"+dolphinServiceMenuFileName, "0644", renderDolphinServiceMenuPreview(), "dolphin-service-menu-preview"),
 		desktopActivationStagedFile("mimeapps-list", "mimeapps-list", "file-manager", desktopActivationApplicationsDir+"/mimeapps.list", "0644", bundle.MIMEAppsPreview, "mimeapps-preview"),
 		desktopActivationStagedFile("desktop-integration-manifest", "desktop-integration-manifest", "all", desktopActivationManifestsDir+"/"+plan.ApplicationID+".json", "0644", manifestContent, "desktop-activation-staging-preview"),
+		desktopActivationStagedFile("managed-launcher-artifact", "managed-launcher-artifact", "launcher", desktopActivationLauncherDir+"/xnix-compat-launch.json", "0644", renderManagedLauncherArtifactPreview(), "cmd/xnix-compat-launch"),
 	}
 	receiptContent, err := desktopActivationReceiptPreviewContent(plan, files)
 	if err != nil {
@@ -280,6 +301,32 @@ func renderDolphinServiceMenuPreview() string {
 		"Name=Open with Xnix Compatibility\n" +
 		"Icon=preferences-desktop\n" +
 		"Exec=xnix-compat-open %U\n"
+}
+
+func renderManagedLauncherArtifactPreview() string {
+	artifact := desktopActivationManagedLauncherArtifact{
+		SchemaVersion:          "xnix.runtime.managed_launcher_artifact.v1",
+		ArtifactType:           "managed-launcher-artifact",
+		Command:                "xnix-compat-launch",
+		SourcePackage:          "cmd/xnix-compat-launch",
+		BuildOutput:            "usr/local/bin/xnix-compat-launch",
+		DesktopExecUsesCommand: true,
+		RuntimeMethod:          "PreviewKnownPortableLaunchBridge",
+		DispatchGate:           "managed-known-app-guest-smoke",
+		BinaryCopied:           false,
+		RuntimeOwned:           true,
+		GoRuntimeBacked:        true,
+		KDEPolicyOwner:         false,
+		ExecutionStarted:       false,
+		HostRootModified:       false,
+		BackendDetailsExposed:  false,
+		DesktopSafeSummary:     "The managed launcher command is provided by the Go Runtime build and remains gated before execution.",
+	}
+	data, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return "{}\n"
+	}
+	return string(data) + "\n"
 }
 
 func desktopActivationManifestPreviewContent(plan Plan, bundle DesktopActivationBundlePreview) (string, error) {

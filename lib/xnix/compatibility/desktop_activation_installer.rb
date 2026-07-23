@@ -22,6 +22,7 @@ module Xnix
       SERVICE_MENUS_DIR = "usr/share/kio/servicemenus"
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
       RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
+      LAUNCHER_ARTIFACTS_DIR = "usr/share/xnix/compatibility/launcher-artifacts"
 
       def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil, file_association_renderer: nil)
         @root = Pathname.new(root)
@@ -40,6 +41,7 @@ module Xnix
           install_desktop_entry,
           install_dolphin_service_menu,
           install_file_associations,
+          install_managed_launcher_artifact,
           install_manifest
         ]
 
@@ -129,6 +131,16 @@ module Xnix
         )
       end
 
+      def install_managed_launcher_artifact
+        install_file(
+          relative_path: File.join(LAUNCHER_ARTIFACTS_DIR, "xnix-compat-launch.json"),
+          contents: "#{JSON.pretty_generate(managed_launcher_artifact)}\n",
+          mode: 0o644,
+          kind: "managed-launcher-artifact",
+          entry_point: "launcher"
+        )
+      end
+
       def install_receipt(installed)
         receipt = {
           "version" => RuntimeDaemon::VERSION,
@@ -185,6 +197,27 @@ module Xnix
                                   "blocking_reasons" => []
                                 }
                               end
+      end
+
+      def managed_launcher_artifact
+        {
+          "schema_version" => "xnix.runtime.managed_launcher_artifact.v1",
+          "artifact_type" => "managed-launcher-artifact",
+          "command" => "xnix-compat-launch",
+          "source_package" => "cmd/xnix-compat-launch",
+          "build_output" => "usr/local/bin/xnix-compat-launch",
+          "desktop_exec_uses_command" => true,
+          "runtime_method" => "PreviewKnownPortableLaunchBridge",
+          "dispatch_gate" => "managed-known-app-guest-smoke",
+          "binary_copied" => false,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "execution_started" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "desktop_safe_summary" => "The managed launcher command is provided by the Go Runtime build and remains gated before execution."
+        }
       end
 
       class RubyDesktopEntryRenderer

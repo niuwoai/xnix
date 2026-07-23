@@ -46,7 +46,7 @@ func TestDesktopActivationTransactionPreviewPlansCommitAndRollbackWithoutWriting
 	}
 	if preview.Staging.RequestType != "desktop-activation-staging-preview" ||
 		preview.Staging.StagingState != "staging-plan-ready" ||
-		preview.Staging.PlannedFileCount != 5 ||
+		preview.Staging.PlannedFileCount != 6 ||
 		preview.Staging.ReceiptFileID != "desktop-activation-receipt" ||
 		preview.Staging.ActivatedEntryPointCount != 7 ||
 		!preview.Staging.InstallerMayProceed ||
@@ -54,7 +54,7 @@ func TestDesktopActivationTransactionPreviewPlansCommitAndRollbackWithoutWriting
 		preview.Staging.HostRootAllowed {
 		t.Fatalf("unexpected staging summary: %#v", preview.Staging)
 	}
-	if got, want := preview.Staging.PlannedFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}; !sameStrings(got, want) {
+	if got, want := preview.Staging.PlannedFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "managed-launcher-artifact", "desktop-activation-receipt"}; !sameStrings(got, want) {
 		t.Fatalf("staging planned file ids = %#v, want %#v", got, want)
 	}
 	if preview.WriteGate.MethodName != "ActivateDesktopIntegration" ||
@@ -70,8 +70,8 @@ func TestDesktopActivationTransactionPreviewPlansCommitAndRollbackWithoutWriting
 		preview.ReceiptEvidence.CommitReceiptType != "desktop-activation-receipt" ||
 		preview.ReceiptEvidence.RollbackReceiptType != "desktop-activation-rollback-receipt" ||
 		preview.ReceiptEvidence.ReceiptRelativePath != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
-		preview.ReceiptEvidence.RequiredFileCount != 5 ||
-		!sameStrings(preview.ReceiptEvidence.RequiredFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}) ||
+		preview.ReceiptEvidence.RequiredFileCount != 6 ||
+		!sameStrings(preview.ReceiptEvidence.RequiredFileIDs, []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "managed-launcher-artifact", "desktop-activation-receipt"}) ||
 		!preview.ReceiptEvidence.InstalledFileDigestRequired ||
 		!preview.ReceiptEvidence.RollbackDigestRequired ||
 		!preview.ReceiptEvidence.CommitReceiptRequired ||

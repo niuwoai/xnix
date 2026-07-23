@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.587"
+EXPECTED_VERSION = "0.2.588"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -5221,7 +5221,7 @@ go_runtime_desktop_activation_manifest_cli_source = read_project_file("cmd/xnix-
 end
 
 go_runtime_activation_stage_source = read_project_file("internal/runtime/activation/stage.go")
-%w[StageRequest StageResult StagedFile desktop-activation-stage xnix.runtime.desktop_activation_stage.v1 kde-desktop-activation-test-root-stage go-runtime-controlled-staging-writer usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts xnix-open-with-compatibility.desktop RenderDesktopEntry xnix-compat-open requires_matching_sha256 refusing to stage desktop activation into filesystem root refusing to overwrite existing staged file].each do |token|
+%w[StageRequest StageResult StagedFile desktop-activation-stage xnix.runtime.desktop_activation_stage.v1 kde-desktop-activation-test-root-stage go-runtime-controlled-staging-writer usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts usr/share/xnix/compatibility/launcher-artifacts managed-launcher-artifact cmd/xnix-compat-launch PreviewKnownPortableLaunchBridge xnix-open-with-compatibility.desktop RenderDesktopEntry xnix-compat-open requires_matching_sha256 refusing to stage desktop activation into filesystem root refusing to overwrite existing staged file].each do |token|
   assert(go_runtime_activation_stage_source.include?(token), "Go Runtime activation stage writer must include #{token}")
 end
 %w[RuntimeOwned GoRuntimeBacked KDEPolicyOwner StagingRootRequired StagingRootPathExposed HostRootAllowed FileWritesPerformed DesktopFilesWritten MIMEAppsWritten ManifestWritten ReceiptWritten RollbackReceiptWritten SettingsPersisted NotificationsSent TaskManagerEntryActive KWinRuleApplied LiveTrayBridgeEnabled LaunchEnabled BackendLaunchEnabled ExecutionStarted HostRootModified NetworkRequired PrivilegedContainerRequired BackendDetailsExposed].each do |token|
@@ -5239,7 +5239,7 @@ go_runtime_activation_stage_cli_source = read_project_file("cmd/xnix-runtime-go/
 end
 
 go_runtime_activation_stage_cli_test_source = read_project_file("cmd/xnix-runtime-go/desktop_activation_stage_cli_test.go")
-%w[desktop-activation-stage staging_root_path_exposed host_root_modified backend_details_exposed xnix-org.example.ledger.desktop requires_matching_sha256].each do |token|
+%w[desktop-activation-stage staging_root_path_exposed host_root_modified backend_details_exposed xnix-org.example.ledger.desktop managed-launcher-artifact cmd/xnix-compat-launch requires_matching_sha256].each do |token|
   assert(go_runtime_activation_stage_cli_test_source.include?(token), "Go Runtime activation stage CLI test must include #{token}")
 end
 
@@ -6425,7 +6425,7 @@ managed_launcher_test_source = read_project_file("cmd/xnix-compat-launch/main_te
 end
 
 desktop_activation_source = read_project_file("lib/xnix/compatibility/desktop_activation_installer.rb")
-%w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts].each do |target|
+%w[usr/share/applications usr/share/kio/servicemenus usr/share/xnix/compatibility/manifests usr/share/xnix/compatibility/activation-receipts usr/share/xnix/compatibility/launcher-artifacts managed-launcher-artifact cmd/xnix-compat-launch PreviewKnownPortableLaunchBridge].each do |target|
   assert(desktop_activation_source.include?(target), "Desktop activation installer must stage #{target}")
 end
 assert(desktop_activation_source.include?("refusing to overwrite existing mimeapps list"), "Desktop activation installer must preserve existing mimeapps lists")

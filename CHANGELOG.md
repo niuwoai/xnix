@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.588] - 2026-07-24
+
+### Added
+
+- Added a managed launcher artifact receipt to Go desktop activation staging previews so KDE desktop entries have an auditable Go `xnix-compat-launch` command source.
+- Added the same managed launcher artifact receipt to the Go controlled staging writer under `usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json` without copying binaries or mutating the host root.
+- Added the managed launcher artifact receipt to the Ruby desktop activation installer staging path, keeping legacy test harness compatibility while documenting that the desktop launcher command is supplied by `cmd/xnix-compat-launch`.
+- Extended targeted activation tests and layout checks to require the launcher artifact, Runtime bridge method, and gated dispatch boundary.
+
 ## [0.2.587] - 2026-07-24
 
 ### Added

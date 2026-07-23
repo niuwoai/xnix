@@ -415,13 +415,13 @@ func TestDesktopActivationStagingPreviewCommandRendersPlannedFiles(t *testing.T)
 		t.Fatalf("unexpected preflight summary: %#v", preflight)
 	}
 	fileIDs := payload["planned_file_ids"].([]any)
-	expectedIDs := []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "desktop-activation-receipt"}
+	expectedIDs := []string{"desktop-entry", "dolphin-service-menu", "mimeapps-list", "desktop-integration-manifest", "managed-launcher-artifact", "desktop-activation-receipt"}
 	for index, expected := range expectedIDs {
 		if fileIDs[index] != expected {
 			t.Fatalf("planned_file_ids[%d] = %#v, want %q", index, fileIDs[index], expected)
 		}
 	}
-	if payload["planned_file_count"] != float64(5) ||
+	if payload["planned_file_count"] != float64(6) ||
 		payload["receipt_file_id"] != "desktop-activation-receipt" ||
 		payload["activated_entry_point_count"] != float64(7) {
 		t.Fatalf("unexpected staging counts: %#v", payload)
@@ -436,7 +436,14 @@ func TestDesktopActivationStagingPreviewCommandRendersPlannedFiles(t *testing.T)
 		first["host_root_modified"] != false {
 		t.Fatalf("unexpected first staged file: %#v", first)
 	}
-	receipt := files[4].(map[string]any)
+	launcherArtifact := files[4].(map[string]any)
+	if launcherArtifact["kind"] != "managed-launcher-artifact" ||
+		launcherArtifact["entry_point"] != "launcher" ||
+		launcherArtifact["relative_path"] != "usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json" ||
+		launcherArtifact["content_source"] != "cmd/xnix-compat-launch" {
+		t.Fatalf("unexpected managed launcher artifact file: %#v", launcherArtifact)
+	}
+	receipt := files[5].(map[string]any)
 	if receipt["kind"] != "desktop-activation-receipt" ||
 		receipt["entry_point"] != "rollback" ||
 		receipt["relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" {
@@ -520,7 +527,7 @@ func TestDesktopActivationTransactionPreviewCommandRendersCommitAndRollbackPlan(
 	staging := payload["staging"].(map[string]any)
 	if staging["request_type"] != "desktop-activation-staging-preview" ||
 		staging["staging_state"] != "staging-plan-ready" ||
-		staging["planned_file_count"] != float64(5) ||
+		staging["planned_file_count"] != float64(6) ||
 		staging["receipt_file_id"] != "desktop-activation-receipt" ||
 		staging["installer_may_proceed"] != true ||
 		staging["host_root_allowed"] != false {
@@ -540,7 +547,7 @@ func TestDesktopActivationTransactionPreviewCommandRendersCommitAndRollbackPlan(
 		receiptEvidence["commit_receipt_type"] != "desktop-activation-receipt" ||
 		receiptEvidence["rollback_receipt_type"] != "desktop-activation-rollback-receipt" ||
 		receiptEvidence["receipt_relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
-		receiptEvidence["required_file_count"] != float64(5) ||
+		receiptEvidence["required_file_count"] != float64(6) ||
 		receiptEvidence["installed_file_digest_required"] != true ||
 		receiptEvidence["rollback_digest_required"] != true ||
 		receiptEvidence["commit_receipt_required"] != true ||
@@ -681,7 +688,7 @@ func TestDesktopActivationStatusPreviewCommandRendersRegistryBackedStatus(t *tes
 	staging := payload["staging"].(map[string]any)
 	if staging["request_type"] != "desktop-activation-staging-preview" ||
 		staging["staging_state"] != "staging-plan-ready" ||
-		staging["planned_file_count"] != float64(5) ||
+		staging["planned_file_count"] != float64(6) ||
 		staging["activated_entry_point_count"] != float64(7) ||
 		staging["receipt_file_id"] != "desktop-activation-receipt" ||
 		staging["staging_plan_ready"] != true ||
@@ -782,7 +789,7 @@ func TestDesktopActivationStatusPreviewCommandConsumesStagedReceipt(t *testing.T
 		evidence["receipt_type"] != "desktop-activation-receipt" ||
 		evidence["receipt_relative_path"] != "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json" ||
 		evidence["application_id"] != "org.example.ledger" ||
-		evidence["installed_file_count"] != float64(4) ||
+		evidence["installed_file_count"] != float64(5) ||
 		evidence["digest_gate_ready"] != true ||
 		evidence["rollback_receipt_ready"] != true ||
 		evidence["runtime_owned"] != true ||

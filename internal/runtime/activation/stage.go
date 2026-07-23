@@ -19,6 +19,7 @@ const (
 	serviceMenusDir      = "usr/share/kio/servicemenus"
 	manifestsDir         = "usr/share/xnix/compatibility/manifests"
 	receiptsDir          = "usr/share/xnix/compatibility/activation-receipts"
+	launcherArtifactsDir = "usr/share/xnix/compatibility/launcher-artifacts"
 	dolphinServiceMenu   = "xnix-open-with-compatibility.desktop"
 	stageSchemaVersion   = "xnix.runtime.desktop_activation_stage.v1"
 	receiptSchemaVersion = "xnix.runtime.desktop_activation_receipt.v1"
@@ -128,6 +129,25 @@ type safety struct {
 	BackendDetailsExposed bool `json:"backend_details_exposed"`
 }
 
+type managedLauncherArtifactFile struct {
+	SchemaVersion          string `json:"schema_version"`
+	ArtifactType           string `json:"artifact_type"`
+	Command                string `json:"command"`
+	SourcePackage          string `json:"source_package"`
+	BuildOutput            string `json:"build_output"`
+	DesktopExecUsesCommand bool   `json:"desktop_exec_uses_command"`
+	RuntimeMethod          string `json:"runtime_method"`
+	DispatchGate           string `json:"dispatch_gate"`
+	BinaryCopied           bool   `json:"binary_copied"`
+	RuntimeOwned           bool   `json:"runtime_owned"`
+	GoRuntimeBacked        bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner         bool   `json:"kde_policy_owner"`
+	ExecutionStarted       bool   `json:"execution_started"`
+	HostRootModified       bool   `json:"host_root_modified"`
+	BackendDetailsExposed  bool   `json:"backend_details_exposed"`
+	DesktopSafeSummary     string `json:"desktop_safe_summary"`
+}
+
 func Stage(req StageRequest) (StageResult, error) {
 	root, err := cleanStageRoot(req.Root)
 	if err != nil {
@@ -232,6 +252,7 @@ func stageArtifacts(plan appidentity.Plan) ([]stageArtifact, error) {
 		newArtifact("desktop-entry", "desktop-entry", "launcher", applicationsDir+"/"+plan.DesktopFile, desktopEntry, "desktop-entry-preview"),
 		newArtifact("dolphin-service-menu", "dolphin-service-menu", "file-manager", serviceMenusDir+"/"+dolphinServiceMenu, renderDolphinServiceMenu(), "dolphin-service-menu-preview"),
 		newArtifact("mimeapps-list", "mimeapps-list", "file-manager", applicationsDir+"/mimeapps.list", mimeapps, "mimeapps-preview"),
+		newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/xnix-compat-launch.json", renderManagedLauncherArtifact(), "cmd/xnix-compat-launch"),
 	}
 	manifestContent, err := renderManifest(plan, stagedFiles(initial))
 	if err != nil {
@@ -276,6 +297,31 @@ func renderDolphinServiceMenu() string {
 		"Name=Open with Xnix Compatibility\n" +
 		"Icon=preferences-desktop\n" +
 		"Exec=xnix-compat-open %U\n"
+}
+
+func renderManagedLauncherArtifact() string {
+	content, err := encodeJSON(managedLauncherArtifactFile{
+		SchemaVersion:          "xnix.runtime.managed_launcher_artifact.v1",
+		ArtifactType:           "managed-launcher-artifact",
+		Command:                "xnix-compat-launch",
+		SourcePackage:          "cmd/xnix-compat-launch",
+		BuildOutput:            "usr/local/bin/xnix-compat-launch",
+		DesktopExecUsesCommand: true,
+		RuntimeMethod:          "PreviewKnownPortableLaunchBridge",
+		DispatchGate:           "managed-known-app-guest-smoke",
+		BinaryCopied:           false,
+		RuntimeOwned:           true,
+		GoRuntimeBacked:        true,
+		KDEPolicyOwner:         false,
+		ExecutionStarted:       false,
+		HostRootModified:       false,
+		BackendDetailsExposed:  false,
+		DesktopSafeSummary:     "The managed launcher command is provided by the Go Runtime build and remains gated before execution.",
+	})
+	if err != nil {
+		return "{}\n"
+	}
+	return content
 }
 
 func renderManifest(plan appidentity.Plan, files []StagedFile) (string, error) {

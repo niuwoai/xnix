@@ -34,10 +34,10 @@ func TestStageWritesDesktopActivationArtifactsInsideStagingRoot(t *testing.T) {
 		result.PreflightDecision != "development-staging-ready" {
 		t.Fatalf("unexpected stage identity: %#v", result)
 	}
-	if got, want := result.WrittenFileIDs, []string{"desktop-activation-receipt", "desktop-entry", "desktop-integration-manifest", "dolphin-service-menu", "mimeapps-list"}; !sameStrings(got, want) {
+	if got, want := result.WrittenFileIDs, []string{"desktop-activation-receipt", "desktop-entry", "desktop-integration-manifest", "dolphin-service-menu", "managed-launcher-artifact", "mimeapps-list"}; !sameStrings(got, want) {
 		t.Fatalf("WrittenFileIDs = %#v, want %#v", got, want)
 	}
-	if result.WrittenFileCount != 5 || len(result.WrittenFiles) != 5 {
+	if result.WrittenFileCount != 6 || len(result.WrittenFiles) != 6 {
 		t.Fatalf("unexpected written file count: %#v", result)
 	}
 	if !result.RuntimeOwned || !result.GoRuntimeBacked || result.KDEPolicyOwner ||
@@ -63,6 +63,7 @@ func TestStageWritesDesktopActivationArtifactsInsideStagingRoot(t *testing.T) {
 		"mimeapps-list":                "usr/share/applications/mimeapps.list",
 		"desktop-integration-manifest": "usr/share/xnix/compatibility/manifests/org.example.ledger.json",
 		"desktop-activation-receipt":   "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json",
+		"managed-launcher-artifact":    "usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json",
 	}
 	for _, file := range result.WrittenFiles {
 		if file.RelativePath != expectedFiles[file.ID] {
@@ -91,9 +92,20 @@ func TestStageWritesDesktopActivationArtifactsInsideStagingRoot(t *testing.T) {
 		!strings.Contains(serviceMenu, "Exec=xnix-compat-open %U\n") {
 		t.Fatalf("unexpected Dolphin service menu content: %q", serviceMenu)
 	}
+	launcherArtifact := readStageFile(t, root, expectedFiles["managed-launcher-artifact"])
+	if !strings.Contains(launcherArtifact, "\"command\": \"xnix-compat-launch\"") ||
+		!strings.Contains(launcherArtifact, "\"source_package\": \"cmd/xnix-compat-launch\"") ||
+		!strings.Contains(launcherArtifact, "\"build_output\": \"usr/local/bin/xnix-compat-launch\"") ||
+		!strings.Contains(launcherArtifact, "\"runtime_method\": \"PreviewKnownPortableLaunchBridge\"") ||
+		!strings.Contains(launcherArtifact, "\"dispatch_gate\": \"managed-known-app-guest-smoke\"") ||
+		!strings.Contains(launcherArtifact, "\"binary_copied\": false") ||
+		!strings.Contains(launcherArtifact, "\"host_root_modified\": false") {
+		t.Fatalf("unexpected managed launcher artifact content: %q", launcherArtifact)
+	}
 	receipt := readStageFile(t, root, expectedFiles["desktop-activation-receipt"])
 	if !strings.Contains(receipt, "\"requires_matching_sha256\": true") ||
-		!strings.Contains(receipt, "\"host_root_modified\": false") {
+		!strings.Contains(receipt, "\"host_root_modified\": false") ||
+		!strings.Contains(receipt, "\"id\": \"managed-launcher-artifact\"") {
 		t.Fatalf("unexpected receipt content: %q", receipt)
 	}
 

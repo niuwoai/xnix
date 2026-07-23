@@ -61,7 +61,7 @@ func TestDesktopActivationStatusPreviewSummarizesActivationWithoutWriting(t *tes
 	}
 	if preview.Staging.RequestType != "desktop-activation-staging-preview" ||
 		preview.Staging.StagingState != "staging-plan-ready" ||
-		preview.Staging.PlannedFileCount != 5 ||
+		preview.Staging.PlannedFileCount != 6 ||
 		preview.Staging.ActivatedEntryPointCount != 7 ||
 		preview.Staging.ReceiptFileID != "desktop-activation-receipt" ||
 		!preview.Staging.StagingPlanReady ||

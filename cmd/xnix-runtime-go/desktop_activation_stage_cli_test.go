@@ -66,7 +66,7 @@ func TestDesktopActivationStageCommandWritesOnlyInsideStagingRoot(t *testing.T) 
 		t.Fatalf("desktop activation stage output exposed staging root: %s", output.String())
 	}
 	writtenFiles := payload["written_files"].([]any)
-	if len(writtenFiles) != 5 || payload["written_file_count"] != float64(5) {
+	if len(writtenFiles) != 6 || payload["written_file_count"] != float64(6) {
 		t.Fatalf("unexpected written file count: %#v", payload)
 	}
 	desktopEntryPath := filepath.Join(stagingRoot, "usr/share/applications/xnix-org.example.ledger.desktop")
@@ -77,13 +77,25 @@ func TestDesktopActivationStageCommandWritesOnlyInsideStagingRoot(t *testing.T) 
 	if !bytes.Contains(desktopEntry, []byte("Exec=xnix-compat-launch --app org.example.ledger %U\n")) {
 		t.Fatalf("unexpected desktop entry:\n%s", desktopEntry)
 	}
+	launcherArtifactPath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json")
+	launcherArtifact, err := os.ReadFile(launcherArtifactPath)
+	if err != nil {
+		t.Fatalf("managed launcher artifact was not staged: %v", err)
+	}
+	if !bytes.Contains(launcherArtifact, []byte(`"command": "xnix-compat-launch"`)) ||
+		!bytes.Contains(launcherArtifact, []byte(`"source_package": "cmd/xnix-compat-launch"`)) ||
+		!bytes.Contains(launcherArtifact, []byte(`"runtime_method": "PreviewKnownPortableLaunchBridge"`)) ||
+		!bytes.Contains(launcherArtifact, []byte(`"binary_copied": false`)) {
+		t.Fatalf("unexpected managed launcher artifact:\n%s", launcherArtifact)
+	}
 	receiptPath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json")
 	receipt, err := os.ReadFile(receiptPath)
 	if err != nil {
 		t.Fatalf("receipt was not staged: %v", err)
 	}
 	if !bytes.Contains(receipt, []byte(`"requires_matching_sha256": true`)) ||
-		!bytes.Contains(receipt, []byte(`"host_root_modified": false`)) {
+		!bytes.Contains(receipt, []byte(`"host_root_modified": false`)) ||
+		!bytes.Contains(receipt, []byte(`"id": "managed-launcher-artifact"`)) {
 		t.Fatalf("unexpected receipt:\n%s", receipt)
 	}
 }
