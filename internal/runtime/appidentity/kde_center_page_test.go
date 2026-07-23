@@ -502,6 +502,103 @@ func TestKDECenterPagePreviewConsumesExecutionSessionRecord(t *testing.T) {
 	}
 }
 
+func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.example.ledger",
+		Name:                "Example Ledger",
+		Icon:                "office-chart-area",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".xls"},
+	}
+	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", []string{"file:///home/test/Documents/book.xls"}, KDECenterPageOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                 "7zr",
+			DisplayName:                           "7-Zip Console",
+			AppVersion:                            "26.02",
+			EvidenceSource:                        "staged-launcher-dispatch-smoke",
+			SmokeStatus:                           "passed",
+			MarkerObserved:                        true,
+			ChecksumVerified:                      true,
+			LaunchAuthorizationReceiptState:       "recorded",
+			LaunchAuthorizationReceiptID:          KnownAppLaunchAuthorizationReceiptID("7zr", "26.02"),
+			LaunchGateConsumed:                    true,
+			LaunchGateReceiptAccepted:             true,
+			LaunchGateGuestBoundaryAccepted:       true,
+			ControlledDispatchReady:               true,
+			ControlledExecutionSessionID:          KnownAppControlledExecutionSessionID("7zr", "26.02"),
+			LauncherSessionGateConsumed:           true,
+			LauncherSessionDigestVerified:         true,
+			LauncherSessionRelativePath:           "execution-ledger/sessions/" + KnownAppControlledExecutionSessionID("7zr", "26.02") + ".json",
+			LauncherSessionRuntimeOwnerConsumable: true,
+			LauncherSessionKDEReadModelConsumable: true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+
+	if preview.Source != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview+known-app-session-gate-evidence" {
+		t.Fatalf("unexpected known app session-gated source: %s", preview.Source)
+	}
+	if preview.KnownAppSessionGateEvidenceCount != 1 ||
+		preview.KnownAppLauncherSessionGateConsumedCount != 1 ||
+		len(preview.KnownAppSessionGateCards) != 1 {
+		t.Fatalf("unexpected known app session gate counts: %#v", preview)
+	}
+	card := preview.KnownAppSessionGateCards[0]
+	if card.AppID != "7zr" ||
+		card.DisplayName != "7-Zip Console" ||
+		card.AppVersion != "26.02" ||
+		card.CompatibilityState != "validated" ||
+		card.CenterCardState != "validated-session-gated-dispatch" ||
+		card.ControlledExecutionSessionID != KnownAppControlledExecutionSessionID("7zr", "26.02") ||
+		!card.LauncherSessionGateConsumed ||
+		!card.LauncherSessionDigestVerified ||
+		card.LauncherSessionRelativePath != "execution-ledger/sessions/"+KnownAppControlledExecutionSessionID("7zr", "26.02")+".json" ||
+		!card.RuntimeOwnerConsumableSession ||
+		!card.KDEReadModelConsumableSession ||
+		!card.LaunchGateConsumed ||
+		!card.ControlledDispatchReady ||
+		card.PrimaryActionID != "review-session-gated-dispatch" ||
+		card.PrimaryActionKind != "session-gate-review" ||
+		!card.PrimaryActionEnabled ||
+		!card.UserVisible ||
+		!card.RuntimeOwned ||
+		!card.GoRuntimeBacked ||
+		card.KDEPolicyOwner ||
+		card.DesktopLaunchEnabled ||
+		card.BackendLaunchEnabled ||
+		card.HostRootModified ||
+		card.BackendDetailsExposed {
+		t.Fatalf("unexpected known app session gate card: %#v", card)
+	}
+	if preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.BackendProcessStarted ||
+		preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("known app session-gated center page must remain gated: %#v", preview)
+	}
+
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "virtual machine", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("KDE center page known app session gate preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func writeKDECenterActivationReceipt(t *testing.T, root string, applicationID string) {
 	t.Helper()
 	relativePath := filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json")

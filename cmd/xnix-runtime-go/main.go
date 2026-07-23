@@ -2561,6 +2561,27 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	readinessArtifactReceipt := flags.String("readiness-artifact-receipt", "", "optional artifact stage receipt JSON file for application readiness evidence")
 	readinessPortalOperation := flags.String("readiness-portal-operation", "file-open", "Portal operation to evaluate for application readiness evidence")
 	readinessSnapshotReason := flags.String("readiness-snapshot-reason", "before-repair", "snapshot reason to evaluate for application readiness evidence")
+	knownAppSmokeApp := flags.String("known-app-smoke-app", "", "known Windows app id with redacted smoke evidence")
+	knownAppSmokeName := flags.String("known-app-smoke-name", "7-Zip Console", "known Windows app display name")
+	knownAppSmokeVersion := flags.String("known-app-smoke-version", "26.02", "known Windows app version")
+	knownAppSmokeSource := flags.String("known-app-smoke-source", "known-app-guest-smoke", "redacted known Windows app smoke evidence source")
+	knownAppSmokeStatus := flags.String("known-app-smoke-status", "", "known Windows app smoke status")
+	knownAppSmokeMarkerObserved := flags.Bool("known-app-smoke-marker-observed", false, "known Windows app marker observation result")
+	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
+	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
+	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
+	knownAppLaunchGateConsumed := flags.Bool("known-app-launch-gate-consumed", false, "known Windows app launch gate consumption result")
+	knownAppLaunchGateReceiptAccepted := flags.Bool("known-app-launch-gate-receipt-accepted", false, "known Windows app launch gate receipt acceptance result")
+	knownAppLaunchGateGuestBoundaryAccepted := flags.Bool("known-app-launch-gate-guest-boundary-accepted", false, "known Windows app launch gate guest boundary acceptance result")
+	knownAppControlledDispatchReady := flags.Bool("known-app-controlled-dispatch-ready", false, "known Windows app controlled dispatch readiness result")
+	knownAppControlledExecutionSessionID := flags.String("known-app-controlled-execution-session-id", "", "opaque known Windows app controlled execution session id")
+	knownAppLauncherSessionGateConsumed := flags.Bool("known-app-launcher-session-gate-consumed", false, "known Windows app launcher-side session gate consumption result")
+	knownAppLauncherSessionDigestVerified := flags.Bool("known-app-launcher-session-digest-verified", false, "known Windows app launcher-side session digest verification result")
+	knownAppLauncherSessionRelativePath := flags.String("known-app-launcher-session-relative-path", "", "relative known Windows app launcher-side session evidence path")
+	knownAppLauncherSessionRuntimeOwnerConsumable := flags.Bool("known-app-launcher-session-runtime-owner-consumable", false, "known Windows app launcher-side Runtime-owner session consumption readiness")
+	knownAppLauncherSessionKDEReadModelConsumable := flags.Bool("known-app-launcher-session-kde-read-model-consumable", false, "known Windows app launcher-side KDE read-model session consumption readiness")
+	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
@@ -2587,6 +2608,32 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		}
 		receipt = &loaded
 	}
+	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
+	if *knownAppSmokeApp != "" || *knownAppSmokeStatus != "" {
+		knownAppSmokeEvidence = []appidentity.KnownAppSmokeEvidenceSummary{{
+			AppID:                                 *knownAppSmokeApp,
+			DisplayName:                           *knownAppSmokeName,
+			AppVersion:                            *knownAppSmokeVersion,
+			EvidenceSource:                        *knownAppSmokeSource,
+			SmokeStatus:                           *knownAppSmokeStatus,
+			LaunchAuthorizationReceiptState:       *knownAppLaunchAuthorizationReceiptState,
+			LaunchAuthorizationReceiptID:          *knownAppLaunchAuthorizationReceiptID,
+			LaunchGateState:                       *knownAppLaunchGateState,
+			LaunchGateConsumed:                    *knownAppLaunchGateConsumed,
+			LaunchGateReceiptAccepted:             *knownAppLaunchGateReceiptAccepted,
+			LaunchGateGuestBoundaryAccepted:       *knownAppLaunchGateGuestBoundaryAccepted,
+			ControlledDispatchReady:               *knownAppControlledDispatchReady,
+			ControlledExecutionSessionID:          *knownAppControlledExecutionSessionID,
+			LauncherSessionGateConsumed:           *knownAppLauncherSessionGateConsumed,
+			LauncherSessionDigestVerified:         *knownAppLauncherSessionDigestVerified,
+			LauncherSessionRelativePath:           *knownAppLauncherSessionRelativePath,
+			LauncherSessionRuntimeOwnerConsumable: *knownAppLauncherSessionRuntimeOwnerConsumable,
+			LauncherSessionKDEReadModelConsumable: *knownAppLauncherSessionKDEReadModelConsumable,
+			LaunchGateBlockedReason:               *knownAppLaunchGateBlockedReason,
+			MarkerObserved:                        *knownAppSmokeMarkerObserved,
+			ChecksumVerified:                      *knownAppSmokeChecksumVerified,
+		}}
+	}
 	return recipe, provenance, *decision, fileURIs, appidentity.KDECenterPageOptions{
 		ActivationRoot:                      *activationRoot,
 		ExecutionSessionRoot:                *sessionRoot,
@@ -2596,6 +2643,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		ApplicationReadinessArtifactReceipt: receipt,
 		ApplicationReadinessPortalOperation: *readinessPortalOperation,
 		ApplicationReadinessSnapshotReason:  *readinessSnapshotReason,
+		KnownAppSmokeEvidence:               knownAppSmokeEvidence,
 	}, nil
 }
 

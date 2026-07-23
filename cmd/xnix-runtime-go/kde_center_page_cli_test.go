@@ -97,3 +97,74 @@ func TestKDECenterPagePreviewCommandConsumesSessionRoot(t *testing.T) {
 	}
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
+
+func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	sessionID := "xnix-known-app-session-7zr-26-02"
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--registry", registryPath,
+		"--app", app,
+		"--decision", "approved",
+		"--known-app-smoke-app", "7zr",
+		"--known-app-smoke-name", "7-Zip Console",
+		"--known-app-smoke-version", "26.02",
+		"--known-app-smoke-source", "staged-launcher-dispatch-smoke",
+		"--known-app-smoke-status", "passed",
+		"--known-app-smoke-marker-observed",
+		"--known-app-smoke-checksum-verified",
+		"--known-app-launch-authorization-receipt-state", "recorded",
+		"--known-app-launch-authorization-receipt-id", "xnix-known-app-launch-authorization-7zr-26-02",
+		"--known-app-launch-gate-consumed",
+		"--known-app-launch-gate-receipt-accepted",
+		"--known-app-launch-gate-guest-boundary-accepted",
+		"--known-app-controlled-dispatch-ready",
+		"--known-app-controlled-execution-session-id", sessionID,
+		"--known-app-launcher-session-gate-consumed",
+		"--known-app-launcher-session-digest-verified",
+		"--known-app-launcher-session-relative-path", "execution-ledger/sessions/" + sessionID + ".json",
+		"--known-app-launcher-session-runtime-owner-consumable",
+		"--known-app-launcher-session-kde-read-model-consumable",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview+known-app-session-gate-evidence" ||
+		payload["known_app_session_gate_evidence_count"] != float64(1) ||
+		payload["known_app_launcher_session_gate_consumed_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected known app session gate page payload: %#v", payload)
+	}
+	cards := payload["known_app_session_gate_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected known app session gate cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "7zr" ||
+		card["center_card_state"] != "validated-session-gated-dispatch" ||
+		card["controlled_execution_session_id"] != sessionID ||
+		card["launcher_session_gate_consumed"] != true ||
+		card["launcher_session_digest_verified"] != true ||
+		card["launcher_session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
+		card["runtime_owner_consumable_session"] != true ||
+		card["kde_read_model_consumable_session"] != true ||
+		card["primary_action_id"] != "review-session-gated-dispatch" ||
+		card["primary_action_kind"] != "session-gate-review" ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false ||
+		card["backend_details_exposed"] != false {
+		t.Fatalf("unexpected known app session gate card: %#v", card)
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}

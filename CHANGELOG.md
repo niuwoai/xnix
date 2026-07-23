@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.606] - 2026-07-24
+
+### Added
+
+- Added KDE Center page read-model projection for session-gated known-app staged launcher evidence, including safe `known_app_session_gate_cards` with opaque controlled session ids, relative session evidence, digest verification, Runtime-owner consumability, and KDE read-model consumability.
+- Extended the staged managed launcher dispatch smoke to verify both Compatibility Center summary evidence and KDE Center page session-gated cards while keeping desktop launch, backend launch, backend details, host paths, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.605] - 2026-07-24
 
 ### Added

@@ -464,6 +464,53 @@ begin
     assert(center_evidence["backend_launch_enabled"] == false, "Compatibility Center evidence must not enable backend launch")
     assert(center_evidence["host_root_modified"] == false, "Compatibility Center evidence must not mutate the host root")
     assert_no_forbidden(center_preview_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Compatibility Center preview output")
+    kde_page_args = [
+      "go", "run", "./cmd/xnix-runtime-go",
+      "kde-center-page-preview",
+      "--registry", "runtime/recipes/registry.json",
+      "--app", "org.xnix.sample.notepad",
+      "--decision", "approved",
+      "--known-app-smoke-app", payload.fetch("app_id"),
+      "--known-app-smoke-name", payload.fetch("display_name"),
+      "--known-app-smoke-version", payload.fetch("app_version"),
+      "--known-app-smoke-source", "staged-launcher-dispatch-smoke",
+      "--known-app-smoke-status", "passed",
+      "--known-app-launch-authorization-receipt-state", "recorded",
+      "--known-app-launch-authorization-receipt-id", receipt_preview.fetch("receipt_id"),
+      "--known-app-launch-gate-state", launch_gate.fetch("launch_gate_state")
+    ]
+    kde_page_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
+    kde_page_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
+    kde_page_args << "--known-app-launch-gate-consumed" if controlled_dispatch["receipt_accepted"]
+    kde_page_args << "--known-app-launch-gate-receipt-accepted" if controlled_dispatch["receipt_accepted"]
+    kde_page_args << "--known-app-launch-gate-guest-boundary-accepted" if controlled_dispatch["guest_boundary_accepted"]
+    kde_page_args << "--known-app-controlled-dispatch-ready" if controlled_dispatch["controlled_dispatch_ready"]
+    kde_page_args.concat(["--known-app-controlled-execution-session-id", payload.fetch("controlled_execution_session_id")])
+    kde_page_args << "--known-app-launcher-session-gate-consumed" if payload["controlled_execution_session_consumed"]
+    kde_page_args << "--known-app-launcher-session-digest-verified" if payload["controlled_session_digest_verified"]
+    kde_page_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
+    kde_page_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
+    kde_page_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
+    kde_page_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
+    kde_page, kde_page_stdout = run_json(go_env, *kde_page_args)
+    assert(kde_page["known_app_session_gate_evidence_count"] == 1, "KDE Center page must receive known app session gate evidence")
+    assert(kde_page["known_app_launcher_session_gate_consumed_count"] == 1, "KDE Center page must count launcher-side session gate consumption")
+    kde_page_card = kde_page.fetch("known_app_session_gate_cards").first
+    assert(kde_page_card["center_card_state"] == "validated-session-gated-dispatch", "KDE Center page card must expose session-gated dispatch state")
+    assert(kde_page_card["controlled_execution_session_id"] == payload.fetch("controlled_execution_session_id"), "KDE Center page card must expose the opaque controlled execution session id")
+    assert(kde_page_card["launcher_session_gate_consumed"] == true, "KDE Center page card must expose launcher session gate consumption")
+    assert(kde_page_card["launcher_session_digest_verified"] == true, "KDE Center page card must expose launcher session digest verification")
+    assert(kde_page_card["launcher_session_relative_path"] == payload.fetch("controlled_session_relative_path"), "KDE Center page card must expose relative launcher session evidence")
+    assert(kde_page_card["runtime_owner_consumable_session"] == true, "KDE Center page card must expose Runtime-owner session consumption readiness")
+    assert(kde_page_card["kde_read_model_consumable_session"] == true, "KDE Center page card must expose KDE read-model session consumption readiness")
+    assert(kde_page_card["primary_action_id"] == "review-session-gated-dispatch", "KDE Center page card must expose session-gated dispatch review as the primary action")
+    assert(kde_page_card["primary_action_kind"] == "session-gate-review", "KDE Center page card must expose a session gate review action")
+    assert(kde_page_card["desktop_launch_enabled"] == false, "KDE Center page card must not enable desktop launch")
+    assert(kde_page_card["backend_launch_enabled"] == false, "KDE Center page card must not enable backend launch")
+    assert(kde_page_card["host_root_modified"] == false, "KDE Center page card must not mutate the host root")
+    assert(kde_page["launch_enabled"] == false, "KDE Center page must remain launch-gated")
+    assert(kde_page["execution_started"] == false, "KDE Center page must not start execution")
+    assert_no_forbidden(kde_page_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "KDE Center page preview output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"
