@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.619
+> Last updated: 2026-07-24 | Baseline: v0.2.620
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.619 by using the consumed Runtime-status launch evidence handoff as the input for the next `show-runtime-controlled-launch` action trigger, then prepare the v0.2.620 formal full Buildroot/QEMU checkpoint. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable writer and `known-app-kde-runtime-status-launch-evidence-preview` as the KDE-safe reader, move the staged 7zr lane closer to an actual desktop-triggered launch path, and preserve Runtime ownership, Go evidence normalization, no raw launcher output, no state-root path exposure, no backend details, no Docker socket mounts, no broad host mounts, and no host-root mutation.
+Continue from v0.2.620 by using the consumed Runtime-status launch evidence handoff as the input for a concrete `show-runtime-controlled-launch` action trigger, then move the staged 7zr lane closer to a real desktop-triggered launch path that can be exercised outside the smoke harness. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable writer and `known-app-kde-runtime-status-launch-evidence-preview` as the KDE-safe reader, preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.620 checkpoint completes a formal full Buildroot/QEMU validation boundary for the Runtime-status launch evidence handoff reader. Restricted full-smoke evidence in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log` shows the builder tools image, Runtime builder image, Buildroot serial/QEMU image, i386 Wine guest, pinned 7zr known Windows app, staged managed launcher dispatch smoke, QEMU guest real Windows app Wine smoke, and full QEMU serial smoke all passed while keeping Docker socket mounting and host-root mutation disabled.
 
 The v0.2.619 checkpoint adds `known-app-kde-runtime-status-launch-evidence-preview`, a Go-owned handoff reader for the Runtime-status launch projection. The reader consumes a safe relative handoff path or opaque evidence id from the Runtime state root, verifies the persisted digest, converts the projection back into normalized known-app smoke evidence, and exposes the `validated-post-review-dispatch` / `show-runtime-controlled-launch` / `runtime-status` desktop action state without exposing state-root paths, evidence absolute paths, raw launcher output, backend details, or launch execution. The staged launcher dispatch smoke now records and reads back the handoff before continuing to Center previews.
 

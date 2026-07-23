@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.619
+> Last updated: 2026-07-24 | Current version: v0.2.620
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.620 checkpoint completes the formal full Buildroot/QEMU validation boundary for the Runtime-status launch evidence handoff reader. The restricted full smoke built the `xnix-builder-tools:0.2.620` and `xnix-builder:0.2.620` images, rebuilt the serial QEMU system image and i386 Wine guest, verified the pinned 7zr known Windows app, passed the staged managed launcher dispatch smoke, passed the QEMU guest real Windows app Wine smoke, and passed the full build and QEMU serial smoke. Evidence was written to `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`; the report records `qemu_booted=true`, `wine_guest_built=true`, `known_app_smoke_passed=true`, `fixture_app_smoke_passed=true`, `docker_socket_mounted=false`, and `host_root_modified=false`. The next formal full checkpoint is v0.2.640.
 
 The v0.2.619 checkpoint makes the Runtime-status launch handoff readable by the next desktop-triggered Runtime action. `known-app-kde-runtime-status-launch-evidence-preview --state-root <root> --evidence-relative-path <relative>` reads the persisted projection, verifies its digest, converts it back into normalized known-app smoke evidence, and exposes the KDE-safe `show-runtime-controlled-launch` action without exposing state-root paths, absolute evidence paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, desktop launch, backend launch, execution start, or host-root mutation. The staged launcher dispatch smoke now records and consumes the Runtime-owned evidence handoff before continuing to Compatibility Center and KDE Center previews. v0.2.619 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

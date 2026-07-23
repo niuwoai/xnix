@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.620] - 2026-07-24
+
+### Changed
+
+- Recorded v0.2.620 as a twentieth small-version formal full Buildroot/QEMU validation checkpoint for the Runtime-status launch evidence handoff reader.
+- Captured restricted full-smoke evidence in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`, with Buildroot/QEMU boot, SSH/sshd serial evidence, the i386 Wine guest, the pinned 7zr known Windows app lane, staged managed launcher dispatch, and the fixture Windows app smoke all passing while Docker socket mounting and host-root mutation remained disabled.
+
 ## [0.2.619] - 2026-07-24
 
 ### Added
