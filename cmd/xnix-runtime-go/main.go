@@ -2348,6 +2348,12 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppLaunchGateReceiptAccepted := flags.Bool("known-app-launch-gate-receipt-accepted", false, "known Windows app launch gate receipt acceptance result")
 	knownAppLaunchGateGuestBoundaryAccepted := flags.Bool("known-app-launch-gate-guest-boundary-accepted", false, "known Windows app launch gate guest boundary acceptance result")
 	knownAppControlledDispatchReady := flags.Bool("known-app-controlled-dispatch-ready", false, "known Windows app controlled dispatch readiness result")
+	knownAppControlledExecutionSessionID := flags.String("known-app-controlled-execution-session-id", "", "opaque known Windows app controlled execution session id")
+	knownAppLauncherSessionGateConsumed := flags.Bool("known-app-launcher-session-gate-consumed", false, "known Windows app launcher-side session gate consumption result")
+	knownAppLauncherSessionDigestVerified := flags.Bool("known-app-launcher-session-digest-verified", false, "known Windows app launcher-side session digest verification result")
+	knownAppLauncherSessionRelativePath := flags.String("known-app-launcher-session-relative-path", "", "relative known Windows app launcher-side session evidence path")
+	knownAppLauncherSessionRuntimeOwnerConsumable := flags.Bool("known-app-launcher-session-runtime-owner-consumable", false, "known Windows app launcher-side Runtime-owner session consumption readiness")
+	knownAppLauncherSessionKDEReadModelConsumable := flags.Bool("known-app-launcher-session-kde-read-model-consumable", false, "known Windows app launcher-side KDE read-model session consumption readiness")
 	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
@@ -2367,21 +2373,27 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	options := appidentity.CompatibilityCenterOptions{}
 	if *knownAppSmokeApp != "" || *knownAppSmokeStatus != "" {
 		options.KnownAppSmokeEvidence = []appidentity.KnownAppSmokeEvidenceSummary{{
-			AppID:                           *knownAppSmokeApp,
-			DisplayName:                     *knownAppSmokeName,
-			AppVersion:                      *knownAppSmokeVersion,
-			EvidenceSource:                  *knownAppSmokeSource,
-			SmokeStatus:                     *knownAppSmokeStatus,
-			LaunchAuthorizationReceiptState: *knownAppLaunchAuthorizationReceiptState,
-			LaunchAuthorizationReceiptID:    *knownAppLaunchAuthorizationReceiptID,
-			LaunchGateState:                 *knownAppLaunchGateState,
-			LaunchGateConsumed:              *knownAppLaunchGateConsumed,
-			LaunchGateReceiptAccepted:       *knownAppLaunchGateReceiptAccepted,
-			LaunchGateGuestBoundaryAccepted: *knownAppLaunchGateGuestBoundaryAccepted,
-			ControlledDispatchReady:         *knownAppControlledDispatchReady,
-			LaunchGateBlockedReason:         *knownAppLaunchGateBlockedReason,
-			MarkerObserved:                  *knownAppSmokeMarkerObserved,
-			ChecksumVerified:                *knownAppSmokeChecksumVerified,
+			AppID:                                 *knownAppSmokeApp,
+			DisplayName:                           *knownAppSmokeName,
+			AppVersion:                            *knownAppSmokeVersion,
+			EvidenceSource:                        *knownAppSmokeSource,
+			SmokeStatus:                           *knownAppSmokeStatus,
+			LaunchAuthorizationReceiptState:       *knownAppLaunchAuthorizationReceiptState,
+			LaunchAuthorizationReceiptID:          *knownAppLaunchAuthorizationReceiptID,
+			LaunchGateState:                       *knownAppLaunchGateState,
+			LaunchGateConsumed:                    *knownAppLaunchGateConsumed,
+			LaunchGateReceiptAccepted:             *knownAppLaunchGateReceiptAccepted,
+			LaunchGateGuestBoundaryAccepted:       *knownAppLaunchGateGuestBoundaryAccepted,
+			ControlledDispatchReady:               *knownAppControlledDispatchReady,
+			ControlledExecutionSessionID:          *knownAppControlledExecutionSessionID,
+			LauncherSessionGateConsumed:           *knownAppLauncherSessionGateConsumed,
+			LauncherSessionDigestVerified:         *knownAppLauncherSessionDigestVerified,
+			LauncherSessionRelativePath:           *knownAppLauncherSessionRelativePath,
+			LauncherSessionRuntimeOwnerConsumable: *knownAppLauncherSessionRuntimeOwnerConsumable,
+			LauncherSessionKDEReadModelConsumable: *knownAppLauncherSessionKDEReadModelConsumable,
+			LaunchGateBlockedReason:               *knownAppLaunchGateBlockedReason,
+			MarkerObserved:                        *knownAppSmokeMarkerObserved,
+			ChecksumVerified:                      *knownAppSmokeChecksumVerified,
 		}}
 	}
 	return recipes, provenance, options, nil

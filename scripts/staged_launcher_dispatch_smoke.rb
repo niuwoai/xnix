@@ -420,6 +420,12 @@ begin
     center_preview_args << "--known-app-launch-gate-receipt-accepted" if controlled_dispatch["receipt_accepted"]
     center_preview_args << "--known-app-launch-gate-guest-boundary-accepted" if controlled_dispatch["guest_boundary_accepted"]
     center_preview_args << "--known-app-controlled-dispatch-ready" if controlled_dispatch["controlled_dispatch_ready"]
+    center_preview_args.concat(["--known-app-controlled-execution-session-id", payload.fetch("controlled_execution_session_id")])
+    center_preview_args << "--known-app-launcher-session-gate-consumed" if payload["controlled_execution_session_consumed"]
+    center_preview_args << "--known-app-launcher-session-digest-verified" if payload["controlled_session_digest_verified"]
+    center_preview_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
+    center_preview_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
+    center_preview_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
     center_preview_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
     assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")
@@ -429,12 +435,13 @@ begin
     assert(center_preview["known_app_launch_authorization_recorded_count"] == 1, "Compatibility Center must count recorded launch authorization receipts")
     assert(center_preview["known_app_launch_gate_consumed_count"] == 1, "Compatibility Center must count launch gate consumption")
     assert(center_preview["known_app_controlled_dispatch_ready_count"] == 1, "Compatibility Center must count controlled dispatch readiness")
+    assert(center_preview["known_app_launcher_session_gate_consumed_count"] == 1, "Compatibility Center must count launcher-side session gate consumption")
     center_evidence = center_preview.fetch("known_app_smoke_evidence").first
     assert(center_evidence["evidence_source"] == "staged-launcher-dispatch-smoke", "Compatibility Center evidence must identify the staged launcher source")
-    assert(center_evidence["center_card_state"] == "validated-launch-gate-consumed", "Compatibility Center evidence must expose launch-gate-consumed card state")
+    assert(center_evidence["center_card_state"] == "validated-session-gated-dispatch", "Compatibility Center evidence must expose session-gated dispatch card state")
     assert(center_evidence["launch_authorization_state"] == "recorded", "Compatibility Center evidence must expose recorded launch authorization state")
-    assert(center_evidence["primary_action_id"] == "review-controlled-dispatch", "Compatibility Center evidence must expose controlled dispatch review as the primary action")
-    assert(center_evidence["primary_action_kind"] == "launch-gate-review", "Compatibility Center evidence must expose a launch gate review action")
+    assert(center_evidence["primary_action_id"] == "review-session-gated-dispatch", "Compatibility Center evidence must expose session-gated dispatch review as the primary action")
+    assert(center_evidence["primary_action_kind"] == "session-gate-review", "Compatibility Center evidence must expose a session gate review action")
     assert(center_evidence["primary_action_enabled"] == true, "Compatibility Center evidence must allow the safe launch gate review action")
     assert(center_evidence["direct_launch_enabled"] == false, "Compatibility Center evidence must not enable direct launch")
     assert(center_evidence["launch_authorization_receipt_state"] == "recorded", "Compatibility Center evidence must expose recorded receipt state")
@@ -444,6 +451,12 @@ begin
     assert(center_evidence["launch_gate_receipt_accepted"] == true, "Compatibility Center evidence must expose receipt acceptance")
     assert(center_evidence["launch_gate_guest_boundary_accepted"] == true, "Compatibility Center evidence must expose guest boundary acceptance")
     assert(center_evidence["controlled_dispatch_ready"] == true, "Compatibility Center evidence must expose controlled dispatch readiness")
+    assert(center_evidence["controlled_execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Compatibility Center evidence must expose the opaque controlled execution session id")
+    assert(center_evidence["launcher_session_gate_consumed"] == true, "Compatibility Center evidence must expose launcher-side session gate consumption")
+    assert(center_evidence["launcher_session_digest_verified"] == true, "Compatibility Center evidence must expose launcher-side session digest verification")
+    assert(center_evidence["launcher_session_relative_path"] == payload.fetch("controlled_session_relative_path"), "Compatibility Center evidence must expose relative launcher session evidence")
+    assert(center_evidence["launcher_session_runtime_owner_consumable"] == true, "Compatibility Center evidence must expose Runtime-owner session consumption readiness")
+    assert(center_evidence["launcher_session_kde_read_model_consumable"] == true, "Compatibility Center evidence must expose KDE read-model session consumption readiness")
     assert(center_evidence["staged_launcher_verified"] == true, "Compatibility Center evidence must verify the staged launcher path")
     assert(center_evidence["runtime_dispatch_verified"] == true, "Compatibility Center evidence must verify Runtime dispatch")
     assert(center_evidence["launch_authorization_required"] == true, "Compatibility Center evidence must keep launch authorization required")

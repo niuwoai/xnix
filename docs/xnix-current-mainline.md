@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.604
+> Last updated: 2026-07-24 | Baseline: v0.2.605
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.604 by projecting launcher-side controlled session consumption into the Compatibility Center staged launcher evidence so KDE can show that the real staged 7zr dispatch lane was guarded by a digest-verified Runtime session gate. The next implementation should preserve the passing staged 7zr QEMU/Wine lane and keep the Go managed launcher as the execution-side gate owner. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from v0.2.605 by carrying the session-gated staged launcher evidence from the Compatibility Center summary into the KDE Center page/card read models so the desktop surface can show the real staged 7zr dispatch lane was guarded by a digest-verified Runtime session gate. The next implementation should preserve the passing staged 7zr QEMU/Wine lane and keep the Go managed launcher as the execution-side gate owner. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.605 checkpoint projects launcher-side controlled session consumption into `compatibility-center-preview`. Known-app staged launcher evidence now carries the opaque controlled session id, relative session evidence path, launcher-side session gate consumption, session digest verification, Runtime-owner session consumability, KDE read-model consumability, `known_app_launcher_session_gate_consumed_count`, and the `validated-session-gated-dispatch` card state. The staged launcher dispatch smoke feeds the final launcher-side session gate fields into the Center preview and verifies that desktop launch, backend launch, path exposure, Docker socket mounts, broad host mounts, and host-root mutation remain disabled.
 
 The v0.2.604 checkpoint updates the Go `xnix-compat-launch` dispatch path so a controlled managed-guest dispatch consumes `PreviewKnownAppControlledExecutionSessionConsumption` before invoking `RunKnownPortableDispatchSmoke`. The staged launcher dispatch smoke now passes the opaque session id into the staged launcher and verifies final dispatch output fields for `controlled_execution_session_consumed`, digest verification, relative session evidence, Runtime-owner session consumption readiness, KDE read-model session consumption readiness, and disabled session-side live observation, session registration, window observation, backend process starts, and host-root mutation.
 

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.605] - 2026-07-24
+
+### Added
+
+- Extended Compatibility Center known-app staged launcher evidence with launcher-side controlled session gate consumption fields, including opaque session id, relative session evidence, digest verification, Runtime-owner consumability, and KDE read-model consumability.
+- Updated the staged managed launcher dispatch smoke to pass launcher session gate evidence into `compatibility-center-preview` and verify the new session-gated card state while keeping desktop launch, backend launch, path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.604] - 2026-07-24
 
 ### Added

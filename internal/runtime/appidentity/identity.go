@@ -790,6 +790,7 @@ type CompatibilityCenterPreview struct {
 	KnownAppLaunchAuthorizationRecordedCount int                            `json:"known_app_launch_authorization_recorded_count"`
 	KnownAppLaunchGateConsumedCount          int                            `json:"known_app_launch_gate_consumed_count"`
 	KnownAppControlledDispatchReadyCount     int                            `json:"known_app_controlled_dispatch_ready_count"`
+	KnownAppLauncherSessionGateConsumedCount int                            `json:"known_app_launcher_session_gate_consumed_count"`
 	Applications                             []CompatibilityCenterApp       `json:"applications"`
 	KnownAppSmokeEvidence                    []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
 	ActionExecutionEnabled                   bool                           `json:"action_execution_enabled"`
@@ -829,44 +830,50 @@ type CompatibilityCenterApp struct {
 }
 
 type KnownAppSmokeEvidenceSummary struct {
-	AppID                              string `json:"app_id"`
-	DisplayName                        string `json:"display_name"`
-	AppVersion                         string `json:"app_version"`
-	EvidenceKind                       string `json:"evidence_kind"`
-	EvidenceSource                     string `json:"evidence_source"`
-	SmokeStatus                        string `json:"smoke_status"`
-	CompatibilityState                 string `json:"compatibility_state"`
-	CenterCardState                    string `json:"center_card_state"`
-	LaunchAuthorizationState           string `json:"launch_authorization_state"`
-	PrimaryActionID                    string `json:"primary_action_id"`
-	PrimaryActionLabel                 string `json:"primary_action_label"`
-	PrimaryActionKind                  string `json:"primary_action_kind"`
-	PrimaryActionEnabled               bool   `json:"primary_action_enabled"`
-	DirectLaunchEnabled                bool   `json:"direct_launch_enabled"`
-	LaunchAuthorizationReceiptRequired bool   `json:"launch_authorization_receipt_required"`
-	LaunchAuthorizationReceiptState    string `json:"launch_authorization_receipt_state"`
-	LaunchAuthorizationReceiptID       string `json:"launch_authorization_receipt_id"`
-	LaunchGateState                    string `json:"launch_gate_state"`
-	LaunchGateConsumed                 bool   `json:"launch_gate_consumed"`
-	LaunchGateReceiptAccepted          bool   `json:"launch_gate_receipt_accepted"`
-	LaunchGateGuestBoundaryAccepted    bool   `json:"launch_gate_guest_boundary_accepted"`
-	LaunchGateBlockedReason            string `json:"launch_gate_blocked_reason,omitempty"`
-	ControlledDispatchReady            bool   `json:"controlled_dispatch_ready"`
-	MarkerObserved                     bool   `json:"marker_observed"`
-	ChecksumVerified                   bool   `json:"checksum_verified"`
-	ExecutionEvidenceRecorded          bool   `json:"execution_evidence_recorded"`
-	StagedLauncherVerified             bool   `json:"staged_launcher_verified"`
-	RuntimeDispatchVerified            bool   `json:"runtime_dispatch_verified"`
-	LaunchAuthorizationRequired        bool   `json:"launch_authorization_required"`
-	DesktopLaunchEnabled               bool   `json:"desktop_launch_enabled"`
-	RuntimeOwned                       bool   `json:"runtime_owned"`
-	KDEPolicyOwner                     bool   `json:"kde_policy_owner"`
-	ActionExecutionEnabled             bool   `json:"action_execution_enabled"`
-	BackendLaunchEnabled               bool   `json:"backend_launch_enabled"`
-	HostRootModified                   bool   `json:"host_root_modified"`
-	BackendDetailsExposed              bool   `json:"backend_details_exposed"`
-	RawArtifactPathExposed             bool   `json:"raw_artifact_path_exposed"`
-	Summary                            string `json:"summary"`
+	AppID                                 string `json:"app_id"`
+	DisplayName                           string `json:"display_name"`
+	AppVersion                            string `json:"app_version"`
+	EvidenceKind                          string `json:"evidence_kind"`
+	EvidenceSource                        string `json:"evidence_source"`
+	SmokeStatus                           string `json:"smoke_status"`
+	CompatibilityState                    string `json:"compatibility_state"`
+	CenterCardState                       string `json:"center_card_state"`
+	LaunchAuthorizationState              string `json:"launch_authorization_state"`
+	PrimaryActionID                       string `json:"primary_action_id"`
+	PrimaryActionLabel                    string `json:"primary_action_label"`
+	PrimaryActionKind                     string `json:"primary_action_kind"`
+	PrimaryActionEnabled                  bool   `json:"primary_action_enabled"`
+	DirectLaunchEnabled                   bool   `json:"direct_launch_enabled"`
+	LaunchAuthorizationReceiptRequired    bool   `json:"launch_authorization_receipt_required"`
+	LaunchAuthorizationReceiptState       string `json:"launch_authorization_receipt_state"`
+	LaunchAuthorizationReceiptID          string `json:"launch_authorization_receipt_id"`
+	LaunchGateState                       string `json:"launch_gate_state"`
+	LaunchGateConsumed                    bool   `json:"launch_gate_consumed"`
+	LaunchGateReceiptAccepted             bool   `json:"launch_gate_receipt_accepted"`
+	LaunchGateGuestBoundaryAccepted       bool   `json:"launch_gate_guest_boundary_accepted"`
+	LaunchGateBlockedReason               string `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchReady               bool   `json:"controlled_dispatch_ready"`
+	ControlledExecutionSessionID          string `json:"controlled_execution_session_id"`
+	LauncherSessionGateConsumed           bool   `json:"launcher_session_gate_consumed"`
+	LauncherSessionDigestVerified         bool   `json:"launcher_session_digest_verified"`
+	LauncherSessionRelativePath           string `json:"launcher_session_relative_path"`
+	LauncherSessionRuntimeOwnerConsumable bool   `json:"launcher_session_runtime_owner_consumable"`
+	LauncherSessionKDEReadModelConsumable bool   `json:"launcher_session_kde_read_model_consumable"`
+	MarkerObserved                        bool   `json:"marker_observed"`
+	ChecksumVerified                      bool   `json:"checksum_verified"`
+	ExecutionEvidenceRecorded             bool   `json:"execution_evidence_recorded"`
+	StagedLauncherVerified                bool   `json:"staged_launcher_verified"`
+	RuntimeDispatchVerified               bool   `json:"runtime_dispatch_verified"`
+	LaunchAuthorizationRequired           bool   `json:"launch_authorization_required"`
+	DesktopLaunchEnabled                  bool   `json:"desktop_launch_enabled"`
+	RuntimeOwned                          bool   `json:"runtime_owned"`
+	KDEPolicyOwner                        bool   `json:"kde_policy_owner"`
+	ActionExecutionEnabled                bool   `json:"action_execution_enabled"`
+	BackendLaunchEnabled                  bool   `json:"backend_launch_enabled"`
+	HostRootModified                      bool   `json:"host_root_modified"`
+	BackendDetailsExposed                 bool   `json:"backend_details_exposed"`
+	RawArtifactPathExposed                bool   `json:"raw_artifact_path_exposed"`
+	Summary                               string `json:"summary"`
 }
 
 type CompatibilityCenterOptions struct {
@@ -2545,6 +2552,7 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 		KnownAppLaunchAuthorizationRecordedCount: countLaunchAuthorizationRecordedKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppLaunchGateConsumedCount:          countLaunchGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppControlledDispatchReadyCount:     countControlledDispatchReadyKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLauncherSessionGateConsumedCount: countLauncherSessionGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppSmokeEvidence:                    knownAppEvidence,
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
@@ -2578,6 +2586,10 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 	if preview.KnownAppLaunchGateConsumedCount > 0 {
 		preview.Summary.Headline = "A known Windows application has passed the Runtime launch gate."
 		preview.Summary.Detail = "KDE can show the launch-gate result, while dispatch and backend launch remain Runtime-controlled."
+	}
+	if preview.KnownAppLauncherSessionGateConsumedCount > 0 {
+		preview.Summary.Headline = "A known Windows application dispatch was guarded by a Runtime session gate."
+		preview.Summary.Detail = "KDE can show that the staged launcher consumed digest-verified session evidence before dispatch while execution remains Runtime-controlled."
 	}
 	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
 		return CompatibilityCenterPreview{}, err
@@ -2696,10 +2708,31 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	if launchGateState == "controlled-dispatch-ready" && !item.ControlledDispatchReady {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app controlled dispatch ready state requires controlled dispatch readiness evidence")
 	}
+	sessionID := strings.TrimSpace(item.ControlledExecutionSessionID)
+	sessionRelativePath := strings.TrimSpace(item.LauncherSessionRelativePath)
+	if item.LauncherSessionGateConsumed {
+		if !item.LauncherSessionDigestVerified || !item.LauncherSessionRuntimeOwnerConsumable || !item.LauncherSessionKDEReadModelConsumable {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires digest-verified Runtime-owner and KDE read-model evidence")
+		}
+		if !item.ControlledDispatchReady || !item.LaunchGateConsumed || !item.LaunchGateReceiptAccepted || !item.LaunchGateGuestBoundaryAccepted {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires controlled dispatch readiness")
+		}
+		if sessionID == "" {
+			sessionID = KnownAppControlledExecutionSessionID(appID, appVersion)
+		}
+		if sessionRelativePath == "" || strings.HasPrefix(sessionRelativePath, "/") || strings.Contains(sessionRelativePath, "..") || !strings.HasPrefix(sessionRelativePath, "execution-ledger/sessions/") {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires safe relative session evidence")
+		}
+	} else if item.LauncherSessionDigestVerified || item.LauncherSessionRuntimeOwnerConsumable || item.LauncherSessionKDEReadModelConsumable || sessionID != "" || sessionRelativePath != "" {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate evidence requires consumed session gate")
+	}
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
 	stagedLauncherVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
 	runtimeDispatchVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
+	if item.LauncherSessionGateConsumed && !stagedLauncherVerified {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires passed staged launcher evidence")
+	}
 	if passed {
 		compatibilityState = "validated"
 		centerCardState = "validated"
@@ -2736,46 +2769,61 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 			summary = displayName + " launch gate accepted the receipt and controlled boundary; dispatch remains Runtime-controlled."
 		}
 	}
+	if stagedLauncherVerified && item.LauncherSessionGateConsumed {
+		centerCardState = "validated-session-gated-dispatch"
+		launchAuthorizationState = "recorded"
+		primaryActionID = "review-session-gated-dispatch"
+		primaryActionLabel = "Review session-gated dispatch"
+		primaryActionKind = "session-gate-review"
+		launchGateState = "controlled-dispatch-ready"
+		summary = displayName + " staged dispatch consumed a digest-verified Runtime session gate before execution."
+	}
 
 	return KnownAppSmokeEvidenceSummary{
-		AppID:                              appID,
-		DisplayName:                        displayName,
-		AppVersion:                         appVersion,
-		EvidenceKind:                       "known-application-managed-smoke",
-		EvidenceSource:                     evidenceSource,
-		SmokeStatus:                        status,
-		CompatibilityState:                 compatibilityState,
-		CenterCardState:                    centerCardState,
-		LaunchAuthorizationState:           launchAuthorizationState,
-		PrimaryActionID:                    primaryActionID,
-		PrimaryActionLabel:                 primaryActionLabel,
-		PrimaryActionKind:                  primaryActionKind,
-		PrimaryActionEnabled:               true,
-		DirectLaunchEnabled:                false,
-		LaunchAuthorizationReceiptRequired: true,
-		LaunchAuthorizationReceiptState:    receiptState,
-		LaunchAuthorizationReceiptID:       receiptID,
-		LaunchGateState:                    launchGateState,
-		LaunchGateConsumed:                 item.LaunchGateConsumed,
-		LaunchGateReceiptAccepted:          item.LaunchGateReceiptAccepted,
-		LaunchGateGuestBoundaryAccepted:    item.LaunchGateGuestBoundaryAccepted,
-		LaunchGateBlockedReason:            launchGateBlockedReason,
-		ControlledDispatchReady:            item.ControlledDispatchReady,
-		MarkerObserved:                     item.MarkerObserved,
-		ChecksumVerified:                   item.ChecksumVerified,
-		ExecutionEvidenceRecorded:          true,
-		StagedLauncherVerified:             stagedLauncherVerified,
-		RuntimeDispatchVerified:            runtimeDispatchVerified,
-		LaunchAuthorizationRequired:        true,
-		DesktopLaunchEnabled:               false,
-		RuntimeOwned:                       true,
-		KDEPolicyOwner:                     false,
-		ActionExecutionEnabled:             false,
-		BackendLaunchEnabled:               false,
-		HostRootModified:                   false,
-		BackendDetailsExposed:              false,
-		RawArtifactPathExposed:             false,
-		Summary:                            summary,
+		AppID:                                 appID,
+		DisplayName:                           displayName,
+		AppVersion:                            appVersion,
+		EvidenceKind:                          "known-application-managed-smoke",
+		EvidenceSource:                        evidenceSource,
+		SmokeStatus:                           status,
+		CompatibilityState:                    compatibilityState,
+		CenterCardState:                       centerCardState,
+		LaunchAuthorizationState:              launchAuthorizationState,
+		PrimaryActionID:                       primaryActionID,
+		PrimaryActionLabel:                    primaryActionLabel,
+		PrimaryActionKind:                     primaryActionKind,
+		PrimaryActionEnabled:                  true,
+		DirectLaunchEnabled:                   false,
+		LaunchAuthorizationReceiptRequired:    true,
+		LaunchAuthorizationReceiptState:       receiptState,
+		LaunchAuthorizationReceiptID:          receiptID,
+		LaunchGateState:                       launchGateState,
+		LaunchGateConsumed:                    item.LaunchGateConsumed,
+		LaunchGateReceiptAccepted:             item.LaunchGateReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted:       item.LaunchGateGuestBoundaryAccepted,
+		LaunchGateBlockedReason:               launchGateBlockedReason,
+		ControlledDispatchReady:               item.ControlledDispatchReady,
+		ControlledExecutionSessionID:          sessionID,
+		LauncherSessionGateConsumed:           item.LauncherSessionGateConsumed,
+		LauncherSessionDigestVerified:         item.LauncherSessionDigestVerified,
+		LauncherSessionRelativePath:           sessionRelativePath,
+		LauncherSessionRuntimeOwnerConsumable: item.LauncherSessionRuntimeOwnerConsumable,
+		LauncherSessionKDEReadModelConsumable: item.LauncherSessionKDEReadModelConsumable,
+		MarkerObserved:                        item.MarkerObserved,
+		ChecksumVerified:                      item.ChecksumVerified,
+		ExecutionEvidenceRecorded:             true,
+		StagedLauncherVerified:                stagedLauncherVerified,
+		RuntimeDispatchVerified:               runtimeDispatchVerified,
+		LaunchAuthorizationRequired:           true,
+		DesktopLaunchEnabled:                  false,
+		RuntimeOwned:                          true,
+		KDEPolicyOwner:                        false,
+		ActionExecutionEnabled:                false,
+		BackendLaunchEnabled:                  false,
+		HostRootModified:                      false,
+		BackendDetailsExposed:                 false,
+		RawArtifactPathExposed:                false,
+		Summary:                               summary,
 	}, nil
 }
 
@@ -2833,6 +2881,16 @@ func countControlledDispatchReadyKnownAppSmokeEvidence(items []KnownAppSmokeEvid
 	count := 0
 	for _, item := range items {
 		if item.ControlledDispatchReady {
+			count++
+		}
+	}
+	return count
+}
+
+func countLauncherSessionGateConsumedKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.LauncherSessionGateConsumed && item.LauncherSessionDigestVerified && item.LauncherSessionRuntimeOwnerConsumable && item.LauncherSessionKDEReadModelConsumable {
 			count++
 		}
 	}

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.604
+> Last updated: 2026-07-24 | Current version: v0.2.605
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.605 checkpoint projects launcher-side controlled session consumption into the KDE-safe Compatibility Center staged launcher evidence. `compatibility-center-preview` now accepts and normalizes opaque controlled session ids, relative session evidence paths, launcher-side session gate consumption, session digest verification, Runtime-owner session consumability, and KDE read-model consumability; it counts session-gated staged launcher dispatches and shows the `validated-session-gated-dispatch` card state. The staged launcher dispatch smoke passes the final launcher JSON fields into that Center evidence while keeping desktop launch, backend launch, raw artifact paths, state-root paths, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.605 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.604 checkpoint moves controlled session consumption into the Go managed launcher itself. When `xnix-compat-launch --app 7zr --guest-boundary managed-known-app-guest-smoke --state-root <path> --receipt-id <opaque-id> [--session-id <opaque-id>]` reaches a materialized dispatch request, it now consumes the digest-verified controlled execution session before invoking the existing staged QEMU/Wine 7zr dispatch lane. The final dispatch result carries launcher-side session consumption evidence while keeping state-root path exposure, live session registration, window observation, task-manager activation, KWin rule application, tray bridge activation, direct launch, desktop launch, backend process start from the session gate, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.604 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

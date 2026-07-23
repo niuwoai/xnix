@@ -99,6 +99,12 @@ func TestCompatibilityCenterPreviewCommandAcceptsKnownAppLaunchGateState(t *test
 		"--known-app-launch-gate-receipt-accepted",
 		"--known-app-launch-gate-guest-boundary-accepted",
 		"--known-app-controlled-dispatch-ready",
+		"--known-app-controlled-execution-session-id", "known-app-controlled-execution-session-7zr-26.02",
+		"--known-app-launcher-session-gate-consumed",
+		"--known-app-launcher-session-digest-verified",
+		"--known-app-launcher-session-relative-path", "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
+		"--known-app-launcher-session-runtime-owner-consumable",
+		"--known-app-launcher-session-kde-read-model-consumable",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -109,19 +115,27 @@ func TestCompatibilityCenterPreviewCommandAcceptsKnownAppLaunchGateState(t *test
 	}
 	if payload["known_app_launch_gate_consumed_count"] != float64(1) ||
 		payload["known_app_controlled_dispatch_ready_count"] != float64(1) ||
+		payload["known_app_launcher_session_gate_consumed_count"] != float64(1) ||
 		payload["backend_launch_enabled"] != false ||
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected Compatibility Center launch gate summary: %#v", payload)
 	}
 	evidenceItems := payload["known_app_smoke_evidence"].([]any)
 	evidence := evidenceItems[0].(map[string]any)
-	if evidence["center_card_state"] != "validated-launch-gate-consumed" ||
-		evidence["primary_action_id"] != "review-controlled-dispatch" ||
+	if evidence["center_card_state"] != "validated-session-gated-dispatch" ||
+		evidence["primary_action_id"] != "review-session-gated-dispatch" ||
+		evidence["primary_action_kind"] != "session-gate-review" ||
 		evidence["launch_gate_state"] != "controlled-dispatch-ready" ||
 		evidence["launch_gate_consumed"] != true ||
 		evidence["launch_gate_receipt_accepted"] != true ||
 		evidence["launch_gate_guest_boundary_accepted"] != true ||
 		evidence["controlled_dispatch_ready"] != true ||
+		evidence["controlled_execution_session_id"] != "known-app-controlled-execution-session-7zr-26.02" ||
+		evidence["launcher_session_gate_consumed"] != true ||
+		evidence["launcher_session_digest_verified"] != true ||
+		evidence["launcher_session_relative_path"] != "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json" ||
+		evidence["launcher_session_runtime_owner_consumable"] != true ||
+		evidence["launcher_session_kde_read_model_consumable"] != true ||
 		evidence["direct_launch_enabled"] != false ||
 		evidence["desktop_launch_enabled"] != false ||
 		evidence["backend_launch_enabled"] != false {

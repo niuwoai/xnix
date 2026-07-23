@@ -1700,6 +1700,83 @@ func TestCompatibilityCenterPreviewSummarizesConsumedKnownAppLaunchGate(t *testi
 	}
 }
 
+func TestCompatibilityCenterPreviewSummarizesLauncherSessionGateConsumption(t *testing.T) {
+	preview, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                 "7zr",
+			DisplayName:                           "7-Zip Console",
+			AppVersion:                            "26.02",
+			EvidenceSource:                        "staged-launcher-dispatch-smoke",
+			SmokeStatus:                           "passed",
+			LaunchAuthorizationReceiptState:       "recorded",
+			LaunchAuthorizationReceiptID:          "known-app-launch-authorization-7zr-26.02",
+			LaunchGateState:                       "controlled-dispatch-ready",
+			LaunchGateConsumed:                    true,
+			LaunchGateReceiptAccepted:             true,
+			LaunchGateGuestBoundaryAccepted:       true,
+			ControlledDispatchReady:               true,
+			ControlledExecutionSessionID:          "known-app-controlled-execution-session-7zr-26.02",
+			LauncherSessionGateConsumed:           true,
+			LauncherSessionDigestVerified:         true,
+			LauncherSessionRelativePath:           "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
+			LauncherSessionRuntimeOwnerConsumable: true,
+			LauncherSessionKDEReadModelConsumable: true,
+			MarkerObserved:                        true,
+			ChecksumVerified:                      true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreviewWithOptions returned error: %v", err)
+	}
+	if preview.KnownAppSmokeEvidenceCount != 1 ||
+		preview.KnownAppSmokePassedCount != 1 ||
+		preview.KnownAppStagedLauncherPassedCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRecordedCount != 1 ||
+		preview.KnownAppLaunchGateConsumedCount != 1 ||
+		preview.KnownAppControlledDispatchReadyCount != 1 ||
+		preview.KnownAppLauncherSessionGateConsumedCount != 1 ||
+		preview.Summary.Headline != "A known Windows application dispatch was guarded by a Runtime session gate." {
+		t.Fatalf("unexpected launcher session gate counts: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence[0]
+	if evidence.CenterCardState != "validated-session-gated-dispatch" ||
+		evidence.PrimaryActionID != "review-session-gated-dispatch" ||
+		evidence.PrimaryActionLabel != "Review session-gated dispatch" ||
+		evidence.PrimaryActionKind != "session-gate-review" ||
+		evidence.ControlledExecutionSessionID != "known-app-controlled-execution-session-7zr-26.02" ||
+		!evidence.LauncherSessionGateConsumed ||
+		!evidence.LauncherSessionDigestVerified ||
+		evidence.LauncherSessionRelativePath != "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json" ||
+		!evidence.LauncherSessionRuntimeOwnerConsumable ||
+		!evidence.LauncherSessionKDEReadModelConsumable ||
+		evidence.DirectLaunchEnabled ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected launcher session gate evidence: %#v", evidence)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center session gate evidence exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestCompatibilityCenterPreviewRejectsInconsistentLaunchGateReadiness(t *testing.T) {
 	_, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
 		{
@@ -1727,6 +1804,38 @@ func TestCompatibilityCenterPreviewRejectsInconsistentLaunchGateReadiness(t *tes
 	})
 	if err == nil || !strings.Contains(err.Error(), "controlled dispatch ready state requires controlled dispatch readiness evidence") {
 		t.Fatalf("expected inconsistent launch gate readiness error, got %v", err)
+	}
+}
+
+func TestCompatibilityCenterPreviewRejectsIncompleteLauncherSessionGateEvidence(t *testing.T) {
+	_, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                           "7zr",
+			DisplayName:                     "7-Zip Console",
+			AppVersion:                      "26.02",
+			EvidenceSource:                  "staged-launcher-dispatch-smoke",
+			SmokeStatus:                     "passed",
+			LaunchAuthorizationReceiptState: "recorded",
+			LaunchGateState:                 "controlled-dispatch-ready",
+			LaunchGateConsumed:              true,
+			LaunchGateReceiptAccepted:       true,
+			LaunchGateGuestBoundaryAccepted: true,
+			ControlledDispatchReady:         true,
+			LauncherSessionGateConsumed:     true,
+			MarkerObserved:                  true,
+			ChecksumVerified:                true,
+		}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "session gate consumption requires digest-verified") {
+		t.Fatalf("expected incomplete launcher session gate evidence error, got %v", err)
 	}
 }
 
