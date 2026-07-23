@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.604] - 2026-07-24
+
+### Added
+
+- Updated the Go `xnix-compat-launch` dispatch path so a controlled managed-guest dispatch now consumes the digest-verified known-app controlled execution session before invoking the existing staged 7zr dispatch lane.
+- Extended the staged managed launcher dispatch smoke to pass the opaque session id into the staged launcher and verify launcher-side session consumption evidence in the final dispatch result while keeping state-root path exposure, live desktop activation, backend process starts, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.603] - 2026-07-24
 
 ### Added

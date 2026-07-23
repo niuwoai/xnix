@@ -365,6 +365,7 @@ begin
     "--guest-boundary", GUEST_BOUNDARY,
     "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
     "--receipt-id", receipt_preview.fetch("receipt_id"),
+    "--session-id", controlled_session_record.fetch("execution_session_id"),
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
     "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
     *APP_ARGS.flat_map { |argument| ["--arg", argument] }
@@ -382,10 +383,21 @@ begin
   assert(payload["request_type"] == "windows-known-app-dispatch-smoke", "staged launcher must enter dispatch smoke with the guest boundary")
   assert(payload["guest_boundary"] == GUEST_BOUNDARY, "staged launcher dispatch must preserve the guest boundary")
   assert(payload["runtime_owned_dispatch"] == true, "staged launcher dispatch must be Runtime-owned")
+  assert(payload["controlled_execution_session_consumed"] == true, "staged launcher dispatch must consume the controlled execution session before dispatch")
+  assert(payload["controlled_execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "staged launcher dispatch must preserve the controlled execution session id")
+  assert(payload["controlled_session_digest_verified"] == true, "staged launcher dispatch must verify the controlled execution session digest")
+  assert(payload["controlled_session_relative_path"] == controlled_session_record.fetch("session_relative_path"), "staged launcher dispatch must preserve relative controlled session evidence")
+  assert(payload["runtime_owner_consumable_session"] == true, "staged launcher dispatch must require Runtime-owner consumable session evidence")
+  assert(payload["kde_read_model_consumable_session"] == true, "staged launcher dispatch must require KDE read-model consumable session evidence")
+  assert(payload["controlled_session_live_state_observed"] == false, "staged launcher dispatch must not observe live session state before dispatch")
+  assert(payload["controlled_session_registered"] == false, "staged launcher dispatch must not register a live session before dispatch")
+  assert(payload["controlled_session_window_observed"] == false, "staged launcher dispatch must not observe windows before dispatch")
+  assert(payload["controlled_session_host_root_modified"] == false, "staged launcher dispatch session gate must not mutate the host root")
+  assert(payload["controlled_session_backend_process_start"] == false, "staged launcher dispatch session gate must not start backend processes")
   assert(payload["host_root_modified"] == false, "staged launcher dispatch must not mutate the host root")
   assert(payload["docker_socket_mounted"] == false, "staged launcher dispatch must not mount the Docker socket")
   assert(payload["broad_host_mount_required"] == false, "staged launcher dispatch must not require broad host mounts")
-  assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "staged launcher dispatch output")
+  assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "staged launcher dispatch output")
 
   case payload.fetch("status")
   when "passed"

@@ -91,7 +91,7 @@ func PreviewKnownAppControlledExecutionSessionConsumption(request KnownAppContro
 		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires --state-root")
 	}
 	if info, err := os.Stat(stateRoot); err != nil {
-		return KnownAppControlledExecutionSessionConsumePreview{}, err
+		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires an available state root")
 	} else if !info.IsDir() {
 		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires a directory state root")
 	}
@@ -107,15 +107,15 @@ func PreviewKnownAppControlledExecutionSessionConsumption(request KnownAppContro
 
 	ledger, err := execution.NewLedger(stateRoot)
 	if err != nil {
-		return KnownAppControlledExecutionSessionConsumePreview{}, err
+		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption cannot open the state root")
 	}
 	transaction, err := ledger.Load(sessionID)
 	if err != nil {
-		return KnownAppControlledExecutionSessionConsumePreview{}, err
+		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires a digest-verified ledger record")
 	}
 	session, err := ledger.LoadSession(sessionID)
 	if err != nil {
-		return KnownAppControlledExecutionSessionConsumePreview{}, err
+		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires a digest-verified session record")
 	}
 	if transaction.ApplicationID != app.ID || session.ApplicationID != app.ID || session.TransactionRelativePath != transaction.RelativePath {
 		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session record identity mismatch")
@@ -123,7 +123,7 @@ func PreviewKnownAppControlledExecutionSessionConsumption(request KnownAppContro
 
 	fanOut, err := (Plan{ApplicationID: app.ID}).ExecutionSessionFanOutEvidence(stateRoot, sessionID)
 	if err != nil {
-		return KnownAppControlledExecutionSessionConsumePreview{}, err
+		return KnownAppControlledExecutionSessionConsumePreview{}, errors.New("known app controlled execution session consumption requires KDE-safe fan-out evidence")
 	}
 	preview := KnownAppControlledExecutionSessionConsumePreview{
 		SchemaVersion:               KnownAppControlledExecutionSessionConsumeSchemaVersion,

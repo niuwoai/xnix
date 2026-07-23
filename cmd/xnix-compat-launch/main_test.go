@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/execution"
 )
 
 func TestCompatLaunchUsesKnownAppLaunchBridge(t *testing.T) {
@@ -131,6 +132,75 @@ func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.
 	}
 	assertCompatLaunchCLISafe(t, output.String(), cacheRoot)
 	assertCompatLaunchCLISafe(t, output.String(), stateRoot)
+}
+
+func TestCompatLaunchConsumesDigestVerifiedSessionGate(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	if _, err := ledger.Record(execution.Transaction{
+		RequestID:      sessionID,
+		ApplicationID:  "7zr",
+		Profile:        "known-app-managed-guest",
+		State:          execution.StateBlocked,
+		ReviewDecision: execution.DecisionApproved,
+		Gates: []execution.Gate{
+			{ID: "controlled-execution-session-handoff", Status: execution.GatePass, Reason: "Runtime execution session handoff ready"},
+			{ID: "runtime-write-gate", Status: execution.GateBlocked, Reason: "dispatch runner must consume the recorded session before execution"},
+		},
+		BlockedReasons:   []string{"runtime-write-gate: dispatch runner must consume the recorded session before execution"},
+		LaunchAllowed:    false,
+		LaunchEnabled:    false,
+		BackendStarted:   false,
+		HostRootModified: false,
+		NetworkRequired:  false,
+		Summary:          "Runtime recorded a known application execution session handoff for launcher consumption.",
+	}); err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	session, err := ledger.RecordSession(sessionID)
+	if err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+
+	preview, err := consumeControlledExecutionSessionForLaunch("7zr", stateRoot, "")
+	if err != nil {
+		t.Fatalf("consumeControlledExecutionSessionForLaunch returned error: %v", err)
+	}
+	if preview.ExecutionSessionID != sessionID ||
+		!preview.RecordConsumed ||
+		!preview.LedgerRecordConsumed ||
+		!preview.SessionRecordConsumed ||
+		!preview.SessionDigestVerified ||
+		preview.SessionRelativePath != session.RelativePath ||
+		!preview.RuntimeOwnerConsumable ||
+		!preview.KDEReadModelConsumable ||
+		preview.LiveStateObserved ||
+		preview.SessionRegistered ||
+		preview.WindowObserved ||
+		preview.HostRootModified ||
+		preview.BackendProcessStarted {
+		t.Fatalf("unexpected launcher session gate preview: %#v", preview)
+	}
+}
+
+func TestCompatLaunchSessionGateRejectsMissingSessionWithoutPathLeak(t *testing.T) {
+	stateRoot := t.TempDir()
+
+	_, err := consumeControlledExecutionSessionForLaunch("7zr", stateRoot, "")
+	if err == nil {
+		t.Fatal("expected missing controlled execution session record to be rejected")
+	}
+	if strings.Contains(strings.ToLower(err.Error()), strings.ToLower(stateRoot)) {
+		t.Fatalf("session gate error exposed state root path: %v", err)
+	}
+	if !strings.Contains(err.Error(), "controlled execution session gate rejected dispatch") ||
+		!strings.Contains(err.Error(), "digest-verified ledger record") {
+		t.Fatalf("unexpected session gate error: %v", err)
+	}
 }
 
 func TestCompatLaunchRejectsUnknownApp(t *testing.T) {

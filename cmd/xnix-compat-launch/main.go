@@ -31,6 +31,7 @@ func run(args []string, stdout io.Writer) error {
 	var guestBoundary string
 	var stateRoot string
 	var receiptID string
+	var sessionID string
 	var host string
 	var port string
 	var user string
@@ -44,6 +45,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the Runtime owner or smoke harness")
 	flags.StringVar(&stateRoot, "state-root", "", "controlled Runtime state root containing the opaque launch authorization receipt")
 	flags.StringVar(&receiptID, "receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	flags.StringVar(&sessionID, "session-id", "", "optional opaque controlled execution session id")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
 	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
 	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
@@ -97,6 +99,10 @@ func run(args []string, stdout io.Writer) error {
 	if !bridge.DispatchSmokeRequestMaterialized {
 		return encode(stdout, bridge)
 	}
+	controlledSession, err := consumeControlledExecutionSessionForLaunch(appID, stateRoot, sessionID)
+	if err != nil {
+		return err
+	}
 
 	timeout, err := time.ParseDuration(timeoutText)
 	if err != nil {
@@ -124,7 +130,47 @@ func run(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return encode(stdout, result)
+	return encode(stdout, launcherDispatchResult{
+		KnownDispatchSmokeResult:             result,
+		ControlledExecutionSessionConsumed:   controlledSession.RecordConsumed,
+		ControlledExecutionSessionID:         controlledSession.ExecutionSessionID,
+		ControlledSessionDigestVerified:      controlledSession.SessionDigestVerified,
+		ControlledSessionRelativePath:        controlledSession.SessionRelativePath,
+		RuntimeOwnerConsumableSession:        controlledSession.RuntimeOwnerConsumable,
+		KDEReadModelConsumableSession:        controlledSession.KDEReadModelConsumable,
+		ControlledSessionLiveStateObserved:   controlledSession.LiveStateObserved,
+		ControlledSessionRegistered:          controlledSession.SessionRegistered,
+		ControlledSessionWindowObserved:      controlledSession.WindowObserved,
+		ControlledSessionHostRootModified:    controlledSession.HostRootModified,
+		ControlledSessionBackendProcessStart: controlledSession.BackendProcessStarted,
+	})
+}
+
+func consumeControlledExecutionSessionForLaunch(appID string, stateRoot string, sessionID string) (appidentity.KnownAppControlledExecutionSessionConsumePreview, error) {
+	preview, err := appidentity.PreviewKnownAppControlledExecutionSessionConsumption(appidentity.KnownAppControlledExecutionSessionConsumeRequest{
+		AppID:     appID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+	})
+	if err != nil {
+		return appidentity.KnownAppControlledExecutionSessionConsumePreview{}, fmt.Errorf("controlled execution session gate rejected dispatch: %w", err)
+	}
+	return preview, nil
+}
+
+type launcherDispatchResult struct {
+	winapp.KnownDispatchSmokeResult
+	ControlledExecutionSessionConsumed   bool   `json:"controlled_execution_session_consumed"`
+	ControlledExecutionSessionID         string `json:"controlled_execution_session_id"`
+	ControlledSessionDigestVerified      bool   `json:"controlled_session_digest_verified"`
+	ControlledSessionRelativePath        string `json:"controlled_session_relative_path"`
+	RuntimeOwnerConsumableSession        bool   `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession        bool   `json:"kde_read_model_consumable_session"`
+	ControlledSessionLiveStateObserved   bool   `json:"controlled_session_live_state_observed"`
+	ControlledSessionRegistered          bool   `json:"controlled_session_registered"`
+	ControlledSessionWindowObserved      bool   `json:"controlled_session_window_observed"`
+	ControlledSessionHostRootModified    bool   `json:"controlled_session_host_root_modified"`
+	ControlledSessionBackendProcessStart bool   `json:"controlled_session_backend_process_start"`
 }
 
 func encode(stdout io.Writer, payload any) error {

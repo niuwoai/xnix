@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.603
+> Last updated: 2026-07-24 | Current version: v0.2.604
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.604 checkpoint moves controlled session consumption into the Go managed launcher itself. When `xnix-compat-launch --app 7zr --guest-boundary managed-known-app-guest-smoke --state-root <path> --receipt-id <opaque-id> [--session-id <opaque-id>]` reaches a materialized dispatch request, it now consumes the digest-verified controlled execution session before invoking the existing staged QEMU/Wine 7zr dispatch lane. The final dispatch result carries launcher-side session consumption evidence while keeping state-root path exposure, live session registration, window observation, task-manager activation, KWin rule application, tray bridge activation, direct launch, desktop launch, backend process start from the session gate, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.604 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.603 checkpoint makes the durable 7zr controlled execution-session record consumable by Runtime-owner and KDE read models. `xnix-runtime-go known-app-controlled-execution-session-consume-preview --app 7zr --state-root <path> [--session-id <opaque-id>]` reads the persisted ledger transaction and session status record, verifies the session digest, rejects mismatched known-app session ids, and fans the record out to task manager, KWin, tray, and Compatibility Center consumers. The command returns only relative transaction/session evidence, digest evidence, consumer readiness, and KDE-safe state while keeping live session registration, window observation, task-manager activation, KWin rule application, tray bridge activation, direct launch, desktop launch, backend launch, backend process start, dispatch start, execution start, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.603 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
