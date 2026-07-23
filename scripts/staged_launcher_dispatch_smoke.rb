@@ -18,6 +18,7 @@ RUN_ROOT = WORK_ROOT.join(RUN_ID)
 BUILD_DIR = RUN_ROOT.join("build")
 STAGE_ROOT = RUN_ROOT.join("stage")
 AUTHORIZATION_STATE_ROOT = RUN_ROOT.join("authorization-state")
+RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH = RUN_ROOT.join("runtime-status-launch-evidence.json")
 KNOWN_APP_CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
@@ -598,6 +599,7 @@ begin
   assert(payload["docker_socket_mounted"] == false, "staged launcher dispatch must not mount the Docker socket")
   assert(payload["broad_host_mount_required"] == false, "staged launcher dispatch must not require broad host mounts")
   assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "staged launcher dispatch output")
+  File.write(RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH, JSON.pretty_generate(payload))
 
   case payload.fetch("status")
   when "passed"
@@ -605,31 +607,8 @@ begin
       "go", "run", "./cmd/xnix-runtime-go",
       "compatibility-center-preview",
       "--registry", "runtime/recipes/registry.json",
-      "--known-app-smoke-app", payload.fetch("app_id"),
-      "--known-app-smoke-name", payload.fetch("display_name"),
-      "--known-app-smoke-version", payload.fetch("app_version"),
-      "--known-app-smoke-source", "staged-launcher-dispatch-smoke",
-      "--known-app-smoke-status", "passed",
-      "--known-app-launch-authorization-receipt-state", "recorded",
-      "--known-app-launch-authorization-receipt-id", receipt_preview.fetch("receipt_id"),
-      "--known-app-launch-gate-state", launch_gate.fetch("launch_gate_state")
+      "--known-app-evidence-file", RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s
     ]
-    center_preview_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
-    center_preview_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
-    center_preview_args << "--known-app-launch-gate-consumed" if controlled_dispatch["receipt_accepted"]
-    center_preview_args << "--known-app-launch-gate-receipt-accepted" if controlled_dispatch["receipt_accepted"]
-    center_preview_args << "--known-app-launch-gate-guest-boundary-accepted" if controlled_dispatch["guest_boundary_accepted"]
-    center_preview_args << "--known-app-controlled-dispatch-ready" if controlled_dispatch["controlled_dispatch_ready"]
-    center_preview_args.concat(["--known-app-controlled-execution-session-id", payload.fetch("controlled_execution_session_id")])
-    center_preview_args << "--known-app-launcher-session-gate-consumed" if payload["controlled_execution_session_consumed"]
-    center_preview_args << "--known-app-launcher-session-digest-verified" if payload["controlled_session_digest_verified"]
-    center_preview_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
-    center_preview_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
-    center_preview_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
-    center_preview_args << "--known-app-post-review-dispatch-consumed" if payload["session_gated_controlled_dispatch_consumed"]
-    center_preview_args.concat(["--known-app-post-review-dispatch-state", payload.fetch("session_gated_controlled_dispatch_state")])
-    center_preview_args.concat(["--known-app-session-gated-review-receipt-id", payload.fetch("session_gated_review_receipt_id")])
-    center_preview_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
     assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")
     assert(center_preview["known_app_smoke_passed_count"] == 1, "Compatibility Center must count passed known app smoke evidence")
@@ -677,31 +656,8 @@ begin
       "--registry", "runtime/recipes/registry.json",
       "--app", "org.xnix.sample.notepad",
       "--decision", "approved",
-      "--known-app-smoke-app", payload.fetch("app_id"),
-      "--known-app-smoke-name", payload.fetch("display_name"),
-      "--known-app-smoke-version", payload.fetch("app_version"),
-      "--known-app-smoke-source", "staged-launcher-dispatch-smoke",
-      "--known-app-smoke-status", "passed",
-      "--known-app-launch-authorization-receipt-state", "recorded",
-      "--known-app-launch-authorization-receipt-id", receipt_preview.fetch("receipt_id"),
-      "--known-app-launch-gate-state", launch_gate.fetch("launch_gate_state")
+      "--known-app-evidence-file", RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s
     ]
-    kde_page_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
-    kde_page_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
-    kde_page_args << "--known-app-launch-gate-consumed" if controlled_dispatch["receipt_accepted"]
-    kde_page_args << "--known-app-launch-gate-receipt-accepted" if controlled_dispatch["receipt_accepted"]
-    kde_page_args << "--known-app-launch-gate-guest-boundary-accepted" if controlled_dispatch["guest_boundary_accepted"]
-    kde_page_args << "--known-app-controlled-dispatch-ready" if controlled_dispatch["controlled_dispatch_ready"]
-    kde_page_args.concat(["--known-app-controlled-execution-session-id", payload.fetch("controlled_execution_session_id")])
-    kde_page_args << "--known-app-launcher-session-gate-consumed" if payload["controlled_execution_session_consumed"]
-    kde_page_args << "--known-app-launcher-session-digest-verified" if payload["controlled_session_digest_verified"]
-    kde_page_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
-    kde_page_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
-    kde_page_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
-    kde_page_args << "--known-app-post-review-dispatch-consumed" if payload["session_gated_controlled_dispatch_consumed"]
-    kde_page_args.concat(["--known-app-post-review-dispatch-state", payload.fetch("session_gated_controlled_dispatch_state")])
-    kde_page_args.concat(["--known-app-session-gated-review-receipt-id", payload.fetch("session_gated_review_receipt_id")])
-    kde_page_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     kde_page, kde_page_stdout = run_json(go_env, *kde_page_args)
     assert(kde_page["known_app_session_gate_evidence_count"] == 1, "KDE Center page must receive known app session gate evidence")
     assert(kde_page["known_app_launcher_session_gate_consumed_count"] == 1, "KDE Center page must count launcher-side session gate consumption")

@@ -573,6 +573,11 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 	if result.DelegatedHostRootModified || result.DelegatedControlledSessionHostRootModified || result.DelegatedDockerSocketMounted || result.DelegatedBroadHostMountRequired || result.DelegatedRawCommandExposed || result.DelegatedBackendDetailsExposed {
 		return knownAppKDERuntimeStatusLaunchExecutionResult{}, errors.New("managed launcher reported an unsafe delegated result")
 	}
+	projectionControlledDispatchReady := plan.ControlledDispatchReady || (result.DelegatedStatus == "passed" && result.DelegatedArtifactVerified && result.DelegatedRuntimeOwnedDispatch)
+	projectionLaunchGateState := plan.LaunchGateState
+	if projectionControlledDispatchReady {
+		projectionLaunchGateState = "controlled-dispatch-ready"
+	}
 	projection, err := appidentity.ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
 		AppID:                                  plan.AppID,
 		DisplayName:                            plan.DisplayName,
@@ -589,6 +594,13 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 		SessionGatedControlledDispatchState:    result.DelegatedSessionGatedControlledDispatchState,
 		SessionGatedReviewReceiptID:            result.DelegatedSessionGatedReviewReceiptID,
 		LaunchAuthorizationReceiptID:           result.DelegatedLaunchAuthorizationReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        projectionLaunchGateState,
+		LaunchGateConsumed:                     plan.LaunchGateConsumed,
+		LaunchGateReceiptAccepted:              plan.LaunchGateReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted:        plan.LaunchGateGuestBoundaryAccepted,
+		LaunchGateBlockedReason:                plan.LaunchGateBlockedReason,
+		ControlledDispatchReady:                projectionControlledDispatchReady,
 		ControlledExecutionSessionConsumed:     result.DelegatedControlledExecutionSessionConsumed,
 		ControlledExecutionSessionID:           result.DelegatedControlledExecutionSessionID,
 		ControlledSessionDigestVerified:        result.DelegatedControlledSessionDigestVerified,

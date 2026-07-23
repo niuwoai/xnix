@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.616
+> Last updated: 2026-07-24 | Current version: v0.2.617
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.617 checkpoint makes the Runtime-status launch projection directly consumable by the Compatibility Center and KDE Center page CLI read models. Both `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-evidence-json` or `--known-app-evidence-file`, validate the Go-owned `known-app-kde-runtime-status-launch-delegated-evidence` payload, and convert it into normalized known-app smoke evidence in Go. The staged launcher dispatch smoke writes the projection once under its run cache and passes that file to both Center previews instead of rebuilding launch receipt, launch gate, controlled session, and post-review fields through Ruby flags. v0.2.617 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.616 checkpoint moves the staged launcher dispatch smoke's final evidence projection out of Ruby and into Go Runtime code. `ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence` now turns the Runtime wrapper's redacted delegated launcher fields into a `compatibility_center_known_app_evidence` payload that directly matches the Compatibility Center and KDE Center read-model shape. The smoke consumes that projection instead of manually remapping fields, while state-root paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation remain hidden or disabled. v0.2.616 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

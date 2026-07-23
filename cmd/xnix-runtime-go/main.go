@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
 	"xnix.local/xnix/internal/runtime/artifact"
@@ -2353,6 +2354,8 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppSmokeStatus := flags.String("known-app-smoke-status", "", "known Windows app smoke status")
 	knownAppSmokeMarkerObserved := flags.Bool("known-app-smoke-marker-observed", false, "known Windows app marker observation result")
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
+	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
+	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2386,7 +2389,17 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	}
 
 	options := appidentity.CompatibilityCenterOptions{}
-	if *knownAppSmokeApp != "" || *knownAppSmokeStatus != "" {
+	projectedEvidence, err := loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile)
+	if err != nil {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
+	}
+	legacyKnownAppSmoke := *knownAppSmokeApp != "" || *knownAppSmokeStatus != ""
+	if len(projectedEvidence) > 0 {
+		if legacyKnownAppSmoke {
+			return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, fmt.Errorf("%s accepts either Runtime-projected known app evidence or legacy known app smoke flags, not both", commandName)
+		}
+		options.KnownAppSmokeEvidence = projectedEvidence
+	} else if legacyKnownAppSmoke {
 		options.KnownAppSmokeEvidence = []appidentity.KnownAppSmokeEvidenceSummary{{
 			AppID:                                 *knownAppSmokeApp,
 			DisplayName:                           *knownAppSmokeName,
@@ -2415,6 +2428,34 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 		}}
 	}
 	return recipes, provenance, options, nil
+}
+
+func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+	projectionJSON = strings.TrimSpace(projectionJSON)
+	projectionFile = strings.TrimSpace(projectionFile)
+	if projectionJSON == "" && projectionFile == "" {
+		return nil, nil
+	}
+	if projectionJSON != "" && projectionFile != "" {
+		return nil, fmt.Errorf("%s accepts only one Runtime-projected known app evidence source", commandName)
+	}
+	payload := []byte(projectionJSON)
+	if projectionFile != "" {
+		loaded, err := os.ReadFile(projectionFile)
+		if err != nil {
+			return nil, fmt.Errorf("read Runtime-projected known app evidence: %w", err)
+		}
+		payload = loaded
+	}
+	var projection appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence
+	if err := json.Unmarshal(payload, &projection); err != nil {
+		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)
+	}
+	evidence, err := appidentity.KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection)
+	if err != nil {
+		return nil, fmt.Errorf("consume Runtime-projected known app evidence: %w", err)
+	}
+	return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
 }
 
 func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {
@@ -2586,6 +2627,8 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppSmokeStatus := flags.String("known-app-smoke-status", "", "known Windows app smoke status")
 	knownAppSmokeMarkerObserved := flags.Bool("known-app-smoke-marker-observed", false, "known Windows app marker observation result")
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
+	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
+	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2630,7 +2673,17 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		receipt = &loaded
 	}
 	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
-	if *knownAppSmokeApp != "" || *knownAppSmokeStatus != "" {
+	projectedEvidence, err := loadKnownAppSmokeEvidenceFromRuntimeProjection("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile)
+	if err != nil {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
+	}
+	legacyKnownAppSmoke := *knownAppSmokeApp != "" || *knownAppSmokeStatus != ""
+	if len(projectedEvidence) > 0 {
+		if legacyKnownAppSmoke {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, errors.New("kde-center-page-preview accepts either Runtime-projected known app evidence or legacy known app smoke flags, not both")
+		}
+		knownAppSmokeEvidence = projectedEvidence
+	} else if legacyKnownAppSmoke {
 		knownAppSmokeEvidence = []appidentity.KnownAppSmokeEvidenceSummary{{
 			AppID:                                 *knownAppSmokeApp,
 			DisplayName:                           *knownAppSmokeName,

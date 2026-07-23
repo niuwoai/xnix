@@ -47,6 +47,11 @@ type KnownAppKDERuntimeStatusLaunchExecutionPlan struct {
 	SessionGatedReviewReceiptID     string   `json:"session_gated_review_receipt_id"`
 	ControlledExecutionSessionID    string   `json:"controlled_execution_session_id"`
 	LaunchGateState                 string   `json:"launch_gate_state"`
+	LaunchGateConsumed              bool     `json:"launch_gate_consumed"`
+	LaunchGateReceiptAccepted       bool     `json:"launch_gate_receipt_accepted"`
+	LaunchGateGuestBoundaryAccepted bool     `json:"launch_gate_guest_boundary_accepted"`
+	LaunchGateBlockedReason         string   `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchReady         bool     `json:"controlled_dispatch_ready"`
 	LaunchReceiptRevalidated        bool     `json:"launch_receipt_revalidated"`
 	GuestBoundaryRevalidated        bool     `json:"guest_boundary_revalidated"`
 	ReviewGateState                 string   `json:"review_gate_state"`
@@ -112,6 +117,13 @@ type KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest struct {
 	SessionGatedControlledDispatchState    string
 	SessionGatedReviewReceiptID            string
 	LaunchAuthorizationReceiptID           string
+	LaunchAuthorizationReceiptState        string
+	LaunchGateState                        string
+	LaunchGateConsumed                     bool
+	LaunchGateReceiptAccepted              bool
+	LaunchGateGuestBoundaryAccepted        bool
+	LaunchGateBlockedReason                string
+	ControlledDispatchReady                bool
 	ControlledExecutionSessionConsumed     bool
 	ControlledExecutionSessionID           string
 	ControlledSessionDigestVerified        bool
@@ -146,6 +158,13 @@ type KnownAppKDERuntimeStatusLaunchDelegatedEvidence struct {
 	SessionGatedControlledDispatchState    string `json:"session_gated_controlled_dispatch_state"`
 	SessionGatedReviewReceiptID            string `json:"session_gated_review_receipt_id"`
 	LaunchAuthorizationReceiptID           string `json:"launch_authorization_receipt_id"`
+	LaunchAuthorizationReceiptState        string `json:"launch_authorization_receipt_state"`
+	LaunchGateState                        string `json:"launch_gate_state"`
+	LaunchGateConsumed                     bool   `json:"launch_gate_consumed"`
+	LaunchGateReceiptAccepted              bool   `json:"launch_gate_receipt_accepted"`
+	LaunchGateGuestBoundaryAccepted        bool   `json:"launch_gate_guest_boundary_accepted"`
+	LaunchGateBlockedReason                string `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchReady                bool   `json:"controlled_dispatch_ready"`
 	ControlledExecutionSessionConsumed     bool   `json:"controlled_execution_session_consumed"`
 	ControlledExecutionSessionID           string `json:"controlled_execution_session_id"`
 	ControlledSessionDigestVerified        bool   `json:"controlled_session_digest_verified"`
@@ -246,6 +265,11 @@ func PrepareKnownAppKDERuntimeStatusLaunchExecution(request KnownAppKDERuntimeSt
 		SessionGatedReviewReceiptID:     requestPreview.SessionGatedReviewReceiptID,
 		ControlledExecutionSessionID:    requestPreview.ControlledExecutionSessionID,
 		LaunchGateState:                 launchGate.LaunchGateState,
+		LaunchGateConsumed:              launchGate.ReceiptAccepted,
+		LaunchGateReceiptAccepted:       launchGate.ReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted: launchGate.GuestBoundaryAccepted,
+		LaunchGateBlockedReason:         launchGate.LaunchGateBlockedReason,
+		ControlledDispatchReady:         launchGate.ControlledDispatchReady,
 		LaunchReceiptRevalidated:        true,
 		GuestBoundaryRevalidated:        true,
 		ReviewGateState:                 reviewGate.ReviewGateState,
@@ -316,6 +340,13 @@ func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDER
 		SessionGatedControlledDispatchState:    strings.TrimSpace(request.SessionGatedControlledDispatchState),
 		SessionGatedReviewReceiptID:            strings.TrimSpace(request.SessionGatedReviewReceiptID),
 		LaunchAuthorizationReceiptID:           strings.TrimSpace(request.LaunchAuthorizationReceiptID),
+		LaunchAuthorizationReceiptState:        strings.TrimSpace(request.LaunchAuthorizationReceiptState),
+		LaunchGateState:                        strings.TrimSpace(request.LaunchGateState),
+		LaunchGateConsumed:                     request.LaunchGateConsumed,
+		LaunchGateReceiptAccepted:              request.LaunchGateReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted:        request.LaunchGateGuestBoundaryAccepted,
+		LaunchGateBlockedReason:                strings.TrimSpace(request.LaunchGateBlockedReason),
+		ControlledDispatchReady:                request.ControlledDispatchReady,
 		ControlledExecutionSessionConsumed:     request.ControlledExecutionSessionConsumed,
 		ControlledExecutionSessionID:           strings.TrimSpace(request.ControlledExecutionSessionID),
 		ControlledSessionDigestVerified:        request.ControlledSessionDigestVerified,
@@ -381,6 +412,10 @@ func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownApp
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires known app identity")
 	case projection.GuestBoundary != winapp.KnownDispatchGuestBoundary:
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires managed guest boundary")
+	case projection.LaunchAuthorizationReceiptState != "recorded":
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires a recorded launch authorization receipt")
+	case !projection.LaunchGateConsumed || !projection.LaunchGateReceiptAccepted || !projection.LaunchGateGuestBoundaryAccepted || !projection.ControlledDispatchReady:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires consumed accepted launch gate evidence")
 	case projection.ControlledSessionRelativePath != "" && (filepath.IsAbs(projection.ControlledSessionRelativePath) || strings.Contains(filepath.Clean(projection.ControlledSessionRelativePath), "..")):
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires relative session evidence")
 	case projection.StateRootPathExposed || projection.ManagedLauncherPathExposed || projection.RawLauncherOutputExposed || projection.BackendDetailsExposed:
@@ -390,7 +425,7 @@ func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownApp
 	case !projection.CompatibilityCenterProjectionReady || !projection.KDECenterProjectionReady:
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence must be ready for Center projections")
 	}
-	for _, value := range []string{projection.ProjectionType, projection.RuntimeMethod, projection.RequestType, projection.Status, projection.SkipReason, projection.FailureReason, projection.AppID, projection.DisplayName, projection.AppVersion, projection.GuestBoundary, projection.SessionGatedControlledDispatchState, projection.SessionGatedReviewReceiptID, projection.LaunchAuthorizationReceiptID, projection.ControlledExecutionSessionID, projection.ControlledSessionRelativePath} {
+	for _, value := range []string{projection.ProjectionType, projection.RuntimeMethod, projection.RequestType, projection.Status, projection.SkipReason, projection.FailureReason, projection.AppID, projection.DisplayName, projection.AppVersion, projection.GuestBoundary, projection.SessionGatedControlledDispatchState, projection.SessionGatedReviewReceiptID, projection.LaunchAuthorizationReceiptID, projection.LaunchAuthorizationReceiptState, projection.LaunchGateState, projection.LaunchGateBlockedReason, projection.ControlledExecutionSessionID, projection.ControlledSessionRelativePath} {
 		if value != "" && !singleLine(value) {
 			return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires single-line fields")
 		}
@@ -399,6 +434,39 @@ func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownApp
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, err
 	}
 	return projection, nil
+}
+
+func KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection KnownAppKDERuntimeStatusLaunchDelegatedEvidence) (KnownAppSmokeEvidenceSummary, error) {
+	projection, err := validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection)
+	if err != nil {
+		return KnownAppSmokeEvidenceSummary{}, err
+	}
+	return KnownAppSmokeEvidenceSummary{
+		AppID:                                 projection.AppID,
+		DisplayName:                           projection.DisplayName,
+		AppVersion:                            projection.AppVersion,
+		EvidenceSource:                        "staged-launcher-dispatch-smoke",
+		SmokeStatus:                           projection.Status,
+		LaunchAuthorizationReceiptState:       projection.LaunchAuthorizationReceiptState,
+		LaunchAuthorizationReceiptID:          projection.LaunchAuthorizationReceiptID,
+		LaunchGateState:                       projection.LaunchGateState,
+		LaunchGateConsumed:                    projection.LaunchGateConsumed,
+		LaunchGateReceiptAccepted:             projection.LaunchGateReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted:       projection.LaunchGateGuestBoundaryAccepted,
+		LaunchGateBlockedReason:               projection.LaunchGateBlockedReason,
+		ControlledDispatchReady:               projection.ControlledDispatchReady,
+		ControlledExecutionSessionID:          projection.ControlledExecutionSessionID,
+		LauncherSessionGateConsumed:           projection.ControlledExecutionSessionConsumed,
+		LauncherSessionDigestVerified:         projection.ControlledSessionDigestVerified,
+		LauncherSessionRelativePath:           projection.ControlledSessionRelativePath,
+		LauncherSessionRuntimeOwnerConsumable: projection.RuntimeOwnerConsumableSession,
+		LauncherSessionKDEReadModelConsumable: projection.KDEReadModelConsumableSession,
+		PostReviewDispatchConsumed:            projection.SessionGatedControlledDispatchConsumed,
+		PostReviewDispatchState:               projection.SessionGatedControlledDispatchState,
+		SessionGatedReviewReceiptID:           projection.SessionGatedReviewReceiptID,
+		MarkerObserved:                        projection.MarkerObserved,
+		ChecksumVerified:                      projection.ArtifactVerified,
+	}, nil
 }
 
 func validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan KnownAppKDERuntimeStatusLaunchExecutionPlan) (KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {
@@ -411,6 +479,8 @@ func validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan KnownAppKDERuntime
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution has invalid action")
 	case plan.CenterCardState != "validated-post-review-dispatch" || plan.PostReviewDispatchState != "created-after-session-gated-review":
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires validated post-review state")
+	case !plan.LaunchGateConsumed || !plan.LaunchGateReceiptAccepted || !plan.LaunchGateGuestBoundaryAccepted:
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires accepted launch gate evidence")
 	case !plan.LaunchReceiptRevalidated || !plan.GuestBoundaryRevalidated || !plan.ReviewReceiptRevalidated || !plan.ControlledSessionRevalidated || !plan.ControlledSessionDigestVerified:
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires revalidated receipts and session evidence")
 	case !plan.RuntimeManagedLauncherArgvReady || len(plan.RuntimeManagedLauncherArgv) != 13:

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.617] - 2026-07-24
+
+### Added
+
+- Added Runtime-projected known-app evidence inputs to `compatibility-center-preview` and `kde-center-page-preview` through `--known-app-evidence-json` and `--known-app-evidence-file`.
+- Added Go normalization from `known-app-kde-runtime-status-launch-delegated-evidence` into Compatibility Center known-app smoke evidence, including launch receipt, launch gate, controlled session, launcher session gate, and post-review dispatch fields.
+
+### Changed
+
+- Simplified the staged launcher dispatch smoke so it writes the Runtime wrapper projection once and passes that evidence file to both Center previews instead of reconstructing legacy known-app evidence flags in Ruby.
+
 ## [0.2.616] - 2026-07-24
 
 ### Added

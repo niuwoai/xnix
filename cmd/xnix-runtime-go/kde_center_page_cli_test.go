@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -203,6 +205,60 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		managedArgv[9] != "--session-id" ||
 		managedArgv[10] != sessionID {
 		t.Fatalf("unexpected Runtime-status launch managed argv: %#v", managedArgv)
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
+func TestKDECenterPagePreviewCommandAcceptsRuntimeProjectedKnownAppEvidenceFile(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	evidencePath := filepath.Join(t.TempDir(), "runtime-status-launch-evidence.json")
+	if err := os.WriteFile(evidencePath, []byte(knownAppRuntimeStatusLaunchProjectionFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile evidence returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"kde-center-page-preview",
+		"--registry", registryPath,
+		"--app", app,
+		"--decision", "approved",
+		"--known-app-evidence-file", evidencePath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_session_gate_evidence_count"] != float64(1) ||
+		payload["known_app_launcher_session_gate_consumed_count"] != float64(1) ||
+		payload["known_app_post_review_dispatch_consumed_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Runtime-projected KDE Center page payload: %#v", payload)
+	}
+	cards := payload["known_app_session_gate_cards"].([]any)
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "7zr" ||
+		card["center_card_state"] != "validated-post-review-dispatch" ||
+		card["controlled_execution_session_id"] != "known-app-controlled-execution-session-7zr-26.02" ||
+		card["launch_authorization_receipt_id"] != "known-app-launch-authorization-7zr-26.02" ||
+		card["launcher_session_gate_consumed"] != true ||
+		card["launcher_session_digest_verified"] != true ||
+		card["runtime_owner_consumable_session"] != true ||
+		card["kde_read_model_consumable_session"] != true ||
+		card["post_review_dispatch_consumed"] != true ||
+		card["post_review_dispatch_state"] != "created-after-session-gated-review" ||
+		card["primary_action_id"] != "show-runtime-controlled-launch" ||
+		card["primary_action_kind"] != "runtime-status" ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false {
+		t.Fatalf("unexpected Runtime-projected KDE Center page card: %#v", card)
 	}
 	assertWindowIdentityPayloadSafe(t, output.String())
 }

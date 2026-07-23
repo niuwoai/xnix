@@ -154,6 +154,12 @@ func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPaylo
 		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
 		SessionGatedReviewReceiptID:            reviewReceiptID,
 		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
 		ControlledExecutionSessionConsumed:     true,
 		ControlledExecutionSessionID:           sessionID,
 		ControlledSessionDigestVerified:        true,
@@ -179,6 +185,12 @@ func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPaylo
 		projection.SessionGatedControlledDispatchState != "created-after-session-gated-review" ||
 		projection.SessionGatedReviewReceiptID != reviewReceiptID ||
 		projection.LaunchAuthorizationReceiptID != launchReceiptID ||
+		projection.LaunchAuthorizationReceiptState != "recorded" ||
+		projection.LaunchGateState != "controlled-dispatch-ready" ||
+		!projection.LaunchGateConsumed ||
+		!projection.LaunchGateReceiptAccepted ||
+		!projection.LaunchGateGuestBoundaryAccepted ||
+		!projection.ControlledDispatchReady ||
 		!projection.ControlledExecutionSessionConsumed ||
 		projection.ControlledExecutionSessionID != sessionID ||
 		!projection.ControlledSessionDigestVerified ||
@@ -199,6 +211,32 @@ func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPaylo
 	encoded, err := json.Marshal(projection)
 	if err != nil {
 		t.Fatalf("Marshal returned error: %v", err)
+	}
+	evidence, err := KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection)
+	if err != nil {
+		t.Fatalf("KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	if evidence.AppID != "7zr" ||
+		evidence.EvidenceSource != "staged-launcher-dispatch-smoke" ||
+		evidence.SmokeStatus != "passed" ||
+		evidence.LaunchAuthorizationReceiptState != "recorded" ||
+		evidence.LaunchGateState != "controlled-dispatch-ready" ||
+		!evidence.LaunchGateConsumed ||
+		!evidence.LaunchGateReceiptAccepted ||
+		!evidence.LaunchGateGuestBoundaryAccepted ||
+		!evidence.ControlledDispatchReady ||
+		evidence.ControlledExecutionSessionID != sessionID ||
+		!evidence.LauncherSessionGateConsumed ||
+		!evidence.LauncherSessionDigestVerified ||
+		evidence.LauncherSessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
+		!evidence.LauncherSessionRuntimeOwnerConsumable ||
+		!evidence.LauncherSessionKDEReadModelConsumable ||
+		!evidence.PostReviewDispatchConsumed ||
+		evidence.PostReviewDispatchState != "created-after-session-gated-review" ||
+		evidence.SessionGatedReviewReceiptID != reviewReceiptID ||
+		!evidence.MarkerObserved ||
+		!evidence.ChecksumVerified {
+		t.Fatalf("unexpected Center smoke evidence conversion: %#v", evidence)
 	}
 	text := strings.ToLower(string(encoded))
 	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
