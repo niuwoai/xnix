@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.581] - 2026-07-23
+
+### Added
+
+- Added the Go-owned `windows-known-app-managed-launch-preview` Runtime CLI for the pinned 7-Zip app, exposing a KDE-safe managed launch surface without raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths.
+- Added managed launch preview checks for missing, checksum-mismatched, and verified known-app cache states so desktop entrypoints can distinguish preparation-required from launch-ready states.
+- Added targeted Go tests covering the redacted managed launch model, CLI output, managed launcher argv, unknown-app rejection, and safety flags.
+
 ## [0.2.580] - 2026-07-23
 
 ### Changed

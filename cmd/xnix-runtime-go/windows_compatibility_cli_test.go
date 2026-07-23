@@ -334,9 +334,73 @@ func TestWindowsKnownAppGuestWineSmokeCommandSkipsUntilArtifactIsFetched(t *test
 	}
 }
 
+func TestWindowsKnownAppManagedLaunchPreviewCommandKeepsDesktopSurfaceRedacted(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-managed-launch-preview",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_managed_launch.v1" ||
+		payload["request_type"] != "windows-known-app-managed-launch-preview" ||
+		payload["status"] != "needs-artifact" ||
+		payload["app_id"] != "7zr" ||
+		payload["display_name"] != "7-Zip standalone console executable" ||
+		payload["app_version"] != "26.02" ||
+		payload["architecture"] != "windows-x86" ||
+		payload["launch_surface_id"] != "known-app-7zr" ||
+		payload["desktop_action_id"] != "launch-known-app-7zr" ||
+		payload["managed_launcher"] != "xnix-compat-launch --app 7zr" ||
+		payload["cache_status"] != "missing" ||
+		payload["artifact_verified"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["preparation_required"] != true ||
+		payload["managed_launch_surface"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["real_app_smoke_gate_required"] != true ||
+		payload["real_app_smoke_gate"] != "managed-known-app-guest-smoke" ||
+		payload["loopback_only_networking"] != true ||
+		payload["guest_runtime_required"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected managed launch payload: %#v", payload)
+	}
+	argv := payload["managed_launcher_argv"].([]any)
+	if strings.Join(anyStrings(argv), " ") != "xnix-compat-launch --app 7zr" {
+		t.Fatalf("unexpected managed launcher argv: %#v", argv)
+	}
+	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+}
+
 func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-fetch", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppManagedLaunchPreviewCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-managed-launch-preview", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}
@@ -356,6 +420,16 @@ func assertWindowsCompatibilityCLISafe(t *testing.T, text string) {
 	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "wine/", ".wine", "virtual machine"} {
 		if strings.Contains(serialized, forbidden) {
 			t.Fatalf("Windows compatibility CLI exposed forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func assertKnownManagedLaunchCLISafe(t *testing.T, text string, hostPath string) {
+	t.Helper()
+	serialized := strings.ToLower(text)
+	for _, forbidden := range []string{".exe", "wine", "qemu", strings.ToLower(hostPath)} {
+		if strings.Contains(serialized, forbidden) {
+			t.Fatalf("known managed launch CLI exposed forbidden term %q: %s", forbidden, text)
 		}
 	}
 }

@@ -15,15 +15,17 @@ import (
 )
 
 const (
-	KnownFetchSchemaVersion      = "xnix.runtime.known_windows_app_fetch.v1"
-	KnownFetchRequestType        = "windows-known-app-fetch"
-	KnownGuestSchemaVersion      = "xnix.runtime.known_windows_app_guest_wine_smoke.v1"
-	KnownGuestRequestType        = "windows-known-app-guest-wine-smoke"
-	DefaultKnownAppID            = "7zr"
-	DefaultKnownAppCacheRoot     = ".cache/xnix/known-winapps"
-	DefaultKnownAppFetchTimeout  = 60 * time.Second
-	DefaultKnownAppGuestTimeout  = 90 * time.Second
-	defaultKnownAppDownloadLimit = 32 << 20
+	KnownFetchSchemaVersion         = "xnix.runtime.known_windows_app_fetch.v1"
+	KnownFetchRequestType           = "windows-known-app-fetch"
+	KnownGuestSchemaVersion         = "xnix.runtime.known_windows_app_guest_wine_smoke.v1"
+	KnownGuestRequestType           = "windows-known-app-guest-wine-smoke"
+	KnownManagedLaunchSchemaVersion = "xnix.runtime.known_windows_app_managed_launch.v1"
+	KnownManagedLaunchRequestType   = "windows-known-app-managed-launch-preview"
+	DefaultKnownAppID               = "7zr"
+	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
+	DefaultKnownAppFetchTimeout     = 60 * time.Second
+	DefaultKnownAppGuestTimeout     = 90 * time.Second
+	defaultKnownAppDownloadLimit    = 32 << 20
 )
 
 type KnownPortableApp struct {
@@ -113,6 +115,48 @@ type KnownGuestResult struct {
 	RawHostPathExposed          bool        `json:"raw_host_path_exposed"`
 	SkipReason                  string      `json:"skip_reason,omitempty"`
 	FailureReason               string      `json:"failure_reason,omitempty"`
+}
+
+type KnownManagedLaunchRequest struct {
+	AppID     string
+	CacheRoot string
+}
+
+type KnownManagedLaunchResult struct {
+	SchemaVersion               string   `json:"schema_version"`
+	RequestType                 string   `json:"request_type"`
+	Status                      string   `json:"status"`
+	AppID                       string   `json:"app_id"`
+	DisplayName                 string   `json:"display_name"`
+	AppVersion                  string   `json:"app_version"`
+	Architecture                string   `json:"architecture"`
+	LaunchSurfaceID             string   `json:"launch_surface_id"`
+	DesktopActionID             string   `json:"desktop_action_id"`
+	DesktopActionLabel          string   `json:"desktop_action_label"`
+	ManagedLauncher             string   `json:"managed_launcher"`
+	ManagedLauncherArgv         []string `json:"managed_launcher_argv"`
+	CacheStatus                 string   `json:"cache_status"`
+	ArtifactVerified            bool     `json:"artifact_verified"`
+	LaunchEnabled               bool     `json:"launch_enabled"`
+	PreparationRequired         bool     `json:"preparation_required"`
+	ManagedLaunchSurface        bool     `json:"managed_launch_surface"`
+	RuntimeOwnedLaunch          bool     `json:"runtime_owned_launch"`
+	KDEPresentationOnly         bool     `json:"kde_presentation_only"`
+	RealAppSmokeGateRequired    bool     `json:"real_app_smoke_gate_required"`
+	RealAppSmokeGate            string   `json:"real_app_smoke_gate"`
+	LoopbackOnlyNetworking      bool     `json:"loopback_only_networking"`
+	GuestRuntimeRequired        bool     `json:"guest_runtime_required"`
+	HostRootModified            bool     `json:"host_root_modified"`
+	PrivilegedContainerRequired bool     `json:"privileged_container_required"`
+	HostNetworkingRequired      bool     `json:"host_networking_required"`
+	DockerSocketMounted         bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool     `json:"broad_host_mount_required"`
+	RawHostPathExposed          bool     `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool     `json:"raw_executable_path_exposed"`
+	RawCommandExposed           bool     `json:"raw_command_exposed"`
+	BackendDetailsExposed       bool     `json:"backend_details_exposed"`
+	DesktopSafeSummary          string   `json:"desktop_safe_summary"`
+	BlockedReason               string   `json:"blocked_reason,omitempty"`
 }
 
 var knownPortableCatalog = []KnownPortableApp{
@@ -286,6 +330,41 @@ func RunKnownPortableGuestSmoke(ctx context.Context, request KnownGuestRequest) 
 	return result, nil
 }
 
+func PreviewKnownPortableManagedLaunch(request KnownManagedLaunchRequest) (KnownManagedLaunchResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownManagedLaunchResult{}, err
+	}
+	result := baseKnownManagedLaunchResult(app)
+
+	cachePath, err := knownAppCachePath(request.CacheRoot, app)
+	if err != nil {
+		return result, err
+	}
+	actual, ok, err := verifyKnownAppFile(cachePath, app)
+	if err != nil {
+		return result, err
+	}
+	if ok {
+		result.Status = "ready"
+		result.CacheStatus = "verified"
+		result.ArtifactVerified = true
+		result.LaunchEnabled = true
+		result.PreparationRequired = false
+		result.DesktopSafeSummary = fmt.Sprintf("%s is ready to launch through the managed compatibility runtime.", app.DisplayName)
+		result.BlockedReason = ""
+		return result, nil
+	}
+	if actual != "" {
+		result.CacheStatus = "checksum-mismatch"
+		result.BlockedReason = "managed application artifact failed checksum verification"
+	} else {
+		result.CacheStatus = "missing"
+		result.BlockedReason = "managed application artifact must be fetched before launch"
+	}
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -308,6 +387,45 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		DockerSocketMounted:    false,
 		BroadHostMountRequired: false,
 		RawHostPathExposed:     false,
+	}
+}
+
+func baseKnownManagedLaunchResult(app KnownPortableApp) KnownManagedLaunchResult {
+	return KnownManagedLaunchResult{
+		SchemaVersion:               KnownManagedLaunchSchemaVersion,
+		RequestType:                 KnownManagedLaunchRequestType,
+		Status:                      "needs-artifact",
+		AppID:                       app.ID,
+		DisplayName:                 app.DisplayName,
+		AppVersion:                  app.Version,
+		Architecture:                app.Architecture,
+		LaunchSurfaceID:             "known-app-" + app.ID,
+		DesktopActionID:             "launch-known-app-" + app.ID,
+		DesktopActionLabel:          "Launch " + app.DisplayName + " in managed compatibility runtime",
+		ManagedLauncher:             "xnix-compat-launch --app " + app.ID,
+		ManagedLauncherArgv:         []string{"xnix-compat-launch", "--app", app.ID},
+		CacheStatus:                 "unknown",
+		ArtifactVerified:            false,
+		LaunchEnabled:               false,
+		PreparationRequired:         true,
+		ManagedLaunchSurface:        true,
+		RuntimeOwnedLaunch:          true,
+		KDEPresentationOnly:         true,
+		RealAppSmokeGateRequired:    true,
+		RealAppSmokeGate:            "managed-known-app-guest-smoke",
+		LoopbackOnlyNetworking:      true,
+		GuestRuntimeRequired:        true,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		RawHostPathExposed:          false,
+		RawExecutablePathExposed:    false,
+		RawCommandExposed:           false,
+		BackendDetailsExposed:       false,
+		DesktopSafeSummary:          app.DisplayName + " needs managed artifact preparation before launch.",
+		BlockedReason:               "managed application artifact must be fetched before launch",
 	}
 }
 

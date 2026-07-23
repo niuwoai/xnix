@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.580
+> Last updated: 2026-07-23 | Baseline: v0.2.581
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Move the v0.2.580 real-app proof closer to product behavior: keep the known-app QEMU Wine smoke as the regression gate, then add the next Runtime-owned managed launch surface for the pinned 7-Zip app without exposing raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths to KDE. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Move the v0.2.581 managed launch surface closer to actual user-visible launching: wire the pinned 7-Zip Runtime launch surface into one KDE-safe desktop entrypoint model, then add the next Runtime-owned launch request path that can later invoke the existing known-app QEMU Wine smoke runner without exposing raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths to KDE. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.581 checkpoint adds the first Go-owned managed launch surface for the pinned 7-Zip application. `windows-known-app-managed-launch-preview` gives KDE a redacted launch action with managed launcher argv, cache readiness, artifact verification, and safety flags while withholding raw `.exe` paths, Wine/QEMU command details, backend internals, and host paths. The preview remains launch-surface-only: actual backend invocation still stays Runtime-owned, preparation is required until the managed artifact checksum verifies, and all privileged containers, host networking, Docker socket mounts, broad host mounts, raw command exposure, backend detail exposure, and host-root mutation remain disabled.
 
 The v0.2.580 checkpoint turns the real Windows app lane into a formal full-smoke gate. `scripts/full_smoke.rb` now explicitly builds the tools image, tested runtime image, base Buildroot/QEMU image, SSH-enabled Wine guest, pinned known Windows app cache, base QEMU boot smoke, known-app QEMU Wine smoke, and fixture QEMU Wine regression smoke. The real-app smokes must print concrete `PASS` evidence; a skipped smoke no longer satisfies the formal checkpoint. The structured full-smoke report records `qemu_booted=true`, `wine_guest_built=true`, `known_app_smoke_passed=true`, and `fixture_app_smoke_passed=true` while keeping privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation disabled. Owner-package source/token and nested-preview validation caching keeps historical preview-chain tests from blocking formal full builds.
 
