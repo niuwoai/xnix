@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.596] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-launch-gate-preview` command, which consumes an opaque known-app launch authorization receipt from an explicit state root and fails closed for missing, malformed, mismatched, or unsafe receipts without exposing receipt paths or state-root paths.
+- Wired the launch gate to require the existing `managed-known-app-guest-smoke` boundary before dispatch readiness can advance, while keeping direct launch, desktop launch, backend launch, backend process start, execution start, Docker socket mounts, broad host mounts, raw artifact path exposure, backend detail exposure, and host-root mutation disabled.
+
 ## [0.2.595] - 2026-07-24
 
 ### Added

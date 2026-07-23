@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.595
+> Last updated: 2026-07-24 | Current version: v0.2.596
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.596 checkpoint adds the Go-owned receipt-consuming launch gate for the tested 7zr staged launcher lane. `xnix-runtime-go known-app-launch-gate-preview --app 7zr --state-root <path> --receipt-id <opaque-id> --guest-boundary managed-known-app-guest-smoke` reads only the Runtime-managed authorization receipt, rejects missing, malformed, mismatched, or unsafe receipts with fail-closed states, requires the existing managed guest boundary before dispatch readiness can advance, and exposes no receipt path or state-root path. The gate can report `accepted-receipt`, `guest-boundary-missing-fail-closed`, `dispatch-preparation-required`, or `controlled-dispatch-ready` while direct launch, desktop launch, backend launch, backend process start, execution start, raw artifact path exposure, Docker socket mounts, broad host mounts, and host-root mutation remain disabled. v0.2.596 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.600.
 
 The v0.2.595 checkpoint adds a Go-owned opaque launch authorization receipt for the tested 7zr staged launcher lane. `xnix-runtime-go known-app-launch-authorization-receipt-preview --app 7zr --state-root <path> --authorize review-launch-authorization` writes a Runtime-managed receipt under the supplied state root, returns only an opaque receipt id, and keeps receipt paths, state-root paths, raw artifact paths, backend details, direct launch, desktop launch, backend launch, backend process start, Docker socket mounts, broad host mounts, and host-root mutation disabled. `compatibility-center-preview` can now project `launch_authorization_receipt_state=recorded`, `launch_authorization_receipt_id`, `launch_gate_state=receipt-recorded-launch-still-gated`, and `center_card_state=validated-launch-authorization-recorded` so KDE can show progress from authorization review to a recorded Runtime receipt without bypassing the next controlled launch gate. v0.2.595 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.600.
 

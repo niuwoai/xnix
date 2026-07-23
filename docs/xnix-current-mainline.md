@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.595
+> Last updated: 2026-07-24 | Baseline: v0.2.596
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from the recorded known-app launch authorization receipt by wiring a controlled launch gate that consumes only the opaque receipt id for the tested 7zr app. The next step should keep KDE review visible, refuse missing or mismatched receipts, avoid exposing the state-root path, and still require the existing managed guest boundary before any backend starts. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from the receipt-consuming launch gate by wiring it into the staged managed launcher smoke path and Compatibility Center evidence for the tested 7zr app. The next step should make the staged launcher dispatch smoke create or consume the opaque authorization receipt, invoke `known-app-launch-gate-preview`, and prove the Center can show the launch-gate result without exposing paths or starting a backend. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.596 checkpoint adds the Go-owned `known-app-launch-gate-preview` command. The gate consumes only the opaque receipt id from an explicit managed state root, rejects missing, malformed, mismatched, or unsafe receipts with fail-closed states, requires the existing `managed-known-app-guest-smoke` boundary before dispatch readiness can advance, and still keeps direct launch, desktop launch, backend launch, backend process start, execution start, path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
 
 The v0.2.595 checkpoint adds the Go-owned receipt writer for that Center action. `known-app-launch-authorization-receipt-preview` records an opaque 7zr launch authorization receipt under an explicit managed state root, exposes only the receipt id, and keeps direct launch, desktop launch, backend launch, backend process start, state-root path exposure, raw artifact path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. Compatibility Center known-app evidence can now show `validated-launch-authorization-recorded`, `launch_authorization_state=recorded`, and `launch_gate_state=receipt-recorded-launch-still-gated`; the next safe UI step is a controlled Runtime launch gate that consumes the receipt id.
 

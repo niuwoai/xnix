@@ -57,3 +57,71 @@ func TestKnownAppLaunchAuthorizationReceiptPreviewCommandRequiresDirective(t *te
 		t.Fatal("expected missing authorization directive to fail")
 	}
 }
+
+func TestKnownAppLaunchGatePreviewCommandConsumesReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	var receiptOutput bytes.Buffer
+	err := run([]string{
+		"known-app-launch-authorization-receipt-preview",
+		"--app", "7zr",
+		"--state-root", stateRoot,
+		"--authorize", appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	}, &receiptOutput)
+	if err != nil {
+		t.Fatalf("receipt run returned error: %v", err)
+	}
+	var receiptPayload map[string]any
+	if err := json.Unmarshal(receiptOutput.Bytes(), &receiptPayload); err != nil {
+		t.Fatalf("Unmarshal receipt returned error: %v", err)
+	}
+
+	var gateOutput bytes.Buffer
+	err = run([]string{
+		"known-app-launch-gate-preview",
+		"--app", "7zr",
+		"--state-root", stateRoot,
+		"--receipt-id", receiptPayload["receipt_id"].(string),
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", "managed-known-app-guest-smoke",
+	}, &gateOutput)
+	if err != nil {
+		t.Fatalf("gate run returned error: %v", err)
+	}
+	var gatePayload map[string]any
+	if err := json.Unmarshal(gateOutput.Bytes(), &gatePayload); err != nil {
+		t.Fatalf("Unmarshal gate returned error: %v", err)
+	}
+	if gatePayload["schema_version"] != appidentity.KnownAppLaunchGateSchemaVersion ||
+		gatePayload["request_type"] != appidentity.KnownAppLaunchGateRequestType ||
+		gatePayload["app_id"] != "7zr" ||
+		gatePayload["receipt_lookup_state"] != "accepted-receipt" ||
+		gatePayload["receipt_accepted"] != true ||
+		gatePayload["receipt_path_exposed"] != false ||
+		gatePayload["state_root_path_exposed"] != false ||
+		gatePayload["guest_boundary_accepted"] != true ||
+		gatePayload["launch_gate_state"] != "dispatch-preparation-required" ||
+		gatePayload["launch_gate_blocked_reason"] != "managed artifact preparation is required before dispatch" ||
+		gatePayload["controlled_dispatch_ready"] != false ||
+		gatePayload["direct_launch_enabled"] != false ||
+		gatePayload["desktop_launch_enabled"] != false ||
+		gatePayload["backend_launch_enabled"] != false ||
+		gatePayload["backend_process_started"] != false {
+		t.Fatalf("unexpected gate preview payload: %#v", gatePayload)
+	}
+	text := strings.ToLower(gateOutput.String())
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("gate preview exposed state root path: %s", text)
+	}
+}
+
+func TestKnownAppLaunchGatePreviewCommandRequiresReceiptID(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		"known-app-launch-gate-preview",
+		"--app", "7zr",
+		"--state-root", t.TempDir(),
+	}, &output)
+	if err == nil {
+		t.Fatal("expected missing receipt id to fail")
+	}
+}
