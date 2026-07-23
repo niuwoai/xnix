@@ -49,6 +49,84 @@ func TestKnownAppLaunchAuthorizationReceiptPreviewCommandWritesReceipt(t *testin
 	}
 }
 
+func TestKnownAppKDERuntimeStatusLaunchRequestPreviewCommandCollectsOpaqueIDs(t *testing.T) {
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	var output bytes.Buffer
+	err := run([]string{
+		"known-app-kde-runtime-status-launch-request-preview",
+		"--app", "7zr",
+		"--launch-authorization-receipt-id", launchReceiptID,
+		"--session-gated-review-receipt-id", reviewReceiptID,
+		"--session-id", sessionID,
+		"--center-card-state", "validated-post-review-dispatch",
+		"--primary-action-id", appidentity.KnownAppKDERuntimeStatusLaunchAction,
+		"--post-review-dispatch-state", "created-after-session-gated-review",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppKDERuntimeStatusLaunchRequestSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchRequestType ||
+		payload["runtime_method"] != "PreviewKnownAppKDERuntimeStatusLaunchRequest" ||
+		payload["read_method"] != "GetKnownAppKDERuntimeStatusLaunchRequest" ||
+		payload["action_id"] != appidentity.KnownAppKDERuntimeStatusLaunchAction ||
+		payload["action_kind"] != "runtime-status" ||
+		payload["center_card_state"] != "validated-post-review-dispatch" ||
+		payload["launch_authorization_receipt_id"] != launchReceiptID ||
+		payload["session_gated_review_receipt_id"] != reviewReceiptID ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["managed_launcher_argv_ready"] != true ||
+		payload["required_opaque_id_count"] != float64(3) ||
+		payload["collected_opaque_id_count"] != float64(3) ||
+		payload["launch_request_created"] != true ||
+		payload["runtime_owned_request"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["kde_action_forwarded"] != true ||
+		payload["state_root_required"] != true ||
+		payload["state_root_supplied_by_runtime"] != true ||
+		payload["kde_state_root_access"] != false ||
+		payload["direct_launch_enabled"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["permission_grant_created"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["receipt_path_exposed"] != false ||
+		payload["session_path_exposed"] != false ||
+		payload["raw_artifact_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE Runtime-status launch request payload: %#v", payload)
+	}
+	argv := payload["managed_launcher_argv"].([]any)
+	if len(argv) != 11 ||
+		argv[0] != "xnix-compat-launch" ||
+		argv[1] != "--app" ||
+		argv[2] != "7zr" ||
+		argv[3] != "--guest-boundary" ||
+		argv[4] != "managed-known-app-guest-smoke" ||
+		argv[5] != "--receipt-id" ||
+		argv[6] != launchReceiptID ||
+		argv[7] != "--review-receipt-id" ||
+		argv[8] != reviewReceiptID ||
+		argv[9] != "--session-id" ||
+		argv[10] != sessionID {
+		t.Fatalf("unexpected managed launcher argv: %#v", argv)
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func TestKnownAppSessionGatedLaunchReviewReceiptRecordCommandWritesReceipt(t *testing.T) {
 	stateRoot := t.TempDir()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")

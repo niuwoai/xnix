@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestKDECenterPagePreviewCommandConsumesSessionRoot(t *testing.T) {
@@ -100,7 +102,7 @@ func TestKDECenterPagePreviewCommandConsumesSessionRoot(t *testing.T) {
 
 func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *testing.T) {
 	registryPath, app := writeTestRepairGroupRegistry(t)
-	sessionID := "xnix-known-app-session-7zr-26-02"
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
 
 	var output bytes.Buffer
 	if err := run([]string{
@@ -116,7 +118,7 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		"--known-app-smoke-marker-observed",
 		"--known-app-smoke-checksum-verified",
 		"--known-app-launch-authorization-receipt-state", "recorded",
-		"--known-app-launch-authorization-receipt-id", "xnix-known-app-launch-authorization-7zr-26-02",
+		"--known-app-launch-authorization-receipt-id", "known-app-launch-authorization-7zr-26.02",
 		"--known-app-launch-gate-consumed",
 		"--known-app-launch-gate-receipt-accepted",
 		"--known-app-launch-gate-guest-boundary-accepted",
@@ -157,6 +159,7 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 	if card["app_id"] != "7zr" ||
 		card["center_card_state"] != "validated-post-review-dispatch" ||
 		card["controlled_execution_session_id"] != sessionID ||
+		card["launch_authorization_receipt_id"] != "known-app-launch-authorization-7zr-26.02" ||
 		card["launcher_session_gate_consumed"] != true ||
 		card["launcher_session_digest_verified"] != true ||
 		card["launcher_session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
@@ -167,6 +170,14 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		card["session_gated_review_receipt_id"] != "known-app-session-gated-launch-review-7zr-26.02-"+sessionID ||
 		card["primary_action_id"] != "show-runtime-controlled-launch" ||
 		card["primary_action_kind"] != "runtime-status" ||
+		card["runtime_status_launch_request_type"] != "known-app-kde-runtime-status-launch-request-preview" ||
+		card["runtime_status_launch_runtime_method"] != "PreviewKnownAppKDERuntimeStatusLaunchRequest" ||
+		card["runtime_status_launch_read_method"] != "GetKnownAppKDERuntimeStatusLaunchRequest" ||
+		card["runtime_status_launch_required_id_count"] != float64(3) ||
+		card["runtime_status_launch_collected_id_count"] != float64(3) ||
+		card["runtime_status_launch_request_ready"] != true ||
+		card["runtime_status_launch_state_root_required"] != true ||
+		card["runtime_status_launch_state_root_owned_by_runtime"] != true ||
 		card["review_route_request_type"] != "known-app-session-gated-launch-review-preview" ||
 		card["review_route_runtime_method"] != "PreviewKnownAppSessionGatedLaunchReview" ||
 		card["review_route_read_method"] != "GetKnownAppSessionGatedLaunchReview" ||
@@ -177,6 +188,21 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		card["host_root_modified"] != false ||
 		card["backend_details_exposed"] != false {
 		t.Fatalf("unexpected known app session gate card: %#v", card)
+	}
+	managedArgv := card["runtime_status_launch_managed_launcher_argv"].([]any)
+	if len(managedArgv) != 11 ||
+		managedArgv[0] != "xnix-compat-launch" ||
+		managedArgv[1] != "--app" ||
+		managedArgv[2] != "7zr" ||
+		managedArgv[3] != "--guest-boundary" ||
+		managedArgv[4] != "managed-known-app-guest-smoke" ||
+		managedArgv[5] != "--receipt-id" ||
+		managedArgv[6] != "known-app-launch-authorization-7zr-26.02" ||
+		managedArgv[7] != "--review-receipt-id" ||
+		managedArgv[8] != "known-app-session-gated-launch-review-7zr-26.02-"+sessionID ||
+		managedArgv[9] != "--session-id" ||
+		managedArgv[10] != sessionID {
+		t.Fatalf("unexpected Runtime-status launch managed argv: %#v", managedArgv)
 	}
 	assertWindowIdentityPayloadSafe(t, output.String())
 }

@@ -233,6 +233,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppSessionGatedLaunchReviewGatePreview(args[1:], stdout)
 	case "known-app-session-gated-controlled-dispatch-request-preview":
 		return runKnownAppSessionGatedControlledDispatchRequestPreview(args[1:], stdout)
+	case "known-app-kde-runtime-status-launch-request-preview":
+		return runKnownAppKDERuntimeStatusLaunchRequestPreview(args[1:], stdout)
 	case "launch-intent-preview":
 		return runLaunchIntentPreview(args[1:], stdout)
 	case "mimeapps-preview":

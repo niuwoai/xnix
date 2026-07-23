@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.613] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-kde-runtime-status-launch-request-preview` command, which validates post-review KDE card state and collects the three Runtime-generated opaque ids needed for the managed launcher.
+- Extended KDE Center page known-app cards and staged launcher dispatch smoke with Runtime-status launch request route metadata, managed launcher argv assembly, Runtime-owned state-root handling, and disabled direct launch, backend launch, request writes, permission grants, path exposure, Docker socket mounts, broad host mounts, and host-root mutation.
+
 ## [0.2.612] - 2026-07-24
 
 ### Added

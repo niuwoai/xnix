@@ -4,8 +4,10 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"xnix.local/xnix/internal/runtime/artifact"
+	"xnix.local/xnix/internal/runtime/winapp"
 )
 
 type KDECenterPagePreview struct {
@@ -106,40 +108,50 @@ type KDECenterPageApplication struct {
 }
 
 type KDECenterPageKnownAppSessionGateCard struct {
-	AppID                         string `json:"app_id"`
-	DisplayName                   string `json:"display_name"`
-	AppVersion                    string `json:"app_version"`
-	CompatibilityState            string `json:"compatibility_state"`
-	CenterCardState               string `json:"center_card_state"`
-	ControlledExecutionSessionID  string `json:"controlled_execution_session_id"`
-	LauncherSessionGateConsumed   bool   `json:"launcher_session_gate_consumed"`
-	LauncherSessionDigestVerified bool   `json:"launcher_session_digest_verified"`
-	LauncherSessionRelativePath   string `json:"launcher_session_relative_path"`
-	RuntimeOwnerConsumableSession bool   `json:"runtime_owner_consumable_session"`
-	KDEReadModelConsumableSession bool   `json:"kde_read_model_consumable_session"`
-	PostReviewDispatchConsumed    bool   `json:"post_review_dispatch_consumed"`
-	PostReviewDispatchState       string `json:"post_review_dispatch_state"`
-	SessionGatedReviewReceiptID   string `json:"session_gated_review_receipt_id"`
-	LaunchGateConsumed            bool   `json:"launch_gate_consumed"`
-	ControlledDispatchReady       bool   `json:"controlled_dispatch_ready"`
-	PrimaryActionID               string `json:"primary_action_id"`
-	PrimaryActionLabel            string `json:"primary_action_label"`
-	PrimaryActionKind             string `json:"primary_action_kind"`
-	PrimaryActionEnabled          bool   `json:"primary_action_enabled"`
-	ReviewRouteRequestType        string `json:"review_route_request_type"`
-	ReviewRouteRuntimeMethod      string `json:"review_route_runtime_method"`
-	ReviewRouteReadMethod         string `json:"review_route_read_method"`
-	ReadBeforeWriteRequired       bool   `json:"read_before_write_required"`
-	RuntimeReceiptRequired        bool   `json:"runtime_receipt_required"`
-	UserVisible                   bool   `json:"user_visible"`
-	RuntimeOwned                  bool   `json:"runtime_owned"`
-	GoRuntimeBacked               bool   `json:"go_runtime_backed"`
-	KDEPolicyOwner                bool   `json:"kde_policy_owner"`
-	DesktopLaunchEnabled          bool   `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled          bool   `json:"backend_launch_enabled"`
-	HostRootModified              bool   `json:"host_root_modified"`
-	BackendDetailsExposed         bool   `json:"backend_details_exposed"`
-	Summary                       string `json:"summary"`
+	AppID                                      string   `json:"app_id"`
+	DisplayName                                string   `json:"display_name"`
+	AppVersion                                 string   `json:"app_version"`
+	CompatibilityState                         string   `json:"compatibility_state"`
+	CenterCardState                            string   `json:"center_card_state"`
+	ControlledExecutionSessionID               string   `json:"controlled_execution_session_id"`
+	LaunchAuthorizationReceiptID               string   `json:"launch_authorization_receipt_id"`
+	LauncherSessionGateConsumed                bool     `json:"launcher_session_gate_consumed"`
+	LauncherSessionDigestVerified              bool     `json:"launcher_session_digest_verified"`
+	LauncherSessionRelativePath                string   `json:"launcher_session_relative_path"`
+	RuntimeOwnerConsumableSession              bool     `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession              bool     `json:"kde_read_model_consumable_session"`
+	PostReviewDispatchConsumed                 bool     `json:"post_review_dispatch_consumed"`
+	PostReviewDispatchState                    string   `json:"post_review_dispatch_state"`
+	SessionGatedReviewReceiptID                string   `json:"session_gated_review_receipt_id"`
+	LaunchGateConsumed                         bool     `json:"launch_gate_consumed"`
+	ControlledDispatchReady                    bool     `json:"controlled_dispatch_ready"`
+	PrimaryActionID                            string   `json:"primary_action_id"`
+	PrimaryActionLabel                         string   `json:"primary_action_label"`
+	PrimaryActionKind                          string   `json:"primary_action_kind"`
+	PrimaryActionEnabled                       bool     `json:"primary_action_enabled"`
+	RuntimeStatusLaunchRequestType             string   `json:"runtime_status_launch_request_type"`
+	RuntimeStatusLaunchRuntimeMethod           string   `json:"runtime_status_launch_runtime_method"`
+	RuntimeStatusLaunchReadMethod              string   `json:"runtime_status_launch_read_method"`
+	RuntimeStatusLaunchRequiredIDCount         int      `json:"runtime_status_launch_required_id_count"`
+	RuntimeStatusLaunchCollectedIDCount        int      `json:"runtime_status_launch_collected_id_count"`
+	RuntimeStatusLaunchManagedLauncherArgv     []string `json:"runtime_status_launch_managed_launcher_argv"`
+	RuntimeStatusLaunchRequestReady            bool     `json:"runtime_status_launch_request_ready"`
+	RuntimeStatusLaunchStateRootRequired       bool     `json:"runtime_status_launch_state_root_required"`
+	RuntimeStatusLaunchStateRootOwnedByRuntime bool     `json:"runtime_status_launch_state_root_owned_by_runtime"`
+	ReviewRouteRequestType                     string   `json:"review_route_request_type"`
+	ReviewRouteRuntimeMethod                   string   `json:"review_route_runtime_method"`
+	ReviewRouteReadMethod                      string   `json:"review_route_read_method"`
+	ReadBeforeWriteRequired                    bool     `json:"read_before_write_required"`
+	RuntimeReceiptRequired                     bool     `json:"runtime_receipt_required"`
+	UserVisible                                bool     `json:"user_visible"`
+	RuntimeOwned                               bool     `json:"runtime_owned"`
+	GoRuntimeBacked                            bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner                             bool     `json:"kde_policy_owner"`
+	DesktopLaunchEnabled                       bool     `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                       bool     `json:"backend_launch_enabled"`
+	HostRootModified                           bool     `json:"host_root_modified"`
+	BackendDetailsExposed                      bool     `json:"backend_details_exposed"`
+	Summary                                    string   `json:"summary"`
 }
 
 type KDECenterPageBackend struct {
@@ -1102,44 +1114,82 @@ func kdeCenterPageKnownAppSessionGateCards(evidence []KnownAppSmokeEvidenceSumma
 		if !item.LauncherSessionGateConsumed {
 			continue
 		}
+		runtimeStatusArgv := kdeCenterPageRuntimeStatusLaunchArgv(item)
 		cards = append(cards, KDECenterPageKnownAppSessionGateCard{
-			AppID:                         item.AppID,
-			DisplayName:                   item.DisplayName,
-			AppVersion:                    item.AppVersion,
-			CompatibilityState:            item.CompatibilityState,
-			CenterCardState:               item.CenterCardState,
-			ControlledExecutionSessionID:  item.ControlledExecutionSessionID,
-			LauncherSessionGateConsumed:   item.LauncherSessionGateConsumed,
-			LauncherSessionDigestVerified: item.LauncherSessionDigestVerified,
-			LauncherSessionRelativePath:   item.LauncherSessionRelativePath,
-			RuntimeOwnerConsumableSession: item.LauncherSessionRuntimeOwnerConsumable,
-			KDEReadModelConsumableSession: item.LauncherSessionKDEReadModelConsumable,
-			PostReviewDispatchConsumed:    item.PostReviewDispatchConsumed,
-			PostReviewDispatchState:       item.PostReviewDispatchState,
-			SessionGatedReviewReceiptID:   item.SessionGatedReviewReceiptID,
-			LaunchGateConsumed:            item.LaunchGateConsumed,
-			ControlledDispatchReady:       item.ControlledDispatchReady,
-			PrimaryActionID:               item.PrimaryActionID,
-			PrimaryActionLabel:            item.PrimaryActionLabel,
-			PrimaryActionKind:             item.PrimaryActionKind,
-			PrimaryActionEnabled:          item.PrimaryActionEnabled,
-			ReviewRouteRequestType:        KnownAppSessionGatedLaunchReviewRequestType,
-			ReviewRouteRuntimeMethod:      "PreviewKnownAppSessionGatedLaunchReview",
-			ReviewRouteReadMethod:         "GetKnownAppSessionGatedLaunchReview",
-			ReadBeforeWriteRequired:       true,
-			RuntimeReceiptRequired:        true,
-			UserVisible:                   true,
-			RuntimeOwned:                  true,
-			GoRuntimeBacked:               true,
-			KDEPolicyOwner:                false,
-			DesktopLaunchEnabled:          false,
-			BackendLaunchEnabled:          false,
-			HostRootModified:              false,
-			BackendDetailsExposed:         false,
-			Summary:                       item.Summary,
+			AppID:                                      item.AppID,
+			DisplayName:                                item.DisplayName,
+			AppVersion:                                 item.AppVersion,
+			CompatibilityState:                         item.CompatibilityState,
+			CenterCardState:                            item.CenterCardState,
+			ControlledExecutionSessionID:               item.ControlledExecutionSessionID,
+			LaunchAuthorizationReceiptID:               item.LaunchAuthorizationReceiptID,
+			LauncherSessionGateConsumed:                item.LauncherSessionGateConsumed,
+			LauncherSessionDigestVerified:              item.LauncherSessionDigestVerified,
+			LauncherSessionRelativePath:                item.LauncherSessionRelativePath,
+			RuntimeOwnerConsumableSession:              item.LauncherSessionRuntimeOwnerConsumable,
+			KDEReadModelConsumableSession:              item.LauncherSessionKDEReadModelConsumable,
+			PostReviewDispatchConsumed:                 item.PostReviewDispatchConsumed,
+			PostReviewDispatchState:                    item.PostReviewDispatchState,
+			SessionGatedReviewReceiptID:                item.SessionGatedReviewReceiptID,
+			LaunchGateConsumed:                         item.LaunchGateConsumed,
+			ControlledDispatchReady:                    item.ControlledDispatchReady,
+			PrimaryActionID:                            item.PrimaryActionID,
+			PrimaryActionLabel:                         item.PrimaryActionLabel,
+			PrimaryActionKind:                          item.PrimaryActionKind,
+			PrimaryActionEnabled:                       item.PrimaryActionEnabled,
+			RuntimeStatusLaunchRequestType:             KnownAppKDERuntimeStatusLaunchRequestType,
+			RuntimeStatusLaunchRuntimeMethod:           "PreviewKnownAppKDERuntimeStatusLaunchRequest",
+			RuntimeStatusLaunchReadMethod:              "GetKnownAppKDERuntimeStatusLaunchRequest",
+			RuntimeStatusLaunchRequiredIDCount:         3,
+			RuntimeStatusLaunchCollectedIDCount:        kdeCenterPageRuntimeStatusCollectedIDCount(item),
+			RuntimeStatusLaunchManagedLauncherArgv:     runtimeStatusArgv,
+			RuntimeStatusLaunchRequestReady:            item.PostReviewDispatchConsumed && len(runtimeStatusArgv) > 0,
+			RuntimeStatusLaunchStateRootRequired:       true,
+			RuntimeStatusLaunchStateRootOwnedByRuntime: true,
+			ReviewRouteRequestType:                     KnownAppSessionGatedLaunchReviewRequestType,
+			ReviewRouteRuntimeMethod:                   "PreviewKnownAppSessionGatedLaunchReview",
+			ReviewRouteReadMethod:                      "GetKnownAppSessionGatedLaunchReview",
+			ReadBeforeWriteRequired:                    true,
+			RuntimeReceiptRequired:                     true,
+			UserVisible:                                true,
+			RuntimeOwned:                               true,
+			GoRuntimeBacked:                            true,
+			KDEPolicyOwner:                             false,
+			DesktopLaunchEnabled:                       false,
+			BackendLaunchEnabled:                       false,
+			HostRootModified:                           false,
+			BackendDetailsExposed:                      false,
+			Summary:                                    item.Summary,
 		})
 	}
 	return cards
+}
+
+func kdeCenterPageRuntimeStatusLaunchArgv(item KnownAppSmokeEvidenceSummary) []string {
+	if !item.PostReviewDispatchConsumed ||
+		strings.TrimSpace(item.LaunchAuthorizationReceiptID) == "" ||
+		strings.TrimSpace(item.SessionGatedReviewReceiptID) == "" ||
+		strings.TrimSpace(item.ControlledExecutionSessionID) == "" {
+		return nil
+	}
+	return []string{
+		"xnix-compat-launch",
+		"--app", item.AppID,
+		"--guest-boundary", winapp.KnownDispatchGuestBoundary,
+		"--receipt-id", item.LaunchAuthorizationReceiptID,
+		"--review-receipt-id", item.SessionGatedReviewReceiptID,
+		"--session-id", item.ControlledExecutionSessionID,
+	}
+}
+
+func kdeCenterPageRuntimeStatusCollectedIDCount(item KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, value := range []string{item.LaunchAuthorizationReceiptID, item.SessionGatedReviewReceiptID, item.ControlledExecutionSessionID} {
+		if strings.TrimSpace(value) != "" {
+			count++
+		}
+	}
+	return count
 }
 
 func kdeCenterPageAIAnalysisInput(recipe Recipe, provenance Provenance, sectionID string, fileURIs []string) (*KDECenterPageAIAnalysisInput, error) {

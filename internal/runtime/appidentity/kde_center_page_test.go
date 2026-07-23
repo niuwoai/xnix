@@ -563,6 +563,7 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 		card.CompatibilityState != "validated" ||
 		card.CenterCardState != "validated-post-review-dispatch" ||
 		card.ControlledExecutionSessionID != sessionID ||
+		card.LaunchAuthorizationReceiptID != KnownAppLaunchAuthorizationReceiptID("7zr", "26.02") ||
 		!card.LauncherSessionGateConsumed ||
 		!card.LauncherSessionDigestVerified ||
 		card.LauncherSessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
@@ -576,6 +577,15 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 		card.PrimaryActionID != "show-runtime-controlled-launch" ||
 		card.PrimaryActionKind != "runtime-status" ||
 		!card.PrimaryActionEnabled ||
+		card.RuntimeStatusLaunchRequestType != KnownAppKDERuntimeStatusLaunchRequestType ||
+		card.RuntimeStatusLaunchRuntimeMethod != "PreviewKnownAppKDERuntimeStatusLaunchRequest" ||
+		card.RuntimeStatusLaunchReadMethod != "GetKnownAppKDERuntimeStatusLaunchRequest" ||
+		card.RuntimeStatusLaunchRequiredIDCount != 3 ||
+		card.RuntimeStatusLaunchCollectedIDCount != 3 ||
+		strings.Join(card.RuntimeStatusLaunchManagedLauncherArgv, " ") != "xnix-compat-launch --app 7zr --guest-boundary managed-known-app-guest-smoke --receipt-id "+KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")+" --review-receipt-id "+reviewReceiptID+" --session-id "+sessionID ||
+		!card.RuntimeStatusLaunchRequestReady ||
+		!card.RuntimeStatusLaunchStateRootRequired ||
+		!card.RuntimeStatusLaunchStateRootOwnedByRuntime ||
 		card.ReviewRouteRequestType != KnownAppSessionGatedLaunchReviewRequestType ||
 		card.ReviewRouteRuntimeMethod != "PreviewKnownAppSessionGatedLaunchReview" ||
 		card.ReviewRouteReadMethod != "GetKnownAppSessionGatedLaunchReview" ||

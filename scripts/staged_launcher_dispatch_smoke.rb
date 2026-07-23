@@ -691,12 +691,57 @@ begin
     assert(kde_page_card["session_gated_review_receipt_id"] == payload.fetch("session_gated_review_receipt_id"), "KDE Center page card must expose the opaque session-gated review receipt id")
     assert(kde_page_card["primary_action_id"] == "show-runtime-controlled-launch", "KDE Center page card must expose Runtime-controlled launch status as the primary action")
     assert(kde_page_card["primary_action_kind"] == "runtime-status", "KDE Center page card must expose a Runtime status action")
+    assert(kde_page_card["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "KDE Center page card must expose the opaque launch authorization receipt id")
+    assert(kde_page_card["runtime_status_launch_request_type"] == "known-app-kde-runtime-status-launch-request-preview", "KDE Center page card must expose the Runtime-status launch request type")
+    assert(kde_page_card["runtime_status_launch_runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchRequest", "KDE Center page card must expose the Runtime-status launch runtime method")
+    assert(kde_page_card["runtime_status_launch_read_method"] == "GetKnownAppKDERuntimeStatusLaunchRequest", "KDE Center page card must expose the Runtime-status launch read method")
+    assert(kde_page_card["runtime_status_launch_required_id_count"] == 3, "KDE Center page card must require three opaque ids for Runtime launch request assembly")
+    assert(kde_page_card["runtime_status_launch_collected_id_count"] == 3, "KDE Center page card must collect three opaque ids for Runtime launch request assembly")
+    assert(kde_page_card["runtime_status_launch_request_ready"] == true, "KDE Center page card must mark the Runtime-status launch request ready")
+    assert(kde_page_card["runtime_status_launch_state_root_required"] == true, "KDE Center page card must keep state-root required for Runtime execution")
+    assert(kde_page_card["runtime_status_launch_state_root_owned_by_runtime"] == true, "KDE Center page card must keep state-root owned by Runtime")
+    assert(kde_page_card["runtime_status_launch_managed_launcher_argv"] == [
+      "xnix-compat-launch",
+      "--app", payload.fetch("app_id"),
+      "--guest-boundary", "managed-known-app-guest-smoke",
+      "--receipt-id", receipt_preview.fetch("receipt_id"),
+      "--review-receipt-id", payload.fetch("session_gated_review_receipt_id"),
+      "--session-id", payload.fetch("controlled_execution_session_id")
+    ], "KDE Center page card must collect managed launcher argv without state-root")
     assert(kde_page_card["desktop_launch_enabled"] == false, "KDE Center page card must not enable desktop launch")
     assert(kde_page_card["backend_launch_enabled"] == false, "KDE Center page card must not enable backend launch")
     assert(kde_page_card["host_root_modified"] == false, "KDE Center page card must not mutate the host root")
     assert(kde_page["launch_enabled"] == false, "KDE Center page must remain launch-gated")
     assert(kde_page["execution_started"] == false, "KDE Center page must not start execution")
     assert_no_forbidden(kde_page_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "KDE Center page preview output")
+    runtime_status_launch, runtime_status_launch_stdout = run_json(go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-kde-runtime-status-launch-request-preview",
+      "--app", payload.fetch("app_id"),
+      "--launch-authorization-receipt-id", kde_page_card.fetch("launch_authorization_receipt_id"),
+      "--session-gated-review-receipt-id", kde_page_card.fetch("session_gated_review_receipt_id"),
+      "--session-id", kde_page_card.fetch("controlled_execution_session_id"),
+      "--center-card-state", kde_page_card.fetch("center_card_state"),
+      "--primary-action-id", kde_page_card.fetch("primary_action_id"),
+      "--post-review-dispatch-state", kde_page_card.fetch("post_review_dispatch_state")
+    )
+    assert(runtime_status_launch["request_type"] == "known-app-kde-runtime-status-launch-request-preview", "Runtime-status launch request preview must use the Go Runtime request type")
+    assert(runtime_status_launch["runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchRequest", "Runtime-status launch request preview must be owned by the Go Runtime")
+    assert(runtime_status_launch["managed_launcher_argv_ready"] == true, "Runtime-status launch request preview must assemble managed launcher argv")
+    assert(runtime_status_launch["required_opaque_id_count"] == 3, "Runtime-status launch request preview must require three opaque ids")
+    assert(runtime_status_launch["collected_opaque_id_count"] == 3, "Runtime-status launch request preview must collect three opaque ids")
+    assert(runtime_status_launch["managed_launcher_argv"] == kde_page_card.fetch("runtime_status_launch_managed_launcher_argv"), "Runtime-status launch request preview must match the KDE-collected managed launcher argv")
+    assert(runtime_status_launch["state_root_required"] == true, "Runtime-status launch request preview must keep state-root required")
+    assert(runtime_status_launch["state_root_supplied_by_runtime"] == true, "Runtime-status launch request preview must keep state-root supplied by Runtime")
+    assert(runtime_status_launch["kde_state_root_access"] == false, "Runtime-status launch request preview must not give KDE state-root access")
+    assert(runtime_status_launch["direct_launch_enabled"] == false, "Runtime-status launch request preview must not enable direct launch")
+    assert(runtime_status_launch["desktop_launch_enabled"] == false, "Runtime-status launch request preview must not enable desktop launch")
+    assert(runtime_status_launch["backend_launch_enabled"] == false, "Runtime-status launch request preview must not enable backend launch")
+    assert(runtime_status_launch["execution_started"] == false, "Runtime-status launch request preview must not start execution")
+    assert(runtime_status_launch["request_objects_created"] == false, "Runtime-status launch request preview must not write request objects")
+    assert(runtime_status_launch["permission_grant_created"] == false, "Runtime-status launch request preview must not create permission grants")
+    assert(runtime_status_launch["host_root_modified"] == false, "Runtime-status launch request preview must not mutate the host root")
+    assert_no_forbidden(runtime_status_launch_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status launch request preview output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

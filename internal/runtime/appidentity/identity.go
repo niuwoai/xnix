@@ -2747,6 +2747,15 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		if !singleLine(sessionGatedReviewReceiptID) || strings.ContainsAny(sessionGatedReviewReceiptID, `/\`) || strings.Contains(sessionGatedReviewReceiptID, "..") {
 			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires an opaque review receipt id")
 		}
+		if receiptID != KnownAppLaunchAuthorizationReceiptID(appID, appVersion) {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires a matching launch authorization receipt id")
+		}
+		if sessionID != KnownAppControlledExecutionSessionID(appID, appVersion) {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires a matching controlled execution session id")
+		}
+		if sessionGatedReviewReceiptID != KnownAppSessionGatedLaunchReviewReceiptID(appID, appVersion, sessionID) {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires a matching session-gated review receipt id")
+		}
 	} else if postReviewDispatchState != "" || sessionGatedReviewReceiptID != "" {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch evidence requires consumed post-review dispatch state")
 	}

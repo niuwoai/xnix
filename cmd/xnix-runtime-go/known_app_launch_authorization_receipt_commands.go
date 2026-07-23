@@ -307,3 +307,34 @@ func runKnownAppSessionGatedControlledDispatchRequestPreview(args []string, stdo
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runKnownAppKDERuntimeStatusLaunchRequestPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("known-app-kde-runtime-status-launch-request-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	appID := flags.String("app", "", "known Windows application id")
+	launchReceiptID := flags.String("launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	reviewReceiptID := flags.String("session-gated-review-receipt-id", "", "opaque known Windows app session-gated review receipt id")
+	sessionID := flags.String("session-id", "", "opaque known Windows app controlled execution session id")
+	centerCardState := flags.String("center-card-state", "", "Compatibility Center card state from the KDE read model")
+	primaryActionID := flags.String("primary-action-id", "", "KDE primary action id from the Runtime-owned card")
+	postReviewDispatchState := flags.String("post-review-dispatch-state", "", "post-review dispatch state from the Runtime-owned card")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-kde-runtime-status-launch-request-preview does not accept positional arguments")
+	}
+	preview, err := appidentity.PreviewKnownAppKDERuntimeStatusLaunchRequest(appidentity.KnownAppKDERuntimeStatusLaunchRequest{
+		AppID:                        *appID,
+		LaunchAuthorizationReceiptID: *launchReceiptID,
+		SessionGatedReviewReceiptID:  *reviewReceiptID,
+		ControlledExecutionSessionID: *sessionID,
+		CenterCardState:              *centerCardState,
+		PrimaryActionID:              *primaryActionID,
+		PostReviewDispatchState:      *postReviewDispatchState,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
