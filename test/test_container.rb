@@ -28,6 +28,7 @@ runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_comman
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 known_winapp_fetch_command = container.known_winapp_fetch_command
 known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
+staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
 dockerfile = Pathname.new(PROJECT_ROOT).join("Dockerfile").read
 expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
@@ -109,6 +110,16 @@ assert(!known_guest_mount.include?("type=bind"), "known Windows app guest smoke 
 assert(!known_winapp_guest_command.include?("--privileged"), "known Windows app guest smoke must not be privileged")
 assert(!known_winapp_guest_command.any? { |argument| argument.include?("docker.sock") }, "known Windows app guest smoke must not mount the Docker socket")
 assert(known_winapp_guest_command.last(2) == ["ruby", "scripts/known_winapp_guest_wine_smoke.rb"], "known Windows app guest smoke must run the QEMU Wine harness")
+
+assert(staged_launcher_dispatch_command.fetch(staged_launcher_dispatch_command.index("--network") + 1) == "none", "staged launcher dispatch smoke must run without container networking")
+assert(staged_launcher_dispatch_command.include?("--read-only"), "staged launcher dispatch smoke must keep the container root read-only")
+assert(staged_launcher_dispatch_command.include?("--mount"), "staged launcher dispatch smoke must mount its managed cache volume")
+staged_launcher_dispatch_mount = staged_launcher_dispatch_command.fetch(staged_launcher_dispatch_command.index("--mount") + 1)
+assert(staged_launcher_dispatch_mount == expected_source_mount, "staged launcher dispatch smoke must use the managed source cache volume")
+assert(!staged_launcher_dispatch_mount.include?("type=bind"), "staged launcher dispatch smoke must not bind mount a host directory")
+assert(!staged_launcher_dispatch_command.include?("--privileged"), "staged launcher dispatch smoke must not be privileged")
+assert(!staged_launcher_dispatch_command.any? { |argument| argument.include?("docker.sock") }, "staged launcher dispatch smoke must not mount the Docker socket")
+assert(staged_launcher_dispatch_command.last(2) == ["ruby", "scripts/staged_launcher_dispatch_smoke.rb"], "staged launcher dispatch smoke must run through the staged launcher harness")
 
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")

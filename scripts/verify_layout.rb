@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.590"
+EXPECTED_VERSION = "0.2.591"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -445,6 +445,7 @@ REQUIRED_FILES = %w[
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
   scripts/staged_launcher_smoke.rb
+  scripts/staged_launcher_dispatch_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
   scripts/mainline_integration_review.rb
@@ -607,6 +608,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_activation.rb
   test/test_runtime_activation_install.rb
   test/test_runtime_activation_smoke_script.rb
+  test/test_staged_launcher_dispatch_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_first_presence_smoke_script.rb
@@ -6441,6 +6443,16 @@ end
 %w[launch_enabled execution_started backend_process_started host_root_modified backend_details_exposed].each do |field|
   assert(staged_launcher_smoke_source.include?(field), "Staged launcher smoke must validate #{field}")
 end
+
+staged_launcher_dispatch_smoke_source = read_project_file("scripts/staged_launcher_dispatch_smoke.rb")
+%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
+  assert(staged_launcher_dispatch_smoke_source.include?(token.gsub("\\ ", " ")), "Staged launcher dispatch smoke must include #{token}")
+end
+%w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required].each do |field|
+  assert(staged_launcher_dispatch_smoke_source.include?(field), "Staged launcher dispatch smoke must validate #{field}")
+end
+assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
+assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_dispatch_smoke_command"), "Container model must expose staged launcher dispatch smoke")
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")
 assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")

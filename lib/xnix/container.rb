@@ -83,6 +83,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/known_winapp_guest_wine_smoke.rb"])
     end
 
+    def staged_launcher_dispatch_smoke_command
+      tools_cache_run_command(["ruby", "scripts/staged_launcher_dispatch_smoke.rb"])
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.591] - 2026-07-24
+
+### Added
+
+- Added a staged managed launcher dispatch smoke that preflights the managed 7-Zip artifact, stages a freshly built Go launcher, invokes the staged launcher with the authorized `managed-known-app-guest-smoke` boundary when QEMU Wine guest prerequisites exist, and validates redacted `windows-known-app-dispatch-smoke` output.
+- Added the restricted container entrypoint `ruby scripts/container.rb staged-launcher-dispatch-smoke` plus script-level tests so the staged desktop launcher path can become the main real Windows app smoke lane without changing the full-smoke cadence.
+
 ## [0.2.590] - 2026-07-24
 
 ### Added
