@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.589"
+EXPECTED_VERSION = "0.2.590"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -444,6 +444,7 @@ REQUIRED_FILES = %w[
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
   scripts/runtime_activation_smoke.rb
+  scripts/staged_launcher_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
   scripts/mainline_integration_review.rb
@@ -6432,6 +6433,14 @@ assert(desktop_activation_source.include?("refusing to overwrite existing mimeap
 assert(desktop_activation_source.include?("\"host_root_modified\" => false"), "Desktop activation installer must not claim host root changes")
 assert(desktop_activation_source.include?("RecipeInstallGate"), "Desktop activation installer must enforce recipe install gate preflight")
 assert(desktop_activation_source.include?("recipe_install_gate_enforced"), "Desktop activation installer must report install gate enforcement")
+
+staged_launcher_smoke_source = read_project_file("scripts/staged_launcher_smoke.rb")
+%w[staged\ managed\ launcher\ smoke go\ build desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch windows-known-app-launch-bridge-preview runtime_owned_bridge PASS].each do |token|
+  assert(staged_launcher_smoke_source.include?(token.gsub("\\ ", " ")), "Staged launcher smoke must include #{token}")
+end
+%w[launch_enabled execution_started backend_process_started host_root_modified backend_details_exposed].each do |field|
+  assert(staged_launcher_smoke_source.include?(field), "Staged launcher smoke must validate #{field}")
+end
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")
 assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")

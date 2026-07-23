@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.590] - 2026-07-24
+
+### Added
+
+- Added a staged managed launcher smoke script that builds the Go launcher, stages it through `desktop-activation-stage --managed-launcher-bin`, executes the staged `usr/local/bin/xnix-compat-launch --app 7zr`, validates redacted launch bridge JSON, and keeps execution, backend, and host mutation gates closed.
+
 ## [0.2.589] - 2026-07-24
 
 ### Added
