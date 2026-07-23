@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.598"
+EXPECTED_VERSION = "0.2.599"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6416,14 +6416,14 @@ end
 assert(desktop_manifest_source.include?("\"backend_commands_exposed\" => false"), "Desktop integration manifest must hide backend commands")
 
 managed_launcher_source = read_project_file("cmd/xnix-compat-launch/main.go")
-%w[PreviewKnownPortableLaunchBridge RunKnownPortableDispatchSmoke guest-boundary DefaultKnownAppCacheRoot].each do |token|
+%w[PreviewKnownPortableLaunchBridge PreviewKnownAppControlledDispatchRequest RunKnownPortableDispatchSmoke guest-boundary state-root receipt-id DefaultKnownAppCacheRoot ControlledDispatchRequestCreated].each do |token|
   assert(managed_launcher_source.include?(token), "Go managed launcher must include #{token}")
 end
 %w[xnix-runtime-go xnix-runtime-owner xnix-compat-launch].each do |binary|
   assert(read_project_file("Dockerfile").include?("/usr/local/bin/#{binary}"), "Dockerfile must build #{binary}")
 end
 managed_launcher_test_source = read_project_file("cmd/xnix-compat-launch/main_test.go")
-%w[TestCompatLaunchUsesKnownAppLaunchBridge TestCompatLaunchRequiresApp TestCompatLaunchRejectsUnknownApp assertCompatLaunchCLISafe].each do |token|
+%w[TestCompatLaunchUsesKnownAppLaunchBridge TestCompatLaunchRequiresReceiptForDispatchBoundary TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch TestCompatLaunchRequiresApp TestCompatLaunchRejectsUnknownApp assertCompatLaunchCLISafe].each do |token|
   assert(managed_launcher_test_source.include?(token), "Go managed launcher tests must include #{token}")
 end
 
@@ -6445,7 +6445,7 @@ end
 end
 
 staged_launcher_dispatch_smoke_source = read_project_file("scripts/staged_launcher_dispatch_smoke.rb")
-%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke known-app-launch-authorization-receipt-preview known-app-launch-gate-preview known-app-controlled-dispatch-request-preview compatibility-center-preview known_app_staged_launcher_passed_count known_app_launch_authorization_required_count known_app_launch_authorization_recorded_count known_app_launch_gate_consumed_count known_app_controlled_dispatch_ready_count validated-launch-gate-consumed review-launch-authorization review-controlled-dispatch direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required launch_authorization_receipt_state launch_authorization_receipt_id launch_gate_state launch_gate_consumed launch_gate_receipt_accepted launch_gate_guest_boundary_accepted controlled_dispatch_ready controlled_dispatch_request_created runtime_owned_dispatch_request dispatch_smoke_request_type desktop_launch_enabled Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
+%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary --state-root --receipt-id managed-known-app-guest-smoke windows-known-app-dispatch-smoke known-app-launch-authorization-receipt-preview known-app-launch-gate-preview known-app-controlled-dispatch-request-preview compatibility-center-preview known_app_staged_launcher_passed_count known_app_launch_authorization_required_count known_app_launch_authorization_recorded_count known_app_launch_gate_consumed_count known_app_controlled_dispatch_ready_count validated-launch-gate-consumed review-launch-authorization review-controlled-dispatch direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required launch_authorization_receipt_state launch_authorization_receipt_id launch_gate_state launch_gate_consumed launch_gate_receipt_accepted launch_gate_guest_boundary_accepted controlled_dispatch_ready controlled_dispatch_request_created runtime_owned_dispatch_request dispatch_smoke_request_type desktop_launch_enabled Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token.gsub("\\ ", " ")), "Staged launcher dispatch smoke must include #{token}")
 end
 %w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required receipt_path_exposed state_root_path_exposed dispatch_request_materialized].each do |field|

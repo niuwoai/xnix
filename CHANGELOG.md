@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.599] - 2026-07-24
+
+### Changed
+
+- Updated the Go `xnix-compat-launch` entrypoint so any `--guest-boundary` dispatch path now requires `--state-root` and `--receipt-id`, consumes `PreviewKnownAppControlledDispatchRequest`, and refuses dispatch unless the controlled request object is created.
+- Reordered the staged launcher dispatch smoke so the Runtime receipt, launch gate, and controlled dispatch request are created before the staged launcher invokes the existing QEMU/Wine dispatch smoke runner.
+
 ## [0.2.598] - 2026-07-24
 
 ### Added

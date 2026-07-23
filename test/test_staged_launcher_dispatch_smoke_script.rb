@@ -23,6 +23,8 @@ assert(contents.include?("desktop-activation-stage"), "Staged launcher dispatch 
 assert(contents.include?("--managed-launcher-bin"), "Staged launcher dispatch smoke must copy the Go launcher binary")
 assert(contents.include?("usr/local/bin/xnix-compat-launch"), "Staged launcher dispatch smoke must execute the staged launcher")
 assert(contents.include?("--guest-boundary"), "Staged launcher dispatch smoke must supply the controlled guest boundary")
+assert(contents.include?("--state-root"), "Staged launcher dispatch smoke must supply the Runtime state root to the launcher")
+assert(contents.include?("--receipt-id"), "Staged launcher dispatch smoke must supply the opaque receipt id to the launcher")
 assert(contents.include?("managed-known-app-guest-smoke"), "Staged launcher dispatch smoke must use the known app guest smoke boundary")
 assert(contents.include?("windows-known-app-dispatch-smoke"), "Staged launcher dispatch smoke must enter the dispatch smoke path")
 assert(contents.include?("compatibility-center-preview"), "Staged launcher dispatch smoke must feed Compatibility Center preview evidence")

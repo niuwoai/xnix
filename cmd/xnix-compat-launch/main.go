@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"xnix.local/xnix/internal/runtime/appidentity"
 	"xnix.local/xnix/internal/runtime/winapp"
 )
 
@@ -28,6 +29,8 @@ func run(args []string, stdout io.Writer) error {
 	var appID string
 	var cacheRoot string
 	var guestBoundary string
+	var stateRoot string
+	var receiptID string
 	var host string
 	var port string
 	var user string
@@ -39,6 +42,8 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&appID, "app", "", "known Windows app id")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
 	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the Runtime owner or smoke harness")
+	flags.StringVar(&stateRoot, "state-root", "", "controlled Runtime state root containing the opaque launch authorization receipt")
+	flags.StringVar(&receiptID, "receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
 	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
 	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
@@ -70,7 +75,26 @@ func run(args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if guestBoundary == "" || !bridge.DispatchSmokeRequestMaterialized {
+	if guestBoundary == "" {
+		return encode(stdout, bridge)
+	}
+	if stateRoot == "" || receiptID == "" {
+		return fmt.Errorf("--state-root and --receipt-id are required when --guest-boundary requests dispatch")
+	}
+	controlledDispatch, err := appidentity.PreviewKnownAppControlledDispatchRequest(appidentity.KnownAppControlledDispatchRequest{
+		AppID:         appID,
+		StateRoot:     stateRoot,
+		ReceiptID:     receiptID,
+		CacheRoot:     cacheRoot,
+		GuestBoundary: guestBoundary,
+	})
+	if err != nil {
+		return err
+	}
+	if !controlledDispatch.ControlledDispatchRequestCreated {
+		return encode(stdout, controlledDispatch)
+	}
+	if !bridge.DispatchSmokeRequestMaterialized {
 		return encode(stdout, bridge)
 	}
 

@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.598
+> Last updated: 2026-07-24 | Baseline: v0.2.599
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from the controlled dispatch request object by making the managed `xnix-compat-launch` entrypoint consume the receipt/gate/request path before it invokes the existing dispatch smoke runner. The next step should add explicit launcher flags for the opaque receipt id and state root, call `known-app-controlled-dispatch-request-preview` or the underlying Go function before `RunKnownPortableDispatchSmoke`, and refuse dispatch when the controlled request object is not created. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from the launcher-owned controlled dispatch gate by running the formal full Buildroot/QEMU checkpoint at v0.2.600, because the next version is the twentieth patch checkpoint. The full checkpoint should prove that the staged launcher path still reaches a real 7zr QEMU/Wine PASS while consuming the opaque receipt and controlled dispatch request inside `xnix-compat-launch`; any project defect found by the full smoke must be fixed and committed before continuing. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.599 checkpoint moves the controlled dispatch request gate into the Go `xnix-compat-launch` entrypoint. Dispatch requests with `--guest-boundary managed-known-app-guest-smoke` now require the opaque `--receipt-id` and explicit `--state-root`, consume `PreviewKnownAppControlledDispatchRequest`, and refuse to call the existing QEMU/Wine dispatch smoke runner unless the controlled request object is created. The staged launcher dispatch smoke now creates the receipt, launch gate, and controlled dispatch request before the real staged launcher dispatch, making the launcher itself consume the gate instead of leaving it as smoke-side evidence only.
 
 The v0.2.598 checkpoint adds the Go-owned `known-app-controlled-dispatch-request-preview` object. It materializes a portable controlled dispatch request only after the Runtime accepts the opaque receipt, accepts the `managed-known-app-guest-smoke` boundary, and verifies the managed artifact. The staged launcher dispatch smoke now validates that object after a real 7zr PASS while keeping dispatch start, execution start, direct launch, desktop launch, backend launch, backend process start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
 

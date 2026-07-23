@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestCompatLaunchUsesKnownAppLaunchBridge(t *testing.T) {
@@ -69,6 +71,66 @@ func TestCompatLaunchRequiresApp(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "--app is required") {
 		t.Fatalf("expected missing app rejection, got %v", err)
 	}
+}
+
+func TestCompatLaunchRequiresReceiptForDispatchBoundary(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		"--app", "7zr",
+		"--guest-boundary", "managed-known-app-guest-smoke",
+	}, &output)
+	if err == nil || !strings.Contains(err.Error(), "--state-root and --receipt-id are required") {
+		t.Fatalf("expected missing receipt rejection, got %v", err)
+	}
+}
+
+func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.T) {
+	cacheRoot := t.TempDir()
+	stateRoot := t.TempDir()
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", "7zr",
+		"--cache-root", cacheRoot,
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppControlledDispatchSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppControlledDispatchRequestType ||
+		payload["receipt_accepted"] != true ||
+		payload["guest_boundary_accepted"] != true ||
+		payload["launch_gate_state"] != "dispatch-preparation-required" ||
+		payload["controlled_dispatch_request_created"] != false ||
+		payload["dispatch_started"] != false ||
+		payload["execution_started"] != false ||
+		payload["direct_launch_enabled"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["receipt_path_exposed"] != false ||
+		payload["state_root_path_exposed"] != false {
+		t.Fatalf("unexpected controlled dispatch request payload: %#v", payload)
+	}
+	assertCompatLaunchCLISafe(t, output.String(), cacheRoot)
+	assertCompatLaunchCLISafe(t, output.String(), stateRoot)
 }
 
 func TestCompatLaunchRejectsUnknownApp(t *testing.T) {
