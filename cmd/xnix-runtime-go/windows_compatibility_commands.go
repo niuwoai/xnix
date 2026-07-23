@@ -77,13 +77,17 @@ func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	var exePath string
 	var stateRoot string
 	var image string
+	var platform string
 	var dockerPath string
 	var timeoutText string
+	var bootstrapTimeoutText string
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
 	flags.StringVar(&image, "image", winapp.DefaultContainerImage, "local Wine container image")
+	flags.StringVar(&platform, "platform", winapp.DefaultWinePlatform, "container platform")
 	flags.StringVar(&dockerPath, "docker", "", "explicit docker runner path")
 	flags.StringVar(&timeoutText, "timeout", "45s", "execution timeout")
+	flags.StringVar(&bootstrapTimeoutText, "bootstrap-timeout", winapp.DefaultWineBootstrapTimeout.String(), "Wine prefix bootstrap timeout")
 
 	var appArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the Windows executable")
@@ -99,14 +103,20 @@ func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
+	bootstrapTimeout, err := time.ParseDuration(bootstrapTimeoutText)
+	if err != nil {
+		return fmt.Errorf("parse bootstrap timeout: %w", err)
+	}
 
 	result, err := winapp.RunContainerSmoke(context.Background(), winapp.ContainerRequest{
-		ExecutablePath: exePath,
-		Arguments:      []string(appArgs),
-		StateRoot:      stateRoot,
-		Image:          image,
-		DockerPath:     dockerPath,
-		Timeout:        timeout,
+		ExecutablePath:   exePath,
+		Arguments:        []string(appArgs),
+		StateRoot:        stateRoot,
+		Image:            image,
+		Platform:         platform,
+		DockerPath:       dockerPath,
+		Timeout:          timeout,
+		BootstrapTimeout: bootstrapTimeout,
 	})
 	if err != nil {
 		return err

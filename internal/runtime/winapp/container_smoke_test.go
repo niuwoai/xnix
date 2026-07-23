@@ -40,8 +40,13 @@ func TestRunContainerSmokeUsesRestrictedDockerRunner(t *testing.T) {
 		result.ExitCode != 0 ||
 		result.ExecutableName != "hello.exe" ||
 		result.ContainerImage != "local/wine-smoke:test" ||
+		result.ContainerPlatform != DefaultWinePlatform ||
+		result.ContainerStateMode != "tmpfs" ||
 		result.PullPolicy != "never" ||
 		result.NetworkMode != "none" ||
+		!result.WineBootstrapRequired ||
+		result.WineBootstrapTimedOut ||
+		result.WineBootstrapExitCode != -1 ||
 		result.CompatibilityLayer != "containerized-windows-compatibility-layer" {
 		t.Fatalf("unexpected result: %#v", result)
 	}
@@ -51,7 +56,7 @@ func TestRunContainerSmokeUsesRestrictedDockerRunner(t *testing.T) {
 		result.HostNetworkingRequired ||
 		result.DockerSocketMounted ||
 		result.BroadHostMountRequired ||
-		result.HostMountCount != 2 {
+		result.HostMountCount != 1 {
 		t.Fatalf("unexpected safety flags: %#v", result)
 	}
 
@@ -62,12 +67,21 @@ func TestRunContainerSmokeUsesRestrictedDockerRunner(t *testing.T) {
 	log := string(logBytes)
 	for _, token := range []string{
 		"image inspect local/wine-smoke:test",
-		"run --rm --pull never --network none",
+		"run --rm --platform linux/amd64 --pull never --network none",
+		"--cpus 2",
+		"--memory 2g",
 		"--security-opt no-new-privileges",
 		"--cap-drop ALL",
+		"--tmpfs /state:rw,nosuid,nodev,size=768m",
 		"--env WINEPREFIX=/state/wineprefix",
+		"--env WINEARCH=win64",
+		"--env WINEDEBUG=-all",
+		"--env WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d",
+		"--env XNIX_WINE_BOOTSTRAP_TIMEOUT_SECONDS=300",
 		"--env HOME=/state/home",
-		"local/wine-smoke:test wine /work/hello.exe",
+		"local/wine-smoke:test sh -lc",
+		"wineboot --init",
+		"exec wine \"$@\" xnix-wine-smoke /work/hello.exe",
 	} {
 		if !strings.Contains(log, token) {
 			t.Fatalf("fake docker log missing %q: %s", token, log)
@@ -111,6 +125,45 @@ func TestRunContainerSmokeSkipsWhenImageUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunContainerSmokeReportsWineBootstrapTimeout(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	body := "#!/bin/sh\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_WINE_BOOTSTRAP_EXIT:124\\n' >&2\n" +
+		"exit 124\n"
+	if err := os.WriteFile(dockerPath, []byte(body), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	result, err := RunContainerSmoke(context.Background(), ContainerRequest{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		Image:          "local/wine-smoke:test",
+		DockerPath:     dockerPath,
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunContainerSmoke returned error: %v", err)
+	}
+	if result.Status != FailedStatus ||
+		result.FailureReason != "wine bootstrap timed out" ||
+		!result.WineBootstrapTimedOut ||
+		result.WineBootstrapExitCode != 124 ||
+		result.MarkerObserved ||
+		result.ExitCode != 124 {
+		t.Fatalf("unexpected timeout result: %#v", result)
+	}
+}
+
 func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-docker")
@@ -118,7 +171,7 @@ func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 		"printf '%s\\n' \"$*\" >> '" + logPath + "'\n" +
 		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
 		"case \"$*\" in\n" +
-		"  *'run --rm --pull never --network none'*'--security-opt no-new-privileges'*'--cap-drop ALL'*'--env WINEPREFIX=/state/wineprefix'*'local/wine-smoke:test wine /work/hello.exe'*) printf 'XNIX_WINAPP_SMOKE_OK\\n'; exit 0 ;;\n" +
+		"  *'run --rm --platform linux/amd64 --pull never --network none'*'--cpus 2'*'--memory 2g'*'--security-opt no-new-privileges'*'--cap-drop ALL'*'--tmpfs /state:rw,nosuid,nodev,size=768m'*'--env WINEPREFIX=/state/wineprefix'*'--env WINEARCH=win64'*'local/wine-smoke:test sh -lc'*'wineboot --init'*'exec wine \"$@\"'*'xnix-wine-smoke /work/hello.exe'*) printf 'XNIX_WINAPP_SMOKE_OK\\n'; exit 0 ;;\n" +
 		"esac\n" +
 		"exit 2\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {

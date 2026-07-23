@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.568] - 2026-07-23
+
+### Changed
+
+- Hardened the containerized Windows app smoke path for Apple/Colima by defaulting the local Wine container to `linux/amd64`, adding platform-specific image validation, and shrinking the Docker build context with local build/cache artifact exclusions.
+- Added a Docker build fallback for environments without `docker buildx`; the fallback prepares and commits a local Wine image for the requested platform while keeping the preparation path explicit and noninteractive.
+- Moved Wine smoke state into a container tmpfs, reduced host exposure to one read-only application mount, raised the restricted container resource ceiling to 2 CPUs and 2 GB for Wine bootstrap, and added explicit Wine bootstrap timeout evidence in the Runtime JSON result.
+- Recorded current Colima evidence: the local `xnix-wine-smoke:local` image builds as `linux/amd64`, Docker exposes 2 CPUs after restart, and the real Windows PE fixture reaches Wine prefix bootstrap but times out in the current macOS Colima/QEMU-user environment instead of producing the smoke marker.
+
 ## [0.2.567] - 2026-07-23
 
 ### Added

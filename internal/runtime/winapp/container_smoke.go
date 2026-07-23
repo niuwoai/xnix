@@ -8,24 +8,30 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	ContainerSchemaVersion = "xnix.runtime.windows_app_container_smoke.v1"
-	ContainerRequestType   = "windows-app-container-run-smoke"
-	DefaultContainerImage  = "xnix-wine-smoke:local"
+	ContainerSchemaVersion      = "xnix.runtime.windows_app_container_smoke.v1"
+	ContainerRequestType        = "windows-app-container-run-smoke"
+	DefaultContainerImage       = "xnix-wine-smoke:local"
+	DefaultWinePlatform         = "linux/amd64"
+	DefaultWineBootstrapTimeout = 300 * time.Second
+	wineBootstrapExitMarker     = "XNIX_WINE_BOOTSTRAP_EXIT:"
 )
 
 type ContainerRequest struct {
-	ExecutablePath string
-	Arguments      []string
-	StateRoot      string
-	Image          string
-	DockerPath     string
-	Timeout        time.Duration
-	ExpectedMarker string
+	ExecutablePath   string
+	Arguments        []string
+	StateRoot        string
+	Image            string
+	Platform         string
+	DockerPath       string
+	Timeout          time.Duration
+	BootstrapTimeout time.Duration
+	ExpectedMarker   string
 }
 
 type ContainerResult struct {
@@ -34,8 +40,13 @@ type ContainerResult struct {
 	Status                      string `json:"status"`
 	ExecutableName              string `json:"executable_name"`
 	ContainerImage              string `json:"container_image"`
+	ContainerPlatform           string `json:"container_platform"`
+	ContainerStateMode          string `json:"container_state_mode"`
 	PullPolicy                  string `json:"pull_policy"`
 	NetworkMode                 string `json:"network_mode"`
+	WineBootstrapRequired       bool   `json:"wine_bootstrap_required"`
+	WineBootstrapTimedOut       bool   `json:"wine_bootstrap_timed_out"`
+	WineBootstrapExitCode       int    `json:"wine_bootstrap_exit_code"`
 	RunnerAvailable             bool   `json:"runner_available"`
 	ImageAvailable              bool   `json:"image_available"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
@@ -101,7 +112,17 @@ func RunContainerSmoke(ctx context.Context, request ContainerRequest) (Container
 	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	args := restrictedDockerRunArgs(executablePath, stateRoot, result.ContainerImage, request.Arguments)
+	bootstrapTimeout := request.BootstrapTimeout
+	if bootstrapTimeout <= 0 {
+		bootstrapTimeout = DefaultWineBootstrapTimeout
+	}
+	args := restrictedDockerRunArgs(
+		executablePath,
+		result.ContainerImage,
+		result.ContainerPlatform,
+		bootstrapTimeout,
+		request.Arguments,
+	)
 	command := exec.CommandContext(runCtx, dockerPath, args...)
 
 	var stdout bytes.Buffer
@@ -116,10 +137,21 @@ func RunContainerSmoke(ctx context.Context, request ContainerRequest) (Container
 	result.Stderr = stderr.String()
 	result.MarkerObserved = strings.Contains(result.Stdout, result.ExpectedMarker)
 	result.ExitCode = exitCode(err)
+	result.WineBootstrapExitCode = parseWineBootstrapExitCode(result.Stderr)
+	result.WineBootstrapTimedOut = result.WineBootstrapExitCode == 124
 
 	if runCtx.Err() == context.DeadlineExceeded {
 		result.Status = FailedStatus
 		result.FailureReason = "container execution timed out"
+		return result, nil
+	}
+	if result.WineBootstrapExitCode != -1 {
+		result.Status = FailedStatus
+		if result.WineBootstrapTimedOut {
+			result.FailureReason = "wine bootstrap timed out"
+		} else {
+			result.FailureReason = "wine bootstrap failed"
+		}
 		return result, nil
 	}
 	if err != nil {
@@ -146,13 +178,22 @@ func baseContainerResult(request ContainerRequest) ContainerResult {
 	if strings.TrimSpace(image) == "" {
 		image = DefaultContainerImage
 	}
+	platform := request.Platform
+	if strings.TrimSpace(platform) == "" {
+		platform = DefaultWinePlatform
+	}
 	return ContainerResult{
 		SchemaVersion:               ContainerSchemaVersion,
 		RequestType:                 ContainerRequestType,
 		Status:                      FailedStatus,
 		ContainerImage:              image,
+		ContainerPlatform:           platform,
+		ContainerStateMode:          "tmpfs",
 		PullPolicy:                  "never",
 		NetworkMode:                 "none",
+		WineBootstrapRequired:       true,
+		WineBootstrapTimedOut:       false,
+		WineBootstrapExitCode:       -1,
 		CompatibilityLayer:          "containerized-windows-compatibility-layer",
 		ExpectedMarker:              marker,
 		ExitCode:                    -1,
@@ -161,7 +202,7 @@ func baseContainerResult(request ContainerRequest) ContainerResult {
 		HostNetworkingRequired:      false,
 		DockerSocketMounted:         false,
 		BroadHostMountRequired:      false,
-		HostMountCount:              2,
+		HostMountCount:              1,
 	}
 }
 
@@ -188,28 +229,69 @@ func inspectLocalImage(ctx context.Context, dockerPath string, image string) err
 	return command.Run()
 }
 
-func restrictedDockerRunArgs(executablePath string, stateRoot string, image string, appArgs []string) []string {
+func restrictedDockerRunArgs(executablePath string, image string, platform string, bootstrapTimeout time.Duration, appArgs []string) []string {
 	workRoot := filepath.Dir(executablePath)
 	executableName := filepath.Base(executablePath)
+	bootstrapSeconds := int(bootstrapTimeout.Round(time.Second).Seconds())
+	if bootstrapSeconds < 1 {
+		bootstrapSeconds = 1
+	}
+	launcher := strings.Join([]string{
+		"timeout \"${XNIX_WINE_BOOTSTRAP_TIMEOUT_SECONDS}s\" wineboot --init",
+		"bootstrap_status=$?",
+		"if [ \"$bootstrap_status\" -ne 0 ]; then",
+		"printf '" + wineBootstrapExitMarker + "%s\\n' \"$bootstrap_status\" >&2",
+		"exit \"$bootstrap_status\"",
+		"fi",
+		"exec wine \"$@\"",
+	}, "\n")
 	args := []string{
 		"run",
 		"--rm",
+		"--platform", platform,
 		"--pull", "never",
 		"--network", "none",
-		"--cpus", "1",
-		"--memory", "768m",
+		"--cpus", "2",
+		"--memory", "2g",
 		"--pids-limit", "256",
 		"--security-opt", "no-new-privileges",
 		"--cap-drop", "ALL",
 		"--tmpfs", "/tmp:rw,nosuid,nodev,size=128m",
+		"--tmpfs", "/state:rw,nosuid,nodev,size=768m",
 		"--volume", workRoot + ":/work:ro",
-		"--volume", stateRoot + ":/state:rw",
 		"--env", "WINEPREFIX=/state/wineprefix",
+		"--env", "WINEARCH=win64",
 		"--env", "HOME=/state/home",
+		"--env", "WINEDEBUG=-all",
+		"--env", "WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d",
+		"--env", "XNIX_WINE_BOOTSTRAP_TIMEOUT_SECONDS=" + strconv.Itoa(bootstrapSeconds),
 		"--workdir", "/work",
 		image,
-		"wine",
+		"sh",
+		"-lc",
+		launcher,
+		"xnix-wine-smoke",
 		"/work/" + executableName,
 	}
 	return append(args, appArgs...)
+}
+
+func parseWineBootstrapExitCode(stderr string) int {
+	index := strings.LastIndex(stderr, wineBootstrapExitMarker)
+	if index == -1 {
+		return -1
+	}
+	start := index + len(wineBootstrapExitMarker)
+	end := start
+	for end < len(stderr) && stderr[end] >= '0' && stderr[end] <= '9' {
+		end++
+	}
+	if end == start {
+		return -1
+	}
+	code, err := strconv.Atoi(stderr[start:end])
+	if err != nil {
+		return -1
+	}
+	return code
 }

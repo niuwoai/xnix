@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.567
+> Last updated: 2026-07-23 | Current version: v0.2.568
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.568 checkpoint hardens the first real Windows application smoke path for constrained Apple/Colima development. The local Wine image builder now defaults to `linux/amd64`, validates the resulting image platform, shrinks the Docker build context, and falls back to a noninteractive run-and-commit image preparation path when `docker buildx` is unavailable. `windows-app-container-run-smoke` now keeps Wine state in container tmpfs, exposes only one read-only application mount from the host, raises the restricted resource ceiling to 2 CPUs and 2 GB for Wine bootstrap, and reports explicit `wine_bootstrap_timed_out` evidence. Current evidence on the local Colima environment shows the `xnix-wine-smoke:local` image builds as `linux/amd64` and Docker exposes 2 CPUs, but Wine prefix bootstrap still times out before the real Windows PE fixture emits `XNIX_WINAPP_SMOKE_OK`; the next implementation step is to move the same Runtime-owned smoke path into a Linux/QEMU guest or another Wine baseline where bootstrap can complete. v0.2.568 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint remains v0.2.580 unless explicitly requested earlier.
 
 The v0.2.567 checkpoint adds the restricted container path needed to run the real Windows PE smoke fixture inside Linux/Wine without polluting the host. `xnix-runtime-go windows-app-container-run-smoke` runs the fixture through a local Wine container image with `--pull never`, `--network none`, dropped capabilities, no new privileges, bounded CPU/memory/PID limits, two narrow repository-local mounts, and redacted JSON evidence. `scripts/winapp_container_smoke.rb` builds the same Windows PE fixture and reports `PASS` for a working local Wine image or `SKIP` when the image is unavailable. `containers/wine-smoke.Dockerfile` and `scripts/build_wine_smoke_image.rb` define the explicit local Wine image preparation path. v0.2.567 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint remains v0.2.580 unless explicitly requested earlier.
 

@@ -1,7 +1,14 @@
 .cache/
 .gocache/
 .git/
+.local/
+.local-cache/
+build/
+dist/
+downloads/
 output/
+tmp/
 *.img
+*.qcow2
 *.iso
 *.log

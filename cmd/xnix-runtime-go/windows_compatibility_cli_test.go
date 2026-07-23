@@ -167,6 +167,7 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 		"--exe", exePath,
 		"--state-root", filepath.Join(tempDir, "state"),
 		"--image", "local/wine-smoke:test",
+		"--platform", "linux/amd64",
 		"--docker", dockerPath,
 		"--timeout", "5s",
 	}, &output)
@@ -183,6 +184,7 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 		payload["status"] != "passed" ||
 		payload["executable_name"] != "hello.exe" ||
 		payload["container_image"] != "local/wine-smoke:test" ||
+		payload["container_platform"] != "linux/amd64" ||
 		payload["pull_policy"] != "never" ||
 		payload["network_mode"] != "none" ||
 		payload["runner_available"] != true ||
@@ -194,7 +196,11 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 		payload["host_networking_required"] != false ||
 		payload["docker_socket_mounted"] != false ||
 		payload["broad_host_mount_required"] != false ||
-		payload["host_mount_count"] != float64(2) {
+		payload["host_mount_count"] != float64(1) ||
+		payload["container_state_mode"] != "tmpfs" ||
+		payload["wine_bootstrap_required"] != true ||
+		payload["wine_bootstrap_timed_out"] != false ||
+		payload["wine_bootstrap_exit_code"] != float64(-1) {
 		t.Fatalf("unexpected container smoke payload: %#v", payload)
 	}
 	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), dockerPath) {

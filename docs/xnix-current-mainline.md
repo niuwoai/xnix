@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.567
+> Last updated: 2026-07-23 | Baseline: v0.2.568
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Build and run the local Wine smoke image, then convert `scripts/winapp_container_smoke.rb` from `SKIP` to `PASS` with the real Windows PE fixture. After that, extend the same Runtime-owned path from the fixture to a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Keep the existing Go Runtime smoke contract and move the execution baseline to an environment where Wine bootstrap can complete: either a Linux/QEMU guest with Wine installed inside the guest, or a pinned container/runtime base known to support Wine under the available emulation. Do not add more compatibility contracts until the real Windows PE fixture produces a `PASS`; the follow-up should turn the fixture smoke green first, then replace the fixture with a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.568 checkpoint proves the local Wine image preparation path and tightens the smoke boundary, but it does not yet prove successful Windows app execution on the current macOS Colima runner. `scripts/build_wine_smoke_image.rb` builds `xnix-wine-smoke:local` as `linux/amd64` even when `docker buildx` is unavailable, and the Runtime container smoke now uses container tmpfs for Wine state, one read-only application mount, no network, no Docker socket mount, no privileged mode, no broad host mount, and explicit Wine bootstrap timeout fields. Current Colima evidence after restarting with 2 CPUs shows Docker supports `linux/amd64` and `linux/386`, but both win64 and win32 Wine prefix bootstrap attempts time out before the real Windows PE fixture can emit `XNIX_WINAPP_SMOKE_OK`.
 
 The v0.2.567 container smoke path adds `xnix-runtime-go windows-app-container-run-smoke`, `scripts/winapp_container_smoke.rb`, `containers/wine-smoke.Dockerfile`, and `scripts/build_wine_smoke_image.rb`. The command uses a local-only image policy, no container network, dropped capabilities, no new privileges, bounded resources, and two narrow repository-local mounts. Current evidence shows the smoke fixture builds, Docker/Colima is reachable with authorization, and the container smoke correctly reports `SKIP` because `xnix-wine-smoke:local` is not yet built locally.
 

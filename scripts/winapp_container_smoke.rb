@@ -11,8 +11,9 @@ WORK_ROOT = PROJECT_ROOT.join(".local", "xnix", "winapp-container-smoke")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".gocache")
 APP_ROOT = WORK_ROOT.join("app")
 EXE_PATH = APP_ROOT.join("hello.exe")
-STATE_ROOT = WORK_ROOT.join("state")
 IMAGE = ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local")
+PLATFORM = ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64")
+STATE_ROOT = WORK_ROOT.join("state-#{PLATFORM.tr("/", "-")}")
 MARKER = "XNIX_WINAPP_SMOKE_OK"
 
 def run_command(env, *argv)
@@ -51,7 +52,9 @@ smoke_stdout, smoke_stderr, smoke_status = run_command(
   "--exe", EXE_PATH.to_s,
   "--state-root", STATE_ROOT.to_s,
   "--image", IMAGE,
-  "--timeout", "60s"
+  "--platform", PLATFORM,
+  "--timeout", "420s",
+  "--bootstrap-timeout", "300s"
 )
 
 unless smoke_status.zero?
