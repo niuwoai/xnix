@@ -180,6 +180,104 @@ func TestPreviewKnownPortableManagedLaunchEnablesVerifiedKnownArtifact(t *testin
 	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
 }
 
+func TestPreviewKnownPortableKDELauncherConsumesManagedLaunchSurface(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PreviewKnownPortableKDELauncher(KnownKDELauncherRequest{
+		AppID:     "7zr",
+		CacheRoot: tempDir,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableKDELauncher returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownKDELauncherSchemaVersion ||
+		result.RequestType != KnownKDELauncherRequestType ||
+		result.Source != KnownManagedLaunchRequestType ||
+		result.Status != "visible-needs-preparation" ||
+		result.Desktop != "KDE Plasma" ||
+		result.EntryPointID != "launcher" ||
+		result.KDEComponent != "Plasma application launcher" ||
+		result.AppID != "7zr" ||
+		result.DisplayName != "7-Zip standalone console executable" ||
+		result.DesktopFile != "xnix-known-app-7zr.desktop" ||
+		result.Icon != "xnix-known-app-7zr" ||
+		result.LaunchSurfaceID != "known-app-7zr" ||
+		result.DesktopActionID != "launch-known-app-7zr" ||
+		result.ManagedLauncher != "xnix-compat-launch --app 7zr" ||
+		strings.Join(result.ManagedLauncherArgv, " ") != "xnix-compat-launch --app 7zr" ||
+		result.CacheStatus != "missing" ||
+		result.ArtifactVerified ||
+		!result.LaunchVisible ||
+		result.LaunchEnabled ||
+		!result.PreparationRequired ||
+		!result.ManagedLaunchSurface ||
+		!result.RuntimeOwnedLaunch ||
+		!result.KDEPresentationOnly ||
+		!result.DesktopEntryPreviewCreated ||
+		result.DesktopFilesWritten ||
+		result.MIMEAppsWritten ||
+		result.BackendProcessStarted ||
+		result.HostRootModified ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.RawHostPathExposed ||
+		result.RawExecutablePathExposed ||
+		result.RawCommandExposed ||
+		result.BackendDetailsExposed ||
+		result.BlockedReason != "managed application artifact must be fetched before launch" {
+		t.Fatalf("unexpected KDE launcher preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, tempDir)
+}
+
+func TestPreviewKnownPortableKDELauncherEnablesVisibleLauncherForVerifiedArtifact(t *testing.T) {
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	result, err := PreviewKnownPortableKDELauncher(KnownKDELauncherRequest{
+		AppID:     "fixture",
+		CacheRoot: cacheRoot,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableKDELauncher returned error: %v", err)
+	}
+	if result.Status != "visible-ready" ||
+		result.AppID != "fixture" ||
+		result.DesktopFile != "xnix-known-app-fixture.desktop" ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.LaunchVisible ||
+		!result.LaunchEnabled ||
+		result.PreparationRequired ||
+		result.BlockedReason != "" ||
+		!strings.Contains(result.DesktopSafeSummary, "visible in the KDE launcher and ready") {
+		t.Fatalf("unexpected ready KDE launcher preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
+}
+
 func TestRunKnownPortableGuestSmokeUsesVerifiedCacheAndLoopbackGuest(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")
@@ -296,7 +394,7 @@ func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, 
 	return function(request)
 }
 
-func assertManagedLaunchSurfaceSafe(t *testing.T, result KnownManagedLaunchResult, hostPath string) {
+func assertManagedLaunchSurfaceSafe(t *testing.T, result any, hostPath string) {
 	t.Helper()
 	text := fmt.Sprintf("%#v", result)
 	lower := strings.ToLower(text)

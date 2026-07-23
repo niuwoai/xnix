@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.582] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-known-app-kde-launcher-preview` CLI, wiring the pinned 7-Zip managed launch surface into a KDE Plasma launcher entrypoint model.
+- Added KDE launcher readiness states that show the 7-Zip launcher as visible but preparation-required until the managed cache artifact verifies, then visible and launch-enabled once verification passes.
+- Added targeted Go tests proving the KDE launcher model consumes the managed launch surface, preserves the `xnix-compat-launch --app 7zr` argv, rejects unknown apps, and avoids raw `.exe` paths, Wine/QEMU details, backend internals, host paths, host-root mutation, broad mounts, host networking, and Docker socket exposure.
+
 ## [0.2.581] - 2026-07-23
 
 ### Added

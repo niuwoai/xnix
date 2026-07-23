@@ -390,6 +390,66 @@ func TestWindowsKnownAppManagedLaunchPreviewCommandKeepsDesktopSurfaceRedacted(t
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
 }
 
+func TestWindowsKnownAppKDELauncherPreviewCommandConsumesManagedLaunchSurface(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-kde-launcher-preview",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_kde_launcher.v1" ||
+		payload["request_type"] != "windows-known-app-kde-launcher-preview" ||
+		payload["source"] != "windows-known-app-managed-launch-preview" ||
+		payload["status"] != "visible-needs-preparation" ||
+		payload["desktop"] != "KDE Plasma" ||
+		payload["entry_point_id"] != "launcher" ||
+		payload["kde_component"] != "Plasma application launcher" ||
+		payload["app_id"] != "7zr" ||
+		payload["display_name"] != "7-Zip standalone console executable" ||
+		payload["desktop_file"] != "xnix-known-app-7zr.desktop" ||
+		payload["icon"] != "xnix-known-app-7zr" ||
+		payload["launch_surface_id"] != "known-app-7zr" ||
+		payload["desktop_action_id"] != "launch-known-app-7zr" ||
+		payload["managed_launcher"] != "xnix-compat-launch --app 7zr" ||
+		payload["cache_status"] != "missing" ||
+		payload["artifact_verified"] != false ||
+		payload["launch_visible"] != true ||
+		payload["launch_enabled"] != false ||
+		payload["preparation_required"] != true ||
+		payload["managed_launch_surface"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["desktop_entry_preview_created"] != true ||
+		payload["desktop_files_written"] != false ||
+		payload["mimeapps_written"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE launcher payload: %#v", payload)
+	}
+	argv := payload["managed_launcher_argv"].([]any)
+	if strings.Join(anyStrings(argv), " ") != "xnix-compat-launch --app 7zr" {
+		t.Fatalf("unexpected KDE launcher argv: %#v", argv)
+	}
+	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+}
+
 func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-fetch", "--app", "missing-app"}, &output)
@@ -401,6 +461,14 @@ func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 func TestWindowsKnownAppManagedLaunchPreviewCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-managed-launch-preview", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppKDELauncherPreviewCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-kde-launcher-preview", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}
