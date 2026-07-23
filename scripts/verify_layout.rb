@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.576"
+EXPECTED_VERSION = "0.2.577"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -802,12 +802,16 @@ windows_app_guest_smoke_test = read_project_file("internal/runtime/winapp/guest_
 %w[TestRunGuestSmokeCopiesExecutableAndObservesMarker TestRunGuestSmokeSkipsWhenGuestWineUnavailable fake-ssh fake-scp guest\ wine\ runner\ unavailable XNIX_WINAPP_SMOKE_OK].each do |token|
   assert(windows_app_guest_smoke_test.include?(token.gsub("\\ ", " ")), "Go Windows app guest Wine smoke test must include #{token}")
 end
+windows_app_guest_smoke_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")
+%w[expected-marker ExpectedMarker].each do |token|
+  assert(windows_app_guest_smoke_cli.include?(token), "Windows app guest Wine smoke CLI must include #{token}")
+end
 windows_app_guest_smoke_cli_test = read_project_file("cmd/xnix-runtime-go/windows_compatibility_cli_test.go")
-%w[TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner windows-app-guest-wine-smoke loopback_only_networking qemu_required raw_host_path_exposed host_root_modified docker_socket_mounted broad_host_mount_required].each do |token|
+%w[TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner windows-app-guest-wine-smoke expected-marker KNOWN_PORTABLE_APP_OK loopback_only_networking qemu_required raw_host_path_exposed host_root_modified docker_socket_mounted broad_host_mount_required].each do |token|
   assert(windows_app_guest_smoke_cli_test.include?(token), "Windows app guest Wine smoke CLI test must include #{token}")
 end
 windows_app_guest_smoke_script = read_project_file("scripts/winapp_guest_wine_smoke.rb")
-%w[GOOS GOARCH 386 GOCACHE GOMODCACHE GOTMPDIR BOOT_TIMEOUT_SECONDS SERIAL_LOG_PATH qemu-serial.log 180 windows-app-guest-wine-smoke Xnix::Qemu.wine_guest Xnix::SshProbe Xnix::SshTestKey build-ssh-wine-guest configure-wine-guest start-build-ssh-wine-guest SKIP PASS .cache XNIX_WINAPP_SMOKE_OK].each do |token|
+%w[GOOS GOARCH 386 GOCACHE GOMODCACHE GOTMPDIR BOOT_TIMEOUT_SECONDS SERIAL_LOG_PATH qemu-serial.log XNIX_WINAPP_GUEST_EXE XNIX_WINAPP_GUEST_ARGS XNIX_WINAPP_GUEST_MARKER expected-marker 180 windows-app-guest-wine-smoke Xnix::Qemu.wine_guest Xnix::SshProbe Xnix::SshTestKey build-ssh-wine-guest configure-wine-guest start-build-ssh-wine-guest SKIP PASS .cache XNIX_WINAPP_SMOKE_OK].each do |token|
   assert(windows_app_guest_smoke_script.include?(token), "Windows app guest Wine smoke script must include #{token}")
 end
 container_script = read_project_file("scripts/container.rb")

@@ -140,6 +140,7 @@ func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
 	var sshPath string
 	var scpPath string
 	var timeoutText string
+	var expectedMarker string
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
 	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
@@ -149,6 +150,7 @@ func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
 	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
 	flags.StringVar(&timeoutText, "timeout", "60s", "guest execution timeout")
+	flags.StringVar(&expectedMarker, "expected-marker", winapp.DefaultMarker, "expected stdout marker")
 
 	var appArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the Windows executable")
@@ -180,6 +182,7 @@ func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
 		SSHPath:        sshPath,
 		SCPPath:        scpPath,
 		Timeout:        timeout,
+		ExpectedMarker: expectedMarker,
 	})
 	if err != nil {
 		return err

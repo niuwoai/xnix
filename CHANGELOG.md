@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.577] - 2026-07-23
+
+### Added
+
+- Added `--expected-marker` to the Go-owned `windows-app-guest-wine-smoke` CLI so non-fixture Windows executables can be validated by their own stdout marker while keeping redacted JSON evidence.
+- Extended `scripts/winapp_guest_wine_smoke.rb` with `XNIX_WINAPP_GUEST_EXE`, `XNIX_WINAPP_GUEST_ARGS`, and `XNIX_WINAPP_GUEST_MARKER`, allowing the same restricted QEMU Wine guest path to run a container-visible external Windows executable instead of always rebuilding the tiny fixture.
+- Kept the default fixture path intact as the regression baseline for `PASS: QEMU guest real Windows app Wine smoke`, and verified the new external executable path with `PASS: QEMU guest external Windows app Wine smoke`.
+
 ## [0.2.576] - 2026-07-23
 
 ### Fixed

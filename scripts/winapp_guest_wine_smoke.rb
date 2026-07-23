@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "pathname"
+require "shellwords"
 require_relative "../lib/xnix/qemu"
 require_relative "../lib/xnix/ssh_probe"
 require_relative "../lib/xnix/ssh_test_key"
@@ -14,9 +15,12 @@ WORK_ROOT = PROJECT_ROOT.join(".cache", "xnix", "winapp-guest-wine-smoke")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
 APP_ROOT = WORK_ROOT.join("app")
-EXE_PATH = APP_ROOT.join("hello.exe")
+DEFAULT_EXE_PATH = APP_ROOT.join("hello.exe")
+EXTERNAL_EXE_PATH = ENV.fetch("XNIX_WINAPP_GUEST_EXE", "").strip
+EXE_PATH = EXTERNAL_EXE_PATH.empty? ? DEFAULT_EXE_PATH : Pathname.new(EXTERNAL_EXE_PATH).expand_path(PROJECT_ROOT)
 SERIAL_LOG_PATH = WORK_ROOT.join("qemu-serial.log")
-MARKER = "XNIX_WINAPP_SMOKE_OK"
+MARKER = ENV.fetch("XNIX_WINAPP_GUEST_MARKER", "XNIX_WINAPP_SMOKE_OK")
+APP_ARGS = Shellwords.split(ENV.fetch("XNIX_WINAPP_GUEST_ARGS", ""))
 BOOT_TIMEOUT_SECONDS = 180
 RETRY_INTERVAL_SECONDS = 1
 FIXTURE_GOARCH = "386"
@@ -54,21 +58,26 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_TMP_ROOT)
 FileUtils.rm_f(SERIAL_LOG_PATH)
 
-build_stdout, build_stderr, build_status = run_command(
-  {
-    "GOOS" => "windows",
-    "GOARCH" => FIXTURE_GOARCH,
-    "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
-    "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
-    "GOTMPDIR" => GO_TMP_ROOT.to_s
-  },
-  "go", "build", "-o", EXE_PATH.to_s, "./test/fixtures/winapp/hello"
-)
+if EXTERNAL_EXE_PATH.empty?
+  build_stdout, build_stderr, build_status = run_command(
+    {
+      "GOOS" => "windows",
+      "GOARCH" => FIXTURE_GOARCH,
+      "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
+      "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
+      "GOTMPDIR" => GO_TMP_ROOT.to_s
+    },
+    "go", "build", "-o", EXE_PATH.to_s, "./test/fixtures/winapp/hello"
+  )
 
-unless build_status.zero?
-  warn build_stdout unless build_stdout.empty?
-  warn build_stderr unless build_stderr.empty?
-  warn "FAIL: Windows app fixture build failed"
+  unless build_status.zero?
+    warn build_stdout unless build_stdout.empty?
+    warn build_stderr unless build_stderr.empty?
+    warn "FAIL: Windows app fixture build failed"
+    exit 1
+  end
+elsif !File.file?(EXE_PATH)
+  warn "FAIL: external Windows app executable is unavailable inside the smoke container"
   exit 1
 end
 
@@ -98,7 +107,9 @@ begin
     "go", "run", "./cmd/xnix-runtime-go", "windows-app-guest-wine-smoke",
     "--exe", EXE_PATH.to_s,
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
-    "--timeout", "90s"
+    "--timeout", "90s",
+    "--expected-marker", MARKER,
+    *APP_ARGS.flat_map { |argument| ["--arg", argument] }
   )
 
   unless smoke_status.zero?
@@ -113,7 +124,8 @@ begin
   case payload.fetch("status")
   when "passed"
     if payload["marker_observed"] && payload["stdout"].include?(MARKER)
-      puts "PASS: QEMU guest real Windows app Wine smoke"
+      label = EXTERNAL_EXE_PATH.empty? ? "real Windows app" : "external Windows app"
+      puts "PASS: QEMU guest #{label} Wine smoke"
       exit 0
     end
     warn "FAIL: QEMU guest Windows app smoke marker missing"

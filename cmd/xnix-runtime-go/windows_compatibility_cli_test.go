@@ -226,7 +226,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
-		"  *' wine '*'hello.exe'*) printf 'XNIX_WINAPP_SMOKE_OK\\n'; exit 0 ;;\n" +
+		"  *' wine '*'hello.exe'*) printf 'KNOWN_PORTABLE_APP_OK\\n'; exit 0 ;;\n" +
 		"esac\n" +
 		"exit 2\n"
 	if err := os.WriteFile(sshPath, []byte(sshBody), 0o700); err != nil {
@@ -253,6 +253,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 		"--ssh", sshPath,
 		"--scp", scpPath,
 		"--timeout", "5s",
+		"--expected-marker", "KNOWN_PORTABLE_APP_OK",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -270,6 +271,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 		payload["guest_reachable"] != true ||
 		payload["wine_available"] != true ||
 		payload["executable_copied"] != true ||
+		payload["expected_marker"] != "KNOWN_PORTABLE_APP_OK" ||
 		payload["marker_observed"] != true ||
 		payload["loopback_only_networking"] != true ||
 		payload["qemu_required"] != true ||
