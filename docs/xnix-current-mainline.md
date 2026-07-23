@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.609
+> Last updated: 2026-07-24 | Baseline: v0.2.610
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.609 by wiring the accepted `known-app-session-gated-launch-review-gate-preview` result into the next Runtime-owned controlled dispatch state transition. The next implementation should preserve the passing staged 7zr QEMU/Wine lane, keep the Go managed launcher as the execution-side gate owner, and move toward a real user-visible launch flow by requiring this accepted review gate before dispatch request creation. Keep KDE presentation-only until the Runtime creates the next state transition, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from v0.2.610 by making the Go managed launcher consume the new `known-app-session-gated-controlled-dispatch-request-preview` state before invoking the existing staged 7zr runner. The next implementation should preserve the passing staged 7zr QEMU/Wine lane, keep KDE presentation-only, keep Runtime launch and dispatch ownership in Go, pass only opaque receipt and session ids across the desktop boundary, and move toward a real user-visible launch flow whose execution-side gate requires the accepted review receipt, existing launch receipt, managed guest boundary, and verified artifact. Keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.610 checkpoint adds the Go-owned `known-app-session-gated-controlled-dispatch-request-preview` command and wires it into the staged launcher dispatch smoke after the session-gated review gate. The preview consumes the accepted session-gated review receipt, reuses the existing opaque launch authorization receipt through the controlled dispatch request gate, and reports `controlled_dispatch_request_state=created-after-session-gated-review` only when the review receipt, launch receipt, managed guest boundary, and managed artifact all pass. It still does not allow dispatch directly, enable desktop launch, start backend or execution processes, create permission grants, expose state-root, session, receipt, or artifact paths, mount Docker sockets, require broad host mounts, or mutate the host root.
 
 The v0.2.609 checkpoint adds the Go-owned `known-app-session-gated-launch-review-gate-preview` command and wires it into the staged launcher dispatch smoke after the review receipt writer. The gate revalidates the digest-verified controlled execution session, reads the selected Runtime-owned review receipt from the explicit state root, verifies the receipt digest, rejects non-approved or mismatched receipts, and reports `dispatch_state_advance_ready=true` only for accepted approved receipts. It does not create dispatch request objects, grant direct launch approval, enable desktop launch, start backend or execution processes, expose state-root or receipt paths, mount Docker sockets, require broad host mounts, or mutate the host root.
 

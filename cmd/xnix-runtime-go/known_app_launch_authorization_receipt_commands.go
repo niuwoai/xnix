@@ -273,3 +273,37 @@ func runKnownAppSessionGatedLaunchReviewGatePreview(args []string, stdout io.Wri
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runKnownAppSessionGatedControlledDispatchRequestPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("known-app-session-gated-controlled-dispatch-request-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	appID := flags.String("app", "", "known Windows application id")
+	stateRoot := flags.String("state-root", "", "controlled Runtime state root containing launch and review receipts")
+	sessionID := flags.String("session-id", "", "optional opaque controlled execution session id")
+	reviewReceiptID := flags.String("review-receipt-id", "", "opaque session-gated launch review receipt id")
+	launchReceiptID := flags.String("launch-receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	cacheRoot := flags.String("cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+	guestBoundary := flags.String("guest-boundary", "", "controlled managed guest boundary")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" || *reviewReceiptID == "" || *launchReceiptID == "" {
+		return errors.New("known-app-session-gated-controlled-dispatch-request-preview requires --state-root, --review-receipt-id, and --launch-receipt-id")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-session-gated-controlled-dispatch-request-preview does not accept positional arguments")
+	}
+	preview, err := appidentity.PreviewKnownAppSessionGatedControlledDispatchRequest(appidentity.KnownAppSessionGatedControlledDispatchRequest{
+		AppID:           *appID,
+		StateRoot:       *stateRoot,
+		SessionID:       *sessionID,
+		ReviewReceiptID: *reviewReceiptID,
+		LaunchReceiptID: *launchReceiptID,
+		CacheRoot:       *cacheRoot,
+		GuestBoundary:   *guestBoundary,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}

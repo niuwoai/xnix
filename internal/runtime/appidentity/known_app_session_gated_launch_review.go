@@ -17,6 +17,8 @@ const (
 	KnownAppSessionGatedLaunchReviewReceiptRequestType   = "known-app-session-gated-launch-review-receipt-record"
 	KnownAppSessionGatedLaunchReviewGateSchemaVersion    = "xnix.runtime.known_app_session_gated_launch_review_gate.v1"
 	KnownAppSessionGatedLaunchReviewGateRequestType      = "known-app-session-gated-launch-review-gate-preview"
+	KnownAppSessionGatedControlledDispatchSchemaVersion  = "xnix.runtime.known_app_session_gated_controlled_dispatch_request.v1"
+	KnownAppSessionGatedControlledDispatchRequestType    = "known-app-session-gated-controlled-dispatch-request-preview"
 	KnownAppSessionGatedLaunchReviewAction               = "review-session-gated-dispatch"
 	knownAppSessionGatedLaunchReviewReceiptDir           = "runtime/session-gated-launch-review-receipts"
 )
@@ -261,6 +263,80 @@ type KnownAppSessionGatedLaunchReviewGatePreview struct {
 	BroadHostMountRequired        bool   `json:"broad_host_mount_required"`
 	NextStep                      string `json:"next_step"`
 	DesktopSafeSummary            string `json:"desktop_safe_summary"`
+}
+
+type KnownAppSessionGatedControlledDispatchRequest struct {
+	AppID           string
+	StateRoot       string
+	SessionID       string
+	ReviewReceiptID string
+	LaunchReceiptID string
+	CacheRoot       string
+	GuestBoundary   string
+}
+
+type KnownAppSessionGatedControlledDispatchPreview struct {
+	SchemaVersion                    string `json:"schema_version"`
+	RequestType                      string `json:"request_type"`
+	Source                           string `json:"source"`
+	RuntimeMethod                    string `json:"runtime_method"`
+	ReadMethod                       string `json:"read_method"`
+	AppID                            string `json:"app_id"`
+	DisplayName                      string `json:"display_name"`
+	AppVersion                       string `json:"app_version"`
+	ExecutionSessionID               string `json:"execution_session_id"`
+	SessionRecordConsumed            bool   `json:"session_record_consumed"`
+	SessionDigestVerified            bool   `json:"session_digest_verified"`
+	SessionRelativePath              string `json:"session_relative_path"`
+	SessionSHA256                    string `json:"session_sha256"`
+	ReviewReceiptID                  string `json:"review_receipt_id"`
+	ReviewReceiptRelativePath        string `json:"review_receipt_relative_path"`
+	ReviewReceiptSHA256              string `json:"review_receipt_sha256"`
+	ReviewReceiptConsumed            bool   `json:"review_receipt_consumed"`
+	ReviewReceiptAccepted            bool   `json:"review_receipt_accepted"`
+	ReviewGateState                  string `json:"review_gate_state"`
+	ReviewGateReady                  bool   `json:"review_gate_ready"`
+	DispatchStateAdvanceReady        bool   `json:"dispatch_state_advance_ready"`
+	LaunchAuthorizationReceiptID     string `json:"launch_authorization_receipt_id"`
+	LaunchGateState                  string `json:"launch_gate_state"`
+	LaunchGateReceiptAccepted        bool   `json:"launch_gate_receipt_accepted"`
+	LaunchGateGuestBoundaryAccepted  bool   `json:"launch_gate_guest_boundary_accepted"`
+	LaunchGateBlockedReason          string `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchGateReady      bool   `json:"controlled_dispatch_gate_ready"`
+	ControlledDispatchRequestCreated bool   `json:"controlled_dispatch_request_created"`
+	ControlledDispatchRequestState   string `json:"controlled_dispatch_request_state"`
+	RuntimeOwnedDispatchRequest      bool   `json:"runtime_owned_dispatch_request"`
+	DispatchRequestID                string `json:"dispatch_request_id,omitempty"`
+	DispatchID                       string `json:"dispatch_id,omitempty"`
+	DispatchRequestType              string `json:"dispatch_request_type"`
+	DispatchSmokeRequestType         string `json:"dispatch_smoke_request_type"`
+	DispatchGate                     string `json:"dispatch_gate"`
+	RunnerLane                       string `json:"runner_lane"`
+	CacheStatus                      string `json:"cache_status"`
+	ArtifactVerified                 bool   `json:"artifact_verified"`
+	DispatchReady                    bool   `json:"dispatch_ready"`
+	DispatchAllowed                  bool   `json:"dispatch_allowed"`
+	DispatchStarted                  bool   `json:"dispatch_started"`
+	ExecutionStarted                 bool   `json:"execution_started"`
+	DirectLaunchEnabled              bool   `json:"direct_launch_enabled"`
+	DesktopLaunchEnabled             bool   `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled             bool   `json:"backend_launch_enabled"`
+	BackendProcessStarted            bool   `json:"backend_process_started"`
+	RequestObjectsCreated            bool   `json:"request_objects_created"`
+	PermissionGrantCreated           bool   `json:"permission_grant_created"`
+	ReviewReceiptPathExposed         bool   `json:"review_receipt_path_exposed"`
+	ReceiptPathExposed               bool   `json:"receipt_path_exposed"`
+	StateRootPathExposed             bool   `json:"state_root_path_exposed"`
+	SessionPathExposed               bool   `json:"session_path_exposed"`
+	RawArtifactPathExposed           bool   `json:"raw_artifact_path_exposed"`
+	BackendDetailsExposed            bool   `json:"backend_details_exposed"`
+	HostRootModified                 bool   `json:"host_root_modified"`
+	NetworkRequired                  bool   `json:"network_required"`
+	PrivilegedContainerRequired      bool   `json:"privileged_container_required"`
+	DockerSocketMounted              bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired           bool   `json:"broad_host_mount_required"`
+	NextStep                         string `json:"next_step"`
+	DesktopSafeSummary               string `json:"desktop_safe_summary"`
 }
 
 func PreviewKnownAppSessionGatedLaunchReview(request KnownAppSessionGatedLaunchReviewRequest) (KnownAppSessionGatedLaunchReviewPreview, error) {
@@ -555,6 +631,72 @@ func PreviewKnownAppSessionGatedLaunchReviewGate(request KnownAppSessionGatedLau
 	return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
 }
 
+func PreviewKnownAppSessionGatedControlledDispatchRequest(request KnownAppSessionGatedControlledDispatchRequest) (KnownAppSessionGatedControlledDispatchPreview, error) {
+	gate, err := PreviewKnownAppSessionGatedLaunchReviewGate(KnownAppSessionGatedLaunchReviewGateRequest{
+		AppID:     request.AppID,
+		StateRoot: request.StateRoot,
+		SessionID: request.SessionID,
+		ReceiptID: request.ReviewReceiptID,
+	})
+	if err != nil {
+		return KnownAppSessionGatedControlledDispatchPreview{}, err
+	}
+	preview := baseKnownAppSessionGatedControlledDispatchPreview(gate, strings.TrimSpace(request.LaunchReceiptID))
+	if !gate.DispatchStateAdvanceReady || !gate.ReviewReceiptAccepted {
+		preview.ControlledDispatchRequestState = "blocked"
+		preview.LaunchGateBlockedReason = gate.ReceiptRejectedReason
+		if preview.LaunchGateBlockedReason == "" {
+			preview.LaunchGateBlockedReason = "session-gated review gate is not ready"
+		}
+		preview.DesktopSafeSummary = gate.DisplayName + " post-review controlled dispatch request is blocked until the Runtime accepts an approved review receipt."
+		return validateKnownAppSessionGatedControlledDispatchPreview(preview)
+	}
+	if strings.TrimSpace(request.LaunchReceiptID) == "" {
+		preview.ControlledDispatchRequestState = "blocked"
+		preview.LaunchGateBlockedReason = "launch authorization receipt id is required before controlled dispatch state can advance"
+		preview.DesktopSafeSummary = gate.DisplayName + " post-review controlled dispatch request needs the existing launch authorization receipt id before it can advance."
+		return validateKnownAppSessionGatedControlledDispatchPreview(preview)
+	}
+
+	dispatch, err := PreviewKnownAppControlledDispatchRequest(KnownAppControlledDispatchRequest{
+		AppID:         gate.AppID,
+		StateRoot:     request.StateRoot,
+		ReceiptID:     request.LaunchReceiptID,
+		CacheRoot:     request.CacheRoot,
+		GuestBoundary: request.GuestBoundary,
+	})
+	if err != nil {
+		return KnownAppSessionGatedControlledDispatchPreview{}, err
+	}
+	preview.LaunchAuthorizationReceiptID = dispatch.ReceiptID
+	preview.LaunchGateState = dispatch.LaunchGateState
+	preview.LaunchGateReceiptAccepted = dispatch.ReceiptAccepted
+	preview.LaunchGateGuestBoundaryAccepted = dispatch.GuestBoundaryAccepted
+	preview.LaunchGateBlockedReason = dispatch.LaunchGateBlockedReason
+	preview.ControlledDispatchGateReady = dispatch.ControlledDispatchReady
+	preview.ControlledDispatchRequestCreated = dispatch.ControlledDispatchRequestCreated
+	preview.ControlledDispatchRequestState = dispatch.ControlledDispatchRequestState
+	preview.RuntimeOwnedDispatchRequest = dispatch.RuntimeOwnedDispatchRequest
+	preview.DispatchRequestID = dispatch.DispatchRequestID
+	preview.DispatchID = dispatch.DispatchID
+	preview.DispatchRequestType = dispatch.DispatchRequestType
+	preview.DispatchSmokeRequestType = dispatch.DispatchSmokeRequestType
+	preview.DispatchGate = dispatch.DispatchGate
+	preview.RunnerLane = dispatch.RunnerLane
+	preview.CacheStatus = dispatch.CacheStatus
+	preview.ArtifactVerified = dispatch.ArtifactVerified
+	preview.DispatchReady = dispatch.DispatchReady
+	preview.RequestObjectsCreated = dispatch.ControlledDispatchRequestCreated
+	if !dispatch.ControlledDispatchRequestCreated {
+		preview.DesktopSafeSummary = gate.DisplayName + " post-review controlled dispatch request is still blocked by the existing launch gate, guest boundary, or artifact readiness."
+		return validateKnownAppSessionGatedControlledDispatchPreview(preview)
+	}
+	preview.ControlledDispatchRequestState = "created-after-session-gated-review"
+	preview.NextStep = "Record the next controlled execution session from this post-review dispatch state before the managed runner starts execution."
+	preview.DesktopSafeSummary = gate.DisplayName + " has a Runtime-owned controlled dispatch request created only after the approved session-gated review receipt was accepted; execution still requires the managed dispatch runner."
+	return validateKnownAppSessionGatedControlledDispatchPreview(preview)
+}
+
 func knownAppSessionGatedLaunchReviewNextStep(decision string) string {
 	switch decision {
 	case "approved":
@@ -676,6 +818,60 @@ func baseKnownAppSessionGatedLaunchReviewGatePreview(preview KnownAppSessionGate
 		BroadHostMountRequired:        false,
 		NextStep:                      "Record and accept a Runtime-owned approved review receipt before controlled dispatch state can advance.",
 		DesktopSafeSummary:            preview.DisplayName + " session-gated review gate is closed until the Runtime accepts a digest-verified approved review receipt.",
+	}
+}
+
+func baseKnownAppSessionGatedControlledDispatchPreview(gate KnownAppSessionGatedLaunchReviewGatePreview, launchReceiptID string) KnownAppSessionGatedControlledDispatchPreview {
+	return KnownAppSessionGatedControlledDispatchPreview{
+		SchemaVersion:                  KnownAppSessionGatedControlledDispatchSchemaVersion,
+		RequestType:                    KnownAppSessionGatedControlledDispatchRequestType,
+		Source:                         KnownAppSessionGatedLaunchReviewGateRequestType + "+" + KnownAppControlledDispatchRequestType,
+		RuntimeMethod:                  "PreviewKnownAppSessionGatedControlledDispatchRequest",
+		ReadMethod:                     "GetKnownAppSessionGatedControlledDispatchRequest",
+		AppID:                          gate.AppID,
+		DisplayName:                    gate.DisplayName,
+		AppVersion:                     gate.AppVersion,
+		ExecutionSessionID:             gate.ExecutionSessionID,
+		SessionRecordConsumed:          gate.SessionRecordConsumed,
+		SessionDigestVerified:          gate.SessionDigestVerified,
+		SessionRelativePath:            gate.SessionRelativePath,
+		SessionSHA256:                  gate.SessionSHA256,
+		ReviewReceiptID:                gate.ReceiptID,
+		ReviewReceiptRelativePath:      gate.ReceiptRelativePath,
+		ReviewReceiptSHA256:            gate.ReceiptSHA256,
+		ReviewReceiptConsumed:          gate.ReviewReceiptConsumed,
+		ReviewReceiptAccepted:          gate.ReviewReceiptAccepted,
+		ReviewGateState:                gate.ReviewGateState,
+		ReviewGateReady:                gate.ReviewGateReady,
+		DispatchStateAdvanceReady:      gate.DispatchStateAdvanceReady,
+		LaunchAuthorizationReceiptID:   launchReceiptID,
+		LaunchGateState:                "not-checked",
+		ControlledDispatchRequestState: "closed",
+		DispatchRequestType:            KnownAppControlledDispatchRequestType,
+		DispatchSmokeRequestType:       "",
+		DispatchGate:                   "",
+		DispatchAllowed:                false,
+		DispatchStarted:                false,
+		ExecutionStarted:               false,
+		DirectLaunchEnabled:            false,
+		DesktopLaunchEnabled:           false,
+		BackendLaunchEnabled:           false,
+		BackendProcessStarted:          false,
+		RequestObjectsCreated:          false,
+		PermissionGrantCreated:         false,
+		ReviewReceiptPathExposed:       false,
+		ReceiptPathExposed:             false,
+		StateRootPathExposed:           false,
+		SessionPathExposed:             false,
+		RawArtifactPathExposed:         false,
+		BackendDetailsExposed:          false,
+		HostRootModified:               false,
+		NetworkRequired:                false,
+		PrivilegedContainerRequired:    false,
+		DockerSocketMounted:            false,
+		BroadHostMountRequired:         false,
+		NextStep:                       "Accept the session-gated review receipt and existing launch gate before creating controlled dispatch state.",
+		DesktopSafeSummary:             gate.DisplayName + " post-review controlled dispatch request is closed until the Runtime accepts the session-gated review receipt.",
 	}
 }
 
@@ -816,6 +1012,42 @@ func validateKnownAppSessionGatedLaunchReviewGatePreview(preview KnownAppSession
 	}
 	if err := validateNoBackendTerms(preview, "known app session-gated launch review gate"); err != nil {
 		return KnownAppSessionGatedLaunchReviewGatePreview{}, err
+	}
+	return preview, nil
+}
+
+func validateKnownAppSessionGatedControlledDispatchPreview(preview KnownAppSessionGatedControlledDispatchPreview) (KnownAppSessionGatedControlledDispatchPreview, error) {
+	switch {
+	case preview.SchemaVersion != KnownAppSessionGatedControlledDispatchSchemaVersion || preview.RequestType != KnownAppSessionGatedControlledDispatchRequestType:
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch has invalid schema")
+	case !preview.SessionRecordConsumed || !preview.SessionDigestVerified || preview.SessionRelativePath == "" || preview.SessionSHA256 == "":
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch requires digest-verified session evidence")
+	case preview.ReviewReceiptID == "" || preview.ReviewReceiptRelativePath == "" || filepath.IsAbs(preview.ReviewReceiptRelativePath) || strings.Contains(filepath.Clean(preview.ReviewReceiptRelativePath), ".."):
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch requires relative review receipt evidence")
+	case !preview.ReviewReceiptAccepted && (preview.ControlledDispatchRequestCreated || preview.DispatchStateAdvanceReady):
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch must not advance without an accepted review gate")
+	case preview.ReviewReceiptAccepted && (!preview.ReviewReceiptConsumed || !preview.ReviewGateReady || !preview.DispatchStateAdvanceReady):
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch requires an accepted review gate")
+	case preview.ControlledDispatchRequestCreated && (!preview.LaunchGateReceiptAccepted || !preview.LaunchGateGuestBoundaryAccepted || !preview.ControlledDispatchGateReady || !preview.RuntimeOwnedDispatchRequest || !preview.ArtifactVerified || !preview.DispatchReady):
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch requires launch gate, boundary, artifact, and Runtime dispatch readiness")
+	case preview.ControlledDispatchRequestCreated && preview.ControlledDispatchRequestState != "created-after-session-gated-review":
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch created state is invalid")
+	case preview.DispatchAllowed || preview.DispatchStarted || preview.ExecutionStarted || preview.DirectLaunchEnabled || preview.DesktopLaunchEnabled:
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch must not start or directly enable launch")
+	case preview.BackendLaunchEnabled || preview.BackendProcessStarted || preview.PermissionGrantCreated:
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch must not start backend processes or grant permissions")
+	case preview.ReviewReceiptPathExposed || preview.ReceiptPathExposed || preview.StateRootPathExposed || preview.SessionPathExposed || preview.RawArtifactPathExposed || preview.BackendDetailsExposed:
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch must not expose raw paths or backend details")
+	case preview.HostRootModified || preview.NetworkRequired || preview.PrivilegedContainerRequired || preview.DockerSocketMounted || preview.BroadHostMountRequired:
+		return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch must keep host and container boundaries closed")
+	}
+	for _, value := range []string{preview.AppID, preview.DisplayName, preview.AppVersion, preview.ExecutionSessionID, preview.ReviewGateState, preview.ControlledDispatchRequestState, preview.LaunchGateState} {
+		if !singleLine(value) {
+			return KnownAppSessionGatedControlledDispatchPreview{}, errors.New("known app session-gated controlled dispatch requires single-line fields")
+		}
+	}
+	if err := validateNoBackendTerms(preview, "known app session-gated controlled dispatch"); err != nil {
+		return KnownAppSessionGatedControlledDispatchPreview{}, err
 	}
 	return preview, nil
 }

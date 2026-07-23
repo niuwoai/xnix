@@ -348,6 +348,147 @@ func TestPreviewKnownAppSessionGatedLaunchReviewGateRejectsDeferredReceipt(t *te
 	}
 }
 
+func TestPreviewKnownAppSessionGatedControlledDispatchRequestRequiresAcceptedReviewGate(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)
+	reviewReceipt, err := RecordKnownAppSessionGatedLaunchReviewReceipt(KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	launchReceipt, err := RecordKnownAppLaunchAuthorizationReceipt(KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	preview, err := PreviewKnownAppSessionGatedControlledDispatchRequest(KnownAppSessionGatedControlledDispatchRequest{
+		AppID:           "7zr",
+		StateRoot:       stateRoot,
+		SessionID:       sessionID,
+		ReviewReceiptID: reviewReceipt.ReceiptID,
+		LaunchReceiptID: launchReceipt.ReceiptID,
+		CacheRoot:       t.TempDir(),
+		GuestBoundary:   "managed-known-app-guest-smoke",
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppSessionGatedControlledDispatchRequest returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppSessionGatedControlledDispatchSchemaVersion ||
+		preview.RequestType != KnownAppSessionGatedControlledDispatchRequestType ||
+		preview.Source != KnownAppSessionGatedLaunchReviewGateRequestType+"+"+KnownAppControlledDispatchRequestType ||
+		preview.RuntimeMethod != "PreviewKnownAppSessionGatedControlledDispatchRequest" ||
+		preview.ReadMethod != "GetKnownAppSessionGatedControlledDispatchRequest" ||
+		preview.AppID != "7zr" ||
+		preview.ExecutionSessionID != sessionID ||
+		!preview.SessionRecordConsumed ||
+		!preview.SessionDigestVerified ||
+		preview.SessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
+		preview.SessionSHA256 == "" ||
+		preview.ReviewReceiptID != reviewReceipt.ReceiptID ||
+		preview.ReviewReceiptRelativePath != reviewReceipt.ReceiptRelativePath ||
+		preview.ReviewReceiptSHA256 != reviewReceipt.ReceiptSHA256 ||
+		!preview.ReviewReceiptConsumed ||
+		!preview.ReviewReceiptAccepted ||
+		preview.ReviewGateState != "review-receipt-accepted-dispatch-still-gated" ||
+		!preview.ReviewGateReady ||
+		!preview.DispatchStateAdvanceReady ||
+		preview.LaunchAuthorizationReceiptID != launchReceipt.ReceiptID ||
+		preview.LaunchGateState != "dispatch-preparation-required" ||
+		!preview.LaunchGateReceiptAccepted ||
+		!preview.LaunchGateGuestBoundaryAccepted ||
+		preview.ControlledDispatchGateReady ||
+		preview.ControlledDispatchRequestCreated ||
+		preview.ControlledDispatchRequestState != "blocked" ||
+		preview.RuntimeOwnedDispatchRequest ||
+		preview.ArtifactVerified ||
+		preview.DispatchReady ||
+		preview.DispatchAllowed ||
+		preview.DispatchStarted ||
+		preview.ExecutionStarted ||
+		preview.DirectLaunchEnabled ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.BackendProcessStarted ||
+		preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated ||
+		preview.ReviewReceiptPathExposed ||
+		preview.ReceiptPathExposed ||
+		preview.StateRootPathExposed ||
+		preview.SessionPathExposed ||
+		preview.RawArtifactPathExposed ||
+		preview.BackendDetailsExposed ||
+		preview.HostRootModified ||
+		preview.NetworkRequired ||
+		preview.PrivilegedContainerRequired ||
+		preview.DockerSocketMounted ||
+		preview.BroadHostMountRequired {
+		t.Fatalf("unexpected known app session-gated controlled dispatch preview: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("known app session-gated controlled dispatch exposed state root path: %s", text)
+	}
+	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("known app session-gated controlled dispatch exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestPreviewKnownAppSessionGatedControlledDispatchRequestRejectsDeferredReviewReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)
+	reviewReceipt, err := RecordKnownAppSessionGatedLaunchReviewReceipt(KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "deferred",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	preview, err := PreviewKnownAppSessionGatedControlledDispatchRequest(KnownAppSessionGatedControlledDispatchRequest{
+		AppID:           "7zr",
+		StateRoot:       stateRoot,
+		SessionID:       sessionID,
+		ReviewReceiptID: reviewReceipt.ReceiptID,
+		LaunchReceiptID: KnownAppLaunchAuthorizationReceiptID("7zr", "26.02"),
+		CacheRoot:       t.TempDir(),
+		GuestBoundary:   "managed-known-app-guest-smoke",
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppSessionGatedControlledDispatchRequest returned error: %v", err)
+	}
+	if preview.ReviewReceiptAccepted ||
+		preview.ReviewGateReady ||
+		preview.DispatchStateAdvanceReady ||
+		preview.ControlledDispatchGateReady ||
+		preview.ControlledDispatchRequestCreated ||
+		preview.RequestObjectsCreated ||
+		preview.DispatchReady ||
+		preview.DispatchAllowed ||
+		preview.ExecutionStarted ||
+		preview.HostRootModified ||
+		preview.ControlledDispatchRequestState != "blocked" ||
+		preview.LaunchGateBlockedReason != "session-gated launch review receipt decision is not approved" {
+		t.Fatalf("unexpected rejected review receipt dispatch preview: %#v", preview)
+	}
+}
+
 func TestPreviewKnownAppSessionGatedLaunchReviewRejectsInvalidAction(t *testing.T) {
 	_, err := PreviewKnownAppSessionGatedLaunchReview(KnownAppSessionGatedLaunchReviewRequest{
 		AppID:     "7zr",
