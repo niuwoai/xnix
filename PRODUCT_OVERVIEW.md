@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.570
+> Last updated: 2026-07-23 | Current version: v0.2.571
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.571 checkpoint removes a practical blocker from the Wine guest bring-up path. The Dockerfile now has a lightweight `tools` target for Ruby, Go, QEMU, and Buildroot tooling, while the default `tested-runtime` target still runs the full Go suite and builds Runtime binaries. `scripts/container.rb build-tools` creates a versioned `xnix-builder-tools` image, and Buildroot/Wine guest commands use that tools image so small-version Wine guest configuration work does not accidentally trigger full validation. The QEMU guest Wine smoke script now writes its working files and Go caches under `.cache`, matching the restricted container's single managed writable volume. Local evidence shows `build-tools` created `xnix-builder-tools:0.2.571` without entering `go test ./...`, and `configure-wine-guest` wrote the isolated Wine guest Buildroot `.config`. This still does not prove a real Windows app `PASS`; it makes the next Wine guest build attempt honest and runnable under the safety model.
 
 The v0.2.570 checkpoint adds the first isolated Wine-capable QEMU guest profile instead of inflating the default tiny x86_64 SSH image. `buildroot/configs/xnix_wine_i386_defconfig` targets i386 with glibc, OpenSSH, and the Buildroot Wine package because the upstream Buildroot Wine path is aligned with i386 Windows application execution. `scripts/container.rb` now exposes `configure-wine-guest`, `build-wine-guest`, and `build-ssh-wine-guest`, while `Xnix::Qemu.wine_guest` boots the dedicated Wine guest kernel with loopback-only SSH. `scripts/winapp_guest_wine_smoke.rb` now builds a 32-bit Windows PE fixture and safely reports `SKIP` until the Wine guest image is built. This still does not prove a real Windows app `PASS`; it narrows the next concrete step to building the Wine guest and resolving any Buildroot Wine package issues.
 

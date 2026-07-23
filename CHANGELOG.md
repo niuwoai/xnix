@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.571] - 2026-07-23
+
+### Changed
+
+- Split the Docker builder into a lightweight `tools` target and the existing full `tested-runtime` target so Buildroot and Wine guest bring-up can run without triggering hidden `go test ./...` full validation during small-version work.
+- Added a versioned `xnix-builder-tools` image path plus `scripts/container.rb build-tools`; Buildroot configure/build, source retrieval, SSH key preparation, QEMU boot smoke, and guest Wine smoke now use the tools image while Runtime D-Bus smokes continue to use the fully validated Runtime image.
+- Moved the QEMU guest Wine smoke working directory and Go caches under `.cache` so the script remains writable inside the restricted read-only container with only the managed cache volume mounted.
+- Recorded local evidence that `ruby scripts/container.rb build-tools` builds `xnix-builder-tools:0.2.571` without entering the full Go suite and `ruby scripts/container.rb configure-wine-guest` writes the isolated Wine guest Buildroot configuration.
+
 ## [0.2.570] - 2026-07-23
 
 ### Added

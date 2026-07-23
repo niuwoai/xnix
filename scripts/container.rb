@@ -36,6 +36,10 @@ qemu = Xnix::Qemu.new
 case ARGV.shift
 when "build"
   exec(*container.build_command)
+when "build-tools"
+  abort "Usage: ruby scripts/container.rb build-tools" unless ARGV.empty?
+
+  exec(*container.build_tools_command)
 when "offline-run"
   abort "Usage: ruby scripts/container.rb offline-run COMMAND [ARGUMENT ...]" if ARGV.empty?
 
@@ -63,39 +67,39 @@ when "fetch-sources"
 when "configure-system"
   abort "Usage: ruby scripts/container.rb configure-system" unless ARGV.empty?
 
-  exec(*container.cache_run_command(buildroot.configure_command))
+  exec(*container.tools_cache_run_command(buildroot.configure_command))
 when "configure-wine-guest"
   abort "Usage: ruby scripts/container.rb configure-wine-guest" unless ARGV.empty?
 
-  exec(*container.cache_run_command(wine_buildroot.configure_command))
+  exec(*container.tools_cache_run_command(wine_buildroot.configure_command))
 when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
-  exec(*container.cache_run_command(buildroot.build_command))
+  exec(*container.tools_cache_run_command(buildroot.build_command))
 when "build-wine-guest"
   abort "Usage: ruby scripts/container.rb build-wine-guest" unless ARGV.empty?
 
-  exec(*container.cache_run_command(wine_buildroot.build_command))
+  exec(*container.tools_cache_run_command(wine_buildroot.build_command))
 when "prepare-ssh-test-key"
   abort "Usage: ruby scripts/container.rb prepare-ssh-test-key" unless ARGV.empty?
 
-  exec(*container.cache_run_command(["ruby", "scripts/prepare_ssh_test_key.rb"]))
+  exec(*container.tools_cache_run_command(["ruby", "scripts/prepare_ssh_test_key.rb"]))
 when "build-ssh-test-system"
   abort "Usage: ruby scripts/container.rb build-ssh-test-system" unless ARGV.empty?
 
-  exec(*container.cache_run_command(buildroot.build_command(ssh_test_key: true)))
+  exec(*container.tools_cache_run_command(buildroot.build_command(ssh_test_key: true)))
 when "build-ssh-wine-guest"
   abort "Usage: ruby scripts/container.rb build-ssh-wine-guest" unless ARGV.empty?
 
-  exec(*container.cache_run_command(wine_buildroot.build_command(ssh_test_key: true)))
+  exec(*container.tools_cache_run_command(wine_buildroot.build_command(ssh_test_key: true)))
 when "ssh-smoke"
   abort "Usage: ruby scripts/container.rb ssh-smoke" unless ARGV.empty?
 
-  exec(*container.cache_run_command(["ruby", "scripts/ssh_smoke.rb"]))
+  exec(*container.tools_cache_run_command(["ruby", "scripts/ssh_smoke.rb"]))
 when "winapp-guest-wine-smoke"
   abort "Usage: ruby scripts/container.rb winapp-guest-wine-smoke" unless ARGV.empty?
 
-  exec(*container.cache_run_command(["ruby", "scripts/winapp_guest_wine_smoke.rb"]))
+  exec(*container.tools_cache_run_command(["ruby", "scripts/winapp_guest_wine_smoke.rb"]))
 when "start-build-system"
   abort "Usage: ruby scripts/container.rb start-build-system" unless ARGV.empty?
 
@@ -108,7 +112,7 @@ when "download-system"
 when "boot-system"
   abort "Usage: ruby scripts/container.rb boot-system" unless ARGV.empty?
 
-  exec(*container.cache_run_command(["timeout", "180s", *qemu.boot_command]))
+  exec(*container.tools_cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-wine-guest|configure-system|configure-wine-guest|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
 end

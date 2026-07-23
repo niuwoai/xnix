@@ -22,7 +22,7 @@ ssh_test_build_command = buildroot.build_command(ssh_test_key: true)
 ssh_wine_test_build_command = wine_buildroot.build_command(ssh_test_key: true)
 source_command = buildroot.source_command
 container = Xnix::Container.new(project_root: "/workspace", version: "0.1.5")
-offline_build = container.cache_run_command(build_command)
+offline_build = container.tools_cache_run_command(build_command)
 
 assert(configure_command.first == "make", "configuration must invoke make")
 assert(configure_command.include?("-C"), "configuration must set the Buildroot source directory")
@@ -40,6 +40,7 @@ assert(source_command.last == "source", "dependency download must use Buildroot'
 assert(offline_build.fetch(offline_build.index("--network") + 1) == "none", "full build must run without network access")
 assert(offline_build.include?("--mount"), "full build must mount the managed cache")
 assert(offline_build.none? { |argument| argument.include?("type=bind") }, "full build must not mount a host directory")
+assert(offline_build.include?(container.tools_image_tag), "Buildroot build must use the tools image")
 networked_download = container.networked_cache_run_command(source_command)
 assert(networked_download.fetch(networked_download.index("--network") + 1) == "bridge", "dependency download requires only bridge networking")
 

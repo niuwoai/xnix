@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.570
+> Last updated: 2026-07-23 | Baseline: v0.2.571
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -43,6 +43,8 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 The next Codex-owned mainline task is:
 
 Make the new `windows-app-guest-wine-smoke` path produce `PASS` by giving the loopback SSH QEMU guest a Wine-capable Linux baseline. Do not add more compatibility contracts until the real Windows PE fixture runs inside the guest and emits `XNIX_WINAPP_SMOKE_OK`; the follow-up should turn the fixture smoke green first, then replace the fixture with a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.571 checkpoint makes the next Wine guest configure/build attempt safe and scoped. The Docker builder now has a `tools` target that installs the required Ruby, Go, QEMU, SSH, and Buildroot utilities without running `go test ./...`; the default `tested-runtime` target keeps the full Runtime validation path for formal build checkpoints. Buildroot source retrieval, configure/build, SSH-key preparation, QEMU boot smoke, and `winapp-guest-wine-smoke` use the versioned `xnix-builder-tools` image. The guest Wine smoke working directory now lives under `.cache`, the only managed writable volume in the restricted container. Local evidence shows `ruby scripts/container.rb build-tools` completed and tagged `xnix-builder-tools:0.2.571`, then `ruby scripts/container.rb configure-wine-guest` wrote `/workspace/.cache/xnix-wine-i386-output/.config`. The next task is to run `prepare-ssh-test-key`, `build-ssh-wine-guest`, and fix concrete Buildroot Wine package/build failures if they appear.
 
 The v0.2.570 checkpoint adds the dedicated Wine guest build lane that should be used for the next concrete unblocker. The default x86_64 Buildroot SSH guest remains small and unchanged; the new `xnix_wine_i386_defconfig` uses an i386 target, glibc, OpenSSH, and Buildroot Wine in an isolated `/workspace/.cache/xnix-wine-i386-output` tree. `scripts/container.rb configure-wine-guest`, `build-wine-guest`, and `build-ssh-wine-guest` now prepare that heavier image explicitly. `Xnix::Qemu.wine_guest` boots the Wine guest kernel with loopback-only SSH, and `scripts/winapp_guest_wine_smoke.rb` now builds a 32-bit Windows PE fixture before invoking the Go-owned Runtime smoke. The next task is to run the Wine guest build path and make the smoke produce a real `PASS`, fixing concrete Buildroot Wine failures rather than adding new preview contracts.
 

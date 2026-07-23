@@ -17,25 +17,46 @@ end
 container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION)
 custom_container = Xnix::Container.new(project_root: PROJECT_ROOT, version: VERSION, docker_bin: "/tmp/xnix-docker")
 build_command = container.build_command
+build_tools_command = container.build_tools_command
 offline_command = container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 custom_build_command = custom_container.build_command
+custom_build_tools_command = custom_container.build_tools_command
 custom_offline_command = custom_container.offline_run_command(["ruby", "scripts/verify_layout.rb"])
 runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
 runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
+dockerfile = Pathname.new(PROJECT_ROOT).join("Dockerfile").read
 
 assert(dockerignore_entries.include?(".cache/"), "Docker build context must exclude the managed Buildroot cache")
 assert(dockerignore_entries.include?(".gocache/"), "Docker build context must exclude the local Go build cache")
+tools_target_index = dockerfile.index("AS tools")
+tested_runtime_target_index = dockerfile.index("AS tested-runtime")
+go_test_index = dockerfile.index("go test -timeout 90m ./...")
+assert(!tools_target_index.nil?, "Dockerfile must define a lightweight tools target")
+assert(!tested_runtime_target_index.nil?, "Dockerfile must define the tested Runtime target")
+assert(!go_test_index.nil?, "Dockerfile must retain full Go validation in the tested Runtime target")
+assert(tools_target_index < tested_runtime_target_index, "Dockerfile tools target must be available before the tested Runtime target")
+assert(tested_runtime_target_index < go_test_index, "Dockerfile tools target must not run the full Go suite")
 
 assert(build_command.first(2) == ["docker", "build"], "build command must invoke docker build")
+assert(build_tools_command.first(2) == ["docker", "build"], "tools build command must invoke docker build")
 assert(custom_build_command.first(2) == ["/tmp/xnix-docker", "build"], "build command must support a custom Docker CLI")
+assert(custom_build_tools_command.first(2) == ["/tmp/xnix-docker", "build"], "tools build command must support a custom Docker CLI")
 assert(custom_offline_command.first(2) == ["/tmp/xnix-docker", "run"], "runtime command must support a custom Docker CLI")
 assert(build_command.include?(container.image_tag), "build command must use the versioned image tag")
+assert(build_command.include?("--target"), "build command must select an explicit Docker target")
+assert(build_command.fetch(build_command.index("--target") + 1) == "tested-runtime", "build command must retain full validation in the tested Runtime target")
+assert(build_tools_command.include?(container.tools_image_tag), "tools build command must use the versioned tools image tag")
+assert(build_tools_command.include?("--target"), "tools build command must select an explicit Docker target")
+assert(build_tools_command.fetch(build_tools_command.index("--target") + 1) == "tools", "tools build command must avoid the full validation target")
 assert(build_command.include?("--pull=false"), "build command must prefer the local base image cache")
+assert(build_tools_command.include?("--pull=false"), "tools build command must prefer the local base image cache")
 assert(!build_command.include?("--memory"), "Buildx must not receive an unsupported memory argument")
 assert(!build_command.include?("--cpus"), "Buildx must not receive an unsupported CPU argument")
+assert(!build_tools_command.include?("--memory"), "tools Buildx must not receive an unsupported memory argument")
+assert(!build_tools_command.include?("--cpus"), "tools Buildx must not receive an unsupported CPU argument")
 
 assert(offline_command.include?("--cap-drop"), "offline container must drop capabilities")
 assert(offline_command.include?("ALL"), "offline container must drop all capabilities")
@@ -72,11 +93,13 @@ observed = container.observed_cache_run_command(name: "xnix-full-build-test", co
 assert(observed.include?("--detach"), "observed build must run detached")
 assert(observed.include?("--name"), "observed build must have a stable name")
 assert(!observed.include?("--rm"), "observed build must retain its logs after exit")
+assert(observed.include?(container.tools_image_tag), "observed Buildroot build must use the tools image")
 
 source_command = container.source_retrieval_command(["ruby", "scripts/fetch_buildroot.rb"])
 assert(source_command.include?("--network"), "source retrieval must configure networking")
 assert(source_command.fetch(source_command.index("--network") + 1) == "bridge", "source retrieval must use bridge networking")
 assert(source_command.include?("--mount"), "source retrieval must mount its internal source cache")
+assert(source_command.include?(container.tools_image_tag), "source retrieval must use the tools image")
 source_mount = source_command.fetch(source_command.index("--mount") + 1)
 expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
 assert(source_mount == expected_source_mount, "source retrieval must use the managed source cache volume")

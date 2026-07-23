@@ -7,6 +7,7 @@ module Xnix
     PROCESS_LIMIT = "256"
     TEMPORARY_FILESYSTEM_SIZE = "64m"
     IMAGE_NAME = "xnix-builder"
+    TOOLS_IMAGE_NAME = "xnix-builder-tools"
     SOURCE_CACHE_VOLUME = "xnix-buildroot-cache"
     DOCKER_ENV = "XNIX_DOCKER_BIN"
     DEFAULT_DOCKER_BIN = "docker"
@@ -28,11 +29,27 @@ module Xnix
       "#{IMAGE_NAME}:#{@version}"
     end
 
+    def tools_image_tag
+      "#{TOOLS_IMAGE_NAME}:#{@version}"
+    end
+
     def build_command
       [
         @docker_bin, "build",
         "--pull=false",
+        "--target", "tested-runtime",
         "--tag", image_tag,
+        "--file", File.join(@project_root, "Dockerfile"),
+        @project_root
+      ]
+    end
+
+    def build_tools_command
+      [
+        @docker_bin, "build",
+        "--pull=false",
+        "--target", "tools",
+        "--tag", tools_image_tag,
         "--file", File.join(@project_root, "Dockerfile"),
         @project_root
       ]
@@ -59,24 +76,28 @@ module Xnix
     end
 
     def source_retrieval_command(command)
-      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
+      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end
 
     def cache_run_command(command)
       runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command)
     end
 
+    def tools_cache_run_command(command)
+      runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
+    end
+
     def networked_cache_run_command(command)
-      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command)
+      runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end
 
     def observed_cache_run_command(name:, command:)
-      runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command, remove: false, name: name, detach: true)
+      runtime_command(network: "none", extra_mounts: [source_cache_mount], command: command, remove: false, name: name, detach: true, image: tools_image_tag)
     end
 
     private
 
-    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false)
+    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag)
       [
         @docker_bin, "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
         "--memory", BUILD_MEMORY_LIMIT,
@@ -88,7 +109,7 @@ module Xnix
         "--read-only",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=#{TEMPORARY_FILESYSTEM_SIZE}",
         *extra_mounts.flat_map { |mount| ["--mount", mount] },
-        image_tag,
+        image,
         *command
       ]
     end

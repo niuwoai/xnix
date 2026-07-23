@@ -10,8 +10,8 @@ require_relative "../lib/xnix/ssh_probe"
 require_relative "../lib/xnix/ssh_test_key"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-WORK_ROOT = PROJECT_ROOT.join(".local", "xnix", "winapp-guest-wine-smoke")
-GO_CACHE_ROOT = PROJECT_ROOT.join(".gocache")
+WORK_ROOT = PROJECT_ROOT.join(".cache", "xnix", "winapp-guest-wine-smoke")
+GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 APP_ROOT = WORK_ROOT.join("app")
 EXE_PATH = APP_ROOT.join("hello.exe")
 MARKER = "XNIX_WINAPP_SMOKE_OK"

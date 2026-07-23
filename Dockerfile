@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS tools
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -35,6 +35,14 @@ COPY --chown=xnix:xnix . /workspace
 RUN mkdir --parents /workspace/.cache/buildroot \
     && chown --recursive xnix:xnix /workspace/.cache
 WORKDIR /workspace
+USER xnix
+WORKDIR /workspace
+ENV BR2_DL_DIR=/workspace/.cache/buildroot-dl
+
+FROM tools AS tested-runtime
+
+USER root
+WORKDIR /workspace
 RUN go test -timeout 90m ./...
 RUN go build -o /usr/local/bin/xnix-runtime-go ./cmd/xnix-runtime-go
 RUN go build -o /usr/local/bin/xnix-runtime-owner ./cmd/xnix-runtime-owner
@@ -48,4 +56,3 @@ RUN gcc -std=c11 -Wall -Wextra -Werror \
 
 USER xnix
 WORKDIR /workspace
-ENV BR2_DL_DIR=/workspace/.cache/buildroot-dl
