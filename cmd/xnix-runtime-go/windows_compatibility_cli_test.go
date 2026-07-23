@@ -143,6 +143,65 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-container-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--image", "local/wine-smoke:test",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_container_smoke.v1" ||
+		payload["request_type"] != "windows-app-container-run-smoke" ||
+		payload["status"] != "passed" ||
+		payload["executable_name"] != "hello.exe" ||
+		payload["container_image"] != "local/wine-smoke:test" ||
+		payload["pull_policy"] != "never" ||
+		payload["network_mode"] != "none" ||
+		payload["runner_available"] != true ||
+		payload["image_available"] != true ||
+		payload["compatibility_layer"] != "containerized-windows-compatibility-layer" ||
+		payload["marker_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["host_mount_count"] != float64(2) {
+		t.Fatalf("unexpected container smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), dockerPath) {
+		t.Fatalf("container smoke output leaked host paths: %s", output.String())
+	}
+}
+
 func anyStrings(values []any) []string {
 	result := make([]string, 0, len(values))
 	for _, value := range values {

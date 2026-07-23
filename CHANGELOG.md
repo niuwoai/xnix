@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.567] - 2026-07-23
+
+### Added
+
+- Added a Go-owned `windows-app-container-run-smoke` command that runs the real Windows PE smoke fixture through a local Wine container image with `--pull never`, `--network none`, dropped capabilities, no new privileges, bounded CPU/memory/PID limits, two narrow repository-local mounts, and redacted JSON evidence.
+- Added `scripts/winapp_container_smoke.rb` to build the Windows PE fixture and run the containerized smoke through the Runtime command while reporting `PASS` for a working local Wine image or `SKIP` when the image is unavailable.
+- Added `containers/wine-smoke.Dockerfile` and `scripts/build_wine_smoke_image.rb` as the explicit local-image preparation path for turning the container smoke from `SKIP` into a real Wine-backed `PASS`.
+
 ## [0.2.566] - 2026-07-23
 
 ### Added

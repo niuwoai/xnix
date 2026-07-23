@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.566
+> Last updated: 2026-07-23 | Baseline: v0.2.567
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Real Windows application execution smoke hardening. The current mainline should improve the v0.2.566 `windows-app-run-smoke` path by running a small real Windows PE fixture through an installed compatibility runner inside an isolated Runtime state root, then extending from the fixture to a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Build and run the local Wine smoke image, then convert `scripts/winapp_container_smoke.rb` from `SKIP` to `PASS` with the real Windows PE fixture. After that, extend the same Runtime-owned path from the fixture to a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.567 container smoke path adds `xnix-runtime-go windows-app-container-run-smoke`, `scripts/winapp_container_smoke.rb`, `containers/wine-smoke.Dockerfile`, and `scripts/build_wine_smoke_image.rb`. The command uses a local-only image policy, no container network, dropped capabilities, no new privileges, bounded resources, and two narrow repository-local mounts. Current evidence shows the smoke fixture builds, Docker/Colima is reachable with authorization, and the container smoke correctly reports `SKIP` because `xnix-wine-smoke:local` is not yet built locally.
 
 The previous contract-only next task is superseded by the v0.2.566 strategy pivot and retained below only as historical evidence:
 

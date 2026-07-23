@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.566
+> Last updated: 2026-07-23 | Current version: v0.2.567
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.567 checkpoint adds the restricted container path needed to run the real Windows PE smoke fixture inside Linux/Wine without polluting the host. `xnix-runtime-go windows-app-container-run-smoke` runs the fixture through a local Wine container image with `--pull never`, `--network none`, dropped capabilities, no new privileges, bounded CPU/memory/PID limits, two narrow repository-local mounts, and redacted JSON evidence. `scripts/winapp_container_smoke.rb` builds the same Windows PE fixture and reports `PASS` for a working local Wine image or `SKIP` when the image is unavailable. `containers/wine-smoke.Dockerfile` and `scripts/build_wine_smoke_image.rb` define the explicit local Wine image preparation path. v0.2.567 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint remains v0.2.580 unless explicitly requested earlier.
 
 The v0.2.566 checkpoint pivots the mainline from contract-only planning toward real Windows application execution. `xnix-runtime-go windows-app-run-smoke` now runs an explicit Windows `.exe` through an isolated Runtime compatibility state root, captures redacted JSON evidence, verifies the `XNIX_WINAPP_SMOKE_OK` marker, and keeps host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled. `scripts/winapp_smoke.rb` cross-compiles a real Windows PE fixture from Go source under `test/fixtures/winapp/hello`, stores all local build and state artifacts under ignored repository-local paths, and reports `PASS` when a compatibility runner is available or `SKIP` when it is absent. v0.2.566 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint remains v0.2.580 unless explicitly requested earlier.
 
