@@ -433,42 +433,43 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 
 type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan
-	ManagedLauncherName                             string `json:"managed_launcher_name"`
-	ManagedLauncherInvoked                          bool   `json:"managed_launcher_invoked"`
-	ExistingManagedLauncherInvoked                  bool   `json:"existing_managed_launcher_invoked"`
-	LauncherExitCode                                int    `json:"launcher_exit_code"`
-	LauncherOutputJSONObserved                      bool   `json:"launcher_output_json_observed"`
-	DelegatedRequestType                            string `json:"delegated_request_type"`
-	DelegatedStatus                                 string `json:"delegated_status"`
-	DelegatedSkipReason                             string `json:"delegated_skip_reason,omitempty"`
-	DelegatedFailureReason                          string `json:"delegated_failure_reason,omitempty"`
-	DelegatedGuestBoundary                          string `json:"delegated_guest_boundary"`
-	DelegatedRuntimeOwnedDispatch                   bool   `json:"delegated_runtime_owned_dispatch"`
-	DelegatedArtifactVerified                       bool   `json:"delegated_artifact_verified"`
-	DelegatedMarkerObserved                         bool   `json:"delegated_marker_observed"`
-	DelegatedSmokePassed                            bool   `json:"delegated_smoke_passed"`
-	DelegatedExecutionStarted                       bool   `json:"delegated_execution_started"`
-	DelegatedBackendProcessStarted                  bool   `json:"delegated_backend_process_started"`
-	DelegatedSessionGatedControlledDispatchConsumed bool   `json:"delegated_session_gated_controlled_dispatch_consumed"`
-	DelegatedSessionGatedControlledDispatchState    string `json:"delegated_session_gated_controlled_dispatch_state"`
-	DelegatedSessionGatedReviewReceiptID            string `json:"delegated_session_gated_review_receipt_id"`
-	DelegatedLaunchAuthorizationReceiptID           string `json:"delegated_launch_authorization_receipt_id"`
-	DelegatedControlledExecutionSessionConsumed     bool   `json:"delegated_controlled_execution_session_consumed"`
-	DelegatedControlledExecutionSessionID           string `json:"delegated_controlled_execution_session_id"`
-	DelegatedControlledSessionDigestVerified        bool   `json:"delegated_controlled_session_digest_verified"`
-	DelegatedControlledSessionRelativePath          string `json:"delegated_controlled_session_relative_path"`
-	DelegatedRuntimeOwnerConsumableSession          bool   `json:"delegated_runtime_owner_consumable_session"`
-	DelegatedKDEReadModelConsumableSession          bool   `json:"delegated_kde_read_model_consumable_session"`
-	DelegatedControlledSessionLiveStateObserved     bool   `json:"delegated_controlled_session_live_state_observed"`
-	DelegatedControlledSessionRegistered            bool   `json:"delegated_controlled_session_registered"`
-	DelegatedControlledSessionWindowObserved        bool   `json:"delegated_controlled_session_window_observed"`
-	DelegatedControlledSessionHostRootModified      bool   `json:"delegated_controlled_session_host_root_modified"`
-	DelegatedControlledSessionBackendProcessStart   bool   `json:"delegated_controlled_session_backend_process_start"`
-	DelegatedHostRootModified                       bool   `json:"delegated_host_root_modified"`
-	DelegatedDockerSocketMounted                    bool   `json:"delegated_docker_socket_mounted"`
-	DelegatedBroadHostMountRequired                 bool   `json:"delegated_broad_host_mount_required"`
-	DelegatedRawCommandExposed                      bool   `json:"delegated_raw_command_exposed"`
-	DelegatedBackendDetailsExposed                  bool   `json:"delegated_backend_details_exposed"`
+	CompatibilityCenterKnownAppEvidence             appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence `json:"compatibility_center_known_app_evidence"`
+	ManagedLauncherName                             string                                                      `json:"managed_launcher_name"`
+	ManagedLauncherInvoked                          bool                                                        `json:"managed_launcher_invoked"`
+	ExistingManagedLauncherInvoked                  bool                                                        `json:"existing_managed_launcher_invoked"`
+	LauncherExitCode                                int                                                         `json:"launcher_exit_code"`
+	LauncherOutputJSONObserved                      bool                                                        `json:"launcher_output_json_observed"`
+	DelegatedRequestType                            string                                                      `json:"delegated_request_type"`
+	DelegatedStatus                                 string                                                      `json:"delegated_status"`
+	DelegatedSkipReason                             string                                                      `json:"delegated_skip_reason,omitempty"`
+	DelegatedFailureReason                          string                                                      `json:"delegated_failure_reason,omitempty"`
+	DelegatedGuestBoundary                          string                                                      `json:"delegated_guest_boundary"`
+	DelegatedRuntimeOwnedDispatch                   bool                                                        `json:"delegated_runtime_owned_dispatch"`
+	DelegatedArtifactVerified                       bool                                                        `json:"delegated_artifact_verified"`
+	DelegatedMarkerObserved                         bool                                                        `json:"delegated_marker_observed"`
+	DelegatedSmokePassed                            bool                                                        `json:"delegated_smoke_passed"`
+	DelegatedExecutionStarted                       bool                                                        `json:"delegated_execution_started"`
+	DelegatedBackendProcessStarted                  bool                                                        `json:"delegated_backend_process_started"`
+	DelegatedSessionGatedControlledDispatchConsumed bool                                                        `json:"delegated_session_gated_controlled_dispatch_consumed"`
+	DelegatedSessionGatedControlledDispatchState    string                                                      `json:"delegated_session_gated_controlled_dispatch_state"`
+	DelegatedSessionGatedReviewReceiptID            string                                                      `json:"delegated_session_gated_review_receipt_id"`
+	DelegatedLaunchAuthorizationReceiptID           string                                                      `json:"delegated_launch_authorization_receipt_id"`
+	DelegatedControlledExecutionSessionConsumed     bool                                                        `json:"delegated_controlled_execution_session_consumed"`
+	DelegatedControlledExecutionSessionID           string                                                      `json:"delegated_controlled_execution_session_id"`
+	DelegatedControlledSessionDigestVerified        bool                                                        `json:"delegated_controlled_session_digest_verified"`
+	DelegatedControlledSessionRelativePath          string                                                      `json:"delegated_controlled_session_relative_path"`
+	DelegatedRuntimeOwnerConsumableSession          bool                                                        `json:"delegated_runtime_owner_consumable_session"`
+	DelegatedKDEReadModelConsumableSession          bool                                                        `json:"delegated_kde_read_model_consumable_session"`
+	DelegatedControlledSessionLiveStateObserved     bool                                                        `json:"delegated_controlled_session_live_state_observed"`
+	DelegatedControlledSessionRegistered            bool                                                        `json:"delegated_controlled_session_registered"`
+	DelegatedControlledSessionWindowObserved        bool                                                        `json:"delegated_controlled_session_window_observed"`
+	DelegatedControlledSessionHostRootModified      bool                                                        `json:"delegated_controlled_session_host_root_modified"`
+	DelegatedControlledSessionBackendProcessStart   bool                                                        `json:"delegated_controlled_session_backend_process_start"`
+	DelegatedHostRootModified                       bool                                                        `json:"delegated_host_root_modified"`
+	DelegatedDockerSocketMounted                    bool                                                        `json:"delegated_docker_socket_mounted"`
+	DelegatedBroadHostMountRequired                 bool                                                        `json:"delegated_broad_host_mount_required"`
+	DelegatedRawCommandExposed                      bool                                                        `json:"delegated_raw_command_exposed"`
+	DelegatedBackendDetailsExposed                  bool                                                        `json:"delegated_backend_details_exposed"`
 }
 
 type knownAppKDERuntimeStatusLaunchExecutionExtraOptions struct {
@@ -572,6 +573,41 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 	if result.DelegatedHostRootModified || result.DelegatedControlledSessionHostRootModified || result.DelegatedDockerSocketMounted || result.DelegatedBroadHostMountRequired || result.DelegatedRawCommandExposed || result.DelegatedBackendDetailsExposed {
 		return knownAppKDERuntimeStatusLaunchExecutionResult{}, errors.New("managed launcher reported an unsafe delegated result")
 	}
+	projection, err := appidentity.ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  plan.AppID,
+		DisplayName:                            plan.DisplayName,
+		AppVersion:                             plan.AppVersion,
+		RequestType:                            result.DelegatedRequestType,
+		Status:                                 result.DelegatedStatus,
+		SkipReason:                             result.DelegatedSkipReason,
+		FailureReason:                          result.DelegatedFailureReason,
+		GuestBoundary:                          result.DelegatedGuestBoundary,
+		RuntimeOwnedDispatch:                   result.DelegatedRuntimeOwnedDispatch,
+		ArtifactVerified:                       result.DelegatedArtifactVerified,
+		MarkerObserved:                         result.DelegatedMarkerObserved,
+		SessionGatedControlledDispatchConsumed: result.DelegatedSessionGatedControlledDispatchConsumed,
+		SessionGatedControlledDispatchState:    result.DelegatedSessionGatedControlledDispatchState,
+		SessionGatedReviewReceiptID:            result.DelegatedSessionGatedReviewReceiptID,
+		LaunchAuthorizationReceiptID:           result.DelegatedLaunchAuthorizationReceiptID,
+		ControlledExecutionSessionConsumed:     result.DelegatedControlledExecutionSessionConsumed,
+		ControlledExecutionSessionID:           result.DelegatedControlledExecutionSessionID,
+		ControlledSessionDigestVerified:        result.DelegatedControlledSessionDigestVerified,
+		ControlledSessionRelativePath:          result.DelegatedControlledSessionRelativePath,
+		RuntimeOwnerConsumableSession:          result.DelegatedRuntimeOwnerConsumableSession,
+		KDEReadModelConsumableSession:          result.DelegatedKDEReadModelConsumableSession,
+		ControlledSessionLiveStateObserved:     result.DelegatedControlledSessionLiveStateObserved,
+		ControlledSessionRegistered:            result.DelegatedControlledSessionRegistered,
+		ControlledSessionWindowObserved:        result.DelegatedControlledSessionWindowObserved,
+		ControlledSessionHostRootModified:      result.DelegatedControlledSessionHostRootModified,
+		ControlledSessionBackendProcessStart:   result.DelegatedControlledSessionBackendProcessStart,
+		HostRootModified:                       result.DelegatedHostRootModified,
+		DockerSocketMounted:                    result.DelegatedDockerSocketMounted,
+		BroadHostMountRequired:                 result.DelegatedBroadHostMountRequired,
+	})
+	if err != nil {
+		return knownAppKDERuntimeStatusLaunchExecutionResult{}, err
+	}
+	result.CompatibilityCenterKnownAppEvidence = projection
 	return result, nil
 }
 

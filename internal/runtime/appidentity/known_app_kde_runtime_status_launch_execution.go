@@ -96,6 +96,79 @@ type KnownAppKDERuntimeStatusLaunchExecutionPlan struct {
 	DesktopSafeSummary              string   `json:"desktop_safe_summary"`
 }
 
+type KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest struct {
+	AppID                                  string
+	DisplayName                            string
+	AppVersion                             string
+	RequestType                            string
+	Status                                 string
+	SkipReason                             string
+	FailureReason                          string
+	GuestBoundary                          string
+	RuntimeOwnedDispatch                   bool
+	ArtifactVerified                       bool
+	MarkerObserved                         bool
+	SessionGatedControlledDispatchConsumed bool
+	SessionGatedControlledDispatchState    string
+	SessionGatedReviewReceiptID            string
+	LaunchAuthorizationReceiptID           string
+	ControlledExecutionSessionConsumed     bool
+	ControlledExecutionSessionID           string
+	ControlledSessionDigestVerified        bool
+	ControlledSessionRelativePath          string
+	RuntimeOwnerConsumableSession          bool
+	KDEReadModelConsumableSession          bool
+	ControlledSessionLiveStateObserved     bool
+	ControlledSessionRegistered            bool
+	ControlledSessionWindowObserved        bool
+	ControlledSessionHostRootModified      bool
+	ControlledSessionBackendProcessStart   bool
+	HostRootModified                       bool
+	DockerSocketMounted                    bool
+	BroadHostMountRequired                 bool
+}
+
+type KnownAppKDERuntimeStatusLaunchDelegatedEvidence struct {
+	ProjectionType                         string `json:"projection_type"`
+	RuntimeMethod                          string `json:"runtime_method"`
+	RequestType                            string `json:"request_type"`
+	Status                                 string `json:"status"`
+	SkipReason                             string `json:"skip_reason,omitempty"`
+	FailureReason                          string `json:"failure_reason,omitempty"`
+	AppID                                  string `json:"app_id"`
+	DisplayName                            string `json:"display_name"`
+	AppVersion                             string `json:"app_version"`
+	GuestBoundary                          string `json:"guest_boundary"`
+	RuntimeOwnedDispatch                   bool   `json:"runtime_owned_dispatch"`
+	ArtifactVerified                       bool   `json:"artifact_verified"`
+	MarkerObserved                         bool   `json:"marker_observed"`
+	SessionGatedControlledDispatchConsumed bool   `json:"session_gated_controlled_dispatch_consumed"`
+	SessionGatedControlledDispatchState    string `json:"session_gated_controlled_dispatch_state"`
+	SessionGatedReviewReceiptID            string `json:"session_gated_review_receipt_id"`
+	LaunchAuthorizationReceiptID           string `json:"launch_authorization_receipt_id"`
+	ControlledExecutionSessionConsumed     bool   `json:"controlled_execution_session_consumed"`
+	ControlledExecutionSessionID           string `json:"controlled_execution_session_id"`
+	ControlledSessionDigestVerified        bool   `json:"controlled_session_digest_verified"`
+	ControlledSessionRelativePath          string `json:"controlled_session_relative_path"`
+	RuntimeOwnerConsumableSession          bool   `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession          bool   `json:"kde_read_model_consumable_session"`
+	ControlledSessionLiveStateObserved     bool   `json:"controlled_session_live_state_observed"`
+	ControlledSessionRegistered            bool   `json:"controlled_session_registered"`
+	ControlledSessionWindowObserved        bool   `json:"controlled_session_window_observed"`
+	ControlledSessionHostRootModified      bool   `json:"controlled_session_host_root_modified"`
+	ControlledSessionBackendProcessStart   bool   `json:"controlled_session_backend_process_start"`
+	HostRootModified                       bool   `json:"host_root_modified"`
+	DockerSocketMounted                    bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired                 bool   `json:"broad_host_mount_required"`
+	StateRootPathExposed                   bool   `json:"state_root_path_exposed"`
+	ManagedLauncherPathExposed             bool   `json:"managed_launcher_path_exposed"`
+	RawLauncherOutputExposed               bool   `json:"raw_launcher_output_exposed"`
+	BackendDetailsExposed                  bool   `json:"backend_details_exposed"`
+	CompatibilityCenterProjectionReady     bool   `json:"compatibility_center_projection_ready"`
+	KDECenterProjectionReady               bool   `json:"kde_center_projection_ready"`
+	DesktopSafeSummary                     string `json:"desktop_safe_summary"`
+}
+
 func PrepareKnownAppKDERuntimeStatusLaunchExecution(request KnownAppKDERuntimeStatusLaunchExecutionRequest) (KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {
 	stateRoot := strings.TrimSpace(request.StateRoot)
 	if err := validateKnownAppRuntimeOwnerStateRoot(stateRoot); err != nil {
@@ -224,6 +297,50 @@ func PrepareKnownAppKDERuntimeStatusLaunchExecution(request KnownAppKDERuntimeSt
 	return validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan)
 }
 
+func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest) (KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
+	projection := KnownAppKDERuntimeStatusLaunchDelegatedEvidence{
+		ProjectionType:                         "known-app-kde-runtime-status-launch-delegated-evidence",
+		RuntimeMethod:                          "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence",
+		RequestType:                            strings.TrimSpace(request.RequestType),
+		Status:                                 strings.TrimSpace(request.Status),
+		SkipReason:                             strings.TrimSpace(request.SkipReason),
+		FailureReason:                          strings.TrimSpace(request.FailureReason),
+		AppID:                                  strings.TrimSpace(request.AppID),
+		DisplayName:                            strings.TrimSpace(request.DisplayName),
+		AppVersion:                             strings.TrimSpace(request.AppVersion),
+		GuestBoundary:                          strings.TrimSpace(request.GuestBoundary),
+		RuntimeOwnedDispatch:                   request.RuntimeOwnedDispatch,
+		ArtifactVerified:                       request.ArtifactVerified,
+		MarkerObserved:                         request.MarkerObserved,
+		SessionGatedControlledDispatchConsumed: request.SessionGatedControlledDispatchConsumed,
+		SessionGatedControlledDispatchState:    strings.TrimSpace(request.SessionGatedControlledDispatchState),
+		SessionGatedReviewReceiptID:            strings.TrimSpace(request.SessionGatedReviewReceiptID),
+		LaunchAuthorizationReceiptID:           strings.TrimSpace(request.LaunchAuthorizationReceiptID),
+		ControlledExecutionSessionConsumed:     request.ControlledExecutionSessionConsumed,
+		ControlledExecutionSessionID:           strings.TrimSpace(request.ControlledExecutionSessionID),
+		ControlledSessionDigestVerified:        request.ControlledSessionDigestVerified,
+		ControlledSessionRelativePath:          filepath.ToSlash(strings.TrimSpace(request.ControlledSessionRelativePath)),
+		RuntimeOwnerConsumableSession:          request.RuntimeOwnerConsumableSession,
+		KDEReadModelConsumableSession:          request.KDEReadModelConsumableSession,
+		ControlledSessionLiveStateObserved:     request.ControlledSessionLiveStateObserved,
+		ControlledSessionRegistered:            request.ControlledSessionRegistered,
+		ControlledSessionWindowObserved:        request.ControlledSessionWindowObserved,
+		ControlledSessionHostRootModified:      request.ControlledSessionHostRootModified,
+		ControlledSessionBackendProcessStart:   request.ControlledSessionBackendProcessStart,
+		HostRootModified:                       request.HostRootModified,
+		DockerSocketMounted:                    request.DockerSocketMounted,
+		BroadHostMountRequired:                 request.BroadHostMountRequired,
+		StateRootPathExposed:                   false,
+		ManagedLauncherPathExposed:             false,
+		RawLauncherOutputExposed:               false,
+		BackendDetailsExposed:                  false,
+		CompatibilityCenterProjectionReady:     true,
+		KDECenterProjectionReady:               true,
+		DesktopSafeSummary:                     strings.TrimSpace(request.DisplayName) + " delegated Runtime launcher evidence is projected for Compatibility Center and KDE Center consumption without exposing launcher output or state-root paths.",
+	}
+	return validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection)
+}
+
 func KnownAppKDERuntimeStatusLaunchExecutionArgv(plan KnownAppKDERuntimeStatusLaunchExecutionPlan, stateRoot string, cacheRoot string, extraArgs []string) ([]string, error) {
 	if _, err := validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan); err != nil {
 		return nil, err
@@ -252,6 +369,36 @@ func KnownAppKDERuntimeStatusLaunchExecutionArgv(plan KnownAppKDERuntimeStatusLa
 		argv = append(argv, value)
 	}
 	return argv, nil
+}
+
+func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownAppKDERuntimeStatusLaunchDelegatedEvidence) (KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
+	switch {
+	case projection.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence":
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence has invalid projection type")
+	case projection.RequestType != winapp.KnownDispatchSmokeRequestType:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires dispatch smoke evidence")
+	case projection.AppID == "" || projection.DisplayName == "" || projection.AppVersion == "":
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires known app identity")
+	case projection.GuestBoundary != winapp.KnownDispatchGuestBoundary:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires managed guest boundary")
+	case projection.ControlledSessionRelativePath != "" && (filepath.IsAbs(projection.ControlledSessionRelativePath) || strings.Contains(filepath.Clean(projection.ControlledSessionRelativePath), "..")):
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires relative session evidence")
+	case projection.StateRootPathExposed || projection.ManagedLauncherPathExposed || projection.RawLauncherOutputExposed || projection.BackendDetailsExposed:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence must not expose paths, launcher output, or backend details")
+	case projection.HostRootModified || projection.ControlledSessionHostRootModified || projection.DockerSocketMounted || projection.BroadHostMountRequired:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence must keep host and container boundaries closed")
+	case !projection.CompatibilityCenterProjectionReady || !projection.KDECenterProjectionReady:
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence must be ready for Center projections")
+	}
+	for _, value := range []string{projection.ProjectionType, projection.RuntimeMethod, projection.RequestType, projection.Status, projection.SkipReason, projection.FailureReason, projection.AppID, projection.DisplayName, projection.AppVersion, projection.GuestBoundary, projection.SessionGatedControlledDispatchState, projection.SessionGatedReviewReceiptID, projection.LaunchAuthorizationReceiptID, projection.ControlledExecutionSessionID, projection.ControlledSessionRelativePath} {
+		if value != "" && !singleLine(value) {
+			return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires single-line fields")
+		}
+	}
+	if err := validateNoBackendTerms(projection, "known app KDE Runtime-status delegated evidence"); err != nil {
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, err
+	}
+	return projection, nil
 }
 
 func validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan KnownAppKDERuntimeStatusLaunchExecutionPlan) (KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {

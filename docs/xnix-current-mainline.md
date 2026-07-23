@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.615
+> Last updated: 2026-07-24 | Baseline: v0.2.616
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.615 by adding a small Runtime-owned execution-result projection for KDE/Compatibility Center that consumes the redacted delegated launcher evidence from `known-app-kde-runtime-status-launch-execution` without requiring the smoke harness to remap fields manually. Preserve the staged 7zr QEMU/Wine lane, keep the wrapper as the only user-visible launch path, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation hidden or disabled.
+Continue from v0.2.616 by making `compatibility-center-preview` and `kde-center-page-preview` consume the Runtime wrapper projection object directly through a file or JSON argument, instead of expanding every projected field into many CLI flags in the smoke harness. Preserve the staged 7zr QEMU/Wine lane, keep the wrapper as the user-visible launch path, keep Go as the owner of evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation hidden or disabled.
+
+The v0.2.616 checkpoint adds a Go-owned delegated evidence projection for the Runtime-status launch execution wrapper. `ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence` converts redacted managed launcher output into `compatibility_center_known_app_evidence`, matching the Compatibility Center and KDE Center read-model field shape. The staged launcher dispatch smoke now consumes that projection directly instead of remapping `delegated_*` fields in Ruby, moving another piece of product logic back into Go while preserving the staged 7zr QEMU/Wine path and all host-safety boundaries.
 
 The v0.2.615 checkpoint switches the staged launcher dispatch smoke to exercise `known-app-kde-runtime-status-launch-execution` as the user-visible Runtime-owned launch path. The smoke now calls the Go wrapper after QEMU SSH readiness, passes the staged `xnix-compat-launch` executable as `--launcher`, and lets the wrapper inject state-root, revalidate the Runtime receipts/session/post-review/guest-boundary gates, invoke the existing launcher, and return redacted delegated launcher evidence. The smoke feeds those delegated fields into Compatibility Center and KDE Center page previews instead of directly trusting raw launcher output.
 

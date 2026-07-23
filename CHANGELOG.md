@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.616] - 2026-07-24
+
+### Added
+
+- Added a Go-owned `known-app-kde-runtime-status-launch-delegated-evidence` projection that converts redacted managed launcher output into the Compatibility Center and KDE Center evidence shape without exposing state-root paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, or host-root mutation.
+
+### Changed
+
+- Simplified the staged launcher dispatch smoke so it consumes the Runtime wrapper's `compatibility_center_known_app_evidence` projection directly instead of manually remapping delegated launcher fields in Ruby.
+
 ## [0.2.615] - 2026-07-24
 
 ### Changed

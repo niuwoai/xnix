@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.615`.
+The project is currently at `v0.2.616`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.615`.
 
 ## Current Checkpoint
 
-v0.2.615 routes the staged 7zr QEMU/Wine dispatch lane through the Go-owned `known-app-kde-runtime-status-launch-execution` entrypoint. The smoke now calls the Runtime wrapper, passes the staged `xnix-compat-launch` executable as the managed launcher, and feeds redacted delegated launcher evidence into Compatibility Center and KDE Center page previews.
+v0.2.616 adds a Go-owned delegated evidence projection for the Runtime-status launch execution wrapper. The staged 7zr QEMU/Wine dispatch smoke now consumes `compatibility_center_known_app_evidence` directly instead of manually remapping delegated launcher fields in Ruby.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -32,7 +32,7 @@ Historical `docs/claude-code-*` files remain repository evidence, but new implem
 Run targeted checks for small versions:
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPrepareKnownAppKDERuntimeStatusLaunchExecution|TestPreviewKnownAppKDERuntimeStatusLaunchRequest' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPrepareKnownAppKDERuntimeStatusLaunchExecution|TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence|TestPreviewKnownAppKDERuntimeStatusLaunchRequest' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot|TestKnownAppKDERuntimeStatusLaunchRequestPreviewCommandCollectsOpaqueIDs' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb

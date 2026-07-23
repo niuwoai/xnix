@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.615
+> Last updated: 2026-07-24 | Current version: v0.2.616
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.616 checkpoint moves the staged launcher dispatch smoke's final evidence projection out of Ruby and into Go Runtime code. `ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence` now turns the Runtime wrapper's redacted delegated launcher fields into a `compatibility_center_known_app_evidence` payload that directly matches the Compatibility Center and KDE Center read-model shape. The smoke consumes that projection instead of manually remapping fields, while state-root paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation remain hidden or disabled. v0.2.616 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.615 checkpoint routes the staged 7zr QEMU/Wine dispatch lane through the Go-owned Runtime-status launch execution wrapper. `scripts/staged_launcher_dispatch_smoke.rb` now invokes `known-app-kde-runtime-status-launch-execution`, passes the staged `xnix-compat-launch` as the Runtime-managed launcher, and lets the wrapper inject state-root and revalidate receipts, session evidence, post-review state, and guest boundary before delegation. The wrapper returns only redacted delegated launcher evidence for Compatibility Center and KDE Center page previews, keeping raw launcher output, state-root paths, launcher paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation hidden or disabled. v0.2.615 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

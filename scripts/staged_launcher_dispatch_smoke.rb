@@ -572,37 +572,10 @@ begin
   assert(runtime_execution["delegated_runtime_owned_dispatch"] == true, "Runtime status launch execution must preserve Runtime-owned delegated dispatch")
   assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, STAGED_LAUNCHER.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch execution output")
 
-  payload = {
-    "request_type" => runtime_execution.fetch("delegated_request_type"),
-    "status" => runtime_execution.fetch("delegated_status"),
-    "skip_reason" => runtime_execution["delegated_skip_reason"],
-    "failure_reason" => runtime_execution["delegated_failure_reason"],
-    "app_id" => runtime_execution.fetch("app_id"),
-    "display_name" => runtime_execution.fetch("display_name"),
-    "app_version" => runtime_execution.fetch("app_version"),
-    "guest_boundary" => runtime_execution.fetch("delegated_guest_boundary"),
-    "runtime_owned_dispatch" => runtime_execution.fetch("delegated_runtime_owned_dispatch"),
-    "artifact_verified" => runtime_execution.fetch("delegated_artifact_verified"),
-    "marker_observed" => runtime_execution.fetch("delegated_marker_observed"),
-    "session_gated_controlled_dispatch_consumed" => runtime_execution.fetch("delegated_session_gated_controlled_dispatch_consumed"),
-    "session_gated_controlled_dispatch_state" => runtime_execution.fetch("delegated_session_gated_controlled_dispatch_state"),
-    "session_gated_review_receipt_id" => runtime_execution.fetch("delegated_session_gated_review_receipt_id"),
-    "launch_authorization_receipt_id" => runtime_execution.fetch("delegated_launch_authorization_receipt_id"),
-    "controlled_execution_session_consumed" => runtime_execution.fetch("delegated_controlled_execution_session_consumed"),
-    "controlled_execution_session_id" => runtime_execution.fetch("delegated_controlled_execution_session_id"),
-    "controlled_session_digest_verified" => runtime_execution.fetch("delegated_controlled_session_digest_verified"),
-    "controlled_session_relative_path" => runtime_execution.fetch("delegated_controlled_session_relative_path"),
-    "runtime_owner_consumable_session" => runtime_execution.fetch("delegated_runtime_owner_consumable_session"),
-    "kde_read_model_consumable_session" => runtime_execution.fetch("delegated_kde_read_model_consumable_session"),
-    "controlled_session_live_state_observed" => runtime_execution.fetch("delegated_controlled_session_live_state_observed"),
-    "controlled_session_registered" => runtime_execution.fetch("delegated_controlled_session_registered"),
-    "controlled_session_window_observed" => runtime_execution.fetch("delegated_controlled_session_window_observed"),
-    "controlled_session_host_root_modified" => runtime_execution.fetch("delegated_controlled_session_host_root_modified"),
-    "controlled_session_backend_process_start" => runtime_execution.fetch("delegated_controlled_session_backend_process_start"),
-    "host_root_modified" => runtime_execution.fetch("delegated_host_root_modified"),
-    "docker_socket_mounted" => runtime_execution.fetch("delegated_docker_socket_mounted"),
-    "broad_host_mount_required" => runtime_execution.fetch("delegated_broad_host_mount_required")
-  }
+  payload = runtime_execution.fetch("compatibility_center_known_app_evidence")
+  assert(payload["projection_type"] == "known-app-kde-runtime-status-launch-delegated-evidence", "Runtime status launch execution must provide a Center-ready delegated evidence projection")
+  assert(payload["compatibility_center_projection_ready"] == true, "Runtime status launch execution projection must be ready for Compatibility Center")
+  assert(payload["kde_center_projection_ready"] == true, "Runtime status launch execution projection must be ready for KDE Center")
   assert(payload["request_type"] == "windows-known-app-dispatch-smoke", "staged launcher must enter dispatch smoke with the guest boundary")
   assert(payload["guest_boundary"] == GUEST_BOUNDARY, "staged launcher dispatch must preserve the guest boundary")
   assert(payload["runtime_owned_dispatch"] == true, "staged launcher dispatch must be Runtime-owned")

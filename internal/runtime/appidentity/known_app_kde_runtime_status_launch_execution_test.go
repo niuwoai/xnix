@@ -136,6 +136,78 @@ func TestPrepareKnownAppKDERuntimeStatusLaunchExecutionRejectsMissingReviewRecei
 	}
 }
 
+func TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPayload(t *testing.T) {
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	if projection.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		projection.RuntimeMethod != "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence" ||
+		projection.RequestType != "windows-known-app-dispatch-smoke" ||
+		projection.Status != "passed" ||
+		projection.AppID != "7zr" ||
+		projection.DisplayName != "7-Zip standalone console executable" ||
+		projection.AppVersion != "26.02" ||
+		projection.GuestBoundary != "managed-known-app-guest-smoke" ||
+		!projection.RuntimeOwnedDispatch ||
+		!projection.ArtifactVerified ||
+		!projection.MarkerObserved ||
+		!projection.SessionGatedControlledDispatchConsumed ||
+		projection.SessionGatedControlledDispatchState != "created-after-session-gated-review" ||
+		projection.SessionGatedReviewReceiptID != reviewReceiptID ||
+		projection.LaunchAuthorizationReceiptID != launchReceiptID ||
+		!projection.ControlledExecutionSessionConsumed ||
+		projection.ControlledExecutionSessionID != sessionID ||
+		!projection.ControlledSessionDigestVerified ||
+		projection.ControlledSessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
+		!projection.RuntimeOwnerConsumableSession ||
+		!projection.KDEReadModelConsumableSession ||
+		projection.StateRootPathExposed ||
+		projection.ManagedLauncherPathExposed ||
+		projection.RawLauncherOutputExposed ||
+		projection.BackendDetailsExposed ||
+		projection.HostRootModified ||
+		projection.DockerSocketMounted ||
+		projection.BroadHostMountRequired ||
+		!projection.CompatibilityCenterProjectionReady ||
+		!projection.KDECenterProjectionReady {
+		t.Fatalf("unexpected delegated evidence projection: %#v", projection)
+	}
+	encoded, err := json.Marshal(projection)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("delegated evidence projection exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func writeKnownAppRuntimeStatusLaunchExecutionFixture(t *testing.T, stateRoot string) string {
 	t.Helper()
 	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)

@@ -224,6 +224,34 @@ func TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWit
 		runtimeArgv[6] != "<runtime-owned-state-root>" {
 		t.Fatalf("unexpected redacted Runtime managed launcher argv: %#v", runtimeArgv)
 	}
+	projection := payload["compatibility_center_known_app_evidence"].(map[string]any)
+	if projection["projection_type"] != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		projection["runtime_method"] != "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence" ||
+		projection["request_type"] != "windows-known-app-dispatch-smoke" ||
+		projection["status"] != "passed" ||
+		projection["app_id"] != "7zr" ||
+		projection["guest_boundary"] != "managed-known-app-guest-smoke" ||
+		projection["runtime_owned_dispatch"] != true ||
+		projection["artifact_verified"] != true ||
+		projection["marker_observed"] != true ||
+		projection["session_gated_controlled_dispatch_consumed"] != true ||
+		projection["session_gated_controlled_dispatch_state"] != "created-after-session-gated-review" ||
+		projection["session_gated_review_receipt_id"] != reviewReceiptID ||
+		projection["launch_authorization_receipt_id"] != launchReceiptID ||
+		projection["controlled_execution_session_consumed"] != true ||
+		projection["controlled_execution_session_id"] != sessionID ||
+		projection["controlled_session_digest_verified"] != true ||
+		projection["controlled_session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
+		projection["runtime_owner_consumable_session"] != true ||
+		projection["kde_read_model_consumable_session"] != true ||
+		projection["state_root_path_exposed"] != false ||
+		projection["managed_launcher_path_exposed"] != false ||
+		projection["raw_launcher_output_exposed"] != false ||
+		projection["backend_details_exposed"] != false ||
+		projection["compatibility_center_projection_ready"] != true ||
+		projection["kde_center_projection_ready"] != true {
+		t.Fatalf("unexpected Compatibility Center known app evidence projection: %#v", projection)
+	}
 	argsData, err := os.ReadFile(fakeArgsPath)
 	if err != nil {
 		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
