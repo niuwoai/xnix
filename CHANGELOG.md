@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.608] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-session-gated-launch-review-receipt-record` command, which re-consumes digest-verified session evidence and records a Runtime-owned review receipt under the explicit state root.
+- Extended the staged launcher dispatch smoke and targeted tests to verify relative receipt evidence, receipt digests, read-before-write consumption, and disabled launch, dispatch, request-object, permission-grant, backend, path-exposure, Docker socket, broad host mount, and host-root mutation flags.
+
 ## [0.2.607] - 2026-07-24
 
 ### Added

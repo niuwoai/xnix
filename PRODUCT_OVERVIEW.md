@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.607
+> Last updated: 2026-07-24 | Current version: v0.2.608
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.608 checkpoint records a Runtime-owned session-gated launch review receipt for the tested 7zr lane. `known-app-session-gated-launch-review-receipt-record` first re-consumes the digest-verified controlled execution session through `known-app-session-gated-launch-review-preview`, then writes an opaque receipt under the explicit state root and returns only a safe relative receipt path plus SHA-256 digest. Even with an `approved` review decision, launch approval, desktop launch, backend launch, execution, request-object creation, permission-grant creation, state-root path exposure, receipt path exposure, raw artifact path exposure, backend details, Docker socket mounts, broad host mounts, and host-root mutation remain disabled until a later Runtime launch gate consumes that receipt. v0.2.608 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.607 checkpoint turns the KDE Center page session-gated 7zr card into a concrete Runtime-owned read-before-write review route. `known-app-session-gated-launch-review-preview` re-consumes the persisted controlled execution session from an explicit state root, verifies the session digest, preserves the KDE `review-session-gated-dispatch` action, and reports that a later Runtime receipt is still required before any dispatch. KDE page cards now carry safe review route metadata while desktop launch, backend launch, execution, request-object creation, receipt recording, state-root path exposure, raw artifact path exposure, backend details, Docker socket mounts, broad host mounts, and host-root mutation remain disabled. v0.2.607 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
