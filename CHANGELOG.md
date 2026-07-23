@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.595] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-launch-authorization-receipt-preview` command, which records an opaque Runtime launch authorization receipt for the tested 7zr staged launcher lane under an explicit state root while exposing only a receipt id to KDE-facing consumers.
+- Extended Compatibility Center known-app evidence with recorded authorization receipt state, receipt id, launch-gate state, and recorded-count fields so KDE can show `validated-launch-authorization-recorded` without enabling direct launch, desktop launch, backend launch, backend process start, path exposure, Docker socket mounts, broad host mounts, or host-root mutation.
+
 ## [0.2.594] - 2026-07-24
 
 ### Added

@@ -1512,6 +1512,7 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 		preview.KnownAppSmokePassedCount != 1 ||
 		preview.KnownAppStagedLauncherPassedCount != 1 ||
 		preview.KnownAppLaunchAuthorizationRequiredCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRecordedCount != 0 ||
 		len(preview.KnownAppSmokeEvidence) != 1 ||
 		preview.Summary.Headline != "A known Windows application has passed the staged launcher Runtime dispatch smoke." {
 		t.Fatalf("unexpected known app smoke counts: %#v", preview)
@@ -1531,6 +1532,10 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 		evidence.PrimaryActionKind != "authorization-review" ||
 		!evidence.PrimaryActionEnabled ||
 		evidence.DirectLaunchEnabled ||
+		!evidence.LaunchAuthorizationReceiptRequired ||
+		evidence.LaunchAuthorizationReceiptState != "missing" ||
+		evidence.LaunchAuthorizationReceiptID != "known-app-launch-authorization-7zr-26.02" ||
+		evidence.LaunchGateState != "receipt-missing-fail-closed" ||
 		!evidence.MarkerObserved ||
 		!evidence.ChecksumVerified ||
 		!evidence.ExecutionEvidenceRecorded ||
@@ -1555,6 +1560,70 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("Compatibility Center known app evidence exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestCompatibilityCenterPreviewSummarizesRecordedKnownAppLaunchAuthorizationReceipt(t *testing.T) {
+	preview, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                           "7zr",
+			DisplayName:                     "7-Zip Console",
+			AppVersion:                      "26.02",
+			EvidenceSource:                  "staged-launcher-dispatch-smoke",
+			SmokeStatus:                     "passed",
+			LaunchAuthorizationReceiptState: "recorded",
+			LaunchAuthorizationReceiptID:    "known-app-launch-authorization-7zr-26.02",
+			MarkerObserved:                  true,
+			ChecksumVerified:                true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreviewWithOptions returned error: %v", err)
+	}
+	if preview.KnownAppSmokeEvidenceCount != 1 ||
+		preview.KnownAppSmokePassedCount != 1 ||
+		preview.KnownAppStagedLauncherPassedCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRequiredCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRecordedCount != 1 ||
+		preview.Summary.Headline != "A known Windows application has a recorded Runtime launch authorization receipt." {
+		t.Fatalf("unexpected recorded receipt counts: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence[0]
+	if evidence.CenterCardState != "validated-launch-authorization-recorded" ||
+		evidence.LaunchAuthorizationState != "recorded" ||
+		evidence.PrimaryActionID != "run-through-launch-gate" ||
+		evidence.PrimaryActionLabel != "Run through launch gate" ||
+		evidence.PrimaryActionKind != "launch-gate-review" ||
+		!evidence.PrimaryActionEnabled ||
+		evidence.DirectLaunchEnabled ||
+		!evidence.LaunchAuthorizationReceiptRequired ||
+		evidence.LaunchAuthorizationReceiptState != "recorded" ||
+		evidence.LaunchAuthorizationReceiptID != "known-app-launch-authorization-7zr-26.02" ||
+		evidence.LaunchGateState != "receipt-recorded-launch-still-gated" ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected recorded receipt evidence: %#v", evidence)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center recorded receipt evidence exposes forbidden term %q: %s", forbidden, text)
 		}
 	}
 }
