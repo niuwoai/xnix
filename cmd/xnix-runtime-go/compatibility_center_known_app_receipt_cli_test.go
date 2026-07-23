@@ -105,6 +105,9 @@ func TestCompatibilityCenterPreviewCommandAcceptsKnownAppLaunchGateState(t *test
 		"--known-app-launcher-session-relative-path", "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
 		"--known-app-launcher-session-runtime-owner-consumable",
 		"--known-app-launcher-session-kde-read-model-consumable",
+		"--known-app-post-review-dispatch-consumed",
+		"--known-app-post-review-dispatch-state", "created-after-session-gated-review",
+		"--known-app-session-gated-review-receipt-id", "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -116,15 +119,16 @@ func TestCompatibilityCenterPreviewCommandAcceptsKnownAppLaunchGateState(t *test
 	if payload["known_app_launch_gate_consumed_count"] != float64(1) ||
 		payload["known_app_controlled_dispatch_ready_count"] != float64(1) ||
 		payload["known_app_launcher_session_gate_consumed_count"] != float64(1) ||
+		payload["known_app_post_review_dispatch_consumed_count"] != float64(1) ||
 		payload["backend_launch_enabled"] != false ||
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected Compatibility Center launch gate summary: %#v", payload)
 	}
 	evidenceItems := payload["known_app_smoke_evidence"].([]any)
 	evidence := evidenceItems[0].(map[string]any)
-	if evidence["center_card_state"] != "validated-session-gated-dispatch" ||
-		evidence["primary_action_id"] != "review-session-gated-dispatch" ||
-		evidence["primary_action_kind"] != "session-gate-review" ||
+	if evidence["center_card_state"] != "validated-post-review-dispatch" ||
+		evidence["primary_action_id"] != "show-runtime-controlled-launch" ||
+		evidence["primary_action_kind"] != "runtime-status" ||
 		evidence["launch_gate_state"] != "controlled-dispatch-ready" ||
 		evidence["launch_gate_consumed"] != true ||
 		evidence["launch_gate_receipt_accepted"] != true ||
@@ -136,6 +140,9 @@ func TestCompatibilityCenterPreviewCommandAcceptsKnownAppLaunchGateState(t *test
 		evidence["launcher_session_relative_path"] != "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json" ||
 		evidence["launcher_session_runtime_owner_consumable"] != true ||
 		evidence["launcher_session_kde_read_model_consumable"] != true ||
+		evidence["post_review_dispatch_consumed"] != true ||
+		evidence["post_review_dispatch_state"] != "created-after-session-gated-review" ||
+		evidence["session_gated_review_receipt_id"] != "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02" ||
 		evidence["direct_launch_enabled"] != false ||
 		evidence["desktop_launch_enabled"] != false ||
 		evidence["backend_launch_enabled"] != false {

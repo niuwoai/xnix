@@ -25,6 +25,7 @@ type KDECenterPagePreview struct {
 	ApplicationSummary                       KDECenterPageApplication               `json:"application_summary"`
 	KnownAppSessionGateEvidenceCount         int                                    `json:"known_app_session_gate_evidence_count"`
 	KnownAppLauncherSessionGateConsumedCount int                                    `json:"known_app_launcher_session_gate_consumed_count"`
+	KnownAppPostReviewDispatchConsumedCount  int                                    `json:"known_app_post_review_dispatch_consumed_count"`
 	KnownAppSessionGateCards                 []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
 	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
@@ -116,6 +117,9 @@ type KDECenterPageKnownAppSessionGateCard struct {
 	LauncherSessionRelativePath   string `json:"launcher_session_relative_path"`
 	RuntimeOwnerConsumableSession bool   `json:"runtime_owner_consumable_session"`
 	KDEReadModelConsumableSession bool   `json:"kde_read_model_consumable_session"`
+	PostReviewDispatchConsumed    bool   `json:"post_review_dispatch_consumed"`
+	PostReviewDispatchState       string `json:"post_review_dispatch_state"`
+	SessionGatedReviewReceiptID   string `json:"session_gated_review_receipt_id"`
 	LaunchGateConsumed            bool   `json:"launch_gate_consumed"`
 	ControlledDispatchReady       bool   `json:"controlled_dispatch_ready"`
 	PrimaryActionID               string `json:"primary_action_id"`
@@ -794,6 +798,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		},
 		KnownAppSessionGateEvidenceCount:         len(knownAppSessionGateCards),
 		KnownAppLauncherSessionGateConsumedCount: center.KnownAppLauncherSessionGateConsumedCount,
+		KnownAppPostReviewDispatchConsumedCount:  center.KnownAppPostReviewDispatchConsumedCount,
 		KnownAppSessionGateCards:                 knownAppSessionGateCards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
@@ -1109,6 +1114,9 @@ func kdeCenterPageKnownAppSessionGateCards(evidence []KnownAppSmokeEvidenceSumma
 			LauncherSessionRelativePath:   item.LauncherSessionRelativePath,
 			RuntimeOwnerConsumableSession: item.LauncherSessionRuntimeOwnerConsumable,
 			KDEReadModelConsumableSession: item.LauncherSessionKDEReadModelConsumable,
+			PostReviewDispatchConsumed:    item.PostReviewDispatchConsumed,
+			PostReviewDispatchState:       item.PostReviewDispatchState,
+			SessionGatedReviewReceiptID:   item.SessionGatedReviewReceiptID,
 			LaunchGateConsumed:            item.LaunchGateConsumed,
 			ControlledDispatchReady:       item.ControlledDispatchReady,
 			PrimaryActionID:               item.PrimaryActionID,

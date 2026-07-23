@@ -127,6 +127,9 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		"--known-app-launcher-session-relative-path", "execution-ledger/sessions/" + sessionID + ".json",
 		"--known-app-launcher-session-runtime-owner-consumable",
 		"--known-app-launcher-session-kde-read-model-consumable",
+		"--known-app-post-review-dispatch-consumed",
+		"--known-app-post-review-dispatch-state", "created-after-session-gated-review",
+		"--known-app-session-gated-review-receipt-id", "known-app-session-gated-launch-review-7zr-26.02-" + sessionID,
 	}, &output); err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
@@ -138,6 +141,7 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 	if payload["source"] != "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview+known-app-session-gate-evidence" ||
 		payload["known_app_session_gate_evidence_count"] != float64(1) ||
 		payload["known_app_launcher_session_gate_consumed_count"] != float64(1) ||
+		payload["known_app_post_review_dispatch_consumed_count"] != float64(1) ||
 		payload["launch_enabled"] != false ||
 		payload["execution_started"] != false ||
 		payload["backend_process_started"] != false ||
@@ -151,15 +155,18 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 	}
 	card := cards[0].(map[string]any)
 	if card["app_id"] != "7zr" ||
-		card["center_card_state"] != "validated-session-gated-dispatch" ||
+		card["center_card_state"] != "validated-post-review-dispatch" ||
 		card["controlled_execution_session_id"] != sessionID ||
 		card["launcher_session_gate_consumed"] != true ||
 		card["launcher_session_digest_verified"] != true ||
 		card["launcher_session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
 		card["runtime_owner_consumable_session"] != true ||
 		card["kde_read_model_consumable_session"] != true ||
-		card["primary_action_id"] != "review-session-gated-dispatch" ||
-		card["primary_action_kind"] != "session-gate-review" ||
+		card["post_review_dispatch_consumed"] != true ||
+		card["post_review_dispatch_state"] != "created-after-session-gated-review" ||
+		card["session_gated_review_receipt_id"] != "known-app-session-gated-launch-review-7zr-26.02-"+sessionID ||
+		card["primary_action_id"] != "show-runtime-controlled-launch" ||
+		card["primary_action_kind"] != "runtime-status" ||
 		card["review_route_request_type"] != "known-app-session-gated-launch-review-preview" ||
 		card["review_route_runtime_method"] != "PreviewKnownAppSessionGatedLaunchReview" ||
 		card["review_route_read_method"] != "GetKnownAppSessionGatedLaunchReview" ||

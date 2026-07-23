@@ -598,6 +598,9 @@ begin
     center_preview_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
     center_preview_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
     center_preview_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
+    center_preview_args << "--known-app-post-review-dispatch-consumed" if payload["session_gated_controlled_dispatch_consumed"]
+    center_preview_args.concat(["--known-app-post-review-dispatch-state", payload.fetch("session_gated_controlled_dispatch_state")])
+    center_preview_args.concat(["--known-app-session-gated-review-receipt-id", payload.fetch("session_gated_review_receipt_id")])
     center_preview_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
     assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")
@@ -608,13 +611,14 @@ begin
     assert(center_preview["known_app_launch_gate_consumed_count"] == 1, "Compatibility Center must count launch gate consumption")
     assert(center_preview["known_app_controlled_dispatch_ready_count"] == 1, "Compatibility Center must count controlled dispatch readiness")
     assert(center_preview["known_app_launcher_session_gate_consumed_count"] == 1, "Compatibility Center must count launcher-side session gate consumption")
+    assert(center_preview["known_app_post_review_dispatch_consumed_count"] == 1, "Compatibility Center must count post-review dispatch consumption")
     center_evidence = center_preview.fetch("known_app_smoke_evidence").first
     assert(center_evidence["evidence_source"] == "staged-launcher-dispatch-smoke", "Compatibility Center evidence must identify the staged launcher source")
-    assert(center_evidence["center_card_state"] == "validated-session-gated-dispatch", "Compatibility Center evidence must expose session-gated dispatch card state")
+    assert(center_evidence["center_card_state"] == "validated-post-review-dispatch", "Compatibility Center evidence must expose post-review dispatch card state")
     assert(center_evidence["launch_authorization_state"] == "recorded", "Compatibility Center evidence must expose recorded launch authorization state")
-    assert(center_evidence["primary_action_id"] == "review-session-gated-dispatch", "Compatibility Center evidence must expose session-gated dispatch review as the primary action")
-    assert(center_evidence["primary_action_kind"] == "session-gate-review", "Compatibility Center evidence must expose a session gate review action")
-    assert(center_evidence["primary_action_enabled"] == true, "Compatibility Center evidence must allow the safe launch gate review action")
+    assert(center_evidence["primary_action_id"] == "show-runtime-controlled-launch", "Compatibility Center evidence must expose Runtime-controlled launch status as the primary action")
+    assert(center_evidence["primary_action_kind"] == "runtime-status", "Compatibility Center evidence must expose a Runtime status action")
+    assert(center_evidence["primary_action_enabled"] == true, "Compatibility Center evidence must allow the safe Runtime status action")
     assert(center_evidence["direct_launch_enabled"] == false, "Compatibility Center evidence must not enable direct launch")
     assert(center_evidence["launch_authorization_receipt_state"] == "recorded", "Compatibility Center evidence must expose recorded receipt state")
     assert(center_evidence["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "Compatibility Center evidence must expose the opaque receipt id")
@@ -629,6 +633,9 @@ begin
     assert(center_evidence["launcher_session_relative_path"] == payload.fetch("controlled_session_relative_path"), "Compatibility Center evidence must expose relative launcher session evidence")
     assert(center_evidence["launcher_session_runtime_owner_consumable"] == true, "Compatibility Center evidence must expose Runtime-owner session consumption readiness")
     assert(center_evidence["launcher_session_kde_read_model_consumable"] == true, "Compatibility Center evidence must expose KDE read-model session consumption readiness")
+    assert(center_evidence["post_review_dispatch_consumed"] == true, "Compatibility Center evidence must expose post-review dispatch consumption")
+    assert(center_evidence["post_review_dispatch_state"] == "created-after-session-gated-review", "Compatibility Center evidence must expose post-review dispatch state")
+    assert(center_evidence["session_gated_review_receipt_id"] == payload.fetch("session_gated_review_receipt_id"), "Compatibility Center evidence must expose the opaque session-gated review receipt id")
     assert(center_evidence["staged_launcher_verified"] == true, "Compatibility Center evidence must verify the staged launcher path")
     assert(center_evidence["runtime_dispatch_verified"] == true, "Compatibility Center evidence must verify Runtime dispatch")
     assert(center_evidence["launch_authorization_required"] == true, "Compatibility Center evidence must keep launch authorization required")
@@ -663,20 +670,27 @@ begin
     kde_page_args.concat(["--known-app-launcher-session-relative-path", payload.fetch("controlled_session_relative_path")])
     kde_page_args << "--known-app-launcher-session-runtime-owner-consumable" if payload["runtime_owner_consumable_session"]
     kde_page_args << "--known-app-launcher-session-kde-read-model-consumable" if payload["kde_read_model_consumable_session"]
+    kde_page_args << "--known-app-post-review-dispatch-consumed" if payload["session_gated_controlled_dispatch_consumed"]
+    kde_page_args.concat(["--known-app-post-review-dispatch-state", payload.fetch("session_gated_controlled_dispatch_state")])
+    kde_page_args.concat(["--known-app-session-gated-review-receipt-id", payload.fetch("session_gated_review_receipt_id")])
     kde_page_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     kde_page, kde_page_stdout = run_json(go_env, *kde_page_args)
     assert(kde_page["known_app_session_gate_evidence_count"] == 1, "KDE Center page must receive known app session gate evidence")
     assert(kde_page["known_app_launcher_session_gate_consumed_count"] == 1, "KDE Center page must count launcher-side session gate consumption")
+    assert(kde_page["known_app_post_review_dispatch_consumed_count"] == 1, "KDE Center page must count post-review dispatch consumption")
     kde_page_card = kde_page.fetch("known_app_session_gate_cards").first
-    assert(kde_page_card["center_card_state"] == "validated-session-gated-dispatch", "KDE Center page card must expose session-gated dispatch state")
+    assert(kde_page_card["center_card_state"] == "validated-post-review-dispatch", "KDE Center page card must expose post-review dispatch state")
     assert(kde_page_card["controlled_execution_session_id"] == payload.fetch("controlled_execution_session_id"), "KDE Center page card must expose the opaque controlled execution session id")
     assert(kde_page_card["launcher_session_gate_consumed"] == true, "KDE Center page card must expose launcher session gate consumption")
     assert(kde_page_card["launcher_session_digest_verified"] == true, "KDE Center page card must expose launcher session digest verification")
     assert(kde_page_card["launcher_session_relative_path"] == payload.fetch("controlled_session_relative_path"), "KDE Center page card must expose relative launcher session evidence")
     assert(kde_page_card["runtime_owner_consumable_session"] == true, "KDE Center page card must expose Runtime-owner session consumption readiness")
     assert(kde_page_card["kde_read_model_consumable_session"] == true, "KDE Center page card must expose KDE read-model session consumption readiness")
-    assert(kde_page_card["primary_action_id"] == "review-session-gated-dispatch", "KDE Center page card must expose session-gated dispatch review as the primary action")
-    assert(kde_page_card["primary_action_kind"] == "session-gate-review", "KDE Center page card must expose a session gate review action")
+    assert(kde_page_card["post_review_dispatch_consumed"] == true, "KDE Center page card must expose post-review dispatch consumption")
+    assert(kde_page_card["post_review_dispatch_state"] == "created-after-session-gated-review", "KDE Center page card must expose post-review dispatch state")
+    assert(kde_page_card["session_gated_review_receipt_id"] == payload.fetch("session_gated_review_receipt_id"), "KDE Center page card must expose the opaque session-gated review receipt id")
+    assert(kde_page_card["primary_action_id"] == "show-runtime-controlled-launch", "KDE Center page card must expose Runtime-controlled launch status as the primary action")
+    assert(kde_page_card["primary_action_kind"] == "runtime-status", "KDE Center page card must expose a Runtime status action")
     assert(kde_page_card["desktop_launch_enabled"] == false, "KDE Center page card must not enable desktop launch")
     assert(kde_page_card["backend_launch_enabled"] == false, "KDE Center page card must not enable backend launch")
     assert(kde_page_card["host_root_modified"] == false, "KDE Center page card must not mutate the host root")

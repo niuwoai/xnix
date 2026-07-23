@@ -510,6 +510,8 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 		Mode:                "automatic",
 		SupportedExtensions: []string{".xls"},
 	}
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
 	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
 		Source:          "registry",
 		RegistryName:    "test-registry",
@@ -530,12 +532,15 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 			LaunchGateReceiptAccepted:             true,
 			LaunchGateGuestBoundaryAccepted:       true,
 			ControlledDispatchReady:               true,
-			ControlledExecutionSessionID:          KnownAppControlledExecutionSessionID("7zr", "26.02"),
+			ControlledExecutionSessionID:          sessionID,
 			LauncherSessionGateConsumed:           true,
 			LauncherSessionDigestVerified:         true,
-			LauncherSessionRelativePath:           "execution-ledger/sessions/" + KnownAppControlledExecutionSessionID("7zr", "26.02") + ".json",
+			LauncherSessionRelativePath:           "execution-ledger/sessions/" + sessionID + ".json",
 			LauncherSessionRuntimeOwnerConsumable: true,
 			LauncherSessionKDEReadModelConsumable: true,
+			PostReviewDispatchConsumed:            true,
+			PostReviewDispatchState:               "created-after-session-gated-review",
+			SessionGatedReviewReceiptID:           reviewReceiptID,
 		}},
 	})
 	if err != nil {
@@ -547,6 +552,7 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 	}
 	if preview.KnownAppSessionGateEvidenceCount != 1 ||
 		preview.KnownAppLauncherSessionGateConsumedCount != 1 ||
+		preview.KnownAppPostReviewDispatchConsumedCount != 1 ||
 		len(preview.KnownAppSessionGateCards) != 1 {
 		t.Fatalf("unexpected known app session gate counts: %#v", preview)
 	}
@@ -555,17 +561,20 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 		card.DisplayName != "7-Zip Console" ||
 		card.AppVersion != "26.02" ||
 		card.CompatibilityState != "validated" ||
-		card.CenterCardState != "validated-session-gated-dispatch" ||
-		card.ControlledExecutionSessionID != KnownAppControlledExecutionSessionID("7zr", "26.02") ||
+		card.CenterCardState != "validated-post-review-dispatch" ||
+		card.ControlledExecutionSessionID != sessionID ||
 		!card.LauncherSessionGateConsumed ||
 		!card.LauncherSessionDigestVerified ||
-		card.LauncherSessionRelativePath != "execution-ledger/sessions/"+KnownAppControlledExecutionSessionID("7zr", "26.02")+".json" ||
+		card.LauncherSessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
 		!card.RuntimeOwnerConsumableSession ||
 		!card.KDEReadModelConsumableSession ||
+		!card.PostReviewDispatchConsumed ||
+		card.PostReviewDispatchState != "created-after-session-gated-review" ||
+		card.SessionGatedReviewReceiptID != reviewReceiptID ||
 		!card.LaunchGateConsumed ||
 		!card.ControlledDispatchReady ||
-		card.PrimaryActionID != "review-session-gated-dispatch" ||
-		card.PrimaryActionKind != "session-gate-review" ||
+		card.PrimaryActionID != "show-runtime-controlled-launch" ||
+		card.PrimaryActionKind != "runtime-status" ||
 		!card.PrimaryActionEnabled ||
 		card.ReviewRouteRequestType != KnownAppSessionGatedLaunchReviewRequestType ||
 		card.ReviewRouteRuntimeMethod != "PreviewKnownAppSessionGatedLaunchReview" ||

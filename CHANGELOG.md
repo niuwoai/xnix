@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.612] - 2026-07-24
+
+### Added
+
+- Extended Compatibility Center known-app staged launcher evidence with post-review dispatch consumption fields, including a validated post-review card state, Runtime-status primary action, and opaque session-gated review receipt id.
+- Extended KDE Center page known-app session gate cards and the staged launcher dispatch smoke so the UI read model can show launcher-consumed post-review dispatch state while KDE remains presentation-only.
+
 ## [0.2.611] - 2026-07-24
 
 ### Added

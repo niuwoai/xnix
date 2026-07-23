@@ -2362,6 +2362,9 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppLauncherSessionRelativePath := flags.String("known-app-launcher-session-relative-path", "", "relative known Windows app launcher-side session evidence path")
 	knownAppLauncherSessionRuntimeOwnerConsumable := flags.Bool("known-app-launcher-session-runtime-owner-consumable", false, "known Windows app launcher-side Runtime-owner session consumption readiness")
 	knownAppLauncherSessionKDEReadModelConsumable := flags.Bool("known-app-launcher-session-kde-read-model-consumable", false, "known Windows app launcher-side KDE read-model session consumption readiness")
+	knownAppPostReviewDispatchConsumed := flags.Bool("known-app-post-review-dispatch-consumed", false, "known Windows app launcher-side post-review dispatch consumption result")
+	knownAppPostReviewDispatchState := flags.String("known-app-post-review-dispatch-state", "", "known Windows app launcher-side post-review dispatch state")
+	knownAppSessionGatedReviewReceiptID := flags.String("known-app-session-gated-review-receipt-id", "", "opaque known Windows app session-gated review receipt id")
 	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
@@ -2399,6 +2402,9 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 			LauncherSessionRelativePath:           *knownAppLauncherSessionRelativePath,
 			LauncherSessionRuntimeOwnerConsumable: *knownAppLauncherSessionRuntimeOwnerConsumable,
 			LauncherSessionKDEReadModelConsumable: *knownAppLauncherSessionKDEReadModelConsumable,
+			PostReviewDispatchConsumed:            *knownAppPostReviewDispatchConsumed,
+			PostReviewDispatchState:               *knownAppPostReviewDispatchState,
+			SessionGatedReviewReceiptID:           *knownAppSessionGatedReviewReceiptID,
 			LaunchGateBlockedReason:               *knownAppLaunchGateBlockedReason,
 			MarkerObserved:                        *knownAppSmokeMarkerObserved,
 			ChecksumVerified:                      *knownAppSmokeChecksumVerified,
@@ -2589,6 +2595,9 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppLauncherSessionRelativePath := flags.String("known-app-launcher-session-relative-path", "", "relative known Windows app launcher-side session evidence path")
 	knownAppLauncherSessionRuntimeOwnerConsumable := flags.Bool("known-app-launcher-session-runtime-owner-consumable", false, "known Windows app launcher-side Runtime-owner session consumption readiness")
 	knownAppLauncherSessionKDEReadModelConsumable := flags.Bool("known-app-launcher-session-kde-read-model-consumable", false, "known Windows app launcher-side KDE read-model session consumption readiness")
+	knownAppPostReviewDispatchConsumed := flags.Bool("known-app-post-review-dispatch-consumed", false, "known Windows app launcher-side post-review dispatch consumption result")
+	knownAppPostReviewDispatchState := flags.String("known-app-post-review-dispatch-state", "", "known Windows app launcher-side post-review dispatch state")
+	knownAppSessionGatedReviewReceiptID := flags.String("known-app-session-gated-review-receipt-id", "", "opaque known Windows app session-gated review receipt id")
 	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
@@ -2637,6 +2646,9 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 			LauncherSessionRelativePath:           *knownAppLauncherSessionRelativePath,
 			LauncherSessionRuntimeOwnerConsumable: *knownAppLauncherSessionRuntimeOwnerConsumable,
 			LauncherSessionKDEReadModelConsumable: *knownAppLauncherSessionKDEReadModelConsumable,
+			PostReviewDispatchConsumed:            *knownAppPostReviewDispatchConsumed,
+			PostReviewDispatchState:               *knownAppPostReviewDispatchState,
+			SessionGatedReviewReceiptID:           *knownAppSessionGatedReviewReceiptID,
 			LaunchGateBlockedReason:               *knownAppLaunchGateBlockedReason,
 			MarkerObserved:                        *knownAppSmokeMarkerObserved,
 			ChecksumVerified:                      *knownAppSmokeChecksumVerified,

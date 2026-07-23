@@ -791,6 +791,7 @@ type CompatibilityCenterPreview struct {
 	KnownAppLaunchGateConsumedCount          int                            `json:"known_app_launch_gate_consumed_count"`
 	KnownAppControlledDispatchReadyCount     int                            `json:"known_app_controlled_dispatch_ready_count"`
 	KnownAppLauncherSessionGateConsumedCount int                            `json:"known_app_launcher_session_gate_consumed_count"`
+	KnownAppPostReviewDispatchConsumedCount  int                            `json:"known_app_post_review_dispatch_consumed_count"`
 	Applications                             []CompatibilityCenterApp       `json:"applications"`
 	KnownAppSmokeEvidence                    []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
 	ActionExecutionEnabled                   bool                           `json:"action_execution_enabled"`
@@ -859,6 +860,9 @@ type KnownAppSmokeEvidenceSummary struct {
 	LauncherSessionRelativePath           string `json:"launcher_session_relative_path"`
 	LauncherSessionRuntimeOwnerConsumable bool   `json:"launcher_session_runtime_owner_consumable"`
 	LauncherSessionKDEReadModelConsumable bool   `json:"launcher_session_kde_read_model_consumable"`
+	PostReviewDispatchConsumed            bool   `json:"post_review_dispatch_consumed"`
+	PostReviewDispatchState               string `json:"post_review_dispatch_state"`
+	SessionGatedReviewReceiptID           string `json:"session_gated_review_receipt_id"`
 	MarkerObserved                        bool   `json:"marker_observed"`
 	ChecksumVerified                      bool   `json:"checksum_verified"`
 	ExecutionEvidenceRecorded             bool   `json:"execution_evidence_recorded"`
@@ -2553,6 +2557,7 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 		KnownAppLaunchGateConsumedCount:          countLaunchGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppControlledDispatchReadyCount:     countControlledDispatchReadyKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppLauncherSessionGateConsumedCount: countLauncherSessionGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppPostReviewDispatchConsumedCount:  countPostReviewDispatchConsumedKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppSmokeEvidence:                    knownAppEvidence,
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
@@ -2590,6 +2595,10 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 	if preview.KnownAppLauncherSessionGateConsumedCount > 0 {
 		preview.Summary.Headline = "A known Windows application dispatch was guarded by a Runtime session gate."
 		preview.Summary.Detail = "KDE can show that the staged launcher consumed digest-verified session evidence before dispatch while execution remains Runtime-controlled."
+	}
+	if preview.KnownAppPostReviewDispatchConsumedCount > 0 {
+		preview.Summary.Headline = "A known Windows application launch consumed the accepted Runtime review gate."
+		preview.Summary.Detail = "KDE can show that the managed launcher consumed the post-review dispatch state before execution while decisions remain Runtime-owned."
 	}
 	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
 		return CompatibilityCenterPreview{}, err
@@ -2710,6 +2719,8 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	}
 	sessionID := strings.TrimSpace(item.ControlledExecutionSessionID)
 	sessionRelativePath := strings.TrimSpace(item.LauncherSessionRelativePath)
+	postReviewDispatchState := strings.TrimSpace(item.PostReviewDispatchState)
+	sessionGatedReviewReceiptID := strings.TrimSpace(item.SessionGatedReviewReceiptID)
 	if item.LauncherSessionGateConsumed {
 		if !item.LauncherSessionDigestVerified || !item.LauncherSessionRuntimeOwnerConsumable || !item.LauncherSessionKDEReadModelConsumable {
 			return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires digest-verified Runtime-owner and KDE read-model evidence")
@@ -2725,6 +2736,19 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		}
 	} else if item.LauncherSessionDigestVerified || item.LauncherSessionRuntimeOwnerConsumable || item.LauncherSessionKDEReadModelConsumable || sessionID != "" || sessionRelativePath != "" {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate evidence requires consumed session gate")
+	}
+	if item.PostReviewDispatchConsumed {
+		if !item.LauncherSessionGateConsumed {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires consumed launcher session gate")
+		}
+		if postReviewDispatchState != "created-after-session-gated-review" {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires the session-gated review dispatch state")
+		}
+		if !singleLine(sessionGatedReviewReceiptID) || strings.ContainsAny(sessionGatedReviewReceiptID, `/\`) || strings.Contains(sessionGatedReviewReceiptID, "..") {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch consumption requires an opaque review receipt id")
+		}
+	} else if postReviewDispatchState != "" || sessionGatedReviewReceiptID != "" {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app post-review dispatch evidence requires consumed post-review dispatch state")
 	}
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
@@ -2778,6 +2802,15 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		launchGateState = "controlled-dispatch-ready"
 		summary = displayName + " staged dispatch consumed a digest-verified Runtime session gate before execution."
 	}
+	if stagedLauncherVerified && item.PostReviewDispatchConsumed {
+		centerCardState = "validated-post-review-dispatch"
+		launchAuthorizationState = "recorded"
+		primaryActionID = "show-runtime-controlled-launch"
+		primaryActionLabel = "Show Runtime-controlled launch"
+		primaryActionKind = "runtime-status"
+		launchGateState = "controlled-dispatch-ready"
+		summary = displayName + " managed launcher consumed the accepted session-gated review receipt before controlled dispatch."
+	}
 
 	return KnownAppSmokeEvidenceSummary{
 		AppID:                                 appID,
@@ -2809,6 +2842,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		LauncherSessionRelativePath:           sessionRelativePath,
 		LauncherSessionRuntimeOwnerConsumable: item.LauncherSessionRuntimeOwnerConsumable,
 		LauncherSessionKDEReadModelConsumable: item.LauncherSessionKDEReadModelConsumable,
+		PostReviewDispatchConsumed:            item.PostReviewDispatchConsumed,
+		PostReviewDispatchState:               postReviewDispatchState,
+		SessionGatedReviewReceiptID:           sessionGatedReviewReceiptID,
 		MarkerObserved:                        item.MarkerObserved,
 		ChecksumVerified:                      item.ChecksumVerified,
 		ExecutionEvidenceRecorded:             true,
@@ -2891,6 +2927,16 @@ func countLauncherSessionGateConsumedKnownAppSmokeEvidence(items []KnownAppSmoke
 	count := 0
 	for _, item := range items {
 		if item.LauncherSessionGateConsumed && item.LauncherSessionDigestVerified && item.LauncherSessionRuntimeOwnerConsumable && item.LauncherSessionKDEReadModelConsumable {
+			count++
+		}
+	}
+	return count
+}
+
+func countPostReviewDispatchConsumedKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.PostReviewDispatchConsumed && item.PostReviewDispatchState == "created-after-session-gated-review" && singleLine(item.SessionGatedReviewReceiptID) && item.LauncherSessionGateConsumed {
 			count++
 		}
 	}

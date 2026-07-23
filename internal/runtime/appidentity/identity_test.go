@@ -1777,6 +1777,80 @@ func TestCompatibilityCenterPreviewSummarizesLauncherSessionGateConsumption(t *t
 	}
 }
 
+func TestCompatibilityCenterPreviewSummarizesPostReviewDispatchConsumption(t *testing.T) {
+	reviewReceiptID := "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02"
+	preview, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                 "7zr",
+			DisplayName:                           "7-Zip Console",
+			AppVersion:                            "26.02",
+			EvidenceSource:                        "staged-launcher-dispatch-smoke",
+			SmokeStatus:                           "passed",
+			LaunchAuthorizationReceiptState:       "recorded",
+			LaunchAuthorizationReceiptID:          "known-app-launch-authorization-7zr-26.02",
+			LaunchGateState:                       "controlled-dispatch-ready",
+			LaunchGateConsumed:                    true,
+			LaunchGateReceiptAccepted:             true,
+			LaunchGateGuestBoundaryAccepted:       true,
+			ControlledDispatchReady:               true,
+			ControlledExecutionSessionID:          "known-app-controlled-execution-session-7zr-26.02",
+			LauncherSessionGateConsumed:           true,
+			LauncherSessionDigestVerified:         true,
+			LauncherSessionRelativePath:           "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
+			LauncherSessionRuntimeOwnerConsumable: true,
+			LauncherSessionKDEReadModelConsumable: true,
+			PostReviewDispatchConsumed:            true,
+			PostReviewDispatchState:               "created-after-session-gated-review",
+			SessionGatedReviewReceiptID:           reviewReceiptID,
+			MarkerObserved:                        true,
+			ChecksumVerified:                      true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreviewWithOptions returned error: %v", err)
+	}
+	if preview.KnownAppSmokeEvidenceCount != 1 ||
+		preview.KnownAppLauncherSessionGateConsumedCount != 1 ||
+		preview.KnownAppPostReviewDispatchConsumedCount != 1 ||
+		preview.Summary.Headline != "A known Windows application launch consumed the accepted Runtime review gate." {
+		t.Fatalf("unexpected post-review dispatch counts: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence[0]
+	if evidence.CenterCardState != "validated-post-review-dispatch" ||
+		evidence.PrimaryActionID != "show-runtime-controlled-launch" ||
+		evidence.PrimaryActionLabel != "Show Runtime-controlled launch" ||
+		evidence.PrimaryActionKind != "runtime-status" ||
+		!evidence.PostReviewDispatchConsumed ||
+		evidence.PostReviewDispatchState != "created-after-session-gated-review" ||
+		evidence.SessionGatedReviewReceiptID != reviewReceiptID ||
+		evidence.DirectLaunchEnabled ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected post-review dispatch evidence: %#v", evidence)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center post-review dispatch evidence exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestCompatibilityCenterPreviewRejectsInconsistentLaunchGateReadiness(t *testing.T) {
 	_, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
 		{
@@ -1836,6 +1910,44 @@ func TestCompatibilityCenterPreviewRejectsIncompleteLauncherSessionGateEvidence(
 	})
 	if err == nil || !strings.Contains(err.Error(), "session gate consumption requires digest-verified") {
 		t.Fatalf("expected incomplete launcher session gate evidence error, got %v", err)
+	}
+}
+
+func TestCompatibilityCenterPreviewRejectsIncompletePostReviewDispatchEvidence(t *testing.T) {
+	_, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                 "7zr",
+			DisplayName:                           "7-Zip Console",
+			AppVersion:                            "26.02",
+			EvidenceSource:                        "staged-launcher-dispatch-smoke",
+			SmokeStatus:                           "passed",
+			LaunchAuthorizationReceiptState:       "recorded",
+			LaunchGateState:                       "controlled-dispatch-ready",
+			LaunchGateConsumed:                    true,
+			LaunchGateReceiptAccepted:             true,
+			LaunchGateGuestBoundaryAccepted:       true,
+			ControlledDispatchReady:               true,
+			LauncherSessionGateConsumed:           true,
+			LauncherSessionDigestVerified:         true,
+			LauncherSessionRelativePath:           "execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json",
+			LauncherSessionRuntimeOwnerConsumable: true,
+			LauncherSessionKDEReadModelConsumable: true,
+			PostReviewDispatchConsumed:            true,
+			PostReviewDispatchState:               "created-after-session-gated-review",
+			MarkerObserved:                        true,
+			ChecksumVerified:                      true,
+		}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "opaque review receipt id") {
+		t.Fatalf("expected incomplete post-review dispatch evidence error, got %v", err)
 	}
 }
 
