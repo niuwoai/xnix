@@ -115,6 +115,78 @@ func TestDesktopActivationStageCommandRejectsMissingRoot(t *testing.T) {
 	}
 }
 
+func TestDesktopActivationStageCommandCanCopyManagedLauncherBinary(t *testing.T) {
+	registryPath := writeStageCommandRegistry(t)
+	stagingRoot := t.TempDir()
+	launcherSource := filepath.Join(t.TempDir(), "xnix-compat-launch")
+	launcherContent := []byte("#!/bin/sh\nprintf 'XNIX_MANAGED_LAUNCHER_OK\\n'\n")
+	if err := os.WriteFile(launcherSource, launcherContent, 0o755); err != nil {
+		t.Fatalf("WriteFile launcher source returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"desktop-activation-stage",
+		"--registry", registryPath,
+		"--app", "org.example.ledger",
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+		"--managed-launcher-bin", launcherSource,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["written_file_count"] != float64(7) {
+		t.Fatalf("unexpected written file count: %#v", payload)
+	}
+	writtenFileIDs := payload["written_file_ids"].([]any)
+	if !containsAnyString(writtenFileIDs, "managed-launcher-executable") {
+		t.Fatalf("written_file_ids must include managed-launcher-executable: %#v", writtenFileIDs)
+	}
+	launcherPath := filepath.Join(stagingRoot, "usr/local/bin/xnix-compat-launch")
+	launcherData, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("managed launcher executable was not staged: %v", err)
+	}
+	if !bytes.Equal(launcherData, launcherContent) {
+		t.Fatalf("unexpected managed launcher executable:\n%s", launcherData)
+	}
+	info, err := os.Stat(launcherPath)
+	if err != nil {
+		t.Fatalf("Stat launcher returned error: %v", err)
+	}
+	if mode := info.Mode() & 0o777; mode != 0o755 {
+		t.Fatalf("managed launcher executable mode = %04o, want 0755", mode)
+	}
+	artifact, err := os.ReadFile(filepath.Join(stagingRoot, "usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json"))
+	if err != nil {
+		t.Fatalf("managed launcher artifact was not staged: %v", err)
+	}
+	if !bytes.Contains(artifact, []byte(`"binary_copied": true`)) ||
+		!bytes.Contains(artifact, []byte(`"executable_staged": true`)) ||
+		!bytes.Contains(artifact, []byte(`"staged_executable": "usr/local/bin/xnix-compat-launch"`)) {
+		t.Fatalf("managed launcher artifact did not record executable staging:\n%s", artifact)
+	}
+	if strings.Contains(strings.ToLower(output.String()), strings.ToLower(stagingRoot)) ||
+		strings.Contains(strings.ToLower(output.String()), strings.ToLower(launcherSource)) {
+		t.Fatalf("desktop activation stage output exposed local paths: %s", output.String())
+	}
+}
+
+func containsAnyString(values []any, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
+
 func writeStageCommandRegistry(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

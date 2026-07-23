@@ -23,13 +23,15 @@ module Xnix
       MANIFESTS_DIR = "usr/share/xnix/compatibility/manifests"
       RECEIPTS_DIR = "usr/share/xnix/compatibility/activation-receipts"
       LAUNCHER_ARTIFACTS_DIR = "usr/share/xnix/compatibility/launcher-artifacts"
+      LAUNCHER_BIN_DIR = "usr/local/bin"
 
-      def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil, file_association_renderer: nil)
+      def initialize(root:, recipe:, install_gate: nil, desktop_entry_renderer: nil, file_association_renderer: nil, managed_launcher_bin: nil)
         @root = Pathname.new(root)
         @recipe = recipe
         @install_gate = install_gate
         @desktop_entry_renderer = desktop_entry_renderer || RubyDesktopEntryRenderer.new
         @file_association_renderer = file_association_renderer || RubyFileAssociationRenderer.new
+        @managed_launcher_bin = managed_launcher_bin
       end
 
       def install
@@ -42,8 +44,9 @@ module Xnix
           install_dolphin_service_menu,
           install_file_associations,
           install_managed_launcher_artifact,
+          install_managed_launcher_executable,
           install_manifest
-        ]
+        ].compact
 
         receipt = install_receipt(installed)
 
@@ -69,7 +72,7 @@ module Xnix
 
       private
 
-      attr_reader :root, :recipe, :install_gate, :desktop_entry_renderer, :file_association_renderer
+      attr_reader :root, :recipe, :install_gate, :desktop_entry_renderer, :file_association_renderer, :managed_launcher_bin
 
       def validate_root!
         raise ArgumentError, "root must not be /" if root.cleanpath.to_s == "/"
@@ -141,6 +144,18 @@ module Xnix
         )
       end
 
+      def install_managed_launcher_executable
+        return nil unless managed_launcher_bin
+
+        install_existing_file(
+          source_path: managed_launcher_bin,
+          relative_path: File.join(LAUNCHER_BIN_DIR, "xnix-compat-launch"),
+          mode: 0o755,
+          kind: "managed-launcher-executable",
+          entry_point: "launcher"
+        )
+      end
+
       def install_receipt(installed)
         receipt = {
           "version" => RuntimeDaemon::VERSION,
@@ -165,6 +180,25 @@ module Xnix
         destination = safe_destination(relative_path)
         FileUtils.mkdir_p(destination.dirname)
         File.write(destination, contents)
+        File.chmod(mode, destination)
+
+        {
+          "entry_point" => entry_point,
+          "kind" => kind,
+          "path" => relative_path,
+          "mode" => format("%04o", mode),
+          "sha256" => Digest::SHA256.file(destination).hexdigest
+        }
+      end
+
+      def install_existing_file(source_path:, relative_path:, mode:, kind:, entry_point:)
+        source = Pathname.new(source_path)
+        raise ArgumentError, "managed launcher binary must exist" unless source.file?
+        raise ArgumentError, "managed launcher binary must not be empty" if source.size.zero?
+
+        destination = safe_destination(relative_path)
+        FileUtils.mkdir_p(destination.dirname)
+        FileUtils.cp(source, destination)
         File.chmod(mode, destination)
 
         {
@@ -206,10 +240,12 @@ module Xnix
           "command" => "xnix-compat-launch",
           "source_package" => "cmd/xnix-compat-launch",
           "build_output" => "usr/local/bin/xnix-compat-launch",
+          "staged_executable" => "usr/local/bin/xnix-compat-launch",
           "desktop_exec_uses_command" => true,
           "runtime_method" => "PreviewKnownPortableLaunchBridge",
           "dispatch_gate" => "managed-known-app-guest-smoke",
-          "binary_copied" => false,
+          "binary_copied" => !managed_launcher_bin.nil?,
+          "executable_staged" => !managed_launcher_bin.nil?,
           "runtime_owned" => true,
           "go_runtime_backed" => true,
           "kde_policy_owner" => false,
@@ -344,6 +380,7 @@ module Xnix
           @desktop_entry_source = "ruby"
           @file_association_source = "ruby"
           @runtime_go_bin = "xnix-runtime-go"
+          @managed_launcher_bin = nil
         end
 
         def run
@@ -361,7 +398,8 @@ module Xnix
             recipe: recipe,
             install_gate: install_gate,
             desktop_entry_renderer: build_desktop_entry_renderer,
-            file_association_renderer: build_file_association_renderer
+            file_association_renderer: build_file_association_renderer,
+            managed_launcher_bin: @managed_launcher_bin
           ).install
           puts JSON.pretty_generate(result)
           0
@@ -395,6 +433,9 @@ module Xnix
             end
             options.on("--runtime-go-bin PATH", "Path to xnix-runtime-go when a runtime-go source is used") do |value|
               @runtime_go_bin = value
+            end
+            options.on("--managed-launcher-bin PATH", "Optional path to a prebuilt xnix-compat-launch binary to copy into the staging root") do |value|
+              @managed_launcher_bin = value
             end
           end
         end

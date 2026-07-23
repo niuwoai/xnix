@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.589] - 2026-07-24
+
+### Added
+
+- Added explicit `--managed-launcher-bin` support to the Go `desktop-activation-stage` command so a prebuilt Go `xnix-compat-launch` executable can be copied into a controlled staging root.
+- Added staged executable support to the Go activation writer at `usr/local/bin/xnix-compat-launch` with mode `0755`, digest evidence, and no host-root mutation.
+- Added matching `managed_launcher_bin` support to the Ruby desktop activation installer for legacy staging workflows.
+- Extended launcher artifact receipts to record `staged_executable`, `binary_copied`, and `executable_staged` state while preserving the Runtime bridge and dispatch gate evidence.
+
 ## [0.2.588] - 2026-07-24
 
 ### Added

@@ -94,6 +94,42 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
 end
 
 Dir.mktmpdir("xnix-desktop-root") do |root|
+  Dir.mktmpdir("xnix-launcher-source") do |launcher_root|
+    launcher_source = Pathname.new(launcher_root).join("xnix-compat-launch")
+    File.write(launcher_source, "#!/bin/sh\nprintf 'XNIX_MANAGED_LAUNCHER_OK\\n'\n")
+    File.chmod(0o755, launcher_source)
+
+    result = Xnix::Compatibility::DesktopActivationInstaller.new(
+      root: root,
+      recipe: recipe,
+      install_gate: development_gate,
+      managed_launcher_bin: launcher_source.to_s
+    ).install
+
+    root_path = Pathname.new(root)
+    launcher_path = root_path.join("usr/local/bin/xnix-compat-launch")
+    launcher_artifact_path = root_path.join("usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json")
+    receipt_path = root_path.join("usr/share/xnix/compatibility/activation-receipts/org.xnix.sample.notepad.json")
+
+    assert(result["installed"].length == 6, "desktop activation installer must install the staged launcher executable when supplied")
+    executable_entry = result["installed"].find { |entry| entry["kind"] == "managed-launcher-executable" }
+    assert(executable_entry && executable_entry["path"] == "usr/local/bin/xnix-compat-launch", "installer result must include the staged launcher executable")
+    assert(executable_entry["mode"] == "0755", "staged launcher executable must be executable")
+    assert(launcher_path.file?, "desktop activation installer must copy the managed launcher executable")
+    assert((launcher_path.stat.mode & 0o777) == 0o755, "copied managed launcher must keep executable mode")
+    assert(launcher_path.read.include?("XNIX_MANAGED_LAUNCHER_OK"), "copied managed launcher must preserve source content")
+
+    launcher_artifact = JSON.parse(launcher_artifact_path.read)
+    assert(launcher_artifact["binary_copied"], "managed launcher artifact must record copied executable state")
+    assert(launcher_artifact["executable_staged"], "managed launcher artifact must record executable staging")
+    assert(launcher_artifact["staged_executable"] == "usr/local/bin/xnix-compat-launch", "managed launcher artifact must record staged executable path")
+
+    receipt = JSON.parse(receipt_path.read)
+    assert(receipt["installed"].any? { |entry| entry["kind"] == "managed-launcher-executable" && entry["mode"] == "0755" }, "desktop activation receipt must include the staged launcher executable")
+  end
+end
+
+Dir.mktmpdir("xnix-desktop-root") do |root|
   result = Xnix::Compatibility::DesktopActivationInstaller.new(
     root: root,
     recipe: recipe,

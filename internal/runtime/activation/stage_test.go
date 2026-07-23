@@ -149,6 +149,53 @@ func TestStageRejectsConflictsAndBlockedProductionMode(t *testing.T) {
 	}
 }
 
+func TestStageCanCopyManagedLauncherExecutableIntoStagingRoot(t *testing.T) {
+	root := t.TempDir()
+	launcherSource := filepath.Join(t.TempDir(), "xnix-compat-launch")
+	launcherContent := "#!/bin/sh\nprintf 'XNIX_MANAGED_LAUNCHER_OK\\n'\n"
+	if err := os.WriteFile(launcherSource, []byte(launcherContent), 0o755); err != nil {
+		t.Fatalf("WriteFile launcher source returned error: %v", err)
+	}
+
+	result, err := Stage(StageRequest{
+		Root:                  root,
+		Mode:                  "development",
+		Plan:                  testPlan(t),
+		ManagedLauncherBinary: launcherSource,
+	})
+	if err != nil {
+		t.Fatalf("Stage returned error: %v", err)
+	}
+	if result.WrittenFileCount != 7 ||
+		!sameStrings(result.WrittenFileIDs, []string{"desktop-activation-receipt", "desktop-entry", "desktop-integration-manifest", "dolphin-service-menu", "managed-launcher-artifact", "managed-launcher-executable", "mimeapps-list"}) {
+		t.Fatalf("unexpected written file summary: %#v", result)
+	}
+
+	launcherPath := filepath.Join(root, "usr/local/bin/xnix-compat-launch")
+	launcherData, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("managed launcher executable was not staged: %v", err)
+	}
+	if string(launcherData) != launcherContent {
+		t.Fatalf("unexpected managed launcher executable content: %q", launcherData)
+	}
+	if mode := fileMode(t, launcherPath); mode != 0o755 {
+		t.Fatalf("managed launcher executable mode = %04o, want 0755", mode)
+	}
+
+	launcherArtifact := readStageFile(t, root, "usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json")
+	if !strings.Contains(launcherArtifact, "\"binary_copied\": true") ||
+		!strings.Contains(launcherArtifact, "\"executable_staged\": true") ||
+		!strings.Contains(launcherArtifact, "\"staged_executable\": \"usr/local/bin/xnix-compat-launch\"") {
+		t.Fatalf("managed launcher artifact did not record executable staging: %q", launcherArtifact)
+	}
+	receipt := readStageFile(t, root, "usr/share/xnix/compatibility/activation-receipts/org.example.ledger.json")
+	if !strings.Contains(receipt, "\"id\": \"managed-launcher-executable\"") ||
+		!strings.Contains(receipt, "\"mode\": \"0755\"") {
+		t.Fatalf("receipt did not include managed launcher executable: %q", receipt)
+	}
+}
+
 func testPlan(t *testing.T) appidentity.Plan {
 	t.Helper()
 	plan, err := appidentity.NewPlanWithProvenance(appidentity.Recipe{
@@ -176,6 +223,15 @@ func readStageFile(t *testing.T, root string, relativePath string) string {
 		t.Fatalf("ReadFile(%s) returned error: %v", relativePath, err)
 	}
 	return string(data)
+}
+
+func fileMode(t *testing.T, path string) os.FileMode {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("Stat(%s) returned error: %v", path, err)
+	}
+	return info.Mode() & 0o777
 }
 
 func sameStrings(got []string, want []string) bool {

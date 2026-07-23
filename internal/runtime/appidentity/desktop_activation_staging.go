@@ -142,10 +142,12 @@ type desktopActivationManagedLauncherArtifact struct {
 	Command                string `json:"command"`
 	SourcePackage          string `json:"source_package"`
 	BuildOutput            string `json:"build_output"`
+	StagedExecutable       string `json:"staged_executable"`
 	DesktopExecUsesCommand bool   `json:"desktop_exec_uses_command"`
 	RuntimeMethod          string `json:"runtime_method"`
 	DispatchGate           string `json:"dispatch_gate"`
 	BinaryCopied           bool   `json:"binary_copied"`
+	ExecutableStaged       bool   `json:"executable_staged"`
 	RuntimeOwned           bool   `json:"runtime_owned"`
 	GoRuntimeBacked        bool   `json:"go_runtime_backed"`
 	KDEPolicyOwner         bool   `json:"kde_policy_owner"`
@@ -310,10 +312,12 @@ func renderManagedLauncherArtifactPreview() string {
 		Command:                "xnix-compat-launch",
 		SourcePackage:          "cmd/xnix-compat-launch",
 		BuildOutput:            "usr/local/bin/xnix-compat-launch",
+		StagedExecutable:       "usr/local/bin/xnix-compat-launch",
 		DesktopExecUsesCommand: true,
 		RuntimeMethod:          "PreviewKnownPortableLaunchBridge",
 		DispatchGate:           "managed-known-app-guest-smoke",
 		BinaryCopied:           false,
+		ExecutableStaged:       false,
 		RuntimeOwned:           true,
 		GoRuntimeBacked:        true,
 		KDEPolicyOwner:         false,

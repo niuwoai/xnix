@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,15 +21,18 @@ const (
 	manifestsDir         = "usr/share/xnix/compatibility/manifests"
 	receiptsDir          = "usr/share/xnix/compatibility/activation-receipts"
 	launcherArtifactsDir = "usr/share/xnix/compatibility/launcher-artifacts"
+	launcherBinDir       = "usr/local/bin"
+	managedLauncherName  = "xnix-compat-launch"
 	dolphinServiceMenu   = "xnix-open-with-compatibility.desktop"
 	stageSchemaVersion   = "xnix.runtime.desktop_activation_stage.v1"
 	receiptSchemaVersion = "xnix.runtime.desktop_activation_receipt.v1"
 )
 
 type StageRequest struct {
-	Root string
-	Mode string
-	Plan appidentity.Plan
+	Root                  string
+	Mode                  string
+	Plan                  appidentity.Plan
+	ManagedLauncherBinary string
 }
 
 type StageResult struct {
@@ -135,10 +139,12 @@ type managedLauncherArtifactFile struct {
 	Command                string `json:"command"`
 	SourcePackage          string `json:"source_package"`
 	BuildOutput            string `json:"build_output"`
+	StagedExecutable       string `json:"staged_executable"`
 	DesktopExecUsesCommand bool   `json:"desktop_exec_uses_command"`
 	RuntimeMethod          string `json:"runtime_method"`
 	DispatchGate           string `json:"dispatch_gate"`
 	BinaryCopied           bool   `json:"binary_copied"`
+	ExecutableStaged       bool   `json:"executable_staged"`
 	RuntimeOwned           bool   `json:"runtime_owned"`
 	GoRuntimeBacked        bool   `json:"go_runtime_backed"`
 	KDEPolicyOwner         bool   `json:"kde_policy_owner"`
@@ -168,7 +174,7 @@ func Stage(req StageRequest) (StageResult, error) {
 		return StageResult{}, fmt.Errorf("desktop activation staging is blocked: %s", staging.PreflightDecision)
 	}
 
-	artifacts, err := stageArtifacts(req.Plan)
+	artifacts, err := stageArtifacts(req.Plan, req.ManagedLauncherBinary)
 	if err != nil {
 		return StageResult{}, err
 	}
@@ -238,7 +244,7 @@ func Stage(req StageRequest) (StageResult, error) {
 	}, nil
 }
 
-func stageArtifacts(plan appidentity.Plan) ([]stageArtifact, error) {
+func stageArtifacts(plan appidentity.Plan, managedLauncherBinary string) ([]stageArtifact, error) {
 	desktopEntry, err := plan.RenderDesktopEntry()
 	if err != nil {
 		return nil, err
@@ -252,7 +258,21 @@ func stageArtifacts(plan appidentity.Plan) ([]stageArtifact, error) {
 		newArtifact("desktop-entry", "desktop-entry", "launcher", applicationsDir+"/"+plan.DesktopFile, desktopEntry, "desktop-entry-preview"),
 		newArtifact("dolphin-service-menu", "dolphin-service-menu", "file-manager", serviceMenusDir+"/"+dolphinServiceMenu, renderDolphinServiceMenu(), "dolphin-service-menu-preview"),
 		newArtifact("mimeapps-list", "mimeapps-list", "file-manager", applicationsDir+"/mimeapps.list", mimeapps, "mimeapps-preview"),
-		newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/xnix-compat-launch.json", renderManagedLauncherArtifact(), "cmd/xnix-compat-launch"),
+		newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/"+managedLauncherName+".json", renderManagedLauncherArtifact(managedLauncherBinary != ""), "cmd/xnix-compat-launch"),
+	}
+	if managedLauncherBinary != "" {
+		launcherExecutable, err := newExecutableArtifact(
+			"managed-launcher-executable",
+			"managed-launcher-executable",
+			"launcher",
+			launcherBinDir+"/"+managedLauncherName,
+			managedLauncherBinary,
+			"cmd/xnix-compat-launch",
+		)
+		if err != nil {
+			return nil, err
+		}
+		initial = append(initial, launcherExecutable)
 	}
 	manifestContent, err := renderManifest(plan, stagedFiles(initial))
 	if err != nil {
@@ -268,13 +288,28 @@ func stageArtifacts(plan appidentity.Plan) ([]stageArtifact, error) {
 }
 
 func newArtifact(id string, kind string, entryPoint string, relativePath string, content string, source string) stageArtifact {
+	return newArtifactWithMode(id, kind, entryPoint, relativePath, content, source, "0644")
+}
+
+func newExecutableArtifact(id string, kind string, entryPoint string, relativePath string, sourcePath string, source string) (stageArtifact, error) {
+	data, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return stageArtifact{}, fmt.Errorf("read managed launcher binary: %w", err)
+	}
+	if len(data) == 0 {
+		return stageArtifact{}, errors.New("managed launcher binary must not be empty")
+	}
+	return newArtifactWithMode(id, kind, entryPoint, relativePath, string(data), source, "0755"), nil
+}
+
+func newArtifactWithMode(id string, kind string, entryPoint string, relativePath string, content string, source string, mode string) stageArtifact {
 	return stageArtifact{
 		file: StagedFile{
 			ID:                    id,
 			Kind:                  kind,
 			EntryPoint:            entryPoint,
 			RelativePath:          relativePath,
-			Mode:                  "0644",
+			Mode:                  mode,
 			SHA256:                sha256Hex(content),
 			ContentSource:         source,
 			Written:               true,
@@ -299,17 +334,19 @@ func renderDolphinServiceMenu() string {
 		"Exec=xnix-compat-open %U\n"
 }
 
-func renderManagedLauncherArtifact() string {
+func renderManagedLauncherArtifact(executableStaged bool) string {
 	content, err := encodeJSON(managedLauncherArtifactFile{
 		SchemaVersion:          "xnix.runtime.managed_launcher_artifact.v1",
 		ArtifactType:           "managed-launcher-artifact",
-		Command:                "xnix-compat-launch",
+		Command:                managedLauncherName,
 		SourcePackage:          "cmd/xnix-compat-launch",
-		BuildOutput:            "usr/local/bin/xnix-compat-launch",
+		BuildOutput:            launcherBinDir + "/" + managedLauncherName,
+		StagedExecutable:       launcherBinDir + "/" + managedLauncherName,
 		DesktopExecUsesCommand: true,
 		RuntimeMethod:          "PreviewKnownPortableLaunchBridge",
 		DispatchGate:           "managed-known-app-guest-smoke",
-		BinaryCopied:           false,
+		BinaryCopied:           executableStaged,
+		ExecutableStaged:       executableStaged,
 		RuntimeOwned:           true,
 		GoRuntimeBacked:        true,
 		KDEPolicyOwner:         false,
@@ -412,7 +449,11 @@ func writeArtifacts(root string, artifacts []stageArtifact) error {
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return fmt.Errorf("prepare staged directory %s: %w", artifact.file.RelativePath, err)
 		}
-		file, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+		mode, err := parseFileMode(artifact.file.Mode)
+		if err != nil {
+			return fmt.Errorf("parse staged file mode %s: %w", artifact.file.RelativePath, err)
+		}
+		file, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
 		if err != nil {
 			return fmt.Errorf("write staged file %s: %w", artifact.file.RelativePath, err)
 		}
@@ -423,8 +464,22 @@ func writeArtifacts(root string, artifacts []stageArtifact) error {
 		if err := file.Close(); err != nil {
 			return fmt.Errorf("close staged file %s: %w", artifact.file.RelativePath, err)
 		}
+		if err := os.Chmod(target, mode); err != nil {
+			return fmt.Errorf("chmod staged file %s: %w", artifact.file.RelativePath, err)
+		}
 	}
 	return nil
+}
+
+func parseFileMode(mode string) (fs.FileMode, error) {
+	switch mode {
+	case "0644":
+		return 0o644, nil
+	case "0755":
+		return 0o755, nil
+	default:
+		return 0, fmt.Errorf("unsupported mode %q", mode)
+	}
 }
 
 func targetPath(root string, relativePath string) (string, error) {

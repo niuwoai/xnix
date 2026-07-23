@@ -12,7 +12,7 @@ import (
 )
 
 func runDesktopActivationStage(args []string, stdout io.Writer) error {
-	recipe, provenance, mode, stagingRoot, err := parseDesktopActivationStageSource(args)
+	recipe, provenance, mode, stagingRoot, managedLauncherBinary, err := parseDesktopActivationStageSource(args)
 	if err != nil {
 		return err
 	}
@@ -21,9 +21,10 @@ func runDesktopActivationStage(args []string, stdout io.Writer) error {
 		return err
 	}
 	result, err := activation.Stage(activation.StageRequest{
-		Root: stagingRoot,
-		Mode: mode,
-		Plan: plan,
+		Root:                  stagingRoot,
+		Mode:                  mode,
+		Plan:                  plan,
+		ManagedLauncherBinary: managedLauncherBinary,
 	})
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func runDesktopActivationStage(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
-func parseDesktopActivationStageSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, error) {
+func parseDesktopActivationStageSource(args []string) (appidentity.Recipe, appidentity.Provenance, string, string, string, error) {
 	flags := flag.NewFlagSet("desktop-activation-stage", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	applicationID := flags.String("app", "", "application id to load from the recipe registry")
@@ -43,25 +44,26 @@ func parseDesktopActivationStageSource(args []string) (appidentity.Recipe, appid
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
 	mode := flags.String("mode", "development", "activation staging mode: production or development")
 	stagingRoot := flags.String("staging-root", "", "test root where desktop activation files may be staged")
+	managedLauncherBinary := flags.String("managed-launcher-bin", "", "optional path to a prebuilt xnix-compat-launch binary to copy into the staging root")
 	if err := flags.Parse(args); err != nil {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", err
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", err
 	}
 	if (*recipePath == "") == (*registryPath == "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-stage requires exactly one source: --recipe or --registry")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires exactly one source: --recipe or --registry")
 	}
 	if *registryPath != "" && *applicationID == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-stage requires --app when --registry is used")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires --app when --registry is used")
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-stage --recipe cannot be combined with --app or --recipe-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage --recipe cannot be combined with --app or --recipe-root")
 	}
 	if *stagingRoot == "" {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-stage requires --staging-root")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires --staging-root")
 	}
 	if flags.NArg() != 0 {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", errors.New("desktop-activation-stage does not accept positional arguments")
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage does not accept positional arguments")
 	}
 
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
-	return recipe, provenance, *mode, *stagingRoot, err
+	return recipe, provenance, *mode, *stagingRoot, *managedLauncherBinary, err
 }
