@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.627
+> Last updated: 2026-07-24 | Baseline: v0.2.628
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.627 by adding a real D-Bus adapter method for `ShowRuntimeControlledLaunch` on the smoke runtime bus, backed by the Go owner service call and still gated so it can only accept an evidence handoff argument. The smoke adapter should expose the owner service envelope and nested action payload without making KDE the Runtime owner. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.628 by making the D-Bus-controlled Runtime-status launch action consume a real owner-service prepared evidence path in a restricted session smoke. The next step should create a small D-Bus-focused smoke fixture that prepares Runtime owner state, invokes `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, and verifies the nested `runtime-owner-service-call` action payload without exposing state-root paths or letting KDE reconstruct receipt/session fields. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.628 checkpoint adds `ShowRuntimeControlledLaunch` to the smoke D-Bus contract and introspection include, then wires the C adapter to `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`. The method accepts only a safe relative evidence path and returns a desktop-safe action result with `runtime-controlled-launch-dbus-action`, `desktop-action-dispatch`, `kde-dbus-runtime-status-action`, Go owner service-call availability, evidence-only handoff flags, and disabled desktop receipt reconstruction/state-root access gates. Evidence and drift reports classify this route as a controlled desktop action instead of a read-only Runtime method, keeping read-only parity at 61 methods without hiding remaining production-gate gaps. This moves the KDE bridge from planned D-Bus surface to a real call boundary while leaving actual production ownership gated.
 
 The v0.2.627 checkpoint adds `runtime_status_owner_service_session_bus_smoke.rb`, a private-session wrapper that runs the staged launcher dispatch smoke under `dbus-run-session`. It is intentionally thin: the inner smoke remains the source of truth for the real staged 7zr/QEMU/Wine dispatch lane and owner-service `ShowRuntimeControlledLaunch` evidence-handoff call. The wrapper gives the next KDE D-Bus bridge a safe targeted smoke entrypoint and a container command that stays offline, read-only, capability-dropped, Docker-socket-free, broad-host-mount-free, and SKIP-capable when host/session prerequisites are missing.
 

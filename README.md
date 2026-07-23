@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.627`.
+The project is currently at `v0.2.628`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.627`.
 
 ## Current Checkpoint
 
-v0.2.627 adds a private session-bus wrapper for the Runtime-status owner service smoke. `ruby scripts/container.rb runtime-status-owner-service-session-bus-smoke` runs the staged launcher dispatch smoke inside `dbus-run-session`, safely skips when session-bus or QEMU/Wine prerequisites are unavailable, and otherwise exercises the real staged `xnix-compat-launch` lane through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`.
+v0.2.628 exposes `ShowRuntimeControlledLaunch` as a real smoke D-Bus adapter action. KDE-facing callers can now forward a safe relative Runtime-status launch evidence path to the Go Runtime Owner service boundary through `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 

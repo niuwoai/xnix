@@ -41,6 +41,7 @@ assert(report.fetch("owner_local_methods").include?("GetRestrictedOwnerSmokeRece
 assert(report.fetch("owner_local_methods").include?("GetKDETestLaunchMaterializationReceiptLookupPreview"), "Runtime contract drift report must include the owner-local KDE materialization receipt lookup")
 assert(report.fetch("owner_local_methods").include?("GetKDETestLaunchMaterializationFanOut"), "Runtime contract drift report must include the owner-local KDE materialization fan-out route")
 assert(report.fetch("write_methods") == %w[InstallRecipe Launch CreateSnapshot RestoreSnapshot], "Runtime contract drift report must list gated write methods")
+assert(report.fetch("desktop_action_methods") == %w[ShowRuntimeControlledLaunch], "Runtime contract drift report must list controlled desktop action methods")
 assert(!report.fetch("write_methods_supported"), "Runtime contract drift report must not support write methods")
 assert(!report.fetch("write_method_dispatch_enabled"), "Runtime contract drift report must not enable write dispatch")
 assert(!report.fetch("drift_detected"), "Runtime contract drift report must not detect drift")
@@ -48,7 +49,7 @@ assert(!report.fetch("network_required"), "Runtime contract drift report must no
 assert(!report.fetch("host_root_modified"), "Runtime contract drift report must not mutate the host root")
 assert(!report.fetch("privileged_container_required"), "Runtime contract drift report must not require privileged containers")
 assert(!report.fetch("backend_details_exposed"), "Runtime contract drift report must not expose backend details")
-assert(report.fetch("counts") == { "total" => 15, "passed" => 15, "failed" => 0 }, "Runtime contract drift report must count checks")
+assert(report.fetch("counts") == { "total" => 16, "passed" => 16, "failed" => 0 }, "Runtime contract drift report must count checks")
 
 check_ids = report.fetch("checks").map { |check| check.fetch("id") }
 expected_checks = %w[
@@ -62,6 +63,7 @@ expected_checks = %w[
   owner-session-bus-smoke-source
   go-owner-smoke-bridge
   session-smoke-service-call-envelope
+  desktop-action-methods
   runtime-dispatch
   dbus-client-definitions
   smoke-adapter

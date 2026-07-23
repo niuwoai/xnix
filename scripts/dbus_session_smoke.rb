@@ -75,6 +75,7 @@ begin
   assert(stdout.include?(INTERFACE), "runtime smoke adapter introspection must expose #{INTERFACE}")
   assert(stdout.include?("ListApplications"), "runtime smoke adapter introspection must expose ListApplications")
   assert(stdout.include?("GetRuntimeServiceBinding"), "runtime smoke adapter introspection must expose Runtime service binding")
+  assert(stdout.include?("ShowRuntimeControlledLaunch"), "runtime smoke adapter introspection must expose controlled Runtime launch actions")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",
@@ -774,6 +775,27 @@ begin
   assert(status.success?, "runtime smoke adapter must answer GetRuntimeWriteGate: #{stderr}")
   assert(stdout.include?("runtime-write-gate"), "runtime smoke adapter must expose Runtime write gates over D-Bus")
   assert_go_owner_bridge(stdout, "GetRuntimeWriteGate")
+
+  stdout, stderr, status = Open3.capture3(
+    "gdbus", "call",
+    "--session",
+    "--dest", BUS_NAME,
+    "--object-path", OBJECT_PATH,
+    "--method", "#{INTERFACE}.ShowRuntimeControlledLaunch",
+    "runtime/kde-runtime-status-launch-evidence/sample.json"
+  )
+  assert(status.success?, "runtime smoke adapter must answer ShowRuntimeControlledLaunch: #{stderr}")
+  assert(stdout.include?("runtime-controlled-launch-dbus-action"), "runtime smoke adapter must expose controlled launch D-Bus actions")
+  assert(stdout.include?("desktop-action-dispatch"), "runtime smoke adapter must mark controlled launch as a desktop action dispatch")
+  assert(stdout.include?("kde-dbus-runtime-status-action"), "runtime smoke adapter must preserve the KDE Runtime-status action type")
+  assert(stdout.include?("evidence-relative-path"), "runtime smoke adapter must forward only the evidence handoff type")
+  assert(stdout.include?("runtime/kde-runtime-status-launch-evidence/sample.json"), "runtime smoke adapter must forward the safe relative evidence path")
+  assert(stdout.include?("go_owner_service_call_available"), "runtime smoke adapter must expose Go owner action service-call availability")
+  assert(stdout.include?("desktop_evidence_handle_forwarded"), "runtime smoke adapter must report evidence-handle forwarding")
+  assert(stdout.include?("desktop_receipt_fields_reconstructed"), "runtime smoke adapter must report receipt-field reconstruction gates")
+  assert(stdout.include?("desktop_kde_state_root_access"), "runtime smoke adapter must report desktop state-root access gates")
+  assert(stdout.include?("host_root_modified"), "runtime smoke adapter must keep host-root mutation observable for controlled launch")
+  assert(stdout.include?("backend_details_exposed"), "runtime smoke adapter must keep backend detail exposure observable for controlled launch")
 
   stdout, stderr, status = Open3.capture3(
     "gdbus", "call",

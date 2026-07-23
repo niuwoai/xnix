@@ -939,6 +939,68 @@ build_krunner_query_plan(const gchar *query)
   return g_variant_builder_end(&plan);
 }
 
+static gboolean
+safe_evidence_relative_path(const gchar *evidence_relative_path)
+{
+  return evidence_relative_path != NULL &&
+         evidence_relative_path[0] != '\0' &&
+         !g_str_has_prefix(evidence_relative_path, "/") &&
+         strstr(evidence_relative_path, "..") == NULL &&
+         strchr(evidence_relative_path, '\n') == NULL &&
+         strchr(evidence_relative_path, '\r') == NULL;
+}
+
+static GVariant *
+build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
+{
+  GVariantBuilder action;
+  gchar *go_owner_service_call_json = NULL;
+  gboolean go_owner_service_call_available = FALSE;
+
+  go_owner_service_call_json = go_owner_service_call5("ShowRuntimeControlledLaunch",
+                                                      "evidence-relative-path",
+                                                      evidence_relative_path,
+                                                      NULL,
+                                                      NULL,
+                                                      NULL);
+  go_owner_service_call_available = go_owner_service_call_json != NULL && go_owner_service_call_json[0] != '\0';
+
+  g_variant_builder_init(&action, G_VARIANT_TYPE("a{sv}"));
+  g_variant_builder_add(&action, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.dbus_runtime_controlled_launch_action.v1"));
+  g_variant_builder_add(&action, "{sv}", "request_type", g_variant_new_string("runtime-controlled-launch-dbus-action"));
+  g_variant_builder_add(&action, "{sv}", "runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
+  g_variant_builder_add(&action, "{sv}", "owner_runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
+  g_variant_builder_add(&action, "{sv}", "desktop_callable_runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
+  g_variant_builder_add(&action, "{sv}", "action_type", g_variant_new_string("kde-dbus-runtime-status-action"));
+  g_variant_builder_add(&action, "{sv}", "action_trigger_handoff_type", g_variant_new_string("evidence-relative-path"));
+  g_variant_builder_add(&action, "{sv}", "evidence_relative_path", g_variant_new_string(evidence_relative_path));
+  g_variant_builder_add(&action, "{sv}", "call_type", g_variant_new_string("desktop-action-dispatch"));
+  g_variant_builder_add(&action, "{sv}", "go_owner_service_call_available", g_variant_new_boolean(go_owner_service_call_available));
+  g_variant_builder_add(&action, "{sv}", "go_owner_service_call_schema", g_variant_new_string(go_owner_service_call_available ? "xnix.runtime.owner_service_call.v1" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_owner_service_call_request_type", g_variant_new_string(go_owner_service_call_available ? "runtime-owner-service-call" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_owner_service_call_json", g_variant_new_string(go_owner_service_call_available ? go_owner_service_call_json : ""));
+  g_variant_builder_add(&action, "{sv}", "runtime_owner_service_action_dispatch", g_variant_new_boolean(go_owner_service_call_available));
+  g_variant_builder_add(&action, "{sv}", "kde_forwards_only_evidence_handle", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&action, "{sv}", "desktop_evidence_handle_forwarded", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&action, "{sv}", "desktop_receipt_fields_reconstructed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "desktop_kde_state_root_access", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "runtime_owned", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&action, "{sv}", "go_runtime_backed", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&action, "{sv}", "kde_policy_owner", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "production_bus_claimed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "write_method", g_variant_new_boolean(TRUE));
+  g_variant_builder_add(&action, "{sv}", "write_methods_enabled", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "read_only_dispatch", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "host_root_modified", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "network_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "privileged_container_required", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
+  g_variant_builder_add(&action, "{sv}", "desktop_safe_summary", g_variant_new_string("D-Bus forwards a Runtime-status evidence handoff to the Go Runtime Owner controlled launch boundary."));
+
+  g_free(go_owner_service_call_json);
+  return g_variant_builder_end(&action);
+}
+
 #include "xnix_compatd_kde_center.inc"
 #include "xnix_compatd_runtime_models.inc"
 
@@ -1638,6 +1700,22 @@ handle_method_call(GDBusConnection *connection,
 
     g_variant_get(parameters, "(&s)", &requested_method);
     g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_write_gate(requested_method)));
+    return;
+  }
+
+  if (g_strcmp0(method_name, "ShowRuntimeControlledLaunch") == 0) {
+    const gchar *evidence_relative_path = NULL;
+
+    g_variant_get(parameters, "(&s)", &evidence_relative_path);
+    if (!safe_evidence_relative_path(evidence_relative_path)) {
+      g_dbus_method_invocation_return_error(invocation,
+                                            G_IO_ERROR,
+                                            G_IO_ERROR_INVALID_ARGUMENT,
+                                            "ShowRuntimeControlledLaunch requires a safe relative evidence path");
+      return;
+    }
+
+    g_dbus_method_invocation_return_value(invocation, g_variant_new("(@a{sv})", build_runtime_controlled_launch_action(evidence_relative_path)));
     return;
   }
 

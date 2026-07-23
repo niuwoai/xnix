@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.628] - 2026-07-24
+
+### Added
+
+- Added the `ShowRuntimeControlledLaunch` method to the `org.xnix.Compatibility1` smoke D-Bus contract and introspection include.
+- Added a C smoke-adapter action bridge that accepts only a safe relative Runtime-status evidence path and forwards it to `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`.
+
+### Changed
+
+- Extended D-Bus smoke and layout guards to verify controlled launch action evidence, evidence-only KDE handoff fields, Go owner service-call visibility, and disabled desktop state-root/receipt reconstruction gates.
+- Classified `ShowRuntimeControlledLaunch` as a controlled desktop action in evidence and drift reports instead of treating it as a read-only Runtime method.
+
 ## [0.2.627] - 2026-07-24
 
 ### Added

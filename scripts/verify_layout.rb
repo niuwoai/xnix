@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.627"
+EXPECTED_VERSION = "0.2.628"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6585,7 +6585,7 @@ dbus_smoke_source = [
   assert(dbus_smoke_source.include?(method_name), "D-Bus smoke adapter must include #{method_name}")
   assert(read_project_file("scripts/dbus_session_smoke.rb").include?(method_name), "D-Bus session smoke must call #{method_name}")
 end
-%w[g_spawn_sync go_owner_read_dispatch go_owner_service_call5 add_go_owner_dispatch_bridge_fields go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_schema go_owner_dispatch_json go_owner_service_call_available go_owner_service_call_schema go_owner_service_call_request_type go_owner_service_call_json go-runtime-owner-dispatch+c-smoke-bridge xnix.runtime.owner_read_dispatch.v1 runtime-owner-read-dispatch xnix.runtime.owner_service_call.v1 runtime-owner-service-call variant_string_field assert_go_owner_service_call_envelope go-runtime-owner-in-process-service dispatch_ready write_methods_enabled].each do |token|
+%w[g_spawn_sync go_owner_read_dispatch go_owner_service_call5 add_go_owner_dispatch_bridge_fields go_owner_write_gate_dispatch go_owner_dispatch_available go_owner_dispatch_schema go_owner_dispatch_json go_owner_service_call_available go_owner_service_call_schema go_owner_service_call_request_type go_owner_service_call_json go-runtime-owner-dispatch+c-smoke-bridge xnix.runtime.owner_read_dispatch.v1 runtime-owner-read-dispatch xnix.runtime.owner_service_call.v1 runtime-owner-service-call ShowRuntimeControlledLaunch build_runtime_controlled_launch_action safe_evidence_relative_path runtime-controlled-launch-dbus-action desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle desktop_evidence_handle_forwarded desktop_receipt_fields_reconstructed desktop_kde_state_root_access variant_string_field assert_go_owner_service_call_envelope go-runtime-owner-in-process-service dispatch_ready write_methods_enabled].each do |token|
   assert(dbus_smoke_source.include?(token) || read_project_file("scripts/dbus_session_smoke.rb").include?(token), "D-Bus smoke adapter must expose Go owner bridge token #{token}")
 end
 

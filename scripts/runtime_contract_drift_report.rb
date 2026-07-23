@@ -11,6 +11,9 @@ WRITE_METHODS = %w[
   CreateSnapshot
   RestoreSnapshot
 ].freeze
+DESKTOP_ACTION_METHODS = %w[
+  ShowRuntimeControlledLaunch
+].freeze
 
 OWNER_LOCAL_READ_METHODS = %w[
   GetRuntimeServiceBinding
@@ -133,7 +136,7 @@ end
 def build_report(root)
   version = read_project_file(root, "VERSION").strip
   contract_methods = dbus_contract_methods(root)
-  read_only_methods = contract_methods - WRITE_METHODS
+  read_only_methods = contract_methods - WRITE_METHODS - DESKTOP_ACTION_METHODS
 
   parity_source = read_project_file(root, "internal/runtime/appidentity/runtime_method_parity_manifest.go")
   route_source = read_project_file(root, "internal/runtime/appidentity/runtime_owner_route_manifest.go")
@@ -329,6 +332,22 @@ def build_report(root)
       summary: "Restricted session smoke extracts and verifies Go owner service-call envelopes for D-Bus read methods."
     ) { |source, token| source.include?(token) },
     source_coverage_check(
+      id: "desktop-action-methods",
+      expected: [
+        "ShowRuntimeControlledLaunch",
+        "build_runtime_controlled_launch_action",
+        "safe_evidence_relative_path",
+        "runtime-controlled-launch-dbus-action",
+        "desktop-action-dispatch",
+        "kde-dbus-runtime-status-action",
+        "kde_forwards_only_evidence_handle",
+        "desktop_receipt_fields_reconstructed",
+        "desktop_kde_state_root_access"
+      ],
+      source: smoke_adapter_source + "\n" + session_smoke_source,
+      summary: "D-Bus desktop action methods stay outside read-only parity while preserving Runtime owner handoff gates."
+    ) { |source, token| source.include?(token) },
+    source_coverage_check(
       id: "runtime-dispatch",
       expected: read_only_methods,
       source: runtime_dispatch_source,
@@ -375,6 +394,7 @@ def build_report(root)
     "owner_smoke_batch_record_count" => dispatch_methods.length + WRITE_METHODS.length,
     "owner_session_bus_smoke_step_count" => dispatch_methods.length + WRITE_METHODS.length + 5,
     "write_methods" => WRITE_METHODS,
+    "desktop_action_methods" => DESKTOP_ACTION_METHODS,
     "write_methods_supported" => false,
     "write_method_dispatch_enabled" => false,
     "owner_local_methods" => OWNER_LOCAL_READ_METHODS,
