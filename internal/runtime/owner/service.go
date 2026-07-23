@@ -60,6 +60,16 @@ func NewService(root string, mode CandidateMode) (Service, error) {
 
 func (service Service) Call(method string, args []string) (ServiceCall, error) {
 	switch {
+	case isSupportedDesktopActionMethod(method):
+		action, err := service.ShowRuntimeControlledLaunch(args)
+		if err != nil {
+			return ServiceCall{}, err
+		}
+		payload, err := json.Marshal(action)
+		if err != nil {
+			return ServiceCall{}, fmt.Errorf("encode service desktop action %s: %w", method, err)
+		}
+		return service.validatedCall(method, args, "desktop-action-dispatch", false, true, "", action.DispatchReady && !action.WriteMethodsEnabled, payload)
 	case isSupportedReadMethod(method):
 		dispatch, err := DispatchRead(service.root, method, args)
 		if err != nil {
@@ -143,6 +153,10 @@ func isSupportedReadMethod(method string) bool {
 		}
 	}
 	return false
+}
+
+func isSupportedDesktopActionMethod(method string) bool {
+	return method == "ShowRuntimeControlledLaunch"
 }
 
 func serviceBlockedActions() []string {

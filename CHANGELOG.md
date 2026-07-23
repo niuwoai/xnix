@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.625] - 2026-07-24
+
+### Added
+
+- Added the Go Runtime Owner `ShowRuntimeControlledLaunch` service method, returning `desktop-action-dispatch` evidence for desktop/DBus callers that forward only a Runtime-status evidence handoff.
+- Added targeted owner service and CLI tests that exercise the service boundary with Runtime-supplied state root, cache root, launcher, and timeout inputs.
+
+### Changed
+
+- Aligned Runtime-owner action output with delegated receipt/session fields and Compatibility Center projection evidence while preserving redaction of state-root paths, launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation.
+
 ## [0.2.624] - 2026-07-24
 
 ### Added

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.624"
+EXPECTED_VERSION = "0.2.625"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -1705,8 +1705,16 @@ end
 end
 
 go_runtime_owner_candidate_cli_source = read_project_file("cmd/xnix-runtime-owner/main.go")
-%w[xnix-runtime-owner mode deny-write dispatch-read lifecycle-log smoke-batch session-bus-smoke route-checkpoint materialization-fanout-owner-smoke-coverage restricted-smoke-fanout-owner-smoke-coverage redacted-adapter-profile-owner-smoke-coverage NewCandidate DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript NewRouteCheckpoint NewKDETestLaunchMaterializationFanOutOwnerSmokeCoveragePreview NewRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreview NewBackendAdapterRedactedProfileOwnerSmokeCoveragePreview smoke-owner].each do |token|
+%w[xnix-runtime-owner mode deny-write dispatch-read service-call lifecycle-log smoke-batch session-bus-smoke route-checkpoint materialization-fanout-owner-smoke-coverage restricted-smoke-fanout-owner-smoke-coverage redacted-adapter-profile-owner-smoke-coverage NewCandidate NewService DisabledWriteResponse DispatchRead NewLifecycleEvents NewSmokeBatchRecords NewSessionBusSmokeTranscript NewRouteCheckpoint NewKDETestLaunchMaterializationFanOutOwnerSmokeCoveragePreview NewRestrictedOwnerSmokeReceiptFanOutOwnerSmokeCoveragePreview NewBackendAdapterRedactedProfileOwnerSmokeCoveragePreview smoke-owner].each do |token|
   assert(go_runtime_owner_candidate_cli_source.include?(token), "Go Runtime owner candidate CLI must include #{token}")
+end
+
+go_runtime_owner_service_action_source = read_project_file("internal/runtime/owner/service.go") +
+                                         read_project_file("internal/runtime/owner/show_runtime_controlled_launch.go") +
+                                         read_project_file("internal/runtime/owner/service_test.go") +
+                                         read_project_file("cmd/xnix-runtime-owner/main_test.go")
+%w[ShowRuntimeControlledLaunch runtime-owner-show-runtime-controlled-launch xnix.runtime.owner_show_runtime_controlled_launch.v1 desktop-action-dispatch go-runtime-owner-in-process-service kde-dbus-runtime-status-action runtime_owner_service_action_dispatch runtime_owner_service_call_ready runtime_owner_service_supplies_owner_inputs kde_forwards_only_evidence_handle desktop_evidence_handle_forwarded desktop_receipt_fields_reconstructed desktop_kde_state_root_access desktop_state_root_supplied_by_runtime_owner desktop_cache_root_supplied_by_runtime_owner desktop_launcher_supplied_by_runtime_owner desktop_timeout_supplied_by_runtime_owner XNIX_RUNTIME_OWNER_STATE_ROOT XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER XNIX_RUNTIME_OWNER_TIMEOUT XNIX_RUNTIME_OWNER_GUEST_TIMEOUT delegated_session_gated_review_receipt_id delegated_launch_authorization_receipt_id delegated_controlled_execution_session_id compatibility_center_known_app_evidence TestServiceCallDispatchesShowRuntimeControlledLaunch TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall].each do |token|
+  assert(go_runtime_owner_service_action_source.include?(token), "Go Runtime owner service action must include #{token}")
 end
 
 go_runtime_owner_dispatch_source = read_project_file("internal/runtime/owner/dispatch.go")

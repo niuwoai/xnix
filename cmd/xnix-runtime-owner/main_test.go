@@ -3,8 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
+	"xnix.local/xnix/internal/runtime/execution"
 )
 
 func TestRuntimeOwnerCommandRendersSmokeCandidate(t *testing.T) {
@@ -84,6 +89,99 @@ func TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch(
 		strings.Contains(strings.ToLower(output.String()), "proton") ||
 		strings.Contains(strings.ToLower(output.String()), "windows-vm") {
 		t.Fatalf("redacted adapter profile owner command exposed internal adapter terms: %s", output.String())
+	}
+}
+
+func TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeOwnerCommandRuntimeStatusLaunchExecutionFixture(t, stateRoot)
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	evidenceRecord := recordOwnerCommandRuntimeStatusLaunchEvidenceFixture(t, stateRoot)
+	fakeLauncher, fakeArgsPath := writeOwnerCommandFakeRuntimeStatusManagedLauncher(t)
+	t.Setenv("XNIX_RUNTIME_OWNER_STATE_ROOT", stateRoot)
+	t.Setenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT", t.TempDir())
+	t.Setenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER", fakeLauncher)
+	t.Setenv("XNIX_RUNTIME_OWNER_TIMEOUT", "5s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT", "1s")
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"--root", "../..",
+		"--mode", "smoke-owner",
+		"--service-call", "ShowRuntimeControlledLaunch",
+		"evidence-relative-path", evidenceRecord.EvidenceRelativePath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["method"] != "ShowRuntimeControlledLaunch" ||
+		payload["call_type"] != "desktop-action-dispatch" ||
+		payload["read_only_dispatch"] != false ||
+		payload["write_method"] != true ||
+		payload["write_methods_enabled"] != false ||
+		payload["dispatch_ready"] != true ||
+		payload["production_bus_claimed"] != false ||
+		payload["network_required"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Runtime controlled launch owner command response: %#v", payload)
+	}
+	action := payload["payload"].(map[string]any)
+	if action["owner_request_type"] != "runtime-owner-show-runtime-controlled-launch" ||
+		action["owner_runtime_method"] != "ShowRuntimeControlledLaunch" ||
+		action["desktop_callable_action_id"] != appidentity.KnownAppKDERuntimeStatusLaunchAction ||
+		action["desktop_callable_route"] != "kde-dbus-runtime-status-action" ||
+		action["desktop_evidence_handle_forwarded"] != true ||
+		action["desktop_receipt_fields_reconstructed"] != false ||
+		action["desktop_kde_state_root_access"] != false ||
+		action["runtime_owner_service_action_dispatch"] != true ||
+		action["runtime_owner_service_supplies_owner_inputs"] != true ||
+		action["kde_forwards_only_evidence_handle"] != true ||
+		action["evidence_relative_path"] != evidenceRecord.EvidenceRelativePath ||
+		action["launch_authorization_receipt_id"] != launchReceiptID ||
+		action["session_gated_review_receipt_id"] != reviewReceiptID ||
+		action["controlled_execution_session_id"] != sessionID ||
+		action["managed_launcher_invoked"] != true ||
+		action["delegated_status"] != "passed" ||
+		action["delegated_session_gated_review_receipt_id"] != reviewReceiptID ||
+		action["delegated_controlled_execution_session_id"] != sessionID ||
+		action["delegated_host_root_modified"] != false ||
+		action["delegated_docker_socket_mounted"] != false ||
+		action["delegated_broad_host_mount_required"] != false ||
+		action["delegated_raw_command_exposed"] != false ||
+		action["delegated_backend_details_exposed"] != false {
+		t.Fatalf("unexpected Runtime controlled launch owner command action: %#v", action)
+	}
+	projection := action["compatibility_center_known_app_evidence"].(map[string]any)
+	if projection["status"] != "passed" ||
+		projection["controlled_execution_session_id"] != sessionID ||
+		projection["compatibility_center_projection_ready"] != true ||
+		projection["kde_center_projection_ready"] != true ||
+		projection["state_root_path_exposed"] != false ||
+		projection["managed_launcher_path_exposed"] != false ||
+		projection["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Runtime controlled launch projection: %#v", projection)
+	}
+	argsData, err := os.ReadFile(fakeArgsPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
+	}
+	argsText := string(argsData)
+	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--timeout\n1s"} {
+		if !strings.Contains(argsText, token) {
+			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
+		}
+	}
+	text := strings.ToLower(output.String())
+	for _, forbidden := range []string{strings.ToLower(stateRoot), strings.ToLower(fakeLauncher), ".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Runtime controlled launch owner command exposed forbidden term %q: %s", forbidden, text)
+		}
 	}
 }
 
@@ -824,4 +922,111 @@ func TestRuntimeOwnerCommandRendersKDEOfflineIdentityCheckpoint(t *testing.T) {
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected offline KDE identity checkpoint payload: %#v", payload)
 	}
+}
+
+func writeOwnerCommandRuntimeStatusLaunchExecutionFixture(t *testing.T, stateRoot string) string {
+	t.Helper()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	if _, err := ledger.Record(execution.Transaction{
+		RequestID:      sessionID,
+		ApplicationID:  "7zr",
+		Profile:        "known-app-managed-guest",
+		State:          execution.StateBlocked,
+		ReviewDecision: execution.DecisionApproved,
+		Gates: []execution.Gate{
+			{ID: "controlled-execution-session-handoff", Status: execution.GatePass, Reason: "Runtime execution session handoff ready"},
+			{ID: "runtime-write-gate", Status: execution.GateBlocked, Reason: "dispatch runner must consume the recorded session before execution"},
+		},
+		BlockedReasons:   []string{"runtime-write-gate: dispatch runner must consume the recorded session before execution"},
+		LaunchAllowed:    false,
+		LaunchEnabled:    false,
+		BackendStarted:   false,
+		HostRootModified: false,
+		NetworkRequired:  false,
+		Summary:          "Runtime recorded a known application execution session handoff for later consumption.",
+	}); err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	if _, err := ledger.RecordSession(sessionID); err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+	if _, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	}); err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+	if _, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	}); err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	return sessionID
+}
+
+func recordOwnerCommandRuntimeStatusLaunchEvidenceFixture(t *testing.T, stateRoot string) appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecord {
+	t.Helper()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := appidentity.ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip Console",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := appidentity.RecordKnownAppKDERuntimeStatusLaunchEvidence(appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	return record
+}
+
+func writeOwnerCommandFakeRuntimeStatusManagedLauncher(t *testing.T) (string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	launcherPath := filepath.Join(dir, "fake-xnix-compat-launch")
+	argsPath := filepath.Join(dir, "launcher-args.txt")
+	t.Setenv("XNIX_OWNER_COMMAND_FAKE_LAUNCHER_ARGS_FILE", argsPath)
+	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_OWNER_COMMAND_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"session_gated_controlled_dispatch_consumed\":true,\"session_gated_controlled_dispatch_state\":\"created-after-session-gated-review\",\"session_gated_review_receipt_id\":\"known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02\",\"launch_authorization_receipt_id\":\"known-app-launch-authorization-7zr-26.02\",\"controlled_execution_session_consumed\":true,\"controlled_execution_session_id\":\"known-app-controlled-execution-session-7zr-26.02\",\"controlled_session_digest_verified\":true,\"controlled_session_relative_path\":\"execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json\",\"runtime_owner_consumable_session\":true,\"kde_read_model_consumable_session\":true,\"controlled_session_live_state_observed\":false,\"controlled_session_registered\":false,\"controlled_session_window_observed\":false,\"controlled_session_host_root_modified\":false,\"controlled_session_backend_process_start\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
+	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("WriteFile fake launcher returned error: %v", err)
+	}
+	return launcherPath, argsPath
 }

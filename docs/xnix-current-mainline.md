@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.624
+> Last updated: 2026-07-24 | Baseline: v0.2.625
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.624 by moving the Runtime-owner adapter from CLI environment plumbing toward the daemon/service boundary, so a KDE D-Bus action can forward only an evidence handle and receive the same redacted `show-runtime-controlled-launch` result without shelling out through smoke-only setup. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.625 by replacing the fake managed launcher in the `ShowRuntimeControlledLaunch` service test path with the real staged `xnix-compat-launch` artifact when QEMU/Wine guest prerequisites are available, so the Runtime Owner service boundary starts exercising the same real known Windows app dispatch lane as the staged launcher smoke. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.625 checkpoint makes `ShowRuntimeControlledLaunch` an in-process Go Runtime Owner service method. The method accepts only an evidence handoff id or safe relative evidence path from the caller, reads owner-only state root, cache root, launcher, and timeout settings from `XNIX_RUNTIME_OWNER_*`, invokes the existing trigger-fed Runtime execution path, and returns a desktop-safe `desktop-action-dispatch` service call with delegated receipt/session fields and a Compatibility Center projection. This is the daemon/service boundary shape needed for KDE D-Bus to remain a replaceable shell instead of reconstructing Runtime launch inputs.
 
 The v0.2.624 checkpoint removes owner-only arguments from the desktop-facing `show-runtime-controlled-launch` call shape. The command now rejects explicit owner-only CLI flags and reads state root, cache root, managed launcher path, guest timeout, and owner timeout from `XNIX_RUNTIME_OWNER_*` Runtime service-boundary configuration before delegating to the trigger-fed Runtime execution path. The staged launcher dispatch smoke now exercises `show-runtime-controlled-launch --evidence-relative-path <relative>` without passing `--state-root`, `--cache-root`, `--launcher`, or timeout flags.
 

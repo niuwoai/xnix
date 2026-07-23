@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.624
+> Last updated: 2026-07-24 | Current version: v0.2.625
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.625 checkpoint moves the desktop-callable Runtime-status launch action behind the Go Runtime Owner service boundary. `ShowRuntimeControlledLaunch` is now an owner service method with `desktop-action-dispatch` call evidence, so a future KDE D-Bus action can forward only an opaque evidence id or safe relative evidence path and receive the same redacted `show-runtime-controlled-launch` result while the owner service supplies state root, cache root, launcher, and timeout inputs from `XNIX_RUNTIME_OWNER_*`. Targeted owner service and CLI tests verify the service boundary, delegated receipt/session fields, Compatibility Center projection, launcher argv handoff, and disabled host-root mutation, Docker socket mount, broad host mount, raw command exposure, and backend-detail exposure gates. v0.2.625 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.624 checkpoint removes owner-only arguments from the desktop-facing `show-runtime-controlled-launch` call shape. KDE now forwards only the Runtime-status handoff id or safe relative evidence path; the Runtime-owner adapter supplies state root, cache root, managed launcher path, guest timeout, and owner timeout through `XNIX_RUNTIME_OWNER_*` configuration before invoking the trigger-fed Go Runtime execution path. The staged launcher dispatch smoke now sets those owner values through the Runtime boundary and verifies `desktop_runtime_owner_adapter_used=true`, `desktop_state_root_supplied_by_runtime_owner=true`, `desktop_cache_root_supplied_by_runtime_owner=true`, `desktop_launcher_supplied_by_runtime_owner=true`, and `desktop_timeout_supplied_by_runtime_owner=true`, while keeping state-root paths, launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation redacted or disabled. v0.2.624 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
