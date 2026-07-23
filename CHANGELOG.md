@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.556] - 2026-07-23
+
+### Changed
+
+- Reconnected `production-receipt-notification-action-dry-run-result-lookup-consumer-enablement-kde-safe-redacted-status-closed-record-writer-storage-root-authorization-receipt-dry-run-lookup-result-consumer-projection-route-enablement-lookup-route-dispatch-dry-run-result-notification-action-request-object-dispatch-dry-run-result-persistence-receipt-consumer-enablement-receipt-storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-receipt-storage-persistence-gate-audit-preview` to the v0.2.555 storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt closed persistence implementation predecessor.
+- Added explicit closed persistence implementation evidence consumption to the storage record writer call authorization receipt accepted receipt gate call authorization receipt accepted receipt gate call receipt consumer enablement receipt storage persistence gate audit preview while keeping storage persistence gates not passed; storage persistence disabled; closed persistence implementations disabled and unimplemented; persistence authorizations not callable, disabled, ungranted, and unauthorized; consumer enablement receipts absent, unpersisted, disabled, unaccepted, and unauthorized; storage record contracts not writable; storage records unwritten; receipt writes disabled; receipt persistence disabled; notification actions disabled; production ownership disabled; backend launch disabled; and host mutation disabled.
+- Recorded v0.2.556 as a targeted-validation-only follow-up after the v0.2.540 formal full Buildroot/QEMU checkpoint; the next formal full checkpoint remains v0.2.560 unless explicitly requested earlier.
+
 ## [0.2.555] - 2026-07-23
 
 ### Changed
