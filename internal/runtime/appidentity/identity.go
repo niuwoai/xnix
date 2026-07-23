@@ -772,29 +772,30 @@ type KRunnerQueryOptions struct {
 }
 
 type CompatibilityCenterPreview struct {
-	SchemaVersion                     string                         `json:"schema_version"`
-	SummaryType                       string                         `json:"summary_type"`
-	Desktop                           string                         `json:"desktop"`
-	Title                             string                         `json:"title"`
-	Source                            KRunnerSource                  `json:"source"`
-	RuntimeOwned                      bool                           `json:"runtime_owned"`
-	KDEPolicyOwner                    bool                           `json:"kde_policy_owner"`
-	ApplicationCount                  int                            `json:"application_count"`
-	KnownIssueCount                   int                            `json:"known_issue_count"`
-	RepairRecordCount                 int                            `json:"repair_record_count"`
-	PendingReviewCount                int                            `json:"pending_review_count"`
-	KnownAppSmokeEvidenceCount        int                            `json:"known_app_smoke_evidence_count"`
-	KnownAppSmokePassedCount          int                            `json:"known_app_smoke_passed_count"`
-	KnownAppStagedLauncherPassedCount int                            `json:"known_app_staged_launcher_passed_count"`
-	Applications                      []CompatibilityCenterApp       `json:"applications"`
-	KnownAppSmokeEvidence             []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
-	ActionExecutionEnabled            bool                           `json:"action_execution_enabled"`
-	RepairExecutionEnabled            bool                           `json:"repair_execution_enabled"`
-	BackendLaunchEnabled              bool                           `json:"backend_launch_enabled"`
-	SettingsPersistenceEnabled        bool                           `json:"settings_persistence_enabled"`
-	HostRootModified                  bool                           `json:"host_root_modified"`
-	BackendDetailsExposed             bool                           `json:"backend_details_exposed"`
-	Summary                           CompatibilityCenterSummaryText `json:"summary"`
+	SchemaVersion                            string                         `json:"schema_version"`
+	SummaryType                              string                         `json:"summary_type"`
+	Desktop                                  string                         `json:"desktop"`
+	Title                                    string                         `json:"title"`
+	Source                                   KRunnerSource                  `json:"source"`
+	RuntimeOwned                             bool                           `json:"runtime_owned"`
+	KDEPolicyOwner                           bool                           `json:"kde_policy_owner"`
+	ApplicationCount                         int                            `json:"application_count"`
+	KnownIssueCount                          int                            `json:"known_issue_count"`
+	RepairRecordCount                        int                            `json:"repair_record_count"`
+	PendingReviewCount                       int                            `json:"pending_review_count"`
+	KnownAppSmokeEvidenceCount               int                            `json:"known_app_smoke_evidence_count"`
+	KnownAppSmokePassedCount                 int                            `json:"known_app_smoke_passed_count"`
+	KnownAppStagedLauncherPassedCount        int                            `json:"known_app_staged_launcher_passed_count"`
+	KnownAppLaunchAuthorizationRequiredCount int                            `json:"known_app_launch_authorization_required_count"`
+	Applications                             []CompatibilityCenterApp       `json:"applications"`
+	KnownAppSmokeEvidence                    []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
+	ActionExecutionEnabled                   bool                           `json:"action_execution_enabled"`
+	RepairExecutionEnabled                   bool                           `json:"repair_execution_enabled"`
+	BackendLaunchEnabled                     bool                           `json:"backend_launch_enabled"`
+	SettingsPersistenceEnabled               bool                           `json:"settings_persistence_enabled"`
+	HostRootModified                         bool                           `json:"host_root_modified"`
+	BackendDetailsExposed                    bool                           `json:"backend_details_exposed"`
+	Summary                                  CompatibilityCenterSummaryText `json:"summary"`
 }
 
 type CompatibilityCenterApp struct {
@@ -832,6 +833,13 @@ type KnownAppSmokeEvidenceSummary struct {
 	EvidenceSource              string `json:"evidence_source"`
 	SmokeStatus                 string `json:"smoke_status"`
 	CompatibilityState          string `json:"compatibility_state"`
+	CenterCardState             string `json:"center_card_state"`
+	LaunchAuthorizationState    string `json:"launch_authorization_state"`
+	PrimaryActionID             string `json:"primary_action_id"`
+	PrimaryActionLabel          string `json:"primary_action_label"`
+	PrimaryActionKind           string `json:"primary_action_kind"`
+	PrimaryActionEnabled        bool   `json:"primary_action_enabled"`
+	DirectLaunchEnabled         bool   `json:"direct_launch_enabled"`
 	MarkerObserved              bool   `json:"marker_observed"`
 	ChecksumVerified            bool   `json:"checksum_verified"`
 	ExecutionEvidenceRecorded   bool   `json:"execution_evidence_recorded"`
@@ -2510,18 +2518,19 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 	}
 
 	preview := CompatibilityCenterPreview{
-		SchemaVersion:                     "xnix.runtime.compatibility_center.v1",
-		SummaryType:                       "compatibility-center-preview",
-		Desktop:                           "KDE Plasma",
-		Title:                             "Xnix Compatibility Center",
-		RuntimeOwned:                      true,
-		KDEPolicyOwner:                    false,
-		ApplicationCount:                  len(applications),
-		Applications:                      applications,
-		KnownAppSmokeEvidenceCount:        len(knownAppEvidence),
-		KnownAppSmokePassedCount:          countPassedKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppStagedLauncherPassedCount: countStagedLauncherKnownAppSmokeEvidence(knownAppEvidence),
-		KnownAppSmokeEvidence:             knownAppEvidence,
+		SchemaVersion:                            "xnix.runtime.compatibility_center.v1",
+		SummaryType:                              "compatibility-center-preview",
+		Desktop:                                  "KDE Plasma",
+		Title:                                    "Xnix Compatibility Center",
+		RuntimeOwned:                             true,
+		KDEPolicyOwner:                           false,
+		ApplicationCount:                         len(applications),
+		Applications:                             applications,
+		KnownAppSmokeEvidenceCount:               len(knownAppEvidence),
+		KnownAppSmokePassedCount:                 countPassedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppStagedLauncherPassedCount:        countStagedLauncherKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLaunchAuthorizationRequiredCount: countLaunchAuthorizationRequiredKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppSmokeEvidence:                    knownAppEvidence,
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
 			RegistryName:          provenance.RegistryName,
@@ -2630,15 +2639,26 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	}
 
 	compatibilityState := "review-required"
+	centerCardState := "smoke-evidence-review-required"
+	launchAuthorizationState := "not-ready"
+	primaryActionID := "review-known-app-smoke"
+	primaryActionLabel := "Review compatibility evidence"
+	primaryActionKind := "evidence-review"
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
 	stagedLauncherVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
 	runtimeDispatchVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
 	if passed {
 		compatibilityState = "validated"
+		centerCardState = "validated"
+		launchAuthorizationState = "review-required"
 		summary = displayName + " passed managed compatibility smoke."
 	}
 	if stagedLauncherVerified {
+		centerCardState = "validated-launch-authorization-required"
+		primaryActionID = "review-launch-authorization"
+		primaryActionLabel = "Review launch authorization"
+		primaryActionKind = "authorization-review"
 		summary = displayName + " passed staged launcher Runtime dispatch smoke."
 	}
 
@@ -2650,6 +2670,13 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		EvidenceSource:              evidenceSource,
 		SmokeStatus:                 status,
 		CompatibilityState:          compatibilityState,
+		CenterCardState:             centerCardState,
+		LaunchAuthorizationState:    launchAuthorizationState,
+		PrimaryActionID:             primaryActionID,
+		PrimaryActionLabel:          primaryActionLabel,
+		PrimaryActionKind:           primaryActionKind,
+		PrimaryActionEnabled:        true,
+		DirectLaunchEnabled:         false,
 		MarkerObserved:              item.MarkerObserved,
 		ChecksumVerified:            item.ChecksumVerified,
 		ExecutionEvidenceRecorded:   true,
@@ -2682,6 +2709,16 @@ func countStagedLauncherKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSumma
 	count := 0
 	for _, item := range items {
 		if item.SmokeStatus == "passed" && item.MarkerObserved && item.ChecksumVerified && item.EvidenceSource == "staged-launcher-dispatch-smoke" {
+			count++
+		}
+	}
+	return count
+}
+
+func countLaunchAuthorizationRequiredKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.LaunchAuthorizationRequired {
 			count++
 		}
 	}

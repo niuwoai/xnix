@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.594] - 2026-07-24
+
+### Added
+
+- Added concrete Compatibility Center card/action state for staged launcher known-app evidence, marking the 7zr smoke as `validated-launch-authorization-required` with `review-launch-authorization` as the safe next action.
+- Extended staged launcher dispatch smoke validation to prove the Center projection keeps direct launch and backend launch disabled after a real PASS.
+
 ## [0.2.593] - 2026-07-24
 
 ### Added

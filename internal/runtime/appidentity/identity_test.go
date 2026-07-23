@@ -1511,6 +1511,7 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 	if preview.KnownAppSmokeEvidenceCount != 1 ||
 		preview.KnownAppSmokePassedCount != 1 ||
 		preview.KnownAppStagedLauncherPassedCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRequiredCount != 1 ||
 		len(preview.KnownAppSmokeEvidence) != 1 ||
 		preview.Summary.Headline != "A known Windows application has passed the staged launcher Runtime dispatch smoke." {
 		t.Fatalf("unexpected known app smoke counts: %#v", preview)
@@ -1523,6 +1524,13 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 		evidence.EvidenceSource != "staged-launcher-dispatch-smoke" ||
 		evidence.SmokeStatus != "passed" ||
 		evidence.CompatibilityState != "validated" ||
+		evidence.CenterCardState != "validated-launch-authorization-required" ||
+		evidence.LaunchAuthorizationState != "review-required" ||
+		evidence.PrimaryActionID != "review-launch-authorization" ||
+		evidence.PrimaryActionLabel != "Review launch authorization" ||
+		evidence.PrimaryActionKind != "authorization-review" ||
+		!evidence.PrimaryActionEnabled ||
+		evidence.DirectLaunchEnabled ||
 		!evidence.MarkerObserved ||
 		!evidence.ChecksumVerified ||
 		!evidence.ExecutionEvidenceRecorded ||

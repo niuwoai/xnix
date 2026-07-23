@@ -908,6 +908,7 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testi
 	if payload["known_app_smoke_evidence_count"] != float64(1) ||
 		payload["known_app_smoke_passed_count"] != float64(1) ||
 		payload["known_app_staged_launcher_passed_count"] != float64(1) ||
+		payload["known_app_launch_authorization_required_count"] != float64(1) ||
 		payload["action_execution_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["host_root_modified"] != false ||
@@ -923,6 +924,13 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testi
 		evidence["evidence_source"] != "staged-launcher-dispatch-smoke" ||
 		evidence["smoke_status"] != "passed" ||
 		evidence["compatibility_state"] != "validated" ||
+		evidence["center_card_state"] != "validated-launch-authorization-required" ||
+		evidence["launch_authorization_state"] != "review-required" ||
+		evidence["primary_action_id"] != "review-launch-authorization" ||
+		evidence["primary_action_label"] != "Review launch authorization" ||
+		evidence["primary_action_kind"] != "authorization-review" ||
+		evidence["primary_action_enabled"] != true ||
+		evidence["direct_launch_enabled"] != false ||
 		evidence["marker_observed"] != true ||
 		evidence["checksum_verified"] != true ||
 		evidence["execution_evidence_recorded"] != true ||
