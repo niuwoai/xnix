@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.584] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-known-app-dispatch-preview` CLI, mapping the pinned 7-Zip Runtime launch request into a managed dispatch preview for the known-app guest smoke lane.
+- Added dispatch readiness states that keep dispatch blocked until the managed artifact checksum verifies, then mark the dispatch preview ready without starting execution or backend processes.
+- Added targeted Go tests proving the dispatch preview consumes the launch request, preserves the safe managed launcher argv, rejects unknown apps, stays dry-run, and avoids raw `.exe` paths, Wine/QEMU details, backend internals, host paths, host networking, Docker socket mounts, broad host mounts, and host-root mutation.
+
 ## [0.2.583] - 2026-07-24
 
 ### Added

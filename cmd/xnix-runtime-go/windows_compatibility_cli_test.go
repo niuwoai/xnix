@@ -512,6 +512,73 @@ func TestWindowsKnownAppLaunchRequestPreviewCommandCreatesRuntimeOwnedRequest(t 
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
 }
 
+func TestWindowsKnownAppDispatchPreviewCommandMapsLaunchRequestToManagedLane(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-dispatch-preview",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_dispatch.v1" ||
+		payload["request_type"] != "windows-known-app-dispatch-preview" ||
+		payload["source"] != "windows-known-app-launch-request-preview" ||
+		payload["status"] != "dispatch-blocked" ||
+		payload["request_id"] != "known-app-launch-request-7zr" ||
+		payload["dispatch_id"] != "known-app-dispatch-7zr" ||
+		payload["runtime_method"] != "DispatchKnownWindowsApp" ||
+		payload["app_id"] != "7zr" ||
+		payload["display_name"] != "7-Zip standalone console executable" ||
+		payload["desktop"] != "KDE Plasma" ||
+		payload["entry_point_id"] != "launcher" ||
+		payload["desktop_file"] != "xnix-known-app-7zr.desktop" ||
+		payload["launch_surface_id"] != "known-app-7zr" ||
+		payload["desktop_action_id"] != "launch-known-app-7zr" ||
+		payload["managed_launcher"] != "xnix-compat-launch --app 7zr" ||
+		payload["dispatch_gate"] != "managed-known-app-guest-smoke" ||
+		payload["runner_lane"] != "known-app-guest-smoke" ||
+		payload["runner_request_type"] != "managed-known-app-guest-smoke" ||
+		payload["cache_status"] != "missing" ||
+		payload["artifact_verified"] != false ||
+		payload["launch_request_created"] != true ||
+		payload["dispatch_preview_created"] != true ||
+		payload["dispatch_allowed"] != false ||
+		payload["dispatch_ready"] != false ||
+		payload["preparation_required"] != true ||
+		payload["runtime_owned_request"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["dry_run"] != true ||
+		payload["dispatch_started"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected dispatch payload: %#v", payload)
+	}
+	argv := payload["managed_launcher_argv"].([]any)
+	if strings.Join(anyStrings(argv), " ") != "xnix-compat-launch --app 7zr" {
+		t.Fatalf("unexpected dispatch argv: %#v", argv)
+	}
+	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+}
+
 func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-fetch", "--app", "missing-app"}, &output)
@@ -539,6 +606,14 @@ func TestWindowsKnownAppKDELauncherPreviewCommandRejectsUnknownApp(t *testing.T)
 func TestWindowsKnownAppLaunchRequestPreviewCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-launch-request-preview", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppDispatchPreviewCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-dispatch-preview", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}
