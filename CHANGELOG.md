@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.574] - 2026-07-23
+
+### Changed
+
+- Added `clang`, `lld`, and `llvm` to the tools Docker image so Buildroot `host-wine` can satisfy Wine's aarch64 PE cross-compilation requirement inside Colima.
+- Extended the layout verifier to keep the aarch64 `host-wine` toolchain dependency visible in the builder image contract.
+- Recorded local evidence that the v0.2.573 offline Wine guest build moved past the previous missing-source failure and then failed while configuring `host-wine` with `PE cross-compilation is required for aarch64`; `xnix-builder-tools:0.2.574` now builds with the requested LLVM tools, and the v0.2.574 detached offline build starts with active `make` work.
+
 ## [0.2.573] - 2026-07-23
 
 ### Changed

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.573
+> Last updated: 2026-07-23 | Current version: v0.2.574
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.574 checkpoint addresses the next concrete Wine guest build failure after source prefetching succeeded. The v0.2.573 offline build moved past the missing `host-gettext-tiny` tarball and failed while configuring `host-wine` because Wine requires PE cross-compilation support on an aarch64 build host. The tools Docker image now installs `clang`, `lld`, and `llvm`, making `clang`, `lld`, and `llvm-dlltool` available for the Buildroot `host-wine` configure path under Colima. Local evidence shows `xnix-builder-tools:0.2.574` built successfully, the tools are present in a no-network container, and the v0.2.574 retained offline Wine guest build started with active Buildroot `make` work. This still does not prove a real Windows app `PASS`; it removes the next observed build-environment blocker for producing the Wine-capable QEMU guest.
 
 The v0.2.573 checkpoint unblocks the next Wine guest build attempt by splitting missing source downloads from the restricted offline Buildroot compile. The retained v0.2.572 build logs show the detached no-network Wine guest build reached OpenSSH, host-patchelf, and urandom-scripts before failing on the missing `host-gettext-tiny` tarball because DNS is intentionally unavailable in the offline build container. `scripts/container.rb download-wine-guest` now runs the Wine guest Buildroot source step with bridge networking and the same managed cache volume, while `build-ssh-wine-guest` and `start-build-ssh-wine-guest` stay networkless with no broad host mount, no privileged mode, and no Docker socket mount. Local evidence shows `download-wine-guest` fetched and verified Wine, `gettext-tiny`, and related tarballs, then `start-build-ssh-wine-guest` launched a v0.2.573 offline build that progressed into `host-flex` compilation. This still does not prove a real Windows app `PASS`; it makes the next attempt fetch the missing sources explicitly before returning to the offline build boundary.
 

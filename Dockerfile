@@ -14,10 +14,13 @@ RUN apt-get update \
         flex \
         git \
         golang-go \
+        clang \
         libglib2.0-bin \
         libglib2.0-dev \
         libelf-dev \
         libssl-dev \
+        lld \
+        llvm \
         openssh-client \
         pkg-config \
         qemu-system-x86 \
