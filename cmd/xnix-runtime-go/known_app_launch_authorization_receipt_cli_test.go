@@ -1106,6 +1106,76 @@ func TestKnownAppKDERuntimeStatusLaunchEvidenceRecordCommandPersistsProjectionFi
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestKnownAppKDERuntimeStatusLaunchEvidencePreviewCommandConsumesRecordedHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	evidenceFile := filepath.Join(t.TempDir(), "runtime-status-launch-evidence.json")
+	if err := os.WriteFile(evidenceFile, []byte(knownAppRuntimeStatusLaunchProjectionFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile evidence returned error: %v", err)
+	}
+	var recordOutput bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType,
+		"--state-root", stateRoot,
+		"--evidence-file", evidenceFile,
+	}, &recordOutput); err != nil {
+		t.Fatalf("record run returned error: %v", err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(recordOutput.Bytes(), &record); err != nil {
+		t.Fatalf("Unmarshal record returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType,
+		"--state-root", stateRoot,
+		"--evidence-relative-path", record["evidence_relative_path"].(string),
+	}, &output); err != nil {
+		t.Fatalf("preview run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal preview returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType ||
+		payload["runtime_method"] != "PreviewKnownAppKDERuntimeStatusLaunchEvidence" ||
+		payload["read_method"] != "GetKnownAppKDERuntimeStatusLaunchEvidence" ||
+		payload["evidence_read_state"] != "consumed" ||
+		payload["evidence_handoff_consumed"] != true ||
+		payload["evidence_relative_path"] != record["evidence_relative_path"] ||
+		payload["evidence_sha256"] != record["evidence_sha256"] ||
+		payload["evidence_digest_verified"] != true ||
+		payload["known_app_smoke_evidence_ready"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["evidence_path_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false {
+		t.Fatalf("unexpected Runtime-status launch evidence preview payload: %#v", payload)
+	}
+	evidence := payload["known_app_smoke_evidence"].(map[string]any)
+	if evidence["center_card_state"] != "validated-post-review-dispatch" ||
+		evidence["primary_action_id"] != "show-runtime-controlled-launch" ||
+		evidence["primary_action_kind"] != "runtime-status" ||
+		evidence["desktop_launch_enabled"] != false ||
+		evidence["backend_launch_enabled"] != false ||
+		evidence["host_root_modified"] != false {
+		t.Fatalf("unexpected handoff known app smoke evidence: %#v", evidence)
+	}
+	if strings.Contains(output.String(), stateRoot) || strings.Contains(output.String(), evidenceFile) {
+		t.Fatalf("preview output exposed local paths: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t *testing.T, stateRoot string) string {
 	t.Helper()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")

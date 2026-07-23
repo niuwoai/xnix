@@ -460,6 +460,32 @@ func runKnownAppKDERuntimeStatusLaunchEvidenceRecord(args []string, stdout io.Wr
 	return encodeIndentedJSON(stdout, record)
 }
 
+func runKnownAppKDERuntimeStatusLaunchEvidencePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	stateRoot := flags.String("state-root", "", "Runtime state root containing the KDE-readable Runtime-status launch evidence handoff")
+	evidenceID := flags.String("evidence-id", "", "opaque Runtime-status launch evidence handoff id")
+	evidenceRelativePath := flags.String("evidence-relative-path", "", "relative Runtime-status launch evidence handoff path")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-kde-runtime-status-launch-evidence-preview does not accept positional arguments")
+	}
+	if strings.TrimSpace(*stateRoot) == "" {
+		return errors.New("known-app-kde-runtime-status-launch-evidence-preview requires --state-root")
+	}
+	preview, err := appidentity.PreviewKnownAppKDERuntimeStatusLaunchEvidence(appidentity.KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest{
+		StateRoot:            *stateRoot,
+		EvidenceID:           *evidenceID,
+		EvidenceRelativePath: *evidenceRelativePath,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
+
 type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan
 	CompatibilityCenterKnownAppEvidence             appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence `json:"compatibility_center_known_app_evidence"`

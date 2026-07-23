@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.618"
+EXPECTED_VERSION = "0.2.619"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6451,6 +6451,9 @@ end
 %w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required receipt_path_exposed state_root_path_exposed transaction_path_exposed session_path_exposed dispatch_request_materialized session_registered window_observed task_manager_entry_active kwin_rule_applied live_tray_bridge_enabled].each do |field|
   assert(staged_launcher_dispatch_smoke_source.include?(field), "Staged launcher dispatch smoke must validate #{field}")
 end
+%w[known-app-kde-runtime-status-launch-evidence-preview PreviewKnownAppKDERuntimeStatusLaunchEvidence evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
+  assert(staged_launcher_dispatch_smoke_source.include?(token), "Staged launcher dispatch smoke must consume Runtime-status launch handoff preview #{token}")
+end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
 assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_dispatch_smoke_command"), "Container model must expose staged launcher dispatch smoke")
 
@@ -6482,6 +6485,9 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
 end
 %w[KnownAppKDERuntimeStatusLaunchEvidenceRecordSchemaVersion KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest KnownAppKDERuntimeStatusLaunchEvidenceRecord RecordKnownAppKDERuntimeStatusLaunchEvidence GetKnownAppKDERuntimeStatusLaunchEvidence known-app-kde-runtime-status-launch-evidence-record evidence_relative_path evidence_sha256 known_app_smoke_evidence_ready evidence_path_exposed].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch evidence handoff record must include #{token}")
+end
+%w[KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest KnownAppKDERuntimeStatusLaunchEvidencePreview PreviewKnownAppKDERuntimeStatusLaunchEvidence known-app-kde-runtime-status-launch-evidence-preview evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
+  assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch evidence handoff preview must include #{token}")
 end
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")

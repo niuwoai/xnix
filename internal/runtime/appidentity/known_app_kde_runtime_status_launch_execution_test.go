@@ -336,6 +336,97 @@ func TestRecordKnownAppKDERuntimeStatusLaunchEvidencePersistsSafeHandoff(t *test
 	}
 }
 
+func TestPreviewKnownAppKDERuntimeStatusLaunchEvidenceConsumesSafeHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := RecordKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	preview, err := PreviewKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest{
+		StateRoot:            stateRoot,
+		EvidenceRelativePath: record.EvidenceRelativePath,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion ||
+		preview.RequestType != KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType ||
+		preview.RuntimeMethod != "PreviewKnownAppKDERuntimeStatusLaunchEvidence" ||
+		preview.ReadMethod != "GetKnownAppKDERuntimeStatusLaunchEvidence" ||
+		preview.EvidenceReadState != "consumed" ||
+		!preview.EvidenceHandoffConsumed ||
+		preview.EvidenceRelativePath != record.EvidenceRelativePath ||
+		preview.EvidenceSHA256 != record.EvidenceSHA256 ||
+		!preview.EvidenceDigestVerified ||
+		preview.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		!preview.CompatibilityCenterProjectionReady ||
+		!preview.KDECenterProjectionReady ||
+		!preview.KnownAppSmokeEvidenceReady ||
+		preview.KnownAppSmokeEvidence.CenterCardState != "validated-post-review-dispatch" ||
+		preview.KnownAppSmokeEvidence.PrimaryActionID != "show-runtime-controlled-launch" ||
+		preview.KnownAppSmokeEvidence.PrimaryActionKind != "runtime-status" ||
+		preview.LaunchAuthorizationReceiptID != launchReceiptID ||
+		preview.SessionGatedReviewReceiptID != reviewReceiptID ||
+		preview.ControlledExecutionSessionID != sessionID ||
+		!preview.RuntimeOwned ||
+		!preview.RuntimeOwnedDispatch ||
+		!preview.GoRuntimeBacked ||
+		preview.KDEPolicyOwner ||
+		preview.StateRootPathExposed ||
+		preview.EvidencePathExposed ||
+		preview.RawLauncherOutputExposed ||
+		preview.BackendDetailsExposed ||
+		preview.HostRootModified ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ExecutionStarted {
+		t.Fatalf("unexpected Runtime-status launch evidence preview: %#v", preview)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), stateRoot) {
+		t.Fatalf("preview exposed state root: %s", string(encoded))
+	}
+}
+
 func writeKnownAppRuntimeStatusLaunchExecutionFixture(t *testing.T, stateRoot string) string {
 	t.Helper()
 	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)

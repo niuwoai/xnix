@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.619] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-kde-runtime-status-launch-evidence-preview` read model, which consumes the persisted Runtime-status launch evidence handoff by opaque id or safe relative path and verifies its digest before exposing KDE-safe next-action evidence.
+
+### Changed
+
+- Extended delegated Runtime-status launch evidence normalization so the handoff preview exposes a complete `known_app_smoke_evidence` payload with `validated-post-review-dispatch`, `show-runtime-controlled-launch`, and `runtime-status` action state.
+- Extended the staged launcher dispatch smoke so it reads back the Runtime-owned evidence handoff before feeding Center previews, proving the next desktop-triggered action can consume persisted handoff state instead of relying only on the smoke-local projection file.
+
 ## [0.2.618] - 2026-07-24
 
 ### Added
