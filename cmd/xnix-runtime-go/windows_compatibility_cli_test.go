@@ -579,6 +579,70 @@ func TestWindowsKnownAppDispatchPreviewCommandMapsLaunchRequestToManagedLane(t *
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
 }
 
+func TestWindowsKnownAppDispatchSmokeCommandBlocksBeforeArtifactPreparation(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-dispatch-smoke",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_dispatch_smoke.v1" ||
+		payload["request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["source"] != "windows-known-app-dispatch-preview" ||
+		payload["status"] != "dispatch-blocked" ||
+		payload["request_id"] != "known-app-launch-request-7zr" ||
+		payload["dispatch_id"] != "known-app-dispatch-7zr" ||
+		payload["runtime_method"] != "DispatchKnownWindowsApp" ||
+		payload["app_id"] != "7zr" ||
+		payload["display_name"] != "7-Zip standalone console executable" ||
+		payload["dispatch_gate"] != "managed-known-app-guest-smoke" ||
+		payload["runner_lane"] != "known-app-guest-smoke" ||
+		payload["guest_boundary"] != "managed-known-app-guest-smoke" ||
+		payload["cache_status"] != "missing" ||
+		payload["artifact_verified"] != false ||
+		payload["launch_request_created"] != true ||
+		payload["dispatch_preview_created"] != true ||
+		payload["dispatch_ready"] != false ||
+		payload["dispatch_allowed"] != false ||
+		payload["dispatch_started"] != false ||
+		payload["execution_started"] != false ||
+		payload["managed_guest_runner_invoked"] != false ||
+		payload["managed_guest_reachable"] != false ||
+		payload["managed_guest_runtime_ready"] != false ||
+		payload["managed_artifact_copied"] != false ||
+		payload["marker_observed"] != false ||
+		payload["smoke_passed"] != false ||
+		payload["exit_code"] != float64(-1) ||
+		payload["runtime_owned_request"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected dispatch smoke payload: %#v", payload)
+	}
+	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+}
+
 func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-fetch", "--app", "missing-app"}, &output)
@@ -614,6 +678,14 @@ func TestWindowsKnownAppLaunchRequestPreviewCommandRejectsUnknownApp(t *testing.
 func TestWindowsKnownAppDispatchPreviewCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-dispatch-preview", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppDispatchSmokeCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-dispatch-smoke", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}

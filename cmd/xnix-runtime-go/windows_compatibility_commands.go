@@ -413,6 +413,75 @@ func runWindowsKnownAppDispatchPreview(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsKnownAppDispatchSmoke(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-known-app-dispatch-smoke", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appID string
+	var cacheRoot string
+	var guestBoundary string
+	var host string
+	var port string
+	var user string
+	var keyPath string
+	var remoteDir string
+	var sshPath string
+	var scpPath string
+	var timeoutText string
+	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
+	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the smoke harness")
+	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
+	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
+	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
+	flags.StringVar(&keyPath, "key", "", "guest SSH private key path")
+	flags.StringVar(&remoteDir, "remote-dir", "/tmp/xnix-known-winapp-smoke", "guest remote smoke directory")
+	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
+	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
+	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
+
+	var appArgs repeatedStringFlag
+	flags.Var(&appArgs, "arg", "argument passed to the known Windows app")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-known-app-dispatch-smoke")
+	}
+
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+	parsedPort, err := winapp.ParseGuestPort(port)
+	if err != nil {
+		return err
+	}
+
+	result, err := winapp.RunKnownPortableDispatchSmoke(context.Background(), winapp.KnownDispatchSmokeRequest{
+		AppID:         appID,
+		CacheRoot:     cacheRoot,
+		Arguments:     []string(appArgs),
+		GuestBoundary: guestBoundary,
+		Host:          host,
+		Port:          parsedPort,
+		User:          user,
+		KeyPath:       keyPath,
+		RemoteDir:     remoteDir,
+		SSHPath:       sshPath,
+		SCPPath:       scpPath,
+		Timeout:       timeout,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 type repeatedStringFlag []string
 
 func (flag *repeatedStringFlag) String() string {

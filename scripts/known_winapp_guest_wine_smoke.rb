@@ -77,9 +77,10 @@ begin
       "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
       "GOTMPDIR" => GO_TMP_ROOT.to_s
     },
-    "go", "run", "./cmd/xnix-runtime-go", "windows-known-app-guest-wine-smoke",
+    "go", "run", "./cmd/xnix-runtime-go", "windows-known-app-dispatch-smoke",
     "--app", APP_ID,
     "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+    "--guest-boundary", "managed-known-app-guest-smoke",
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
     "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
     *APP_ARGS.flat_map { |argument| ["--arg", argument] }

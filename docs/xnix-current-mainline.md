@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.584
+> Last updated: 2026-07-24 | Baseline: v0.2.585
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Move the v0.2.584 Runtime-owned dispatch preview closer to actual managed execution: add a gated Runtime dispatch command that consumes the verified dispatch preview and can invoke the existing known-app guest smoke runner only when artifact verification passes and the smoke harness supplies the controlled guest boundary. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Move the v0.2.585 gated dispatch smoke path closer to a real desktop launch path: add a Runtime launch-to-dispatch bridge that lets the managed `xnix-compat-launch --app 7zr` action materialize a dispatch-smoke request for the verified known app while still requiring the controlled smoke harness or future Runtime service owner to supply the guest boundary. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch and dispatch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.585 checkpoint puts the existing known-app guest smoke runner behind a Go-owned Runtime dispatch gate. `windows-known-app-dispatch-smoke` consumes `windows-known-app-dispatch-preview`, refuses to invoke the runner until the managed artifact checksum verifies, and also requires the smoke harness to supply the explicit `managed-known-app-guest-smoke` boundary. When both gates pass, the command invokes the managed known-app guest runner and returns redacted execution evidence: guest reachability, managed runtime readiness, artifact copy, marker observation, pass status, exit code, and duration. `scripts/known_winapp_guest_wine_smoke.rb` now calls this gated dispatch command instead of directly invoking the lower-level known-app guest runner. The result does not expose raw `.exe` paths, Wine/QEMU command details, backend internals, host paths, host networking, Docker socket mounts, broad host mounts, or host-root mutation.
 
 The v0.2.584 checkpoint maps the pinned 7-Zip Runtime launch request into a Go-owned managed dispatch preview. `windows-known-app-dispatch-preview` consumes `windows-known-app-launch-request-preview`, preserves the safe managed launcher argv, and returns a dispatch id, Runtime dispatch method, managed runner lane, cache readiness, dispatch readiness, and dry-run safety state. Dispatch remains blocked until the managed cache artifact checksum verifies, then becomes ready for the existing known-app guest smoke lane. The preview does not start execution, start backend processes, expose raw `.exe` paths, expose Wine/QEMU command details, expose backend internals, require host networking, mount the Docker socket, use broad host mounts, or mutate the host root.
 

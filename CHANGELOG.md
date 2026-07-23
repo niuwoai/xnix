@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.585] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-known-app-dispatch-smoke` CLI, which consumes `windows-known-app-dispatch-preview` and invokes the managed known-app guest runner only after artifact verification and an explicit smoke-harness guest boundary are present.
+- Added redacted dispatch-smoke result fields for guest reachability, managed runtime readiness, artifact copy, marker observation, pass status, exit code, and duration without exposing raw `.exe` paths, Wine/QEMU command details, backend internals, or host paths.
+- Updated the known Windows app QEMU smoke harness to call the gated dispatch command instead of directly invoking the lower-level known-app guest runner.
+- Added targeted Go tests proving artifact and guest-boundary gates block safely, verified artifacts can invoke the fake managed guest runner, unknown apps are rejected, and CLI output preserves the managed safety boundary.
+
 ## [0.2.584] - 2026-07-24
 
 ### Added

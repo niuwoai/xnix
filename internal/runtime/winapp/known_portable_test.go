@@ -492,6 +492,202 @@ func TestPreviewKnownPortableDispatchReadiesVerifiedArtifact(t *testing.T) {
 	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
 }
 
+func TestRunKnownPortableDispatchSmokeBlocksUntilArtifactVerified(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := RunKnownPortableDispatchSmoke(context.Background(), KnownDispatchSmokeRequest{
+		AppID:         "7zr",
+		CacheRoot:     tempDir,
+		GuestBoundary: KnownDispatchGuestBoundary,
+		Timeout:       5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableDispatchSmoke returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownDispatchSmokeSchemaVersion ||
+		result.RequestType != KnownDispatchSmokeRequestType ||
+		result.Source != KnownDispatchRequestType ||
+		result.Status != "dispatch-blocked" ||
+		result.RequestID != "known-app-launch-request-7zr" ||
+		result.DispatchID != "known-app-dispatch-7zr" ||
+		result.RuntimeMethod != "DispatchKnownWindowsApp" ||
+		result.AppID != "7zr" ||
+		result.DispatchGate != KnownDispatchGuestBoundary ||
+		result.RunnerLane != "known-app-guest-smoke" ||
+		result.GuestBoundary != KnownDispatchGuestBoundary ||
+		result.CacheStatus != "missing" ||
+		result.ArtifactVerified ||
+		!result.LaunchRequestCreated ||
+		!result.DispatchPreviewCreated ||
+		result.DispatchReady ||
+		result.DispatchAllowed ||
+		result.DispatchStarted ||
+		result.ExecutionStarted ||
+		result.ManagedGuestRunnerInvoked ||
+		result.ManagedGuestReachable ||
+		result.ManagedGuestRuntimeReady ||
+		result.ManagedArtifactCopied ||
+		result.MarkerObserved ||
+		result.SmokePassed ||
+		result.ExitCode != -1 ||
+		!result.RuntimeOwnedRequest ||
+		!result.RuntimeOwnedLaunch ||
+		!result.RuntimeOwnedDispatch ||
+		!result.KDEPresentationOnly ||
+		result.HostRootModified ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.RawHostPathExposed ||
+		result.RawExecutablePathExposed ||
+		result.RawCommandExposed ||
+		result.BackendDetailsExposed ||
+		result.BlockedReason != "managed application artifact must be fetched before launch" ||
+		result.SkipReason != "managed application artifact must be fetched before launch" {
+		t.Fatalf("unexpected blocked dispatch smoke: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, tempDir)
+}
+
+func TestRunKnownPortableDispatchSmokeRequiresControlledGuestBoundary(t *testing.T) {
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	result, err := RunKnownPortableDispatchSmoke(context.Background(), KnownDispatchSmokeRequest{
+		AppID:     "fixture",
+		CacheRoot: cacheRoot,
+		Timeout:   5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableDispatchSmoke returned error: %v", err)
+	}
+	if result.Status != "dispatch-blocked" ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.DispatchReady ||
+		result.DispatchAllowed ||
+		result.DispatchStarted ||
+		result.ManagedGuestRunnerInvoked ||
+		result.BlockedReason != "controlled managed guest boundary must be supplied by the smoke harness" {
+		t.Fatalf("unexpected boundary-blocked dispatch smoke: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
+}
+
+func TestRunKnownPortableDispatchSmokeInvokesManagedGuestRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	guestRoot := t.TempDir()
+	logPath := filepath.Join(guestRoot, "guest.log")
+	sshPath := writeFakeKnownAppGuestSSH(t, guestRoot, logPath)
+	scpPath := writeFakeGuestSCP(t, guestRoot, logPath)
+
+	result, err := RunKnownPortableDispatchSmoke(context.Background(), KnownDispatchSmokeRequest{
+		AppID:         "fixture",
+		CacheRoot:     cacheRoot,
+		GuestBoundary: KnownDispatchGuestBoundary,
+		Host:          "127.0.0.1",
+		Port:          "2222",
+		User:          "root",
+		KeyPath:       filepath.Join(guestRoot, "id_ed25519"),
+		RemoteDir:     "/tmp/xnix-known-winapp-smoke",
+		SSHPath:       sshPath,
+		SCPPath:       scpPath,
+		Timeout:       5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableDispatchSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.RequestID != "known-app-launch-request-fixture" ||
+		result.DispatchID != "known-app-dispatch-fixture" ||
+		result.AppID != "fixture" ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.DispatchReady ||
+		!result.DispatchAllowed ||
+		!result.DispatchStarted ||
+		!result.ExecutionStarted ||
+		!result.ManagedGuestRunnerInvoked ||
+		!result.ManagedGuestReachable ||
+		!result.ManagedGuestRuntimeReady ||
+		!result.ManagedArtifactCopied ||
+		!result.MarkerObserved ||
+		!result.SmokePassed ||
+		result.ExitCode != 0 ||
+		result.HostRootModified ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.RawHostPathExposed ||
+		result.RawExecutablePathExposed ||
+		result.RawCommandExposed ||
+		result.BackendDetailsExposed ||
+		!strings.Contains(result.DesktopSafeSummary, "passed the gated Runtime managed guest dispatch smoke") {
+		t.Fatalf("unexpected dispatch smoke result: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
+
+	logBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile log returned error: %v", err)
+	}
+	log := string(logBytes)
+	if !strings.Contains(log, "fixture.exe root@127.0.0.1:/tmp/xnix-known-winapp-smoke/fixture.exe") ||
+		!strings.Contains(log, "WINEPREFIX='/tmp/xnix-known-winapp-smoke/wineprefix' WINEDEBUG=-all wine '/tmp/xnix-known-winapp-smoke/fixture.exe'") {
+		t.Fatalf("guest log missing known app execution: %s", log)
+	}
+}
+
 func TestRunKnownPortableGuestSmokeUsesVerifiedCacheAndLoopbackGuest(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")

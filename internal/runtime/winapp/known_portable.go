@@ -27,6 +27,9 @@ const (
 	KnownLaunchRequestType          = "windows-known-app-launch-request-preview"
 	KnownDispatchSchemaVersion      = "xnix.runtime.known_windows_app_dispatch.v1"
 	KnownDispatchRequestType        = "windows-known-app-dispatch-preview"
+	KnownDispatchSmokeSchemaVersion = "xnix.runtime.known_windows_app_dispatch_smoke.v1"
+	KnownDispatchSmokeRequestType   = "windows-known-app-dispatch-smoke"
+	KnownDispatchGuestBoundary      = "managed-known-app-guest-smoke"
 	DefaultKnownAppID               = "7zr"
 	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
 	DefaultKnownAppFetchTimeout     = 60 * time.Second
@@ -316,6 +319,71 @@ type KnownDispatchResult struct {
 	BlockedReason            string   `json:"blocked_reason,omitempty"`
 }
 
+type KnownDispatchSmokeRequest struct {
+	AppID         string
+	CacheRoot     string
+	Arguments     []string
+	GuestBoundary string
+	Host          string
+	Port          string
+	User          string
+	KeyPath       string
+	RemoteDir     string
+	SSHPath       string
+	SCPPath       string
+	Timeout       time.Duration
+}
+
+type KnownDispatchSmokeResult struct {
+	SchemaVersion               string `json:"schema_version"`
+	RequestType                 string `json:"request_type"`
+	Source                      string `json:"source"`
+	Status                      string `json:"status"`
+	RequestID                   string `json:"request_id"`
+	DispatchID                  string `json:"dispatch_id"`
+	RuntimeMethod               string `json:"runtime_method"`
+	AppID                       string `json:"app_id"`
+	DisplayName                 string `json:"display_name"`
+	AppVersion                  string `json:"app_version"`
+	Architecture                string `json:"architecture"`
+	DispatchGate                string `json:"dispatch_gate"`
+	RunnerLane                  string `json:"runner_lane"`
+	GuestBoundary               string `json:"guest_boundary"`
+	CacheStatus                 string `json:"cache_status"`
+	ArtifactVerified            bool   `json:"artifact_verified"`
+	LaunchRequestCreated        bool   `json:"launch_request_created"`
+	DispatchPreviewCreated      bool   `json:"dispatch_preview_created"`
+	DispatchReady               bool   `json:"dispatch_ready"`
+	DispatchAllowed             bool   `json:"dispatch_allowed"`
+	DispatchStarted             bool   `json:"dispatch_started"`
+	ExecutionStarted            bool   `json:"execution_started"`
+	ManagedGuestRunnerInvoked   bool   `json:"managed_guest_runner_invoked"`
+	ManagedGuestReachable       bool   `json:"managed_guest_reachable"`
+	ManagedGuestRuntimeReady    bool   `json:"managed_guest_runtime_ready"`
+	ManagedArtifactCopied       bool   `json:"managed_artifact_copied"`
+	MarkerObserved              bool   `json:"marker_observed"`
+	SmokePassed                 bool   `json:"smoke_passed"`
+	ExitCode                    int    `json:"exit_code"`
+	DurationMillis              int64  `json:"duration_millis"`
+	RuntimeOwnedRequest         bool   `json:"runtime_owned_request"`
+	RuntimeOwnedLaunch          bool   `json:"runtime_owned_launch"`
+	RuntimeOwnedDispatch        bool   `json:"runtime_owned_dispatch"`
+	KDEPresentationOnly         bool   `json:"kde_presentation_only"`
+	HostRootModified            bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired bool   `json:"privileged_container_required"`
+	HostNetworkingRequired      bool   `json:"host_networking_required"`
+	DockerSocketMounted         bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
+	RawHostPathExposed          bool   `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool   `json:"raw_executable_path_exposed"`
+	RawCommandExposed           bool   `json:"raw_command_exposed"`
+	BackendDetailsExposed       bool   `json:"backend_details_exposed"`
+	DesktopSafeSummary          string `json:"desktop_safe_summary"`
+	SkipReason                  string `json:"skip_reason,omitempty"`
+	FailureReason               string `json:"failure_reason,omitempty"`
+	BlockedReason               string `json:"blocked_reason,omitempty"`
+}
+
 var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:             "7zr",
@@ -590,6 +658,75 @@ func PreviewKnownPortableDispatch(request KnownDispatchRequest) (KnownDispatchRe
 	return result, nil
 }
 
+func RunKnownPortableDispatchSmoke(ctx context.Context, request KnownDispatchSmokeRequest) (KnownDispatchSmokeResult, error) {
+	dispatchPreview, err := PreviewKnownPortableDispatch(KnownDispatchRequest{
+		AppID:     request.AppID,
+		CacheRoot: request.CacheRoot,
+	})
+	if err != nil {
+		return KnownDispatchSmokeResult{}, err
+	}
+	result := baseKnownDispatchSmokeResult(dispatchPreview, request.GuestBoundary)
+	if !dispatchPreview.DispatchReady {
+		result.Status = "dispatch-blocked"
+		result.BlockedReason = dispatchPreview.BlockedReason
+		result.SkipReason = dispatchPreview.BlockedReason
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " dispatch is blocked until managed artifact preparation completes."
+		return result, nil
+	}
+	if strings.TrimSpace(request.GuestBoundary) != KnownDispatchGuestBoundary {
+		result.Status = "dispatch-blocked"
+		result.BlockedReason = "controlled managed guest boundary must be supplied by the smoke harness"
+		result.SkipReason = result.BlockedReason
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " dispatch is ready, but the smoke harness did not supply the controlled guest boundary."
+		return result, nil
+	}
+
+	guest, err := RunKnownPortableGuestSmoke(ctx, KnownGuestRequest{
+		AppID:     request.AppID,
+		CacheRoot: request.CacheRoot,
+		Arguments: append([]string{}, request.Arguments...),
+		Host:      request.Host,
+		Port:      request.Port,
+		User:      request.User,
+		KeyPath:   request.KeyPath,
+		RemoteDir: request.RemoteDir,
+		SSHPath:   request.SSHPath,
+		SCPPath:   request.SCPPath,
+		Timeout:   request.Timeout,
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Status = guest.Status
+	result.DispatchAllowed = true
+	result.DispatchStarted = true
+	result.ExecutionStarted = guest.Guest.ExecutableCopied && guest.Guest.WineAvailable
+	result.ManagedGuestRunnerInvoked = true
+	result.ManagedGuestReachable = guest.Guest.GuestReachable
+	result.ManagedGuestRuntimeReady = guest.Guest.WineAvailable
+	result.ManagedArtifactCopied = guest.Guest.ExecutableCopied
+	result.MarkerObserved = guest.Guest.MarkerObserved
+	result.SmokePassed = guest.Status == PassedStatus
+	result.ExitCode = guest.Guest.ExitCode
+	result.DurationMillis = guest.Guest.DurationMillis
+	result.PrivilegedContainerRequired = guest.PrivilegedContainerRequired
+	result.HostRootModified = guest.HostRootModified
+	result.HostNetworkingRequired = guest.HostNetworkingRequired
+	result.DockerSocketMounted = guest.DockerSocketMounted
+	result.BroadHostMountRequired = guest.BroadHostMountRequired
+	result.RawHostPathExposed = guest.RawHostPathExposed
+	result.SkipReason = guest.SkipReason
+	result.FailureReason = guest.FailureReason
+	if result.SmokePassed {
+		result.DesktopSafeSummary = guest.DisplayName + " passed the gated Runtime managed guest dispatch smoke."
+	} else {
+		result.DesktopSafeSummary = guest.DisplayName + " did not pass the gated Runtime managed guest dispatch smoke."
+	}
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -612,6 +749,56 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		DockerSocketMounted:    false,
 		BroadHostMountRequired: false,
 		RawHostPathExposed:     false,
+	}
+}
+
+func baseKnownDispatchSmokeResult(dispatchPreview KnownDispatchResult, guestBoundary string) KnownDispatchSmokeResult {
+	return KnownDispatchSmokeResult{
+		SchemaVersion:               KnownDispatchSmokeSchemaVersion,
+		RequestType:                 KnownDispatchSmokeRequestType,
+		Source:                      KnownDispatchRequestType,
+		Status:                      "dispatch-blocked",
+		RequestID:                   dispatchPreview.RequestID,
+		DispatchID:                  dispatchPreview.DispatchID,
+		RuntimeMethod:               dispatchPreview.RuntimeMethod,
+		AppID:                       dispatchPreview.AppID,
+		DisplayName:                 dispatchPreview.DisplayName,
+		AppVersion:                  dispatchPreview.AppVersion,
+		Architecture:                dispatchPreview.Architecture,
+		DispatchGate:                dispatchPreview.DispatchGate,
+		RunnerLane:                  dispatchPreview.RunnerLane,
+		GuestBoundary:               guestBoundary,
+		CacheStatus:                 dispatchPreview.CacheStatus,
+		ArtifactVerified:            dispatchPreview.ArtifactVerified,
+		LaunchRequestCreated:        dispatchPreview.LaunchRequestCreated,
+		DispatchPreviewCreated:      dispatchPreview.DispatchPreviewCreated,
+		DispatchReady:               dispatchPreview.DispatchReady,
+		DispatchAllowed:             false,
+		DispatchStarted:             false,
+		ExecutionStarted:            false,
+		ManagedGuestRunnerInvoked:   false,
+		ManagedGuestReachable:       false,
+		ManagedGuestRuntimeReady:    false,
+		ManagedArtifactCopied:       false,
+		MarkerObserved:              false,
+		SmokePassed:                 false,
+		ExitCode:                    -1,
+		DurationMillis:              0,
+		RuntimeOwnedRequest:         dispatchPreview.RuntimeOwnedRequest,
+		RuntimeOwnedLaunch:          dispatchPreview.RuntimeOwnedLaunch,
+		RuntimeOwnedDispatch:        dispatchPreview.RuntimeOwnedDispatch,
+		KDEPresentationOnly:         dispatchPreview.KDEPresentationOnly,
+		HostRootModified:            dispatchPreview.HostRootModified,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      dispatchPreview.HostNetworkingRequired,
+		DockerSocketMounted:         dispatchPreview.DockerSocketMounted,
+		BroadHostMountRequired:      dispatchPreview.BroadHostMountRequired,
+		RawHostPathExposed:          dispatchPreview.RawHostPathExposed,
+		RawExecutablePathExposed:    dispatchPreview.RawExecutablePathExposed,
+		RawCommandExposed:           dispatchPreview.RawCommandExposed,
+		BackendDetailsExposed:       dispatchPreview.BackendDetailsExposed,
+		DesktopSafeSummary:          dispatchPreview.DesktopSafeSummary,
+		BlockedReason:               dispatchPreview.BlockedReason,
 	}
 }
 
