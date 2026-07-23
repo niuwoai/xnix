@@ -1628,6 +1628,108 @@ func TestCompatibilityCenterPreviewSummarizesRecordedKnownAppLaunchAuthorization
 	}
 }
 
+func TestCompatibilityCenterPreviewSummarizesConsumedKnownAppLaunchGate(t *testing.T) {
+	preview, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                           "7zr",
+			DisplayName:                     "7-Zip Console",
+			AppVersion:                      "26.02",
+			EvidenceSource:                  "staged-launcher-dispatch-smoke",
+			SmokeStatus:                     "passed",
+			LaunchAuthorizationReceiptState: "recorded",
+			LaunchAuthorizationReceiptID:    "known-app-launch-authorization-7zr-26.02",
+			LaunchGateState:                 "controlled-dispatch-ready",
+			LaunchGateConsumed:              true,
+			LaunchGateReceiptAccepted:       true,
+			LaunchGateGuestBoundaryAccepted: true,
+			ControlledDispatchReady:         true,
+			MarkerObserved:                  true,
+			ChecksumVerified:                true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreviewWithOptions returned error: %v", err)
+	}
+	if preview.KnownAppSmokeEvidenceCount != 1 ||
+		preview.KnownAppSmokePassedCount != 1 ||
+		preview.KnownAppStagedLauncherPassedCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRequiredCount != 1 ||
+		preview.KnownAppLaunchAuthorizationRecordedCount != 1 ||
+		preview.KnownAppLaunchGateConsumedCount != 1 ||
+		preview.KnownAppControlledDispatchReadyCount != 1 ||
+		preview.Summary.Headline != "A known Windows application has passed the Runtime launch gate." {
+		t.Fatalf("unexpected launch gate consumed counts: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence[0]
+	if evidence.CenterCardState != "validated-launch-gate-consumed" ||
+		evidence.LaunchAuthorizationState != "recorded" ||
+		evidence.PrimaryActionID != "review-controlled-dispatch" ||
+		evidence.PrimaryActionLabel != "Review controlled dispatch" ||
+		evidence.PrimaryActionKind != "launch-gate-review" ||
+		!evidence.PrimaryActionEnabled ||
+		evidence.DirectLaunchEnabled ||
+		evidence.LaunchGateState != "controlled-dispatch-ready" ||
+		!evidence.LaunchGateConsumed ||
+		!evidence.LaunchGateReceiptAccepted ||
+		!evidence.LaunchGateGuestBoundaryAccepted ||
+		!evidence.ControlledDispatchReady ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected consumed launch gate evidence: %#v", evidence)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center launch gate evidence exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestCompatibilityCenterPreviewRejectsInconsistentLaunchGateReadiness(t *testing.T) {
+	_, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                           "7zr",
+			DisplayName:                     "7-Zip Console",
+			AppVersion:                      "26.02",
+			EvidenceSource:                  "staged-launcher-dispatch-smoke",
+			SmokeStatus:                     "passed",
+			LaunchAuthorizationReceiptState: "recorded",
+			LaunchAuthorizationReceiptID:    "known-app-launch-authorization-7zr-26.02",
+			LaunchGateState:                 "controlled-dispatch-ready",
+			LaunchGateConsumed:              true,
+			LaunchGateReceiptAccepted:       true,
+			MarkerObserved:                  true,
+			ChecksumVerified:                true,
+		}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "controlled dispatch ready state requires controlled dispatch readiness evidence") {
+		t.Fatalf("expected inconsistent launch gate readiness error, got %v", err)
+	}
+}
+
 func TestFileOpenPreviewRequiresPortalAndSelectsByExtension(t *testing.T) {
 	preview, err := NewFileOpenPreview([]Recipe{
 		{

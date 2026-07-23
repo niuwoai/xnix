@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.596
+> Last updated: 2026-07-24 | Current version: v0.2.597
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.597 checkpoint wires the Go-owned launch authorization receipt and launch gate into the real staged 7zr dispatch smoke evidence path. After `scripts/staged_launcher_dispatch_smoke.rb` observes a real `windows-known-app-dispatch-smoke` PASS, it writes a Runtime-managed opaque receipt, consumes it through `known-app-launch-gate-preview`, and feeds the accepted gate result into `compatibility-center-preview`. The Center can now project `center_card_state=validated-launch-gate-consumed`, `primary_action_id=review-controlled-dispatch`, `launch_gate_consumed=true`, `launch_gate_receipt_accepted=true`, `launch_gate_guest_boundary_accepted=true`, `controlled_dispatch_ready=true`, `known_app_launch_gate_consumed_count=1`, and `known_app_controlled_dispatch_ready_count=1` without exposing receipt paths, state-root paths, raw artifact paths, Wine/QEMU details, backend internals, or enabling direct launch, desktop launch, backend launch, backend process start, execution start, Docker socket mounts, broad host mounts, or host-root mutation. v0.2.597 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.600.
 
 The v0.2.596 checkpoint adds the Go-owned receipt-consuming launch gate for the tested 7zr staged launcher lane. `xnix-runtime-go known-app-launch-gate-preview --app 7zr --state-root <path> --receipt-id <opaque-id> --guest-boundary managed-known-app-guest-smoke` reads only the Runtime-managed authorization receipt, rejects missing, malformed, mismatched, or unsafe receipts with fail-closed states, requires the existing managed guest boundary before dispatch readiness can advance, and exposes no receipt path or state-root path. The gate can report `accepted-receipt`, `guest-boundary-missing-fail-closed`, `dispatch-preparation-required`, or `controlled-dispatch-ready` while direct launch, desktop launch, backend launch, backend process start, execution start, raw artifact path exposure, Docker socket mounts, broad host mounts, and host-root mutation remain disabled. v0.2.596 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.600.
 

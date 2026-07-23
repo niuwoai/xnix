@@ -17,6 +17,7 @@ RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom
 RUN_ROOT = WORK_ROOT.join(RUN_ID)
 BUILD_DIR = RUN_ROOT.join("build")
 STAGE_ROOT = RUN_ROOT.join("stage")
+AUTHORIZATION_STATE_ROOT = RUN_ROOT.join("authorization-state")
 KNOWN_APP_CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
@@ -82,6 +83,7 @@ end
 
 FileUtils.mkdir_p(WORK_ROOT)
 FileUtils.mkdir_p(BUILD_DIR)
+FileUtils.mkdir_p(AUTHORIZATION_STATE_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_TMP_ROOT)
@@ -196,6 +198,53 @@ begin
 
   case payload.fetch("status")
   when "passed"
+    receipt_preview, receipt_preview_stdout = run_json(
+      go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-launch-authorization-receipt-preview",
+      "--app", payload.fetch("app_id"),
+      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+      "--authorize", "review-launch-authorization"
+    )
+    assert(receipt_preview["request_type"] == "known-app-launch-authorization-receipt-preview", "launch authorization receipt request type must match")
+    assert(receipt_preview["receipt_written"] == true, "launch authorization receipt must be written")
+    assert(receipt_preview["launch_authorization_recorded"] == true, "launch authorization receipt must be recorded")
+    assert(receipt_preview["receipt_path_exposed"] == false, "launch authorization receipt output must not expose receipt paths")
+    assert(receipt_preview["state_root_path_exposed"] == false, "launch authorization receipt output must not expose the state root path")
+    assert(receipt_preview["direct_launch_enabled"] == false, "launch authorization receipt must not enable direct launch")
+    assert(receipt_preview["desktop_launch_enabled"] == false, "launch authorization receipt must not enable desktop launch")
+    assert(receipt_preview["backend_launch_enabled"] == false, "launch authorization receipt must not enable backend launch")
+    assert(receipt_preview["backend_process_started"] == false, "launch authorization receipt must not start backend processes")
+    assert(receipt_preview["host_root_modified"] == false, "launch authorization receipt must not mutate the host root")
+    assert_no_forbidden(receipt_preview_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "launch authorization receipt output")
+
+    launch_gate, launch_gate_stdout = run_json(
+      go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-launch-gate-preview",
+      "--app", payload.fetch("app_id"),
+      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+      "--receipt-id", receipt_preview.fetch("receipt_id"),
+      "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+      "--guest-boundary", GUEST_BOUNDARY
+    )
+    assert(launch_gate["request_type"] == "known-app-launch-gate-preview", "launch gate request type must match")
+    assert(launch_gate["receipt_lookup_state"] == "accepted-receipt", "launch gate must accept the Runtime authorization receipt")
+    assert(launch_gate["receipt_accepted"] == true, "launch gate must mark the receipt accepted")
+    assert(launch_gate["guest_boundary_accepted"] == true, "launch gate must accept the controlled guest boundary")
+    assert(launch_gate["launch_gate_state"] == "controlled-dispatch-ready", "launch gate must reach controlled dispatch readiness after a real staged dispatch PASS")
+    assert(launch_gate["controlled_dispatch_ready"] == true, "launch gate must report controlled dispatch readiness")
+    assert(launch_gate["dispatch_request_materialized"] == true, "launch gate must materialize the controlled dispatch request")
+    assert(launch_gate["direct_launch_enabled"] == false, "launch gate must not enable direct launch")
+    assert(launch_gate["desktop_launch_enabled"] == false, "launch gate must not enable desktop launch")
+    assert(launch_gate["backend_launch_enabled"] == false, "launch gate must not enable backend launch")
+    assert(launch_gate["backend_process_started"] == false, "launch gate must not start backend processes")
+    assert(launch_gate["execution_started"] == false, "launch gate preview must not start execution")
+    assert(launch_gate["host_root_modified"] == false, "launch gate must not mutate the host root")
+    assert(launch_gate["receipt_path_exposed"] == false, "launch gate output must not expose receipt paths")
+    assert(launch_gate["state_root_path_exposed"] == false, "launch gate output must not expose the state root path")
+    assert_no_forbidden(launch_gate_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "launch gate output")
+
     center_preview_args = [
       "go", "run", "./cmd/xnix-runtime-go",
       "compatibility-center-preview",
@@ -204,23 +253,41 @@ begin
       "--known-app-smoke-name", payload.fetch("display_name"),
       "--known-app-smoke-version", payload.fetch("app_version"),
       "--known-app-smoke-source", "staged-launcher-dispatch-smoke",
-      "--known-app-smoke-status", "passed"
+      "--known-app-smoke-status", "passed",
+      "--known-app-launch-authorization-receipt-state", "recorded",
+      "--known-app-launch-authorization-receipt-id", receipt_preview.fetch("receipt_id"),
+      "--known-app-launch-gate-state", launch_gate.fetch("launch_gate_state")
     ]
     center_preview_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
     center_preview_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
+    center_preview_args << "--known-app-launch-gate-consumed" if launch_gate["receipt_accepted"]
+    center_preview_args << "--known-app-launch-gate-receipt-accepted" if launch_gate["receipt_accepted"]
+    center_preview_args << "--known-app-launch-gate-guest-boundary-accepted" if launch_gate["guest_boundary_accepted"]
+    center_preview_args << "--known-app-controlled-dispatch-ready" if launch_gate["controlled_dispatch_ready"]
+    center_preview_args.concat(["--known-app-launch-gate-blocked-reason", launch_gate["launch_gate_blocked_reason"]]) if launch_gate["launch_gate_blocked_reason"]
     center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
     assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")
     assert(center_preview["known_app_smoke_passed_count"] == 1, "Compatibility Center must count passed known app smoke evidence")
     assert(center_preview["known_app_staged_launcher_passed_count"] == 1, "Compatibility Center must count staged launcher smoke evidence")
     assert(center_preview["known_app_launch_authorization_required_count"] == 1, "Compatibility Center must count launch authorization requirements")
+    assert(center_preview["known_app_launch_authorization_recorded_count"] == 1, "Compatibility Center must count recorded launch authorization receipts")
+    assert(center_preview["known_app_launch_gate_consumed_count"] == 1, "Compatibility Center must count launch gate consumption")
+    assert(center_preview["known_app_controlled_dispatch_ready_count"] == 1, "Compatibility Center must count controlled dispatch readiness")
     center_evidence = center_preview.fetch("known_app_smoke_evidence").first
     assert(center_evidence["evidence_source"] == "staged-launcher-dispatch-smoke", "Compatibility Center evidence must identify the staged launcher source")
-    assert(center_evidence["center_card_state"] == "validated-launch-authorization-required", "Compatibility Center evidence must expose validated authorization-required card state")
-    assert(center_evidence["launch_authorization_state"] == "review-required", "Compatibility Center evidence must expose launch authorization review state")
-    assert(center_evidence["primary_action_id"] == "review-launch-authorization", "Compatibility Center evidence must expose launch authorization review as the primary action")
-    assert(center_evidence["primary_action_kind"] == "authorization-review", "Compatibility Center evidence must expose an authorization review action")
-    assert(center_evidence["primary_action_enabled"] == true, "Compatibility Center evidence must allow the safe authorization review action")
+    assert(center_evidence["center_card_state"] == "validated-launch-gate-consumed", "Compatibility Center evidence must expose launch-gate-consumed card state")
+    assert(center_evidence["launch_authorization_state"] == "recorded", "Compatibility Center evidence must expose recorded launch authorization state")
+    assert(center_evidence["primary_action_id"] == "review-controlled-dispatch", "Compatibility Center evidence must expose controlled dispatch review as the primary action")
+    assert(center_evidence["primary_action_kind"] == "launch-gate-review", "Compatibility Center evidence must expose a launch gate review action")
+    assert(center_evidence["primary_action_enabled"] == true, "Compatibility Center evidence must allow the safe launch gate review action")
     assert(center_evidence["direct_launch_enabled"] == false, "Compatibility Center evidence must not enable direct launch")
+    assert(center_evidence["launch_authorization_receipt_state"] == "recorded", "Compatibility Center evidence must expose recorded receipt state")
+    assert(center_evidence["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "Compatibility Center evidence must expose the opaque receipt id")
+    assert(center_evidence["launch_gate_state"] == "controlled-dispatch-ready", "Compatibility Center evidence must expose controlled dispatch readiness")
+    assert(center_evidence["launch_gate_consumed"] == true, "Compatibility Center evidence must expose launch gate consumption")
+    assert(center_evidence["launch_gate_receipt_accepted"] == true, "Compatibility Center evidence must expose receipt acceptance")
+    assert(center_evidence["launch_gate_guest_boundary_accepted"] == true, "Compatibility Center evidence must expose guest boundary acceptance")
+    assert(center_evidence["controlled_dispatch_ready"] == true, "Compatibility Center evidence must expose controlled dispatch readiness")
     assert(center_evidence["staged_launcher_verified"] == true, "Compatibility Center evidence must verify the staged launcher path")
     assert(center_evidence["runtime_dispatch_verified"] == true, "Compatibility Center evidence must verify Runtime dispatch")
     assert(center_evidence["launch_authorization_required"] == true, "Compatibility Center evidence must keep launch authorization required")

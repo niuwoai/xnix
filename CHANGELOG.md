@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.597] - 2026-07-24
+
+### Added
+
+- Wired `scripts/staged_launcher_dispatch_smoke.rb` to record a Go-owned known-app launch authorization receipt and consume it through `known-app-launch-gate-preview` after a real staged 7zr dispatch PASS.
+- Extended Compatibility Center known-app smoke evidence with launch-gate consumption, receipt acceptance, guest-boundary acceptance, controlled-dispatch readiness, and matching aggregate counts while keeping direct launch, desktop launch, backend launch, backend process start, execution start, receipt path exposure, state-root path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.596] - 2026-07-24
 
 ### Added

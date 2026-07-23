@@ -2335,6 +2335,12 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
+	knownAppLaunchGateConsumed := flags.Bool("known-app-launch-gate-consumed", false, "known Windows app launch gate consumption result")
+	knownAppLaunchGateReceiptAccepted := flags.Bool("known-app-launch-gate-receipt-accepted", false, "known Windows app launch gate receipt acceptance result")
+	knownAppLaunchGateGuestBoundaryAccepted := flags.Bool("known-app-launch-gate-guest-boundary-accepted", false, "known Windows app launch gate guest boundary acceptance result")
+	knownAppControlledDispatchReady := flags.Bool("known-app-controlled-dispatch-ready", false, "known Windows app controlled dispatch readiness result")
+	knownAppLaunchGateBlockedReason := flags.String("known-app-launch-gate-blocked-reason", "", "redacted known Windows app launch gate blocked reason")
 	if err := flags.Parse(args); err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
 	}
@@ -2360,6 +2366,12 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 			SmokeStatus:                     *knownAppSmokeStatus,
 			LaunchAuthorizationReceiptState: *knownAppLaunchAuthorizationReceiptState,
 			LaunchAuthorizationReceiptID:    *knownAppLaunchAuthorizationReceiptID,
+			LaunchGateState:                 *knownAppLaunchGateState,
+			LaunchGateConsumed:              *knownAppLaunchGateConsumed,
+			LaunchGateReceiptAccepted:       *knownAppLaunchGateReceiptAccepted,
+			LaunchGateGuestBoundaryAccepted: *knownAppLaunchGateGuestBoundaryAccepted,
+			ControlledDispatchReady:         *knownAppControlledDispatchReady,
+			LaunchGateBlockedReason:         *knownAppLaunchGateBlockedReason,
 			MarkerObserved:                  *knownAppSmokeMarkerObserved,
 			ChecksumVerified:                *knownAppSmokeChecksumVerified,
 		}}

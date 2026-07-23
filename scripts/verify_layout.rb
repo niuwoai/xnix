@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.596"
+EXPECTED_VERSION = "0.2.597"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6445,10 +6445,10 @@ end
 end
 
 staged_launcher_dispatch_smoke_source = read_project_file("scripts/staged_launcher_dispatch_smoke.rb")
-%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke compatibility-center-preview known_app_staged_launcher_passed_count known_app_launch_authorization_required_count validated-launch-authorization-required review-launch-authorization direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required desktop_launch_enabled Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
+%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke known-app-launch-authorization-receipt-preview known-app-launch-gate-preview compatibility-center-preview known_app_staged_launcher_passed_count known_app_launch_authorization_required_count known_app_launch_authorization_recorded_count known_app_launch_gate_consumed_count known_app_controlled_dispatch_ready_count validated-launch-gate-consumed review-launch-authorization review-controlled-dispatch direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required launch_authorization_receipt_state launch_authorization_receipt_id launch_gate_state launch_gate_consumed launch_gate_receipt_accepted launch_gate_guest_boundary_accepted controlled_dispatch_ready desktop_launch_enabled Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token.gsub("\\ ", " ")), "Staged launcher dispatch smoke must include #{token}")
 end
-%w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required].each do |field|
+%w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required receipt_path_exposed state_root_path_exposed dispatch_request_materialized].each do |field|
   assert(staged_launcher_dispatch_smoke_source.include?(field), "Staged launcher dispatch smoke must validate #{field}")
 end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
@@ -6457,8 +6457,9 @@ assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_disp
 go_compatibility_center_source = read_project_file("internal/runtime/appidentity/identity.go") +
                                  read_project_file("internal/runtime/appidentity/identity_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/main.go") +
+                                 read_project_file("cmd/xnix-runtime-go/compatibility_center_known_app_receipt_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/desktop_activation_cli_test.go")
-%w[KnownAppStagedLauncherPassedCount KnownAppLaunchAuthorizationRequiredCount EvidenceSource CenterCardState LaunchAuthorizationState PrimaryActionID PrimaryActionKind DirectLaunchEnabled StagedLauncherVerified RuntimeDispatchVerified LaunchAuthorizationRequired DesktopLaunchEnabled --known-app-smoke-source staged-launcher-dispatch-smoke known_app_staged_launcher_passed_count known_app_launch_authorization_required_count evidence_source center_card_state validated-launch-authorization-required launch_authorization_state review-required primary_action_id review-launch-authorization primary_action_kind authorization-review direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required desktop_launch_enabled].each do |token|
+%w[KnownAppStagedLauncherPassedCount KnownAppLaunchAuthorizationRequiredCount KnownAppLaunchAuthorizationRecordedCount KnownAppLaunchGateConsumedCount KnownAppControlledDispatchReadyCount EvidenceSource CenterCardState LaunchAuthorizationState LaunchAuthorizationReceiptState LaunchAuthorizationReceiptID LaunchGateState LaunchGateConsumed LaunchGateReceiptAccepted LaunchGateGuestBoundaryAccepted ControlledDispatchReady PrimaryActionID PrimaryActionKind DirectLaunchEnabled StagedLauncherVerified RuntimeDispatchVerified LaunchAuthorizationRequired DesktopLaunchEnabled --known-app-smoke-source --known-app-launch-authorization-receipt-state --known-app-launch-authorization-receipt-id --known-app-launch-gate-state --known-app-launch-gate-consumed --known-app-launch-gate-receipt-accepted --known-app-launch-gate-guest-boundary-accepted --known-app-controlled-dispatch-ready staged-launcher-dispatch-smoke known_app_staged_launcher_passed_count known_app_launch_authorization_required_count known_app_launch_authorization_recorded_count known_app_launch_gate_consumed_count known_app_controlled_dispatch_ready_count evidence_source center_card_state validated-launch-authorization-required validated-launch-authorization-recorded validated-launch-gate-consumed launch_authorization_state review-required recorded primary_action_id review-launch-authorization review-controlled-dispatch primary_action_kind authorization-review launch-gate-review direct_launch_enabled staged_launcher_verified runtime_dispatch_verified launch_authorization_required launch_authorization_receipt_state launch_authorization_receipt_id launch_gate_state launch_gate_consumed launch_gate_receipt_accepted launch_gate_guest_boundary_accepted controlled_dispatch_ready desktop_launch_enabled].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Compatibility Center known app evidence must include #{token}")
 end
 

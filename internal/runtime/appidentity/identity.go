@@ -788,6 +788,8 @@ type CompatibilityCenterPreview struct {
 	KnownAppStagedLauncherPassedCount        int                            `json:"known_app_staged_launcher_passed_count"`
 	KnownAppLaunchAuthorizationRequiredCount int                            `json:"known_app_launch_authorization_required_count"`
 	KnownAppLaunchAuthorizationRecordedCount int                            `json:"known_app_launch_authorization_recorded_count"`
+	KnownAppLaunchGateConsumedCount          int                            `json:"known_app_launch_gate_consumed_count"`
+	KnownAppControlledDispatchReadyCount     int                            `json:"known_app_controlled_dispatch_ready_count"`
 	Applications                             []CompatibilityCenterApp       `json:"applications"`
 	KnownAppSmokeEvidence                    []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
 	ActionExecutionEnabled                   bool                           `json:"action_execution_enabled"`
@@ -845,6 +847,11 @@ type KnownAppSmokeEvidenceSummary struct {
 	LaunchAuthorizationReceiptState    string `json:"launch_authorization_receipt_state"`
 	LaunchAuthorizationReceiptID       string `json:"launch_authorization_receipt_id"`
 	LaunchGateState                    string `json:"launch_gate_state"`
+	LaunchGateConsumed                 bool   `json:"launch_gate_consumed"`
+	LaunchGateReceiptAccepted          bool   `json:"launch_gate_receipt_accepted"`
+	LaunchGateGuestBoundaryAccepted    bool   `json:"launch_gate_guest_boundary_accepted"`
+	LaunchGateBlockedReason            string `json:"launch_gate_blocked_reason,omitempty"`
+	ControlledDispatchReady            bool   `json:"controlled_dispatch_ready"`
 	MarkerObserved                     bool   `json:"marker_observed"`
 	ChecksumVerified                   bool   `json:"checksum_verified"`
 	ExecutionEvidenceRecorded          bool   `json:"execution_evidence_recorded"`
@@ -2536,6 +2543,8 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 		KnownAppStagedLauncherPassedCount:        countStagedLauncherKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppLaunchAuthorizationRequiredCount: countLaunchAuthorizationRequiredKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppLaunchAuthorizationRecordedCount: countLaunchAuthorizationRecordedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppLaunchGateConsumedCount:          countLaunchGateConsumedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppControlledDispatchReadyCount:     countControlledDispatchReadyKnownAppSmokeEvidence(knownAppEvidence),
 		KnownAppSmokeEvidence:                    knownAppEvidence,
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
@@ -2565,6 +2574,10 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 	if preview.KnownAppLaunchAuthorizationRecordedCount > 0 {
 		preview.Summary.Headline = "A known Windows application has a recorded Runtime launch authorization receipt."
 		preview.Summary.Detail = "KDE can show the recorded authorization state, while actual launch remains controlled by the Runtime launch gate."
+	}
+	if preview.KnownAppLaunchGateConsumedCount > 0 {
+		preview.Summary.Headline = "A known Windows application has passed the Runtime launch gate."
+		preview.Summary.Detail = "KDE can show the launch-gate result, while dispatch and backend launch remain Runtime-controlled."
 	}
 	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
 		return CompatibilityCenterPreview{}, err
@@ -2668,6 +2681,21 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		receiptID = KnownAppLaunchAuthorizationReceiptID(appID, appVersion)
 	}
 	launchGateState := "receipt-missing-fail-closed"
+	if strings.TrimSpace(item.LaunchGateState) != "" {
+		launchGateState = strings.TrimSpace(item.LaunchGateState)
+	}
+	switch launchGateState {
+	case "receipt-missing-fail-closed", "receipt-recorded-launch-still-gated", "guest-boundary-missing-fail-closed", "dispatch-preparation-required", "controlled-dispatch-ready", "missing-receipt-fail-closed", "malformed-receipt-fail-closed", "rejected-receipt-fail-closed":
+	default:
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app launch gate state %q is not supported", launchGateState)
+	}
+	launchGateBlockedReason := strings.TrimSpace(item.LaunchGateBlockedReason)
+	if item.ControlledDispatchReady && (!item.LaunchGateConsumed || !item.LaunchGateReceiptAccepted || !item.LaunchGateGuestBoundaryAccepted) {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app controlled dispatch readiness requires consumed receipt, accepted receipt, and accepted guest boundary")
+	}
+	if launchGateState == "controlled-dispatch-ready" && !item.ControlledDispatchReady {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app controlled dispatch ready state requires controlled dispatch readiness evidence")
+	}
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
 	stagedLauncherVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
@@ -2691,8 +2719,22 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		primaryActionID = "run-through-launch-gate"
 		primaryActionLabel = "Run through launch gate"
 		primaryActionKind = "launch-gate-review"
-		launchGateState = "receipt-recorded-launch-still-gated"
+		if strings.TrimSpace(item.LaunchGateState) == "" {
+			launchGateState = "receipt-recorded-launch-still-gated"
+		}
 		summary = displayName + " has a recorded Runtime launch authorization receipt; launch remains gate-controlled."
+	}
+	if stagedLauncherVerified && receiptState == "recorded" && item.LaunchGateConsumed && item.LaunchGateReceiptAccepted {
+		centerCardState = "validated-launch-gate-consumed"
+		launchAuthorizationState = "recorded"
+		primaryActionID = "review-controlled-dispatch"
+		primaryActionLabel = "Review controlled dispatch"
+		primaryActionKind = "launch-gate-review"
+		summary = displayName + " launch authorization receipt was consumed by the Runtime launch gate."
+		if item.ControlledDispatchReady {
+			launchGateState = "controlled-dispatch-ready"
+			summary = displayName + " launch gate accepted the receipt and controlled boundary; dispatch remains Runtime-controlled."
+		}
 	}
 
 	return KnownAppSmokeEvidenceSummary{
@@ -2714,6 +2756,11 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		LaunchAuthorizationReceiptState:    receiptState,
 		LaunchAuthorizationReceiptID:       receiptID,
 		LaunchGateState:                    launchGateState,
+		LaunchGateConsumed:                 item.LaunchGateConsumed,
+		LaunchGateReceiptAccepted:          item.LaunchGateReceiptAccepted,
+		LaunchGateGuestBoundaryAccepted:    item.LaunchGateGuestBoundaryAccepted,
+		LaunchGateBlockedReason:            launchGateBlockedReason,
+		ControlledDispatchReady:            item.ControlledDispatchReady,
 		MarkerObserved:                     item.MarkerObserved,
 		ChecksumVerified:                   item.ChecksumVerified,
 		ExecutionEvidenceRecorded:          true,
@@ -2766,6 +2813,26 @@ func countLaunchAuthorizationRecordedKnownAppSmokeEvidence(items []KnownAppSmoke
 	count := 0
 	for _, item := range items {
 		if item.LaunchAuthorizationReceiptState == "recorded" {
+			count++
+		}
+	}
+	return count
+}
+
+func countLaunchGateConsumedKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.LaunchGateConsumed {
+			count++
+		}
+	}
+	return count
+}
+
+func countControlledDispatchReadyKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.ControlledDispatchReady {
 			count++
 		}
 	}
