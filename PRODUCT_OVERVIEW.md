@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.625
+> Last updated: 2026-07-24 | Current version: v0.2.626
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.626 checkpoint routes the staged 7zr Runtime-status launch smoke through the Go Runtime Owner service boundary. After the first real staged `xnix-compat-launch` pass records Runtime-status launch evidence, the second trigger-fed launch now calls `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>` instead of bypassing the owner service through the Runtime CLI action. The smoke verifies the `runtime-owner-service-call` envelope, `desktop-action-dispatch`, `ShowRuntimeControlledLaunch`, `kde-dbus-runtime-status-action`, Runtime-owned service flags, owner-supplied inputs, delegated receipt/session fields, and the same redacted Compatibility Center projection while keeping state-root paths, staged launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.626 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.625 checkpoint moves the desktop-callable Runtime-status launch action behind the Go Runtime Owner service boundary. `ShowRuntimeControlledLaunch` is now an owner service method with `desktop-action-dispatch` call evidence, so a future KDE D-Bus action can forward only an opaque evidence id or safe relative evidence path and receive the same redacted `show-runtime-controlled-launch` result while the owner service supplies state root, cache root, launcher, and timeout inputs from `XNIX_RUNTIME_OWNER_*`. Targeted owner service and CLI tests verify the service boundary, delegated receipt/session fields, Compatibility Center projection, launcher argv handoff, and disabled host-root mutation, Docker socket mount, broad host mount, raw command exposure, and backend-detail exposure gates. v0.2.625 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

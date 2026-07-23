@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.626] - 2026-07-24
+
+### Changed
+
+- Routed the staged launcher dispatch smoke's trigger-fed Runtime-status launch through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch`, so the real staged `xnix-compat-launch` lane exercises the owner service boundary when QEMU/Wine prerequisites are available.
+- Extended staged launcher smoke assertions to verify the `runtime-owner-service-call` envelope, `desktop-action-dispatch`, owner-supplied inputs, delegated receipt/session fields, and `kde-dbus-runtime-status-action` route.
+
 ## [0.2.625] - 2026-07-24
 
 ### Added

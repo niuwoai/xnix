@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.625`.
+The project is currently at `v0.2.626`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.625`.
 
 ## Current Checkpoint
 
-v0.2.625 moves the desktop-callable launch action behind the Go Runtime Owner service boundary. `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>` now lets the desktop/DBus layer forward only a Runtime-status evidence handoff while the owner service supplies state root, cache root, launcher, and timeout configuration before returning the same redacted Runtime-controlled launch result.
+v0.2.626 routes the staged 7zr Runtime-status launch smoke through the Go Runtime Owner service boundary. When QEMU/Wine prerequisites are available, the second trigger-fed launch now calls `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>`, so the real staged `xnix-compat-launch` artifact is exercised through the same owner-service envelope a KDE D-Bus action will use.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 

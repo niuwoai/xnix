@@ -745,9 +745,11 @@ begin
   )
   trigger_launcher_stdout, trigger_launcher_stderr, trigger_launcher_status = run_command(
     runtime_owner_env,
-    "go", "run", "./cmd/xnix-runtime-go",
-    "show-runtime-controlled-launch",
-    "--evidence-relative-path", evidence_record.fetch("evidence_relative_path")
+    "go", "run", "./cmd/xnix-runtime-owner",
+    "--root", ".",
+    "--mode", "smoke-owner",
+    "--service-call", "ShowRuntimeControlledLaunch",
+    "evidence-relative-path", evidence_record.fetch("evidence_relative_path")
   )
   unless trigger_launcher_status.zero?
     warn "QEMU serial log: #{SERIAL_LOG_PATH}"
@@ -756,10 +758,33 @@ begin
     warn "FAIL: #{SMOKE_NAME} trigger-fed command failed"
     exit 1
   end
-  trigger_runtime_execution = JSON.parse(trigger_launcher_stdout)
+  trigger_owner_service_call = JSON.parse(trigger_launcher_stdout)
+  assert(trigger_owner_service_call["request_type"] == "runtime-owner-service-call", "trigger-fed Runtime owner launch must use the owner service call envelope")
+  assert(trigger_owner_service_call["service_type"] == "go-runtime-owner-in-process-service", "trigger-fed Runtime owner launch must use the Go owner service boundary")
+  assert(trigger_owner_service_call["method"] == "ShowRuntimeControlledLaunch", "trigger-fed Runtime owner launch must call ShowRuntimeControlledLaunch")
+  assert(trigger_owner_service_call["call_type"] == "desktop-action-dispatch", "trigger-fed Runtime owner launch must expose desktop action dispatch")
+  assert(trigger_owner_service_call["read_only_dispatch"] == false, "trigger-fed Runtime owner launch must not pretend to be a read-only dispatch")
+  assert(trigger_owner_service_call["write_method"] == true, "trigger-fed Runtime owner launch must be guarded as a write-like desktop action")
+  assert(trigger_owner_service_call["write_methods_enabled"] == false, "trigger-fed Runtime owner launch must keep generic write methods disabled")
+  assert(trigger_owner_service_call["dispatch_ready"] == true, "trigger-fed Runtime owner launch must report dispatch readiness after delegated pass")
+  assert(trigger_owner_service_call["runtime_owned"] == true, "trigger-fed Runtime owner launch must stay Runtime-owned")
+  assert(trigger_owner_service_call["go_runtime_backed"] == true, "trigger-fed Runtime owner launch must stay Go Runtime backed")
+  assert(trigger_owner_service_call["kde_policy_owner"] == false, "trigger-fed Runtime owner launch must not make KDE the policy owner")
+  assert(trigger_owner_service_call["production_bus_claimed"] == false, "trigger-fed Runtime owner launch must not claim the production bus")
+  assert(trigger_owner_service_call["network_required"] == false, "trigger-fed Runtime owner launch service envelope must not require host networking")
+  assert(trigger_owner_service_call["host_root_modified"] == false, "trigger-fed Runtime owner launch service envelope must not mutate host root")
+  assert(trigger_owner_service_call["backend_details_exposed"] == false, "trigger-fed Runtime owner launch service envelope must not expose backend details")
+  trigger_runtime_execution = trigger_owner_service_call.fetch("payload")
+  assert(trigger_runtime_execution["owner_request_type"] == "runtime-owner-show-runtime-controlled-launch", "trigger-fed Runtime owner launch must return the owner action result")
+  assert(trigger_runtime_execution["owner_runtime_method"] == "ShowRuntimeControlledLaunch", "trigger-fed Runtime owner launch must preserve the owner Runtime method")
+  assert(trigger_runtime_execution["owner_service_boundary"] == "go-runtime-owner-in-process-service", "trigger-fed Runtime owner launch action must stay inside the owner service boundary")
+  assert(trigger_runtime_execution["runtime_owner_service_action_dispatch"] == true, "trigger-fed Runtime owner launch must report service action dispatch")
+  assert(trigger_runtime_execution["runtime_owner_service_call_ready"] == true, "trigger-fed Runtime owner launch must report service-call readiness")
+  assert(trigger_runtime_execution["runtime_owner_service_supplies_owner_inputs"] == true, "trigger-fed Runtime owner launch must prove owner-only inputs came from the service")
+  assert(trigger_runtime_execution["kde_forwards_only_evidence_handle"] == true, "trigger-fed Runtime owner launch must prove KDE forwards only evidence handles")
   assert(trigger_runtime_execution["desktop_callable_action_id"] == "show-runtime-controlled-launch", "trigger-fed Runtime status launch execution must be callable through the KDE desktop action")
-  assert(trigger_runtime_execution["desktop_callable_route"] == "kde-desktop-runtime-status-action", "trigger-fed Runtime status launch execution must expose the desktop-callable route")
-  assert(trigger_runtime_execution["desktop_callable_runtime_method"] == "RunKnownAppKDERuntimeStatusLaunchExecution", "trigger-fed Runtime status launch execution must route to the Runtime execution method")
+  assert(trigger_runtime_execution["desktop_callable_route"] == "kde-dbus-runtime-status-action", "trigger-fed Runtime status launch execution must expose the D-Bus-callable owner route")
+  assert(trigger_runtime_execution["desktop_callable_runtime_method"] == "ShowRuntimeControlledLaunch", "trigger-fed Runtime status launch execution must route through the owner service method")
   assert(trigger_runtime_execution["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "trigger-fed Runtime status launch execution must preserve the Runtime execution type")
   assert(trigger_runtime_execution["desktop_evidence_handle_forwarded"] == true, "trigger-fed Runtime status launch execution must forward only the evidence handoff")
   assert(trigger_runtime_execution["desktop_receipt_fields_reconstructed"] == false, "trigger-fed Runtime status launch execution must not reconstruct receipt or session fields in KDE")
