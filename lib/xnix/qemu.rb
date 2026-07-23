@@ -3,20 +3,43 @@
 module Xnix
   class Qemu
     MEMORY = "512M"
+    WINE_MEMORY = "1024M"
     CPU_COUNT = "1"
+    WINE_CPU_COUNT = "2"
+    BINARY = "qemu-system-x86_64"
+    WINE_BINARY = "qemu-system-i386"
     KERNEL_IMAGE = "/workspace/.cache/xnix-output/images/bzImage"
+    WINE_KERNEL_IMAGE = "/workspace/.cache/xnix-wine-i386-output/images/bzImage"
+
+    attr_reader :binary, :kernel_image, :memory, :cpu_count
+
+    def self.wine_guest
+      new(
+        binary: WINE_BINARY,
+        kernel_image: WINE_KERNEL_IMAGE,
+        memory: WINE_MEMORY,
+        cpu_count: WINE_CPU_COUNT
+      )
+    end
+
+    def initialize(binary: BINARY, kernel_image: KERNEL_IMAGE, memory: MEMORY, cpu_count: CPU_COUNT)
+      @binary = binary
+      @kernel_image = kernel_image
+      @memory = memory
+      @cpu_count = cpu_count
+    end
 
     def boot_command(ssh: false)
       [
-        "qemu-system-x86_64",
+        binary,
         "-machine", "q35,accel=tcg",
         "-cpu", "max",
-        "-m", MEMORY,
-        "-smp", CPU_COUNT,
+        "-m", memory,
+        "-smp", cpu_count,
         "-nographic",
         "-serial", "mon:stdio",
         "-no-reboot",
-        "-kernel", KERNEL_IMAGE,
+        "-kernel", kernel_image,
         "-append", "console=ttyS0,115200 panic=-1",
         "-netdev", network_definition(ssh),
         "-device", "e1000,netdev=net0"

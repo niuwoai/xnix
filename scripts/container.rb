@@ -30,6 +30,7 @@ abort "Xnix commands require the Colima Docker context. Run `docker context use 
 
 container = Xnix::Container.new(project_root: PROJECT_ROOT.to_s, version: VERSION, docker_bin: DOCKER_BIN)
 buildroot = Xnix::Buildroot.new
+wine_buildroot = Xnix::Buildroot.new(profile: :wine_i386)
 qemu = Xnix::Qemu.new
 
 case ARGV.shift
@@ -63,10 +64,18 @@ when "configure-system"
   abort "Usage: ruby scripts/container.rb configure-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.configure_command))
+when "configure-wine-guest"
+  abort "Usage: ruby scripts/container.rb configure-wine-guest" unless ARGV.empty?
+
+  exec(*container.cache_run_command(wine_buildroot.configure_command))
 when "build-system"
   abort "Usage: ruby scripts/container.rb build-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command))
+when "build-wine-guest"
+  abort "Usage: ruby scripts/container.rb build-wine-guest" unless ARGV.empty?
+
+  exec(*container.cache_run_command(wine_buildroot.build_command))
 when "prepare-ssh-test-key"
   abort "Usage: ruby scripts/container.rb prepare-ssh-test-key" unless ARGV.empty?
 
@@ -75,6 +84,10 @@ when "build-ssh-test-system"
   abort "Usage: ruby scripts/container.rb build-ssh-test-system" unless ARGV.empty?
 
   exec(*container.cache_run_command(buildroot.build_command(ssh_test_key: true)))
+when "build-ssh-wine-guest"
+  abort "Usage: ruby scripts/container.rb build-ssh-wine-guest" unless ARGV.empty?
+
+  exec(*container.cache_run_command(wine_buildroot.build_command(ssh_test_key: true)))
 when "ssh-smoke"
   abort "Usage: ruby scripts/container.rb ssh-smoke" unless ARGV.empty?
 
@@ -97,5 +110,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-wine-guest|configure-system|configure-wine-guest|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
 end

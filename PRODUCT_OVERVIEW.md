@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.569
+> Last updated: 2026-07-23 | Current version: v0.2.570
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.570 checkpoint adds the first isolated Wine-capable QEMU guest profile instead of inflating the default tiny x86_64 SSH image. `buildroot/configs/xnix_wine_i386_defconfig` targets i386 with glibc, OpenSSH, and the Buildroot Wine package because the upstream Buildroot Wine path is aligned with i386 Windows application execution. `scripts/container.rb` now exposes `configure-wine-guest`, `build-wine-guest`, and `build-ssh-wine-guest`, while `Xnix::Qemu.wine_guest` boots the dedicated Wine guest kernel with loopback-only SSH. `scripts/winapp_guest_wine_smoke.rb` now builds a 32-bit Windows PE fixture and safely reports `SKIP` until the Wine guest image is built. This still does not prove a real Windows app `PASS`; it narrows the next concrete step to building the Wine guest and resolving any Buildroot Wine package issues.
 
 The v0.2.569 checkpoint moves the real Windows application smoke path from the Colima-hosted Wine container toward the product-relevant Linux/QEMU guest baseline. `xnix-runtime-go windows-app-guest-wine-smoke` copies the real Windows PE fixture into a loopback SSH guest, checks guest-side Wine availability, runs the executable inside the guest, captures the `XNIX_WINAPP_SMOKE_OK` marker, and returns redacted JSON without exposing host paths. `scripts/winapp_guest_wine_smoke.rb` boots the existing SSH-enabled QEMU image and invokes the Go Runtime command, keeping Ruby as test harness rather than product logic. Current guest images are still expected to report `SKIP` when Wine is absent; the next implementation step is to add a Wine-capable Linux guest baseline so this same command produces a real `PASS`. v0.2.569 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint remains v0.2.580 unless explicitly requested earlier.
 

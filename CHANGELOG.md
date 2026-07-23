@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.570] - 2026-07-23
+
+### Added
+
+- Added an isolated Buildroot `xnix_wine_i386_defconfig` for the first Wine-capable QEMU guest baseline, with an i386 target, glibc toolchain, OpenSSH server, and Buildroot Wine package enabled separately from the default x86_64 SSH guest.
+- Added Wine guest build commands in `scripts/container.rb` (`configure-wine-guest`, `build-wine-guest`, and `build-ssh-wine-guest`) so the heavier Wine image path is explicit and does not bloat the normal tiny QEMU smoke baseline.
+- Added a dedicated i386 QEMU helper profile and updated the QEMU guest Wine smoke harness to build a 32-bit Windows PE fixture and boot the Wine guest kernel, while safely reporting `SKIP` until the Wine guest image exists.
+
 ## [0.2.569] - 2026-07-23
 
 ### Added

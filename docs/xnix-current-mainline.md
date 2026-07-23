@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.569
+> Last updated: 2026-07-23 | Baseline: v0.2.570
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -43,6 +43,8 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 The next Codex-owned mainline task is:
 
 Make the new `windows-app-guest-wine-smoke` path produce `PASS` by giving the loopback SSH QEMU guest a Wine-capable Linux baseline. Do not add more compatibility contracts until the real Windows PE fixture runs inside the guest and emits `XNIX_WINAPP_SMOKE_OK`; the follow-up should turn the fixture smoke green first, then replace the fixture with a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.570 checkpoint adds the dedicated Wine guest build lane that should be used for the next concrete unblocker. The default x86_64 Buildroot SSH guest remains small and unchanged; the new `xnix_wine_i386_defconfig` uses an i386 target, glibc, OpenSSH, and Buildroot Wine in an isolated `/workspace/.cache/xnix-wine-i386-output` tree. `scripts/container.rb configure-wine-guest`, `build-wine-guest`, and `build-ssh-wine-guest` now prepare that heavier image explicitly. `Xnix::Qemu.wine_guest` boots the Wine guest kernel with loopback-only SSH, and `scripts/winapp_guest_wine_smoke.rb` now builds a 32-bit Windows PE fixture before invoking the Go-owned Runtime smoke. The next task is to run the Wine guest build path and make the smoke produce a real `PASS`, fixing concrete Buildroot Wine failures rather than adding new preview contracts.
 
 The v0.2.569 checkpoint adds the Go-owned QEMU guest execution path. `xnix-runtime-go windows-app-guest-wine-smoke` copies the real Windows PE fixture into the loopback SSH guest, checks for guest-side Wine, runs Wine in the guest, captures the smoke marker, and keeps host paths redacted. `scripts/winapp_guest_wine_smoke.rb` is only the Ruby harness that boots QEMU and invokes the Runtime command. Current Buildroot guest images are expected to report `SKIP` when Wine is unavailable, so the next real unblocker is a Wine-capable Linux guest baseline.
 

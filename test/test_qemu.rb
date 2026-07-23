@@ -25,4 +25,13 @@ ssh_network = ssh_command.fetch(ssh_command.index("-netdev") + 1)
 assert(ssh_network.include?("hostfwd=tcp:127.0.0.1:2222-:22"), "SSH forwarding must bind only the loopback address")
 assert(!ssh_network.include?("0.0.0.0"), "SSH forwarding must never bind all interfaces")
 
+wine_command = Xnix::Qemu.wine_guest.boot_command(ssh: true)
+wine_network = wine_command.fetch(wine_command.index("-netdev") + 1)
+assert(wine_command.first == "qemu-system-i386", "Wine guest QEMU command must use i386 system emulation")
+assert(wine_command.fetch(wine_command.index("-kernel") + 1) == Xnix::Qemu::WINE_KERNEL_IMAGE, "Wine guest QEMU command must boot the Wine kernel")
+assert(wine_command.fetch(wine_command.index("-m") + 1) == Xnix::Qemu::WINE_MEMORY, "Wine guest QEMU command must use the Wine memory limit")
+assert(wine_command.fetch(wine_command.index("-smp") + 1) == Xnix::Qemu::WINE_CPU_COUNT, "Wine guest QEMU command must use the Wine CPU limit")
+assert(wine_network.include?("hostfwd=tcp:127.0.0.1:2222-:22"), "Wine guest SSH forwarding must bind only the loopback address")
+assert(!wine_network.include?("0.0.0.0"), "Wine guest SSH forwarding must never bind all interfaces")
+
 puts "PASS: QEMU command unit tests"

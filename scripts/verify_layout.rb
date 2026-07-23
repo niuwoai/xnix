@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.569"
+EXPECTED_VERSION = "0.2.570"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -40,6 +40,7 @@ REQUIRED_FILES = %w[
   buildroot/external.mk
   buildroot/sources.lock
   buildroot/configs/xnix_x86_64_defconfig
+  buildroot/configs/xnix_wine_i386_defconfig
   buildroot/board/xnix/rootfs-overlay/etc/ssh/sshd_config
   buildroot/board/xnix/post-build.sh
   lib/xnix/container.rb
@@ -805,7 +806,7 @@ windows_app_guest_smoke_cli_test = read_project_file("cmd/xnix-runtime-go/window
   assert(windows_app_guest_smoke_cli_test.include?(token), "Windows app guest Wine smoke CLI test must include #{token}")
 end
 windows_app_guest_smoke_script = read_project_file("scripts/winapp_guest_wine_smoke.rb")
-%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-guest-wine-smoke Xnix::Qemu Xnix::SshProbe Xnix::SshTestKey SKIP PASS .local XNIX_WINAPP_SMOKE_OK].each do |token|
+%w[GOOS GOARCH 386 GOCACHE GOMODCACHE windows-app-guest-wine-smoke Xnix::Qemu.wine_guest Xnix::SshProbe Xnix::SshTestKey build-ssh-wine-guest configure-wine-guest SKIP PASS .local XNIX_WINAPP_SMOKE_OK].each do |token|
   assert(windows_app_guest_smoke_script.include?(token), "Windows app guest Wine smoke script must include #{token}")
 end
 wine_smoke_dockerfile = read_project_file("containers/wine-smoke.Dockerfile")
@@ -824,6 +825,20 @@ assert(source_lock.match?(/^buildroot.sha256=[0-9a-f]{64}$/), "source lock must 
 config = read_project_file("buildroot/configs/xnix_x86_64_defconfig")
 REQUIRED_CONFIG_LINES.each do |line|
   assert(config.include?(line), "defconfig must include #{line}")
+end
+wine_guest_config = read_project_file("buildroot/configs/xnix_wine_i386_defconfig")
+%w[BR2_i386=y BR2_TOOLCHAIN_BUILDROOT_GLIBC=y BR2_LINUX_KERNEL_DEFCONFIG="i386" BR2_PACKAGE_OPENSSH_SERVER=y BR2_PACKAGE_WINE=y].each do |line|
+  assert(wine_guest_config.include?(line), "Wine guest defconfig must include #{line}")
+end
+
+buildroot_helper = read_project_file("lib/xnix/buildroot.rb")
+%w[WINE_OUTPUT_DIRECTORY WINE_DEFCONFIG wine_i386 xnix_wine_i386_defconfig xnix-wine-i386-output].each do |token|
+  assert(buildroot_helper.include?(token), "Buildroot helper must include Wine guest profile token #{token}")
+end
+
+qemu_helper = read_project_file("lib/xnix/qemu.rb")
+%w[WINE_KERNEL_IMAGE WINE_MEMORY WINE_CPU_COUNT WINE_BINARY wine_guest qemu-system-i386 xnix-wine-i386-output].each do |token|
+  assert(qemu_helper.include?(token), "QEMU helper must include Wine guest token #{token}")
 end
 
 dockerfile = read_project_file("Dockerfile")
@@ -3573,7 +3588,7 @@ end
   storage-record-writer-call-authorization-receipt-accepted-receipt-gate-call-authorization-receipt-accepted-receipt-gate-call-receipt-consumer-enablement-receipt-storage-record-writer-call-gate-
   install-failure
 ].each do |token|
-  assert(go_runtime_storage_record_writer_deep_call_gate_source.include?(token), "Go Runtime production receipt notification action dry-run result lookup consumer enablement receipt storage record writer call gate must include v0.2.569 enablement evidence #{token}")
+  assert(go_runtime_storage_record_writer_deep_call_gate_source.include?(token), "Go Runtime production receipt notification action dry-run result lookup consumer enablement receipt storage record writer call gate must include v0.2.570 enablement evidence #{token}")
 end
 %w[receipt_consumer_enablement_receipt_storage_record_writer_call_gate_callable receipt_consumer_enablement_receipt_storage_record_writer_call_gate_enabled receipt_consumer_enablement_receipt_storage_record_writer_call_gate_granted receipt_consumer_enablement_receipt_storage_record_writer_call_gate_accepted receipt_consumer_enablement_receipt_storage_record_writer_enablement_callable receipt_consumer_enablement_receipt_storage_record_writer_enablement_enabled receipt_consumer_enablement_receipt_storage_record_writer_enablement_granted receipt_consumer_enablement_receipt_storage_record_writer_enablement_accepted receipt_consumer_enablement_receipt_storage_record_writer_grant_callable receipt_consumer_enablement_receipt_storage_record_writer_grant_granted receipt_consumer_enablement_receipt_storage_record_writer_grant_accepted receipt_consumer_enablement_receipt_storage_record_writer_authorization_receipt_accepted receipt_consumer_enablement_receipt_storage_record_written receipt_consumer_enablement_receipt_storage_persistence_gate_passed receipt_consumer_enablement_receipt_storage_persisted receipt_consumer_enablement_receipt_persisted receipt_consumer_enablement_receipt_present receipt_consumer_enablement_receipt_write_enabled receipt_consumer_enablement_enabled consumer_enabled kde_consumer_enabled runtime_consumer_enabled receipt_consumption_enabled receipt_consumed receipt_acceptance_enabled receipt_accepted receipt_write_enabled result_visibility_persistence_enabled dry_run_result_persistence_enabled dispatch_dry_run_execution_enabled request_object_creation_enabled request_object_dispatch_enabled notification_action_enabled notification_sent user_visible storage_write_enabled production_ownership_ready production_bus_claimed write_methods_enabled runtime_writes_enabled backend_launch_enabled host_root_modified state_root_path_exposed file_paths_exposed file_content_read notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_storage_record_writer_call_gate_item_count ready_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_storage_record_writer_call_gate_item_count side_effect_notification_action_request_dispatch_dry_run_result_persistence_receipt_consumer_enablement_receipt_storage_record_writer_call_authorization_receipt_accepted_receipt_gate_call_authorization_receipt_accepted_receipt_gate_call_receipt_consumer_enablement_receipt_storage_record_writer_call_gate_item_count].each do |token|
   assert(go_runtime_storage_record_writer_deep_call_gate_source.include?(token), "Go Runtime production receipt notification action dry-run result lookup consumer enablement receipt storage record writer call gate must expose safety gate #{token}")

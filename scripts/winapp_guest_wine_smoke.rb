@@ -17,6 +17,7 @@ EXE_PATH = APP_ROOT.join("hello.exe")
 MARKER = "XNIX_WINAPP_SMOKE_OK"
 BOOT_TIMEOUT_SECONDS = 60
 RETRY_INTERVAL_SECONDS = 1
+FIXTURE_GOARCH = "386"
 
 def run_command(env, *argv)
   stdout, stderr, status = Open3.capture3(env, *argv, chdir: PROJECT_ROOT.to_s)
@@ -34,7 +35,14 @@ rescue Errno::ESRCH
 end
 
 unless File.file?(Xnix::SshTestKey::PRIVATE_KEY_PATH)
-  puts "SKIP: QEMU guest Wine smoke (SSH test key unavailable; run prepare-ssh-test-key and build-ssh-test-system first)"
+  puts "SKIP: QEMU guest Wine smoke (SSH test key unavailable; run prepare-ssh-test-key and build-ssh-wine-guest first)"
+  exit 0
+end
+
+qemu = Xnix::Qemu.wine_guest
+
+unless File.file?(qemu.kernel_image)
+  puts "SKIP: QEMU guest Wine smoke (Wine guest kernel unavailable; run configure-wine-guest and build-ssh-wine-guest first)"
   exit 0
 end
 
@@ -45,7 +53,7 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 build_stdout, build_stderr, build_status = run_command(
   {
     "GOOS" => "windows",
-    "GOARCH" => "amd64",
+    "GOARCH" => FIXTURE_GOARCH,
     "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
     "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
   },
@@ -59,7 +67,7 @@ unless build_status.zero?
   exit 1
 end
 
-stdin, output, wait_thread = Open3.popen2e(*Xnix::Qemu.new.boot_command(ssh: true))
+stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close
 reader = Thread.new { output.read }
 probe = Xnix::SshProbe.new
