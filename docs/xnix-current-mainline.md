@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.613
+> Last updated: 2026-07-24 | Baseline: v0.2.614
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.613 by adding the Runtime-owner execution entrypoint that consumes the KDE Runtime-status launch request preview, injects the state-root internally, and invokes the existing managed launcher path only after revalidating the launch receipt, session-gated review receipt, controlled session id, post-review dispatch state, and guest boundary. The next implementation should preserve the passing staged 7zr QEMU/Wine lane, keep Runtime launch and dispatch ownership in Go, expose only opaque ids plus redacted readiness state to KDE, and move toward a real user-visible launch flow where the validated app card can request a Runtime-owned managed launch. Keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Continue from v0.2.614 by switching the staged launcher dispatch smoke to exercise `known-app-kde-runtime-status-launch-execution` as the user-visible Runtime-owned launch path instead of calling `xnix-compat-launch` directly. Preserve the current passing staged 7zr QEMU/Wine lane, avoid double-running the app in one smoke, keep the Runtime-owned wrapper responsible for state-root injection and receipt/session revalidation, and keep KDE presentation-only with state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation hidden or disabled. Keep Ruby limited to smoke harnesses and reports.
+
+The v0.2.614 checkpoint adds the Go-owned Runtime execution entrypoint behind the KDE Runtime-status launch request. `known-app-kde-runtime-status-launch-execution` accepts the Runtime-owned state root at the Runtime boundary, consumes the KDE request preview fields, revalidates the launch authorization receipt, session-gated review receipt, controlled execution session, post-review dispatch state, and managed guest boundary, then invokes an existing managed launcher executable with state-root injected into argv. Its JSON result reports only safe delegated launcher status fields and keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of desktop output.
 
 The v0.2.613 checkpoint turns the KDE `show-runtime-controlled-launch` action into a concrete Runtime-owned launch request preview. `known-app-kde-runtime-status-launch-request-preview` accepts the validated post-review card state, `created-after-session-gated-review`, and the three Runtime-generated opaque ids, then verifies the launch authorization receipt id, session-gated review receipt id, and controlled execution session id against the known app before assembling managed `xnix-compat-launch` argv. KDE Center page known-app cards now include the launch authorization receipt id, Runtime-status request route metadata, collected opaque-id counts, and state-root-owned-by-Runtime flags; they still do not expose state-root paths, write request objects, create permission grants, enable desktop launch, enable backend launch, start execution, mount Docker sockets, require broad host mounts, or mutate the host root.
 

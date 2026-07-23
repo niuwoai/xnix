@@ -127,6 +127,102 @@ func TestKnownAppKDERuntimeStatusLaunchRequestPreviewCommandCollectsOpaqueIDs(t 
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t, stateRoot)
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	fakeLauncher, fakeArgsPath := writeFakeRuntimeStatusManagedLauncher(t)
+	var output bytes.Buffer
+	err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType,
+		"--app", "7zr",
+		"--state-root", stateRoot,
+		"--launch-authorization-receipt-id", launchReceiptID,
+		"--session-gated-review-receipt-id", reviewReceiptID,
+		"--session-id", sessionID,
+		"--center-card-state", "validated-post-review-dispatch",
+		"--primary-action-id", appidentity.KnownAppKDERuntimeStatusLaunchAction,
+		"--post-review-dispatch-state", "created-after-session-gated-review",
+		"--launcher", fakeLauncher,
+		"--owner-timeout", "5s",
+		"--timeout", "1s",
+		"--arg", "--help",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		payload["runtime_method"] != "PrepareKnownAppKDERuntimeStatusLaunchExecution" ||
+		payload["execution_method"] != "RunKnownAppKDERuntimeStatusLaunchExecution" ||
+		payload["request_preview_type"] != appidentity.KnownAppKDERuntimeStatusLaunchRequestType ||
+		payload["launch_authorization_receipt_id"] != launchReceiptID ||
+		payload["session_gated_review_receipt_id"] != reviewReceiptID ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["launch_receipt_revalidated"] != true ||
+		payload["guest_boundary_revalidated"] != true ||
+		payload["review_receipt_revalidated"] != true ||
+		payload["controlled_session_revalidated"] != true ||
+		payload["controlled_session_digest_verified"] != true ||
+		payload["runtime_managed_launcher_argv_ready"] != true ||
+		payload["state_root_required"] != true ||
+		payload["state_root_accepted"] != true ||
+		payload["state_root_injected_by_runtime"] != true ||
+		payload["state_root_supplied_by_runtime"] != true ||
+		payload["kde_state_root_access"] != false ||
+		payload["managed_launcher_invocation_ready"] != true ||
+		payload["existing_managed_launcher_path_used"] != true ||
+		payload["managed_launcher_invoked"] != true ||
+		payload["existing_managed_launcher_invoked"] != true ||
+		payload["launcher_output_json_observed"] != true ||
+		payload["delegated_request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["delegated_status"] != "passed" ||
+		payload["delegated_smoke_passed"] != true ||
+		payload["delegated_execution_started"] != true ||
+		payload["delegated_backend_process_started"] != false ||
+		payload["delegated_host_root_modified"] != false ||
+		payload["delegated_docker_socket_mounted"] != false ||
+		payload["delegated_broad_host_mount_required"] != false ||
+		payload["delegated_raw_command_exposed"] != false ||
+		payload["delegated_backend_details_exposed"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["managed_launcher_path_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false {
+		t.Fatalf("unexpected Runtime-status launch execution payload: %#v", payload)
+	}
+	runtimeArgv := payload["runtime_managed_launcher_argv"].([]any)
+	if len(runtimeArgv) != 13 ||
+		runtimeArgv[0] != "xnix-compat-launch" ||
+		runtimeArgv[5] != "--state-root" ||
+		runtimeArgv[6] != "<runtime-owned-state-root>" {
+		t.Fatalf("unexpected redacted Runtime managed launcher argv: %#v", runtimeArgv)
+	}
+	argsData, err := os.ReadFile(fakeArgsPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
+	}
+	argsText := string(argsData)
+	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--arg\n--help"} {
+		if !strings.Contains(argsText, token) {
+			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
+		}
+	}
+	text := strings.ToLower(output.String())
+	for _, forbidden := range []string{strings.ToLower(stateRoot), strings.ToLower(fakeLauncher), ".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Runtime-status launch execution output exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestKnownAppSessionGatedLaunchReviewReceiptRecordCommandWritesReceipt(t *testing.T) {
 	stateRoot := t.TempDir()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
@@ -902,4 +998,66 @@ func TestKnownAppSessionGatedLaunchReviewPreviewCommandConsumesSessionBeforeRevi
 	if strings.Contains(text, strings.ToLower(stateRoot)) {
 		t.Fatalf("session-gated launch review exposed state root path: %s", text)
 	}
+}
+
+func writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t *testing.T, stateRoot string) string {
+	t.Helper()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	if _, err := ledger.Record(execution.Transaction{
+		RequestID:      sessionID,
+		ApplicationID:  "7zr",
+		Profile:        "known-app-managed-guest",
+		State:          execution.StateBlocked,
+		ReviewDecision: execution.DecisionApproved,
+		Gates: []execution.Gate{
+			{ID: "controlled-execution-session-handoff", Status: execution.GatePass, Reason: "Runtime execution session handoff ready"},
+			{ID: "runtime-write-gate", Status: execution.GateBlocked, Reason: "dispatch runner must consume the recorded session before execution"},
+		},
+		BlockedReasons:   []string{"runtime-write-gate: dispatch runner must consume the recorded session before execution"},
+		LaunchAllowed:    false,
+		LaunchEnabled:    false,
+		BackendStarted:   false,
+		HostRootModified: false,
+		NetworkRequired:  false,
+		Summary:          "Runtime recorded a known application execution session handoff for later consumption.",
+	}); err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	if _, err := ledger.RecordSession(sessionID); err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+	if _, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	}); err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+	if _, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	}); err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	return sessionID
+}
+
+func writeFakeRuntimeStatusManagedLauncher(t *testing.T) (string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	launcherPath := filepath.Join(dir, "fake-xnix-compat-launch")
+	argsPath := filepath.Join(dir, "launcher-args.txt")
+	t.Setenv("XNIX_FAKE_LAUNCHER_ARGS_FILE", argsPath)
+	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
+	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("WriteFile fake launcher returned error: %v", err)
+	}
+	return launcherPath, argsPath
 }

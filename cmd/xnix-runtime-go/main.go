@@ -235,6 +235,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppSessionGatedControlledDispatchRequestPreview(args[1:], stdout)
 	case "known-app-kde-runtime-status-launch-request-preview":
 		return runKnownAppKDERuntimeStatusLaunchRequestPreview(args[1:], stdout)
+	case "known-app-kde-runtime-status-launch-execution":
+		return runKnownAppKDERuntimeStatusLaunchExecution(args[1:], stdout)
 	case "launch-intent-preview":
 		return runLaunchIntentPreview(args[1:], stdout)
 	case "mimeapps-preview":

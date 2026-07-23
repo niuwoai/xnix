@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.614] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-kde-runtime-status-launch-execution` entrypoint, which consumes the KDE Runtime-status launch request, accepts the Runtime-owned state root only at the Runtime boundary, revalidates launch authorization, session-gated review, controlled execution session, post-review state, and managed guest boundary evidence, then invokes an existing managed launcher executable.
+- Added Runtime-status launch execution plan and CLI tests proving that the state root is injected into the launcher argv without exposing state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, or host-root mutation in the returned desktop-safe JSON.
+
 ## [0.2.613] - 2026-07-24
 
 ### Added

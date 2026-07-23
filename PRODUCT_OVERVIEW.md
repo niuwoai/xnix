@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.613
+> Last updated: 2026-07-24 | Current version: v0.2.614
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.614 checkpoint adds the Go-owned Runtime execution entrypoint behind the KDE Runtime-status launch request. `known-app-kde-runtime-status-launch-execution` accepts the Runtime-owned state root only at the Runtime boundary, revalidates the launch authorization receipt, session-gated review receipt, controlled execution session, post-review state, and managed guest boundary, then invokes an existing managed launcher executable with state-root injected into the launcher argv. Its returned JSON redacts state-root and launcher paths, exposes only safe delegated launcher status fields, and keeps KDE state-root access, direct desktop launch, raw launcher output exposure, backend detail exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.614 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.613 checkpoint turns the KDE `show-runtime-controlled-launch` status action into a Go-owned Runtime request preview. `known-app-kde-runtime-status-launch-request-preview` accepts only the validated post-review card state plus the three Runtime-generated opaque ids, verifies that they match the known app, and assembles the managed `xnix-compat-launch` argv that will later be executed by the Runtime owner with state-root supplied internally. KDE Center page cards now expose the launch authorization receipt id, Runtime-status request route metadata, collected opaque-id counts, and managed launcher argv without giving KDE state-root access, direct launch, backend launch, permission grants, raw path exposure, Docker socket mounts, broad host mounts, or host-root mutation. v0.2.613 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
