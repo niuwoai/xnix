@@ -9,6 +9,7 @@ require "pathname"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 LOCK_PATH = PROJECT_ROOT.join("buildroot", "sources.lock")
 CACHE_ROOT = PROJECT_ROOT.join(".cache", "buildroot")
+SOURCE_PATCH_ROOT = PROJECT_ROOT.join("buildroot", "source-patches")
 
 def read_lock
   LOCK_PATH.each_line.each_with_object({}) do |line, lock|
@@ -50,6 +51,45 @@ def extract_archive(archive_path, destination)
   abort "Unable to extract Buildroot archive" unless success
 end
 
+def patch_command(source_directory, patch_path, *arguments)
+  [
+    "patch",
+    "--directory", source_directory.to_s,
+    "--strip=1",
+    *arguments,
+    "--input", patch_path.to_s
+  ]
+end
+
+def patch_applies?(source_directory, patch_path)
+  system(
+    *patch_command(source_directory, patch_path, "--forward", "--dry-run"),
+    out: File::NULL,
+    err: File::NULL
+  )
+end
+
+def patch_already_applied?(source_directory, patch_path)
+  system(
+    *patch_command(source_directory, patch_path, "--reverse", "--dry-run"),
+    out: File::NULL,
+    err: File::NULL
+  )
+end
+
+def apply_source_patches(source_directory, patch_root)
+  return unless patch_root.directory?
+
+  patch_root.children.select { |path| path.file? && path.extname == ".patch" }.sort.each do |patch_path|
+    if patch_applies?(source_directory, patch_path)
+      success = system(*patch_command(source_directory, patch_path, "--forward"))
+      abort "Unable to apply Buildroot source patch: #{patch_path.basename}" unless success
+    elsif !patch_already_applied?(source_directory, patch_path)
+      abort "Buildroot source patch is neither applicable nor already applied: #{patch_path.basename}"
+    end
+  end
+end
+
 lock = read_lock
 validate_lock(lock)
 
@@ -71,4 +111,5 @@ end
 
 verify_archive(archive_path, lock.fetch("buildroot.sha256"))
 extract_archive(archive_path, CACHE_ROOT) unless source_directory.directory?
+apply_source_patches(source_directory, SOURCE_PATCH_ROOT.join("buildroot-#{lock.fetch("buildroot.version")}"))
 puts source_directory

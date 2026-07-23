@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xnix Maintainers <maintainers@xnix.local>
+Date: Thu, 23 Jul 2026 20:36:00 +0800
+Subject: [PATCH] package/wine: allow host-wine PE tools on aarch64
+
+Wine 10 requires PE cross-compilation support when configuring host-wine
+on an aarch64 build host. Buildroot's host-wine cut-down option set
+unconditionally disables MinGW/PE tooling, which prevents Wine from
+using clang, lld, and llvm-dlltool in the Xnix Colima builder.
+
+Keep the target Wine package lean, but allow host-wine to detect the
+available PE toolchain.
+---
+ package/wine/wine.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/package/wine/wine.mk b/package/wine/wine.mk
+index 1111111111..2222222222 100644
+--- a/package/wine/wine.mk
++++ b/package/wine/wine.mk
+@@ -285,9 +285,8 @@ HOST_WINE_CONF_OPTS += \
+ 	--without-gphoto \
+ 	--without-gnutls \
+ 	--without-gssapi \
+ 	--without-gstreamer \
+ 	--without-krb5 \
+-	--without-mingw \
+ 	--without-netapi \
+ 	--without-opencl \
+ 	--without-opengl \
+-- 
+2.39.5

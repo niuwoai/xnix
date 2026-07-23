@@ -4,13 +4,21 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.575] - 2026-07-23
+
+### Changed
+
+- Added a Buildroot source patch application step to `scripts/fetch_buildroot.rb` so repository-owned Buildroot metadata fixes are applied after extracting the pinned Buildroot source archive.
+- Added a Buildroot 2025.02.15 Wine package metadata patch that removes `--without-mingw` from the host-wine cut-down configure options, allowing Wine 10 to detect the already installed clang, lld, and llvm-dlltool PE toolchain on aarch64 Colima builders.
+- Extended the layout verifier to require the Buildroot source patch file and the idempotent patch application path; local evidence shows `fetch-sources` applied the patch, the v0.2.575 host-wine configure command no longer includes `--without-mingw`, Wine detected clang/lld PE support, and `host-wine` entered its build step.
+
 ## [0.2.574] - 2026-07-23
 
 ### Changed
 
 - Added `clang`, `lld`, and `llvm` to the tools Docker image so Buildroot `host-wine` can satisfy Wine's aarch64 PE cross-compilation requirement inside Colima.
 - Extended the layout verifier to keep the aarch64 `host-wine` toolchain dependency visible in the builder image contract.
-- Recorded local evidence that the v0.2.573 offline Wine guest build moved past the previous missing-source failure and then failed while configuring `host-wine` with `PE cross-compilation is required for aarch64`; `xnix-builder-tools:0.2.574` now builds with the requested LLVM tools, and the v0.2.574 detached offline build starts with active `make` work.
+- Recorded local evidence that the v0.2.573 offline Wine guest build moved past the previous missing-source failure and then failed while configuring `host-wine` with `PE cross-compilation is required for aarch64`; `xnix-builder-tools:0.2.574` built with the requested LLVM tools, and the v0.2.574 detached offline build exposed Buildroot's host-wine `--without-mingw` metadata blocker.
 
 ## [0.2.573] - 2026-07-23
 
