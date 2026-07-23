@@ -2,7 +2,7 @@
 
 module Xnix
   class Milestone
-    INTERVAL = 10
+    INTERVAL = 20
 
     def self.full_build_required?(version)
       match = version.match(/\A\d+\.\d+\.(\d+)(?:-rc\d+)?\z/)

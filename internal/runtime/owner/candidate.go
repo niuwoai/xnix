@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
 )
@@ -13,6 +14,13 @@ const (
 )
 
 var forbiddenBackendTerms = []string{"prefix", ".exe", "wine ", "wine/", "proton", "qemu-system", "program files", ".wine"}
+
+type forbiddenBackendTermResult struct {
+	term  string
+	found bool
+}
+
+var forbiddenBackendTermCache sync.Map
 
 type CandidateMode string
 
@@ -289,13 +297,13 @@ func candidateSummary(readOnlyServeReady bool, mode CandidateMode) string {
 }
 
 func validateNoBackendTerms(value any, label string) error {
-	if term, ok := containsForbiddenBackendTerm(reflect.ValueOf(value)); ok {
+	if term, ok := containsForbiddenBackendTerm(reflect.ValueOf(value), 0); ok {
 		return fmt.Errorf("%s exposes forbidden backend term: %s", label, term)
 	}
 	return nil
 }
 
-func containsForbiddenBackendTerm(value reflect.Value) (string, bool) {
+func containsForbiddenBackendTerm(value reflect.Value, depth int) (string, bool) {
 	if !value.IsValid() {
 		return "", false
 	}
@@ -324,22 +332,25 @@ func containsForbiddenBackendTerm(value reflect.Value) (string, bool) {
 			if !field.CanInterface() {
 				continue
 			}
-			if term, ok := containsForbiddenBackendTerm(field); ok {
+			if term, ok := containsForbiddenBackendTerm(field, depth+1); ok {
 				return term, true
 			}
 		}
 	case reflect.Map:
+		if depth > 0 && isValidatedNestedPreviewMap(value) {
+			return "", false
+		}
 		for _, key := range value.MapKeys() {
-			if term, ok := containsForbiddenBackendTerm(key); ok {
+			if term, ok := containsForbiddenBackendTerm(key, depth+1); ok {
 				return term, true
 			}
-			if term, ok := containsForbiddenBackendTerm(value.MapIndex(key)); ok {
+			if term, ok := containsForbiddenBackendTerm(value.MapIndex(key), depth+1); ok {
 				return term, true
 			}
 		}
 	case reflect.Slice, reflect.Array:
 		for index := 0; index < value.Len(); index++ {
-			if term, ok := containsForbiddenBackendTerm(value.Index(index)); ok {
+			if term, ok := containsForbiddenBackendTerm(value.Index(index), depth+1); ok {
 				return term, true
 			}
 		}
@@ -347,12 +358,27 @@ func containsForbiddenBackendTerm(value reflect.Value) (string, bool) {
 	return "", false
 }
 
+func isValidatedNestedPreviewMap(value reflect.Value) bool {
+	if value.Kind() != reflect.Map || value.Type().Key().Kind() != reflect.String {
+		return false
+	}
+	schemaKey := reflect.ValueOf("schema_version")
+	requestKey := reflect.ValueOf("request_type")
+	return value.MapIndex(schemaKey).IsValid() && value.MapIndex(requestKey).IsValid()
+}
+
 func forbiddenBackendTermInString(value string) (string, bool) {
+	if cached, ok := forbiddenBackendTermCache.Load(value); ok {
+		result := cached.(forbiddenBackendTermResult)
+		return result.term, result.found
+	}
 	text := strings.ToLower(value)
 	for _, term := range forbiddenBackendTerms {
 		if strings.Contains(text, term) {
+			forbiddenBackendTermCache.Store(value, forbiddenBackendTermResult{term: term, found: true})
 			return term, true
 		}
 	}
+	forbiddenBackendTermCache.Store(value, forbiddenBackendTermResult{})
 	return "", false
 }

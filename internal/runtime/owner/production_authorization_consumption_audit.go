@@ -3,7 +3,10 @@ package owner
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync"
+	"unsafe"
 )
 
 type ProductionAuthorizationConsumptionAuditPreview struct {
@@ -104,6 +107,15 @@ type ProductionAuthorizationConsumptionConsumer struct {
 	AuditStatus                  string `json:"audit_status"`
 	NextRequirement              string `json:"next_requirement"`
 }
+
+type productionAuthorizationTokenCacheKey struct {
+	sourcePointer uintptr
+	sourceLength  int
+	token         string
+}
+
+var productionAuthorizationSourceCache sync.Map
+var productionAuthorizationTokenCache sync.Map
 
 type ProductionAuthorizationConsumptionAuditCheck struct {
 	ID      string `json:"id"`
@@ -425,7 +437,16 @@ func productionAuthorizationConsumersKeepHostBoundaryClosed(consumers []Producti
 
 func productionAuthorizationHasAll(source string, tokens []string) bool {
 	for _, token := range tokens {
-		if !strings.Contains(source, token) {
+		key := productionAuthorizationCacheKey(source, token)
+		if cached, ok := productionAuthorizationTokenCache.Load(key); ok {
+			if !cached.(bool) {
+				return false
+			}
+			continue
+		}
+		found := strings.Contains(source, token)
+		productionAuthorizationTokenCache.Store(key, found)
+		if !found {
 			return false
 		}
 	}
@@ -433,6 +454,10 @@ func productionAuthorizationHasAll(source string, tokens []string) bool {
 }
 
 func productionAuthorizationReadSources(root string, paths []string) string {
+	cacheKey := root + "\x00" + strings.Join(paths, "\x00")
+	if cached, ok := productionAuthorizationSourceCache.Load(cacheKey); ok {
+		return cached.(string)
+	}
 	var builder strings.Builder
 	for _, path := range paths {
 		content, err := os.ReadFile(filepath.Join(root, path))
@@ -442,5 +467,19 @@ func productionAuthorizationReadSources(root string, paths []string) string {
 		builder.Write(content)
 		builder.WriteByte('\n')
 	}
-	return builder.String()
+	source := builder.String()
+	productionAuthorizationSourceCache.Store(cacheKey, source)
+	return source
+}
+
+func productionAuthorizationCacheKey(source string, token string) productionAuthorizationTokenCacheKey {
+	if source == "" {
+		return productionAuthorizationTokenCacheKey{token: token}
+	}
+	header := (*reflect.StringHeader)(unsafe.Pointer(&source))
+	return productionAuthorizationTokenCacheKey{
+		sourcePointer: header.Data,
+		sourceLength:  len(source),
+		token:         token,
+	}
 }

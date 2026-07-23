@@ -15,7 +15,22 @@ serial_log = Xnix::SerialLog.new("Welcome to Buildroot\nxnix login: ")
 version = File.read(File.expand_path("../VERSION", __dir__), encoding: "UTF-8").strip
 report = Xnix::FullSmokeReport.new(
   version: version,
-  steps: %w[build fetch-sources configure-system download-system build-system boot-system],
+  steps: %w[
+    build-tools
+    build
+    fetch-sources
+    configure-system
+    download-system
+    build-system
+    prepare-ssh-test-key
+    configure-wine-guest
+    download-wine-guest
+    build-ssh-wine-guest
+    fetch-known-winapp
+    boot-system
+    known-winapp-guest-wine-smoke
+    winapp-guest-wine-smoke
+  ],
   serial_log_path: "output/serial.log",
   serial_log: serial_log
 )
@@ -24,8 +39,8 @@ data = report.to_h
 assert(data.fetch("version") == version, "full smoke report must expose the canonical version")
 assert(data.fetch("schema_version") == "xnix.full_smoke_report.v1", "full smoke report must expose its schema")
 assert(data.fetch("report_type") == "full-build-qemu-smoke-report", "full smoke report must identify its type")
-assert(data.fetch("step_count") == 6, "full smoke report must count smoke steps")
-assert(data.fetch("steps").last == "boot-system", "full smoke report must include the QEMU boot step")
+assert(data.fetch("step_count") == 14, "full smoke report must count smoke steps")
+assert(data.fetch("steps").last == "winapp-guest-wine-smoke", "full smoke report must include the fixture Windows app smoke step")
 assert(data.fetch("serial_log_path") == "output/serial.log", "full smoke report must expose the serial log path")
 assert(data.fetch("serial_log_persisted"), "full smoke report must record serial log persistence")
 assert(data.fetch("qemu_booted"), "full smoke report must record successful QEMU boot markers")
@@ -36,10 +51,17 @@ assert(!data.fetch("docker_socket_mounted"), "full smoke report must not mount t
 assert(!data.fetch("host_network_enabled"), "full smoke report must keep host networking disabled")
 assert(data.fetch("qemu_network_restricted"), "full smoke report must keep QEMU networking restricted")
 assert(data.fetch("network_required_for_source_download"), "full smoke report must identify source download network use")
+assert(data.fetch("wine_guest_built"), "full smoke report must record Wine guest build coverage")
+assert(data.fetch("known_app_smoke_included"), "full smoke report must record known Windows app smoke coverage")
+assert(data.fetch("known_app_smoke_passed"), "full smoke report must record known Windows app smoke pass evidence")
+assert(data.fetch("fixture_app_smoke_included"), "full smoke report must record fixture Windows app smoke coverage")
+assert(data.fetch("fixture_app_smoke_passed"), "full smoke report must record fixture Windows app smoke pass evidence")
 
 markdown = report.to_markdown
 assert(markdown.include?("# Full Build and QEMU Smoke Report"), "full smoke report markdown must include a title")
 assert(markdown.include?("- QEMU booted: true"), "full smoke report markdown must include boot status")
-assert(markdown.include?("6. boot-system"), "full smoke report markdown must list the boot step")
+assert(markdown.include?("- Known Windows app smoke passed: true"), "full smoke report markdown must include known app smoke status")
+assert(markdown.include?("12. boot-system"), "full smoke report markdown must list the boot step")
+assert(markdown.include?("14. winapp-guest-wine-smoke"), "full smoke report markdown must list the fixture app smoke step")
 
 puts "PASS: full smoke report unit tests"

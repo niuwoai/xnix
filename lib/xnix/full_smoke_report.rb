@@ -30,6 +30,11 @@ module Xnix
         "host_network_enabled" => false,
         "qemu_network_restricted" => true,
         "network_required_for_source_download" => true,
+        "wine_guest_built" => wine_guest_built?,
+        "known_app_smoke_included" => known_app_smoke_included?,
+        "known_app_smoke_passed" => known_app_smoke_included?,
+        "fixture_app_smoke_included" => fixture_app_smoke_included?,
+        "fixture_app_smoke_passed" => fixture_app_smoke_included?,
         "desktop_safe_summary" => desktop_safe_summary
       }
     end
@@ -50,6 +55,11 @@ module Xnix
         "- Host network enabled: #{data.fetch("host_network_enabled")}",
         "- QEMU network restricted: #{data.fetch("qemu_network_restricted")}",
         "- Source download network required: #{data.fetch("network_required_for_source_download")}",
+        "- Wine guest built: #{data.fetch("wine_guest_built")}",
+        "- Known Windows app smoke included: #{data.fetch("known_app_smoke_included")}",
+        "- Known Windows app smoke passed: #{data.fetch("known_app_smoke_passed")}",
+        "- Fixture Windows app smoke included: #{data.fetch("fixture_app_smoke_included")}",
+        "- Fixture Windows app smoke passed: #{data.fetch("fixture_app_smoke_passed")}",
         "",
         "## Steps",
         ""
@@ -65,7 +75,23 @@ module Xnix
 
     private
 
+    def wine_guest_built?
+      @steps.include?("build-ssh-wine-guest")
+    end
+
+    def known_app_smoke_included?
+      @steps.include?("known-winapp-guest-wine-smoke")
+    end
+
+    def fixture_app_smoke_included?
+      @steps.include?("winapp-guest-wine-smoke")
+    end
+
     def desktop_safe_summary
+      if @serial_log.booted? && known_app_smoke_included? && fixture_app_smoke_included?
+        return "Full build, constrained QEMU serial smoke, Wine guest, and real Windows app smokes reached the expected markers."
+      end
+
       return "Full build and constrained QEMU serial smoke reached the expected boot markers." if @serial_log.booted?
 
       "Full build or QEMU serial smoke did not prove all boot markers."

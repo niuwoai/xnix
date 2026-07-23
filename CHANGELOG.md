@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.580] - 2026-07-23
+
+### Changed
+
+- Promoted the formal full checkpoint cadence from every tenth patch version to every twentieth patch version, matching the current development strategy for targeted small-version validation.
+- Extended `scripts/full_smoke.rb` to build both runtime and tools images explicitly, build the SSH-enabled Wine guest, fetch the pinned known Windows application, and require concrete `PASS` output from both the known-app QEMU Wine smoke and the fixture QEMU Wine smoke before accepting the checkpoint.
+- Extended the full smoke report with Wine guest and Windows app smoke pass evidence while preserving the no-privileged-container, no-host-network, no-Docker-socket, no-host-root-mutation safety boundary.
+- Added owner-package source/token and nested-preview validation caching so full Go validation can finish under the formal checkpoint instead of spending tens of minutes repeatedly scanning the same historical preview chains.
+- Verified the v0.2.580 restricted full smoke: `build-tools`, `build`, Buildroot source/config/download/build, SSH key preparation, Wine guest config/download/build, known Windows app fetch, base QEMU boot, known 7-Zip QEMU Wine smoke, and fixture QEMU Wine smoke all completed with PASS evidence.
+
 ## [0.2.579] - 2026-07-23
 
 ### Added

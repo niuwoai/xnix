@@ -11,8 +11,9 @@ def assert(condition, message)
 end
 
 assert(!Xnix::Milestone.full_build_required?("0.1.9"), "ordinary small versions must not run a full build")
-assert(Xnix::Milestone.full_build_required?("0.1.10"), "the tenth version must run a full build")
-assert(Xnix::Milestone.full_build_required?("1.4.20"), "later tenth versions must run a full build")
-assert(Xnix::Milestone.full_build_required?("0.1.10-rc1"), "tenth-version release candidates must rerun the full build after fixes")
+assert(!Xnix::Milestone.full_build_required?("0.2.590"), "ordinary non-twentieth versions must not run a full build")
+assert(Xnix::Milestone.full_build_required?("0.2.580"), "the twentieth version must run a full build")
+assert(Xnix::Milestone.full_build_required?("1.4.20"), "later twentieth versions must run a full build")
+assert(Xnix::Milestone.full_build_required?("0.2.580-rc1"), "twentieth-version release candidates must rerun the full build after fixes")
 
 puts "PASS: milestone version unit tests"
