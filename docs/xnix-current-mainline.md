@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.568
+> Last updated: 2026-07-23 | Baseline: v0.2.569
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Keep the existing Go Runtime smoke contract and move the execution baseline to an environment where Wine bootstrap can complete: either a Linux/QEMU guest with Wine installed inside the guest, or a pinned container/runtime base known to support Wine under the available emulation. Do not add more compatibility contracts until the real Windows PE fixture produces a `PASS`; the follow-up should turn the fixture smoke green first, then replace the fixture with a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Make the new `windows-app-guest-wine-smoke` path produce `PASS` by giving the loopback SSH QEMU guest a Wine-capable Linux baseline. Do not add more compatibility contracts until the real Windows PE fixture runs inside the guest and emits `XNIX_WINAPP_SMOKE_OK`; the follow-up should turn the fixture smoke green first, then replace the fixture with a known portable Windows application. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.569 checkpoint adds the Go-owned QEMU guest execution path. `xnix-runtime-go windows-app-guest-wine-smoke` copies the real Windows PE fixture into the loopback SSH guest, checks for guest-side Wine, runs Wine in the guest, captures the smoke marker, and keeps host paths redacted. `scripts/winapp_guest_wine_smoke.rb` is only the Ruby harness that boots QEMU and invokes the Runtime command. Current Buildroot guest images are expected to report `SKIP` when Wine is unavailable, so the next real unblocker is a Wine-capable Linux guest baseline.
 
 The v0.2.568 checkpoint proves the local Wine image preparation path and tightens the smoke boundary, but it does not yet prove successful Windows app execution on the current macOS Colima runner. `scripts/build_wine_smoke_image.rb` builds `xnix-wine-smoke:local` as `linux/amd64` even when `docker buildx` is unavailable, and the Runtime container smoke now uses container tmpfs for Wine state, one read-only application mount, no network, no Docker socket mount, no privileged mode, no broad host mount, and explicit Wine bootstrap timeout fields. Current Colima evidence after restarting with 2 CPUs shows Docker supports `linux/amd64` and `linux/386`, but both win64 and win32 Wine prefix bootstrap attempts time out before the real Windows PE fixture can emit `XNIX_WINAPP_SMOKE_OK`.
 

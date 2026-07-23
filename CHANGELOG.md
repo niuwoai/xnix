@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.569] - 2026-07-23
+
+### Added
+
+- Added a Go-owned `windows-app-guest-wine-smoke` command that copies a real Windows `.exe` into a loopback SSH QEMU guest, checks for guest-side Wine, runs the executable inside the guest, captures the smoke marker, and reports redacted JSON without exposing host paths.
+- Added `scripts/winapp_guest_wine_smoke.rb` and a `scripts/container.rb winapp-guest-wine-smoke` entrypoint so Ruby remains the QEMU/test harness while the Runtime owns the guest Wine execution path in Go.
+- Added unit and CLI coverage for the guest Wine smoke path with fake SSH/SCP clients, including the current expected `guest wine runner unavailable` skip mode for guests that boot but do not yet include Wine.
+
 ## [0.2.568] - 2026-07-23
 
 ### Changed

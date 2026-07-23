@@ -127,6 +127,69 @@ func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-guest-wine-smoke", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var exePath string
+	var host string
+	var port string
+	var user string
+	var keyPath string
+	var remoteDir string
+	var sshPath string
+	var scpPath string
+	var timeoutText string
+	flags.StringVar(&exePath, "exe", "", "Windows executable path")
+	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
+	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
+	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
+	flags.StringVar(&keyPath, "key", "", "guest SSH private key path")
+	flags.StringVar(&remoteDir, "remote-dir", winapp.DefaultRemoteDir, "guest remote smoke directory")
+	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
+	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
+	flags.StringVar(&timeoutText, "timeout", "60s", "guest execution timeout")
+
+	var appArgs repeatedStringFlag
+	flags.Var(&appArgs, "arg", "argument passed to the Windows executable")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-guest-wine-smoke")
+	}
+
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+	parsedPort, err := winapp.ParseGuestPort(port)
+	if err != nil {
+		return err
+	}
+
+	result, err := winapp.RunGuestSmoke(context.Background(), winapp.GuestRequest{
+		ExecutablePath: exePath,
+		Arguments:      []string(appArgs),
+		Host:           host,
+		Port:           parsedPort,
+		User:           user,
+		KeyPath:        keyPath,
+		RemoteDir:      remoteDir,
+		SSHPath:        sshPath,
+		SCPPath:        scpPath,
+		Timeout:        timeout,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 type repeatedStringFlag []string
 
 func (flag *repeatedStringFlag) String() string {

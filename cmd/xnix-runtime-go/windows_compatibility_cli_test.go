@@ -208,6 +208,87 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 	}
 }
 
+func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	logPath := filepath.Join(tempDir, "guest.log")
+	sshPath := filepath.Join(tempDir, "fake-ssh")
+	sshBody := "#!/bin/sh\n" +
+		"printf 'ssh %s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"case \"$*\" in\n" +
+		"  *' true') exit 0 ;;\n" +
+		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'mkdir -p'*) exit 0 ;;\n" +
+		"  *' wine '*'hello.exe'*) printf 'XNIX_WINAPP_SMOKE_OK\\n'; exit 0 ;;\n" +
+		"esac\n" +
+		"exit 2\n"
+	if err := os.WriteFile(sshPath, []byte(sshBody), 0o700); err != nil {
+		t.Fatalf("WriteFile ssh returned error: %v", err)
+	}
+	scpPath := filepath.Join(tempDir, "fake-scp")
+	scpBody := "#!/bin/sh\n" +
+		"printf 'scp %s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"exit 0\n"
+	if err := os.WriteFile(scpPath, []byte(scpBody), 0o700); err != nil {
+		t.Fatalf("WriteFile scp returned error: %v", err)
+	}
+	keyPath := filepath.Join(tempDir, "id_ed25519")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-guest-wine-smoke",
+		"--exe", exePath,
+		"--host", "127.0.0.1",
+		"--port", "2222",
+		"--user", "root",
+		"--key", keyPath,
+		"--remote-dir", "/tmp/xnix-winapp-smoke",
+		"--ssh", sshPath,
+		"--scp", scpPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_guest_wine_smoke.v1" ||
+		payload["request_type"] != "windows-app-guest-wine-smoke" ||
+		payload["status"] != "passed" ||
+		payload["executable_name"] != "hello.exe" ||
+		payload["guest_transport"] != "loopback-ssh" ||
+		payload["guest_reachable"] != true ||
+		payload["wine_available"] != true ||
+		payload["executable_copied"] != true ||
+		payload["marker_observed"] != true ||
+		payload["loopback_only_networking"] != true ||
+		payload["qemu_required"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false {
+		t.Fatalf("unexpected guest smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), sshPath) ||
+		strings.Contains(output.String(), scpPath) ||
+		strings.Contains(output.String(), keyPath) {
+		t.Fatalf("guest smoke output leaked host paths: %s", output.String())
+	}
+}
+
 func anyStrings(values []any) []string {
 	result := make([]string, 0, len(values))
 	for _, value := range values {

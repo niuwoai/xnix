@@ -79,6 +79,10 @@ when "ssh-smoke"
   abort "Usage: ruby scripts/container.rb ssh-smoke" unless ARGV.empty?
 
   exec(*container.cache_run_command(["ruby", "scripts/ssh_smoke.rb"]))
+when "winapp-guest-wine-smoke"
+  abort "Usage: ruby scripts/container.rb winapp-guest-wine-smoke" unless ARGV.empty?
+
+  exec(*container.cache_run_command(["ruby", "scripts/winapp_guest_wine_smoke.rb"]))
 when "start-build-system"
   abort "Usage: ruby scripts/container.rb start-build-system" unless ARGV.empty?
 
@@ -93,5 +97,5 @@ when "boot-system"
 
   exec(*container.cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|configure-system|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
 end
