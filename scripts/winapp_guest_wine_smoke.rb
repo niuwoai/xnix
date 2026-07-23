@@ -35,14 +35,14 @@ rescue Errno::ESRCH
 end
 
 unless File.file?(Xnix::SshTestKey::PRIVATE_KEY_PATH)
-  puts "SKIP: QEMU guest Wine smoke (SSH test key unavailable; run prepare-ssh-test-key and build-ssh-wine-guest first)"
+  puts "SKIP: QEMU guest Wine smoke (SSH test key unavailable; run prepare-ssh-test-key and start-build-ssh-wine-guest first)"
   exit 0
 end
 
 qemu = Xnix::Qemu.wine_guest
 
 unless File.file?(qemu.kernel_image)
-  puts "SKIP: QEMU guest Wine smoke (Wine guest kernel unavailable; run configure-wine-guest and build-ssh-wine-guest first)"
+  puts "SKIP: QEMU guest Wine smoke (Wine guest kernel unavailable; run configure-wine-guest and start-build-ssh-wine-guest first)"
   exit 0
 end
 

@@ -92,6 +92,11 @@ when "build-ssh-wine-guest"
   abort "Usage: ruby scripts/container.rb build-ssh-wine-guest" unless ARGV.empty?
 
   exec(*container.tools_cache_run_command(wine_buildroot.build_command(ssh_test_key: true)))
+when "start-build-ssh-wine-guest"
+  abort "Usage: ruby scripts/container.rb start-build-ssh-wine-guest" unless ARGV.empty?
+
+  name = "xnix-wine-guest-build-#{VERSION.gsub(/[^a-zA-Z0-9]+/, "-")}"
+  exec(*container.observed_cache_run_command(name: name, command: wine_buildroot.build_command(ssh_test_key: true)))
 when "ssh-smoke"
   abort "Usage: ruby scripts/container.rb ssh-smoke" unless ARGV.empty?
 
@@ -114,5 +119,5 @@ when "boot-system"
 
   exec(*container.tools_cache_run_command(["timeout", "180s", *qemu.boot_command]))
 else
-  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-system|winapp-guest-wine-smoke}"
+  abort "Usage: ruby scripts/container.rb {boot-system|build|build-ssh-test-system|build-ssh-wine-guest|build-system|build-tools|build-wine-guest|configure-system|configure-wine-guest|download-system|fetch-sources|kde-center-dbus-smoke|offline-run COMMAND [ARGUMENT ...]|prepare-ssh-test-key|runtime-activation-smoke|runtime-dbus-smoke|runtime-owner-candidate-smoke|ssh-smoke|start-build-ssh-wine-guest|start-build-system|winapp-guest-wine-smoke}"
 end

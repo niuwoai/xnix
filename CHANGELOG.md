@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.572] - 2026-07-23
+
+### Changed
+
+- Added `scripts/container.rb start-build-ssh-wine-guest` so the heavy Wine-capable Buildroot guest can build as a detached observed Docker container instead of flooding the interactive Codex session.
+- Updated the QEMU guest Wine smoke skip guidance to point at the detached Wine guest build path while preserving the existing restricted container boundary: no host networking, no privileged mode, no Docker socket mount, no broad host mount, and only the managed cache volume mounted.
+- Recorded local evidence that `ruby scripts/container.rb build-tools` creates `xnix-builder-tools:0.2.572`, and `ruby scripts/container.rb start-build-ssh-wine-guest` starts a retained container that reaches the Buildroot i386 GCC toolchain build stage; no concrete Buildroot package failure has been observed yet.
+
 ## [0.2.571] - 2026-07-23
 
 ### Changed

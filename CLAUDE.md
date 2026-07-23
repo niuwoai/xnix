@@ -4,12 +4,12 @@ This file is for Claude Code and other automated contributors. Follow [AGENTS.md
 
 ## Current Phase
 
-- Version: `0.2.571`
+- Version: `0.2.572`
 - Target architecture: x86_64
 - Virtual machine: QEMU running with software emulation inside a restricted Docker container
 - Flagship stack: Fedora Kinoite-compatible atomic base, KDE Plasma 6, XDG Desktop Portal, and the Xnix Compatibility Runtime
 - Learning baseline: Linux LTS kernel, Buildroot, BusyBox, initramfs, and OpenSSH `sshd`
-- Container host: Colima Docker, limited to 6 GiB RAM and 1 CPU
+- Container host: Colima Docker, currently started with 2 CPUs; project containers still keep their own narrower runtime limits
 
 ## Safety Constraints
 
