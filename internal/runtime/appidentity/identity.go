@@ -783,7 +783,10 @@ type CompatibilityCenterPreview struct {
 	KnownIssueCount            int                            `json:"known_issue_count"`
 	RepairRecordCount          int                            `json:"repair_record_count"`
 	PendingReviewCount         int                            `json:"pending_review_count"`
+	KnownAppSmokeEvidenceCount int                            `json:"known_app_smoke_evidence_count"`
+	KnownAppSmokePassedCount   int                            `json:"known_app_smoke_passed_count"`
 	Applications               []CompatibilityCenterApp       `json:"applications"`
+	KnownAppSmokeEvidence      []KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
 	ActionExecutionEnabled     bool                           `json:"action_execution_enabled"`
 	RepairExecutionEnabled     bool                           `json:"repair_execution_enabled"`
 	BackendLaunchEnabled       bool                           `json:"backend_launch_enabled"`
@@ -818,6 +821,30 @@ type CompatibilityCenterApp struct {
 	HostRootModified           bool     `json:"host_root_modified"`
 	BackendDetailsExposed      bool     `json:"backend_details_exposed"`
 	Summary                    string   `json:"summary"`
+}
+
+type KnownAppSmokeEvidenceSummary struct {
+	AppID                     string `json:"app_id"`
+	DisplayName               string `json:"display_name"`
+	AppVersion                string `json:"app_version"`
+	EvidenceKind              string `json:"evidence_kind"`
+	SmokeStatus               string `json:"smoke_status"`
+	CompatibilityState        string `json:"compatibility_state"`
+	MarkerObserved            bool   `json:"marker_observed"`
+	ChecksumVerified          bool   `json:"checksum_verified"`
+	ExecutionEvidenceRecorded bool   `json:"execution_evidence_recorded"`
+	RuntimeOwned              bool   `json:"runtime_owned"`
+	KDEPolicyOwner            bool   `json:"kde_policy_owner"`
+	ActionExecutionEnabled    bool   `json:"action_execution_enabled"`
+	BackendLaunchEnabled      bool   `json:"backend_launch_enabled"`
+	HostRootModified          bool   `json:"host_root_modified"`
+	BackendDetailsExposed     bool   `json:"backend_details_exposed"`
+	RawArtifactPathExposed    bool   `json:"raw_artifact_path_exposed"`
+	Summary                   string `json:"summary"`
+}
+
+type CompatibilityCenterOptions struct {
+	KnownAppSmokeEvidence []KnownAppSmokeEvidenceSummary
 }
 
 type CompatibilityCenterSummaryText struct {
@@ -2449,6 +2476,10 @@ func krunnerReceiptBackedMatchCount(matches []KRunnerMatch) int {
 }
 
 func NewCompatibilityCenterPreview(recipes []Recipe, provenance Provenance) (CompatibilityCenterPreview, error) {
+	return NewCompatibilityCenterPreviewWithOptions(recipes, provenance, CompatibilityCenterOptions{})
+}
+
+func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Provenance, options CompatibilityCenterOptions) (CompatibilityCenterPreview, error) {
 	if provenance.Source == "" {
 		provenance.Source = "registry"
 	}
@@ -2467,16 +2498,23 @@ func NewCompatibilityCenterPreview(recipes []Recipe, provenance Provenance) (Com
 	sort.Slice(applications, func(left int, right int) bool {
 		return applications[left].DisplayName < applications[right].DisplayName
 	})
+	knownAppEvidence, err := normalizeKnownAppSmokeEvidence(options.KnownAppSmokeEvidence)
+	if err != nil {
+		return CompatibilityCenterPreview{}, err
+	}
 
 	preview := CompatibilityCenterPreview{
-		SchemaVersion:    "xnix.runtime.compatibility_center.v1",
-		SummaryType:      "compatibility-center-preview",
-		Desktop:          "KDE Plasma",
-		Title:            "Xnix Compatibility Center",
-		RuntimeOwned:     true,
-		KDEPolicyOwner:   false,
-		ApplicationCount: len(applications),
-		Applications:     applications,
+		SchemaVersion:              "xnix.runtime.compatibility_center.v1",
+		SummaryType:                "compatibility-center-preview",
+		Desktop:                    "KDE Plasma",
+		Title:                      "Xnix Compatibility Center",
+		RuntimeOwned:               true,
+		KDEPolicyOwner:             false,
+		ApplicationCount:           len(applications),
+		Applications:               applications,
+		KnownAppSmokeEvidenceCount: len(knownAppEvidence),
+		KnownAppSmokePassedCount:   countPassedKnownAppSmokeEvidence(knownAppEvidence),
+		KnownAppSmokeEvidence:      knownAppEvidence,
 		Source: KRunnerSource{
 			Kind:                  "runtime-go-registry",
 			RegistryName:          provenance.RegistryName,
@@ -2493,6 +2531,10 @@ func NewCompatibilityCenterPreview(recipes []Recipe, provenance Provenance) (Com
 			Headline: "Compatibility applications are ready for KDE review.",
 			Detail:   "The Runtime exposes application status, user-facing mode, diagnostics state, and repair records without enabling execution.",
 		},
+	}
+	if preview.KnownAppSmokePassedCount > 0 {
+		preview.Summary.Headline = "A known Windows application has passed managed compatibility smoke."
+		preview.Summary.Detail = "The Runtime exposes redacted known-application execution evidence to KDE without enabling desktop launch or backend actions."
 	}
 	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
 		return CompatibilityCenterPreview{}, err
@@ -2527,6 +2569,82 @@ func compatibilityCenterApp(plan Plan, recipe Recipe) CompatibilityCenterApp {
 		BackendDetailsExposed:      false,
 		Summary:                    "KDE can display this compatibility application, but execution and repair actions remain gated in the Runtime.",
 	}
+}
+
+func normalizeKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) ([]KnownAppSmokeEvidenceSummary, error) {
+	result := make([]KnownAppSmokeEvidenceSummary, 0, len(items))
+	for _, item := range items {
+		normalized, err := normalizeKnownAppSmokeEvidenceItem(item)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, normalized)
+	}
+	sort.Slice(result, func(left int, right int) bool {
+		return result[left].DisplayName < result[right].DisplayName
+	})
+	return result, nil
+}
+
+func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (KnownAppSmokeEvidenceSummary, error) {
+	appID := strings.TrimSpace(item.AppID)
+	if appID == "" {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app smoke evidence requires an app id")
+	}
+	displayName := strings.TrimSpace(item.DisplayName)
+	if displayName == "" {
+		displayName = "Known Windows application"
+	}
+	appVersion := strings.TrimSpace(item.AppVersion)
+	if appVersion == "" {
+		appVersion = "unknown"
+	}
+	status := strings.TrimSpace(item.SmokeStatus)
+	if status == "" {
+		status = "unknown"
+	}
+	switch status {
+	case "passed", "failed", "skipped", "unknown":
+	default:
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app smoke status %q is not supported", status)
+	}
+
+	compatibilityState := "review-required"
+	summary := displayName + " smoke evidence is available for review."
+	if status == "passed" && item.MarkerObserved && item.ChecksumVerified {
+		compatibilityState = "validated"
+		summary = displayName + " passed managed compatibility smoke."
+	}
+
+	return KnownAppSmokeEvidenceSummary{
+		AppID:                     appID,
+		DisplayName:               displayName,
+		AppVersion:                appVersion,
+		EvidenceKind:              "known-application-managed-smoke",
+		SmokeStatus:               status,
+		CompatibilityState:        compatibilityState,
+		MarkerObserved:            item.MarkerObserved,
+		ChecksumVerified:          item.ChecksumVerified,
+		ExecutionEvidenceRecorded: true,
+		RuntimeOwned:              true,
+		KDEPolicyOwner:            false,
+		ActionExecutionEnabled:    false,
+		BackendLaunchEnabled:      false,
+		HostRootModified:          false,
+		BackendDetailsExposed:     false,
+		RawArtifactPathExposed:    false,
+		Summary:                   summary,
+	}, nil
+}
+
+func countPassedKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.SmokeStatus == "passed" && item.MarkerObserved && item.ChecksumVerified {
+			count++
+		}
+	}
+	return count
 }
 
 func NewFileOpenPreview(recipes []Recipe, provenance Provenance, fileURIs []string, applicationID string) (FileOpenPreview, error) {

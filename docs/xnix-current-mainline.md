@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.578
+> Last updated: 2026-07-23 | Baseline: v0.2.579
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Expand from the passing pinned 7-Zip `7zr.exe` known portable Windows app toward a small real-app compatibility lane: add another console app or start wiring the verified known-app result into the KDE Compatibility Center read model. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Prepare the v0.2.580 formal full checkpoint around the real-app lane: keep the known-app smoke evidence visible in Compatibility Center, then run the required restricted full validation for the twentieth-version boundary. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.579 checkpoint wires the passing known-app smoke lane into the Go-owned Compatibility Center read model. `compatibility-center-preview` now consumes redacted known-app smoke status, marker observation, and checksum verification evidence so KDE can show that 7-Zip Console passed managed compatibility smoke without exposing `.exe` paths, Wine/QEMU command details, backend internals, or host paths. This keeps KDE presentation-only: action execution, backend launch, settings persistence, host-root mutation, raw artifact path exposure, and backend detail exposure remain disabled.
 
 The v0.2.578 checkpoint adds and verifies the first known portable app lane. The Go Runtime owns a catalog entry for the official 7-Zip `7zr.exe` 26.02 x86 standalone console executable with source metadata, SHA256 verification, and the `7-Zip` stdout marker. `windows-known-app-fetch` performs explicit artifact acquisition into the managed cache, while `windows-known-app-guest-wine-smoke` verifies that cached executable before reusing the established QEMU Wine guest runner. The container commands keep acquisition and execution separate: `fetch-known-winapp` is bridge-networked, and `known-winapp-guest-wine-smoke` is networkless execution from the Docker-managed cache volume. Local evidence shows the known app fetch, known app QEMU Wine guest smoke, and retained fixture QEMU Wine guest smoke all passing.
 

@@ -833,7 +833,9 @@ func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 		t.Fatalf("unexpected center schema: %#v", payload)
 	}
 	if payload["application_count"] != float64(1) || payload["known_issue_count"] != float64(0) ||
-		payload["repair_record_count"] != float64(0) || payload["pending_review_count"] != float64(0) {
+		payload["repair_record_count"] != float64(0) || payload["pending_review_count"] != float64(0) ||
+		payload["known_app_smoke_evidence_count"] != float64(0) ||
+		payload["known_app_smoke_passed_count"] != float64(0) {
 		t.Fatalf("unexpected center counts: %#v", payload)
 	}
 	source := payload["source"].(map[string]any)
@@ -859,5 +861,74 @@ func TestCompatibilityCenterPreviewCommandRendersRegistrySummary(t *testing.T) {
 		payload["host_root_modified"] != false ||
 		payload["backend_details_exposed"] != false {
 		t.Fatalf("unexpected center safety flags: %#v", payload)
+	}
+}
+
+func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testing.T) {
+	root := t.TempDir()
+	recipeData := []byte(`{"id":"org.example.ledger","name":"Example Ledger","icon":"office-chart-area","mode":"automatic","supported_extensions":[".abc"]}`)
+	sum := sha256.Sum256(recipeData)
+	digest := hex.EncodeToString(sum[:])
+	if err := os.WriteFile(filepath.Join(root, "org.example.ledger.json"), recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	registryPath := filepath.Join(root, "registry.json")
+	registryData := []byte(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.example.ledger","path":"org.example.ledger.json","sha256":"` + digest + `","signature_status":"development-only"}]}`)
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"compatibility-center-preview",
+		"--registry", registryPath,
+		"--known-app-smoke-app", "7zr",
+		"--known-app-smoke-name", "7-Zip Console",
+		"--known-app-smoke-version", "26.02",
+		"--known-app-smoke-status", "passed",
+		"--known-app-smoke-marker-observed",
+		"--known-app-smoke-checksum-verified",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_smoke_evidence_count"] != float64(1) ||
+		payload["known_app_smoke_passed_count"] != float64(1) ||
+		payload["action_execution_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected center known app evidence summary: %#v", payload)
+	}
+	evidenceItems := payload["known_app_smoke_evidence"].([]any)
+	evidence := evidenceItems[0].(map[string]any)
+	if evidence["app_id"] != "7zr" ||
+		evidence["display_name"] != "7-Zip Console" ||
+		evidence["app_version"] != "26.02" ||
+		evidence["evidence_kind"] != "known-application-managed-smoke" ||
+		evidence["smoke_status"] != "passed" ||
+		evidence["compatibility_state"] != "validated" ||
+		evidence["marker_observed"] != true ||
+		evidence["checksum_verified"] != true ||
+		evidence["execution_evidence_recorded"] != true ||
+		evidence["runtime_owned"] != true ||
+		evidence["kde_policy_owner"] != false ||
+		evidence["action_execution_enabled"] != false ||
+		evidence["backend_launch_enabled"] != false ||
+		evidence["host_root_modified"] != false ||
+		evidence["backend_details_exposed"] != false ||
+		evidence["raw_artifact_path_exposed"] != false {
+		t.Fatalf("unexpected known app smoke evidence: %#v", evidence)
+	}
+	text := strings.ToLower(output.String())
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center CLI known app evidence exposes forbidden term %q: %s", forbidden, output.String())
+		}
 	}
 }

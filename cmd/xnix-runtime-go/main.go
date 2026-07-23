@@ -663,11 +663,11 @@ func runEngineCatalogPreview(args []string, stdout io.Writer) error {
 }
 
 func runCompatibilityCenterPreview(args []string, stdout io.Writer) error {
-	recipes, provenance, err := parseRegistryPreviewSource("compatibility-center-preview", args)
+	recipes, provenance, options, err := parseCompatibilityCenterPreviewSource(args)
 	if err != nil {
 		return err
 	}
-	preview, err := appidentity.NewCompatibilityCenterPreview(recipes, provenance)
+	preview, err := appidentity.NewCompatibilityCenterPreviewWithOptions(recipes, provenance, options)
 	if err != nil {
 		return err
 	}
@@ -2302,6 +2302,47 @@ func parseRegistryPreviewSource(commandName string, args []string) ([]appidentit
 	}
 
 	return appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+}
+
+func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, appidentity.CompatibilityCenterOptions, error) {
+	const commandName = "compatibility-center-preview"
+	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
+	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
+	knownAppSmokeApp := flags.String("known-app-smoke-app", "", "known Windows app id with redacted smoke evidence")
+	knownAppSmokeName := flags.String("known-app-smoke-name", "7-Zip Console", "known Windows app display name")
+	knownAppSmokeVersion := flags.String("known-app-smoke-version", "26.02", "known Windows app version")
+	knownAppSmokeStatus := flags.String("known-app-smoke-status", "", "known Windows app smoke status")
+	knownAppSmokeMarkerObserved := flags.Bool("known-app-smoke-marker-observed", false, "known Windows app marker observation result")
+	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
+	if err := flags.Parse(args); err != nil {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
+	}
+	if *registryPath == "" {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, fmt.Errorf("%s requires --registry", commandName)
+	}
+	if flags.NArg() != 0 {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, fmt.Errorf("%s does not accept positional arguments", commandName)
+	}
+
+	recipes, provenance, err := appidentity.LoadRecipesFromRegistry(*registryPath, *recipeRoot)
+	if err != nil {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
+	}
+
+	options := appidentity.CompatibilityCenterOptions{}
+	if *knownAppSmokeApp != "" || *knownAppSmokeStatus != "" {
+		options.KnownAppSmokeEvidence = []appidentity.KnownAppSmokeEvidenceSummary{{
+			AppID:            *knownAppSmokeApp,
+			DisplayName:      *knownAppSmokeName,
+			AppVersion:       *knownAppSmokeVersion,
+			SmokeStatus:      *knownAppSmokeStatus,
+			MarkerObserved:   *knownAppSmokeMarkerObserved,
+			ChecksumVerified: *knownAppSmokeChecksumVerified,
+		}}
+	}
+	return recipes, provenance, options, nil
 }
 
 func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {

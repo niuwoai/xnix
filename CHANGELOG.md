@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.579] - 2026-07-23
+
+### Added
+
+- Added a Go-owned Compatibility Center known-app smoke evidence summary so the KDE read model can show that a managed real Windows application smoke has passed without exposing `.exe` paths, Wine/QEMU command details, backend internals, or host paths.
+- Added `compatibility-center-preview` CLI flags for consuming redacted known-app smoke status, marker observation, and checksum verification evidence produced by the Runtime smoke lane.
+- Kept KDE presentation-only and all action execution, backend launch, settings persistence, host-root mutation, raw artifact path exposure, and backend detail exposure disabled while surfacing the real-app smoke result.
+
 ## [0.2.578] - 2026-07-23
 
 ### Added

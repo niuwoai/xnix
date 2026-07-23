@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-23 | Current version: v0.2.578
+> Last updated: 2026-07-23 | Current version: v0.2.579
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.579 checkpoint wires the passing real-app smoke lane into the Go-owned Compatibility Center read model. `compatibility-center-preview` can now consume redacted known-app smoke evidence, including smoke status, marker observation, and checksum verification, then expose a KDE-safe summary such as "7-Zip Console passed managed compatibility smoke" without showing `.exe` paths, Wine/QEMU command details, backend internals, or host paths. The new summary remains presentation-only: action execution, backend launch, settings persistence, host-root mutation, raw artifact path exposure, and backend detail exposure stay disabled. This turns the v0.2.578 QEMU/Wine result into a user-visible product signal while preserving the rule that KDE is the shell and the Runtime owns compatibility decisions.
 
 The v0.2.578 checkpoint turns the external Windows executable path into a first known portable app lane and proves it with a real third-party Windows console app. The Go Runtime now owns a known Windows app catalog entry for the official 7-Zip `7zr.exe` 26.02 x86 standalone console executable, including the 7-Zip download page, release URL, pinned SHA256, and the `7-Zip` stdout marker expected from Wine. `xnix-runtime-go windows-known-app-fetch` fetches that executable into the managed cache only when called from an explicit networked preparation step, and `xnix-runtime-go windows-known-app-guest-wine-smoke` verifies the cached artifact before running it through the same loopback SSH QEMU Wine guest path. `scripts/container.rb fetch-known-winapp` uses bridge networking and the Docker-managed cache volume, while `scripts/container.rb known-winapp-guest-wine-smoke` keeps container networking disabled for execution. Local evidence shows `PASS: known Windows app fetched and verified (7zr 26.02)`, `PASS: known Windows app QEMU guest Wine smoke (7zr 26.02)`, and the retained `PASS: QEMU guest real Windows app Wine smoke` regression.
 

@@ -1440,7 +1440,9 @@ func TestCompatibilityCenterPreviewSummarizesApplicationsSafely(t *testing.T) {
 		t.Fatalf("unexpected center source: %#v", preview.Source)
 	}
 	if preview.ApplicationCount != 1 || len(preview.Applications) != 1 ||
-		preview.KnownIssueCount != 0 || preview.RepairRecordCount != 0 || preview.PendingReviewCount != 0 {
+		preview.KnownIssueCount != 0 || preview.RepairRecordCount != 0 || preview.PendingReviewCount != 0 ||
+		preview.KnownAppSmokeEvidenceCount != 0 || preview.KnownAppSmokePassedCount != 0 ||
+		len(preview.KnownAppSmokeEvidence) != 0 {
 		t.Fatalf("unexpected center counts: %#v", preview)
 	}
 	if !preview.RuntimeOwned || preview.KDEPolicyOwner ||
@@ -1479,6 +1481,65 @@ func TestCompatibilityCenterPreviewSummarizesApplicationsSafely(t *testing.T) {
 	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("Compatibility Center preview exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *testing.T) {
+	preview, err := NewCompatibilityCenterPreviewWithOptions([]Recipe{
+		{
+			ID:                  "org.example.ledger",
+			Name:                "Example Ledger",
+			Icon:                "office-chart-area",
+			Mode:                "automatic",
+			SupportedExtensions: []string{".abc"},
+		},
+	}, Provenance{Source: "registry", RegistryName: "test-registry", DigestVerified: true}, CompatibilityCenterOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:            "7zr",
+			DisplayName:      "7-Zip Console",
+			AppVersion:       "26.02",
+			SmokeStatus:      "passed",
+			MarkerObserved:   true,
+			ChecksumVerified: true,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewCompatibilityCenterPreviewWithOptions returned error: %v", err)
+	}
+	if preview.KnownAppSmokeEvidenceCount != 1 ||
+		preview.KnownAppSmokePassedCount != 1 ||
+		len(preview.KnownAppSmokeEvidence) != 1 ||
+		preview.Summary.Headline != "A known Windows application has passed managed compatibility smoke." {
+		t.Fatalf("unexpected known app smoke counts: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence[0]
+	if evidence.AppID != "7zr" ||
+		evidence.DisplayName != "7-Zip Console" ||
+		evidence.AppVersion != "26.02" ||
+		evidence.EvidenceKind != "known-application-managed-smoke" ||
+		evidence.SmokeStatus != "passed" ||
+		evidence.CompatibilityState != "validated" ||
+		!evidence.MarkerObserved ||
+		!evidence.ChecksumVerified ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeOwned ||
+		evidence.KDEPolicyOwner ||
+		evidence.ActionExecutionEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected known app smoke evidence: %#v", evidence)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("Compatibility Center known app evidence exposes forbidden term %q: %s", forbidden, text)
 		}
 	}
 }
