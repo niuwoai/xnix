@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.593] - 2026-07-24
+
+### Added
+
+- Added staged launcher dispatch source fields to Go Compatibility Center known-app smoke evidence, including staged launcher verification, Runtime dispatch verification, launch authorization requirement, and disabled desktop launch state.
+- Extended the staged launcher dispatch smoke to validate that a passing 7zr run is immediately projected into redacted Compatibility Center evidence without enabling backend launch or exposing implementation details.
+
 ## [0.2.592] - 2026-07-24
 
 ### Changed

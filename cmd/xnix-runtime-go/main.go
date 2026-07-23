@@ -2325,6 +2325,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppSmokeApp := flags.String("known-app-smoke-app", "", "known Windows app id with redacted smoke evidence")
 	knownAppSmokeName := flags.String("known-app-smoke-name", "7-Zip Console", "known Windows app display name")
 	knownAppSmokeVersion := flags.String("known-app-smoke-version", "26.02", "known Windows app version")
+	knownAppSmokeSource := flags.String("known-app-smoke-source", "known-app-guest-smoke", "redacted known Windows app smoke evidence source")
 	knownAppSmokeStatus := flags.String("known-app-smoke-status", "", "known Windows app smoke status")
 	knownAppSmokeMarkerObserved := flags.Bool("known-app-smoke-marker-observed", false, "known Windows app marker observation result")
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
@@ -2349,6 +2350,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 			AppID:            *knownAppSmokeApp,
 			DisplayName:      *knownAppSmokeName,
 			AppVersion:       *knownAppSmokeVersion,
+			EvidenceSource:   *knownAppSmokeSource,
 			SmokeStatus:      *knownAppSmokeStatus,
 			MarkerObserved:   *knownAppSmokeMarkerObserved,
 			ChecksumVerified: *knownAppSmokeChecksumVerified,

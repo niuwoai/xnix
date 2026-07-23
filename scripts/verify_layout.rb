@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.592"
+EXPECTED_VERSION = "0.2.593"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6445,7 +6445,7 @@ end
 end
 
 staged_launcher_dispatch_smoke_source = read_project_file("scripts/staged_launcher_dispatch_smoke.rb")
-%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
+%w[staged\ managed\ launcher\ dispatch\ smoke go\ build windows-known-app-dispatch-preview desktop-activation-stage --managed-launcher-bin usr/local/bin/xnix-compat-launch --guest-boundary managed-known-app-guest-smoke windows-known-app-dispatch-smoke compatibility-center-preview known_app_staged_launcher_passed_count staged_launcher_verified runtime_dispatch_verified launch_authorization_required desktop_launch_enabled Xnix::Qemu.wine_guest Xnix::SshProbe SKIP PASS].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token.gsub("\\ ", " ")), "Staged launcher dispatch smoke must include #{token}")
 end
 %w[runtime_owned_dispatch dispatch_started execution_started host_root_modified docker_socket_mounted broad_host_mount_required].each do |field|
@@ -6453,6 +6453,14 @@ end
 end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
 assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_dispatch_smoke_command"), "Container model must expose staged launcher dispatch smoke")
+
+go_compatibility_center_source = read_project_file("internal/runtime/appidentity/identity.go") +
+                                 read_project_file("internal/runtime/appidentity/identity_test.go") +
+                                 read_project_file("cmd/xnix-runtime-go/main.go") +
+                                 read_project_file("cmd/xnix-runtime-go/desktop_activation_cli_test.go")
+%w[KnownAppStagedLauncherPassedCount EvidenceSource StagedLauncherVerified RuntimeDispatchVerified LaunchAuthorizationRequired DesktopLaunchEnabled --known-app-smoke-source staged-launcher-dispatch-smoke known_app_staged_launcher_passed_count evidence_source staged_launcher_verified runtime_dispatch_verified launch_authorization_required desktop_launch_enabled].each do |token|
+  assert(go_compatibility_center_source.include?(token), "Go Compatibility Center known app evidence must include #{token}")
+end
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")
 assert(desktop_rollback_source.include?("xnix-rollback-desktop-integration"), "Desktop activation rollback must expose a CLI command")

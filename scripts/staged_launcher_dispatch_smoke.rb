@@ -5,6 +5,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "pathname"
+require "securerandom"
 require "shellwords"
 require_relative "../lib/xnix/qemu"
 require_relative "../lib/xnix/ssh_probe"
@@ -12,7 +13,8 @@ require_relative "../lib/xnix/ssh_test_key"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 WORK_ROOT = PROJECT_ROOT.join(".cache", "xnix", "staged-launcher-dispatch-smoke")
-RUN_ROOT = WORK_ROOT.join(Process.pid.to_s)
+RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
+RUN_ROOT = WORK_ROOT.join(RUN_ID)
 BUILD_DIR = RUN_ROOT.join("build")
 STAGE_ROOT = RUN_ROOT.join("stage")
 KNOWN_APP_CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
@@ -194,6 +196,31 @@ begin
 
   case payload.fetch("status")
   when "passed"
+    center_preview_args = [
+      "go", "run", "./cmd/xnix-runtime-go",
+      "compatibility-center-preview",
+      "--registry", "runtime/recipes/registry.json",
+      "--known-app-smoke-app", payload.fetch("app_id"),
+      "--known-app-smoke-name", payload.fetch("display_name"),
+      "--known-app-smoke-version", payload.fetch("app_version"),
+      "--known-app-smoke-source", "staged-launcher-dispatch-smoke",
+      "--known-app-smoke-status", "passed"
+    ]
+    center_preview_args << "--known-app-smoke-marker-observed" if payload["marker_observed"]
+    center_preview_args << "--known-app-smoke-checksum-verified" if payload["artifact_verified"]
+    center_preview, center_preview_stdout = run_json(go_env, *center_preview_args)
+    assert(center_preview["known_app_smoke_evidence_count"] == 1, "Compatibility Center must receive known app smoke evidence")
+    assert(center_preview["known_app_smoke_passed_count"] == 1, "Compatibility Center must count passed known app smoke evidence")
+    assert(center_preview["known_app_staged_launcher_passed_count"] == 1, "Compatibility Center must count staged launcher smoke evidence")
+    center_evidence = center_preview.fetch("known_app_smoke_evidence").first
+    assert(center_evidence["evidence_source"] == "staged-launcher-dispatch-smoke", "Compatibility Center evidence must identify the staged launcher source")
+    assert(center_evidence["staged_launcher_verified"] == true, "Compatibility Center evidence must verify the staged launcher path")
+    assert(center_evidence["runtime_dispatch_verified"] == true, "Compatibility Center evidence must verify Runtime dispatch")
+    assert(center_evidence["launch_authorization_required"] == true, "Compatibility Center evidence must keep launch authorization required")
+    assert(center_evidence["desktop_launch_enabled"] == false, "Compatibility Center evidence must not enable desktop launch")
+    assert(center_evidence["backend_launch_enabled"] == false, "Compatibility Center evidence must not enable backend launch")
+    assert(center_evidence["host_root_modified"] == false, "Compatibility Center evidence must not mutate the host root")
+    assert_no_forbidden(center_preview_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Compatibility Center preview output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

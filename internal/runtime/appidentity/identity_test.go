@@ -1499,6 +1499,7 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 			AppID:            "7zr",
 			DisplayName:      "7-Zip Console",
 			AppVersion:       "26.02",
+			EvidenceSource:   "staged-launcher-dispatch-smoke",
 			SmokeStatus:      "passed",
 			MarkerObserved:   true,
 			ChecksumVerified: true,
@@ -1509,8 +1510,9 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 	}
 	if preview.KnownAppSmokeEvidenceCount != 1 ||
 		preview.KnownAppSmokePassedCount != 1 ||
+		preview.KnownAppStagedLauncherPassedCount != 1 ||
 		len(preview.KnownAppSmokeEvidence) != 1 ||
-		preview.Summary.Headline != "A known Windows application has passed managed compatibility smoke." {
+		preview.Summary.Headline != "A known Windows application has passed the staged launcher Runtime dispatch smoke." {
 		t.Fatalf("unexpected known app smoke counts: %#v", preview)
 	}
 	evidence := preview.KnownAppSmokeEvidence[0]
@@ -1518,11 +1520,16 @@ func TestCompatibilityCenterPreviewSummarizesKnownAppSmokeEvidenceSafely(t *test
 		evidence.DisplayName != "7-Zip Console" ||
 		evidence.AppVersion != "26.02" ||
 		evidence.EvidenceKind != "known-application-managed-smoke" ||
+		evidence.EvidenceSource != "staged-launcher-dispatch-smoke" ||
 		evidence.SmokeStatus != "passed" ||
 		evidence.CompatibilityState != "validated" ||
 		!evidence.MarkerObserved ||
 		!evidence.ChecksumVerified ||
 		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.StagedLauncherVerified ||
+		!evidence.RuntimeDispatchVerified ||
+		!evidence.LaunchAuthorizationRequired ||
+		evidence.DesktopLaunchEnabled ||
 		!evidence.RuntimeOwned ||
 		evidence.KDEPolicyOwner ||
 		evidence.ActionExecutionEnabled ||

@@ -892,6 +892,7 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testi
 		"--known-app-smoke-app", "7zr",
 		"--known-app-smoke-name", "7-Zip Console",
 		"--known-app-smoke-version", "26.02",
+		"--known-app-smoke-source", "staged-launcher-dispatch-smoke",
 		"--known-app-smoke-status", "passed",
 		"--known-app-smoke-marker-observed",
 		"--known-app-smoke-checksum-verified",
@@ -906,6 +907,7 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testi
 	}
 	if payload["known_app_smoke_evidence_count"] != float64(1) ||
 		payload["known_app_smoke_passed_count"] != float64(1) ||
+		payload["known_app_staged_launcher_passed_count"] != float64(1) ||
 		payload["action_execution_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["host_root_modified"] != false ||
@@ -918,11 +920,16 @@ func TestCompatibilityCenterPreviewCommandConsumesKnownAppSmokeEvidence(t *testi
 		evidence["display_name"] != "7-Zip Console" ||
 		evidence["app_version"] != "26.02" ||
 		evidence["evidence_kind"] != "known-application-managed-smoke" ||
+		evidence["evidence_source"] != "staged-launcher-dispatch-smoke" ||
 		evidence["smoke_status"] != "passed" ||
 		evidence["compatibility_state"] != "validated" ||
 		evidence["marker_observed"] != true ||
 		evidence["checksum_verified"] != true ||
 		evidence["execution_evidence_recorded"] != true ||
+		evidence["staged_launcher_verified"] != true ||
+		evidence["runtime_dispatch_verified"] != true ||
+		evidence["launch_authorization_required"] != true ||
+		evidence["desktop_launch_enabled"] != false ||
 		evidence["runtime_owned"] != true ||
 		evidence["kde_policy_owner"] != false ||
 		evidence["action_execution_enabled"] != false ||
