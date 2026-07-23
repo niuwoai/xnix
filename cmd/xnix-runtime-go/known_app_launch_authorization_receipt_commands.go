@@ -358,6 +358,8 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 	centerCardState := flags.String("center-card-state", "", "Compatibility Center card state from the KDE read model")
 	primaryActionID := flags.String("primary-action-id", "", "KDE primary action id from the Runtime-owned card")
 	postReviewDispatchState := flags.String("post-review-dispatch-state", "", "post-review dispatch state from the Runtime-owned card")
+	evidenceID := flags.String("evidence-id", "", "opaque Runtime-status launch evidence handoff id used by the Runtime action trigger")
+	evidenceRelativePath := flags.String("evidence-relative-path", "", "relative Runtime-status launch evidence handoff path used by the Runtime action trigger")
 	launcherPath := flags.String("launcher", "xnix-compat-launch", "Runtime-managed launcher executable")
 	host := flags.String("host", "", "optional guest SSH host forwarded to the managed launcher")
 	port := flags.String("port", "", "optional guest SSH port forwarded to the managed launcher")
@@ -376,7 +378,7 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 	if flags.NArg() != 0 {
 		return errors.New("known-app-kde-runtime-status-launch-execution does not accept positional arguments")
 	}
-	plan, err := appidentity.PrepareKnownAppKDERuntimeStatusLaunchExecution(appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequest{
+	plan, err := knownAppKDERuntimeStatusLaunchExecutionPlanFromInput(knownAppKDERuntimeStatusLaunchExecutionPlanInput{
 		AppID:                        *appID,
 		StateRoot:                    *stateRoot,
 		CacheRoot:                    *cacheRoot,
@@ -386,6 +388,8 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 		CenterCardState:              *centerCardState,
 		PrimaryActionID:              *primaryActionID,
 		PostReviewDispatchState:      *postReviewDispatchState,
+		EvidenceID:                   *evidenceID,
+		EvidenceRelativePath:         *evidenceRelativePath,
 	})
 	if err != nil {
 		return err
@@ -429,6 +433,42 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 		return err
 	}
 	return encodeIndentedJSON(stdout, result)
+}
+
+type knownAppKDERuntimeStatusLaunchExecutionPlanInput struct {
+	AppID                        string
+	StateRoot                    string
+	CacheRoot                    string
+	LaunchAuthorizationReceiptID string
+	SessionGatedReviewReceiptID  string
+	ControlledExecutionSessionID string
+	CenterCardState              string
+	PrimaryActionID              string
+	PostReviewDispatchState      string
+	EvidenceID                   string
+	EvidenceRelativePath         string
+}
+
+func knownAppKDERuntimeStatusLaunchExecutionPlanFromInput(input knownAppKDERuntimeStatusLaunchExecutionPlanInput) (appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {
+	if strings.TrimSpace(input.EvidenceID) != "" || strings.TrimSpace(input.EvidenceRelativePath) != "" {
+		return appidentity.PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger(appidentity.KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest{
+			StateRoot:            input.StateRoot,
+			CacheRoot:            input.CacheRoot,
+			EvidenceID:           input.EvidenceID,
+			EvidenceRelativePath: input.EvidenceRelativePath,
+		})
+	}
+	return appidentity.PrepareKnownAppKDERuntimeStatusLaunchExecution(appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequest{
+		AppID:                        input.AppID,
+		StateRoot:                    input.StateRoot,
+		CacheRoot:                    input.CacheRoot,
+		LaunchAuthorizationReceiptID: input.LaunchAuthorizationReceiptID,
+		SessionGatedReviewReceiptID:  input.SessionGatedReviewReceiptID,
+		ControlledExecutionSessionID: input.ControlledExecutionSessionID,
+		CenterCardState:              input.CenterCardState,
+		PrimaryActionID:              input.PrimaryActionID,
+		PostReviewDispatchState:      input.PostReviewDispatchState,
+	})
 }
 
 func runKnownAppKDERuntimeStatusLaunchEvidenceRecord(args []string, stdout io.Writer) error {

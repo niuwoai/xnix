@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.621"
+EXPECTED_VERSION = "0.2.622"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6454,7 +6454,7 @@ end
 %w[known-app-kde-runtime-status-launch-evidence-preview PreviewKnownAppKDERuntimeStatusLaunchEvidence evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token), "Staged launcher dispatch smoke must consume Runtime-status launch handoff preview #{token}")
 end
-%w[known-app-kde-runtime-status-launch-action-trigger-preview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method].each do |token|
+%w[known-app-kde-runtime-status-launch-action-trigger-preview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method action_trigger_type trigger-fed\ Runtime\ status\ launch\ execution].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token), "Staged launcher dispatch smoke must consume Runtime-status launch action trigger #{token}")
 end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
@@ -6493,7 +6493,7 @@ end
 %w[KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest KnownAppKDERuntimeStatusLaunchEvidencePreview PreviewKnownAppKDERuntimeStatusLaunchEvidence known-app-kde-runtime-status-launch-evidence-preview evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch evidence handoff preview must include #{token}")
 end
-%w[KnownAppKDERuntimeStatusLaunchActionTriggerSchemaVersion KnownAppKDERuntimeStatusLaunchActionTriggerRequestType KnownAppKDERuntimeStatusLaunchActionTriggerRequest KnownAppKDERuntimeStatusLaunchActionTriggerPreview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger known-app-kde-runtime-status-launch-action-trigger-preview trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method launch_request_read_method].each do |token|
+%w[KnownAppKDERuntimeStatusLaunchActionTriggerSchemaVersion KnownAppKDERuntimeStatusLaunchActionTriggerRequestType KnownAppKDERuntimeStatusLaunchActionTriggerRequest KnownAppKDERuntimeStatusLaunchActionTriggerPreview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger known-app-kde-runtime-status-launch-action-trigger-preview trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method launch_request_read_method action_trigger_type action_trigger_runtime_method action_trigger_read_method action_trigger_state evidence_handoff_consumed evidence_digest_verified].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch action trigger must include #{token}")
 end
 

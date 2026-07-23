@@ -73,6 +73,8 @@ assert(contents.include?("trigger_state"), "Staged launcher dispatch smoke must 
 assert(contents.include?("runtime-launch-request-assembled"), "Staged launcher dispatch smoke must verify Runtime-status action trigger assembles a launch request")
 assert(contents.include?("runtime_owned_trigger"), "Staged launcher dispatch smoke must verify Runtime ownership of action triggers")
 assert(contents.include?("launch_request_type"), "Staged launcher dispatch smoke must verify action trigger creates a launch request preview")
+assert(contents.include?("action_trigger_type"), "Staged launcher dispatch smoke must verify trigger-fed Runtime-status launch execution")
+assert(contents.include?("trigger-fed Runtime status launch execution"), "Staged launcher dispatch smoke must exercise Runtime execution through the action trigger handoff")
 assert(contents.include?("known_app_staged_launcher_passed_count"), "Staged launcher dispatch smoke must verify Compatibility Center staged launcher evidence")
 assert(contents.include?("known_app_launch_authorization_required_count"), "Staged launcher dispatch smoke must verify launch authorization requirement count")
 assert(contents.include?("known_app_launch_authorization_recorded_count"), "Staged launcher dispatch smoke must verify launch authorization receipt count")

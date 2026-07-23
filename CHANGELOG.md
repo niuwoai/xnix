@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.622] - 2026-07-24
+
+### Added
+
+- Added trigger-fed execution planning for `known-app-kde-runtime-status-launch-execution`, allowing the Runtime-owned execution wrapper to consume a persisted Runtime-status launch evidence handoff by opaque id or safe relative path.
+
+### Changed
+
+- Extended the staged launcher dispatch smoke so, after the first managed launcher pass records the Runtime-status handoff, a second Runtime execution call derives its launcher plan from `known-app-kde-runtime-status-launch-action-trigger-preview` instead of reconstructing launch request fields from smoke-local variables.
+
 ## [0.2.621] - 2026-07-24
 
 ### Added

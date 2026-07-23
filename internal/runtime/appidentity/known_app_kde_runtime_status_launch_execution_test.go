@@ -112,6 +112,102 @@ func TestPrepareKnownAppKDERuntimeStatusLaunchExecutionRevalidatesRuntimeOwnedSt
 	}
 }
 
+func TestPrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerConsumesHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppRuntimeStatusLaunchExecutionFixture(t, stateRoot)
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := RecordKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	plan, err := PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger(KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest{
+		StateRoot:            stateRoot,
+		EvidenceRelativePath: record.EvidenceRelativePath,
+	})
+	if err != nil {
+		t.Fatalf("PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger returned error: %v", err)
+	}
+	if plan.SchemaVersion != KnownAppKDERuntimeStatusLaunchExecutionSchemaVersion ||
+		plan.RequestType != KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		plan.Source != KnownAppKDERuntimeStatusLaunchActionTriggerRequestType+"+runtime-owner-execution-entrypoint" ||
+		plan.ActionTriggerType != KnownAppKDERuntimeStatusLaunchActionTriggerRequestType ||
+		plan.ActionTriggerRuntimeMethod != "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger" ||
+		plan.ActionTriggerReadMethod != "GetKnownAppKDERuntimeStatusLaunchActionTrigger" ||
+		plan.ActionTriggerState != "runtime-launch-request-assembled" ||
+		!plan.EvidenceHandoffConsumed ||
+		!plan.EvidenceDigestVerified ||
+		plan.EvidenceRelativePath != record.EvidenceRelativePath ||
+		plan.EvidenceSHA256 != record.EvidenceSHA256 ||
+		plan.RequestPreviewType != KnownAppKDERuntimeStatusLaunchRequestType ||
+		plan.ActionID != KnownAppKDERuntimeStatusLaunchAction ||
+		plan.LaunchAuthorizationReceiptID != launchReceiptID ||
+		plan.SessionGatedReviewReceiptID != reviewReceiptID ||
+		plan.ControlledExecutionSessionID != sessionID ||
+		!plan.LaunchReceiptRevalidated ||
+		!plan.ReviewReceiptRevalidated ||
+		!plan.ControlledSessionRevalidated ||
+		!plan.RuntimeManagedLauncherArgvReady ||
+		strings.Join(plan.RuntimeManagedLauncherArgv, " ") != "xnix-compat-launch --app 7zr --guest-boundary managed-known-app-guest-smoke --state-root <runtime-owned-state-root> --receipt-id "+launchReceiptID+" --review-receipt-id "+reviewReceiptID+" --session-id "+sessionID ||
+		!plan.StateRootInjectedByRuntime ||
+		!plan.StateRootSuppliedByRuntime ||
+		plan.KDEStateRootAccess ||
+		!plan.ManagedLauncherInvocationReady ||
+		!plan.RuntimeOwnedRequest ||
+		!plan.RuntimeOwnedLaunch ||
+		!plan.RuntimeOwnedDispatch ||
+		plan.DirectLaunchEnabled ||
+		plan.DesktopLaunchEnabled ||
+		plan.BackendLaunchEnabled ||
+		plan.ExecutionStarted ||
+		plan.StateRootPathExposed ||
+		plan.RawLauncherOutputExposed ||
+		plan.BackendDetailsExposed ||
+		plan.HostRootModified {
+		t.Fatalf("unexpected trigger-fed Runtime-status launch execution plan: %#v", plan)
+	}
+	encoded, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(string(encoded), stateRoot) {
+		t.Fatalf("trigger-fed execution plan exposed state root: %s", string(encoded))
+	}
+}
+
 func TestPrepareKnownAppKDERuntimeStatusLaunchExecutionRejectsMissingReviewReceipt(t *testing.T) {
 	stateRoot := t.TempDir()
 	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)

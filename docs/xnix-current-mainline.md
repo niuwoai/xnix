@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.621
+> Last updated: 2026-07-24 | Baseline: v0.2.622
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.621 by letting the `known-app-kde-runtime-status-launch-action-trigger-preview` output feed the Runtime-owned execution wrapper, so the staged 7zr lane can be exercised as a desktop-triggered Runtime action rather than a smoke harness reconstruction. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable writer, `known-app-kde-runtime-status-launch-evidence-preview` as the KDE-safe reader, and `known-app-kde-runtime-status-launch-action-trigger-preview` as the action-forwarding bridge. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.622 by exposing the trigger-fed Runtime execution path as the desktop-callable `show-runtime-controlled-launch` route, so KDE can forward a handoff id or relative evidence handle instead of shelling out with smoke-only fields. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable writer, `known-app-kde-runtime-status-launch-evidence-preview` as the KDE-safe reader, `known-app-kde-runtime-status-launch-action-trigger-preview` as the action-forwarding bridge, and `known-app-kde-runtime-status-launch-execution --evidence-relative-path` as the Runtime-owned execution entrypoint. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.622 checkpoint lets `known-app-kde-runtime-status-launch-execution` consume a Runtime-status action trigger handoff directly through `--evidence-relative-path` or `--evidence-id`. The execution wrapper now reads the handoff through the action trigger preview, derives the Runtime-owned managed launcher request, revalidates receipts and session evidence, injects the state root only inside Runtime, and invokes the managed launcher without KDE or Ruby smoke code reconstructing launch receipt, review receipt, controlled session id, card state, action id, or post-review dispatch state.
 
 The v0.2.621 checkpoint adds `known-app-kde-runtime-status-launch-action-trigger-preview`, a Go-owned bridge between the consumed Runtime-status handoff and the `show-runtime-controlled-launch` desktop action. It reads the persisted handoff from the Runtime state root, verifies digest evidence, consumes the normalized action state, and assembles the Runtime-owned managed launcher request without requiring KDE or Ruby smoke code to reconstruct launch receipt, review receipt, session id, card state, action id, or post-review dispatch state from separate flags.
 

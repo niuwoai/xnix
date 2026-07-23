@@ -735,6 +735,50 @@ begin
   assert(action_trigger["docker_socket_mounted"] == false, "Runtime status launch action trigger must not mount Docker socket")
   assert(action_trigger["broad_host_mount_required"] == false, "Runtime status launch action trigger must not require broad host mounts")
   assert_no_forbidden(action_trigger_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch action trigger output")
+  trigger_launcher_stdout, trigger_launcher_stderr, trigger_launcher_status = run_command(
+    go_env,
+    "go", "run", "./cmd/xnix-runtime-go",
+    "known-app-kde-runtime-status-launch-execution",
+    "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+    "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+    "--evidence-relative-path", evidence_record.fetch("evidence_relative_path"),
+    "--launcher", STAGED_LAUNCHER.to_s,
+    "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
+    "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
+    *APP_ARGS.flat_map { |argument| ["--arg", argument] }
+  )
+  unless trigger_launcher_status.zero?
+    warn "QEMU serial log: #{SERIAL_LOG_PATH}"
+    warn trigger_launcher_stdout unless trigger_launcher_stdout.empty?
+    warn trigger_launcher_stderr unless trigger_launcher_stderr.empty?
+    warn "FAIL: #{SMOKE_NAME} trigger-fed command failed"
+    exit 1
+  end
+  trigger_runtime_execution = JSON.parse(trigger_launcher_stdout)
+  assert(trigger_runtime_execution["request_type"] == "known-app-kde-runtime-status-launch-execution", "trigger-fed Runtime status launch execution must use the Runtime-owned entrypoint")
+  assert(trigger_runtime_execution["action_trigger_type"] == "known-app-kde-runtime-status-launch-action-trigger-preview", "trigger-fed Runtime status launch execution must consume the action trigger")
+  assert(trigger_runtime_execution["action_trigger_runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger", "trigger-fed Runtime status launch execution must consume the Go Runtime action trigger")
+  assert(trigger_runtime_execution["action_trigger_read_method"] == "GetKnownAppKDERuntimeStatusLaunchActionTrigger", "trigger-fed Runtime status launch execution must expose the action trigger read method")
+  assert(trigger_runtime_execution["action_trigger_state"] == "runtime-launch-request-assembled", "trigger-fed Runtime status launch execution must receive an assembled launch request")
+  assert(trigger_runtime_execution["evidence_handoff_consumed"] == true, "trigger-fed Runtime status launch execution must consume handoff evidence")
+  assert(trigger_runtime_execution["evidence_digest_verified"] == true, "trigger-fed Runtime status launch execution must verify handoff digest")
+  assert(trigger_runtime_execution["evidence_relative_path"] == evidence_record.fetch("evidence_relative_path"), "trigger-fed Runtime status launch execution must preserve relative handoff evidence path")
+  assert(trigger_runtime_execution["evidence_sha256"] == evidence_record.fetch("evidence_sha256"), "trigger-fed Runtime status launch execution must preserve handoff digest")
+  assert(trigger_runtime_execution["state_root_injected_by_runtime"] == true, "trigger-fed Runtime status launch execution must inject state-root internally")
+  assert(trigger_runtime_execution["state_root_supplied_by_runtime"] == true, "trigger-fed Runtime status launch execution must keep state-root supplied by Runtime")
+  assert(trigger_runtime_execution["kde_state_root_access"] == false, "trigger-fed Runtime status launch execution must not give KDE state-root access")
+  assert(trigger_runtime_execution["managed_launcher_invoked"] == true, "trigger-fed Runtime status launch execution must invoke the managed launcher")
+  assert(trigger_runtime_execution["existing_managed_launcher_invoked"] == true, "trigger-fed Runtime status launch execution must invoke the existing staged launcher")
+  assert(trigger_runtime_execution["launcher_output_json_observed"] == true, "trigger-fed Runtime status launch execution must observe delegated launcher JSON")
+  assert(trigger_runtime_execution["delegated_status"] == "passed", "trigger-fed Runtime status launch execution must pass delegated launcher evidence")
+  assert(trigger_runtime_execution["delegated_session_gated_review_receipt_id"] == payload.fetch("session_gated_review_receipt_id"), "trigger-fed Runtime status launch execution must preserve delegated review receipt id")
+  assert(trigger_runtime_execution["delegated_controlled_execution_session_id"] == payload.fetch("controlled_execution_session_id"), "trigger-fed Runtime status launch execution must preserve delegated controlled session id")
+  assert(trigger_runtime_execution["raw_launcher_output_exposed"] == false, "trigger-fed Runtime status launch execution must not expose raw launcher output")
+  assert(trigger_runtime_execution["state_root_path_exposed"] == false, "trigger-fed Runtime status launch execution must not expose state-root paths")
+  assert(trigger_runtime_execution["managed_launcher_path_exposed"] == false, "trigger-fed Runtime status launch execution must not expose launcher paths")
+  assert(trigger_runtime_execution["backend_details_exposed"] == false, "trigger-fed Runtime status launch execution must not expose backend details")
+  assert(trigger_runtime_execution["host_root_modified"] == false, "trigger-fed Runtime status launch execution must not mutate host root")
+  assert_no_forbidden(trigger_launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, STAGED_LAUNCHER.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "trigger-fed Runtime status launch execution output")
 
   case payload.fetch("status")
   when "passed"

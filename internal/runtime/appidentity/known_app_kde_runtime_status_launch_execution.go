@@ -28,6 +28,13 @@ type KnownAppKDERuntimeStatusLaunchExecutionRequest struct {
 	PostReviewDispatchState      string
 }
 
+type KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest struct {
+	StateRoot            string
+	CacheRoot            string
+	EvidenceID           string
+	EvidenceRelativePath string
+}
+
 type KnownAppKDERuntimeStatusLaunchExecutionPlan struct {
 	SchemaVersion                   string   `json:"schema_version"`
 	RequestType                     string   `json:"request_type"`
@@ -36,6 +43,14 @@ type KnownAppKDERuntimeStatusLaunchExecutionPlan struct {
 	RuntimeMethod                   string   `json:"runtime_method"`
 	ExecutionMethod                 string   `json:"execution_method"`
 	RequestPreviewType              string   `json:"request_preview_type"`
+	ActionTriggerType               string   `json:"action_trigger_type,omitempty"`
+	ActionTriggerRuntimeMethod      string   `json:"action_trigger_runtime_method,omitempty"`
+	ActionTriggerReadMethod         string   `json:"action_trigger_read_method,omitempty"`
+	ActionTriggerState              string   `json:"action_trigger_state,omitempty"`
+	EvidenceHandoffConsumed         bool     `json:"evidence_handoff_consumed,omitempty"`
+	EvidenceDigestVerified          bool     `json:"evidence_digest_verified,omitempty"`
+	EvidenceRelativePath            string   `json:"evidence_relative_path,omitempty"`
+	EvidenceSHA256                  string   `json:"evidence_sha256,omitempty"`
 	AppID                           string   `json:"app_id"`
 	DisplayName                     string   `json:"display_name"`
 	AppVersion                      string   `json:"app_version"`
@@ -321,6 +336,42 @@ func PrepareKnownAppKDERuntimeStatusLaunchExecution(request KnownAppKDERuntimeSt
 	return validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan)
 }
 
+func PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger(request KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest) (KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {
+	trigger, err := PreviewKnownAppKDERuntimeStatusLaunchActionTrigger(KnownAppKDERuntimeStatusLaunchActionTriggerRequest{
+		StateRoot:            request.StateRoot,
+		EvidenceID:           request.EvidenceID,
+		EvidenceRelativePath: request.EvidenceRelativePath,
+	})
+	if err != nil {
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, err
+	}
+	launchRequest := trigger.LaunchRequest
+	plan, err := PrepareKnownAppKDERuntimeStatusLaunchExecution(KnownAppKDERuntimeStatusLaunchExecutionRequest{
+		AppID:                        launchRequest.AppID,
+		StateRoot:                    request.StateRoot,
+		CacheRoot:                    request.CacheRoot,
+		LaunchAuthorizationReceiptID: launchRequest.LaunchAuthorizationReceiptID,
+		SessionGatedReviewReceiptID:  launchRequest.SessionGatedReviewReceiptID,
+		ControlledExecutionSessionID: launchRequest.ControlledExecutionSessionID,
+		CenterCardState:              launchRequest.CenterCardState,
+		PrimaryActionID:              launchRequest.ActionID,
+		PostReviewDispatchState:      launchRequest.PostReviewDispatchState,
+	})
+	if err != nil {
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, err
+	}
+	plan.Source = trigger.RequestType + "+runtime-owner-execution-entrypoint"
+	plan.ActionTriggerType = trigger.RequestType
+	plan.ActionTriggerRuntimeMethod = trigger.RuntimeMethod
+	plan.ActionTriggerReadMethod = trigger.ReadMethod
+	plan.ActionTriggerState = trigger.TriggerState
+	plan.EvidenceHandoffConsumed = trigger.EvidenceHandoffConsumed
+	plan.EvidenceDigestVerified = trigger.EvidenceDigestVerified
+	plan.EvidenceRelativePath = trigger.EvidenceRelativePath
+	plan.EvidenceSHA256 = trigger.EvidenceSHA256
+	return validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan)
+}
+
 func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest) (KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
 	projection := KnownAppKDERuntimeStatusLaunchDelegatedEvidence{
 		ProjectionType:                         "known-app-kde-runtime-status-launch-delegated-evidence",
@@ -498,6 +549,12 @@ func validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan KnownAppKDERuntime
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution has invalid schema")
 	case plan.RequestPreviewType != KnownAppKDERuntimeStatusLaunchRequestType:
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires the KDE request preview")
+	case plan.ActionTriggerType != "" && (plan.ActionTriggerType != KnownAppKDERuntimeStatusLaunchActionTriggerRequestType || plan.ActionTriggerRuntimeMethod != "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger" || plan.ActionTriggerReadMethod != "GetKnownAppKDERuntimeStatusLaunchActionTrigger" || plan.ActionTriggerState != "runtime-launch-request-assembled"):
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires a valid action trigger handoff")
+	case plan.ActionTriggerType != "" && (!plan.EvidenceHandoffConsumed || !plan.EvidenceDigestVerified || plan.EvidenceRelativePath == "" || plan.EvidenceSHA256 == ""):
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires consumed verified handoff evidence")
+	case plan.EvidenceRelativePath != "" && (filepath.IsAbs(plan.EvidenceRelativePath) || strings.Contains(filepath.Clean(plan.EvidenceRelativePath), "..")):
+		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires relative handoff evidence")
 	case plan.ActionID != KnownAppKDERuntimeStatusLaunchAction || plan.ActionKind != "runtime-status":
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution has invalid action")
 	case plan.CenterCardState != "validated-post-review-dispatch" || plan.PostReviewDispatchState != "created-after-session-gated-review":
@@ -525,8 +582,8 @@ func validateKnownAppKDERuntimeStatusLaunchExecutionPlan(plan KnownAppKDERuntime
 	case plan.HostRootModified || plan.PrivilegedContainerRequired || plan.DockerSocketMounted || plan.BroadHostMountRequired:
 		return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution must keep host and container boundaries closed")
 	}
-	for _, value := range []string{plan.AppID, plan.DisplayName, plan.AppVersion, plan.ActionID, plan.CenterCardState, plan.PostReviewDispatchState, plan.LaunchAuthorizationReceiptID, plan.SessionGatedReviewReceiptID, plan.ControlledExecutionSessionID, plan.LaunchGateState, plan.ReviewGateState} {
-		if !singleLine(value) {
+	for _, value := range []string{plan.AppID, plan.DisplayName, plan.AppVersion, plan.ActionID, plan.CenterCardState, plan.PostReviewDispatchState, plan.LaunchAuthorizationReceiptID, plan.SessionGatedReviewReceiptID, plan.ControlledExecutionSessionID, plan.LaunchGateState, plan.ReviewGateState, plan.ActionTriggerType, plan.ActionTriggerRuntimeMethod, plan.ActionTriggerReadMethod, plan.ActionTriggerState, plan.EvidenceRelativePath, plan.EvidenceSHA256} {
+		if value != "" && !singleLine(value) {
 			return KnownAppKDERuntimeStatusLaunchExecutionPlan{}, errors.New("known app KDE Runtime-status launch execution requires single-line fields")
 		}
 	}
