@@ -364,6 +364,107 @@ func TestKnownAppKDERuntimeStatusLaunchExecutionCommandConsumesActionTriggerHand
 	}
 }
 
+func TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t, stateRoot)
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	evidenceFile := filepath.Join(t.TempDir(), "runtime-status-launch-evidence.json")
+	if err := os.WriteFile(evidenceFile, []byte(knownAppRuntimeStatusLaunchProjectionFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile evidence returned error: %v", err)
+	}
+	var recordOutput bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType,
+		"--state-root", stateRoot,
+		"--evidence-file", evidenceFile,
+	}, &recordOutput); err != nil {
+		t.Fatalf("record run returned error: %v", err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(recordOutput.Bytes(), &record); err != nil {
+		t.Fatalf("Unmarshal record returned error: %v", err)
+	}
+	fakeLauncher, fakeArgsPath := writeFakeRuntimeStatusManagedLauncher(t)
+	var output bytes.Buffer
+	err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchAction,
+		"--state-root", stateRoot,
+		"--cache-root", t.TempDir(),
+		"--evidence-relative-path", record["evidence_relative_path"].(string),
+		"--launcher", fakeLauncher,
+		"--owner-timeout", "5s",
+		"--timeout", "1s",
+		"--arg", "--help",
+	}, &output)
+	if err != nil {
+		t.Fatalf("show-runtime-controlled-launch run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["desktop_callable_action_id"] != appidentity.KnownAppKDERuntimeStatusLaunchAction ||
+		payload["desktop_callable_route"] != "kde-desktop-runtime-status-action" ||
+		payload["desktop_callable_runtime_method"] != "RunKnownAppKDERuntimeStatusLaunchExecution" ||
+		payload["desktop_callable_execution_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		payload["desktop_evidence_handle_forwarded"] != true ||
+		payload["desktop_receipt_fields_reconstructed"] != false ||
+		payload["desktop_kde_state_root_access"] != false ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		payload["action_trigger_type"] != appidentity.KnownAppKDERuntimeStatusLaunchActionTriggerRequestType ||
+		payload["evidence_handoff_consumed"] != true ||
+		payload["evidence_digest_verified"] != true ||
+		payload["evidence_relative_path"] != record["evidence_relative_path"] ||
+		payload["launch_authorization_receipt_id"] != launchReceiptID ||
+		payload["session_gated_review_receipt_id"] != reviewReceiptID ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["state_root_injected_by_runtime"] != true ||
+		payload["kde_state_root_access"] != false ||
+		payload["managed_launcher_invoked"] != true ||
+		payload["delegated_status"] != "passed" ||
+		payload["delegated_execution_started"] != true ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["managed_launcher_path_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected desktop-callable Runtime launch payload: %#v", payload)
+	}
+	argsData, err := os.ReadFile(fakeArgsPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
+	}
+	argsText := string(argsData)
+	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--arg\n--help"} {
+		if !strings.Contains(argsText, token) {
+			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
+		}
+	}
+	text := strings.ToLower(output.String())
+	for _, forbidden := range []string{strings.ToLower(stateRoot), strings.ToLower(evidenceFile), strings.ToLower(fakeLauncher), ".exe", "program files", "qemu-system", "proton", "wine ", "/tmp"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("desktop-callable Runtime launch output exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestShowRuntimeControlledLaunchCommandRejectsReconstructedFields(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchAction,
+		"--state-root", t.TempDir(),
+		"--evidence-relative-path", "runtime/kde-runtime-status-launch-evidence/example.json",
+		"--app", "7zr",
+	}, &output)
+	if err == nil {
+		t.Fatal("show-runtime-controlled-launch accepted reconstructed KDE fields")
+	}
+	if !strings.Contains(err.Error(), "must forward only Runtime handoff evidence") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestKnownAppSessionGatedLaunchReviewReceiptRecordCommandWritesReceipt(t *testing.T) {
 	stateRoot := t.TempDir()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")

@@ -738,7 +738,7 @@ begin
   trigger_launcher_stdout, trigger_launcher_stderr, trigger_launcher_status = run_command(
     go_env,
     "go", "run", "./cmd/xnix-runtime-go",
-    "known-app-kde-runtime-status-launch-execution",
+    "show-runtime-controlled-launch",
     "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
     "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
     "--evidence-relative-path", evidence_record.fetch("evidence_relative_path"),
@@ -755,6 +755,13 @@ begin
     exit 1
   end
   trigger_runtime_execution = JSON.parse(trigger_launcher_stdout)
+  assert(trigger_runtime_execution["desktop_callable_action_id"] == "show-runtime-controlled-launch", "trigger-fed Runtime status launch execution must be callable through the KDE desktop action")
+  assert(trigger_runtime_execution["desktop_callable_route"] == "kde-desktop-runtime-status-action", "trigger-fed Runtime status launch execution must expose the desktop-callable route")
+  assert(trigger_runtime_execution["desktop_callable_runtime_method"] == "RunKnownAppKDERuntimeStatusLaunchExecution", "trigger-fed Runtime status launch execution must route to the Runtime execution method")
+  assert(trigger_runtime_execution["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "trigger-fed Runtime status launch execution must preserve the Runtime execution type")
+  assert(trigger_runtime_execution["desktop_evidence_handle_forwarded"] == true, "trigger-fed Runtime status launch execution must forward only the evidence handoff")
+  assert(trigger_runtime_execution["desktop_receipt_fields_reconstructed"] == false, "trigger-fed Runtime status launch execution must not reconstruct receipt or session fields in KDE")
+  assert(trigger_runtime_execution["desktop_kde_state_root_access"] == false, "trigger-fed Runtime status launch execution must not grant KDE state-root access")
   assert(trigger_runtime_execution["request_type"] == "known-app-kde-runtime-status-launch-execution", "trigger-fed Runtime status launch execution must use the Runtime-owned entrypoint")
   assert(trigger_runtime_execution["action_trigger_type"] == "known-app-kde-runtime-status-launch-action-trigger-preview", "trigger-fed Runtime status launch execution must consume the action trigger")
   assert(trigger_runtime_execution["action_trigger_runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger", "trigger-fed Runtime status launch execution must consume the Go Runtime action trigger")

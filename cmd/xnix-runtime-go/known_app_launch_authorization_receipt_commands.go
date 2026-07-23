@@ -347,7 +347,15 @@ func runKnownAppKDERuntimeStatusLaunchRequestPreview(args []string, stdout io.Wr
 }
 
 func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer) error {
-	flags := flag.NewFlagSet(appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType, flag.ContinueOnError)
+	return runKnownAppKDERuntimeStatusLaunchExecutionCommand(appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType, args, stdout, false)
+}
+
+func runKnownAppKDEShowRuntimeControlledLaunch(args []string, stdout io.Writer) error {
+	return runKnownAppKDERuntimeStatusLaunchExecutionCommand(appidentity.KnownAppKDERuntimeStatusLaunchAction, args, stdout, true)
+}
+
+func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args []string, stdout io.Writer, desktopActionRoute bool) error {
+	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	appID := flags.String("app", "", "known Windows application id")
 	stateRoot := flags.String("state-root", "", "Runtime-owner supplied state root; KDE must not provide this value")
@@ -376,9 +384,9 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 		return err
 	}
 	if flags.NArg() != 0 {
-		return errors.New("known-app-kde-runtime-status-launch-execution does not accept positional arguments")
+		return fmt.Errorf("%s does not accept positional arguments", commandName)
 	}
-	plan, err := knownAppKDERuntimeStatusLaunchExecutionPlanFromInput(knownAppKDERuntimeStatusLaunchExecutionPlanInput{
+	planInput := knownAppKDERuntimeStatusLaunchExecutionPlanInput{
 		AppID:                        *appID,
 		StateRoot:                    *stateRoot,
 		CacheRoot:                    *cacheRoot,
@@ -390,7 +398,16 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 		PostReviewDispatchState:      *postReviewDispatchState,
 		EvidenceID:                   *evidenceID,
 		EvidenceRelativePath:         *evidenceRelativePath,
-	})
+	}
+	if desktopActionRoute {
+		if !planInput.hasEvidenceHandoff() {
+			return errors.New("show-runtime-controlled-launch requires --evidence-id or --evidence-relative-path")
+		}
+		if planInput.hasReconstructedLaunchFields() {
+			return errors.New("show-runtime-controlled-launch must forward only Runtime handoff evidence, not reconstructed app, receipt, session, card, or dispatch fields")
+		}
+	}
+	plan, err := knownAppKDERuntimeStatusLaunchExecutionPlanFromInput(planInput)
 	if err != nil {
 		return err
 	}
@@ -432,6 +449,15 @@ func runKnownAppKDERuntimeStatusLaunchExecution(args []string, stdout io.Writer)
 	if err != nil {
 		return err
 	}
+	if desktopActionRoute {
+		result.DesktopCallableActionID = appidentity.KnownAppKDERuntimeStatusLaunchAction
+		result.DesktopCallableRoute = "kde-desktop-runtime-status-action"
+		result.DesktopCallableRuntimeMethod = "RunKnownAppKDERuntimeStatusLaunchExecution"
+		result.DesktopCallableExecutionType = appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType
+		result.DesktopEvidenceHandleForwarded = true
+		result.DesktopReceiptFieldsReconstructed = false
+		result.DesktopKDEStateRootAccess = false
+	}
 	return encodeIndentedJSON(stdout, result)
 }
 
@@ -449,8 +475,29 @@ type knownAppKDERuntimeStatusLaunchExecutionPlanInput struct {
 	EvidenceRelativePath         string
 }
 
+func (input knownAppKDERuntimeStatusLaunchExecutionPlanInput) hasEvidenceHandoff() bool {
+	return strings.TrimSpace(input.EvidenceID) != "" || strings.TrimSpace(input.EvidenceRelativePath) != ""
+}
+
+func (input knownAppKDERuntimeStatusLaunchExecutionPlanInput) hasReconstructedLaunchFields() bool {
+	for _, value := range []string{
+		input.AppID,
+		input.LaunchAuthorizationReceiptID,
+		input.SessionGatedReviewReceiptID,
+		input.ControlledExecutionSessionID,
+		input.CenterCardState,
+		input.PrimaryActionID,
+		input.PostReviewDispatchState,
+	} {
+		if strings.TrimSpace(value) != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func knownAppKDERuntimeStatusLaunchExecutionPlanFromInput(input knownAppKDERuntimeStatusLaunchExecutionPlanInput) (appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan, error) {
-	if strings.TrimSpace(input.EvidenceID) != "" || strings.TrimSpace(input.EvidenceRelativePath) != "" {
+	if input.hasEvidenceHandoff() {
 		return appidentity.PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger(appidentity.KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest{
 			StateRoot:            input.StateRoot,
 			CacheRoot:            input.CacheRoot,
@@ -554,6 +601,13 @@ func runKnownAppKDERuntimeStatusLaunchActionTriggerPreview(args []string, stdout
 
 type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan
+	DesktopCallableActionID                         string                                                      `json:"desktop_callable_action_id,omitempty"`
+	DesktopCallableRoute                            string                                                      `json:"desktop_callable_route,omitempty"`
+	DesktopCallableRuntimeMethod                    string                                                      `json:"desktop_callable_runtime_method,omitempty"`
+	DesktopCallableExecutionType                    string                                                      `json:"desktop_callable_execution_type,omitempty"`
+	DesktopEvidenceHandleForwarded                  bool                                                        `json:"desktop_evidence_handle_forwarded,omitempty"`
+	DesktopReceiptFieldsReconstructed               bool                                                        `json:"desktop_receipt_fields_reconstructed"`
+	DesktopKDEStateRootAccess                       bool                                                        `json:"desktop_kde_state_root_access"`
 	CompatibilityCenterKnownAppEvidence             appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence `json:"compatibility_center_known_app_evidence"`
 	ManagedLauncherName                             string                                                      `json:"managed_launcher_name"`
 	ManagedLauncherInvoked                          bool                                                        `json:"managed_launcher_invoked"`

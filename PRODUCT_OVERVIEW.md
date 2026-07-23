@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.622
+> Last updated: 2026-07-24 | Current version: v0.2.623
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.623 checkpoint makes `show-runtime-controlled-launch` a desktop-callable Runtime route instead of only a KDE card action id. The route requires a Runtime-status evidence handoff id or safe relative path, rejects reconstructed app id, launch receipt id, review receipt id, session id, card state, action id, and post-review dispatch fields, then delegates to the existing trigger-fed Runtime execution path. The staged launcher dispatch smoke now calls `show-runtime-controlled-launch` for its second trigger-fed execution, proving that KDE can forward only the handoff while Runtime revalidates receipts and session evidence, injects state root internally, invokes the managed launcher, and redacts paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation. v0.2.623 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.622 checkpoint lets the Runtime-owned execution wrapper consume the action trigger handoff directly. `known-app-kde-runtime-status-launch-execution --state-root <root> --evidence-relative-path <relative>` now derives its execution plan from `known-app-kde-runtime-status-launch-action-trigger-preview`, revalidates the launch receipt, review receipt, managed guest boundary, controlled session, and session digest, injects the state root only inside Runtime, and invokes the managed launcher without requiring KDE or Ruby smoke code to reconstruct launch receipt, review receipt, session id, card state, action id, or post-review dispatch state from separate flags. The staged launcher dispatch smoke now performs a trigger-fed second Runtime execution in the same QEMU session after recording the first handoff, while keeping state-root paths, evidence absolute paths, managed launcher paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of desktop-facing output. v0.2.622 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

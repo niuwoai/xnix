@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.623] - 2026-07-24
+
+### Added
+
+- Added the desktop-callable `show-runtime-controlled-launch` CLI route that runs the trigger-fed Runtime launch execution from a safe Runtime-status evidence handoff.
+
+### Changed
+
+- Updated the staged launcher dispatch smoke to call `show-runtime-controlled-launch` for the second trigger-fed execution and verify that KDE forwards only the evidence handle without reconstructing app, receipt, session, card, action, or dispatch fields.
+
 ## [0.2.622] - 2026-07-24
 
 ### Added

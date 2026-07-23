@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.622`.
+The project is currently at `v0.2.623`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.622`.
 
 ## Current Checkpoint
 
-v0.2.622 lets `known-app-kde-runtime-status-launch-execution` consume a Runtime-status handoff directly through `--evidence-relative-path` or `--evidence-id`. The execution wrapper now derives its plan from `known-app-kde-runtime-status-launch-action-trigger-preview`, revalidates Runtime receipts and session evidence, injects state root only inside Runtime, and invokes the managed launcher without KDE/Ruby reconstructing receipt, session, card, action, or post-review fields.
+v0.2.623 exposes the Runtime-controlled KDE action itself as the desktop-callable `show-runtime-controlled-launch` command. The desktop route requires a Runtime-status evidence handoff id or safe relative path, rejects reconstructed app/receipt/session/card/action fields, derives execution through the existing Go Runtime trigger path, injects state root only inside Runtime, and invokes the managed launcher through the same redacted execution result used by the lower-level Runtime entrypoint.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -33,7 +33,7 @@ Run targeted checks for small versions:
 
 ```text
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerConsumesHandoff|TestPrepareKnownAppKDERuntimeStatusLaunchExecutionRevalidatesRuntimeOwnedState|TestPreviewKnownAppKDERuntimeStatusLaunchActionTriggerConsumesHandoff' -count=1
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchExecutionCommandConsumesActionTriggerHandoff|TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot|TestKnownAppKDERuntimeStatusLaunchActionTriggerCommandAssemblesLaunchRequestFromHandoff' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff|TestShowRuntimeControlledLaunchCommandRejectsReconstructedFields|TestKnownAppKDERuntimeStatusLaunchExecutionCommandConsumesActionTriggerHandoff|TestKnownAppKDERuntimeStatusLaunchActionTriggerCommandAssemblesLaunchRequestFromHandoff' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```

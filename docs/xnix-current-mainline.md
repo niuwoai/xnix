@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.622
+> Last updated: 2026-07-24 | Baseline: v0.2.623
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.622 by exposing the trigger-fed Runtime execution path as the desktop-callable `show-runtime-controlled-launch` route, so KDE can forward a handoff id or relative evidence handle instead of shelling out with smoke-only fields. Keep `known-app-kde-runtime-status-launch-evidence-record` as the durable writer, `known-app-kde-runtime-status-launch-evidence-preview` as the KDE-safe reader, `known-app-kde-runtime-status-launch-action-trigger-preview` as the action-forwarding bridge, and `known-app-kde-runtime-status-launch-execution --evidence-relative-path` as the Runtime-owned execution entrypoint. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.623 by replacing the smoke-local `--state-root` desktop action call shape with a Runtime-owner adapter that supplies state root internally before invoking `show-runtime-controlled-launch`. KDE should only forward the safe handoff id or relative evidence handle; the Runtime service boundary should supply owner-only state root, cache root, launcher path, and timeout settings. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.623 checkpoint exposes `show-runtime-controlled-launch` as the desktop-callable Runtime action route. The command accepts a Runtime-status evidence handoff id or safe relative path, rejects reconstructed app, receipt, session, card, action, and post-review dispatch fields, then delegates to the trigger-fed Runtime execution path. The staged launcher dispatch smoke now exercises the desktop action for its second Runtime execution and verifies `desktop_evidence_handle_forwarded=true`, `desktop_receipt_fields_reconstructed=false`, and `desktop_kde_state_root_access=false`.
 
 The v0.2.622 checkpoint lets `known-app-kde-runtime-status-launch-execution` consume a Runtime-status action trigger handoff directly through `--evidence-relative-path` or `--evidence-id`. The execution wrapper now reads the handoff through the action trigger preview, derives the Runtime-owned managed launcher request, revalidates receipts and session evidence, injects the state root only inside Runtime, and invokes the managed launcher without KDE or Ruby smoke code reconstructing launch receipt, review receipt, controlled session id, card state, action id, or post-review dispatch state.
 
