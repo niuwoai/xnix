@@ -122,6 +122,11 @@ type KDECenterPageKnownAppSessionGateCard struct {
 	PrimaryActionLabel            string `json:"primary_action_label"`
 	PrimaryActionKind             string `json:"primary_action_kind"`
 	PrimaryActionEnabled          bool   `json:"primary_action_enabled"`
+	ReviewRouteRequestType        string `json:"review_route_request_type"`
+	ReviewRouteRuntimeMethod      string `json:"review_route_runtime_method"`
+	ReviewRouteReadMethod         string `json:"review_route_read_method"`
+	ReadBeforeWriteRequired       bool   `json:"read_before_write_required"`
+	RuntimeReceiptRequired        bool   `json:"runtime_receipt_required"`
 	UserVisible                   bool   `json:"user_visible"`
 	RuntimeOwned                  bool   `json:"runtime_owned"`
 	GoRuntimeBacked               bool   `json:"go_runtime_backed"`
@@ -1110,6 +1115,11 @@ func kdeCenterPageKnownAppSessionGateCards(evidence []KnownAppSmokeEvidenceSumma
 			PrimaryActionLabel:            item.PrimaryActionLabel,
 			PrimaryActionKind:             item.PrimaryActionKind,
 			PrimaryActionEnabled:          item.PrimaryActionEnabled,
+			ReviewRouteRequestType:        KnownAppSessionGatedLaunchReviewRequestType,
+			ReviewRouteRuntimeMethod:      "PreviewKnownAppSessionGatedLaunchReview",
+			ReviewRouteReadMethod:         "GetKnownAppSessionGatedLaunchReview",
+			ReadBeforeWriteRequired:       true,
+			RuntimeReceiptRequired:        true,
 			UserVisible:                   true,
 			RuntimeOwned:                  true,
 			GoRuntimeBacked:               true,

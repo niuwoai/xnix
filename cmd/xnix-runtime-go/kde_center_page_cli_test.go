@@ -160,6 +160,11 @@ func TestKDECenterPagePreviewCommandSurfacesKnownAppLauncherSessionGateCards(t *
 		card["kde_read_model_consumable_session"] != true ||
 		card["primary_action_id"] != "review-session-gated-dispatch" ||
 		card["primary_action_kind"] != "session-gate-review" ||
+		card["review_route_request_type"] != "known-app-session-gated-launch-review-preview" ||
+		card["review_route_runtime_method"] != "PreviewKnownAppSessionGatedLaunchReview" ||
+		card["review_route_read_method"] != "GetKnownAppSessionGatedLaunchReview" ||
+		card["read_before_write_required"] != true ||
+		card["runtime_receipt_required"] != true ||
 		card["desktop_launch_enabled"] != false ||
 		card["backend_launch_enabled"] != false ||
 		card["host_root_modified"] != false ||

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.606
+> Last updated: 2026-07-24 | Current version: v0.2.607
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.607 checkpoint turns the KDE Center page session-gated 7zr card into a concrete Runtime-owned read-before-write review route. `known-app-session-gated-launch-review-preview` re-consumes the persisted controlled execution session from an explicit state root, verifies the session digest, preserves the KDE `review-session-gated-dispatch` action, and reports that a later Runtime receipt is still required before any dispatch. KDE page cards now carry safe review route metadata while desktop launch, backend launch, execution, request-object creation, receipt recording, state-root path exposure, raw artifact path exposure, backend details, Docker socket mounts, broad host mounts, and host-root mutation remain disabled. v0.2.607 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.606 checkpoint carries the session-gated staged launcher evidence from the Runtime Compatibility Center summary into the KDE Center page read model. `kde-center-page-preview` now accepts the same normalized known-app launcher session gate evidence as `compatibility-center-preview`, exposes `known_app_session_gate_cards`, counts launcher-side session gate consumption, and keeps each card read-only with desktop launch, backend launch, backend details, and host-root mutation disabled. The staged launcher dispatch smoke now verifies both the Compatibility Center summary and the KDE Center page card after the real 7zr QEMU/Wine dispatch lane reports a pass. v0.2.606 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 

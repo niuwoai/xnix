@@ -511,6 +511,35 @@ begin
     assert(kde_page["launch_enabled"] == false, "KDE Center page must remain launch-gated")
     assert(kde_page["execution_started"] == false, "KDE Center page must not start execution")
     assert_no_forbidden(kde_page_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "KDE Center page preview output")
+    launch_review, launch_review_stdout = run_json(
+      go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-session-gated-launch-review-preview",
+      "--app", payload.fetch("app_id"),
+      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+      "--session-id", payload.fetch("controlled_execution_session_id"),
+      "--action", "review-session-gated-dispatch",
+      "--decision", "approved"
+    )
+    assert(launch_review["request_type"] == "known-app-session-gated-launch-review-preview", "Runtime launch review route must be session-gated")
+    assert(launch_review["source"] == "known-app-controlled-execution-session-consume-preview+kde-center-page-session-gate-card", "Runtime launch review route must consume the controlled session evidence")
+    assert(launch_review["action_id"] == "review-session-gated-dispatch", "Runtime launch review route must preserve the KDE card action")
+    assert(launch_review["review_route_created"] == true, "Runtime launch review route must be available")
+    assert(launch_review["read_before_write_required"] == true, "Runtime launch review route must stay read-before-write")
+    assert(launch_review["runtime_receipt_required"] == true, "Runtime launch review route must require a later Runtime receipt")
+    assert(launch_review["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Runtime launch review route must preserve the opaque session id")
+    assert(launch_review["session_record_consumed"] == true, "Runtime launch review route must consume the session record")
+    assert(launch_review["session_digest_verified"] == true, "Runtime launch review route must verify the session digest")
+    assert(launch_review["session_relative_path"] == payload.fetch("controlled_session_relative_path"), "Runtime launch review route must expose only relative session evidence")
+    assert(launch_review["runtime_owner_consumable"] == true, "Runtime launch review route must be Runtime-owner consumable")
+    assert(launch_review["kde_read_model_consumable"] == true, "Runtime launch review route must be KDE read-model consumable")
+    assert(launch_review["runtime_launch_approval"] == false, "Runtime launch review route must not grant launch approval")
+    assert(launch_review["desktop_launch_enabled"] == false, "Runtime launch review route must not enable desktop launch")
+    assert(launch_review["backend_launch_enabled"] == false, "Runtime launch review route must not enable backend launch")
+    assert(launch_review["execution_started"] == false, "Runtime launch review route must not start execution")
+    assert(launch_review["review_receipt_recorded"] == false, "Runtime launch review route must not record a receipt during preview")
+    assert(launch_review["host_root_modified"] == false, "Runtime launch review route must not mutate the host root")
+    assert_no_forbidden(launch_review_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review route output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

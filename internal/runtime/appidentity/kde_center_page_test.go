@@ -567,6 +567,11 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 		card.PrimaryActionID != "review-session-gated-dispatch" ||
 		card.PrimaryActionKind != "session-gate-review" ||
 		!card.PrimaryActionEnabled ||
+		card.ReviewRouteRequestType != KnownAppSessionGatedLaunchReviewRequestType ||
+		card.ReviewRouteRuntimeMethod != "PreviewKnownAppSessionGatedLaunchReview" ||
+		card.ReviewRouteReadMethod != "GetKnownAppSessionGatedLaunchReview" ||
+		!card.ReadBeforeWriteRequired ||
+		!card.RuntimeReceiptRequired ||
 		!card.UserVisible ||
 		!card.RuntimeOwned ||
 		!card.GoRuntimeBacked ||

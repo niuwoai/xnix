@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.607] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-session-gated-launch-review-preview` command, which re-consumes digest-verified controlled session evidence before exposing a Runtime-owned read-before-write review route for the KDE `review-session-gated-dispatch` card action.
+- Extended KDE Center page session-gated known-app cards and the staged launcher dispatch smoke with Runtime review route metadata while keeping desktop launch, backend launch, execution, review receipt recording, raw paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
 ## [0.2.606] - 2026-07-24
 
 ### Added

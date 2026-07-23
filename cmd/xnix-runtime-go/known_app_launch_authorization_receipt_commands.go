@@ -185,3 +185,33 @@ func runKnownAppControlledExecutionSessionConsumePreview(args []string, stdout i
 	}
 	return encodeIndentedJSON(stdout, preview)
 }
+
+func runKnownAppSessionGatedLaunchReviewPreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("known-app-session-gated-launch-review-preview", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	appID := flags.String("app", "", "known Windows application id")
+	stateRoot := flags.String("state-root", "", "controlled Runtime state root containing the persisted execution session record")
+	sessionID := flags.String("session-id", "", "optional opaque controlled execution session id")
+	actionID := flags.String("action", appidentity.KnownAppSessionGatedLaunchReviewAction, "exact session-gated launch review action id")
+	decision := flags.String("decision", "reviewed", "review decision: reviewed, approved, deferred, or rejected")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *stateRoot == "" {
+		return errors.New("known-app-session-gated-launch-review-preview requires --state-root")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("known-app-session-gated-launch-review-preview does not accept positional arguments")
+	}
+	preview, err := appidentity.PreviewKnownAppSessionGatedLaunchReview(appidentity.KnownAppSessionGatedLaunchReviewRequest{
+		AppID:     *appID,
+		StateRoot: *stateRoot,
+		SessionID: *sessionID,
+		ActionID:  *actionID,
+		Decision:  *decision,
+	})
+	if err != nil {
+		return err
+	}
+	return encodeIndentedJSON(stdout, preview)
+}
