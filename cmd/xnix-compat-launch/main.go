@@ -31,6 +31,7 @@ func run(args []string, stdout io.Writer) error {
 	var guestBoundary string
 	var stateRoot string
 	var receiptID string
+	var reviewReceiptID string
 	var sessionID string
 	var host string
 	var port string
@@ -45,6 +46,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the Runtime owner or smoke harness")
 	flags.StringVar(&stateRoot, "state-root", "", "controlled Runtime state root containing the opaque launch authorization receipt")
 	flags.StringVar(&receiptID, "receipt-id", "", "opaque known Windows app launch authorization receipt id")
+	flags.StringVar(&reviewReceiptID, "review-receipt-id", "", "opaque Runtime session-gated launch review receipt id")
 	flags.StringVar(&sessionID, "session-id", "", "optional opaque controlled execution session id")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
 	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
@@ -80,16 +82,10 @@ func run(args []string, stdout io.Writer) error {
 	if guestBoundary == "" {
 		return encode(stdout, bridge)
 	}
-	if stateRoot == "" || receiptID == "" {
-		return fmt.Errorf("--state-root and --receipt-id are required when --guest-boundary requests dispatch")
+	if stateRoot == "" || receiptID == "" || reviewReceiptID == "" {
+		return fmt.Errorf("--state-root, --receipt-id, and --review-receipt-id are required when --guest-boundary requests dispatch")
 	}
-	controlledDispatch, err := appidentity.PreviewKnownAppControlledDispatchRequest(appidentity.KnownAppControlledDispatchRequest{
-		AppID:         appID,
-		StateRoot:     stateRoot,
-		ReceiptID:     receiptID,
-		CacheRoot:     cacheRoot,
-		GuestBoundary: guestBoundary,
-	})
+	controlledDispatch, err := consumeSessionGatedControlledDispatchForLaunch(appID, stateRoot, sessionID, reviewReceiptID, receiptID, cacheRoot, guestBoundary)
 	if err != nil {
 		return err
 	}
@@ -131,18 +127,22 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 	return encode(stdout, launcherDispatchResult{
-		KnownDispatchSmokeResult:             result,
-		ControlledExecutionSessionConsumed:   controlledSession.RecordConsumed,
-		ControlledExecutionSessionID:         controlledSession.ExecutionSessionID,
-		ControlledSessionDigestVerified:      controlledSession.SessionDigestVerified,
-		ControlledSessionRelativePath:        controlledSession.SessionRelativePath,
-		RuntimeOwnerConsumableSession:        controlledSession.RuntimeOwnerConsumable,
-		KDEReadModelConsumableSession:        controlledSession.KDEReadModelConsumable,
-		ControlledSessionLiveStateObserved:   controlledSession.LiveStateObserved,
-		ControlledSessionRegistered:          controlledSession.SessionRegistered,
-		ControlledSessionWindowObserved:      controlledSession.WindowObserved,
-		ControlledSessionHostRootModified:    controlledSession.HostRootModified,
-		ControlledSessionBackendProcessStart: controlledSession.BackendProcessStarted,
+		KnownDispatchSmokeResult:               result,
+		SessionGatedControlledDispatchConsumed: controlledDispatch.ControlledDispatchRequestCreated,
+		SessionGatedControlledDispatchState:    controlledDispatch.ControlledDispatchRequestState,
+		SessionGatedReviewReceiptID:            controlledDispatch.ReviewReceiptID,
+		LaunchAuthorizationReceiptID:           controlledDispatch.LaunchAuthorizationReceiptID,
+		ControlledExecutionSessionConsumed:     controlledSession.RecordConsumed,
+		ControlledExecutionSessionID:           controlledSession.ExecutionSessionID,
+		ControlledSessionDigestVerified:        controlledSession.SessionDigestVerified,
+		ControlledSessionRelativePath:          controlledSession.SessionRelativePath,
+		RuntimeOwnerConsumableSession:          controlledSession.RuntimeOwnerConsumable,
+		KDEReadModelConsumableSession:          controlledSession.KDEReadModelConsumable,
+		ControlledSessionLiveStateObserved:     controlledSession.LiveStateObserved,
+		ControlledSessionRegistered:            controlledSession.SessionRegistered,
+		ControlledSessionWindowObserved:        controlledSession.WindowObserved,
+		ControlledSessionHostRootModified:      controlledSession.HostRootModified,
+		ControlledSessionBackendProcessStart:   controlledSession.BackendProcessStarted,
 	})
 }
 
@@ -158,19 +158,39 @@ func consumeControlledExecutionSessionForLaunch(appID string, stateRoot string, 
 	return preview, nil
 }
 
+func consumeSessionGatedControlledDispatchForLaunch(appID string, stateRoot string, sessionID string, reviewReceiptID string, launchReceiptID string, cacheRoot string, guestBoundary string) (appidentity.KnownAppSessionGatedControlledDispatchPreview, error) {
+	preview, err := appidentity.PreviewKnownAppSessionGatedControlledDispatchRequest(appidentity.KnownAppSessionGatedControlledDispatchRequest{
+		AppID:           appID,
+		StateRoot:       stateRoot,
+		SessionID:       sessionID,
+		ReviewReceiptID: reviewReceiptID,
+		LaunchReceiptID: launchReceiptID,
+		CacheRoot:       cacheRoot,
+		GuestBoundary:   guestBoundary,
+	})
+	if err != nil {
+		return appidentity.KnownAppSessionGatedControlledDispatchPreview{}, fmt.Errorf("session-gated controlled dispatch gate rejected dispatch: %w", err)
+	}
+	return preview, nil
+}
+
 type launcherDispatchResult struct {
 	winapp.KnownDispatchSmokeResult
-	ControlledExecutionSessionConsumed   bool   `json:"controlled_execution_session_consumed"`
-	ControlledExecutionSessionID         string `json:"controlled_execution_session_id"`
-	ControlledSessionDigestVerified      bool   `json:"controlled_session_digest_verified"`
-	ControlledSessionRelativePath        string `json:"controlled_session_relative_path"`
-	RuntimeOwnerConsumableSession        bool   `json:"runtime_owner_consumable_session"`
-	KDEReadModelConsumableSession        bool   `json:"kde_read_model_consumable_session"`
-	ControlledSessionLiveStateObserved   bool   `json:"controlled_session_live_state_observed"`
-	ControlledSessionRegistered          bool   `json:"controlled_session_registered"`
-	ControlledSessionWindowObserved      bool   `json:"controlled_session_window_observed"`
-	ControlledSessionHostRootModified    bool   `json:"controlled_session_host_root_modified"`
-	ControlledSessionBackendProcessStart bool   `json:"controlled_session_backend_process_start"`
+	SessionGatedControlledDispatchConsumed bool   `json:"session_gated_controlled_dispatch_consumed"`
+	SessionGatedControlledDispatchState    string `json:"session_gated_controlled_dispatch_state"`
+	SessionGatedReviewReceiptID            string `json:"session_gated_review_receipt_id"`
+	LaunchAuthorizationReceiptID           string `json:"launch_authorization_receipt_id"`
+	ControlledExecutionSessionConsumed     bool   `json:"controlled_execution_session_consumed"`
+	ControlledExecutionSessionID           string `json:"controlled_execution_session_id"`
+	ControlledSessionDigestVerified        bool   `json:"controlled_session_digest_verified"`
+	ControlledSessionRelativePath          string `json:"controlled_session_relative_path"`
+	RuntimeOwnerConsumableSession          bool   `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession          bool   `json:"kde_read_model_consumable_session"`
+	ControlledSessionLiveStateObserved     bool   `json:"controlled_session_live_state_observed"`
+	ControlledSessionRegistered            bool   `json:"controlled_session_registered"`
+	ControlledSessionWindowObserved        bool   `json:"controlled_session_window_observed"`
+	ControlledSessionHostRootModified      bool   `json:"controlled_session_host_root_modified"`
+	ControlledSessionBackendProcessStart   bool   `json:"controlled_session_backend_process_start"`
 }
 
 func encode(stdout io.Writer, payload any) error {

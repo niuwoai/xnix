@@ -339,6 +339,173 @@ assert(controlled_session_consume["transaction_path_exposed"] == false, "control
 assert(controlled_session_consume["session_path_exposed"] == false, "controlled execution session consumption output must not expose session paths")
 assert_no_forbidden(controlled_session_consume_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled execution session consumption output")
 
+launch_review, launch_review_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-session-gated-launch-review-preview",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--session-id", controlled_session_record.fetch("execution_session_id"),
+  "--action", "review-session-gated-dispatch",
+  "--decision", "approved"
+)
+assert(launch_review["request_type"] == "known-app-session-gated-launch-review-preview", "Runtime launch review route must be session-gated")
+assert(launch_review["source"] == "known-app-controlled-execution-session-consume-preview+kde-center-page-session-gate-card", "Runtime launch review route must consume the controlled session evidence")
+assert(launch_review["action_id"] == "review-session-gated-dispatch", "Runtime launch review route must preserve the KDE card action")
+assert(launch_review["review_route_created"] == true, "Runtime launch review route must be available")
+assert(launch_review["read_before_write_required"] == true, "Runtime launch review route must stay read-before-write")
+assert(launch_review["runtime_receipt_required"] == true, "Runtime launch review route must require a later Runtime receipt")
+assert(launch_review["execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "Runtime launch review route must preserve the opaque session id")
+assert(launch_review["session_record_consumed"] == true, "Runtime launch review route must consume the session record")
+assert(launch_review["session_digest_verified"] == true, "Runtime launch review route must verify the session digest")
+assert(launch_review["session_relative_path"] == controlled_session_record.fetch("session_relative_path"), "Runtime launch review route must expose only relative session evidence")
+assert(launch_review["runtime_owner_consumable"] == true, "Runtime launch review route must be Runtime-owner consumable")
+assert(launch_review["kde_read_model_consumable"] == true, "Runtime launch review route must be KDE read-model consumable")
+assert(launch_review["runtime_launch_approval"] == false, "Runtime launch review route must not grant launch approval")
+assert(launch_review["desktop_launch_enabled"] == false, "Runtime launch review route must not enable desktop launch")
+assert(launch_review["backend_launch_enabled"] == false, "Runtime launch review route must not enable backend launch")
+assert(launch_review["execution_started"] == false, "Runtime launch review route must not start execution")
+assert(launch_review["review_receipt_recorded"] == false, "Runtime launch review route must not record a receipt during preview")
+assert(launch_review["host_root_modified"] == false, "Runtime launch review route must not mutate the host root")
+assert_no_forbidden(launch_review_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review route output")
+
+launch_review_receipt, launch_review_receipt_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-session-gated-launch-review-receipt-record",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--session-id", controlled_session_record.fetch("execution_session_id"),
+  "--action", "review-session-gated-dispatch",
+  "--decision", "approved"
+)
+assert(launch_review_receipt["request_type"] == "known-app-session-gated-launch-review-receipt-record", "Runtime launch review receipt request type must match")
+assert(launch_review_receipt["source"] == "known-app-session-gated-launch-review-preview+runtime-review-receipt-store", "Runtime launch review receipt must consume the preview route")
+assert(launch_review_receipt["runtime_method"] == "RecordKnownAppSessionGatedLaunchReviewReceipt", "Runtime launch review receipt must be written by the Go Runtime")
+assert(launch_review_receipt["read_method"] == "GetKnownAppSessionGatedLaunchReviewReceipt", "Runtime launch review receipt must expose a stable read method")
+assert(launch_review_receipt["action_id"] == "review-session-gated-dispatch", "Runtime launch review receipt must preserve the KDE card action")
+assert(launch_review_receipt["decision"] == "approved", "Runtime launch review receipt must preserve the explicit decision")
+assert(launch_review_receipt["read_before_write_consumed"] == true, "Runtime launch review receipt must consume read-before-write evidence")
+assert(launch_review_receipt["review_route_consumed"] == true, "Runtime launch review receipt must consume the review route")
+assert(launch_review_receipt["runtime_receipt_required"] == true, "Runtime launch review receipt must still require a later launch gate")
+assert(launch_review_receipt["execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "Runtime launch review receipt must preserve the opaque session id")
+assert(launch_review_receipt["session_record_consumed"] == true, "Runtime launch review receipt must consume the session record")
+assert(launch_review_receipt["session_digest_verified"] == true, "Runtime launch review receipt must verify the session digest")
+assert(launch_review_receipt["session_relative_path"] == controlled_session_record.fetch("session_relative_path"), "Runtime launch review receipt must expose only relative session evidence")
+assert(launch_review_receipt["receipt_id"].is_a?(String) && !launch_review_receipt["receipt_id"].empty?, "Runtime launch review receipt must expose an opaque receipt id")
+assert(launch_review_receipt["receipt_relative_path"].is_a?(String) && launch_review_receipt["receipt_relative_path"].start_with?("runtime/session-gated-launch-review-receipts/"), "Runtime launch review receipt must expose only relative receipt evidence")
+assert(launch_review_receipt["receipt_sha256"].is_a?(String) && launch_review_receipt["receipt_sha256"].length == 64, "Runtime launch review receipt must expose a receipt digest")
+assert(launch_review_receipt["review_receipt_recorded"] == true, "Runtime launch review receipt must be recorded")
+assert(launch_review_receipt["runtime_owner_consumable"] == true, "Runtime launch review receipt must be Runtime-owner consumable")
+assert(launch_review_receipt["kde_read_model_consumable"] == true, "Runtime launch review receipt must be KDE read-model consumable")
+assert(launch_review_receipt["runtime_launch_approval"] == false, "Runtime launch review receipt must not grant launch approval")
+assert(launch_review_receipt["launch_allowed"] == false, "Runtime launch review receipt must not allow launch")
+assert(launch_review_receipt["desktop_launch_enabled"] == false, "Runtime launch review receipt must not enable desktop launch")
+assert(launch_review_receipt["backend_launch_enabled"] == false, "Runtime launch review receipt must not enable backend launch")
+assert(launch_review_receipt["execution_started"] == false, "Runtime launch review receipt must not start execution")
+assert(launch_review_receipt["request_objects_created"] == false, "Runtime launch review receipt must not create request objects")
+assert(launch_review_receipt["permission_grant_created"] == false, "Runtime launch review receipt must not create permission grants")
+assert(launch_review_receipt["receipt_path_exposed"] == false, "Runtime launch review receipt must not expose receipt paths")
+assert(launch_review_receipt["state_root_path_exposed"] == false, "Runtime launch review receipt must not expose the state root")
+assert(launch_review_receipt["host_root_modified"] == false, "Runtime launch review receipt must not mutate the host root")
+assert_no_forbidden(launch_review_receipt_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review receipt output")
+
+launch_review_gate, launch_review_gate_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-session-gated-launch-review-gate-preview",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--session-id", controlled_session_record.fetch("execution_session_id"),
+  "--receipt-id", launch_review_receipt.fetch("receipt_id")
+)
+assert(launch_review_gate["request_type"] == "known-app-session-gated-launch-review-gate-preview", "Runtime launch review gate request type must match")
+assert(launch_review_gate["source"] == "known-app-session-gated-launch-review-receipt-record+runtime-review-receipt-gate", "Runtime launch review gate must consume the review receipt")
+assert(launch_review_gate["runtime_method"] == "PreviewKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must be owned by the Go Runtime")
+assert(launch_review_gate["read_method"] == "GetKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must expose a stable read method")
+assert(launch_review_gate["execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "Runtime launch review gate must preserve the opaque session id")
+assert(launch_review_gate["session_record_consumed"] == true, "Runtime launch review gate must re-consume the session record")
+assert(launch_review_gate["session_digest_verified"] == true, "Runtime launch review gate must verify the session digest")
+assert(launch_review_gate["read_before_write_revalidated"] == true, "Runtime launch review gate must revalidate read-before-write evidence")
+assert(launch_review_gate["receipt_id"] == launch_review_receipt.fetch("receipt_id"), "Runtime launch review gate must consume the selected receipt id")
+assert(launch_review_gate["receipt_relative_path"] == launch_review_receipt.fetch("receipt_relative_path"), "Runtime launch review gate must expose only relative receipt evidence")
+assert(launch_review_gate["receipt_sha256"] == launch_review_receipt.fetch("receipt_sha256"), "Runtime launch review gate must verify the receipt digest")
+assert(launch_review_gate["receipt_lookup_state"] == "accepted-receipt", "Runtime launch review gate must accept the review receipt")
+assert(launch_review_gate["receipt_decision"] == "approved", "Runtime launch review gate must accept only approved receipts")
+assert(launch_review_gate["review_receipt_consumed"] == true, "Runtime launch review gate must consume the review receipt")
+assert(launch_review_gate["review_receipt_accepted"] == true, "Runtime launch review gate must accept the review receipt")
+assert(launch_review_gate["review_gate_ready"] == true, "Runtime launch review gate must be ready")
+assert(launch_review_gate["controlled_dispatch_gate_ready"] == true, "Runtime launch review gate must prepare the controlled dispatch gate")
+assert(launch_review_gate["dispatch_state_advance_ready"] == true, "Runtime launch review gate must allow the next dispatch state to advance")
+assert(launch_review_gate["dispatch_state_advanced"] == false, "Runtime launch review gate must not advance dispatch state itself")
+assert(launch_review_gate["runtime_launch_approval"] == false, "Runtime launch review gate must not grant direct launch approval")
+assert(launch_review_gate["launch_allowed"] == false, "Runtime launch review gate must not allow direct launch")
+assert(launch_review_gate["desktop_launch_enabled"] == false, "Runtime launch review gate must not enable desktop launch")
+assert(launch_review_gate["backend_launch_enabled"] == false, "Runtime launch review gate must not enable backend launch")
+assert(launch_review_gate["execution_started"] == false, "Runtime launch review gate must not start execution")
+assert(launch_review_gate["controlled_dispatch_request_created"] == false, "Runtime launch review gate must not create dispatch requests")
+assert(launch_review_gate["permission_grant_created"] == false, "Runtime launch review gate must not create permission grants")
+assert(launch_review_gate["receipt_path_exposed"] == false, "Runtime launch review gate must not expose receipt paths")
+assert(launch_review_gate["state_root_path_exposed"] == false, "Runtime launch review gate must not expose the state root")
+assert(launch_review_gate["host_root_modified"] == false, "Runtime launch review gate must not mutate the host root")
+assert_no_forbidden(launch_review_gate_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review gate output")
+
+session_gated_dispatch, session_gated_dispatch_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "known-app-session-gated-controlled-dispatch-request-preview",
+  "--app", APP_ID,
+  "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+  "--session-id", controlled_session_record.fetch("execution_session_id"),
+  "--review-receipt-id", launch_review_receipt.fetch("receipt_id"),
+  "--launch-receipt-id", receipt_preview.fetch("receipt_id"),
+  "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
+  "--guest-boundary", GUEST_BOUNDARY
+)
+assert(session_gated_dispatch["request_type"] == "known-app-session-gated-controlled-dispatch-request-preview", "post-review controlled dispatch request type must match")
+assert(session_gated_dispatch["source"] == "known-app-session-gated-launch-review-gate-preview+known-app-controlled-dispatch-request-preview", "post-review controlled dispatch must consume the session-gated review gate")
+assert(session_gated_dispatch["runtime_method"] == "PreviewKnownAppSessionGatedControlledDispatchRequest", "post-review controlled dispatch must be owned by the Go Runtime")
+assert(session_gated_dispatch["read_method"] == "GetKnownAppSessionGatedControlledDispatchRequest", "post-review controlled dispatch must expose a stable read method")
+assert(session_gated_dispatch["execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "post-review controlled dispatch must preserve the opaque session id")
+assert(session_gated_dispatch["session_record_consumed"] == true, "post-review controlled dispatch must re-consume the session record")
+assert(session_gated_dispatch["session_digest_verified"] == true, "post-review controlled dispatch must verify the session digest")
+assert(session_gated_dispatch["session_relative_path"] == controlled_session_record.fetch("session_relative_path"), "post-review controlled dispatch must expose only relative session evidence")
+assert(session_gated_dispatch["review_receipt_id"] == launch_review_receipt.fetch("receipt_id"), "post-review controlled dispatch must consume the selected review receipt")
+assert(session_gated_dispatch["review_receipt_relative_path"] == launch_review_receipt.fetch("receipt_relative_path"), "post-review controlled dispatch must expose only relative review receipt evidence")
+assert(session_gated_dispatch["review_receipt_sha256"] == launch_review_receipt.fetch("receipt_sha256"), "post-review controlled dispatch must verify the review receipt digest")
+assert(session_gated_dispatch["review_receipt_consumed"] == true, "post-review controlled dispatch must consume the review receipt")
+assert(session_gated_dispatch["review_receipt_accepted"] == true, "post-review controlled dispatch must accept the review receipt")
+assert(session_gated_dispatch["review_gate_ready"] == true, "post-review controlled dispatch must require the review gate")
+assert(session_gated_dispatch["dispatch_state_advance_ready"] == true, "post-review controlled dispatch must require review-gated dispatch advance readiness")
+assert(session_gated_dispatch["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "post-review controlled dispatch must preserve the launch authorization receipt id")
+assert(session_gated_dispatch["launch_gate_state"] == "controlled-dispatch-ready", "post-review controlled dispatch must consume a ready launch gate")
+assert(session_gated_dispatch["launch_gate_receipt_accepted"] == true, "post-review controlled dispatch must accept the launch authorization receipt")
+assert(session_gated_dispatch["launch_gate_guest_boundary_accepted"] == true, "post-review controlled dispatch must accept the managed guest boundary")
+assert(session_gated_dispatch["controlled_dispatch_gate_ready"] == true, "post-review controlled dispatch must require controlled dispatch readiness")
+assert(session_gated_dispatch["controlled_dispatch_request_created"] == true, "post-review controlled dispatch must create the controlled dispatch request state")
+assert(session_gated_dispatch["controlled_dispatch_request_state"] == "created-after-session-gated-review", "post-review controlled dispatch must report session-gated created state")
+assert(session_gated_dispatch["runtime_owned_dispatch_request"] == true, "post-review controlled dispatch request must be Runtime-owned")
+assert(session_gated_dispatch["dispatch_request_type"] == "windows-known-app-dispatch-preview", "post-review controlled dispatch must preserve the dispatch preview type")
+assert(session_gated_dispatch["dispatch_smoke_request_type"] == "windows-known-app-dispatch-smoke", "post-review controlled dispatch must preserve the dispatch smoke request type")
+assert(session_gated_dispatch["dispatch_gate"] == GUEST_BOUNDARY, "post-review controlled dispatch must preserve the managed guest boundary")
+assert(session_gated_dispatch["artifact_verified"] == true, "post-review controlled dispatch must require verified managed artifact evidence")
+assert(session_gated_dispatch["dispatch_ready"] == true, "post-review controlled dispatch must require dispatch readiness")
+assert(session_gated_dispatch["request_objects_created"] == true, "post-review controlled dispatch must create only controlled request state")
+assert(session_gated_dispatch["dispatch_allowed"] == false, "post-review controlled dispatch preview must not allow dispatch directly")
+assert(session_gated_dispatch["dispatch_started"] == false, "post-review controlled dispatch preview must not start dispatch")
+assert(session_gated_dispatch["execution_started"] == false, "post-review controlled dispatch preview must not start execution")
+assert(session_gated_dispatch["direct_launch_enabled"] == false, "post-review controlled dispatch must not enable direct launch")
+assert(session_gated_dispatch["desktop_launch_enabled"] == false, "post-review controlled dispatch must not enable desktop launch")
+assert(session_gated_dispatch["backend_launch_enabled"] == false, "post-review controlled dispatch must not enable backend launch")
+assert(session_gated_dispatch["backend_process_started"] == false, "post-review controlled dispatch must not start backend processes")
+assert(session_gated_dispatch["permission_grant_created"] == false, "post-review controlled dispatch must not create permission grants")
+assert(session_gated_dispatch["review_receipt_path_exposed"] == false, "post-review controlled dispatch must not expose review receipt paths")
+assert(session_gated_dispatch["receipt_path_exposed"] == false, "post-review controlled dispatch must not expose launch receipt paths")
+assert(session_gated_dispatch["state_root_path_exposed"] == false, "post-review controlled dispatch must not expose the state root")
+assert(session_gated_dispatch["session_path_exposed"] == false, "post-review controlled dispatch must not expose session paths")
+assert(session_gated_dispatch["host_root_modified"] == false, "post-review controlled dispatch must not mutate the host root")
+assert_no_forbidden(session_gated_dispatch_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "post-review controlled dispatch output")
+
 FileUtils.rm_f(SERIAL_LOG_PATH)
 stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close
@@ -365,6 +532,7 @@ begin
     "--guest-boundary", GUEST_BOUNDARY,
     "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
     "--receipt-id", receipt_preview.fetch("receipt_id"),
+    "--review-receipt-id", launch_review_receipt.fetch("receipt_id"),
     "--session-id", controlled_session_record.fetch("execution_session_id"),
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
     "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
@@ -383,6 +551,10 @@ begin
   assert(payload["request_type"] == "windows-known-app-dispatch-smoke", "staged launcher must enter dispatch smoke with the guest boundary")
   assert(payload["guest_boundary"] == GUEST_BOUNDARY, "staged launcher dispatch must preserve the guest boundary")
   assert(payload["runtime_owned_dispatch"] == true, "staged launcher dispatch must be Runtime-owned")
+  assert(payload["session_gated_controlled_dispatch_consumed"] == true, "staged launcher dispatch must consume the post-review controlled dispatch state")
+  assert(payload["session_gated_controlled_dispatch_state"] == "created-after-session-gated-review", "staged launcher dispatch must preserve the post-review controlled dispatch state")
+  assert(payload["session_gated_review_receipt_id"] == launch_review_receipt.fetch("receipt_id"), "staged launcher dispatch must preserve the opaque review receipt id")
+  assert(payload["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "staged launcher dispatch must preserve the opaque launch authorization receipt id")
   assert(payload["controlled_execution_session_consumed"] == true, "staged launcher dispatch must consume the controlled execution session before dispatch")
   assert(payload["controlled_execution_session_id"] == controlled_session_record.fetch("execution_session_id"), "staged launcher dispatch must preserve the controlled execution session id")
   assert(payload["controlled_session_digest_verified"] == true, "staged launcher dispatch must verify the controlled execution session digest")
@@ -511,169 +683,6 @@ begin
     assert(kde_page["launch_enabled"] == false, "KDE Center page must remain launch-gated")
     assert(kde_page["execution_started"] == false, "KDE Center page must not start execution")
     assert_no_forbidden(kde_page_stdout, [PROJECT_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "KDE Center page preview output")
-    launch_review, launch_review_stdout = run_json(
-      go_env,
-      "go", "run", "./cmd/xnix-runtime-go",
-      "known-app-session-gated-launch-review-preview",
-      "--app", payload.fetch("app_id"),
-      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-      "--session-id", payload.fetch("controlled_execution_session_id"),
-      "--action", "review-session-gated-dispatch",
-      "--decision", "approved"
-    )
-    assert(launch_review["request_type"] == "known-app-session-gated-launch-review-preview", "Runtime launch review route must be session-gated")
-    assert(launch_review["source"] == "known-app-controlled-execution-session-consume-preview+kde-center-page-session-gate-card", "Runtime launch review route must consume the controlled session evidence")
-    assert(launch_review["action_id"] == "review-session-gated-dispatch", "Runtime launch review route must preserve the KDE card action")
-    assert(launch_review["review_route_created"] == true, "Runtime launch review route must be available")
-    assert(launch_review["read_before_write_required"] == true, "Runtime launch review route must stay read-before-write")
-    assert(launch_review["runtime_receipt_required"] == true, "Runtime launch review route must require a later Runtime receipt")
-    assert(launch_review["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Runtime launch review route must preserve the opaque session id")
-    assert(launch_review["session_record_consumed"] == true, "Runtime launch review route must consume the session record")
-    assert(launch_review["session_digest_verified"] == true, "Runtime launch review route must verify the session digest")
-    assert(launch_review["session_relative_path"] == payload.fetch("controlled_session_relative_path"), "Runtime launch review route must expose only relative session evidence")
-    assert(launch_review["runtime_owner_consumable"] == true, "Runtime launch review route must be Runtime-owner consumable")
-    assert(launch_review["kde_read_model_consumable"] == true, "Runtime launch review route must be KDE read-model consumable")
-    assert(launch_review["runtime_launch_approval"] == false, "Runtime launch review route must not grant launch approval")
-    assert(launch_review["desktop_launch_enabled"] == false, "Runtime launch review route must not enable desktop launch")
-    assert(launch_review["backend_launch_enabled"] == false, "Runtime launch review route must not enable backend launch")
-    assert(launch_review["execution_started"] == false, "Runtime launch review route must not start execution")
-    assert(launch_review["review_receipt_recorded"] == false, "Runtime launch review route must not record a receipt during preview")
-    assert(launch_review["host_root_modified"] == false, "Runtime launch review route must not mutate the host root")
-    assert_no_forbidden(launch_review_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review route output")
-    launch_review_receipt, launch_review_receipt_stdout = run_json(
-      go_env,
-      "go", "run", "./cmd/xnix-runtime-go",
-      "known-app-session-gated-launch-review-receipt-record",
-      "--app", payload.fetch("app_id"),
-      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-      "--session-id", payload.fetch("controlled_execution_session_id"),
-      "--action", "review-session-gated-dispatch",
-      "--decision", "approved"
-    )
-    assert(launch_review_receipt["request_type"] == "known-app-session-gated-launch-review-receipt-record", "Runtime launch review receipt request type must match")
-    assert(launch_review_receipt["source"] == "known-app-session-gated-launch-review-preview+runtime-review-receipt-store", "Runtime launch review receipt must consume the preview route")
-    assert(launch_review_receipt["runtime_method"] == "RecordKnownAppSessionGatedLaunchReviewReceipt", "Runtime launch review receipt must be written by the Go Runtime")
-    assert(launch_review_receipt["read_method"] == "GetKnownAppSessionGatedLaunchReviewReceipt", "Runtime launch review receipt must expose a stable read method")
-    assert(launch_review_receipt["action_id"] == "review-session-gated-dispatch", "Runtime launch review receipt must preserve the KDE card action")
-    assert(launch_review_receipt["decision"] == "approved", "Runtime launch review receipt must preserve the explicit decision")
-    assert(launch_review_receipt["read_before_write_consumed"] == true, "Runtime launch review receipt must consume read-before-write evidence")
-    assert(launch_review_receipt["review_route_consumed"] == true, "Runtime launch review receipt must consume the review route")
-    assert(launch_review_receipt["runtime_receipt_required"] == true, "Runtime launch review receipt must still require a later launch gate")
-    assert(launch_review_receipt["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Runtime launch review receipt must preserve the opaque session id")
-    assert(launch_review_receipt["session_record_consumed"] == true, "Runtime launch review receipt must consume the session record")
-    assert(launch_review_receipt["session_digest_verified"] == true, "Runtime launch review receipt must verify the session digest")
-    assert(launch_review_receipt["session_relative_path"] == payload.fetch("controlled_session_relative_path"), "Runtime launch review receipt must expose only relative session evidence")
-    assert(launch_review_receipt["receipt_id"].is_a?(String) && !launch_review_receipt["receipt_id"].empty?, "Runtime launch review receipt must expose an opaque receipt id")
-    assert(launch_review_receipt["receipt_relative_path"].is_a?(String) && launch_review_receipt["receipt_relative_path"].start_with?("runtime/session-gated-launch-review-receipts/"), "Runtime launch review receipt must expose only relative receipt evidence")
-    assert(launch_review_receipt["receipt_sha256"].is_a?(String) && launch_review_receipt["receipt_sha256"].length == 64, "Runtime launch review receipt must expose a receipt digest")
-    assert(launch_review_receipt["review_receipt_recorded"] == true, "Runtime launch review receipt must be recorded")
-    assert(launch_review_receipt["runtime_owner_consumable"] == true, "Runtime launch review receipt must be Runtime-owner consumable")
-    assert(launch_review_receipt["kde_read_model_consumable"] == true, "Runtime launch review receipt must be KDE read-model consumable")
-    assert(launch_review_receipt["runtime_launch_approval"] == false, "Runtime launch review receipt must not grant launch approval")
-    assert(launch_review_receipt["launch_allowed"] == false, "Runtime launch review receipt must not allow launch")
-    assert(launch_review_receipt["desktop_launch_enabled"] == false, "Runtime launch review receipt must not enable desktop launch")
-    assert(launch_review_receipt["backend_launch_enabled"] == false, "Runtime launch review receipt must not enable backend launch")
-    assert(launch_review_receipt["execution_started"] == false, "Runtime launch review receipt must not start execution")
-    assert(launch_review_receipt["request_objects_created"] == false, "Runtime launch review receipt must not create request objects")
-    assert(launch_review_receipt["permission_grant_created"] == false, "Runtime launch review receipt must not create permission grants")
-    assert(launch_review_receipt["receipt_path_exposed"] == false, "Runtime launch review receipt must not expose receipt paths")
-    assert(launch_review_receipt["state_root_path_exposed"] == false, "Runtime launch review receipt must not expose the state root")
-    assert(launch_review_receipt["host_root_modified"] == false, "Runtime launch review receipt must not mutate the host root")
-    assert_no_forbidden(launch_review_receipt_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review receipt output")
-    launch_review_gate, launch_review_gate_stdout = run_json(
-      go_env,
-      "go", "run", "./cmd/xnix-runtime-go",
-      "known-app-session-gated-launch-review-gate-preview",
-      "--app", payload.fetch("app_id"),
-      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-      "--session-id", payload.fetch("controlled_execution_session_id"),
-      "--receipt-id", launch_review_receipt.fetch("receipt_id")
-    )
-    assert(launch_review_gate["request_type"] == "known-app-session-gated-launch-review-gate-preview", "Runtime launch review gate request type must match")
-    assert(launch_review_gate["source"] == "known-app-session-gated-launch-review-receipt-record+runtime-review-receipt-gate", "Runtime launch review gate must consume the review receipt")
-    assert(launch_review_gate["runtime_method"] == "PreviewKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must be owned by the Go Runtime")
-    assert(launch_review_gate["read_method"] == "GetKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must expose a stable read method")
-    assert(launch_review_gate["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Runtime launch review gate must preserve the opaque session id")
-    assert(launch_review_gate["session_record_consumed"] == true, "Runtime launch review gate must re-consume the session record")
-    assert(launch_review_gate["session_digest_verified"] == true, "Runtime launch review gate must verify the session digest")
-    assert(launch_review_gate["read_before_write_revalidated"] == true, "Runtime launch review gate must revalidate read-before-write evidence")
-    assert(launch_review_gate["receipt_id"] == launch_review_receipt.fetch("receipt_id"), "Runtime launch review gate must consume the selected receipt id")
-    assert(launch_review_gate["receipt_relative_path"] == launch_review_receipt.fetch("receipt_relative_path"), "Runtime launch review gate must expose only relative receipt evidence")
-    assert(launch_review_gate["receipt_sha256"] == launch_review_receipt.fetch("receipt_sha256"), "Runtime launch review gate must verify the receipt digest")
-    assert(launch_review_gate["receipt_lookup_state"] == "accepted-receipt", "Runtime launch review gate must accept the review receipt")
-    assert(launch_review_gate["receipt_decision"] == "approved", "Runtime launch review gate must accept only approved receipts")
-    assert(launch_review_gate["review_receipt_consumed"] == true, "Runtime launch review gate must consume the review receipt")
-    assert(launch_review_gate["review_receipt_accepted"] == true, "Runtime launch review gate must accept the review receipt")
-    assert(launch_review_gate["review_gate_ready"] == true, "Runtime launch review gate must be ready")
-    assert(launch_review_gate["controlled_dispatch_gate_ready"] == true, "Runtime launch review gate must prepare the controlled dispatch gate")
-    assert(launch_review_gate["dispatch_state_advance_ready"] == true, "Runtime launch review gate must allow the next dispatch state to advance")
-    assert(launch_review_gate["dispatch_state_advanced"] == false, "Runtime launch review gate must not advance dispatch state itself")
-    assert(launch_review_gate["runtime_launch_approval"] == false, "Runtime launch review gate must not grant direct launch approval")
-    assert(launch_review_gate["launch_allowed"] == false, "Runtime launch review gate must not allow direct launch")
-    assert(launch_review_gate["desktop_launch_enabled"] == false, "Runtime launch review gate must not enable desktop launch")
-    assert(launch_review_gate["backend_launch_enabled"] == false, "Runtime launch review gate must not enable backend launch")
-    assert(launch_review_gate["execution_started"] == false, "Runtime launch review gate must not start execution")
-    assert(launch_review_gate["controlled_dispatch_request_created"] == false, "Runtime launch review gate must not create dispatch requests")
-    assert(launch_review_gate["permission_grant_created"] == false, "Runtime launch review gate must not create permission grants")
-    assert(launch_review_gate["receipt_path_exposed"] == false, "Runtime launch review gate must not expose receipt paths")
-    assert(launch_review_gate["state_root_path_exposed"] == false, "Runtime launch review gate must not expose the state root")
-    assert(launch_review_gate["host_root_modified"] == false, "Runtime launch review gate must not mutate the host root")
-    assert_no_forbidden(launch_review_gate_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review gate output")
-    session_gated_dispatch, session_gated_dispatch_stdout = run_json(
-      go_env,
-      "go", "run", "./cmd/xnix-runtime-go",
-      "known-app-session-gated-controlled-dispatch-request-preview",
-      "--app", payload.fetch("app_id"),
-      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-      "--session-id", payload.fetch("controlled_execution_session_id"),
-      "--review-receipt-id", launch_review_receipt.fetch("receipt_id"),
-      "--launch-receipt-id", receipt_preview.fetch("receipt_id"),
-      "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
-      "--guest-boundary", GUEST_BOUNDARY
-    )
-    assert(session_gated_dispatch["request_type"] == "known-app-session-gated-controlled-dispatch-request-preview", "post-review controlled dispatch request type must match")
-    assert(session_gated_dispatch["source"] == "known-app-session-gated-launch-review-gate-preview+known-app-controlled-dispatch-request-preview", "post-review controlled dispatch must consume the session-gated review gate")
-    assert(session_gated_dispatch["runtime_method"] == "PreviewKnownAppSessionGatedControlledDispatchRequest", "post-review controlled dispatch must be owned by the Go Runtime")
-    assert(session_gated_dispatch["read_method"] == "GetKnownAppSessionGatedControlledDispatchRequest", "post-review controlled dispatch must expose a stable read method")
-    assert(session_gated_dispatch["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "post-review controlled dispatch must preserve the opaque session id")
-    assert(session_gated_dispatch["session_record_consumed"] == true, "post-review controlled dispatch must re-consume the session record")
-    assert(session_gated_dispatch["session_digest_verified"] == true, "post-review controlled dispatch must verify the session digest")
-    assert(session_gated_dispatch["session_relative_path"] == payload.fetch("controlled_session_relative_path"), "post-review controlled dispatch must expose only relative session evidence")
-    assert(session_gated_dispatch["review_receipt_id"] == launch_review_receipt.fetch("receipt_id"), "post-review controlled dispatch must consume the selected review receipt")
-    assert(session_gated_dispatch["review_receipt_relative_path"] == launch_review_receipt.fetch("receipt_relative_path"), "post-review controlled dispatch must expose only relative review receipt evidence")
-    assert(session_gated_dispatch["review_receipt_sha256"] == launch_review_receipt.fetch("receipt_sha256"), "post-review controlled dispatch must verify the review receipt digest")
-    assert(session_gated_dispatch["review_receipt_consumed"] == true, "post-review controlled dispatch must consume the review receipt")
-    assert(session_gated_dispatch["review_receipt_accepted"] == true, "post-review controlled dispatch must accept the review receipt")
-    assert(session_gated_dispatch["review_gate_ready"] == true, "post-review controlled dispatch must require the review gate")
-    assert(session_gated_dispatch["dispatch_state_advance_ready"] == true, "post-review controlled dispatch must require review-gated dispatch advance readiness")
-    assert(session_gated_dispatch["launch_authorization_receipt_id"] == receipt_preview.fetch("receipt_id"), "post-review controlled dispatch must preserve the launch authorization receipt id")
-    assert(session_gated_dispatch["launch_gate_state"] == "controlled-dispatch-ready", "post-review controlled dispatch must consume a ready launch gate")
-    assert(session_gated_dispatch["launch_gate_receipt_accepted"] == true, "post-review controlled dispatch must accept the launch authorization receipt")
-    assert(session_gated_dispatch["launch_gate_guest_boundary_accepted"] == true, "post-review controlled dispatch must accept the managed guest boundary")
-    assert(session_gated_dispatch["controlled_dispatch_gate_ready"] == true, "post-review controlled dispatch must require controlled dispatch readiness")
-    assert(session_gated_dispatch["controlled_dispatch_request_created"] == true, "post-review controlled dispatch must create the controlled dispatch request state")
-    assert(session_gated_dispatch["controlled_dispatch_request_state"] == "created-after-session-gated-review", "post-review controlled dispatch must report session-gated created state")
-    assert(session_gated_dispatch["runtime_owned_dispatch_request"] == true, "post-review controlled dispatch request must be Runtime-owned")
-    assert(session_gated_dispatch["dispatch_request_type"] == "windows-known-app-dispatch-preview", "post-review controlled dispatch must preserve the dispatch preview type")
-    assert(session_gated_dispatch["dispatch_smoke_request_type"] == "windows-known-app-dispatch-smoke", "post-review controlled dispatch must preserve the dispatch smoke request type")
-    assert(session_gated_dispatch["dispatch_gate"] == GUEST_BOUNDARY, "post-review controlled dispatch must preserve the managed guest boundary")
-    assert(session_gated_dispatch["artifact_verified"] == true, "post-review controlled dispatch must require verified managed artifact evidence")
-    assert(session_gated_dispatch["dispatch_ready"] == true, "post-review controlled dispatch must require dispatch readiness")
-    assert(session_gated_dispatch["request_objects_created"] == true, "post-review controlled dispatch must create only controlled request state")
-    assert(session_gated_dispatch["dispatch_allowed"] == false, "post-review controlled dispatch preview must not allow dispatch directly")
-    assert(session_gated_dispatch["dispatch_started"] == false, "post-review controlled dispatch preview must not start dispatch")
-    assert(session_gated_dispatch["execution_started"] == false, "post-review controlled dispatch preview must not start execution")
-    assert(session_gated_dispatch["direct_launch_enabled"] == false, "post-review controlled dispatch must not enable direct launch")
-    assert(session_gated_dispatch["desktop_launch_enabled"] == false, "post-review controlled dispatch must not enable desktop launch")
-    assert(session_gated_dispatch["backend_launch_enabled"] == false, "post-review controlled dispatch must not enable backend launch")
-    assert(session_gated_dispatch["backend_process_started"] == false, "post-review controlled dispatch must not start backend processes")
-    assert(session_gated_dispatch["permission_grant_created"] == false, "post-review controlled dispatch must not create permission grants")
-    assert(session_gated_dispatch["review_receipt_path_exposed"] == false, "post-review controlled dispatch must not expose review receipt paths")
-    assert(session_gated_dispatch["receipt_path_exposed"] == false, "post-review controlled dispatch must not expose launch receipt paths")
-    assert(session_gated_dispatch["state_root_path_exposed"] == false, "post-review controlled dispatch must not expose the state root")
-    assert(session_gated_dispatch["session_path_exposed"] == false, "post-review controlled dispatch must not expose session paths")
-    assert(session_gated_dispatch["host_root_modified"] == false, "post-review controlled dispatch must not mutate the host root")
-    assert_no_forbidden(session_gated_dispatch_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "post-review controlled dispatch output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

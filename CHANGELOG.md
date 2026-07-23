@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.611] - 2026-07-24
+
+### Added
+
+- Updated the Go `xnix-compat-launch` managed launcher so controlled dispatch now requires `--review-receipt-id` and consumes `known-app-session-gated-controlled-dispatch-request-preview` before invoking the staged known Windows app runner.
+- Reordered the staged launcher dispatch smoke so the Runtime records and accepts the session-gated launch review receipt before QEMU execution, then verifies launcher-side post-review controlled dispatch state consumption in the final dispatch result.
+
 ## [0.2.610] - 2026-07-24
 
 ### Added

@@ -80,14 +80,25 @@ func TestCompatLaunchRequiresReceiptForDispatchBoundary(t *testing.T) {
 		"--app", "7zr",
 		"--guest-boundary", "managed-known-app-guest-smoke",
 	}, &output)
-	if err == nil || !strings.Contains(err.Error(), "--state-root and --receipt-id are required") {
+	if err == nil || !strings.Contains(err.Error(), "--state-root, --receipt-id, and --review-receipt-id are required") {
 		t.Fatalf("expected missing receipt rejection, got %v", err)
 	}
 }
 
-func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.T) {
+func TestCompatLaunchConsumesSessionGatedControlledDispatchRequestBeforeDispatch(t *testing.T) {
 	cacheRoot := t.TempDir()
 	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixture(t, stateRoot)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
 	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
 		AppID:     "7zr",
 		StateRoot: stateRoot,
@@ -104,6 +115,8 @@ func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.
 		"--guest-boundary", "managed-known-app-guest-smoke",
 		"--state-root", stateRoot,
 		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -113,12 +126,22 @@ func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}
-	if payload["schema_version"] != appidentity.KnownAppControlledDispatchSchemaVersion ||
-		payload["request_type"] != appidentity.KnownAppControlledDispatchRequestType ||
-		payload["receipt_accepted"] != true ||
-		payload["guest_boundary_accepted"] != true ||
+	if payload["schema_version"] != appidentity.KnownAppSessionGatedControlledDispatchSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppSessionGatedControlledDispatchRequestType ||
+		payload["source"] != appidentity.KnownAppSessionGatedLaunchReviewGateRequestType+"+"+appidentity.KnownAppControlledDispatchRequestType ||
+		payload["execution_session_id"] != sessionID ||
+		payload["review_receipt_id"] != reviewReceipt.ReceiptID ||
+		payload["review_receipt_consumed"] != true ||
+		payload["review_receipt_accepted"] != true ||
+		payload["review_gate_ready"] != true ||
+		payload["dispatch_state_advance_ready"] != true ||
+		payload["launch_authorization_receipt_id"] != receipt.ReceiptID ||
+		payload["launch_gate_receipt_accepted"] != true ||
+		payload["launch_gate_guest_boundary_accepted"] != true ||
 		payload["launch_gate_state"] != "dispatch-preparation-required" ||
 		payload["controlled_dispatch_request_created"] != false ||
+		payload["controlled_dispatch_request_state"] != "blocked" ||
+		payload["request_objects_created"] != false ||
 		payload["dispatch_started"] != false ||
 		payload["execution_started"] != false ||
 		payload["direct_launch_enabled"] != false ||
@@ -126,9 +149,10 @@ func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.
 		payload["backend_launch_enabled"] != false ||
 		payload["backend_process_started"] != false ||
 		payload["host_root_modified"] != false ||
+		payload["review_receipt_path_exposed"] != false ||
 		payload["receipt_path_exposed"] != false ||
 		payload["state_root_path_exposed"] != false {
-		t.Fatalf("unexpected controlled dispatch request payload: %#v", payload)
+		t.Fatalf("unexpected session-gated controlled dispatch request payload: %#v", payload)
 	}
 	assertCompatLaunchCLISafe(t, output.String(), cacheRoot)
 	assertCompatLaunchCLISafe(t, output.String(), stateRoot)
@@ -136,6 +160,31 @@ func TestCompatLaunchConsumesControlledDispatchRequestBeforeDispatch(t *testing.
 
 func TestCompatLaunchConsumesDigestVerifiedSessionGate(t *testing.T) {
 	stateRoot := t.TempDir()
+	sessionID, sessionRelativePath := recordLauncherSessionGateFixture(t, stateRoot)
+
+	preview, err := consumeControlledExecutionSessionForLaunch("7zr", stateRoot, "")
+	if err != nil {
+		t.Fatalf("consumeControlledExecutionSessionForLaunch returned error: %v", err)
+	}
+	if preview.ExecutionSessionID != sessionID ||
+		!preview.RecordConsumed ||
+		!preview.LedgerRecordConsumed ||
+		!preview.SessionRecordConsumed ||
+		!preview.SessionDigestVerified ||
+		preview.SessionRelativePath != sessionRelativePath ||
+		!preview.RuntimeOwnerConsumable ||
+		!preview.KDEReadModelConsumable ||
+		preview.LiveStateObserved ||
+		preview.SessionRegistered ||
+		preview.WindowObserved ||
+		preview.HostRootModified ||
+		preview.BackendProcessStarted {
+		t.Fatalf("unexpected launcher session gate preview: %#v", preview)
+	}
+}
+
+func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, string) {
+	t.Helper()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
 	ledger, err := execution.NewLedger(stateRoot)
 	if err != nil {
@@ -165,26 +214,7 @@ func TestCompatLaunchConsumesDigestVerifiedSessionGate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RecordSession returned error: %v", err)
 	}
-
-	preview, err := consumeControlledExecutionSessionForLaunch("7zr", stateRoot, "")
-	if err != nil {
-		t.Fatalf("consumeControlledExecutionSessionForLaunch returned error: %v", err)
-	}
-	if preview.ExecutionSessionID != sessionID ||
-		!preview.RecordConsumed ||
-		!preview.LedgerRecordConsumed ||
-		!preview.SessionRecordConsumed ||
-		!preview.SessionDigestVerified ||
-		preview.SessionRelativePath != session.RelativePath ||
-		!preview.RuntimeOwnerConsumable ||
-		!preview.KDEReadModelConsumable ||
-		preview.LiveStateObserved ||
-		preview.SessionRegistered ||
-		preview.WindowObserved ||
-		preview.HostRootModified ||
-		preview.BackendProcessStarted {
-		t.Fatalf("unexpected launcher session gate preview: %#v", preview)
-	}
+	return sessionID, session.RelativePath
 }
 
 func TestCompatLaunchSessionGateRejectsMissingSessionWithoutPathLeak(t *testing.T) {

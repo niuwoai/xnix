@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.610
+> Last updated: 2026-07-24 | Current version: v0.2.611
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.611 checkpoint moves the post-review controlled dispatch gate into the Go managed launcher execution path. `xnix-compat-launch --guest-boundary managed-known-app-guest-smoke` now requires the opaque launch authorization receipt, opaque session-gated review receipt, and controlled execution session id before it can invoke the staged 7zr runner; it consumes `known-app-session-gated-controlled-dispatch-request-preview` first and reports launcher-side `session_gated_controlled_dispatch_consumed=true` only after that state is created. The staged launcher dispatch smoke now records and accepts the session-gated review receipt before QEMU execution, then verifies the launcher consumed that post-review state while keeping direct launch, desktop launch, backend launch, permission grants, raw path exposure, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.611 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
 The v0.2.610 checkpoint creates the next Runtime-owned controlled dispatch state only after the session-gated review gate is accepted. `known-app-session-gated-controlled-dispatch-request-preview` first consumes `known-app-session-gated-launch-review-gate-preview`, then reuses the existing opaque launch authorization receipt through `known-app-controlled-dispatch-request-preview`; it reports `controlled_dispatch_request_state=created-after-session-gated-review` only when the approved review receipt, launch receipt, managed guest boundary, and verified artifact all pass. It still does not allow dispatch directly, enable desktop launch, start backend or execution processes, create permission grants, expose state-root, session, receipt, or artifact paths, mount Docker sockets, require broad host mounts, or mutate the host root. v0.2.610 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.620.
 
