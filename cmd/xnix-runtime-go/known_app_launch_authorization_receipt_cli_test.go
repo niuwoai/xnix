@@ -182,9 +182,28 @@ func TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWit
 		payload["launcher_output_json_observed"] != true ||
 		payload["delegated_request_type"] != "windows-known-app-dispatch-smoke" ||
 		payload["delegated_status"] != "passed" ||
+		payload["delegated_guest_boundary"] != "managed-known-app-guest-smoke" ||
+		payload["delegated_runtime_owned_dispatch"] != true ||
+		payload["delegated_artifact_verified"] != true ||
+		payload["delegated_marker_observed"] != true ||
 		payload["delegated_smoke_passed"] != true ||
 		payload["delegated_execution_started"] != true ||
 		payload["delegated_backend_process_started"] != false ||
+		payload["delegated_session_gated_controlled_dispatch_consumed"] != true ||
+		payload["delegated_session_gated_controlled_dispatch_state"] != "created-after-session-gated-review" ||
+		payload["delegated_session_gated_review_receipt_id"] != reviewReceiptID ||
+		payload["delegated_launch_authorization_receipt_id"] != launchReceiptID ||
+		payload["delegated_controlled_execution_session_consumed"] != true ||
+		payload["delegated_controlled_execution_session_id"] != sessionID ||
+		payload["delegated_controlled_session_digest_verified"] != true ||
+		payload["delegated_controlled_session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
+		payload["delegated_runtime_owner_consumable_session"] != true ||
+		payload["delegated_kde_read_model_consumable_session"] != true ||
+		payload["delegated_controlled_session_live_state_observed"] != false ||
+		payload["delegated_controlled_session_registered"] != false ||
+		payload["delegated_controlled_session_window_observed"] != false ||
+		payload["delegated_controlled_session_host_root_modified"] != false ||
+		payload["delegated_controlled_session_backend_process_start"] != false ||
 		payload["delegated_host_root_modified"] != false ||
 		payload["delegated_docker_socket_mounted"] != false ||
 		payload["delegated_broad_host_mount_required"] != false ||
@@ -1055,7 +1074,7 @@ func writeFakeRuntimeStatusManagedLauncher(t *testing.T) (string, string) {
 	launcherPath := filepath.Join(dir, "fake-xnix-compat-launch")
 	argsPath := filepath.Join(dir, "launcher-args.txt")
 	t.Setenv("XNIX_FAKE_LAUNCHER_ARGS_FILE", argsPath)
-	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
+	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"session_gated_controlled_dispatch_consumed\":true,\"session_gated_controlled_dispatch_state\":\"created-after-session-gated-review\",\"session_gated_review_receipt_id\":\"known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02\",\"launch_authorization_receipt_id\":\"known-app-launch-authorization-7zr-26.02\",\"controlled_execution_session_consumed\":true,\"controlled_execution_session_id\":\"known-app-controlled-execution-session-7zr-26.02\",\"controlled_session_digest_verified\":true,\"controlled_session_relative_path\":\"execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json\",\"runtime_owner_consumable_session\":true,\"kde_read_model_consumable_session\":true,\"controlled_session_live_state_observed\":false,\"controlled_session_registered\":false,\"controlled_session_window_observed\":false,\"controlled_session_host_root_modified\":false,\"controlled_session_backend_process_start\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
 	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
 		t.Fatalf("WriteFile fake launcher returned error: %v", err)
 	}

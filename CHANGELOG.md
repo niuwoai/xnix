@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.615] - 2026-07-24
+
+### Changed
+
+- Switched the staged launcher dispatch smoke so its QEMU/Wine lane now calls the Go-owned `known-app-kde-runtime-status-launch-execution` wrapper, which then invokes the staged `xnix-compat-launch` executable instead of letting the smoke call the launcher directly.
+- Extended Runtime execution wrapper output with redacted delegated launcher evidence used by Compatibility Center and KDE Center page previews, including delegated request type, guest boundary, artifact verification, marker observation, post-review dispatch state, opaque receipt ids, controlled session consumption, and safety flags without exposing raw launcher output or state-root paths.
+
 ## [0.2.614] - 2026-07-24
 
 ### Added

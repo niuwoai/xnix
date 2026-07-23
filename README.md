@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.614`.
+The project is currently at `v0.2.615`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.614`.
 
 ## Current Checkpoint
 
-v0.2.614 adds the Go-owned `known-app-kde-runtime-status-launch-execution` entrypoint. It consumes the KDE Runtime-status launch request, accepts the Runtime state root only at the Runtime boundary, revalidates the launch authorization receipt, session-gated review receipt, controlled execution session, post-review dispatch state, and managed guest boundary, then invokes an existing managed launcher executable with state-root injected into argv.
+v0.2.615 routes the staged 7zr QEMU/Wine dispatch lane through the Go-owned `known-app-kde-runtime-status-launch-execution` entrypoint. The smoke now calls the Runtime wrapper, passes the staged `xnix-compat-launch` executable as the managed launcher, and feeds redacted delegated launcher evidence into Compatibility Center and KDE Center page previews.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -34,6 +34,7 @@ Run targeted checks for small versions:
 ```text
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPrepareKnownAppKDERuntimeStatusLaunchExecution|TestPreviewKnownAppKDERuntimeStatusLaunchRequest' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot|TestKnownAppKDERuntimeStatusLaunchRequestPreviewCommandCollectsOpaqueIDs' -count=1
+ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```
 

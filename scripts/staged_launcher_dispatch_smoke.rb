@@ -525,15 +525,19 @@ begin
   end
 
   launcher_stdout, launcher_stderr, launcher_status = run_command(
-    {},
-    STAGED_LAUNCHER.to_s,
+    go_env,
+    "go", "run", "./cmd/xnix-runtime-go",
+    "known-app-kde-runtime-status-launch-execution",
     "--app", APP_ID,
     "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
-    "--guest-boundary", GUEST_BOUNDARY,
     "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-    "--receipt-id", receipt_preview.fetch("receipt_id"),
-    "--review-receipt-id", launch_review_receipt.fetch("receipt_id"),
+    "--launch-authorization-receipt-id", receipt_preview.fetch("receipt_id"),
+    "--session-gated-review-receipt-id", launch_review_receipt.fetch("receipt_id"),
     "--session-id", controlled_session_record.fetch("execution_session_id"),
+    "--center-card-state", "validated-post-review-dispatch",
+    "--primary-action-id", "show-runtime-controlled-launch",
+    "--post-review-dispatch-state", "created-after-session-gated-review",
+    "--launcher", STAGED_LAUNCHER.to_s,
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
     "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
     *APP_ARGS.flat_map { |argument| ["--arg", argument] }
@@ -547,7 +551,58 @@ begin
     exit 1
   end
 
-  payload = JSON.parse(launcher_stdout)
+  runtime_execution = JSON.parse(launcher_stdout)
+  assert(runtime_execution["request_type"] == "known-app-kde-runtime-status-launch-execution", "Runtime status launch execution must use the Runtime-owned entrypoint")
+  assert(runtime_execution["runtime_method"] == "PrepareKnownAppKDERuntimeStatusLaunchExecution", "Runtime status launch execution must prepare through Go Runtime")
+  assert(runtime_execution["execution_method"] == "RunKnownAppKDERuntimeStatusLaunchExecution", "Runtime status launch execution must own the execution bridge")
+  assert(runtime_execution["request_preview_type"] == "known-app-kde-runtime-status-launch-request-preview", "Runtime status launch execution must consume the KDE request preview")
+  assert(runtime_execution["state_root_injected_by_runtime"] == true, "Runtime status launch execution must inject state-root internally")
+  assert(runtime_execution["state_root_supplied_by_runtime"] == true, "Runtime status launch execution must keep state-root supplied by Runtime")
+  assert(runtime_execution["kde_state_root_access"] == false, "Runtime status launch execution must not give KDE state-root access")
+  assert(runtime_execution["launch_receipt_revalidated"] == true, "Runtime status launch execution must revalidate launch receipt")
+  assert(runtime_execution["review_receipt_revalidated"] == true, "Runtime status launch execution must revalidate review receipt")
+  assert(runtime_execution["controlled_session_revalidated"] == true, "Runtime status launch execution must revalidate controlled session")
+  assert(runtime_execution["guest_boundary_revalidated"] == true, "Runtime status launch execution must revalidate the managed guest boundary")
+  assert(runtime_execution["managed_launcher_invoked"] == true, "Runtime status launch execution must invoke the managed launcher")
+  assert(runtime_execution["existing_managed_launcher_invoked"] == true, "Runtime status launch execution must invoke the existing staged launcher")
+  assert(runtime_execution["launcher_output_json_observed"] == true, "Runtime status launch execution must observe delegated launcher JSON")
+  assert(runtime_execution["raw_launcher_output_exposed"] == false, "Runtime status launch execution must not expose raw launcher output")
+  assert(runtime_execution["delegated_request_type"] == "windows-known-app-dispatch-smoke", "Runtime status launch execution must delegate to the dispatch smoke path")
+  assert(runtime_execution["delegated_guest_boundary"] == GUEST_BOUNDARY, "Runtime status launch execution must preserve delegated guest boundary")
+  assert(runtime_execution["delegated_runtime_owned_dispatch"] == true, "Runtime status launch execution must preserve Runtime-owned delegated dispatch")
+  assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, STAGED_LAUNCHER.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch execution output")
+
+  payload = {
+    "request_type" => runtime_execution.fetch("delegated_request_type"),
+    "status" => runtime_execution.fetch("delegated_status"),
+    "skip_reason" => runtime_execution["delegated_skip_reason"],
+    "failure_reason" => runtime_execution["delegated_failure_reason"],
+    "app_id" => runtime_execution.fetch("app_id"),
+    "display_name" => runtime_execution.fetch("display_name"),
+    "app_version" => runtime_execution.fetch("app_version"),
+    "guest_boundary" => runtime_execution.fetch("delegated_guest_boundary"),
+    "runtime_owned_dispatch" => runtime_execution.fetch("delegated_runtime_owned_dispatch"),
+    "artifact_verified" => runtime_execution.fetch("delegated_artifact_verified"),
+    "marker_observed" => runtime_execution.fetch("delegated_marker_observed"),
+    "session_gated_controlled_dispatch_consumed" => runtime_execution.fetch("delegated_session_gated_controlled_dispatch_consumed"),
+    "session_gated_controlled_dispatch_state" => runtime_execution.fetch("delegated_session_gated_controlled_dispatch_state"),
+    "session_gated_review_receipt_id" => runtime_execution.fetch("delegated_session_gated_review_receipt_id"),
+    "launch_authorization_receipt_id" => runtime_execution.fetch("delegated_launch_authorization_receipt_id"),
+    "controlled_execution_session_consumed" => runtime_execution.fetch("delegated_controlled_execution_session_consumed"),
+    "controlled_execution_session_id" => runtime_execution.fetch("delegated_controlled_execution_session_id"),
+    "controlled_session_digest_verified" => runtime_execution.fetch("delegated_controlled_session_digest_verified"),
+    "controlled_session_relative_path" => runtime_execution.fetch("delegated_controlled_session_relative_path"),
+    "runtime_owner_consumable_session" => runtime_execution.fetch("delegated_runtime_owner_consumable_session"),
+    "kde_read_model_consumable_session" => runtime_execution.fetch("delegated_kde_read_model_consumable_session"),
+    "controlled_session_live_state_observed" => runtime_execution.fetch("delegated_controlled_session_live_state_observed"),
+    "controlled_session_registered" => runtime_execution.fetch("delegated_controlled_session_registered"),
+    "controlled_session_window_observed" => runtime_execution.fetch("delegated_controlled_session_window_observed"),
+    "controlled_session_host_root_modified" => runtime_execution.fetch("delegated_controlled_session_host_root_modified"),
+    "controlled_session_backend_process_start" => runtime_execution.fetch("delegated_controlled_session_backend_process_start"),
+    "host_root_modified" => runtime_execution.fetch("delegated_host_root_modified"),
+    "docker_socket_mounted" => runtime_execution.fetch("delegated_docker_socket_mounted"),
+    "broad_host_mount_required" => runtime_execution.fetch("delegated_broad_host_mount_required")
+  }
   assert(payload["request_type"] == "windows-known-app-dispatch-smoke", "staged launcher must enter dispatch smoke with the guest boundary")
   assert(payload["guest_boundary"] == GUEST_BOUNDARY, "staged launcher dispatch must preserve the guest boundary")
   assert(payload["runtime_owned_dispatch"] == true, "staged launcher dispatch must be Runtime-owned")
