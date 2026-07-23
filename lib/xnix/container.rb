@@ -75,6 +75,14 @@ module Xnix
       offline_run_command(["ruby", "scripts/kde_center_dbus_smoke.rb"])
     end
 
+    def known_winapp_fetch_command
+      networked_cache_run_command(["ruby", "scripts/known_winapp_fetch.rb"])
+    end
+
+    def known_winapp_guest_wine_smoke_command
+      tools_cache_run_command(["ruby", "scripts/known_winapp_guest_wine_smoke.rb"])
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end

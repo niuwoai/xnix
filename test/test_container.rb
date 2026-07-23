@@ -26,8 +26,11 @@ runtime_activation_command = container.runtime_activation_smoke_command
 runtime_dbus_command = container.runtime_dbus_smoke_command
 runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_command
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
+known_winapp_fetch_command = container.known_winapp_fetch_command
+known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
 dockerfile = Pathname.new(PROJECT_ROOT).join("Dockerfile").read
+expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
 
 assert(dockerignore_entries.include?(".cache/"), "Docker build context must exclude the managed Buildroot cache")
 assert(dockerignore_entries.include?(".gocache/"), "Docker build context must exclude the local Go build cache")
@@ -89,6 +92,24 @@ assert(kde_center_dbus_command.fetch(kde_center_dbus_command.index("--network") 
 assert(kde_center_dbus_command.include?("--read-only"), "KDE center D-Bus smoke must keep the container root read-only")
 assert(kde_center_dbus_command.last(2) == ["ruby", "scripts/kde_center_dbus_smoke.rb"], "KDE center D-Bus smoke must run the model session bus smoke")
 
+assert(known_winapp_fetch_command.fetch(known_winapp_fetch_command.index("--network") + 1) == "bridge", "known Windows app fetch must use explicit bridge networking")
+assert(known_winapp_fetch_command.include?("--read-only"), "known Windows app fetch must keep the container root read-only")
+assert(known_winapp_fetch_command.include?("--mount"), "known Windows app fetch must mount its managed cache volume")
+known_fetch_mount = known_winapp_fetch_command.fetch(known_winapp_fetch_command.index("--mount") + 1)
+assert(known_fetch_mount == expected_source_mount, "known Windows app fetch must use the managed source cache volume")
+assert(!known_fetch_mount.include?("type=bind"), "known Windows app fetch must not bind mount a host directory")
+assert(known_winapp_fetch_command.last(2) == ["ruby", "scripts/known_winapp_fetch.rb"], "known Windows app fetch must run the fetch harness")
+
+assert(known_winapp_guest_command.fetch(known_winapp_guest_command.index("--network") + 1) == "none", "known Windows app guest smoke must run without container networking")
+assert(known_winapp_guest_command.include?("--read-only"), "known Windows app guest smoke must keep the container root read-only")
+assert(known_winapp_guest_command.include?("--mount"), "known Windows app guest smoke must mount its managed cache volume")
+known_guest_mount = known_winapp_guest_command.fetch(known_winapp_guest_command.index("--mount") + 1)
+assert(known_guest_mount == expected_source_mount, "known Windows app guest smoke must use the managed source cache volume")
+assert(!known_guest_mount.include?("type=bind"), "known Windows app guest smoke must not bind mount a host directory")
+assert(!known_winapp_guest_command.include?("--privileged"), "known Windows app guest smoke must not be privileged")
+assert(!known_winapp_guest_command.any? { |argument| argument.include?("docker.sock") }, "known Windows app guest smoke must not mount the Docker socket")
+assert(known_winapp_guest_command.last(2) == ["ruby", "scripts/known_winapp_guest_wine_smoke.rb"], "known Windows app guest smoke must run the QEMU Wine harness")
+
 observed = container.observed_cache_run_command(name: "xnix-full-build-test", command: ["make"])
 assert(observed.include?("--detach"), "observed build must run detached")
 assert(observed.include?("--name"), "observed build must have a stable name")
@@ -101,7 +122,6 @@ assert(source_command.fetch(source_command.index("--network") + 1) == "bridge", 
 assert(source_command.include?("--mount"), "source retrieval must mount its internal source cache")
 assert(source_command.include?(container.tools_image_tag), "source retrieval must use the tools image")
 source_mount = source_command.fetch(source_command.index("--mount") + 1)
-expected_source_mount = "type=volume,source=#{Xnix::Container::SOURCE_CACHE_VOLUME},target=/workspace/.cache"
 assert(source_mount == expected_source_mount, "source retrieval must use the managed source cache volume")
 assert(!source_mount.include?("type=bind"), "source retrieval must not bind mount a host directory")
 

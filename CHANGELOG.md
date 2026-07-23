@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.578] - 2026-07-23
+
+### Added
+
+- Added a Go-owned known Windows app catalog with the pinned 7-Zip `7zr.exe` 26.02 x86 standalone console executable, official source metadata, SHA256 verification, and the `7-Zip` stdout marker for QEMU Wine guest validation.
+- Added `windows-known-app-fetch` and `windows-known-app-guest-wine-smoke` Runtime commands so known portable app acquisition and guest execution are owned by Go while preserving redacted JSON evidence.
+- Added `scripts/container.rb fetch-known-winapp` for explicit bridge-networked artifact fetch into the managed cache volume, and `scripts/container.rb known-winapp-guest-wine-smoke` for no-network QEMU Wine guest execution from that verified cache.
+- Verified `PASS: known Windows app fetched and verified (7zr 26.02)`, `PASS: known Windows app QEMU guest Wine smoke (7zr 26.02)`, and the retained `PASS: QEMU guest real Windows app Wine smoke` regression under the restricted Colima/Docker boundary.
+
 ## [0.2.577] - 2026-07-23
 
 ### Added

@@ -291,6 +291,57 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsKnownAppGuestWineSmokeCommandSkipsUntilArtifactIsFetched(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-guest-wine-smoke",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_guest_wine_smoke.v1" ||
+		payload["request_type"] != "windows-known-app-guest-wine-smoke" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "7zr" ||
+		payload["display_name"] != "7-Zip standalone console executable" ||
+		payload["app_version"] != "26.02" ||
+		payload["architecture"] != "windows-x86" ||
+		payload["executable_name"] != "7zr.exe" ||
+		payload["expected_marker"] != "7-Zip" ||
+		payload["checksum_verified"] != false ||
+		payload["loopback_only_networking"] != true ||
+		payload["qemu_required"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false {
+		t.Fatalf("unexpected known app guest payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), tempDir) {
+		t.Fatalf("known app guest output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-fetch", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
 func anyStrings(values []any) []string {
 	result := make([]string, 0, len(values))
 	for _, value := range values {

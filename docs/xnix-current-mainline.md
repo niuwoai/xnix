@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-23 | Baseline: v0.2.577
+> Last updated: 2026-07-23 | Baseline: v0.2.578
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Use the external executable path added in v0.2.577 to run a known portable Windows application through the same passing `windows-app-guest-wine-smoke` gate. Do not return to compatibility contracts until that real application runs through the Go-owned Runtime path inside the loopback SSH QEMU Wine guest. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+Expand from the passing pinned 7-Zip `7zr.exe` known portable Windows app toward a small real-app compatibility lane: add another console app or start wiring the verified known-app result into the KDE Compatibility Center read model. Do not return to compatibility contracts detached from real execution. Keep KDE as presentation-only, keep Runtime launch ownership in Go, keep Ruby limited to smoke harnesses and reports, and keep host networking, privileged containers, Docker socket mounts, broad host mounts, and host-root mutation disabled.
+
+The v0.2.578 checkpoint adds and verifies the first known portable app lane. The Go Runtime owns a catalog entry for the official 7-Zip `7zr.exe` 26.02 x86 standalone console executable with source metadata, SHA256 verification, and the `7-Zip` stdout marker. `windows-known-app-fetch` performs explicit artifact acquisition into the managed cache, while `windows-known-app-guest-wine-smoke` verifies that cached executable before reusing the established QEMU Wine guest runner. The container commands keep acquisition and execution separate: `fetch-known-winapp` is bridge-networked, and `known-winapp-guest-wine-smoke` is networkless execution from the Docker-managed cache volume. Local evidence shows the known app fetch, known app QEMU Wine guest smoke, and retained fixture QEMU Wine guest smoke all passing.
 
 The v0.2.577 checkpoint turns the passing fixture smoke into a reusable external-app smoke path. `xnix-runtime-go windows-app-guest-wine-smoke` now accepts `--expected-marker`, and `scripts/winapp_guest_wine_smoke.rb` now accepts `XNIX_WINAPP_GUEST_EXE`, `XNIX_WINAPP_GUEST_ARGS`, and `XNIX_WINAPP_GUEST_MARKER` for a container-visible external Windows executable. The default generated 32-bit fixture remains the regression baseline, and local evidence shows the new external executable path returning `PASS: QEMU guest external Windows app Wine smoke` when pointed at the already generated Windows executable. The next product step is now concrete: place a known portable Windows app under the managed cache and run it through the same QEMU Wine guest instead of adding more preview contracts.
 

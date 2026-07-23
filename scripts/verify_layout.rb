@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.577"
+EXPECTED_VERSION = "0.2.578"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -219,10 +219,14 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/container_smoke_test.go
   internal/runtime/winapp/guest_smoke.go
   internal/runtime/winapp/guest_smoke_test.go
+  internal/runtime/winapp/known_portable.go
+  internal/runtime/winapp/known_portable_test.go
   scripts/build_wine_smoke_image.rb
   scripts/winapp_smoke.rb
   scripts/winapp_container_smoke.rb
   scripts/winapp_guest_wine_smoke.rb
+  scripts/known_winapp_fetch.rb
+  scripts/known_winapp_guest_wine_smoke.rb
   test/fixtures/winapp/hello/main.go
   cmd/xnix-runtime-go/runtime_safety_commands.go
   cmd/xnix-runtime-go/runtime_safety_cli_test.go
