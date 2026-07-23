@@ -482,6 +482,38 @@ func runWindowsKnownAppDispatchSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsKnownAppLaunchBridgePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-known-app-launch-bridge-preview", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appID string
+	var cacheRoot string
+	var launcherArgv repeatedStringFlag
+	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
+	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
+	flags.Var(&launcherArgv, "launcher-arg", "argument from the managed launcher invocation")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-known-app-launch-bridge-preview")
+	}
+
+	result, err := winapp.PreviewKnownPortableLaunchBridge(winapp.KnownLaunchBridgeRequest{
+		AppID:               appID,
+		CacheRoot:           cacheRoot,
+		ManagedLauncherArgv: []string(launcherArgv),
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 type repeatedStringFlag []string
 
 func (flag *repeatedStringFlag) String() string {

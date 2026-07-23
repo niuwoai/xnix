@@ -29,6 +29,8 @@ const (
 	KnownDispatchRequestType        = "windows-known-app-dispatch-preview"
 	KnownDispatchSmokeSchemaVersion = "xnix.runtime.known_windows_app_dispatch_smoke.v1"
 	KnownDispatchSmokeRequestType   = "windows-known-app-dispatch-smoke"
+	KnownLaunchBridgeSchemaVersion  = "xnix.runtime.known_windows_app_launch_bridge.v1"
+	KnownLaunchBridgeRequestType    = "windows-known-app-launch-bridge-preview"
 	KnownDispatchGuestBoundary      = "managed-known-app-guest-smoke"
 	DefaultKnownAppID               = "7zr"
 	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
@@ -384,6 +386,67 @@ type KnownDispatchSmokeResult struct {
 	BlockedReason               string `json:"blocked_reason,omitempty"`
 }
 
+type KnownLaunchBridgeRequest struct {
+	AppID               string
+	CacheRoot           string
+	ManagedLauncherArgv []string
+}
+
+type KnownLaunchBridgeResult struct {
+	SchemaVersion                    string   `json:"schema_version"`
+	RequestType                      string   `json:"request_type"`
+	Source                           string   `json:"source"`
+	Status                           string   `json:"status"`
+	Desktop                          string   `json:"desktop"`
+	EntryPointID                     string   `json:"entry_point_id"`
+	DesktopFile                      string   `json:"desktop_file"`
+	LaunchSurfaceID                  string   `json:"launch_surface_id"`
+	DesktopActionID                  string   `json:"desktop_action_id"`
+	ManagedLauncher                  string   `json:"managed_launcher"`
+	ManagedLauncherArgv              []string `json:"managed_launcher_argv"`
+	LauncherArgvAccepted             bool     `json:"launcher_argv_accepted"`
+	RequestID                        string   `json:"request_id"`
+	DispatchID                       string   `json:"dispatch_id"`
+	RuntimeMethod                    string   `json:"runtime_method"`
+	DispatchSmokeRequestType         string   `json:"dispatch_smoke_request_type"`
+	DispatchSmokeRequestMaterialized bool     `json:"dispatch_smoke_request_materialized"`
+	AppID                            string   `json:"app_id"`
+	DisplayName                      string   `json:"display_name"`
+	AppVersion                       string   `json:"app_version"`
+	Architecture                     string   `json:"architecture"`
+	DispatchGate                     string   `json:"dispatch_gate"`
+	RunnerLane                       string   `json:"runner_lane"`
+	GuestBoundaryRequired            bool     `json:"guest_boundary_required"`
+	GuestBoundarySupplied            bool     `json:"guest_boundary_supplied"`
+	SmokeHarnessRequired             bool     `json:"smoke_harness_required"`
+	CacheStatus                      string   `json:"cache_status"`
+	ArtifactVerified                 bool     `json:"artifact_verified"`
+	LaunchRequestCreated             bool     `json:"launch_request_created"`
+	DispatchPreviewCreated           bool     `json:"dispatch_preview_created"`
+	BridgePreviewCreated             bool     `json:"bridge_preview_created"`
+	DispatchReady                    bool     `json:"dispatch_ready"`
+	PreparationRequired              bool     `json:"preparation_required"`
+	RuntimeOwnedRequest              bool     `json:"runtime_owned_request"`
+	RuntimeOwnedLaunch               bool     `json:"runtime_owned_launch"`
+	RuntimeOwnedDispatch             bool     `json:"runtime_owned_dispatch"`
+	RuntimeOwnedBridge               bool     `json:"runtime_owned_bridge"`
+	KDEPresentationOnly              bool     `json:"kde_presentation_only"`
+	DryRun                           bool     `json:"dry_run"`
+	DispatchStarted                  bool     `json:"dispatch_started"`
+	ExecutionStarted                 bool     `json:"execution_started"`
+	BackendProcessStarted            bool     `json:"backend_process_started"`
+	HostRootModified                 bool     `json:"host_root_modified"`
+	HostNetworkingRequired           bool     `json:"host_networking_required"`
+	DockerSocketMounted              bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired           bool     `json:"broad_host_mount_required"`
+	RawHostPathExposed               bool     `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed         bool     `json:"raw_executable_path_exposed"`
+	RawCommandExposed                bool     `json:"raw_command_exposed"`
+	BackendDetailsExposed            bool     `json:"backend_details_exposed"`
+	DesktopSafeSummary               string   `json:"desktop_safe_summary"`
+	BlockedReason                    string   `json:"blocked_reason,omitempty"`
+}
+
 var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:             "7zr",
@@ -727,6 +790,37 @@ func RunKnownPortableDispatchSmoke(ctx context.Context, request KnownDispatchSmo
 	return result, nil
 }
 
+func PreviewKnownPortableLaunchBridge(request KnownLaunchBridgeRequest) (KnownLaunchBridgeResult, error) {
+	dispatchPreview, err := PreviewKnownPortableDispatch(KnownDispatchRequest{
+		AppID:     request.AppID,
+		CacheRoot: request.CacheRoot,
+	})
+	if err != nil {
+		return KnownLaunchBridgeResult{}, err
+	}
+	result := baseKnownLaunchBridgeResult(dispatchPreview)
+	if !managedLauncherArgvMatches(request.ManagedLauncherArgv, dispatchPreview.ManagedLauncherArgv) {
+		result.Status = "bridge-blocked"
+		result.BlockedReason = "managed launcher argv does not match the Runtime-owned launch surface"
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " launch bridge rejected a launcher request that did not match the Runtime-owned launch surface."
+		return result, nil
+	}
+
+	result.LauncherArgvAccepted = true
+	if dispatchPreview.DispatchReady {
+		result.Status = "bridge-ready"
+		result.DispatchSmokeRequestMaterialized = true
+		result.PreparationRequired = false
+		result.BlockedReason = ""
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " launch bridge materialized a gated dispatch smoke request."
+	} else {
+		result.Status = "bridge-blocked"
+		result.BlockedReason = dispatchPreview.BlockedReason
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " launch bridge accepted the managed launcher, but artifact preparation is required before dispatch smoke materialization."
+	}
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -749,6 +843,63 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		DockerSocketMounted:    false,
 		BroadHostMountRequired: false,
 		RawHostPathExposed:     false,
+	}
+}
+
+func baseKnownLaunchBridgeResult(dispatchPreview KnownDispatchResult) KnownLaunchBridgeResult {
+	return KnownLaunchBridgeResult{
+		SchemaVersion:                    KnownLaunchBridgeSchemaVersion,
+		RequestType:                      KnownLaunchBridgeRequestType,
+		Source:                           KnownDispatchRequestType,
+		Status:                           "bridge-blocked",
+		Desktop:                          dispatchPreview.Desktop,
+		EntryPointID:                     dispatchPreview.EntryPointID,
+		DesktopFile:                      dispatchPreview.DesktopFile,
+		LaunchSurfaceID:                  dispatchPreview.LaunchSurfaceID,
+		DesktopActionID:                  dispatchPreview.DesktopActionID,
+		ManagedLauncher:                  dispatchPreview.ManagedLauncher,
+		ManagedLauncherArgv:              append([]string{}, dispatchPreview.ManagedLauncherArgv...),
+		LauncherArgvAccepted:             false,
+		RequestID:                        dispatchPreview.RequestID,
+		DispatchID:                       dispatchPreview.DispatchID,
+		RuntimeMethod:                    "BridgeKnownLauncherToDispatchSmoke",
+		DispatchSmokeRequestType:         KnownDispatchSmokeRequestType,
+		DispatchSmokeRequestMaterialized: false,
+		AppID:                            dispatchPreview.AppID,
+		DisplayName:                      dispatchPreview.DisplayName,
+		AppVersion:                       dispatchPreview.AppVersion,
+		Architecture:                     dispatchPreview.Architecture,
+		DispatchGate:                     dispatchPreview.DispatchGate,
+		RunnerLane:                       dispatchPreview.RunnerLane,
+		GuestBoundaryRequired:            true,
+		GuestBoundarySupplied:            false,
+		SmokeHarnessRequired:             true,
+		CacheStatus:                      dispatchPreview.CacheStatus,
+		ArtifactVerified:                 dispatchPreview.ArtifactVerified,
+		LaunchRequestCreated:             dispatchPreview.LaunchRequestCreated,
+		DispatchPreviewCreated:           dispatchPreview.DispatchPreviewCreated,
+		BridgePreviewCreated:             true,
+		DispatchReady:                    dispatchPreview.DispatchReady,
+		PreparationRequired:              dispatchPreview.PreparationRequired,
+		RuntimeOwnedRequest:              dispatchPreview.RuntimeOwnedRequest,
+		RuntimeOwnedLaunch:               dispatchPreview.RuntimeOwnedLaunch,
+		RuntimeOwnedDispatch:             dispatchPreview.RuntimeOwnedDispatch,
+		RuntimeOwnedBridge:               true,
+		KDEPresentationOnly:              dispatchPreview.KDEPresentationOnly,
+		DryRun:                           true,
+		DispatchStarted:                  false,
+		ExecutionStarted:                 false,
+		BackendProcessStarted:            false,
+		HostRootModified:                 dispatchPreview.HostRootModified,
+		HostNetworkingRequired:           dispatchPreview.HostNetworkingRequired,
+		DockerSocketMounted:              dispatchPreview.DockerSocketMounted,
+		BroadHostMountRequired:           dispatchPreview.BroadHostMountRequired,
+		RawHostPathExposed:               dispatchPreview.RawHostPathExposed,
+		RawExecutablePathExposed:         dispatchPreview.RawExecutablePathExposed,
+		RawCommandExposed:                dispatchPreview.RawCommandExposed,
+		BackendDetailsExposed:            dispatchPreview.BackendDetailsExposed,
+		DesktopSafeSummary:               dispatchPreview.DesktopSafeSummary,
+		BlockedReason:                    dispatchPreview.BlockedReason,
 	}
 }
 
@@ -1038,6 +1189,21 @@ func verifyKnownAppFile(path string, app KnownPortableApp) (string, bool, error)
 		return "", false, err
 	}
 	return actual, actual == strings.ToLower(app.SHA256), nil
+}
+
+func managedLauncherArgvMatches(provided []string, expected []string) bool {
+	if len(provided) == 0 {
+		return true
+	}
+	if len(provided) != len(expected) {
+		return false
+	}
+	for index, value := range provided {
+		if value != expected[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func sha256File(path string) (string, error) {

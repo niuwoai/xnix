@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.586] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-known-app-launch-bridge-preview` CLI, turning the managed `xnix-compat-launch --app 7zr` launcher invocation into a Runtime-owned gated dispatch-smoke request model.
+- Added launcher argv validation so bridge previews accept only the Runtime-owned managed launcher shape and block unexpected launcher arguments before dispatch-smoke request materialization.
+- Added launch bridge readiness states that keep dispatch-smoke request materialization blocked until the managed artifact checksum verifies, then mark the request model ready for a smoke harness or future Runtime service owner to supply the controlled guest boundary.
+- Added targeted Go tests proving launcher argv acceptance/rejection, verified-artifact request materialization, unknown-app rejection, and redacted CLI output without raw `.exe` paths, Wine/QEMU details, backend internals, host paths, backend starts, or host mutation.
+
 ## [0.2.585] - 2026-07-24
 
 ### Added

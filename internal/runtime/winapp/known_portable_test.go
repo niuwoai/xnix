@@ -688,6 +688,147 @@ func TestRunKnownPortableDispatchSmokeInvokesManagedGuestRunner(t *testing.T) {
 	}
 }
 
+func TestPreviewKnownPortableLaunchBridgeConsumesManagedLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PreviewKnownPortableLaunchBridge(KnownLaunchBridgeRequest{
+		AppID:               "7zr",
+		CacheRoot:           tempDir,
+		ManagedLauncherArgv: []string{"xnix-compat-launch", "--app", "7zr"},
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableLaunchBridge returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownLaunchBridgeSchemaVersion ||
+		result.RequestType != KnownLaunchBridgeRequestType ||
+		result.Source != KnownDispatchRequestType ||
+		result.Status != "bridge-blocked" ||
+		result.Desktop != "KDE Plasma" ||
+		result.EntryPointID != "launcher" ||
+		result.DesktopFile != "xnix-known-app-7zr.desktop" ||
+		result.LaunchSurfaceID != "known-app-7zr" ||
+		result.DesktopActionID != "launch-known-app-7zr" ||
+		result.ManagedLauncher != "xnix-compat-launch --app 7zr" ||
+		strings.Join(result.ManagedLauncherArgv, " ") != "xnix-compat-launch --app 7zr" ||
+		!result.LauncherArgvAccepted ||
+		result.RequestID != "known-app-launch-request-7zr" ||
+		result.DispatchID != "known-app-dispatch-7zr" ||
+		result.RuntimeMethod != "BridgeKnownLauncherToDispatchSmoke" ||
+		result.DispatchSmokeRequestType != KnownDispatchSmokeRequestType ||
+		result.DispatchSmokeRequestMaterialized ||
+		result.AppID != "7zr" ||
+		result.DispatchGate != KnownDispatchGuestBoundary ||
+		result.RunnerLane != "known-app-guest-smoke" ||
+		!result.GuestBoundaryRequired ||
+		result.GuestBoundarySupplied ||
+		!result.SmokeHarnessRequired ||
+		result.CacheStatus != "missing" ||
+		result.ArtifactVerified ||
+		!result.LaunchRequestCreated ||
+		!result.DispatchPreviewCreated ||
+		!result.BridgePreviewCreated ||
+		result.DispatchReady ||
+		!result.PreparationRequired ||
+		!result.RuntimeOwnedRequest ||
+		!result.RuntimeOwnedLaunch ||
+		!result.RuntimeOwnedDispatch ||
+		!result.RuntimeOwnedBridge ||
+		!result.KDEPresentationOnly ||
+		!result.DryRun ||
+		result.DispatchStarted ||
+		result.ExecutionStarted ||
+		result.BackendProcessStarted ||
+		result.HostRootModified ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.RawHostPathExposed ||
+		result.RawExecutablePathExposed ||
+		result.RawCommandExposed ||
+		result.BackendDetailsExposed ||
+		result.BlockedReason != "managed application artifact must be fetched before launch" {
+		t.Fatalf("unexpected launch bridge preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, tempDir)
+}
+
+func TestPreviewKnownPortableLaunchBridgeRejectsUnexpectedLauncherArgv(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PreviewKnownPortableLaunchBridge(KnownLaunchBridgeRequest{
+		AppID:               "7zr",
+		CacheRoot:           tempDir,
+		ManagedLauncherArgv: []string{"xnix-compat-launch", "--app", "not-7zr"},
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableLaunchBridge returned error: %v", err)
+	}
+	if result.Status != "bridge-blocked" ||
+		result.LauncherArgvAccepted ||
+		result.DispatchSmokeRequestMaterialized ||
+		result.DispatchStarted ||
+		result.ExecutionStarted ||
+		result.BackendProcessStarted ||
+		result.BlockedReason != "managed launcher argv does not match the Runtime-owned launch surface" {
+		t.Fatalf("unexpected rejected launch bridge preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, tempDir)
+}
+
+func TestPreviewKnownPortableLaunchBridgeMaterializesVerifiedDispatchSmokeRequest(t *testing.T) {
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	result, err := PreviewKnownPortableLaunchBridge(KnownLaunchBridgeRequest{
+		AppID:               "fixture",
+		CacheRoot:           cacheRoot,
+		ManagedLauncherArgv: []string{"xnix-compat-launch", "--app", "fixture"},
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownPortableLaunchBridge returned error: %v", err)
+	}
+	if result.Status != "bridge-ready" ||
+		result.RequestID != "known-app-launch-request-fixture" ||
+		result.DispatchID != "known-app-dispatch-fixture" ||
+		result.DispatchSmokeRequestType != KnownDispatchSmokeRequestType ||
+		!result.DispatchSmokeRequestMaterialized ||
+		result.AppID != "fixture" ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.LauncherArgvAccepted ||
+		!result.DispatchReady ||
+		result.PreparationRequired ||
+		result.BlockedReason != "" ||
+		result.DispatchStarted ||
+		result.ExecutionStarted ||
+		result.BackendProcessStarted ||
+		!strings.Contains(result.DesktopSafeSummary, "materialized a gated dispatch smoke request") {
+		t.Fatalf("unexpected ready launch bridge preview: %#v", result)
+	}
+	assertManagedLaunchSurfaceSafe(t, result, cacheRoot)
+}
+
 func TestRunKnownPortableGuestSmokeUsesVerifiedCacheAndLoopbackGuest(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")
