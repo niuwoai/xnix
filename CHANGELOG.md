@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.573] - 2026-07-23
+
+### Changed
+
+- Added `scripts/container.rb download-wine-guest` so Wine guest Buildroot sources can be fetched in an explicit bridge-networked preparation step before the restricted offline build.
+- Kept `build-ssh-wine-guest` and `start-build-ssh-wine-guest` networkless, preserving the no-network build boundary while allowing missing sources such as `gettext-tiny` to be fetched through the dedicated preparation command.
+- Recorded local evidence that the v0.2.572 detached offline Wine guest build reached OpenSSH, host-patchelf, and urandom-scripts before failing on the missing `host-gettext-tiny` tarball because DNS is unavailable in the networkless build container; after `download-wine-guest`, the v0.2.573 detached offline build started and progressed into `host-flex` compilation.
+
 ## [0.2.572] - 2026-07-23
 
 ### Changed

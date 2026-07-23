@@ -43,6 +43,10 @@ assert(offline_build.none? { |argument| argument.include?("type=bind") }, "full 
 assert(offline_build.include?(container.tools_image_tag), "Buildroot build must use the tools image")
 networked_download = container.networked_cache_run_command(source_command)
 assert(networked_download.fetch(networked_download.index("--network") + 1) == "bridge", "dependency download requires only bridge networking")
+wine_networked_download = container.networked_cache_run_command(wine_buildroot.source_command)
+assert(wine_networked_download.fetch(wine_networked_download.index("--network") + 1) == "bridge", "Wine guest dependency download requires only bridge networking")
+assert(wine_networked_download.include?("O=#{Xnix::Buildroot::WINE_OUTPUT_DIRECTORY}"), "Wine guest dependency download must use the Wine output directory")
+assert(wine_networked_download.none? { |argument| argument.include?("type=bind") }, "Wine guest dependency download must not mount a host directory")
 
 project_root = Pathname.new(__dir__).join("..").realpath
 defconfig = project_root.join("buildroot/configs/xnix_x86_64_defconfig").read
