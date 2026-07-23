@@ -386,10 +386,43 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", commandName)
 	}
+	if desktopActionRoute {
+		if err := rejectShowRuntimeControlledLaunchOwnerFlags(flags); err != nil {
+			return err
+		}
+	}
+	resolvedStateRoot := *stateRoot
+	resolvedCacheRoot := *cacheRoot
+	resolvedLauncherPath := *launcherPath
+	resolvedOwnerTimeoutText := *ownerTimeoutText
+	resolvedExtraOptions := knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
+		Host:      *host,
+		Port:      *port,
+		User:      *user,
+		KeyPath:   *keyPath,
+		RemoteDir: *remoteDir,
+		SSHPath:   *sshPath,
+		SCPPath:   *scpPath,
+		Timeout:   *timeoutText,
+		AppArgs:   []string(appArgs),
+	}
+	var ownerConfig knownAppKDEShowRuntimeControlledLaunchOwnerConfig
+	if desktopActionRoute {
+		var err error
+		ownerConfig, err = knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv()
+		if err != nil {
+			return err
+		}
+		resolvedStateRoot = ownerConfig.StateRoot
+		resolvedCacheRoot = ownerConfig.CacheRoot
+		resolvedLauncherPath = ownerConfig.LauncherPath
+		resolvedOwnerTimeoutText = ownerConfig.OwnerTimeout
+		resolvedExtraOptions = ownerConfig.ExtraOptions
+	}
 	planInput := knownAppKDERuntimeStatusLaunchExecutionPlanInput{
 		AppID:                        *appID,
-		StateRoot:                    *stateRoot,
-		CacheRoot:                    *cacheRoot,
+		StateRoot:                    resolvedStateRoot,
+		CacheRoot:                    resolvedCacheRoot,
 		LaunchAuthorizationReceiptID: *launchReceiptID,
 		SessionGatedReviewReceiptID:  *reviewReceiptID,
 		ControlledExecutionSessionID: *sessionID,
@@ -411,31 +444,21 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	if err != nil {
 		return err
 	}
-	extra, err := knownAppKDERuntimeStatusLaunchExecutionExtraArgs(knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
-		Host:      *host,
-		Port:      *port,
-		User:      *user,
-		KeyPath:   *keyPath,
-		RemoteDir: *remoteDir,
-		SSHPath:   *sshPath,
-		SCPPath:   *scpPath,
-		Timeout:   *timeoutText,
-		AppArgs:   []string(appArgs),
-	})
+	extra, err := knownAppKDERuntimeStatusLaunchExecutionExtraArgs(resolvedExtraOptions)
 	if err != nil {
 		return err
 	}
-	launcherArgs, err := appidentity.KnownAppKDERuntimeStatusLaunchExecutionArgv(plan, *stateRoot, *cacheRoot, extra)
+	launcherArgs, err := appidentity.KnownAppKDERuntimeStatusLaunchExecutionArgv(plan, resolvedStateRoot, resolvedCacheRoot, extra)
 	if err != nil {
 		return err
 	}
-	ownerTimeout, err := time.ParseDuration(strings.TrimSpace(*ownerTimeoutText))
+	ownerTimeout, err := time.ParseDuration(strings.TrimSpace(resolvedOwnerTimeoutText))
 	if err != nil {
 		return fmt.Errorf("parse Runtime-owner timeout: %w", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ownerTimeout)
 	defer cancel()
-	output, err := exec.CommandContext(ctx, strings.TrimSpace(*launcherPath), launcherArgs...).Output()
+	output, err := exec.CommandContext(ctx, strings.TrimSpace(resolvedLauncherPath), launcherArgs...).Output()
 	if ctx.Err() != nil {
 		return errors.New("managed launcher invocation timed out")
 	}
@@ -445,7 +468,7 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 		}
 		return errors.New("managed launcher invocation failed")
 	}
-	result, err := knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan, *launcherPath, output)
+	result, err := knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan, resolvedLauncherPath, output)
 	if err != nil {
 		return err
 	}
@@ -457,6 +480,11 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 		result.DesktopEvidenceHandleForwarded = true
 		result.DesktopReceiptFieldsReconstructed = false
 		result.DesktopKDEStateRootAccess = false
+		result.DesktopRuntimeOwnerAdapterUsed = true
+		result.DesktopStateRootSuppliedByRuntimeOwner = true
+		result.DesktopCacheRootSuppliedByRuntimeOwner = true
+		result.DesktopLauncherSuppliedByRuntimeOwner = true
+		result.DesktopTimeoutSuppliedByRuntimeOwner = true
 	}
 	return encodeIndentedJSON(stdout, result)
 }
@@ -473,6 +501,81 @@ type knownAppKDERuntimeStatusLaunchExecutionPlanInput struct {
 	PostReviewDispatchState      string
 	EvidenceID                   string
 	EvidenceRelativePath         string
+}
+
+type knownAppKDEShowRuntimeControlledLaunchOwnerConfig struct {
+	StateRoot    string
+	CacheRoot    string
+	LauncherPath string
+	OwnerTimeout string
+	ExtraOptions knownAppKDERuntimeStatusLaunchExecutionExtraOptions
+}
+
+func rejectShowRuntimeControlledLaunchOwnerFlags(flags *flag.FlagSet) error {
+	allowed := map[string]bool{
+		"evidence-id":            true,
+		"evidence-relative-path": true,
+	}
+	var rejected []string
+	flags.Visit(func(flag *flag.Flag) {
+		if !allowed[flag.Name] {
+			rejected = append(rejected, "--"+flag.Name)
+		}
+	})
+	if len(rejected) > 0 {
+		return fmt.Errorf("show-runtime-controlled-launch accepts only Runtime handoff evidence flags; owner-only flags must be supplied by the Runtime service boundary: %s", strings.Join(rejected, ", "))
+	}
+	return nil
+}
+
+func knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv() (knownAppKDEShowRuntimeControlledLaunchOwnerConfig, error) {
+	config := knownAppKDEShowRuntimeControlledLaunchOwnerConfig{
+		StateRoot:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_STATE_ROOT")),
+		CacheRoot:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT")),
+		LauncherPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER")),
+		OwnerTimeout: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_TIMEOUT")),
+		ExtraOptions: knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
+			Host:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
+			Port:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
+			User:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
+			KeyPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
+			RemoteDir: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
+			SSHPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
+			SCPPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
+			Timeout:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
+		},
+	}
+	if config.StateRoot == "" {
+		return knownAppKDEShowRuntimeControlledLaunchOwnerConfig{}, errors.New("show-runtime-controlled-launch requires XNIX_RUNTIME_OWNER_STATE_ROOT from the Runtime service boundary")
+	}
+	if config.CacheRoot == "" {
+		config.CacheRoot = winapp.DefaultKnownAppCacheRoot
+	}
+	if config.LauncherPath == "" {
+		config.LauncherPath = "xnix-compat-launch"
+	}
+	if config.OwnerTimeout == "" {
+		config.OwnerTimeout = "5m"
+	}
+	for _, value := range []string{
+		config.StateRoot,
+		config.CacheRoot,
+		config.LauncherPath,
+		config.OwnerTimeout,
+		config.ExtraOptions.Host,
+		config.ExtraOptions.Port,
+		config.ExtraOptions.User,
+		config.ExtraOptions.KeyPath,
+		config.ExtraOptions.RemoteDir,
+		config.ExtraOptions.SSHPath,
+		config.ExtraOptions.SCPPath,
+		config.ExtraOptions.Timeout,
+	} {
+		if strings.ContainsAny(value, "\r\n") {
+			return knownAppKDEShowRuntimeControlledLaunchOwnerConfig{}, errors.New("show-runtime-controlled-launch Runtime owner configuration requires single-line values")
+		}
+	}
+	return config, nil
 }
 
 func (input knownAppKDERuntimeStatusLaunchExecutionPlanInput) hasEvidenceHandoff() bool {
@@ -608,6 +711,11 @@ type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	DesktopEvidenceHandleForwarded                  bool                                                        `json:"desktop_evidence_handle_forwarded,omitempty"`
 	DesktopReceiptFieldsReconstructed               bool                                                        `json:"desktop_receipt_fields_reconstructed"`
 	DesktopKDEStateRootAccess                       bool                                                        `json:"desktop_kde_state_root_access"`
+	DesktopRuntimeOwnerAdapterUsed                  bool                                                        `json:"desktop_runtime_owner_adapter_used,omitempty"`
+	DesktopStateRootSuppliedByRuntimeOwner          bool                                                        `json:"desktop_state_root_supplied_by_runtime_owner,omitempty"`
+	DesktopCacheRootSuppliedByRuntimeOwner          bool                                                        `json:"desktop_cache_root_supplied_by_runtime_owner,omitempty"`
+	DesktopLauncherSuppliedByRuntimeOwner           bool                                                        `json:"desktop_launcher_supplied_by_runtime_owner,omitempty"`
+	DesktopTimeoutSuppliedByRuntimeOwner            bool                                                        `json:"desktop_timeout_supplied_by_runtime_owner,omitempty"`
 	CompatibilityCenterKnownAppEvidence             appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence `json:"compatibility_center_known_app_evidence"`
 	ManagedLauncherName                             string                                                      `json:"managed_launcher_name"`
 	ManagedLauncherInvoked                          bool                                                        `json:"managed_launcher_invoked"`

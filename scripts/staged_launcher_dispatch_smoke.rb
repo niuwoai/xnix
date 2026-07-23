@@ -735,17 +735,19 @@ begin
   assert(action_trigger["docker_socket_mounted"] == false, "Runtime status launch action trigger must not mount Docker socket")
   assert(action_trigger["broad_host_mount_required"] == false, "Runtime status launch action trigger must not require broad host mounts")
   assert_no_forbidden(action_trigger_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch action trigger output")
+  runtime_owner_env = go_env.merge(
+    "XNIX_RUNTIME_OWNER_STATE_ROOT" => AUTHORIZATION_STATE_ROOT.to_s,
+    "XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT" => KNOWN_APP_CACHE_ROOT.to_s,
+    "XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER" => STAGED_LAUNCHER.to_s,
+    "XNIX_RUNTIME_OWNER_GUEST_KEY" => Xnix::SshTestKey::PRIVATE_KEY_PATH,
+    "XNIX_RUNTIME_OWNER_GUEST_TIMEOUT" => ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
+    "XNIX_RUNTIME_OWNER_TIMEOUT" => ENV.fetch("XNIX_RUNTIME_OWNER_TIMEOUT", "5m")
+  )
   trigger_launcher_stdout, trigger_launcher_stderr, trigger_launcher_status = run_command(
-    go_env,
+    runtime_owner_env,
     "go", "run", "./cmd/xnix-runtime-go",
     "show-runtime-controlled-launch",
-    "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
-    "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
-    "--evidence-relative-path", evidence_record.fetch("evidence_relative_path"),
-    "--launcher", STAGED_LAUNCHER.to_s,
-    "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
-    "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
-    *APP_ARGS.flat_map { |argument| ["--arg", argument] }
+    "--evidence-relative-path", evidence_record.fetch("evidence_relative_path")
   )
   unless trigger_launcher_status.zero?
     warn "QEMU serial log: #{SERIAL_LOG_PATH}"
@@ -762,6 +764,11 @@ begin
   assert(trigger_runtime_execution["desktop_evidence_handle_forwarded"] == true, "trigger-fed Runtime status launch execution must forward only the evidence handoff")
   assert(trigger_runtime_execution["desktop_receipt_fields_reconstructed"] == false, "trigger-fed Runtime status launch execution must not reconstruct receipt or session fields in KDE")
   assert(trigger_runtime_execution["desktop_kde_state_root_access"] == false, "trigger-fed Runtime status launch execution must not grant KDE state-root access")
+  assert(trigger_runtime_execution["desktop_runtime_owner_adapter_used"] == true, "trigger-fed Runtime status launch execution must use the Runtime-owner adapter")
+  assert(trigger_runtime_execution["desktop_state_root_supplied_by_runtime_owner"] == true, "trigger-fed Runtime status launch execution must receive state-root from the Runtime owner")
+  assert(trigger_runtime_execution["desktop_cache_root_supplied_by_runtime_owner"] == true, "trigger-fed Runtime status launch execution must receive cache root from the Runtime owner")
+  assert(trigger_runtime_execution["desktop_launcher_supplied_by_runtime_owner"] == true, "trigger-fed Runtime status launch execution must receive launcher path from the Runtime owner")
+  assert(trigger_runtime_execution["desktop_timeout_supplied_by_runtime_owner"] == true, "trigger-fed Runtime status launch execution must receive timeout settings from the Runtime owner")
   assert(trigger_runtime_execution["request_type"] == "known-app-kde-runtime-status-launch-execution", "trigger-fed Runtime status launch execution must use the Runtime-owned entrypoint")
   assert(trigger_runtime_execution["action_trigger_type"] == "known-app-kde-runtime-status-launch-action-trigger-preview", "trigger-fed Runtime status launch execution must consume the action trigger")
   assert(trigger_runtime_execution["action_trigger_runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger", "trigger-fed Runtime status launch execution must consume the Go Runtime action trigger")

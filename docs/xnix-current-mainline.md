@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.623
+> Last updated: 2026-07-24 | Baseline: v0.2.624
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.623 by replacing the smoke-local `--state-root` desktop action call shape with a Runtime-owner adapter that supplies state root internally before invoking `show-runtime-controlled-launch`. KDE should only forward the safe handoff id or relative evidence handle; the Runtime service boundary should supply owner-only state root, cache root, launcher path, and timeout settings. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.624 by moving the Runtime-owner adapter from CLI environment plumbing toward the daemon/service boundary, so a KDE D-Bus action can forward only an evidence handle and receive the same redacted `show-runtime-controlled-launch` result without shelling out through smoke-only setup. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, state-root paths, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.624 checkpoint removes owner-only arguments from the desktop-facing `show-runtime-controlled-launch` call shape. The command now rejects explicit owner-only CLI flags and reads state root, cache root, managed launcher path, guest timeout, and owner timeout from `XNIX_RUNTIME_OWNER_*` Runtime service-boundary configuration before delegating to the trigger-fed Runtime execution path. The staged launcher dispatch smoke now exercises `show-runtime-controlled-launch --evidence-relative-path <relative>` without passing `--state-root`, `--cache-root`, `--launcher`, or timeout flags.
 
 The v0.2.623 checkpoint exposes `show-runtime-controlled-launch` as the desktop-callable Runtime action route. The command accepts a Runtime-status evidence handoff id or safe relative path, rejects reconstructed app, receipt, session, card, action, and post-review dispatch fields, then delegates to the trigger-fed Runtime execution path. The staged launcher dispatch smoke now exercises the desktop action for its second Runtime execution and verifies `desktop_evidence_handle_forwarded=true`, `desktop_receipt_fields_reconstructed=false`, and `desktop_kde_state_root_access=false`.
 

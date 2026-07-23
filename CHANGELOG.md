@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.624] - 2026-07-24
+
+### Added
+
+- Added Runtime-owner adapter configuration for `show-runtime-controlled-launch`, using `XNIX_RUNTIME_OWNER_*` values for state root, cache root, managed launcher, and timeout settings.
+
+### Changed
+
+- Tightened the desktop-callable launch route so KDE forwards only the Runtime-status evidence handoff while owner-only launch inputs are supplied by the Runtime boundary instead of desktop CLI flags.
+
 ## [0.2.623] - 2026-07-24
 
 ### Added

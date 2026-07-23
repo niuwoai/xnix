@@ -386,16 +386,15 @@ func TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff(t *testin
 		t.Fatalf("Unmarshal record returned error: %v", err)
 	}
 	fakeLauncher, fakeArgsPath := writeFakeRuntimeStatusManagedLauncher(t)
+	t.Setenv("XNIX_RUNTIME_OWNER_STATE_ROOT", stateRoot)
+	t.Setenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT", t.TempDir())
+	t.Setenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER", fakeLauncher)
+	t.Setenv("XNIX_RUNTIME_OWNER_TIMEOUT", "5s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT", "1s")
 	var output bytes.Buffer
 	err := run([]string{
 		appidentity.KnownAppKDERuntimeStatusLaunchAction,
-		"--state-root", stateRoot,
-		"--cache-root", t.TempDir(),
 		"--evidence-relative-path", record["evidence_relative_path"].(string),
-		"--launcher", fakeLauncher,
-		"--owner-timeout", "5s",
-		"--timeout", "1s",
-		"--arg", "--help",
 	}, &output)
 	if err != nil {
 		t.Fatalf("show-runtime-controlled-launch run returned error: %v", err)
@@ -411,6 +410,11 @@ func TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff(t *testin
 		payload["desktop_evidence_handle_forwarded"] != true ||
 		payload["desktop_receipt_fields_reconstructed"] != false ||
 		payload["desktop_kde_state_root_access"] != false ||
+		payload["desktop_runtime_owner_adapter_used"] != true ||
+		payload["desktop_state_root_supplied_by_runtime_owner"] != true ||
+		payload["desktop_cache_root_supplied_by_runtime_owner"] != true ||
+		payload["desktop_launcher_supplied_by_runtime_owner"] != true ||
+		payload["desktop_timeout_supplied_by_runtime_owner"] != true ||
 		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
 		payload["action_trigger_type"] != appidentity.KnownAppKDERuntimeStatusLaunchActionTriggerRequestType ||
 		payload["evidence_handoff_consumed"] != true ||
@@ -436,7 +440,7 @@ func TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff(t *testin
 		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
 	}
 	argsText := string(argsData)
-	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--arg\n--help"} {
+	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--timeout\n1s"} {
 		if !strings.Contains(argsText, token) {
 			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
 		}
@@ -450,17 +454,17 @@ func TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff(t *testin
 }
 
 func TestShowRuntimeControlledLaunchCommandRejectsReconstructedFields(t *testing.T) {
+	t.Setenv("XNIX_RUNTIME_OWNER_STATE_ROOT", t.TempDir())
 	var output bytes.Buffer
 	err := run([]string{
 		appidentity.KnownAppKDERuntimeStatusLaunchAction,
-		"--state-root", t.TempDir(),
 		"--evidence-relative-path", "runtime/kde-runtime-status-launch-evidence/example.json",
 		"--app", "7zr",
 	}, &output)
 	if err == nil {
 		t.Fatal("show-runtime-controlled-launch accepted reconstructed KDE fields")
 	}
-	if !strings.Contains(err.Error(), "must forward only Runtime handoff evidence") {
+	if !strings.Contains(err.Error(), "accepts only Runtime handoff evidence flags") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
