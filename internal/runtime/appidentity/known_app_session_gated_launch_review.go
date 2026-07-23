@@ -15,6 +15,8 @@ const (
 	KnownAppSessionGatedLaunchReviewRequestType          = "known-app-session-gated-launch-review-preview"
 	KnownAppSessionGatedLaunchReviewReceiptSchemaVersion = "xnix.runtime.known_app_session_gated_launch_review_receipt.v1"
 	KnownAppSessionGatedLaunchReviewReceiptRequestType   = "known-app-session-gated-launch-review-receipt-record"
+	KnownAppSessionGatedLaunchReviewGateSchemaVersion    = "xnix.runtime.known_app_session_gated_launch_review_gate.v1"
+	KnownAppSessionGatedLaunchReviewGateRequestType      = "known-app-session-gated-launch-review-gate-preview"
 	KnownAppSessionGatedLaunchReviewAction               = "review-session-gated-dispatch"
 	knownAppSessionGatedLaunchReviewReceiptDir           = "runtime/session-gated-launch-review-receipts"
 )
@@ -192,6 +194,73 @@ type knownAppSessionGatedLaunchReviewReceiptFile struct {
 	RawArtifactPathExposed  bool   `json:"raw_artifact_path_exposed"`
 	BackendDetailsExposed   bool   `json:"backend_details_exposed"`
 	RecordedAtUTC           string `json:"recorded_at_utc"`
+}
+
+type KnownAppSessionGatedLaunchReviewGateRequest struct {
+	AppID     string
+	StateRoot string
+	SessionID string
+	ReceiptID string
+}
+
+type KnownAppSessionGatedLaunchReviewGatePreview struct {
+	SchemaVersion                 string `json:"schema_version"`
+	RequestType                   string `json:"request_type"`
+	Source                        string `json:"source"`
+	RuntimeMethod                 string `json:"runtime_method"`
+	ReadMethod                    string `json:"read_method"`
+	AppID                         string `json:"app_id"`
+	DisplayName                   string `json:"display_name"`
+	AppVersion                    string `json:"app_version"`
+	ActionID                      string `json:"action_id"`
+	ActionKind                    string `json:"action_kind"`
+	ExecutionSessionID            string `json:"execution_session_id"`
+	SessionRecordConsumed         bool   `json:"session_record_consumed"`
+	SessionDigestVerified         bool   `json:"session_digest_verified"`
+	SessionRelativePath           string `json:"session_relative_path"`
+	SessionSHA256                 string `json:"session_sha256"`
+	ReadBeforeWriteRevalidated    bool   `json:"read_before_write_revalidated"`
+	ReceiptID                     string `json:"receipt_id"`
+	ReceiptRelativePath           string `json:"receipt_relative_path"`
+	ReceiptSHA256                 string `json:"receipt_sha256"`
+	ReceiptLookupState            string `json:"receipt_lookup_state"`
+	ReceiptRejectedReason         string `json:"receipt_rejected_reason,omitempty"`
+	ReceiptDecision               string `json:"receipt_decision"`
+	ReviewReceiptConsumed         bool   `json:"review_receipt_consumed"`
+	ReviewReceiptAccepted         bool   `json:"review_receipt_accepted"`
+	ReviewGateState               string `json:"review_gate_state"`
+	ReviewGateReady               bool   `json:"review_gate_ready"`
+	ControlledDispatchGateReady   bool   `json:"controlled_dispatch_gate_ready"`
+	DispatchStateAdvanceReady     bool   `json:"dispatch_state_advance_ready"`
+	DispatchStateAdvanced         bool   `json:"dispatch_state_advanced"`
+	RuntimeOwnerConsumable        bool   `json:"runtime_owner_consumable"`
+	KDEReadModelConsumable        bool   `json:"kde_read_model_consumable"`
+	SafeForKDE                    bool   `json:"safe_for_kde"`
+	RuntimeOwned                  bool   `json:"runtime_owned"`
+	GoRuntimeBacked               bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner                bool   `json:"kde_policy_owner"`
+	UserDecisionAllowsLaunch      bool   `json:"user_decision_allows_launch"`
+	RuntimeLaunchApproval         bool   `json:"runtime_launch_approval"`
+	LaunchAllowed                 bool   `json:"launch_allowed"`
+	LaunchEnabled                 bool   `json:"launch_enabled"`
+	DesktopLaunchEnabled          bool   `json:"desktop_launch_enabled"`
+	ExecutionStarted              bool   `json:"execution_started"`
+	BackendLaunchEnabled          bool   `json:"backend_launch_enabled"`
+	BackendProcessStarted         bool   `json:"backend_process_started"`
+	ControlledDispatchRequestMade bool   `json:"controlled_dispatch_request_created"`
+	PermissionGrantCreated        bool   `json:"permission_grant_created"`
+	StateRootPathExposed          bool   `json:"state_root_path_exposed"`
+	SessionPathExposed            bool   `json:"session_path_exposed"`
+	ReceiptPathExposed            bool   `json:"receipt_path_exposed"`
+	RawArtifactPathExposed        bool   `json:"raw_artifact_path_exposed"`
+	BackendDetailsExposed         bool   `json:"backend_details_exposed"`
+	HostRootModified              bool   `json:"host_root_modified"`
+	NetworkRequired               bool   `json:"network_required"`
+	PrivilegedContainerRequired   bool   `json:"privileged_container_required"`
+	DockerSocketMounted           bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired        bool   `json:"broad_host_mount_required"`
+	NextStep                      string `json:"next_step"`
+	DesktopSafeSummary            string `json:"desktop_safe_summary"`
 }
 
 func PreviewKnownAppSessionGatedLaunchReview(request KnownAppSessionGatedLaunchReviewRequest) (KnownAppSessionGatedLaunchReviewPreview, error) {
@@ -421,6 +490,71 @@ func RecordKnownAppSessionGatedLaunchReviewReceipt(request KnownAppSessionGatedL
 	return validateKnownAppSessionGatedLaunchReviewReceiptRecord(record)
 }
 
+func PreviewKnownAppSessionGatedLaunchReviewGate(request KnownAppSessionGatedLaunchReviewGateRequest) (KnownAppSessionGatedLaunchReviewGatePreview, error) {
+	preview, err := PreviewKnownAppSessionGatedLaunchReview(KnownAppSessionGatedLaunchReviewRequest{
+		AppID:     request.AppID,
+		StateRoot: request.StateRoot,
+		SessionID: request.SessionID,
+		ActionID:  KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, err
+	}
+	receiptID := strings.TrimSpace(request.ReceiptID)
+	if receiptID == "" {
+		receiptID = KnownAppSessionGatedLaunchReviewReceiptID(preview.AppID, preview.AppVersion, preview.ExecutionSessionID)
+	}
+	gate := baseKnownAppSessionGatedLaunchReviewGatePreview(preview, receiptID)
+	receiptPath, err := KnownAppSessionGatedLaunchReviewReceiptPath(request.StateRoot, receiptID)
+	if err != nil {
+		gate.ReceiptLookupState = "receipt-path-invalid"
+		gate.ReceiptRejectedReason = "review receipt path is outside the managed state root"
+		gate.ReviewGateState = "receipt-path-invalid-fail-closed"
+		gate.DesktopSafeSummary = preview.DisplayName + " session-gated review gate rejected an invalid receipt path without exposing storage details."
+		return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
+	}
+	content, err := os.ReadFile(receiptPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			gate.ReceiptLookupState = "missing-receipt"
+			gate.ReceiptRejectedReason = "session-gated launch review receipt is missing"
+			gate.ReviewGateState = "missing-receipt-fail-closed"
+			gate.DesktopSafeSummary = preview.DisplayName + " session-gated review gate did not find a Runtime review receipt and remains closed."
+			return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
+		}
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, fmt.Errorf("read session-gated launch review receipt: %w", err)
+	}
+	gate.ReceiptSHA256 = sha256Hex(string(content))
+	var receipt knownAppSessionGatedLaunchReviewReceiptFile
+	if err := json.Unmarshal(content, &receipt); err != nil {
+		gate.ReceiptLookupState = "malformed-receipt"
+		gate.ReceiptRejectedReason = "session-gated launch review receipt could not be parsed"
+		gate.ReviewGateState = "malformed-receipt-fail-closed"
+		gate.DesktopSafeSummary = preview.DisplayName + " session-gated review gate rejected a malformed receipt and remains closed."
+		return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
+	}
+	gate.ReceiptDecision = receipt.Decision
+	gate.ReviewReceiptConsumed = true
+	if reason := rejectKnownAppSessionGatedLaunchReviewReceipt(receipt, preview, receiptID); reason != "" {
+		gate.ReceiptLookupState = "rejected-receipt"
+		gate.ReceiptRejectedReason = reason
+		gate.ReviewGateState = "rejected-receipt-fail-closed"
+		gate.DesktopSafeSummary = preview.DisplayName + " session-gated review gate rejected the Runtime review receipt and remains closed."
+		return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
+	}
+	gate.ReceiptLookupState = "accepted-receipt"
+	gate.ReviewReceiptAccepted = true
+	gate.ReviewGateState = "review-receipt-accepted-dispatch-still-gated"
+	gate.ReviewGateReady = true
+	gate.ControlledDispatchGateReady = true
+	gate.DispatchStateAdvanceReady = true
+	gate.UserDecisionAllowsLaunch = true
+	gate.NextStep = "Create the next Runtime-owned controlled dispatch state from this accepted review receipt gate."
+	gate.DesktopSafeSummary = preview.DisplayName + " session-gated review gate accepted the digest-verified Runtime receipt; controlled dispatch state can advance, but execution still requires the managed dispatch runner."
+	return validateKnownAppSessionGatedLaunchReviewGatePreview(gate)
+}
+
 func knownAppSessionGatedLaunchReviewNextStep(decision string) string {
 	switch decision {
 	case "approved":
@@ -491,6 +625,60 @@ func KnownAppSessionGatedLaunchReviewReceiptPath(stateRoot string, receiptID str
 	return cleanCandidate, nil
 }
 
+func baseKnownAppSessionGatedLaunchReviewGatePreview(preview KnownAppSessionGatedLaunchReviewPreview, receiptID string) KnownAppSessionGatedLaunchReviewGatePreview {
+	return KnownAppSessionGatedLaunchReviewGatePreview{
+		SchemaVersion:                 KnownAppSessionGatedLaunchReviewGateSchemaVersion,
+		RequestType:                   KnownAppSessionGatedLaunchReviewGateRequestType,
+		Source:                        KnownAppSessionGatedLaunchReviewReceiptRequestType + "+runtime-review-receipt-gate",
+		RuntimeMethod:                 "PreviewKnownAppSessionGatedLaunchReviewGate",
+		ReadMethod:                    "GetKnownAppSessionGatedLaunchReviewGate",
+		AppID:                         preview.AppID,
+		DisplayName:                   preview.DisplayName,
+		AppVersion:                    preview.AppVersion,
+		ActionID:                      preview.ActionID,
+		ActionKind:                    preview.ActionKind,
+		ExecutionSessionID:            preview.ExecutionSessionID,
+		SessionRecordConsumed:         preview.SessionRecordConsumed,
+		SessionDigestVerified:         preview.SessionDigestVerified,
+		SessionRelativePath:           preview.SessionRelativePath,
+		SessionSHA256:                 preview.SessionSHA256,
+		ReadBeforeWriteRevalidated:    true,
+		ReceiptID:                     receiptID,
+		ReceiptRelativePath:           KnownAppSessionGatedLaunchReviewReceiptRelativePath(receiptID),
+		ReceiptLookupState:            "not-checked",
+		ReceiptDecision:               "not-read",
+		ReviewGateState:               "closed",
+		RuntimeOwnerConsumable:        true,
+		KDEReadModelConsumable:        true,
+		SafeForKDE:                    true,
+		RuntimeOwned:                  true,
+		GoRuntimeBacked:               true,
+		KDEPolicyOwner:                false,
+		UserDecisionAllowsLaunch:      false,
+		RuntimeLaunchApproval:         false,
+		LaunchAllowed:                 false,
+		LaunchEnabled:                 false,
+		DesktopLaunchEnabled:          false,
+		ExecutionStarted:              false,
+		BackendLaunchEnabled:          false,
+		BackendProcessStarted:         false,
+		ControlledDispatchRequestMade: false,
+		PermissionGrantCreated:        false,
+		StateRootPathExposed:          false,
+		SessionPathExposed:            false,
+		ReceiptPathExposed:            false,
+		RawArtifactPathExposed:        false,
+		BackendDetailsExposed:         false,
+		HostRootModified:              false,
+		NetworkRequired:               false,
+		PrivilegedContainerRequired:   false,
+		DockerSocketMounted:           false,
+		BroadHostMountRequired:        false,
+		NextStep:                      "Record and accept a Runtime-owned approved review receipt before controlled dispatch state can advance.",
+		DesktopSafeSummary:            preview.DisplayName + " session-gated review gate is closed until the Runtime accepts a digest-verified approved review receipt.",
+	}
+}
+
 func validateKnownAppSessionGatedLaunchReviewPreview(preview KnownAppSessionGatedLaunchReviewPreview) (KnownAppSessionGatedLaunchReviewPreview, error) {
 	switch {
 	case preview.SchemaVersion != KnownAppSessionGatedLaunchReviewSchemaVersion || preview.RequestType != KnownAppSessionGatedLaunchReviewRequestType:
@@ -557,4 +745,77 @@ func validateKnownAppSessionGatedLaunchReviewReceiptRecord(record KnownAppSessio
 		return KnownAppSessionGatedLaunchReviewReceiptRecord{}, err
 	}
 	return record, nil
+}
+
+func rejectKnownAppSessionGatedLaunchReviewReceipt(receipt knownAppSessionGatedLaunchReviewReceiptFile, preview KnownAppSessionGatedLaunchReviewPreview, receiptID string) string {
+	switch {
+	case receipt.SchemaVersion != KnownAppSessionGatedLaunchReviewReceiptSchemaVersion:
+		return "session-gated launch review receipt schema is not supported"
+	case receipt.ReceiptType != "runtime-owned-session-gated-launch-review":
+		return "session-gated launch review receipt type is not supported"
+	case receipt.ReceiptID != receiptID:
+		return "session-gated launch review receipt id does not match the requested receipt"
+	case receipt.AppID != preview.AppID:
+		return "session-gated launch review receipt app id does not match the requested app"
+	case receipt.AppVersion != preview.AppVersion:
+		return "session-gated launch review receipt app version does not match the requested app"
+	case receipt.ActionID != KnownAppSessionGatedLaunchReviewAction || receipt.ActionKind != "session-gate-review":
+		return "session-gated launch review receipt action is not accepted"
+	case receipt.Decision != "approved":
+		return "session-gated launch review receipt decision is not approved"
+	case receipt.ReviewState != "recorded-dispatch-still-gated":
+		return "session-gated launch review receipt state is not accepted"
+	case receipt.ExecutionSessionID != preview.ExecutionSessionID:
+		return "session-gated launch review receipt session id does not match the active session"
+	case receipt.SessionRelativePath != preview.SessionRelativePath || receipt.SessionSHA256 != preview.SessionSHA256:
+		return "session-gated launch review receipt session digest does not match the active session"
+	case !receipt.SessionDigestVerified || !receipt.ReadBeforeWriteConsumed:
+		return "session-gated launch review receipt lacks digest-verified read-before-write evidence"
+	case !receipt.RuntimeOwned || !receipt.GoRuntimeBacked || receipt.KDEPolicyOwner:
+		return "session-gated launch review receipt is not Runtime-owned Go evidence"
+	case receipt.RuntimeLaunchApproval || receipt.LaunchAllowed || receipt.DesktopLaunchEnabled || receipt.BackendLaunchEnabled || receipt.ExecutionStarted || receipt.HostRootModified:
+		return "session-gated launch review receipt contains unsafe launch side effects"
+	case receipt.StateRootPathExposed || receipt.SessionPathExposed || receipt.ReceiptPathExposed || receipt.RawArtifactPathExposed || receipt.BackendDetailsExposed:
+		return "session-gated launch review receipt contains unsafe exposure flags"
+	default:
+		return ""
+	}
+}
+
+func validateKnownAppSessionGatedLaunchReviewGatePreview(preview KnownAppSessionGatedLaunchReviewGatePreview) (KnownAppSessionGatedLaunchReviewGatePreview, error) {
+	switch {
+	case preview.SchemaVersion != KnownAppSessionGatedLaunchReviewGateSchemaVersion || preview.RequestType != KnownAppSessionGatedLaunchReviewGateRequestType:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate has invalid schema")
+	case preview.ActionID != KnownAppSessionGatedLaunchReviewAction || preview.ActionKind != "session-gate-review":
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires the session gate review action")
+	case !preview.SessionRecordConsumed || !preview.SessionDigestVerified || preview.SessionRelativePath == "" || preview.SessionSHA256 == "" || !preview.ReadBeforeWriteRevalidated:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires digest-verified session evidence")
+	case preview.ReceiptID == "" || preview.ReceiptRelativePath == "" || filepath.IsAbs(preview.ReceiptRelativePath) || strings.Contains(filepath.Clean(preview.ReceiptRelativePath), ".."):
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires relative receipt evidence")
+	case !preview.RuntimeOwnerConsumable || !preview.KDEReadModelConsumable || !preview.SafeForKDE || !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires Runtime-owned KDE-safe evidence")
+	case preview.ReviewReceiptAccepted && (!preview.ReviewReceiptConsumed || preview.ReceiptLookupState != "accepted-receipt" || preview.ReceiptDecision != "approved" || preview.ReceiptSHA256 == "" || !preview.ReviewGateReady || !preview.ControlledDispatchGateReady || !preview.DispatchStateAdvanceReady):
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires an accepted approved receipt")
+	case preview.ReviewReceiptAccepted && preview.ReviewGateState != "review-receipt-accepted-dispatch-still-gated":
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate accepted state is invalid")
+	case !preview.ReviewReceiptAccepted && preview.DispatchStateAdvanceReady:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate must not advance without an accepted receipt")
+	case preview.RuntimeLaunchApproval || preview.LaunchAllowed || preview.LaunchEnabled || preview.DesktopLaunchEnabled || preview.ExecutionStarted:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate must not approve or start launch")
+	case preview.BackendLaunchEnabled || preview.BackendProcessStarted || preview.ControlledDispatchRequestMade || preview.PermissionGrantCreated:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate must not create dispatch objects")
+	case preview.StateRootPathExposed || preview.SessionPathExposed || preview.ReceiptPathExposed || preview.RawArtifactPathExposed || preview.BackendDetailsExposed:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate must not expose raw paths or backend details")
+	case preview.HostRootModified || preview.NetworkRequired || preview.PrivilegedContainerRequired || preview.DockerSocketMounted || preview.BroadHostMountRequired:
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate must keep host and container boundaries closed")
+	}
+	for _, value := range []string{preview.AppID, preview.DisplayName, preview.AppVersion, preview.ExecutionSessionID, preview.ReceiptLookupState, preview.ReceiptDecision, preview.ReviewGateState} {
+		if !singleLine(value) {
+			return KnownAppSessionGatedLaunchReviewGatePreview{}, errors.New("known app session-gated launch review gate requires single-line fields")
+		}
+	}
+	if err := validateNoBackendTerms(preview, "known app session-gated launch review gate"); err != nil {
+		return KnownAppSessionGatedLaunchReviewGatePreview{}, err
+	}
+	return preview, nil
 }

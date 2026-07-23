@@ -213,6 +213,141 @@ func TestRecordKnownAppSessionGatedLaunchReviewReceiptConsumesSessionBeforeWrite
 	}
 }
 
+func TestPreviewKnownAppSessionGatedLaunchReviewGateAcceptsApprovedReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)
+	receipt, err := RecordKnownAppSessionGatedLaunchReviewReceipt(KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+
+	gate, err := PreviewKnownAppSessionGatedLaunchReviewGate(KnownAppSessionGatedLaunchReviewGateRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ReceiptID: receipt.ReceiptID,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppSessionGatedLaunchReviewGate returned error: %v", err)
+	}
+	if gate.SchemaVersion != KnownAppSessionGatedLaunchReviewGateSchemaVersion ||
+		gate.RequestType != KnownAppSessionGatedLaunchReviewGateRequestType ||
+		gate.Source != KnownAppSessionGatedLaunchReviewReceiptRequestType+"+runtime-review-receipt-gate" ||
+		gate.RuntimeMethod != "PreviewKnownAppSessionGatedLaunchReviewGate" ||
+		gate.ReadMethod != "GetKnownAppSessionGatedLaunchReviewGate" ||
+		gate.AppID != "7zr" ||
+		gate.DisplayName != "7-Zip standalone console executable" ||
+		gate.AppVersion != "26.02" ||
+		gate.ActionID != "review-session-gated-dispatch" ||
+		gate.ActionKind != "session-gate-review" ||
+		gate.ExecutionSessionID != sessionID ||
+		!gate.SessionRecordConsumed ||
+		!gate.SessionDigestVerified ||
+		gate.SessionRelativePath != "execution-ledger/sessions/"+sessionID+".json" ||
+		gate.SessionSHA256 == "" ||
+		!gate.ReadBeforeWriteRevalidated ||
+		gate.ReceiptID != receipt.ReceiptID ||
+		gate.ReceiptRelativePath != receipt.ReceiptRelativePath ||
+		gate.ReceiptSHA256 != receipt.ReceiptSHA256 ||
+		gate.ReceiptLookupState != "accepted-receipt" ||
+		gate.ReceiptDecision != "approved" ||
+		!gate.ReviewReceiptConsumed ||
+		!gate.ReviewReceiptAccepted ||
+		gate.ReviewGateState != "review-receipt-accepted-dispatch-still-gated" ||
+		!gate.ReviewGateReady ||
+		!gate.ControlledDispatchGateReady ||
+		!gate.DispatchStateAdvanceReady ||
+		gate.DispatchStateAdvanced ||
+		!gate.RuntimeOwnerConsumable ||
+		!gate.KDEReadModelConsumable ||
+		!gate.SafeForKDE ||
+		!gate.RuntimeOwned ||
+		!gate.GoRuntimeBacked ||
+		gate.KDEPolicyOwner ||
+		!gate.UserDecisionAllowsLaunch ||
+		gate.RuntimeLaunchApproval ||
+		gate.LaunchAllowed ||
+		gate.LaunchEnabled ||
+		gate.DesktopLaunchEnabled ||
+		gate.ExecutionStarted ||
+		gate.BackendLaunchEnabled ||
+		gate.BackendProcessStarted ||
+		gate.ControlledDispatchRequestMade ||
+		gate.PermissionGrantCreated ||
+		gate.StateRootPathExposed ||
+		gate.SessionPathExposed ||
+		gate.ReceiptPathExposed ||
+		gate.RawArtifactPathExposed ||
+		gate.BackendDetailsExposed ||
+		gate.HostRootModified ||
+		gate.NetworkRequired ||
+		gate.PrivilegedContainerRequired ||
+		gate.DockerSocketMounted ||
+		gate.BroadHostMountRequired {
+		t.Fatalf("unexpected known app session-gated launch review gate preview: %#v", gate)
+	}
+	encoded, err := json.Marshal(gate)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("known app session-gated launch review gate exposed state root path: %s", text)
+	}
+	for _, forbidden := range []string{".exe", "program files", "qemu-system", "proton", "wine "} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("known app session-gated launch review gate exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func TestPreviewKnownAppSessionGatedLaunchReviewGateRejectsDeferredReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeKnownAppSessionGatedLaunchReviewFixture(t, stateRoot)
+	receipt, err := RecordKnownAppSessionGatedLaunchReviewReceipt(KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "deferred",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	gate, err := PreviewKnownAppSessionGatedLaunchReviewGate(KnownAppSessionGatedLaunchReviewGateRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ReceiptID: receipt.ReceiptID,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKnownAppSessionGatedLaunchReviewGate returned error: %v", err)
+	}
+	if gate.ReceiptLookupState != "rejected-receipt" ||
+		gate.ReceiptRejectedReason != "session-gated launch review receipt decision is not approved" ||
+		gate.ReceiptDecision != "deferred" ||
+		!gate.ReviewReceiptConsumed ||
+		gate.ReviewReceiptAccepted ||
+		gate.ReviewGateReady ||
+		gate.ControlledDispatchGateReady ||
+		gate.DispatchStateAdvanceReady ||
+		gate.UserDecisionAllowsLaunch ||
+		gate.RuntimeLaunchApproval ||
+		gate.LaunchAllowed ||
+		gate.DesktopLaunchEnabled ||
+		gate.ExecutionStarted ||
+		gate.ControlledDispatchRequestMade ||
+		gate.HostRootModified {
+		t.Fatalf("unexpected deferred receipt gate preview: %#v", gate)
+	}
+}
+
 func TestPreviewKnownAppSessionGatedLaunchReviewRejectsInvalidAction(t *testing.T) {
 	_, err := PreviewKnownAppSessionGatedLaunchReview(KnownAppSessionGatedLaunchReviewRequest{
 		AppID:     "7zr",

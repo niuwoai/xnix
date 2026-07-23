@@ -580,6 +580,45 @@ begin
     assert(launch_review_receipt["state_root_path_exposed"] == false, "Runtime launch review receipt must not expose the state root")
     assert(launch_review_receipt["host_root_modified"] == false, "Runtime launch review receipt must not mutate the host root")
     assert_no_forbidden(launch_review_receipt_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review receipt output")
+    launch_review_gate, launch_review_gate_stdout = run_json(
+      go_env,
+      "go", "run", "./cmd/xnix-runtime-go",
+      "known-app-session-gated-launch-review-gate-preview",
+      "--app", payload.fetch("app_id"),
+      "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+      "--session-id", payload.fetch("controlled_execution_session_id"),
+      "--receipt-id", launch_review_receipt.fetch("receipt_id")
+    )
+    assert(launch_review_gate["request_type"] == "known-app-session-gated-launch-review-gate-preview", "Runtime launch review gate request type must match")
+    assert(launch_review_gate["source"] == "known-app-session-gated-launch-review-receipt-record+runtime-review-receipt-gate", "Runtime launch review gate must consume the review receipt")
+    assert(launch_review_gate["runtime_method"] == "PreviewKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must be owned by the Go Runtime")
+    assert(launch_review_gate["read_method"] == "GetKnownAppSessionGatedLaunchReviewGate", "Runtime launch review gate must expose a stable read method")
+    assert(launch_review_gate["execution_session_id"] == payload.fetch("controlled_execution_session_id"), "Runtime launch review gate must preserve the opaque session id")
+    assert(launch_review_gate["session_record_consumed"] == true, "Runtime launch review gate must re-consume the session record")
+    assert(launch_review_gate["session_digest_verified"] == true, "Runtime launch review gate must verify the session digest")
+    assert(launch_review_gate["read_before_write_revalidated"] == true, "Runtime launch review gate must revalidate read-before-write evidence")
+    assert(launch_review_gate["receipt_id"] == launch_review_receipt.fetch("receipt_id"), "Runtime launch review gate must consume the selected receipt id")
+    assert(launch_review_gate["receipt_relative_path"] == launch_review_receipt.fetch("receipt_relative_path"), "Runtime launch review gate must expose only relative receipt evidence")
+    assert(launch_review_gate["receipt_sha256"] == launch_review_receipt.fetch("receipt_sha256"), "Runtime launch review gate must verify the receipt digest")
+    assert(launch_review_gate["receipt_lookup_state"] == "accepted-receipt", "Runtime launch review gate must accept the review receipt")
+    assert(launch_review_gate["receipt_decision"] == "approved", "Runtime launch review gate must accept only approved receipts")
+    assert(launch_review_gate["review_receipt_consumed"] == true, "Runtime launch review gate must consume the review receipt")
+    assert(launch_review_gate["review_receipt_accepted"] == true, "Runtime launch review gate must accept the review receipt")
+    assert(launch_review_gate["review_gate_ready"] == true, "Runtime launch review gate must be ready")
+    assert(launch_review_gate["controlled_dispatch_gate_ready"] == true, "Runtime launch review gate must prepare the controlled dispatch gate")
+    assert(launch_review_gate["dispatch_state_advance_ready"] == true, "Runtime launch review gate must allow the next dispatch state to advance")
+    assert(launch_review_gate["dispatch_state_advanced"] == false, "Runtime launch review gate must not advance dispatch state itself")
+    assert(launch_review_gate["runtime_launch_approval"] == false, "Runtime launch review gate must not grant direct launch approval")
+    assert(launch_review_gate["launch_allowed"] == false, "Runtime launch review gate must not allow direct launch")
+    assert(launch_review_gate["desktop_launch_enabled"] == false, "Runtime launch review gate must not enable desktop launch")
+    assert(launch_review_gate["backend_launch_enabled"] == false, "Runtime launch review gate must not enable backend launch")
+    assert(launch_review_gate["execution_started"] == false, "Runtime launch review gate must not start execution")
+    assert(launch_review_gate["controlled_dispatch_request_created"] == false, "Runtime launch review gate must not create dispatch requests")
+    assert(launch_review_gate["permission_grant_created"] == false, "Runtime launch review gate must not create permission grants")
+    assert(launch_review_gate["receipt_path_exposed"] == false, "Runtime launch review gate must not expose receipt paths")
+    assert(launch_review_gate["state_root_path_exposed"] == false, "Runtime launch review gate must not expose the state root")
+    assert(launch_review_gate["host_root_modified"] == false, "Runtime launch review gate must not mutate the host root")
+    assert_no_forbidden(launch_review_gate_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime launch review gate output")
     puts "PASS: #{SMOKE_NAME} (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

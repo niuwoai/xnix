@@ -153,6 +153,116 @@ func TestKnownAppSessionGatedLaunchReviewReceiptRecordCommandWritesReceipt(t *te
 	}
 }
 
+func TestKnownAppSessionGatedLaunchReviewGatePreviewCommandAcceptsReceipt(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	ledger, err := execution.NewLedger(stateRoot)
+	if err != nil {
+		t.Fatalf("NewLedger returned error: %v", err)
+	}
+	if _, err := ledger.Record(execution.Transaction{
+		RequestID:      sessionID,
+		ApplicationID:  "7zr",
+		Profile:        "known-app-managed-guest",
+		State:          execution.StateBlocked,
+		ReviewDecision: execution.DecisionApproved,
+		Gates: []execution.Gate{
+			{ID: "controlled-execution-session-handoff", Status: execution.GatePass, Reason: "Runtime execution session handoff ready"},
+			{ID: "runtime-write-gate", Status: execution.GateBlocked, Reason: "dispatch runner must consume the recorded session before execution"},
+		},
+		BlockedReasons:   []string{"runtime-write-gate: dispatch runner must consume the recorded session before execution"},
+		LaunchAllowed:    false,
+		LaunchEnabled:    false,
+		BackendStarted:   false,
+		HostRootModified: false,
+		NetworkRequired:  false,
+		Summary:          "Runtime recorded a known application execution session handoff for later consumption.",
+	}); err != nil {
+		t.Fatalf("Record returned error: %v", err)
+	}
+	if _, err := ledger.RecordSession(sessionID); err != nil {
+		t.Fatalf("RecordSession returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     "7zr",
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"known-app-session-gated-launch-review-gate-preview",
+		"--app", "7zr",
+		"--state-root", stateRoot,
+		"--session-id", sessionID,
+		"--receipt-id", receipt.ReceiptID,
+	}, &output)
+	if err != nil {
+		t.Fatalf("session-gated launch review gate run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal session-gated launch review gate returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppSessionGatedLaunchReviewGateSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppSessionGatedLaunchReviewGateRequestType ||
+		payload["source"] != appidentity.KnownAppSessionGatedLaunchReviewReceiptRequestType+"+runtime-review-receipt-gate" ||
+		payload["runtime_method"] != "PreviewKnownAppSessionGatedLaunchReviewGate" ||
+		payload["read_method"] != "GetKnownAppSessionGatedLaunchReviewGate" ||
+		payload["app_id"] != "7zr" ||
+		payload["action_id"] != "review-session-gated-dispatch" ||
+		payload["action_kind"] != "session-gate-review" ||
+		payload["execution_session_id"] != sessionID ||
+		payload["session_record_consumed"] != true ||
+		payload["session_digest_verified"] != true ||
+		payload["session_relative_path"] != "execution-ledger/sessions/"+sessionID+".json" ||
+		payload["read_before_write_revalidated"] != true ||
+		payload["receipt_id"] != receipt.ReceiptID ||
+		payload["receipt_relative_path"] != receipt.ReceiptRelativePath ||
+		payload["receipt_sha256"] != receipt.ReceiptSHA256 ||
+		payload["receipt_lookup_state"] != "accepted-receipt" ||
+		payload["receipt_decision"] != "approved" ||
+		payload["review_receipt_consumed"] != true ||
+		payload["review_receipt_accepted"] != true ||
+		payload["review_gate_state"] != "review-receipt-accepted-dispatch-still-gated" ||
+		payload["review_gate_ready"] != true ||
+		payload["controlled_dispatch_gate_ready"] != true ||
+		payload["dispatch_state_advance_ready"] != true ||
+		payload["dispatch_state_advanced"] != false ||
+		payload["runtime_owner_consumable"] != true ||
+		payload["kde_read_model_consumable"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["user_decision_allows_launch"] != true ||
+		payload["runtime_launch_approval"] != false ||
+		payload["launch_allowed"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["controlled_dispatch_request_created"] != false ||
+		payload["permission_grant_created"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["session_path_exposed"] != false ||
+		payload["receipt_path_exposed"] != false ||
+		payload["raw_artifact_path_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected session-gated launch review gate payload: %#v", payload)
+	}
+	text := strings.ToLower(output.String())
+	if strings.Contains(text, strings.ToLower(stateRoot)) {
+		t.Fatalf("session-gated launch review gate exposed state root path: %s", text)
+	}
+}
+
 func TestKnownAppLaunchAuthorizationReceiptPreviewCommandRequiresDirective(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{
