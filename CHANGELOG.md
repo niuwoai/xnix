@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.621] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-kde-runtime-status-launch-action-trigger-preview` command, which consumes the persisted Runtime-status launch evidence handoff and assembles a Runtime-owned managed launcher request for the `show-runtime-controlled-launch` action.
+
+### Changed
+
+- Extended the staged launcher dispatch smoke so the KDE Runtime-status action is forwarded through the Runtime handoff trigger preview instead of reconstructing launch request fields directly from smoke-local variables.
+
 ## [0.2.620] - 2026-07-24
 
 ### Changed

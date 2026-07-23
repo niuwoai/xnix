@@ -242,6 +242,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppKDERuntimeStatusLaunchEvidenceRecord(args[1:], stdout)
 	case "known-app-kde-runtime-status-launch-evidence-preview":
 		return runKnownAppKDERuntimeStatusLaunchEvidencePreview(args[1:], stdout)
+	case "known-app-kde-runtime-status-launch-action-trigger-preview":
+		return runKnownAppKDERuntimeStatusLaunchActionTriggerPreview(args[1:], stdout)
 	case "launch-intent-preview":
 		return runLaunchIntentPreview(args[1:], stdout)
 	case "mimeapps-preview":

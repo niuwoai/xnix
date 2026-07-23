@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.620`.
+The project is currently at `v0.2.621`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.620`.
 
 ## Current Checkpoint
 
-v0.2.620 is the formal full Buildroot/QEMU checkpoint for the Runtime-status launch evidence handoff reader. The restricted full smoke built the `xnix-builder-tools:0.2.620` and `xnix-builder:0.2.620` images, rebuilt the Buildroot serial/QEMU image and i386 Wine guest, verified the known 7zr Windows app lane, passed the staged managed launcher dispatch smoke, passed the QEMU guest real Windows app Wine smoke, and persisted evidence in `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`.
+v0.2.621 connects the consumed Runtime-status launch evidence handoff to a concrete `show-runtime-controlled-launch` action trigger preview. `known-app-kde-runtime-status-launch-action-trigger-preview` reads the persisted handoff, verifies the digest, consumes the KDE-safe Runtime status action, and assembles the Runtime-owned managed launcher request without giving KDE state-root access or starting execution.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -32,8 +32,8 @@ Historical `docs/claude-code-*` files remain repository evidence, but new implem
 Run targeted checks for small versions:
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewKnownAppKDERuntimeStatusLaunchEvidenceConsumesSafeHandoff|TestRecordKnownAppKDERuntimeStatusLaunchEvidencePersistsSafeHandoff|TestProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidenceBuildsCenterPayload' -count=1
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchEvidencePreviewCommandConsumesRecordedHandoff|TestKnownAppKDERuntimeStatusLaunchEvidenceRecordCommandPersistsProjectionFile|TestKnownAppKDERuntimeStatusLaunchExecutionCommandInvokesManagedLauncherWithRuntimeStateRoot' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewKnownAppKDERuntimeStatusLaunchActionTriggerConsumesHandoff|TestPreviewKnownAppKDERuntimeStatusLaunchEvidenceConsumesSafeHandoff|TestPreviewKnownAppKDERuntimeStatusLaunchRequestCollectsOpaqueIDs' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppKDERuntimeStatusLaunchActionTriggerCommandAssemblesLaunchRequestFromHandoff|TestKnownAppKDERuntimeStatusLaunchEvidencePreviewCommandConsumesRecordedHandoff|TestKnownAppKDERuntimeStatusLaunchRequestPreviewCommandCollectsOpaqueIDs' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```

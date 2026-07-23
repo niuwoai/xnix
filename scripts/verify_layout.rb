@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.620"
+EXPECTED_VERSION = "0.2.621"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6454,6 +6454,9 @@ end
 %w[known-app-kde-runtime-status-launch-evidence-preview PreviewKnownAppKDERuntimeStatusLaunchEvidence evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
   assert(staged_launcher_dispatch_smoke_source.include?(token), "Staged launcher dispatch smoke must consume Runtime-status launch handoff preview #{token}")
 end
+%w[known-app-kde-runtime-status-launch-action-trigger-preview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method].each do |token|
+  assert(staged_launcher_dispatch_smoke_source.include?(token), "Staged launcher dispatch smoke must consume Runtime-status launch action trigger #{token}")
+end
 assert(read_project_file("scripts/container.rb").include?("staged-launcher-dispatch-smoke"), "Container CLI must expose staged launcher dispatch smoke")
 assert(read_project_file("lib/xnix/container.rb").include?("staged_launcher_dispatch_smoke_command"), "Container model must expose staged launcher dispatch smoke")
 
@@ -6469,6 +6472,7 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_request.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_execution.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_evidence_record.go") +
+                                 read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_action_trigger.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_controlled_execution_session_record_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_session_gated_launch_review_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_request_test.go") +
@@ -6488,6 +6492,9 @@ end
 end
 %w[KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest KnownAppKDERuntimeStatusLaunchEvidencePreview PreviewKnownAppKDERuntimeStatusLaunchEvidence known-app-kde-runtime-status-launch-evidence-preview evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch evidence handoff preview must include #{token}")
+end
+%w[KnownAppKDERuntimeStatusLaunchActionTriggerSchemaVersion KnownAppKDERuntimeStatusLaunchActionTriggerRequestType KnownAppKDERuntimeStatusLaunchActionTriggerRequest KnownAppKDERuntimeStatusLaunchActionTriggerPreview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger known-app-kde-runtime-status-launch-action-trigger-preview trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method launch_request_read_method].each do |token|
+  assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch action trigger must include #{token}")
 end
 
 desktop_rollback_source = read_project_file("lib/xnix/compatibility/desktop_activation_rollback.rb")

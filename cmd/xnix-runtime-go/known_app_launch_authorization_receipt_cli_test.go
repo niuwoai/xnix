@@ -1176,6 +1176,108 @@ func TestKnownAppKDERuntimeStatusLaunchEvidencePreviewCommandConsumesRecordedHan
 	assertWindowIdentityPayloadSafe(t, output.String())
 }
 
+func TestKnownAppKDERuntimeStatusLaunchActionTriggerCommandAssemblesLaunchRequestFromHandoff(t *testing.T) {
+	stateRoot := t.TempDir()
+	evidenceFile := filepath.Join(t.TempDir(), "runtime-status-launch-evidence.json")
+	if err := os.WriteFile(evidenceFile, []byte(knownAppRuntimeStatusLaunchProjectionFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile evidence returned error: %v", err)
+	}
+	var recordOutput bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchEvidenceRecordRequestType,
+		"--state-root", stateRoot,
+		"--evidence-file", evidenceFile,
+	}, &recordOutput); err != nil {
+		t.Fatalf("record run returned error: %v", err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(recordOutput.Bytes(), &record); err != nil {
+		t.Fatalf("Unmarshal record returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		appidentity.KnownAppKDERuntimeStatusLaunchActionTriggerRequestType,
+		"--state-root", stateRoot,
+		"--evidence-relative-path", record["evidence_relative_path"].(string),
+	}, &output); err != nil {
+		t.Fatalf("trigger run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal trigger returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.KnownAppKDERuntimeStatusLaunchActionTriggerSchemaVersion ||
+		payload["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchActionTriggerRequestType ||
+		payload["runtime_method"] != "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger" ||
+		payload["read_method"] != "GetKnownAppKDERuntimeStatusLaunchActionTrigger" ||
+		payload["action_id"] != appidentity.KnownAppKDERuntimeStatusLaunchAction ||
+		payload["action_kind"] != "runtime-status" ||
+		payload["trigger_state"] != "runtime-launch-request-assembled" ||
+		payload["evidence_read_state"] != "consumed" ||
+		payload["evidence_handoff_consumed"] != true ||
+		payload["evidence_relative_path"] != record["evidence_relative_path"] ||
+		payload["evidence_sha256"] != record["evidence_sha256"] ||
+		payload["evidence_digest_verified"] != true ||
+		payload["launch_request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchRequestType ||
+		payload["launch_request_runtime_method"] != "PreviewKnownAppKDERuntimeStatusLaunchRequest" ||
+		payload["launch_request_read_method"] != "GetKnownAppKDERuntimeStatusLaunchRequest" ||
+		payload["launch_request_created"] != true ||
+		payload["managed_launcher_argv_ready"] != true ||
+		payload["required_opaque_id_count"] != float64(3) ||
+		payload["collected_opaque_id_count"] != float64(3) ||
+		payload["runtime_owned_trigger"] != true ||
+		payload["runtime_owned_request"] != true ||
+		payload["runtime_owned_launch"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["kde_presentation_only"] != true ||
+		payload["kde_action_forwarded"] != true ||
+		payload["state_root_required"] != true ||
+		payload["state_root_supplied_by_runtime"] != true ||
+		payload["kde_state_root_access"] != false ||
+		payload["direct_launch_enabled"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["permission_grant_created"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["evidence_path_exposed"] != false ||
+		payload["receipt_path_exposed"] != false ||
+		payload["session_path_exposed"] != false ||
+		payload["raw_artifact_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["raw_launcher_output_exposed"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected Runtime-status launch action trigger payload: %#v", payload)
+	}
+	argv := payload["managed_launcher_argv"].([]any)
+	if len(argv) != 11 ||
+		argv[0] != "xnix-compat-launch" ||
+		argv[2] != "7zr" ||
+		argv[4] != "managed-known-app-guest-smoke" ||
+		argv[6] != "known-app-launch-authorization-7zr-26.02" ||
+		argv[8] != "known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02" ||
+		argv[10] != "known-app-controlled-execution-session-7zr-26.02" {
+		t.Fatalf("unexpected trigger managed launcher argv: %#v", argv)
+	}
+	launchRequest := payload["launch_request"].(map[string]any)
+	if launchRequest["request_type"] != appidentity.KnownAppKDERuntimeStatusLaunchRequestType ||
+		launchRequest["action_id"] != appidentity.KnownAppKDERuntimeStatusLaunchAction ||
+		launchRequest["launch_request_created"] != true ||
+		launchRequest["state_root_supplied_by_runtime"] != true ||
+		launchRequest["kde_state_root_access"] != false ||
+		launchRequest["execution_started"] != false {
+		t.Fatalf("unexpected nested launch request: %#v", launchRequest)
+	}
+	if strings.Contains(output.String(), stateRoot) || strings.Contains(output.String(), evidenceFile) {
+		t.Fatalf("trigger output exposed local paths: %s", output.String())
+	}
+	assertWindowIdentityPayloadSafe(t, output.String())
+}
+
 func writeKnownAppRuntimeStatusLaunchExecutionCLIFixture(t *testing.T, stateRoot string) string {
 	t.Helper()
 	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")

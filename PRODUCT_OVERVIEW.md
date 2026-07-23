@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.620
+> Last updated: 2026-07-24 | Current version: v0.2.621
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.621 checkpoint connects the consumed Runtime-status launch evidence handoff to a concrete `show-runtime-controlled-launch` action trigger preview. `known-app-kde-runtime-status-launch-action-trigger-preview --state-root <root> --evidence-relative-path <relative>` reads the persisted Runtime-owned handoff, verifies the digest, consumes the KDE-safe Runtime status action state, and assembles the same Runtime-owned managed launcher request that `known-app-kde-runtime-status-launch-request-preview` previously required KDE/smoke code to reconstruct from separate fields. The trigger keeps KDE presentation-only, keeps state root supplied by Runtime, exposes only relative evidence plus opaque ids, and keeps direct launch, desktop launch, backend launch, execution start, request-object writes, permission grants, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.621 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.620 checkpoint completes the formal full Buildroot/QEMU validation boundary for the Runtime-status launch evidence handoff reader. The restricted full smoke built the `xnix-builder-tools:0.2.620` and `xnix-builder:0.2.620` images, rebuilt the serial QEMU system image and i386 Wine guest, verified the pinned 7zr known Windows app, passed the staged managed launcher dispatch smoke, passed the QEMU guest real Windows app Wine smoke, and passed the full build and QEMU serial smoke. Evidence was written to `output/full-smoke-report.json`, `output/full-smoke-report.md`, and `output/serial.log`; the report records `qemu_booted=true`, `wine_guest_built=true`, `known_app_smoke_passed=true`, `fixture_app_smoke_passed=true`, `docker_socket_mounted=false`, and `host_root_modified=false`. The next formal full checkpoint is v0.2.640.
 

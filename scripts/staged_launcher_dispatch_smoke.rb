@@ -674,6 +674,67 @@ begin
   assert(evidence_preview["execution_started"] == false, "Runtime status launch evidence preview must not start execution")
   assert(evidence_preview["backend_process_started"] == false, "Runtime status launch evidence preview must not start backend processes")
   assert_no_forbidden(evidence_preview_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch evidence preview output")
+  action_trigger, action_trigger_stdout = run_json(
+    go_env,
+    "go", "run", "./cmd/xnix-runtime-go",
+    "known-app-kde-runtime-status-launch-action-trigger-preview",
+    "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+    "--evidence-relative-path", evidence_record.fetch("evidence_relative_path")
+  )
+  assert(action_trigger["request_type"] == "known-app-kde-runtime-status-launch-action-trigger-preview", "Runtime status launch action trigger must use the Go-owned trigger type")
+  assert(action_trigger["runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchActionTrigger", "Runtime status launch action trigger must be owned by Go Runtime")
+  assert(action_trigger["read_method"] == "GetKnownAppKDERuntimeStatusLaunchActionTrigger", "Runtime status launch action trigger must expose the KDE-safe trigger read method")
+  assert(action_trigger["action_id"] == "show-runtime-controlled-launch", "Runtime status launch action trigger must consume the KDE Runtime status action")
+  assert(action_trigger["action_kind"] == "runtime-status", "Runtime status launch action trigger must preserve Runtime status action kind")
+  assert(action_trigger["trigger_state"] == "runtime-launch-request-assembled", "Runtime status launch action trigger must assemble the Runtime launch request")
+  assert(action_trigger["evidence_read_state"] == "consumed", "Runtime status launch action trigger must consume the handoff evidence")
+  assert(action_trigger["evidence_handoff_consumed"] == true, "Runtime status launch action trigger must mark handoff evidence consumed")
+  assert(action_trigger["evidence_relative_path"] == evidence_record.fetch("evidence_relative_path"), "Runtime status launch action trigger must preserve the safe relative handoff path")
+  assert(action_trigger["evidence_sha256"] == evidence_record.fetch("evidence_sha256"), "Runtime status launch action trigger must preserve evidence digest")
+  assert(action_trigger["evidence_digest_verified"] == true, "Runtime status launch action trigger must verify evidence digest")
+  assert(action_trigger["launch_request_type"] == "known-app-kde-runtime-status-launch-request-preview", "Runtime status launch action trigger must create a Runtime launch request preview")
+  assert(action_trigger["launch_request_runtime_method"] == "PreviewKnownAppKDERuntimeStatusLaunchRequest", "Runtime status launch action trigger must reuse the Go launch request preview")
+  assert(action_trigger["launch_request_created"] == true, "Runtime status launch action trigger must report launch request creation")
+  assert(action_trigger["managed_launcher_argv_ready"] == true, "Runtime status launch action trigger must assemble managed launcher argv")
+  assert(action_trigger["managed_launcher_argv"] == [
+    "xnix-compat-launch",
+    "--app", payload.fetch("app_id"),
+    "--guest-boundary", "managed-known-app-guest-smoke",
+    "--receipt-id", receipt_preview.fetch("receipt_id"),
+    "--review-receipt-id", payload.fetch("session_gated_review_receipt_id"),
+    "--session-id", payload.fetch("controlled_execution_session_id")
+  ], "Runtime status launch action trigger must assemble managed launcher argv from handoff evidence")
+  action_trigger_request = action_trigger.fetch("launch_request")
+  assert(action_trigger_request["request_type"] == "known-app-kde-runtime-status-launch-request-preview", "Runtime status launch action trigger must embed the launch request preview")
+  assert(action_trigger_request["managed_launcher_argv"] == action_trigger.fetch("managed_launcher_argv"), "Runtime status launch action trigger embedded request must match managed launcher argv")
+  assert(action_trigger["runtime_owned_trigger"] == true, "Runtime status launch action trigger must be Runtime-owned")
+  assert(action_trigger["runtime_owned_request"] == true, "Runtime status launch action trigger must create a Runtime-owned request")
+  assert(action_trigger["runtime_owned_launch"] == true, "Runtime status launch action trigger must keep launch Runtime-owned")
+  assert(action_trigger["runtime_owned_dispatch"] == true, "Runtime status launch action trigger must keep dispatch Runtime-owned")
+  assert(action_trigger["kde_presentation_only"] == true, "Runtime status launch action trigger must keep KDE presentation-only")
+  assert(action_trigger["kde_action_forwarded"] == true, "Runtime status launch action trigger must model KDE action forwarding")
+  assert(action_trigger["state_root_required"] == true, "Runtime status launch action trigger must keep state-root required")
+  assert(action_trigger["state_root_supplied_by_runtime"] == true, "Runtime status launch action trigger must keep state-root supplied by Runtime")
+  assert(action_trigger["kde_state_root_access"] == false, "Runtime status launch action trigger must not give KDE state-root access")
+  assert(action_trigger["direct_launch_enabled"] == false, "Runtime status launch action trigger must not enable direct launch")
+  assert(action_trigger["desktop_launch_enabled"] == false, "Runtime status launch action trigger must not enable desktop launch")
+  assert(action_trigger["backend_launch_enabled"] == false, "Runtime status launch action trigger must not enable backend launch")
+  assert(action_trigger["execution_started"] == false, "Runtime status launch action trigger must not start execution")
+  assert(action_trigger["backend_process_started"] == false, "Runtime status launch action trigger must not start backend processes")
+  assert(action_trigger["request_objects_created"] == false, "Runtime status launch action trigger must not write request objects")
+  assert(action_trigger["permission_grant_created"] == false, "Runtime status launch action trigger must not create permission grants")
+  assert(action_trigger["state_root_path_exposed"] == false, "Runtime status launch action trigger must not expose state-root paths")
+  assert(action_trigger["evidence_path_exposed"] == false, "Runtime status launch action trigger must not expose evidence absolute paths")
+  assert(action_trigger["receipt_path_exposed"] == false, "Runtime status launch action trigger must not expose receipt paths")
+  assert(action_trigger["session_path_exposed"] == false, "Runtime status launch action trigger must not expose session paths")
+  assert(action_trigger["raw_artifact_path_exposed"] == false, "Runtime status launch action trigger must not expose raw artifact paths")
+  assert(action_trigger["raw_command_exposed"] == false, "Runtime status launch action trigger must not expose raw commands")
+  assert(action_trigger["raw_launcher_output_exposed"] == false, "Runtime status launch action trigger must not expose launcher output")
+  assert(action_trigger["backend_details_exposed"] == false, "Runtime status launch action trigger must not expose backend details")
+  assert(action_trigger["host_root_modified"] == false, "Runtime status launch action trigger must not mutate host root")
+  assert(action_trigger["docker_socket_mounted"] == false, "Runtime status launch action trigger must not mount Docker socket")
+  assert(action_trigger["broad_host_mount_required"] == false, "Runtime status launch action trigger must not require broad host mounts")
+  assert_no_forbidden(action_trigger_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch action trigger output")
 
   case payload.fetch("status")
   when "passed"
