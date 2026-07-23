@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.575"
+EXPECTED_VERSION = "0.2.576"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -807,7 +807,7 @@ windows_app_guest_smoke_cli_test = read_project_file("cmd/xnix-runtime-go/window
   assert(windows_app_guest_smoke_cli_test.include?(token), "Windows app guest Wine smoke CLI test must include #{token}")
 end
 windows_app_guest_smoke_script = read_project_file("scripts/winapp_guest_wine_smoke.rb")
-%w[GOOS GOARCH 386 GOCACHE GOMODCACHE windows-app-guest-wine-smoke Xnix::Qemu.wine_guest Xnix::SshProbe Xnix::SshTestKey build-ssh-wine-guest configure-wine-guest start-build-ssh-wine-guest SKIP PASS .cache XNIX_WINAPP_SMOKE_OK].each do |token|
+%w[GOOS GOARCH 386 GOCACHE GOMODCACHE GOTMPDIR BOOT_TIMEOUT_SECONDS SERIAL_LOG_PATH qemu-serial.log 180 windows-app-guest-wine-smoke Xnix::Qemu.wine_guest Xnix::SshProbe Xnix::SshTestKey build-ssh-wine-guest configure-wine-guest start-build-ssh-wine-guest SKIP PASS .cache XNIX_WINAPP_SMOKE_OK].each do |token|
   assert(windows_app_guest_smoke_script.include?(token), "Windows app guest Wine smoke script must include #{token}")
 end
 container_script = read_project_file("scripts/container.rb")
@@ -821,6 +821,10 @@ end
 builder_dockerfile = read_project_file("Dockerfile")
 %w[clang lld llvm].each do |token|
   assert(builder_dockerfile.include?(token), "Tools image Dockerfile must include #{token} for aarch64 host-wine PE cross-compilation")
+end
+post_build_script = read_project_file("buildroot/board/xnix/post-build.sh")
+%w[install_wine_nls_files BUILD_DIR wine-*/nls/l_intl.nls usr/share/wine/nls].each do |token|
+  assert(post_build_script.include?(token), "post-build script must include Wine NLS install token #{token}")
 end
 wine_smoke_image_build_script = read_project_file("scripts/build_wine_smoke_image.rb")
 %w[docker build --platform docker buildx version docker image inspect docker run docker commit docker rm run-and-commit fallback DEBIAN_FRONTEND=noninteractive --cpus 2 XNIX_WINE_IMAGE XNIX_WINE_PLATFORM XNIX_WINE_PULL linux/amd64 xnix-wine-smoke:local containers/wine-smoke.Dockerfile actual_platform].each do |token|
@@ -854,7 +858,7 @@ buildroot_helper = read_project_file("lib/xnix/buildroot.rb")
 end
 
 qemu_helper = read_project_file("lib/xnix/qemu.rb")
-%w[WINE_KERNEL_IMAGE WINE_MEMORY WINE_CPU_COUNT WINE_BINARY wine_guest qemu-system-i386 xnix-wine-i386-output].each do |token|
+%w[WINE_KERNEL_IMAGE WINE_MEMORY WINE_CPU_COUNT WINE_CPU_MODEL qemu32 WINE_BINARY wine_guest qemu-system-i386 xnix-wine-i386-output].each do |token|
   assert(qemu_helper.include?(token), "QEMU helper must include Wine guest token #{token}")
 end
 

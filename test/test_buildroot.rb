@@ -58,4 +58,9 @@ assert(wine_defconfig.include?("BR2_TOOLCHAIN_BUILDROOT_GLIBC=y"), "Wine guest m
 assert(wine_defconfig.include?("BR2_PACKAGE_WINE=y"), "Wine guest must enable the Buildroot Wine package")
 assert(wine_defconfig.include?("BR2_PACKAGE_OPENSSH_SERVER=y"), "Wine guest must keep loopback SSH smoke access")
 
+post_build = project_root.join("buildroot/board/xnix/post-build.sh").read
+assert(post_build.include?("install_wine_nls_files"), "post-build script must install Wine NLS files when Wine is present")
+assert(post_build.include?('/wine-*/nls/l_intl.nls'), "post-build script must detect the Wine NLS build output")
+assert(post_build.include?("usr/share/wine/nls"), "post-build script must install NLS files where wineserver searches")
+
 puts "PASS: Buildroot command unit tests"

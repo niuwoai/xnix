@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.576] - 2026-07-23
+
+### Fixed
+
+- Fixed the QEMU guest Wine smoke harness to set `GOTMPDIR` under the repository cache before invoking Go, avoiding `/tmp/go-build...` execution denial inside the restricted tools container.
+- Added a Buildroot post-build Wine NLS install step so the guest rootfs includes `l_intl.nls` and related files under `/usr/share/wine/nls`, matching the path searched by `wineserver`.
+- Increased the Wine guest smoke SSH boot wait window to 180 seconds so the heavier Wine/glibc initramfs can boot under 2-CPU Colima before the Runtime smoke begins.
+- Persisted the QEMU serial console from `winapp-guest-wine-smoke` to `.cache/xnix/winapp-guest-wine-smoke/qemu-serial.log` so the next guest-side Wine failure can be diagnosed from kernel/init logs.
+- Switched the i386 Wine guest QEMU CPU model from `max` to `qemu32` after serial logs showed 32-bit Wine processes triggering kernel Oops with the overly broad emulated CPU feature set.
+- Recorded evidence that the retained v0.2.575 no-network Wine guest build completed successfully, the v0.2.576 incremental rootfs rebuild installed 76 Wine NLS files, and `ruby scripts/container.rb winapp-guest-wine-smoke` now returns `PASS: QEMU guest real Windows app Wine smoke`.
+- Extended the Buildroot and layout verifiers to keep the `GOTMPDIR` boundary and Wine NLS rootfs install path visible.
+
 ## [0.2.575] - 2026-07-23
 
 ### Changed

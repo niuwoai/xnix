@@ -12,10 +12,12 @@ require_relative "../lib/xnix/ssh_test_key"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 WORK_ROOT = PROJECT_ROOT.join(".cache", "xnix", "winapp-guest-wine-smoke")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
+GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
 APP_ROOT = WORK_ROOT.join("app")
 EXE_PATH = APP_ROOT.join("hello.exe")
+SERIAL_LOG_PATH = WORK_ROOT.join("qemu-serial.log")
 MARKER = "XNIX_WINAPP_SMOKE_OK"
-BOOT_TIMEOUT_SECONDS = 60
+BOOT_TIMEOUT_SECONDS = 180
 RETRY_INTERVAL_SECONDS = 1
 FIXTURE_GOARCH = "386"
 
@@ -49,13 +51,16 @@ end
 FileUtils.mkdir_p(APP_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
+FileUtils.mkdir_p(GO_TMP_ROOT)
+FileUtils.rm_f(SERIAL_LOG_PATH)
 
 build_stdout, build_stderr, build_status = run_command(
   {
     "GOOS" => "windows",
     "GOARCH" => FIXTURE_GOARCH,
     "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
-    "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
+    "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
+    "GOTMPDIR" => GO_TMP_ROOT.to_s
   },
   "go", "build", "-o", EXE_PATH.to_s, "./test/fixtures/winapp/hello"
 )
@@ -69,7 +74,8 @@ end
 
 stdin, output, wait_thread = Open3.popen2e(*qemu.boot_command(ssh: true))
 stdin.close
-reader = Thread.new { output.read }
+serial_log = +""
+reader = Thread.new { serial_log = output.read }
 probe = Xnix::SshProbe.new
 deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BOOT_TIMEOUT_SECONDS
 
@@ -86,7 +92,8 @@ begin
   smoke_stdout, smoke_stderr, smoke_status = run_command(
     {
       "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
-      "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
+      "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
+      "GOTMPDIR" => GO_TMP_ROOT.to_s
     },
     "go", "run", "./cmd/xnix-runtime-go", "windows-app-guest-wine-smoke",
     "--exe", EXE_PATH.to_s,
@@ -95,6 +102,7 @@ begin
   )
 
   unless smoke_status.zero?
+    warn "QEMU serial log: #{SERIAL_LOG_PATH}"
     warn smoke_stdout unless smoke_stdout.empty?
     warn smoke_stderr unless smoke_stderr.empty?
     warn "FAIL: QEMU guest Wine smoke command failed"
@@ -123,4 +131,5 @@ ensure
   stop_qemu(wait_thread)
   output.close unless output.closed?
   reader.join
+  SERIAL_LOG_PATH.write(serial_log) unless serial_log.empty?
 end

@@ -6,34 +6,38 @@ module Xnix
     WINE_MEMORY = "1024M"
     CPU_COUNT = "1"
     WINE_CPU_COUNT = "2"
+    CPU_MODEL = "max"
+    WINE_CPU_MODEL = "qemu32"
     BINARY = "qemu-system-x86_64"
     WINE_BINARY = "qemu-system-i386"
     KERNEL_IMAGE = "/workspace/.cache/xnix-output/images/bzImage"
     WINE_KERNEL_IMAGE = "/workspace/.cache/xnix-wine-i386-output/images/bzImage"
 
-    attr_reader :binary, :kernel_image, :memory, :cpu_count
+    attr_reader :binary, :kernel_image, :memory, :cpu_count, :cpu_model
 
     def self.wine_guest
       new(
         binary: WINE_BINARY,
         kernel_image: WINE_KERNEL_IMAGE,
         memory: WINE_MEMORY,
-        cpu_count: WINE_CPU_COUNT
+        cpu_count: WINE_CPU_COUNT,
+        cpu_model: WINE_CPU_MODEL
       )
     end
 
-    def initialize(binary: BINARY, kernel_image: KERNEL_IMAGE, memory: MEMORY, cpu_count: CPU_COUNT)
+    def initialize(binary: BINARY, kernel_image: KERNEL_IMAGE, memory: MEMORY, cpu_count: CPU_COUNT, cpu_model: CPU_MODEL)
       @binary = binary
       @kernel_image = kernel_image
       @memory = memory
       @cpu_count = cpu_count
+      @cpu_model = cpu_model
     end
 
     def boot_command(ssh: false)
       [
         binary,
         "-machine", "q35,accel=tcg",
-        "-cpu", "max",
+        "-cpu", cpu_model,
         "-m", memory,
         "-smp", cpu_count,
         "-nographic",
