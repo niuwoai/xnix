@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.631"
+EXPECTED_VERSION = "0.2.632"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6486,7 +6486,7 @@ dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/d
                                                     read_project_file("test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb") +
                                                     read_project_file("scripts/container.rb") +
                                                     read_project_file("lib/xnix/container.rb")
-%w[dbus-controlled-launch-owner-fixture-smoke D-Bus\ controlled\ launch\ owner\ fixture\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS xnix-dbus-smoke org.xnix.Compatibility1.ShowRuntimeControlledLaunch known-app-runtime-status-launch-owner-fixture-record XNIX_RUNTIME_OWNER_STATE_ROOT XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE .xnix-dbus-controlled-launch-scratch CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES rw,exec,nosuid go_owner_service_call_json runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle desktop_receipt_fields_reconstructed desktop_kde_state_root_access docker.sock --privileged --network\ host type=bind dbus_controlled_launch_owner_fixture_smoke_command].each do |token|
+%w[dbus-controlled-launch-owner-fixture-smoke D-Bus\ controlled\ launch\ owner\ fixture\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS xnix-dbus-smoke org.xnix.Compatibility1.ShowRuntimeControlledLaunch known-app-runtime-status-launch-owner-fixture-record desktop_trigger_from_fixture owner_service_call_args desktop_trigger.fetch desktop_dbus_method XNIX_RUNTIME_OWNER_STATE_ROOT XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE .xnix-dbus-controlled-launch-scratch CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES rw,exec,nosuid go_owner_service_call_json runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle desktop_receipt_fields_reconstructed desktop_kde_state_root_access docker.sock --privileged --network\ host type=bind dbus_controlled_launch_owner_fixture_smoke_command].each do |token|
   assert(dbus_controlled_launch_owner_fixture_smoke_source.include?(token.gsub("\\ ", " ")), "D-Bus controlled launch owner fixture smoke must include #{token}")
 end
 

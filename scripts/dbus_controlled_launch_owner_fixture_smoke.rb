@@ -178,13 +178,25 @@ def prepare_fixture(runtime_command)
   fixture
 end
 
-def assert_owner_service_call(stdout, evidence_record)
+def desktop_trigger_from_fixture(fixture)
+  args = fixture.fetch("owner_service_call_args")
+  assert(args == ["ShowRuntimeControlledLaunch", "evidence-relative-path", fixture.fetch("evidence_relative_path")],
+         "Runtime-status evidence fixture must expose an evidence-only desktop trigger")
+  {
+    "method" => fixture.fetch("desktop_dbus_method"),
+    "owner_service_method" => args.fetch(0),
+    "handoff_kind" => args.fetch(1),
+    "evidence_relative_path" => args.fetch(2)
+  }
+end
+
+def assert_owner_service_call(stdout, evidence_record, desktop_trigger)
   payload = variant_string_field(stdout, "go_owner_service_call_json")
   call = JSON.parse(payload)
   assert(call["schema_version"] == "xnix.runtime.owner_service_call.v1", "D-Bus owner call must expose the owner service-call schema")
   assert(call["request_type"] == "runtime-owner-service-call", "D-Bus owner call must expose the owner service-call request type")
   assert(call["service_type"] == "go-runtime-owner-in-process-service", "D-Bus owner call must route through the Go owner service")
-  assert(call["method"] == "ShowRuntimeControlledLaunch", "D-Bus owner call must preserve ShowRuntimeControlledLaunch")
+  assert(call["method"] == desktop_trigger.fetch("owner_service_method"), "D-Bus owner call must preserve the Go-owned owner service method")
   assert(call["call_type"] == "desktop-action-dispatch", "D-Bus owner call must be a desktop action dispatch")
   assert(call["read_only_dispatch"] == false, "D-Bus owner call must not pretend the launch action is read-only")
   assert(call["write_method"] == true, "D-Bus owner call must keep launch action guarded as write-like")
@@ -287,6 +299,7 @@ FileUtils.mkdir_p(RUN_ROOT)
 FileUtils.mkdir_p(STATE_ROOT)
 write_fake_launcher
 evidence_record = prepare_fixture(runtime_command)
+desktop_trigger = desktop_trigger_from_fixture(evidence_record)
 
 server_log = RUN_ROOT.join("xnix-dbus-smoke.log")
 server_env = {
@@ -308,8 +321,8 @@ begin
     "--session",
     "--dest", BUS_NAME,
     "--object-path", OBJECT_PATH,
-    "--method", PUBLIC_METHOD,
-    evidence_record.fetch("evidence_relative_path")
+    "--method", desktop_trigger.fetch("method"),
+    desktop_trigger.fetch("evidence_relative_path")
   )
   assert(status.success?, "runtime smoke adapter must answer ShowRuntimeControlledLaunch: #{stderr}")
   assert(stdout.include?("runtime-controlled-launch-dbus-action"), "D-Bus response must expose controlled launch action evidence")
@@ -319,7 +332,7 @@ begin
   assert(stdout.include?("kde_forwards_only_evidence_handle"), "D-Bus response must prove KDE forwards only the evidence handle")
   assert(stdout.include?("desktop_receipt_fields_reconstructed"), "D-Bus response must keep receipt reconstruction gates observable")
   assert(stdout.include?("desktop_kde_state_root_access"), "D-Bus response must keep KDE state-root gates observable")
-  assert_owner_service_call(stdout, evidence_record)
+  assert_owner_service_call(stdout, evidence_record, desktop_trigger)
   assert_no_forbidden(stdout, [STATE_ROOT.to_s, FAKE_LAUNCHER.to_s, ".exe", "wine ", "wine/", ".wine", "qemu-system", "program files", "docker.sock", "--privileged", "--network host", "type=bind"], "D-Bus controlled launch response")
 
   launcher_args = FAKE_LAUNCHER_ARGS.read

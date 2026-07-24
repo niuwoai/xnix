@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.631`.
+The project is currently at `v0.2.632`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.631`.
 
 ## Current Checkpoint
 
-v0.2.631 extends the Go Runtime owner fixture helper so its ready-path evidence carries the exact desktop trigger and owner service call bridge for `ShowRuntimeControlledLaunch evidence-relative-path <relative>`. The D-Bus smoke now verifies those Go-owned trigger fields before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
+v0.2.632 makes the D-Bus controlled-launch owner fixture smoke consume the Go-owned desktop trigger bridge instead of hardcoding the method/evidence pair. The smoke now derives the D-Bus method and evidence handoff from `owner_service_call_args` and `desktop_dbus_method` before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 

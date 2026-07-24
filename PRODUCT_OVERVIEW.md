@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.631
+> Last updated: 2026-07-24 | Current version: v0.2.632
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.632 checkpoint makes the D-Bus controlled-launch owner fixture smoke consume the Go-owned desktop trigger bridge instead of rebuilding the method/evidence pair in Ruby. `dbus_controlled_launch_owner_fixture_smoke.rb` now derives its D-Bus method from `desktop_dbus_method` and its evidence handoff from `owner_service_call_args=["ShowRuntimeControlledLaunch","evidence-relative-path","<relative>"]`, then verifies that the owner service call preserves the same Runtime method. This keeps Ruby as orchestration only while Go owns the trigger shape consumed by the desktop path. The path still keeps KDE evidence-only, receipt reconstruction disabled, KDE state-root access disabled, Runtime owner supplied inputs, hidden backend/local paths, no Docker socket, no privileged container, no broad host mount, no host networking, and no host-root mutation. v0.2.632 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.631 checkpoint makes the Go-owned D-Bus controlled-launch owner fixture evidence directly describe the desktop-triggered Runtime owner launch lane. When the managed known-app artifact is available, `known-app-runtime-status-launch-owner-fixture-record` now marks `desktop_trigger_ready`, exposes the KDE D-Bus Runtime-status route, the `ShowRuntimeControlledLaunch` method, the Runtime execution type, and the evidence-only owner service call arguments `ShowRuntimeControlledLaunch evidence-relative-path <relative>`. The D-Bus smoke verifies these fields before invoking `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, keeping Ruby as orchestration only while Go owns the trigger shape. The path still keeps KDE evidence-only, receipt reconstruction disabled, KDE state-root access disabled, Runtime owner supplied inputs, hidden backend/local paths, no Docker socket, no privileged container, no broad host mount, no host networking, and no host-root mutation. v0.2.631 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

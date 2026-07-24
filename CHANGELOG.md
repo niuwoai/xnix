@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.632] - 2026-07-24
+
+### Changed
+
+- Updated `dbus_controlled_launch_owner_fixture_smoke.rb` to consume the Go-owned desktop trigger bridge by deriving the D-Bus method from `desktop_dbus_method` and the evidence handoff from `owner_service_call_args`.
+- Tightened D-Bus smoke guards so the nested owner service call must preserve the same Runtime method provided by the fixture trigger.
+- Extended layout and script checks to prevent the D-Bus fixture smoke from drifting back to a Ruby-reconstructed method/evidence launch pair.
+
 ## [0.2.631] - 2026-07-24
 
 ### Changed
