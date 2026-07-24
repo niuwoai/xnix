@@ -31,6 +31,8 @@ type KDECenterPagePreview struct {
 	KnownAppSessionGateCards                 []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
 	KnownAppMatrixEvidenceCount              int                                    `json:"known_app_matrix_evidence_count"`
 	KnownAppMatrixEvidenceCards              []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
+	KnownAppGUIEvidenceCount                 int                                    `json:"known_app_gui_evidence_count"`
+	KnownAppGUIEvidenceCards                 []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
 	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
 	ExecutionReadinessSnapshot               KDECenterPageExecution                 `json:"execution_readiness_snapshot"`
@@ -791,6 +793,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	navigation := kdeCenterPageNavigation()
 	knownAppSessionGateCards := kdeCenterPageKnownAppSessionGateCards(center.KnownAppSmokeEvidence)
 	knownAppMatrixCards := kdeCenterPageKnownAppMatrixCards(center.KnownAppSmokeEvidence)
+	knownAppGUICards := kdeCenterPageKnownAppGUICards(center.KnownAppSmokeEvidence)
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
@@ -800,6 +803,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 	if len(knownAppMatrixCards) > 0 {
 		source += "+known-app-matrix-evidence"
+	}
+	if len(knownAppGUICards) > 0 {
+		source += "+known-app-gui-smoke-evidence"
 	}
 	preview := KDECenterPagePreview{
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
@@ -849,6 +855,8 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppSessionGateCards:                 knownAppSessionGateCards,
 		KnownAppMatrixEvidenceCount:              len(knownAppMatrixCards),
 		KnownAppMatrixEvidenceCards:              knownAppMatrixCards,
+		KnownAppGUIEvidenceCount:                 len(knownAppGUICards),
+		KnownAppGUIEvidenceCards:                 knownAppGUICards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
 			PlanType:                    backendSelection.PlanType,
@@ -1206,6 +1214,44 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 	cards := make([]KDECenterPageKnownAppMatrixCard, 0, len(evidence))
 	for _, item := range evidence {
 		if item.EvidenceSource != "remote-known-winapp-matrix-smoke" {
+			continue
+		}
+		cards = append(cards, KDECenterPageKnownAppMatrixCard{
+			AppID:                       item.AppID,
+			DisplayName:                 item.DisplayName,
+			AppVersion:                  item.AppVersion,
+			EvidenceKind:                item.EvidenceKind,
+			EvidenceSource:              item.EvidenceSource,
+			SmokeStatus:                 item.SmokeStatus,
+			CompatibilityState:          item.CompatibilityState,
+			CenterCardState:             item.CenterCardState,
+			PrimaryActionID:             item.PrimaryActionID,
+			PrimaryActionLabel:          item.PrimaryActionLabel,
+			PrimaryActionKind:           item.PrimaryActionKind,
+			PrimaryActionEnabled:        item.PrimaryActionEnabled,
+			MarkerObserved:              item.MarkerObserved,
+			ChecksumVerified:            item.ChecksumVerified,
+			ExecutionEvidenceRecorded:   item.ExecutionEvidenceRecorded,
+			RuntimeDispatchVerified:     item.RuntimeDispatchVerified,
+			LaunchAuthorizationRequired: item.LaunchAuthorizationRequired,
+			DesktopLaunchEnabled:        false,
+			BackendLaunchEnabled:        false,
+			RuntimeOwned:                true,
+			GoRuntimeBacked:             true,
+			KDEPolicyOwner:              false,
+			HostRootModified:            false,
+			BackendDetailsExposed:       false,
+			RawArtifactPathExposed:      false,
+			Summary:                     item.Summary,
+		})
+	}
+	return cards
+}
+
+func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KDECenterPageKnownAppMatrixCard {
+	cards := make([]KDECenterPageKnownAppMatrixCard, 0, len(evidence))
+	for _, item := range evidence {
+		if item.EvidenceSource != "wine-guest-gui-smoke" {
 			continue
 		}
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{

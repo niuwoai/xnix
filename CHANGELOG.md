@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc78] - 2026-07-25
+
+### Added
+
+- Added a Go-owned `gui-smoke-evidence-preview` read model that consumes executed Wine guest GUI smoke reports and projects KDE-safe real-window evidence without exposing report paths, guest paths, backend commands, or raw output.
+- Added `--known-app-gui-smoke-report` support to Compatibility Center and KDE Center previews so real GUI QEMU/Wine smoke evidence can be counted and shown as a dedicated GUI evidence card.
+
 ## [0.2.640-rc77] - 2026-07-25
 
 ### Added

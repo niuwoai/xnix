@@ -190,6 +190,169 @@ func TestKDECenterPagePreviewCommandConsumesKnownAppMatrixReport(t *testing.T) {
 	}
 }
 
+func TestGUISmokeEvidencePreviewCommandConsumesMessageBoxReport(t *testing.T) {
+	reportPath := filepath.Join(t.TempDir(), "wine-gui-messagebox.json")
+	if err := os.WriteFile(reportPath, []byte(guiSmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"gui-smoke-evidence-preview",
+		"--gui-smoke-report", reportPath,
+		"--app-id", "org.xnix.fixture.messagebox",
+		"--display-name", "Xnix MessageBox",
+		"--app-version", "0.2.640-rc77-fixture",
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.gui_smoke_evidence_preview.v1" ||
+		payload["request_type"] != "gui-smoke-evidence-preview" ||
+		payload["report_status"] != "passed" ||
+		payload["report_consumed"] != true ||
+		payload["report_path_exposed"] != false ||
+		payload["app_id"] != "org.xnix.fixture.messagebox" ||
+		payload["display_name"] != "Xnix MessageBox" ||
+		payload["gui_app_name"] != "xnix-messagebox-smoke.exe" ||
+		payload["local_gui_executable_configured"] != true ||
+		payload["executable_copied"] != true ||
+		payload["x_window_observed"] != true ||
+		payload["x_window_child_count"] != float64(14) ||
+		payload["compatibility_center_projection_ready"] != true ||
+		payload["kde_center_projection_ready"] != true ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected GUI smoke evidence payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), "/home/xnix-run-materials") || strings.Contains(output.String(), reportPath) {
+		t.Fatalf("GUI smoke evidence preview exposed raw paths: %s", output.String())
+	}
+	evidence := payload["known_app_smoke_evidence"].(map[string]any)
+	if evidence["evidence_kind"] != "known-application-gui-smoke" ||
+		evidence["evidence_source"] != "wine-guest-gui-smoke" ||
+		evidence["compatibility_state"] != "real-gui-qemu-wine-verified" ||
+		evidence["center_card_state"] != "validated-real-gui-runtime-run" ||
+		evidence["marker_observed"] != false ||
+		evidence["checksum_verified"] != false ||
+		evidence["execution_evidence_recorded"] != true ||
+		evidence["runtime_dispatch_verified"] != true ||
+		evidence["desktop_launch_enabled"] != false ||
+		evidence["backend_details_exposed"] != false {
+		t.Fatalf("unexpected GUI known app evidence: %#v", evidence)
+	}
+}
+
+func TestCompatibilityCenterPreviewCommandConsumesGUISmokeReport(t *testing.T) {
+	registryPath, _ := writeTestRepairGroupRegistry(t)
+	reportPath := filepath.Join(t.TempDir(), "wine-gui-messagebox.json")
+	if err := os.WriteFile(reportPath, []byte(guiSmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-gui-smoke-report", reportPath}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_smoke_evidence_count"] != float64(1) ||
+		payload["known_app_smoke_passed_count"] != float64(1) ||
+		payload["known_app_staged_launcher_passed_count"] != float64(0) ||
+		payload["known_app_launch_authorization_required_count"] != float64(1) ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected compatibility center GUI payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), "/home/xnix-run-materials") || strings.Contains(output.String(), reportPath) {
+		t.Fatalf("compatibility center GUI projection exposed raw paths: %s", output.String())
+	}
+	evidenceItems := payload["known_app_smoke_evidence"].([]any)
+	if len(evidenceItems) != 1 {
+		t.Fatalf("unexpected GUI evidence items: %#v", evidenceItems)
+	}
+	evidence := evidenceItems[0].(map[string]any)
+	if evidence["evidence_kind"] != "known-application-gui-smoke" ||
+		evidence["evidence_source"] != "wine-guest-gui-smoke" ||
+		evidence["compatibility_state"] != "real-gui-qemu-wine-verified" ||
+		evidence["center_card_state"] != "validated-real-gui-runtime-run" ||
+		evidence["marker_observed"] != false ||
+		evidence["checksum_verified"] != false ||
+		evidence["execution_evidence_recorded"] != true ||
+		evidence["runtime_dispatch_verified"] != true ||
+		evidence["desktop_launch_enabled"] != false ||
+		evidence["backend_launch_enabled"] != false ||
+		evidence["backend_details_exposed"] != false {
+		t.Fatalf("unexpected compatibility center GUI evidence: %#v", evidence)
+	}
+}
+
+func TestKDECenterPagePreviewCommandConsumesGUISmokeReport(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	reportPath := filepath.Join(t.TempDir(), "wine-gui-messagebox.json")
+	if err := os.WriteFile(reportPath, []byte(guiSmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-gui-smoke-report", reportPath}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if !strings.Contains(payload["source"].(string), "known-app-gui-smoke-evidence") ||
+		payload["known_app_matrix_evidence_count"] != float64(0) ||
+		payload["known_app_gui_evidence_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["request_objects_created"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE center GUI payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), "/home/xnix-run-materials") || strings.Contains(output.String(), reportPath) {
+		t.Fatalf("KDE center GUI projection exposed raw path: %s", output.String())
+	}
+	cards := payload["known_app_gui_evidence_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected GUI cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "org.xnix.fixture.messagebox" ||
+		card["evidence_kind"] != "known-application-gui-smoke" ||
+		card["evidence_source"] != "wine-guest-gui-smoke" ||
+		card["smoke_status"] != "passed" ||
+		card["compatibility_state"] != "real-gui-qemu-wine-verified" ||
+		card["center_card_state"] != "validated-real-gui-runtime-run" ||
+		card["primary_action_id"] != "review-known-app-gui-evidence" ||
+		card["primary_action_kind"] != "review" ||
+		card["marker_observed"] != false ||
+		card["checksum_verified"] != false ||
+		card["execution_evidence_recorded"] != true ||
+		card["runtime_dispatch_verified"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false ||
+		card["backend_details_exposed"] != false ||
+		card["raw_artifact_path_exposed"] != false {
+		t.Fatalf("unexpected KDE GUI card: %#v", card)
+	}
+}
+
 func knownAppMatrixEvidenceCLIFixture() string {
 	return `{
   "schema_version": "xnix.scripts.remote_known_windows_app_matrix_smoke.v1",
@@ -246,5 +409,35 @@ func knownAppMatrixEvidenceCLIFixture() string {
   "broad_host_mount_required": false,
   "passed_count": 2,
   "failed_count": 0
+}`
+}
+
+func guiSmokeEvidenceCLIFixture() string {
+	return `{
+  "version": "0.2.640-rc77",
+  "schema_version": "xnix.scripts.wine_guest_gui_smoke.v1",
+  "request_type": "wine-guest-gui-smoke",
+  "status": "passed",
+  "execute": true,
+  "backend": "qemu-guest-wine-x11",
+  "gui_app_name": "xnix-messagebox-smoke.exe",
+  "local_gui_executable_configured": true,
+  "runtime_go_owned_gui_smoke": true,
+  "state_root": "/home/xnix-run-materials/state/wine-gui-messagebox-0.2.640-rc77-v2",
+  "kernel_image": "/home/xnix-build/xnix-wine-i386-output-gui-0.2.640-rc75/images/bzImage",
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "wineboot_invoked": true,
+  "x_window_observed": true,
+  "x_window_child_count": 14,
+  "runtime_payload_schema_version": "xnix.runtime.windows_app_guest_wine_gui_smoke.v1",
+  "executable_copied": true,
+  "xwininfo_bytes": 1228,
+  "guest_stderr_bytes": 0,
+  "guest_graphics_driver_error_observed": false,
+  "kde_safe_output_summary": "Wine GUI window observed; child_windows=14 xwininfo_bytes=1228 guest_stderr_bytes=0"
 }`
 }

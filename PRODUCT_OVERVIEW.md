@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc77
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc78
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc78 checkpoint candidate connects the real Windows GUI smoke lane to product-facing Runtime read models. `xnix-runtime-go gui-smoke-evidence-preview --gui-smoke-report FILE` consumes executed Wine guest GUI smoke JSON, verifies the Go-owned QEMU/Wine/X11 evidence, and emits KDE-safe GUI run evidence. Compatibility Center and KDE Center previews now accept `--known-app-gui-smoke-report`, count the passed GUI evidence, and expose a dedicated GUI evidence card while keeping launch, backend process startup, host mutation, report paths, guest paths, backend details, and raw output disabled.
 
 The v0.2.640-rc77 checkpoint candidate turns the guest Wine GUI smoke from an in-guest-only launcher into a repeatable local-artifact delivery path. `xnix-runtime-go windows-app-guest-wine-gui-smoke --executable FILE.exe` validates a local Windows executable, copies it into the QEMU guest over loopback SCP, launches the copied guest path with Wine on the X display, observes the resulting X window, and keeps KDE-facing output free of raw host paths, guest executable paths, and backend commands. The Ruby Xvfb/QEMU harness now passes `--executable` through to Go, and the repository includes a controlled Windows `MessageBoxW` GUI fixture source for q4-built smoke artifacts.
 
