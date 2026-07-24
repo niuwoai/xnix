@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc82] - 2026-07-25
+
+### Added
+
+- Added `scripts/remote_wine_guest_gui_smoke.rb --remote-executable PATH` so q4 can repeat the real copied Windows GUI `.exe` smoke path through the maintained remote harness while keeping executable paths constrained to `/home/xnix-*`.
+
+### Fixed
+
+- Verified an unattended q4 `xnix-messagebox-smoke.exe` run copied the Windows GUI fixture into the Wine guest and observed an X window with `executable_copied=true`, `guest_x11_driver_available=true`, and `x_window_observed=true`.
+- Verified the rc82 GUI report feeds `gui-smoke-evidence-preview` and `kde-center-page-preview`, producing `known_app_gui_evidence_count=1` without enabling desktop launch or backend launch.
+
 ## [0.2.640-rc81] - 2026-07-25
 
 ### Changed

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc81
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc82
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc82 checkpoint candidate makes the copied Windows GUI executable lane repeatable through the maintained q4 remote harness. `scripts/remote_wine_guest_gui_smoke.rb --remote-executable /home/xnix-.../app.exe` now passes a managed remote `.exe` to the guest GUI smoke so the Runtime copies it into the QEMU guest before Wine launches it. The q4 `xnix-messagebox-smoke.exe` fixture passed unattended with `executable_copied=true`, `guest_x11_driver_available=true`, and `x_window_observed=true` in `/home/xnix-run-materials/state/wine-gui-messagebox-0.2.640-rc82-remote-harness.json`; the same report feeds `gui-smoke-evidence-preview` and `kde-center-page-preview`, producing `known_app_gui_evidence_count=1` while launch and backend-start gates remain disabled.
 
 The v0.2.640-rc81 checkpoint candidate tightens and verifies the real Windows GUI app smoke loop discovered on q4. The Go-owned `windows-app-guest-wine-gui-smoke` command now polls X window state throughout the observation window instead of checking once after a fixed sleep, continues suppressing Wine first-run installer prompts while observing, verifies `guest_x11_driver_available`, and reports `x_window_observation_attempts` so failed real Xvfb/QEMU/Wine runs are easier to diagnose. The q4 managed Wine guest run material was updated from the stale image that lacked `winex11` to the rebuilt X11-driver image, and an unattended `winemine.exe` run passed with `x_window_observed=true` in `/home/xnix-run-materials/state/wine-gui-winemine-0.2.640-rc81-final.json`. The flow still runs through loopback SSH into a QEMU guest and does not require privileged containers, host networking, Docker socket mounts, broad host mounts, or host-root mutation.
 

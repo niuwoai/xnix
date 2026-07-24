@@ -25,6 +25,7 @@ assert(payload["execute"] == false, "remote GUI smoke must not execute without -
 assert(payload["remote_host"] == "root@q4", "remote GUI smoke must default to q4")
 assert(payload["backend"] == "qemu-guest-wine-x11", "remote GUI smoke must target QEMU guest Wine X11")
 assert(payload["gui_app_name"] == "winemine.exe", "remote GUI smoke must use a real GUI Windows app")
+assert(payload["remote_gui_executable_configured"] == false, "remote GUI smoke must not configure an executable by default")
 assert(payload["requires_rebuilt_wine_guest_with_x11"] == true, "remote GUI smoke must document the rebuilt Wine guest requirement")
 assert(payload["remote_timeout_seconds"] == 300, "remote GUI smoke must expose a bounded remote timeout")
 assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build the Go Runtime before execution")
@@ -45,5 +46,24 @@ bad_stdout, bad_stderr, bad_status = Open3.capture3(
 )
 assert(!bad_status.success?, "remote GUI smoke must reject source roots outside /home/xnix-*")
 assert((bad_stdout + bad_stderr).include?("remote source root must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe source roots")
+
+exe_stdout, exe_stderr, exe_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-executable", "/home/xnix-run-materials/fixtures/xnix-messagebox-smoke.exe",
+  chdir: project_root.to_s
+)
+assert(exe_status.success?, "remote GUI smoke executable plan must succeed: #{exe_stderr}")
+exe_payload = JSON.parse(exe_stdout)
+assert(exe_payload["remote_executable"] == "/home/xnix-run-materials/fixtures/xnix-messagebox-smoke.exe", "remote GUI smoke must expose the managed remote executable")
+assert(exe_payload["remote_gui_executable_configured"] == true, "remote GUI smoke must mark remote executable configuration")
+assert(exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "remote GUI smoke must show the executable basename")
+
+bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-executable", "/tmp/xnix-messagebox-smoke.exe",
+  chdir: project_root.to_s
+)
+assert(!bad_exe_status.success?, "remote GUI smoke must reject executables outside /home/xnix-*")
+assert((bad_exe_stdout + bad_exe_stderr).include?("remote executable must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe executable paths")
 
 puts "PASS: remote Wine guest GUI smoke script plan"
