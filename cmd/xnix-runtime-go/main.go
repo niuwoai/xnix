@@ -246,6 +246,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppKDERuntimeStatusLaunchActionTriggerPreview(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-fixture-record":
 		return runKnownAppRuntimeStatusLaunchOwnerFixtureRecord(args[1:], stdout)
+	case "known-app-runtime-status-launch-owner-trigger-preview":
+		return runKnownAppRuntimeStatusLaunchOwnerTriggerPreview(args[1:], stdout)
 	case appidentity.KnownAppKDERuntimeStatusLaunchAction:
 		return runKnownAppKDEShowRuntimeControlledLaunch(args[1:], stdout)
 	case "launch-intent-preview":

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.633] - 2026-07-24
+
+### Added
+
+- Added `known-app-runtime-status-launch-owner-trigger-preview`, a Go-owned Runtime-status launch owner trigger preview that reads verified handoff evidence and emits desktop and owner-service trigger metadata.
+
+### Changed
+
+- Updated the staged launcher dispatch smoke to consume `owner_service_cli_args` from the Go preview before calling `xnix-runtime-owner`.
+- Extended script and layout guards so the real staged owner-service launch lane cannot drift back to a Ruby-reconstructed method/evidence pair.
+
 ## [0.2.632] - 2026-07-24
 
 ### Changed

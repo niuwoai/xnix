@@ -35,6 +35,8 @@ assert(inner_contents.include?("xnix-runtime-owner"), "Inner staged smoke must r
 assert(inner_contents.include?("--service-call"), "Inner staged smoke must call the owner service boundary")
 assert(inner_contents.include?("ShowRuntimeControlledLaunch"), "Inner staged smoke must call ShowRuntimeControlledLaunch")
 assert(inner_contents.include?("evidence-relative-path"), "Inner staged smoke must forward only the Runtime-status evidence path")
+assert(inner_contents.include?("known-app-runtime-status-launch-owner-trigger-preview"), "Inner staged smoke must consume the Go-owned owner trigger bridge")
+assert(inner_contents.include?("owner_service_cli_args"), "Inner staged smoke must use Go-owned owner service CLI arguments")
 assert(inner_contents.include?("runtime-owner-service-call"), "Inner staged smoke must verify the owner service envelope")
 assert(inner_contents.include?("desktop-action-dispatch"), "Inner staged smoke must verify desktop action dispatch")
 assert(inner_contents.include?("kde-dbus-runtime-status-action"), "Inner staged smoke must expose the D-Bus callable owner route")
