@@ -614,6 +614,14 @@ type KnownRunRequest struct {
 	SSHPath          string
 	SCPPath          string
 	Timeout          time.Duration
+	StartQEMU        bool
+	QEMUBinary       string
+	QEMUKernelImage  string
+	QEMUMemory       string
+	QEMUCPUCount     string
+	QEMUCPUModel     string
+	QEMUBootTimeout  time.Duration
+	QEMUSerialLog    string
 	HTTPClient       *http.Client
 }
 
@@ -633,6 +641,10 @@ type KnownRunResult struct {
 	ChecksumVerified            bool                                `json:"checksum_verified"`
 	ProfileWritten              bool                                `json:"profile_written"`
 	LauncherBundleWritten       bool                                `json:"launcher_bundle_written"`
+	GuestStartAttempted         bool                                `json:"guest_start_attempted"`
+	GuestStarted                bool                                `json:"guest_started"`
+	GuestStartMode              string                              `json:"guest_start_mode"`
+	QEMUSerialLogWritten        bool                                `json:"qemu_serial_log_written"`
 	ExecutableCopied            bool                                `json:"executable_copied"`
 	MarkerObserved              bool                                `json:"marker_observed"`
 	ExecutableFormat            string                              `json:"executable_format"`
@@ -662,6 +674,7 @@ type KnownRunResult struct {
 	RawStateRootPathExposed     bool                                `json:"raw_state_root_path_exposed"`
 	RawRuntimeArgvExposed       bool                                `json:"raw_runtime_argv_exposed"`
 	RawRunnerPathExposed        bool                                `json:"raw_runner_path_exposed"`
+	RawQEMUPathExposed          bool                                `json:"raw_qemu_path_exposed"`
 	NextAction                  string                              `json:"next_action"`
 	SkipReason                  string                              `json:"skip_reason,omitempty"`
 	FailureReason               string                              `json:"failure_reason,omitempty"`
@@ -1448,6 +1461,52 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.SkipReason = local.SkipReason
 		result.FailureReason = local.FailureReason
 	case KnownRunBackendGuestWine:
+		result.GuestStartMode = "external"
+		if request.StartQEMU {
+			result.GuestStartMode = "go-qemu"
+			guestPreflight, ok, err := preflightKnownGuestArtifact(request.CacheRoot, app)
+			if err != nil {
+				return result, err
+			}
+			if !ok {
+				result.GuestPayload = &guestPreflight
+				result.Status = guestPreflight.Status
+				result.ChecksumVerified = false
+				result.SkipReason = guestPreflight.SkipReason
+				return result, nil
+			}
+			result.ChecksumVerified = true
+		}
+		if request.StartQEMU {
+			result.GuestStartAttempted = true
+			result.GuestStartMode = "go-qemu"
+			guest, err := StartQEMUStartedGuest(ctx, QEMUStartedGuestRequest{
+				Binary:        request.QEMUBinary,
+				KernelImage:   request.QEMUKernelImage,
+				Memory:        request.QEMUMemory,
+				CPUCount:      request.QEMUCPUCount,
+				CPUModel:      request.QEMUCPUModel,
+				Host:          request.Host,
+				Port:          request.Port,
+				User:          request.User,
+				KeyPath:       request.KeyPath,
+				SSHPath:       request.SSHPath,
+				BootTimeout:   request.QEMUBootTimeout,
+				SerialLogPath: request.QEMUSerialLog,
+			})
+			if err != nil {
+				result.Status = SkippedStatus
+				result.SkipReason = safeQEMUGuestStartSkipReason(err)
+				result.QEMUSerialLogWritten = strings.TrimSpace(request.QEMUSerialLog) != ""
+				return result, nil
+			}
+			result.GuestStarted = true
+			result.QEMUExecuted = true
+			defer func() {
+				guest.Stop()
+				result.QEMUSerialLogWritten = strings.TrimSpace(request.QEMUSerialLog) != ""
+			}()
+		}
 		guest, err := RunKnownPortableGuestSmoke(ctx, KnownGuestRequest{
 			AppID:     app.ID,
 			CacheRoot: request.CacheRoot,
@@ -1482,7 +1541,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.DockerSocketMounted = guest.DockerSocketMounted
 		result.BroadHostMountRequired = guest.BroadHostMountRequired
 		result.DockerExecuted = false
-		result.QEMUExecuted = false
+		result.QEMUExecuted = result.QEMUExecuted || request.StartQEMU
 		result.WineExecuted = guest.Guest.WineAvailable
 		result.ColimaExecuted = false
 		result.NetworkChecksRun = false
@@ -1495,6 +1554,45 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.FailureReason = "unsupported known app run backend"
 	}
 	return result, nil
+}
+
+func preflightKnownGuestArtifact(cacheRoot string, app KnownPortableApp) (KnownGuestResult, bool, error) {
+	result := baseKnownGuestResult(app)
+	cachePath, err := knownAppCachePath(cacheRoot, app)
+	if err != nil {
+		return result, false, err
+	}
+	actual, ok, err := verifyKnownAppFile(cachePath, app)
+	if err != nil {
+		return result, false, err
+	}
+	result.ActualSHA256 = actual
+	if !ok {
+		result.Status = SkippedStatus
+		result.SkipReason = "known Windows app artifact unavailable or checksum mismatch"
+		return result, false, nil
+	}
+	result.Status = PassedStatus
+	result.ChecksumVerified = true
+	return result, true, nil
+}
+
+func safeQEMUGuestStartSkipReason(err error) string {
+	text := err.Error()
+	switch {
+	case strings.Contains(text, "qemu guest runner unavailable"):
+		return "qemu guest runner unavailable"
+	case strings.Contains(text, "qemu guest kernel unavailable"):
+		return "qemu guest kernel unavailable"
+	case strings.Contains(text, "guest ssh transport unavailable"):
+		return "guest ssh transport unavailable"
+	case strings.Contains(text, "timed out waiting for ssh"):
+		return "qemu guest timed out waiting for ssh"
+	case strings.Contains(text, "exited before ssh became ready"):
+		return "qemu guest exited before ssh became ready"
+	default:
+		return "qemu guest start failed"
+	}
 }
 
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
@@ -1635,6 +1733,7 @@ func baseKnownRunResult(app KnownPortableApp, backend string) KnownRunResult {
 		Architecture:                app.Architecture,
 		ExecutableName:              app.ExecutableName,
 		Backend:                     backend,
+		GuestStartMode:              "none",
 		ExecutableFormat:            "unknown",
 		ExecutableArchitecture:      "unknown",
 		WineArchitecture:            "unknown",
@@ -1660,6 +1759,7 @@ func baseKnownRunResult(app KnownPortableApp, backend string) KnownRunResult {
 		RawStateRootPathExposed:     false,
 		RawRuntimeArgvExposed:       false,
 		RawRunnerPathExposed:        false,
+		RawQEMUPathExposed:          false,
 	}
 }
 

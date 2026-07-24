@@ -187,8 +187,12 @@ func baseGuestResult(request GuestRequest) GuestResult {
 }
 
 func resolveTool(path string, name string) (string, error) {
-	if strings.TrimSpace(path) != "" {
-		absolutePath, err := filepath.Abs(path)
+	value := strings.TrimSpace(path)
+	if value != "" {
+		if !strings.ContainsRune(value, os.PathSeparator) {
+			return exec.LookPath(value)
+		}
+		absolutePath, err := filepath.Abs(value)
 		if err != nil {
 			return "", err
 		}

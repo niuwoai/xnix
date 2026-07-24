@@ -524,6 +524,125 @@ func TestRunKnownPortableAppGuestWineBackendUsesVerifiedCacheAndLoopbackGuest(t 
 	}
 }
 
+func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(appDir, "fixture.exe"), body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	guestRoot := t.TempDir()
+	guestLogPath := filepath.Join(guestRoot, "guest.log")
+	serialLogPath := filepath.Join(guestRoot, "qemu-serial.log")
+	kernelPath := filepath.Join(guestRoot, "bzImage")
+	if err := os.WriteFile(kernelPath, []byte("fake kernel"), 0o600); err != nil {
+		t.Fatalf("WriteFile kernel returned error: %v", err)
+	}
+
+	result, err := RunKnownPortableApp(context.Background(), KnownRunRequest{
+		AppID:           "fixture",
+		Backend:         KnownRunBackendGuestWine,
+		CacheRoot:       cacheRoot,
+		Host:            "127.0.0.1",
+		Port:            "2222",
+		User:            "root",
+		KeyPath:         filepath.Join(guestRoot, "id_ed25519"),
+		RemoteDir:       "/tmp/xnix-known-winapp-smoke",
+		SSHPath:         writeFakeKnownAppGuestSSH(t, guestRoot, guestLogPath),
+		SCPPath:         writeFakeGuestSCP(t, guestRoot, guestLogPath),
+		Timeout:         5 * time.Second,
+		StartQEMU:       true,
+		QEMUBinary:      writeFakeQEMU(t, guestRoot),
+		QEMUKernelImage: kernelPath,
+		QEMUBootTimeout: 5 * time.Second,
+		QEMUSerialLog:   serialLogPath,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableApp returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.Backend != KnownRunBackendGuestWine ||
+		!result.GuestStartAttempted ||
+		!result.GuestStarted ||
+		result.GuestStartMode != "go-qemu" ||
+		!result.QEMUExecuted ||
+		!result.BackendReady ||
+		!result.WineExecuted ||
+		!result.ChecksumVerified ||
+		!result.MarkerObserved ||
+		result.RawQEMUPathExposed ||
+		result.RawHostPathExposed ||
+		result.HostRootModified {
+		t.Fatalf("unexpected Go-started QEMU known app run result: %#v", result)
+	}
+	serialBytes, err := os.ReadFile(serialLogPath)
+	if err != nil {
+		t.Fatalf("ReadFile serial log returned error: %v", err)
+	}
+	if !strings.Contains(string(serialBytes), "fake qemu boot") {
+		t.Fatalf("serial log did not capture fake qemu output: %s", string(serialBytes))
+	}
+}
+
+func TestRunKnownPortableAppGuestWineStartQEMUSkipsBeforeVMWhenArtifactMissing(t *testing.T) {
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         strings.Repeat("0", 64),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	guestRoot := t.TempDir()
+	result, err := RunKnownPortableApp(context.Background(), KnownRunRequest{
+		AppID:           "fixture",
+		Backend:         KnownRunBackendGuestWine,
+		CacheRoot:       t.TempDir(),
+		StartQEMU:       true,
+		QEMUBinary:      filepath.Join(guestRoot, "must-not-run-qemu"),
+		QEMUKernelImage: filepath.Join(guestRoot, "must-not-check-kernel"),
+		QEMUBootTimeout: time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableApp returned error: %v", err)
+	}
+	if result.Status != SkippedStatus ||
+		result.GuestStartMode != "go-qemu" ||
+		result.GuestStartAttempted ||
+		result.GuestStarted ||
+		result.QEMUExecuted ||
+		result.ChecksumVerified ||
+		result.GuestPayload == nil ||
+		result.SkipReason != "known Windows app artifact unavailable or checksum mismatch" {
+		t.Fatalf("unexpected preflight skip result: %#v", result)
+	}
+}
+
 func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
 	body := minimalPEFixture(0x014c)
 	sum := sha256.Sum256(body)
@@ -1428,6 +1547,19 @@ func writeFakeKnownAppGuestSSH(t *testing.T, tempDir string, logPath string) str
 		"exit 2\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
 		t.Fatalf("WriteFile fake ssh returned error: %v", err)
+	}
+	return path
+}
+
+func writeFakeQEMU(t *testing.T, tempDir string) string {
+	t.Helper()
+	path := filepath.Join(tempDir, "fake-qemu")
+	body := "#!/bin/sh\n" +
+		"printf 'fake qemu boot\\n'\n" +
+		"trap 'exit 0' TERM INT\n" +
+		"while :; do sleep 1; done\n"
+	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
+		t.Fatalf("WriteFile fake qemu returned error: %v", err)
 	}
 	return path
 }

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc60
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc61
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc61 checkpoint candidate moves the known Windows app guest-wine QEMU lifecycle into Go. `windows-known-app-run --backend guest-wine --start-qemu` now validates the cached known app artifact before starting a guest, launches QEMU with explicit kernel and resource flags, waits for loopback SSH, delegates to the existing Wine guest execution path, stops the guest, and reports safe guest-start evidence without exposing QEMU binary paths, kernel paths, serial-log paths, or host paths. Ruby remains the restricted smoke harness rather than the VM manager.
 
 The v0.2.640-rc60 checkpoint candidate routes the formal known Windows app QEMU/Wine smoke harness through `windows-known-app-run --backend guest-wine`. The maintained `scripts/known_winapp_guest_wine_smoke.rb` path still starts QEMU explicitly in the Ruby test harness, waits for loopback SSH, and then asks the Go Runtime unified known-app entrypoint to run the verified cached 7zr.exe through the Wine guest. This makes the official real-app guest smoke prove the new Runtime-owned execution strategy rather than the older dispatch-smoke bypass while keeping guest startup outside product-facing Runtime commands.
 

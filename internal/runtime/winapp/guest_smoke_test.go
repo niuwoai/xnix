@@ -112,6 +112,27 @@ func TestRunGuestSmokeSkipsWhenGuestWineUnavailable(t *testing.T) {
 	}
 }
 
+func TestResolveToolAcceptsPathCommandNames(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell PATH fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	toolPath := filepath.Join(tempDir, "fake-tool")
+	if err := os.WriteFile(toolPath, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatalf("WriteFile fake tool returned error: %v", err)
+	}
+	t.Setenv("PATH", tempDir)
+
+	resolved, err := resolveTool("fake-tool", "fallback-tool")
+	if err != nil {
+		t.Fatalf("resolveTool returned error: %v", err)
+	}
+	if resolved != toolPath {
+		t.Fatalf("resolveTool resolved %q, want %q", resolved, toolPath)
+	}
+}
+
 func writeFakeGuestSSH(t *testing.T, tempDir string, logPath string, wineAvailable bool) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-ssh")

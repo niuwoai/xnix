@@ -4,6 +4,22 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc61] - 2026-07-24
+
+### Added
+
+- Added Go-owned QEMU guest lifecycle support for `windows-known-app-run --backend guest-wine --start-qemu`, including explicit QEMU binary, kernel, memory, CPU, boot-timeout, and serial-log controls.
+- Added safe guest-start evidence fields for known app runs: `guest_start_attempted`, `guest_started`, `guest_start_mode`, `qemu_serial_log_written`, and `raw_qemu_path_exposed=false`.
+
+### Changed
+
+- Updated `scripts/known_winapp_guest_wine_smoke.rb` so Ruby remains the test harness while the Go Runtime starts, waits for, uses, and stops the QEMU Wine guest.
+- Made the Go QEMU start path preflight the known app artifact before starting the guest, so missing or checksum-mismatched artifacts skip safely without launching a VM.
+
+### Fixed
+
+- Fixed Runtime tool resolution so bare command names such as `qemu-system-i386` are resolved from `PATH` instead of being misread as workspace-relative files.
+
 ## [0.2.640-rc60] - 2026-07-24
 
 ### Changed

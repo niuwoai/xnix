@@ -755,8 +755,16 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	var sshPath string
 	var scpPath string
 	var timeoutText string
+	var qemuBinary string
+	var qemuKernel string
+	var qemuMemory string
+	var qemuCPUs string
+	var qemuCPU string
+	var qemuBootTimeoutText string
+	var qemuSerialLog string
 	var allowDownload bool
 	var skipBootstrap bool
+	var startQEMU bool
 	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
 	flags.StringVar(&backend, "backend", winapp.KnownRunBackendLocal, "known app backend: local or guest-wine")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "known app cache root")
@@ -775,8 +783,16 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path for guest-wine backend")
 	flags.StringVar(&scpPath, "scp", "", "explicit scp client path for guest-wine backend")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppFetchTimeout.String(), "known app operation timeout")
+	flags.StringVar(&qemuBinary, "qemu-binary", winapp.DefaultQEMUBinary, "QEMU binary used only when --start-qemu is set")
+	flags.StringVar(&qemuKernel, "qemu-kernel", "", "guest kernel image used only when --start-qemu is set")
+	flags.StringVar(&qemuMemory, "qemu-memory", winapp.DefaultQEMUMemory, "QEMU memory used only when --start-qemu is set")
+	flags.StringVar(&qemuCPUs, "qemu-cpus", winapp.DefaultQEMUCPUCount, "QEMU CPU count used only when --start-qemu is set")
+	flags.StringVar(&qemuCPU, "qemu-cpu", winapp.DefaultQEMUCPUModel, "QEMU CPU model used only when --start-qemu is set")
+	flags.StringVar(&qemuBootTimeoutText, "qemu-boot-timeout", winapp.DefaultQEMUBootTimeout.String(), "QEMU guest SSH boot timeout used only when --start-qemu is set")
+	flags.StringVar(&qemuSerialLog, "qemu-serial-log", "", "serial log path used only when --start-qemu is set")
 	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app artifact when it is missing")
 	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a local launch profile that skips runner bootstrap")
+	flags.BoolVar(&startQEMU, "start-qemu", false, "start and stop a loopback-only QEMU guest for the guest-wine backend")
 	var runtimeArgs repeatedStringFlag
 	var runnerArgs repeatedStringFlag
 	var appArgs repeatedStringFlag
@@ -793,6 +809,10 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	timeout, err := time.ParseDuration(timeoutText)
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
+	}
+	qemuBootTimeout, err := time.ParseDuration(qemuBootTimeoutText)
+	if err != nil {
+		return fmt.Errorf("parse qemu boot timeout: %w", err)
 	}
 	parsedPort, err := winapp.ParseGuestPort(port)
 	if err != nil {
@@ -823,6 +843,14 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 		SSHPath:          sshPath,
 		SCPPath:          scpPath,
 		Timeout:          timeout,
+		StartQEMU:        startQEMU,
+		QEMUBinary:       qemuBinary,
+		QEMUKernelImage:  qemuKernel,
+		QEMUMemory:       qemuMemory,
+		QEMUCPUCount:     qemuCPUs,
+		QEMUCPUModel:     qemuCPU,
+		QEMUBootTimeout:  qemuBootTimeout,
+		QEMUSerialLog:    qemuSerialLog,
 	})
 	if err != nil {
 		return err
