@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.637"
+EXPECTED_VERSION = "0.2.638"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -463,6 +463,7 @@ REQUIRED_FILES = %w[
   scripts/staged_launcher_smoke.rb
   scripts/staged_launcher_dispatch_smoke.rb
   scripts/runtime_status_owner_service_session_bus_smoke.rb
+  scripts/kde_controlled_launch_action_smoke.rb
   scripts/dbus_controlled_launch_owner_fixture_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
@@ -631,6 +632,7 @@ REQUIRED_FILES = %w[
   test/test_runtime_status_owner_service_session_bus_smoke_script.rb
   test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
   test/test_kde_controlled_launch_action_stub.rb
+  test/test_kde_controlled_launch_action_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_first_presence_smoke_script.rb
@@ -6498,6 +6500,13 @@ runtime_status_owner_service_session_bus_smoke_source = read_project_file("scrip
                                                         read_project_file("lib/xnix/container.rb")
 %w[runtime-status-owner-service-session-bus-smoke Runtime-status\ owner\ service\ session-bus\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS scripts/staged_launcher_dispatch_smoke.rb PASS:\ Runtime-status\ owner\ service\ session-bus\ smoke SKIP:\ Runtime-status\ owner\ service\ session-bus\ smoke xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle runtime_owner_service_supplies_owner_inputs docker.sock --privileged --network\ host runtime_status_owner_service_session_bus_smoke_command].each do |token|
   assert(runtime_status_owner_service_session_bus_smoke_source.include?(token.gsub("\\ ", " ")), "Runtime-status owner service session-bus smoke must include #{token}")
+end
+kde_controlled_launch_action_smoke_source = read_project_file("scripts/kde_controlled_launch_action_smoke.rb") +
+                                            read_project_file("test/test_kde_controlled_launch_action_smoke_script.rb") +
+                                            read_project_file("scripts/container.rb") +
+                                            read_project_file("lib/xnix/container.rb")
+%w[kde-controlled-launch-action-smoke KDE\ controlled\ launch\ action\ smoke kde-controlled-launch-session-bus-smoke-plan-preview known-app-runtime-status-launch-owner-fixture-record XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE runtime_status_owner_session_smoke_command PASS:\ KDE\ controlled\ launch\ action\ smoke SKIP:\ KDE\ controlled\ launch\ action\ smoke kde_forwards_only_evidence_handle owner_service_args_exposed_to_kde desktop_kde_state_root_access desktop_receipt_fields_reconstructed smoke_executed_by_preview docker.sock --privileged --network\ host kde_controlled_launch_action_smoke_command].each do |token|
+  assert(kde_controlled_launch_action_smoke_source.include?(token.gsub("\\ ", " ")), "KDE controlled launch action smoke must include #{token}")
 end
 dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/dbus_controlled_launch_owner_fixture_smoke.rb") +
                                                     read_project_file("test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb") +

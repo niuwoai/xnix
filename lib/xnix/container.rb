@@ -92,6 +92,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"])
     end
 
+    def kde_controlled_launch_action_smoke_command
+      tools_cache_run_command(["ruby", "scripts/kde_controlled_launch_action_smoke.rb"])
+    end
+
     def dbus_controlled_launch_owner_fixture_smoke_command
       runtime_command(
         network: "none",

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.638] - 2026-07-24
+
+### Added
+
+- Added `kde_controlled_launch_action_smoke.rb`, a restricted KDE controlled-launch action smoke harness that consumes the Go-owned session-bus smoke plan before any optional execution.
+- Added the `kde-controlled-launch-action-smoke` container command and targeted script guard.
+
+### Changed
+
+- Updated the KDE controlled-launch lane documentation and layout guards to require plan-consuming smoke orchestration, explicit execution opt-in, evidence-only KDE forwarding, hidden owner-service arguments, disabled KDE state-root access, disabled receipt reconstruction, and closed host/container gates.
+
 ## [0.2.637] - 2026-07-24
 
 ### Added

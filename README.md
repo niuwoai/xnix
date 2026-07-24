@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.637`.
+The project is currently at `v0.2.638`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.637`.
 
 ## Current Checkpoint
 
-v0.2.637 adds a Go-owned KDE controlled-launch session-bus smoke plan. `kde-controlled-launch-session-bus-smoke-plan-preview` links the KDE action stub to the existing restricted private-session D-Bus smoke chain without executing it, while preserving evidence-only KDE forwarding and keeping Runtime-owned inputs hidden.
+v0.2.638 adds `kde_controlled_launch_action_smoke.rb`, a restricted KDE action smoke harness that consumes the Go-owned session-bus smoke plan before deciding whether to execute the private-session D-Bus smoke. By default it validates the plan and safely skips execution; setting `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE=1` lets it run the plan-provided restricted session-bus smoke command.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.636 also added the KDE-facing Runtime-status controlled-launch action stub and Go `kde-controlled-launch-action-preview` command.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.637 also added the Go-owned KDE controlled-launch session-bus smoke plan.
 
 ## Main References
 
@@ -43,6 +43,7 @@ ruby -Ilib test/test_runtime_dbus_smoke_script.rb
 ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
 ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
 ruby -Ilib test/test_kde_controlled_launch_action_stub.rb
+ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
 gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xnix-dbus-smoke-check $(pkg-config --cflags --libs gio-2.0)
 ruby scripts/verify_layout.rb
 ```
