@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc46] - 2026-07-24
+
+### Added
+
+- Added architecture-derived Wine prefix selection so x86_64 executables use `WINEARCH=win64` and x86 executables use `WINEARCH=win32`.
+- Added `wine_architecture` evidence to Go Runtime smoke, profile preflight, and Ruby JSON/Markdown smoke reports.
+
 ## [0.2.640-rc45] - 2026-07-24
 
 ### Added

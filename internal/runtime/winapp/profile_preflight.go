@@ -26,6 +26,7 @@ type SmokeProfilePreflightResult struct {
 	WindowsExecutableSignature  bool                    `json:"windows_executable_signature_observed"`
 	ExecutableArchitecture      string                  `json:"executable_architecture"`
 	ExecutableArchitectureReady bool                    `json:"executable_architecture_supported"`
+	WineArchitecture            string                  `json:"wine_architecture"`
 	WorkingDirectoryMode        string                  `json:"working_directory_mode"`
 	WorkingDirectoryValid       bool                    `json:"working_directory_valid"`
 	StateRootConfigured         bool                    `json:"state_root_configured"`
@@ -108,6 +109,7 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 		result.NextAction = "Use an x86_64 or x86 Windows PE executable before running the app."
 		return result, nil
 	}
+	result.WineArchitecture = wineArchitectureForExecutable(executableArchitecture)
 
 	workingDirectoryMode, workingDirectoryErr := inspectProfileWorkingDirectory(request.WorkingDirectory, executablePath)
 	if workingDirectoryErr != nil {
@@ -145,6 +147,7 @@ func baseSmokeProfilePreflightResult() SmokeProfilePreflightResult {
 		Status:                      ProfileBlockedStatus,
 		ExecutableFormat:            "unknown",
 		ExecutableArchitecture:      "unknown",
+		WineArchitecture:            "unknown",
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		SuccessMode:                 SuccessModeMarker,
 		RawProfilePathExposed:       false,

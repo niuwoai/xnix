@@ -50,6 +50,7 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		!result.WindowsExecutableSignature ||
 		result.ExecutableArchitecture != "x86_64" ||
 		!result.ExecutableArchitectureReady ||
+		result.WineArchitecture != "win64" ||
 		result.WorkingDirectoryMode != WorkingDirectoryModeOperator ||
 		!result.WorkingDirectoryValid ||
 		!result.StateRootConfigured ||
@@ -136,6 +137,7 @@ func TestPreflightSmokeProfileBlocksUnsupportedArchitecture(t *testing.T) {
 		!result.WindowsExecutableSignature ||
 		result.ExecutableArchitecture != "arm64" ||
 		result.ExecutableArchitectureReady ||
+		result.WineArchitecture != "unknown" ||
 		result.FailureReason != "Windows executable architecture is not supported" ||
 		result.RunnerAvailable ||
 		result.WineExecuted ||

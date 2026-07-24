@@ -46,6 +46,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "windows_executable_signature_observed" => true,
         "executable_architecture" => "x86_64",
         "executable_architecture_supported" => true,
+        "wine_architecture" => "win64",
         "working_directory_mode" => "operator-supplied",
         "working_directory_valid" => true,
         "state_root_configured" => true,
@@ -141,6 +142,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "windows_executable_signature_observed" => true,
         "executable_architecture" => "x86_64",
         "executable_architecture_supported" => true,
+        "wine_architecture" => "win64",
         "runner_available" => true,
         "runner_argument_count" => runner_arg_count,
         "compatibility_layer" => "windows-compatibility-layer",
@@ -242,6 +244,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("windows_executable_signature_observed"), "JSON report must preserve Windows signature evidence")
   assert(report.fetch("executable_architecture") == "x86_64", "JSON report must preserve executable architecture")
   assert(report.fetch("executable_architecture_supported"), "JSON report must preserve executable architecture support")
+  assert(report.fetch("wine_architecture") == "win64", "JSON report must preserve Wine architecture")
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
   assert(report.fetch("runner_diagnostics_status") == "passed", "JSON report must preserve diagnostics status")
   assert(report.fetch("runner_candidate_count") == 1, "JSON report must preserve runner candidate count")
@@ -266,6 +269,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Windows executable signature observed: true"), "Markdown report must expose executable signature evidence")
   assert(markdown_stdout.include?("Executable architecture: x86_64"), "Markdown report must expose executable architecture")
   assert(markdown_stdout.include?("Executable architecture supported: true"), "Markdown report must expose executable architecture support")
+  assert(markdown_stdout.include?("Wine architecture: win64"), "Markdown report must expose Wine architecture")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
   assert(markdown_stdout.include?("Profile preflight invoked: false"), "Markdown report must expose profile preflight invocation")
@@ -307,6 +311,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("windows_executable_signature_observed"), "custom report must preserve Windows signature evidence")
   assert(custom_report.fetch("executable_architecture") == "x86_64", "custom report must preserve executable architecture")
   assert(custom_report.fetch("executable_architecture_supported"), "custom report must preserve executable architecture support")
+  assert(custom_report.fetch("wine_architecture") == "win64", "custom report must preserve Wine architecture")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("success_mode") == "marker", "custom report must preserve default success mode")
   assert(custom_report.fetch("working_directory_mode") == "operator-supplied", "custom report must preserve working directory mode")
@@ -365,10 +370,12 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("profile_preflight_payload").fetch("windows_executable_signature_observed"), "profile report must preserve Windows executable signature evidence")
   assert(profile_report.fetch("profile_preflight_payload").fetch("executable_architecture") == "x86_64", "profile report must preserve preflight executable architecture")
   assert(profile_report.fetch("profile_preflight_payload").fetch("executable_architecture_supported"), "profile report must preserve preflight executable architecture support")
+  assert(profile_report.fetch("profile_preflight_payload").fetch("wine_architecture") == "win64", "profile report must preserve preflight Wine architecture")
   assert(profile_report.fetch("executable_format") == "pe-mz", "profile report must preserve report-level executable format")
   assert(profile_report.fetch("windows_executable_signature_observed"), "profile report must preserve report-level Windows signature evidence")
   assert(profile_report.fetch("executable_architecture") == "x86_64", "profile report must preserve report-level executable architecture")
   assert(profile_report.fetch("executable_architecture_supported"), "profile report must preserve report-level executable architecture support")
+  assert(profile_report.fetch("wine_architecture") == "win64", "profile report must preserve report-level Wine architecture")
   assert(profile_report.fetch("executable_source") == "profile", "profile report must identify profile executable source")
   assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
   assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")

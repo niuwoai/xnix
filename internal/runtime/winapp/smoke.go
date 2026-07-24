@@ -53,6 +53,7 @@ type Result struct {
 	WindowsExecutableSignature  bool   `json:"windows_executable_signature_observed"`
 	ExecutableArchitecture      string `json:"executable_architecture"`
 	ExecutableArchitectureReady bool   `json:"executable_architecture_supported"`
+	WineArchitecture            string `json:"wine_architecture"`
 	RunnerAvailable             bool   `json:"runner_available"`
 	RunnerArgumentCount         int    `json:"runner_argument_count"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
@@ -150,6 +151,8 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		result.FailureReason = "Windows executable architecture is not supported"
 		return result, nil
 	}
+	wineArchitecture := wineArchitectureForExecutable(executableArchitecture)
+	result.WineArchitecture = wineArchitecture
 
 	if strings.TrimSpace(request.StateRoot) == "" {
 		return result, errors.New("state root is required")
@@ -191,7 +194,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		bootstrapArgs := append([]string{}, runnerArguments...)
 		bootstrapArgs = append(bootstrapArgs, "--init")
 		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, bootstrapArgs...)
-		bootstrapCommand.Env = runnerEnvironment(stateRoot)
+		bootstrapCommand.Env = runnerEnvironment(stateRoot, wineArchitecture)
 		bootstrapCommand.Dir = workingDirectory
 		var bootstrapStderr bytes.Buffer
 		bootstrapCommand.Stderr = &bootstrapStderr
@@ -217,7 +220,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	args = append(args, executablePath)
 	args = append(args, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
-	command.Env = runnerEnvironment(stateRoot)
+	command.Env = runnerEnvironment(stateRoot, wineArchitecture)
 	command.Dir = workingDirectory
 
 	var stdout bytes.Buffer
@@ -406,6 +409,7 @@ func baseResult(request Request) Result {
 		Status:                      FailedStatus,
 		ExecutableFormat:            "unknown",
 		ExecutableArchitecture:      "unknown",
+		WineArchitecture:            "unknown",
 		CompatibilityLayer:          "windows-compatibility-layer",
 		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
@@ -442,14 +446,28 @@ func kdeSafeOutputSummary(result Result) string {
 	return "expected smoke marker not observed; " + streamSummary
 }
 
-func runnerEnvironment(stateRoot string) []string {
+func runnerEnvironment(stateRoot string, wineArchitecture string) []string {
+	if strings.TrimSpace(wineArchitecture) == "" {
+		wineArchitecture = "unknown"
+	}
 	return append(
 		os.Environ(),
 		"WINEPREFIX="+stateRoot,
-		"WINEARCH=win64",
+		"WINEARCH="+wineArchitecture,
 		"WINEDEBUG=-all",
 		"WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d",
 	)
+}
+
+func wineArchitectureForExecutable(executableArchitecture string) string {
+	switch executableArchitecture {
+	case "x86_64":
+		return "win64"
+	case "x86":
+		return "win32"
+	default:
+		return "unknown"
+	}
 }
 
 func validateExecutable(path string) (string, error) {

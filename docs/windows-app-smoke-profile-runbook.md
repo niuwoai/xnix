@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc45
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc46
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -81,6 +81,7 @@ Direct `--exe` smoke runs also validate the Windows `MZ` executable signature an
 - Direct smoke reports also expose `executable_format: pe-mz` when the supplied `--exe` target is a Windows PE-style executable.
 - `executable_architecture: x86_64` or `x86` proves the Runtime parsed the PE machine field for Wine prefix policy.
 - `executable_architecture_supported: true` means the current smoke path accepts the executable architecture before invoking a runner.
+- `wine_architecture: win64` or `win32` proves the Runtime selected the Wine prefix architecture from the PE machine field.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

@@ -37,6 +37,7 @@ func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 		!result.WindowsExecutableSignature ||
 		result.ExecutableArchitecture != "x86_64" ||
 		!result.ExecutableArchitectureReady ||
+		result.WineArchitecture != "win64" ||
 		result.CompatibilityLayer != "windows-compatibility-layer" {
 		t.Fatalf("unexpected result: %#v", result)
 	}
@@ -69,6 +70,32 @@ func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
 	}
 	if result.Status != PassedStatus {
 		t.Fatalf("expected managed Wine environment smoke to pass, got %#v", result)
+	}
+}
+
+func TestRunSmokeUsesWin32WineArchitectureForX86Executable(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "legacy.exe")
+	if err := os.WriteFile(executablePath, minimalPEFixture(0x014c), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunnerExpectingWineArchitecture(t, tempDir, "win32", 0, DefaultMarker+"\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.ExecutableArchitecture != "x86" ||
+		!result.ExecutableArchitectureReady ||
+		result.WineArchitecture != "win32" ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected win32 architecture smoke result: %#v", result)
 	}
 }
 
@@ -318,7 +345,7 @@ func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	if err := os.WriteFile(executablePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
-	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
+	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", "win64", 0, DefaultMarker+"\n")
 	bootstrapMarker := filepath.Join(tempDir, "bootstrap.marker")
 	winebootBody := "#!/bin/sh\n" +
 		"test -n \"$WINEPREFIX\" || exit 89\n" +
@@ -358,7 +385,7 @@ func TestRunSmokePassesRunnerArgumentsToWineboot(t *testing.T) {
 	if err := os.WriteFile(executablePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
-	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
+	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", "win64", 0, DefaultMarker+"\n")
 	winebootBody := "#!/bin/sh\n" +
 		"test \"$1\" = --bottle || exit 78\n" +
 		"test \"$2\" = smoke-bottle || exit 77\n" +
@@ -553,7 +580,7 @@ func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
 	if err := os.WriteFile(executablePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
-	writeNamedFakeRunner(t, tempDir, "wine64", 0, DefaultMarker+"\n")
+	writeNamedFakeRunner(t, tempDir, "wine64", "win64", 0, DefaultMarker+"\n")
 	t.Setenv("PATH", tempDir)
 
 	result, err := RunSmoke(context.Background(), Request{
@@ -679,7 +706,11 @@ func TestRunSmokeBlocksUnsupportedArchitectureBeforeRunnerResolution(t *testing.
 }
 
 func writeFakeRunner(t *testing.T, tempDir string, exitCode int, stdout string) string {
-	return writeNamedFakeRunner(t, tempDir, "fake-runner", exitCode, stdout)
+	return writeNamedFakeRunner(t, tempDir, "fake-runner", "win64", exitCode, stdout)
+}
+
+func writeFakeRunnerExpectingWineArchitecture(t *testing.T, tempDir string, wineArchitecture string, exitCode int, stdout string) string {
+	return writeNamedFakeRunner(t, tempDir, "fake-runner", wineArchitecture, exitCode, stdout)
 }
 
 func minimalPEFixture(machine uint16) []byte {
@@ -692,7 +723,7 @@ func minimalPEFixture(machine uint16) []byte {
 	return data
 }
 
-func writeNamedFakeRunner(t *testing.T, tempDir string, name string, exitCode int, stdout string) string {
+func writeNamedFakeRunner(t *testing.T, tempDir string, name string, wineArchitecture string, exitCode int, stdout string) string {
 	t.Helper()
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")
@@ -700,7 +731,7 @@ func writeNamedFakeRunner(t *testing.T, tempDir string, name string, exitCode in
 	path := filepath.Join(tempDir, name)
 	body := "#!/bin/sh\n" +
 		"test -n \"$WINEPREFIX\" || exit 89\n" +
-		"test \"$WINEARCH\" = win64 || exit 88\n" +
+		"test \"$WINEARCH\" = " + wineArchitecture + " || exit 88\n" +
 		"test \"$WINEDEBUG\" = -all || exit 87\n" +
 		"case \"$WINEDLLOVERRIDES\" in *winemenubuilder.exe=d*mscoree=d*mshtml=d*) ;; *) exit 86 ;; esac\n" +
 		"printf '%s' '" + strings.ReplaceAll(stdout, "'", "'\\''") + "'\n" +
