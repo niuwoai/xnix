@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc10"
+EXPECTED_VERSION = "0.2.640-rc11"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -26,6 +26,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-seventh-wave-task-batch.md
   docs/claude-code-current-execution-queue.md
   docs/claude-code-next-actions-handoff.md
+  docs/claude-code-next-mainline-work-pack.md
   docs/claude-code-stability-release-train.md
   docs/claude-code-dispatch-runbook.md
   docs/claude-code-open-domain-work-packages.md
@@ -478,6 +479,7 @@ REQUIRED_FILES = %w[
   scripts/offline_application_fixture_matrix.rb
   scripts/fetch_buildroot.rb
   scripts/full_smoke.rb
+  scripts/full_checkpoint_promotion_packet.rb
   scripts/restricted_product_smoke_packet.rb
   scripts/install_runtime_activation.rb
   scripts/prepare_ssh_test_key.rb
@@ -626,6 +628,7 @@ REQUIRED_FILES = %w[
   test/test_file_open_request.rb
   test/test_full_smoke_report.rb
   test/test_full_smoke_script.rb
+  test/test_full_checkpoint_promotion_packet.rb
   test/test_restricted_product_smoke_packet.rb
   test/test_launch_request.rb
   test/test_notification_request.rb
@@ -6093,6 +6096,80 @@ assert(!restricted_smoke_packet_script_source.include?("boot-system"), "Restrict
 restricted_smoke_packet_test_source = read_project_file("test/test_restricted_product_smoke_packet.rb")
 %w[xnix.runtime.restricted_product_smoke_packet.v1 ready_for_authorized_smoke human_authorization_required docker_executed qemu_executed release_ready].each do |token|
   assert(restricted_smoke_packet_test_source.include?(token), "Restricted product smoke packet tests must include #{token}")
+end
+
+full_checkpoint_promotion_packet_source = read_project_file("scripts/full_checkpoint_promotion_packet.rb")
+%w[
+  xnix.runtime.full_checkpoint_promotion_packet.v1
+  full-checkpoint-promotion-packet
+  full-smoke-report.json
+  full-smoke-report.md
+  expected_release_version
+  release_candidate
+  version_promotable
+  full_smoke_state
+  blocked-missing-full-smoke-report
+  blocked-malformed-full-smoke-report
+  blocked-full-smoke-failed
+  blocked-incomplete-full-smoke-report
+  blocked-version-mismatch
+  promotion_decision
+  promotion_allowed
+  formal_release_ready
+  operator_required_command
+  restricted_container_evidence_observed
+  qemu_evidence_observed
+  wine_evidence_observed
+  known_windows_app_smoke_observed
+  fixture_windows_app_smoke_observed
+  kde_action_smoke_observed
+  full_smoke_executed_by_packet
+  docker_executed_by_packet
+  qemu_executed_by_packet
+  wine_executed_by_packet
+  colima_executed_by_packet
+  dbus_called_by_packet
+  host_root_modified
+].each do |token|
+  assert(full_checkpoint_promotion_packet_source.include?(token), "Full checkpoint promotion packet script must include #{token}")
+end
+%w[
+  full_smoke_executed_by_packet
+  docker_executed_by_packet
+  qemu_executed_by_packet
+  wine_executed_by_packet
+  colima_executed_by_packet
+  dbus_called_by_packet
+  desktop_launch_enabled
+  backend_launch_enabled
+  network_required_by_packet
+  privileged_container_required_by_packet
+  host_root_modified
+].each do |token|
+  assert(full_checkpoint_promotion_packet_source.include?("\"#{token}\" => false"), "Full checkpoint promotion packet must keep #{token} false")
+end
+assert(!full_checkpoint_promotion_packet_source.include?("scripts/container.rb"), "Full checkpoint promotion packet must not run Docker")
+assert(!full_checkpoint_promotion_packet_source.include?("qemu-system-"), "Full checkpoint promotion packet must not boot QEMU")
+
+full_checkpoint_promotion_packet_test_source = read_project_file("test/test_full_checkpoint_promotion_packet.rb")
+%w[
+  xnix.runtime.full_checkpoint_promotion_packet.v1
+  full-checkpoint-promotion-packet
+  blocked-missing-full-smoke-report
+  blocked-malformed-full-smoke-report
+  blocked-full-smoke-failed
+  blocked-incomplete-full-smoke-report
+  blocked-version-mismatch
+  promotion_allowed
+  formal_release_ready
+  full_smoke_executed_by_packet
+  docker_executed_by_packet
+  qemu_executed_by_packet
+  wine_executed_by_packet
+  host_root_modified
+  markdown
+].each do |token|
+  assert(full_checkpoint_promotion_packet_test_source.include?(token), "Full checkpoint promotion packet tests must include #{token}")
 end
 
 go_runtime_kde_restricted_product_smoke_checkpoint_source = read_project_file("internal/runtime/appidentity/kde_restricted_product_smoke_checkpoint.go")

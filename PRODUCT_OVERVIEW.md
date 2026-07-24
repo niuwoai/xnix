@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc10
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc11
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc11 checkpoint candidate adds `scripts/full_checkpoint_promotion_packet.rb`, a read-only release-promotion evidence packet for `v0.2.640`. The packet reads existing `output/full-smoke-report.json` and Markdown presence evidence, reports missing, malformed, failed, incomplete, passing, and version-mismatched states, and claims `formal_release_ready=true` only when a valid existing full-smoke PASS report matches the active `v0.2.640` release-candidate line. It keeps full smoke execution, Docker, QEMU, Wine, Colima, D-Bus, desktop launch, backend launch, network access, privileged containers, and host mutation disabled inside the packet.
 
 The v0.2.640-rc10 checkpoint candidate routes the private D-Bus controlled-launch fixture through `desktop-trigger-service-call-materialization-preview`, matching the real staged launcher dispatch smoke's Go-owned service-call materialization path. The C smoke adapter now consumes materialized evidence-only `ShowRuntimeControlledLaunch` owner service call arguments instead of calling the lower-level Runtime-status owner trigger preview directly. It still keeps KDE evidence-only, does not hand owner arguments to KDE, and keeps request-object writes, permission grants, Runtime state writes, KDE configuration writes, desktop launch, backend launch, network access, privileged containers, broad host mounts, Docker socket mounts, and host mutation disabled.
 

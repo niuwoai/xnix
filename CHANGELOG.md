@@ -4,6 +4,22 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc11] - 2026-07-24
+
+### Added
+
+- Added `scripts/full_checkpoint_promotion_packet.rb`, a read-only release-promotion evidence packet that reads existing full-smoke JSON and Markdown reports and decides whether `v0.2.640` can be promoted.
+- Added targeted tests for missing, malformed, failed, incomplete, passing, version-mismatched, Markdown, redaction, and no-side-effect promotion packet behavior.
+- Added `docs/claude-code-next-mainline-work-pack.md` as the next copy-first Claude Code task pack for C8W11-C8W14 and post-release C9W1 work.
+
+### Changed
+
+- Updated layout and mainline integration review gates so the full checkpoint promotion packet is classified with the product image and QEMU acceptance lane.
+
+### Fixed
+
+- Kept formal release readiness false unless an existing valid full-smoke PASS report matches the active `v0.2.640` release-candidate line.
+
 ## [0.2.640-rc10] - 2026-07-24
 
 ### Changed

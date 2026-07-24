@@ -340,8 +340,10 @@ LANES = [
       %r{\Alib/xnix/full_smoke_report\.rb\z},
       %r{\Acmd/xnix-runtime-go/restricted_product_smoke_packet_},
       %r{\Ascripts/full_smoke\.rb\z},
+      %r{\Ascripts/full_checkpoint_promotion_packet\.rb\z},
       %r{\Ascripts/restricted_product_smoke_packet\.rb\z},
       %r{\Atest/test_full_smoke},
+      %r{\Atest/test_full_checkpoint_promotion_packet\.rb\z},
       %r{\Atest/test_restricted_product_smoke_packet\.rb\z},
       %r{\Atest/test_container\.rb\z}
     ]
