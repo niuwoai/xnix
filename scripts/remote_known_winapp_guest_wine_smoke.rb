@@ -11,7 +11,8 @@ PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
-DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source")
+DEFAULT_SOURCE_SYNC_MODE = ENV.fetch("XNIX_SOURCE_SYNC_MODE", "runtime")
+DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-#{DEFAULT_SOURCE_SYNC_MODE}-#{VERSION}")
 DEFAULT_REMOTE_BUILD_ROOT = ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
 DEFAULT_REMOTE_GO = ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go")
@@ -21,6 +22,7 @@ DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
 options = {
   execute: false,
   sync_source: true,
+  source_sync_mode: DEFAULT_SOURCE_SYNC_MODE,
   local_shell: DEFAULT_LOCAL_SHELL,
   remote_host: DEFAULT_REMOTE_HOST,
   remote_source_root: DEFAULT_REMOTE_SOURCE_ROOT,
@@ -36,6 +38,7 @@ OptionParser.new do |parser|
   parser.banner = "Usage: ruby scripts/remote_known_winapp_guest_wine_smoke.rb [--execute]"
   parser.on("--execute", "Run the remote q4 build and QEMU/Wine known app smoke.") { options[:execute] = true }
   parser.on("--no-sync-source", "Use the existing remote source tree without syncing this checkout.") { options[:sync_source] = false }
+  parser.on("--source-sync-mode MODE", "Source sync mode: runtime or full.") { |value| options[:source_sync_mode] = value }
   parser.on("--local-shell PATH", "Local login shell used for ssh/rsync alias resolution.") { |value| options[:local_shell] = value }
   parser.on("--remote HOST", "Remote SSH target, default: #{DEFAULT_REMOTE_HOST}") { |value| options[:remote_host] = value }
   parser.on("--remote-source-root PATH", "Remote source root under /home/xnix*.") { |value| options[:remote_source_root] = value }
@@ -48,6 +51,10 @@ OptionParser.new do |parser|
 end.parse!
 
 abort "remote known Windows app smoke does not accept positional arguments" unless ARGV.empty?
+
+if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
+  options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-#{options.fetch(:source_sync_mode)}-#{VERSION}"
+end
 
 def ensure_remote_xnix_path!(label, path)
   clean = Pathname.new(path).cleanpath.to_s
@@ -65,7 +72,20 @@ def shell_join(argv)
   Shellwords.join(argv)
 end
 
+def source_sync_entries(mode)
+  case mode
+  when "runtime"
+    %w[go.mod cmd internal runtime]
+  when "full"
+    ["."]
+  else
+    abort "source sync mode must be runtime or full"
+  end
+end
+
 remote_host = options.fetch(:remote_host)
+source_sync_mode = options.fetch(:source_sync_mode)
+source_entries = source_sync_entries(source_sync_mode)
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
@@ -116,6 +136,9 @@ plan = {
   "local_shell" => options.fetch(:local_shell),
   "remote_host" => remote_host,
   "source_sync_planned" => options.fetch(:sync_source),
+  "source_sync_mode" => source_sync_mode,
+  "source_sync_entry_count" => source_entries.length,
+  "source_sync_entries" => source_entries,
   "remote_source_root" => remote_source_root,
   "remote_build_root" => remote_build_root,
   "remote_materials_root" => remote_materials_root,
@@ -139,6 +162,19 @@ unless options.fetch(:execute)
 end
 
 if options.fetch(:sync_source)
+  mkdir_stdout, mkdir_stderr, mkdir_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(["mkdir", "-p", remote_source_root])]))
+  unless mkdir_status.zero?
+    warn mkdir_stdout unless mkdir_stdout.empty?
+    warn mkdir_stderr unless mkdir_stderr.empty?
+    warn "FAIL: remote known Windows app source root preparation failed"
+    exit 1
+  end
+
+  rsync_sources = if source_sync_mode == "full"
+                    ["#{PROJECT_ROOT}/"]
+                  else
+                    source_entries.map { |entry| "#{PROJECT_ROOT}/#{entry}" }
+                  end
   rsync_args = [
     "rsync",
     "-az",
@@ -146,7 +182,7 @@ if options.fetch(:sync_source)
     "--exclude", ".cache",
     "--exclude", "buildroot/output",
     "--exclude", "docs/claude-code-implementation-packages.md",
-    "#{PROJECT_ROOT}/",
+    *rsync_sources,
     "#{remote_host}:#{remote_source_root}/"
   ]
   rsync_stdout, rsync_stderr, rsync_status = run_shell(options.fetch(:local_shell), shell_join(rsync_args))

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc67] - 2026-07-24
+
+### Changed
+
+- Changed `scripts/remote_known_winapp_guest_wine_smoke.rb` to default to a lightweight `runtime` source sync mode that copies only `go.mod`, `cmd/`, `internal/`, and `runtime/` into a versioned q4 source tree before building the Go Runtime.
+- Added an explicit `--source-sync-mode full` fallback for operator-controlled whole-checkout q4 smoke syncs.
+
 ## [0.2.640-rc66] - 2026-07-24
 
 ### Added

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc66
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc67
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc67 checkpoint candidate makes q4 real-run evidence faster and safer to repeat. `scripts/remote_known_winapp_guest_wine_smoke.rb` now defaults to `--source-sync-mode runtime`, syncing only `go.mod`, `cmd/`, `internal/`, and `runtime/` into a versioned q4 source tree before building and running the Go-owned QEMU/Wine known-app lane. `--source-sync-mode full` remains available for whole-checkout syncs.
 
 The v0.2.640-rc66 checkpoint candidate makes q4 real-run evidence reproducible from the repository. `windows-known-app-run --report-output` now persists the same redacted JSON report it writes to stdout, and `scripts/remote_known_winapp_guest_wine_smoke.rb --execute` can sync the checkout to the managed q4 source root, build the Go Runtime with the private q4 Go toolchain, run the known Windows app through Runtime-started QEMU/Wine, and persist both the JSON report and QEMU serial log under the managed q4 run-materials state directory.
 

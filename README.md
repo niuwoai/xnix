@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc66`.
+The project is currently at `v0.2.640-rc67`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc66`.
 
 ## Current Checkpoint
 
-v0.2.640-rc66 adds operator-controlled remote q4 evidence capture for the real known Windows app QEMU/Wine lane. `windows-known-app-run --report-output` can persist the same redacted JSON report it writes to stdout, and `scripts/remote_known_winapp_guest_wine_smoke.rb --execute` can sync this checkout to the managed q4 source root, build the Go Runtime with the private q4 Go toolchain, run `7zr.exe` through Runtime-started QEMU/Wine, and persist the JSON report plus serial log under `/home/xnix-run-materials/state`. The previous v0.2.640-rc65 checkpoint added redacted guest-wine output evidence.
+v0.2.640-rc67 makes the q4 remote known-app smoke faster and safer to repeat. `scripts/remote_known_winapp_guest_wine_smoke.rb` now defaults to `--source-sync-mode runtime`, syncing only `go.mod`, `cmd/`, `internal/`, and `runtime/` into a versioned `/home/xnix-build/xnix-runtime-source-runtime-<version>` tree before building and running the Go-owned QEMU/Wine path. `--source-sync-mode full` remains available when an operator needs a whole-checkout sync. The previous v0.2.640-rc66 checkpoint added operator-controlled remote q4 evidence capture.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc66 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc67 is a targeted follow-up and does not reset the next full-checkpoint cadence.
