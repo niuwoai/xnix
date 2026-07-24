@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc62
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc63
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc63 checkpoint candidate tightens the Go-owned known Windows app guest-wine lane by normalizing `localhost` to `127.0.0.1` before both QEMU host forwarding and SSH/SCP Wine execution. This keeps automatic loopback port runs internally consistent when operators use `--host localhost --port auto`.
 
 The v0.2.640-rc62 checkpoint candidate makes the Go-owned known Windows app guest-wine lane safer for repeated real executable runs by supporting `--port auto` with `windows-known-app-run --backend guest-wine --start-qemu`. The Runtime allocates an available loopback SSH port, gives that port to QEMU host forwarding and the SSH/SCP Wine execution path, reports safe `guest_host`, `guest_port`, and `guest_port_auto` evidence, and keeps the Ruby smoke harness from depending on fixed host port 2222.
 

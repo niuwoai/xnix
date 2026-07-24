@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc63] - 2026-07-24
+
+### Fixed
+
+- Fixed Go-started known app QEMU guest runs so a `localhost` request is normalized to `127.0.0.1` for both QEMU host forwarding and the subsequent SSH/SCP Wine execution path.
+
 ## [0.2.640-rc62] - 2026-07-24
 
 ### Added

@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc62
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc63
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 

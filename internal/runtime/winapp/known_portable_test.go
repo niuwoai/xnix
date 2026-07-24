@@ -564,7 +564,7 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		AppID:           "fixture",
 		Backend:         KnownRunBackendGuestWine,
 		CacheRoot:       cacheRoot,
-		Host:            "127.0.0.1",
+		Host:            "localhost",
 		Port:            AutoGuestPort,
 		User:            "root",
 		KeyPath:         filepath.Join(guestRoot, "id_ed25519"),
@@ -614,7 +614,9 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		t.Fatalf("ReadFile guest log returned error: %v", err)
 	}
 	if !strings.Contains(string(guestBytes), "-p "+result.GuestPort) ||
-		!strings.Contains(string(guestBytes), "-P "+result.GuestPort) {
+		!strings.Contains(string(guestBytes), "-P "+result.GuestPort) ||
+		!strings.Contains(string(guestBytes), "root@127.0.0.1") ||
+		strings.Contains(string(guestBytes), "root@localhost") {
 		t.Fatalf("guest log did not use allocated port %q: %s", result.GuestPort, string(guestBytes))
 	}
 }

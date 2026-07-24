@@ -1517,7 +1517,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 			AppID:     app.ID,
 			CacheRoot: request.CacheRoot,
 			Arguments: append([]string{}, request.Arguments...),
-			Host:      request.Host,
+			Host:      stringDefault(result.GuestHost, request.Host),
 			Port:      stringDefault(result.GuestPort, request.Port),
 			User:      request.User,
 			KeyPath:   request.KeyPath,
