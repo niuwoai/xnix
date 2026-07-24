@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc55`.
+The project is currently at `v0.2.640-rc56`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc55`.
 
 ## Current Checkpoint
 
-v0.2.640-rc55 connects the known Windows app catalog to the product-style launch-profile path. `windows-known-app-launch-profile-materialize` verifies a cached known app artifact, writes a reusable launch profile, and writes a managed launcher in `launch` mode without downloading artifacts or exposing raw paths. The previous v0.2.640-rc54 checkpoint added `windows-app-launch-profile`.
+v0.2.640-rc56 adds `windows-known-app-prepare-launch-profile`, a Go-owned one-step prepare path for known apps. It checks the cache offline by default, can explicitly download with `--allow-download`, and then materializes the launch profile and managed `launch` mode launcher. The previous v0.2.640-rc55 checkpoint connected verified known app artifacts to launch profiles.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc55`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc56`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

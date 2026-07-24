@@ -1710,9 +1710,66 @@ func TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact(t *t
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
 }
 
+func TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-prepare-launch-profile",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runtime-bin", "go",
+		"--runtime-arg", "run",
+		"--runtime-arg", "./cmd/xnix-runtime-go",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_prepare_launch_profile.v1" ||
+		payload["request_type"] != "windows-known-app-prepare-launch-profile" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "7zr" ||
+		payload["allow_download"] != false ||
+		payload["network_required"] != false ||
+		payload["fetch_status"] != "skipped" ||
+		payload["fetch_cache_status"] != "missing" ||
+		payload["downloaded"] != false ||
+		payload["checksum_verified"] != false ||
+		payload["materialize_status"] != "not-run" ||
+		payload["profile_written"] != false ||
+		payload["launcher_bundle_written"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_profile_path_exposed"] != false ||
+		payload["raw_state_root_path_exposed"] != false ||
+		payload["raw_runtime_argv_exposed"] != false ||
+		payload["skip_reason"] != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected known prepare launch profile payload: %#v", payload)
+	}
+	fetchPayload := payload["fetch_payload"].(map[string]any)
+	if fetchPayload["network_required"] != false {
+		t.Fatalf("offline prepare fetch payload must not require network: %#v", fetchPayload)
+	}
+	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+}
+
 func TestWindowsKnownAppManagedLaunchPreviewCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-managed-launch-preview", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppPrepareLaunchProfileCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-prepare-launch-profile", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}

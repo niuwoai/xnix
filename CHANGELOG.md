@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc56] - 2026-07-24
+
+### Added
+
+- Added `windows-known-app-prepare-launch-profile`, combining offline known-app cache checks, optional explicit downloads, checksum verification, and launch-profile materialization.
+- Added targeted tests for offline missing-artifact skips and explicit mock-download preparation into profile and launcher bundle outputs.
+
 ## [0.2.640-rc55] - 2026-07-24
 
 ### Added

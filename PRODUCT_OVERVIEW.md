@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc55
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc56
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc56 checkpoint candidate adds `windows-known-app-prepare-launch-profile`, a Go-owned one-step prepare path for known Windows apps. By default it checks the local cache offline and skips safely when the artifact is missing; with explicit `--allow-download` it downloads through the pinned catalog, verifies the checksum, and then materializes the reusable launch profile plus managed `launch` mode launcher. This keeps artifact acquisition explicit while turning the known app path into a concrete Runtime workflow: catalog entry, cache verification, optional acquisition, profile creation, and desktop launcher creation. Reports expose fetch/materialize status, download and checksum evidence, profile/launcher write flags, and closed host-boundary flags while hiding raw cache paths, executable paths, profile paths, state roots, and runtime argv details.
 
 The v0.2.640-rc55 checkpoint candidate connects the known Windows app catalog to the product-style launch-profile path. `windows-known-app-launch-profile-materialize` verifies a cached known app artifact, writes a reusable Windows app launch profile, and writes a managed launcher bundle in `launch` mode so KDE can point at `windows-app-launch-profile` instead of direct smoke commands. The materializer does not download artifacts, run Wine, run Docker, run QEMU, use Colima, call package managers, or mutate the host root; missing or checksum-mismatched artifacts return safe skipped evidence without writing profiles. Reports expose safe file names, launcher mode, launcher command, checksum state, marker, success mode, and staged workspace mode while hiding cache paths, executable paths, profile paths, state roots, runtime argv details, and runner paths.
 

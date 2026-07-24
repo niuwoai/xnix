@@ -34,6 +34,8 @@ const (
 	KnownLaunchBridgeRequestType    = "windows-known-app-launch-bridge-preview"
 	KnownLaunchProfileSchemaVersion = "xnix.runtime.known_windows_app_launch_profile_materialize.v1"
 	KnownLaunchProfileRequestType   = "windows-known-app-launch-profile-materialize"
+	KnownPrepareLaunchSchemaVersion = "xnix.runtime.known_windows_app_prepare_launch_profile.v1"
+	KnownPrepareLaunchRequestType   = "windows-known-app-prepare-launch-profile"
 	KnownDispatchGuestBoundary      = "managed-known-app-guest-smoke"
 	DefaultKnownAppID               = "7zr"
 	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
@@ -441,6 +443,54 @@ type KnownLaunchProfileMaterializeResult struct {
 	BroadHostMountRequired      bool                  `json:"broad_host_mount_required"`
 	SkipReason                  string                `json:"skip_reason,omitempty"`
 	FailureReason               string                `json:"failure_reason,omitempty"`
+}
+
+type KnownPrepareLaunchProfileRequest struct {
+	AppID            string
+	CacheRoot        string
+	StateRoot        string
+	ProfileOutput    string
+	ApplicationID    string
+	DisplayName      string
+	RuntimeBinary    string
+	RuntimeArguments []string
+	AllowDownload    bool
+	HTTPClient       *http.Client
+	Timeout          time.Duration
+}
+
+type KnownPrepareLaunchProfileResult struct {
+	SchemaVersion               string                               `json:"schema_version"`
+	RequestType                 string                               `json:"request_type"`
+	Status                      string                               `json:"status"`
+	AppID                       string                               `json:"app_id"`
+	DisplayName                 string                               `json:"display_name"`
+	AppVersion                  string                               `json:"app_version"`
+	Architecture                string                               `json:"architecture"`
+	ExecutableName              string                               `json:"executable_name"`
+	AllowDownload               bool                                 `json:"allow_download"`
+	FetchStatus                 string                               `json:"fetch_status"`
+	FetchCacheStatus            string                               `json:"fetch_cache_status"`
+	Downloaded                  bool                                 `json:"downloaded"`
+	ChecksumVerified            bool                                 `json:"checksum_verified"`
+	MaterializeStatus           string                               `json:"materialize_status"`
+	ProfileWritten              bool                                 `json:"profile_written"`
+	LauncherBundleWritten       bool                                 `json:"launcher_bundle_written"`
+	FetchPayload                KnownFetchResult                     `json:"fetch_payload"`
+	MaterializePayload          *KnownLaunchProfileMaterializeResult `json:"materialize_payload,omitempty"`
+	NetworkRequired             bool                                 `json:"network_required"`
+	HostRootModified            bool                                 `json:"host_root_modified"`
+	PrivilegedContainerRequired bool                                 `json:"privileged_container_required"`
+	HostNetworkingRequired      bool                                 `json:"host_networking_required"`
+	DockerSocketMounted         bool                                 `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool                                 `json:"broad_host_mount_required"`
+	RawHostPathExposed          bool                                 `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool                                 `json:"raw_executable_path_exposed"`
+	RawProfilePathExposed       bool                                 `json:"raw_profile_path_exposed"`
+	RawStateRootPathExposed     bool                                 `json:"raw_state_root_path_exposed"`
+	RawRuntimeArgvExposed       bool                                 `json:"raw_runtime_argv_exposed"`
+	SkipReason                  string                               `json:"skip_reason,omitempty"`
+	FailureReason               string                               `json:"failure_reason,omitempty"`
 }
 
 type KnownLaunchBridgeResult struct {
@@ -964,6 +1014,78 @@ func MaterializeKnownPortableLaunchProfile(request KnownLaunchProfileMaterialize
 	return result, nil
 }
 
+func PrepareKnownPortableLaunchProfile(ctx context.Context, request KnownPrepareLaunchProfileRequest) (KnownPrepareLaunchProfileResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownPrepareLaunchProfileResult{}, err
+	}
+	result := baseKnownPrepareLaunchProfileResult(app, request.AllowDownload)
+	fetch, err := FetchKnownPortableApp(ctx, KnownFetchRequest{
+		AppID:         app.ID,
+		CacheRoot:     request.CacheRoot,
+		AllowDownload: request.AllowDownload,
+		HTTPClient:    request.HTTPClient,
+		Timeout:       request.Timeout,
+	})
+	if err != nil {
+		return result, err
+	}
+	if !request.AllowDownload {
+		fetch.NetworkRequired = false
+	}
+	result.FetchPayload = fetch
+	result.FetchStatus = fetch.Status
+	result.FetchCacheStatus = fetch.CacheStatus
+	result.Downloaded = fetch.Downloaded
+	result.ChecksumVerified = fetch.ChecksumVerified
+	result.NetworkRequired = request.AllowDownload
+	result.HostRootModified = fetch.HostRootModified
+	result.HostNetworkingRequired = fetch.HostNetworkingRequired
+	result.DockerSocketMounted = fetch.DockerSocketMounted
+	result.BroadHostMountRequired = fetch.BroadHostMountRequired
+	result.RawHostPathExposed = fetch.RawHostPathExposed
+	if fetch.Status != PassedStatus || !fetch.ChecksumVerified {
+		result.Status = fetch.Status
+		if result.Status == FailedStatus {
+			result.FailureReason = fetch.FailureReason
+		} else {
+			result.SkipReason = fetch.SkipReason
+		}
+		return result, nil
+	}
+
+	materialized, err := MaterializeKnownPortableLaunchProfile(KnownLaunchProfileMaterializeRequest{
+		AppID:            app.ID,
+		CacheRoot:        request.CacheRoot,
+		StateRoot:        request.StateRoot,
+		ProfileOutput:    request.ProfileOutput,
+		ApplicationID:    request.ApplicationID,
+		DisplayName:      request.DisplayName,
+		RuntimeBinary:    request.RuntimeBinary,
+		RuntimeArguments: append([]string{}, request.RuntimeArguments...),
+	})
+	if err != nil {
+		return result, err
+	}
+	result.MaterializePayload = &materialized
+	result.MaterializeStatus = materialized.Status
+	result.ProfileWritten = materialized.ProfileWritten
+	result.LauncherBundleWritten = materialized.LauncherBundleWritten
+	result.RawExecutablePathExposed = materialized.RawExecutablePathExposed
+	result.RawProfilePathExposed = materialized.RawProfilePathExposed
+	result.RawStateRootPathExposed = materialized.RawStateRootPathExposed
+	result.RawRuntimeArgvExposed = materialized.RawRuntimeArgvExposed
+	result.PrivilegedContainerRequired = materialized.PrivilegedContainerRequired
+	result.HostRootModified = result.HostRootModified || materialized.HostRootModified
+	result.HostNetworkingRequired = result.HostNetworkingRequired || materialized.HostNetworkingRequired
+	result.DockerSocketMounted = result.DockerSocketMounted || materialized.DockerSocketMounted
+	result.BroadHostMountRequired = result.BroadHostMountRequired || materialized.BroadHostMountRequired
+	result.Status = materialized.Status
+	result.SkipReason = materialized.SkipReason
+	result.FailureReason = materialized.FailureReason
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -1017,6 +1139,34 @@ func baseKnownLaunchProfileMaterializeResult(app KnownPortableApp) KnownLaunchPr
 		HostNetworkingRequired:      false,
 		DockerSocketMounted:         false,
 		BroadHostMountRequired:      false,
+	}
+}
+
+func baseKnownPrepareLaunchProfileResult(app KnownPortableApp, allowDownload bool) KnownPrepareLaunchProfileResult {
+	return KnownPrepareLaunchProfileResult{
+		SchemaVersion:               KnownPrepareLaunchSchemaVersion,
+		RequestType:                 KnownPrepareLaunchRequestType,
+		Status:                      SkippedStatus,
+		AppID:                       app.ID,
+		DisplayName:                 app.DisplayName,
+		AppVersion:                  app.Version,
+		Architecture:                app.Architecture,
+		ExecutableName:              app.ExecutableName,
+		AllowDownload:               allowDownload,
+		FetchStatus:                 SkippedStatus,
+		FetchCacheStatus:            "unknown",
+		MaterializeStatus:           "not-run",
+		NetworkRequired:             allowDownload,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		RawHostPathExposed:          false,
+		RawExecutablePathExposed:    false,
+		RawProfilePathExposed:       false,
+		RawStateRootPathExposed:     false,
+		RawRuntimeArgvExposed:       false,
 	}
 }
 

@@ -166,6 +166,117 @@ func TestMaterializeKnownPortableLaunchProfileSkipsUntilArtifactIsVerified(t *te
 	assertKnownLaunchProfileMaterializeSafe(t, result, tempDir)
 }
 
+func TestPrepareKnownPortableLaunchProfileSkipsOfflineMissingArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PrepareKnownPortableLaunchProfile(context.Background(), KnownPrepareLaunchProfileRequest{
+		AppID:     "7zr",
+		CacheRoot: tempDir,
+		StateRoot: filepath.Join(tempDir, "state"),
+	})
+	if err != nil {
+		t.Fatalf("PrepareKnownPortableLaunchProfile returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownPrepareLaunchSchemaVersion ||
+		result.RequestType != KnownPrepareLaunchRequestType ||
+		result.Status != SkippedStatus ||
+		result.AppID != "7zr" ||
+		result.AllowDownload ||
+		result.NetworkRequired ||
+		result.FetchStatus != SkippedStatus ||
+		result.FetchCacheStatus != "missing" ||
+		result.Downloaded ||
+		result.ChecksumVerified ||
+		result.MaterializeStatus != "not-run" ||
+		result.ProfileWritten ||
+		result.LauncherBundleWritten ||
+		result.HostRootModified ||
+		result.RawExecutablePathExposed ||
+		result.RawProfilePathExposed ||
+		result.RawStateRootPathExposed ||
+		result.RawRuntimeArgvExposed ||
+		result.FetchPayload.NetworkRequired ||
+		result.SkipReason != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected offline prepare result: %#v", result)
+	}
+	if _, err := os.Stat(filepath.Join(tempDir, "state")); err == nil {
+		t.Fatalf("offline missing prepare must not create state root")
+	}
+}
+
+func TestPrepareKnownPortableLaunchProfileDownloadsAndMaterializesWhenAllowed(t *testing.T) {
+	body := minimalPEFixture(0x014c)
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	stateRoot := filepath.Join(cacheRoot, "fixture-state")
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(string(body))),
+			Header:     make(http.Header),
+			Request:    request,
+		}, nil
+	})}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+		Arguments:      []string{"--help"},
+	}})
+
+	result, err := PrepareKnownPortableLaunchProfile(context.Background(), KnownPrepareLaunchProfileRequest{
+		AppID:            "fixture",
+		CacheRoot:        cacheRoot,
+		StateRoot:        stateRoot,
+		RuntimeBinary:    "go",
+		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
+		AllowDownload:    true,
+		HTTPClient:       client,
+		Timeout:          5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("PrepareKnownPortableLaunchProfile returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.AllowDownload ||
+		!result.NetworkRequired ||
+		result.FetchStatus != PassedStatus ||
+		result.FetchCacheStatus != "verified" ||
+		!result.Downloaded ||
+		!result.ChecksumVerified ||
+		result.MaterializeStatus != PassedStatus ||
+		!result.ProfileWritten ||
+		!result.LauncherBundleWritten ||
+		result.MaterializePayload == nil ||
+		result.MaterializePayload.LauncherCommand != LaunchProfileRequestType ||
+		result.RawExecutablePathExposed ||
+		result.RawProfilePathExposed ||
+		result.RawStateRootPathExposed ||
+		result.RawRuntimeArgvExposed ||
+		result.HostRootModified {
+		t.Fatalf("unexpected allowed prepare result: %#v", result)
+	}
+	profilePath := filepath.Join(stateRoot, "profiles", "fixture.windows-app-smoke-profile.json")
+	profileRequest, err := LoadSmokeProfile(profilePath)
+	if err != nil {
+		t.Fatalf("LoadSmokeProfile returned error: %v", err)
+	}
+	if profileRequest.ExpectedMarker != "FIXTURE_OK" ||
+		!profileRequest.RedactOutput ||
+		!profileRequest.StageAppDir ||
+		len(profileRequest.Arguments) != 1 ||
+		profileRequest.Arguments[0] != "--help" {
+		t.Fatalf("unexpected prepared profile request: %#v", profileRequest)
+	}
+}
+
 func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
 	body := minimalPEFixture(0x014c)
 	sum := sha256.Sum256(body)

@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc55
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc56
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -97,6 +97,14 @@ go run ./cmd/xnix-runtime-go windows-known-app-launch-profile-materialize --app 
 ```
 
 If the artifact is missing or fails checksum verification, the command returns safe `skipped` evidence and writes no profile. If the artifact is verified, it writes a reusable profile and a `launch` mode launcher bundle that calls `windows-app-launch-profile`. The report exposes only safe file names and status fields.
+
+To combine offline cache checking, optional explicit acquisition, and materialization in one Runtime-owned command:
+
+```text
+go run ./cmd/xnix-runtime-go windows-known-app-prepare-launch-profile --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go
+```
+
+The command is offline by default. Add `--allow-download` only when the operator intends to fetch the pinned artifact from the catalog. After checksum verification, it writes the same launch profile and managed launcher bundle as the materializer.
 
 Or use the report script without launching the Windows app:
 
