@@ -90,6 +90,55 @@ func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
+	tempDir := t.TempDir()
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
+
+	result := RunnerDiagnostics(runnerPath)
+	if result.Status != PassedStatus ||
+		!result.RunnerAvailable ||
+		!result.ExplicitRunnerSupplied ||
+		result.CandidateCount != 1 ||
+		result.SelectedRunnerName != "fake-runner" ||
+		result.RawPathExposed ||
+		result.HostRootModified ||
+		result.PackageManagerInvoked ||
+		result.DockerExecuted ||
+		result.QEMUExecuted ||
+		result.ColimaExecuted {
+		t.Fatalf("unexpected explicit runner diagnostics: %#v", result)
+	}
+	if len(result.Candidates) != 1 ||
+		result.Candidates[0].ID != "explicit-runner" ||
+		result.Candidates[0].Source != "operator-supplied-runner" ||
+		!result.Candidates[0].Available ||
+		!result.Candidates[0].Selected ||
+		result.Candidates[0].Reason != "available" {
+		t.Fatalf("unexpected candidate evidence: %#v", result.Candidates)
+	}
+}
+
+func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
+	tempDir := t.TempDir()
+	missingRunner := filepath.Join(tempDir, "missing-runner")
+
+	result := RunnerDiagnostics(missingRunner)
+	if result.Status != SkippedStatus ||
+		result.RunnerAvailable ||
+		!result.ExplicitRunnerSupplied ||
+		result.CandidateCount != 1 ||
+		result.SelectedRunnerName != "" ||
+		result.RawPathExposed ||
+		!strings.Contains(result.NextAction, "--runner PATH") {
+		t.Fatalf("unexpected missing runner diagnostics: %#v", result)
+	}
+	if len(result.Candidates) != 1 ||
+		result.Candidates[0].Available ||
+		result.Candidates[0].Reason != "not-found" {
+		t.Fatalf("unexpected missing candidate evidence: %#v", result.Candidates)
+	}
+}
+
 func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("PATH-based shell runner fixture is not portable to Windows hosts")

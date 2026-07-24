@@ -76,6 +76,26 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppRunnerDiagnostics(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-runner-diagnostics", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var runnerPath string
+	flags.StringVar(&runnerPath, "runner", "", "explicit compatibility runner path")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-runner-diagnostics")
+	}
+
+	result := winapp.RunnerDiagnostics(runnerPath)
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-app-container-run-smoke", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

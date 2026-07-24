@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc25] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-app-runner-diagnostics` command for checking local Wine-compatible runner availability before attempting a real Windows app smoke.
+- Added diagnostics evidence for explicit runner paths, discovered runner candidates, safe next actions, and closed Docker/QEMU/Colima/network/package-manager gates without exposing raw host paths.
+
 ## [0.2.640-rc24] - 2026-07-24
 
 ### Fixed

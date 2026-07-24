@@ -657,6 +657,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowIdentityPreview(args[1:], stdout)
 	case "windows-app-run-smoke":
 		return runWindowsAppRunSmoke(args[1:], stdout)
+	case "windows-app-runner-diagnostics":
+		return runWindowsAppRunnerDiagnostics(args[1:], stdout)
 	case "windows-app-container-run-smoke":
 		return runWindowsAppContainerRunSmoke(args[1:], stdout)
 	case "windows-app-guest-wine-smoke":

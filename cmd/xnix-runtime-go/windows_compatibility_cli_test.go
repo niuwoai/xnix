@@ -143,6 +143,50 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunnerDiagnosticsCommandUsesExplicitRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nprintf 'ready\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-runner-diagnostics",
+		"--runner", runnerPath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_runner_diagnostics.v1" ||
+		payload["request_type"] != "windows-app-runner-diagnostics" ||
+		payload["status"] != "passed" ||
+		payload["runner_available"] != true ||
+		payload["explicit_runner_supplied"] != true ||
+		payload["selected_runner_name"] != "fake-runner" ||
+		payload["raw_path_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["package_manager_invoked"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["colima_executed"] != false {
+		t.Fatalf("unexpected runner diagnostics payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), runnerPath) || strings.Contains(output.String(), tempDir) {
+		t.Fatalf("runner diagnostics leaked raw host paths: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

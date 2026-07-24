@@ -14,12 +14,14 @@ import (
 )
 
 const (
-	SchemaVersion = "xnix.runtime.windows_app_smoke.v1"
-	RequestType   = "windows-app-run-smoke"
-	PassedStatus  = "passed"
-	FailedStatus  = "failed"
-	SkippedStatus = "skipped"
-	DefaultMarker = "XNIX_WINAPP_SMOKE_OK"
+	SchemaVersion                  = "xnix.runtime.windows_app_smoke.v1"
+	RunnerDiagnosticsSchemaVersion = "xnix.runtime.windows_app_runner_diagnostics.v1"
+	RequestType                    = "windows-app-run-smoke"
+	RunnerDiagnosticsRequestType   = "windows-app-runner-diagnostics"
+	PassedStatus                   = "passed"
+	FailedStatus                   = "failed"
+	SkippedStatus                  = "skipped"
+	DefaultMarker                  = "XNIX_WINAPP_SMOKE_OK"
 )
 
 type Request struct {
@@ -60,6 +62,43 @@ type Result struct {
 	HostNetworkingRequired      bool   `json:"host_networking_required"`
 	DockerSocketMounted         bool   `json:"docker_socket_mounted"`
 	BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
+}
+
+type RunnerDiagnosticsResult struct {
+	SchemaVersion               string                    `json:"schema_version"`
+	RequestType                 string                    `json:"request_type"`
+	Status                      string                    `json:"status"`
+	RunnerAvailable             bool                      `json:"runner_available"`
+	ExplicitRunnerSupplied      bool                      `json:"explicit_runner_supplied"`
+	CandidateCount              int                       `json:"candidate_count"`
+	Candidates                  []RunnerCandidateEvidence `json:"candidates"`
+	SelectedRunnerName          string                    `json:"selected_runner_name"`
+	NextAction                  string                    `json:"next_action"`
+	RawPathExposed              bool                      `json:"raw_path_exposed"`
+	HostRootModified            bool                      `json:"host_root_modified"`
+	PrivilegedContainerRequired bool                      `json:"privileged_container_required"`
+	HostNetworkingRequired      bool                      `json:"host_networking_required"`
+	DockerSocketMounted         bool                      `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool                      `json:"broad_host_mount_required"`
+	DockerExecuted              bool                      `json:"docker_executed"`
+	QEMUExecuted                bool                      `json:"qemu_executed"`
+	ColimaExecuted              bool                      `json:"colima_executed"`
+	NetworkChecksRun            bool                      `json:"network_checks_run"`
+	PackageManagerInvoked       bool                      `json:"package_manager_invoked"`
+}
+
+type RunnerCandidateEvidence struct {
+	ID        string `json:"id"`
+	Source    string `json:"source"`
+	Available bool   `json:"available"`
+	Selected  bool   `json:"selected"`
+	Reason    string `json:"reason"`
+}
+
+type runnerCandidate struct {
+	id     string
+	source string
+	path   string
 }
 
 func RunSmoke(ctx context.Context, request Request) (Result, error) {
@@ -149,6 +188,59 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	return result, nil
 }
 
+func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
+	explicitRunner = strings.TrimSpace(explicitRunner)
+	candidates := runnerCandidates()
+	if explicitRunner != "" {
+		candidates = []runnerCandidate{{
+			id:     "explicit-runner",
+			source: "operator-supplied-runner",
+			path:   explicitRunner,
+		}}
+	}
+
+	result := RunnerDiagnosticsResult{
+		SchemaVersion:               RunnerDiagnosticsSchemaVersion,
+		RequestType:                 RunnerDiagnosticsRequestType,
+		Status:                      SkippedStatus,
+		ExplicitRunnerSupplied:      explicitRunner != "",
+		CandidateCount:              len(candidates),
+		RawPathExposed:              false,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		DockerExecuted:              false,
+		QEMUExecuted:                false,
+		ColimaExecuted:              false,
+		NetworkChecksRun:            false,
+		PackageManagerInvoked:       false,
+	}
+
+	for _, candidate := range candidates {
+		evidence, selectedName := probeRunnerCandidate(candidate)
+		if selectedName != "" && !result.RunnerAvailable {
+			evidence.Selected = true
+			result.Status = PassedStatus
+			result.RunnerAvailable = true
+			result.SelectedRunnerName = selectedName
+		}
+		result.Candidates = append(result.Candidates, evidence)
+	}
+
+	if result.RunnerAvailable {
+		result.NextAction = "Run `windows-app-run-smoke` with the selected runner or omit `--runner` when it is discoverable from the managed environment."
+		return result
+	}
+	if explicitRunner != "" {
+		result.NextAction = "Provide an existing Wine-compatible runner file through `--runner PATH` or install Wine so `wine` or `wine64` is discoverable."
+	} else {
+		result.NextAction = "Install or provide a Wine-compatible runner, then rerun `windows-app-run-smoke`; no Docker, QEMU, Colima, network, or package-manager action was attempted by this diagnostic."
+	}
+	return result
+}
+
 func baseResult(request Request) Result {
 	marker := request.ExpectedMarker
 	if strings.TrimSpace(marker) == "" {
@@ -227,14 +319,14 @@ func resolveRunner(path string) (string, error) {
 		return validateRunnerPath(path)
 	}
 	for _, candidate := range runnerCandidates() {
-		if strings.ContainsRune(candidate, os.PathSeparator) {
-			runnerPath, err := validateRunnerPath(candidate)
+		if strings.ContainsRune(candidate.path, os.PathSeparator) {
+			runnerPath, err := validateRunnerPath(candidate.path)
 			if err == nil {
 				return runnerPath, nil
 			}
 			continue
 		}
-		runnerPath, err := exec.LookPath(candidate)
+		runnerPath, err := exec.LookPath(candidate.path)
 		if err == nil {
 			return runnerPath, nil
 		}
@@ -242,23 +334,50 @@ func resolveRunner(path string) (string, error) {
 	return "", errors.New("windows compatibility runner unavailable")
 }
 
-func runnerCandidates() []string {
-	candidates := []string{"wine", "wine64"}
+func runnerCandidates() []runnerCandidate {
+	candidates := []runnerCandidate{
+		{id: "path-wine", source: "path-command", path: "wine"},
+		{id: "path-wine64", source: "path-command", path: "wine64"},
+	}
 	if runtime.GOOS == "darwin" {
 		candidates = append(candidates,
-			"/opt/homebrew/bin/wine",
-			"/opt/homebrew/bin/wine64",
-			"/usr/local/bin/wine",
-			"/usr/local/bin/wine64",
-			"/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine",
-			"/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine64",
-			"/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine",
-			"/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine64",
-			"/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine",
-			"/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine64",
+			runnerCandidate{id: "homebrew-wine", source: "macos-common-path", path: "/opt/homebrew/bin/wine"},
+			runnerCandidate{id: "homebrew-wine64", source: "macos-common-path", path: "/opt/homebrew/bin/wine64"},
+			runnerCandidate{id: "usr-local-wine", source: "macos-common-path", path: "/usr/local/bin/wine"},
+			runnerCandidate{id: "usr-local-wine64", source: "macos-common-path", path: "/usr/local/bin/wine64"},
+			runnerCandidate{id: "wine-stable-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine"},
+			runnerCandidate{id: "wine-stable-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine64"},
+			runnerCandidate{id: "wine-devel-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine"},
+			runnerCandidate{id: "wine-devel-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine64"},
+			runnerCandidate{id: "wine-staging-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"},
+			runnerCandidate{id: "wine-staging-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine64"},
 		)
 	}
 	return candidates
+}
+
+func probeRunnerCandidate(candidate runnerCandidate) (RunnerCandidateEvidence, string) {
+	evidence := RunnerCandidateEvidence{
+		ID:     candidate.id,
+		Source: candidate.source,
+		Reason: "not-found",
+	}
+	var runnerPath string
+	var err error
+	if strings.ContainsRune(candidate.path, os.PathSeparator) {
+		runnerPath, err = validateRunnerPath(candidate.path)
+	} else {
+		runnerPath, err = exec.LookPath(candidate.path)
+	}
+	if err != nil {
+		if strings.Contains(err.Error(), "runner path must be a file") {
+			evidence.Reason = "is-directory"
+		}
+		return evidence, ""
+	}
+	evidence.Available = true
+	evidence.Reason = "available"
+	return evidence, filepath.Base(runnerPath)
 }
 
 func validateRunnerPath(path string) (string, error) {
