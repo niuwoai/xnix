@@ -334,10 +334,12 @@ LANES = [
     patterns: [
       %r{\Ainternal/runtime/winapp/},
       %r{\Acmd/xnix-runtime-go/windows_compatibility_},
+      %r{\Adocs/windows-app-smoke-profile-runbook\.md\z},
       %r{\Ascripts/winapp_smoke\.rb\z},
       %r{\Ascripts/winapp_container_smoke\.rb\z},
       %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
       %r{\Ascripts/known_winapp_},
+      %r{\Atest/test_known_winapp_guest_wine_smoke_script\.rb\z},
       %r{\Atest/test_winapp_smoke_script\.rb\z},
       %r{\Atest/fixtures/winapp/}
     ]

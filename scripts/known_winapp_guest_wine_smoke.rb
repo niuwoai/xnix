@@ -77,10 +77,10 @@ begin
       "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s,
       "GOTMPDIR" => GO_TMP_ROOT.to_s
     },
-    "go", "run", "./cmd/xnix-runtime-go", "windows-known-app-dispatch-smoke",
+    "go", "run", "./cmd/xnix-runtime-go", "windows-known-app-run",
+    "--backend", "guest-wine",
     "--app", APP_ID,
     "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
-    "--guest-boundary", "managed-known-app-guest-smoke",
     "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
     "--timeout", ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
     *APP_ARGS.flat_map { |argument| ["--arg", argument] }
@@ -97,6 +97,8 @@ begin
   payload = JSON.parse(smoke_stdout)
   case payload.fetch("status")
   when "passed"
+    abort "known Windows app QEMU guest Wine smoke used unexpected backend" unless payload.fetch("backend") == "guest-wine"
+
     puts "PASS: known Windows app QEMU guest Wine smoke (#{payload.fetch("app_id")} #{payload.fetch("app_version")})"
     exit 0
   when "skipped"

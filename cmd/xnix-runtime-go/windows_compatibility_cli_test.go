@@ -223,8 +223,13 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		"executable_path": filepath.Join(tempDir, "app", "hello.exe"),
 		"state_root":      stateRoot,
 		"runner_path":     filepath.Join(tempDir, "private-wine"),
-		"timeout":         "30s",
-		"stage_app_dir":   true,
+		"runner_bottle":   "private-bottle",
+		"runner_arguments": []string{
+			"--private-runner-arg",
+		},
+		"skip_bootstrap": true,
+		"timeout":        "30s",
+		"stage_app_dir":  true,
 	})
 
 	var output bytes.Buffer
@@ -236,10 +241,6 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		"--runtime-bin", "go",
 		"--runtime-arg", "run",
 		"--runtime-arg", "./cmd/xnix-runtime-go",
-		"--runner", "/private/runner",
-		"--runner-bottle", "private-bottle",
-		"--runner-arg", "--private-runner-arg",
-		"--skip-bootstrap",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)

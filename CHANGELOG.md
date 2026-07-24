@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc60] - 2026-07-24
+
+### Changed
+
+- Routed `scripts/known_winapp_guest_wine_smoke.rb` through the Go-owned `windows-known-app-run --backend guest-wine` entrypoint instead of the older dispatch-smoke command.
+- Added a targeted script guard proving the formal known Windows app QEMU/Wine smoke path now validates the unified `guest-wine` backend while preserving the explicit QEMU harness boundary.
+
+### Fixed
+
+- Fixed the full-suite launcher bundle CLI test to store runner settings in the smoke profile fixture instead of passing obsolete runner flags to `windows-app-launcher-bundle-record`.
+- Fixed the mainline integration review classification for the Windows app smoke runbook and known-app guest smoke script guard.
+
 ## [0.2.640-rc59] - 2026-07-24
 
 ### Added
