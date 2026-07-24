@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc5] - 2026-07-24
+
+### Added
+
+- Added `kde-controlled-launch-action-surface-audit-preview`, a Go-owned audit that validates the KDE controlled-launch desktop action metadata before any desktop-triggered smoke can be attempted.
+
+### Changed
+
+- The audit checks action identity, public D-Bus method, evidence-only argument shape, missing or malformed metadata, unsafe owner-only launch inputs, backend terms, redaction, and no-side-effect behavior while keeping D-Bus calls, KDE configuration writes, Runtime writes, desktop launch, backend launch, network access, and host mutation disabled.
+- Added targeted Go and CLI tests that audit the repository KDE action metadata and block unsafe owner arguments, backend terms, malformed metadata, missing evidence handles, and unsafe evidence handles.
+
 ## [0.2.640-rc4] - 2026-07-24
 
 ### Added

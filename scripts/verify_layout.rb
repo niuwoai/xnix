@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc4"
+EXPECTED_VERSION = "0.2.640-rc5"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -212,6 +212,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/known_app_runtime_status_launch_owner_trigger_cli_test.go
   cmd/xnix-runtime-go/kde_controlled_launch_action_commands.go
   cmd/xnix-runtime-go/kde_controlled_launch_action_cli_test.go
+  cmd/xnix-runtime-go/kde_controlled_launch_action_surface_audit_commands.go
+  cmd/xnix-runtime-go/kde_controlled_launch_action_surface_audit_cli_test.go
   cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_commands.go
   cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_cli_test.go
   cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_commands.go
@@ -310,6 +312,8 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/known_app_runtime_status_launch_owner_trigger_test.go
   internal/runtime/appidentity/kde_controlled_launch_action.go
   internal/runtime/appidentity/kde_controlled_launch_action_test.go
+  internal/runtime/appidentity/kde_controlled_launch_action_surface_audit.go
+  internal/runtime/appidentity/kde_controlled_launch_action_surface_audit_test.go
   internal/runtime/appidentity/kde_controlled_launch_session_bus_smoke_plan.go
   internal/runtime/appidentity/kde_controlled_launch_session_bus_smoke_plan_test.go
   internal/runtime/appidentity/kde_desktop_trigger_staged_invocation_readiness.go
@@ -6542,6 +6546,7 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_fixture.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_trigger.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_action.go") +
+                                 read_project_file("internal/runtime/appidentity/kde_controlled_launch_action_surface_audit.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_session_bus_smoke_plan.go") +
                                  read_project_file("internal/runtime/appidentity/kde_desktop_trigger_staged_invocation_readiness.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_controlled_execution_session_record_test.go") +
@@ -6551,6 +6556,7 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_fixture_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_trigger_test.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_action_test.go") +
+                                 read_project_file("internal/runtime/appidentity/kde_controlled_launch_action_surface_audit_test.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_session_bus_smoke_plan_test.go") +
                                  read_project_file("internal/runtime/appidentity/kde_desktop_trigger_staged_invocation_readiness_test.go") +
                                  read_project_file("scripts/staged_launcher_dispatch_smoke.rb") +
@@ -6564,6 +6570,8 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("cmd/xnix-runtime-go/known_app_runtime_status_launch_owner_trigger_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_action_commands.go") +
                                  read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_action_cli_test.go") +
+                                 read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_action_surface_audit_commands.go") +
+                                 read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_action_surface_audit_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_commands.go") +
                                  read_project_file("cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_commands.go") +
@@ -6591,6 +6599,10 @@ end
 
 %w[KDEControlledLaunchActionSchemaVersion KDEControlledLaunchActionRequestType KDEControlledLaunchActionRequest KDEControlledLaunchActionPreview PreviewKDEControlledLaunchAction GetKDEControlledLaunchActionPreview kde-controlled-launch-action-preview kde_forwarded_arguments kde_forwarded_argument_kind owner_service_args_exposed_to_kde owner_service_boundary_hidden_from_kde kde_owns_owner_service_args runtime_preview_command].each do |token|
   assert(go_compatibility_center_source.include?(token.gsub("\\ ", " ")), "Go KDE controlled launch action preview must include #{token}")
+end
+
+%w[KDEControlledLaunchActionSurfaceAuditSchemaVersion KDEControlledLaunchActionSurfaceAuditRequestType KDEControlledLaunchActionSurfaceAuditRequest KDEControlledLaunchActionSurfaceAuditPreview PreviewKDEControlledLaunchActionSurfaceAudit kde-controlled-launch-action-surface-audit-preview GetKDEControlledLaunchActionSurfaceAuditPreview audit_state safe unsafe-owner-args unsafe-backend-terms malformed missing-evidence-handle desktop-entry-file evidence_handle_shape_accepted evidence_only_argument_shape required_metadata_present metadata_malformed unsafe_owner_arguments_present unsafe_backend_terms_present surface_safe_for_human_smoke owner_service_arguments_recreated state_root_access receipt_reconstruction raw_executable_path_exposed backend_command_exposed dbus_called kde_configuration_written runtime_state_written desktop_launch_enabled backend_launch_enabled execution_started network_required host_root_modified X-Xnix-KDE-Action-ID X-Xnix-Runtime-Preview X-Xnix-Restricted-Smoke-Plan X-Xnix-DBus-Method X-Xnix-Forwarded-Argument X-Xnix-Forwards-Only-Evidence-Handle X-Xnix-Owner-Service-Args-Exposed-To-KDE X-Xnix-State-Root-Access X-Xnix-Receipt-Reconstruction TestKDEControlledLaunchActionSurfaceAuditAcceptsSafeMetadata TestKDEControlledLaunchActionSurfaceAuditBlocksUnsafeOwnerArgsBackendTermsMalformedAndMissingEvidence TestKDEControlledLaunchActionSurfaceAuditPreviewCommandAcceptsRepositoryMetadata].each do |token|
+  assert(go_compatibility_center_source.include?(token), "Go KDE controlled launch action surface audit must include #{token}")
 end
 
 %w[KDEControlledLaunchSessionBusSmokePlanSchemaVersion KDEControlledLaunchSessionBusSmokePlanRequestType KDEControlledLaunchSessionBusSmokePlanRequest KDEControlledLaunchSessionBusSmokePlanPreview PreviewKDEControlledLaunchSessionBusSmokePlan GetKDEControlledLaunchSessionBusSmokePlan kde-controlled-launch-session-bus-smoke-plan-preview restricted_session_bus_plan_ready private_session_bus_required dbus_session_bus_address_required outer_private_session_bus_command runtime_status_owner_session_smoke_command inner_staged_launcher_dispatch_command container_smoke_command dbus_controlled_launch_fixture_plan_ready dbus_controlled_launch_fixture_command dbus_controlled_launch_fixture_container_command expected_dbus_fixture_pass_marker expected_dbus_fixture_skip_marker smoke_executed_by_preview runtime-status-owner-service-session-bus-smoke dbus-controlled-launch-owner-fixture-smoke scripts/runtime_status_owner_service_session_bus_smoke.rb scripts/staged_launcher_dispatch_smoke.rb scripts/dbus_controlled_launch_owner_fixture_smoke.rb].each do |token|

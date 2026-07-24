@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc4
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc5
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc5 checkpoint candidate adds `kde-controlled-launch-action-surface-audit-preview`, a Go-owned audit for the KDE controlled-launch desktop action metadata. The audit reads the desktop action surface, verifies the action id, Runtime preview route, restricted smoke plan route, public D-Bus service/object/method, evidence-only forwarded argument, disabled KDE policy ownership, disabled owner-service argument exposure, disabled state-root access, disabled receipt reconstruction, disabled backend launch, disabled execution, and closed host/container gates. It returns safe, unsafe-owner-args, unsafe-backend-terms, malformed, or missing-evidence-handle states without echoing local file paths, owner-only values, raw executable details, backend commands, D-Bus calls, KDE configuration writes, Runtime writes, desktop launch, backend launch, network access, or host mutation. The formal `v0.2.640` release remains pending until full smoke passes.
 
 The v0.2.640-rc4 checkpoint candidate adds `owner-service-launch-envelope-guard-preview`, a Go-owned fail-closed Runtime owner guard for future desktop-triggered launch requests. The guard validates the public route, owner service method, action id, caller role, freshness state, replay marker, safe evidence handle shape, and Runtime-status launch evidence digest before any service dispatch can be considered. It blocks KDE-supplied state roots, cache roots, launcher paths, timeout values, raw executable paths, backend commands, receipt ids, session ids, and dispatch ids while keeping receipt writes, production authorization acceptance, service calls, D-Bus ownership, desktop launch, backend launch, execution, Runtime state writes, network fetches, privileged containers, and host mutation disabled. The formal `v0.2.640` release remains pending until full smoke passes.
 
