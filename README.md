@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc72`.
+The project is currently at `v0.2.640-rc73`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc72`.
 
 ## Current Checkpoint
 
-v0.2.640-rc72 wires the real known-app matrix evidence into the product read models. `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-matrix-report FILE`, consume the Go-owned matrix evidence projection, and surface KDE-safe matrix cards and counts without exposing remote paths or raw output.
+v0.2.640-rc73 opens the next real Windows GUI-app lane. The Wine i386 guest defconfig now includes the X.org client libraries and font/image dependencies that make Wine build with its X11 driver, and `scripts/wine_guest_gui_smoke.rb --execute` can run a real Wine GUI app through QEMU against an Xvfb desktop while keeping SSH loopback-bound and reporting the temporary display-network exception explicitly.
+
+The previous v0.2.640-rc72 checkpoint wired the real known-app matrix evidence into the product read models. `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-matrix-report FILE`, consume the Go-owned matrix evidence projection, and surface KDE-safe matrix cards and counts without exposing remote paths or raw output.
 
 The previous v0.2.640-rc71 checkpoint added a Go-owned known-app matrix evidence consumer. `xnix-runtime-go known-app-matrix-evidence-preview --matrix-report FILE` reads the aggregate q4 matrix JSON, validates the executed two-app QEMU/Wine evidence, preserves checksum, marker, redaction, serial-log, QEMU, and Wine counts, and projects KDE-safe per-app `known_app_smoke_evidence` without exposing remote paths or raw output.
 
@@ -67,6 +69,7 @@ ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
 ruby -Ilib test/test_kde_controlled_launch_action_stub.rb
 ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
 ruby -Ilib test/test_desktop_trigger_request_preflight_smoke_script.rb
+ruby -Ilib test/test_wine_guest_gui_smoke_script.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb --format json
 ruby -Ilib test/test_full_smoke_script.rb
@@ -77,4 +80,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc72 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc73 is a targeted follow-up and does not reset the next full-checkpoint cadence.

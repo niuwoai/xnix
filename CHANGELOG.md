@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc73] - 2026-07-24
+
+### Added
+
+- Added `scripts/wine_guest_gui_smoke.rb`, an execute-gated Xvfb/QEMU/Wine GUI smoke harness for proving a real Wine GUI Windows app creates an X window.
+- Added plan-only coverage for the Wine guest GUI smoke so targeted checks can validate safety boundaries without launching QEMU.
+
+### Changed
+
+- Changed the Wine i386 guest Buildroot defconfig to include X.org client libraries, font/image dependencies, and Wine X11 integration prerequisites required for GUI Windows applications.
+
 ## [0.2.640-rc72] - 2026-07-24
 
 ### Added

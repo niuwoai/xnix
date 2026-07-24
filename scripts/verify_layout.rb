@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc72"
+EXPECTED_VERSION = "0.2.640-rc73"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -987,6 +987,13 @@ end
 wine_guest_config = read_project_file("buildroot/configs/xnix_wine_i386_defconfig")
 %w[BR2_i386=y BR2_TOOLCHAIN_BUILDROOT_GLIBC=y BR2_LINUX_KERNEL_DEFCONFIG="i386" BR2_PACKAGE_OPENSSH_SERVER=y BR2_PACKAGE_WINE=y].each do |line|
   assert(wine_guest_config.include?(line), "Wine guest defconfig must include #{line}")
+end
+%w[BR2_PACKAGE_XORG7=y BR2_PACKAGE_XLIB_LIBX11=y BR2_PACKAGE_XLIB_LIBXCOMPOSITE=y BR2_PACKAGE_XLIB_LIBXCURSOR=y BR2_PACKAGE_XLIB_LIBXEXT=y BR2_PACKAGE_XLIB_LIBXI=y BR2_PACKAGE_XLIB_LIBXINERAMA=y BR2_PACKAGE_XLIB_LIBXRANDR=y BR2_PACKAGE_XLIB_LIBXRENDER=y BR2_PACKAGE_XLIB_LIBXXF86VM=y BR2_PACKAGE_FONTCONFIG=y BR2_PACKAGE_FREETYPE=y BR2_PACKAGE_LIBPNG=y BR2_PACKAGE_JPEG=y BR2_PACKAGE_ZLIB=y].each do |line|
+  assert(wine_guest_config.include?(line), "Wine guest GUI defconfig must include #{line}")
+end
+wine_guest_gui_smoke = read_project_file("scripts/wine_guest_gui_smoke.rb")
+%w[xnix.scripts.wine_guest_gui_smoke.v1 --execute --plan-only Xvfb xwininfo winemine.exe wineboot\ --init qemu-guest-wine-x11 qemu_user_network_restrict_disabled_for_display loopback_ssh_forwarding_only privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+  assert(wine_guest_gui_smoke.include?(token), "Wine guest GUI smoke script must include #{token}")
 end
 
 buildroot_helper = read_project_file("lib/xnix/buildroot.rb")

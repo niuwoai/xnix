@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc72
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc73
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc73 checkpoint candidate starts the real Windows GUI-app lane. The Wine i386 guest defconfig now brings in X.org client libraries plus font and image dependencies so Wine can be rebuilt with its X11 graphics driver, and `scripts/wine_guest_gui_smoke.rb` provides an execute-gated Xvfb/QEMU/Wine smoke that verifies a real Wine GUI app creates an X window while keeping SSH loopback-bound, privileged containers, host networking, broad host mounts, Docker socket mounts, and host-root mutation disabled.
 
 The v0.2.640-rc72 checkpoint candidate connects real q4 known-app matrix evidence to the Compatibility Center product surfaces. Both `compatibility-center-preview` and `kde-center-page-preview` accept `--known-app-matrix-report FILE`, consume the Go-owned `known-app-matrix-evidence-preview` projection, and expose KDE-safe real-run evidence counts/cards while keeping remote paths, raw output, desktop launch, backend launch, Runtime writes, KDE writes, and host mutation disabled.
 
