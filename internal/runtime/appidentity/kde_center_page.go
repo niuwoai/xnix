@@ -29,6 +29,8 @@ type KDECenterPagePreview struct {
 	KnownAppLauncherSessionGateConsumedCount int                                    `json:"known_app_launcher_session_gate_consumed_count"`
 	KnownAppPostReviewDispatchConsumedCount  int                                    `json:"known_app_post_review_dispatch_consumed_count"`
 	KnownAppSessionGateCards                 []KDECenterPageKnownAppSessionGateCard `json:"known_app_session_gate_cards"`
+	KnownAppMatrixEvidenceCount              int                                    `json:"known_app_matrix_evidence_count"`
+	KnownAppMatrixEvidenceCards              []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
 	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
 	ExecutionReadinessSnapshot               KDECenterPageExecution                 `json:"execution_readiness_snapshot"`
@@ -152,6 +154,35 @@ type KDECenterPageKnownAppSessionGateCard struct {
 	HostRootModified                           bool     `json:"host_root_modified"`
 	BackendDetailsExposed                      bool     `json:"backend_details_exposed"`
 	Summary                                    string   `json:"summary"`
+}
+
+type KDECenterPageKnownAppMatrixCard struct {
+	AppID                       string `json:"app_id"`
+	DisplayName                 string `json:"display_name"`
+	AppVersion                  string `json:"app_version"`
+	EvidenceKind                string `json:"evidence_kind"`
+	EvidenceSource              string `json:"evidence_source"`
+	SmokeStatus                 string `json:"smoke_status"`
+	CompatibilityState          string `json:"compatibility_state"`
+	CenterCardState             string `json:"center_card_state"`
+	PrimaryActionID             string `json:"primary_action_id"`
+	PrimaryActionLabel          string `json:"primary_action_label"`
+	PrimaryActionKind           string `json:"primary_action_kind"`
+	PrimaryActionEnabled        bool   `json:"primary_action_enabled"`
+	MarkerObserved              bool   `json:"marker_observed"`
+	ChecksumVerified            bool   `json:"checksum_verified"`
+	ExecutionEvidenceRecorded   bool   `json:"execution_evidence_recorded"`
+	RuntimeDispatchVerified     bool   `json:"runtime_dispatch_verified"`
+	LaunchAuthorizationRequired bool   `json:"launch_authorization_required"`
+	DesktopLaunchEnabled        bool   `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled        bool   `json:"backend_launch_enabled"`
+	RuntimeOwned                bool   `json:"runtime_owned"`
+	GoRuntimeBacked             bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner              bool   `json:"kde_policy_owner"`
+	HostRootModified            bool   `json:"host_root_modified"`
+	BackendDetailsExposed       bool   `json:"backend_details_exposed"`
+	RawArtifactPathExposed      bool   `json:"raw_artifact_path_exposed"`
+	Summary                     string `json:"summary"`
 }
 
 type KDECenterPageBackend struct {
@@ -759,12 +790,16 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	application := center.Applications[0]
 	navigation := kdeCenterPageNavigation()
 	knownAppSessionGateCards := kdeCenterPageKnownAppSessionGateCards(center.KnownAppSmokeEvidence)
+	knownAppMatrixCards := kdeCenterPageKnownAppMatrixCards(center.KnownAppSmokeEvidence)
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
 	}
 	if len(knownAppSessionGateCards) > 0 {
 		source += "+known-app-session-gate-evidence"
+	}
+	if len(knownAppMatrixCards) > 0 {
+		source += "+known-app-matrix-evidence"
 	}
 	preview := KDECenterPagePreview{
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
@@ -812,6 +847,8 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppLauncherSessionGateConsumedCount: center.KnownAppLauncherSessionGateConsumedCount,
 		KnownAppPostReviewDispatchConsumedCount:  center.KnownAppPostReviewDispatchConsumedCount,
 		KnownAppSessionGateCards:                 knownAppSessionGateCards,
+		KnownAppMatrixEvidenceCount:              len(knownAppMatrixCards),
+		KnownAppMatrixEvidenceCards:              knownAppMatrixCards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
 			PlanType:                    backendSelection.PlanType,
@@ -1160,6 +1197,44 @@ func kdeCenterPageKnownAppSessionGateCards(evidence []KnownAppSmokeEvidenceSumma
 			HostRootModified:                           false,
 			BackendDetailsExposed:                      false,
 			Summary:                                    item.Summary,
+		})
+	}
+	return cards
+}
+
+func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) []KDECenterPageKnownAppMatrixCard {
+	cards := make([]KDECenterPageKnownAppMatrixCard, 0, len(evidence))
+	for _, item := range evidence {
+		if item.EvidenceSource != "remote-known-winapp-matrix-smoke" {
+			continue
+		}
+		cards = append(cards, KDECenterPageKnownAppMatrixCard{
+			AppID:                       item.AppID,
+			DisplayName:                 item.DisplayName,
+			AppVersion:                  item.AppVersion,
+			EvidenceKind:                item.EvidenceKind,
+			EvidenceSource:              item.EvidenceSource,
+			SmokeStatus:                 item.SmokeStatus,
+			CompatibilityState:          item.CompatibilityState,
+			CenterCardState:             item.CenterCardState,
+			PrimaryActionID:             item.PrimaryActionID,
+			PrimaryActionLabel:          item.PrimaryActionLabel,
+			PrimaryActionKind:           item.PrimaryActionKind,
+			PrimaryActionEnabled:        item.PrimaryActionEnabled,
+			MarkerObserved:              item.MarkerObserved,
+			ChecksumVerified:            item.ChecksumVerified,
+			ExecutionEvidenceRecorded:   item.ExecutionEvidenceRecorded,
+			RuntimeDispatchVerified:     item.RuntimeDispatchVerified,
+			LaunchAuthorizationRequired: item.LaunchAuthorizationRequired,
+			DesktopLaunchEnabled:        false,
+			BackendLaunchEnabled:        false,
+			RuntimeOwned:                true,
+			GoRuntimeBacked:             true,
+			KDEPolicyOwner:              false,
+			HostRootModified:            false,
+			BackendDetailsExposed:       false,
+			RawArtifactPathExposed:      false,
+			Summary:                     item.Summary,
 		})
 	}
 	return cards

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc71
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc72
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc72 checkpoint candidate connects real q4 known-app matrix evidence to the Compatibility Center product surfaces. Both `compatibility-center-preview` and `kde-center-page-preview` accept `--known-app-matrix-report FILE`, consume the Go-owned `known-app-matrix-evidence-preview` projection, and expose KDE-safe real-run evidence counts/cards while keeping remote paths, raw output, desktop launch, backend launch, Runtime writes, KDE writes, and host mutation disabled.
 
 The v0.2.640-rc71 checkpoint candidate turns the aggregate q4 known-app matrix JSON into a Go-owned product read model. `xnix-runtime-go known-app-matrix-evidence-preview --matrix-report FILE` validates the executed matrix schema, app counts, pass/fail counts, checksum verification, marker observation, output redaction, serial-log evidence, QEMU execution, Wine execution, and closed host/container boundaries, then emits KDE-safe per-app `known_app_smoke_evidence` without exposing remote paths or raw output.
 

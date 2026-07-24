@@ -2677,7 +2677,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		evidenceSource = "known-app-guest-smoke"
 	}
 	switch evidenceSource {
-	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke":
+	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke", "remote-known-winapp-matrix-smoke":
 	default:
 		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app smoke evidence source %q is not supported", evidenceSource)
 	}
@@ -2762,7 +2762,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
 	stagedLauncherVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
-	runtimeDispatchVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
+	matrixRunVerified := evidenceSource == "remote-known-winapp-matrix-smoke" && passed
+	runtimeDispatchVerified := (evidenceSource == "staged-launcher-dispatch-smoke" || evidenceSource == "remote-known-winapp-matrix-smoke") && passed
+	evidenceKind := "known-application-managed-smoke"
 	if item.LauncherSessionGateConsumed && !stagedLauncherVerified {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires passed staged launcher evidence")
 	}
@@ -2820,12 +2822,22 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		launchGateState = "controlled-dispatch-ready"
 		summary = displayName + " managed launcher consumed the accepted session-gated review receipt before controlled dispatch."
 	}
+	if matrixRunVerified {
+		evidenceKind = "known-application-matrix-smoke"
+		compatibilityState = "real-qemu-wine-verified"
+		centerCardState = "validated-real-runtime-run"
+		launchAuthorizationState = "review-required"
+		primaryActionID = "review-known-app-matrix-evidence"
+		primaryActionLabel = "Review real run evidence"
+		primaryActionKind = "review"
+		summary = displayName + " has redacted real runtime matrix evidence."
+	}
 
 	return KnownAppSmokeEvidenceSummary{
 		AppID:                                 appID,
 		DisplayName:                           displayName,
 		AppVersion:                            appVersion,
-		EvidenceKind:                          "known-application-managed-smoke",
+		EvidenceKind:                          evidenceKind,
 		EvidenceSource:                        evidenceSource,
 		SmokeStatus:                           status,
 		CompatibilityState:                    compatibilityState,

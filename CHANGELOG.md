@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc72] - 2026-07-24
+
+### Added
+
+- Added `--known-app-matrix-report` to `compatibility-center-preview` and `kde-center-page-preview` so product read models can consume aggregate q4 known-app matrix evidence.
+- Added KDE Center page `known_app_matrix_evidence_cards` and matrix evidence counts for real-run known Windows app evidence while keeping launch and backend actions disabled.
+
+### Changed
+
+- Changed known-app smoke evidence normalization to preserve the `remote-known-winapp-matrix-smoke` source as `known-application-matrix-smoke` with `validated-real-runtime-run` card state.
+
 ## [0.2.640-rc71] - 2026-07-24
 
 ### Added

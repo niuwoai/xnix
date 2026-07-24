@@ -2405,6 +2405,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
+	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2438,7 +2439,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	}
 
 	options := appidentity.CompatibilityCenterOptions{}
-	projectedEvidence, err := loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport)
 	if err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
 	}
@@ -2479,14 +2480,32 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	return recipes, provenance, options, nil
 }
 
-func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON string, projectionFile string, matrixReport string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
 	projectionJSON = strings.TrimSpace(projectionJSON)
 	projectionFile = strings.TrimSpace(projectionFile)
-	if projectionJSON == "" && projectionFile == "" {
+	matrixReport = strings.TrimSpace(matrixReport)
+	sourceCount := 0
+	if projectionJSON != "" {
+		sourceCount++
+	}
+	if projectionFile != "" {
+		sourceCount++
+	}
+	if matrixReport != "" {
+		sourceCount++
+	}
+	if sourceCount == 0 {
 		return nil, nil
 	}
-	if projectionJSON != "" && projectionFile != "" {
-		return nil, fmt.Errorf("%s accepts only one Runtime-projected known app evidence source", commandName)
+	if sourceCount > 1 {
+		return nil, fmt.Errorf("%s accepts only one known app evidence source", commandName)
+	}
+	if matrixReport != "" {
+		preview, err := appidentity.PreviewKnownAppMatrixEvidence(appidentity.KnownAppMatrixEvidencePreviewRequest{MatrixReportPath: matrixReport})
+		if err != nil {
+			return nil, fmt.Errorf("consume known app matrix evidence: %w", err)
+		}
+		return preview.KnownAppSmokeEvidence, nil
 	}
 	payload := []byte(projectionJSON)
 	if projectionFile != "" {
@@ -2505,6 +2524,10 @@ func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projecti
 		return nil, fmt.Errorf("consume Runtime-projected known app evidence: %w", err)
 	}
 	return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
+}
+
+func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "")
 }
 
 func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {
@@ -2678,6 +2701,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppSmokeChecksumVerified := flags.Bool("known-app-smoke-checksum-verified", false, "known Windows app checksum verification result")
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
+	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2722,7 +2746,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		receipt = &loaded
 	}
 	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
-	projectedEvidence, err := loadKnownAppSmokeEvidenceFromRuntimeProjection("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport)
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
