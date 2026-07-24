@@ -47,7 +47,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -58,7 +58,7 @@ OptionParser.new do |parser|
   parser.on("--app-name NAME", "Display name for the launcher bundle") { |value| options[:app_name] = value }
   parser.on("--runtime-bin PATH", "Runtime binary used by the managed launcher bundle") { |value| options[:runtime_bin] = value }
   parser.on("--runtime-arg VALUE", "Argument passed to the runtime binary before windows-app-run-smoke") { |value| options[:runtime_args] << value }
-  parser.on("--launcher-mode MODE", "Launcher mode: execute or preflight") { |value| options[:launcher_mode] = value }
+  parser.on("--launcher-mode MODE", "Launcher mode: launch (windows-app-launch-profile), execute, or preflight") { |value| options[:launcher_mode] = value }
   parser.on("--preflight-only", "Validate a profile and emit readiness without launching the Windows app") { options[:preflight_only] = true }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }

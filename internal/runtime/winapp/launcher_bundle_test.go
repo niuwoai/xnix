@@ -156,6 +156,47 @@ func TestRecordLauncherBundleCanWritePreflightLauncher(t *testing.T) {
 	}
 }
 
+func TestRecordLauncherBundleCanWriteLaunchProfileLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	profilePath := filepath.Join(tempDir, "real-app.profile.json")
+	writeSmokeProfile(t, profilePath, map[string]any{
+		"schema_version":  SmokeProfileSchemaVersion,
+		"executable_path": filepath.Join(tempDir, "app", "hello.exe"),
+		"state_root":      stateRoot,
+		"timeout":         "30s",
+	})
+
+	record, err := RecordLauncherBundle(LauncherBundleRequest{
+		ProfilePath:   profilePath,
+		ApplicationID: "org.xnix.realapp.launch",
+		DisplayName:   "Real Windows App Launch",
+		RuntimeBinary: "xnix-runtime-go",
+		LauncherMode:  LauncherModeLaunch,
+	})
+	if err != nil {
+		t.Fatalf("RecordLauncherBundle returned error: %v", err)
+	}
+	if record.Status != PassedStatus ||
+		record.LauncherMode != LauncherModeLaunch ||
+		record.LauncherCommand != LaunchProfileRequestType ||
+		record.RawProfilePathExposed ||
+		record.RawRuntimeArgvExposed ||
+		record.HostRootModified {
+		t.Fatalf("unexpected launch profile launcher record: %#v", record)
+	}
+	launcherPath := filepath.Join(stateRoot, "launcher-bundle", "launchers", "org.xnix.realapp.launch.sh")
+	launcherText, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("ReadFile launcher returned error: %v", err)
+	}
+	if !strings.Contains(string(launcherText), "exec 'xnix-runtime-go' windows-app-launch-profile --profile") ||
+		strings.Contains(string(launcherText), "windows-app-run-smoke") ||
+		!strings.Contains(string(launcherText), shellQuote(profilePath)) {
+		t.Fatalf("launch profile launcher script did not preserve Runtime-owned launch: %s", string(launcherText))
+	}
+}
+
 func TestRecordLauncherBundleBlocksUnsafeApplicationID(t *testing.T) {
 	tempDir := t.TempDir()
 	profilePath := filepath.Join(tempDir, "real-app.profile.json")

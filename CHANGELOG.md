@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc54] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-app-launch-profile` entrypoint, which preflights a reusable Windows app profile before redacted Runtime execution.
+- Added `--launcher-mode launch` to managed launcher bundles and `scripts/winapp_smoke.rb` so desktop launchers can call the product-style launch profile path.
+
 ## [0.2.640-rc53] - 2026-07-24
 
 ### Added

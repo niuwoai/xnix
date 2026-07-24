@@ -14,6 +14,7 @@ const (
 	LauncherBundleSchemaVersion = "xnix.runtime.windows_app_launcher_bundle.v1"
 	LauncherBundleRequestType   = "windows-app-launcher-bundle-record"
 	defaultRuntimeBinary        = "xnix-runtime-go"
+	LauncherModeLaunch          = "launch"
 	LauncherModeExecute         = "execute"
 	LauncherModePreflight       = "preflight"
 )
@@ -207,12 +208,14 @@ func normalizeLauncherMode(value string) (string, string, error) {
 		return LauncherModeExecute, RequestType, nil
 	}
 	switch value {
+	case LauncherModeLaunch:
+		return LauncherModeLaunch, LaunchProfileRequestType, nil
 	case LauncherModeExecute:
 		return LauncherModeExecute, RequestType, nil
 	case LauncherModePreflight:
 		return LauncherModePreflight, SmokeProfilePreflightRequestType, nil
 	default:
-		return "", "", errors.New("launcher mode must be execute or preflight")
+		return "", "", errors.New("launcher mode must be launch, execute, or preflight")
 	}
 }
 

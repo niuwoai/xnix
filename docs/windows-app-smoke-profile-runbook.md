@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc53
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc54
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -40,13 +40,21 @@ ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state
 
 Reports expose only `runtime_argument_count`; they do not expose the runtime argv values.
 
-To create a desktop launcher that validates the profile without starting Wine or the Windows application, use preflight mode:
+To create a product-style desktop launcher that preflights first and launches only when ready, use launch mode:
+
+```text
+ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir --write-profile .local/xnix/winapp-smoke/my-app.profile.json --write-launcher-bundle --app-id org.xnix.myapp.launch --launcher-mode launch
+```
+
+`--launcher-mode launch` calls `windows-app-launch-profile`, which returns blocked readiness evidence when the runner is unavailable and delegates to redacted execution only after preflight reports ready.
+
+To create a desktop launcher that only validates the profile without starting Wine or the Windows application, use preflight mode:
 
 ```text
 ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir --write-profile .local/xnix/winapp-smoke/my-app.profile.json --write-launcher-bundle --app-id org.xnix.myapp.preflight --launcher-mode preflight
 ```
 
-`--launcher-mode execute` is the default and calls `windows-app-run-smoke`. `--launcher-mode preflight` calls `windows-app-smoke-profile-preflight`, preserving a KDE-friendly click target for readiness checks before the real runner is available. Reports expose the safe `launcher_mode` and `launcher_command` values.
+`--launcher-mode execute` is the compatibility default and calls `windows-app-run-smoke`. `--launcher-mode preflight` calls `windows-app-smoke-profile-preflight`, preserving a KDE-friendly click target for readiness checks before the real runner is available. Reports expose the safe `launcher_mode` and `launcher_command` values.
 
 Profile fields:
 
@@ -72,6 +80,12 @@ Validate the profile before launch:
 
 ```text
 go run ./cmd/xnix-runtime-go windows-app-smoke-profile-preflight --profile .local/xnix/winapp-smoke/my-app.profile.json
+```
+
+Product-style launch with a preflight gate:
+
+```text
+go run ./cmd/xnix-runtime-go windows-app-launch-profile --profile .local/xnix/winapp-smoke/my-app.profile.json
 ```
 
 Or use the report script without launching the Windows app:

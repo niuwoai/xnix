@@ -95,6 +95,32 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppLaunchProfile(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-launch-profile", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var profilePath string
+	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-launch-profile")
+	}
+
+	result, err := winapp.LaunchProfile(context.Background(), winapp.LaunchProfileRequest{
+		ProfilePath: profilePath,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsAppSmokeProfileRender(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-app-smoke-profile-render", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
@@ -172,7 +198,7 @@ func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
 	flags.StringVar(&appID, "app-id", "", "desktop-safe application id")
 	flags.StringVar(&name, "name", "", "desktop display name")
 	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
-	flags.StringVar(&launcherMode, "launcher-mode", "", "launcher mode: execute or preflight")
+	flags.StringVar(&launcherMode, "launcher-mode", "", "launcher mode: launch, execute, or preflight")
 	var runtimeArgs repeatedStringFlag
 	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-run-smoke")
 

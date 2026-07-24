@@ -158,7 +158,14 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       app_id = args[args.index("--app-id") + 1]
       app_name = args.include?("--name") ? args[args.index("--name") + 1] : app_id
       launcher_mode = args.include?("--launcher-mode") ? args[args.index("--launcher-mode") + 1] : "execute"
-      launcher_command = launcher_mode == "preflight" ? "windows-app-smoke-profile-preflight" : "windows-app-run-smoke"
+      launcher_command = case launcher_mode
+                         when "launch"
+                           "windows-app-launch-profile"
+                         when "preflight"
+                           "windows-app-smoke-profile-preflight"
+                         else
+                           "windows-app-run-smoke"
+                         end
       profile = JSON.parse(File.read(profile_path))
       state_root = profile.fetch("state_root")
       bundle_root = File.join(state_root, "launcher-bundle")
@@ -463,7 +470,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--runtime-bin", "go",
     "--runtime-arg", "run",
     "--runtime-arg", "./cmd/xnix-runtime-go",
-    "--launcher-mode", "preflight"
+    "--launcher-mode", "launch"
   )
   assert(write_profile_status.success?, "winapp smoke profile write report must succeed: #{write_profile_stderr}")
   write_profile_report = JSON.parse(write_profile_stdout)
@@ -473,8 +480,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(write_profile_report.fetch("launcher_bundle_written"), "launcher bundle report must record bundle write")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("request_type") == "windows-app-launcher-bundle-record", "launcher bundle report must embed safe payload")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("desktop_file_name") == "org.xnix.generated.desktop", "launcher bundle report must preserve desktop file name")
-  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_mode") == "preflight", "launcher bundle report must preserve launcher mode")
-  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_command") == "windows-app-smoke-profile-preflight", "launcher bundle report must preserve launcher command")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_mode") == "launch", "launcher bundle report must preserve launcher mode")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_command") == "windows-app-launch-profile", "launcher bundle report must preserve launcher command")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("runtime_argument_count") == 2, "launcher bundle report must preserve runtime argument count")
   rendered_profile = JSON.parse(generated_profile.read)
   assert(rendered_profile.fetch("schema_version") == "xnix.runtime.windows_app_smoke_profile.v1", "written profile must preserve schema")

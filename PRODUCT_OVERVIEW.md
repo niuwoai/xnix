@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc53
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc54
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc54 checkpoint candidate adds the Go-owned `windows-app-launch-profile` entrypoint for managed desktop launches. It preflights a reusable Windows app profile first, blocks safely without creating execution state when the runner is unavailable, and only delegates to `windows-app-run-smoke` when the profile is ready. Launch-profile results include safe preflight status, launch-attempt evidence, redacted Runtime payloads, PE format, architecture, staged workspace, and runner readiness while keeping profile paths, executable paths, runner paths, runtime argv details, Docker, QEMU, Colima, networking, package managers, raw app output, and host-root mutation out of desktop-facing output. Launcher bundles now also support `--launcher-mode launch`, which writes desktop scripts that call this product-style Runtime entrypoint.
 
 The v0.2.640-rc53 checkpoint candidate lets managed launcher bundles choose between `execute` and `preflight` mode. Execute mode keeps the existing `windows-app-run-smoke --profile <profile>` behavior, while preflight mode writes launchers that call `windows-app-smoke-profile-preflight --profile <profile>` so KDE or development desktop entries can validate a real Windows PE profile, architecture, working directory, state-root setting, and runner readiness without starting Wine or the application. Reports expose only safe `launcher_mode` and `launcher_command` values plus existing runtime argument counts, while keeping profile paths, state roots, runner paths, runtime argv details, Docker, QEMU, Colima, networking, package managers, Wine execution, and host-root mutation out of report output.
 

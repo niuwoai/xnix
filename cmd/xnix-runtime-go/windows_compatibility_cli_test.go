@@ -313,6 +313,99 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		strings.Contains(string(preflightLauncherText), "windows-app-run-smoke") {
 		t.Fatalf("unexpected preflight launcher script: %s", string(preflightLauncherText))
 	}
+
+	var launchOutput bytes.Buffer
+	err = run([]string{
+		"windows-app-launcher-bundle-record",
+		"--profile", profilePath,
+		"--app-id", "org.xnix.realapp.launch",
+		"--launcher-mode", "launch",
+	}, &launchOutput)
+	if err != nil {
+		t.Fatalf("launch run returned error: %v", err)
+	}
+	var launchPayload map[string]any
+	if err := json.Unmarshal(launchOutput.Bytes(), &launchPayload); err != nil {
+		t.Fatalf("Unmarshal launch returned error: %v", err)
+	}
+	if launchPayload["status"] != "passed" ||
+		launchPayload["launcher_mode"] != "launch" ||
+		launchPayload["launcher_command"] != "windows-app-launch-profile" ||
+		launchPayload["raw_profile_path_exposed"] != false ||
+		launchPayload["raw_runtime_argv_exposed"] != false {
+		t.Fatalf("unexpected launch profile launcher payload: %#v", launchPayload)
+	}
+	launchLauncherPath := filepath.Join(stateRoot, "launcher-bundle", "launchers", "org.xnix.realapp.launch.sh")
+	launchLauncherText, err := os.ReadFile(launchLauncherPath)
+	if err != nil {
+		t.Fatalf("ReadFile launch launcher returned error: %v", err)
+	}
+	if !strings.Contains(string(launchLauncherText), "windows-app-launch-profile --profile") ||
+		strings.Contains(string(launchLauncherText), "windows-app-run-smoke") {
+		t.Fatalf("unexpected launch profile launcher script: %s", string(launchLauncherText))
+	}
+}
+
+func TestWindowsAppLaunchProfileCommandBlocksBeforeExecutionWhenRunnerUnavailable(t *testing.T) {
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	profilePath := filepath.Join(tempDir, "real-app.profile.json")
+	writeCLIJSON(t, profilePath, map[string]any{
+		"schema_version":  "xnix.runtime.windows_app_smoke_profile.v1",
+		"executable_path": exePath,
+		"state_root":      stateRoot,
+		"runner_path":     filepath.Join(tempDir, "missing-runner"),
+		"timeout":         "5s",
+		"stage_app_dir":   true,
+	})
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-launch-profile",
+		"--profile", profilePath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_launch_profile.v1" ||
+		payload["request_type"] != "windows-app-launch-profile" ||
+		payload["status"] != "blocked" ||
+		payload["preflight_status"] != "blocked" ||
+		payload["launch_attempted"] != false ||
+		payload["runtime_payload"] != nil ||
+		payload["executable_name"] != "hello.exe" ||
+		payload["executable_format"] != "pe-mz" ||
+		payload["windows_executable_signature_observed"] != true ||
+		payload["executable_architecture"] != "x86_64" ||
+		payload["executable_architecture_supported"] != true ||
+		payload["wine_architecture"] != "win64" ||
+		payload["application_workspace_mode"] != "staged-application-directory" ||
+		payload["runner_available"] != false ||
+		payload["raw_output_redacted"] != true ||
+		payload["raw_profile_path_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["wine_executed"] != false {
+		t.Fatalf("unexpected launch profile payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), profilePath) ||
+		strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), exePath) {
+		t.Fatalf("launch profile output leaked private paths: %s", output.String())
+	}
+	if _, err := os.Stat(stateRoot); err == nil {
+		t.Fatalf("blocked launch profile command must not create state root before runner readiness")
+	}
 }
 
 func TestWindowsAppRunSmokeCommandCanStageApplicationDirectory(t *testing.T) {
