@@ -52,6 +52,7 @@ Use these lanes to review the current mixed worktree and future Claude Code outp
 | `CW3 / A3` State root and backend lifecycle | Persist Runtime-owned backend state without launching Wine, Proton, or VM backends. | `internal/runtime/appidentity/backend_*`, environment lifecycle files | State-root record tests, hidden-path assertions, no backend-launch assertions |
 | `CW5 / A4` Portal and permission safety | Record fake-mode permission requests and review states before real Portal transport. | `internal/runtime/portal/`, permission and execution preflight files | Granted, denied, expired, and blocked-state receipt tests |
 | `CW8 / A6` Execution ledger and session evidence | Record reviewed execution transactions while launch remains disabled. | `internal/runtime/execution/`, KDE session-evidence consumers | Ledger tests, session-record tests, no launch or backend-start assertions |
+| `CW9 / A10` Windows app runner path | Move the real Windows executable smoke runner toward product-safe consumption without enabling broad backend launch. | `internal/runtime/winapp/`, `windows-app-run-smoke`, Windows app smoke scripts | Runner tests, redacted output tests, no host-path or raw-backend exposure assertions |
 | `CW10 / A8` Evidence and drift harness | Prevent more contract-only growth by requiring implementation evidence. | `scripts/implementation_evidence_report.rb`, `scripts/runtime_contract_drift_report.rb`, `scripts/verify_layout.rb` | Report tests, layout verification, contract-drift verification |
 | `CW4 / A5` KDE entry points | Make KDE consume Runtime evidence through safe read models. | KDE shell, Compatibility Center, task-manager, KWin, tray, Dolphin, settings files | KDE-safe output tests, no backend detail or host path exposure |
 | `CW11 / A9` Product image acceptance | Validate the product through restricted Docker or QEMU only after Runtime evidence is meaningful. | Buildroot, boot, QEMU, container scripts | Loopback-only SSH, persisted logs, no privileged container or host mutation |
@@ -66,8 +67,9 @@ The current worktree contains both planning documents and implementation changes
 4. `CW3 / A3` backend state root and lifecycle.
 5. `CW5 / A4` Portal safety records.
 6. `CW8 / A6` execution ledger and session evidence.
-7. `CW10 / A8` evidence and drift gates.
-8. KDE consumers that only read durable Runtime evidence.
+7. `CW9 / A10` Windows app runner path.
+8. `CW10 / A8` evidence and drift gates.
+9. KDE consumers that only read durable Runtime evidence.
 
 Do not merge `CW11 / A9` product-image work until the restricted Docker or QEMU smoke can validate real Runtime evidence instead of static contracts.
 

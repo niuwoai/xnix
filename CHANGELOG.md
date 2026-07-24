@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc19] - 2026-07-24
+
+### Added
+
+- Added `--redact-output` support to `windows-app-run-smoke` so real Windows app runner evidence can preserve marker, byte, and line-count diagnostics without exposing raw stdout or stderr.
+- Added Go Runtime runner and CLI tests for KDE-safe redacted output summaries.
+
+### Fixed
+
+- Kept the local Windows app smoke path useful for developer marker checks by preserving raw output by default while giving product-facing consumers an explicit redacted mode.
+
 ## [0.2.640-rc18] - 2026-07-24
 
 ### Added

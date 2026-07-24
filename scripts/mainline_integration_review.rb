@@ -322,8 +322,23 @@ LANES = [
       %r{\Atest/test_release_evidence_index\.rb\z},
       %r{\Atest/test_offline_application_fixture_matrix\.rb\z},
       %r{\Atest/test_merge_readiness_packet\.rb\z},
-      %r{\Acmd/xnix-runtime-go/windows_compatibility_},
       %r{\Ainternal/runtime/appidentity/windows_compatibility_}
+    ]
+  },
+  {
+    id: "cw9-windows-app-runner-path",
+    workstream: "CW9 / A10",
+    title: "Windows app runner path",
+    description: "Real Windows executable smoke runner, known-app runner helpers, and product-safe runner evidence without broad backend launch.",
+    review_order: 8.8,
+    patterns: [
+      %r{\Ainternal/runtime/winapp/},
+      %r{\Acmd/xnix-runtime-go/windows_compatibility_},
+      %r{\Ascripts/winapp_smoke\.rb\z},
+      %r{\Ascripts/winapp_container_smoke\.rb\z},
+      %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
+      %r{\Ascripts/known_winapp_},
+      %r{\Atest/fixtures/winapp/}
     ]
   },
   {
@@ -588,6 +603,24 @@ LANE_REVIEW_REQUIREMENTS = {
       "read-only-report",
       "never-stage-all",
       "docker-qemu-not-required"
+    ]
+  },
+  "cw9-windows-app-runner-path" => {
+    required_verification: [
+      "go test ./internal/runtime/winapp -run 'TestRunSmoke' -count=1",
+      "go test ./cmd/xnix-runtime-go -run 'TestWindowsAppRunSmokeCommand' -count=1",
+      "ruby scripts/verify_layout.rb",
+      "git diff --check"
+    ],
+    required_evidence: [
+      "The local runner can execute a Windows .exe through an explicit compatibility runner or skip safely when unavailable.",
+      "Product-facing output can redact raw stdout and stderr while preserving marker and size evidence.",
+      "Runner evidence hides host paths, raw backend commands, state roots, secrets, tokens, usernames, and environment variables."
+    ],
+    safety_guards: [
+      "host-root-mutation-disabled",
+      "raw-output-redaction-available",
+      "broad-backend-launch-disabled"
     ]
   },
   "cw11-product-image-acceptance" => {

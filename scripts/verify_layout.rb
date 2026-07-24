@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc18"
+EXPECTED_VERSION = "0.2.640-rc19"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -819,15 +819,15 @@ assert(windows_workstreams_cli.include?("NewWindowsCompatibilityWorkstreamsPrevi
        "Windows compatibility workstreams CLI must use the Go Runtime read model")
 
 windows_app_smoke_go = read_project_file("internal/runtime/winapp/smoke.go")
-%w[xnix.runtime.windows_app_smoke.v1 windows-app-run-smoke XNIX_WINAPP_SMOKE_OK WINEPREFIX HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired windows-compatibility-layer validateExecutable resolveRunner].each do |token|
+%w[xnix.runtime.windows_app_smoke.v1 windows-app-run-smoke XNIX_WINAPP_SMOKE_OK WINEPREFIX HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired RawOutputRedacted KDESafeOutputSummary windows-compatibility-layer validateExecutable resolveRunner].each do |token|
   assert(windows_app_smoke_go.include?(token), "Go Windows app smoke runner must include #{token}")
 end
 windows_app_smoke_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")
-%w[windows-app-run-smoke RunSmoke exe state-root runner timeout].each do |token|
+%w[windows-app-run-smoke RunSmoke exe state-root runner timeout redact-output].each do |token|
   assert(windows_app_smoke_cli.include?(token), "Windows app smoke CLI must include #{token}")
 end
 windows_app_smoke_test = read_project_file("cmd/xnix-runtime-go/windows_compatibility_cli_test.go")
-%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner XNIX_WINAPP_SMOKE_OK host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
+%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner TestWindowsAppRunSmokeCommandCanRedactRawOutput XNIX_WINAPP_SMOKE_OK raw_output_redacted kde_safe_output_summary host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
   assert(windows_app_smoke_test.include?(token), "Windows app smoke CLI test must include #{token}")
 end
 windows_app_fixture = read_project_file("test/fixtures/winapp/hello/main.go")
@@ -7010,6 +7010,7 @@ mainline_integration_review_source = read_project_file("scripts/mainline_integra
   cw4-kde-entrypoint-consumers
   cw6-snapshot-rollback-store
   cw7-ai-diagnostic-privacy
+  cw9-windows-app-runner-path
   cw10-evidence-drift-harness
   blocked-protected-claude-owned-file
   unclassified
@@ -7051,6 +7052,7 @@ mainline_integration_review_test_source = read_project_file("test/test_mainline_
   cw4-kde-entrypoint-consumers
   cw6-snapshot-rollback-store
   cw7-ai-diagnostic-privacy
+  cw9-windows-app-runner-path
   cw10-evidence-drift-harness
   blocked-protected-claude-owned-file
   unclassified

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc18
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc19
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc19 checkpoint candidate adds product-facing redaction to the real local Windows app smoke runner. `windows-app-run-smoke --redact-output` now preserves marker observation, byte counts, line counts, and a KDE-safe output summary while omitting raw stdout and stderr. Raw output remains available by default for developer smoke marker checks, so the existing real executable runner path keeps working while gaining a safer Compatibility Center consumption mode.
 
 The v0.2.640-rc18 checkpoint candidate makes `scripts/release_evidence_index.rb` classify existing desktop-trigger request preflight smoke JSON evidence without running the smoke. `--desktop-trigger-request-preflight-smoke <path>` now produces a `desktop-trigger-request-preflight-smoke` release claim, treats missing evidence as skipped, marks passing side-effect-free evidence as implemented, and blocks failed or malformed supplied evidence. `docs/claude-code-active-work-order.md` now provides the short current Claude Code work order for C9W5/C9W6 handoff without reworking completed C9W2 through C9W4 lanes. Release evidence indexing and the active work order still keep Docker, QEMU, Wine, Colima, network checks, package-manager calls, backend launch, automatic staging/tagging, and host mutation disabled.
 

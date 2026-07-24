@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc18`.
+The project is currently at `v0.2.640-rc19`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc18`.
 
 ## Current Checkpoint
 
-v0.2.640-rc18 makes `scripts/release_evidence_index.rb` optionally classify existing desktop-trigger request preflight smoke JSON evidence through `--desktop-trigger-request-preflight-smoke`. The index never runs the smoke, emits a `desktop-trigger-request-preflight-smoke` claim, treats missing evidence as skipped, and blocks failed or malformed supplied evidence while keeping release evidence indexing offline and side-effect free. `docs/claude-code-active-work-order.md` is the short current handoff for dispatching the next Claude Code task without reworking completed C9W2 through C9W4 lanes.
+v0.2.640-rc19 adds `--redact-output` to the Go-owned `windows-app-run-smoke` path. The local Windows app smoke still keeps raw output by default for developer marker checks, but product-facing consumers can now request marker, byte, and line-count evidence without raw stdout or stderr, moving the real executable runner closer to KDE-safe Compatibility Center consumption.
+
+The previous v0.2.640-rc18 checkpoint made `scripts/release_evidence_index.rb` optionally classify existing desktop-trigger request preflight smoke JSON evidence through `--desktop-trigger-request-preflight-smoke`. The index never runs the smoke, emits a `desktop-trigger-request-preflight-smoke` claim, treats missing evidence as skipped, and blocks failed or malformed supplied evidence while keeping release evidence indexing offline and side-effect free. `docs/claude-code-active-work-order.md` is the short current handoff for dispatching the next Claude Code task without reworking completed C9W2 through C9W4 lanes.
 
 The previous v0.2.640-rc17 checkpoint made `scripts/merge_readiness_packet.rb` optionally consume existing desktop-trigger request preflight smoke JSON evidence through `--desktop-trigger-request-preflight-smoke`. The packet never runs the smoke by default, treats missing evidence as non-blocking, surfaces `desktop_trigger_request_preflight_smoke_status`, and turns failed or malformed supplied evidence into a release-only blocker while keeping merge readiness offline and side-effect free.
 
@@ -64,4 +66,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc18`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc19`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

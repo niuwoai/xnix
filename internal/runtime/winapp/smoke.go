@@ -28,6 +28,7 @@ type Request struct {
 	RunnerPath     string
 	Timeout        time.Duration
 	ExpectedMarker string
+	RedactOutput   bool
 }
 
 type Result struct {
@@ -43,6 +44,13 @@ type Result struct {
 	DurationMillis              int64  `json:"duration_millis"`
 	Stdout                      string `json:"stdout"`
 	Stderr                      string `json:"stderr"`
+	StdoutBytes                 int    `json:"stdout_bytes"`
+	StderrBytes                 int    `json:"stderr_bytes"`
+	StdoutLineCount             int    `json:"stdout_line_count"`
+	StderrLineCount             int    `json:"stderr_line_count"`
+	RawOutputIncluded           bool   `json:"raw_output_included"`
+	RawOutputRedacted           bool   `json:"raw_output_redacted"`
+	KDESafeOutputSummary        string `json:"kde_safe_output_summary"`
 	SkipReason                  string `json:"skip_reason,omitempty"`
 	FailureReason               string `json:"failure_reason,omitempty"`
 	IsolatedStateRoot           bool   `json:"isolated_state_root"`
@@ -101,9 +109,23 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	startedAt := time.Now()
 	err = command.Run()
 	result.DurationMillis = time.Since(startedAt).Milliseconds()
-	result.Stdout = stdout.String()
-	result.Stderr = stderr.String()
-	result.MarkerObserved = strings.Contains(result.Stdout, result.ExpectedMarker)
+	stdoutText := stdout.String()
+	stderrText := stderr.String()
+	result.StdoutBytes = len(stdoutText)
+	result.StderrBytes = len(stderrText)
+	result.StdoutLineCount = lineCount(stdoutText)
+	result.StderrLineCount = lineCount(stderrText)
+	result.RawOutputIncluded = !request.RedactOutput
+	result.RawOutputRedacted = request.RedactOutput
+	result.MarkerObserved = strings.Contains(stdoutText, result.ExpectedMarker)
+	result.KDESafeOutputSummary = kdeSafeOutputSummary(result)
+	if request.RedactOutput {
+		result.Stdout = ""
+		result.Stderr = ""
+	} else {
+		result.Stdout = stdoutText
+		result.Stderr = stderrText
+	}
 	result.ExitCode = exitCode(err)
 
 	if runCtx.Err() == context.DeadlineExceeded {
@@ -138,12 +160,34 @@ func baseResult(request Request) Result {
 		CompatibilityLayer:          "windows-compatibility-layer",
 		ExpectedMarker:              marker,
 		ExitCode:                    -1,
+		RawOutputIncluded:           true,
+		RawOutputRedacted:           false,
+		KDESafeOutputSummary:        "execution has not started",
 		HostRootModified:            false,
 		PrivilegedContainerRequired: false,
 		HostNetworkingRequired:      false,
 		DockerSocketMounted:         false,
 		BroadHostMountRequired:      false,
 	}
+}
+
+func lineCount(text string) int {
+	if text == "" {
+		return 0
+	}
+	count := strings.Count(text, "\n")
+	if !strings.HasSuffix(text, "\n") {
+		count++
+	}
+	return count
+}
+
+func kdeSafeOutputSummary(result Result) string {
+	streamSummary := fmt.Sprintf("stdout_bytes=%d stderr_bytes=%d stdout_lines=%d stderr_lines=%d", result.StdoutBytes, result.StderrBytes, result.StdoutLineCount, result.StderrLineCount)
+	if result.MarkerObserved {
+		return "expected smoke marker observed; " + streamSummary
+	}
+	return "expected smoke marker not observed; " + streamSummary
 }
 
 func validateExecutable(path string) (string, error) {

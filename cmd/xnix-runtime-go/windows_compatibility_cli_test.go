@@ -143,6 +143,57 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\nraw-host-path=/private/tmp/secret\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--timeout", "5s",
+		"--redact-output",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["marker_observed"] != true ||
+		payload["stdout"] != "" ||
+		payload["stderr"] != "" ||
+		payload["raw_output_included"] != false ||
+		payload["raw_output_redacted"] != true ||
+		payload["stdout_bytes"] == float64(0) ||
+		payload["stdout_line_count"] != float64(2) ||
+		!strings.Contains(payload["kde_safe_output_summary"].(string), "expected smoke marker observed") {
+		t.Fatalf("unexpected redacted smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), "/private/tmp") || strings.Contains(output.String(), "secret") || strings.Contains(output.String(), runnerPath) || strings.Contains(output.String(), exePath) {
+		t.Fatalf("redacted smoke output leaked raw values: %s", output.String())
+	}
+}
+
 func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell docker fixture is not portable to Windows hosts")

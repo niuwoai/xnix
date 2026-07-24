@@ -68,6 +68,41 @@ func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunSmokeCanRedactRawOutputForDesktopConsumers(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\nraw-host-path=/private/tmp/secret\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+		RedactOutput:   true,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.MarkerObserved ||
+		result.RawOutputIncluded ||
+		!result.RawOutputRedacted ||
+		result.Stdout != "" ||
+		result.Stderr != "" ||
+		result.StdoutBytes == 0 ||
+		result.StdoutLineCount != 2 ||
+		!strings.Contains(result.KDESafeOutputSummary, "expected smoke marker observed") {
+		t.Fatalf("unexpected redacted result: %#v", result)
+	}
+	if strings.Contains(result.KDESafeOutputSummary, "/private/tmp") ||
+		strings.Contains(result.KDESafeOutputSummary, "secret") {
+		t.Fatalf("KDE-safe output summary leaked raw runner output: %q", result.KDESafeOutputSummary)
+	}
+}
+
 func TestRunSmokeRejectsNonWindowsExecutable(t *testing.T) {
 	tempDir := t.TempDir()
 	path := filepath.Join(tempDir, "hello")

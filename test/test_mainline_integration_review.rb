@@ -32,6 +32,8 @@ begin
   fixture.write(" M test/test_ai_diagnostic_input.rb\n")
   fixture.write(" M test/test_compatibility_snapshot_plan.rb\n")
   fixture.write(" M internal/runtime/appidentity/windows_compatibility_workstreams.go\n")
+  fixture.write(" M internal/runtime/winapp/smoke.go\n")
+  fixture.write(" M cmd/xnix-runtime-go/windows_compatibility_commands.go\n")
   fixture.write(" M scripts/implementation_evidence_report.rb\n")
   fixture.write(" M scripts/kde_first_presence_smoke.rb\n")
   fixture.write(" M .dockerignore\n")
@@ -58,7 +60,7 @@ begin
   assert(report.fetch("protected_claude_file_modified"), "mainline integration review must flag protected Claude file changes")
   assert(report.fetch("excluded_prefixes") == [".gocache/", "tmp/"], "mainline integration review must expose excluded prefixes")
   assert(report.fetch("excluded_file_count") == 2, "mainline integration review must exclude cache and tmp files")
-  assert(report.fetch("changed_file_count") == 24, "mainline integration review must count included fixture files")
+  assert(report.fetch("changed_file_count") == 26, "mainline integration review must count included fixture files")
   assert(!report.fetch("safe_to_stage_all"), "mainline integration review must never mark a mixed tree safe to stage all")
   assert(!report.fetch("docker_or_qemu_required"), "mainline integration review must not require Docker or QEMU")
   assert(!report.fetch("host_root_modified"), "mainline integration review must not mutate the host root")
@@ -79,6 +81,7 @@ begin
     cw6-snapshot-rollback-store
     cw7-ai-diagnostic-privacy
     cw4-kde-entrypoint-consumers
+    cw9-windows-app-runner-path
     cw10-evidence-drift-harness
     cw11-product-image-acceptance
     blocked-protected-claude-owned-file
@@ -98,6 +101,8 @@ begin
   assert(lanes.fetch("cw6-snapshot-rollback-store").fetch("paths").include?("test/test_compatibility_snapshot_plan.rb"), "CW6 lane must include snapshot and rollback work")
   assert(lanes.fetch("cw7-ai-diagnostic-privacy").fetch("paths").include?("test/test_ai_diagnostic_input.rb"), "CW7 lane must include AI diagnostic work")
   assert(lanes.fetch("cw4-kde-entrypoint-consumers").fetch("paths").include?("scripts/kde_first_presence_smoke.rb"), "CW4 lane must include KDE-first presence smoke work")
+  assert(lanes.fetch("cw9-windows-app-runner-path").fetch("paths").include?("internal/runtime/winapp/smoke.go"), "CW9 lane must include Windows app runner work")
+  assert(lanes.fetch("cw9-windows-app-runner-path").fetch("paths").include?("cmd/xnix-runtime-go/windows_compatibility_commands.go"), "CW9 lane must include Windows app smoke CLI work")
   assert(lanes.fetch("cw10-evidence-drift-harness").fetch("paths").include?("scripts/implementation_evidence_report.rb"), "CW10 lane must include evidence report work")
   assert(lanes.fetch("cw10-evidence-drift-harness").fetch("paths").include?("internal/runtime/appidentity/windows_compatibility_workstreams.go"), "CW10 lane must include Windows compatibility workstream model work")
   cw11_paths = lanes.fetch("cw11-product-image-acceptance").fetch("paths")
@@ -123,10 +128,15 @@ begin
   assert(cw10_matrix.fetch("required_verification").include?("ruby scripts/mainline_integration_review.rb --format json"), "CW10 matrix must require the integration review report")
   assert(cw10_matrix.fetch("safety_guards").include?("never-stage-all"), "CW10 matrix must keep never-stage-all guard visible")
 
+  cw9_matrix = report.fetch("review_matrix").find { |entry| entry.fetch("id") == "cw9-windows-app-runner-path" }
+  assert(cw9_matrix.fetch("required_verification").include?("go test ./internal/runtime/winapp -run 'TestRunSmoke' -count=1"), "CW9 matrix must require local Windows app runner tests")
+  assert(cw9_matrix.fetch("safety_guards").include?("raw-output-redaction-available"), "CW9 matrix must expose raw output redaction guard")
+
   markdown, markdown_stderr, markdown_status = Open3.capture3("ruby", script.to_s, "--format", "markdown", "--status-fixture", fixture.path)
   assert(markdown_status.success?, "mainline integration review Markdown must exit successfully: #{markdown_stderr}")
   assert(markdown.include?("# Mainline Integration Review"), "Markdown report must include a title")
   assert(markdown.include?("cw1-runtime-owner-read-boundary"), "Markdown report must include CW1 lane")
+  assert(markdown.include?("cw9-windows-app-runner-path"), "Markdown report must include CW9 lane")
   assert(markdown.include?("Protected Claude file modified: true"), "Markdown report must expose protected file status")
   assert(markdown.include?("Required verification:"), "Markdown report must include required verification commands")
   assert(markdown.include?("Safety guards:"), "Markdown report must include safety guards")

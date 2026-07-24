@@ -1,6 +1,6 @@
 # Claude Code Immediate Mainline Handoff
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc18 | Formal release: v0.2.640 is still blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc19 | Formal release: v0.2.640 is still blocked until full smoke passes
 
 This is the short handoff document for asking Claude Code to perform the next Xnix mainline implementation work. It is intentionally separate from `docs/claude-code-implementation-packages.md`; do not edit that protected file while working from this handoff.
 
@@ -20,7 +20,7 @@ The current near-term milestone is still:
 
 ## Baseline State
 
-The local baseline is `v0.2.640-rc18`.
+The local baseline is `v0.2.640-rc19`.
 
 Use `docs/claude-code-active-work-order.md` as the short current Claude Code handoff for the next bounded implementation task.
 
