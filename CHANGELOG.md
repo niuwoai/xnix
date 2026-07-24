@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc18] - 2026-07-24
+
+### Added
+
+- Added optional `--desktop-trigger-request-preflight-smoke PATH` fixture support to `scripts/release_evidence_index.rb`.
+- Added a `desktop-trigger-request-preflight-smoke` release evidence claim that classifies supplied preflight smoke evidence as implemented, blocked, or skipped.
+- Added `docs/claude-code-active-work-order.md` as the short current Claude Code handoff for C9W5/C9W6.
+- Added release evidence tests for supplied, missing, failed, and malformed preflight smoke evidence.
+
+### Fixed
+
+- Kept release evidence indexing from running the preflight smoke by default while still blocking failed or malformed supplied preflight smoke evidence.
+
 ## [0.2.640-rc17] - 2026-07-24
 
 ### Added

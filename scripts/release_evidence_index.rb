@@ -182,6 +182,7 @@ def parse_options
     parser.on("--mainline-review PATH", "Use an existing mainline integration review JSON report") { |value| options[:reports][:mainline_review] = value }
     parser.on("--kde-smoke-report PATH", "Use an existing KDE-first presence smoke JSON report") { |value| options[:reports][:kde_smoke] = value }
     parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:reports][:full_checkpoint_promotion] = value }
+    parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:reports][:desktop_trigger_request_preflight_smoke] = value }
   end.parse!
 
   unless %w[json markdown].include?(options[:format])
@@ -212,6 +213,14 @@ def load_product_smoke_evidence
   parse_report_json(PRODUCT_SMOKE_EVIDENCE_PATH.read, PRODUCT_SMOKE_EVIDENCE_PATH.relative_path_from(PROJECT_ROOT).to_s)
 rescue Errno::ENOENT
   [nil, { source: PRODUCT_SMOKE_EVIDENCE_PATH.relative_path_from(PROJECT_ROOT).to_s, error: "missing-report", detail: "authorized product smoke evidence is missing" }]
+end
+
+def load_optional_desktop_trigger_request_preflight_smoke(fixture_path)
+  return [nil, nil] if fixture_path.to_s.strip.empty?
+
+  parse_report_json(Pathname.new(fixture_path).read, fixture_path)
+rescue Errno::ENOENT
+  [nil, { source: fixture_path, error: "missing-report", detail: "desktop-trigger request preflight smoke evidence is missing" }]
 end
 
 def evidence_level_from_status(status)
@@ -301,6 +310,7 @@ def build_report(options)
   end
   product_smoke_evidence, product_smoke_error = load_product_smoke_evidence
   report_errors << product_smoke_error if product_smoke_error
+  preflight_smoke_evidence, preflight_smoke_error = load_optional_desktop_trigger_request_preflight_smoke(options[:reports][:desktop_trigger_request_preflight_smoke])
 
   claims = CLAIM_DEFINITIONS.map { |definition| domain_claim(definition, domains, report_errors) }
   claims << report_integrity_claim(report_errors)
@@ -309,6 +319,7 @@ def build_report(options)
   claims << contract_drift_claim(contract_drift)
   claims << kde_presence_claim(kde_smoke)
   claims << full_checkpoint_promotion_claim(full_checkpoint_promotion, full_checkpoint_promotion_error)
+  claims << desktop_trigger_request_preflight_smoke_claim(preflight_smoke_evidence, preflight_smoke_error)
   claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error, full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << skipped_heavy_smoke_claim
 
@@ -316,7 +327,7 @@ def build_report(options)
     "version" => VERSION,
     "schema_version" => "xnix.runtime.release_evidence_index.v1",
     "report_type" => "release-evidence-index",
-    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion",
+    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke",
     "runtime_owned" => true,
     "go_runtime_backed" => false,
     "ruby_report_only" => true,
@@ -332,12 +343,85 @@ def build_report(options)
     "automatic_release_tagging_enabled" => false,
     "malformed_report_detected" => report_errors.any? { |error| error.fetch(:error) == "malformed-report" },
     "report_errors" => report_errors,
+    "desktop_trigger_request_preflight_smoke_status" => desktop_trigger_request_preflight_smoke_status(preflight_smoke_evidence, preflight_smoke_error),
     "claims" => claims,
     "claim_count" => claims.length,
     "counts" => count_claims(claims),
     "human_authorization_required" => claims.any? { |claim| claim.fetch(:human_authorization_required) },
     "release_ready" => false,
     "desktop_safe_summary" => "Release-critical evidence is indexed offline; Docker, QEMU, network checks, package managers, backend launch, automatic staging, release tagging, and host-root mutation remain disabled."
+  }
+end
+
+def desktop_trigger_request_preflight_smoke_passed?(evidence)
+  evidence.is_a?(Hash) &&
+    evidence.fetch("schema_version", nil) == "xnix.runtime.desktop_trigger_request_preflight_smoke.v1" &&
+    evidence.fetch("report_type", nil) == "desktop-trigger-request-preflight-smoke" &&
+    evidence.fetch("smoke_passed", false) == true &&
+    evidence.fetch("preflight_smoke_state", nil) == "passed" &&
+    evidence.fetch("blocked_preflight_state", nil) == "blocked-missing-promotion" &&
+    evidence.fetch("ready_preflight_state", nil) == "ready-for-operator-request" &&
+    evidence.fetch("owner_service_call_shape_verified", false) == true &&
+    evidence.fetch("operator_request_ready", false) == true &&
+    evidence.fetch("formal_release_ready", true) == false &&
+    evidence.fetch("kde_receives_materialized_owner_args", true) == false &&
+    evidence.fetch("service_call_dispatched", true) == false &&
+    evidence.fetch("dbus_called", true) == false &&
+    evidence.fetch("desktop_launch_enabled", true) == false &&
+    evidence.fetch("backend_launch_enabled", true) == false &&
+    evidence.fetch("runtime_state_written", true) == false &&
+    evidence.fetch("kde_configuration_written", true) == false &&
+    evidence.fetch("docker_executed", true) == false &&
+    evidence.fetch("qemu_executed", true) == false &&
+    evidence.fetch("wine_executed", true) == false &&
+    evidence.fetch("colima_executed", true) == false &&
+    evidence.fetch("network_checks_run", true) == false &&
+    evidence.fetch("package_manager_invoked", true) == false &&
+    evidence.fetch("host_root_modified", true) == false
+end
+
+def desktop_trigger_request_preflight_smoke_blockers(evidence, error)
+  return ["desktop-trigger-request-preflight-smoke-report:#{error.fetch(:error)}"] if error
+  return [] unless evidence
+  return [] if desktop_trigger_request_preflight_smoke_passed?(evidence)
+
+  blockers = []
+  blockers << "desktop-trigger-request-preflight-smoke-schema" unless evidence.fetch("schema_version", nil) == "xnix.runtime.desktop_trigger_request_preflight_smoke.v1" && evidence.fetch("report_type", nil) == "desktop-trigger-request-preflight-smoke"
+  blockers << "desktop-trigger-request-preflight-smoke-not-passed" unless evidence.fetch("smoke_passed", false) == true && evidence.fetch("preflight_smoke_state", nil) == "passed"
+  blockers << "desktop-trigger-request-preflight-smoke-blocked-state-missing" unless evidence.fetch("blocked_preflight_state", nil) == "blocked-missing-promotion"
+  blockers << "desktop-trigger-request-preflight-smoke-ready-state-missing" unless evidence.fetch("ready_preflight_state", nil) == "ready-for-operator-request"
+  blockers << "desktop-trigger-request-preflight-smoke-side-effect-gate-open" unless %w[
+    kde_receives_materialized_owner_args
+    service_call_dispatched
+    dbus_called
+    desktop_launch_enabled
+    backend_launch_enabled
+    runtime_state_written
+    kde_configuration_written
+    docker_executed
+    qemu_executed
+    wine_executed
+    colima_executed
+    network_checks_run
+    package_manager_invoked
+    host_root_modified
+  ].all? { |key| evidence.fetch(key, true) == false }
+  blockers.uniq
+end
+
+def desktop_trigger_request_preflight_smoke_status(evidence, error)
+  blockers = desktop_trigger_request_preflight_smoke_blockers(evidence, error)
+  {
+    "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
+    "smoke_passed" => evidence.is_a?(Hash) && blockers.empty?,
+    "status" => if error
+                  "blocked"
+                elsif evidence.is_a?(Hash)
+                  blockers.empty? ? "implemented" : "blocked"
+                else
+                  "not-supplied"
+                end,
+    "blockers" => blockers
   }
 end
 
@@ -483,6 +567,39 @@ def full_checkpoint_promotion_claim(promotion, error)
     human_authorization_required: !blockers.empty?,
     blockers: blockers,
     next_branch_sized_follow_up: blockers.empty? ? "Use the human-owned release workflow to promote the formal tag." : "Run the human-authorized full smoke and review the promotion packet before release."
+  }
+end
+
+def desktop_trigger_request_preflight_smoke_claim(evidence, error)
+  blockers = desktop_trigger_request_preflight_smoke_blockers(evidence, error)
+  level = if error || evidence
+            blockers.empty? ? "implemented" : "blocked"
+          else
+            "skipped"
+          end
+  {
+    id: "desktop-trigger-request-preflight-smoke",
+    title: "Desktop-trigger request preflight smoke evidence is classified without execution",
+    release_claim: "The release index can consume existing desktop-trigger request preflight smoke evidence without running the smoke.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[scripts/desktop_trigger_request_preflight_smoke.rb scripts/release_evidence_index.rb scripts/merge_readiness_packet.rb],
+    verification_commands: ["ruby scripts/desktop_trigger_request_preflight_smoke.rb --format json", "ruby scripts/release_evidence_index.rb --format json"],
+    current_evidence: if error
+                        "Desktop-trigger request preflight smoke evidence could not be loaded."
+                      elsif evidence
+                        "Desktop-trigger request preflight smoke evidence is #{blockers.empty? ? "passing and side-effect-free" : "present but blocked"}."
+                      else
+                        "Desktop-trigger request preflight smoke evidence was not supplied; the release index did not run the smoke."
+                      end,
+    smoke_passed: evidence.is_a?(Hash) && blockers.empty?,
+    preflight_smoke_state: evidence.is_a?(Hash) ? evidence.fetch("preflight_smoke_state", "missing") : "not-supplied",
+    blocked_preflight_state: evidence.is_a?(Hash) ? evidence.fetch("blocked_preflight_state", "missing") : "not-supplied",
+    ready_preflight_state: evidence.is_a?(Hash) ? evidence.fetch("ready_preflight_state", "missing") : "not-supplied",
+    unsafe_gates: disabled_unsafe_gates,
+    human_authorization_required: !blockers.empty?,
+    blockers: blockers,
+    next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this evidence available to release review; do not replace it with live smoke execution inside the index." : "Supply a passing preflight smoke JSON report before relying on this release claim."
   }
 end
 

@@ -131,6 +131,59 @@ blocked_promotion = write_json_fixture(
   "wine_executed_by_packet" => false,
   "host_root_modified" => false
 )
+preflight_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
+  "report_type" => "desktop-trigger-request-preflight-smoke",
+  "smoke_passed" => true,
+  "preflight_smoke_state" => "passed",
+  "blocked_preflight_state" => "blocked-missing-promotion",
+  "ready_preflight_state" => "ready-for-operator-request",
+  "owner_service_call_shape_verified" => true,
+  "operator_request_ready" => true,
+  "formal_release_ready" => false,
+  "kde_receives_materialized_owner_args" => false,
+  "service_call_dispatched" => false,
+  "dbus_called" => false,
+  "desktop_launch_enabled" => false,
+  "backend_launch_enabled" => false,
+  "runtime_state_written" => false,
+  "kde_configuration_written" => false,
+  "docker_executed" => false,
+  "qemu_executed" => false,
+  "wine_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false,
+  "host_root_modified" => false
+)
+failed_preflight_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
+  "report_type" => "desktop-trigger-request-preflight-smoke",
+  "smoke_passed" => false,
+  "preflight_smoke_state" => "failed",
+  "blocked_preflight_state" => "blocked-missing-promotion",
+  "ready_preflight_state" => "blocked",
+  "owner_service_call_shape_verified" => false,
+  "operator_request_ready" => false,
+  "formal_release_ready" => false,
+  "kde_receives_materialized_owner_args" => false,
+  "service_call_dispatched" => false,
+  "dbus_called" => false,
+  "desktop_launch_enabled" => false,
+  "backend_launch_enabled" => false,
+  "runtime_state_written" => false,
+  "kde_configuration_written" => false,
+  "docker_executed" => false,
+  "qemu_executed" => false,
+  "wine_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false,
+  "host_root_modified" => false
+)
+malformed_preflight_smoke = write_text_fixture("{not-json")
 malformed = nil
 
 begin
@@ -148,7 +201,9 @@ begin
     "--kde-smoke-report",
     kde_smoke.path,
     "--full-checkpoint-promotion",
-    completed_promotion.path
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path
   )
   assert(status.success?, "release evidence index JSON must exit successfully: #{stderr}")
   report = JSON.parse(stdout)
@@ -156,6 +211,10 @@ begin
   assert(report.fetch("version") == File.read(project_root.join("VERSION")).strip, "release evidence index must expose the current version")
   assert(report.fetch("schema_version") == "xnix.runtime.release_evidence_index.v1", "release evidence index must expose the schema")
   assert(report.fetch("report_type") == "release-evidence-index", "release evidence index must identify its report type")
+  preflight_status = report.fetch("desktop_trigger_request_preflight_smoke_status")
+  assert(preflight_status.fetch("evidence_supplied"), "release evidence index must report supplied preflight smoke evidence")
+  assert(preflight_status.fetch("smoke_passed"), "release evidence index must report passing preflight smoke evidence")
+  assert(preflight_status.fetch("status") == "implemented", "release evidence index must expose implemented preflight smoke evidence")
   assert(report.fetch("runtime_owned"), "release evidence index must keep Runtime ownership explicit")
   assert(!report.fetch("go_runtime_backed"), "release evidence index must identify itself as a Ruby report, not Go Runtime business logic")
   assert(report.fetch("ruby_report_only"), "release evidence index must be marked Ruby report only")
@@ -196,6 +255,10 @@ begin
   assert(claims.fetch("product-image-qemu-acceptance").fetch("promotion_decision") == "promote", "product image claim must expose promotion decision")
   assert(claims.fetch("full-checkpoint-promotion").fetch("evidence_level") == "implemented", "promotion claim must be implemented when promotion packet allows release")
   assert(claims.fetch("full-checkpoint-promotion").fetch("formal_release_ready"), "promotion claim must expose formal readiness")
+  assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("evidence_level") == "implemented", "preflight smoke claim must be implemented when supplied evidence passes")
+  assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("smoke_passed"), "preflight smoke claim must expose smoke pass state")
+  assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("blocked_preflight_state") == "blocked-missing-promotion", "preflight smoke claim must preserve blocked state evidence")
+  assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("ready_preflight_state") == "ready-for-operator-request", "preflight smoke claim must preserve ready state evidence")
   assert(claims.fetch("restricted-heavy-smoke-skipped").fetch("evidence_level") == "skipped", "heavy smoke claim must be skipped by default")
   assert(claims.fetch("kde-first-presence").fetch("evidence_level") == "implemented", "KDE presence claim must be implemented when seven entry points are present")
   assert(claims.fetch("contract-drift").fetch("evidence_level") == "implemented", "contract drift claim must be implemented when no drift is reported")
@@ -215,13 +278,88 @@ begin
     "--kde-smoke-report",
     kde_smoke.path,
     "--full-checkpoint-promotion",
-    completed_promotion.path
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path
   )
   assert(markdown_status.success?, "release evidence index Markdown must exit successfully: #{markdown_stderr}")
   assert(markdown.include?("# Release Evidence Index"), "Markdown report must include a title")
   assert(markdown.include?("runtime-owner-read-boundary"), "Markdown report must include runtime owner claim")
   assert(markdown.include?("product-image-qemu-acceptance"), "Markdown report must include product image claim")
   assert(markdown.include?("full-checkpoint-promotion"), "Markdown report must include promotion claim")
+  assert(markdown.include?("desktop-trigger-request-preflight-smoke"), "Markdown report must include preflight smoke claim")
+
+  missing_preflight_stdout, missing_preflight_stderr, missing_preflight_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path
+  )
+  assert(missing_preflight_status.success?, "missing preflight smoke evidence case must still emit a release index: #{missing_preflight_stderr}")
+  missing_preflight_report = JSON.parse(missing_preflight_stdout)
+  missing_preflight_claim = missing_preflight_report.fetch("claims").find { |claim| claim.fetch("id") == "desktop-trigger-request-preflight-smoke" }
+  assert(missing_preflight_report.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "not-supplied", "missing preflight smoke evidence must be visible")
+  assert(missing_preflight_claim.fetch("evidence_level") == "skipped", "missing preflight smoke evidence must be skipped, not executed")
+
+  failed_preflight_stdout, failed_preflight_stderr, failed_preflight_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    failed_preflight_smoke.path
+  )
+  assert(failed_preflight_status.success?, "failed preflight smoke evidence case must still emit a release index: #{failed_preflight_stderr}")
+  failed_preflight_report = JSON.parse(failed_preflight_stdout)
+  failed_preflight_claim = failed_preflight_report.fetch("claims").find { |claim| claim.fetch("id") == "desktop-trigger-request-preflight-smoke" }
+  assert(failed_preflight_report.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "blocked", "failed preflight smoke evidence must be blocked")
+  assert(failed_preflight_claim.fetch("evidence_level") == "blocked", "failed preflight smoke claim must be blocked")
+  assert(failed_preflight_claim.fetch("blockers").include?("desktop-trigger-request-preflight-smoke-not-passed"), "failed preflight smoke claim must name the failed smoke blocker")
+
+  malformed_preflight_stdout, malformed_preflight_stderr, malformed_preflight_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    malformed_preflight_smoke.path
+  )
+  assert(malformed_preflight_status.success?, "malformed preflight smoke evidence case must still emit a release index: #{malformed_preflight_stderr}")
+  malformed_preflight_report = JSON.parse(malformed_preflight_stdout)
+  malformed_preflight_claim = malformed_preflight_report.fetch("claims").find { |claim| claim.fetch("id") == "desktop-trigger-request-preflight-smoke" }
+  assert(malformed_preflight_report.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "blocked", "malformed preflight smoke evidence must be blocked")
+  assert(malformed_preflight_claim.fetch("evidence_level") == "blocked", "malformed preflight smoke claim must be blocked")
+  assert(malformed_preflight_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed preflight smoke claim must name malformed-report blocker")
 
   blocked_stdout, blocked_stderr, blocked_status = Open3.capture3(
     "ruby",
@@ -237,7 +375,9 @@ begin
     "--kde-smoke-report",
     kde_smoke.path,
     "--full-checkpoint-promotion",
-    blocked_promotion.path
+    blocked_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path
   )
   assert(blocked_status.success?, "blocked promotion case must still emit a release index: #{blocked_stderr}")
   blocked_report = JSON.parse(blocked_stdout)
@@ -266,7 +406,9 @@ begin
     "--kde-smoke-report",
     kde_smoke.path,
     "--full-checkpoint-promotion",
-    completed_promotion.path
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path
   )
   assert(malformed_status.success?, "malformed report case must still emit a release index: #{malformed_stderr}")
   malformed_report = JSON.parse(malformed_stdout)
@@ -274,7 +416,7 @@ begin
   malformed_claims = malformed_report.fetch("claims").to_h { |claim| [claim.fetch("id"), claim] }
   assert(malformed_claims.fetch("report-integrity").fetch("evidence_level") == "blocked", "report integrity claim must block malformed reports")
 ensure
-  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, malformed].compact.each do |file|
+  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, failed_preflight_smoke, malformed_preflight_smoke, malformed].compact.each do |file|
     file.close
     file.unlink
   end

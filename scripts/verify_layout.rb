@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc17"
+EXPECTED_VERSION = "0.2.640-rc18"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -26,6 +26,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-seventh-wave-task-batch.md
   docs/claude-code-current-execution-queue.md
   docs/claude-code-next-actions-handoff.md
+  docs/claude-code-active-work-order.md
   docs/claude-code-next-dispatch-brief.md
   docs/claude-code-next-mainline-work-pack.md
   docs/claude-code-stability-release-train.md
@@ -7064,9 +7065,14 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   xnix.runtime.release_evidence_index.v1
   implementation-evidence+contract-drift+mainline-review+kde-first-presence
   full-checkpoint-promotion
+  optional-desktop-trigger-request-preflight-smoke
   REPORT_COMMANDS
   CLAIM_DEFINITIONS
   --full-checkpoint-promotion
+  --desktop-trigger-request-preflight-smoke
+  desktop-trigger-request-preflight-smoke
+  desktop_trigger_request_preflight_smoke_status
+  desktop-trigger-request-preflight-smoke-not-passed
   runtime-owner-read-boundary
   recipe-artifact-trust
   runtime-state-backend-lifecycle
@@ -7118,6 +7124,9 @@ release_evidence_index_test_source = read_project_file("test/test_release_eviden
   human-authorized
   product-image-qemu-acceptance
   full-checkpoint-promotion
+  desktop-trigger-request-preflight-smoke
+  desktop_trigger_request_preflight_smoke_status
+  desktop-trigger-request-preflight-smoke-not-passed
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
   historical_product_smoke_evidence_passed
