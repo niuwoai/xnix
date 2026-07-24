@@ -644,6 +644,9 @@ type KnownRunResult struct {
 	GuestStartAttempted         bool                                `json:"guest_start_attempted"`
 	GuestStarted                bool                                `json:"guest_started"`
 	GuestStartMode              string                              `json:"guest_start_mode"`
+	GuestHost                   string                              `json:"guest_host,omitempty"`
+	GuestPort                   string                              `json:"guest_port,omitempty"`
+	GuestPortAuto               bool                                `json:"guest_port_auto"`
 	QEMUSerialLogWritten        bool                                `json:"qemu_serial_log_written"`
 	ExecutableCopied            bool                                `json:"executable_copied"`
 	MarkerObserved              bool                                `json:"marker_observed"`
@@ -1501,6 +1504,9 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 				return result, nil
 			}
 			result.GuestStarted = true
+			result.GuestHost = guest.Host
+			result.GuestPort = guest.Port
+			result.GuestPortAuto = guest.AutoPort
 			result.QEMUExecuted = true
 			defer func() {
 				guest.Stop()
@@ -1512,7 +1518,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 			CacheRoot: request.CacheRoot,
 			Arguments: append([]string{}, request.Arguments...),
 			Host:      request.Host,
-			Port:      request.Port,
+			Port:      stringDefault(result.GuestPort, request.Port),
 			User:      request.User,
 			KeyPath:   request.KeyPath,
 			RemoteDir: request.RemoteDir,
@@ -1586,6 +1592,10 @@ func safeQEMUGuestStartSkipReason(err error) string {
 		return "qemu guest kernel unavailable"
 	case strings.Contains(text, "guest ssh transport unavailable"):
 		return "guest ssh transport unavailable"
+	case strings.Contains(text, "qemu guest loopback host required"):
+		return "qemu guest loopback host required"
+	case strings.Contains(text, "qemu guest auto port unavailable"):
+		return "qemu guest auto port unavailable"
 	case strings.Contains(text, "timed out waiting for ssh"):
 		return "qemu guest timed out waiting for ssh"
 	case strings.Contains(text, "exited before ssh became ready"):

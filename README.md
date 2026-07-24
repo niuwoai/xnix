@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc61`.
+The project is currently at `v0.2.640-rc62`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc61`.
 
 ## Current Checkpoint
 
-v0.2.640-rc61 moves QEMU guest lifecycle control for the known Windows app guest-wine lane into Go. `windows-known-app-run --backend guest-wine --start-qemu` now explicitly starts, waits for, uses, and stops the loopback-only QEMU Wine guest after verifying the cached known app artifact, while the Ruby script remains the restricted test harness. The previous v0.2.640-rc60 checkpoint routed the formal known-app QEMU/Wine smoke harness through the unified run entrypoint.
+v0.2.640-rc62 makes the Go-owned known Windows app guest-wine lane allocate an available loopback SSH port with `windows-known-app-run --backend guest-wine --start-qemu --port auto`. The Runtime passes that port to QEMU host forwarding and to the SSH/SCP Wine execution path, reports safe port evidence, and keeps the Ruby smoke harness off fixed host port 2222. The previous v0.2.640-rc61 checkpoint moved QEMU guest lifecycle control for this lane into Go.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc61 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc62 is a targeted follow-up and does not reset the next full-checkpoint cadence.

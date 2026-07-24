@@ -18,6 +18,7 @@ const (
 	GuestRequestType   = "windows-app-guest-wine-smoke"
 	DefaultGuestHost   = "127.0.0.1"
 	DefaultGuestPort   = "2222"
+	AutoGuestPort      = "auto"
 	DefaultGuestUser   = "root"
 	DefaultRemoteDir   = "/tmp/xnix-winapp-smoke"
 )
@@ -308,9 +309,17 @@ func ParseGuestPort(value string) (string, error) {
 	if strings.TrimSpace(value) == "" {
 		return DefaultGuestPort, nil
 	}
-	port, err := strconv.Atoi(value)
+	port, err := strconv.Atoi(strings.TrimSpace(value))
 	if err != nil || port < 1 || port > 65535 {
 		return "", errors.New("guest port must be between 1 and 65535")
 	}
-	return value, nil
+	return strings.TrimSpace(value), nil
+}
+
+func ParseGuestPortForQEMU(value string, startQEMU bool) (string, error) {
+	port := strings.TrimSpace(value)
+	if startQEMU && strings.EqualFold(port, AutoGuestPort) {
+		return AutoGuestPort, nil
+	}
+	return ParseGuestPort(port)
 }

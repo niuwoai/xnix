@@ -776,7 +776,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	flags.StringVar(&runnerPath, "runner", "", "Windows compatibility runner path stored in the local launch profile")
 	flags.StringVar(&runnerBottle, "runner-bottle", "", "runner bottle name stored in the local launch profile")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host for guest-wine backend")
-	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port for guest-wine backend")
+	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port for guest-wine backend; use auto with --start-qemu")
 	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user for guest-wine backend")
 	flags.StringVar(&keyPath, "key", "", "guest SSH private key path for guest-wine backend")
 	flags.StringVar(&remoteDir, "remote-dir", "/tmp/xnix-known-winapp-smoke", "guest remote smoke directory for guest-wine backend")
@@ -814,7 +814,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse qemu boot timeout: %w", err)
 	}
-	parsedPort, err := winapp.ParseGuestPort(port)
+	parsedPort, err := winapp.ParseGuestPortForQEMU(port, startQEMU)
 	if err != nil {
 		return err
 	}

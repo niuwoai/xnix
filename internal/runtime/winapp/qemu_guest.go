@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -42,6 +44,9 @@ type QEMUStartedGuest struct {
 	serialLogPath string
 	waitDone      chan error
 	stopped       bool
+	Host          string
+	Port          string
+	AutoPort      bool
 }
 
 func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest) (*QEMUStartedGuest, error) {
@@ -57,6 +62,10 @@ func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest)
 	if err != nil {
 		return nil, fmt.Errorf("guest ssh transport unavailable: %w", err)
 	}
+	host, port, autoPort, err := qemuGuestHostPort(request)
+	if err != nil {
+		return nil, err
+	}
 
 	timeout := request.BootTimeout
 	if timeout <= 0 {
@@ -66,7 +75,7 @@ func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest)
 	defer cancel()
 
 	var serial bytes.Buffer
-	command := exec.CommandContext(ctx, qemuPath, qemuGuestArgs(request, kernelImage)...)
+	command := exec.CommandContext(ctx, qemuPath, qemuGuestArgs(request, kernelImage, host, port)...)
 	command.Stdout = &serial
 	command.Stderr = &serial
 	if err := command.Start(); err != nil {
@@ -78,6 +87,9 @@ func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest)
 		serialBuffer:  &serial,
 		serialLogPath: request.SerialLogPath,
 		waitDone:      make(chan error, 1),
+		Host:          host,
+		Port:          port,
+		AutoPort:      autoPort,
 	}
 
 	go func() {
@@ -85,8 +97,8 @@ func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest)
 	}()
 
 	probeRequest := GuestRequest{
-		Host:    request.Host,
-		Port:    request.Port,
+		Host:    host,
+		Port:    port,
 		User:    request.User,
 		KeyPath: request.KeyPath,
 	}
@@ -157,7 +169,46 @@ func validateQEMUKernelImage(path string) (string, error) {
 	return absolutePath, nil
 }
 
-func qemuGuestArgs(request QEMUStartedGuestRequest, kernelImage string) []string {
+func qemuGuestHostPort(request QEMUStartedGuestRequest) (string, string, bool, error) {
+	host := stringDefault(request.Host, DefaultGuestHost)
+	if host == "localhost" {
+		host = DefaultGuestHost
+	}
+	if host != DefaultGuestHost {
+		return "", "", false, errors.New("qemu guest loopback host required")
+	}
+	port := strings.TrimSpace(request.Port)
+	if port == "" {
+		return host, DefaultGuestPort, false, nil
+	}
+	if strings.EqualFold(port, AutoGuestPort) {
+		allocated, err := allocateLoopbackPort(host)
+		if err != nil {
+			return "", "", false, fmt.Errorf("qemu guest auto port unavailable: %w", err)
+		}
+		return host, allocated, true, nil
+	}
+	parsed, err := ParseGuestPort(port)
+	if err != nil {
+		return "", "", false, err
+	}
+	return host, parsed, false, nil
+}
+
+func allocateLoopbackPort(host string) (string, error) {
+	listener, err := net.Listen("tcp", net.JoinHostPort(host, "0"))
+	if err != nil {
+		return "", err
+	}
+	defer listener.Close()
+	address, ok := listener.Addr().(*net.TCPAddr)
+	if !ok || address.Port <= 0 {
+		return "", errors.New("loopback tcp port allocation failed")
+	}
+	return strconv.Itoa(address.Port), nil
+}
+
+func qemuGuestArgs(request QEMUStartedGuestRequest, kernelImage string, host string, port string) []string {
 	memory := stringDefault(request.Memory, DefaultQEMUMemory)
 	cpuCount := stringDefault(request.CPUCount, DefaultQEMUCPUCount)
 	cpuModel := stringDefault(request.CPUModel, DefaultQEMUCPUModel)
@@ -171,7 +222,7 @@ func qemuGuestArgs(request QEMUStartedGuestRequest, kernelImage string) []string
 		"-no-reboot",
 		"-kernel", kernelImage,
 		"-append", "console=ttyS0,115200 panic=-1",
-		"-netdev", "user,id=net0,restrict=on,hostfwd=tcp:" + stringDefault(request.Host, DefaultGuestHost) + ":" + guestPort(GuestRequest{Port: request.Port}) + "-:22",
+		"-netdev", "user,id=net0,restrict=on,hostfwd=tcp:" + host + ":" + port + "-:22",
 		"-device", "e1000,netdev=net0",
 	}
 }

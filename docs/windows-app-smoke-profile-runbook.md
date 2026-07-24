@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc61
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc62
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -119,10 +119,10 @@ For the unified Runtime-owned known app execution entrypoint, select a backend e
 ```text
 go run ./cmd/xnix-runtime-go windows-known-app-run --backend local --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runner path/to/wine
 go run ./cmd/xnix-runtime-go windows-known-app-run --backend guest-wine --app 7zr --cache-root .cache/xnix/known-winapps --key .cache/xnix/ssh-test-key/id_ed25519 --timeout 90s
-go run ./cmd/xnix-runtime-go windows-known-app-run --backend guest-wine --start-qemu --app 7zr --cache-root .cache/xnix/known-winapps --key .cache/xnix/ssh-test-key/id_ed25519 --qemu-kernel .cache/xnix-wine-i386-output/images/bzImage --qemu-serial-log .cache/xnix/known-winapp-guest-wine-smoke/qemu-serial.log --qemu-boot-timeout 180s --timeout 90s
+go run ./cmd/xnix-runtime-go windows-known-app-run --backend guest-wine --start-qemu --port auto --app 7zr --cache-root .cache/xnix/known-winapps --key .cache/xnix/ssh-test-key/id_ed25519 --qemu-kernel .cache/xnix-wine-i386-output/images/bzImage --qemu-serial-log .cache/xnix/known-winapp-guest-wine-smoke/qemu-serial.log --qemu-boot-timeout 180s --timeout 90s
 ```
 
-`--backend local` reuses `windows-known-app-prepare-and-launch-profile`. `--backend guest-wine` reuses the loopback SSH Wine guest smoke path. By default it assumes the Wine-capable guest is already running; with explicit `--start-qemu`, the Go Runtime first verifies the cached artifact, then starts and stops a loopback-only QEMU guest around the same Wine execution path. The unified result reports backend selection, backend readiness, checksum verification, launch attempt, runner availability, guest-start evidence, marker observation, and either `local_payload` or `guest_payload`.
+`--backend local` reuses `windows-known-app-prepare-and-launch-profile`. `--backend guest-wine` reuses the loopback SSH Wine guest smoke path. By default it assumes the Wine-capable guest is already running; with explicit `--start-qemu`, the Go Runtime first verifies the cached artifact, then starts and stops a loopback-only QEMU guest around the same Wine execution path. Use `--port auto` with `--start-qemu` to avoid fixed host port conflicts; the unified result reports the safe loopback guest host, allocated port, backend selection, backend readiness, checksum verification, launch attempt, runner availability, guest-start evidence, marker observation, and either `local_payload` or `guest_payload`.
 
 Or use the report script without launching the Windows app:
 

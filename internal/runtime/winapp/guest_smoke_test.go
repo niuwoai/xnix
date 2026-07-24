@@ -133,6 +133,19 @@ func TestResolveToolAcceptsPathCommandNames(t *testing.T) {
 	}
 }
 
+func TestParseGuestPortForQEMUAcceptsAutoOnlyWhenStartingQEMU(t *testing.T) {
+	port, err := ParseGuestPortForQEMU("auto", true)
+	if err != nil {
+		t.Fatalf("ParseGuestPortForQEMU returned error: %v", err)
+	}
+	if port != AutoGuestPort {
+		t.Fatalf("ParseGuestPortForQEMU returned %q, want %q", port, AutoGuestPort)
+	}
+	if _, err := ParseGuestPortForQEMU("auto", false); err == nil {
+		t.Fatalf("ParseGuestPortForQEMU accepted auto without QEMU start")
+	}
+}
+
 func writeFakeGuestSSH(t *testing.T, tempDir string, logPath string, wineAvailable bool) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-ssh")

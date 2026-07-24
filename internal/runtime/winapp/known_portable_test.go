@@ -565,7 +565,7 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		Backend:         KnownRunBackendGuestWine,
 		CacheRoot:       cacheRoot,
 		Host:            "127.0.0.1",
-		Port:            "2222",
+		Port:            AutoGuestPort,
 		User:            "root",
 		KeyPath:         filepath.Join(guestRoot, "id_ed25519"),
 		RemoteDir:       "/tmp/xnix-known-winapp-smoke",
@@ -586,6 +586,9 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		!result.GuestStartAttempted ||
 		!result.GuestStarted ||
 		result.GuestStartMode != "go-qemu" ||
+		result.GuestHost != "127.0.0.1" ||
+		result.GuestPort == "" ||
+		!result.GuestPortAuto ||
 		!result.QEMUExecuted ||
 		!result.BackendReady ||
 		!result.WineExecuted ||
@@ -602,6 +605,17 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 	}
 	if !strings.Contains(string(serialBytes), "fake qemu boot") {
 		t.Fatalf("serial log did not capture fake qemu output: %s", string(serialBytes))
+	}
+	if !strings.Contains(string(serialBytes), "hostfwd=tcp:127.0.0.1:"+result.GuestPort+"-:22") {
+		t.Fatalf("serial log did not capture allocated loopback port %q: %s", result.GuestPort, string(serialBytes))
+	}
+	guestBytes, err := os.ReadFile(guestLogPath)
+	if err != nil {
+		t.Fatalf("ReadFile guest log returned error: %v", err)
+	}
+	if !strings.Contains(string(guestBytes), "-p "+result.GuestPort) ||
+		!strings.Contains(string(guestBytes), "-P "+result.GuestPort) {
+		t.Fatalf("guest log did not use allocated port %q: %s", result.GuestPort, string(guestBytes))
 	}
 }
 
@@ -1556,6 +1570,7 @@ func writeFakeQEMU(t *testing.T, tempDir string) string {
 	path := filepath.Join(tempDir, "fake-qemu")
 	body := "#!/bin/sh\n" +
 		"printf 'fake qemu boot\\n'\n" +
+		"printf 'fake qemu args %s\\n' \"$*\"\n" +
 		"trap 'exit 0' TERM INT\n" +
 		"while :; do sleep 1; done\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {

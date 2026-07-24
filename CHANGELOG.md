@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc62] - 2026-07-24
+
+### Added
+
+- Added `--port auto` support for `windows-known-app-run --backend guest-wine --start-qemu`, allowing the Go Runtime to allocate an available loopback SSH port for each QEMU guest run.
+- Added safe guest port evidence fields (`guest_host`, `guest_port`, and `guest_port_auto`) to Go-owned known app guest-wine run results.
+
+### Changed
+
+- Updated the known Windows app QEMU/Wine smoke harness to use the Runtime-owned automatic loopback port instead of a fixed host port.
+
 ## [0.2.640-rc61] - 2026-07-24
 
 ### Added

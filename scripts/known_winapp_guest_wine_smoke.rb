@@ -49,6 +49,7 @@ smoke_stdout, smoke_stderr, smoke_status = run_command(
   "go", "run", "./cmd/xnix-runtime-go", "windows-known-app-run",
   "--backend", "guest-wine",
   "--start-qemu",
+  "--port", "auto",
   "--app", APP_ID,
   "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
   "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
