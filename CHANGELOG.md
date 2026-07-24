@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc10] - 2026-07-24
+
+### Changed
+
+- Routed the private D-Bus controlled-launch fixture and C smoke adapter through `desktop-trigger-service-call-materialization-preview`, matching the staged launcher dispatch smoke's Go-owned service-call materialization path.
+- Renamed the D-Bus fixture's exposed Go metadata payload from owner-trigger evidence to service-call materialization evidence while preserving the owner service-call envelope payload.
+
+### Fixed
+
+- Removed the D-Bus controlled-launch fixture's direct dependency on `known-app-runtime-status-launch-owner-trigger-preview` for owner service call arguments, keeping the lower-level trigger consumed inside the Go materialization packet instead.
+
 ## [0.2.640-rc9] - 2026-07-24
 
 ### Added

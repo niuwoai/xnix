@@ -1,6 +1,6 @@
 # Claude Code Immediate Mainline Handoff
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc9 | Formal release: v0.2.640 is still blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc10 | Formal release: v0.2.640 is still blocked until full smoke passes
 
 This is the short handoff document for asking Claude Code to perform the next Xnix mainline implementation work. It is intentionally separate from `docs/claude-code-implementation-packages.md`; do not edit that protected file while working from this handoff.
 
@@ -20,7 +20,7 @@ The current near-term milestone is still:
 
 ## Baseline State
 
-The local baseline is `v0.2.640-rc9`.
+The local baseline is `v0.2.640-rc10`.
 
 Already present:
 
@@ -31,6 +31,7 @@ Already present:
 - `desktop-trigger-dry-run-request-review-preview` from `v0.2.640-rc7`.
 - `desktop-trigger-service-call-materialization-preview` from `v0.2.640-rc8`.
 - The real staged launcher dispatch smoke consumes `desktop-trigger-service-call-materialization-preview` with an explicit human-authorized smoke candidate flag from `v0.2.640-rc9`.
+- The private D-Bus controlled-launch fixture consumes the same `desktop-trigger-service-call-materialization-preview` path from `v0.2.640-rc10`.
 - The existing staged smoke already reaches the Runtime owner service through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch ...` when QEMU/Wine prerequisites are available.
 
 Do not ask Claude Code to reimplement completed checkpoint packets unless Codex or a reviewer explicitly asks for a repair branch.
@@ -84,8 +85,8 @@ Use this order unless Codex or a reviewer asks for a repair branch.
 | Order | Task | Suggested branch | Outcome |
 | --- | --- | --- | --- |
 | Done | `C8W9` Route staged smoke through materialized service-call arguments | `codex/staged-smoke-service-call-materialization` | Present locally in v0.2.640-rc9. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C8W10` Route the D-Bus controlled-launch fixture through the same materialization packet | `codex/dbus-fixture-service-call-materialization` | The private D-Bus fixture no longer consumes the lower-level owner trigger directly for controlled-launch service-call arguments. |
-| 2 | `C8W11` Add a release-promotion evidence packet for `v0.2.640` | `codex/full-checkpoint-promotion-packet` | Codex and the operator get a deterministic promotion checklist after the human-authorized full smoke passes. |
+| Done | `C8W10` Route the D-Bus controlled-launch fixture through the same materialization packet | `codex/dbus-fixture-service-call-materialization` | Present locally in v0.2.640-rc10. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C8W11` Add a release-promotion evidence packet for `v0.2.640` | `codex/full-checkpoint-promotion-packet` | Codex and the operator get a deterministic promotion checklist after the human-authorized full smoke passes. |
 
 Stop after each task and return the branch for Codex review. Do not chain tasks.
 

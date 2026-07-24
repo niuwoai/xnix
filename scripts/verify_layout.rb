@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc9"
+EXPECTED_VERSION = "0.2.640-rc10"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6535,7 +6535,7 @@ dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/d
                                                     read_project_file("runtime/dbus/xnix_compatd_smoke.c") +
                                                     read_project_file("scripts/container.rb") +
                                                     read_project_file("lib/xnix/container.rb")
-%w[dbus-controlled-launch-owner-fixture-smoke D-Bus\ controlled\ launch\ owner\ fixture\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS xnix-dbus-smoke org.xnix.Compatibility1.ShowRuntimeControlledLaunch known-app-runtime-status-launch-owner-fixture-record known-app-runtime-status-launch-owner-trigger-preview PreviewKnownAppRuntimeStatusLaunchOwnerTrigger GetKnownAppRuntimeStatusLaunchOwnerTrigger desktop_trigger_from_runtime assert_owner_trigger_response go_runtime_owner_trigger_preview json_string_array_value owner_service_call_args owner_service_cli_args desktop_trigger.fetch desktop_dbus_method XNIX_RUNTIME_OWNER_STATE_ROOT XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE .xnix-dbus-controlled-launch-scratch CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES rw,exec,nosuid go_owner_trigger_available go_owner_trigger_json go_owner_service_call_json runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle desktop_receipt_fields_reconstructed desktop_kde_state_root_access docker.sock --privileged --network\ host type=bind dbus_controlled_launch_owner_fixture_smoke_command].each do |token|
+%w[dbus-controlled-launch-owner-fixture-smoke D-Bus\ controlled\ launch\ owner\ fixture\ smoke dbus-run-session DBUS_SESSION_BUS_ADDRESS xnix-dbus-smoke org.xnix.Compatibility1.ShowRuntimeControlledLaunch known-app-runtime-status-launch-owner-fixture-record desktop-trigger-service-call-materialization-preview --human-authorized-smoke PreviewDesktopTriggerServiceCallMaterialization GetDesktopTriggerServiceCallMaterialization service_call_materialization_from_runtime assert_service_call_materialization_response go_service_call_materialization_preview json_string_array_value owner_service_call_args owner_service_cli_args desktop_trigger.fetch desktop_dbus_method human_authorized_smoke full_checkpoint_promotion_claimed formal_release_ready owner_trigger_state XNIX_RUNTIME_OWNER_STATE_ROOT XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE .xnix-dbus-controlled-launch-scratch CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES rw,exec,nosuid go_service_call_materialization_available go_service_call_materialization_json go_owner_service_call_json runtime-owner-service-call desktop-action-dispatch kde-dbus-runtime-status-action kde_forwards_only_evidence_handle desktop_receipt_fields_reconstructed desktop_kde_state_root_access docker.sock --privileged --network\ host type=bind dbus_controlled_launch_owner_fixture_smoke_command].each do |token|
   assert(dbus_controlled_launch_owner_fixture_smoke_source.include?(token.gsub("\\ ", " ")), "D-Bus controlled launch owner fixture smoke must include #{token}")
 end
 

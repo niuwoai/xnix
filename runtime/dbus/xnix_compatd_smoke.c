@@ -122,26 +122,29 @@ go_owner_service_call5(const gchar *method_name,
 }
 
 static gchar *
-go_runtime_owner_trigger_preview(const gchar *evidence_relative_path)
+go_service_call_materialization_preview(const gchar *evidence_relative_path)
 {
   const gchar *state_root = g_getenv("XNIX_RUNTIME_OWNER_STATE_ROOT");
   gchar *stdout_data = NULL;
   gchar *stderr_data = NULL;
   GError *error = NULL;
   gint wait_status = 0;
-  gchar *argv[7] = {0};
+  gchar *argv[10] = {0};
 
   if (state_root == NULL || state_root[0] == '\0' || !safe_evidence_relative_path(evidence_relative_path)) {
     return NULL;
   }
 
   argv[0] = "xnix-runtime-go";
-  argv[1] = "known-app-runtime-status-launch-owner-trigger-preview";
+  argv[1] = "desktop-trigger-service-call-materialization-preview";
   argv[2] = "--state-root";
   argv[3] = (gchar *)state_root;
-  argv[4] = "--evidence-relative-path";
-  argv[5] = (gchar *)evidence_relative_path;
-  argv[6] = NULL;
+  argv[4] = "--desktop-entry-file";
+  argv[5] = "kde/actions/xnix-runtime-status-controlled-launch.desktop";
+  argv[6] = "--human-authorized-smoke";
+  argv[7] = "--evidence-relative-path";
+  argv[8] = (gchar *)evidence_relative_path;
+  argv[9] = NULL;
 
   if (!g_spawn_sync(NULL,
                     argv,
@@ -1120,7 +1123,7 @@ static GVariant *
 build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
 {
   GVariantBuilder action;
-  gchar *go_owner_trigger_json = NULL;
+  gchar *go_service_call_materialization_json = NULL;
   gchar *go_owner_service_call_json = NULL;
   gchar *trigger_runtime_method = NULL;
   gchar *trigger_action_type = NULL;
@@ -1128,18 +1131,18 @@ build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
   gchar *trigger_handoff_kind = NULL;
   gchar *trigger_handoff_value = NULL;
   gchar *trigger_owner_service_method = NULL;
-  gboolean go_owner_trigger_available = FALSE;
+  gboolean go_service_call_materialization_available = FALSE;
   gboolean go_owner_service_call_available = FALSE;
 
-  go_owner_trigger_json = go_runtime_owner_trigger_preview(evidence_relative_path);
-  go_owner_trigger_available = go_owner_trigger_json != NULL && go_owner_trigger_json[0] != '\0';
-  if (go_owner_trigger_available) {
-    trigger_runtime_method = json_string_value(go_owner_trigger_json, "desktop_callable_runtime_method");
-    trigger_action_type = json_string_value(go_owner_trigger_json, "desktop_callable_route");
-    trigger_call_type = json_string_value(go_owner_trigger_json, "owner_service_call_type");
-    trigger_owner_service_method = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 0);
-    trigger_handoff_kind = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 1);
-    trigger_handoff_value = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 2);
+  go_service_call_materialization_json = go_service_call_materialization_preview(evidence_relative_path);
+  go_service_call_materialization_available = go_service_call_materialization_json != NULL && go_service_call_materialization_json[0] != '\0';
+  if (go_service_call_materialization_available) {
+    trigger_runtime_method = json_string_value(go_service_call_materialization_json, "desktop_callable_runtime_method");
+    trigger_action_type = json_string_value(go_service_call_materialization_json, "desktop_callable_route");
+    trigger_call_type = json_string_value(go_service_call_materialization_json, "owner_service_call_type");
+    trigger_owner_service_method = json_string_array_value(go_service_call_materialization_json, "owner_service_call_args", 0);
+    trigger_handoff_kind = json_string_array_value(go_service_call_materialization_json, "owner_service_call_args", 1);
+    trigger_handoff_value = json_string_array_value(go_service_call_materialization_json, "owner_service_call_args", 2);
   }
   if (trigger_owner_service_method != NULL && trigger_owner_service_method[0] != '\0' &&
       trigger_handoff_kind != NULL && trigger_handoff_kind[0] != '\0' &&
@@ -1163,10 +1166,10 @@ build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
   g_variant_builder_add(&action, "{sv}", "action_trigger_handoff_type", g_variant_new_string(trigger_handoff_kind == NULL ? "" : trigger_handoff_kind));
   g_variant_builder_add(&action, "{sv}", "evidence_relative_path", g_variant_new_string(evidence_relative_path));
   g_variant_builder_add(&action, "{sv}", "call_type", g_variant_new_string(trigger_call_type == NULL ? "" : trigger_call_type));
-  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_available", g_variant_new_boolean(go_owner_trigger_available));
-  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_schema", g_variant_new_string(go_owner_trigger_available ? "xnix.runtime.known_app_runtime_status_launch_owner_trigger.v1" : ""));
-  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_request_type", g_variant_new_string(go_owner_trigger_available ? "known-app-runtime-status-launch-owner-trigger-preview" : ""));
-  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_json", g_variant_new_string(go_owner_trigger_available ? go_owner_trigger_json : ""));
+  g_variant_builder_add(&action, "{sv}", "go_service_call_materialization_available", g_variant_new_boolean(go_service_call_materialization_available));
+  g_variant_builder_add(&action, "{sv}", "go_service_call_materialization_schema", g_variant_new_string(go_service_call_materialization_available ? "xnix.runtime.desktop_trigger_service_call_materialization.v1" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_service_call_materialization_request_type", g_variant_new_string(go_service_call_materialization_available ? "desktop-trigger-service-call-materialization-preview" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_service_call_materialization_json", g_variant_new_string(go_service_call_materialization_available ? go_service_call_materialization_json : ""));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_available", g_variant_new_boolean(go_owner_service_call_available));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_schema", g_variant_new_string(go_owner_service_call_available ? "xnix.runtime.owner_service_call.v1" : ""));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_request_type", g_variant_new_string(go_owner_service_call_available ? "runtime-owner-service-call" : ""));
@@ -1189,7 +1192,7 @@ build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
   g_variant_builder_add(&action, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&action, "{sv}", "desktop_safe_summary", g_variant_new_string("D-Bus forwards a Runtime-status evidence handoff to the Go Runtime Owner controlled launch boundary."));
 
-  g_free(go_owner_trigger_json);
+  g_free(go_service_call_materialization_json);
   g_free(go_owner_service_call_json);
   g_free(trigger_runtime_method);
   g_free(trigger_action_type);

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc9`.
+The project is currently at `v0.2.640-rc10`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.640-rc9`.
 
 ## Current Checkpoint
 
-v0.2.640-rc9 keeps the formal full checkpoint gate pending and routes the real staged launcher dispatch smoke through `desktop-trigger-service-call-materialization-preview` before it invokes `xnix-runtime-owner`. The materialization packet now has an explicit human-authorized smoke candidate flag so the smoke can consume evidence-only `ShowRuntimeControlledLaunch` owner service call arguments without claiming that the formal full checkpoint has already been promoted. The formal `v0.2.640` tag remains pending until full smoke passes.
+v0.2.640-rc10 keeps the formal full checkpoint gate pending and routes the private D-Bus controlled-launch fixture through the same `desktop-trigger-service-call-materialization-preview` packet already consumed by the real staged launcher dispatch smoke. The C smoke adapter now consumes materialized evidence-only `ShowRuntimeControlledLaunch` owner service call arguments instead of calling the lower-level owner trigger preview directly. The formal `v0.2.640` tag remains pending until full smoke passes.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, request-object writes, permission grants, preview-side service dispatch, D-Bus calls, Runtime writes, KDE configuration writes, desktop launch, backend launch, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.640-rc8 added the service-call materialization packet; v0.2.640-rc7 added the dry-run review gate before any human-authorized desktop-triggered smoke.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, request-object writes, permission grants, preview-side service dispatch, Runtime writes, KDE configuration writes, desktop launch, backend launch, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.640-rc9 added the staged smoke materialization consumer path; v0.2.640-rc8 added the service-call materialization packet; v0.2.640-rc7 added the dry-run review gate before any human-authorized desktop-triggered smoke.
 
 ## Main References
 
@@ -51,4 +51,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc9`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc10`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
