@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc76] - 2026-07-25
+
+### Fixed
+
+- Disabled Wine Mono, Gecko, and menu-builder bootstrap with the Wine-compatible `winemenubuilder.exe=d,mscoree,mshtml=` override, and added Go-owned suppression of only the first-run `control.exe appwiz.cpl install_mono` subprocess so guest GUI smoke can reach `winemine.exe` without interrupting core Wine prefix setup.
+
 ## [0.2.640-rc75] - 2026-07-24
 
 ### Added

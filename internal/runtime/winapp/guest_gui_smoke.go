@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	GuestGUISchemaVersion  = "xnix.runtime.windows_app_guest_wine_gui_smoke.v1"
-	GuestGUIRequestType    = "windows-app-guest-wine-gui-smoke"
-	DefaultGuestGUIApp     = "/usr/lib/wine/i386-windows/winemine.exe"
-	DefaultGuestGUIDisplay = "10.0.2.2:100"
-	DefaultHostGUIDisplay  = ":100"
+	GuestGUISchemaVersion    = "xnix.runtime.windows_app_guest_wine_gui_smoke.v1"
+	GuestGUIRequestType      = "windows-app-guest-wine-gui-smoke"
+	DefaultGuestGUIApp       = "/usr/lib/wine/i386-windows/winemine.exe"
+	DefaultGuestGUIDisplay   = "10.0.2.2:100"
+	DefaultHostGUIDisplay    = ":100"
+	GuestGUIWineDLLOVERRIDES = "winemenubuilder.exe=d,mscoree,mshtml="
 )
 
 type GuestGUIRequest struct {
@@ -249,11 +250,24 @@ func hostDisplay(request GuestGUIRequest) string {
 
 func guestGUIWinebootCommand(remoteDir string, display string) string {
 	return strings.Join([]string{
+		"(",
 		"DISPLAY=" + shellQuote(display),
 		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
 		"WINEDEBUG=-all",
+		"WINEDLLOVERRIDES=" + shellQuote(GuestGUIWineDLLOVERRIDES),
 		"wineboot",
 		"--init",
+		"&",
+		"wineboot_pid=$!",
+		";",
+		"while kill -0 \"$wineboot_pid\" 2>/dev/null; do",
+		guestGUIWineInstallerSuppressCommand(),
+		"sleep 1",
+		";",
+		"done",
+		";",
+		"wait \"$wineboot_pid\"",
+		")",
 	}, " ")
 }
 
@@ -262,6 +276,7 @@ func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) 
 		"DISPLAY=" + shellQuote(display),
 		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
 		"WINEDEBUG=-all",
+		"WINEDLLOVERRIDES=" + shellQuote(GuestGUIWineDLLOVERRIDES),
 		"wine",
 		shellQuote(guiApp),
 		">" + shellQuote(remoteDir+"/stdout.txt"),
@@ -272,6 +287,10 @@ func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) 
 		"\"$!\"",
 		">" + shellQuote(remoteDir+"/pid"),
 	}, " ")
+}
+
+func guestGUIWineInstallerSuppressCommand() string {
+	return "ps w | while read pid user command; do case \"$command\" in \"{control.exe}\"*\"appwiz.cpl install_mono\"*) kill \"$pid\" 2>/dev/null || true ;; esac; done;"
 }
 
 func runXWinInfo(ctx context.Context, xwininfoPath string, display string) (string, string, error) {

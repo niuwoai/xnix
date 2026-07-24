@@ -92,6 +92,9 @@ func TestRunGuestGUISmokeObservesWindowThroughGoRuntime(t *testing.T) {
 	}
 	log := string(logBytes)
 	if !strings.Contains(log, "wineboot --init") ||
+		!strings.Contains(log, "WINEDLLOVERRIDES='winemenubuilder.exe=d,mscoree,mshtml='") ||
+		!strings.Contains(log, "{control.exe}") ||
+		!strings.Contains(log, "appwiz.cpl install_mono") ||
 		!strings.Contains(log, "winemine.exe") ||
 		!strings.Contains(log, "xwininfo display=:100") {
 		t.Fatalf("GUI smoke did not run expected commands: %s", log)
