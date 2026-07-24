@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.637] - 2026-07-24
+
+### Added
+
+- Added `kde-controlled-launch-session-bus-smoke-plan-preview`, a Go-owned KDE controlled-launch smoke plan that links the action stub to the restricted private session-bus D-Bus smoke chain without executing it.
+
+### Changed
+
+- Updated the KDE controlled-launch action stub, targeted tests, and layout guards to require the restricted smoke plan command while preserving evidence-only KDE forwarding, hidden owner-service arguments, disabled KDE state-root access, disabled receipt reconstruction, and no execution start from the preview.
+
 ## [0.2.636] - 2026-07-24
 
 ### Added

@@ -250,6 +250,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppRuntimeStatusLaunchOwnerTriggerPreview(args[1:], stdout)
 	case "kde-controlled-launch-action-preview":
 		return runKDEControlledLaunchActionPreview(args[1:], stdout)
+	case "kde-controlled-launch-session-bus-smoke-plan-preview":
+		return runKDEControlledLaunchSessionBusSmokePlanPreview(args[1:], stdout)
 	case appidentity.KnownAppKDERuntimeStatusLaunchAction:
 		return runKnownAppKDEShowRuntimeControlledLaunch(args[1:], stdout)
 	case "launch-intent-preview":

@@ -12,6 +12,7 @@ class KDEControlledLaunchActionStubTest < Minitest::Test
     assert_includes contents, "Name=Xnix Runtime controlled launch"
     assert_includes contents, "X-Xnix-KDE-Action-ID=xnix.runtime-status.controlled-launch"
     assert_includes contents, "X-Xnix-Runtime-Preview=xnix-runtime-go kde-controlled-launch-action-preview"
+    assert_includes contents, "X-Xnix-Restricted-Smoke-Plan=xnix-runtime-go kde-controlled-launch-session-bus-smoke-plan-preview"
     assert_includes contents, "X-Xnix-DBus-Service=org.xnix.Compatibility1"
     assert_includes contents, "X-Xnix-DBus-Object-Path=/org/xnix/Compatibility1"
     assert_includes contents, "X-Xnix-DBus-Method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch"

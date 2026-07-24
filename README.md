@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.636`.
+The project is currently at `v0.2.637`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.636`.
 
 ## Current Checkpoint
 
-v0.2.636 adds a KDE-facing Runtime-status controlled-launch action stub and a Go `kde-controlled-launch-action-preview` command. The KDE artifact declares the public D-Bus route while forwarding only the Runtime-status evidence handle; Go keeps Runtime ownership, owner-service arguments, state-root access, receipt reconstruction, and execution gates out of KDE.
+v0.2.637 adds a Go-owned KDE controlled-launch session-bus smoke plan. `kde-controlled-launch-session-bus-smoke-plan-preview` links the KDE action stub to the existing restricted private-session D-Bus smoke chain without executing it, while preserving evidence-only KDE forwarding and keeping Runtime-owned inputs hidden.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.635 also made the C D-Bus smoke adapter consume Go owner-trigger metadata before dispatching `ShowRuntimeControlledLaunch`.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.636 also added the KDE-facing Runtime-status controlled-launch action stub and Go `kde-controlled-launch-action-preview` command.
 
 ## Main References
 
@@ -32,8 +32,8 @@ Historical `docs/claude-code-*` files remain repository evidence, but new implem
 Run targeted checks for small versions:
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle|TestPrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerConsumesHandoff|TestPrepareKnownAppKDERuntimeStatusLaunchExecutionRevalidatesRuntimeOwnedState|TestPreviewKnownAppKDERuntimeStatusLaunchActionTriggerConsumesHandoff|TestPreviewKnownAppRuntimeStatusLaunchOwnerTriggerConsumesVerifiedHandoff' -count=1
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKDEControlledLaunchActionPreviewCommandForwardsOnlyEvidenceHandle|TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot|TestShowRuntimeControlledLaunchCommandForwardsOnlyEvidenceHandoff|TestShowRuntimeControlledLaunchCommandRejectsReconstructedFields|TestKnownAppKDERuntimeStatusLaunchExecutionCommandConsumesActionTriggerHandoff|TestKnownAppKDERuntimeStatusLaunchActionTriggerCommandAssemblesLaunchRequestFromHandoff|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandConsumesVerifiedHandoff|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandRejectsMissingStateRoot' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewKDEControlledLaunchSessionBusSmokePlanLinksActionToRestrictedSmoke|TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle|TestPreviewKnownAppRuntimeStatusLaunchOwnerTriggerConsumesVerifiedHandoff' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestrictedSmoke|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandRejectsMissingStateRoot|TestKDEControlledLaunchActionPreviewCommandForwardsOnlyEvidenceHandle|TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandConsumesVerifiedHandoff' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner -run 'TestServiceCallDispatchesShowRuntimeControlledLaunch|TestServiceCallServesReadDispatchInProcess' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner -run 'TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall|TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureBlocksWithoutVerifiedArtifact' -count=1

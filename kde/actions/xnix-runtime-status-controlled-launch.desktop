@@ -5,6 +5,7 @@ Comment=Forward a Runtime-status evidence handle to the Xnix Runtime D-Bus contr
 Icon=media-playback-start
 X-Xnix-KDE-Action-ID=xnix.runtime-status.controlled-launch
 X-Xnix-Runtime-Preview=xnix-runtime-go kde-controlled-launch-action-preview
+X-Xnix-Restricted-Smoke-Plan=xnix-runtime-go kde-controlled-launch-session-bus-smoke-plan-preview
 X-Xnix-DBus-Service=org.xnix.Compatibility1
 X-Xnix-DBus-Object-Path=/org/xnix/Compatibility1
 X-Xnix-DBus-Method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch
