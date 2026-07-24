@@ -40,7 +40,11 @@ func run(args []string, stdout io.Writer) error {
 	var remoteDir string
 	var sshPath string
 	var scpPath string
+	var xwininfoPath string
+	var guestDisplay string
+	var hostDisplay string
 	var timeoutText string
+	var guiWaitText string
 	flags.StringVar(&appID, "app", "", "known Windows app id")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
 	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the Runtime owner or smoke harness")
@@ -55,7 +59,11 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&remoteDir, "remote-dir", "/tmp/xnix-known-winapp-smoke", "guest remote smoke directory")
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
 	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
+	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo client path for guest GUI dispatch")
+	flags.StringVar(&guestDisplay, "guest-display", "", "guest DISPLAY value for guest GUI dispatch")
+	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
+	flags.StringVar(&guiWaitText, "gui-wait", "10s", "guest GUI observation wait")
 
 	var appArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the known Windows app")
@@ -68,6 +76,10 @@ func run(args []string, stdout io.Writer) error {
 	}
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", launcherName)
+	}
+	app, err := winapp.LookupKnownPortableApp(appID)
+	if err != nil {
+		return err
 	}
 
 	launcherArgv := []string{launcherName, "--app", appID}
@@ -104,9 +116,56 @@ func run(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
+	guiWait, err := time.ParseDuration(guiWaitText)
+	if err != nil {
+		return fmt.Errorf("parse GUI wait: %w", err)
+	}
 	parsedPort, err := winapp.ParseGuestPort(port)
 	if err != nil {
 		return err
+	}
+
+	if app.GuestBuiltinGUI {
+		result, err := winapp.RunKnownPortableGuestGUIDispatchSmoke(context.Background(), winapp.KnownDispatchSmokeRequest{
+			AppID:         appID,
+			CacheRoot:     cacheRoot,
+			Arguments:     []string(appArgs),
+			GuestBoundary: guestBoundary,
+			Host:          host,
+			Port:          parsedPort,
+			User:          user,
+			KeyPath:       keyPath,
+			RemoteDir:     remoteDir,
+			SSHPath:       sshPath,
+			SCPPath:       scpPath,
+			XWinInfoPath:  xwininfoPath,
+			GuestDisplay:  guestDisplay,
+			HostDisplay:   hostDisplay,
+			Timeout:       timeout,
+			Wait:          guiWait,
+		})
+		if err != nil {
+			return err
+		}
+		return encode(stdout, launcherDispatchResult{
+			KnownDispatchSmokeResult:               result,
+			EvidenceSource:                         "wine-guest-gui-smoke",
+			SessionGatedControlledDispatchConsumed: controlledDispatch.ControlledDispatchRequestCreated,
+			SessionGatedControlledDispatchState:    controlledDispatch.ControlledDispatchRequestState,
+			SessionGatedReviewReceiptID:            controlledDispatch.ReviewReceiptID,
+			LaunchAuthorizationReceiptID:           controlledDispatch.LaunchAuthorizationReceiptID,
+			ControlledExecutionSessionConsumed:     controlledSession.RecordConsumed,
+			ControlledExecutionSessionID:           controlledSession.ExecutionSessionID,
+			ControlledSessionDigestVerified:        controlledSession.SessionDigestVerified,
+			ControlledSessionRelativePath:          controlledSession.SessionRelativePath,
+			RuntimeOwnerConsumableSession:          controlledSession.RuntimeOwnerConsumable,
+			KDEReadModelConsumableSession:          controlledSession.KDEReadModelConsumable,
+			ControlledSessionLiveStateObserved:     result.SmokePassed,
+			ControlledSessionRegistered:            controlledSession.SessionRegistered,
+			ControlledSessionWindowObserved:        result.SmokePassed,
+			ControlledSessionHostRootModified:      controlledSession.HostRootModified || result.HostRootModified,
+			ControlledSessionBackendProcessStart:   result.BackendProcessStarted,
+		})
 	}
 
 	result, err := winapp.RunKnownPortableDispatchSmoke(context.Background(), winapp.KnownDispatchSmokeRequest{
@@ -176,6 +235,7 @@ func consumeSessionGatedControlledDispatchForLaunch(appID string, stateRoot stri
 
 type launcherDispatchResult struct {
 	winapp.KnownDispatchSmokeResult
+	EvidenceSource                         string `json:"evidence_source,omitempty"`
 	SessionGatedControlledDispatchConsumed bool   `json:"session_gated_controlled_dispatch_consumed"`
 	SessionGatedControlledDispatchState    string `json:"session_gated_controlled_dispatch_state"`
 	SessionGatedReviewReceiptID            string `json:"session_gated_review_receipt_id"`

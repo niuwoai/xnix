@@ -47,6 +47,7 @@ type ShowRuntimeControlledLaunchResult struct {
 	LauncherExitCode                                int                                                         `json:"launcher_exit_code"`
 	LauncherOutputJSONObserved                      bool                                                        `json:"launcher_output_json_observed"`
 	DelegatedRequestType                            string                                                      `json:"delegated_request_type"`
+	DelegatedEvidenceSource                         string                                                      `json:"delegated_evidence_source,omitempty"`
 	DelegatedStatus                                 string                                                      `json:"delegated_status"`
 	DelegatedSkipReason                             string                                                      `json:"delegated_skip_reason,omitempty"`
 	DelegatedFailureReason                          string                                                      `json:"delegated_failure_reason,omitempty"`
@@ -80,12 +81,22 @@ type ShowRuntimeControlledLaunchResult struct {
 }
 
 type runtimeControlledLaunchOwnerConfig struct {
-	StateRoot    string
-	CacheRoot    string
-	LauncherPath string
-	OwnerTimeout string
-	GuestTimeout string
-	GuestKeyPath string
+	StateRoot         string
+	CacheRoot         string
+	LauncherPath      string
+	OwnerTimeout      string
+	GuestTimeout      string
+	GuestHost         string
+	GuestPort         string
+	GuestUser         string
+	GuestKeyPath      string
+	GuestRemoteDir    string
+	GuestSSHPath      string
+	GuestSCPPath      string
+	GuestXWinInfoPath string
+	GuestDisplay      string
+	HostDisplay       string
+	GUIWait           string
 }
 
 func (service Service) ShowRuntimeControlledLaunch(args []string) (ShowRuntimeControlledLaunchResult, error) {
@@ -166,12 +177,22 @@ func parseShowRuntimeControlledLaunchArgs(args []string) (string, string, error)
 
 func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerConfig, error) {
 	config := runtimeControlledLaunchOwnerConfig{
-		StateRoot:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_STATE_ROOT")),
-		CacheRoot:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT")),
-		LauncherPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER")),
-		OwnerTimeout: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_TIMEOUT")),
-		GuestTimeout: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
-		GuestKeyPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
+		StateRoot:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_STATE_ROOT")),
+		CacheRoot:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT")),
+		LauncherPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER")),
+		OwnerTimeout:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_TIMEOUT")),
+		GuestTimeout:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
+		GuestHost:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
+		GuestPort:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
+		GuestUser:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
+		GuestKeyPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
+		GuestRemoteDir:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
+		GuestSSHPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
+		GuestSCPPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
+		GuestXWinInfoPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
+		GuestDisplay:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
+		HostDisplay:       strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
+		GUIWait:           strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_WAIT")),
 	}
 	if config.StateRoot == "" {
 		return runtimeControlledLaunchOwnerConfig{}, errors.New("ShowRuntimeControlledLaunch requires XNIX_RUNTIME_OWNER_STATE_ROOT from the Runtime owner service boundary")
@@ -185,7 +206,7 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 	if config.OwnerTimeout == "" {
 		config.OwnerTimeout = "5m"
 	}
-	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestKeyPath} {
+	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestHost, config.GuestPort, config.GuestUser, config.GuestKeyPath, config.GuestRemoteDir, config.GuestSSHPath, config.GuestSCPPath, config.GuestXWinInfoPath, config.GuestDisplay, config.HostDisplay, config.GUIWait} {
 		if strings.ContainsAny(value, "\r\n") {
 			return runtimeControlledLaunchOwnerConfig{}, errors.New("ShowRuntimeControlledLaunch Runtime owner configuration requires single-line values")
 		}
@@ -195,11 +216,41 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 
 func runtimeControlledLaunchExtraArgs(config runtimeControlledLaunchOwnerConfig) ([]string, error) {
 	var args []string
+	if config.GuestHost != "" {
+		args = append(args, "--host", config.GuestHost)
+	}
+	if config.GuestPort != "" {
+		args = append(args, "--port", config.GuestPort)
+	}
+	if config.GuestUser != "" {
+		args = append(args, "--user", config.GuestUser)
+	}
 	if config.GuestKeyPath != "" {
 		args = append(args, "--key", config.GuestKeyPath)
 	}
+	if config.GuestRemoteDir != "" {
+		args = append(args, "--remote-dir", config.GuestRemoteDir)
+	}
+	if config.GuestSSHPath != "" {
+		args = append(args, "--ssh", config.GuestSSHPath)
+	}
+	if config.GuestSCPPath != "" {
+		args = append(args, "--scp", config.GuestSCPPath)
+	}
+	if config.GuestXWinInfoPath != "" {
+		args = append(args, "--xwininfo", config.GuestXWinInfoPath)
+	}
+	if config.GuestDisplay != "" {
+		args = append(args, "--guest-display", config.GuestDisplay)
+	}
+	if config.HostDisplay != "" {
+		args = append(args, "--host-display", config.HostDisplay)
+	}
 	if config.GuestTimeout != "" {
 		args = append(args, "--timeout", config.GuestTimeout)
+	}
+	if config.GUIWait != "" {
+		args = append(args, "--gui-wait", config.GUIWait)
 	}
 	for _, value := range args {
 		if strings.ContainsAny(value, "\r\n") {
@@ -244,6 +295,7 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 		LauncherExitCode:                                0,
 		LauncherOutputJSONObserved:                      true,
 		DelegatedRequestType:                            ownerStringJSONField(delegated, "request_type"),
+		DelegatedEvidenceSource:                         ownerStringJSONField(delegated, "evidence_source"),
 		DelegatedStatus:                                 ownerStringJSONField(delegated, "status"),
 		DelegatedSkipReason:                             ownerStringJSONField(delegated, "skip_reason"),
 		DelegatedFailureReason:                          ownerStringJSONField(delegated, "failure_reason"),
@@ -294,6 +346,7 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 		AppID:                                  plan.AppID,
 		DisplayName:                            plan.DisplayName,
 		AppVersion:                             plan.AppVersion,
+		EvidenceSource:                         result.DelegatedEvidenceSource,
 		RequestType:                            result.DelegatedRequestType,
 		Status:                                 result.DelegatedStatus,
 		SkipReason:                             result.DelegatedSkipReason,

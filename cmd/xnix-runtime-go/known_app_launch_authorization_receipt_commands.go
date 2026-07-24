@@ -376,7 +376,11 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	remoteDir := flags.String("remote-dir", "", "optional guest remote directory forwarded to the managed launcher")
 	sshPath := flags.String("ssh", "", "optional ssh client path forwarded to the managed launcher")
 	scpPath := flags.String("scp", "", "optional scp client path forwarded to the managed launcher")
+	xwininfoPath := flags.String("xwininfo", "", "optional xwininfo client path forwarded to the managed launcher")
+	guestDisplay := flags.String("guest-display", "", "optional guest DISPLAY forwarded to the managed launcher")
+	hostDisplay := flags.String("host-display", "", "optional host DISPLAY forwarded to the managed launcher")
 	timeoutText := flags.String("timeout", "", "optional guest execution timeout forwarded to the managed launcher")
+	guiWaitText := flags.String("gui-wait", "", "optional GUI observation wait forwarded to the managed launcher")
 	ownerTimeoutText := flags.String("owner-timeout", "5m", "Runtime-owner launcher invocation timeout")
 	var appArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the known Windows app through the managed launcher")
@@ -396,15 +400,19 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	resolvedLauncherPath := *launcherPath
 	resolvedOwnerTimeoutText := *ownerTimeoutText
 	resolvedExtraOptions := knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
-		Host:      *host,
-		Port:      *port,
-		User:      *user,
-		KeyPath:   *keyPath,
-		RemoteDir: *remoteDir,
-		SSHPath:   *sshPath,
-		SCPPath:   *scpPath,
-		Timeout:   *timeoutText,
-		AppArgs:   []string(appArgs),
+		Host:         *host,
+		Port:         *port,
+		User:         *user,
+		KeyPath:      *keyPath,
+		RemoteDir:    *remoteDir,
+		SSHPath:      *sshPath,
+		SCPPath:      *scpPath,
+		XWinInfoPath: *xwininfoPath,
+		GuestDisplay: *guestDisplay,
+		HostDisplay:  *hostDisplay,
+		Timeout:      *timeoutText,
+		GUIWait:      *guiWaitText,
+		AppArgs:      []string(appArgs),
 	}
 	var ownerConfig knownAppKDEShowRuntimeControlledLaunchOwnerConfig
 	if desktopActionRoute {
@@ -535,14 +543,18 @@ func knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv() (knownAppKDEShow
 		LauncherPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER")),
 		OwnerTimeout: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_TIMEOUT")),
 		ExtraOptions: knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
-			Host:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
-			Port:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
-			User:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
-			KeyPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
-			RemoteDir: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
-			SSHPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
-			SCPPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
-			Timeout:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
+			Host:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
+			Port:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
+			User:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
+			KeyPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
+			RemoteDir:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
+			SSHPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
+			SCPPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
+			XWinInfoPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
+			GuestDisplay: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
+			HostDisplay:  strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
+			Timeout:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
+			GUIWait:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_WAIT")),
 		},
 	}
 	if config.StateRoot == "" {
@@ -569,7 +581,11 @@ func knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv() (knownAppKDEShow
 		config.ExtraOptions.RemoteDir,
 		config.ExtraOptions.SSHPath,
 		config.ExtraOptions.SCPPath,
+		config.ExtraOptions.XWinInfoPath,
+		config.ExtraOptions.GuestDisplay,
+		config.ExtraOptions.HostDisplay,
 		config.ExtraOptions.Timeout,
+		config.ExtraOptions.GUIWait,
 	} {
 		if strings.ContainsAny(value, "\r\n") {
 			return knownAppKDEShowRuntimeControlledLaunchOwnerConfig{}, errors.New("show-runtime-controlled-launch Runtime owner configuration requires single-line values")
@@ -723,6 +739,7 @@ type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	LauncherExitCode                                int                                                         `json:"launcher_exit_code"`
 	LauncherOutputJSONObserved                      bool                                                        `json:"launcher_output_json_observed"`
 	DelegatedRequestType                            string                                                      `json:"delegated_request_type"`
+	DelegatedEvidenceSource                         string                                                      `json:"delegated_evidence_source,omitempty"`
 	DelegatedStatus                                 string                                                      `json:"delegated_status"`
 	DelegatedSkipReason                             string                                                      `json:"delegated_skip_reason,omitempty"`
 	DelegatedFailureReason                          string                                                      `json:"delegated_failure_reason,omitempty"`
@@ -756,15 +773,19 @@ type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 }
 
 type knownAppKDERuntimeStatusLaunchExecutionExtraOptions struct {
-	Host      string
-	Port      string
-	User      string
-	KeyPath   string
-	RemoteDir string
-	SSHPath   string
-	SCPPath   string
-	Timeout   string
-	AppArgs   []string
+	Host         string
+	Port         string
+	User         string
+	KeyPath      string
+	RemoteDir    string
+	SSHPath      string
+	SCPPath      string
+	XWinInfoPath string
+	GuestDisplay string
+	HostDisplay  string
+	Timeout      string
+	GUIWait      string
+	AppArgs      []string
 }
 
 func knownAppKDERuntimeStatusLaunchExecutionExtraArgs(options knownAppKDERuntimeStatusLaunchExecutionExtraOptions) ([]string, error) {
@@ -780,7 +801,11 @@ func knownAppKDERuntimeStatusLaunchExecutionExtraArgs(options knownAppKDERuntime
 		{"--remote-dir", options.RemoteDir},
 		{"--ssh", options.SSHPath},
 		{"--scp", options.SCPPath},
+		{"--xwininfo", options.XWinInfoPath},
+		{"--guest-display", options.GuestDisplay},
+		{"--host-display", options.HostDisplay},
 		{"--timeout", options.Timeout},
+		{"--gui-wait", options.GUIWait},
 	} {
 		value := strings.TrimSpace(pair.value)
 		if value == "" {
@@ -813,6 +838,7 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 		LauncherExitCode:                                0,
 		LauncherOutputJSONObserved:                      true,
 		DelegatedRequestType:                            stringJSONField(delegated, "request_type"),
+		DelegatedEvidenceSource:                         stringJSONField(delegated, "evidence_source"),
 		DelegatedStatus:                                 stringJSONField(delegated, "status"),
 		DelegatedSkipReason:                             stringJSONField(delegated, "skip_reason"),
 		DelegatedFailureReason:                          stringJSONField(delegated, "failure_reason"),
@@ -865,6 +891,7 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 		AppID:                                  plan.AppID,
 		DisplayName:                            plan.DisplayName,
 		AppVersion:                             plan.AppVersion,
+		EvidenceSource:                         result.DelegatedEvidenceSource,
 		RequestType:                            result.DelegatedRequestType,
 		Status:                                 result.DelegatedStatus,
 		SkipReason:                             result.DelegatedSkipReason,

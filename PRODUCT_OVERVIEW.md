@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc86
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc87
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc87 checkpoint candidate promotes `org.xnix.apps.mines` from real GUI evidence handoff into a Runtime-owner-managed GUI launch execution path. `xnix-compat-launch` now recognizes guest-builtin GUI known apps and dispatches Mines through the Go-owned Wine GUI smoke lane after launch authorization, session-gated review, and controlled execution session consumption. `ShowRuntimeControlledLaunch` forwards owner-only guest parameters such as loopback SSH, display, and GUI observation settings to the managed launcher, records `wine-guest-gui-smoke` as delegated evidence, and keeps KDE-facing projections free of state roots, launcher paths, executable paths, backend commands, receipt reconstruction authority, privileged containers, Docker socket mounts, broad host mounts, host networking, and host-root mutation. The q4 restricted Xvfb/QEMU/Wine run for `winemine.exe` passed with `x_window_observed=true`, `guest_x11_driver_available=true`, and evidence persisted at `/home/xnix-run-materials/state/wine-gui-mines-0.2.640-rc87.json`.
 
 The v0.2.640-rc86 checkpoint candidate connects the first real Windows GUI app evidence to the Runtime-owned desktop trigger path. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file FILE` now consumes a passed `gui-smoke-evidence-preview` projection for `org.xnix.apps.mines`, records Runtime launch authorization/session/review handoff evidence, and lets the owner trigger and KDE action trigger assemble a `ShowRuntimeControlledLaunch` request from an evidence handle. The desktop still receives no Runtime state-root, cache-root, launcher path, raw executable path, backend command, or receipt/session reconstruction authority, and the preview does not start a process; actual GUI execution remains proven by the q4 Xvfb/QEMU/Wine smoke lane.
 

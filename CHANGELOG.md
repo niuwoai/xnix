@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc87] - 2026-07-25
+
+### Added
+
+- Added guest-builtin GUI dispatch support to `xnix-compat-launch` so `org.xnix.apps.mines` can execute through the Go-owned Wine GUI smoke lane after Runtime launch authorization, session-gated review, and controlled execution session consumption.
+- Added owner-service forwarding for GUI launch parameters, including guest SSH endpoint, display selection, host X11 observation, and GUI wait duration, while preserving KDE-safe delegated evidence projection.
+
+### Changed
+
+- Changed Runtime-owner controlled launch results to retain `wine-guest-gui-smoke` as the delegated evidence source when a human-authorized Mines launch executes through the managed GUI path.
+- Changed the Mines Runtime recipe and known-app catalog version to `0.2.640-rc87`.
+- Verified a restricted q4 Xvfb/QEMU/Wine `winemine.exe` run with `x_window_observed=true`, `guest_x11_driver_available=true`, and evidence persisted at `/home/xnix-run-materials/state/wine-gui-mines-0.2.640-rc87.json`.
+
 ## [0.2.640-rc86] - 2026-07-25
 
 ### Added

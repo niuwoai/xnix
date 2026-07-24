@@ -350,7 +350,11 @@ type KnownDispatchSmokeRequest struct {
 	RemoteDir     string
 	SSHPath       string
 	SCPPath       string
+	XWinInfoPath  string
+	GuestDisplay  string
+	HostDisplay   string
 	Timeout       time.Duration
+	Wait          time.Duration
 }
 
 type KnownDispatchSmokeResult struct {
@@ -376,6 +380,7 @@ type KnownDispatchSmokeResult struct {
 	DispatchAllowed             bool   `json:"dispatch_allowed"`
 	DispatchStarted             bool   `json:"dispatch_started"`
 	ExecutionStarted            bool   `json:"execution_started"`
+	BackendProcessStarted       bool   `json:"backend_process_started"`
 	ManagedGuestRunnerInvoked   bool   `json:"managed_guest_runner_invoked"`
 	ManagedGuestReachable       bool   `json:"managed_guest_reachable"`
 	ManagedGuestRuntimeReady    bool   `json:"managed_guest_runtime_ready"`
@@ -769,7 +774,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc86",
+		Version:         "0.2.640-rc87",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -1130,6 +1135,90 @@ func RunKnownPortableDispatchSmoke(ctx context.Context, request KnownDispatchSmo
 		result.DesktopSafeSummary = guest.DisplayName + " passed the gated Runtime managed guest dispatch smoke."
 	} else {
 		result.DesktopSafeSummary = guest.DisplayName + " did not pass the gated Runtime managed guest dispatch smoke."
+	}
+	return result, nil
+}
+
+func RunKnownPortableGuestGUIDispatchSmoke(ctx context.Context, request KnownDispatchSmokeRequest) (KnownDispatchSmokeResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownDispatchSmokeResult{}, err
+	}
+	dispatchPreview, err := PreviewKnownPortableDispatch(KnownDispatchRequest{
+		AppID:     request.AppID,
+		CacheRoot: request.CacheRoot,
+	})
+	if err != nil {
+		return KnownDispatchSmokeResult{}, err
+	}
+	result := baseKnownDispatchSmokeResult(dispatchPreview, request.GuestBoundary)
+	result.CacheStatus = "guest-builtin-gui"
+	result.ArtifactVerified = false
+	result.MarkerObserved = false
+	if !app.GuestBuiltinGUI {
+		result.Status = "dispatch-blocked"
+		result.BlockedReason = "known Windows app is not a Runtime-managed guest GUI application"
+		result.SkipReason = result.BlockedReason
+		return result, nil
+	}
+	if !dispatchPreview.DispatchReady {
+		result.Status = "dispatch-blocked"
+		result.BlockedReason = dispatchPreview.BlockedReason
+		result.SkipReason = dispatchPreview.BlockedReason
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " GUI dispatch is blocked until Runtime preparation completes."
+		return result, nil
+	}
+	if strings.TrimSpace(request.GuestBoundary) != KnownDispatchGuestBoundary {
+		result.Status = "dispatch-blocked"
+		result.BlockedReason = "controlled managed guest boundary must be supplied by the GUI smoke harness"
+		result.SkipReason = result.BlockedReason
+		result.DesktopSafeSummary = dispatchPreview.DisplayName + " GUI dispatch is ready, but the smoke harness did not supply the controlled guest boundary."
+		return result, nil
+	}
+
+	gui, err := RunGuestGUISmoke(ctx, GuestGUIRequest{
+		GUIAppPath:   DefaultGuestGUIApp,
+		Host:         request.Host,
+		Port:         request.Port,
+		User:         request.User,
+		KeyPath:      request.KeyPath,
+		RemoteDir:    request.RemoteDir,
+		SSHPath:      request.SSHPath,
+		SCPPath:      request.SCPPath,
+		XWinInfoPath: request.XWinInfoPath,
+		GuestDisplay: request.GuestDisplay,
+		HostDisplay:  request.HostDisplay,
+		Timeout:      request.Timeout,
+		Wait:         request.Wait,
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.Status = gui.Status
+	result.DispatchAllowed = true
+	result.DispatchStarted = true
+	result.ExecutionStarted = gui.LaunchAttempted
+	result.ManagedGuestRunnerInvoked = true
+	result.ManagedGuestReachable = gui.GuestReachable
+	result.ManagedGuestRuntimeReady = gui.WineAvailable && gui.GuestX11DriverAvailable
+	result.ManagedArtifactCopied = gui.ExecutableCopied
+	result.SmokePassed = gui.Status == PassedStatus
+	result.DurationMillis = gui.DurationMillis
+	result.PrivilegedContainerRequired = gui.PrivilegedContainerRequired
+	result.HostRootModified = gui.HostRootModified
+	result.HostNetworkingRequired = gui.HostNetworkingRequired
+	result.DockerSocketMounted = gui.DockerSocketMounted
+	result.BroadHostMountRequired = gui.BroadHostMountRequired
+	result.RawHostPathExposed = gui.RawHostPathExposed
+	result.RawExecutablePathExposed = false
+	result.RawCommandExposed = gui.RawCommandExposed
+	result.SkipReason = gui.SkipReason
+	result.FailureReason = gui.FailureReason
+	if result.SmokePassed {
+		result.DesktopSafeSummary = app.DisplayName + " passed the gated Runtime managed guest GUI smoke."
+	} else {
+		result.DesktopSafeSummary = app.DisplayName + " did not pass the gated Runtime managed guest GUI smoke."
 	}
 	return result, nil
 }

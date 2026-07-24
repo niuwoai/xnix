@@ -3,11 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
 	"xnix.local/xnix/internal/runtime/execution"
+	"xnix.local/xnix/internal/runtime/winapp"
 )
 
 func TestCompatLaunchUsesKnownAppLaunchBridge(t *testing.T) {
@@ -183,16 +187,101 @@ func TestCompatLaunchConsumesDigestVerifiedSessionGate(t *testing.T) {
 	}
 }
 
+func TestCompatLaunchRunsMinesThroughGuestGUIDispatchSmoke(t *testing.T) {
+	app, err := winapp.LookupKnownPortableApp("org.xnix.apps.mines")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixtureForApp(t, stateRoot, app.ID, app.Version)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+	sshPath, xwininfoPath := writeGuestGUIFakeTools(t)
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", app.ID,
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
+		"--ssh", sshPath,
+		"--xwininfo", xwininfoPath,
+		"--guest-display", "10.0.2.2:127",
+		"--host-display", ":127",
+		"--timeout", "5s",
+		"--gui-wait", (1 * time.Millisecond).String(),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_dispatch_smoke.v1" ||
+		payload["request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["evidence_source"] != "wine-guest-gui-smoke" ||
+		payload["status"] != "passed" ||
+		payload["app_id"] != app.ID ||
+		payload["cache_status"] != "guest-builtin-gui" ||
+		payload["artifact_verified"] != false ||
+		payload["marker_observed"] != false ||
+		payload["smoke_passed"] != true ||
+		payload["execution_started"] != true ||
+		payload["managed_guest_runner_invoked"] != true ||
+		payload["managed_guest_reachable"] != true ||
+		payload["managed_guest_runtime_ready"] != true ||
+		payload["session_gated_controlled_dispatch_consumed"] != true ||
+		payload["session_gated_controlled_dispatch_state"] != "created-after-session-gated-review" ||
+		payload["controlled_execution_session_consumed"] != true ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["controlled_session_window_observed"] != true ||
+		payload["controlled_session_host_root_modified"] != false ||
+		payload["controlled_session_backend_process_start"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Mines GUI dispatch payload: %#v", payload)
+	}
+	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, xwininfoPath)
+}
+
 func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, string) {
 	t.Helper()
-	sessionID := appidentity.KnownAppControlledExecutionSessionID("7zr", "26.02")
+	return recordLauncherSessionGateFixtureForApp(t, stateRoot, "7zr", "26.02")
+}
+
+func recordLauncherSessionGateFixtureForApp(t *testing.T, stateRoot string, appID string, appVersion string) (string, string) {
+	t.Helper()
+	sessionID := appidentity.KnownAppControlledExecutionSessionID(appID, appVersion)
 	ledger, err := execution.NewLedger(stateRoot)
 	if err != nil {
 		t.Fatalf("NewLedger returned error: %v", err)
 	}
 	if _, err := ledger.Record(execution.Transaction{
 		RequestID:      sessionID,
-		ApplicationID:  "7zr",
+		ApplicationID:  appID,
 		Profile:        "known-app-managed-guest",
 		State:          execution.StateBlocked,
 		ReviewDecision: execution.DecisionApproved,
@@ -215,6 +304,35 @@ func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, s
 		t.Fatalf("RecordSession returned error: %v", err)
 	}
 	return sessionID, session.RelativePath
+}
+
+func writeGuestGUIFakeTools(t *testing.T) (string, string) {
+	t.Helper()
+	tempDir := t.TempDir()
+	sshPath := filepath.Join(tempDir, "fake-ssh")
+	sshBody := "#!/bin/sh\n" +
+		"case \"$*\" in\n" +
+		"  *' true') exit 0 ;;\n" +
+		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
+		"  *'mkdir -p'*) exit 0 ;;\n" +
+		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
+		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
+		"  *'cat '*'stderr.txt'*) printf ''; exit 0 ;;\n" +
+		"  *'wineserver -k'*) exit 0 ;;\n" +
+		"esac\n" +
+		"exit 2\n"
+	if err := os.WriteFile(sshPath, []byte(sshBody), 0o700); err != nil {
+		t.Fatalf("WriteFile ssh returned error: %v", err)
+	}
+	xwininfoPath := filepath.Join(tempDir, "fake-xwininfo")
+	xwininfoBody := "#!/bin/sh\n" +
+		"printf 'xwininfo: Window id: 0x3a7 (the root window)\\n'\n" +
+		"printf '  0x200001 \"WineMine\": ()  320x240+0+0  +0+0\\n'\n"
+	if err := os.WriteFile(xwininfoPath, []byte(xwininfoBody), 0o700); err != nil {
+		t.Fatalf("WriteFile xwininfo returned error: %v", err)
+	}
+	return sshPath, xwininfoPath
 }
 
 func TestCompatLaunchSessionGateRejectsMissingSessionWithoutPathLeak(t *testing.T) {
@@ -247,6 +365,21 @@ func assertCompatLaunchCLISafe(t *testing.T, text string, hostPath string) {
 	for _, forbidden := range []string{".exe", "wine", "qemu", strings.ToLower(hostPath)} {
 		if strings.Contains(serialized, forbidden) {
 			t.Fatalf("compat launch CLI exposed forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func assertCompatLaunchGUIDispatchSafe(t *testing.T, text string, hostPaths ...string) {
+	t.Helper()
+	serialized := strings.ToLower(text)
+	for _, forbidden := range []string{".exe", "qemu-system", "program files", "/usr/lib/wine", "wine ", ".wine"} {
+		if strings.Contains(serialized, forbidden) {
+			t.Fatalf("compat launch GUI dispatch exposed forbidden term %q: %s", forbidden, text)
+		}
+	}
+	for _, hostPath := range hostPaths {
+		if strings.Contains(serialized, strings.ToLower(hostPath)) {
+			t.Fatalf("compat launch GUI dispatch exposed host path %q: %s", hostPath, text)
 		}
 	}
 }
