@@ -214,6 +214,70 @@ func TestWindowsAppSmokeProfileRenderCommand(t *testing.T) {
 	}
 }
 
+func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	profilePath := filepath.Join(tempDir, "real-app.profile.json")
+	writeCLIJSON(t, profilePath, map[string]any{
+		"schema_version":  "xnix.runtime.windows_app_smoke_profile.v1",
+		"executable_path": filepath.Join(tempDir, "app", "hello.exe"),
+		"state_root":      stateRoot,
+		"runner_path":     filepath.Join(tempDir, "private-wine"),
+		"timeout":         "30s",
+		"stage_app_dir":   true,
+	})
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-launcher-bundle-record",
+		"--profile", profilePath,
+		"--app-id", "org.xnix.realapp",
+		"--name", "Real Windows App",
+		"--runtime-bin", "xnix-runtime-go",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_launcher_bundle.v1" ||
+		payload["request_type"] != "windows-app-launcher-bundle-record" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.realapp" ||
+		payload["display_name"] != "Real Windows App" ||
+		payload["desktop_file_name"] != "org.xnix.realapp.desktop" ||
+		payload["launcher_script_name"] != "org.xnix.realapp.sh" ||
+		payload["files_written"] != true ||
+		payload["launcher_script_written"] != true ||
+		payload["desktop_entry_written"] != true ||
+		payload["receipt_written"] != true ||
+		payload["desktop_entry_exec_uses_managed_launcher"] != true ||
+		payload["raw_profile_path_exposed"] != false ||
+		payload["raw_state_root_path_exposed"] != false ||
+		payload["raw_runner_path_exposed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected launcher bundle payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), profilePath) ||
+		strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), filepath.Join(tempDir, "private-wine")) {
+		t.Fatalf("launcher bundle output leaked private paths: %s", output.String())
+	}
+	desktopPath := filepath.Join(stateRoot, "launcher-bundle", "applications", "org.xnix.realapp.desktop")
+	desktopText, err := os.ReadFile(desktopPath)
+	if err != nil {
+		t.Fatalf("ReadFile desktop entry returned error: %v", err)
+	}
+	if !strings.Contains(string(desktopText), "[Desktop Entry]") ||
+		!strings.Contains(string(desktopText), "Exec=") ||
+		!strings.Contains(string(desktopText), "X-Xnix-RuntimeOwned=true") {
+		t.Fatalf("unexpected desktop entry: %s", string(desktopText))
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanStageApplicationDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")
@@ -1527,6 +1591,17 @@ func anyStrings(values []any) []string {
 		result = append(result, value.(string))
 	}
 	return result
+}
+
+func writeCLIJSON(t *testing.T, path string, payload map[string]any) {
+	t.Helper()
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("Marshal payload returned error: %v", err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("WriteFile JSON returned error: %v", err)
+	}
 }
 
 func minimalPEFixture(machine uint16) []byte {

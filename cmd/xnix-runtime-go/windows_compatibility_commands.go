@@ -159,6 +159,41 @@ func runWindowsAppSmokeProfileRender(args []string, stdout io.Writer) error {
 	return encoder.Encode(profile)
 }
 
+func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-launcher-bundle-record", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var profilePath string
+	var appID string
+	var name string
+	var runtimeBinary string
+	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
+	flags.StringVar(&appID, "app-id", "", "desktop-safe application id")
+	flags.StringVar(&name, "name", "", "desktop display name")
+	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-launcher-bundle-record")
+	}
+
+	record, err := winapp.RecordLauncherBundle(winapp.LauncherBundleRequest{
+		ProfilePath:   profilePath,
+		ApplicationID: appID,
+		DisplayName:   name,
+		RuntimeBinary: runtimeBinary,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(record)
+}
+
 func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]bool, exePath string, appArgs []string, runnerArgs []string, runnerBottle string, stateRoot string, workingDir string, runnerPath string, expectedMarker string, successMode string, redactOutput bool, skipBootstrap bool, stageAppDir bool) {
 	if strings.TrimSpace(exePath) != "" {
 		request.ExecutablePath = exePath

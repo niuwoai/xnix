@@ -663,6 +663,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowsAppSmokeProfilePreflight(args[1:], stdout)
 	case "windows-app-smoke-profile-render":
 		return runWindowsAppSmokeProfileRender(args[1:], stdout)
+	case "windows-app-launcher-bundle-record":
+		return runWindowsAppLauncherBundleRecord(args[1:], stdout)
 	case "windows-app-container-run-smoke":
 		return runWindowsAppContainerRunSmoke(args[1:], stdout)
 	case "windows-app-guest-wine-smoke":

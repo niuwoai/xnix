@@ -24,6 +24,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     #!/usr/bin/env ruby
     # frozen_string_literal: true
 
+    require "fileutils"
     require "json"
 
     args = ARGV.dup
@@ -152,6 +153,46 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-launcher-bundle-record")
+      profile_path = args[args.index("--profile") + 1]
+      app_id = args[args.index("--app-id") + 1]
+      app_name = args.include?("--name") ? args[args.index("--name") + 1] : app_id
+      profile = JSON.parse(File.read(profile_path))
+      state_root = profile.fetch("state_root")
+      bundle_root = File.join(state_root, "launcher-bundle")
+      FileUtils.mkdir_p(File.join(bundle_root, "launchers"))
+      FileUtils.mkdir_p(File.join(bundle_root, "applications"))
+      File.write(File.join(bundle_root, "launchers", "#{app_id}.sh"), "#!/bin/sh\nexec xnix-runtime-go windows-app-run-smoke --profile '#{profile_path}'\n")
+      File.write(File.join(bundle_root, "applications", "#{app_id}.desktop"), "[Desktop Entry]\nName=#{app_name}\nExec=#{File.join(bundle_root, "launchers", "#{app_id}.sh")}\nTerminal=false\nX-Xnix-RuntimeOwned=true\n")
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_launcher_bundle.v1",
+        "request_type" => "windows-app-launcher-bundle-record",
+        "status" => "passed",
+        "application_id" => app_id,
+        "display_name" => app_name,
+        "desktop_file_name" => "#{app_id}.desktop",
+        "launcher_script_name" => "#{app_id}.sh",
+        "receipt_file_name" => "#{app_id}.launcher-bundle.json",
+        "profile_supplied" => true,
+        "files_written" => true,
+        "launcher_script_written" => true,
+        "desktop_entry_written" => true,
+        "receipt_written" => true,
+        "desktop_entry_exec_uses_managed_launcher" => true,
+        "desktop_entry_terminal_disabled" => true,
+        "raw_profile_path_exposed" => false,
+        "raw_state_root_path_exposed" => false,
+        "raw_runner_path_exposed" => false,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     if args[0] == "run" && args.include?("windows-app-run-smoke")
       redacted = args.include?("--redact-output")
       marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
@@ -274,6 +315,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(!report.fetch("profile_preflight_invoked"), "JSON fixture report must not run profile preflight")
   assert(!report.fetch("profile_written"), "JSON fixture report must not write a profile by default")
+  assert(!report.fetch("launcher_bundle_written"), "JSON fixture report must not write a launcher bundle by default")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
   assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
@@ -408,12 +450,19 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--skip-bootstrap",
     "--stage-app-dir",
     "--arg", "--custom-flag",
-    "--write-profile", generated_profile.to_s
+    "--write-profile", generated_profile.to_s,
+    "--write-launcher-bundle",
+    "--app-id", "org.xnix.generated",
+    "--app-name", "Generated Windows App"
   )
   assert(write_profile_status.success?, "winapp smoke profile write report must succeed: #{write_profile_stderr}")
   write_profile_report = JSON.parse(write_profile_stdout)
   assert(write_profile_report.fetch("profile_write_invoked"), "profile write report must invoke profile rendering")
   assert(write_profile_report.fetch("profile_written"), "profile write report must record profile write")
+  assert(write_profile_report.fetch("launcher_bundle_write_invoked"), "launcher bundle report must invoke bundle writing")
+  assert(write_profile_report.fetch("launcher_bundle_written"), "launcher bundle report must record bundle write")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("request_type") == "windows-app-launcher-bundle-record", "launcher bundle report must embed safe payload")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("desktop_file_name") == "org.xnix.generated.desktop", "launcher bundle report must preserve desktop file name")
   rendered_profile = JSON.parse(generated_profile.read)
   assert(rendered_profile.fetch("schema_version") == "xnix.runtime.windows_app_smoke_profile.v1", "written profile must preserve schema")
   assert(rendered_profile.fetch("expected_marker") == "CUSTOM_APP_OK", "written profile must preserve marker")
@@ -422,6 +471,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(rendered_profile.fetch("runner_arguments") == ["--shim-mode"], "written profile must preserve runner args")
   assert(rendered_profile.fetch("arguments") == ["--custom-flag"], "written profile must preserve app args")
   assert(!write_profile_stdout.include?(generated_profile.to_s), "profile write report must not leak written profile path")
+  assert(!write_profile_stdout.include?(temp_root.join("generated-state").to_s), "launcher bundle report must not leak launcher state root")
 
   profile_path = temp_root.join("winapp-profile.json")
   profile_working_dir = temp_root.join("profile-working-dir")

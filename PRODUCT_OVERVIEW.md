@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc50
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc51
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc51 checkpoint candidate adds a managed launcher bundle for local real Windows app attempts. `windows-app-launcher-bundle-record` reads a reusable smoke profile and writes a shell launcher, `.desktop` file, and launcher receipt under the profile state root. `scripts/winapp_smoke.rb --write-launcher-bundle --app-id <id>` can create that bundle after rendering a profile, exposing only safe file names and write flags in reports. This gives KDE a future click-to-launch artifact while keeping raw profile paths, state roots, runner paths, Docker, QEMU, Colima, networking, package managers, privileged containers, broad host mounts, and host-root mutation out of report output.
 
 The v0.2.640-rc50 checkpoint candidate makes real Windows app smoke settings repeatable. The Go Runtime now exposes `windows-app-smoke-profile-render`, and `scripts/winapp_smoke.rb --write-profile <path>` can save a reusable profile containing the executable, state root, runner, staged workspace, bootstrap, arguments, timeout, marker, success mode, and redaction settings. Reports expose only `profile_write_invoked` and `profile_written`, not the written profile path, so operators can iterate on a real `.exe` without repeatedly rebuilding long commands.
 

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc51] - 2026-07-24
+
+### Added
+
+- Added Go-owned `windows-app-launcher-bundle-record` for writing a managed launcher script, `.desktop` file, and receipt from a reusable Windows app smoke profile.
+- Added `scripts/winapp_smoke.rb --write-launcher-bundle` with path-safe launcher bundle evidence for future KDE click-to-launch wiring.
+
 ## [0.2.640-rc50] - 2026-07-24
 
 ### Added

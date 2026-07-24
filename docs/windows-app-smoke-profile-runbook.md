@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc50
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc51
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -23,6 +23,14 @@ ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state
 ```
 
 The script asks the Go Runtime to render the profile through `windows-app-smoke-profile-render`, then writes the JSON to the requested operator-local path. Reports expose `profile_write_invoked` and `profile_written`; they do not expose the profile path.
+
+To also create a managed launcher script and `.desktop` file under the profile state root:
+
+```text
+ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir --write-profile .local/xnix/winapp-smoke/my-app.profile.json --write-launcher-bundle --app-id org.xnix.myapp --app-name "My Windows App"
+```
+
+The launcher bundle is written by `windows-app-launcher-bundle-record`. Reports expose `launcher_bundle_write_invoked`, `launcher_bundle_written`, safe desktop file names, and safe launcher script names; they do not expose profile paths, state-root paths, or runner paths.
 
 Profile fields:
 
@@ -76,6 +84,12 @@ To render the profile JSON without the Ruby wrapper:
 
 ```text
 go run ./cmd/xnix-runtime-go windows-app-smoke-profile-render --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir
+```
+
+To write a launcher bundle directly from an existing profile:
+
+```text
+go run ./cmd/xnix-runtime-go windows-app-launcher-bundle-record --profile .local/xnix/winapp-smoke/my-app.profile.json --app-id org.xnix.myapp --name "My Windows App"
 ```
 
 Both paths keep Docker, QEMU, Colima, network checks, package managers, privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation disabled.

@@ -21,6 +21,10 @@ options = {
   backend: "local",
   profile: nil,
   write_profile: nil,
+  write_launcher_bundle: false,
+  app_id: nil,
+  app_name: nil,
+  runtime_bin: nil,
   preflight_only: false,
   exe: nil,
   runner: nil,
@@ -41,12 +45,16 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
   parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
   parser.on("--write-profile PATH", "Write a reusable Windows app smoke profile for the resolved settings") { |value| options[:write_profile] = value }
+  parser.on("--write-launcher-bundle", "Write a managed launcher script and desktop entry from the profile") { options[:write_launcher_bundle] = true }
+  parser.on("--app-id ID", "Desktop-safe application id for the launcher bundle") { |value| options[:app_id] = value }
+  parser.on("--app-name NAME", "Display name for the launcher bundle") { |value| options[:app_name] = value }
+  parser.on("--runtime-bin PATH", "Runtime binary used by the managed launcher bundle") { |value| options[:runtime_bin] = value }
   parser.on("--preflight-only", "Validate a profile and emit readiness without launching the Windows app") { options[:preflight_only] = true }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
@@ -108,6 +116,14 @@ if options.fetch(:preflight_only) && options[:profile].to_s.strip.empty?
   warn "FAIL: --preflight-only requires --profile"
   exit 1
 end
+if options.fetch(:write_launcher_bundle) && options[:profile].to_s.strip.empty? && options[:write_profile].to_s.strip.empty?
+  warn "FAIL: --write-launcher-bundle requires --profile or --write-profile"
+  exit 1
+end
+if options.fetch(:write_launcher_bundle) && options[:app_id].to_s.strip.empty?
+  warn "FAIL: --write-launcher-bundle requires --app-id"
+  exit 1
+end
 
 options[:redact_output] = options[:format] != "text" if options[:redact_output].nil?
 
@@ -135,6 +151,9 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "profile_supplied" => profile_supplied,
     "profile_write_invoked" => false,
     "profile_written" => false,
+    "launcher_bundle_write_invoked" => false,
+    "launcher_bundle_written" => false,
+    "launcher_bundle_payload" => nil,
     "profile_preflight_invoked" => false,
     "profile_preflight_status" => "not-run",
     "profile_preflight_next_action" => "",
@@ -216,6 +235,7 @@ def emit_report(report)
     puts "- Profile preflight invoked: #{report.fetch("profile_preflight_invoked")}"
     puts "- Profile preflight status: #{report.fetch("profile_preflight_status")}"
     puts "- Profile written: #{report.fetch("profile_written")}"
+    puts "- Launcher bundle written: #{report.fetch("launcher_bundle_written")}"
     puts "- Success mode: #{report.fetch("success_mode")}"
     puts "- Working directory mode: #{report.fetch("working_directory_mode")}"
     puts "- Application workspace mode: #{report.fetch("application_workspace_mode")}"
@@ -347,6 +367,31 @@ unless options[:write_profile].to_s.strip.empty?
   FileUtils.mkdir_p(write_profile_path.dirname)
   File.write(write_profile_path, profile_stdout)
   report["profile_written"] = true
+end
+
+if options.fetch(:write_launcher_bundle)
+  launcher_profile_path = options[:write_profile].to_s.strip.empty? ? options.fetch(:profile) : options.fetch(:write_profile)
+  launcher_command = [
+    "go", "run", "./cmd/xnix-runtime-go", "windows-app-launcher-bundle-record",
+    "--profile", launcher_profile_path,
+    "--app-id", options.fetch(:app_id)
+  ]
+  launcher_command.concat(["--name", options.fetch(:app_name)]) unless options[:app_name].to_s.strip.empty?
+  launcher_command.concat(["--runtime-bin", options.fetch(:runtime_bin)]) unless options[:runtime_bin].to_s.strip.empty?
+  launcher_stdout, launcher_stderr, launcher_status = run_command(go_env, *launcher_command)
+  report["launcher_bundle_write_invoked"] = true
+  unless launcher_status.zero?
+    report["failure_reason"] = "Windows app launcher bundle command failed"
+    if options.fetch(:format) == "text"
+      warn launcher_stdout unless launcher_stdout.empty?
+      warn launcher_stderr unless launcher_stderr.empty?
+      warn "FAIL: Windows app launcher bundle command failed"
+    end
+    finish(report, 1)
+  end
+  launcher_payload = JSON.parse(launcher_stdout)
+  report["launcher_bundle_payload"] = launcher_payload
+  report["launcher_bundle_written"] = launcher_payload.fetch("status") == "passed" && launcher_payload.fetch("files_written", false)
 end
 
 if profile_supplied
