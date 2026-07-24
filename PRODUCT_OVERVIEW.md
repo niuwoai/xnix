@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc95
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc96
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc96 checkpoint candidate lets the Go Runtime consume the safe KDE GUI card route directly. `kde-controlled-launch-action-preview --kde-gui-card-file` reads a KDE-rendered owner-controlled GUI evidence card, derives the handoff only from its single `evidence-relative-path` forwarded argument when no explicit evidence path is supplied, revalidates the persisted Runtime evidence under the Runtime state root, and returns the existing controlled-launch action preview. Runtime validation rejects card identity mismatches, wrong route metadata, wrong D-Bus methods, extra forwarded arguments, exposed owner service arguments, opened desktop/backend launch gates, raw artifact paths, backend details, and host-root mutation. This closes the loop from real MessageBox GUI evidence to a desktop-consumable action without moving launch-policy ownership into KDE.
 
 The v0.2.640-rc95 checkpoint candidate turns the handoff-ready owner-controlled Windows GUI app card into a concrete evidence-only desktop route. KDE GUI evidence cards now expose `desktop_callable_route=kde-dbus-runtime-status-action`, `desktop_callable_runtime_method=ShowRuntimeControlledLaunch`, `desktop_callable_execution_type=known-app-kde-runtime-status-launch-execution`, `desktop_dbus_method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, `desktop_evidence_handle_forwarded=true`, and a single `evidence-relative-path` argument for the safe owner evidence handoff. This lets KDE know exactly which Runtime-owned action to call for the proven MessageBox GUI lane while still hiding owner service arguments, state roots, cache roots, launcher paths, raw executable paths, backend commands, Docker sockets, broad mounts, host networking, and host-root mutation authority.
 

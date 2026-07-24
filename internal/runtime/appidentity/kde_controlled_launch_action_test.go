@@ -1,6 +1,10 @@
 package appidentity
 
-import "testing"
+import (
+	"testing"
+
+	"xnix.local/xnix/internal/runtime/winapp"
+)
 
 func TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle(t *testing.T) {
 	stateRoot := t.TempDir()
@@ -74,6 +78,53 @@ func TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle(t *testing.T
 	}
 }
 
+func TestPreviewKDEControlledLaunchActionConsumesKDEGUICardRoute(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+
+	preview, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:        stateRoot,
+		KDECenterGUICard: &card,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchAction returned error: %v", err)
+	}
+
+	if preview.ApplicationID != "org.xnix.apps.messagebox" ||
+		preview.ApplicationName != "Xnix MessageBox" ||
+		preview.EvidenceRelativePath != record.EvidenceRelativePath ||
+		preview.PublicDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		preview.DesktopCallableRoute != card.DesktopCallableRoute ||
+		preview.DesktopCallableRuntimeMethod != card.DesktopCallableRuntimeMethod ||
+		preview.DesktopCallableExecutionType != card.DesktopCallableExecutionType ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.KDEForwardedArguments, []string{record.EvidenceRelativePath}) ||
+		preview.OwnerServiceArgsExposedToKDE ||
+		preview.StateRootPathExposed ||
+		preview.BackendDetailsExposed ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ExecutionStarted {
+		t.Fatalf("unexpected GUI card controlled launch action preview: %#v", preview)
+	}
+}
+
+func TestPreviewKDEControlledLaunchActionRejectsUnsafeKDEGUICardRoute(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+	card.KDEForwardedArguments = []string{record.EvidenceRelativePath, "--state-root", stateRoot}
+	card.OwnerServiceArgsExposedToKDE = true
+
+	_, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:        stateRoot,
+		KDECenterGUICard: &card,
+	})
+	if err == nil {
+		t.Fatalf("unsafe GUI card route must be rejected")
+	}
+}
+
 func recordKDEControlledLaunchActionEvidence(t *testing.T, stateRoot string) KnownAppKDERuntimeStatusLaunchEvidenceRecord {
 	t.Helper()
 
@@ -118,4 +169,96 @@ func recordKDEControlledLaunchActionEvidence(t *testing.T, stateRoot string) Kno
 		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
 	}
 	return record
+}
+
+func recordKDEControlledLaunchActionGUIEvidence(t *testing.T, stateRoot string) KnownAppKDERuntimeStatusLaunchEvidenceRecord {
+	t.Helper()
+
+	appVersion := currentProjectVersion(t)
+	sessionID := KnownAppControlledExecutionSessionID("org.xnix.apps.messagebox", appVersion)
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("org.xnix.apps.messagebox", appVersion)
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("org.xnix.apps.messagebox", appVersion, sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "org.xnix.apps.messagebox",
+		DisplayName:                            "Xnix MessageBox",
+		AppVersion:                             appVersion,
+		RequestType:                            winapp.KnownDispatchSmokeRequestType,
+		Status:                                 "passed",
+		EvidenceSource:                         "wine-guest-gui-smoke",
+		GuestBoundary:                          winapp.KnownDispatchGuestBoundary,
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+		ControlledSessionWindowObserved:        true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := RecordKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	return record
+}
+
+func kdeControlledLaunchActionGUICard(record KnownAppKDERuntimeStatusLaunchEvidenceRecord) KDECenterPageKnownAppMatrixCard {
+	return KDECenterPageKnownAppMatrixCard{
+		AppID:                                "org.xnix.apps.messagebox",
+		DisplayName:                          "Xnix MessageBox",
+		AppVersion:                           record.AppVersion,
+		EvidenceKind:                         "known-application-gui-smoke",
+		EvidenceSource:                       "wine-guest-gui-smoke",
+		SmokeStatus:                          "passed",
+		CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
+		CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
+		PrimaryActionID:                      KnownAppKDERuntimeStatusLaunchAction,
+		PrimaryActionLabel:                   "Show Runtime-controlled launch",
+		PrimaryActionKind:                    "runtime-status",
+		PrimaryActionEnabled:                 true,
+		DesktopCallableRoute:                 "kde-dbus-runtime-status-action",
+		DesktopCallableRuntimeMethod:         "ShowRuntimeControlledLaunch",
+		DesktopCallableExecutionType:         KnownAppKDERuntimeStatusLaunchExecutionRequestType,
+		DesktopDBusMethod:                    "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+		DesktopEvidenceHandleForwarded:       true,
+		KDEForwardedArgumentKind:             "evidence-relative-path",
+		KDEForwardedArguments:                []string{record.EvidenceRelativePath},
+		OwnerServiceArgsExposedToKDE:         false,
+		ExecutionEvidenceRecorded:            true,
+		StagedLauncherVerified:               true,
+		OwnerControlledRuntimeLaunchVerified: true,
+		OwnerManagedCopyVerified:             true,
+		OwnerServiceCallReady:                true,
+		OwnerEvidenceHandoffReady:            true,
+		OwnerEvidenceRelativePath:            record.EvidenceRelativePath,
+		RuntimeDispatchVerified:              true,
+		LaunchAuthorizationRequired:          true,
+		DesktopLaunchEnabled:                 false,
+		BackendLaunchEnabled:                 false,
+		RuntimeOwned:                         true,
+		GoRuntimeBacked:                      true,
+		KDEPolicyOwner:                       false,
+		HostRootModified:                     false,
+		BackendDetailsExposed:                false,
+		RawArtifactPathExposed:               false,
+		Summary:                              "Xnix MessageBox GUI card can forward only a safe Runtime evidence handle.",
+	}
 }

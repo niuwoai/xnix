@@ -1,6 +1,9 @@
 package appidentity
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 const (
 	KDEControlledLaunchActionSchemaVersion = "xnix.runtime.kde_controlled_launch_action.v1"
@@ -11,6 +14,7 @@ type KDEControlledLaunchActionRequest struct {
 	StateRoot            string
 	EvidenceID           string
 	EvidenceRelativePath string
+	KDECenterGUICard     *KDECenterPageKnownAppMatrixCard
 }
 
 type KDEControlledLaunchActionPreview struct {
@@ -73,10 +77,14 @@ type KDEControlledLaunchActionPreview struct {
 }
 
 func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) (KDEControlledLaunchActionPreview, error) {
+	evidenceRelativePath := strings.TrimSpace(request.EvidenceRelativePath)
+	if evidenceRelativePath == "" && request.KDECenterGUICard != nil {
+		evidenceRelativePath = kdeControlledLaunchActionEvidenceRelativePathFromCard(*request.KDECenterGUICard)
+	}
 	trigger, err := PreviewKnownAppRuntimeStatusLaunchOwnerTrigger(KnownAppRuntimeStatusLaunchOwnerTriggerRequest{
 		StateRoot:            request.StateRoot,
 		EvidenceID:           request.EvidenceID,
-		EvidenceRelativePath: request.EvidenceRelativePath,
+		EvidenceRelativePath: evidenceRelativePath,
 	})
 	if err != nil {
 		return KDEControlledLaunchActionPreview{}, err
@@ -139,7 +147,79 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 		BlockedActions:                    []string{"derive owner service arguments in KDE", "read Runtime state root from KDE", "reconstruct Runtime receipts in KDE", "start compatibility engine from KDE", "expose raw launcher output to KDE", "mutate host root from KDE action stub"},
 		DesktopSafeSummary:                trigger.DisplayName + " can be presented as a KDE controlled-launch action that forwards only the Runtime-status evidence handle to D-Bus.",
 	}
-	return validateKDEControlledLaunchActionPreview(preview)
+	preview, err = validateKDEControlledLaunchActionPreview(preview)
+	if err != nil {
+		return KDEControlledLaunchActionPreview{}, err
+	}
+	if request.KDECenterGUICard != nil {
+		if err := validateKDEControlledLaunchActionGUICard(*request.KDECenterGUICard, preview); err != nil {
+			return KDEControlledLaunchActionPreview{}, err
+		}
+	}
+	return preview, nil
+}
+
+func kdeControlledLaunchActionEvidenceRelativePathFromCard(card KDECenterPageKnownAppMatrixCard) string {
+	if len(card.KDEForwardedArguments) == 1 && strings.TrimSpace(card.KDEForwardedArguments[0]) != "" {
+		return strings.TrimSpace(card.KDEForwardedArguments[0])
+	}
+	return strings.TrimSpace(card.OwnerEvidenceRelativePath)
+}
+
+func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCard, preview KDEControlledLaunchActionPreview) error {
+	switch {
+	case card.EvidenceKind != "known-application-gui-smoke" || card.EvidenceSource != "wine-guest-gui-smoke":
+		return errors.New("KDE controlled launch action GUI card requires GUI smoke evidence")
+	case card.AppID != preview.ApplicationID || card.DisplayName != preview.ApplicationName || card.AppVersion != preview.ApplicationVersion:
+		return errors.New("KDE controlled launch action GUI card must match Runtime evidence identity")
+	case card.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction || card.PrimaryActionKind != "runtime-status" || !card.PrimaryActionEnabled:
+		return errors.New("KDE controlled launch action GUI card requires Runtime-status primary action")
+	case card.DesktopCallableRoute != preview.DesktopCallableRoute || card.DesktopCallableRuntimeMethod != preview.DesktopCallableRuntimeMethod || card.DesktopCallableExecutionType != preview.DesktopCallableExecutionType:
+		return errors.New("KDE controlled launch action GUI card route does not match Runtime action")
+	case card.DesktopDBusMethod != preview.PublicDBusMethod || !card.DesktopEvidenceHandleForwarded || card.KDEForwardedArgumentKind != "evidence-relative-path":
+		return errors.New("KDE controlled launch action GUI card must forward the public Runtime D-Bus evidence handle")
+	case !sameRuntimeStatusLaunchOwnerFixtureArgs(card.KDEForwardedArguments, []string{preview.EvidenceRelativePath}):
+		return errors.New("KDE controlled launch action GUI card must forward only the Runtime evidence relative path")
+	case card.OwnerServiceArgsExposedToKDE || card.DesktopLaunchEnabled || card.BackendLaunchEnabled:
+		return errors.New("KDE controlled launch action GUI card must keep owner args and launch gates closed")
+	case card.HostRootModified || card.BackendDetailsExposed || card.RawArtifactPathExposed || card.KDEPolicyOwner:
+		return errors.New("KDE controlled launch action GUI card must keep unsafe desktop fields closed")
+	case !card.RuntimeOwned || !card.GoRuntimeBacked || !card.ExecutionEvidenceRecorded || !card.RuntimeDispatchVerified:
+		return errors.New("KDE controlled launch action GUI card requires Runtime-owned verified evidence")
+	case !card.OwnerControlledRuntimeLaunchVerified || !card.OwnerManagedCopyVerified || !card.OwnerServiceCallReady || !card.OwnerEvidenceHandoffReady:
+		return errors.New("KDE controlled launch action GUI card requires owner-controlled handoff readiness")
+	case card.OwnerEvidenceRelativePath != preview.EvidenceRelativePath:
+		return errors.New("KDE controlled launch action GUI card owner evidence path must match Runtime evidence")
+	}
+	for _, value := range []string{
+		card.AppID,
+		card.DisplayName,
+		card.AppVersion,
+		card.EvidenceKind,
+		card.EvidenceSource,
+		card.SmokeStatus,
+		card.CompatibilityState,
+		card.CenterCardState,
+		card.PrimaryActionID,
+		card.PrimaryActionLabel,
+		card.PrimaryActionKind,
+		card.DesktopCallableRoute,
+		card.DesktopCallableRuntimeMethod,
+		card.DesktopCallableExecutionType,
+		card.DesktopDBusMethod,
+		card.KDEForwardedArgumentKind,
+		card.OwnerEvidenceRelativePath,
+	} {
+		if value != "" && !singleLine(value) {
+			return errors.New("KDE controlled launch action GUI card requires single-line fields")
+		}
+	}
+	for _, value := range card.KDEForwardedArguments {
+		if value != "" && !singleLine(value) {
+			return errors.New("KDE controlled launch action GUI card requires single-line forwarded arguments")
+		}
+	}
+	return nil
 }
 
 func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionPreview) (KDEControlledLaunchActionPreview, error) {

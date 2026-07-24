@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc96] - 2026-07-25
+
+### Added
+
+- Added Go Runtime validation for consuming a safe KDE GUI evidence card as the input to `kde-controlled-launch-action-preview`.
+- Added CLI support for `kde-controlled-launch-action-preview --kde-gui-card-file`, deriving the evidence handle only from the card's single safe forwarded argument when `--evidence-relative-path` is omitted.
+
+### Changed
+
+- Changed the KDE controlled-launch action preview path to verify GUI card identity, route metadata, D-Bus method, forwarded evidence handle, owner handoff readiness, and closed desktop/backend launch gates before returning a desktop action.
+
 ## [0.2.640-rc95] - 2026-07-25
 
 ### Added
