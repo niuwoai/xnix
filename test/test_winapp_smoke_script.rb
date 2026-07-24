@@ -135,6 +135,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "request_type" => "windows-app-run-smoke",
         "status" => "passed",
         "executable_name" => File.basename(exe_path),
+        "executable_format" => "pe-mz",
+        "windows_executable_signature_observed" => true,
         "runner_available" => true,
         "runner_argument_count" => runner_arg_count,
         "compatibility_layer" => "windows-compatibility-layer",
@@ -232,6 +234,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
   assert(report.fetch("backend") == "local", "JSON report must default to the local backend")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
+  assert(report.fetch("executable_format") == "pe-mz", "JSON report must preserve executable format evidence")
+  assert(report.fetch("windows_executable_signature_observed"), "JSON report must preserve Windows signature evidence")
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
   assert(report.fetch("runner_diagnostics_status") == "passed", "JSON report must preserve diagnostics status")
   assert(report.fetch("runner_candidate_count") == 1, "JSON report must preserve runner candidate count")
@@ -252,6 +256,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("# Windows App Smoke Report"), "Markdown report must include title")
   assert(markdown_stdout.include?("Backend: local"), "Markdown report must include backend")
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
+  assert(markdown_stdout.include?("Executable format: pe-mz"), "Markdown report must expose executable format")
+  assert(markdown_stdout.include?("Windows executable signature observed: true"), "Markdown report must expose executable signature evidence")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
   assert(markdown_stdout.include?("Profile preflight invoked: false"), "Markdown report must expose profile preflight invocation")
@@ -289,6 +295,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("user_executable_supplied"), "custom report must mark user executable supplied")
   assert(!custom_report.fetch("fixture_built"), "custom report must skip fixture build")
   assert(custom_report.fetch("runner_diagnostics_payload").fetch("explicit_runner_supplied"), "custom report must pass runner into diagnostics")
+  assert(custom_report.fetch("executable_format") == "pe-mz", "custom report must preserve executable format evidence")
+  assert(custom_report.fetch("windows_executable_signature_observed"), "custom report must preserve Windows signature evidence")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("success_mode") == "marker", "custom report must preserve default success mode")
   assert(custom_report.fetch("working_directory_mode") == "operator-supplied", "custom report must preserve working directory mode")
@@ -345,6 +353,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("profile_preflight_payload").fetch("request_type") == "windows-app-smoke-profile-preflight", "profile report must embed preflight payload")
   assert(profile_report.fetch("profile_preflight_payload").fetch("executable_format") == "pe-mz", "profile report must preserve preflight executable format")
   assert(profile_report.fetch("profile_preflight_payload").fetch("windows_executable_signature_observed"), "profile report must preserve Windows executable signature evidence")
+  assert(profile_report.fetch("executable_format") == "pe-mz", "profile report must preserve report-level executable format")
+  assert(profile_report.fetch("windows_executable_signature_observed"), "profile report must preserve report-level Windows signature evidence")
   assert(profile_report.fetch("executable_source") == "profile", "profile report must identify profile executable source")
   assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
   assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")

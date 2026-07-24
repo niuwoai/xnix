@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc43
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc44
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc44 checkpoint candidate brings the same Windows executable proof into direct local smoke runs. `windows-app-run-smoke --exe <path>` now validates the target executable's `MZ` signature before creating the isolated state root, resolving the working directory, or selecting a runner. Direct smoke JSON and Markdown reports now carry report-level `executable_format` and `windows_executable_signature_observed` evidence, so real `.exe` attempts fail fast on wrong files while keeping raw paths, runner arguments, Docker, QEMU, Colima, networking, package managers, and host-root mutation disabled.
 
 The v0.2.640-rc43 checkpoint candidate makes profile preflight verify that the target executable starts with the Windows `MZ` signature before reporting readiness. The Go-owned preflight now reports `executable_format` and `windows_executable_signature_observed`, blocks non-Windows files before smoke execution, and still keeps raw paths, runner arguments, Wine execution, Docker, QEMU, Colima, networking, package managers, and host-root mutation disabled.
 

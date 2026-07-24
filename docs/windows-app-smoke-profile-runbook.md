@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc43
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc44
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -64,6 +64,8 @@ go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile .local/xnix/winapp-
 
 Both paths keep Docker, QEMU, Colima, network checks, package managers, privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation disabled.
 
+Direct `--exe` smoke runs also validate the Windows `MZ` executable signature before runner resolution, working-directory setup, or app execution.
+
 ## Choosing Success Mode
 
 - Use `marker` when the app or fixture can print `expected_marker`.
@@ -76,6 +78,7 @@ Both paths keep Docker, QEMU, Colima, network checks, package managers, privileg
 - `skipped` with `windows compatibility runner unavailable` means no Wine-compatible runner was found or supplied.
 - `profile_supplied: true` proves the report used a profile input.
 - `windows_executable_signature_observed: true` proves the profile points to a Windows PE-style executable header.
+- Direct smoke reports also expose `executable_format: pe-mz` when the supplied `--exe` target is a Windows PE-style executable.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

@@ -131,6 +131,8 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["request_type"] != "windows-app-run-smoke" ||
 		payload["status"] != "passed" ||
 		payload["executable_name"] != "hello.exe" ||
+		payload["executable_format"] != "pe-mz" ||
+		payload["windows_executable_signature_observed"] != true ||
 		payload["runner_available"] != true ||
 		payload["success_mode"] != "marker" ||
 		payload["working_directory_mode"] != "executable-directory" ||
@@ -155,6 +157,37 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandRejectsNonPEExecutable(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("plain text"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nprintf 'should-not-run\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+	}, &output)
+	if err == nil || !strings.Contains(err.Error(), "Windows PE file") {
+		t.Fatalf("expected PE validation error, got err=%v output=%s", err, output.String())
+	}
+	if output.Len() != 0 {
+		t.Fatalf("non-PE executable should be rejected before JSON smoke output, got %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")
@@ -162,7 +195,7 @@ func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "runtime-cwd")
@@ -366,7 +399,7 @@ func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -410,7 +443,7 @@ func TestWindowsAppRunSmokeCommandCanUseStartupWindowSuccessMode(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -539,7 +572,7 @@ func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -590,7 +623,7 @@ func TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "custom.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -636,7 +669,7 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	dockerPath := filepath.Join(tempDir, "fake-docker")
@@ -701,7 +734,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	logPath := filepath.Join(tempDir, "guest.log")

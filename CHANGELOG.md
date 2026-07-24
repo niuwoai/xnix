@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc44] - 2026-07-24
+
+### Added
+
+- Added Windows `MZ` executable signature validation to direct `windows-app-run-smoke` runs before runner resolution.
+- Added report-level `executable_format` and `windows_executable_signature_observed` evidence to direct Windows app smoke JSON and Markdown reports.
+
 ## [0.2.640-rc43] - 2026-07-24
 
 ### Added

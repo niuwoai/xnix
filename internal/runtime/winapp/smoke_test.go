@@ -13,7 +13,7 @@ import (
 func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
@@ -32,6 +32,8 @@ func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 		!result.MarkerObserved ||
 		result.ExitCode != 0 ||
 		result.ExecutableName != "hello.exe" ||
+		result.ExecutableFormat != "pe-mz" ||
+		!result.WindowsExecutableSignature ||
 		result.CompatibilityLayer != "windows-compatibility-layer" {
 		t.Fatalf("unexpected result: %#v", result)
 	}
@@ -48,7 +50,7 @@ func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
@@ -73,7 +75,7 @@ func TestRunSmokeDefaultsWorkingDirectoryToExecutableDirectory(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tempDir, "companion.dll"), []byte("sidecar"), 0o600); err != nil {
@@ -109,7 +111,7 @@ func TestRunSmokeUsesOperatorWorkingDirectoryWithoutReportingPath(t *testing.T) 
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "runtime-cwd")
@@ -152,7 +154,7 @@ func TestRunSmokePassesRunnerArgumentsBeforeExecutable(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -190,7 +192,7 @@ func TestRunSmokeExpandsRunnerBottleBeforeRunnerArguments(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -225,7 +227,7 @@ func TestRunSmokeExpandsRunnerBottleBeforeRunnerArguments(t *testing.T) {
 func TestRunSmokeCanPassOnExitCodeWithoutMarker(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, "GUI app exited cleanly\n")
@@ -254,7 +256,7 @@ func TestRunSmokeCanPassWhenProcessSurvivesStartupWindow(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -285,7 +287,7 @@ func TestRunSmokeCanPassWhenProcessSurvivesStartupWindow(t *testing.T) {
 func TestRunSmokeFailsStartupWindowWhenProcessExitsEarly(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, "closed quickly\n")
@@ -310,7 +312,7 @@ func TestRunSmokeFailsStartupWindowWhenProcessExitsEarly(t *testing.T) {
 func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
@@ -350,7 +352,7 @@ func TestRunSmokePassesRunnerArgumentsToWineboot(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
@@ -383,7 +385,7 @@ func TestRunSmokePassesRunnerArgumentsToWineboot(t *testing.T) {
 func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 
@@ -440,7 +442,7 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 func TestRunSmokeUsesConfiguredRunnerEnvironmentVariable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
@@ -545,7 +547,7 @@ func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	writeNamedFakeRunner(t, tempDir, "wine64", 0, DefaultMarker+"\n")
@@ -570,7 +572,7 @@ func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
 func TestRunSmokeCanRedactRawOutputForDesktopConsumers(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\nraw-host-path=/private/tmp/secret\n")
@@ -616,6 +618,31 @@ func TestRunSmokeRejectsNonWindowsExecutable(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "Windows .exe") {
 		t.Fatalf("expected Windows executable validation error, got %v", err)
+	}
+}
+
+func TestRunSmokeRejectsNonPEExecutableBeforeRunnerResolution(t *testing.T) {
+	tempDir := t.TempDir()
+	path := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(path, []byte("plain text"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: path,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+	})
+	if err == nil || !strings.Contains(err.Error(), "Windows PE file") {
+		t.Fatalf("expected Windows PE validation error, got result=%#v err=%v", result, err)
+	}
+	if result.ExecutableName != "hello.exe" ||
+		result.ExecutableFormat != "unknown" ||
+		result.WindowsExecutableSignature ||
+		result.RunnerAvailable ||
+		result.IsolatedStateRoot {
+		t.Fatalf("unexpected pre-run validation result: %#v", result)
 	}
 }
 
