@@ -76,9 +76,11 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     if args[0] == "run" && args.include?("windows-app-run-smoke")
       redacted = args.include?("--redact-output")
       marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
+      success_mode = args.include?("--success-mode") ? args[args.index("--success-mode") + 1] : "marker"
       exe_path = args[args.index("--exe") + 1]
       runner_arg_count = args.each_with_index.count { |value, index| value == "--runner-arg" && index + 1 < args.length }
       runner_arg_count += 2 if args.include?("--runner-bottle")
+      marker_observed = success_mode == "marker"
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
@@ -91,10 +93,11 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "wine_bootstrap_succeeded" => false,
         "wine_bootstrap_exit_code" => -1,
         "expected_marker" => marker,
-        "marker_observed" => true,
+        "success_mode" => success_mode,
+        "marker_observed" => marker_observed,
         "exit_code" => 0,
         "duration_millis" => 1,
-        "stdout" => redacted ? "" : "#{marker}\\n",
+        "stdout" => redacted ? "" : (marker_observed ? "#{marker}\\n" : "GUI app exited cleanly\\n"),
         "stderr" => "",
         "stdout_bytes" => 39,
         "stderr_bytes" => 0,
@@ -173,6 +176,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("schema_version") == "xnix.runtime.winapp_smoke_report.v1", "JSON report must expose schema")
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
+  assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
   assert(report.fetch("backend") == "local", "JSON report must default to the local backend")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
@@ -196,6 +200,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
+  assert(markdown_stdout.include?("Success mode: marker"), "Markdown report must expose success mode")
   assert(markdown_stdout.include?("Runner argument count: 0"), "Markdown report must expose runner argument count")
   assert(markdown_stdout.include?("Runner command hints:"), "Markdown report must expose runner command hints")
   assert(markdown_stdout.include?("ruby scripts/winapp_smoke.rb --exe path/to/app.exe"), "Markdown report must include safe smoke command hint")
@@ -225,6 +230,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(!custom_report.fetch("fixture_built"), "custom report must skip fixture build")
   assert(custom_report.fetch("runner_diagnostics_payload").fetch("explicit_runner_supplied"), "custom report must pass runner into diagnostics")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
+  assert(custom_report.fetch("success_mode") == "marker", "custom report must preserve default success mode")
   assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
   assert(custom_report.fetch("runner_argument_count") == 3, "custom report must preserve runner argument count")
@@ -241,6 +247,21 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(last_invocation.include?("--runner-bottle"), "custom executable mode must forward runner bottle")
   assert(last_invocation.include?("--runner-arg"), "custom executable mode must forward runner arguments")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
+
+  exit_code_stdout, exit_code_stderr, exit_code_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--exe", custom_exe.to_s,
+    "--runner", custom_runner.to_s,
+    "--success-mode", "exit-code"
+  )
+  assert(exit_code_status.success?, "winapp smoke exit-code success mode report must succeed: #{exit_code_stderr}")
+  exit_code_report = JSON.parse(exit_code_stdout)
+  assert(exit_code_report.fetch("status") == "passed", "exit-code report must pass on zero runner exit")
+  assert(exit_code_report.fetch("success_mode") == "exit-code", "exit-code report must preserve success mode")
+  assert(!exit_code_report.fetch("marker_observed"), "exit-code report must not require marker observation")
+  assert(!exit_code_stdout.include?(custom_exe.to_s), "exit-code report must not leak executable path")
 
   container_stdout, container_stderr, container_status = Open3.capture3(
     env,

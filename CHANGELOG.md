@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc36] - 2026-07-24
+
+### Added
+
+- Added `--success-mode marker|exit-code` to the Go-owned local Windows app smoke command, preserving marker validation by default while allowing explicit zero-exit real app evidence.
+- Added success mode forwarding and `success_mode` reporting to `scripts/winapp_smoke.rb`.
+
 ## [0.2.640-rc35] - 2026-07-24
 
 ### Added

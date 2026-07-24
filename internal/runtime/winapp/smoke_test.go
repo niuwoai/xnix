@@ -143,6 +143,32 @@ func TestRunSmokeExpandsRunnerBottleBeforeRunnerArguments(t *testing.T) {
 	}
 }
 
+func TestRunSmokeCanPassOnExitCodeWithoutMarker(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, "GUI app exited cleanly\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+		SuccessMode:    SuccessModeExitCode,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.SuccessMode != SuccessModeExitCode ||
+		result.MarkerObserved ||
+		result.FailureReason != "" {
+		t.Fatalf("unexpected exit-code success result: %#v", result)
+	}
+}
+
 func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")

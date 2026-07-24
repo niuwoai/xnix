@@ -22,6 +22,8 @@ const (
 	PassedStatus                   = "passed"
 	FailedStatus                   = "failed"
 	SkippedStatus                  = "skipped"
+	SuccessModeMarker              = "marker"
+	SuccessModeExitCode            = "exit-code"
 	DefaultMarker                  = "XNIX_WINAPP_SMOKE_OK"
 )
 
@@ -34,6 +36,7 @@ type Request struct {
 	RunnerPath      string
 	Timeout         time.Duration
 	ExpectedMarker  string
+	SuccessMode     string
 	RedactOutput    bool
 }
 
@@ -49,6 +52,7 @@ type Result struct {
 	WineBootstrapSucceeded      bool   `json:"wine_bootstrap_succeeded"`
 	WineBootstrapExitCode       int    `json:"wine_bootstrap_exit_code"`
 	ExpectedMarker              string `json:"expected_marker"`
+	SuccessMode                 string `json:"success_mode"`
 	MarkerObserved              bool   `json:"marker_observed"`
 	ExitCode                    int    `json:"exit_code"`
 	DurationMillis              int64  `json:"duration_millis"`
@@ -112,6 +116,11 @@ type runnerCandidate struct {
 
 func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	result := baseResult(request)
+	successMode, err := normalizeSuccessMode(request.SuccessMode)
+	if err != nil {
+		return result, err
+	}
+	result.SuccessMode = successMode
 
 	executablePath, err := validateExecutable(request.ExecutablePath)
 	if err != nil {
@@ -218,6 +227,10 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		result.FailureReason = "runner returned a non-zero exit status"
 		return result, nil
 	}
+	if successMode == SuccessModeExitCode {
+		result.Status = PassedStatus
+		return result, nil
+	}
 	if !result.MarkerObserved {
 		result.Status = FailedStatus
 		result.FailureReason = "expected smoke marker was not observed"
@@ -226,6 +239,19 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 
 	result.Status = PassedStatus
 	return result, nil
+}
+
+func normalizeSuccessMode(mode string) (string, error) {
+	mode = strings.TrimSpace(mode)
+	if mode == "" {
+		return SuccessModeMarker, nil
+	}
+	switch mode {
+	case SuccessModeMarker, SuccessModeExitCode:
+		return mode, nil
+	default:
+		return "", fmt.Errorf("unsupported success mode %q", mode)
+	}
 }
 
 func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
@@ -320,6 +346,7 @@ func baseResult(request Request) Result {
 		CompatibilityLayer:          "windows-compatibility-layer",
 		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
+		SuccessMode:                 SuccessModeMarker,
 		ExitCode:                    -1,
 		RawOutputIncluded:           !request.RedactOutput,
 		RawOutputRedacted:           request.RedactOutput,

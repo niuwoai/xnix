@@ -28,13 +28,14 @@ options = {
   timeout: "30s",
   bootstrap_timeout: "300s",
   expected_marker: MARKER,
+  success_mode: "marker",
   runner_bottle: nil,
   runner_args: [],
   app_args: []
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -47,6 +48,7 @@ OptionParser.new do |parser|
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
+  parser.on("--success-mode MODE", "Success mode: marker or exit-code") { |value| options[:success_mode] = value }
   parser.on("--runner-bottle NAME", "Compatibility runner bottle name passed before the executable path") { |value| options[:runner_bottle] = value }
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
@@ -60,6 +62,10 @@ unless %w[local container].include?(options[:backend])
   warn "FAIL: unsupported backend #{options[:backend]}"
   exit 1
 end
+unless %w[marker exit-code].include?(options[:success_mode])
+  warn "FAIL: unsupported success mode #{options[:success_mode]}"
+  exit 1
+end
 
 options[:redact_output] = options[:format] != "text" if options[:redact_output].nil?
 
@@ -68,7 +74,7 @@ def run_command(env, *argv)
   [stdout, stderr, status.exitstatus]
 end
 
-def base_report(format, redact_output, expected_marker, executable_source, backend, image, platform)
+def base_report(format, redact_output, expected_marker, success_mode, executable_source, backend, image, platform)
   {
     "version" => PROJECT_ROOT.join("VERSION").read.strip,
     "schema_version" => SCHEMA_VERSION,
@@ -83,6 +89,7 @@ def base_report(format, redact_output, expected_marker, executable_source, backe
     "smoke_invoked" => false,
     "status" => "failed",
     "marker" => expected_marker,
+    "success_mode" => success_mode,
     "runner_available" => false,
     "runner_argument_count" => 0,
     "runner_diagnostics_status" => "not-run",
@@ -135,6 +142,7 @@ def emit_report(report)
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
+    puts "- Success mode: #{report.fetch("success_mode")}"
     puts "- Runner argument count: #{report.fetch("runner_argument_count")}"
     unless report.fetch("runner_command_hints").empty?
       puts "- Runner command hints:"
@@ -172,6 +180,7 @@ report = base_report(
   options.fetch(:format),
   options.fetch(:redact_output),
   options.fetch(:expected_marker),
+  options.fetch(:success_mode),
   executable_source,
   options.fetch(:backend),
   options.fetch(:image),
@@ -312,7 +321,8 @@ smoke_command = [
   "--exe", selected_exe_path.to_s,
   "--state-root", options.fetch(:state_root),
   "--timeout", options.fetch(:timeout),
-  "--expected-marker", options.fetch(:expected_marker)
+  "--expected-marker", options.fetch(:expected_marker),
+  "--success-mode", options.fetch(:success_mode)
 ]
 smoke_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
 smoke_command.concat(["--runner-bottle", options.fetch(:runner_bottle)]) unless options[:runner_bottle].to_s.strip.empty?
@@ -337,6 +347,7 @@ payload = JSON.parse(smoke_stdout)
 report["runtime_payload"] = payload
 report["status"] = payload.fetch("status")
 report["runner_available"] = payload.fetch("runner_available", false)
+report["success_mode"] = payload.fetch("success_mode", options.fetch(:success_mode))
 report["runner_argument_count"] = payload.fetch("runner_argument_count", 0)
 report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
 report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)
@@ -355,6 +366,10 @@ report["skip_reason"] = payload.fetch("skip_reason", "")
 
 case payload.fetch("status")
 when "passed"
+  if report.fetch("success_mode") == "exit-code"
+    puts "PASS: real Windows app smoke" if options.fetch(:format) == "text"
+    finish(report, 0)
+  end
   if payload["marker_observed"] && payload["stdout"].include?(options.fetch(:expected_marker))
     puts "PASS: real Windows app smoke"
     exit 0

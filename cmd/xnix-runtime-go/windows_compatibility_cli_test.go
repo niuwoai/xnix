@@ -132,6 +132,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["status"] != "passed" ||
 		payload["executable_name"] != "hello.exe" ||
 		payload["runner_available"] != true ||
+		payload["success_mode"] != "marker" ||
 		payload["runner_argument_count"] != float64(3) ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
@@ -150,6 +151,50 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		strings.Contains(output.String(), "private-bottle-name") ||
 		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nprintf 'GUI app exited cleanly\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--success-mode", "exit-code",
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["success_mode"] != "exit-code" ||
+		payload["marker_observed"] != false ||
+		payload["failure_reason"] != nil {
+		t.Fatalf("unexpected exit-code success payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("exit-code smoke output leaked host paths: %s", output.String())
 	}
 }
 
