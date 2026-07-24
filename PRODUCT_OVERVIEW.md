@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.635
+> Last updated: 2026-07-24 | Current version: v0.2.636
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.636 checkpoint adds a KDE-facing Runtime-status controlled-launch action stub plus the Go-owned `kde-controlled-launch-action-preview` command. The KDE desktop action declares `org.xnix.Compatibility1.ShowRuntimeControlledLaunch` as the public route and forwards only the Runtime-status evidence-relative-path handle. The Go preview consumes verified Runtime-status launch evidence through the existing owner-trigger bridge and returns desktop-safe action metadata while keeping owner-service arguments, state-root access, receipt reconstruction, raw launcher output, backend details, Docker socket mounts, privileged containers, broad host mounts, host networking, host-root mutation, and actual execution outside KDE. v0.2.636 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.635 checkpoint moves the C D-Bus smoke adapter's controlled-launch owner-service dispatch onto Go-provided trigger metadata. `xnix_compatd_smoke.c` now calls `xnix-runtime-go known-app-runtime-status-launch-owner-trigger-preview`, reads the trigger's `owner_service_call_args`, Runtime method, route, and call type, and then invokes `xnix-runtime-owner` with those values instead of hardcoding the owner-service method/handoff pair in the adapter. `dbus_controlled_launch_owner_fixture_smoke.rb` now parses `go_owner_trigger_json` from the D-Bus response and verifies the Go trigger digest, owner-service args, evidence-only KDE behavior, disabled receipt reconstruction, disabled KDE state-root access, hidden backend/local paths, no Docker socket, no privileged container, no broad host mount, no host networking, and no host-root mutation. v0.2.635 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

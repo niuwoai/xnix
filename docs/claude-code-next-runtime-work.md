@@ -1,6 +1,6 @@
 # Claude Code Next Runtime Work
 
-> Last updated: 2026-07-24 | Baseline: v0.2.635
+> Last updated: 2026-07-24 | Baseline: v0.2.636
 
 This document is an implementation handoff for Claude Code. It is intentionally separate from `docs/claude-code-implementation-packages.md`; do not edit that file while working from this handoff.
 
@@ -19,19 +19,21 @@ Implementation ownership rules:
 
 ## Current Baseline
 
-The current baseline is `v0.2.635`.
+The current baseline is `v0.2.636`.
 
 Already done:
 
 - The real staged launcher lane can launch the managed known Windows app through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch evidence-relative-path <relative>` when QEMU/Wine prerequisites are present.
 - `known-app-runtime-status-launch-owner-trigger-preview` reads verified Runtime-status launch evidence and emits desktop/owner-service trigger metadata.
+- `kde-controlled-launch-action-preview` renders a KDE-facing controlled-launch action stub from that verified trigger while forwarding only the evidence-relative-path handle.
+- `kde/actions/xnix-runtime-status-controlled-launch.desktop` declares the public controlled-launch D-Bus route without exposing owner-service arguments, state-root access, receipt reconstruction, or execution start state.
 - `staged_launcher_dispatch_smoke.rb` consumes `owner_service_cli_args` from the Go trigger preview.
 - `dbus_controlled_launch_owner_fixture_smoke.rb` consumes the same Go trigger preview before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
 
 Remaining near-term gap:
 
-- The C D-Bus smoke adapter now consumes Go owner-trigger metadata for the controlled-launch dispatch, but the next KDE-facing action entrypoint still needs to consume the same trigger shape.
-- KDE-facing action wiring is still smoke-level; it has not become a real KDE entrypoint for launching the managed Windows app.
+- The KDE-facing action stub now consumes the same trigger shape, but it is still a declarative smoke-level artifact.
+- KDE-facing action wiring has not become a real KDE plugin entrypoint for launching the managed Windows app.
 - The current smoke path proves the trigger shape, but the next step should remove more adapter-owned launch knowledge and move toward a real desktop-triggered staged `xnix-compat-launch` path.
 
 ## Work Package A: Go-Owned D-Bus Dispatch Payload

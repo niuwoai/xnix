@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.636] - 2026-07-24
+
+### Added
+
+- Added `kde-controlled-launch-action-preview`, a Go-owned KDE controlled-launch action preview that consumes verified Runtime-status launch evidence and exposes only an evidence-relative-path handle to KDE.
+- Added `kde/actions/xnix-runtime-status-controlled-launch.desktop`, a declarative KDE action stub for the public `org.xnix.Compatibility1.ShowRuntimeControlledLaunch` D-Bus route.
+
+### Changed
+
+- Updated layout and targeted guards to require the KDE controlled-launch action stub, safe Go CLI output, hidden owner-service arguments, disabled KDE state-root access, disabled receipt reconstruction, and no execution start from KDE.
+
 ## [0.2.635] - 2026-07-24
 
 ### Changed

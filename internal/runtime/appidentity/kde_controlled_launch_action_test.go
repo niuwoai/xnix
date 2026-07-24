@@ -1,0 +1,121 @@
+package appidentity
+
+import "testing"
+
+func TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionEvidence(t, stateRoot)
+
+	preview, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:            stateRoot,
+		EvidenceRelativePath: record.EvidenceRelativePath,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchAction returned error: %v", err)
+	}
+
+	if preview.SchemaVersion != KDEControlledLaunchActionSchemaVersion ||
+		preview.RequestType != KDEControlledLaunchActionRequestType ||
+		preview.Source != KnownAppRuntimeStatusLaunchOwnerTriggerRequestType+"+kde-controlled-launch-action-stub" ||
+		preview.Desktop != "KDE Plasma" ||
+		preview.KDEComponent != "Compatibility Center" ||
+		preview.KDEActionID != "xnix.runtime-status.controlled-launch" ||
+		preview.KDEActionLabel != "Run with Xnix Runtime" ||
+		preview.KDEActionState != "ready-to-forward-evidence" ||
+		preview.RuntimeMethod != "PreviewKDEControlledLaunchAction" ||
+		preview.ReadMethod != "GetKDEControlledLaunchActionPreview" ||
+		preview.ApplicationID != "7zr" ||
+		preview.ApplicationName != "7-Zip standalone console executable" ||
+		preview.ApplicationVersion != "26.02" ||
+		preview.EvidenceRelativePath != record.EvidenceRelativePath ||
+		preview.EvidenceSHA256 != record.EvidenceSHA256 ||
+		!preview.EvidenceHandoffConsumed ||
+		!preview.EvidenceDigestVerified ||
+		preview.PublicDBusService != "org.xnix.Compatibility1" ||
+		preview.PublicDBusObjectPath != "/org/xnix/Compatibility1" ||
+		preview.PublicDBusInterface != "org.xnix.Compatibility1" ||
+		preview.PublicDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		preview.KDEForwardedArgumentKind != "evidence-relative-path" ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.KDEForwardedArguments, []string{record.EvidenceRelativePath}) ||
+		!preview.KDEForwardsOnlyEvidenceHandle ||
+		!preview.DesktopEvidenceHandleForwarded ||
+		!preview.DesktopTriggerReady ||
+		preview.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
+		preview.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
+		preview.DesktopCallableExecutionType != KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		!preview.RuntimeOwned ||
+		!preview.GoRuntimeBacked ||
+		preview.KDEPolicyOwner ||
+		preview.KDEOwnsOwnerServiceArgs ||
+		preview.OwnerServiceArgsExposedToKDE ||
+		!preview.OwnerServiceBoundaryHiddenFromKDE ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.RuntimePreviewCommand, []string{"xnix-runtime-go", KDEControlledLaunchActionRequestType, "--evidence-relative-path", record.EvidenceRelativePath}) {
+		t.Fatalf("unexpected KDE controlled launch action preview: %#v", preview)
+	}
+
+	if preview.DesktopReceiptFieldsReconstructed ||
+		preview.DesktopKDEStateRootAccess ||
+		preview.StateRootPathExposed ||
+		preview.EvidencePathExposed ||
+		preview.ManagedLauncherPathExposed ||
+		preview.RawLauncherOutputExposed ||
+		preview.BackendDetailsExposed ||
+		preview.HostRootModified ||
+		preview.DockerSocketMounted ||
+		preview.BroadHostMountRequired ||
+		preview.PrivilegedContainerRequired ||
+		preview.HostNetworkRequired ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.BackendProcessStarted ||
+		preview.RequestObjectCreatedByKDE {
+		t.Fatalf("KDE controlled launch action preview opened unsafe gates: %#v", preview)
+	}
+}
+
+func recordKDEControlledLaunchActionEvidence(t *testing.T, stateRoot string) KnownAppKDERuntimeStatusLaunchEvidenceRecord {
+	t.Helper()
+
+	sessionID := KnownAppControlledExecutionSessionID("7zr", "26.02")
+	launchReceiptID := KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	projection, err := ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
+		AppID:                                  "7zr",
+		DisplayName:                            "7-Zip standalone console executable",
+		AppVersion:                             "26.02",
+		RequestType:                            "windows-known-app-dispatch-smoke",
+		Status:                                 "passed",
+		GuestBoundary:                          "managed-known-app-guest-smoke",
+		RuntimeOwnedDispatch:                   true,
+		ArtifactVerified:                       true,
+		MarkerObserved:                         true,
+		SessionGatedControlledDispatchConsumed: true,
+		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
+		SessionGatedReviewReceiptID:            reviewReceiptID,
+		LaunchAuthorizationReceiptID:           launchReceiptID,
+		LaunchAuthorizationReceiptState:        "recorded",
+		LaunchGateState:                        "controlled-dispatch-ready",
+		LaunchGateConsumed:                     true,
+		LaunchGateReceiptAccepted:              true,
+		LaunchGateGuestBoundaryAccepted:        true,
+		ControlledDispatchReady:                true,
+		ControlledExecutionSessionConsumed:     true,
+		ControlledExecutionSessionID:           sessionID,
+		ControlledSessionDigestVerified:        true,
+		ControlledSessionRelativePath:          "execution-ledger/sessions/" + sessionID + ".json",
+		RuntimeOwnerConsumableSession:          true,
+		KDEReadModelConsumableSession:          true,
+	})
+	if err != nil {
+		t.Fatalf("ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence returned error: %v", err)
+	}
+	record, err := RecordKnownAppKDERuntimeStatusLaunchEvidence(KnownAppKDERuntimeStatusLaunchEvidenceRecordRequest{
+		StateRoot:  stateRoot,
+		Projection: projection,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppKDERuntimeStatusLaunchEvidence returned error: %v", err)
+	}
+	return record
+}
