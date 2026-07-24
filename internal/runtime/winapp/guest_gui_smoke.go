@@ -21,18 +21,20 @@ const (
 )
 
 type GuestGUIRequest struct {
-	GUIAppPath   string
-	Host         string
-	Port         string
-	User         string
-	KeyPath      string
-	RemoteDir    string
-	SSHPath      string
-	XWinInfoPath string
-	GuestDisplay string
-	HostDisplay  string
-	Timeout      time.Duration
-	Wait         time.Duration
+	ExecutablePath string
+	GUIAppPath     string
+	Host           string
+	Port           string
+	User           string
+	KeyPath        string
+	RemoteDir      string
+	SSHPath        string
+	SCPPath        string
+	XWinInfoPath   string
+	GuestDisplay   string
+	HostDisplay    string
+	Timeout        time.Duration
+	Wait           time.Duration
 }
 
 type GuestGUIResult struct {
@@ -46,6 +48,7 @@ type GuestGUIResult struct {
 	WineAvailable                             bool   `json:"wine_available"`
 	WinebootInvoked                           bool   `json:"wineboot_invoked"`
 	WinebootExitCode                          int    `json:"wineboot_exit_code"`
+	ExecutableCopied                          bool   `json:"executable_copied"`
 	LaunchAttempted                           bool   `json:"launch_attempted"`
 	LaunchPIDRecorded                         bool   `json:"launch_pid_recorded"`
 	XWinInfoInvoked                           bool   `json:"xwininfo_invoked"`
@@ -75,11 +78,29 @@ type GuestGUIResult struct {
 
 func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIResult, error) {
 	result := baseGuestGUIResult(request)
+	executablePath := strings.TrimSpace(request.ExecutablePath)
+	if executablePath != "" {
+		validatedExecutablePath, err := validateExecutable(executablePath)
+		if err != nil {
+			return result, err
+		}
+		executablePath = validatedExecutablePath
+		result.GUIAppName = filepath.Base(executablePath)
+	}
 	sshPath, err := resolveTool(request.SSHPath, "ssh")
 	if err != nil {
 		result.Status = SkippedStatus
 		result.SkipReason = "guest ssh transport unavailable"
 		return result, nil
+	}
+	scpPath := ""
+	if executablePath != "" {
+		scpPath, err = resolveTool(request.SCPPath, "scp")
+		if err != nil {
+			result.Status = SkippedStatus
+			result.SkipReason = "guest scp transport unavailable"
+			return result, nil
+		}
 	}
 	xwininfoPath, err := resolveTool(request.XWinInfoPath, "xwininfo")
 	if err != nil {
@@ -126,6 +147,19 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		return result, nil
 	}
 
+	remoteGUIApp := guiAppPath(request)
+	if executablePath != "" {
+		remoteGUIApp = remoteDir + "/" + filepath.Base(executablePath)
+		if err := runGuestSCP(runCtx, scpPath, GuestRequest{Host: request.Host, Port: request.Port, User: request.User, KeyPath: request.KeyPath}, executablePath, guest+":"+remoteGUIApp); err != nil {
+			result.DurationMillis = time.Since(startedAt).Milliseconds()
+			result.Status = FailedStatus
+			result.FailureReason = "guest GUI executable copy failed"
+			result.WinebootExitCode = exitCode(err)
+			return result, nil
+		}
+		result.ExecutableCopied = true
+	}
+
 	winebootCommand := guestGUIWinebootCommand(remoteDir, guestDisplay(request))
 	var winebootStderr bytes.Buffer
 	winebootErr := runGuestSSH(runCtx, sshPath, sshBase, guest, winebootCommand, nil, &winebootStderr)
@@ -141,7 +175,7 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		return result, nil
 	}
 
-	launchCommand := guestGUIWineLaunchCommand(remoteDir, guestDisplay(request), guiAppPath(request))
+	launchCommand := guestGUIWineLaunchCommand(remoteDir, guestDisplay(request), remoteGUIApp)
 	var launchStderr bytes.Buffer
 	launchErr := runGuestSSH(runCtx, sshPath, sshBase, guest, launchCommand, nil, &launchStderr)
 	result.LaunchAttempted = true

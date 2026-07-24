@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc76
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc77
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc77 checkpoint candidate turns the guest Wine GUI smoke from an in-guest-only launcher into a repeatable local-artifact delivery path. `xnix-runtime-go windows-app-guest-wine-gui-smoke --executable FILE.exe` validates a local Windows executable, copies it into the QEMU guest over loopback SCP, launches the copied guest path with Wine on the X display, observes the resulting X window, and keeps KDE-facing output free of raw host paths, guest executable paths, and backend commands. The Ruby Xvfb/QEMU harness now passes `--executable` through to Go, and the repository includes a controlled Windows `MessageBoxW` GUI fixture source for q4-built smoke artifacts.
 
 The v0.2.640-rc76 checkpoint candidate fixes the real guest Wine GUI smoke path discovered on q4. The rebuilt X/Wine guest image can boot under QEMU with SSH ready and Wine 10.0 installed, but first-run `wineboot --init` hung while launching `appwiz.cpl install_mono`. The Go-owned guest GUI Runtime now disables Wine Mono, Gecko, and menu-builder bootstrap for the smoke prefix and suppresses the first-run Mono installer subprocess so the lane can proceed directly toward launching `winemine.exe` and observing the X window.
 

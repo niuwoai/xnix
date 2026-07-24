@@ -439,24 +439,28 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	flags.SetOutput(io.Discard)
 
 	var guiAppPath string
+	var executablePath string
 	var host string
 	var port string
 	var user string
 	var keyPath string
 	var remoteDir string
 	var sshPath string
+	var scpPath string
 	var xwininfoPath string
 	var guestDisplay string
 	var hostDisplay string
 	var timeoutText string
 	var waitText string
 	flags.StringVar(&guiAppPath, "gui-app", winapp.DefaultGuestGUIApp, "Windows GUI app path inside the Wine guest")
+	flags.StringVar(&executablePath, "executable", "", "local Windows GUI .exe to copy into the guest before launch")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
 	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
 	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
 	flags.StringVar(&keyPath, "key", "", "guest SSH private key path")
 	flags.StringVar(&remoteDir, "remote-dir", "/tmp/xnix-wine-guest-gui-smoke", "guest remote GUI smoke directory")
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
+	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
 	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo path")
 	flags.StringVar(&guestDisplay, "guest-display", winapp.DefaultGuestGUIDisplay, "guest-visible X11 display")
 	flags.StringVar(&hostDisplay, "host-display", winapp.DefaultHostGUIDisplay, "host X11 display inspected by xwininfo")
@@ -483,18 +487,20 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	}
 
 	result, err := winapp.RunGuestGUISmoke(context.Background(), winapp.GuestGUIRequest{
-		GUIAppPath:   guiAppPath,
-		Host:         host,
-		Port:         parsedPort,
-		User:         user,
-		KeyPath:      keyPath,
-		RemoteDir:    remoteDir,
-		SSHPath:      sshPath,
-		XWinInfoPath: xwininfoPath,
-		GuestDisplay: guestDisplay,
-		HostDisplay:  hostDisplay,
-		Timeout:      timeout,
-		Wait:         wait,
+		ExecutablePath: executablePath,
+		GUIAppPath:     guiAppPath,
+		Host:           host,
+		Port:           parsedPort,
+		User:           user,
+		KeyPath:        keyPath,
+		RemoteDir:      remoteDir,
+		SSHPath:        sshPath,
+		SCPPath:        scpPath,
+		XWinInfoPath:   xwininfoPath,
+		GuestDisplay:   guestDisplay,
+		HostDisplay:    hostDisplay,
+		Timeout:        timeout,
+		Wait:           wait,
 	})
 	if err != nil {
 		return err

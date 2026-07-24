@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc77] - 2026-07-25
+
+### Added
+
+- Added a Go-owned local Windows GUI executable delivery path to `windows-app-guest-wine-gui-smoke`, allowing a validated local `.exe` to be copied into the QEMU guest over loopback SCP before Wine launches it on the observed X display.
+- Added a Windows `MessageBoxW` GUI fixture source and `scripts/wine_guest_gui_smoke.rb --executable` pass-through so q4 can run a controlled local GUI `.exe` through the same Runtime-owned path.
+
 ## [0.2.640-rc76] - 2026-07-25
 
 ### Fixed

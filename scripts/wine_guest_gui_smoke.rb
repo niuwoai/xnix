@@ -18,6 +18,7 @@ DEFAULT_DISPLAY_NUMBER = 100
 DEFAULT_SSH_PORT = "2223"
 DEFAULT_GUEST_DISPLAY_HOST = "10.0.2.2"
 DEFAULT_GUI_APP = "/usr/lib/wine/i386-windows/winemine.exe"
+DEFAULT_GUI_EXECUTABLE = ENV.fetch("XNIX_WINE_GUI_EXECUTABLE", "")
 DEFAULT_WAIT_SECONDS = 10
 DEFAULT_BOOT_TIMEOUT_SECONDS = 180
 DEFAULT_RUNTIME_BIN = ENV.fetch("XNIX_RUNTIME_GO_BIN", "go")
@@ -34,6 +35,7 @@ options = {
   display_number: Integer(ENV.fetch("XNIX_WINE_GUI_DISPLAY", DEFAULT_DISPLAY_NUMBER.to_s), 10),
   guest_display_host: ENV.fetch("XNIX_WINE_GUI_GUEST_DISPLAY_HOST", DEFAULT_GUEST_DISPLAY_HOST),
   gui_app: ENV.fetch("XNIX_WINE_GUI_APP", DEFAULT_GUI_APP),
+  executable: DEFAULT_GUI_EXECUTABLE,
   runtime_bin: DEFAULT_RUNTIME_BIN,
   wait_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_WAIT_SECONDS", DEFAULT_WAIT_SECONDS.to_s), 10),
   boot_timeout_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_BOOT_TIMEOUT_SECONDS", DEFAULT_BOOT_TIMEOUT_SECONDS.to_s), 10)
@@ -52,6 +54,7 @@ OptionParser.new do |parser|
   parser.on("--display-number NUMBER", Integer, "Host Xvfb display number.") { |value| options[:display_number] = value }
   parser.on("--guest-display-host HOST", "Guest-visible host display address.") { |value| options[:guest_display_host] = value }
   parser.on("--gui-app PATH", "Windows GUI app path inside the Wine guest.") { |value| options[:gui_app] = value }
+  parser.on("--executable PATH", "Local Windows GUI .exe copied into the Wine guest before launch.") { |value| options[:executable] = value }
   parser.on("--runtime-bin PATH", "Runtime binary; use `go` to run ./cmd/xnix-runtime-go from source.") { |value| options[:runtime_bin] = value }
   parser.on("--wait-seconds SECONDS", Integer, "Seconds to wait for the GUI window.") { |value| options[:wait_seconds] = value }
   parser.on("--boot-timeout-seconds SECONDS", Integer, "Seconds to wait for guest SSH.") { |value| options[:boot_timeout_seconds] = value }
@@ -146,7 +149,7 @@ def runtime_command(options)
            [options.fetch(:runtime_bin)]
          end
   display_number = options.fetch(:display_number)
-  [
+  command = [
     *base,
     "windows-app-guest-wine-gui-smoke",
     "--gui-app", options.fetch(:gui_app),
@@ -160,6 +163,10 @@ def runtime_command(options)
     "--wait", "#{options.fetch(:wait_seconds)}s",
     "--timeout", "#{options.fetch(:boot_timeout_seconds)}s"
   ]
+  unless options.fetch(:executable).strip.empty?
+    command.push("--executable", options.fetch(:executable))
+  end
+  command
 end
 
 def stop_process(pid)
@@ -181,7 +188,8 @@ def base_report(options)
     "status" => options.fetch(:execute) ? "running" : "planned",
     "execute" => options.fetch(:execute),
     "backend" => "qemu-guest-wine-x11",
-    "gui_app_name" => File.basename(options.fetch(:gui_app)),
+    "gui_app_name" => File.basename(options.fetch(:executable).strip.empty? ? options.fetch(:gui_app) : options.fetch(:executable)),
+    "local_gui_executable_configured" => !options.fetch(:executable).strip.empty?,
     "runtime_go_owned_gui_smoke" => true,
     "runtime_bin_configured" => !options.fetch(:runtime_bin).strip.empty?,
     "state_root" => state_root.to_s,
@@ -294,6 +302,8 @@ begin
 
   runtime_payload = JSON.parse(runtime_stdout)
   report["runtime_payload_schema_version"] = runtime_payload.fetch("schema_version")
+  report["gui_app_name"] = runtime_payload.fetch("gui_app_name", report.fetch("gui_app_name"))
+  report["executable_copied"] = runtime_payload.fetch("executable_copied", false)
   report["wineboot_invoked"] = runtime_payload.fetch("wineboot_invoked", false)
   report["x_window_child_count"] = runtime_payload.fetch("x_window_child_count", 0)
   report["x_window_observed"] = runtime_payload.fetch("x_window_observed", false)

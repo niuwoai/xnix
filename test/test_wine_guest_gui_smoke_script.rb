@@ -45,6 +45,7 @@ go_gui_smoke_source = project_root.join("internal/runtime/winapp/guest_gui_smoke
 assert(go_gui_smoke_source.include?("\"&\"") && go_gui_smoke_source.include?("printf"), "Go GUI smoke must record the background Wine process id without invalid shell separators")
 assert(!script_source.include?("&;"), "GUI smoke must not emit an invalid background shell separator")
 assert(script_source.include?("windows-app-guest-wine-gui-smoke"), "GUI smoke must delegate Wine GUI execution to the Go Runtime")
+assert(script_source.include?("--executable"), "GUI smoke must expose a local Windows GUI executable delivery path")
 assert(go_gui_smoke_source.include?("\"wineboot\"") && go_gui_smoke_source.include?("\"--init\""), "Go Runtime must initialize the Wine prefix before launching the GUI app")
 
 stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--plan-only", "--format", "json", chdir: project_root.to_s)
@@ -56,6 +57,7 @@ assert(payload["status"] == "planned", "GUI smoke plan must not execute by defau
 assert(payload["execute"] == false, "GUI smoke plan must keep execution disabled")
 assert(payload["backend"] == "qemu-guest-wine-x11", "GUI smoke must target the QEMU guest Wine X11 backend")
 assert(payload["gui_app_name"] == "winemine.exe", "GUI smoke must use a real Wine GUI Windows app by default")
+assert(payload["local_gui_executable_configured"] == false, "GUI smoke plan must default to the in-guest app path")
 assert(payload["qemu_user_network_restrict_disabled_for_display"] == true, "GUI smoke must disclose the temporary display networking exception")
 assert(payload["loopback_ssh_forwarding_only"] == true, "GUI smoke must keep SSH forwarding loopback-bound")
 assert(payload["privileged_container_required"] == false, "GUI smoke must not require privileged containers")
@@ -65,5 +67,12 @@ assert(payload["broad_host_mount_required"] == false, "GUI smoke must not requir
 assert(payload["host_root_modified"] == false, "GUI smoke must not mutate the host root")
 assert(payload["wineboot_invoked"] == false, "GUI smoke plan must not invoke wineboot")
 assert(payload["runtime_go_owned_gui_smoke"] == true, "GUI smoke must report Go-owned Runtime GUI execution")
+
+fixture_executable = project_root.join("test/fixtures/winapp/messagebox/xnix-messagebox-smoke.exe")
+stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--plan-only", "--format", "json", "--executable", fixture_executable.to_s, chdir: project_root.to_s)
+assert(status.success?, "Wine guest GUI smoke executable plan must succeed: #{stderr}")
+payload = JSON.parse(stdout)
+assert(payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke executable plan must surface the executable basename")
+assert(payload["local_gui_executable_configured"] == true, "GUI smoke executable plan must record local executable delivery mode")
 
 puts "PASS: Wine guest GUI smoke script plan"
