@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc68] - 2026-07-24
+
+### Added
+
+- Added `busybox-w32` as the second pinned real Windows known app, including source URL, executable name, PE32 architecture, SHA-256 checksum, default `--help` smoke argument, and `BusyBox` marker.
+
+### Changed
+
+- Updated known-app downloads to send a Runtime User-Agent so official sources that block default Go HTTP clients can still be fetched through the managed catalog path.
+
 ## [0.2.640-rc67] - 2026-07-24
 
 ### Changed

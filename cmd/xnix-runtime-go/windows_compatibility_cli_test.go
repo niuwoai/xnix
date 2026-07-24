@@ -1672,6 +1672,49 @@ func TestWindowsKnownAppFetchCommandRejectsUnknownApp(t *testing.T) {
 	}
 }
 
+func TestWindowsKnownAppGuestWineSmokeCommandRecognizesBusyBoxW32(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-guest-wine-smoke",
+		"--app", "busybox-w32",
+		"--cache-root", tempDir,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_guest_wine_smoke.v1" ||
+		payload["request_type"] != "windows-known-app-guest-wine-smoke" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "busybox-w32" ||
+		payload["display_name"] != "BusyBox-w32 standalone console executable" ||
+		payload["app_version"] != "current-2026-07-24" ||
+		payload["architecture"] != "windows-x86" ||
+		payload["executable_name"] != "busybox.exe" ||
+		payload["expected_sha256"] != "7bfee530965315665044e6e01db58125f2763c8a39c2e72ba1a6beb6923e0e1f" ||
+		payload["expected_marker"] != "BusyBox" ||
+		payload["checksum_verified"] != false ||
+		payload["loopback_only_networking"] != true ||
+		payload["qemu_required"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false {
+		t.Fatalf("unexpected BusyBox-w32 guest payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), tempDir) {
+		t.Fatalf("known app guest output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact(t *testing.T) {
 	tempDir := t.TempDir()
 

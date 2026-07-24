@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc67
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc68
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -43,6 +43,8 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 The next Codex-owned mainline task is:
 
 Continue from v0.2.640-rc21 with the human-authorized full smoke or, if the operator defers the heavy checkpoint, keep real desktop-triggered request execution blocked on formal `v0.2.640` promotion. The full checkpoint candidate now includes the KDE controlled-launch action D-Bus fixture lane, structured full-smoke failure classification, the Go-owned desktop-trigger staged invocation readiness packet, the fail-closed Runtime owner service launch envelope guard, the KDE controlled-launch action surface audit, the managed launcher acceptance report, the desktop-trigger dry-run request review, the desktop-trigger service call materialization packet, the post-release desktop-trigger request preflight, the targeted desktop-trigger request preflight smoke, merge readiness consumption of that preflight smoke evidence, release evidence index consumption of that preflight smoke evidence, KDE-safe redacted output evidence for the local Windows app runner, reusable JSON/Markdown reports from the local Windows app smoke script, a user-supplied `.exe` path for local Windows app smoke evidence, a staged-smoke materialization consumer path, a D-Bus fixture materialization consumer path, a deterministic read-only promotion packet, merge readiness consumption of that packet, release evidence index consumption of that packet, a human-operator promotion checklist, and a short Claude Code dispatch brief. The formal `v0.2.640` tag must still wait until `ruby scripts/full_smoke.rb` passes and the promotion packet allows promotion. If full smoke fails after the Docker pull issue is resolved, fix the concrete project defect and rerun the complete checkpoint before moving on. If it passes, promote to `v0.2.640` and then use `desktop-trigger-request-preflight-preview` as the real staged `ShowRuntimeControlledLaunch` request gate while preserving evidence-only KDE forwarding and Runtime-owned execution policy.
+
+The v0.2.640-rc68 checkpoint candidate adds `busybox-w32` as a second real Windows known app, including a pinned checksum, default `--help` smoke arguments, and `BusyBox` marker evidence for guest-wine runs. Known-app fetching now sends a Runtime User-Agent for official sources that reject default Go HTTP clients.
 
 The v0.2.640-rc67 checkpoint candidate makes the q4-proven QEMU/Wine/7zr path cheaper to repeat. The remote harness now defaults to a lightweight Runtime source sync (`go.mod`, `cmd/`, `internal/`, and `runtime/`) into a versioned q4 source tree, while retaining an explicit full-checkout sync mode for operator fallback.
 

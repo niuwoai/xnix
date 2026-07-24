@@ -45,6 +45,7 @@ const (
 	DefaultKnownAppCacheRoot           = ".cache/xnix/known-winapps"
 	DefaultKnownAppFetchTimeout        = 60 * time.Second
 	DefaultKnownAppGuestTimeout        = 90 * time.Second
+	KnownAppDownloadUserAgent          = "Xnix-Compatibility-Runtime/known-app-fetch"
 	defaultKnownAppDownloadLimit       = 32 << 20
 )
 
@@ -751,6 +752,18 @@ var knownPortableCatalog = []KnownPortableApp{
 		DownloadURL:    "https://github.com/ip7z/7zip/releases/download/26.02/7zr.exe",
 		SHA256:         "56b8cc9f4971cef253644fafe54063ed7fdca551d4dee0f8c6baa81b855acd72",
 		ExpectedMarker: "7-Zip",
+	},
+	{
+		ID:             "busybox-w32",
+		DisplayName:    "BusyBox-w32 standalone console executable",
+		Version:        "current-2026-07-24",
+		Architecture:   "windows-x86",
+		ExecutableName: "busybox.exe",
+		SourcePageURL:  "https://frippery.org/busybox/",
+		DownloadURL:    "https://frippery.org/files/busybox/busybox.exe",
+		SHA256:         "7bfee530965315665044e6e01db58125f2763c8a39c2e72ba1a6beb6923e0e1f",
+		ExpectedMarker: "BusyBox",
+		Arguments:      []string{"--help"},
 	},
 }
 
@@ -2206,6 +2219,7 @@ func downloadKnownPortableApp(ctx context.Context, client *http.Client, url stri
 	if err != nil {
 		return "", fmt.Errorf("create known app download request: %w", err)
 	}
+	request.Header.Set("User-Agent", KnownAppDownloadUserAgent)
 	response, err := client.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("download known app: %w", err)

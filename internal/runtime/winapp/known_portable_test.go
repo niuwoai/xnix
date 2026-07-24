@@ -16,6 +16,11 @@ import (
 )
 
 func TestKnownPortableCatalogContainsPinned7ZipConsoleExecutable(t *testing.T) {
+	catalog := KnownPortableCatalog()
+	if len(catalog) < 2 {
+		t.Fatalf("known portable catalog must include more than one real Windows app, got %d", len(catalog))
+	}
+
 	app, err := LookupKnownPortableApp("7zr")
 	if err != nil {
 		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
@@ -32,10 +37,31 @@ func TestKnownPortableCatalogContainsPinned7ZipConsoleExecutable(t *testing.T) {
 	}
 }
 
+func TestKnownPortableCatalogContainsPinnedBusyBoxW32ConsoleExecutable(t *testing.T) {
+	app, err := LookupKnownPortableApp("busybox-w32")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	if app.DisplayName != "BusyBox-w32 standalone console executable" ||
+		app.Version != "current-2026-07-24" ||
+		app.Architecture != "windows-x86" ||
+		app.ExecutableName != "busybox.exe" ||
+		app.SourcePageURL != "https://frippery.org/busybox/" ||
+		app.DownloadURL != "https://frippery.org/files/busybox/busybox.exe" ||
+		app.SHA256 != "7bfee530965315665044e6e01db58125f2763c8a39c2e72ba1a6beb6923e0e1f" ||
+		app.ExpectedMarker != "BusyBox" ||
+		strings.Join(app.Arguments, " ") != "--help" {
+		t.Fatalf("unexpected BusyBox-w32 catalog entry: %#v", app)
+	}
+}
+
 func TestFetchKnownPortableAppDownloadsAndVerifiesPinnedArtifact(t *testing.T) {
 	body := []byte("fixture portable windows executable")
 	sum := sha256.Sum256(body)
 	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if request.Header.Get("User-Agent") != KnownAppDownloadUserAgent {
+			return nil, fmt.Errorf("unexpected known app fetch user agent: %q", request.Header.Get("User-Agent"))
+		}
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       io.NopCloser(strings.NewReader(string(body))),
