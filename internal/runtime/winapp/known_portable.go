@@ -38,12 +38,19 @@ const (
 	KnownPrepareLaunchRequestType      = "windows-known-app-prepare-launch-profile"
 	KnownPrepareAndLaunchSchemaVersion = "xnix.runtime.known_windows_app_prepare_and_launch_profile.v1"
 	KnownPrepareAndLaunchRequestType   = "windows-known-app-prepare-and-launch-profile"
+	KnownRunSchemaVersion              = "xnix.runtime.known_windows_app_run.v1"
+	KnownRunRequestType                = "windows-known-app-run"
 	KnownDispatchGuestBoundary         = "managed-known-app-guest-smoke"
 	DefaultKnownAppID                  = "7zr"
 	DefaultKnownAppCacheRoot           = ".cache/xnix/known-winapps"
 	DefaultKnownAppFetchTimeout        = 60 * time.Second
 	DefaultKnownAppGuestTimeout        = 90 * time.Second
 	defaultKnownAppDownloadLimit       = 32 << 20
+)
+
+const (
+	KnownRunBackendLocal     = "local"
+	KnownRunBackendGuestWine = "guest-wine"
 )
 
 type KnownPortableApp struct {
@@ -581,6 +588,83 @@ type KnownPrepareAndLaunchProfileResult struct {
 	NextAction                  string                          `json:"next_action"`
 	SkipReason                  string                          `json:"skip_reason,omitempty"`
 	FailureReason               string                          `json:"failure_reason,omitempty"`
+}
+
+type KnownRunRequest struct {
+	AppID            string
+	Backend          string
+	CacheRoot        string
+	StateRoot        string
+	ProfileOutput    string
+	ApplicationID    string
+	DisplayName      string
+	RuntimeBinary    string
+	RuntimeArguments []string
+	RunnerPath       string
+	RunnerBottle     string
+	RunnerArguments  []string
+	SkipBootstrap    bool
+	AllowDownload    bool
+	Arguments        []string
+	Host             string
+	Port             string
+	User             string
+	KeyPath          string
+	RemoteDir        string
+	SSHPath          string
+	SCPPath          string
+	Timeout          time.Duration
+	HTTPClient       *http.Client
+}
+
+type KnownRunResult struct {
+	SchemaVersion               string                              `json:"schema_version"`
+	RequestType                 string                              `json:"request_type"`
+	Status                      string                              `json:"status"`
+	AppID                       string                              `json:"app_id"`
+	DisplayName                 string                              `json:"display_name"`
+	AppVersion                  string                              `json:"app_version"`
+	Architecture                string                              `json:"architecture"`
+	ExecutableName              string                              `json:"executable_name"`
+	Backend                     string                              `json:"backend"`
+	BackendReady                bool                                `json:"backend_ready"`
+	LaunchAttempted             bool                                `json:"launch_attempted"`
+	RunnerAvailable             bool                                `json:"runner_available"`
+	ChecksumVerified            bool                                `json:"checksum_verified"`
+	ProfileWritten              bool                                `json:"profile_written"`
+	LauncherBundleWritten       bool                                `json:"launcher_bundle_written"`
+	ExecutableCopied            bool                                `json:"executable_copied"`
+	MarkerObserved              bool                                `json:"marker_observed"`
+	ExecutableFormat            string                              `json:"executable_format"`
+	ExecutableArchitecture      string                              `json:"executable_architecture"`
+	WineArchitecture            string                              `json:"wine_architecture"`
+	ApplicationWorkspaceMode    string                              `json:"application_workspace_mode"`
+	RawOutputRedacted           bool                                `json:"raw_output_redacted"`
+	LocalPayload                *KnownPrepareAndLaunchProfileResult `json:"local_payload,omitempty"`
+	GuestPayload                *KnownGuestResult                   `json:"guest_payload,omitempty"`
+	LoopbackOnlyNetworking      bool                                `json:"loopback_only_networking"`
+	QEMURequired                bool                                `json:"qemu_required"`
+	NetworkRequired             bool                                `json:"network_required"`
+	HostRootModified            bool                                `json:"host_root_modified"`
+	PrivilegedContainerRequired bool                                `json:"privileged_container_required"`
+	HostNetworkingRequired      bool                                `json:"host_networking_required"`
+	DockerSocketMounted         bool                                `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool                                `json:"broad_host_mount_required"`
+	DockerExecuted              bool                                `json:"docker_executed"`
+	QEMUExecuted                bool                                `json:"qemu_executed"`
+	WineExecuted                bool                                `json:"wine_executed"`
+	ColimaExecuted              bool                                `json:"colima_executed"`
+	NetworkChecksRun            bool                                `json:"network_checks_run"`
+	PackageManagerInvoked       bool                                `json:"package_manager_invoked"`
+	RawHostPathExposed          bool                                `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool                                `json:"raw_executable_path_exposed"`
+	RawProfilePathExposed       bool                                `json:"raw_profile_path_exposed"`
+	RawStateRootPathExposed     bool                                `json:"raw_state_root_path_exposed"`
+	RawRuntimeArgvExposed       bool                                `json:"raw_runtime_argv_exposed"`
+	RawRunnerPathExposed        bool                                `json:"raw_runner_path_exposed"`
+	NextAction                  string                              `json:"next_action"`
+	SkipReason                  string                              `json:"skip_reason,omitempty"`
+	FailureReason               string                              `json:"failure_reason,omitempty"`
 }
 
 type KnownLaunchBridgeResult struct {
@@ -1298,6 +1382,121 @@ func PrepareAndLaunchKnownPortableProfile(ctx context.Context, request KnownPrep
 	return result, nil
 }
 
+func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRunResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownRunResult{}, err
+	}
+	backend := knownRunBackend(request.Backend)
+	result := baseKnownRunResult(app, backend)
+	switch backend {
+	case KnownRunBackendLocal:
+		local, err := PrepareAndLaunchKnownPortableProfile(ctx, KnownPrepareAndLaunchProfileRequest{
+			AppID:            app.ID,
+			CacheRoot:        request.CacheRoot,
+			StateRoot:        request.StateRoot,
+			ProfileOutput:    request.ProfileOutput,
+			ApplicationID:    request.ApplicationID,
+			DisplayName:      request.DisplayName,
+			RuntimeBinary:    request.RuntimeBinary,
+			RuntimeArguments: append([]string{}, request.RuntimeArguments...),
+			RunnerPath:       request.RunnerPath,
+			RunnerBottle:     request.RunnerBottle,
+			RunnerArguments:  append([]string{}, request.RunnerArguments...),
+			SkipBootstrap:    request.SkipBootstrap,
+			AllowDownload:    request.AllowDownload,
+			HTTPClient:       request.HTTPClient,
+			Timeout:          request.Timeout,
+		})
+		if err != nil {
+			return result, err
+		}
+		result.LocalPayload = &local
+		result.Status = local.Status
+		result.BackendReady = local.RunnerAvailable
+		result.LaunchAttempted = local.LaunchAttempted
+		result.RunnerAvailable = local.RunnerAvailable
+		result.ChecksumVerified = local.PreparePayload.ChecksumVerified
+		result.ProfileWritten = local.ProfileWritten
+		result.LauncherBundleWritten = local.LauncherBundleWritten
+		result.ExecutableFormat = local.ExecutableFormat
+		result.ExecutableArchitecture = local.ExecutableArchitecture
+		result.WineArchitecture = local.WineArchitecture
+		result.ApplicationWorkspaceMode = local.ApplicationWorkspaceMode
+		result.RawOutputRedacted = local.RawOutputRedacted
+		result.LoopbackOnlyNetworking = false
+		result.QEMURequired = false
+		result.NetworkRequired = local.NetworkRequired
+		result.HostRootModified = local.HostRootModified
+		result.PrivilegedContainerRequired = local.PrivilegedContainerRequired
+		result.HostNetworkingRequired = local.HostNetworkingRequired
+		result.DockerSocketMounted = local.DockerSocketMounted
+		result.BroadHostMountRequired = local.BroadHostMountRequired
+		result.DockerExecuted = local.DockerExecuted
+		result.QEMUExecuted = local.QEMUExecuted
+		result.WineExecuted = local.WineExecuted
+		result.ColimaExecuted = local.ColimaExecuted
+		result.NetworkChecksRun = local.NetworkChecksRun
+		result.PackageManagerInvoked = local.PackageManagerInvoked
+		result.RawHostPathExposed = local.RawHostPathExposed
+		result.RawExecutablePathExposed = local.RawExecutablePathExposed
+		result.RawProfilePathExposed = local.RawProfilePathExposed
+		result.RawStateRootPathExposed = local.RawStateRootPathExposed
+		result.RawRuntimeArgvExposed = local.RawRuntimeArgvExposed
+		result.RawRunnerPathExposed = local.RawRunnerPathExposed
+		result.NextAction = local.NextAction
+		result.SkipReason = local.SkipReason
+		result.FailureReason = local.FailureReason
+	case KnownRunBackendGuestWine:
+		guest, err := RunKnownPortableGuestSmoke(ctx, KnownGuestRequest{
+			AppID:     app.ID,
+			CacheRoot: request.CacheRoot,
+			Arguments: append([]string{}, request.Arguments...),
+			Host:      request.Host,
+			Port:      request.Port,
+			User:      request.User,
+			KeyPath:   request.KeyPath,
+			RemoteDir: request.RemoteDir,
+			SSHPath:   request.SSHPath,
+			SCPPath:   request.SCPPath,
+			Timeout:   request.Timeout,
+		})
+		if err != nil {
+			return result, err
+		}
+		result.GuestPayload = &guest
+		result.Status = guest.Status
+		result.BackendReady = guest.Guest.GuestReachable && guest.Guest.WineAvailable
+		result.LaunchAttempted = guest.Guest.ExecutableCopied
+		result.RunnerAvailable = guest.Guest.WineAvailable
+		result.ChecksumVerified = guest.ChecksumVerified
+		result.ExecutableCopied = guest.Guest.ExecutableCopied
+		result.MarkerObserved = guest.Guest.MarkerObserved
+		result.RawOutputRedacted = false
+		result.LoopbackOnlyNetworking = guest.LoopbackOnlyNetworking
+		result.QEMURequired = guest.QEMURequired
+		result.NetworkRequired = false
+		result.HostRootModified = guest.HostRootModified
+		result.PrivilegedContainerRequired = guest.PrivilegedContainerRequired
+		result.HostNetworkingRequired = guest.HostNetworkingRequired
+		result.DockerSocketMounted = guest.DockerSocketMounted
+		result.BroadHostMountRequired = guest.BroadHostMountRequired
+		result.DockerExecuted = false
+		result.QEMUExecuted = false
+		result.WineExecuted = guest.Guest.WineAvailable
+		result.ColimaExecuted = false
+		result.NetworkChecksRun = false
+		result.PackageManagerInvoked = false
+		result.RawHostPathExposed = guest.RawHostPathExposed
+		result.SkipReason = guest.SkipReason
+		result.FailureReason = guest.FailureReason
+	default:
+		result.Status = FailedStatus
+		result.FailureReason = "unsupported known app run backend"
+	}
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -1422,6 +1621,56 @@ func baseKnownPrepareAndLaunchProfileResult(app KnownPortableApp, request KnownP
 		RawStateRootPathExposed:     false,
 		RawRuntimeArgvExposed:       false,
 		RawRunnerPathExposed:        false,
+	}
+}
+
+func baseKnownRunResult(app KnownPortableApp, backend string) KnownRunResult {
+	return KnownRunResult{
+		SchemaVersion:               KnownRunSchemaVersion,
+		RequestType:                 KnownRunRequestType,
+		Status:                      SkippedStatus,
+		AppID:                       app.ID,
+		DisplayName:                 app.DisplayName,
+		AppVersion:                  app.Version,
+		Architecture:                app.Architecture,
+		ExecutableName:              app.ExecutableName,
+		Backend:                     backend,
+		ExecutableFormat:            "unknown",
+		ExecutableArchitecture:      "unknown",
+		WineArchitecture:            "unknown",
+		ApplicationWorkspaceMode:    ApplicationWorkspaceModeDirect,
+		RawOutputRedacted:           true,
+		LoopbackOnlyNetworking:      backend == KnownRunBackendGuestWine,
+		QEMURequired:                backend == KnownRunBackendGuestWine,
+		NetworkRequired:             false,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		DockerExecuted:              false,
+		QEMUExecuted:                false,
+		WineExecuted:                false,
+		ColimaExecuted:              false,
+		NetworkChecksRun:            false,
+		PackageManagerInvoked:       false,
+		RawHostPathExposed:          false,
+		RawExecutablePathExposed:    false,
+		RawProfilePathExposed:       false,
+		RawStateRootPathExposed:     false,
+		RawRuntimeArgvExposed:       false,
+		RawRunnerPathExposed:        false,
+	}
+}
+
+func knownRunBackend(value string) string {
+	switch strings.TrimSpace(value) {
+	case "", KnownRunBackendLocal:
+		return KnownRunBackendLocal
+	case KnownRunBackendGuestWine:
+		return KnownRunBackendGuestWine
+	default:
+		return strings.TrimSpace(value)
 	}
 }
 

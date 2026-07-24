@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc58
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc59
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -113,6 +113,15 @@ go run ./cmd/xnix-runtime-go windows-known-app-prepare-and-launch-profile --app 
 ```
 
 The command emits combined `prepare_payload` and `launch_payload` evidence. It still checks the cache offline by default and still requires `--allow-download` for acquisition. If the artifact is verified but the runner is unavailable, the launch payload reports `blocked` with `launch_attempted=false`. If the runner is ready, the same command launches through `windows-app-launch-profile`, forces redacted output, and reports Runtime smoke evidence without exposing raw local paths or runner details.
+
+For the unified Runtime-owned known app execution entrypoint, select a backend explicitly:
+
+```text
+go run ./cmd/xnix-runtime-go windows-known-app-run --backend local --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runner path/to/wine
+go run ./cmd/xnix-runtime-go windows-known-app-run --backend guest-wine --app 7zr --cache-root .cache/xnix/known-winapps --key .cache/xnix/ssh-test-key/id_ed25519 --timeout 90s
+```
+
+`--backend local` reuses `windows-known-app-prepare-and-launch-profile`. `--backend guest-wine` reuses the loopback SSH Wine guest smoke path and assumes the Wine-capable guest is already running; it does not start QEMU or Docker by itself. The unified result reports backend selection, backend readiness, checksum verification, launch attempt, runner availability, marker observation, and either `local_payload` or `guest_payload`.
 
 Or use the report script without launching the Windows app:
 

@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc59] - 2026-07-24
+
+### Added
+
+- Added `windows-known-app-run`, a Go-owned known app execution entrypoint with explicit `local` and `guest-wine` backends.
+- Added unified run evidence for backend selection, backend readiness, checksum verification, launch attempt, runner availability, marker observation, local payloads, guest payloads, loopback networking, QEMU requirement, and host-boundary flags.
+- Added targeted tests proving the local backend reuses prepare-and-launch and the guest-wine backend reaches the loopback Wine guest smoke path through fake SSH/SCP fixtures.
+
 ## [0.2.640-rc58] - 2026-07-24
 
 ### Added

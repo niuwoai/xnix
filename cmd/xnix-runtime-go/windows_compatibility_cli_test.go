@@ -1834,6 +1834,122 @@ func TestWindowsKnownAppPrepareAndLaunchProfileCommandSkipsOfflineMissingArtifac
 	assertCLIOutputOmitsValues(t, output.String(), "/private/runner", "private-bottle", "--private-runner-arg")
 }
 
+func TestWindowsKnownAppRunCommandLocalBackendSkipsOfflineMissingArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-run",
+		"--backend", "local",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", "/private/runner",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_run.v1" ||
+		payload["request_type"] != "windows-known-app-run" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "7zr" ||
+		payload["backend"] != "local" ||
+		payload["backend_ready"] != false ||
+		payload["launch_attempted"] != false ||
+		payload["runner_available"] != false ||
+		payload["checksum_verified"] != false ||
+		payload["profile_written"] != false ||
+		payload["launcher_bundle_written"] != false ||
+		payload["loopback_only_networking"] != false ||
+		payload["qemu_required"] != false ||
+		payload["wine_executed"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["skip_reason"] != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected known app run local payload: %#v", payload)
+	}
+	if _, ok := payload["local_payload"]; !ok {
+		t.Fatalf("local known app run must include local payload: %#v", payload)
+	}
+	if _, ok := payload["guest_payload"]; ok {
+		t.Fatalf("local known app run must not include guest payload: %#v", payload)
+	}
+	assertCLIOutputOmitsValues(t, output.String(), "/private/runner")
+}
+
+func TestWindowsKnownAppRunCommandGuestWineBackendSkipsOfflineMissingArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-run",
+		"--backend", "guest-wine",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_run.v1" ||
+		payload["request_type"] != "windows-known-app-run" ||
+		payload["status"] != "skipped" ||
+		payload["app_id"] != "7zr" ||
+		payload["backend"] != "guest-wine" ||
+		payload["backend_ready"] != false ||
+		payload["launch_attempted"] != false ||
+		payload["runner_available"] != false ||
+		payload["checksum_verified"] != false ||
+		payload["loopback_only_networking"] != true ||
+		payload["qemu_required"] != true ||
+		payload["wine_executed"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["skip_reason"] != "known Windows app artifact unavailable or checksum mismatch" {
+		t.Fatalf("unexpected known app run guest payload: %#v", payload)
+	}
+	if _, ok := payload["local_payload"]; ok {
+		t.Fatalf("guest known app run must not include local payload: %#v", payload)
+	}
+	if _, ok := payload["guest_payload"]; !ok {
+		t.Fatalf("guest known app run must include guest payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), tempDir) {
+		t.Fatalf("known app run guest output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsKnownAppRunCommandRejectsUnsupportedBackend(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-run", "--backend", "missing-backend"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "failed" ||
+		payload["backend"] != "missing-backend" ||
+		payload["failure_reason"] != "unsupported known app run backend" ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["wine_executed"] != false {
+		t.Fatalf("unexpected unsupported backend payload: %#v", payload)
+	}
+}
+
 func TestWindowsKnownAppManagedLaunchPreviewCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-managed-launch-preview", "--app", "missing-app"}, &output)
@@ -1861,6 +1977,14 @@ func TestWindowsKnownAppLaunchProfileMaterializeCommandRejectsUnknownApp(t *test
 func TestWindowsKnownAppPrepareAndLaunchProfileCommandRejectsUnknownApp(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-prepare-and-launch-profile", "--app", "missing-app"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
+		t.Fatalf("expected unknown app rejection, got %v", err)
+	}
+}
+
+func TestWindowsKnownAppRunCommandRejectsUnknownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"windows-known-app-run", "--app", "missing-app"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "unknown known Windows app") {
 		t.Fatalf("expected unknown app rejection, got %v", err)
 	}

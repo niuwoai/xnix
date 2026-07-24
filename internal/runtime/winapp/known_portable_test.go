@@ -418,6 +418,112 @@ func TestPrepareAndLaunchKnownPortableProfileRunsVerifiedArtifactWithReadyRunner
 	assertKnownPrepareAndLaunchProfileSafe(t, result, cacheRoot, "private-bottle", "--private-runner-arg", "/private/tmp/secret")
 }
 
+func TestRunKnownPortableAppLocalBackendUsesPrepareAndLaunchPath(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := RunKnownPortableApp(context.Background(), KnownRunRequest{
+		AppID:     "7zr",
+		Backend:   KnownRunBackendLocal,
+		CacheRoot: tempDir,
+		StateRoot: filepath.Join(tempDir, "state"),
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableApp returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownRunSchemaVersion ||
+		result.RequestType != KnownRunRequestType ||
+		result.Status != SkippedStatus ||
+		result.AppID != "7zr" ||
+		result.Backend != KnownRunBackendLocal ||
+		result.BackendReady ||
+		result.LaunchAttempted ||
+		result.RunnerAvailable ||
+		result.ChecksumVerified ||
+		result.ProfileWritten ||
+		result.LauncherBundleWritten ||
+		result.LocalPayload == nil ||
+		result.GuestPayload != nil ||
+		result.LoopbackOnlyNetworking ||
+		result.QEMURequired ||
+		result.WineExecuted ||
+		result.DockerExecuted ||
+		result.QEMUExecuted ||
+		result.NetworkChecksRun ||
+		result.PackageManagerInvoked ||
+		result.SkipReason != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected local known app run result: %#v", result)
+	}
+}
+
+func TestRunKnownPortableAppGuestWineBackendUsesVerifiedCacheAndLoopbackGuest(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	body := []byte("fixture portable windows executable")
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(appDir, "fixture.exe"), body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+	}})
+
+	guestRoot := t.TempDir()
+	logPath := filepath.Join(guestRoot, "guest.log")
+	result, err := RunKnownPortableApp(context.Background(), KnownRunRequest{
+		AppID:     "fixture",
+		Backend:   KnownRunBackendGuestWine,
+		CacheRoot: cacheRoot,
+		Host:      "127.0.0.1",
+		Port:      "2222",
+		User:      "root",
+		KeyPath:   filepath.Join(guestRoot, "id_ed25519"),
+		RemoteDir: "/tmp/xnix-known-winapp-smoke",
+		SSHPath:   writeFakeKnownAppGuestSSH(t, guestRoot, logPath),
+		SCPPath:   writeFakeGuestSCP(t, guestRoot, logPath),
+		Timeout:   5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownPortableApp returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.Backend != KnownRunBackendGuestWine ||
+		!result.BackendReady ||
+		!result.LaunchAttempted ||
+		!result.RunnerAvailable ||
+		!result.ChecksumVerified ||
+		!result.ExecutableCopied ||
+		!result.MarkerObserved ||
+		result.LocalPayload != nil ||
+		result.GuestPayload == nil ||
+		!result.LoopbackOnlyNetworking ||
+		!result.QEMURequired ||
+		!result.WineExecuted ||
+		result.DockerExecuted ||
+		result.QEMUExecuted ||
+		result.NetworkChecksRun ||
+		result.PackageManagerInvoked ||
+		result.RawHostPathExposed ||
+		result.HostRootModified {
+		t.Fatalf("unexpected guest known app run result: %#v", result)
+	}
+}
+
 func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
 	body := minimalPEFixture(0x014c)
 	sum := sha256.Sum256(body)
