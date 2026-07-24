@@ -125,6 +125,7 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 
 selected_exe_path = options[:exe]
 if executable_source == "fixture"
+  FileUtils.rm_f(EXE_PATH)
   build_stdout, build_stderr, build_status = run_command(
     {
       "GOOS" => "windows",

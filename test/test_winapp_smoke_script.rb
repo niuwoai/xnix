@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "open3"
 require "pathname"
 require "tmpdir"
@@ -78,6 +79,10 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "PATH" => "#{temp_root}:#{ENV.fetch("PATH")}",
     "XNIX_FAKE_GO_LOG" => fake_go_log.to_s
   }
+
+  stale_fixture_output = project_root.join(".local/xnix/winapp-smoke/hello.exe")
+  FileUtils.mkdir_p(stale_fixture_output.dirname)
+  stale_fixture_output.write("stale exe")
 
   json_stdout, json_stderr, json_status = Open3.capture3(env, "ruby", script.to_s, "--format", "json")
   assert(json_status.success?, "winapp smoke JSON report must succeed: #{json_stderr}")

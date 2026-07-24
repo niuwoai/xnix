@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc22] - 2026-07-24
+
+### Fixed
+
+- Made `scripts/winapp_smoke.rb` clear its managed fixture executable output before rebuilding so stale local smoke artifacts cannot block repeated real Windows app smoke attempts.
+- Added regression coverage proving the fixture smoke can recover from a stale managed `hello.exe` output while preserving custom executable behavior.
+
 ## [0.2.640-rc21] - 2026-07-24
 
 ### Added
