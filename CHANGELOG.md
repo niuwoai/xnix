@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc32] - 2026-07-24
+
+### Added
+
+- Added common macOS CrossOver system and user bundle Wine runner candidates to Go Runtime Windows app diagnostics.
+- Added common Whisky user-library Wine runner candidates so local real `.exe` smoke attempts can discover an existing Whisky-managed Wine library without host mutation.
+
 ## [0.2.640-rc31] - 2026-07-24
 
 ### Added

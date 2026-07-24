@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc31`.
+The project is currently at `v0.2.640-rc32`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc31`.
 
 ## Current Checkpoint
 
-v0.2.640-rc31 adds safe `runner_command_hints` to the Go-owned Windows app runner diagnostics and to `scripts/winapp_smoke.rb` JSON/Markdown reports. Operators now get direct placeholder commands for `XNIX_WINDOWS_RUNNER` and `--runner` without exposing host paths, making the next real `.exe` PASS attempt less dependent on manual guesswork. The previous v0.2.640-rc30 checkpoint turned `scripts/winapp_container_smoke.rb` into a compatibility wrapper around the unified container backend.
+v0.2.640-rc32 broadens Go Runtime local runner discovery for real Windows app smoke attempts by adding common CrossOver and Whisky Wine runner candidates on macOS. The previous v0.2.640-rc31 checkpoint added safe `runner_command_hints` to the Go-owned Windows app runner diagnostics and to `scripts/winapp_smoke.rb` JSON/Markdown reports.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -70,4 +70,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc31`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc32`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

@@ -405,20 +405,36 @@ func runnerCandidates() []runnerCandidate {
 		{id: "path-wine64", source: "path-command", path: "wine64"},
 	}
 	if runtime.GOOS == "darwin" {
-		candidates = append(candidates,
-			runnerCandidate{id: "homebrew-wine", source: "macos-common-path", path: "/opt/homebrew/bin/wine"},
-			runnerCandidate{id: "homebrew-wine64", source: "macos-common-path", path: "/opt/homebrew/bin/wine64"},
-			runnerCandidate{id: "usr-local-wine", source: "macos-common-path", path: "/usr/local/bin/wine"},
-			runnerCandidate{id: "usr-local-wine64", source: "macos-common-path", path: "/usr/local/bin/wine64"},
-			runnerCandidate{id: "wine-stable-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine"},
-			runnerCandidate{id: "wine-stable-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine64"},
-			runnerCandidate{id: "wine-devel-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine"},
-			runnerCandidate{id: "wine-devel-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine64"},
-			runnerCandidate{id: "wine-staging-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"},
-			runnerCandidate{id: "wine-staging-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine64"},
-		)
+		candidates = append(candidates, darwinRunnerCandidates()...)
 	}
 	return candidates
+}
+
+func darwinRunnerCandidates() []runnerCandidate {
+	candidates := []runnerCandidate{
+		{id: "homebrew-wine", source: "macos-common-path", path: "/opt/homebrew/bin/wine"},
+		{id: "homebrew-wine64", source: "macos-common-path", path: "/opt/homebrew/bin/wine64"},
+		{id: "usr-local-wine", source: "macos-common-path", path: "/usr/local/bin/wine"},
+		{id: "usr-local-wine64", source: "macos-common-path", path: "/usr/local/bin/wine64"},
+		{id: "crossover-system-wine", source: "macos-crossover-bundle", path: "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine"},
+		{id: "crossover-system-wine64", source: "macos-crossover-bundle", path: "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine64"},
+		{id: "wine-stable-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine"},
+		{id: "wine-stable-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine64"},
+		{id: "wine-devel-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine"},
+		{id: "wine-devel-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine64"},
+		{id: "wine-staging-app-wine", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"},
+		{id: "wine-staging-app-wine64", source: "macos-app-bundle", path: "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine64"},
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil || strings.TrimSpace(homeDir) == "" {
+		return candidates
+	}
+	return append(candidates,
+		runnerCandidate{id: "crossover-user-wine", source: "macos-crossover-user-bundle", path: filepath.Join(homeDir, "CrossOver.app", "Contents", "SharedSupport", "CrossOver", "bin", "wine")},
+		runnerCandidate{id: "crossover-user-wine64", source: "macos-crossover-user-bundle", path: filepath.Join(homeDir, "CrossOver.app", "Contents", "SharedSupport", "CrossOver", "bin", "wine64")},
+		runnerCandidate{id: "whisky-user-wine", source: "macos-whisky-library", path: filepath.Join(homeDir, "Library", "Application Support", "com.isaacmarovitz.Whisky", "Libraries", "Wine", "bin", "wine")},
+		runnerCandidate{id: "whisky-user-wine64", source: "macos-whisky-library", path: filepath.Join(homeDir, "Library", "Application Support", "com.isaacmarovitz.Whisky", "Libraries", "Wine", "bin", "wine64")},
+	)
 }
 
 func probeRunnerCandidate(candidate runnerCandidate) (RunnerCandidateEvidence, string) {

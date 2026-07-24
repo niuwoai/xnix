@@ -236,6 +236,31 @@ func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 	}
 }
 
+func TestRunnerCandidatesIncludeCommonDarwinCompatibilityRunners(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("macOS app bundle runner candidates are only available on Darwin hosts")
+	}
+
+	candidates := runnerCandidates()
+	ids := make(map[string]bool, len(candidates))
+	for _, candidate := range candidates {
+		ids[candidate.id] = true
+	}
+
+	for _, id := range []string{
+		"crossover-system-wine",
+		"crossover-system-wine64",
+		"crossover-user-wine",
+		"crossover-user-wine64",
+		"whisky-user-wine",
+		"whisky-user-wine64",
+	} {
+		if !ids[id] {
+			t.Fatalf("expected Darwin runner candidate %q in %#v", id, candidates)
+		}
+	}
+}
+
 func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("PATH-based shell runner fixture is not portable to Windows hosts")
