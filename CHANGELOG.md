@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc14] - 2026-07-24
+
+### Added
+
+- Added `docs/post-checkpoint-promotion-checklist-0640.md`, the human-operator checklist for promoting the active `v0.2.640` release candidate only after full smoke passes and the promotion packet allows the release.
+- Added layout checks that keep the promotion checklist tied to full smoke, promotion packet, release evidence index, merge readiness, protected Claude file review, rollback notes, and formal tag commands.
+
+### Fixed
+
+- Kept formal `v0.2.640` promotion explicitly operator-owned and blocked until `ruby scripts/full_smoke.rb` passes with current PASS evidence.
+
 ## [0.2.640-rc13] - 2026-07-24
 
 ### Changed

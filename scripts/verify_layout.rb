@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc13"
+EXPECTED_VERSION = "0.2.640-rc14"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -31,6 +31,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-dispatch-runbook.md
   docs/claude-code-open-domain-work-packages.md
   docs/claude-code-windows-compatibility-workstreams.md
+  docs/post-checkpoint-promotion-checklist-0640.md
   docs/xnix-current-mainline.md
   docs/mainline-integration-checkpoint.md
   docs/kde-first-compatibility-acceptance.md
@@ -7191,6 +7192,32 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   markdown
 ].each do |token|
   assert(merge_readiness_packet_test_source.include?(token), "Merge readiness packet test must include #{token}")
+end
+
+post_checkpoint_promotion_checklist_source = read_project_file("docs/post-checkpoint-promotion-checklist-0640.md")
+[
+  "v0.2.640 Post-Checkpoint Promotion Checklist",
+  "ruby scripts/full_smoke.rb",
+  "ruby scripts/full_checkpoint_promotion_packet.rb --format json",
+  "ruby scripts/release_evidence_index.rb --format json",
+  "ruby scripts/merge_readiness_packet.rb --format json --offline-only",
+  "ruby scripts/mainline_integration_review.rb --format json",
+  "git diff -- docs/claude-code-implementation-packages.md",
+  "promotion_allowed=true",
+  "promotion_decision=promote",
+  "formal_release_ready=true",
+  "full-checkpoint-promotion-not-allowed",
+  "known_app_smoke_passed=true",
+  "fixture_app_smoke_passed=true",
+  "kde_action_smoke_passed=true",
+  "kde-controlled-launch-action-dbus-fixture-smoke",
+  "Do not tag.",
+  "Rollback Notes",
+  "git tag -a v0.2.640",
+  "git tag -d v0.2.640",
+  "docs/claude-code-implementation-packages.md"
+].each do |token|
+  assert(post_checkpoint_promotion_checklist_source.include?(token), "Post-checkpoint promotion checklist must include #{token}")
 end
 
 claude_code_dispatch_runbook_source = read_project_file("docs/claude-code-dispatch-runbook.md")

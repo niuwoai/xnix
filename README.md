@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc13`.
+The project is currently at `v0.2.640-rc14`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.640-rc13`.
 
 ## Current Checkpoint
 
-v0.2.640-rc13 keeps the formal full checkpoint gate pending and makes `scripts/release_evidence_index.rb` consume `scripts/full_checkpoint_promotion_packet.rb`. The `product-image-qemu-acceptance` claim now preserves historical product smoke evidence while blocking current formal release acceptance unless the promotion packet allows `v0.2.640`.
+v0.2.640-rc14 keeps the formal full checkpoint gate pending and adds `docs/post-checkpoint-promotion-checklist-0640.md`, the human-operator runbook for promoting `v0.2.640` only after full smoke passes and the promotion packet allows the release.
 
-The previous v0.2.640-rc12 checkpoint made merge readiness consume the promotion packet as the single release-promotion gate and expose `full_checkpoint_promotion_status`. The earlier v0.2.640-rc11 checkpoint added the read-only promotion packet that reports missing, malformed, failed, incomplete, passing, and version-mismatched full-smoke evidence while keeping full smoke, Docker, QEMU, Wine, Colima, D-Bus, desktop launch, backend launch, network access, and host mutation disabled inside the packet.
+The previous v0.2.640-rc13 checkpoint made `scripts/release_evidence_index.rb` consume `scripts/full_checkpoint_promotion_packet.rb`, keeping historical product smoke evidence separate from current formal release readiness. The earlier v0.2.640-rc12 checkpoint made merge readiness consume the same promotion packet as the single release-promotion gate and expose `full_checkpoint_promotion_status`.
 
 ## Main References
 
@@ -54,4 +54,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc13`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc14`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
