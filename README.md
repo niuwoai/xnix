@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc103`.
+The project is currently at `v0.2.640-rc104`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc103`.
 
 ## Current Checkpoint
 
-v0.2.640-rc103 fixes desktop activation staging for launcher-only known GUI apps such as Mines. The Runtime now treats empty MIME/file-association data as not applicable, while still staging the normal KDE launcher files, manifest, managed-launcher artifact, and activation receipt needed for a desktop entry.
+v0.2.640-rc104 adds `xnix-runtime-go windows-app-container-x-gui-smoke`, a restricted Docker fallback that starts Wine on an Xvfb desktop and verifies a real Windows GUI window with `xwininfo`. This gives the project a repeatable local `notepad.exe`-style GUI proof when q4 is unavailable, while the q4/QEMU/Wine guest lane remains the stricter product-grade run.
+
+The previous v0.2.640-rc103 checkpoint fixed desktop activation staging for launcher-only known GUI apps such as Mines. The Runtime now treats empty MIME/file-association data as not applicable, while still staging the normal KDE launcher files, manifest, managed-launcher artifact, and activation receipt needed for a desktop entry.
 
 The previous v0.2.640-rc102 checkpoint let the Go Runtime launch known Wine GUI apps by catalog id. `xnix-runtime-go windows-app-guest-wine-gui-smoke --app org.xnix.apps.mines` resolves the builtin Mines runner and emits the known app id, display name, and version in the JSON result. The local and q4 Wine GUI smoke harnesses can now pass `--known-app-id org.xnix.apps.mines` so real runs exercise the catalog-selected path instead of hand-written guest paths.
 

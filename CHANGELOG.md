@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc104] - 2026-07-25
+
+### Added
+
+- Added the Go Runtime `windows-app-container-x-gui-smoke` command for restricted Docker-based Wine/Xvfb GUI validation with X window observation.
+
+### Changed
+
+- Changed the local Wine smoke image definition and fallback builder to include Xvfb and X11 inspection tools so GUI Windows app smoke runs can observe real desktop windows without privileged containers, host networking, Docker socket mounts, or host directory mounts.
+
 ## [0.2.640-rc103] - 2026-07-25
 
 ### Fixed

@@ -368,6 +368,52 @@ func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-container-x-gui-smoke", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appName string
+	var windowMatch string
+	var image string
+	var platform string
+	var dockerPath string
+	var timeoutText string
+	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
+	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
+	flags.StringVar(&image, "image", winapp.DefaultContainerImage, "local Wine X GUI container image")
+	flags.StringVar(&platform, "platform", winapp.DefaultWinePlatform, "container platform, or empty to use the local image platform")
+	flags.StringVar(&dockerPath, "docker", "", "explicit docker runner path")
+	flags.StringVar(&timeoutText, "timeout", "90s", "execution timeout")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-container-x-gui-smoke")
+	}
+
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+
+	result, err := winapp.RunContainerXGUISmoke(context.Background(), winapp.ContainerXGUIRequest{
+		ApplicationName: appName,
+		WindowMatch:     windowMatch,
+		Image:           image,
+		Platform:        platform,
+		DockerPath:      dockerPath,
+		Timeout:         timeout,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-app-guest-wine-smoke", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

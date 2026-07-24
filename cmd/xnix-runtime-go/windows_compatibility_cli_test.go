@@ -1153,6 +1153,76 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 	}
 }
 
+func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-container-x-gui-smoke",
+		"--app", "notepad.exe",
+		"--window-match", "notepad.exe",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
+		payload["request_type"] != "windows-app-container-x-gui-smoke" ||
+		payload["status"] != "passed" ||
+		payload["application_name"] != "notepad.exe" ||
+		payload["window_match"] != "notepad.exe" ||
+		payload["container_image"] != "local/wine-x-gui:test" ||
+		payload["container_platform"] != "linux/amd64" ||
+		payload["pull_policy"] != "never" ||
+		payload["network_mode"] != "none" ||
+		payload["desktop_display"] != "Xvfb" ||
+		payload["runner_available"] != true ||
+		payload["image_available"] != true ||
+		payload["x_server_started"] != true ||
+		payload["wine_bootstrap_attempted"] != true ||
+		payload["x_window_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["host_mount_count"] != float64(0) ||
+		payload["container_state_mode"] != "tmpfs" {
+		t.Fatalf("unexpected container X GUI smoke payload: %#v", payload)
+	}
+	if !strings.Contains(payload["window_evidence_summary"].(string), "notepad.exe") {
+		t.Fatalf("window evidence summary must mention the observed app: %#v", payload)
+	}
+	if strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "docker.sock") ||
+		strings.Contains(output.String(), "--privileged") ||
+		strings.Contains(output.String(), "--network host") {
+		t.Fatalf("container X GUI smoke output leaked unsafe details: %s", output.String())
+	}
+}
+
 func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")

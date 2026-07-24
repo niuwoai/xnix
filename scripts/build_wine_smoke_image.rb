@@ -8,11 +8,12 @@ require "securerandom"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 IMAGE = ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local")
 PLATFORM = ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64")
+BASE_PLATFORM = ENV.fetch("XNIX_WINE_BASE_PLATFORM", PLATFORM)
 PULL_BASE = ENV.fetch("XNIX_WINE_PULL", "0") == "1"
 DOCKERFILE_RELATIVE = "containers/wine-smoke.Dockerfile"
 DOCKERFILE = PROJECT_ROOT.join(DOCKERFILE_RELATIVE)
 
-argv = ["docker", "build", "--platform", PLATFORM]
+argv = ["docker", "build", "--platform", PLATFORM, "--build-arg", "XNIX_WINE_BASE_PLATFORM=#{BASE_PLATFORM}"]
 argv << "--pull" if PULL_BASE
 argv.concat([
   "-f", DOCKERFILE.to_s,
@@ -41,9 +42,10 @@ end
 def commit_fallback_image(image, platform)
   container_name = "xnix-wine-smoke-build-#{SecureRandom.hex(6)}"
   install_command = [
-    "dpkg --add-architecture i386",
+    "if [ \"$(dpkg --print-architecture)\" = \"amd64\" ]; then dpkg --add-architecture i386; fi",
     "apt-get update",
-    "apt-get install -y --no-install-recommends ca-certificates wine wine32 wine64",
+    "if [ \"$(dpkg --print-architecture)\" = \"amd64\" ]; then wine_packages=\"wine wine32 wine64\"; else wine_packages=\"wine wine64\"; fi",
+    "apt-get install -y --no-install-recommends ca-certificates procps ${wine_packages} x11-utils xvfb",
     "rm -rf /var/lib/apt/lists/*"
   ].join(" && ")
 

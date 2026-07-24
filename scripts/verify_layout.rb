@@ -952,7 +952,7 @@ container_script = read_project_file("scripts/container.rb")
   assert(container_script.include?(token), "Container harness must expose detached Wine guest build token #{token}")
 end
 wine_smoke_dockerfile = read_project_file("containers/wine-smoke.Dockerfile")
-%w[--platform=linux/amd64 debian:bookworm-slim dpkg --add-architecture i386 apt-get install wine wine32 wine64 WINEDEBUG].each do |token|
+%w[XNIX_WINE_BASE_PLATFORM=linux/amd64 debian:bookworm-slim dpkg --add-architecture i386 apt-get install wine wine32 wine64 x11-utils xvfb WINEDEBUG].each do |token|
   assert(wine_smoke_dockerfile.include?(token), "Wine smoke Dockerfile must include #{token}")
 end
 builder_dockerfile = read_project_file("Dockerfile")
@@ -964,7 +964,7 @@ post_build_script = read_project_file("buildroot/board/xnix/post-build.sh")
   assert(post_build_script.include?(token), "post-build script must include Wine NLS install token #{token}")
 end
 wine_smoke_image_build_script = read_project_file("scripts/build_wine_smoke_image.rb")
-%w[docker build --platform docker buildx version docker image inspect docker run docker commit docker rm run-and-commit fallback DEBIAN_FRONTEND=noninteractive --cpus 2 XNIX_WINE_IMAGE XNIX_WINE_PLATFORM XNIX_WINE_PULL linux/amd64 xnix-wine-smoke:local containers/wine-smoke.Dockerfile actual_platform].each do |token|
+%w[docker build --platform --build-arg docker buildx version docker image inspect docker run docker commit docker rm run-and-commit fallback DEBIAN_FRONTEND=noninteractive --cpus 2 XNIX_WINE_IMAGE XNIX_WINE_PLATFORM XNIX_WINE_BASE_PLATFORM XNIX_WINE_PULL linux/amd64 xnix-wine-smoke:local containers/wine-smoke.Dockerfile actual_platform x11-utils xvfb].each do |token|
   assert(wine_smoke_image_build_script.include?(token), "Wine smoke image build script must include #{token}")
 end
 

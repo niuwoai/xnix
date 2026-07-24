@@ -164,6 +164,87 @@ func TestRunContainerSmokeReportsWineBootstrapTimeout(t *testing.T) {
 	}
 }
 
+func TestRunContainerXGUISmokeObservesWindowWithRestrictedDockerRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	logPath := filepath.Join(tempDir, "docker-x-gui.log")
+	dockerPath := writeFakeXGUIDocker(t, tempDir, logPath)
+
+	result, err := RunContainerXGUISmoke(context.Background(), ContainerXGUIRequest{
+		ApplicationName: "notepad.exe",
+		WindowMatch:     "notepad.exe",
+		Image:           "local/wine-x-gui:test",
+		Platform:        "linux/amd64",
+		DockerPath:      dockerPath,
+		Timeout:         5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunContainerXGUISmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.SchemaVersion != ContainerXGUISchemaVersion ||
+		result.RequestType != ContainerXGUIRequestType ||
+		result.ApplicationName != "notepad.exe" ||
+		result.WindowMatch != "notepad.exe" ||
+		result.ContainerImage != "local/wine-x-gui:test" ||
+		result.ContainerPlatform != "linux/amd64" ||
+		result.PullPolicy != "never" ||
+		result.NetworkMode != "none" ||
+		result.DesktopDisplay != "Xvfb" ||
+		!result.RunnerAvailable ||
+		!result.ImageAvailable ||
+		!result.XServerStarted ||
+		!result.WineBootstrapAttempted ||
+		!result.XWindowObserved ||
+		result.WindowEvidenceSummary == "" ||
+		result.ExitCode != 0 {
+		t.Fatalf("unexpected X GUI result: %#v", result)
+	}
+	if result.HostRootModified ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.HostMountCount != 0 {
+		t.Fatalf("unexpected X GUI safety flags: %#v", result)
+	}
+
+	logBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile log returned error: %v", err)
+	}
+	log := string(logBytes)
+	for _, token := range []string{
+		"image inspect local/wine-x-gui:test",
+		"run --rm --pull never --network none",
+		"--cpus 2",
+		"--memory 3g",
+		"--pids-limit 512",
+		"--security-opt no-new-privileges",
+		"--cap-drop ALL",
+		"--tmpfs /state:rw,nosuid,nodev,size=1g",
+		"--env WINEPREFIX=/state/wineprefix",
+		"--env DISPLAY=:99",
+		"--env XNIX_GUI_APP=notepad.exe",
+		"--env XNIX_WINDOW_MATCH=notepad.exe",
+		"--platform linux/amd64",
+		"local/wine-x-gui:test sh -lc",
+		"Xvfb \"$DISPLAY\"",
+		"xwininfo -root -tree",
+		"wine \"$XNIX_GUI_APP\"",
+	} {
+		if !strings.Contains(log, token) {
+			t.Fatalf("fake X GUI docker log missing %q: %s", token, log)
+		}
+	}
+	if strings.Contains(log, "docker.sock") || strings.Contains(log, "--privileged") || strings.Contains(log, "--network host") || strings.Contains(log, "--volume") {
+		t.Fatalf("X GUI docker log contains unsafe host access: %s", log)
+	}
+}
+
 func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-docker")
@@ -173,6 +254,20 @@ func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 		"case \"$*\" in\n" +
 		"  *'run --rm --platform linux/amd64 --pull never --network none'*'--cpus 2'*'--memory 2g'*'--security-opt no-new-privileges'*'--cap-drop ALL'*'--tmpfs /state:rw,nosuid,nodev,size=768m'*'--env WINEPREFIX=/state/wineprefix'*'--env WINEARCH=win64'*'local/wine-smoke:test sh -lc'*'wineboot --init'*'exec wine \"$@\"'*'xnix-wine-smoke /work/hello.exe'*) printf 'XNIX_WINAPP_SMOKE_OK\\n'; exit 0 ;;\n" +
 		"esac\n" +
+		"exit 2\n"
+	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	return path
+}
+
+func writeFakeXGUIDocker(t *testing.T, tempDir string, logPath string) string {
+	t.Helper()
+	path := filepath.Join(tempDir, "fake-x-gui-docker")
+	body := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"if test \"$1\" = 'run'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
 		"exit 2\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
 		t.Fatalf("WriteFile docker returned error: %v", err)
