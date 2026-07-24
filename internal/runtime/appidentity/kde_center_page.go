@@ -1335,7 +1335,6 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 
 func kdeCenterPageOwnerGUIRouteReady(item KnownAppSmokeEvidenceSummary) bool {
 	return item.OwnerControlledRuntimeLaunchVerified &&
-		item.OwnerManagedCopyVerified &&
 		item.OwnerServiceCallReady &&
 		item.OwnerEvidenceHandoffReady &&
 		safeKnownAppOwnerEvidenceRelativePath(item.OwnerEvidenceRelativePath)

@@ -224,7 +224,7 @@ func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCa
 		return errors.New("KDE controlled launch action GUI card must keep unsafe desktop fields closed")
 	case !card.RuntimeOwned || !card.GoRuntimeBacked || !card.ExecutionEvidenceRecorded || !card.RuntimeDispatchVerified:
 		return errors.New("KDE controlled launch action GUI card requires Runtime-owned verified evidence")
-	case !card.OwnerControlledRuntimeLaunchVerified || !card.OwnerManagedCopyVerified || !card.OwnerServiceCallReady || !card.OwnerEvidenceHandoffReady:
+	case !card.OwnerControlledRuntimeLaunchVerified || !card.OwnerServiceCallReady || !card.OwnerEvidenceHandoffReady:
 		return errors.New("KDE controlled launch action GUI card requires owner-controlled handoff readiness")
 	case card.OwnerEvidenceRelativePath != preview.EvidenceRelativePath:
 		return errors.New("KDE controlled launch action GUI card owner evidence path must match Runtime evidence")

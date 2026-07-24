@@ -752,6 +752,73 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 	}
 }
 
+func TestKDECenterPagePreviewSurfacesBuiltinGUIRouteWithoutManagedCopy(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.xnix.apps.mines",
+		Name:                "Mines",
+		Icon:                "applications-games",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}
+	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", nil, KDECenterPageOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                "org.xnix.apps.mines",
+			DisplayName:                          "Mines",
+			AppVersion:                           currentProjectVersion(t),
+			EvidenceKind:                         "known-application-gui-smoke",
+			EvidenceSource:                       "wine-guest-gui-smoke",
+			SmokeStatus:                          "passed",
+			CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
+			CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
+			PrimaryActionID:                      KnownAppKDERuntimeStatusLaunchAction,
+			PrimaryActionLabel:                   "Show Runtime-controlled launch",
+			PrimaryActionKind:                    "runtime-status",
+			PrimaryActionEnabled:                 true,
+			ExecutionEvidenceRecorded:            true,
+			StagedLauncherVerified:               true,
+			OwnerControlledRuntimeLaunchVerified: true,
+			OwnerManagedCopyVerified:             false,
+			OwnerServiceCallReady:                true,
+			OwnerEvidenceHandoffReady:            true,
+			OwnerEvidenceRelativePath:            "runtime/kde-runtime-status-launch-evidence/owner-mines.json",
+			RuntimeDispatchVerified:              true,
+			Summary:                              "Mines has a Runtime-owner controlled GUI launch handoff ready.",
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+
+	if preview.KnownAppOwnerManagedCopyVerifiedCount != 0 ||
+		preview.KnownAppOwnerControlledGUIEvidenceCount != 1 ||
+		len(preview.KnownAppGUIEvidenceCards) != 1 {
+		t.Fatalf("unexpected builtin GUI counts: %#v", preview)
+	}
+	card := preview.KnownAppGUIEvidenceCards[0]
+	if card.AppID != "org.xnix.apps.mines" ||
+		card.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
+		card.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
+		card.DesktopCallableExecutionType != KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		card.DesktopDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		!card.DesktopEvidenceHandleForwarded ||
+		card.KDEForwardedArgumentKind != "evidence-relative-path" ||
+		len(card.KDEForwardedArguments) != 1 ||
+		card.KDEForwardedArguments[0] != "runtime/kde-runtime-status-launch-evidence/owner-mines.json" ||
+		card.OwnerManagedCopyVerified ||
+		!card.OwnerServiceCallReady ||
+		!card.OwnerEvidenceHandoffReady ||
+		card.OwnerServiceArgsExposedToKDE ||
+		card.DesktopLaunchEnabled ||
+		card.BackendLaunchEnabled {
+		t.Fatalf("unexpected builtin GUI card: %#v", card)
+	}
+}
+
 func writeKDECenterActivationReceipt(t *testing.T, root string, applicationID string) {
 	t.Helper()
 	relativePath := filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json")

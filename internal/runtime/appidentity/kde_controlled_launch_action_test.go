@@ -109,6 +109,31 @@ func TestPreviewKDEControlledLaunchActionConsumesKDEGUICardRoute(t *testing.T) {
 	}
 }
 
+func TestPreviewKDEControlledLaunchActionAcceptsBuiltinGUIWithoutManagedCopy(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+	card.OwnerManagedCopyVerified = false
+
+	preview, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:        stateRoot,
+		KDECenterGUICard: &card,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchAction returned error for builtin GUI evidence without managed copy: %v", err)
+	}
+
+	if preview.ApplicationID != "org.xnix.apps.messagebox" ||
+		preview.ApplicationName != "Xnix MessageBox" ||
+		preview.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
+		!preview.DesktopEvidenceHandleForwarded ||
+		preview.OwnerServiceArgsExposedToKDE ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled {
+		t.Fatalf("unexpected builtin GUI action preview: %#v", preview)
+	}
+}
+
 func TestPreviewKDEControlledLaunchActionRejectsUnsafeKDEGUICardRoute(t *testing.T) {
 	stateRoot := t.TempDir()
 	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)

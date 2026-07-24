@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc100`.
+The project is currently at `v0.2.640-rc101`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc100`.
 
 ## Current Checkpoint
 
-v0.2.640-rc100 makes the q4 real GUI harness produce desktop-consumable evidence automatically after a successful run. `scripts/remote_wine_guest_gui_smoke.rb --execute` now writes the Runtime GUI evidence, a `kde-center-page-preview` JSON payload, and, for owner-controlled launches, a `kde-controlled-launch-action-preview` JSON payload from the same real MessageBox run.
+v0.2.640-rc101 fixes the KDE controlled-launch action route for owner-controlled Wine builtin GUI apps such as Mines. A real q4 `winemine.exe` desktop run can now keep `owner_managed_copy_verified=false` while still producing the safe KDE page and action evidence when the Runtime owner handoff is ready.
+
+The previous v0.2.640-rc100 checkpoint made the q4 real GUI harness produce desktop-consumable evidence automatically after a successful run. `scripts/remote_wine_guest_gui_smoke.rb --execute` now writes the Runtime GUI evidence, a `kde-center-page-preview` JSON payload, and, for owner-controlled launches, a `kde-controlled-launch-action-preview` JSON payload from the same real MessageBox run.
 
 The previous v0.2.640-rc99 checkpoint let the real Wine GUI smoke harness carry the requested application identity into owner-controlled Runtime evidence. MessageBox runs can now pass `--evidence-app-id org.xnix.apps.messagebox --evidence-display-name "Xnix MessageBox"` through the remote q4 harness, the local Xvfb/QEMU/Wine harness, Go `gui-smoke-evidence-preview`, and the Runtime-status owner fixture instead of reusing the Mines identity for the owner handoff.
 
@@ -130,4 +132,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc100 is a cadence-boundary candidate and should receive an explicitly approved restricted full-smoke run before any formal promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc100 received an explicitly approved restricted full-smoke run before v0.2.640-rc101 continued the post-boundary GUI action fix.

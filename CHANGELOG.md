@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc101] - 2026-07-25
+
+### Fixed
+
+- Fixed KDE controlled-launch action readiness for owner-controlled Wine builtin GUI apps whose runtime evidence has a safe owner handoff but no managed executable copy.
+- Kept owner-managed copy status visible as evidence instead of using it as a hard gate for builtin desktop action routing.
+
 ## [0.2.640-rc100] - 2026-07-25
 
 ### Added
