@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.633
+> Last updated: 2026-07-24 | Baseline: v0.2.634
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.633 by making the Go-owned owner trigger bridge callable from the next desktop/D-Bus lane without Ruby reconstructing launch inputs. Keep Ruby as orchestration only, keep KDE forwarding only evidence handles, and move toward a real desktop-triggered staged `xnix-compat-launch` path that can run the managed 7zr smoke when prerequisites are present. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.634 by replacing the remaining C smoke-adapter hardcoded owner-service dispatch with Go-provided trigger metadata where practical, then connect that same trigger shape toward a KDE-facing action entrypoint. Keep Ruby as orchestration only, keep KDE forwarding only evidence handles, and move toward a real desktop-triggered staged `xnix-compat-launch` path that can run the managed 7zr smoke when prerequisites are present. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.634 checkpoint makes `dbus_controlled_launch_owner_fixture_smoke.rb` consume the same `known-app-runtime-status-launch-owner-trigger-preview` used by the real staged launcher dispatch lane. The D-Bus smoke now asks Go to read the verified Runtime-status evidence handoff, verifies the trigger preview runtime/read methods, cross-checks the evidence digest and owner-service args against the fixture, then calls the public D-Bus method from `desktop_dbus_method` with the evidence handle supplied by the Go trigger. This removes another Ruby-reconstructed desktop trigger path while keeping the C adapter and KDE-facing route presentation-only.
 
 The v0.2.633 checkpoint adds `known-app-runtime-status-launch-owner-trigger-preview`, a Go-owned bridge that reads verified Runtime-status launch evidence and returns the desktop-trigger metadata plus `owner_service_cli_args` for the real staged launcher dispatch lane. `staged_launcher_dispatch_smoke.rb` now calls that preview and passes the returned CLI arguments into `xnix-runtime-owner`, proving the staged 7zr owner-service launch path can consume Runtime-owned trigger metadata instead of a Ruby-reconstructed method/evidence pair.
 

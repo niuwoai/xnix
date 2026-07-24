@@ -178,12 +178,46 @@ def prepare_fixture(runtime_command)
   fixture
 end
 
-def desktop_trigger_from_fixture(fixture)
-  args = fixture.fetch("owner_service_call_args")
-  assert(args == ["ShowRuntimeControlledLaunch", "evidence-relative-path", fixture.fetch("evidence_relative_path")],
-         "Runtime-status evidence fixture must expose an evidence-only desktop trigger")
+def desktop_trigger_from_runtime(runtime_command, fixture)
+  trigger, trigger_stdout = run_json(
+    {},
+    *runtime_command,
+    "known-app-runtime-status-launch-owner-trigger-preview",
+    "--state-root", STATE_ROOT.to_s,
+    "--evidence-relative-path", fixture.fetch("evidence_relative_path")
+  )
+  assert(trigger["schema_version"] == "xnix.runtime.known_app_runtime_status_launch_owner_trigger.v1", "Runtime-status owner trigger must expose the Go-owned trigger schema")
+  assert(trigger["request_type"] == "known-app-runtime-status-launch-owner-trigger-preview", "Runtime-status owner trigger must use the Go-owned trigger type")
+  assert(trigger["runtime_method"] == "PreviewKnownAppRuntimeStatusLaunchOwnerTrigger", "Runtime-status owner trigger must use the Go preview")
+  assert(trigger["read_method"] == "GetKnownAppRuntimeStatusLaunchOwnerTrigger", "Runtime-status owner trigger must expose the read method")
+  assert(trigger["evidence_relative_path"] == fixture.fetch("evidence_relative_path"), "Runtime-status owner trigger must consume the fixture evidence path")
+  assert(trigger["evidence_sha256"] == fixture.fetch("evidence_sha256"), "Runtime-status owner trigger must preserve the fixture evidence digest")
+  assert(trigger["evidence_handoff_consumed"] == true, "Runtime-status owner trigger must consume the evidence handoff")
+  assert(trigger["evidence_digest_verified"] == true, "Runtime-status owner trigger must verify the evidence digest")
+  assert(trigger["desktop_trigger_ready"] == true, "Runtime-status owner trigger must expose a desktop trigger")
+  assert(trigger["desktop_callable_route"] == "kde-dbus-runtime-status-action", "Runtime-status owner trigger must target the KDE D-Bus Runtime-status route")
+  assert(trigger["desktop_callable_runtime_method"] == "ShowRuntimeControlledLaunch", "Runtime-status owner trigger must target ShowRuntimeControlledLaunch")
+  assert(trigger["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "Runtime-status owner trigger must target the Runtime launch execution")
+  assert(trigger["desktop_dbus_method"] == PUBLIC_METHOD, "Runtime-status owner trigger must expose the public D-Bus method")
+  assert(trigger["owner_service_call_ready"] == true, "Runtime-status owner trigger must expose a ready owner service call")
+  assert(trigger["owner_service_boundary"] == "go-runtime-owner-in-process-service", "Runtime-status owner trigger must route through the Go owner service")
+  assert(trigger["owner_service_method"] == "ShowRuntimeControlledLaunch", "Runtime-status owner trigger must preserve the owner service method")
+  assert(trigger["owner_service_call_type"] == "desktop-action-dispatch", "Runtime-status owner trigger must classify the owner call as a desktop action dispatch")
+  assert(trigger["owner_service_call_args"] == fixture.fetch("owner_service_call_args"), "Runtime-status owner trigger must preserve fixture owner service args")
+  assert(trigger["owner_service_cli_args"] == ["--service-call", "ShowRuntimeControlledLaunch", "evidence-relative-path", fixture.fetch("evidence_relative_path")], "Runtime-status owner trigger must expose evidence-only owner service CLI args")
+  assert(trigger["runtime_owner_service_supplies_inputs"] == true, "Runtime-status owner trigger must keep owner inputs supplied by Runtime")
+  assert(trigger["desktop_evidence_handle_forwarded"] == true, "Runtime-status owner trigger must forward only the evidence handle")
+  assert(trigger["kde_forwards_only_evidence_handle"] == true, "Runtime-status owner trigger must keep KDE evidence-only")
+  assert(trigger["desktop_receipt_fields_reconstructed"] == false, "Runtime-status owner trigger must not reconstruct receipt fields in KDE")
+  assert(trigger["desktop_kde_state_root_access"] == false, "Runtime-status owner trigger must not grant KDE state-root access")
+  assert(trigger["state_root_path_exposed"] == false, "Runtime-status owner trigger must not expose the state root")
+  assert(trigger["raw_launcher_output_exposed"] == false, "Runtime-status owner trigger must not expose raw launcher output")
+  assert(trigger["backend_details_exposed"] == false, "Runtime-status owner trigger must not expose backend details")
+  assert(trigger["host_root_modified"] == false, "Runtime-status owner trigger must not mutate the host root")
+  assert_no_forbidden(trigger_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status owner trigger output")
+  args = trigger.fetch("owner_service_call_args")
   {
-    "method" => fixture.fetch("desktop_dbus_method"),
+    "method" => trigger.fetch("desktop_dbus_method"),
     "owner_service_method" => args.fetch(0),
     "handoff_kind" => args.fetch(1),
     "evidence_relative_path" => args.fetch(2)
@@ -299,7 +333,7 @@ FileUtils.mkdir_p(RUN_ROOT)
 FileUtils.mkdir_p(STATE_ROOT)
 write_fake_launcher
 evidence_record = prepare_fixture(runtime_command)
-desktop_trigger = desktop_trigger_from_fixture(evidence_record)
+desktop_trigger = desktop_trigger_from_runtime(runtime_command, evidence_record)
 
 server_log = RUN_ROOT.join("xnix-dbus-smoke.log")
 server_env = {

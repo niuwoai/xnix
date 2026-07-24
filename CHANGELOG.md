@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.634] - 2026-07-24
+
+### Changed
+
+- Updated `dbus_controlled_launch_owner_fixture_smoke.rb` to consume `known-app-runtime-status-launch-owner-trigger-preview` before invoking the public D-Bus controlled-launch method.
+- Added D-Bus smoke guards for the Go trigger preview runtime/read methods, evidence digest parity, owner-service CLI args, and disabled unsafe gates.
+- Extended static layout checks so the D-Bus fixture lane cannot drift back to a fixture-only or Ruby-reconstructed trigger path.
+
 ## [0.2.633] - 2026-07-24
 
 ### Added
