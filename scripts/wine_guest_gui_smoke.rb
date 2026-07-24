@@ -20,6 +20,7 @@ DEFAULT_GUEST_DISPLAY_HOST = "10.0.2.2"
 DEFAULT_GUI_APP = "/usr/lib/wine/i386-windows/winemine.exe"
 DEFAULT_WAIT_SECONDS = 10
 DEFAULT_BOOT_TIMEOUT_SECONDS = 180
+DEFAULT_RUNTIME_BIN = ENV.fetch("XNIX_RUNTIME_GO_BIN", "go")
 
 options = {
   execute: false,
@@ -33,6 +34,7 @@ options = {
   display_number: Integer(ENV.fetch("XNIX_WINE_GUI_DISPLAY", DEFAULT_DISPLAY_NUMBER.to_s), 10),
   guest_display_host: ENV.fetch("XNIX_WINE_GUI_GUEST_DISPLAY_HOST", DEFAULT_GUEST_DISPLAY_HOST),
   gui_app: ENV.fetch("XNIX_WINE_GUI_APP", DEFAULT_GUI_APP),
+  runtime_bin: DEFAULT_RUNTIME_BIN,
   wait_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_WAIT_SECONDS", DEFAULT_WAIT_SECONDS.to_s), 10),
   boot_timeout_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_BOOT_TIMEOUT_SECONDS", DEFAULT_BOOT_TIMEOUT_SECONDS.to_s), 10)
 }
@@ -50,6 +52,7 @@ OptionParser.new do |parser|
   parser.on("--display-number NUMBER", Integer, "Host Xvfb display number.") { |value| options[:display_number] = value }
   parser.on("--guest-display-host HOST", "Guest-visible host display address.") { |value| options[:guest_display_host] = value }
   parser.on("--gui-app PATH", "Windows GUI app path inside the Wine guest.") { |value| options[:gui_app] = value }
+  parser.on("--runtime-bin PATH", "Runtime binary; use `go` to run ./cmd/xnix-runtime-go from source.") { |value| options[:runtime_bin] = value }
   parser.on("--wait-seconds SECONDS", Integer, "Seconds to wait for the GUI window.") { |value| options[:wait_seconds] = value }
   parser.on("--boot-timeout-seconds SECONDS", Integer, "Seconds to wait for guest SSH.") { |value| options[:boot_timeout_seconds] = value }
   parser.on("--plan-only", "Emit the non-executing plan.") { options[:execute] = false }
@@ -136,6 +139,29 @@ def start_qemu(options, state_root)
   [process, serial_log]
 end
 
+def runtime_command(options)
+  base = if options.fetch(:runtime_bin).strip == "go"
+           ["go", "run", "./cmd/xnix-runtime-go"]
+         else
+           [options.fetch(:runtime_bin)]
+         end
+  display_number = options.fetch(:display_number)
+  [
+    *base,
+    "windows-app-guest-wine-gui-smoke",
+    "--gui-app", options.fetch(:gui_app),
+    "--host", "127.0.0.1",
+    "--port", options.fetch(:ssh_port),
+    "--user", "root",
+    "--key", options.fetch(:ssh_key),
+    "--remote-dir", "/tmp/xnix-wine-guest-gui-smoke",
+    "--guest-display", "#{options.fetch(:guest_display_host)}:#{display_number}",
+    "--host-display", ":#{display_number}",
+    "--wait", "#{options.fetch(:wait_seconds)}s",
+    "--timeout", "#{options.fetch(:boot_timeout_seconds)}s"
+  ]
+end
+
 def stop_process(pid)
   return if pid.nil?
 
@@ -156,6 +182,8 @@ def base_report(options)
     "execute" => options.fetch(:execute),
     "backend" => "qemu-guest-wine-x11",
     "gui_app_name" => File.basename(options.fetch(:gui_app)),
+    "runtime_go_owned_gui_smoke" => true,
+    "runtime_bin_configured" => !options.fetch(:runtime_bin).strip.empty?,
     "state_root" => state_root.to_s,
     "qemu_binary" => options.fetch(:qemu_binary),
     "kernel_image" => options.fetch(:kernel_image),
@@ -255,49 +283,25 @@ begin
   end
   report["guest_ssh_ready"] = true
 
-  remote_prefix = "/tmp/xnix-wine-guest-gui-smoke"
-  guest_display = "#{options.fetch(:guest_display_host)}:#{options.fetch(:display_number)}"
-  wineboot_command = "mkdir -p #{remote_prefix}; " \
-                     "DISPLAY=#{guest_display} WINEPREFIX=#{remote_prefix}/wineprefix WINEDEBUG=-all " \
-                     "wineboot --init >#{remote_prefix}/wineboot-stdout.txt 2>#{remote_prefix}/wineboot-stderr.txt || true"
-  _wineboot_stdout, wineboot_stderr, wineboot_status = guest_ssh(options, wineboot_command)
-  unless wineboot_status.zero?
+  runtime_stdout, runtime_stderr, runtime_status = run_command({}, *runtime_command(options))
+  unless runtime_status.zero?
     report["status"] = "failed"
-    report["failure_reason"] = "guest Wine boot command failed: #{wineboot_stderr.strip}"
-    emit(report, options)
-    exit 1
-  end
-  report["wineboot_invoked"] = true
-
-  start_command = "mkdir -p #{remote_prefix}; " \
-                  "DISPLAY=#{guest_display} WINEPREFIX=#{remote_prefix}/wineprefix WINEDEBUG=-all " \
-                  "wine #{options.fetch(:gui_app)} >#{remote_prefix}/stdout.txt 2>#{remote_prefix}/stderr.txt " \
-                  "& printf '%s\\n' \"$!\" >#{remote_prefix}/pid"
-  _stdout, stderr, status = guest_ssh(options, start_command)
-  unless status.zero?
-    report["status"] = "failed"
-    report["failure_reason"] = "guest Wine GUI launch command failed: #{stderr.strip}"
+    report["failure_reason"] = "Go Runtime Wine GUI smoke command failed"
+    report["runtime_stderr_bytes"] = runtime_stderr.bytesize
     emit(report, options)
     exit 1
   end
 
-  sleep options.fetch(:wait_seconds)
-  display = ":#{options.fetch(:display_number)}"
-  xwininfo, xwininfo_stderr, _xwininfo_status = run_command({ "DISPLAY" => display }, "xwininfo", "-root", "-tree")
-  state_root.join("xwininfo.txt").write(xwininfo)
-  wineboot_stderr_text, _wineboot_ssh_stderr, _wineboot_status = guest_ssh(options, "cat #{remote_prefix}/wineboot-stderr.txt 2>/dev/null || true")
-  state_root.join("wineboot-stderr.txt").write(wineboot_stderr_text)
-  guest_stderr, _guest_ssh_stderr, _guest_status = guest_ssh(options, "cat #{remote_prefix}/stderr.txt 2>/dev/null || true")
-  state_root.join("guest-stderr.txt").write(guest_stderr)
-
-  child_lines = xwininfo.lines.select { |line| line.match?(/^\s+0x[0-9a-f]+/i) }
-  report["x_window_child_count"] = child_lines.length
-  report["x_window_observed"] = !child_lines.empty?
-  report["xwininfo_bytes"] = xwininfo.bytesize
-  report["wineboot_stderr_bytes"] = wineboot_stderr_text.bytesize
-  report["guest_stderr_bytes"] = guest_stderr.bytesize
-  report["guest_graphics_driver_error_observed"] = [wineboot_stderr_text, guest_stderr].any? { |text| text.match?(/graphics driver is missing|no driver could be loaded/i) }
-  report["xwininfo_error"] = xwininfo_stderr.strip
+  runtime_payload = JSON.parse(runtime_stdout)
+  report["runtime_payload_schema_version"] = runtime_payload.fetch("schema_version")
+  report["wineboot_invoked"] = runtime_payload.fetch("wineboot_invoked", false)
+  report["x_window_child_count"] = runtime_payload.fetch("x_window_child_count", 0)
+  report["x_window_observed"] = runtime_payload.fetch("x_window_observed", false)
+  report["xwininfo_bytes"] = runtime_payload.fetch("xwininfo_bytes", 0)
+  report["wineboot_stderr_bytes"] = runtime_payload.fetch("wineboot_stderr_bytes", 0)
+  report["guest_stderr_bytes"] = runtime_payload.fetch("guest_stderr_bytes", 0)
+  report["guest_graphics_driver_error_observed"] = runtime_payload.fetch("guest_graphics_driver_error_observed", false)
+  report["kde_safe_output_summary"] = runtime_payload.fetch("kde_safe_output_summary", "")
 
   if report.fetch("x_window_observed")
     report["status"] = "passed"
@@ -306,7 +310,7 @@ begin
   end
 
   report["status"] = "failed"
-  report["failure_reason"] = "Wine GUI app did not create an X window"
+  report["failure_reason"] = runtime_payload.fetch("failure_reason", "Wine GUI app did not create an X window")
   emit(report, options)
   exit 1
 ensure

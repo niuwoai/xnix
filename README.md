@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc74`.
+The project is currently at `v0.2.640-rc75`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc74`.
 
 ## Current Checkpoint
 
-v0.2.640-rc74 makes the q4 Wine GUI lane reproducible from the repository. `scripts/remote_wine_guest_gui_smoke.rb --execute` syncs the checkout to a managed `/home/xnix-*` source root, runs `scripts/wine_guest_gui_smoke.rb` remotely against the q4 Wine guest kernel, and persists JSON evidence under the q4 run-materials state directory. The plan-only mode records that the pass condition requires a rebuilt Wine guest with X11 support.
+v0.2.640-rc75 moves the Wine GUI smoke core into Go. `xnix-runtime-go windows-app-guest-wine-gui-smoke` now owns guest `wineboot`, GUI app launch, host `xwininfo` observation, and KDE-safe evidence, while `scripts/wine_guest_gui_smoke.rb` remains the Xvfb/QEMU harness. The remote q4 GUI harness now builds the current Go Runtime before running the smoke so it does not depend on stale binaries.
+
+The previous v0.2.640-rc74 checkpoint made the q4 Wine GUI lane reproducible from the repository. `scripts/remote_wine_guest_gui_smoke.rb --execute` syncs the checkout to a managed `/home/xnix-*` source root, runs `scripts/wine_guest_gui_smoke.rb` remotely against the q4 Wine guest kernel, and persists JSON evidence under the q4 run-materials state directory. The plan-only mode records that the pass condition requires a rebuilt Wine guest with X11 support.
 
 The previous v0.2.640-rc73 checkpoint opened the next real Windows GUI-app lane. The Wine i386 guest defconfig now includes the X.org client libraries and font/image dependencies that make Wine build with its X11 driver, and `scripts/wine_guest_gui_smoke.rb --execute` can run a real Wine GUI app through QEMU against an Xvfb desktop while keeping SSH loopback-bound and reporting the temporary display-network exception explicitly.
 
@@ -64,6 +66,7 @@ GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner -run 'TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall|TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureBlocksWithoutVerifiedArtifact' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandBlocksWithoutArtifact|TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandRejectsMissingStateRoot' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/winapp ./cmd/xnix-runtime-go -run 'TestRunGuestGUISmoke|TestWindowsAppGuestWineGUISmoke' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby -Ilib test/test_runtime_dbus_smoke_script.rb
 ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
@@ -83,4 +86,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc74 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc75 is a targeted follow-up and does not reset the next full-checkpoint cadence.

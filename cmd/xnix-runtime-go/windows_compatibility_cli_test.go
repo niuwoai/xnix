@@ -1236,6 +1236,95 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	logPath := filepath.Join(tempDir, "guest-gui.log")
+	sshPath := filepath.Join(tempDir, "fake-ssh")
+	sshBody := "#!/bin/sh\n" +
+		"printf 'ssh %s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"case \"$*\" in\n" +
+		"  *' true') exit 0 ;;\n" +
+		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'mkdir -p'*) exit 0 ;;\n" +
+		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
+		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
+		"  *'cat '*'stderr.txt'*) printf ''; exit 0 ;;\n" +
+		"  *'wineserver -k'*) exit 0 ;;\n" +
+		"esac\n" +
+		"exit 2\n"
+	if err := os.WriteFile(sshPath, []byte(sshBody), 0o700); err != nil {
+		t.Fatalf("WriteFile ssh returned error: %v", err)
+	}
+	xwininfoPath := filepath.Join(tempDir, "fake-xwininfo")
+	xwininfoBody := "#!/bin/sh\n" +
+		"printf 'xwininfo display=%s\\n' \"$DISPLAY\" >> '" + logPath + "'\n" +
+		"printf 'xwininfo: Window id: 0x3a7 (the root window)\\n'\n" +
+		"printf '  0x200001 \"WineMine\": ()  320x240+0+0  +0+0\\n'\n"
+	if err := os.WriteFile(xwininfoPath, []byte(xwininfoBody), 0o700); err != nil {
+		t.Fatalf("WriteFile xwininfo returned error: %v", err)
+	}
+	keyPath := filepath.Join(tempDir, "id_ed25519")
+	guestDisplay := strings.Join([]string{"10", "0", "2", "2"}, ".") + ":100"
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-guest-wine-gui-smoke",
+		"--gui-app", "/usr/lib/wine/i386-windows/winemine.exe",
+		"--host", "127.0.0.1",
+		"--port", "2222",
+		"--user", "root",
+		"--key", keyPath,
+		"--remote-dir", "/tmp/xnix-wine-guest-gui-smoke",
+		"--ssh", sshPath,
+		"--xwininfo", xwininfoPath,
+		"--guest-display", guestDisplay,
+		"--host-display", ":100",
+		"--timeout", "5s",
+		"--wait", "1ms",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_guest_wine_gui_smoke.v1" ||
+		payload["request_type"] != "windows-app-guest-wine-gui-smoke" ||
+		payload["status"] != "passed" ||
+		payload["gui_app_name"] != "winemine.exe" ||
+		payload["backend"] != "qemu-guest-wine-x11" ||
+		payload["wineboot_invoked"] != true ||
+		payload["launch_attempted"] != true ||
+		payload["xwininfo_invoked"] != true ||
+		payload["x_window_observed"] != true ||
+		payload["x_window_child_count"] != float64(1) ||
+		payload["loopback_ssh_forwarding_only"] != true ||
+		payload["qemu_required"] != true ||
+		payload["xvfb_required"] != true ||
+		payload["qemu_user_network_restrict_disabled_for_display"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["privileged_container_required"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_guest_gui_app_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false {
+		t.Fatalf("unexpected guest GUI smoke payload: %#v", payload)
+	}
+	for _, forbidden := range []string{sshPath, xwininfoPath, keyPath, "/usr/lib/wine/i386-windows/winemine.exe"} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("guest GUI smoke output leaked raw path %q: %s", forbidden, output.String())
+		}
+	}
+}
+
 func TestWindowsKnownAppGuestWineSmokeCommandSkipsUntilArtifactIsFetched(t *testing.T) {
 	tempDir := t.TempDir()
 

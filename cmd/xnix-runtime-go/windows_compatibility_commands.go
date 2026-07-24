@@ -434,6 +434,77 @@ func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-guest-wine-gui-smoke", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var guiAppPath string
+	var host string
+	var port string
+	var user string
+	var keyPath string
+	var remoteDir string
+	var sshPath string
+	var xwininfoPath string
+	var guestDisplay string
+	var hostDisplay string
+	var timeoutText string
+	var waitText string
+	flags.StringVar(&guiAppPath, "gui-app", winapp.DefaultGuestGUIApp, "Windows GUI app path inside the Wine guest")
+	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
+	flags.StringVar(&port, "port", winapp.DefaultGuestPort, "guest SSH port")
+	flags.StringVar(&user, "user", winapp.DefaultGuestUser, "guest SSH user")
+	flags.StringVar(&keyPath, "key", "", "guest SSH private key path")
+	flags.StringVar(&remoteDir, "remote-dir", "/tmp/xnix-wine-guest-gui-smoke", "guest remote GUI smoke directory")
+	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
+	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo path")
+	flags.StringVar(&guestDisplay, "guest-display", winapp.DefaultGuestGUIDisplay, "guest-visible X11 display")
+	flags.StringVar(&hostDisplay, "host-display", winapp.DefaultHostGUIDisplay, "host X11 display inspected by xwininfo")
+	flags.StringVar(&timeoutText, "timeout", "90s", "guest GUI execution timeout")
+	flags.StringVar(&waitText, "wait", "10s", "GUI window observation wait")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-guest-wine-gui-smoke")
+	}
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+	wait, err := time.ParseDuration(waitText)
+	if err != nil {
+		return fmt.Errorf("parse wait: %w", err)
+	}
+	parsedPort, err := winapp.ParseGuestPort(port)
+	if err != nil {
+		return err
+	}
+
+	result, err := winapp.RunGuestGUISmoke(context.Background(), winapp.GuestGUIRequest{
+		GUIAppPath:   guiAppPath,
+		Host:         host,
+		Port:         parsedPort,
+		User:         user,
+		KeyPath:      keyPath,
+		RemoteDir:    remoteDir,
+		SSHPath:      sshPath,
+		XWinInfoPath: xwininfoPath,
+		GuestDisplay: guestDisplay,
+		HostDisplay:  hostDisplay,
+		Timeout:      timeout,
+		Wait:         wait,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsKnownAppFetch(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-known-app-fetch", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

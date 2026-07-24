@@ -41,9 +41,11 @@ end
 
 assert(sshd_config.include?("X11Forwarding no"), "Wine guest SSH must keep X11 forwarding disabled by default")
 assert(sshd_config.include?("AllowTcpForwarding no"), "Wine guest SSH must keep TCP forwarding disabled by default")
-assert(script_source.include?("& printf"), "GUI smoke must record the background Wine process id without invalid shell separators")
+go_gui_smoke_source = project_root.join("internal/runtime/winapp/guest_gui_smoke.go").read
+assert(go_gui_smoke_source.include?("\"&\"") && go_gui_smoke_source.include?("printf"), "Go GUI smoke must record the background Wine process id without invalid shell separators")
 assert(!script_source.include?("&;"), "GUI smoke must not emit an invalid background shell separator")
-assert(script_source.include?("wineboot --init"), "GUI smoke must initialize the Wine prefix before launching the GUI app")
+assert(script_source.include?("windows-app-guest-wine-gui-smoke"), "GUI smoke must delegate Wine GUI execution to the Go Runtime")
+assert(go_gui_smoke_source.include?("\"wineboot\"") && go_gui_smoke_source.include?("\"--init\""), "Go Runtime must initialize the Wine prefix before launching the GUI app")
 
 stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--plan-only", "--format", "json", chdir: project_root.to_s)
 assert(status.success?, "Wine guest GUI smoke plan must succeed: #{stderr}")
@@ -62,5 +64,6 @@ assert(payload["docker_socket_mounted"] == false, "GUI smoke must not mount the 
 assert(payload["broad_host_mount_required"] == false, "GUI smoke must not require broad host mounts")
 assert(payload["host_root_modified"] == false, "GUI smoke must not mutate the host root")
 assert(payload["wineboot_invoked"] == false, "GUI smoke plan must not invoke wineboot")
+assert(payload["runtime_go_owned_gui_smoke"] == true, "GUI smoke must report Go-owned Runtime GUI execution")
 
 puts "PASS: Wine guest GUI smoke script plan"

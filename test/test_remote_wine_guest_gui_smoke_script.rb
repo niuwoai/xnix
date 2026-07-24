@@ -27,6 +27,8 @@ assert(payload["backend"] == "qemu-guest-wine-x11", "remote GUI smoke must targe
 assert(payload["gui_app_name"] == "winemine.exe", "remote GUI smoke must use a real GUI Windows app")
 assert(payload["requires_rebuilt_wine_guest_with_x11"] == true, "remote GUI smoke must document the rebuilt Wine guest requirement")
 assert(payload["remote_timeout_seconds"] == 300, "remote GUI smoke must expose a bounded remote timeout")
+assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build the Go Runtime before execution")
+assert(payload["remote_runtime_bin"].end_with?("/bin/xnix-runtime-go"), "remote GUI smoke must expose the managed Runtime binary location")
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")
 assert(payload["report_output"].start_with?("/home/xnix-"), "remote report output must stay under /home/xnix-*")
 assert(payload["state_root"].start_with?("/home/xnix-"), "remote state root must stay under /home/xnix-*")

@@ -25,6 +25,8 @@ options = {
   remote_materials_root: DEFAULT_REMOTE_MATERIALS_ROOT,
   remote_kernel: ENV.fetch("XNIX_WINE_GUI_REMOTE_KERNEL", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/wine-guest/bzImage"),
   remote_ssh_key: ENV.fetch("XNIX_WINE_GUI_REMOTE_SSH_KEY", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/ssh/id_ed25519"),
+  remote_build_root: ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache"),
+  remote_go: ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go"),
   report_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REPORT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}.json"),
   state_root: ENV.fetch("XNIX_WINE_GUI_REMOTE_STATE_ROOT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}"),
   ssh_port: ENV.fetch("XNIX_WINE_GUI_REMOTE_SSH_PORT", "40229"),
@@ -43,6 +45,8 @@ OptionParser.new do |parser|
   parser.on("--remote-materials-root PATH", "Remote materials root under /home/xnix*.") { |value| options[:remote_materials_root] = value }
   parser.on("--remote-kernel PATH", "Remote Wine guest kernel image.") { |value| options[:remote_kernel] = value }
   parser.on("--remote-ssh-key PATH", "Remote Wine guest SSH key.") { |value| options[:remote_ssh_key] = value }
+  parser.on("--remote-build-root PATH", "Remote build cache root under /home/xnix*.") { |value| options[:remote_build_root] = value }
+  parser.on("--remote-go PATH", "Remote Go binary used to build xnix-runtime-go.") { |value| options[:remote_go] = value }
   parser.on("--report-output PATH", "Remote JSON report output path under /home/xnix*.") { |value| options[:report_output] = value }
   parser.on("--state-root PATH", "Remote smoke state root under /home/xnix*.") { |value| options[:state_root] = value }
   parser.on("--ssh-port PORT", "Loopback SSH port for the temporary QEMU guest.") { |value| options[:ssh_port] = value }
@@ -114,8 +118,11 @@ remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetc
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
 remote_kernel = ensure_remote_xnix_path!("remote kernel", options.fetch(:remote_kernel))
 remote_ssh_key = ensure_remote_xnix_path!("remote SSH key", options.fetch(:remote_ssh_key))
+remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 report_output = ensure_remote_xnix_path!("report output", options.fetch(:report_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
+remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
+remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
 
 plan = {
   "schema_version" => "xnix.scripts.remote_wine_guest_gui_smoke.v1",
@@ -129,6 +136,9 @@ plan = {
   "remote_materials_root" => remote_materials_root,
   "remote_kernel" => remote_kernel,
   "remote_ssh_key" => remote_ssh_key,
+  "remote_build_root" => remote_build_root,
+  "remote_runtime_bin" => remote_runtime_bin,
+  "runtime_build_planned" => true,
   "report_output" => report_output,
   "state_root" => state_root,
   "ssh_port" => options.fetch(:ssh_port),
@@ -181,6 +191,20 @@ if options.fetch(:sync_source)
   end
 end
 
+build_command = [
+  "set -eu",
+  shell_join(["mkdir", "-p", "#{remote_build_root}/bin", "#{remote_build_root}/go-build", "#{remote_build_root}/go-mod", "#{remote_build_root}/tmp"]),
+  "cd #{Shellwords.escape(remote_source_root)}",
+  "PATH=#{Shellwords.escape(remote_go_dir)}:$PATH GOCACHE=#{Shellwords.escape("#{remote_build_root}/go-build")} GOMODCACHE=#{Shellwords.escape("#{remote_build_root}/go-mod")} GOTMPDIR=#{Shellwords.escape("#{remote_build_root}/tmp")} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_runtime_bin, "./cmd/xnix-runtime-go"])}"
+].join("\n")
+build_stdout, build_stderr, build_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, build_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
+unless build_status.zero?
+  warn build_stdout unless build_stdout.empty?
+  warn build_stderr unless build_stderr.empty?
+  warn "FAIL: remote Wine guest GUI Runtime build failed"
+  exit 1
+end
+
 remote_args = [
   "ruby", "scripts/wine_guest_gui_smoke.rb",
   "--execute",
@@ -191,6 +215,7 @@ remote_args = [
   "--ssh-port", options.fetch(:ssh_port),
   "--display-number", options.fetch(:display_number).to_s,
   "--wait-seconds", options.fetch(:wait_seconds).to_s,
+  "--runtime-bin", remote_runtime_bin,
   "--report-output", report_output
 ]
 remote_command = [

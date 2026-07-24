@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc75] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-app-guest-wine-gui-smoke` command for guest Wine GUI app validation, including guest `wineboot`, GUI launch, host `xwininfo` observation, and KDE-safe evidence.
+
+### Changed
+
+- Changed `scripts/wine_guest_gui_smoke.rb` to delegate Wine GUI execution and window observation to the Go Runtime while Ruby remains the Xvfb/QEMU harness.
+- Changed `scripts/remote_wine_guest_gui_smoke.rb --execute` to build the current Go Runtime on q4 before invoking the GUI smoke.
+
 ## [0.2.640-rc74] - 2026-07-24
 
 ### Added

@@ -673,6 +673,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowsAppContainerRunSmoke(args[1:], stdout)
 	case "windows-app-guest-wine-smoke":
 		return runWindowsAppGuestWineSmoke(args[1:], stdout)
+	case "windows-app-guest-wine-gui-smoke":
+		return runWindowsAppGuestWineGUISmoke(args[1:], stdout)
 	case "windows-known-app-fetch":
 		return runWindowsKnownAppFetch(args[1:], stdout)
 	case "windows-known-app-guest-wine-smoke":

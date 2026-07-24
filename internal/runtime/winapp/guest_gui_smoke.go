@@ -1,0 +1,319 @@
+package winapp
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+const (
+	GuestGUISchemaVersion  = "xnix.runtime.windows_app_guest_wine_gui_smoke.v1"
+	GuestGUIRequestType    = "windows-app-guest-wine-gui-smoke"
+	DefaultGuestGUIApp     = "/usr/lib/wine/i386-windows/winemine.exe"
+	DefaultGuestGUIDisplay = "10.0.2.2:100"
+	DefaultHostGUIDisplay  = ":100"
+)
+
+type GuestGUIRequest struct {
+	GUIAppPath   string
+	Host         string
+	Port         string
+	User         string
+	KeyPath      string
+	RemoteDir    string
+	SSHPath      string
+	XWinInfoPath string
+	GuestDisplay string
+	HostDisplay  string
+	Timeout      time.Duration
+	Wait         time.Duration
+}
+
+type GuestGUIResult struct {
+	SchemaVersion                             string `json:"schema_version"`
+	RequestType                               string `json:"request_type"`
+	Status                                    string `json:"status"`
+	GUIAppName                                string `json:"gui_app_name"`
+	Backend                                   string `json:"backend"`
+	GuestTransport                            string `json:"guest_transport"`
+	GuestReachable                            bool   `json:"guest_reachable"`
+	WineAvailable                             bool   `json:"wine_available"`
+	WinebootInvoked                           bool   `json:"wineboot_invoked"`
+	WinebootExitCode                          int    `json:"wineboot_exit_code"`
+	LaunchAttempted                           bool   `json:"launch_attempted"`
+	LaunchPIDRecorded                         bool   `json:"launch_pid_recorded"`
+	XWinInfoInvoked                           bool   `json:"xwininfo_invoked"`
+	XWindowObserved                           bool   `json:"x_window_observed"`
+	XWindowChildCount                         int    `json:"x_window_child_count"`
+	XWinInfoBytes                             int    `json:"xwininfo_bytes"`
+	WinebootStderrBytes                       int    `json:"wineboot_stderr_bytes"`
+	GuestStderrBytes                          int    `json:"guest_stderr_bytes"`
+	GuestGraphicsDriverErrorObserved          bool   `json:"guest_graphics_driver_error_observed"`
+	DurationMillis                            int64  `json:"duration_millis"`
+	KDESafeOutputSummary                      string `json:"kde_safe_output_summary"`
+	SkipReason                                string `json:"skip_reason,omitempty"`
+	FailureReason                             string `json:"failure_reason,omitempty"`
+	LoopbackSSHForwardingOnly                 bool   `json:"loopback_ssh_forwarding_only"`
+	QEMURequired                              bool   `json:"qemu_required"`
+	XvfbRequired                              bool   `json:"xvfb_required"`
+	QEMUUserNetworkRestrictDisabledForDisplay bool   `json:"qemu_user_network_restrict_disabled_for_display"`
+	HostRootModified                          bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired               bool   `json:"privileged_container_required"`
+	HostNetworkingRequired                    bool   `json:"host_networking_required"`
+	DockerSocketMounted                       bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired                    bool   `json:"broad_host_mount_required"`
+	RawHostPathExposed                        bool   `json:"raw_host_path_exposed"`
+	RawGuestGUIAppPathExposed                 bool   `json:"raw_guest_gui_app_path_exposed"`
+	RawCommandExposed                         bool   `json:"raw_command_exposed"`
+}
+
+func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIResult, error) {
+	result := baseGuestGUIResult(request)
+	sshPath, err := resolveTool(request.SSHPath, "ssh")
+	if err != nil {
+		result.Status = SkippedStatus
+		result.SkipReason = "guest ssh transport unavailable"
+		return result, nil
+	}
+	xwininfoPath, err := resolveTool(request.XWinInfoPath, "xwininfo")
+	if err != nil {
+		result.Status = SkippedStatus
+		result.SkipReason = "host xwininfo unavailable"
+		return result, nil
+	}
+
+	timeout := request.Timeout
+	if timeout <= 0 {
+		timeout = 90 * time.Second
+	}
+	runCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	startedAt := time.Now()
+	remoteDir := guestRemoteDir(request.RemoteDir)
+	guest := guestTarget(GuestRequest{Host: request.Host, Port: request.Port, User: request.User})
+	sshBase := guestSSHBaseArgs(GuestRequest{Host: request.Host, Port: request.Port, User: request.User, KeyPath: request.KeyPath})
+
+	if err := runGuestSSH(runCtx, sshPath, sshBase, guest, "true", nil, nil); err != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = SkippedStatus
+		result.SkipReason = "guest ssh endpoint unavailable"
+		result.WinebootExitCode = exitCode(err)
+		return result, nil
+	}
+	result.GuestReachable = true
+
+	if err := runGuestSSH(runCtx, sshPath, sshBase, guest, "command -v wine >/dev/null 2>&1 && command -v wineboot >/dev/null 2>&1", nil, nil); err != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = SkippedStatus
+		result.SkipReason = "guest wine GUI runner unavailable"
+		result.WinebootExitCode = exitCode(err)
+		return result, nil
+	}
+	result.WineAvailable = true
+
+	if err := runGuestSSH(runCtx, sshPath, sshBase, guest, "mkdir -p "+shellQuote(remoteDir)+" && chmod 700 "+shellQuote(remoteDir), nil, nil); err != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest work directory preparation failed"
+		result.WinebootExitCode = exitCode(err)
+		return result, nil
+	}
+
+	winebootCommand := guestGUIWinebootCommand(remoteDir, guestDisplay(request))
+	var winebootStderr bytes.Buffer
+	winebootErr := runGuestSSH(runCtx, sshPath, sshBase, guest, winebootCommand, nil, &winebootStderr)
+	result.WinebootInvoked = true
+	result.WinebootExitCode = exitCode(winebootErr)
+	winebootText := winebootStderr.String()
+	result.WinebootStderrBytes = len(winebootText)
+	if winebootErr != nil && runCtx.Err() == context.DeadlineExceeded {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest wineboot timed out"
+		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+		return result, nil
+	}
+
+	launchCommand := guestGUIWineLaunchCommand(remoteDir, guestDisplay(request), guiAppPath(request))
+	var launchStderr bytes.Buffer
+	launchErr := runGuestSSH(runCtx, sshPath, sshBase, guest, launchCommand, nil, &launchStderr)
+	result.LaunchAttempted = true
+	result.LaunchPIDRecorded = launchErr == nil
+	if launchErr != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest Wine GUI launch command failed"
+		result.GuestStderrBytes = launchStderr.Len()
+		result.GuestGraphicsDriverErrorObserved = guiDriverErrorObserved(winebootText, launchStderr.String())
+		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+		return result, nil
+	}
+
+	wait := request.Wait
+	if wait <= 0 {
+		wait = 10 * time.Second
+	}
+	select {
+	case <-runCtx.Done():
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest Wine GUI wait timed out"
+		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+		return result, nil
+	case <-time.After(wait):
+	}
+
+	xwininfoText, xwininfoStderr, xwininfoErr := runXWinInfo(runCtx, xwininfoPath, hostDisplay(request))
+	result.XWinInfoInvoked = true
+	result.XWinInfoBytes = len(xwininfoText)
+	result.XWindowChildCount = countXWindowChildren(xwininfoText)
+	result.XWindowObserved = result.XWindowChildCount > 0
+	result.FailureReason = xwininfoStderr
+	if xwininfoErr != nil && runCtx.Err() == context.DeadlineExceeded {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "host xwininfo timed out"
+		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+		return result, nil
+	}
+
+	guestStderrText := readGuestFile(runCtx, sshPath, sshBase, guest, remoteDir+"/stderr.txt")
+	result.GuestStderrBytes = len(guestStderrText)
+	result.GuestGraphicsDriverErrorObserved = guiDriverErrorObserved(winebootText, guestStderrText)
+	_ = runGuestSSH(context.Background(), sshPath, sshBase, guest, "wineserver -k 2>/dev/null || true", nil, nil)
+
+	result.DurationMillis = time.Since(startedAt).Milliseconds()
+	result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+	if result.XWindowObserved {
+		result.Status = PassedStatus
+		result.FailureReason = ""
+		return result, nil
+	}
+	result.Status = FailedStatus
+	if strings.TrimSpace(result.FailureReason) == "" {
+		result.FailureReason = "Wine GUI app did not create an X window"
+	}
+	return result, nil
+}
+
+func baseGuestGUIResult(request GuestGUIRequest) GuestGUIResult {
+	return GuestGUIResult{
+		SchemaVersion:             GuestGUISchemaVersion,
+		RequestType:               GuestGUIRequestType,
+		Status:                    FailedStatus,
+		GUIAppName:                filepath.Base(guiAppPath(request)),
+		Backend:                   "qemu-guest-wine-x11",
+		GuestTransport:            "loopback-ssh",
+		WinebootExitCode:          -1,
+		LoopbackSSHForwardingOnly: true,
+		QEMURequired:              true,
+		XvfbRequired:              true,
+		QEMUUserNetworkRestrictDisabledForDisplay: true,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		RawHostPathExposed:          false,
+		RawGuestGUIAppPathExposed:   false,
+		RawCommandExposed:           false,
+	}
+}
+
+func guiAppPath(request GuestGUIRequest) string {
+	if strings.TrimSpace(request.GUIAppPath) == "" {
+		return DefaultGuestGUIApp
+	}
+	return request.GUIAppPath
+}
+
+func guestDisplay(request GuestGUIRequest) string {
+	if strings.TrimSpace(request.GuestDisplay) == "" {
+		return DefaultGuestGUIDisplay
+	}
+	return request.GuestDisplay
+}
+
+func hostDisplay(request GuestGUIRequest) string {
+	if strings.TrimSpace(request.HostDisplay) == "" {
+		return DefaultHostGUIDisplay
+	}
+	return request.HostDisplay
+}
+
+func guestGUIWinebootCommand(remoteDir string, display string) string {
+	return strings.Join([]string{
+		"DISPLAY=" + shellQuote(display),
+		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
+		"WINEDEBUG=-all",
+		"wineboot",
+		"--init",
+	}, " ")
+}
+
+func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) string {
+	return strings.Join([]string{
+		"DISPLAY=" + shellQuote(display),
+		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
+		"WINEDEBUG=-all",
+		"wine",
+		shellQuote(guiApp),
+		">" + shellQuote(remoteDir+"/stdout.txt"),
+		"2>" + shellQuote(remoteDir+"/stderr.txt"),
+		"&",
+		"printf",
+		"'%s\\n'",
+		"\"$!\"",
+		">" + shellQuote(remoteDir+"/pid"),
+	}, " ")
+}
+
+func runXWinInfo(ctx context.Context, xwininfoPath string, display string) (string, string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command := exec.CommandContext(ctx, xwininfoPath, "-root", "-tree")
+	command.Env = append(os.Environ(), "DISPLAY="+display)
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
+	return stdout.String(), stderr.String(), err
+}
+
+func countXWindowChildren(text string) int {
+	count := 0
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "0x") {
+			count++
+		}
+	}
+	return count
+}
+
+func readGuestFile(ctx context.Context, sshPath string, sshBase []string, guest string, path string) string {
+	var stdout bytes.Buffer
+	_ = runGuestSSH(ctx, sshPath, sshBase, guest, "cat "+shellQuote(path)+" 2>/dev/null || true", &stdout, nil)
+	return stdout.String()
+}
+
+func guiDriverErrorObserved(values ...string) bool {
+	for _, value := range values {
+		lower := strings.ToLower(value)
+		if strings.Contains(lower, "graphics driver is missing") || strings.Contains(lower, "no driver could be loaded") {
+			return true
+		}
+	}
+	return false
+}
+
+func guestGUIKDESafeOutputSummary(result GuestGUIResult) string {
+	if result.XWindowObserved {
+		return fmt.Sprintf("Wine GUI window observed; child_windows=%d xwininfo_bytes=%d guest_stderr_bytes=%d", result.XWindowChildCount, result.XWinInfoBytes, result.GuestStderrBytes)
+	}
+	return fmt.Sprintf("Wine GUI window not observed; child_windows=%d xwininfo_bytes=%d wineboot_stderr_bytes=%d guest_stderr_bytes=%d", result.XWindowChildCount, result.XWinInfoBytes, result.WinebootStderrBytes, result.GuestStderrBytes)
+}
