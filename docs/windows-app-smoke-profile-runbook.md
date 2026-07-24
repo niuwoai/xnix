@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc56
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc57
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -93,18 +93,18 @@ go run ./cmd/xnix-runtime-go windows-app-launch-profile --profile .local/xnix/wi
 For a Runtime-owned known app such as the pinned 7-Zip standalone executable, first fetch the artifact through the existing known-app acquisition path when network access is explicitly allowed by the operator. Once the artifact is cached and checksum-verified, materialize a product launch profile and managed launcher without downloading or running the app:
 
 ```text
-go run ./cmd/xnix-runtime-go windows-known-app-launch-profile-materialize --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go
+go run ./cmd/xnix-runtime-go windows-known-app-launch-profile-materialize --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go --runner path/to/wine --runner-bottle bottle-name --runner-arg "--private-runner-option" --skip-bootstrap
 ```
 
-If the artifact is missing or fails checksum verification, the command returns safe `skipped` evidence and writes no profile. If the artifact is verified, it writes a reusable profile and a `launch` mode launcher bundle that calls `windows-app-launch-profile`. The report exposes only safe file names and status fields.
+If the artifact is missing or fails checksum verification, the command returns safe `skipped` evidence and writes no profile. If the artifact is verified, it writes a reusable profile and a `launch` mode launcher bundle that calls `windows-app-launch-profile`. The optional runner settings are stored in the local profile, but reports expose only `runner_configured`, `runner_bottle_configured`, `runner_argument_count`, and `skip_bootstrap`; they do not expose raw runner paths, bottle names, or runner argv values.
 
 To combine offline cache checking, optional explicit acquisition, and materialization in one Runtime-owned command:
 
 ```text
-go run ./cmd/xnix-runtime-go windows-known-app-prepare-launch-profile --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go
+go run ./cmd/xnix-runtime-go windows-known-app-prepare-launch-profile --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go --runner path/to/wine --runner-bottle bottle-name --runner-arg "--private-runner-option" --skip-bootstrap
 ```
 
-The command is offline by default. Add `--allow-download` only when the operator intends to fetch the pinned artifact from the catalog. After checksum verification, it writes the same launch profile and managed launcher bundle as the materializer.
+The command is offline by default. Add `--allow-download` only when the operator intends to fetch the pinned artifact from the catalog. After checksum verification, it writes the same launch profile and managed launcher bundle as the materializer, including any explicit runner and bootstrap settings supplied by the operator.
 
 Or use the report script without launching the Windows app:
 

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc56
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc57
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc57 checkpoint candidate carries explicit runner settings through the known Windows app launch-profile path. `windows-known-app-launch-profile-materialize` and `windows-known-app-prepare-launch-profile` accept `--runner`, `--runner-bottle`, repeated `--runner-arg`, and `--skip-bootstrap`, store those launch controls in the reusable smoke profile, and keep product-facing output limited to `runner_configured`, `runner_bottle_configured`, `runner_argument_count`, and `skip_bootstrap`. This lets operators prepare a known app for an existing Wine/CrossOver-style runner while reports still hide raw runner paths, bottle names, runner argv values, cache paths, executable paths, profile paths, state roots, and runtime argv details.
 
 The v0.2.640-rc56 checkpoint candidate adds `windows-known-app-prepare-launch-profile`, a Go-owned one-step prepare path for known Windows apps. By default it checks the local cache offline and skips safely when the artifact is missing; with explicit `--allow-download` it downloads through the pinned catalog, verifies the checksum, and then materializes the reusable launch profile plus managed `launch` mode launcher. This keeps artifact acquisition explicit while turning the known app path into a concrete Runtime workflow: catalog entry, cache verification, optional acquisition, profile creation, and desktop launcher creation. Reports expose fetch/materialize status, download and checksum evidence, profile/launcher write flags, and closed host-boundary flags while hiding raw cache paths, executable paths, profile paths, state roots, and runtime argv details.
 

@@ -236,6 +236,10 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		"--runtime-bin", "go",
 		"--runtime-arg", "run",
 		"--runtime-arg", "./cmd/xnix-runtime-go",
+		"--runner", "/private/runner",
+		"--runner-bottle", "private-bottle",
+		"--runner-arg", "--private-runner-arg",
+		"--skip-bootstrap",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -1679,6 +1683,10 @@ func TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact(t *t
 		"--runtime-bin", "go",
 		"--runtime-arg", "run",
 		"--runtime-arg", "./cmd/xnix-runtime-go",
+		"--runner", "/private/runner",
+		"--runner-bottle", "private-bottle",
+		"--runner-arg", "--private-runner-arg",
+		"--skip-bootstrap",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -1698,6 +1706,10 @@ func TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact(t *t
 		payload["launcher_bundle_written"] != false ||
 		payload["launcher_mode"] != "launch" ||
 		payload["launcher_command"] != "windows-app-launch-profile" ||
+		payload["runner_configured"] != true ||
+		payload["runner_bottle_configured"] != true ||
+		payload["runner_argument_count"] != float64(3) ||
+		payload["skip_bootstrap"] != true ||
 		payload["network_required"] != false ||
 		payload["host_root_modified"] != false ||
 		payload["raw_executable_path_exposed"] != false ||
@@ -1708,6 +1720,7 @@ func TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact(t *t
 		t.Fatalf("unexpected known launch profile materialize payload: %#v", payload)
 	}
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+	assertCLIOutputOmitsValues(t, output.String(), "/private/runner", "private-bottle", "--private-runner-arg")
 }
 
 func TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact(t *testing.T) {
@@ -1722,6 +1735,10 @@ func TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact(t
 		"--runtime-bin", "go",
 		"--runtime-arg", "run",
 		"--runtime-arg", "./cmd/xnix-runtime-go",
+		"--runner", "/private/runner",
+		"--runner-bottle", "private-bottle",
+		"--runner-arg", "--private-runner-arg",
+		"--skip-bootstrap",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -1744,6 +1761,10 @@ func TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact(t
 		payload["materialize_status"] != "not-run" ||
 		payload["profile_written"] != false ||
 		payload["launcher_bundle_written"] != false ||
+		payload["runner_configured"] != true ||
+		payload["runner_bottle_configured"] != true ||
+		payload["runner_argument_count"] != float64(3) ||
+		payload["skip_bootstrap"] != true ||
 		payload["host_root_modified"] != false ||
 		payload["raw_executable_path_exposed"] != false ||
 		payload["raw_profile_path_exposed"] != false ||
@@ -1757,6 +1778,7 @@ func TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact(t
 		t.Fatalf("offline prepare fetch payload must not require network: %#v", fetchPayload)
 	}
 	assertKnownManagedLaunchCLISafe(t, output.String(), tempDir)
+	assertCLIOutputOmitsValues(t, output.String(), "/private/runner", "private-bottle", "--private-runner-arg")
 }
 
 func TestWindowsKnownAppManagedLaunchPreviewCommandRejectsUnknownApp(t *testing.T) {
@@ -1868,6 +1890,15 @@ func assertKnownManagedLaunchCLISafe(t *testing.T, text string, hostPath string)
 	for _, forbidden := range []string{"wine", "qemu", strings.ToLower(hostPath)} {
 		if strings.Contains(serialized, forbidden) {
 			t.Fatalf("known managed launch CLI exposed forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
+func assertCLIOutputOmitsValues(t *testing.T, text string, values ...string) {
+	t.Helper()
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" && strings.Contains(text, value) {
+			t.Fatalf("CLI output exposed forbidden value %q: %s", value, text)
 		}
 	}
 }

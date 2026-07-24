@@ -547,6 +547,9 @@ func runWindowsKnownAppLaunchProfileMaterialize(args []string, stdout io.Writer)
 	var applicationID string
 	var name string
 	var runtimeBinary string
+	var runnerPath string
+	var runnerBottle string
+	var skipBootstrap bool
 	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "known app cache root")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root for the launch profile")
@@ -554,8 +557,13 @@ func runWindowsKnownAppLaunchProfileMaterialize(args []string, stdout io.Writer)
 	flags.StringVar(&applicationID, "app-id", "", "desktop-safe application id")
 	flags.StringVar(&name, "name", "", "desktop display name")
 	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+	flags.StringVar(&runnerPath, "runner", "", "Windows compatibility runner path stored in the launch profile")
+	flags.StringVar(&runnerBottle, "runner-bottle", "", "runner bottle name stored in the launch profile")
+	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a launch profile that skips runner bootstrap")
 	var runtimeArgs repeatedStringFlag
+	var runnerArgs repeatedStringFlag
 	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-launch-profile")
+	flags.Var(&runnerArgs, "runner-arg", "argument passed to the compatibility runner when launching the app")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -573,6 +581,10 @@ func runWindowsKnownAppLaunchProfileMaterialize(args []string, stdout io.Writer)
 		DisplayName:      name,
 		RuntimeBinary:    runtimeBinary,
 		RuntimeArguments: []string(runtimeArgs),
+		RunnerPath:       runnerPath,
+		RunnerBottle:     runnerBottle,
+		RunnerArguments:  []string(runnerArgs),
+		SkipBootstrap:    skipBootstrap,
 	})
 	if err != nil {
 		return err
@@ -594,8 +606,11 @@ func runWindowsKnownAppPrepareLaunchProfile(args []string, stdout io.Writer) err
 	var applicationID string
 	var name string
 	var runtimeBinary string
+	var runnerPath string
+	var runnerBottle string
 	var timeoutText string
 	var allowDownload bool
+	var skipBootstrap bool
 	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "known app cache root")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root for the launch profile")
@@ -603,10 +618,15 @@ func runWindowsKnownAppPrepareLaunchProfile(args []string, stdout io.Writer) err
 	flags.StringVar(&applicationID, "app-id", "", "desktop-safe application id")
 	flags.StringVar(&name, "name", "", "desktop display name")
 	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+	flags.StringVar(&runnerPath, "runner", "", "Windows compatibility runner path stored in the launch profile")
+	flags.StringVar(&runnerBottle, "runner-bottle", "", "runner bottle name stored in the launch profile")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppFetchTimeout.String(), "known app fetch timeout when downloads are allowed")
 	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app artifact when it is missing")
+	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a launch profile that skips runner bootstrap")
 	var runtimeArgs repeatedStringFlag
+	var runnerArgs repeatedStringFlag
 	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-launch-profile")
+	flags.Var(&runnerArgs, "runner-arg", "argument passed to the compatibility runner when launching the app")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -628,6 +648,10 @@ func runWindowsKnownAppPrepareLaunchProfile(args []string, stdout io.Writer) err
 		DisplayName:      name,
 		RuntimeBinary:    runtimeBinary,
 		RuntimeArguments: []string(runtimeArgs),
+		RunnerPath:       runnerPath,
+		RunnerBottle:     runnerBottle,
+		RunnerArguments:  []string(runnerArgs),
+		SkipBootstrap:    skipBootstrap,
 		AllowDownload:    allowDownload,
 		Timeout:          timeout,
 	})

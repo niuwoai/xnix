@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc56"
+EXPECTED_VERSION = "0.2.640-rc57"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -884,7 +884,7 @@ windows_app_smoke_profile_template_test = read_project_file("test/test_winapp_sm
   assert(windows_app_smoke_profile_template_test.include?(token.gsub("\\ ", " ")), "Windows app smoke profile template test must include #{token}")
 end
 known_windows_app_go = read_project_file("internal/runtime/winapp/known_portable.go")
-%w[xnix.runtime.known_windows_app_launch_profile_materialize.v1 xnix.runtime.known_windows_app_prepare_launch_profile.v1 windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile KnownLaunchProfileMaterializeRequest KnownLaunchProfileMaterializeResult KnownPrepareLaunchProfileRequest KnownPrepareLaunchProfileResult MaterializeKnownPortableLaunchProfile PrepareKnownPortableLaunchProfile SmokeProfileFromRequest RecordLauncherBundle FetchKnownPortableApp LauncherModeLaunch LaunchProfileRequestType profile_written launcher_bundle_written allow_download fetch_status materialize_status raw_profile_path_exposed raw_state_root_path_exposed raw_runtime_argv_exposed network_required].each do |token|
+%w[xnix.runtime.known_windows_app_launch_profile_materialize.v1 xnix.runtime.known_windows_app_prepare_launch_profile.v1 windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile KnownLaunchProfileMaterializeRequest KnownLaunchProfileMaterializeResult KnownPrepareLaunchProfileRequest KnownPrepareLaunchProfileResult MaterializeKnownPortableLaunchProfile PrepareKnownPortableLaunchProfile SmokeProfileFromRequest RecordLauncherBundle FetchKnownPortableApp LauncherModeLaunch LaunchProfileRequestType profile_written launcher_bundle_written allow_download fetch_status materialize_status runner_configured runner_bottle_configured runner_argument_count skip_bootstrap runner_path runner_bottle runner_arguments raw_profile_path_exposed raw_state_root_path_exposed raw_runtime_argv_exposed network_required].each do |token|
   assert(known_windows_app_go.include?(token), "Go known Windows app materializer must include #{token}")
 end
 known_windows_app_test = read_project_file("internal/runtime/winapp/known_portable_test.go")
@@ -892,11 +892,11 @@ known_windows_app_test = read_project_file("internal/runtime/winapp/known_portab
   assert(known_windows_app_test.include?(token), "Go known Windows app materializer test must include #{token}")
 end
 known_windows_app_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go") + read_project_file("cmd/xnix-runtime-go/main.go")
-%w[windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile MaterializeKnownPortableLaunchProfile PrepareKnownPortableLaunchProfile allow-download profile-output state-root runtime-bin runtime-arg].each do |token|
+%w[windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile MaterializeKnownPortableLaunchProfile PrepareKnownPortableLaunchProfile allow-download profile-output state-root runtime-bin runtime-arg runner runner-bottle runner-arg skip-bootstrap].each do |token|
   assert(known_windows_app_cli.include?(token), "Known Windows app materializer CLI must include #{token}")
 end
 known_windows_app_cli_test = read_project_file("cmd/xnix-runtime-go/windows_compatibility_cli_test.go")
-%w[TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact TestWindowsKnownAppPrepareLaunchProfileCommandRejectsUnknownApp TestWindowsKnownAppLaunchProfileMaterializeCommandRejectsUnknownApp windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile launcher_command profile_written launcher_bundle_written allow_download fetch_status materialize_status raw_runtime_argv_exposed].each do |token|
+%w[TestWindowsKnownAppLaunchProfileMaterializeCommandSkipsMissingArtifact TestWindowsKnownAppPrepareLaunchProfileCommandSkipsOfflineMissingArtifact TestWindowsKnownAppPrepareLaunchProfileCommandRejectsUnknownApp TestWindowsKnownAppLaunchProfileMaterializeCommandRejectsUnknownApp windows-known-app-launch-profile-materialize windows-known-app-prepare-launch-profile launcher_command profile_written launcher_bundle_written allow_download fetch_status materialize_status runner_configured runner_bottle_configured runner_argument_count skip_bootstrap raw_runtime_argv_exposed].each do |token|
   assert(known_windows_app_cli_test.include?(token), "Known Windows app materializer CLI test must include #{token}")
 end
 windows_app_container_smoke_go = read_project_file("internal/runtime/winapp/container_smoke.go")

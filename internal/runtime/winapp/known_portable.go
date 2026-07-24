@@ -406,6 +406,10 @@ type KnownLaunchProfileMaterializeRequest struct {
 	DisplayName      string
 	RuntimeBinary    string
 	RuntimeArguments []string
+	RunnerPath       string
+	RunnerBottle     string
+	RunnerArguments  []string
+	SkipBootstrap    bool
 }
 
 type KnownLaunchProfileMaterializeResult struct {
@@ -427,6 +431,10 @@ type KnownLaunchProfileMaterializeResult struct {
 	LauncherMode                string                `json:"launcher_mode"`
 	LauncherCommand             string                `json:"launcher_command"`
 	LauncherBundlePayload       *LauncherBundleRecord `json:"launcher_bundle_payload,omitempty"`
+	RunnerConfigured            bool                  `json:"runner_configured"`
+	RunnerBottleConfigured      bool                  `json:"runner_bottle_configured"`
+	RunnerArgumentCount         int                   `json:"runner_argument_count"`
+	SkipBootstrap               bool                  `json:"skip_bootstrap"`
 	ExpectedMarker              string                `json:"expected_marker"`
 	SuccessMode                 string                `json:"success_mode"`
 	ApplicationWorkspaceMode    string                `json:"application_workspace_mode"`
@@ -445,6 +453,8 @@ type KnownLaunchProfileMaterializeResult struct {
 	FailureReason               string                `json:"failure_reason,omitempty"`
 }
 
+// Raw profile fields runner_path, runner_bottle, runner_arguments, and skip_bootstrap are stored only in the operator-local smoke profile.
+// Product-facing known-app materialization reports expose only runner_configured, runner_bottle_configured, runner_argument_count, and skip_bootstrap.
 type KnownPrepareLaunchProfileRequest struct {
 	AppID            string
 	CacheRoot        string
@@ -454,6 +464,10 @@ type KnownPrepareLaunchProfileRequest struct {
 	DisplayName      string
 	RuntimeBinary    string
 	RuntimeArguments []string
+	RunnerPath       string
+	RunnerBottle     string
+	RunnerArguments  []string
+	SkipBootstrap    bool
 	AllowDownload    bool
 	HTTPClient       *http.Client
 	Timeout          time.Duration
@@ -478,6 +492,10 @@ type KnownPrepareLaunchProfileResult struct {
 	LauncherBundleWritten       bool                                 `json:"launcher_bundle_written"`
 	FetchPayload                KnownFetchResult                     `json:"fetch_payload"`
 	MaterializePayload          *KnownLaunchProfileMaterializeResult `json:"materialize_payload,omitempty"`
+	RunnerConfigured            bool                                 `json:"runner_configured"`
+	RunnerBottleConfigured      bool                                 `json:"runner_bottle_configured"`
+	RunnerArgumentCount         int                                  `json:"runner_argument_count"`
+	SkipBootstrap               bool                                 `json:"skip_bootstrap"`
 	NetworkRequired             bool                                 `json:"network_required"`
 	HostRootModified            bool                                 `json:"host_root_modified"`
 	PrivilegedContainerRequired bool                                 `json:"privileged_container_required"`
@@ -928,6 +946,13 @@ func MaterializeKnownPortableLaunchProfile(request KnownLaunchProfileMaterialize
 		return KnownLaunchProfileMaterializeResult{}, err
 	}
 	result := baseKnownLaunchProfileMaterializeResult(app)
+	result.RunnerConfigured = strings.TrimSpace(request.RunnerPath) != ""
+	result.RunnerBottleConfigured = strings.TrimSpace(request.RunnerBottle) != ""
+	result.RunnerArgumentCount = len(runnerInvocationArguments(Request{
+		RunnerBottle:    request.RunnerBottle,
+		RunnerArguments: append([]string{}, request.RunnerArguments...),
+	}))
+	result.SkipBootstrap = request.SkipBootstrap
 	cachePath, err := knownAppCachePath(request.CacheRoot, app)
 	if err != nil {
 		return result, err
@@ -960,14 +985,18 @@ func MaterializeKnownPortableLaunchProfile(request KnownLaunchProfileMaterialize
 		return result, err
 	}
 	profile := SmokeProfileFromRequest(Request{
-		ExecutablePath: cachePath,
-		Arguments:      append([]string{}, app.Arguments...),
-		StateRoot:      stateRoot,
-		Timeout:        30 * time.Second,
-		ExpectedMarker: app.ExpectedMarker,
-		SuccessMode:    SuccessModeMarker,
-		RedactOutput:   true,
-		StageAppDir:    true,
+		ExecutablePath:  cachePath,
+		Arguments:       append([]string{}, app.Arguments...),
+		RunnerArguments: append([]string{}, request.RunnerArguments...),
+		RunnerBottle:    request.RunnerBottle,
+		StateRoot:       stateRoot,
+		RunnerPath:      request.RunnerPath,
+		Timeout:         30 * time.Second,
+		ExpectedMarker:  app.ExpectedMarker,
+		SuccessMode:     SuccessModeMarker,
+		RedactOutput:    true,
+		SkipBootstrap:   request.SkipBootstrap,
+		StageAppDir:     true,
 	})
 	if err := os.MkdirAll(filepath.Dir(profilePath), 0o700); err != nil {
 		return result, fmt.Errorf("create known app profile directory: %w", err)
@@ -1020,6 +1049,13 @@ func PrepareKnownPortableLaunchProfile(ctx context.Context, request KnownPrepare
 		return KnownPrepareLaunchProfileResult{}, err
 	}
 	result := baseKnownPrepareLaunchProfileResult(app, request.AllowDownload)
+	result.RunnerConfigured = strings.TrimSpace(request.RunnerPath) != ""
+	result.RunnerBottleConfigured = strings.TrimSpace(request.RunnerBottle) != ""
+	result.RunnerArgumentCount = len(runnerInvocationArguments(Request{
+		RunnerBottle:    request.RunnerBottle,
+		RunnerArguments: append([]string{}, request.RunnerArguments...),
+	}))
+	result.SkipBootstrap = request.SkipBootstrap
 	fetch, err := FetchKnownPortableApp(ctx, KnownFetchRequest{
 		AppID:         app.ID,
 		CacheRoot:     request.CacheRoot,
@@ -1063,6 +1099,10 @@ func PrepareKnownPortableLaunchProfile(ctx context.Context, request KnownPrepare
 		DisplayName:      request.DisplayName,
 		RuntimeBinary:    request.RuntimeBinary,
 		RuntimeArguments: append([]string{}, request.RuntimeArguments...),
+		RunnerPath:       request.RunnerPath,
+		RunnerBottle:     request.RunnerBottle,
+		RunnerArguments:  append([]string{}, request.RunnerArguments...),
+		SkipBootstrap:    request.SkipBootstrap,
 	})
 	if err != nil {
 		return result, err
@@ -1071,6 +1111,10 @@ func PrepareKnownPortableLaunchProfile(ctx context.Context, request KnownPrepare
 	result.MaterializeStatus = materialized.Status
 	result.ProfileWritten = materialized.ProfileWritten
 	result.LauncherBundleWritten = materialized.LauncherBundleWritten
+	result.RunnerConfigured = materialized.RunnerConfigured
+	result.RunnerBottleConfigured = materialized.RunnerBottleConfigured
+	result.RunnerArgumentCount = materialized.RunnerArgumentCount
+	result.SkipBootstrap = materialized.SkipBootstrap
 	result.RawExecutablePathExposed = materialized.RawExecutablePathExposed
 	result.RawProfilePathExposed = materialized.RawProfilePathExposed
 	result.RawStateRootPathExposed = materialized.RawStateRootPathExposed

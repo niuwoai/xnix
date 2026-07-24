@@ -237,6 +237,10 @@ func TestPrepareKnownPortableLaunchProfileDownloadsAndMaterializesWhenAllowed(t 
 		StateRoot:        stateRoot,
 		RuntimeBinary:    "go",
 		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
+		RunnerPath:       filepath.Join(cacheRoot, "private-runner"),
+		RunnerBottle:     "private-bottle",
+		RunnerArguments:  []string{"--private-runner-arg"},
+		SkipBootstrap:    true,
 		AllowDownload:    true,
 		HTTPClient:       client,
 		Timeout:          5 * time.Second,
@@ -254,8 +258,16 @@ func TestPrepareKnownPortableLaunchProfileDownloadsAndMaterializesWhenAllowed(t 
 		result.MaterializeStatus != PassedStatus ||
 		!result.ProfileWritten ||
 		!result.LauncherBundleWritten ||
+		!result.RunnerConfigured ||
+		!result.RunnerBottleConfigured ||
+		result.RunnerArgumentCount != 3 ||
+		!result.SkipBootstrap ||
 		result.MaterializePayload == nil ||
 		result.MaterializePayload.LauncherCommand != LaunchProfileRequestType ||
+		!result.MaterializePayload.RunnerConfigured ||
+		!result.MaterializePayload.RunnerBottleConfigured ||
+		result.MaterializePayload.RunnerArgumentCount != 3 ||
+		!result.MaterializePayload.SkipBootstrap ||
 		result.RawExecutablePathExposed ||
 		result.RawProfilePathExposed ||
 		result.RawStateRootPathExposed ||
@@ -270,11 +282,17 @@ func TestPrepareKnownPortableLaunchProfileDownloadsAndMaterializesWhenAllowed(t 
 	}
 	if profileRequest.ExpectedMarker != "FIXTURE_OK" ||
 		!profileRequest.RedactOutput ||
+		profileRequest.RunnerPath != filepath.Join(cacheRoot, "private-runner") ||
+		profileRequest.RunnerBottle != "private-bottle" ||
+		len(profileRequest.RunnerArguments) != 1 ||
+		profileRequest.RunnerArguments[0] != "--private-runner-arg" ||
+		!profileRequest.SkipBootstrap ||
 		!profileRequest.StageAppDir ||
 		len(profileRequest.Arguments) != 1 ||
 		profileRequest.Arguments[0] != "--help" {
 		t.Fatalf("unexpected prepared profile request: %#v", profileRequest)
 	}
+	assertKnownPrepareLaunchProfileSafe(t, result, cacheRoot, "private-bottle", "--private-runner-arg")
 }
 
 func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
@@ -311,6 +329,10 @@ func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVer
 		ApplicationID:    "org.xnix.known.fixture",
 		RuntimeBinary:    "go",
 		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
+		RunnerPath:       filepath.Join(cacheRoot, "private-runner"),
+		RunnerBottle:     "private-bottle",
+		RunnerArguments:  []string{"--private-runner-arg"},
+		SkipBootstrap:    true,
 	})
 	if err != nil {
 		t.Fatalf("MaterializeKnownPortableLaunchProfile returned error: %v", err)
@@ -323,6 +345,10 @@ func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVer
 		!result.LauncherBundleWritten ||
 		result.LauncherMode != LauncherModeLaunch ||
 		result.LauncherCommand != LaunchProfileRequestType ||
+		!result.RunnerConfigured ||
+		!result.RunnerBottleConfigured ||
+		result.RunnerArgumentCount != 3 ||
+		!result.SkipBootstrap ||
 		result.ExpectedMarker != "FIXTURE_OK" ||
 		result.SuccessMode != SuccessModeMarker ||
 		result.ApplicationWorkspaceMode != ApplicationWorkspaceModeStaged ||
@@ -344,9 +370,14 @@ func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVer
 	}
 	if profileRequest.ExecutablePath != executablePath ||
 		profileRequest.StateRoot != stateRoot ||
+		profileRequest.RunnerPath != filepath.Join(cacheRoot, "private-runner") ||
+		profileRequest.RunnerBottle != "private-bottle" ||
+		len(profileRequest.RunnerArguments) != 1 ||
+		profileRequest.RunnerArguments[0] != "--private-runner-arg" ||
 		profileRequest.ExpectedMarker != "FIXTURE_OK" ||
 		profileRequest.SuccessMode != SuccessModeMarker ||
 		!profileRequest.RedactOutput ||
+		!profileRequest.SkipBootstrap ||
 		!profileRequest.StageAppDir ||
 		len(profileRequest.Arguments) != 1 ||
 		profileRequest.Arguments[0] != "--help" {
@@ -362,6 +393,8 @@ func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVer
 		t.Fatalf("unexpected launch profile launcher: %s", string(launcherText))
 	}
 	assertKnownLaunchProfileMaterializeSafe(t, result, cacheRoot)
+	assertKnownLaunchProfileMaterializeSafe(t, result, "private-bottle")
+	assertKnownLaunchProfileMaterializeSafe(t, result, "--private-runner-arg")
 }
 
 func TestPreviewKnownPortableManagedLaunchEnablesVerifiedKnownArtifact(t *testing.T) {
@@ -1193,6 +1226,16 @@ func assertKnownLaunchProfileMaterializeSafe(t *testing.T, result KnownLaunchPro
 	for _, forbidden := range []string{hostPath, filepath.Join(hostPath, "fixture"), filepath.Join(hostPath, "state")} {
 		if strings.TrimSpace(forbidden) != "" && strings.Contains(text, forbidden) {
 			t.Fatalf("known launch profile materialization exposed raw path %q: %#v", forbidden, result)
+		}
+	}
+}
+
+func assertKnownPrepareLaunchProfileSafe(t *testing.T, result KnownPrepareLaunchProfileResult, forbiddenValues ...string) {
+	t.Helper()
+	text := fmt.Sprintf("%#v", result)
+	for _, forbidden := range forbiddenValues {
+		if strings.TrimSpace(forbidden) != "" && strings.Contains(text, forbidden) {
+			t.Fatalf("known launch profile preparation exposed forbidden value %q: %#v", forbidden, result)
 		}
 	}
 }

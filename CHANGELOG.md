@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc57] - 2026-07-24
+
+### Added
+
+- Added explicit runner settings to known-app launch profile materialization and one-step preparation with `--runner`, `--runner-bottle`, repeated `--runner-arg`, and `--skip-bootstrap`.
+- Added path-safe runner summary evidence (`runner_configured`, `runner_bottle_configured`, `runner_argument_count`, and `skip_bootstrap`) while keeping raw runner paths, bottle names, and runner argv values out of product-facing JSON reports.
+
 ## [0.2.640-rc56] - 2026-07-24
 
 ### Added
