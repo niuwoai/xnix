@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc33] - 2026-07-24
+
+### Added
+
+- Added repeated `--runner-arg` support to the Go-owned local Windows app smoke command so compatibility runners can receive pre-executable arguments.
+- Added `--runner-arg` forwarding and `runner_argument_count` reporting to `scripts/winapp_smoke.rb` without exposing raw runner argument values.
+
 ## [0.2.640-rc32] - 2026-07-24
 
 ### Added

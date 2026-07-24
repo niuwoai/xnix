@@ -44,7 +44,9 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	flags.BoolVar(&redactOutput, "redact-output", false, "omit raw stdout and stderr while preserving safe output evidence")
 
 	var appArgs repeatedStringFlag
+	var runnerArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the Windows executable")
+	flags.Var(&runnerArgs, "runner-arg", "argument passed to the compatibility runner before the executable path")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -59,13 +61,14 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	}
 
 	result, err := winapp.RunSmoke(context.Background(), winapp.Request{
-		ExecutablePath: exePath,
-		Arguments:      []string(appArgs),
-		StateRoot:      stateRoot,
-		RunnerPath:     runnerPath,
-		Timeout:        timeout,
-		ExpectedMarker: expectedMarker,
-		RedactOutput:   redactOutput,
+		ExecutablePath:  exePath,
+		Arguments:       []string(appArgs),
+		RunnerArguments: []string(runnerArgs),
+		StateRoot:       stateRoot,
+		RunnerPath:      runnerPath,
+		Timeout:         timeout,
+		ExpectedMarker:  expectedMarker,
+		RedactOutput:    redactOutput,
 	})
 	if err != nil {
 		return err

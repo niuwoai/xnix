@@ -26,13 +26,14 @@ const (
 )
 
 type Request struct {
-	ExecutablePath string
-	Arguments      []string
-	StateRoot      string
-	RunnerPath     string
-	Timeout        time.Duration
-	ExpectedMarker string
-	RedactOutput   bool
+	ExecutablePath  string
+	Arguments       []string
+	RunnerArguments []string
+	StateRoot       string
+	RunnerPath      string
+	Timeout         time.Duration
+	ExpectedMarker  string
+	RedactOutput    bool
 }
 
 type Result struct {
@@ -41,6 +42,7 @@ type Result struct {
 	Status                      string `json:"status"`
 	ExecutableName              string `json:"executable_name"`
 	RunnerAvailable             bool   `json:"runner_available"`
+	RunnerArgumentCount         int    `json:"runner_argument_count"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
 	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
 	WineBootstrapSucceeded      bool   `json:"wine_bootstrap_succeeded"`
@@ -168,7 +170,10 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		result.WineBootstrapSucceeded = true
 	}
 
-	args := append([]string{executablePath}, request.Arguments...)
+	result.RunnerArgumentCount = len(request.RunnerArguments)
+	args := append([]string{}, request.RunnerArguments...)
+	args = append(args, executablePath)
+	args = append(args, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
 	command.Env = runnerEnvironment(stateRoot)
 
@@ -279,11 +284,13 @@ func runnerCommandHints(runnerAvailable bool) []string {
 		return []string{
 			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
 			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
+			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-arg --bottle --runner-arg bottle-name --format json",
 		}
 	}
 	return []string{
 		"XNIX_WINDOWS_RUNNER=path/to/wine ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
 		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
+		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-arg --bottle --runner-arg bottle-name --format json",
 		"ruby scripts/winapp_smoke.rb --format json",
 	}
 }

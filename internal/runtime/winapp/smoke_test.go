@@ -67,6 +67,44 @@ func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
 	}
 }
 
+func TestRunSmokePassesRunnerArgumentsBeforeExecutable(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test \"$1\" = --bottle || exit 78\n" +
+		"test \"$2\" = smoke-bottle || exit 77\n" +
+		"test \"$3\" = '" + strings.ReplaceAll(executablePath, "'", "'\\''") + "' || exit 76\n" +
+		"test \"$4\" = --app-flag || exit 75\n" +
+		"printf '" + DefaultMarker + "\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath:  executablePath,
+		Arguments:       []string{"--app-flag"},
+		RunnerArguments: []string{"--bottle", "smoke-bottle"},
+		StateRoot:       filepath.Join(tempDir, "state"),
+		RunnerPath:      runnerPath,
+		Timeout:         5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.RunnerArgumentCount != 2 ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected runner argument smoke result: %#v", result)
+	}
+}
+
 func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
@@ -137,7 +175,7 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 		!result.ExplicitRunnerSupplied ||
 		result.CandidateCount != 1 ||
 		result.SelectedRunnerName != "fake-runner" ||
-		len(result.RunnerCommandHints) != 2 ||
+		len(result.RunnerCommandHints) != 3 ||
 		result.RawPathExposed ||
 		result.HostRootModified ||
 		result.PackageManagerInvoked ||
@@ -155,6 +193,7 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 		t.Fatalf("unexpected candidate evidence: %#v", result.Candidates)
 	}
 	if !strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json") ||
+		!strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "--runner-arg --bottle") ||
 		strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), runnerPath) {
 		t.Fatalf("unexpected available runner command hints: %#v", result.RunnerCommandHints)
 	}
@@ -218,7 +257,7 @@ func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 		!result.ExplicitRunnerSupplied ||
 		result.CandidateCount != 1 ||
 		result.SelectedRunnerName != "" ||
-		len(result.RunnerCommandHints) != 3 ||
+		len(result.RunnerCommandHints) != 4 ||
 		result.RawPathExposed ||
 		!strings.Contains(result.NextAction, "--runner PATH") {
 		t.Fatalf("unexpected missing runner diagnostics: %#v", result)
@@ -226,6 +265,7 @@ func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 	hints := strings.Join(result.RunnerCommandHints, "\n")
 	if !strings.Contains(hints, "XNIX_WINDOWS_RUNNER=path/to/wine") ||
 		!strings.Contains(hints, "--runner path/to/wine") ||
+		!strings.Contains(hints, "--runner-arg --bottle") ||
 		strings.Contains(hints, missingRunner) {
 		t.Fatalf("unexpected missing runner command hints: %#v", result.RunnerCommandHints)
 	}

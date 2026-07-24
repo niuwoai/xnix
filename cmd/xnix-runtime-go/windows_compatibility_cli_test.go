@@ -115,6 +115,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		"--exe", exePath,
 		"--state-root", filepath.Join(tempDir, "state"),
 		"--runner", runnerPath,
+		"--runner-arg", "--shim-mode",
 		"--timeout", "5s",
 	}, &output)
 	if err != nil {
@@ -130,6 +131,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["status"] != "passed" ||
 		payload["executable_name"] != "hello.exe" ||
 		payload["runner_available"] != true ||
+		payload["runner_argument_count"] != float64(1) ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
 		payload["wine_bootstrap_succeeded"] != false ||
@@ -142,7 +144,9 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["broad_host_mount_required"] != false {
 		t.Fatalf("unexpected smoke payload: %#v", payload)
 	}
-	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), runnerPath) {
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), runnerPath) ||
+		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
 	}
 }
@@ -187,7 +191,7 @@ func TestWindowsAppRunnerDiagnosticsCommandUsesExplicitRunner(t *testing.T) {
 		t.Fatalf("unexpected runner diagnostics payload: %#v", payload)
 	}
 	commandHints, ok := payload["runner_command_hints"].([]any)
-	if !ok || len(commandHints) != 2 || !strings.Contains(fmt.Sprint(commandHints[0]), "path/to/app.exe") {
+	if !ok || len(commandHints) != 3 || !strings.Contains(fmt.Sprint(commandHints[0]), "path/to/app.exe") {
 		t.Fatalf("unexpected runner command hints: %#v", payload["runner_command_hints"])
 	}
 	if strings.Contains(output.String(), runnerPath) || strings.Contains(output.String(), tempDir) {

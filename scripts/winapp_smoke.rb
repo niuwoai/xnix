@@ -28,11 +28,12 @@ options = {
   timeout: "30s",
   bootstrap_timeout: "300s",
   expected_marker: MARKER,
+  runner_args: [],
   app_args: []
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-arg VALUE] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -45,6 +46,7 @@ OptionParser.new do |parser|
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
+  parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
 end.parse!
 
@@ -80,6 +82,7 @@ def base_report(format, redact_output, expected_marker, executable_source, backe
     "status" => "failed",
     "marker" => expected_marker,
     "runner_available" => false,
+    "runner_argument_count" => 0,
     "runner_diagnostics_status" => "not-run",
     "env_runner_configured" => false,
     "runner_candidate_count" => 0,
@@ -130,6 +133,7 @@ def emit_report(report)
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
+    puts "- Runner argument count: #{report.fetch("runner_argument_count")}"
     unless report.fetch("runner_command_hints").empty?
       puts "- Runner command hints:"
       report.fetch("runner_command_hints").each { |hint| puts "  - #{hint}" }
@@ -309,6 +313,7 @@ smoke_command = [
   "--expected-marker", options.fetch(:expected_marker)
 ]
 smoke_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+options.fetch(:runner_args).each { |value| smoke_command.concat(["--runner-arg", value]) }
 options.fetch(:app_args).each { |value| smoke_command.concat(["--arg", value]) }
 smoke_command << "--redact-output" if options.fetch(:redact_output)
 
@@ -329,6 +334,7 @@ payload = JSON.parse(smoke_stdout)
 report["runtime_payload"] = payload
 report["status"] = payload.fetch("status")
 report["runner_available"] = payload.fetch("runner_available", false)
+report["runner_argument_count"] = payload.fetch("runner_argument_count", 0)
 report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
 report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)
 report["wine_bootstrap_exit_code"] = payload.fetch("wine_bootstrap_exit_code", -1)
