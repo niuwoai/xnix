@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.628`.
+The project is currently at `v0.2.629`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.628`.
 
 ## Current Checkpoint
 
-v0.2.628 exposes `ShowRuntimeControlledLaunch` as a real smoke D-Bus adapter action. KDE-facing callers can now forward a safe relative Runtime-status launch evidence path to the Go Runtime Owner service boundary through `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
+v0.2.629 adds a restricted D-Bus controlled-launch owner fixture smoke. It prepares Runtime-owned launch authorization, controlled session, review receipt, and Runtime-status evidence handoff state, calls `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, and verifies the nested Go owner `runtime-owner-service-call` payload without giving KDE state-root access or receipt reconstruction responsibility.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -38,6 +38,7 @@ GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner -run 'TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall|TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
+ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
 ruby scripts/verify_layout.rb
 ```
 

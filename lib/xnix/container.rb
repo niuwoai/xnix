@@ -9,6 +9,7 @@ module Xnix
     IMAGE_NAME = "xnix-builder"
     TOOLS_IMAGE_NAME = "xnix-builder-tools"
     SOURCE_CACHE_VOLUME = "xnix-buildroot-cache"
+    CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES = "67108864"
     DOCKER_ENV = "XNIX_DOCKER_BIN"
     DEFAULT_DOCKER_BIN = "docker"
 
@@ -91,6 +92,16 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"])
     end
 
+    def dbus_controlled_launch_owner_fixture_smoke_command
+      runtime_command(
+        network: "none",
+        extra_mounts: [source_cache_mount],
+        extra_tmpfs: [dbus_controlled_launch_scratch_tmpfs],
+        command: ["ruby", "scripts/dbus_controlled_launch_owner_fixture_smoke.rb"],
+        image: image_tag
+      )
+    end
+
     def source_retrieval_command(command)
       runtime_command(network: "bridge", extra_mounts: [source_cache_mount], command: command, image: tools_image_tag)
     end
@@ -113,7 +124,7 @@ module Xnix
 
     private
 
-    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag)
+    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag, extra_tmpfs: [])
       [
         @docker_bin, "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
         "--memory", BUILD_MEMORY_LIMIT,
@@ -124,6 +135,7 @@ module Xnix
         "--network", network,
         "--read-only",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=#{TEMPORARY_FILESYSTEM_SIZE}",
+        *extra_tmpfs.flat_map { |tmpfs| ["--tmpfs", tmpfs] },
         *extra_mounts.flat_map { |mount| ["--mount", mount] },
         image,
         *command
@@ -132,6 +144,10 @@ module Xnix
 
     def source_cache_mount
       "type=volume,source=#{SOURCE_CACHE_VOLUME},target=/workspace/.cache"
+    end
+
+    def dbus_controlled_launch_scratch_tmpfs
+      "/workspace/.xnix-dbus-controlled-launch-scratch:rw,exec,nosuid,size=#{CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES},mode=1777"
     end
   end
 end

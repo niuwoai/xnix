@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.629] - 2026-07-24
+
+### Added
+
+- Added `dbus_controlled_launch_owner_fixture_smoke.rb`, a restricted private-session D-Bus smoke that prepares Runtime-owned launch, controlled session, review receipt, and Runtime-status evidence handoff state in a managed container tmpfs scratch mount before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
+- Added the `dbus-controlled-launch-owner-fixture-smoke` container command and targeted Ruby guard coverage for the offline, read-only, Docker-socket-free tested Runtime image path.
+
+### Changed
+
+- Extended layout and container guards to verify the D-Bus controlled-launch owner fixture parses the nested Go owner `runtime-owner-service-call` payload while keeping KDE evidence-only, receipt reconstruction disabled, state-root access disabled, backend details hidden, and host/container safety gates closed.
+
 ## [0.2.628] - 2026-07-24
 
 ### Added

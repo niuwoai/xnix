@@ -63,6 +63,15 @@ type ShowRuntimeControlledLaunchResult struct {
 	DelegatedLaunchAuthorizationReceiptID           string                                                      `json:"delegated_launch_authorization_receipt_id"`
 	DelegatedControlledExecutionSessionConsumed     bool                                                        `json:"delegated_controlled_execution_session_consumed"`
 	DelegatedControlledExecutionSessionID           string                                                      `json:"delegated_controlled_execution_session_id"`
+	DelegatedControlledSessionDigestVerified        bool                                                        `json:"delegated_controlled_session_digest_verified"`
+	DelegatedControlledSessionRelativePath          string                                                      `json:"delegated_controlled_session_relative_path"`
+	DelegatedRuntimeOwnerConsumableSession          bool                                                        `json:"delegated_runtime_owner_consumable_session"`
+	DelegatedKDEReadModelConsumableSession          bool                                                        `json:"delegated_kde_read_model_consumable_session"`
+	DelegatedControlledSessionLiveStateObserved     bool                                                        `json:"delegated_controlled_session_live_state_observed"`
+	DelegatedControlledSessionRegistered            bool                                                        `json:"delegated_controlled_session_registered"`
+	DelegatedControlledSessionWindowObserved        bool                                                        `json:"delegated_controlled_session_window_observed"`
+	DelegatedControlledSessionHostRootModified      bool                                                        `json:"delegated_controlled_session_host_root_modified"`
+	DelegatedControlledSessionBackendProcessStart   bool                                                        `json:"delegated_controlled_session_backend_process_start"`
 	DelegatedHostRootModified                       bool                                                        `json:"delegated_host_root_modified"`
 	DelegatedDockerSocketMounted                    bool                                                        `json:"delegated_docker_socket_mounted"`
 	DelegatedBroadHostMountRequired                 bool                                                        `json:"delegated_broad_host_mount_required"`
@@ -251,6 +260,15 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 		DelegatedLaunchAuthorizationReceiptID:           ownerStringJSONField(delegated, "launch_authorization_receipt_id"),
 		DelegatedControlledExecutionSessionConsumed:     ownerBoolJSONField(delegated, "controlled_execution_session_consumed"),
 		DelegatedControlledExecutionSessionID:           ownerStringJSONField(delegated, "controlled_execution_session_id"),
+		DelegatedControlledSessionDigestVerified:        ownerBoolJSONField(delegated, "controlled_session_digest_verified"),
+		DelegatedControlledSessionRelativePath:          ownerStringJSONField(delegated, "controlled_session_relative_path"),
+		DelegatedRuntimeOwnerConsumableSession:          ownerBoolJSONField(delegated, "runtime_owner_consumable_session"),
+		DelegatedKDEReadModelConsumableSession:          ownerBoolJSONField(delegated, "kde_read_model_consumable_session"),
+		DelegatedControlledSessionLiveStateObserved:     ownerBoolJSONField(delegated, "controlled_session_live_state_observed"),
+		DelegatedControlledSessionRegistered:            ownerBoolJSONField(delegated, "controlled_session_registered"),
+		DelegatedControlledSessionWindowObserved:        ownerBoolJSONField(delegated, "controlled_session_window_observed"),
+		DelegatedControlledSessionHostRootModified:      ownerBoolJSONField(delegated, "controlled_session_host_root_modified"),
+		DelegatedControlledSessionBackendProcessStart:   ownerBoolJSONField(delegated, "controlled_session_backend_process_start"),
 		DelegatedHostRootModified:                       ownerBoolJSONField(delegated, "host_root_modified"),
 		DelegatedDockerSocketMounted:                    ownerBoolJSONField(delegated, "docker_socket_mounted"),
 		DelegatedBroadHostMountRequired:                 ownerBoolJSONField(delegated, "broad_host_mount_required"),
@@ -263,7 +281,13 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 	if result.DelegatedRequestType != winapp.KnownDispatchSmokeRequestType {
 		return ShowRuntimeControlledLaunchResult{}, errors.New("Runtime owner action managed launcher returned an unexpected delegated request type")
 	}
-	if result.DelegatedHostRootModified || result.DelegatedDockerSocketMounted || result.DelegatedBroadHostMountRequired || result.DelegatedRawCommandExposed || result.DelegatedBackendDetailsExposed {
+	if result.DelegatedControlledSessionHostRootModified ||
+		result.DelegatedControlledSessionBackendProcessStart ||
+		result.DelegatedHostRootModified ||
+		result.DelegatedDockerSocketMounted ||
+		result.DelegatedBroadHostMountRequired ||
+		result.DelegatedRawCommandExposed ||
+		result.DelegatedBackendDetailsExposed {
 		return ShowRuntimeControlledLaunchResult{}, errors.New("Runtime owner action managed launcher reported an unsafe delegated result")
 	}
 	projection, err := appidentity.ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest{
