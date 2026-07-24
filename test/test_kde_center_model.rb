@@ -26,6 +26,8 @@ assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model 
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
 assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
 assert(model["summary"]["known_application_count"] == 1, "KDE center model must summarize known applications")
+assert(model["summary"]["known_app_gui_evidence_count"].zero?, "KDE center model must summarize absent GUI evidence")
+assert(model["summary"]["known_app_gui_evidence_verified_count"].zero?, "KDE center model must summarize absent verified GUI evidence")
 assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
 assert(model["summary"]["queued_compatibility_action_count"] == 5, "KDE center model must summarize queued Compatibility Center actions")
 assert(model["summary"]["queued_user_review_count"] == 3, "KDE center model must summarize queued review actions")
@@ -253,6 +255,108 @@ assert(application["supported_extensions"].include?(".txt"), "KDE center model m
 json = JSON.pretty_generate(model)
 assert(!json.match?(/prefix|\.wine|proton|virtual machine/i), "KDE center model must not expose backend storage or implementation terms")
 
+GUIEvidenceRuntime = Struct.new(:application) do
+  def list_applications
+    [application]
+  end
+
+  def diagnostics(_application_id)
+    {
+      "application_id" => application.fetch("id"),
+      "status" => "known",
+      "runtime_mode" => "automatic"
+    }
+  end
+
+  def kde_center_page
+    {
+      "schema_version" => "xnix.runtime.kde_center_page.v1",
+      "known_app_gui_evidence_count" => 2,
+      "known_app_gui_evidence_cards" => [
+        {
+          "app_id" => "org.xnix.fixture.messagebox",
+          "display_name" => "Xnix MessageBox Smoke",
+          "app_version" => "fixture-version",
+          "evidence_kind" => "known-application-gui-smoke",
+          "evidence_source" => "wine-guest-gui-smoke",
+          "smoke_status" => "passed",
+          "compatibility_state" => "real-gui-qemu-wine-verified",
+          "center_card_state" => "validated-real-gui-runtime-run",
+          "primary_action_id" => "review-real-gui-evidence",
+          "primary_action_label" => "Review real GUI evidence",
+          "primary_action_kind" => "review",
+          "primary_action_enabled" => false,
+          "marker_observed" => false,
+          "checksum_verified" => false,
+          "execution_evidence_recorded" => true,
+          "runtime_dispatch_verified" => true,
+          "launch_authorization_required" => true,
+          "desktop_launch_enabled" => false,
+          "backend_launch_enabled" => false,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "raw_artifact_path_exposed" => false,
+          "summary" => "A real GUI window was observed through the Runtime-owned smoke lane."
+        },
+        {
+          "app_id" => "org.xnix.fixture.unsafe",
+          "display_name" => "Unsafe GUI Smoke",
+          "app_version" => "fixture-version",
+          "evidence_kind" => "known-application-gui-smoke",
+          "evidence_source" => "wine-guest-gui-smoke",
+          "smoke_status" => "passed",
+          "compatibility_state" => "unsafe",
+          "center_card_state" => "blocked",
+          "primary_action_id" => "review-real-gui-evidence",
+          "primary_action_label" => "Review real GUI evidence",
+          "primary_action_kind" => "review",
+          "execution_evidence_recorded" => true,
+          "runtime_dispatch_verified" => true,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "backend_details_exposed" => true,
+          "raw_artifact_path_exposed" => true,
+          "summary" => "Unsafe fixture must not be rendered."
+        }
+      ]
+    }
+  end
+
+  def source_metadata
+    {
+      "kind" => "runtime-go-kde-center-page-fixture",
+      "bus_name" => "org.xnix.Compatibility1",
+      "object_path" => "/org/xnix/Compatibility1",
+      "interface" => "org.xnix.Compatibility1"
+    }
+  end
+end
+
+gui_model = Xnix::Compatibility::KdeCenterModel.new(runtime: GUIEvidenceRuntime.new(runtime.list_applications.first)).to_h
+assert(gui_model["known_app_gui_evidence_count"] == 1, "KDE center model must render one safe GUI evidence card")
+assert(gui_model["known_app_gui_evidence_verified_count"] == 1, "KDE center model must render passed GUI evidence counts")
+assert(gui_model["summary"]["known_app_gui_evidence_count"] == 1, "KDE center summary must count safe GUI evidence cards")
+assert(gui_model["summary"]["known_app_gui_evidence_verified_count"] == 1, "KDE center summary must count passed GUI evidence cards")
+gui_card = gui_model.fetch("known_app_gui_evidence_cards").first
+assert(gui_card["display_name"] == "Xnix MessageBox Smoke", "KDE GUI evidence card must expose display names")
+assert(gui_card["evidence_kind"] == "known-application-gui-smoke", "KDE GUI evidence card must preserve evidence kind")
+assert(gui_card["evidence_source"] == "wine-guest-gui-smoke", "KDE GUI evidence card must preserve evidence source")
+assert(gui_card["center_card_state"] == "validated-real-gui-runtime-run", "KDE GUI evidence card must expose card state")
+assert(gui_card["execution_evidence_recorded"], "KDE GUI evidence card must expose execution evidence status")
+assert(gui_card["runtime_dispatch_verified"], "KDE GUI evidence card must expose Runtime dispatch status")
+assert(!gui_card["primary_action_enabled"], "KDE GUI evidence card must keep action execution disabled")
+assert(!gui_card["desktop_launch_enabled"], "KDE GUI evidence card must keep desktop launch disabled")
+assert(!gui_card["backend_launch_enabled"], "KDE GUI evidence card must keep backend launch disabled")
+assert(!gui_card["host_root_modified"], "KDE GUI evidence card must keep host mutation disabled")
+assert(!gui_card["backend_details_exposed"], "KDE GUI evidence card must hide backend details")
+assert(!gui_card["raw_artifact_path_exposed"], "KDE GUI evidence card must hide raw artifact paths")
+gui_json = JSON.pretty_generate(gui_model)
+assert(!gui_json.include?("Unsafe GUI Smoke"), "KDE center model must filter unsafe GUI evidence cards")
+assert(!gui_json.match?(/prefix|\.wine|proton|virtual machine|\/Users|\/home|\/tmp/i), "KDE GUI evidence model must not expose backend storage or host paths")
+
 MinimalRuntime = Struct.new(:application) do
   def list_applications
     [application]
@@ -286,6 +390,7 @@ assert(minimal_model["summary"]["pending_runtime_owner_smoke_plan_count"].zero?,
 assert(minimal_model["summary"]["runtime_method_parity_ready_count"].zero?, "KDE center model must tolerate missing D-Bus method parity summaries")
 assert(minimal_model["summary"]["runtime_service_binding_ready_count"].zero?, "KDE center model must tolerate missing D-Bus service binding summaries")
 assert(minimal_model["summary"]["blocked_runtime_write_gate_count"].zero?, "KDE center model must tolerate missing D-Bus write gate summaries")
+assert(minimal_model["summary"]["known_app_gui_evidence_count"].zero?, "KDE center model must tolerate missing D-Bus GUI evidence summaries")
 
 stdout, stderr, status = Open3.capture3("ruby", project_root.join("bin/xnix-kde-center-model").to_s, "--source", "local")
 assert(status.success?, "KDE center model CLI must exit successfully: #{stderr}")

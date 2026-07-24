@@ -26,6 +26,14 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   kde-center-page-preview
   known_app_gui_evidence_count
   known_app_gui_evidence_cards
+  guiEvidenceCardFields
+  display_name
+  smoke_status
+  compatibility_state
+  center_card_state
+  execution_evidence_recorded
+  runtime_dispatch_verified
+  primary_action_label
   wine-guest-gui-smoke
   known-application-gui-smoke
   Real\ Windows\ GUI\ evidence

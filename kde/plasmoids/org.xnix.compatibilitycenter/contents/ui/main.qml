@@ -11,6 +11,15 @@ PlasmoidItem {
     readonly property string guiEvidenceCardsField: "known_app_gui_evidence_cards"
     readonly property string guiEvidenceSource: "wine-guest-gui-smoke"
     readonly property string guiEvidenceKind: "known-application-gui-smoke"
+    readonly property var guiEvidenceCardFields: [
+        "display_name",
+        "smoke_status",
+        "compatibility_state",
+        "center_card_state",
+        "execution_evidence_recorded",
+        "runtime_dispatch_verified",
+        "primary_action_label"
+    ]
     compactRepresentation: PlasmaComponents.ToolButton {
         icon.name: "preferences-desktop"
         text: "Compatibility"
@@ -36,6 +45,11 @@ PlasmoidItem {
         }
         PlasmaComponents.Label {
             text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count and known_app_gui_evidence_cards from wine-guest-gui-smoke."
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+        PlasmaComponents.Label {
+            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, runtime_dispatch_verified, and primary_action_label from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc80] - 2026-07-25
+
+### Added
+
+- Added KDE Compatibility Center read-model projection for safe real Windows GUI evidence cards from the Runtime KDE Center page payload, including card counts, passed-evidence counts, display fields, Runtime dispatch status, and read-only action state.
+
+### Changed
+
+- Changed the KDE Compatibility Center plasmoid card contract to name the GUI evidence display fields expected from safe `known_app_gui_evidence_cards`.
+- Updated the KDE package metadata, Claude collaboration index, and C Runtime core version define to match the Runtime version.
+
 ## [0.2.640-rc79] - 2026-07-25
 
 ### Added

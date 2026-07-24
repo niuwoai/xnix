@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc79`.
+The project is currently at `v0.2.640-rc80`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc79`.
 
 ## Current Checkpoint
 
-v0.2.640-rc79 carries real Windows GUI evidence into the KDE shell package. The Compatibility Center plasmoid now has a read-only GUI evidence card entry that points KDE surfaces at `kde-center-page-preview`, `known_app_gui_evidence_count`, and `known_app_gui_evidence_cards`, while keeping launch, backend startup, repair, snapshot, restore, and host mutation disabled.
+v0.2.640-rc80 lets `xnix-kde-center-model` render safe real Windows GUI evidence cards from Runtime KDE Center page payloads. The model now exposes GUI evidence counts, passed-evidence counts, display fields, Runtime dispatch status, and read-only action state while filtering cards that expose backend details, host mutation, KDE policy ownership, or raw artifact paths.
+
+The previous v0.2.640-rc79 checkpoint carried real Windows GUI evidence into the KDE shell package. The Compatibility Center plasmoid now has a read-only GUI evidence card entry that points KDE surfaces at `kde-center-page-preview`, `known_app_gui_evidence_count`, and `known_app_gui_evidence_cards`, while keeping launch, backend startup, repair, snapshot, restore, and host mutation disabled.
 
 The previous v0.2.640-rc78 checkpoint connected the real Windows GUI smoke lane to product-facing Runtime read models. `xnix-runtime-go gui-smoke-evidence-preview --gui-smoke-report FILE` consumes executed Wine guest GUI smoke JSON, verifies Go-owned QEMU/Wine/X11 evidence, and emits KDE-safe GUI run evidence for Compatibility Center and KDE Center previews.
 
@@ -82,6 +84,7 @@ ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
 ruby -Ilib test/test_desktop_trigger_request_preflight_smoke_script.rb
 ruby -Ilib test/test_wine_guest_gui_smoke_script.rb
 ruby -Ilib test/test_remote_wine_guest_gui_smoke_script.rb
+ruby -Ilib test/test_kde_center_model.rb
 ruby -Ilib test/test_kde_compatibility_center_plasmoid.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb --format json
@@ -93,4 +96,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc79 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc80 is a targeted follow-up that reaches the 20-small-version cadence boundary for the next restricted full-smoke decision.

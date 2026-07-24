@@ -29,12 +29,16 @@ module Xnix
 
       def to_h
         applications = runtime.list_applications.map { |application| application_summary(application) }
+        gui_evidence_cards = known_app_gui_evidence_cards
 
         {
           "version" => RuntimeDaemon::VERSION,
           "title" => "Xnix Compatibility Center",
           "source" => source_metadata,
-          "summary" => summary(applications),
+          "summary" => summary(applications, gui_evidence_cards),
+          "known_app_gui_evidence_count" => gui_evidence_cards.length,
+          "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
+          "known_app_gui_evidence_cards" => gui_evidence_cards,
           "applications" => applications
         }
       end
@@ -54,6 +58,67 @@ module Xnix
           "object_path" => RuntimeDaemon::OBJECT_PATH,
           "interface" => RuntimeDaemon::INTERFACE
         }
+      end
+
+      def known_app_gui_evidence_cards
+        return [] unless runtime.respond_to?(:kde_center_page)
+
+        kde_center_page_method = runtime.method(:kde_center_page)
+        return [] unless kde_center_page_method.arity <= 0
+
+        page = kde_center_page_method.call
+        return [] unless page.is_a?(Hash)
+
+        cards = page.fetch("known_app_gui_evidence_cards", [])
+        return [] unless cards.is_a?(Array)
+
+        cards.filter_map { |card| known_app_gui_evidence_card(card) }
+      end
+
+      def known_app_gui_evidence_card(card)
+        return nil unless card.is_a?(Hash)
+        return nil unless card.fetch("evidence_kind", nil) == "known-application-gui-smoke"
+        return nil unless card.fetch("evidence_source", nil) == "wine-guest-gui-smoke"
+        return nil unless card.fetch("runtime_owned", false)
+        return nil unless card.fetch("go_runtime_backed", false)
+        return nil if card.fetch("kde_policy_owner", false)
+        return nil if card.fetch("host_root_modified", false)
+        return nil if card.fetch("backend_details_exposed", false)
+        return nil if card.fetch("raw_artifact_path_exposed", false)
+        return nil unless card.fetch("execution_evidence_recorded", false)
+
+        {
+          "app_id" => card.fetch("app_id"),
+          "display_name" => card.fetch("display_name"),
+          "app_version" => card.fetch("app_version", ""),
+          "evidence_kind" => card.fetch("evidence_kind"),
+          "evidence_source" => card.fetch("evidence_source"),
+          "smoke_status" => card.fetch("smoke_status"),
+          "compatibility_state" => card.fetch("compatibility_state"),
+          "center_card_state" => card.fetch("center_card_state"),
+          "primary_action_id" => card.fetch("primary_action_id"),
+          "primary_action_label" => card.fetch("primary_action_label"),
+          "primary_action_kind" => card.fetch("primary_action_kind"),
+          "primary_action_enabled" => card.fetch("primary_action_enabled", false),
+          "marker_observed" => card.fetch("marker_observed", false),
+          "checksum_verified" => card.fetch("checksum_verified", false),
+          "execution_evidence_recorded" => card.fetch("execution_evidence_recorded", false),
+          "runtime_dispatch_verified" => card.fetch("runtime_dispatch_verified", false),
+          "launch_authorization_required" => card.fetch("launch_authorization_required", true),
+          "desktop_launch_enabled" => false,
+          "backend_launch_enabled" => false,
+          "runtime_owned" => true,
+          "go_runtime_backed" => true,
+          "kde_policy_owner" => false,
+          "host_root_modified" => false,
+          "backend_details_exposed" => false,
+          "raw_artifact_path_exposed" => false,
+          "summary" => card.fetch("summary", "")
+        }
+      end
+
+      def verified_gui_evidence_count(gui_evidence_cards)
+        gui_evidence_cards.count { |card| card.fetch("smoke_status", nil) == "passed" }
       end
 
       def application_summary(application)
@@ -640,10 +705,12 @@ module Xnix
         }
       end
 
-      def summary(applications)
+      def summary(applications, gui_evidence_cards)
         {
           "application_count" => applications.length,
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
+          "known_app_gui_evidence_count" => gui_evidence_cards.length,
+          "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },

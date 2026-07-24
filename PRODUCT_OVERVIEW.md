@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc79
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc80
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc80 checkpoint candidate lets the KDE Compatibility Center read model render safe real Windows GUI evidence cards from Runtime KDE Center page payloads. `xnix-kde-center-model` now exposes `known_app_gui_evidence_count`, `known_app_gui_evidence_verified_count`, and safe card fields such as `display_name`, `smoke_status`, `compatibility_state`, `center_card_state`, `execution_evidence_recorded`, `runtime_dispatch_verified`, and `primary_action_label`. Unsafe cards that expose backend details, host mutation, KDE policy ownership, or raw artifact paths are filtered before reaching the KDE-facing JSON, and all launch/action execution remains disabled.
 
 The v0.2.640-rc79 checkpoint candidate carries the real Windows GUI evidence into the KDE shell package. The Compatibility Center plasmoid now includes a read-only GUI evidence card entry that points KDE surfaces at `kde-center-page-preview`, `known_app_gui_evidence_count`, and `known_app_gui_evidence_cards`, explaining that a passed GUI card means a local Windows `.exe` was copied into the QEMU guest, launched by Wine, and observed as an X11 window. The plasmoid remains presentation-only and does not enable launch, backend startup, repair, snapshot, restore, or host mutation.
 
