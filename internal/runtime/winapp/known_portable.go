@@ -351,6 +351,7 @@ type KnownDispatchSmokeRequest struct {
 	SSHPath       string
 	SCPPath       string
 	XWinInfoPath  string
+	GUIAppPath    string
 	GuestDisplay  string
 	HostDisplay   string
 	Timeout       time.Duration
@@ -774,11 +775,21 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc88",
+		Version:         "0.2.640-rc89",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
 		ExpectedMarker:  "Mines",
+		GuestBuiltinGUI: true,
+	},
+	{
+		ID:              "org.xnix.apps.messagebox",
+		DisplayName:     "Xnix MessageBox",
+		Version:         "0.2.640-rc89",
+		Architecture:    "windows-x86-gui",
+		ExecutableName:  "xnix-messagebox-smoke.exe",
+		SourcePageURL:   "runtime-managed-external-gui-fixture",
+		ExpectedMarker:  "MessageBox",
 		GuestBuiltinGUI: true,
 	},
 }
@@ -1177,7 +1188,7 @@ func RunKnownPortableGuestGUIDispatchSmoke(ctx context.Context, request KnownDis
 	}
 
 	gui, err := RunGuestGUISmoke(ctx, GuestGUIRequest{
-		GUIAppPath:   DefaultGuestGUIApp,
+		GUIAppPath:   knownPortableGuestGUIAppPath(request.GUIAppPath),
 		Host:         request.Host,
 		Port:         request.Port,
 		User:         request.User,
@@ -1221,6 +1232,14 @@ func RunKnownPortableGuestGUIDispatchSmoke(ctx context.Context, request KnownDis
 		result.DesktopSafeSummary = app.DisplayName + " did not pass the gated Runtime managed guest GUI smoke."
 	}
 	return result, nil
+}
+
+func knownPortableGuestGUIAppPath(guiAppPath string) string {
+	clean := strings.TrimSpace(guiAppPath)
+	if clean == "" {
+		return DefaultGuestGUIApp
+	}
+	return clean
 }
 
 func PreviewKnownPortableLaunchBridge(request KnownLaunchBridgeRequest) (KnownLaunchBridgeResult, error) {

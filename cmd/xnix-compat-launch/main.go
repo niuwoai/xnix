@@ -41,6 +41,7 @@ func run(args []string, stdout io.Writer) error {
 	var sshPath string
 	var scpPath string
 	var xwininfoPath string
+	var guiAppPath string
 	var guestDisplay string
 	var hostDisplay string
 	var timeoutText string
@@ -60,6 +61,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
 	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
 	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo client path for guest GUI dispatch")
+	flags.StringVar(&guiAppPath, "gui-app", "", "Runtime-owner supplied guest GUI app path for guest GUI dispatch")
 	flags.StringVar(&guestDisplay, "guest-display", "", "guest DISPLAY value for guest GUI dispatch")
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
@@ -139,6 +141,7 @@ func run(args []string, stdout io.Writer) error {
 			SSHPath:       sshPath,
 			SCPPath:       scpPath,
 			XWinInfoPath:  xwininfoPath,
+			GUIAppPath:    guiAppPath,
 			GuestDisplay:  guestDisplay,
 			HostDisplay:   hostDisplay,
 			Timeout:       timeout,

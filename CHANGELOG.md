@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc89] - 2026-07-25
+
+### Added
+
+- Added Runtime-owner-supplied guest GUI app forwarding through `XNIX_RUNTIME_OWNER_GUEST_GUI_APP` and `xnix-compat-launch --gui-app`, allowing owner-controlled smoke runs to start an already-copied external Windows GUI executable from the managed guest.
+- Added owner-controlled GUI smoke plan fields for external GUI app requests while keeping the raw guest GUI app path out of product-facing JSON.
+- Added `org.xnix.apps.messagebox` as a development recipe and known-app identity for the q4 `xnix-messagebox-smoke.exe` GUI fixture.
+
+### Changed
+
+- Changed guest-builtin GUI known-app dispatch to use an owner-supplied GUI app path when present, falling back to Wine's built-in `winemine.exe`.
+- Verified the q4 owner-controlled external GUI `xnix-messagebox-smoke.exe` run with `executable_copied=true`, `owner_external_gui_app_requested=true`, `owner_managed_launcher_invoked=true`, `owner_delegated_smoke_passed=true`, `owner_delegated_evidence_source=wine-guest-gui-smoke`, `x_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc89.json`.
+
 ## [0.2.640-rc88] - 2026-07-25
 
 ### Added

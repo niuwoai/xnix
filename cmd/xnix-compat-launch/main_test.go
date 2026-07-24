@@ -225,6 +225,7 @@ func TestCompatLaunchRunsMinesThroughGuestGUIDispatchSmoke(t *testing.T) {
 		"--session-id", sessionID,
 		"--ssh", sshPath,
 		"--xwininfo", xwininfoPath,
+		"--gui-app", "/tmp/xnix-wine-guest-gui-smoke/owner-messagebox.exe",
 		"--guest-display", "10.0.2.2:127",
 		"--host-display", ":127",
 		"--timeout", "5s",
@@ -318,6 +319,7 @@ func writeGuestGUIFakeTools(t *testing.T) (string, string) {
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
+		"  *'wine '*'owner-messagebox.exe'*) exit 0 ;;\n" +
 		"  *'cat '*'stderr.txt'*) printf ''; exit 0 ;;\n" +
 		"  *'wineserver -k'*) exit 0 ;;\n" +
 		"esac\n" +

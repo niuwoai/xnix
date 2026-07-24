@@ -88,6 +88,8 @@ assert(owner_payload["owner_service_call_planned"] == true, "GUI smoke owner mod
 assert(owner_payload["owner_seed_gui_smoke_planned"] == true, "GUI smoke owner mode must plan seed GUI evidence")
 assert(owner_payload["runtime_owner_bin_configured"] == true, "GUI smoke owner mode must configure the Runtime owner binary")
 assert(owner_payload["managed_launcher_bin_configured"] == true, "GUI smoke owner mode must configure the managed launcher")
+assert(owner_payload["owner_external_gui_app_requested"] == false, "GUI smoke owner mode must default to the built-in GUI app")
+assert(owner_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner mode must not expose owner guest GUI paths")
 
 bad_mode_stdout, bad_mode_stderr, bad_mode_status = Open3.capture3(
   "ruby", script.to_s,
@@ -104,5 +106,20 @@ assert(status.success?, "Wine guest GUI smoke executable plan must succeed: #{st
 payload = JSON.parse(stdout)
 assert(payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke executable plan must surface the executable basename")
 assert(payload["local_gui_executable_configured"] == true, "GUI smoke executable plan must record local executable delivery mode")
+
+owner_exe_stdout, owner_exe_stderr, owner_exe_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--launch-mode", "owner-controlled-launch",
+  "--launcher-bin", "/home/xnix-build-cache/bin/xnix-compat-launch",
+  "--executable", fixture_executable.to_s,
+  chdir: project_root.to_s
+)
+assert(owner_exe_status.success?, "Wine guest GUI smoke owner executable plan must succeed: #{owner_exe_stderr}")
+owner_exe_payload = JSON.parse(owner_exe_stdout)
+assert(owner_exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke owner executable plan must expose the executable basename")
+assert(owner_exe_payload["owner_external_gui_app_requested"] == true, "GUI smoke owner executable plan must request owner external GUI app launch")
+assert(owner_exe_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner executable plan must not expose owner guest GUI paths")
 
 puts "PASS: Wine guest GUI smoke script plan"
