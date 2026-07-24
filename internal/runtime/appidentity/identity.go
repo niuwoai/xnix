@@ -867,6 +867,8 @@ type KnownAppSmokeEvidenceSummary struct {
 	ChecksumVerified                      bool   `json:"checksum_verified"`
 	ExecutionEvidenceRecorded             bool   `json:"execution_evidence_recorded"`
 	StagedLauncherVerified                bool   `json:"staged_launcher_verified"`
+	OwnerControlledRuntimeLaunchVerified  bool   `json:"owner_controlled_runtime_launch_verified"`
+	OwnerManagedCopyVerified              bool   `json:"owner_managed_copy_verified"`
 	RuntimeDispatchVerified               bool   `json:"runtime_dispatch_verified"`
 	LaunchAuthorizationRequired           bool   `json:"launch_authorization_required"`
 	DesktopLaunchEnabled                  bool   `json:"desktop_launch_enabled"`
@@ -2765,7 +2767,8 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		(evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded && item.StagedLauncherVerified)
 	matrixRunVerified := evidenceSource == "remote-known-winapp-matrix-smoke" && passed
 	guiRunVerified := evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded
-	ownerControlledGUIRunVerified := guiRunVerified && item.StagedLauncherVerified
+	ownerControlledGUIRunVerified := guiRunVerified && (item.OwnerControlledRuntimeLaunchVerified || item.StagedLauncherVerified || item.CompatibilityState == "owner-controlled-gui-qemu-wine-verified")
+	ownerManagedCopyVerified := ownerControlledGUIRunVerified && (item.OwnerManagedCopyVerified || strings.Contains(item.Summary, "managed launcher copied"))
 	runtimeStatusLaunchVerified := stagedLauncherVerified || guiRunVerified
 	runtimeDispatchVerified := ((evidenceSource == "staged-launcher-dispatch-smoke" || evidenceSource == "remote-known-winapp-matrix-smoke") && passed) || guiRunVerified
 	evidenceKind := "known-application-managed-smoke"
@@ -2849,7 +2852,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 			compatibilityState = "owner-controlled-gui-qemu-wine-verified"
 			centerCardState = "validated-owner-controlled-gui-runtime-run"
 			summary = displayName + " has redacted Runtime-owner controlled GUI window evidence."
-			if strings.Contains(item.Summary, "managed launcher copied") {
+			if ownerManagedCopyVerified {
 				summary = displayName + " has redacted Runtime-owner controlled GUI window evidence after the managed launcher copied the Windows executable into the guest."
 			}
 		}
@@ -2892,6 +2895,8 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		ChecksumVerified:                      item.ChecksumVerified,
 		ExecutionEvidenceRecorded:             true,
 		StagedLauncherVerified:                stagedLauncherVerified,
+		OwnerControlledRuntimeLaunchVerified:  ownerControlledGUIRunVerified,
+		OwnerManagedCopyVerified:              ownerManagedCopyVerified,
 		RuntimeDispatchVerified:               runtimeDispatchVerified,
 		LaunchAuthorizationRequired:           true,
 		DesktopLaunchEnabled:                  false,

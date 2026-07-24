@@ -416,6 +416,72 @@ func TestKDECenterPagePreviewCommandConsumesGUISmokeReport(t *testing.T) {
 	}
 }
 
+func TestKDECenterPagePreviewCommandConsumesOwnerControlledGUIEvidenceFile(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "wine-gui-messagebox-owner.json")
+	evidencePath := filepath.Join(tempDir, "wine-gui-messagebox-owner-evidence.json")
+	if err := os.WriteFile(reportPath, []byte(ownerControlledGUISmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var evidenceOutput bytes.Buffer
+	if err := run([]string{
+		"gui-smoke-evidence-preview",
+		"--gui-smoke-report", reportPath,
+		"--app-id", "org.xnix.apps.messagebox",
+		"--display-name", "Xnix MessageBox",
+		"--app-version", currentProjectVersion(t),
+		"--output", evidencePath,
+	}, &evidenceOutput); err != nil {
+		t.Fatalf("GUI evidence projection returned error: %v", err)
+	}
+
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	var output bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-evidence-file", evidencePath}, &output); err != nil {
+		t.Fatalf("KDE center consumption returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if !strings.Contains(payload["source"].(string), "owner-controlled-gui-evidence") ||
+		payload["known_app_gui_evidence_count"] != float64(1) ||
+		payload["known_app_owner_controlled_gui_evidence_count"] != float64(1) ||
+		payload["known_app_owner_managed_copy_verified_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected owner-controlled KDE payload: %#v", payload)
+	}
+	cards := payload["known_app_gui_evidence_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected owner-controlled GUI cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "org.xnix.apps.messagebox" ||
+		card["compatibility_state"] != "owner-controlled-gui-qemu-wine-verified" ||
+		card["center_card_state"] != "validated-owner-controlled-gui-runtime-run" ||
+		card["execution_evidence_recorded"] != true ||
+		card["staged_launcher_verified"] != true ||
+		card["owner_controlled_runtime_launch_verified"] != true ||
+		card["owner_managed_copy_verified"] != true ||
+		card["runtime_dispatch_verified"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false ||
+		card["backend_details_exposed"] != false ||
+		card["raw_artifact_path_exposed"] != false {
+		t.Fatalf("unexpected owner-controlled KDE GUI card: %#v", card)
+	}
+	if strings.Contains(output.String(), "/home/xnix-run-materials") || strings.Contains(output.String(), reportPath) {
+		t.Fatalf("owner-controlled KDE projection exposed raw path: %s", output.String())
+	}
+}
+
 func knownAppMatrixEvidenceCLIFixture() string {
 	return `{
   "schema_version": "xnix.scripts.remote_known_windows_app_matrix_smoke.v1",
@@ -502,5 +568,51 @@ func guiSmokeEvidenceCLIFixture() string {
   "guest_stderr_bytes": 0,
   "guest_graphics_driver_error_observed": false,
   "kde_safe_output_summary": "Wine GUI window observed; child_windows=14 xwininfo_bytes=1228 guest_stderr_bytes=0"
+}`
+}
+
+func ownerControlledGUISmokeEvidenceCLIFixture() string {
+	return `{
+  "version": "version-under-test",
+  "schema_version": "xnix.scripts.wine_guest_gui_smoke.v1",
+  "request_type": "wine-guest-gui-smoke",
+  "status": "passed",
+  "execute": true,
+  "backend": "qemu-guest-wine-x11",
+  "gui_app_name": "xnix-messagebox-smoke.exe",
+  "local_gui_executable_configured": true,
+  "runtime_go_owned_gui_smoke": true,
+  "owner_controlled_launch_requested": true,
+  "owner_external_gui_app_requested": true,
+  "owner_external_gui_app_delivery": "owner-managed-copy",
+  "owner_seed_evidence_projected": true,
+  "owner_service_call_ready": true,
+  "owner_managed_launcher_invoked": true,
+  "owner_delegated_managed_artifact_copied": true,
+  "owner_delegated_smoke_passed": true,
+  "owner_delegated_evidence_source": "wine-guest-gui-smoke",
+  "owner_delegated_execution_started": true,
+  "owner_delegated_controlled_session_window_observed": true,
+  "owner_delegated_host_root_modified": false,
+  "owner_delegated_docker_socket_mounted": false,
+  "owner_delegated_broad_host_mount_required": false,
+  "owner_delegated_raw_command_exposed": false,
+  "owner_delegated_backend_details_exposed": false,
+  "state_root": "/home/xnix-run-materials/state/wine-gui-messagebox-owner-version-under-test",
+  "kernel_image": "/home/xnix-run-materials/wine-guest/bzImage",
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "wineboot_invoked": true,
+  "x_window_observed": true,
+  "x_window_child_count": 9,
+  "runtime_payload_schema_version": "xnix.runtime.windows_app_guest_wine_gui_smoke.v1",
+  "executable_copied": true,
+  "xwininfo_bytes": 772,
+  "guest_stderr_bytes": 667,
+  "guest_graphics_driver_error_observed": false,
+  "kde_safe_output_summary": "Wine GUI window observed; child_windows=9 xwininfo_bytes=772 guest_stderr_bytes=667"
 }`
 }

@@ -38,6 +38,8 @@ module Xnix
           "summary" => summary(applications, gui_evidence_cards),
           "known_app_gui_evidence_count" => gui_evidence_cards.length,
           "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
+          "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
+          "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
           "known_app_gui_evidence_cards" => gui_evidence_cards,
           "applications" => applications
         }
@@ -103,6 +105,9 @@ module Xnix
           "marker_observed" => card.fetch("marker_observed", false),
           "checksum_verified" => card.fetch("checksum_verified", false),
           "execution_evidence_recorded" => card.fetch("execution_evidence_recorded", false),
+          "staged_launcher_verified" => card.fetch("staged_launcher_verified", false),
+          "owner_controlled_runtime_launch_verified" => card.fetch("owner_controlled_runtime_launch_verified", false),
+          "owner_managed_copy_verified" => card.fetch("owner_managed_copy_verified", false),
           "runtime_dispatch_verified" => card.fetch("runtime_dispatch_verified", false),
           "launch_authorization_required" => card.fetch("launch_authorization_required", true),
           "desktop_launch_enabled" => false,
@@ -119,6 +124,23 @@ module Xnix
 
       def verified_gui_evidence_count(gui_evidence_cards)
         gui_evidence_cards.count { |card| card.fetch("smoke_status", nil) == "passed" }
+      end
+
+      def owner_controlled_gui_evidence_count(gui_evidence_cards)
+        gui_evidence_cards.count do |card|
+          card.fetch("smoke_status", nil) == "passed" &&
+            card.fetch("owner_controlled_runtime_launch_verified", false) &&
+            card.fetch("compatibility_state", nil) == "owner-controlled-gui-qemu-wine-verified" &&
+            card.fetch("center_card_state", nil) == "validated-owner-controlled-gui-runtime-run"
+        end
+      end
+
+      def owner_managed_copy_verified_count(gui_evidence_cards)
+        gui_evidence_cards.count do |card|
+          card.fetch("smoke_status", nil) == "passed" &&
+            card.fetch("owner_controlled_runtime_launch_verified", false) &&
+            card.fetch("owner_managed_copy_verified", false)
+        end
       end
 
       def application_summary(application)
@@ -711,6 +733,8 @@ module Xnix
           "known_application_count" => applications.count { |application| application["compatibility_status"] == "known" },
           "known_app_gui_evidence_count" => gui_evidence_cards.length,
           "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
+          "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
+          "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },

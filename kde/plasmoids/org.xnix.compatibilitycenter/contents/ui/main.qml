@@ -8,6 +8,8 @@ PlasmoidItem {
     property string runtimeModelCommand: "xnix-kde-center-model"
     readonly property string centerPreviewCommand: "kde-center-page-preview"
     readonly property string guiEvidenceCountField: "known_app_gui_evidence_count"
+    readonly property string ownerControlledGuiEvidenceCountField: "known_app_owner_controlled_gui_evidence_count"
+    readonly property string ownerManagedCopyVerifiedCountField: "known_app_owner_managed_copy_verified_count"
     readonly property string guiEvidenceCardsField: "known_app_gui_evidence_cards"
     readonly property string guiEvidenceSource: "wine-guest-gui-smoke"
     readonly property string guiEvidenceKind: "known-application-gui-smoke"
@@ -17,6 +19,9 @@ PlasmoidItem {
         "compatibility_state",
         "center_card_state",
         "execution_evidence_recorded",
+        "staged_launcher_verified",
+        "owner_controlled_runtime_launch_verified",
+        "owner_managed_copy_verified",
         "runtime_dispatch_verified",
         "primary_action_label"
     ]
@@ -44,17 +49,17 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count and known_app_gui_evidence_cards from wine-guest-gui-smoke."
+            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count, known_app_owner_controlled_gui_evidence_count, known_app_owner_managed_copy_verified_count, and known_app_gui_evidence_cards from wine-guest-gui-smoke."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, runtime_dispatch_verified, and primary_action_label from each safe card."
+            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, runtime_dispatch_verified, and primary_action_label from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "A passing GUI card means a local Windows .exe was copied into the QEMU guest, launched by Wine, and observed as an X11 window."
+            text: "A passing owner-controlled GUI card means the Runtime owner service invoked the managed launcher, copied the Windows .exe into the QEMU guest when needed, launched it by Wine, and observed it as an X11 window."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

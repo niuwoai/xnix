@@ -123,6 +123,8 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		evidence.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.StagedLauncherVerified ||
+		!evidence.OwnerControlledRuntimeLaunchVerified ||
+		!evidence.OwnerManagedCopyVerified ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.RawArtifactPathExposed ||
 		!strings.Contains(evidence.Summary, "managed launcher copied") {

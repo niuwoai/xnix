@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc91
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc92
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc92 checkpoint candidate makes owner-controlled Windows GUI app evidence explicit in the KDE/Compatibility Center read model. `KnownAppSmokeEvidenceSummary` now carries structured `owner_controlled_runtime_launch_verified` and `owner_managed_copy_verified` facts, while KDE Center pages expose owner-controlled GUI evidence counts and per-card owner verification fields. The Plasma shell stub documents these read-only fields so KDE can present a real Runtime-owner managed launch as stronger evidence than a generic GUI smoke without gaining launch, backend, raw path, receipt/session reconstruction, Docker socket, broad mount, host networking, raw command, backend detail, or host-root mutation authority.
 
 The v0.2.640-rc91 checkpoint candidate makes owner-controlled external GUI launch evidence first-class in the Runtime/KDE read model. `gui-smoke-evidence-preview` now consumes q4 MessageBox owner reports, verifies the owner seed projection, owner service handoff, managed launcher invocation, delegated `wine-guest-gui-smoke` source, delegated execution/window observation, and owner-managed artifact copy, then projects `org.xnix.apps.messagebox` as `owner-controlled-gui-qemu-wine-verified` with the `validated-owner-controlled-gui-runtime-run` card state. Product-facing JSON still keeps raw host paths, guest app paths, backend commands, state roots, receipts, sessions, Docker socket mounts, broad host mounts, host networking, raw delegated commands, backend details, and host-root mutation closed. The q4 owner-controlled MessageBox run passed with `owner_managed_copy_verified=true`, `owner_delegated_managed_artifact_copied=true`, `owner_delegated_controlled_session_window_observed=true`, `x_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc91-final-evidence.json`.
 

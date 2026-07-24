@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc92] - 2026-07-25
+
+### Added
+
+- Added structured `owner_controlled_runtime_launch_verified` and `owner_managed_copy_verified` fields to known-app GUI smoke evidence summaries and KDE GUI evidence cards.
+- Added KDE Center owner-controlled GUI evidence counts for Runtime-owner managed GUI launches and owner-managed executable copy verification.
+
+### Changed
+
+- Changed the Compatibility Center normalization path to preserve owner-controlled GUI verification as structured evidence instead of relying on summary text.
+- Changed the Plasma Compatibility Center stub to document the owner-controlled GUI evidence counters and card fields while keeping launch/backend execution disabled.
+
 ## [0.2.640-rc91] - 2026-07-25
 
 ### Added

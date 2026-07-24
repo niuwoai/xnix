@@ -32,6 +32,8 @@ type KDECenterPagePreview struct {
 	KnownAppMatrixEvidenceCount              int                                    `json:"known_app_matrix_evidence_count"`
 	KnownAppMatrixEvidenceCards              []KDECenterPageKnownAppMatrixCard      `json:"known_app_matrix_evidence_cards"`
 	KnownAppGUIEvidenceCount                 int                                    `json:"known_app_gui_evidence_count"`
+	KnownAppOwnerControlledGUIEvidenceCount  int                                    `json:"known_app_owner_controlled_gui_evidence_count"`
+	KnownAppOwnerManagedCopyVerifiedCount    int                                    `json:"known_app_owner_managed_copy_verified_count"`
 	KnownAppGUIEvidenceCards                 []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
 	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
@@ -159,32 +161,35 @@ type KDECenterPageKnownAppSessionGateCard struct {
 }
 
 type KDECenterPageKnownAppMatrixCard struct {
-	AppID                       string `json:"app_id"`
-	DisplayName                 string `json:"display_name"`
-	AppVersion                  string `json:"app_version"`
-	EvidenceKind                string `json:"evidence_kind"`
-	EvidenceSource              string `json:"evidence_source"`
-	SmokeStatus                 string `json:"smoke_status"`
-	CompatibilityState          string `json:"compatibility_state"`
-	CenterCardState             string `json:"center_card_state"`
-	PrimaryActionID             string `json:"primary_action_id"`
-	PrimaryActionLabel          string `json:"primary_action_label"`
-	PrimaryActionKind           string `json:"primary_action_kind"`
-	PrimaryActionEnabled        bool   `json:"primary_action_enabled"`
-	MarkerObserved              bool   `json:"marker_observed"`
-	ChecksumVerified            bool   `json:"checksum_verified"`
-	ExecutionEvidenceRecorded   bool   `json:"execution_evidence_recorded"`
-	RuntimeDispatchVerified     bool   `json:"runtime_dispatch_verified"`
-	LaunchAuthorizationRequired bool   `json:"launch_authorization_required"`
-	DesktopLaunchEnabled        bool   `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled        bool   `json:"backend_launch_enabled"`
-	RuntimeOwned                bool   `json:"runtime_owned"`
-	GoRuntimeBacked             bool   `json:"go_runtime_backed"`
-	KDEPolicyOwner              bool   `json:"kde_policy_owner"`
-	HostRootModified            bool   `json:"host_root_modified"`
-	BackendDetailsExposed       bool   `json:"backend_details_exposed"`
-	RawArtifactPathExposed      bool   `json:"raw_artifact_path_exposed"`
-	Summary                     string `json:"summary"`
+	AppID                                string `json:"app_id"`
+	DisplayName                          string `json:"display_name"`
+	AppVersion                           string `json:"app_version"`
+	EvidenceKind                         string `json:"evidence_kind"`
+	EvidenceSource                       string `json:"evidence_source"`
+	SmokeStatus                          string `json:"smoke_status"`
+	CompatibilityState                   string `json:"compatibility_state"`
+	CenterCardState                      string `json:"center_card_state"`
+	PrimaryActionID                      string `json:"primary_action_id"`
+	PrimaryActionLabel                   string `json:"primary_action_label"`
+	PrimaryActionKind                    string `json:"primary_action_kind"`
+	PrimaryActionEnabled                 bool   `json:"primary_action_enabled"`
+	MarkerObserved                       bool   `json:"marker_observed"`
+	ChecksumVerified                     bool   `json:"checksum_verified"`
+	ExecutionEvidenceRecorded            bool   `json:"execution_evidence_recorded"`
+	StagedLauncherVerified               bool   `json:"staged_launcher_verified"`
+	OwnerControlledRuntimeLaunchVerified bool   `json:"owner_controlled_runtime_launch_verified"`
+	OwnerManagedCopyVerified             bool   `json:"owner_managed_copy_verified"`
+	RuntimeDispatchVerified              bool   `json:"runtime_dispatch_verified"`
+	LaunchAuthorizationRequired          bool   `json:"launch_authorization_required"`
+	DesktopLaunchEnabled                 bool   `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                 bool   `json:"backend_launch_enabled"`
+	RuntimeOwned                         bool   `json:"runtime_owned"`
+	GoRuntimeBacked                      bool   `json:"go_runtime_backed"`
+	KDEPolicyOwner                       bool   `json:"kde_policy_owner"`
+	HostRootModified                     bool   `json:"host_root_modified"`
+	BackendDetailsExposed                bool   `json:"backend_details_exposed"`
+	RawArtifactPathExposed               bool   `json:"raw_artifact_path_exposed"`
+	Summary                              string `json:"summary"`
 }
 
 type KDECenterPageBackend struct {
@@ -797,6 +802,8 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	knownAppSessionGateCards := kdeCenterPageKnownAppSessionGateCards(center.KnownAppSmokeEvidence)
 	knownAppMatrixCards := kdeCenterPageKnownAppMatrixCards(center.KnownAppSmokeEvidence)
 	knownAppGUICards := kdeCenterPageKnownAppGUICards(center.KnownAppSmokeEvidence)
+	knownAppOwnerControlledGUICount := countOwnerControlledKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
+	knownAppOwnerManagedCopyVerifiedCount := countOwnerManagedCopyVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
@@ -809,6 +816,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	}
 	if len(knownAppGUICards) > 0 {
 		source += "+known-app-gui-smoke-evidence"
+	}
+	if knownAppOwnerControlledGUICount > 0 {
+		source += "+owner-controlled-gui-evidence"
 	}
 	preview := KDECenterPagePreview{
 		SchemaVersion:   "xnix.runtime.kde_center_page.v1",
@@ -859,6 +869,8 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppMatrixEvidenceCount:              len(knownAppMatrixCards),
 		KnownAppMatrixEvidenceCards:              knownAppMatrixCards,
 		KnownAppGUIEvidenceCount:                 len(knownAppGUICards),
+		KnownAppOwnerControlledGUIEvidenceCount:  knownAppOwnerControlledGUICount,
+		KnownAppOwnerManagedCopyVerifiedCount:    knownAppOwnerManagedCopyVerifiedCount,
 		KnownAppGUIEvidenceCards:                 knownAppGUICards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
@@ -1220,32 +1232,35 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			continue
 		}
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{
-			AppID:                       item.AppID,
-			DisplayName:                 item.DisplayName,
-			AppVersion:                  item.AppVersion,
-			EvidenceKind:                item.EvidenceKind,
-			EvidenceSource:              item.EvidenceSource,
-			SmokeStatus:                 item.SmokeStatus,
-			CompatibilityState:          item.CompatibilityState,
-			CenterCardState:             item.CenterCardState,
-			PrimaryActionID:             item.PrimaryActionID,
-			PrimaryActionLabel:          item.PrimaryActionLabel,
-			PrimaryActionKind:           item.PrimaryActionKind,
-			PrimaryActionEnabled:        item.PrimaryActionEnabled,
-			MarkerObserved:              item.MarkerObserved,
-			ChecksumVerified:            item.ChecksumVerified,
-			ExecutionEvidenceRecorded:   item.ExecutionEvidenceRecorded,
-			RuntimeDispatchVerified:     item.RuntimeDispatchVerified,
-			LaunchAuthorizationRequired: item.LaunchAuthorizationRequired,
-			DesktopLaunchEnabled:        false,
-			BackendLaunchEnabled:        false,
-			RuntimeOwned:                true,
-			GoRuntimeBacked:             true,
-			KDEPolicyOwner:              false,
-			HostRootModified:            false,
-			BackendDetailsExposed:       false,
-			RawArtifactPathExposed:      false,
-			Summary:                     item.Summary,
+			AppID:                                item.AppID,
+			DisplayName:                          item.DisplayName,
+			AppVersion:                           item.AppVersion,
+			EvidenceKind:                         item.EvidenceKind,
+			EvidenceSource:                       item.EvidenceSource,
+			SmokeStatus:                          item.SmokeStatus,
+			CompatibilityState:                   item.CompatibilityState,
+			CenterCardState:                      item.CenterCardState,
+			PrimaryActionID:                      item.PrimaryActionID,
+			PrimaryActionLabel:                   item.PrimaryActionLabel,
+			PrimaryActionKind:                    item.PrimaryActionKind,
+			PrimaryActionEnabled:                 item.PrimaryActionEnabled,
+			MarkerObserved:                       item.MarkerObserved,
+			ChecksumVerified:                     item.ChecksumVerified,
+			ExecutionEvidenceRecorded:            item.ExecutionEvidenceRecorded,
+			StagedLauncherVerified:               item.StagedLauncherVerified,
+			OwnerControlledRuntimeLaunchVerified: item.OwnerControlledRuntimeLaunchVerified,
+			OwnerManagedCopyVerified:             item.OwnerManagedCopyVerified,
+			RuntimeDispatchVerified:              item.RuntimeDispatchVerified,
+			LaunchAuthorizationRequired:          item.LaunchAuthorizationRequired,
+			DesktopLaunchEnabled:                 false,
+			BackendLaunchEnabled:                 false,
+			RuntimeOwned:                         true,
+			GoRuntimeBacked:                      true,
+			KDEPolicyOwner:                       false,
+			HostRootModified:                     false,
+			BackendDetailsExposed:                false,
+			RawArtifactPathExposed:               false,
+			Summary:                              item.Summary,
 		})
 	}
 	return cards
@@ -1258,35 +1273,67 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			continue
 		}
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{
-			AppID:                       item.AppID,
-			DisplayName:                 item.DisplayName,
-			AppVersion:                  item.AppVersion,
-			EvidenceKind:                item.EvidenceKind,
-			EvidenceSource:              item.EvidenceSource,
-			SmokeStatus:                 item.SmokeStatus,
-			CompatibilityState:          item.CompatibilityState,
-			CenterCardState:             item.CenterCardState,
-			PrimaryActionID:             item.PrimaryActionID,
-			PrimaryActionLabel:          item.PrimaryActionLabel,
-			PrimaryActionKind:           item.PrimaryActionKind,
-			PrimaryActionEnabled:        item.PrimaryActionEnabled,
-			MarkerObserved:              item.MarkerObserved,
-			ChecksumVerified:            item.ChecksumVerified,
-			ExecutionEvidenceRecorded:   item.ExecutionEvidenceRecorded,
-			RuntimeDispatchVerified:     item.RuntimeDispatchVerified,
-			LaunchAuthorizationRequired: item.LaunchAuthorizationRequired,
-			DesktopLaunchEnabled:        false,
-			BackendLaunchEnabled:        false,
-			RuntimeOwned:                true,
-			GoRuntimeBacked:             true,
-			KDEPolicyOwner:              false,
-			HostRootModified:            false,
-			BackendDetailsExposed:       false,
-			RawArtifactPathExposed:      false,
-			Summary:                     item.Summary,
+			AppID:                                item.AppID,
+			DisplayName:                          item.DisplayName,
+			AppVersion:                           item.AppVersion,
+			EvidenceKind:                         item.EvidenceKind,
+			EvidenceSource:                       item.EvidenceSource,
+			SmokeStatus:                          item.SmokeStatus,
+			CompatibilityState:                   item.CompatibilityState,
+			CenterCardState:                      item.CenterCardState,
+			PrimaryActionID:                      item.PrimaryActionID,
+			PrimaryActionLabel:                   item.PrimaryActionLabel,
+			PrimaryActionKind:                    item.PrimaryActionKind,
+			PrimaryActionEnabled:                 item.PrimaryActionEnabled,
+			MarkerObserved:                       item.MarkerObserved,
+			ChecksumVerified:                     item.ChecksumVerified,
+			ExecutionEvidenceRecorded:            item.ExecutionEvidenceRecorded,
+			StagedLauncherVerified:               item.StagedLauncherVerified,
+			OwnerControlledRuntimeLaunchVerified: item.OwnerControlledRuntimeLaunchVerified,
+			OwnerManagedCopyVerified:             item.OwnerManagedCopyVerified,
+			RuntimeDispatchVerified:              item.RuntimeDispatchVerified,
+			LaunchAuthorizationRequired:          item.LaunchAuthorizationRequired,
+			DesktopLaunchEnabled:                 false,
+			BackendLaunchEnabled:                 false,
+			RuntimeOwned:                         true,
+			GoRuntimeBacked:                      true,
+			KDEPolicyOwner:                       false,
+			HostRootModified:                     false,
+			BackendDetailsExposed:                false,
+			RawArtifactPathExposed:               false,
+			Summary:                              item.Summary,
 		})
 	}
 	return cards
+}
+
+func countOwnerControlledKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range evidence {
+		if item.EvidenceSource == "wine-guest-gui-smoke" &&
+			item.SmokeStatus == "passed" &&
+			item.ExecutionEvidenceRecorded &&
+			item.RuntimeDispatchVerified &&
+			item.OwnerControlledRuntimeLaunchVerified &&
+			item.CompatibilityState == "owner-controlled-gui-qemu-wine-verified" &&
+			item.CenterCardState == "validated-owner-controlled-gui-runtime-run" {
+			count++
+		}
+	}
+	return count
+}
+
+func countOwnerManagedCopyVerifiedKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range evidence {
+		if item.EvidenceSource == "wine-guest-gui-smoke" &&
+			item.SmokeStatus == "passed" &&
+			item.OwnerControlledRuntimeLaunchVerified &&
+			item.OwnerManagedCopyVerified {
+			count++
+		}
+	}
+	return count
 }
 
 func kdeCenterPageRuntimeStatusLaunchArgv(item KnownAppSmokeEvidenceSummary) []string {

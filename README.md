@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc91`.
+The project is currently at `v0.2.640-rc92`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc91`.
 
 ## Current Checkpoint
 
-v0.2.640-rc91 projects owner-controlled external GUI launch evidence into the Runtime/KDE read model. `gui-smoke-evidence-preview` now verifies the owner seed projection, owner service handoff, managed launcher invocation, delegated `wine-guest-gui-smoke` source, delegated execution/window observation, and owner-managed artifact copy before marking `org.xnix.apps.messagebox` as `owner-controlled-gui-qemu-wine-verified`. Unsafe delegated host mutation, Docker socket, broad mount, raw command, backend detail, and raw path details remain closed. The q4 owner-controlled MessageBox run passed with `owner_managed_copy_verified=true`, `owner_delegated_managed_artifact_copied=true`, `owner_delegated_controlled_session_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc91-final-evidence.json`.
+v0.2.640-rc92 makes owner-controlled Windows GUI evidence explicit in the KDE/Compatibility Center read model. KDE Center pages now expose `known_app_owner_controlled_gui_evidence_count`, `known_app_owner_managed_copy_verified_count`, and per-card `owner_controlled_runtime_launch_verified` / `owner_managed_copy_verified` fields for `wine-guest-gui-smoke` evidence, so the desktop shell can distinguish a Runtime-owner managed app launch from a generic GUI smoke without gaining launch, backend, raw path, or host mutation authority.
+
+The previous v0.2.640-rc91 checkpoint projected owner-controlled external GUI launch evidence into the Runtime/KDE read model. `gui-smoke-evidence-preview` verifies the owner seed projection, owner service handoff, managed launcher invocation, delegated `wine-guest-gui-smoke` source, delegated execution/window observation, and owner-managed artifact copy before marking `org.xnix.apps.messagebox` as `owner-controlled-gui-qemu-wine-verified`. Unsafe delegated host mutation, Docker socket, broad mount, raw command, backend detail, and raw path details remain closed. The q4 owner-controlled MessageBox run passed with `owner_managed_copy_verified=true`, `owner_delegated_managed_artifact_copied=true`, `owner_delegated_controlled_session_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc91-final-evidence.json`.
 
 The previous v0.2.640-rc90 checkpoint moved external GUI executable delivery into the owner-controlled launch path. `XNIX_RUNTIME_OWNER_GUI_EXECUTABLE` is consumed only by the Runtime owner boundary and forwarded to `xnix-compat-launch --executable`, letting the managed launcher copy the external `.exe` into the QEMU guest with SCP before starting it through the Go-owned Wine GUI smoke lane. `XNIX_RUNTIME_OWNER_GUEST_GUI_APP` remains available for already-present guest paths, but the q4 MessageBox path now proves owner-managed copy delivery.
 
@@ -112,4 +114,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc91 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc92 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

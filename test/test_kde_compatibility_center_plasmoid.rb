@@ -25,6 +25,8 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   centerPreviewCommand
   kde-center-page-preview
   known_app_gui_evidence_count
+  known_app_owner_controlled_gui_evidence_count
+  known_app_owner_managed_copy_verified_count
   known_app_gui_evidence_cards
   guiEvidenceCardFields
   display_name
@@ -32,6 +34,9 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   compatibility_state
   center_card_state
   execution_evidence_recorded
+  staged_launcher_verified
+  owner_controlled_runtime_launch_verified
+  owner_managed_copy_verified
   runtime_dispatch_verified
   primary_action_label
   wine-guest-gui-smoke

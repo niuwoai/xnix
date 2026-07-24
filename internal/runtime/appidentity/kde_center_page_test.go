@@ -664,6 +664,76 @@ func TestKDECenterPagePreviewSurfacesKnownAppLauncherSessionGateCards(t *testing
 	}
 }
 
+func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.xnix.apps.messagebox",
+		Name:                "Xnix MessageBox",
+		Icon:                "dialog-information",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}
+	preview, err := NewKDECenterPagePreviewWithOptions(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", nil, KDECenterPageOptions{
+		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
+			AppID:                                "org.xnix.apps.messagebox",
+			DisplayName:                          "Xnix MessageBox",
+			AppVersion:                           currentProjectVersion(t),
+			EvidenceKind:                         "known-application-gui-smoke",
+			EvidenceSource:                       "wine-guest-gui-smoke",
+			SmokeStatus:                          "passed",
+			CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
+			CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
+			ExecutionEvidenceRecorded:            true,
+			StagedLauncherVerified:               true,
+			OwnerControlledRuntimeLaunchVerified: true,
+			OwnerManagedCopyVerified:             true,
+			RuntimeDispatchVerified:              true,
+			Summary:                              "Xnix MessageBox passed after the managed launcher copied the Windows executable into the guest.",
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreviewWithOptions returned error: %v", err)
+	}
+
+	if !strings.Contains(preview.Source, "known-app-gui-smoke-evidence") ||
+		!strings.Contains(preview.Source, "owner-controlled-gui-evidence") ||
+		preview.KnownAppGUIEvidenceCount != 1 ||
+		preview.KnownAppOwnerControlledGUIEvidenceCount != 1 ||
+		preview.KnownAppOwnerManagedCopyVerifiedCount != 1 ||
+		len(preview.KnownAppGUIEvidenceCards) != 1 {
+		t.Fatalf("unexpected owner-controlled GUI counts: %#v", preview)
+	}
+	card := preview.KnownAppGUIEvidenceCards[0]
+	if card.AppID != "org.xnix.apps.messagebox" ||
+		card.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
+		card.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		!card.ExecutionEvidenceRecorded ||
+		!card.StagedLauncherVerified ||
+		!card.OwnerControlledRuntimeLaunchVerified ||
+		!card.OwnerManagedCopyVerified ||
+		!card.RuntimeDispatchVerified ||
+		card.DesktopLaunchEnabled ||
+		card.BackendLaunchEnabled ||
+		card.HostRootModified ||
+		card.BackendDetailsExposed ||
+		card.RawArtifactPathExposed {
+		t.Fatalf("unexpected owner-controlled GUI card: %#v", card)
+	}
+	if preview.LaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.BackendProcessStarted ||
+		preview.RequestObjectsCreated ||
+		preview.PermissionGrantCreated ||
+		preview.HostRootModified ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("owner-controlled GUI center page must remain gated: %#v", preview)
+	}
+}
+
 func writeKDECenterActivationReceipt(t *testing.T, root string, applicationID string) {
 	t.Helper()
 	relativePath := filepath.Join("usr/share/xnix/compatibility/activation-receipts", applicationID+".json")

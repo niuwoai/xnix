@@ -24,43 +24,53 @@ model = Xnix::Compatibility::KdeCenterModel.new(runtime: runtime).to_h
 assert(model["version"] == File.read(File.expand_path("../VERSION", __dir__)).strip, "KDE center model must expose the current version")
 assert(model["source"]["kind"] == "runtime-local-read-model", "KDE center model must describe the local fallback read model")
 assert(model["source"]["bus_name"] == "org.xnix.Compatibility1", "KDE center model must keep the Runtime bus boundary visible")
-assert(model["summary"]["application_count"] == 1, "KDE center model must summarize bundled applications")
-assert(model["summary"]["known_application_count"] == 1, "KDE center model must summarize known applications")
+applications = model.fetch("applications")
+application_ids = applications.map { |item| item.fetch("id") }
+application_count = applications.length
+assert(application_count >= 3, "KDE center model must summarize bundled and real GUI applications")
+assert(application_ids.include?("org.xnix.sample.notepad"), "KDE center model must include the sample application")
+assert(application_ids.include?("org.xnix.apps.mines"), "KDE center model must include the Mines GUI application")
+assert(application_ids.include?("org.xnix.apps.messagebox"), "KDE center model must include the MessageBox GUI application")
+assert(model["summary"]["application_count"] == application_count, "KDE center model must summarize bundled applications")
+assert(model["summary"]["known_application_count"] == application_count, "KDE center model must summarize known applications")
 assert(model["summary"]["known_app_gui_evidence_count"].zero?, "KDE center model must summarize absent GUI evidence")
 assert(model["summary"]["known_app_gui_evidence_verified_count"].zero?, "KDE center model must summarize absent verified GUI evidence")
-assert(model["summary"]["pending_action_count"] == 1, "KDE center model must summarize pending compatibility work")
-assert(model["summary"]["queued_compatibility_action_count"] == 5, "KDE center model must summarize queued Compatibility Center actions")
-assert(model["summary"]["queued_user_review_count"] == 3, "KDE center model must summarize queued review actions")
-assert(model["summary"]["recorded_action_review_count"] == 1, "KDE center model must summarize recorded action reviews")
-assert(model["summary"]["compatibility_center_summary_count"] == 1, "KDE center model must summarize Compatibility Center summaries")
-assert(model["summary"]["kde_shell_integration_plan_count"] == 1, "KDE center model must summarize KDE shell integration plans")
+assert(model["summary"]["known_app_owner_controlled_gui_evidence_count"].zero?, "KDE center model must summarize absent owner-controlled GUI evidence")
+assert(model["summary"]["known_app_owner_managed_copy_verified_count"].zero?, "KDE center model must summarize absent owner-managed copy evidence")
+assert(model["summary"]["pending_action_count"] == application_count, "KDE center model must summarize pending compatibility work")
+assert(model["summary"]["queued_compatibility_action_count"] == application_count * 5, "KDE center model must summarize queued Compatibility Center actions")
+assert(model["summary"]["queued_user_review_count"] == application_count * 3, "KDE center model must summarize queued review actions")
+assert(model["summary"]["recorded_action_review_count"] == application_count, "KDE center model must summarize recorded action reviews")
+assert(model["summary"]["compatibility_center_summary_count"] == application_count, "KDE center model must summarize Compatibility Center summaries")
+assert(model["summary"]["kde_shell_integration_plan_count"] == application_count, "KDE center model must summarize KDE shell integration plans")
 assert(model["summary"]["kde_shell_component_count"] == 9, "KDE center model must summarize KDE shell component counts")
-assert(model["summary"]["compatibility_center_known_issue_count"] == 1, "KDE center model must summarize Compatibility Center known issues")
-assert(model["summary"]["pending_test_step_count"] == 3, "KDE center model must summarize pending compatibility test work")
-assert(model["summary"]["pending_test_result_count"] == 1, "KDE center model must summarize pending test results")
-assert(model["summary"]["pending_install_plan_count"] == 1, "KDE center model must summarize pending install plans")
-assert(model["summary"]["pending_acquisition_preflight_count"] == 1, "KDE center model must summarize pending acquisition preflight")
-assert(model["summary"]["pending_artifact_manifest_count"] == 1, "KDE center model must summarize pending artifact manifests")
-assert(model["summary"]["pending_package_source_count"] == 1, "KDE center model must summarize pending package sources")
-assert(model["summary"]["planned_state_root_count"] == 1, "KDE center model must summarize planned state roots")
-assert(model["summary"]["pending_backend_binding_count"] == 1, "KDE center model must summarize pending backend bindings")
-assert(model["summary"]["pending_backend_capability_matrix_count"] == 1, "KDE center model must summarize pending backend capability matrices")
-assert(model["summary"]["pending_backend_selection_count"] == 1, "KDE center model must summarize pending backend selections")
-assert(model["summary"]["ai_diagnostic_ready_count"] == 1, "KDE center model must summarize AI diagnostic readiness")
-assert(model["summary"]["ai_recommendation_ready_count"] == 1, "KDE center model must summarize AI recommendation readiness")
-assert(model["summary"]["blocked_ai_repair_gate_count"] == 1, "KDE center model must summarize blocked AI repair gates")
-assert(model["summary"]["pending_runtime_live_owner_gate_count"] == 1, "KDE center model must summarize pending Runtime live owner gates")
-assert(model["summary"]["pending_runtime_owner_smoke_plan_count"] == 1, "KDE center model must summarize pending Runtime owner smoke plans")
-assert(model["summary"]["runtime_method_parity_ready_count"] == 1, "KDE center model must summarize Runtime method parity readiness")
-assert(model["summary"]["runtime_service_binding_ready_count"] == 1, "KDE center model must summarize Runtime service binding readiness")
-assert(model["summary"]["blocked_runtime_write_gate_count"] == 1, "KDE center model must summarize blocked Runtime write gates")
-assert(model["summary"]["runtime_settings_model_count"] == 1, "KDE center model must summarize Runtime settings models")
-assert(model["summary"]["pending_settings_change_plan_count"] == 1, "KDE center model must summarize pending settings change plans")
-assert(model["summary"]["pending_mode_switch_plan_count"] == 1, "KDE center model must summarize pending compatibility mode switch plans")
-assert(model["summary"]["pending_permission_review_plan_count"] == 1, "KDE center model must summarize pending compatibility permission review plans")
-assert(model["summary"]["pending_review_flow_plan_count"] == 1, "KDE center model must summarize pending compatibility review flow plans")
+assert(model["summary"]["compatibility_center_known_issue_count"] == application_count, "KDE center model must summarize Compatibility Center known issues")
+assert(model["summary"]["pending_test_step_count"] == application_count * 3, "KDE center model must summarize pending compatibility test work")
+assert(model["summary"]["pending_test_result_count"] == application_count, "KDE center model must summarize pending test results")
+assert(model["summary"]["pending_install_plan_count"] == application_count, "KDE center model must summarize pending install plans")
+assert(model["summary"]["pending_acquisition_preflight_count"] == application_count, "KDE center model must summarize pending acquisition preflight")
+assert(model["summary"]["pending_artifact_manifest_count"] == application_count, "KDE center model must summarize pending artifact manifests")
+assert(model["summary"]["pending_package_source_count"] == application_count, "KDE center model must summarize pending package sources")
+assert(model["summary"]["planned_state_root_count"] == application_count, "KDE center model must summarize planned state roots")
+assert(model["summary"]["pending_backend_binding_count"] == application_count, "KDE center model must summarize pending backend bindings")
+assert(model["summary"]["pending_backend_capability_matrix_count"] == application_count, "KDE center model must summarize pending backend capability matrices")
+assert(model["summary"]["pending_backend_selection_count"] == application_count, "KDE center model must summarize pending backend selections")
+assert(model["summary"]["ai_diagnostic_ready_count"] == application_count, "KDE center model must summarize AI diagnostic readiness")
+assert(model["summary"]["ai_recommendation_ready_count"] == application_count, "KDE center model must summarize AI recommendation readiness")
+assert(model["summary"]["blocked_ai_repair_gate_count"] == application_count, "KDE center model must summarize blocked AI repair gates")
+assert(model["summary"]["pending_runtime_live_owner_gate_count"] == application_count, "KDE center model must summarize pending Runtime live owner gates")
+assert(model["summary"]["pending_runtime_owner_smoke_plan_count"] == application_count, "KDE center model must summarize pending Runtime owner smoke plans")
+assert(model["summary"]["runtime_method_parity_ready_count"] == application_count, "KDE center model must summarize Runtime method parity readiness")
+assert(model["summary"]["runtime_service_binding_ready_count"] == application_count, "KDE center model must summarize Runtime service binding readiness")
+assert(model["summary"]["blocked_runtime_write_gate_count"] == application_count, "KDE center model must summarize blocked Runtime write gates")
+assert(model["summary"]["runtime_settings_model_count"] == application_count, "KDE center model must summarize Runtime settings models")
+assert(model["summary"]["pending_settings_change_plan_count"] == application_count, "KDE center model must summarize pending settings change plans")
+assert(model["summary"]["pending_mode_switch_plan_count"] == application_count, "KDE center model must summarize pending compatibility mode switch plans")
+assert(model["summary"]["pending_permission_review_plan_count"] == application_count, "KDE center model must summarize pending compatibility permission review plans")
+assert(model["summary"]["pending_review_flow_plan_count"] == application_count, "KDE center model must summarize pending compatibility review flow plans")
 
-application = model.fetch("applications").first
+application = applications.find { |item| item.fetch("id") == "org.xnix.sample.notepad" }
+assert(application, "KDE center model must include the sample application")
 assert(application["id"] == "org.xnix.sample.notepad", "KDE center model must include the sample application")
 assert(application["mode_label"] == "Automatic", "KDE center model must present user-facing mode labels")
 assert(application["compatibility_label"] == "Known", "KDE center model must present user-facing status labels")
@@ -280,8 +290,8 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "evidence_kind" => "known-application-gui-smoke",
           "evidence_source" => "wine-guest-gui-smoke",
           "smoke_status" => "passed",
-          "compatibility_state" => "real-gui-qemu-wine-verified",
-          "center_card_state" => "validated-real-gui-runtime-run",
+          "compatibility_state" => "owner-controlled-gui-qemu-wine-verified",
+          "center_card_state" => "validated-owner-controlled-gui-runtime-run",
           "primary_action_id" => "review-real-gui-evidence",
           "primary_action_label" => "Review real GUI evidence",
           "primary_action_kind" => "review",
@@ -289,6 +299,9 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "marker_observed" => false,
           "checksum_verified" => false,
           "execution_evidence_recorded" => true,
+          "staged_launcher_verified" => true,
+          "owner_controlled_runtime_launch_verified" => true,
+          "owner_managed_copy_verified" => true,
           "runtime_dispatch_verified" => true,
           "launch_authorization_required" => true,
           "desktop_launch_enabled" => false,
@@ -338,14 +351,21 @@ end
 gui_model = Xnix::Compatibility::KdeCenterModel.new(runtime: GUIEvidenceRuntime.new(runtime.list_applications.first)).to_h
 assert(gui_model["known_app_gui_evidence_count"] == 1, "KDE center model must render one safe GUI evidence card")
 assert(gui_model["known_app_gui_evidence_verified_count"] == 1, "KDE center model must render passed GUI evidence counts")
+assert(gui_model["known_app_owner_controlled_gui_evidence_count"] == 1, "KDE center model must render owner-controlled GUI evidence counts")
+assert(gui_model["known_app_owner_managed_copy_verified_count"] == 1, "KDE center model must render owner-managed copy counts")
 assert(gui_model["summary"]["known_app_gui_evidence_count"] == 1, "KDE center summary must count safe GUI evidence cards")
 assert(gui_model["summary"]["known_app_gui_evidence_verified_count"] == 1, "KDE center summary must count passed GUI evidence cards")
+assert(gui_model["summary"]["known_app_owner_controlled_gui_evidence_count"] == 1, "KDE center summary must count owner-controlled GUI evidence cards")
+assert(gui_model["summary"]["known_app_owner_managed_copy_verified_count"] == 1, "KDE center summary must count owner-managed copy evidence cards")
 gui_card = gui_model.fetch("known_app_gui_evidence_cards").first
 assert(gui_card["display_name"] == "Xnix MessageBox Smoke", "KDE GUI evidence card must expose display names")
 assert(gui_card["evidence_kind"] == "known-application-gui-smoke", "KDE GUI evidence card must preserve evidence kind")
 assert(gui_card["evidence_source"] == "wine-guest-gui-smoke", "KDE GUI evidence card must preserve evidence source")
-assert(gui_card["center_card_state"] == "validated-real-gui-runtime-run", "KDE GUI evidence card must expose card state")
+assert(gui_card["center_card_state"] == "validated-owner-controlled-gui-runtime-run", "KDE GUI evidence card must expose card state")
 assert(gui_card["execution_evidence_recorded"], "KDE GUI evidence card must expose execution evidence status")
+assert(gui_card["staged_launcher_verified"], "KDE GUI evidence card must expose staged launcher status")
+assert(gui_card["owner_controlled_runtime_launch_verified"], "KDE GUI evidence card must expose owner-controlled Runtime launch status")
+assert(gui_card["owner_managed_copy_verified"], "KDE GUI evidence card must expose owner-managed copy status")
 assert(gui_card["runtime_dispatch_verified"], "KDE GUI evidence card must expose Runtime dispatch status")
 assert(!gui_card["primary_action_enabled"], "KDE GUI evidence card must keep action execution disabled")
 assert(!gui_card["desktop_launch_enabled"], "KDE GUI evidence card must keep desktop launch disabled")
