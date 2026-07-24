@@ -21,6 +21,7 @@ func TestRunGuestGUISmokeObservesWindowThroughGoRuntime(t *testing.T) {
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
@@ -65,12 +66,14 @@ func TestRunGuestGUISmokeObservesWindowThroughGoRuntime(t *testing.T) {
 		result.Backend != "qemu-guest-wine-x11" ||
 		!result.GuestReachable ||
 		!result.WineAvailable ||
+		!result.GuestX11DriverAvailable ||
 		!result.WinebootInvoked ||
 		!result.LaunchAttempted ||
 		!result.LaunchPIDRecorded ||
 		!result.XWinInfoInvoked ||
 		!result.XWindowObserved ||
 		result.XWindowChildCount != 1 ||
+		result.XWindowObservationAttempts == 0 ||
 		result.WinebootStderrBytes == 0 ||
 		result.LoopbackSSHForwardingOnly != true ||
 		result.QEMURequired != true ||
@@ -92,9 +95,9 @@ func TestRunGuestGUISmokeObservesWindowThroughGoRuntime(t *testing.T) {
 	}
 	log := string(logBytes)
 	if !strings.Contains(log, "wineboot --init") ||
+		!strings.Contains(log, "WINEDEBUG='err+winediag'") ||
 		!strings.Contains(log, "WINEDLLOVERRIDES='winemenubuilder.exe=d,mscoree,mshtml='") ||
-		!strings.Contains(log, "{control.exe}") ||
-		!strings.Contains(log, "appwiz.cpl install_mono") ||
+		!strings.Contains(log, "grep 'appwiz[.]cpl install_mono'") ||
 		!strings.Contains(log, "winemine.exe") ||
 		!strings.Contains(log, "xwininfo display=:100") {
 		t.Fatalf("GUI smoke did not run expected commands: %s", log)
@@ -117,6 +120,7 @@ func TestRunGuestGUISmokeCopiesLocalGUIExecutableIntoGuest(t *testing.T) {
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'hello-gui.exe'*) exit 0 ;;\n" +
@@ -165,7 +169,9 @@ func TestRunGuestGUISmokeCopiesLocalGUIExecutableIntoGuest(t *testing.T) {
 		result.GUIAppName != "hello-gui.exe" ||
 		!result.ExecutableCopied ||
 		!result.LaunchAttempted ||
+		!result.GuestX11DriverAvailable ||
 		!result.XWindowObserved ||
+		result.XWindowObservationAttempts == 0 ||
 		result.RawHostPathExposed ||
 		result.RawGuestGUIAppPathExposed ||
 		result.RawCommandExposed {

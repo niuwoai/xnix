@@ -201,6 +201,7 @@ def base_report(options)
     "xvfb_required" => true,
     "qemu_required" => true,
     "wine_required" => true,
+    "guest_x11_driver_available" => false,
     "qemu_user_network_restrict_disabled_for_display" => true,
     "loopback_ssh_forwarding_only" => true,
     "privileged_container_required" => false,
@@ -304,9 +305,11 @@ begin
   report["runtime_payload_schema_version"] = runtime_payload.fetch("schema_version")
   report["gui_app_name"] = runtime_payload.fetch("gui_app_name", report.fetch("gui_app_name"))
   report["executable_copied"] = runtime_payload.fetch("executable_copied", false)
+  report["guest_x11_driver_available"] = runtime_payload.fetch("guest_x11_driver_available", false)
   report["wineboot_invoked"] = runtime_payload.fetch("wineboot_invoked", false)
   report["x_window_child_count"] = runtime_payload.fetch("x_window_child_count", 0)
   report["x_window_observed"] = runtime_payload.fetch("x_window_observed", false)
+  report["x_window_observation_attempts"] = runtime_payload.fetch("x_window_observation_attempts", 0)
   report["xwininfo_bytes"] = runtime_payload.fetch("xwininfo_bytes", 0)
   report["wineboot_stderr_bytes"] = runtime_payload.fetch("wineboot_stderr_bytes", 0)
   report["guest_stderr_bytes"] = runtime_payload.fetch("guest_stderr_bytes", 0)

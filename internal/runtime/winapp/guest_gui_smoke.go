@@ -18,6 +18,7 @@ const (
 	DefaultGuestGUIDisplay   = "10.0.2.2:100"
 	DefaultHostGUIDisplay    = ":100"
 	GuestGUIWineDLLOVERRIDES = "winemenubuilder.exe=d,mscoree,mshtml="
+	GuestGUIWineDebug        = "err+winediag"
 )
 
 type GuestGUIRequest struct {
@@ -46,6 +47,7 @@ type GuestGUIResult struct {
 	GuestTransport                            string `json:"guest_transport"`
 	GuestReachable                            bool   `json:"guest_reachable"`
 	WineAvailable                             bool   `json:"wine_available"`
+	GuestX11DriverAvailable                   bool   `json:"guest_x11_driver_available"`
 	WinebootInvoked                           bool   `json:"wineboot_invoked"`
 	WinebootExitCode                          int    `json:"wineboot_exit_code"`
 	ExecutableCopied                          bool   `json:"executable_copied"`
@@ -54,6 +56,7 @@ type GuestGUIResult struct {
 	XWinInfoInvoked                           bool   `json:"xwininfo_invoked"`
 	XWindowObserved                           bool   `json:"x_window_observed"`
 	XWindowChildCount                         int    `json:"x_window_child_count"`
+	XWindowObservationAttempts                int    `json:"x_window_observation_attempts"`
 	XWinInfoBytes                             int    `json:"xwininfo_bytes"`
 	WinebootStderrBytes                       int    `json:"wineboot_stderr_bytes"`
 	GuestStderrBytes                          int    `json:"guest_stderr_bytes"`
@@ -139,6 +142,16 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 	}
 	result.WineAvailable = true
 
+	if err := runGuestSSH(runCtx, sshPath, sshBase, guest, guestGUIX11DriverCheckCommand(), nil, nil); err != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest Wine X11 graphics driver unavailable"
+		result.WinebootExitCode = exitCode(err)
+		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
+		return result, nil
+	}
+	result.GuestX11DriverAvailable = true
+
 	if err := runGuestSSH(runCtx, sshPath, sshBase, guest, "mkdir -p "+shellQuote(remoteDir)+" && chmod 700 "+shellQuote(remoteDir), nil, nil); err != nil {
 		result.DurationMillis = time.Since(startedAt).Milliseconds()
 		result.Status = FailedStatus
@@ -190,30 +203,18 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		return result, nil
 	}
 
-	wait := request.Wait
-	if wait <= 0 {
-		wait = 10 * time.Second
-	}
-	select {
-	case <-runCtx.Done():
+	observeGuestGUIWindow(runCtx, &result, guestGUIObservationRequest{
+		Wait:         request.Wait,
+		SSHPath:      sshPath,
+		SSHBase:      sshBase,
+		Guest:        guest,
+		XWinInfoPath: xwininfoPath,
+		HostDisplay:  hostDisplay(request),
+	})
+	if runCtx.Err() == context.DeadlineExceeded {
 		result.DurationMillis = time.Since(startedAt).Milliseconds()
 		result.Status = FailedStatus
-		result.FailureReason = "guest Wine GUI wait timed out"
-		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
-		return result, nil
-	case <-time.After(wait):
-	}
-
-	xwininfoText, xwininfoStderr, xwininfoErr := runXWinInfo(runCtx, xwininfoPath, hostDisplay(request))
-	result.XWinInfoInvoked = true
-	result.XWinInfoBytes = len(xwininfoText)
-	result.XWindowChildCount = countXWindowChildren(xwininfoText)
-	result.XWindowObserved = result.XWindowChildCount > 0
-	result.FailureReason = xwininfoStderr
-	if xwininfoErr != nil && runCtx.Err() == context.DeadlineExceeded {
-		result.DurationMillis = time.Since(startedAt).Milliseconds()
-		result.Status = FailedStatus
-		result.FailureReason = "host xwininfo timed out"
+		result.FailureReason = "guest Wine GUI observation timed out"
 		result.KDESafeOutputSummary = guestGUIKDESafeOutputSummary(result)
 		return result, nil
 	}
@@ -233,6 +234,9 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 	result.Status = FailedStatus
 	if strings.TrimSpace(result.FailureReason) == "" {
 		result.FailureReason = "Wine GUI app did not create an X window"
+	}
+	if result.GuestGraphicsDriverErrorObserved {
+		result.FailureReason = "guest Wine X11 graphics driver unavailable"
 	}
 	return result, nil
 }
@@ -287,7 +291,7 @@ func guestGUIWinebootCommand(remoteDir string, display string) string {
 		"(",
 		"DISPLAY=" + shellQuote(display),
 		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
-		"WINEDEBUG=-all",
+		"WINEDEBUG=" + shellQuote(GuestGUIWineDebug),
 		"WINEDLLOVERRIDES=" + shellQuote(GuestGUIWineDLLOVERRIDES),
 		"wineboot",
 		"--init",
@@ -309,7 +313,7 @@ func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) 
 	return strings.Join([]string{
 		"DISPLAY=" + shellQuote(display),
 		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
-		"WINEDEBUG=-all",
+		"WINEDEBUG=" + shellQuote(GuestGUIWineDebug),
 		"WINEDLLOVERRIDES=" + shellQuote(GuestGUIWineDLLOVERRIDES),
 		"wine",
 		shellQuote(guiApp),
@@ -323,8 +327,60 @@ func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) 
 	}, " ")
 }
 
+func guestGUIX11DriverCheckCommand() string {
+	return "test -e /usr/lib/wine/i386-unix/winex11.so || test -e /usr/lib/wine/i386-unix/winex11.drv.so"
+}
+
 func guestGUIWineInstallerSuppressCommand() string {
-	return "ps w | while read pid user command; do case \"$command\" in \"{control.exe}\"*\"appwiz.cpl install_mono\"*) kill \"$pid\" 2>/dev/null || true ;; esac; done;"
+	return "ps w | grep 'appwiz[.]cpl install_mono' | while read pid rest; do kill \"$pid\" 2>/dev/null || true; done;"
+}
+
+type guestGUIObservationRequest struct {
+	Wait         time.Duration
+	SSHPath      string
+	SSHBase      []string
+	Guest        string
+	XWinInfoPath string
+	HostDisplay  string
+}
+
+func observeGuestGUIWindow(ctx context.Context, result *GuestGUIResult, request guestGUIObservationRequest) {
+	wait := request.Wait
+	if wait <= 0 {
+		wait = 10 * time.Second
+	}
+	deadline := time.Now().Add(wait)
+	for {
+		result.XWindowObservationAttempts++
+		_ = runGuestSSH(ctx, request.SSHPath, request.SSHBase, request.Guest, guestGUIWineInstallerSuppressCommand(), nil, nil)
+		xwininfoText, xwininfoStderr, xwininfoErr := runXWinInfo(ctx, request.XWinInfoPath, request.HostDisplay)
+		result.XWinInfoInvoked = true
+		result.XWinInfoBytes = len(xwininfoText)
+		result.XWindowChildCount = countXWindowChildren(xwininfoText)
+		result.XWindowObserved = result.XWindowChildCount > 0
+		result.FailureReason = xwininfoStderr
+		if result.XWindowObserved || ctx.Err() != nil {
+			return
+		}
+		if xwininfoErr != nil && strings.TrimSpace(xwininfoStderr) != "" {
+			return
+		}
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return
+		}
+		sleepFor := time.Second
+		if remaining < sleepFor {
+			sleepFor = remaining
+		}
+		timer := time.NewTimer(sleepFor)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+		}
+	}
 }
 
 func runXWinInfo(ctx context.Context, xwininfoPath string, display string) (string, string, error) {

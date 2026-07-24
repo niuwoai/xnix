@@ -1170,6 +1170,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *' wine '*'hello.exe'*) printf 'KNOWN_PORTABLE_APP_OK\\n'; exit 0 ;;\n" +
 		"esac\n" +
@@ -1249,6 +1250,7 @@ func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
@@ -1300,10 +1302,12 @@ func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
 		payload["gui_app_name"] != "winemine.exe" ||
 		payload["backend"] != "qemu-guest-wine-x11" ||
 		payload["wineboot_invoked"] != true ||
+		payload["guest_x11_driver_available"] != true ||
 		payload["launch_attempted"] != true ||
 		payload["xwininfo_invoked"] != true ||
 		payload["x_window_observed"] != true ||
 		payload["x_window_child_count"] != float64(1) ||
+		payload["x_window_observation_attempts"] == float64(0) ||
 		payload["loopback_ssh_forwarding_only"] != true ||
 		payload["qemu_required"] != true ||
 		payload["xvfb_required"] != true ||
@@ -1342,6 +1346,7 @@ func TestWindowsAppGuestWineGUISmokeCommandCopiesLocalExecutable(t *testing.T) {
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
 		"  *'mkdir -p'*) exit 0 ;;\n" +
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'hello-gui.exe'*) exit 0 ;;\n" +
@@ -1397,8 +1402,10 @@ func TestWindowsAppGuestWineGUISmokeCommandCopiesLocalExecutable(t *testing.T) {
 	if payload["status"] != "passed" ||
 		payload["gui_app_name"] != "hello-gui.exe" ||
 		payload["executable_copied"] != true ||
+		payload["guest_x11_driver_available"] != true ||
 		payload["launch_attempted"] != true ||
 		payload["x_window_observed"] != true ||
+		payload["x_window_observation_attempts"] == float64(0) ||
 		payload["raw_host_path_exposed"] != false ||
 		payload["raw_guest_gui_app_path_exposed"] != false ||
 		payload["raw_command_exposed"] != false {

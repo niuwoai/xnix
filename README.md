@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc80`.
+The project is currently at `v0.2.640-rc81`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc80`.
 
 ## Current Checkpoint
 
-v0.2.640-rc80 lets `xnix-kde-center-model` render safe real Windows GUI evidence cards from Runtime KDE Center page payloads. The model now exposes GUI evidence counts, passed-evidence counts, display fields, Runtime dispatch status, and read-only action state while filtering cards that expose backend details, host mutation, KDE policy ownership, or raw artifact paths.
+v0.2.640-rc81 tightens and verifies the real Windows GUI app smoke loop after q4 showed QEMU, guest SSH, Wine boot, and executable copy succeeding while Xvfb saw no child window. `windows-app-guest-wine-gui-smoke` now polls X window state throughout the observation window, keeps suppressing Wine first-run installer prompts while observing, verifies `guest_x11_driver_available`, and reports `x_window_observation_attempts` for failed real Xvfb/QEMU/Wine runs. The q4 managed Wine guest run material was updated to the rebuilt X11-driver image, and an unattended `winemine.exe` smoke passed with `x_window_observed=true` in `/home/xnix-run-materials/state/wine-gui-winemine-0.2.640-rc81-final.json`.
+
+The previous v0.2.640-rc80 checkpoint let `xnix-kde-center-model` render safe real Windows GUI evidence cards from Runtime KDE Center page payloads. The model now exposes GUI evidence counts, passed-evidence counts, display fields, Runtime dispatch status, and read-only action state while filtering cards that expose backend details, host mutation, KDE policy ownership, or raw artifact paths.
 
 The previous v0.2.640-rc79 checkpoint carried real Windows GUI evidence into the KDE shell package. The Compatibility Center plasmoid now has a read-only GUI evidence card entry that points KDE surfaces at `kde-center-page-preview`, `known_app_gui_evidence_count`, and `known_app_gui_evidence_cards`, while keeping launch, backend startup, repair, snapshot, restore, and host mutation disabled.
 
@@ -96,4 +98,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc80 is a targeted follow-up that reaches the 20-small-version cadence boundary for the next restricted full-smoke decision.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc81 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

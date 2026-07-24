@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc81] - 2026-07-25
+
+### Changed
+
+- Changed the Go-owned Wine guest GUI smoke to poll X window state throughout the observation window instead of checking once after a fixed sleep.
+- Changed Wine first-run installer suppression to match BusyBox `ps` output more reliably and to keep suppressing installer prompts while the GUI window is being observed.
+- Added GUI window observation attempt counts and guest Wine X11 driver availability checks to the Runtime and Ruby harness reports for diagnosing real Xvfb/QEMU/Wine runs.
+
+### Fixed
+
+- Updated the q4 managed Wine guest run material to the rebuilt X11-driver image and verified an unattended `winemine.exe` GUI smoke pass with `guest_x11_driver_available=true`, `x_window_observed=true`, and the report persisted at `/home/xnix-run-materials/state/wine-gui-winemine-0.2.640-rc81-final.json`.
+
 ## [0.2.640-rc80] - 2026-07-25
 
 ### Added
