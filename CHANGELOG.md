@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc1] - 2026-07-24
+
+### Changed
+
+- Promoted `kde-controlled-launch-action-dbus-fixture-smoke` into the formal full-smoke gate candidate so v0.2.640 requires the KDE controlled-launch action D-Bus fixture lane to PASS once the external Docker pull blocker is resolved.
+- Extended the constrained container command model and tests with explicit D-Bus fixture execution environment wiring for the KDE action smoke while preserving no networking, no privileged container, no Docker socket, managed cache volume use, and the controlled-launch scratch tmpfs.
+- Extended the full-smoke report to record KDE action smoke inclusion and pass status.
+
+### Blocked
+
+- Attempted the v0.2.640 full smoke, but Colima Docker could not pull `debian:bookworm-slim` from Docker Hub; Docker daemon requests to Docker auth/layer endpoints failed with EOF before project build/test steps could run.
+
 ## [0.2.639] - 2026-07-24
 
 ### Changed

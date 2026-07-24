@@ -10,6 +10,7 @@ module Xnix
     TOOLS_IMAGE_NAME = "xnix-builder-tools"
     SOURCE_CACHE_VOLUME = "xnix-buildroot-cache"
     CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES = "67108864"
+    KDE_CONTROLLED_LAUNCH_ACTION_DBUS_FIXTURE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE"
     DOCKER_ENV = "XNIX_DOCKER_BIN"
     DEFAULT_DOCKER_BIN = "docker"
 
@@ -96,6 +97,17 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/kde_controlled_launch_action_smoke.rb"])
     end
 
+    def kde_controlled_launch_action_dbus_fixture_smoke_command
+      runtime_command(
+        network: "none",
+        extra_mounts: [source_cache_mount],
+        extra_tmpfs: [dbus_controlled_launch_scratch_tmpfs],
+        extra_env: { KDE_CONTROLLED_LAUNCH_ACTION_DBUS_FIXTURE_ENV => "1" },
+        command: ["ruby", "scripts/kde_controlled_launch_action_smoke.rb"],
+        image: image_tag
+      )
+    end
+
     def dbus_controlled_launch_owner_fixture_smoke_command
       runtime_command(
         network: "none",
@@ -128,7 +140,7 @@ module Xnix
 
     private
 
-    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag, extra_tmpfs: [])
+    def runtime_command(network:, extra_mounts:, command:, remove: true, name: nil, detach: false, image: image_tag, extra_tmpfs: [], extra_env: {})
       [
         @docker_bin, "run", *(remove ? ["--rm"] : []), *(detach ? ["--detach"] : []), *(name.nil? ? [] : ["--name", name]), "--init",
         "--memory", BUILD_MEMORY_LIMIT,
@@ -140,6 +152,7 @@ module Xnix
         "--read-only",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=#{TEMPORARY_FILESYSTEM_SIZE}",
         *extra_tmpfs.flat_map { |tmpfs| ["--tmpfs", tmpfs] },
+        *extra_env.flat_map { |key, value| ["--env", "#{key}=#{value}"] },
         *extra_mounts.flat_map { |mount| ["--mount", mount] },
         image,
         *command

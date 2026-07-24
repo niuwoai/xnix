@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.639`.
+The project is currently at `v0.2.640-rc1`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.639`.
 
 ## Current Checkpoint
 
-v0.2.639 connects the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane. The plan now exposes both the private session-bus smoke command and the D-Bus fixture command; the harness validates both lanes from Go metadata and still requires explicit environment opt-in before executing either restricted smoke.
+v0.2.640-rc1 prepares the formal full checkpoint gate. The full smoke now requires a PASS from the KDE controlled-launch action D-Bus fixture lane in addition to the base QEMU boot, staged known Windows app dispatch smoke, and QEMU guest real Windows app Wine smoke. The formal `v0.2.640` tag remains pending because Colima Docker currently fails to pull `debian:bookworm-slim` from Docker Hub with EOF during token/layer fetch.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.638 also added the first plan-consuming KDE action smoke harness.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.639 connected the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane.
 
 ## Main References
 
@@ -44,8 +44,9 @@ ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
 ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
 ruby -Ilib test/test_kde_controlled_launch_action_stub.rb
 ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
+ruby -Ilib test/test_full_smoke_script.rb
 gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xnix-dbus-smoke-check $(pkg-config --cflags --libs gio-2.0)
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke only at the configured checkpoint cadence. The next formal full checkpoint is `v0.2.640`.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc1`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.

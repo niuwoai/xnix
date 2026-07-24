@@ -50,7 +50,8 @@ abort "QEMU boot process failed" unless status.success? || status.exitstatus == 
 
 real_app_steps = [
   [["staged-launcher-dispatch-smoke"], "PASS: staged managed launcher dispatch smoke"],
-  [["winapp-guest-wine-smoke"], "PASS: QEMU guest real Windows app Wine smoke"]
+  [["winapp-guest-wine-smoke"], "PASS: QEMU guest real Windows app Wine smoke"],
+  [["kde-controlled-launch-action-dbus-fixture-smoke"], "PASS: KDE controlled launch action smoke"]
 ]
 real_app_steps.each do |arguments, expected_pass|
   require_pass_step(arguments, expected_pass)

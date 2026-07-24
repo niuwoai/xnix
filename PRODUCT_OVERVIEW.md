@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.639
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc1
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc1 checkpoint candidate promotes the KDE controlled-launch action D-Bus fixture lane into the formal full-smoke gate. `scripts/full_smoke.rb` now requires `PASS: KDE controlled launch action smoke` after the base QEMU boot, staged known Windows app dispatch smoke, and QEMU guest real Windows app Wine smoke. `kde-controlled-launch-action-dbus-fixture-smoke` runs the plan-consuming KDE action harness in the tested Runtime image with explicit D-Bus fixture execution opt-in, restricted networking, no privileged container, no Docker socket, a managed cache volume, and the controlled-launch scratch tmpfs. The full smoke report now records KDE action smoke inclusion/pass status. The formal `v0.2.640` release remains pending because Colima Docker cannot currently pull `debian:bookworm-slim` from Docker Hub; Docker daemon requests to Docker auth/layer endpoints fail with EOF even though targeted local validation passes.
 
 The v0.2.639 checkpoint connects the KDE controlled-launch smoke plan to the D-Bus controlled-launch owner fixture lane. `kde-controlled-launch-session-bus-smoke-plan-preview` now exposes the D-Bus fixture script command, the restricted container command, and plan-defined D-Bus fixture PASS/SKIP markers alongside the private session-bus smoke lane. `kde_controlled_launch_action_smoke.rb` validates both lanes from Go-owned metadata and adds a separate `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE=1` opt-in for the fixture path, while keeping the default run a safe SKIP after plan validation. v0.2.639 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

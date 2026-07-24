@@ -30,6 +30,8 @@ known_winapp_fetch_command = container.known_winapp_fetch_command
 known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
 staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
 runtime_status_owner_service_session_bus_command = container.runtime_status_owner_service_session_bus_smoke_command
+kde_controlled_launch_action_smoke_command = container.kde_controlled_launch_action_smoke_command
+kde_controlled_launch_action_dbus_fixture_smoke_command = container.kde_controlled_launch_action_dbus_fixture_smoke_command
 dbus_controlled_launch_owner_fixture_command = container.dbus_controlled_launch_owner_fixture_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
 dockerfile = Pathname.new(PROJECT_ROOT).join("Dockerfile").read
@@ -132,6 +134,33 @@ assert(!runtime_status_owner_service_session_bus_mount.include?("type=bind"), "R
 assert(!runtime_status_owner_service_session_bus_command.include?("--privileged"), "Runtime-status owner service session-bus smoke must not be privileged")
 assert(!runtime_status_owner_service_session_bus_command.any? { |argument| argument.include?("docker.sock") }, "Runtime-status owner service session-bus smoke must not mount the Docker socket")
 assert(runtime_status_owner_service_session_bus_command.last(2) == ["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"], "Runtime-status owner service session-bus smoke must run through the session-bus harness")
+
+assert(kde_controlled_launch_action_smoke_command.fetch(kde_controlled_launch_action_smoke_command.index("--network") + 1) == "none", "KDE controlled launch action smoke must run without container networking")
+assert(kde_controlled_launch_action_smoke_command.include?("--read-only"), "KDE controlled launch action smoke must keep the container root read-only")
+assert(kde_controlled_launch_action_smoke_command.include?("--mount"), "KDE controlled launch action smoke must mount its managed cache volume")
+kde_controlled_launch_action_smoke_mount = kde_controlled_launch_action_smoke_command.fetch(kde_controlled_launch_action_smoke_command.index("--mount") + 1)
+assert(kde_controlled_launch_action_smoke_mount == expected_source_mount, "KDE controlled launch action smoke must use the managed source cache volume")
+assert(!kde_controlled_launch_action_smoke_mount.include?("type=bind"), "KDE controlled launch action smoke must not bind mount a host directory")
+assert(!kde_controlled_launch_action_smoke_command.include?("--privileged"), "KDE controlled launch action smoke must not be privileged")
+assert(!kde_controlled_launch_action_smoke_command.any? { |argument| argument.include?("docker.sock") }, "KDE controlled launch action smoke must not mount the Docker socket")
+assert(kde_controlled_launch_action_smoke_command.last(2) == ["ruby", "scripts/kde_controlled_launch_action_smoke.rb"], "KDE controlled launch action smoke must run through the KDE action harness")
+
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.fetch(kde_controlled_launch_action_dbus_fixture_smoke_command.index("--network") + 1) == "none", "KDE controlled launch action D-Bus fixture smoke must run without container networking")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?("--read-only"), "KDE controlled launch action D-Bus fixture smoke must keep the container root read-only")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?("--mount"), "KDE controlled launch action D-Bus fixture smoke must mount its managed cache volume")
+kde_controlled_launch_action_dbus_fixture_mount = kde_controlled_launch_action_dbus_fixture_smoke_command.fetch(kde_controlled_launch_action_dbus_fixture_smoke_command.index("--mount") + 1)
+assert(kde_controlled_launch_action_dbus_fixture_mount == expected_source_mount, "KDE controlled launch action D-Bus fixture smoke must use the managed source cache volume")
+assert(!kde_controlled_launch_action_dbus_fixture_mount.include?("type=bind"), "KDE controlled launch action D-Bus fixture smoke must not bind mount a host directory")
+kde_controlled_launch_action_dbus_fixture_tmpfs = kde_controlled_launch_action_dbus_fixture_smoke_command.each_with_index.filter_map do |argument, index|
+  kde_controlled_launch_action_dbus_fixture_smoke_command.fetch(index + 1) if argument == "--tmpfs"
+end
+assert(kde_controlled_launch_action_dbus_fixture_tmpfs.include?("/workspace/.xnix-dbus-controlled-launch-scratch:rw,exec,nosuid,size=#{Xnix::Container::CONTROLLED_LAUNCH_SCRATCH_SIZE_BYTES},mode=1777"), "KDE controlled launch action D-Bus fixture smoke must use an executable managed tmpfs scratch mount")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?("--env"), "KDE controlled launch action D-Bus fixture smoke must explicitly opt in to D-Bus fixture execution")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?("#{Xnix::Container::KDE_CONTROLLED_LAUNCH_ACTION_DBUS_FIXTURE_ENV}=1"), "KDE controlled launch action D-Bus fixture smoke must set the D-Bus fixture execution env")
+assert(!kde_controlled_launch_action_dbus_fixture_smoke_command.include?("--privileged"), "KDE controlled launch action D-Bus fixture smoke must not be privileged")
+assert(!kde_controlled_launch_action_dbus_fixture_smoke_command.any? { |argument| argument.include?("docker.sock") }, "KDE controlled launch action D-Bus fixture smoke must not mount the Docker socket")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?(container.image_tag), "KDE controlled launch action D-Bus fixture smoke must use the tested Runtime image")
+assert(kde_controlled_launch_action_dbus_fixture_smoke_command.last(2) == ["ruby", "scripts/kde_controlled_launch_action_smoke.rb"], "KDE controlled launch action D-Bus fixture smoke must run through the KDE action harness")
 
 assert(dbus_controlled_launch_owner_fixture_command.fetch(dbus_controlled_launch_owner_fixture_command.index("--network") + 1) == "none", "D-Bus controlled launch owner fixture smoke must run without container networking")
 assert(dbus_controlled_launch_owner_fixture_command.include?("--read-only"), "D-Bus controlled launch owner fixture smoke must keep the container root read-only")

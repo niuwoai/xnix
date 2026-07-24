@@ -1,6 +1,6 @@
 # Claude Code Next Runtime Work
 
-> Last updated: 2026-07-24 | Baseline: v0.2.639
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc1
 
 This document is an implementation handoff for Claude Code. It is intentionally separate from `docs/claude-code-implementation-packages.md`; do not edit that file while working from this handoff.
 
@@ -19,7 +19,7 @@ Implementation ownership rules:
 
 ## Current Baseline
 
-The current baseline is `v0.2.639`.
+The current baseline is `v0.2.640-rc1`.
 
 Already done:
 
@@ -29,13 +29,15 @@ Already done:
 - `kde-controlled-launch-session-bus-smoke-plan-preview` links that KDE action stub to the restricted private session-bus smoke path without executing it.
 - `kde-controlled-launch-session-bus-smoke-plan-preview` also exposes the D-Bus controlled-launch owner fixture lane command and plan-defined markers.
 - `kde_controlled_launch_action_smoke.rb` consumes the Go plan, validates both evidence-only smoke lanes, and safely skips execution unless explicitly enabled.
+- `scripts/full_smoke.rb` now requires the KDE controlled-launch action D-Bus fixture lane as part of the formal full checkpoint candidate.
+- The formal `v0.2.640` tag is still pending because Colima Docker currently fails to pull the Debian base image from Docker Hub with EOF.
 - `kde/actions/xnix-runtime-status-controlled-launch.desktop` declares the public controlled-launch D-Bus route without exposing owner-service arguments, state-root access, receipt reconstruction, or execution start state.
 - `staged_launcher_dispatch_smoke.rb` consumes `owner_service_cli_args` from the Go trigger preview.
 - `dbus_controlled_launch_owner_fixture_smoke.rb` consumes the same Go trigger preview before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
 
 Remaining near-term gap:
 
-- The KDE-facing action stub now has a plan-consuming restricted smoke harness for both session-bus and D-Bus fixture lanes, but the harness defaults to a safe SKIP unless explicitly enabled.
+- The KDE-facing action stub now has a plan-consuming restricted smoke harness for both session-bus and D-Bus fixture lanes, and the formal full checkpoint candidate requires the D-Bus fixture lane to PASS.
 - KDE-facing action wiring has not become a real KDE plugin entrypoint for launching the managed Windows app.
 - The current smoke path proves the trigger shape, but the next step should remove more adapter-owned launch knowledge and move toward a real desktop-triggered staged `xnix-compat-launch` path.
 
@@ -183,7 +185,7 @@ For every implementation change:
 4. Update `docs/xnix-current-mainline.md` when the mainline changes.
 5. Keep project-facing text in English.
 6. Do not edit `docs/claude-code-implementation-packages.md`.
-7. Do not run full Buildroot/QEMU smoke for every small version. The next formal full checkpoint is `v0.2.640`.
+7. Do not run full Buildroot/QEMU smoke for every small version. The current formal full checkpoint candidate is `v0.2.640-rc1`; promote to `v0.2.640` only after the Docker pull blocker is resolved and `ruby scripts/full_smoke.rb` passes.
 
 ## Safety Checklist
 

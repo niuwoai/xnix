@@ -35,6 +35,8 @@ module Xnix
         "known_app_smoke_passed" => known_app_smoke_included?,
         "fixture_app_smoke_included" => fixture_app_smoke_included?,
         "fixture_app_smoke_passed" => fixture_app_smoke_included?,
+        "kde_action_smoke_included" => kde_action_smoke_included?,
+        "kde_action_smoke_passed" => kde_action_smoke_included?,
         "desktop_safe_summary" => desktop_safe_summary
       }
     end
@@ -60,6 +62,8 @@ module Xnix
         "- Known Windows app smoke passed: #{data.fetch("known_app_smoke_passed")}",
         "- Fixture Windows app smoke included: #{data.fetch("fixture_app_smoke_included")}",
         "- Fixture Windows app smoke passed: #{data.fetch("fixture_app_smoke_passed")}",
+        "- KDE action smoke included: #{data.fetch("kde_action_smoke_included")}",
+        "- KDE action smoke passed: #{data.fetch("kde_action_smoke_passed")}",
         "",
         "## Steps",
         ""
@@ -87,9 +91,13 @@ module Xnix
       @steps.include?("winapp-guest-wine-smoke")
     end
 
+    def kde_action_smoke_included?
+      @steps.include?("kde-controlled-launch-action-dbus-fixture-smoke")
+    end
+
     def desktop_safe_summary
-      if @serial_log.booted? && known_app_smoke_included? && fixture_app_smoke_included?
-        return "Full build, constrained QEMU serial smoke, Wine guest, and real Windows app smokes reached the expected markers."
+      if @serial_log.booted? && known_app_smoke_included? && fixture_app_smoke_included? && kde_action_smoke_included?
+        return "Full build, constrained QEMU serial smoke, Wine guest, real Windows app smokes, and KDE controlled-launch action smoke reached the expected markers."
       end
 
       return "Full build and constrained QEMU serial smoke reached the expected boot markers." if @serial_log.booted?

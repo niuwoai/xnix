@@ -28,6 +28,7 @@ script = project_root.join("scripts/full_smoke.rb").read
   boot-system
   staged-launcher-dispatch-smoke
   winapp-guest-wine-smoke
+  kde-controlled-launch-action-dbus-fixture-smoke
 ].each do |step|
   assert(script.include?("\"#{step}\""), "full smoke script must include #{step}")
 end
@@ -46,6 +47,7 @@ fetch_known_app_index = script.index("\"fetch-known-winapp\"")
 boot_index = script.index("\"boot-system\"")
 known_app_smoke_index = script.index("\"staged-launcher-dispatch-smoke\"")
 fixture_app_smoke_index = script.index("\"winapp-guest-wine-smoke\"")
+kde_action_smoke_index = script.index("\"kde-controlled-launch-action-dbus-fixture-smoke\"")
 
 assert(build_tools_index < build_index, "full smoke must build the tools image before the tested runtime image")
 assert(build_index < fetch_index, "full smoke must build the container image before fetching sources")
@@ -61,9 +63,11 @@ assert(fetch_known_app_index < boot_index, "full smoke must fetch known Windows 
 assert(build_system_index < boot_index, "full smoke must build the system before booting QEMU")
 assert(boot_index < known_app_smoke_index, "full smoke must prove the base QEMU boot before the known Windows app smoke")
 assert(known_app_smoke_index < fixture_app_smoke_index, "full smoke must prove known app smoke before fixture regression smoke")
+assert(fixture_app_smoke_index < kde_action_smoke_index, "full smoke must prove fixture regression smoke before KDE action smoke")
 assert(script.include?("require_pass_step"), "full smoke must reject skipped real-app smoke lanes")
 assert(script.include?("PASS: staged managed launcher dispatch smoke"), "full smoke must require staged launcher known Windows app PASS evidence")
 assert(script.include?("PASS: QEMU guest real Windows app Wine smoke"), "full smoke must require fixture Windows app PASS evidence")
+assert(script.include?("PASS: KDE controlled launch action smoke"), "full smoke must require KDE action smoke PASS evidence")
 assert(script.include?("Xnix::Milestone.full_build_required?"), "full smoke must remain gated to twentieth versions")
 assert(script.include?("Xnix::FullSmokeReport"), "full smoke must emit a structured report")
 assert(script.include?("full-smoke-report.json"), "full smoke must write a JSON report")
