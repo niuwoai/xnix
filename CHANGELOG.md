@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc55] - 2026-07-24
+
+### Added
+
+- Added `windows-known-app-launch-profile-materialize`, connecting verified known Windows app artifacts to reusable launch profiles and managed `launch` mode launcher bundles.
+- Added tests proving missing known app artifacts skip safely and verified artifacts can write profiles and launcher bundles without exposing raw paths.
+
 ## [0.2.640-rc54] - 2026-07-24
 
 ### Added

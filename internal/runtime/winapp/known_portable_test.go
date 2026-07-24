@@ -133,6 +133,126 @@ func TestPreviewKnownPortableManagedLaunchBlocksUntilArtifactIsVerified(t *testi
 	assertManagedLaunchSurfaceSafe(t, result, tempDir)
 }
 
+func TestMaterializeKnownPortableLaunchProfileSkipsUntilArtifactIsVerified(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := MaterializeKnownPortableLaunchProfile(KnownLaunchProfileMaterializeRequest{
+		AppID:     "7zr",
+		CacheRoot: tempDir,
+		StateRoot: filepath.Join(tempDir, "state"),
+	})
+	if err != nil {
+		t.Fatalf("MaterializeKnownPortableLaunchProfile returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownLaunchProfileSchemaVersion ||
+		result.RequestType != KnownLaunchProfileRequestType ||
+		result.Status != SkippedStatus ||
+		result.AppID != "7zr" ||
+		result.CacheStatus != "missing" ||
+		result.ArtifactVerified ||
+		result.ProfileWritten ||
+		result.LauncherBundleWritten ||
+		result.LauncherMode != LauncherModeLaunch ||
+		result.LauncherCommand != LaunchProfileRequestType ||
+		result.NetworkRequired ||
+		result.HostRootModified ||
+		result.RawExecutablePathExposed ||
+		result.RawProfilePathExposed ||
+		result.RawStateRootPathExposed ||
+		result.RawRuntimeArgvExposed ||
+		result.SkipReason != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected skipped known launch profile materialization: %#v", result)
+	}
+	assertKnownLaunchProfileMaterializeSafe(t, result, tempDir)
+}
+
+func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
+	body := minimalPEFixture(0x014c)
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "fixture.exe")
+	if err := os.WriteFile(executablePath, body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(cacheRoot, "fixture-state")
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+		Arguments:      []string{"--help"},
+	}})
+
+	result, err := MaterializeKnownPortableLaunchProfile(KnownLaunchProfileMaterializeRequest{
+		AppID:            "fixture",
+		CacheRoot:        cacheRoot,
+		StateRoot:        stateRoot,
+		ApplicationID:    "org.xnix.known.fixture",
+		RuntimeBinary:    "go",
+		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
+	})
+	if err != nil {
+		t.Fatalf("MaterializeKnownPortableLaunchProfile returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.CacheStatus != "verified" ||
+		!result.ArtifactVerified ||
+		!result.ProfileWritten ||
+		result.ProfileFileName != "fixture.windows-app-smoke-profile.json" ||
+		!result.LauncherBundleWritten ||
+		result.LauncherMode != LauncherModeLaunch ||
+		result.LauncherCommand != LaunchProfileRequestType ||
+		result.ExpectedMarker != "FIXTURE_OK" ||
+		result.SuccessMode != SuccessModeMarker ||
+		result.ApplicationWorkspaceMode != ApplicationWorkspaceModeStaged ||
+		result.NetworkRequired ||
+		result.HostRootModified ||
+		result.RawExecutablePathExposed ||
+		result.RawProfilePathExposed ||
+		result.RawStateRootPathExposed ||
+		result.RawRuntimeArgvExposed ||
+		result.LauncherBundlePayload == nil ||
+		result.LauncherBundlePayload.LauncherCommand != LaunchProfileRequestType ||
+		result.LauncherBundlePayload.RuntimeArgumentCount != 2 {
+		t.Fatalf("unexpected ready known launch profile materialization: %#v", result)
+	}
+	profilePath := filepath.Join(stateRoot, "profiles", "fixture.windows-app-smoke-profile.json")
+	profileRequest, err := LoadSmokeProfile(profilePath)
+	if err != nil {
+		t.Fatalf("LoadSmokeProfile returned error: %v", err)
+	}
+	if profileRequest.ExecutablePath != executablePath ||
+		profileRequest.StateRoot != stateRoot ||
+		profileRequest.ExpectedMarker != "FIXTURE_OK" ||
+		profileRequest.SuccessMode != SuccessModeMarker ||
+		!profileRequest.RedactOutput ||
+		!profileRequest.StageAppDir ||
+		len(profileRequest.Arguments) != 1 ||
+		profileRequest.Arguments[0] != "--help" {
+		t.Fatalf("unexpected materialized profile request: %#v", profileRequest)
+	}
+	launcherPath := filepath.Join(stateRoot, "launcher-bundle", "launchers", "org.xnix.known.fixture.sh")
+	launcherText, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("ReadFile launcher returned error: %v", err)
+	}
+	if !strings.Contains(string(launcherText), "windows-app-launch-profile --profile") ||
+		strings.Contains(string(launcherText), "windows-app-run-smoke") {
+		t.Fatalf("unexpected launch profile launcher: %s", string(launcherText))
+	}
+	assertKnownLaunchProfileMaterializeSafe(t, result, cacheRoot)
+}
+
 func TestPreviewKnownPortableManagedLaunchEnablesVerifiedKnownArtifact(t *testing.T) {
 	body := []byte("fixture portable windows executable")
 	sum := sha256.Sum256(body)
@@ -952,6 +1072,16 @@ func assertManagedLaunchSurfaceSafe(t *testing.T, result any, hostPath string) {
 	for _, forbidden := range []string{".exe", "wine", "qemu", hostPath} {
 		if strings.Contains(lower, strings.ToLower(forbidden)) {
 			t.Fatalf("managed launch preview exposed forbidden term %q: %#v", forbidden, result)
+		}
+	}
+}
+
+func assertKnownLaunchProfileMaterializeSafe(t *testing.T, result KnownLaunchProfileMaterializeResult, hostPath string) {
+	t.Helper()
+	text := fmt.Sprintf("%#v", result)
+	for _, forbidden := range []string{hostPath, filepath.Join(hostPath, "fixture"), filepath.Join(hostPath, "state")} {
+		if strings.TrimSpace(forbidden) != "" && strings.Contains(text, forbidden) {
+			t.Fatalf("known launch profile materialization exposed raw path %q: %#v", forbidden, result)
 		}
 	}
 }

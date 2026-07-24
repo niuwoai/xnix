@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc54
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc55
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc55 checkpoint candidate connects the known Windows app catalog to the product-style launch-profile path. `windows-known-app-launch-profile-materialize` verifies a cached known app artifact, writes a reusable Windows app launch profile, and writes a managed launcher bundle in `launch` mode so KDE can point at `windows-app-launch-profile` instead of direct smoke commands. The materializer does not download artifacts, run Wine, run Docker, run QEMU, use Colima, call package managers, or mutate the host root; missing or checksum-mismatched artifacts return safe skipped evidence without writing profiles. Reports expose safe file names, launcher mode, launcher command, checksum state, marker, success mode, and staged workspace mode while hiding cache paths, executable paths, profile paths, state roots, runtime argv details, and runner paths.
 
 The v0.2.640-rc54 checkpoint candidate adds the Go-owned `windows-app-launch-profile` entrypoint for managed desktop launches. It preflights a reusable Windows app profile first, blocks safely without creating execution state when the runner is unavailable, and only delegates to `windows-app-run-smoke` when the profile is ready. Launch-profile results include safe preflight status, launch-attempt evidence, redacted Runtime payloads, PE format, architecture, staged workspace, and runner readiness while keeping profile paths, executable paths, runner paths, runtime argv details, Docker, QEMU, Colima, networking, package managers, raw app output, and host-root mutation out of desktop-facing output. Launcher bundles now also support `--launcher-mode launch`, which writes desktop scripts that call this product-style Runtime entrypoint.
 

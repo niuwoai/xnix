@@ -675,6 +675,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowsKnownAppFetch(args[1:], stdout)
 	case "windows-known-app-guest-wine-smoke":
 		return runWindowsKnownAppGuestWineSmoke(args[1:], stdout)
+	case "windows-known-app-launch-profile-materialize":
+		return runWindowsKnownAppLaunchProfileMaterialize(args[1:], stdout)
 	case "windows-known-app-managed-launch-preview":
 		return runWindowsKnownAppManagedLaunchPreview(args[1:], stdout)
 	case "windows-known-app-kde-launcher-preview":

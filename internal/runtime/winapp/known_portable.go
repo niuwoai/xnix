@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -31,6 +32,8 @@ const (
 	KnownDispatchSmokeRequestType   = "windows-known-app-dispatch-smoke"
 	KnownLaunchBridgeSchemaVersion  = "xnix.runtime.known_windows_app_launch_bridge.v1"
 	KnownLaunchBridgeRequestType    = "windows-known-app-launch-bridge-preview"
+	KnownLaunchProfileSchemaVersion = "xnix.runtime.known_windows_app_launch_profile_materialize.v1"
+	KnownLaunchProfileRequestType   = "windows-known-app-launch-profile-materialize"
 	KnownDispatchGuestBoundary      = "managed-known-app-guest-smoke"
 	DefaultKnownAppID               = "7zr"
 	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
@@ -390,6 +393,54 @@ type KnownLaunchBridgeRequest struct {
 	AppID               string
 	CacheRoot           string
 	ManagedLauncherArgv []string
+}
+
+type KnownLaunchProfileMaterializeRequest struct {
+	AppID            string
+	CacheRoot        string
+	StateRoot        string
+	ProfileOutput    string
+	ApplicationID    string
+	DisplayName      string
+	RuntimeBinary    string
+	RuntimeArguments []string
+}
+
+type KnownLaunchProfileMaterializeResult struct {
+	SchemaVersion               string                `json:"schema_version"`
+	RequestType                 string                `json:"request_type"`
+	Status                      string                `json:"status"`
+	AppID                       string                `json:"app_id"`
+	DisplayName                 string                `json:"display_name"`
+	AppVersion                  string                `json:"app_version"`
+	Architecture                string                `json:"architecture"`
+	ExecutableName              string                `json:"executable_name"`
+	ExpectedSHA256              string                `json:"expected_sha256"`
+	ActualSHA256                string                `json:"actual_sha256,omitempty"`
+	CacheStatus                 string                `json:"cache_status"`
+	ArtifactVerified            bool                  `json:"artifact_verified"`
+	ProfileWritten              bool                  `json:"profile_written"`
+	ProfileFileName             string                `json:"profile_file_name"`
+	LauncherBundleWritten       bool                  `json:"launcher_bundle_written"`
+	LauncherMode                string                `json:"launcher_mode"`
+	LauncherCommand             string                `json:"launcher_command"`
+	LauncherBundlePayload       *LauncherBundleRecord `json:"launcher_bundle_payload,omitempty"`
+	ExpectedMarker              string                `json:"expected_marker"`
+	SuccessMode                 string                `json:"success_mode"`
+	ApplicationWorkspaceMode    string                `json:"application_workspace_mode"`
+	RawHostPathExposed          bool                  `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool                  `json:"raw_executable_path_exposed"`
+	RawProfilePathExposed       bool                  `json:"raw_profile_path_exposed"`
+	RawStateRootPathExposed     bool                  `json:"raw_state_root_path_exposed"`
+	RawRuntimeArgvExposed       bool                  `json:"raw_runtime_argv_exposed"`
+	NetworkRequired             bool                  `json:"network_required"`
+	HostRootModified            bool                  `json:"host_root_modified"`
+	PrivilegedContainerRequired bool                  `json:"privileged_container_required"`
+	HostNetworkingRequired      bool                  `json:"host_networking_required"`
+	DockerSocketMounted         bool                  `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool                  `json:"broad_host_mount_required"`
+	SkipReason                  string                `json:"skip_reason,omitempty"`
+	FailureReason               string                `json:"failure_reason,omitempty"`
 }
 
 type KnownLaunchBridgeResult struct {
@@ -821,6 +872,98 @@ func PreviewKnownPortableLaunchBridge(request KnownLaunchBridgeRequest) (KnownLa
 	return result, nil
 }
 
+func MaterializeKnownPortableLaunchProfile(request KnownLaunchProfileMaterializeRequest) (KnownLaunchProfileMaterializeResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownLaunchProfileMaterializeResult{}, err
+	}
+	result := baseKnownLaunchProfileMaterializeResult(app)
+	cachePath, err := knownAppCachePath(request.CacheRoot, app)
+	if err != nil {
+		return result, err
+	}
+	actual, ok, err := verifyKnownAppFile(cachePath, app)
+	if err != nil {
+		return result, err
+	}
+	result.ActualSHA256 = actual
+	if !ok {
+		result.Status = SkippedStatus
+		if actual != "" {
+			result.CacheStatus = "checksum-mismatch"
+			result.SkipReason = "known Windows app artifact checksum mismatch"
+		} else {
+			result.CacheStatus = "missing"
+			result.SkipReason = "known Windows app artifact unavailable"
+		}
+		return result, nil
+	}
+	result.CacheStatus = "verified"
+	result.ArtifactVerified = true
+
+	stateRoot, err := knownLaunchProfileStateRoot(request.StateRoot, request.CacheRoot, app)
+	if err != nil {
+		return result, err
+	}
+	profilePath, err := knownLaunchProfileOutputPath(request.ProfileOutput, stateRoot, app)
+	if err != nil {
+		return result, err
+	}
+	profile := SmokeProfileFromRequest(Request{
+		ExecutablePath: cachePath,
+		Arguments:      append([]string{}, app.Arguments...),
+		StateRoot:      stateRoot,
+		Timeout:        30 * time.Second,
+		ExpectedMarker: app.ExpectedMarker,
+		SuccessMode:    SuccessModeMarker,
+		RedactOutput:   true,
+		StageAppDir:    true,
+	})
+	if err := os.MkdirAll(filepath.Dir(profilePath), 0o700); err != nil {
+		return result, fmt.Errorf("create known app profile directory: %w", err)
+	}
+	profileData, err := json.MarshalIndent(profile, "", "  ")
+	if err != nil {
+		return result, fmt.Errorf("encode known app launch profile: %w", err)
+	}
+	if err := os.WriteFile(profilePath, append(profileData, '\n'), 0o600); err != nil {
+		return result, fmt.Errorf("write known app launch profile: %w", err)
+	}
+	result.ProfileWritten = true
+	result.ProfileFileName = filepath.Base(profilePath)
+
+	applicationID := strings.TrimSpace(request.ApplicationID)
+	if applicationID == "" {
+		applicationID = "org.xnix.known." + app.ID
+	}
+	displayName := strings.TrimSpace(request.DisplayName)
+	if displayName == "" {
+		displayName = app.DisplayName
+	}
+	launcherRecord, err := RecordLauncherBundle(LauncherBundleRequest{
+		ProfilePath:      profilePath,
+		ApplicationID:    applicationID,
+		DisplayName:      displayName,
+		RuntimeBinary:    request.RuntimeBinary,
+		RuntimeArguments: append([]string{}, request.RuntimeArguments...),
+		LauncherMode:     LauncherModeLaunch,
+	})
+	if err != nil {
+		return result, err
+	}
+	result.LauncherBundlePayload = &launcherRecord
+	result.LauncherBundleWritten = launcherRecord.Status == PassedStatus && launcherRecord.FilesWritten
+	result.LauncherMode = launcherRecord.LauncherMode
+	result.LauncherCommand = launcherRecord.LauncherCommand
+	if !result.LauncherBundleWritten {
+		result.Status = FailedStatus
+		result.FailureReason = launcherRecord.FailureReason
+		return result, nil
+	}
+	result.Status = PassedStatus
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -843,6 +986,37 @@ func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 		DockerSocketMounted:    false,
 		BroadHostMountRequired: false,
 		RawHostPathExposed:     false,
+	}
+}
+
+func baseKnownLaunchProfileMaterializeResult(app KnownPortableApp) KnownLaunchProfileMaterializeResult {
+	return KnownLaunchProfileMaterializeResult{
+		SchemaVersion:               KnownLaunchProfileSchemaVersion,
+		RequestType:                 KnownLaunchProfileRequestType,
+		Status:                      SkippedStatus,
+		AppID:                       app.ID,
+		DisplayName:                 app.DisplayName,
+		AppVersion:                  app.Version,
+		Architecture:                app.Architecture,
+		ExecutableName:              app.ExecutableName,
+		ExpectedSHA256:              strings.ToLower(app.SHA256),
+		CacheStatus:                 "unknown",
+		LauncherMode:                LauncherModeLaunch,
+		LauncherCommand:             LaunchProfileRequestType,
+		ExpectedMarker:              app.ExpectedMarker,
+		SuccessMode:                 SuccessModeMarker,
+		ApplicationWorkspaceMode:    ApplicationWorkspaceModeStaged,
+		RawHostPathExposed:          false,
+		RawExecutablePathExposed:    false,
+		RawProfilePathExposed:       false,
+		RawStateRootPathExposed:     false,
+		RawRuntimeArgvExposed:       false,
+		NetworkRequired:             false,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
 	}
 }
 
@@ -1167,6 +1341,34 @@ func knownAppCachePath(cacheRoot string, app KnownPortableApp) (string, error) {
 		return "", fmt.Errorf("resolve known app cache root: %w", err)
 	}
 	return filepath.Join(absoluteRoot, app.ID, app.ExecutableName), nil
+}
+
+func knownLaunchProfileStateRoot(stateRoot string, cacheRoot string, app KnownPortableApp) (string, error) {
+	root := strings.TrimSpace(stateRoot)
+	if root == "" {
+		cache := strings.TrimSpace(cacheRoot)
+		if cache == "" {
+			cache = DefaultKnownAppCacheRoot
+		}
+		root = filepath.Join(cache, app.ID, "runtime-state")
+	}
+	absoluteRoot, err := filepath.Abs(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve known app launch profile state root: %w", err)
+	}
+	return absoluteRoot, nil
+}
+
+func knownLaunchProfileOutputPath(profileOutput string, stateRoot string, app KnownPortableApp) (string, error) {
+	path := strings.TrimSpace(profileOutput)
+	if path == "" {
+		path = filepath.Join(stateRoot, "profiles", app.ID+".windows-app-smoke-profile.json")
+	}
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolve known app launch profile output: %w", err)
+	}
+	return absolutePath, nil
 }
 
 func knownAppCacheRelativePath(app KnownPortableApp) string {
