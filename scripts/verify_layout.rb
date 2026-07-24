@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc23"
+EXPECTED_VERSION = "0.2.640-rc24"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -820,7 +820,7 @@ assert(windows_workstreams_cli.include?("NewWindowsCompatibilityWorkstreamsPrevi
        "Windows compatibility workstreams CLI must use the Go Runtime read model")
 
 windows_app_smoke_go = read_project_file("internal/runtime/winapp/smoke.go")
-%w[xnix.runtime.windows_app_smoke.v1 windows-app-run-smoke XNIX_WINAPP_SMOKE_OK WINEPREFIX HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired RawOutputRedacted KDESafeOutputSummary windows-compatibility-layer validateExecutable resolveRunner].each do |token|
+%w[xnix.runtime.windows_app_smoke.v1 windows-app-run-smoke XNIX_WINAPP_SMOKE_OK WINEPREFIX WINEARCH WINEDEBUG WINEDLLOVERRIDES HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired RawOutputRedacted KDESafeOutputSummary windows-compatibility-layer validateExecutable resolveRunner].each do |token|
   assert(windows_app_smoke_go.include?(token), "Go Windows app smoke runner must include #{token}")
 end
 windows_app_smoke_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")

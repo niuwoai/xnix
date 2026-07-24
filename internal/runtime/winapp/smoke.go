@@ -100,7 +100,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 
 	args := append([]string{executablePath}, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
-	command.Env = append(os.Environ(), "WINEPREFIX="+stateRoot)
+	command.Env = runnerEnvironment(stateRoot)
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -189,6 +189,16 @@ func kdeSafeOutputSummary(result Result) string {
 		return "expected smoke marker observed; " + streamSummary
 	}
 	return "expected smoke marker not observed; " + streamSummary
+}
+
+func runnerEnvironment(stateRoot string) []string {
+	return append(
+		os.Environ(),
+		"WINEPREFIX="+stateRoot,
+		"WINEARCH=win64",
+		"WINEDEBUG=-all",
+		"WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d",
+	)
 }
 
 func validateExecutable(path string) (string, error) {

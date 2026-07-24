@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc24] - 2026-07-24
+
+### Fixed
+
+- Aligned local Windows app smoke execution with the Runtime-managed Wine environment by setting `WINEARCH=win64`, `WINEDEBUG=-all`, and `WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d` alongside the isolated `WINEPREFIX`.
+- Added Runtime coverage proving the local smoke runner receives the managed Wine environment before marker observation.
+
 ## [0.2.640-rc23] - 2026-07-24
 
 ### Fixed

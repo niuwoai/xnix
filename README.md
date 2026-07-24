@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc23`.
+The project is currently at `v0.2.640-rc24`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc23`.
 
 ## Current Checkpoint
 
-v0.2.640-rc23 broadens Runtime runner discovery for real Windows app smoke attempts. The local smoke now checks `wine`, `wine64`, Homebrew Wine paths, and common macOS Wine app bundle runner paths before returning a safe runner-unavailable SKIP. The previous v0.2.640-rc22 path still makes repeated fixture rebuilds safe by clearing only the managed fixture `hello.exe` output.
+v0.2.640-rc24 aligns local real Windows app smoke execution with the Runtime-managed Wine environment used by the container and guest paths. Local smoke now sets an isolated `WINEPREFIX`, `WINEARCH=win64`, `WINEDEBUG=-all`, and disables noisy Wine helper DLLs before launching the runner. The previous v0.2.640-rc23 path still broadens runner discovery across `wine`, `wine64`, Homebrew paths, and common macOS Wine app bundles.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -70,4 +70,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc23`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc24`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

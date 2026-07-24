@@ -45,6 +45,28 @@ func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 	}
 }
 
+func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus {
+		t.Fatalf("expected managed Wine environment smoke to pass, got %#v", result)
+	}
+}
+
 func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
@@ -160,6 +182,9 @@ func writeNamedFakeRunner(t *testing.T, tempDir string, name string, exitCode in
 	path := filepath.Join(tempDir, name)
 	body := "#!/bin/sh\n" +
 		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"test \"$WINEARCH\" = win64 || exit 88\n" +
+		"test \"$WINEDEBUG\" = -all || exit 87\n" +
+		"case \"$WINEDLLOVERRIDES\" in *winemenubuilder.exe=d*mscoree=d*mshtml=d*) ;; *) exit 86 ;; esac\n" +
 		"printf '%s' '" + strings.ReplaceAll(stdout, "'", "'\\''") + "'\n" +
 		"exit " + string(rune('0'+exitCode)) + "\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
