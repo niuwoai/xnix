@@ -371,6 +371,7 @@ func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	if result.Status != PassedStatus ||
 		!result.WineBootstrapAttempted ||
 		!result.WineBootstrapSucceeded ||
+		result.WineBootstrapSkipped ||
 		result.WineBootstrapExitCode != 0 ||
 		!result.MarkerObserved {
 		t.Fatalf("unexpected bootstrap smoke result: %#v", result)
@@ -411,8 +412,50 @@ func TestRunSmokePassesRunnerArgumentsToWineboot(t *testing.T) {
 	if result.Status != PassedStatus ||
 		result.RunnerArgumentCount != 2 ||
 		!result.WineBootstrapSucceeded ||
+		result.WineBootstrapSkipped ||
 		!result.MarkerObserved {
 		t.Fatalf("unexpected runner-argument bootstrap result: %#v", result)
+	}
+}
+
+func TestRunSmokeCanSkipWineBootstrap(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, minimalPEFixture(0x8664), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", "win64", 0, DefaultMarker+"\n")
+	bootstrapMarker := filepath.Join(tempDir, "bootstrap.marker")
+	winebootBody := "#!/bin/sh\n" +
+		"printf should-not-bootstrap > '" + strings.ReplaceAll(bootstrapMarker, "'", "'\\''") + "'\n" +
+		"exit 99\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "wineboot"), []byte(winebootBody), 0o700); err != nil {
+		t.Fatalf("WriteFile wineboot returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+		SkipBootstrap:  true,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.WineBootstrapAttempted ||
+		result.WineBootstrapSucceeded ||
+		!result.WineBootstrapSkipped ||
+		result.WineBootstrapExitCode != -1 ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected skip-bootstrap smoke result: %#v", result)
+	}
+	if _, err := os.Stat(bootstrapMarker); !os.IsNotExist(err) {
+		t.Fatalf("wineboot marker must not exist when bootstrap is skipped: %v", err)
 	}
 }
 

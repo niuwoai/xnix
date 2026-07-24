@@ -34,6 +34,7 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		"timeout":           "15s",
 		"expected_marker":   "APP_OK",
 		"success_mode":      SuccessModeMarker,
+		"skip_bootstrap":    true,
 	})
 
 	result, err := PreflightSmokeProfile(profilePath)
@@ -60,6 +61,7 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		result.RunnerArgumentCount != 1 ||
 		result.AppArgumentCount != 1 ||
 		result.SuccessMode != SuccessModeMarker ||
+		!result.SkipBootstrap ||
 		!result.TimeoutConfigured ||
 		!result.ExpectedMarkerConfigured ||
 		result.WineExecuted ||

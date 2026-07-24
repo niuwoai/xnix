@@ -36,6 +36,7 @@ type SmokeProfilePreflightResult struct {
 	RunnerArgumentCount         int                     `json:"runner_argument_count"`
 	AppArgumentCount            int                     `json:"app_argument_count"`
 	SuccessMode                 string                  `json:"success_mode"`
+	SkipBootstrap               bool                    `json:"skip_bootstrap"`
 	TimeoutConfigured           bool                    `json:"timeout_configured"`
 	ExpectedMarkerConfigured    bool                    `json:"expected_marker_configured"`
 	RunnerDiagnosticsPayload    RunnerDiagnosticsResult `json:"runner_diagnostics_payload"`
@@ -83,6 +84,7 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 	}
 	result.SuccessMode = successMode
 	result.TimeoutConfigured = request.Timeout > 0
+	result.SkipBootstrap = request.SkipBootstrap
 	result.ExpectedMarkerConfigured = strings.TrimSpace(request.ExpectedMarker) != ""
 	result.RunnerArgumentCount = len(runnerInvocationArguments(request))
 	result.AppArgumentCount = len(request.Arguments)

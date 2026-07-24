@@ -41,6 +41,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	var successMode string
 	var runnerBottle string
 	var redactOutput bool
+	var skipBootstrap bool
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
 	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
@@ -51,6 +52,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&expectedMarker, "expected-marker", winapp.DefaultMarker, "expected stdout marker")
 	flags.StringVar(&successMode, "success-mode", winapp.SuccessModeMarker, "success mode: marker, exit-code, or startup-window")
 	flags.BoolVar(&redactOutput, "redact-output", false, "omit raw stdout and stderr while preserving safe output evidence")
+	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "skip Wine prefix bootstrap before application execution")
 
 	var appArgs repeatedStringFlag
 	var runnerArgs repeatedStringFlag
@@ -79,7 +81,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 		}
 		request.Timeout = timeout
 	}
-	applySmokeCLIOverrides(&request, visitedFlags, exePath, []string(appArgs), []string(runnerArgs), runnerBottle, stateRoot, workingDir, runnerPath, expectedMarker, successMode, redactOutput)
+	applySmokeCLIOverrides(&request, visitedFlags, exePath, []string(appArgs), []string(runnerArgs), runnerBottle, stateRoot, workingDir, runnerPath, expectedMarker, successMode, redactOutput, skipBootstrap)
 
 	result, err := winapp.RunSmoke(context.Background(), request)
 	if err != nil {
@@ -91,7 +93,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
-func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]bool, exePath string, appArgs []string, runnerArgs []string, runnerBottle string, stateRoot string, workingDir string, runnerPath string, expectedMarker string, successMode string, redactOutput bool) {
+func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]bool, exePath string, appArgs []string, runnerArgs []string, runnerBottle string, stateRoot string, workingDir string, runnerPath string, expectedMarker string, successMode string, redactOutput bool, skipBootstrap bool) {
 	if strings.TrimSpace(exePath) != "" {
 		request.ExecutablePath = exePath
 	}
@@ -121,6 +123,9 @@ func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]boo
 	}
 	if redactOutput {
 		request.RedactOutput = true
+	}
+	if skipBootstrap {
+		request.SkipBootstrap = true
 	}
 }
 

@@ -42,6 +42,7 @@ type Request struct {
 	ExpectedMarker   string
 	SuccessMode      string
 	RedactOutput     bool
+	SkipBootstrap    bool
 }
 
 type Result struct {
@@ -61,6 +62,7 @@ type Result struct {
 	CompatibilityLayer          string `json:"compatibility_layer"`
 	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
 	WineBootstrapSucceeded      bool   `json:"wine_bootstrap_succeeded"`
+	WineBootstrapSkipped        bool   `json:"wine_bootstrap_skipped"`
 	WineBootstrapExitCode       int    `json:"wine_bootstrap_exit_code"`
 	ExpectedMarker              string `json:"expected_marker"`
 	SuccessMode                 string `json:"success_mode"`
@@ -134,6 +136,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, err
 	}
 	result.SuccessMode = successMode
+	result.WineBootstrapSkipped = request.SkipBootstrap
 
 	executablePath, err := validateExecutable(request.ExecutablePath)
 	if err != nil {
@@ -197,7 +200,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	defer cancel()
 
 	bootstrapPath, bootstrapAvailable := resolveWineboot(runnerPath)
-	if bootstrapAvailable {
+	if bootstrapAvailable && !request.SkipBootstrap {
 		result.WineBootstrapAttempted = true
 		bootstrapArgs := append([]string{}, runnerArguments...)
 		bootstrapArgs = append(bootstrapArgs, "--init")

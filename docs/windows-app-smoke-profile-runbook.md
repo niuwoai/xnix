@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc47
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc48
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -30,6 +30,7 @@ Profile fields:
 | `timeout` | Smoke timeout such as `30s` or `2m` | Not exposed |
 | `expected_marker` | Strong marker proof for console fixtures | Marker value |
 | `success_mode` | `marker`, `exit-code`, or `startup-window` | Mode only |
+| `skip_bootstrap` | Optional local-runner bypass for Wine prefix bootstrap when first-run bootstrap hangs or is already complete | Boolean |
 | `redact_output` | Omit raw stdout and stderr from report payloads | Boolean |
 
 ## Preflight
@@ -66,6 +67,8 @@ Both paths keep Docker, QEMU, Colima, network checks, package managers, privileg
 
 Direct `--exe` smoke runs also validate the Windows `MZ` executable signature and PE machine architecture before runner resolution, working-directory setup, or app execution.
 
+When diagnosing an existing Wine prefix or a runner whose `wineboot --init` hangs, use `--skip-bootstrap` or set `skip_bootstrap: true` in a local profile. This still prepares the architecture-scoped prefix directory and launches through the managed runner environment, but it does not invoke companion `wineboot` before the app.
+
 ## Choosing Success Mode
 
 - Use `marker` when the app or fixture can print `expected_marker`.
@@ -84,6 +87,7 @@ Direct `--exe` smoke runs also validate the Windows `MZ` executable signature an
 - `wine_architecture: win64` or `win32` proves the Runtime selected the Wine prefix architecture from the PE machine field.
 - `wine_prefix_mode: architecture-scoped` proves the Runtime will keep win64 and win32 prefixes separate under the managed state root.
 - `wine_prefix_prepared: true` appears only after a direct smoke run creates the architecture-scoped prefix; profile preflight reports the intended mode without creating it.
+- `wine_bootstrap_skipped: true` proves the operator requested the local smoke to bypass companion `wineboot` before app execution.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

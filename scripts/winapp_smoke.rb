@@ -32,13 +32,14 @@ options = {
   bootstrap_timeout: "300s",
   expected_marker: MARKER,
   success_mode: "marker",
+  skip_bootstrap: false,
   runner_bottle: nil,
   runner_args: [],
   app_args: []
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -55,6 +56,7 @@ OptionParser.new do |parser|
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
   parser.on("--success-mode MODE", "Success mode: marker, exit-code, or startup-window") { |value| options[:success_mode] = value }
+  parser.on("--skip-bootstrap", "Skip Wine prefix bootstrap before app execution") { options[:skip_bootstrap] = true }
   parser.on("--runner-bottle NAME", "Compatibility runner bottle name passed before the executable path") { |value| options[:runner_bottle] = value }
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
@@ -76,6 +78,7 @@ unless options[:profile].to_s.strip.empty?
     options[:expected_marker] = profile["expected_marker"] if options[:expected_marker] == MARKER && !profile["expected_marker"].to_s.strip.empty?
     options[:success_mode] = profile["success_mode"] if options[:success_mode] == "marker" && !profile["success_mode"].to_s.strip.empty?
     options[:redact_output] = profile["redact_output"] unless options.key?(:redact_output) && !options[:redact_output].nil?
+    options[:skip_bootstrap] = profile["skip_bootstrap"] if !options[:skip_bootstrap] && profile.key?("skip_bootstrap")
     options[:runner_args] = Array(profile["runner_arguments"]) + options.fetch(:runner_args)
     options[:app_args] = Array(profile["arguments"]) + options.fetch(:app_args)
   rescue JSON::ParserError, KeyError, Errno::ENOENT
@@ -147,6 +150,7 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "runner_command_hints" => [],
     "wine_bootstrap_attempted" => false,
     "wine_bootstrap_succeeded" => false,
+    "wine_bootstrap_skipped" => false,
     "wine_bootstrap_exit_code" => -1,
     "marker_observed" => false,
     "startup_window_observed" => false,
@@ -213,6 +217,7 @@ def emit_report(report)
     puts "- Runner available: #{report.fetch("runner_available")}"
     puts "- Wine bootstrap attempted: #{report.fetch("wine_bootstrap_attempted")}"
     puts "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
+    puts "- Wine bootstrap skipped: #{report.fetch("wine_bootstrap_skipped")}"
     puts "- Wine bootstrap exit code: #{report.fetch("wine_bootstrap_exit_code")}"
     puts "- Marker observed: #{report.fetch("marker_observed")}"
     puts "- Startup window observed: #{report.fetch("startup_window_observed")}"
@@ -323,6 +328,7 @@ if profile_supplied
   report["wine_prefix_prepared"] = preflight_payload.fetch("wine_prefix_prepared", false)
   report["runner_available"] = preflight_payload.fetch("runner_available", false)
   report["runner_argument_count"] = preflight_payload.fetch("runner_argument_count", 0)
+  report["wine_bootstrap_skipped"] = preflight_payload.fetch("skip_bootstrap", false)
   report["working_directory_mode"] = preflight_payload.fetch("working_directory_mode", "executable-directory")
   report["host_root_modified"] = preflight_payload.fetch("host_root_modified", false)
   report["privileged_container_required"] = preflight_payload.fetch("privileged_container_required", false)
@@ -460,6 +466,7 @@ smoke_command.concat(["--runner-bottle", options.fetch(:runner_bottle)]) unless 
 options.fetch(:runner_args).each { |value| smoke_command.concat(["--runner-arg", value]) }
 options.fetch(:app_args).each { |value| smoke_command.concat(["--arg", value]) }
 smoke_command << "--redact-output" if options.fetch(:redact_output)
+smoke_command << "--skip-bootstrap" if options.fetch(:skip_bootstrap)
 
 smoke_stdout, smoke_stderr, smoke_status = run_command(go_env, *smoke_command)
 report["smoke_invoked"] = true
@@ -490,6 +497,7 @@ report["working_directory_mode"] = payload.fetch("working_directory_mode", "exec
 report["runner_argument_count"] = payload.fetch("runner_argument_count", 0)
 report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
 report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)
+report["wine_bootstrap_skipped"] = payload.fetch("wine_bootstrap_skipped", false)
 report["wine_bootstrap_exit_code"] = payload.fetch("wine_bootstrap_exit_code", -1)
 report["marker_observed"] = payload.fetch("marker_observed", false)
 report["startup_window_observed"] = payload.fetch("startup_window_observed", false)

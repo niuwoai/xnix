@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc48] - 2026-07-24
+
+### Added
+
+- Added `--skip-bootstrap` to local Windows app smoke so operators can bypass companion `wineboot` during real executable diagnostics.
+- Added `skip_bootstrap` profile support and `wine_bootstrap_skipped` evidence to Go Runtime, preflight, Ruby JSON, and Markdown reports.
+
 ## [0.2.640-rc47] - 2026-07-24
 
 ### Added

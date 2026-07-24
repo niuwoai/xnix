@@ -10,5 +10,6 @@
   "timeout": "30s",
   "expected_marker": "XNIX_WINAPP_SMOKE_OK",
   "success_mode": "marker",
+  "skip_bootstrap": false,
   "redact_output": true
 }

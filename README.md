@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc47`.
+The project is currently at `v0.2.640-rc48`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc47`.
 
 ## Current Checkpoint
 
-v0.2.640-rc47 prepares architecture-scoped Wine prefixes, reporting `wine_prefix_mode` and `wine_prefix_prepared` without exposing prefix paths. The previous v0.2.640-rc46 checkpoint mapped parsed PE architecture into `win64` or `win32` Wine policy.
+v0.2.640-rc48 lets local real Windows app smoke skip companion `wineboot` through `--skip-bootstrap` or profile `skip_bootstrap`, reporting `wine_bootstrap_skipped` while preserving architecture-scoped prefixes and path-safe evidence. The previous v0.2.640-rc47 checkpoint prepared architecture-scoped Wine prefixes.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc47`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc48`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

@@ -21,7 +21,8 @@ func TestLoadSmokeProfileParsesReusableRealAppSettings(t *testing.T) {
   "timeout": "45s",
   "expected_marker": "APP_OK",
   "success_mode": "marker",
-  "redact_output": true
+  "redact_output": true,
+  "skip_bootstrap": true
 }`)
 	if err := os.WriteFile(profilePath, profile, 0o600); err != nil {
 		t.Fatalf("WriteFile profile returned error: %v", err)
@@ -39,7 +40,8 @@ func TestLoadSmokeProfileParsesReusableRealAppSettings(t *testing.T) {
 		request.Timeout.String() != "45s" ||
 		request.ExpectedMarker != "APP_OK" ||
 		request.SuccessMode != "marker" ||
-		!request.RedactOutput {
+		!request.RedactOutput ||
+		!request.SkipBootstrap {
 		t.Fatalf("unexpected profile request: %#v", request)
 	}
 	if len(request.RunnerArguments) != 1 ||

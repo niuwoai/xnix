@@ -23,6 +23,7 @@ type SmokeProfile struct {
 	ExpectedMarker   string   `json:"expected_marker"`
 	SuccessMode      string   `json:"success_mode"`
 	RedactOutput     bool     `json:"redact_output"`
+	SkipBootstrap    bool     `json:"skip_bootstrap"`
 }
 
 func LoadSmokeProfile(path string) (Request, error) {
@@ -57,6 +58,7 @@ func LoadSmokeProfile(path string) (Request, error) {
 		ExpectedMarker:   profile.ExpectedMarker,
 		SuccessMode:      profile.SuccessMode,
 		RedactOutput:     profile.RedactOutput,
+		SkipBootstrap:    profile.SkipBootstrap,
 	}, nil
 }
 

@@ -26,6 +26,7 @@ assert(template.fetch("state_root") == ".local/xnix/winapp-smoke/profile-state",
 assert(template.fetch("timeout") == "30s", "profile template must provide a bounded timeout")
 assert(template.fetch("expected_marker") == "XNIX_WINAPP_SMOKE_OK", "profile template must default to the Xnix smoke marker")
 assert(template.fetch("success_mode") == "marker", "profile template must default to marker mode")
+assert(template.fetch("skip_bootstrap") == false, "profile template must default to Wine bootstrap enabled")
 assert(template.fetch("redact_output"), "profile template must request redacted output")
 assert(template.fetch("runner_arguments").is_a?(Array), "profile template runner arguments must be an array")
 assert(template.fetch("arguments").is_a?(Array), "profile template app arguments must be an array")
@@ -40,6 +41,8 @@ assert(template.fetch("arguments").is_a?(Array), "profile template app arguments
   "windows_executable_signature_observed",
   "working_directory_mode",
   "runner_argument_count",
+  "skip_bootstrap",
+  "wine_bootstrap_skipped",
   "startup-window"
 ].each do |token|
   assert(runbook.include?(token), "profile runbook must include #{token}")

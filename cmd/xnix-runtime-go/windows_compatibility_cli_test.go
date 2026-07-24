@@ -146,6 +146,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
 		payload["wine_bootstrap_succeeded"] != false ||
+		payload["wine_bootstrap_skipped"] != false ||
 		payload["wine_bootstrap_exit_code"] != float64(-1) ||
 		payload["marker_observed"] != true ||
 		payload["host_root_modified"] != false ||
@@ -160,6 +161,61 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		strings.Contains(output.String(), "private-bottle-name") ||
 		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsAppRunSmokeCommandCanSkipBootstrap(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "wine")
+	runnerBody := "#!/bin/sh\n" +
+		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	bootstrapMarker := filepath.Join(tempDir, "bootstrap.marker")
+	winebootBody := "#!/bin/sh\n" +
+		"printf should-not-bootstrap > '" + strings.ReplaceAll(bootstrapMarker, "'", "'\\''") + "'\n" +
+		"exit 99\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "wineboot"), []byte(winebootBody), 0o700); err != nil {
+		t.Fatalf("WriteFile wineboot returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--skip-bootstrap",
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["wine_bootstrap_attempted"] != false ||
+		payload["wine_bootstrap_succeeded"] != false ||
+		payload["wine_bootstrap_skipped"] != true ||
+		payload["wine_bootstrap_exit_code"] != float64(-1) ||
+		payload["marker_observed"] != true {
+		t.Fatalf("unexpected skip-bootstrap payload: %#v", payload)
+	}
+	if _, err := os.Stat(bootstrapMarker); !os.IsNotExist(err) {
+		t.Fatalf("wineboot marker must not exist when bootstrap is skipped: %v", err)
 	}
 }
 
