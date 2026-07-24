@@ -84,6 +84,7 @@ def base_report(format, redact_output, expected_marker, executable_source, backe
     "env_runner_configured" => false,
     "runner_candidate_count" => 0,
     "runner_diagnostics_next_action" => "",
+    "runner_command_hints" => [],
     "wine_bootstrap_attempted" => false,
     "wine_bootstrap_succeeded" => false,
     "wine_bootstrap_exit_code" => -1,
@@ -129,6 +130,10 @@ def emit_report(report)
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
+    unless report.fetch("runner_command_hints").empty?
+      puts "- Runner command hints:"
+      report.fetch("runner_command_hints").each { |hint| puts "  - #{hint}" }
+    end
     puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
     puts "- Container smoke invoked: #{report.fetch("container_smoke_invoked")}"
     puts "- Container image available: #{report.fetch("container_image_available")}"
@@ -293,6 +298,7 @@ report["runner_diagnostics_status"] = diagnostics_payload.fetch("status")
 report["env_runner_configured"] = diagnostics_payload.fetch("env_runner_configured", false)
 report["runner_candidate_count"] = diagnostics_payload.fetch("candidate_count", 0)
 report["runner_diagnostics_next_action"] = diagnostics_payload.fetch("next_action", "")
+report["runner_command_hints"] = diagnostics_payload.fetch("runner_command_hints", [])
 report["runner_available"] = diagnostics_payload.fetch("runner_available", false)
 
 smoke_command = [

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc31] - 2026-07-24
+
+### Added
+
+- Added safe `runner_command_hints` to the Go-owned Windows app runner diagnostics result.
+- Carried runner command hints into `scripts/winapp_smoke.rb` JSON and Markdown reports so real `.exe` smoke attempts can be rerun with `XNIX_WINDOWS_RUNNER` or `--runner` placeholder commands without exposing host paths.
+
 ## [0.2.640-rc30] - 2026-07-24
 
 ### Changed

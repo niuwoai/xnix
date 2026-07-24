@@ -79,6 +79,7 @@ type RunnerDiagnosticsResult struct {
 	Candidates                  []RunnerCandidateEvidence `json:"candidates"`
 	SelectedRunnerName          string                    `json:"selected_runner_name"`
 	NextAction                  string                    `json:"next_action"`
+	RunnerCommandHints          []string                  `json:"runner_command_hints"`
 	RawPathExposed              bool                      `json:"raw_path_exposed"`
 	HostRootModified            bool                      `json:"host_root_modified"`
 	PrivilegedContainerRequired bool                      `json:"privileged_container_required"`
@@ -259,6 +260,7 @@ func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
 
 	if result.RunnerAvailable {
 		result.NextAction = "Run `windows-app-run-smoke` with the selected runner or omit `--runner` when it is discoverable from the managed environment."
+		result.RunnerCommandHints = runnerCommandHints(true)
 		return result
 	}
 	if explicitRunner != "" {
@@ -268,7 +270,22 @@ func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
 	} else {
 		result.NextAction = "Install or provide a Wine-compatible runner, then rerun `windows-app-run-smoke`; no Docker, QEMU, Colima, network, or package-manager action was attempted by this diagnostic."
 	}
+	result.RunnerCommandHints = runnerCommandHints(false)
 	return result
+}
+
+func runnerCommandHints(runnerAvailable bool) []string {
+	if runnerAvailable {
+		return []string{
+			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
+			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
+		}
+	}
+	return []string{
+		"XNIX_WINDOWS_RUNNER=path/to/wine ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
+		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
+		"ruby scripts/winapp_smoke.rb --format json",
+	}
 }
 
 func baseResult(request Request) Result {

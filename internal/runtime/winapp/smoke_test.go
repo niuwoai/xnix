@@ -137,6 +137,7 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 		!result.ExplicitRunnerSupplied ||
 		result.CandidateCount != 1 ||
 		result.SelectedRunnerName != "fake-runner" ||
+		len(result.RunnerCommandHints) != 2 ||
 		result.RawPathExposed ||
 		result.HostRootModified ||
 		result.PackageManagerInvoked ||
@@ -152,6 +153,10 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 		!result.Candidates[0].Selected ||
 		result.Candidates[0].Reason != "available" {
 		t.Fatalf("unexpected candidate evidence: %#v", result.Candidates)
+	}
+	if !strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json") ||
+		strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), runnerPath) {
+		t.Fatalf("unexpected available runner command hints: %#v", result.RunnerCommandHints)
 	}
 }
 
@@ -213,9 +218,16 @@ func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 		!result.ExplicitRunnerSupplied ||
 		result.CandidateCount != 1 ||
 		result.SelectedRunnerName != "" ||
+		len(result.RunnerCommandHints) != 3 ||
 		result.RawPathExposed ||
 		!strings.Contains(result.NextAction, "--runner PATH") {
 		t.Fatalf("unexpected missing runner diagnostics: %#v", result)
+	}
+	hints := strings.Join(result.RunnerCommandHints, "\n")
+	if !strings.Contains(hints, "XNIX_WINDOWS_RUNNER=path/to/wine") ||
+		!strings.Contains(hints, "--runner path/to/wine") ||
+		strings.Contains(hints, missingRunner) {
+		t.Fatalf("unexpected missing runner command hints: %#v", result.RunnerCommandHints)
 	}
 	if len(result.Candidates) != 1 ||
 		result.Candidates[0].Available ||

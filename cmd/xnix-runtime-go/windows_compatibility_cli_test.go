@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -184,6 +185,10 @@ func TestWindowsAppRunnerDiagnosticsCommandUsesExplicitRunner(t *testing.T) {
 		payload["qemu_executed"] != false ||
 		payload["colima_executed"] != false {
 		t.Fatalf("unexpected runner diagnostics payload: %#v", payload)
+	}
+	commandHints, ok := payload["runner_command_hints"].([]any)
+	if !ok || len(commandHints) != 2 || !strings.Contains(fmt.Sprint(commandHints[0]), "path/to/app.exe") {
+		t.Fatalf("unexpected runner command hints: %#v", payload["runner_command_hints"])
 	}
 	if strings.Contains(output.String(), runnerPath) || strings.Contains(output.String(), tempDir) {
 		t.Fatalf("runner diagnostics leaked raw host paths: %s", output.String())

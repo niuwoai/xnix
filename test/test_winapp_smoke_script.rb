@@ -53,6 +53,10 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         }],
         "selected_runner_name" => "fake-runner",
         "next_action" => "Run windows-app-run-smoke with the selected runner.",
+        "runner_command_hints" => [
+          "ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
+          "ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json"
+        ],
         "raw_path_exposed" => false,
         "host_root_modified" => false,
         "privileged_container_required" => false,
@@ -171,6 +175,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
   assert(report.fetch("runner_diagnostics_status") == "passed", "JSON report must preserve diagnostics status")
   assert(report.fetch("runner_candidate_count") == 1, "JSON report must preserve runner candidate count")
+  assert(report.fetch("runner_command_hints").any? { |hint| hint.include?("path/to/app.exe") }, "JSON report must expose safe runner command hints")
   assert(report.fetch("runner_diagnostics_payload").fetch("request_type") == "windows-app-runner-diagnostics", "JSON report must embed diagnostics payload")
   assert(report.fetch("smoke_invoked"), "JSON report must record smoke invocation")
   assert(!report.fetch("wine_bootstrap_attempted"), "JSON report must preserve bootstrap attempted state")
@@ -188,6 +193,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
+  assert(markdown_stdout.include?("Runner command hints:"), "Markdown report must expose runner command hints")
+  assert(markdown_stdout.include?("ruby scripts/winapp_smoke.rb --exe path/to/app.exe"), "Markdown report must include safe smoke command hint")
   assert(markdown_stdout.include?("Wine bootstrap attempted: false"), "Markdown report must expose bootstrap attempted state")
   assert(markdown_stdout.include?("Raw output redacted: true"), "Markdown report must expose redaction")
   assert(markdown_stdout.include?("Wine executed by script: false"), "Markdown report must keep Wine execution-by-script false")
@@ -216,6 +223,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
   assert(!custom_stdout.include?(custom_exe.to_s), "custom report must not leak executable path")
   assert(!custom_stdout.include?(custom_runner.to_s), "custom report must not leak runner path")
+  assert(!custom_report.fetch("runner_command_hints").join("\n").include?(custom_runner.to_s), "custom command hints must not leak runner path")
 
   custom_invocations = fake_go_log.read.lines.map { |line| line.split("\u0001") }
   last_invocation = custom_invocations.last

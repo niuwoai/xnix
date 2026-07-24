@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc30
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc31
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc31 checkpoint candidate makes real Windows app smoke readiness more actionable. The Go-owned `windows-app-runner-diagnostics` result now includes safe `runner_command_hints`, and `scripts/winapp_smoke.rb` carries those hints through JSON and Markdown reports. The hints show placeholder `XNIX_WINDOWS_RUNNER` and `--runner` command forms without exposing host paths, so an operator with Wine, CrossOver, or another Wine-compatible runner can move directly from runner SKIP evidence to a real `.exe` PASS attempt.
 
 The v0.2.640-rc30 checkpoint candidate removes the duplicated container smoke orchestration path. `scripts/winapp_container_smoke.rb` now delegates to `scripts/winapp_smoke.rb --backend container`, preserving `XNIX_WINE_IMAGE`, `XNIX_WINE_PLATFORM`, the 420-second execution timeout, and the 300-second bootstrap timeout while keeping the unified smoke report as the single product evidence path for future human-authorized restricted-container Windows app PASS attempts.
 
