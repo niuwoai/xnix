@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc97
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc98
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc98 checkpoint candidate adds a restricted KDE controlled-launch action smoke lane for the owner-controlled MessageBox GUI handoff. `scripts/kde_controlled_launch_action_smoke.rb` now creates a Runtime-status MessageBox handoff, projects a safe owner GUI report through `gui-smoke-evidence-preview`, renders the full `kde-center-page-preview`, and feeds that page back into `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID`. The default smoke remains a safe SKIP after validation, so it verifies the desktop handoff contract without launching a backend unless an operator explicitly opts into execution.
 
 The v0.2.640-rc97 checkpoint candidate lets KDE hand an entire `kde-center-page-preview` payload back to the Go Runtime when preparing the Runtime-controlled launch action. `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID` selects exactly one matching owner-controlled GUI evidence card from the page, derives the handoff from that card's single safe forwarded `evidence-relative-path`, revalidates the persisted Runtime evidence, and returns the controlled-launch action preview. The Runtime rejects unsafe pages with opened launch/backend gates, backend detail exposure, host-root mutation, missing app identity, or ambiguous card matches, keeping KDE as a replaceable shell rather than a launch-policy owner.
 

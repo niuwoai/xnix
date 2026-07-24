@@ -8,10 +8,13 @@ require "pathname"
 require "securerandom"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
+VERSION = PROJECT_ROOT.join("VERSION").read.strip
 SMOKE_NAME = "KDE controlled launch action smoke"
 PASS_MARKER = "PASS: KDE controlled launch action smoke"
 SKIP_MARKER = "SKIP: KDE controlled launch action smoke"
 APP_ID = "7zr"
+GUI_APP_ID = "org.xnix.apps.messagebox"
+GUI_APP_NAME = "Xnix MessageBox"
 GUEST_BOUNDARY = "managed-known-app-guest-smoke"
 RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
 WORK_ROOT = PROJECT_ROOT.join(".cache", "xnix", "kde-controlled-launch-action-smoke", RUN_ID)
@@ -79,6 +82,94 @@ def assert_false_payload(payload, fields, label)
   fields.each do |field|
     assert(payload[field] == false, "#{label} must keep #{field}=false")
   end
+end
+
+def messagebox_gui_projection
+  session_id = "xnix-messagebox-controlled-session-#{VERSION}"
+  {
+    "projection_type" => "known-app-kde-runtime-status-launch-delegated-evidence",
+    "runtime_method" => "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence",
+    "request_type" => "windows-known-app-dispatch-smoke",
+    "status" => "passed",
+    "app_id" => GUI_APP_ID,
+    "display_name" => GUI_APP_NAME,
+    "app_version" => VERSION,
+    "evidence_source" => "wine-guest-gui-smoke",
+    "guest_boundary" => GUEST_BOUNDARY,
+    "runtime_owned_dispatch" => true,
+    "artifact_verified" => true,
+    "marker_observed" => true,
+    "session_gated_controlled_dispatch_consumed" => true,
+    "session_gated_controlled_dispatch_state" => "created-after-session-gated-review",
+    "session_gated_review_receipt_id" => "xnix-messagebox-session-review-#{VERSION}",
+    "launch_authorization_receipt_id" => "xnix-messagebox-launch-authorization-#{VERSION}",
+    "launch_authorization_receipt_state" => "recorded",
+    "launch_gate_state" => "controlled-dispatch-ready",
+    "launch_gate_consumed" => true,
+    "launch_gate_receipt_accepted" => true,
+    "launch_gate_guest_boundary_accepted" => true,
+    "controlled_dispatch_ready" => true,
+    "controlled_execution_session_consumed" => true,
+    "controlled_execution_session_id" => session_id,
+    "controlled_session_digest_verified" => true,
+    "controlled_session_relative_path" => "execution-ledger/sessions/#{session_id}.json",
+    "runtime_owner_consumable_session" => true,
+    "kde_read_model_consumable_session" => true,
+    "controlled_session_window_observed" => true,
+    "compatibility_center_projection_ready" => true,
+    "kde_center_projection_ready" => true,
+    "state_root_path_exposed" => false,
+    "managed_launcher_path_exposed" => false,
+    "raw_launcher_output_exposed" => false,
+    "backend_details_exposed" => false,
+    "host_root_modified" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false
+  }
+end
+
+def messagebox_owner_gui_report(evidence_relative_path)
+  {
+    "schema_version" => "xnix.scripts.wine_guest_gui_smoke.v1",
+    "request_type" => "wine-guest-gui-smoke",
+    "status" => "passed",
+    "execute" => true,
+    "gui_app_name" => "xnix-messagebox-smoke.exe",
+    "local_gui_executable_configured" => true,
+    "executable_copied" => true,
+    "owner_controlled_launch_requested" => true,
+    "owner_external_gui_app_requested" => true,
+    "owner_external_gui_app_delivery" => "owner-managed-copy",
+    "owner_seed_evidence_projected" => true,
+    "owner_service_call_ready" => true,
+    "owner_managed_launcher_invoked" => true,
+    "owner_delegated_managed_artifact_copied" => true,
+    "owner_delegated_smoke_passed" => true,
+    "owner_delegated_evidence_source" => "wine-guest-gui-smoke",
+    "owner_delegated_execution_started" => true,
+    "owner_delegated_controlled_session_window_observed" => true,
+    "owner_delegated_host_root_modified" => false,
+    "owner_delegated_docker_socket_mounted" => false,
+    "owner_delegated_broad_host_mount_required" => false,
+    "owner_delegated_raw_command_exposed" => false,
+    "owner_delegated_backend_details_exposed" => false,
+    "owner_evidence_handoff_ready" => true,
+    "owner_evidence_relative_path" => evidence_relative_path,
+    "runtime_go_owned_gui_smoke" => true,
+    "runtime_payload_schema_version" => "xnix.runtime.windows_app_guest_wine_gui_smoke.v1",
+    "wineboot_invoked" => true,
+    "x_window_observed" => true,
+    "x_window_child_count" => 3,
+    "xwininfo_bytes" => 512,
+    "guest_stderr_bytes" => 0,
+    "guest_graphics_driver_error_observed" => false,
+    "host_root_modified" => false,
+    "privileged_container_required" => false,
+    "host_networking_required" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "kde_safe_output_summary" => "MessageBox GUI smoke evidence observed a Runtime-owned X window."
+  }
 end
 
 FileUtils.mkdir_p(STATE_ROOT)
@@ -162,8 +253,105 @@ assert_false_payload(
 )
 assert_no_forbidden(plan_stdout, [STATE_ROOT.to_s, "owner_service_call_args", "wine ", "wine/", ".wine", "qemu-system", "program files"], "plan output")
 
+runtime_status_projection_path = WORK_ROOT.join("messagebox-runtime-status-projection.json")
+gui_report_path = WORK_ROOT.join("messagebox-owner-gui-report.json")
+gui_evidence_path = WORK_ROOT.join("messagebox-owner-gui-evidence.json")
+gui_page_path = WORK_ROOT.join("messagebox-kde-center-page.json")
+File.write(runtime_status_projection_path, JSON.pretty_generate(messagebox_gui_projection))
+
+gui_record, gui_record_stdout = run_json(
+  go_env,
+  *runtime_command,
+  "known-app-kde-runtime-status-launch-evidence-record",
+  "--state-root", STATE_ROOT.to_s,
+  "--evidence-file", runtime_status_projection_path.to_s
+)
+gui_evidence_relative_path = gui_record.fetch("evidence_relative_path")
+assert(gui_record["app_id"] == GUI_APP_ID, "GUI record must preserve the MessageBox app id")
+assert(gui_record["known_app_smoke_evidence_ready"] == true, "GUI record must be center-page consumable")
+assert(gui_evidence_relative_path.start_with?("runtime/kde-runtime-status-launch-evidence/"), "GUI record must expose only relative Runtime evidence")
+assert_false_payload(
+  gui_record,
+  %w[state_root_path_exposed evidence_path_exposed managed_launcher_path_exposed raw_launcher_output_exposed backend_details_exposed host_root_modified docker_socket_mounted broad_host_mount_required desktop_launch_enabled backend_launch_enabled execution_started backend_process_started],
+  "GUI record"
+)
+assert_no_forbidden(gui_record_stdout, [STATE_ROOT.to_s, runtime_status_projection_path.to_s, "owner_service_call_args", "wine/", ".wine", "qemu-system", "program files"], "GUI record output")
+
+File.write(gui_report_path, JSON.pretty_generate(messagebox_owner_gui_report(gui_evidence_relative_path)))
+gui_evidence, gui_evidence_stdout = run_json(
+  go_env,
+  *runtime_command,
+  "gui-smoke-evidence-preview",
+  "--gui-smoke-report", gui_report_path.to_s,
+  "--app-id", GUI_APP_ID,
+  "--display-name", GUI_APP_NAME,
+  "--app-version", VERSION,
+  "--output", gui_evidence_path.to_s
+)
+assert(gui_evidence["request_type"] == "gui-smoke-evidence-preview", "GUI evidence projection request type must match")
+assert(gui_evidence["owner_controlled_launch_verified"] == true, "GUI evidence must verify owner-controlled launch")
+assert(gui_evidence["owner_managed_copy_verified"] == true, "GUI evidence must verify owner-managed copy")
+assert(gui_evidence["owner_evidence_handoff_ready"] == true, "GUI evidence must preserve owner handoff readiness")
+assert(gui_evidence["owner_evidence_relative_path"] == gui_evidence_relative_path, "GUI evidence must preserve the Runtime-status handoff")
+assert(gui_evidence.dig("known_app_smoke_evidence", "primary_action_id") == "show-runtime-controlled-launch", "GUI evidence card must expose the Runtime-controlled action")
+assert_false_payload(
+  gui_evidence,
+  %w[desktop_launch_enabled backend_launch_enabled action_execution_enabled backend_details_exposed raw_output_exposed remote_path_exposed host_root_modified privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required],
+  "GUI evidence"
+)
+assert_no_forbidden(gui_evidence_stdout, [STATE_ROOT.to_s, gui_report_path.to_s, gui_evidence_path.to_s, "owner_service_call_args", "wine/", ".wine", "qemu-system", "program files"], "GUI evidence output")
+
+gui_page, gui_page_stdout = run_json(
+  go_env,
+  *runtime_command,
+  "kde-center-page-preview",
+  "--registry", PROJECT_ROOT.join("runtime/recipes/registry.json").to_s,
+  "--app", GUI_APP_ID,
+  "--decision", "approved",
+  "--known-app-evidence-file", gui_evidence_path.to_s
+)
+File.write(gui_page_path, JSON.pretty_generate(gui_page))
+assert(gui_page["request_type"] == "kde-center-page-preview", "GUI page request type must match")
+assert(gui_page["application_id"] == GUI_APP_ID, "GUI page must target MessageBox")
+assert(gui_page["known_app_gui_evidence_count"] == 1, "GUI page must include one GUI evidence card")
+assert(gui_page["known_app_owner_controlled_gui_evidence_count"] == 1, "GUI page must include owner-controlled GUI evidence")
+assert(gui_page["known_app_owner_managed_copy_verified_count"] == 1, "GUI page must include owner-managed copy evidence")
+assert(gui_page["known_app_gui_evidence_cards"].length == 1, "GUI page must carry one safe GUI card")
+owner_gui_card = gui_page.fetch("known_app_gui_evidence_cards").first
+assert(owner_gui_card.fetch("primary_action_id") == "show-runtime-controlled-launch", "owner GUI card must expose the Runtime-controlled action")
+assert(owner_gui_card.fetch("desktop_callable_route") == "kde-dbus-runtime-status-action", "owner GUI card must expose the controlled desktop route")
+assert(owner_gui_card.fetch("kde_forwarded_arguments") == [gui_evidence_relative_path], "owner GUI card must forward only the Runtime evidence handle")
+assert(owner_gui_card.fetch("owner_service_args_exposed_to_kde") == false, "owner GUI card must hide owner service arguments")
+assert_false_payload(
+  gui_page,
+  %w[launch_enabled execution_started backend_process_started host_root_modified backend_details_exposed],
+  "GUI page"
+)
+assert_no_forbidden(gui_page_stdout, [STATE_ROOT.to_s, gui_evidence_path.to_s, "owner_service_call_args", "wine/", ".wine", "qemu-system", "program files"], "GUI page output")
+
+gui_action, gui_action_stdout = run_json(
+  go_env,
+  *runtime_command,
+  "kde-controlled-launch-action-preview",
+  "--state-root", STATE_ROOT.to_s,
+  "--kde-center-page-file", gui_page_path.to_s,
+  "--app", GUI_APP_ID
+)
+assert(gui_action["request_type"] == "kde-controlled-launch-action-preview", "GUI page action request type must match")
+assert(gui_action["application_id"] == GUI_APP_ID, "GUI page action must target MessageBox")
+assert(gui_action["public_dbus_method"] == "org.xnix.Compatibility1.ShowRuntimeControlledLaunch", "GUI page action must target the controlled D-Bus method")
+assert(gui_action["kde_forwarded_arguments"] == [gui_evidence_relative_path], "GUI page action must forward only the Runtime evidence handle")
+assert(gui_action["desktop_callable_route"] == "kde-dbus-runtime-status-action", "GUI page action must preserve the controlled route")
+assert(gui_action["kde_forwards_only_evidence_handle"] == true, "GUI page action must keep KDE evidence-only")
+assert_false_payload(
+  gui_action,
+  %w[kde_policy_owner owner_service_args_exposed_to_kde kde_owns_owner_service_args desktop_kde_state_root_access desktop_receipt_fields_reconstructed state_root_path_exposed evidence_path_exposed managed_launcher_path_exposed raw_launcher_output_exposed backend_details_exposed host_root_modified docker_socket_mounted broad_host_mount_required privileged_container_required host_network_required desktop_launch_enabled backend_launch_enabled execution_started backend_process_started request_object_created_by_kde],
+  "GUI page action"
+)
+assert_no_forbidden(gui_action_stdout, [STATE_ROOT.to_s, gui_page_path.to_s, gui_evidence_path.to_s, runtime_status_projection_path.to_s, "owner_service_call_args", "wine/", ".wine", "qemu-system", "program files"], "GUI page action output")
+
 unless ENV.fetch(EXECUTE_ENV, "") == "1" || ENV.fetch(EXECUTE_DBUS_FIXTURE_ENV, "") == "1"
-  puts "#{SKIP_MARKER} (validated Go-owned plan and D-Bus fixture lane; set #{EXECUTE_ENV}=1 or #{EXECUTE_DBUS_FIXTURE_ENV}=1 to execute a restricted smoke)"
+  puts "#{SKIP_MARKER} (validated Go-owned plan, GUI center-page handoff, and D-Bus fixture lane; set #{EXECUTE_ENV}=1 or #{EXECUTE_DBUS_FIXTURE_ENV}=1 to execute a restricted smoke)"
   exit 0
 end
 

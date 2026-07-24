@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc98] - 2026-07-25
+
+### Added
+
+- Added a restricted KDE controlled-launch action smoke lane that validates the owner-controlled MessageBox GUI handoff through Runtime-status evidence, `gui-smoke-evidence-preview`, `kde-center-page-preview`, and `kde-controlled-launch-action-preview --kde-center-page-file`.
+
+### Changed
+
+- Changed the KDE controlled-launch action smoke default SKIP summary to report GUI center-page handoff validation while keeping actual session-bus or backend execution behind explicit opt-in environment variables.
+
 ## [0.2.640-rc97] - 2026-07-25
 
 ### Added
