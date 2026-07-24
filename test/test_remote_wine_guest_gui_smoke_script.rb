@@ -32,6 +32,10 @@ assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build th
 assert(payload["remote_runtime_bin"].end_with?("/bin/xnix-runtime-go"), "remote GUI smoke must expose the managed Runtime binary location")
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")
 assert(payload["report_output"].start_with?("/home/xnix-"), "remote report output must stay under /home/xnix-*")
+assert(payload["evidence_output"].start_with?("/home/xnix-"), "remote evidence output must stay under /home/xnix-*")
+assert(payload["evidence_preview_planned"] == true, "remote GUI smoke must project Runtime GUI evidence after a pass")
+assert(payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke must expose the default evidence app id")
+assert(payload["evidence_display_name"] == "Mines", "remote GUI smoke must expose the default evidence display name")
 assert(payload["state_root"].start_with?("/home/xnix-"), "remote state root must stay under /home/xnix-*")
 assert(payload["privileged_container_required"] == false, "remote GUI smoke must not require privileged containers")
 assert(payload["host_networking_required"] == false, "remote GUI smoke must not require host networking")
@@ -65,5 +69,13 @@ bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
 )
 assert(!bad_exe_status.success?, "remote GUI smoke must reject executables outside /home/xnix-*")
 assert((bad_exe_stdout + bad_exe_stderr).include?("remote executable must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe executable paths")
+
+bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--evidence-output", "/tmp/wine-gui-evidence.json",
+  chdir: project_root.to_s
+)
+assert(!bad_evidence_status.success?, "remote GUI smoke must reject evidence output outside /home/xnix-*")
+assert((bad_evidence_stdout + bad_evidence_stderr).include?("evidence output must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe evidence output paths")
 
 puts "PASS: remote Wine guest GUI smoke script plan"

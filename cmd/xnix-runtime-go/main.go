@@ -2535,11 +2535,34 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 	if err := json.Unmarshal(payload, &projection); err != nil {
 		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)
 	}
+	if projection.RequestType == appidentity.GUISmokeEvidencePreviewRequestType {
+		return loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload)
+	}
 	evidence, err := appidentity.KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection)
 	if err != nil {
 		return nil, fmt.Errorf("consume Runtime-projected known app evidence: %w", err)
 	}
 	return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
+}
+
+func loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+	var projection appidentity.GUISmokeEvidencePreview
+	if err := json.Unmarshal(payload, &projection); err != nil {
+		return nil, fmt.Errorf("parse GUI smoke Runtime evidence projection: %w", err)
+	}
+	switch {
+	case projection.SchemaVersion != appidentity.GUISmokeEvidencePreviewSchemaVersion:
+		return nil, fmt.Errorf("GUI smoke Runtime evidence projection has unsupported schema %q", projection.SchemaVersion)
+	case projection.ReportStatus != "passed" || !projection.ReportConsumed:
+		return nil, errors.New("GUI smoke Runtime evidence projection has not consumed a passed report")
+	case !projection.CompatibilityCenterProjectionReady || !projection.KDECenterProjectionReady:
+		return nil, errors.New("GUI smoke Runtime evidence projection is not ready for center consumption")
+	case projection.ReportPathExposed || projection.RemotePathExposed || projection.BackendDetailsExposed || projection.RawOutputExposed:
+		return nil, errors.New("GUI smoke Runtime evidence projection exposes unsafe details")
+	case projection.DesktopLaunchEnabled || projection.BackendLaunchEnabled || projection.ActionExecutionEnabled || projection.HostRootModified:
+		return nil, errors.New("GUI smoke Runtime evidence projection enables unsafe execution")
+	}
+	return []appidentity.KnownAppSmokeEvidenceSummary{projection.KnownAppSmokeEvidence}, nil
 }
 
 func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {

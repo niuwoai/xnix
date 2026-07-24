@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
 )
@@ -17,6 +20,7 @@ func runGUISmokeEvidencePreview(args []string, stdout io.Writer) error {
 	appID := flags.String("app-id", "", "application id to attach to the GUI smoke evidence")
 	displayName := flags.String("display-name", "", "display name to attach to the GUI smoke evidence")
 	appVersion := flags.String("app-version", "", "application version to attach to the GUI smoke evidence")
+	outputPath := flags.String("output", "", "optional JSON output path for the projected GUI smoke evidence")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -34,7 +38,24 @@ func runGUISmokeEvidencePreview(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	encoder := json.NewEncoder(stdout)
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(preview)
+	if err := encoder.Encode(preview); err != nil {
+		return err
+	}
+	if _, err := stdout.Write(buffer.Bytes()); err != nil {
+		return err
+	}
+	if *outputPath == "" {
+		return nil
+	}
+	cleanOutput := filepath.Clean(*outputPath)
+	if err := os.MkdirAll(filepath.Dir(cleanOutput), 0o700); err != nil {
+		return fmt.Errorf("prepare GUI smoke evidence output directory: %w", err)
+	}
+	if err := os.WriteFile(cleanOutput, buffer.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("write GUI smoke evidence output: %w", err)
+	}
+	return nil
 }

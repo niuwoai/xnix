@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc83] - 2026-07-25
+
+### Added
+
+- Added `gui-smoke-evidence-preview --output FILE` so a passed real Wine guest GUI smoke report can persist the same redacted Runtime/KDE evidence projection that it prints to stdout.
+- Changed `scripts/remote_wine_guest_gui_smoke.rb` to automatically project Runtime GUI evidence after a passed q4 Xvfb/QEMU/Wine run while constraining the evidence output path to `/home/xnix-*`.
+- Changed Compatibility Center and KDE Center evidence loading so `--known-app-evidence-file` can consume the persisted `gui-smoke-evidence-preview` projection directly.
+- Changed the remote GUI evidence defaults to backend-neutral application identifiers and display names so desktop-facing projections pass the existing KDE-safe backend-detail redaction guard.
+
 ## [0.2.640-rc82] - 2026-07-25
 
 ### Added

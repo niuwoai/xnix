@@ -249,6 +249,69 @@ func TestGUISmokeEvidencePreviewCommandConsumesMessageBoxReport(t *testing.T) {
 	}
 }
 
+func TestGUISmokeEvidencePreviewCommandWritesProjectedEvidenceOutput(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "wine-gui-messagebox.json")
+	outputPath := filepath.Join(tempDir, "evidence", "wine-gui-messagebox-evidence.json")
+	if err := os.WriteFile(reportPath, []byte(guiSmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := run([]string{
+		"gui-smoke-evidence-preview",
+		"--gui-smoke-report", reportPath,
+		"--app-id", "org.xnix.fixture.messagebox",
+		"--display-name", "Xnix MessageBox",
+		"--app-version", "fixture-version",
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written GUI smoke evidence must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+	if strings.Contains(string(written), "/home/xnix-run-materials") || strings.Contains(string(written), reportPath) {
+		t.Fatalf("written GUI smoke evidence exposed raw paths: %s", string(written))
+	}
+
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	var compatibilityOutput bytes.Buffer
+	if err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-evidence-file", outputPath}, &compatibilityOutput); err != nil {
+		t.Fatalf("compatibility center consumption returned error: %v", err)
+	}
+	var compatibilityPayload map[string]any
+	if err := json.Unmarshal(compatibilityOutput.Bytes(), &compatibilityPayload); err != nil {
+		t.Fatalf("Unmarshal compatibility output returned error: %v", err)
+	}
+	if compatibilityPayload["known_app_smoke_evidence_count"] != float64(1) ||
+		compatibilityPayload["known_app_smoke_passed_count"] != float64(1) ||
+		compatibilityPayload["backend_details_exposed"] != false ||
+		compatibilityPayload["host_root_modified"] != false {
+		t.Fatalf("unexpected compatibility payload from GUI evidence file: %#v", compatibilityPayload)
+	}
+
+	var kdeOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-evidence-file", outputPath}, &kdeOutput); err != nil {
+		t.Fatalf("KDE center consumption returned error: %v", err)
+	}
+	var kdePayload map[string]any
+	if err := json.Unmarshal(kdeOutput.Bytes(), &kdePayload); err != nil {
+		t.Fatalf("Unmarshal KDE output returned error: %v", err)
+	}
+	if kdePayload["known_app_gui_evidence_count"] != float64(1) ||
+		kdePayload["launch_enabled"] != false ||
+		kdePayload["backend_details_exposed"] != false ||
+		kdePayload["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE payload from GUI evidence file: %#v", kdePayload)
+	}
+}
+
 func TestCompatibilityCenterPreviewCommandConsumesGUISmokeReport(t *testing.T) {
 	registryPath, _ := writeTestRepairGroupRegistry(t)
 	reportPath := filepath.Join(t.TempDir(), "wine-gui-messagebox.json")

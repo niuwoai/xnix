@@ -29,6 +29,10 @@ options = {
   remote_build_root: ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache"),
   remote_go: ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go"),
   report_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REPORT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}.json"),
+  evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
+  evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
+  evidence_display_name: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_DISPLAY_NAME", "Mines"),
+  evidence_app_version: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_VERSION", VERSION),
   state_root: ENV.fetch("XNIX_WINE_GUI_REMOTE_STATE_ROOT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}"),
   ssh_port: ENV.fetch("XNIX_WINE_GUI_REMOTE_SSH_PORT", "40229"),
   display_number: Integer(ENV.fetch("XNIX_WINE_GUI_REMOTE_DISPLAY", "106"), 10),
@@ -50,6 +54,10 @@ OptionParser.new do |parser|
   parser.on("--remote-build-root PATH", "Remote build cache root under /home/xnix*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-go PATH", "Remote Go binary used to build xnix-runtime-go.") { |value| options[:remote_go] = value }
   parser.on("--report-output PATH", "Remote JSON report output path under /home/xnix*.") { |value| options[:report_output] = value }
+  parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
+  parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
+  parser.on("--evidence-display-name NAME", "Display name for the Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
+  parser.on("--evidence-app-version VERSION", "Application version for the Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
   parser.on("--state-root PATH", "Remote smoke state root under /home/xnix*.") { |value| options[:state_root] = value }
   parser.on("--ssh-port PORT", "Loopback SSH port for the temporary QEMU guest.") { |value| options[:ssh_port] = value }
   parser.on("--display-number NUMBER", Integer, "Remote Xvfb display number.") { |value| options[:display_number] = value }
@@ -130,6 +138,7 @@ remote_ssh_key = ensure_remote_xnix_path!("remote SSH key", options.fetch(:remot
 remote_executable = ensure_optional_remote_xnix_path!("remote executable", options.fetch(:remote_executable))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 report_output = ensure_remote_xnix_path!("report output", options.fetch(:report_output))
+evidence_output = ensure_remote_xnix_path!("evidence output", options.fetch(:evidence_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
 remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
@@ -151,6 +160,11 @@ plan = {
   "remote_runtime_bin" => remote_runtime_bin,
   "runtime_build_planned" => true,
   "report_output" => report_output,
+  "evidence_output" => evidence_output,
+  "evidence_preview_planned" => true,
+  "evidence_app_id" => options.fetch(:evidence_app_id),
+  "evidence_display_name" => options.fetch(:evidence_display_name),
+  "evidence_app_version" => options.fetch(:evidence_app_version),
   "state_root" => state_root,
   "ssh_port" => options.fetch(:ssh_port),
   "display_number" => options.fetch(:display_number),
@@ -240,4 +254,29 @@ remote_command = [
 stdout, stderr, status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, remote_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
 warn stderr unless stderr.empty?
 puts stdout unless stdout.empty?
-exit status.zero? ? 0 : 1
+exit 1 unless status.zero?
+
+smoke_status = begin
+  JSON.parse(stdout).fetch("status", "")
+rescue JSON::ParserError
+  ""
+end
+exit 0 unless smoke_status == "passed"
+
+evidence_args = [
+  remote_runtime_bin,
+  "gui-smoke-evidence-preview",
+  "--gui-smoke-report", report_output,
+  "--app-id", options.fetch(:evidence_app_id),
+  "--display-name", options.fetch(:evidence_display_name),
+  "--app-version", options.fetch(:evidence_app_version),
+  "--output", evidence_output
+]
+evidence_command = [
+  "set -eu",
+  "cd #{Shellwords.escape(remote_source_root)}",
+  shell_join(evidence_args)
+].join("\n")
+_evidence_stdout, evidence_stderr, evidence_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, evidence_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
+warn evidence_stderr unless evidence_stderr.empty?
+exit evidence_status.zero? ? 0 : 1
