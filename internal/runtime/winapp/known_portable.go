@@ -55,16 +55,17 @@ const (
 )
 
 type KnownPortableApp struct {
-	ID             string
-	DisplayName    string
-	Version        string
-	Architecture   string
-	ExecutableName string
-	SourcePageURL  string
-	DownloadURL    string
-	SHA256         string
-	ExpectedMarker string
-	Arguments      []string
+	ID              string
+	DisplayName     string
+	Version         string
+	Architecture    string
+	ExecutableName  string
+	SourcePageURL   string
+	DownloadURL     string
+	SHA256          string
+	ExpectedMarker  string
+	Arguments       []string
+	GuestBuiltinGUI bool
 }
 
 type KnownFetchRequest struct {
@@ -765,6 +766,16 @@ var knownPortableCatalog = []KnownPortableApp{
 		ExpectedMarker: "BusyBox",
 		Arguments:      []string{"--help"},
 	},
+	{
+		ID:              "org.xnix.apps.mines",
+		DisplayName:     "Mines",
+		Version:         "0.2.640-rc86",
+		Architecture:    "windows-x86-gui",
+		ExecutableName:  "winemine.exe",
+		SourcePageURL:   "runtime-managed-guest-gui-fixture",
+		ExpectedMarker:  "Mines",
+		GuestBuiltinGUI: true,
+	},
 }
 
 func KnownPortableCatalog() []KnownPortableApp {
@@ -792,6 +803,17 @@ func FetchKnownPortableApp(ctx context.Context, request KnownFetchRequest) (Know
 		return KnownFetchResult{}, err
 	}
 	result := baseKnownFetchResult(app)
+	if app.GuestBuiltinGUI {
+		result.Status = PassedStatus
+		result.CacheStatus = "guest-builtin-gui"
+		result.SkipReason = ""
+		result.Downloaded = false
+		result.ChecksumVerified = false
+		result.NetworkRequired = false
+		result.HostRootModified = false
+		result.HostNetworkingRequired = false
+		return result, nil
+	}
 
 	cachePath, err := knownAppCachePath(request.CacheRoot, app)
 	if err != nil {
@@ -869,6 +891,11 @@ func RunKnownPortableGuestSmoke(ctx context.Context, request KnownGuestRequest) 
 		return KnownGuestResult{}, err
 	}
 	result := baseKnownGuestResult(app)
+	if app.GuestBuiltinGUI {
+		result.Status = SkippedStatus
+		result.SkipReason = "known GUI application requires the Runtime guest GUI smoke lane"
+		return result, nil
+	}
 
 	cachePath, err := knownAppCachePath(request.CacheRoot, app)
 	if err != nil {
@@ -931,6 +958,16 @@ func PreviewKnownPortableManagedLaunch(request KnownManagedLaunchRequest) (Known
 		return KnownManagedLaunchResult{}, err
 	}
 	result := baseKnownManagedLaunchResult(app)
+	if app.GuestBuiltinGUI {
+		result.Status = "ready"
+		result.CacheStatus = "guest-builtin-gui"
+		result.ArtifactVerified = true
+		result.LaunchEnabled = true
+		result.PreparationRequired = false
+		result.DesktopSafeSummary = app.DisplayName + " is ready for Runtime-managed GUI launch using recorded guest GUI evidence instead of a host-cached download artifact."
+		result.BlockedReason = ""
+		return result, nil
+	}
 
 	cachePath, err := knownAppCachePath(request.CacheRoot, app)
 	if err != nil {

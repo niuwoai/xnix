@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -67,5 +69,65 @@ func TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandRejectsMissingState
 	err := run([]string{"known-app-runtime-status-launch-owner-fixture-record"}, &output)
 	if err == nil || !strings.Contains(err.Error(), "requires --state-root") {
 		t.Fatalf("missing state root must be rejected, got: %v", err)
+	}
+}
+
+func TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandConsumesGUISmokeEvidence(t *testing.T) {
+	tempDir := t.TempDir()
+	version := currentProjectVersion(t)
+	reportPath := filepath.Join(tempDir, "mines-gui-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(guiSmokeEvidenceCLIFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile GUI smoke report returned error: %v", err)
+	}
+
+	var evidence bytes.Buffer
+	err := run([]string{
+		"gui-smoke-evidence-preview",
+		"--gui-smoke-report", reportPath,
+		"--app-id", "org.xnix.apps.mines",
+		"--display-name", "Mines",
+		"--app-version", version,
+	}, &evidence)
+	if err != nil {
+		t.Fatalf("gui-smoke-evidence-preview returned error: %v", err)
+	}
+	evidencePath := filepath.Join(tempDir, "mines-gui-evidence.json")
+	if err := os.WriteFile(evidencePath, evidence.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile GUI smoke evidence returned error: %v", err)
+	}
+
+	stateRoot := filepath.Join(tempDir, "state")
+	if err := os.Mkdir(stateRoot, 0o700); err != nil {
+		t.Fatalf("Mkdir state root returned error: %v", err)
+	}
+	var output bytes.Buffer
+	err = run([]string{
+		"known-app-runtime-status-launch-owner-fixture-record",
+		"--state-root", stateRoot,
+		"--cache-root", filepath.Join(tempDir, "cache"),
+		"--gui-smoke-evidence-file", evidencePath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("fixture output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["fixture_ready"] != true ||
+		payload["fixture_state"] != "ready" ||
+		payload["app_id"] != "org.xnix.apps.mines" ||
+		payload["display_name"] != "Mines" ||
+		payload["desktop_trigger_ready"] != true ||
+		payload["owner_service_call_ready"] != true ||
+		payload["desktop_callable_runtime_method"] != "ShowRuntimeControlledLaunch" ||
+		payload["desktop_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" {
+		t.Fatalf("unexpected GUI-backed fixture payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), evidencePath) ||
+		strings.Contains(output.String(), filepath.Join(tempDir, "cache")) {
+		t.Fatalf("GUI-backed fixture output exposed local paths: %s", output.String())
 	}
 }

@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc86] - 2026-07-25
+
+### Added
+
+- Added `org.xnix.apps.mines` to the Runtime-known Windows app identity catalog as a guest GUI application so Runtime-status launch request previews can recognize the same real GUI app identity used by the recipe registry.
+- Added `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file FILE` so a passed `gui-smoke-evidence-preview` projection can seed Runtime-owned launch authorization, session, review, and KDE handoff evidence for Mines without exposing paths or enabling desktop/backend launch.
+
+### Changed
+
+- Changed Runtime-status launch delegated evidence to preserve `wine-guest-gui-smoke` as a supported evidence source, allowing real GUI window evidence to drive the same owner-service handoff and KDE action-trigger path as staged launcher smoke while keeping marker/checksum artifact claims separate.
+
 ## [0.2.640-rc85] - 2026-07-25
 
 ### Added

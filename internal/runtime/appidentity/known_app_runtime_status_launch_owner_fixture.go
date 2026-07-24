@@ -2,6 +2,8 @@ package appidentity
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -14,12 +16,13 @@ const (
 )
 
 type KnownAppRuntimeStatusLaunchOwnerFixtureRequest struct {
-	AppID         string
-	StateRoot     string
-	CacheRoot     string
-	GuestBoundary string
-	Status        string
-	RecordedAtUTC time.Time
+	AppID                string
+	StateRoot            string
+	CacheRoot            string
+	GuestBoundary        string
+	Status               string
+	GUISmokeEvidencePath string
+	RecordedAtUTC        time.Time
 }
 
 type KnownAppRuntimeStatusLaunchOwnerFixtureRecord struct {
@@ -88,12 +91,27 @@ type KnownAppRuntimeStatusLaunchOwnerFixtureRecord struct {
 
 func RecordKnownAppRuntimeStatusLaunchOwnerFixture(request KnownAppRuntimeStatusLaunchOwnerFixtureRequest) (KnownAppRuntimeStatusLaunchOwnerFixtureRecord, error) {
 	appID := strings.TrimSpace(request.AppID)
+	guiEvidence, err := knownAppRuntimeStatusLaunchOwnerFixtureGUISmokeEvidence(request.GUISmokeEvidencePath)
+	if err != nil {
+		return KnownAppRuntimeStatusLaunchOwnerFixtureRecord{}, err
+	}
+	if guiEvidence != nil {
+		if appID == "" {
+			appID = guiEvidence.AppID
+		}
+		if appID != guiEvidence.AppID {
+			return KnownAppRuntimeStatusLaunchOwnerFixtureRecord{}, errors.New("known app Runtime-status launch owner fixture GUI evidence app id does not match --app")
+		}
+	}
 	if appID == "" {
 		appID = winapp.DefaultKnownAppID
 	}
 	app, err := winapp.LookupKnownPortableApp(appID)
 	if err != nil {
 		return KnownAppRuntimeStatusLaunchOwnerFixtureRecord{}, err
+	}
+	if guiEvidence != nil && (app.DisplayName != guiEvidence.DisplayName || app.Version != guiEvidence.AppVersion) {
+		return KnownAppRuntimeStatusLaunchOwnerFixtureRecord{}, errors.New("known app Runtime-status launch owner fixture GUI evidence identity does not match the Runtime catalog")
 	}
 	stateRoot := strings.TrimSpace(request.StateRoot)
 	if err := validateKnownAppRuntimeOwnerStateRoot(stateRoot); err != nil {
@@ -110,6 +128,9 @@ func RecordKnownAppRuntimeStatusLaunchOwnerFixture(request KnownAppRuntimeStatus
 	status := strings.TrimSpace(request.Status)
 	if status == "" {
 		status = "passed"
+	}
+	if guiEvidence != nil && status == "" {
+		status = guiEvidence.SmokeStatus
 	}
 	recordedAt := request.RecordedAtUTC
 	if recordedAt.IsZero() {
@@ -169,12 +190,13 @@ func RecordKnownAppRuntimeStatusLaunchOwnerFixture(request KnownAppRuntimeStatus
 		AppID:                                  app.ID,
 		DisplayName:                            app.DisplayName,
 		AppVersion:                             app.Version,
+		EvidenceSource:                         knownAppRuntimeStatusLaunchOwnerFixtureEvidenceSource(guiEvidence),
 		RequestType:                            winapp.KnownDispatchSmokeRequestType,
 		Status:                                 status,
 		GuestBoundary:                          guestBoundary,
 		RuntimeOwnedDispatch:                   true,
-		ArtifactVerified:                       true,
-		MarkerObserved:                         true,
+		ArtifactVerified:                       knownAppRuntimeStatusLaunchOwnerFixtureArtifactVerified(guiEvidence),
+		MarkerObserved:                         knownAppRuntimeStatusLaunchOwnerFixtureMarkerObserved(guiEvidence),
 		SessionGatedControlledDispatchConsumed: true,
 		SessionGatedControlledDispatchState:    "created-after-session-gated-review",
 		SessionGatedReviewReceiptID:            reviewReceipt.ReceiptID,
@@ -233,7 +255,48 @@ func RecordKnownAppRuntimeStatusLaunchOwnerFixture(request KnownAppRuntimeStatus
 	result.OwnerServiceCallArgs = []string{"ShowRuntimeControlledLaunch", "evidence-relative-path", evidenceRecord.EvidenceRelativePath}
 	result.RuntimeOwnerServiceSuppliesInputs = true
 	result.DesktopSafeSummary = app.DisplayName + " controlled launch owner fixture prepared Runtime-owned evidence handoff state for D-Bus controlled launch without exposing Runtime paths."
+	if guiEvidence != nil {
+		result.Source = "gui-smoke-evidence-preview+runtime-status-evidence"
+		result.DesktopSafeSummary = app.DisplayName + " controlled launch owner fixture consumed real GUI smoke evidence before preparing Runtime-owned D-Bus launch handoff state."
+	}
 	return validateKnownAppRuntimeStatusLaunchOwnerFixtureRecord(result)
+}
+
+func knownAppRuntimeStatusLaunchOwnerFixtureGUISmokeEvidence(path string) (*KnownAppSmokeEvidenceSummary, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return nil, nil
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read GUI smoke Runtime evidence projection: %w", err)
+	}
+	evidence, err := KnownAppSmokeEvidenceFromGUISmokeProjection(content)
+	if err != nil {
+		return nil, err
+	}
+	return &evidence, nil
+}
+
+func knownAppRuntimeStatusLaunchOwnerFixtureEvidenceSource(guiEvidence *KnownAppSmokeEvidenceSummary) string {
+	if guiEvidence == nil {
+		return "staged-launcher-dispatch-smoke"
+	}
+	return guiEvidence.EvidenceSource
+}
+
+func knownAppRuntimeStatusLaunchOwnerFixtureArtifactVerified(guiEvidence *KnownAppSmokeEvidenceSummary) bool {
+	if guiEvidence == nil {
+		return true
+	}
+	return guiEvidence.ChecksumVerified
+}
+
+func knownAppRuntimeStatusLaunchOwnerFixtureMarkerObserved(guiEvidence *KnownAppSmokeEvidenceSummary) bool {
+	if guiEvidence == nil {
+		return true
+	}
+	return guiEvidence.MarkerObserved
 }
 
 func baseKnownAppRuntimeStatusLaunchOwnerFixtureRecord(app winapp.KnownPortableApp, guestBoundary string, recordedAt time.Time) KnownAppRuntimeStatusLaunchOwnerFixtureRecord {

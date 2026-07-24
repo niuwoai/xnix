@@ -2764,10 +2764,11 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	stagedLauncherVerified := evidenceSource == "staged-launcher-dispatch-smoke" && passed
 	matrixRunVerified := evidenceSource == "remote-known-winapp-matrix-smoke" && passed
 	guiRunVerified := evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded
+	runtimeStatusLaunchVerified := stagedLauncherVerified || guiRunVerified
 	runtimeDispatchVerified := ((evidenceSource == "staged-launcher-dispatch-smoke" || evidenceSource == "remote-known-winapp-matrix-smoke") && passed) || guiRunVerified
 	evidenceKind := "known-application-managed-smoke"
-	if item.LauncherSessionGateConsumed && !stagedLauncherVerified {
-		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires passed staged launcher evidence")
+	if item.LauncherSessionGateConsumed && !runtimeStatusLaunchVerified {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires passed staged launcher or GUI evidence")
 	}
 	if passed {
 		compatibilityState = "validated"
@@ -2782,7 +2783,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		primaryActionKind = "authorization-review"
 		summary = displayName + " passed staged launcher Runtime dispatch smoke."
 	}
-	if stagedLauncherVerified && receiptState == "recorded" {
+	if runtimeStatusLaunchVerified && receiptState == "recorded" {
 		centerCardState = "validated-launch-authorization-recorded"
 		launchAuthorizationState = "recorded"
 		primaryActionID = "run-through-launch-gate"
@@ -2793,7 +2794,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		}
 		summary = displayName + " has a recorded Runtime launch authorization receipt; launch remains gate-controlled."
 	}
-	if stagedLauncherVerified && receiptState == "recorded" && item.LaunchGateConsumed && item.LaunchGateReceiptAccepted {
+	if runtimeStatusLaunchVerified && receiptState == "recorded" && item.LaunchGateConsumed && item.LaunchGateReceiptAccepted {
 		centerCardState = "validated-launch-gate-consumed"
 		launchAuthorizationState = "recorded"
 		primaryActionID = "review-controlled-dispatch"
@@ -2805,7 +2806,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 			summary = displayName + " launch gate accepted the receipt and controlled boundary; dispatch remains Runtime-controlled."
 		}
 	}
-	if stagedLauncherVerified && item.LauncherSessionGateConsumed {
+	if runtimeStatusLaunchVerified && item.LauncherSessionGateConsumed {
 		centerCardState = "validated-session-gated-dispatch"
 		launchAuthorizationState = "recorded"
 		primaryActionID = "review-session-gated-dispatch"
@@ -2814,7 +2815,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		launchGateState = "controlled-dispatch-ready"
 		summary = displayName + " staged dispatch consumed a digest-verified Runtime session gate before execution."
 	}
-	if stagedLauncherVerified && item.PostReviewDispatchConsumed {
+	if runtimeStatusLaunchVerified && item.PostReviewDispatchConsumed {
 		centerCardState = "validated-post-review-dispatch"
 		launchAuthorizationState = "recorded"
 		primaryActionID = "show-runtime-controlled-launch"
@@ -2833,7 +2834,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		primaryActionKind = "review"
 		summary = displayName + " has redacted real runtime matrix evidence."
 	}
-	if guiRunVerified {
+	if guiRunVerified && !item.PostReviewDispatchConsumed {
 		evidenceKind = "known-application-gui-smoke"
 		compatibilityState = "real-gui-qemu-wine-verified"
 		centerCardState = "validated-real-gui-runtime-run"

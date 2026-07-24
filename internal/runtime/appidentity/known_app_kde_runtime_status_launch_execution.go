@@ -120,6 +120,7 @@ type KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest struct {
 	AppID                                  string
 	DisplayName                            string
 	AppVersion                             string
+	EvidenceSource                         string
 	RequestType                            string
 	Status                                 string
 	SkipReason                             string
@@ -165,6 +166,7 @@ type KnownAppKDERuntimeStatusLaunchDelegatedEvidence struct {
 	AppID                                  string `json:"app_id"`
 	DisplayName                            string `json:"display_name"`
 	AppVersion                             string `json:"app_version"`
+	EvidenceSource                         string `json:"evidence_source"`
 	GuestBoundary                          string `json:"guest_boundary"`
 	RuntimeOwnedDispatch                   bool   `json:"runtime_owned_dispatch"`
 	ArtifactVerified                       bool   `json:"artifact_verified"`
@@ -373,6 +375,10 @@ func PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger(request Kno
 }
 
 func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDERuntimeStatusLaunchDelegatedEvidenceRequest) (KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
+	evidenceSource := strings.TrimSpace(request.EvidenceSource)
+	if evidenceSource == "" {
+		evidenceSource = "staged-launcher-dispatch-smoke"
+	}
 	projection := KnownAppKDERuntimeStatusLaunchDelegatedEvidence{
 		ProjectionType:                         "known-app-kde-runtime-status-launch-delegated-evidence",
 		RuntimeMethod:                          "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence",
@@ -383,6 +389,7 @@ func ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence(request KnownAppKDER
 		AppID:                                  strings.TrimSpace(request.AppID),
 		DisplayName:                            strings.TrimSpace(request.DisplayName),
 		AppVersion:                             strings.TrimSpace(request.AppVersion),
+		EvidenceSource:                         evidenceSource,
 		GuestBoundary:                          strings.TrimSpace(request.GuestBoundary),
 		RuntimeOwnedDispatch:                   request.RuntimeOwnedDispatch,
 		ArtifactVerified:                       request.ArtifactVerified,
@@ -454,11 +461,16 @@ func KnownAppKDERuntimeStatusLaunchExecutionArgv(plan KnownAppKDERuntimeStatusLa
 }
 
 func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownAppKDERuntimeStatusLaunchDelegatedEvidence) (KnownAppKDERuntimeStatusLaunchDelegatedEvidence, error) {
+	if strings.TrimSpace(projection.EvidenceSource) == "" {
+		projection.EvidenceSource = "staged-launcher-dispatch-smoke"
+	}
 	switch {
 	case projection.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence":
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence has invalid projection type")
 	case projection.RequestType != winapp.KnownDispatchSmokeRequestType:
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires dispatch smoke evidence")
+	case projection.EvidenceSource != "staged-launcher-dispatch-smoke" && projection.EvidenceSource != "wine-guest-gui-smoke":
+		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires a supported Runtime evidence source")
 	case projection.AppID == "" || projection.DisplayName == "" || projection.AppVersion == "":
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires known app identity")
 	case projection.GuestBoundary != winapp.KnownDispatchGuestBoundary:
@@ -476,7 +488,7 @@ func validateKnownAppKDERuntimeStatusLaunchDelegatedEvidence(projection KnownApp
 	case !projection.CompatibilityCenterProjectionReady || !projection.KDECenterProjectionReady:
 		return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence must be ready for Center projections")
 	}
-	for _, value := range []string{projection.ProjectionType, projection.RuntimeMethod, projection.RequestType, projection.Status, projection.SkipReason, projection.FailureReason, projection.AppID, projection.DisplayName, projection.AppVersion, projection.GuestBoundary, projection.SessionGatedControlledDispatchState, projection.SessionGatedReviewReceiptID, projection.LaunchAuthorizationReceiptID, projection.LaunchAuthorizationReceiptState, projection.LaunchGateState, projection.LaunchGateBlockedReason, projection.ControlledExecutionSessionID, projection.ControlledSessionRelativePath} {
+	for _, value := range []string{projection.ProjectionType, projection.RuntimeMethod, projection.RequestType, projection.Status, projection.SkipReason, projection.FailureReason, projection.AppID, projection.DisplayName, projection.AppVersion, projection.EvidenceSource, projection.GuestBoundary, projection.SessionGatedControlledDispatchState, projection.SessionGatedReviewReceiptID, projection.LaunchAuthorizationReceiptID, projection.LaunchAuthorizationReceiptState, projection.LaunchGateState, projection.LaunchGateBlockedReason, projection.ControlledExecutionSessionID, projection.ControlledSessionRelativePath} {
 		if value != "" && !singleLine(value) {
 			return KnownAppKDERuntimeStatusLaunchDelegatedEvidence{}, errors.New("known app KDE Runtime-status delegated evidence requires single-line fields")
 		}
@@ -492,14 +504,24 @@ func KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection
 	if err != nil {
 		return KnownAppSmokeEvidenceSummary{}, err
 	}
+	evidenceKind := "known-application-managed-smoke"
+	compatibilityState := "managed-known-app-verified"
+	stagedLauncherVerified := true
+	summary := projection.DisplayName + " Runtime-status launch handoff is ready for a KDE-triggered Runtime action."
+	if projection.EvidenceSource == "wine-guest-gui-smoke" {
+		evidenceKind = "known-application-gui-smoke"
+		compatibilityState = "real-gui-qemu-wine-verified"
+		stagedLauncherVerified = false
+		summary = projection.DisplayName + " Runtime-status launch handoff is backed by real Runtime-owned GUI window evidence."
+	}
 	return KnownAppSmokeEvidenceSummary{
 		AppID:                                 projection.AppID,
 		DisplayName:                           projection.DisplayName,
 		AppVersion:                            projection.AppVersion,
-		EvidenceKind:                          "known-application-managed-smoke",
-		EvidenceSource:                        "staged-launcher-dispatch-smoke",
+		EvidenceKind:                          evidenceKind,
+		EvidenceSource:                        projection.EvidenceSource,
 		SmokeStatus:                           projection.Status,
-		CompatibilityState:                    "managed-known-app-verified",
+		CompatibilityState:                    compatibilityState,
 		CenterCardState:                       "validated-post-review-dispatch",
 		LaunchAuthorizationState:              "recorded",
 		PrimaryActionID:                       KnownAppKDERuntimeStatusLaunchAction,
@@ -528,7 +550,7 @@ func KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection
 		MarkerObserved:                        projection.MarkerObserved,
 		ChecksumVerified:                      projection.ArtifactVerified,
 		ExecutionEvidenceRecorded:             true,
-		StagedLauncherVerified:                true,
+		StagedLauncherVerified:                stagedLauncherVerified,
 		RuntimeDispatchVerified:               true,
 		LaunchAuthorizationRequired:           true,
 		DesktopLaunchEnabled:                  false,
@@ -539,7 +561,7 @@ func KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection
 		HostRootModified:                      false,
 		BackendDetailsExposed:                 false,
 		RawArtifactPathExposed:                false,
-		Summary:                               projection.DisplayName + " Runtime-status launch handoff is ready for a KDE-triggered Runtime action.",
+		Summary:                               summary,
 	}, nil
 }
 

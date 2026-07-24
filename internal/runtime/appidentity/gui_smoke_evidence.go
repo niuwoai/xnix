@@ -163,6 +163,38 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	}, nil
 }
 
+func KnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) (KnownAppSmokeEvidenceSummary, error) {
+	var projection GUISmokeEvidencePreview
+	if err := json.Unmarshal(payload, &projection); err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("parse GUI smoke Runtime evidence projection: %w", err)
+	}
+	switch {
+	case projection.SchemaVersion != GUISmokeEvidencePreviewSchemaVersion:
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("GUI smoke Runtime evidence projection has unsupported schema %q", projection.SchemaVersion)
+	case projection.RequestType != GUISmokeEvidencePreviewRequestType:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection has invalid request type")
+	case projection.ReportStatus != "passed" || !projection.ReportConsumed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection has not consumed a passed report")
+	case !projection.CompatibilityCenterProjectionReady || !projection.KDECenterProjectionReady:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection is not ready for center consumption")
+	case projection.ReportPathExposed || projection.RemotePathExposed || projection.BackendDetailsExposed || projection.RawOutputExposed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection exposes unsafe details")
+	case projection.DesktopLaunchEnabled || projection.BackendLaunchEnabled || projection.ActionExecutionEnabled || projection.HostRootModified:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection enables unsafe execution")
+	case !projection.RuntimeOwned || !projection.GoRuntimeBacked || projection.KDEPolicyOwner:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection must remain Runtime-owned and Go-backed")
+	}
+	evidence := projection.KnownAppSmokeEvidence
+	if evidence.EvidenceSource != "wine-guest-gui-smoke" || !evidence.ExecutionEvidenceRecorded || !evidence.RuntimeDispatchVerified {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection requires recorded Runtime dispatch evidence")
+	}
+	normalized, err := normalizeKnownAppSmokeEvidenceItem(evidence)
+	if err != nil {
+		return KnownAppSmokeEvidenceSummary{}, err
+	}
+	return normalized, nil
+}
+
 func validateGUISmokeReport(report guiSmokeReport) error {
 	switch {
 	case report.SchemaVersion != "xnix.scripts.wine_guest_gui_smoke.v1":

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc85
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc86
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc86 checkpoint candidate connects the first real Windows GUI app evidence to the Runtime-owned desktop trigger path. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file FILE` now consumes a passed `gui-smoke-evidence-preview` projection for `org.xnix.apps.mines`, records Runtime launch authorization/session/review handoff evidence, and lets the owner trigger and KDE action trigger assemble a `ShowRuntimeControlledLaunch` request from an evidence handle. The desktop still receives no Runtime state-root, cache-root, launcher path, raw executable path, backend command, or receipt/session reconstruction authority, and the preview does not start a process; actual GUI execution remains proven by the q4 Xvfb/QEMU/Wine smoke lane.
 
 The v0.2.640-rc85 checkpoint candidate promotes the first real Windows GUI smoke target into the Runtime recipe library. `runtime/recipes/org.xnix.apps.mines.json` gives the verified Mines GUI app a backend-neutral application identity, and `runtime/recipes/registry.json` now carries its digest-verified development entry. This lets q4 GUI evidence generated for `org.xnix.apps.mines` render on its own KDE/Compatibility Center page, rather than using `org.xnix.sample.notepad` as a temporary host, while keeping backend selection and launch execution behind the Runtime gates.
 

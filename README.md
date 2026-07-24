@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc85`.
+The project is currently at `v0.2.640-rc86`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc85`.
 
 ## Current Checkpoint
 
-v0.2.640-rc85 gives the first real Windows GUI app its own Runtime recipe entry. `org.xnix.apps.mines` now appears in the development recipe registry with a backend-neutral identity, so q4 GUI evidence for `Mines` can land on its own KDE/Compatibility Center page instead of borrowing the sample Notepad recipe.
+v0.2.640-rc86 connects the first real Windows GUI app evidence to the Runtime-owned desktop trigger path. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file FILE` can consume a passed `gui-smoke-evidence-preview` projection for `org.xnix.apps.mines`, record Runtime launch authorization/session/review handoff evidence, and let the owner trigger plus KDE action trigger assemble a `ShowRuntimeControlledLaunch` request from an evidence handle. KDE still receives no Runtime state-root, cache-root, launcher path, raw executable path, backend command, or receipt/session reconstruction authority, and the preview does not start a process.
+
+The previous v0.2.640-rc85 checkpoint gave the first real Windows GUI app its own Runtime recipe entry. `org.xnix.apps.mines` now appears in the development recipe registry with a backend-neutral identity, so q4 GUI evidence for `Mines` can land on its own KDE/Compatibility Center page instead of borrowing the sample Notepad recipe.
 
 The previous v0.2.640-rc81 checkpoint tightened and verified the real Windows GUI app smoke loop after q4 showed QEMU, guest SSH, Wine boot, and executable copy succeeding while Xvfb saw no child window. `windows-app-guest-wine-gui-smoke` now polls X window state throughout the observation window, keeps suppressing Wine first-run installer prompts while observing, verifies `guest_x11_driver_available`, and reports `x_window_observation_attempts` for failed real Xvfb/QEMU/Wine runs. The q4 managed Wine guest run material was updated to the rebuilt X11-driver image, and an unattended `winemine.exe` smoke passed with `x_window_observed=true` in `/home/xnix-run-materials/state/wine-gui-winemine-0.2.640-rc81-final.json`.
 
@@ -100,4 +102,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc85 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc86 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
