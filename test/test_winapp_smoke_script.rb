@@ -26,6 +26,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     require "json"
 
     args = ARGV.dup
+    File.open(ENV.fetch("XNIX_FAKE_GO_LOG"), "a") { |file| file.puts(args.join("\u0001")) } if ENV["XNIX_FAKE_GO_LOG"]
     if args.first == "build"
       output_path = args[args.index("-o") + 1]
       File.write(output_path, "fixture exe")
@@ -34,18 +35,20 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
 
     if args[0] == "run" && args.include?("windows-app-run-smoke")
       redacted = args.include?("--redact-output")
+      marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
+      exe_path = args[args.index("--exe") + 1]
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
         "status" => "passed",
-        "executable_name" => "hello.exe",
+        "executable_name" => File.basename(exe_path),
         "runner_available" => true,
         "compatibility_layer" => "windows-compatibility-layer",
-        "expected_marker" => "XNIX_WINAPP_SMOKE_OK",
+        "expected_marker" => marker,
         "marker_observed" => true,
         "exit_code" => 0,
         "duration_millis" => 1,
-        "stdout" => redacted ? "" : "XNIX_WINAPP_SMOKE_OK\\n",
+        "stdout" => redacted ? "" : "#{marker}\\n",
         "stderr" => "",
         "stdout_bytes" => 39,
         "stderr_bytes" => 0,
@@ -69,9 +72,11 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     exit 2
   RUBY
   fake_go.chmod(0o700)
+  fake_go_log = temp_root.join("fake-go.log")
 
   env = {
-    "PATH" => "#{temp_root}:#{ENV.fetch("PATH")}"
+    "PATH" => "#{temp_root}:#{ENV.fetch("PATH")}",
+    "XNIX_FAKE_GO_LOG" => fake_go_log.to_s
   }
 
   json_stdout, json_stderr, json_status = Open3.capture3(env, "ruby", script.to_s, "--format", "json")
@@ -95,4 +100,34 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Raw output redacted: true"), "Markdown report must expose redaction")
   assert(markdown_stdout.include?("Wine executed by script: false"), "Markdown report must keep Wine execution-by-script false")
+
+  custom_exe = temp_root.join("custom.exe")
+  custom_exe.write("custom fixture")
+  custom_runner = temp_root.join("custom-runner")
+  custom_runner.write("runner")
+  custom_stdout, custom_stderr, custom_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--exe", custom_exe.to_s,
+    "--runner", custom_runner.to_s,
+    "--expected-marker", "CUSTOM_APP_OK",
+    "--arg", "--custom-flag"
+  )
+  assert(custom_status.success?, "winapp smoke custom executable JSON report must succeed: #{custom_stderr}")
+  custom_report = JSON.parse(custom_stdout)
+  assert(custom_report.fetch("executable_source") == "user-supplied", "custom report must identify user-supplied source")
+  assert(custom_report.fetch("user_executable_supplied"), "custom report must mark user executable supplied")
+  assert(!custom_report.fetch("fixture_built"), "custom report must skip fixture build")
+  assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
+  assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
+  assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
+  assert(!custom_stdout.include?(custom_exe.to_s), "custom report must not leak executable path")
+  assert(!custom_stdout.include?(custom_runner.to_s), "custom report must not leak runner path")
+
+  custom_invocations = fake_go_log.read.lines.map { |line| line.split("\u0001") }
+  last_invocation = custom_invocations.last
+  assert(!last_invocation.include?("build"), "custom executable mode must not build the fixture")
+  assert(last_invocation.include?("--runner"), "custom executable mode must forward explicit runner")
+  assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
 end

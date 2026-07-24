@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc20"
+EXPECTED_VERSION = "0.2.640-rc21"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -824,22 +824,22 @@ windows_app_smoke_go = read_project_file("internal/runtime/winapp/smoke.go")
   assert(windows_app_smoke_go.include?(token), "Go Windows app smoke runner must include #{token}")
 end
 windows_app_smoke_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")
-%w[windows-app-run-smoke RunSmoke exe state-root runner timeout redact-output].each do |token|
+%w[windows-app-run-smoke RunSmoke exe state-root runner timeout expected-marker redact-output].each do |token|
   assert(windows_app_smoke_cli.include?(token), "Windows app smoke CLI must include #{token}")
 end
 windows_app_smoke_test = read_project_file("cmd/xnix-runtime-go/windows_compatibility_cli_test.go")
-%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner TestWindowsAppRunSmokeCommandCanRedactRawOutput XNIX_WINAPP_SMOKE_OK raw_output_redacted kde_safe_output_summary host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
+%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner TestWindowsAppRunSmokeCommandCanRedactRawOutput TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker XNIX_WINAPP_SMOKE_OK CUSTOM_APP_OK raw_output_redacted kde_safe_output_summary host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
   assert(windows_app_smoke_test.include?(token), "Windows app smoke CLI test must include #{token}")
 end
 windows_app_fixture = read_project_file("test/fixtures/winapp/hello/main.go")
 assert(windows_app_fixture.include?("XNIX_WINAPP_SMOKE_OK"),
        "Windows app smoke fixture must emit the smoke marker")
 windows_app_smoke_script = read_project_file("scripts/winapp_smoke.rb")
-%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-run-smoke SKIP PASS .local XNIX_WINAPP_SMOKE_OK --format markdown --redact-output redacted_output_requested wine_executed_by_script].each do |token|
+%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-run-smoke SKIP PASS .local XNIX_WINAPP_SMOKE_OK --format markdown --redact-output --exe --runner --arg expected-marker executable_source user_executable_supplied redacted_output_requested wine_executed_by_script].each do |token|
   assert(windows_app_smoke_script.include?(token), "Windows app smoke script must include #{token}")
 end
 windows_app_smoke_script_test = read_project_file("test/test_winapp_smoke_script.rb")
-%w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke --format json --format markdown raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
+%w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke --format json --format markdown --exe --runner CUSTOM_APP_OK user-supplied raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
   assert(windows_app_smoke_script_test.include?(token.gsub("\\ ", " ")), "Windows app smoke script test must include #{token}")
 end
 windows_app_container_smoke_go = read_project_file("internal/runtime/winapp/container_smoke.go")

@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc21] - 2026-07-24
+
+### Added
+
+- Added `--expected-marker` support to the Go-owned `windows-app-run-smoke` CLI.
+- Added `--exe`, `--runner`, `--arg`, `--expected-marker`, `--timeout`, and `--state-root` support to `scripts/winapp_smoke.rb` so existing user-supplied Windows executables can use the same redacted evidence path as the fixture smoke.
+- Added tests proving custom executable mode skips fixture builds, forwards runner/app arguments, preserves safe executable basenames, and avoids leaking executable or runner paths.
+
+### Fixed
+
+- Kept the default fixture smoke unchanged while making user-supplied executable smoke evidence path-safe and reportable.
+
 ## [0.2.640-rc20] - 2026-07-24
 
 ### Added

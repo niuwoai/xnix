@@ -194,6 +194,52 @@ func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "custom.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"printf 'CUSTOM_APP_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--timeout", "5s",
+		"--expected-marker", "CUSTOM_APP_OK",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["marker_observed"] != true ||
+		payload["expected_marker"] != "CUSTOM_APP_OK" ||
+		payload["executable_name"] != "custom.exe" {
+		t.Fatalf("unexpected custom marker payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("custom marker smoke output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell docker fixture is not portable to Windows hosts")

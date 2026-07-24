@@ -1,6 +1,6 @@
 # Claude Code Next Mainline Work Pack
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc20 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc21 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is a copy-first task pack for asking Claude Code to implement the next Xnix mainline work while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -10,7 +10,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current Mainline State
 
-The current local baseline is `v0.2.640-rc20`.
+The current local baseline is `v0.2.640-rc21`.
 
 For a short current handoff that Claude Code can execute without reading the full historical task pack first, use `docs/claude-code-active-work-order.md`.
 

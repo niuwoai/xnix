@@ -17,13 +17,25 @@ SCHEMA_VERSION = "xnix.runtime.winapp_smoke_report.v1"
 
 options = {
   format: "text",
-  redact_output: nil
+  redact_output: nil,
+  exe: nil,
+  runner: nil,
+  state_root: STATE_ROOT.to_s,
+  timeout: "30s",
+  expected_marker: MARKER,
+  app_args: []
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--redact-output]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--exe PATH] [--runner PATH] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
+  parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
+  parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
+  parser.on("--state-root PATH", "Isolated Runtime state root") { |value| options[:state_root] = value }
+  parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
+  parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
+  parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
 end.parse!
 
 unless %w[text json markdown].include?(options[:format])
@@ -38,17 +50,19 @@ def run_command(env, *argv)
   [stdout, stderr, status.exitstatus]
 end
 
-def base_report(format, redact_output)
+def base_report(format, redact_output, expected_marker, executable_source)
   {
     "version" => PROJECT_ROOT.join("VERSION").read.strip,
     "schema_version" => SCHEMA_VERSION,
     "report_type" => "winapp-smoke",
     "format" => format,
     "redacted_output_requested" => redact_output,
+    "executable_source" => executable_source,
+    "user_executable_supplied" => executable_source == "user-supplied",
     "fixture_built" => false,
     "smoke_invoked" => false,
     "status" => "failed",
-    "marker" => MARKER,
+    "marker" => expected_marker,
     "runner_available" => false,
     "marker_observed" => false,
     "raw_output_included" => false,
@@ -102,39 +116,47 @@ def finish(report, exit_code)
   exit exit_code
 end
 
-report = base_report(options.fetch(:format), options.fetch(:redact_output))
+executable_source = options[:exe].to_s.strip.empty? ? "fixture" : "user-supplied"
+report = base_report(options.fetch(:format), options.fetch(:redact_output), options.fetch(:expected_marker), executable_source)
 
 FileUtils.mkdir_p(WORK_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 
-build_stdout, build_stderr, build_status = run_command(
-  {
-    "GOOS" => "windows",
-    "GOARCH" => "amd64",
-    "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
-    "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
-  },
-  "go", "build", "-o", EXE_PATH.to_s, "./test/fixtures/winapp/hello"
-)
+selected_exe_path = options[:exe]
+if executable_source == "fixture"
+  build_stdout, build_stderr, build_status = run_command(
+    {
+      "GOOS" => "windows",
+      "GOARCH" => "amd64",
+      "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
+      "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
+    },
+    "go", "build", "-o", EXE_PATH.to_s, "./test/fixtures/winapp/hello"
+  )
 
-unless build_status.zero?
-  report["failure_reason"] = "Windows app fixture build failed"
-  if options.fetch(:format) == "text"
-    warn build_stdout unless build_stdout.empty?
-    warn build_stderr unless build_stderr.empty?
-    warn "FAIL: Windows app fixture build failed"
+  unless build_status.zero?
+    report["failure_reason"] = "Windows app fixture build failed"
+    if options.fetch(:format) == "text"
+      warn build_stdout unless build_stdout.empty?
+      warn build_stderr unless build_stderr.empty?
+      warn "FAIL: Windows app fixture build failed"
+    end
+    finish(report, 1)
   end
-  finish(report, 1)
+  report["fixture_built"] = true
+  selected_exe_path = EXE_PATH.to_s
 end
-report["fixture_built"] = true
 
 smoke_command = [
   "go", "run", "./cmd/xnix-runtime-go", "windows-app-run-smoke",
-  "--exe", EXE_PATH.to_s,
-  "--state-root", STATE_ROOT.to_s,
-  "--timeout", "30s"
+  "--exe", selected_exe_path.to_s,
+  "--state-root", options.fetch(:state_root),
+  "--timeout", options.fetch(:timeout),
+  "--expected-marker", options.fetch(:expected_marker)
 ]
+smoke_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+options.fetch(:app_args).each { |value| smoke_command.concat(["--arg", value]) }
 smoke_command << "--redact-output" if options.fetch(:redact_output)
 
 smoke_stdout, smoke_stderr, smoke_status = run_command(
@@ -174,7 +196,7 @@ report["skip_reason"] = payload.fetch("skip_reason", "")
 
 case payload.fetch("status")
 when "passed"
-  if payload["marker_observed"] && payload["stdout"].include?(MARKER)
+  if payload["marker_observed"] && payload["stdout"].include?(options.fetch(:expected_marker))
     puts "PASS: real Windows app smoke"
     exit 0
   end

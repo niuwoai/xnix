@@ -1,6 +1,6 @@
 # Claude Code Active Work Order
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc20 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc21 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is the current short-form work order for asking Claude Code to implement the next bounded Xnix mainline task. It intentionally excludes completed task details so Claude Code does not drift back into already-landed work.
 

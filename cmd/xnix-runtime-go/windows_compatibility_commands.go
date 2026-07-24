@@ -34,11 +34,13 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	var stateRoot string
 	var runnerPath string
 	var timeoutText string
+	var expectedMarker string
 	var redactOutput bool
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
 	flags.StringVar(&runnerPath, "runner", "", "explicit compatibility runner path")
 	flags.StringVar(&timeoutText, "timeout", "20s", "execution timeout")
+	flags.StringVar(&expectedMarker, "expected-marker", winapp.DefaultMarker, "expected stdout marker")
 	flags.BoolVar(&redactOutput, "redact-output", false, "omit raw stdout and stderr while preserving safe output evidence")
 
 	var appArgs repeatedStringFlag
@@ -62,6 +64,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 		StateRoot:      stateRoot,
 		RunnerPath:     runnerPath,
 		Timeout:        timeout,
+		ExpectedMarker: expectedMarker,
 		RedactOutput:   redactOutput,
 	})
 	if err != nil {
