@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc15`.
+The project is currently at `v0.2.640-rc16`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc15`.
 
 ## Current Checkpoint
 
-v0.2.640-rc15 adds a Go-owned `desktop-trigger-request-preflight-preview` for the post-release real desktop-triggered `ShowRuntimeControlledLaunch` request lane. The preflight consumes service-call materialization, keeps KDE evidence-only, hides owner service call arguments, and blocks with `blocked-missing-promotion` until formal full checkpoint promotion is observed.
+v0.2.640-rc16 adds `scripts/desktop_trigger_request_preflight_smoke.rb`, a lightweight targeted smoke that records safe Runtime-status handoff evidence, invokes the Go-owned `desktop-trigger-request-preflight-preview`, verifies `blocked-missing-promotion` before formal promotion, verifies `ready-for-operator-request` with explicit promoted evidence, and keeps service dispatch, D-Bus calls, desktop launch, backend launch, Runtime writes, KDE writes, backend exposure, and host mutation disabled.
+
+The previous v0.2.640-rc15 checkpoint added the Go-owned `desktop-trigger-request-preflight-preview` for the post-release real desktop-triggered `ShowRuntimeControlledLaunch` request lane. The preflight consumes service-call materialization, keeps KDE evidence-only, hides owner service call arguments, and blocks with `blocked-missing-promotion` until formal full checkpoint promotion is observed.
 
 The previous v0.2.640-rc14 checkpoint kept the formal full checkpoint gate pending and added `docs/post-checkpoint-promotion-checklist-0640.md`, the human-operator runbook for promoting `v0.2.640` only after full smoke passes and the promotion packet allows the release. The earlier v0.2.640-rc13 checkpoint made `scripts/release_evidence_index.rb` consume `scripts/full_checkpoint_promotion_packet.rb`, keeping historical product smoke evidence separate from current formal release readiness.
 
@@ -47,6 +49,8 @@ ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
 ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
 ruby -Ilib test/test_kde_controlled_launch_action_stub.rb
 ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
+ruby -Ilib test/test_desktop_trigger_request_preflight_smoke_script.rb
+ruby scripts/desktop_trigger_request_preflight_smoke.rb
 ruby -Ilib test/test_full_smoke_script.rb
 ruby -Ilib test/test_full_checkpoint_promotion_packet.rb
 ruby -Ilib test/test_merge_readiness_packet.rb
@@ -55,4 +59,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc15`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc16`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

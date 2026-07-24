@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc15
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc16
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc16 checkpoint candidate adds `scripts/desktop_trigger_request_preflight_smoke.rb`, a lightweight targeted smoke for the desktop-trigger request preflight lane. The smoke records safe Runtime-status handoff evidence through the Runtime CLI, invokes the Go-owned `desktop-trigger-request-preflight-preview`, proves the lane remains `blocked-missing-promotion` before formal promotion, proves explicit promoted fixture evidence reaches `ready-for-operator-request`, and keeps service dispatch, D-Bus calls, desktop launch, backend launch, Runtime writes, KDE writes, backend exposure, owner service argument exposure, and host mutation disabled. It also adds a restricted container command and a short Claude Code dispatch brief for the next handoff batch.
 
 The v0.2.640-rc15 checkpoint candidate adds `desktop-trigger-request-preflight-preview`, a Go-owned read-only preflight for the future real desktop-triggered `ShowRuntimeControlledLaunch` request lane. It consumes `desktop-trigger-service-call-materialization-preview`, verifies the owner service call shape inside Runtime, returns `ready-for-operator-request` only after formal promotion is observed, defaults to `blocked-missing-promotion`, and keeps KDE evidence-only without exposing owner service call arguments, state roots, launcher paths, backend details, D-Bus calls, desktop launch, backend launch, Runtime writes, or host mutation.
 

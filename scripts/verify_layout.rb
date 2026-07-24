@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc15"
+EXPECTED_VERSION = "0.2.640-rc16"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -26,6 +26,7 @@ REQUIRED_FILES = %w[
   docs/claude-code-seventh-wave-task-batch.md
   docs/claude-code-current-execution-queue.md
   docs/claude-code-next-actions-handoff.md
+  docs/claude-code-next-dispatch-brief.md
   docs/claude-code-next-mainline-work-pack.md
   docs/claude-code-stability-release-train.md
   docs/claude-code-dispatch-runbook.md
@@ -493,6 +494,7 @@ REQUIRED_FILES = %w[
   scripts/staged_launcher_dispatch_smoke.rb
   scripts/runtime_status_owner_service_session_bus_smoke.rb
   scripts/kde_controlled_launch_action_smoke.rb
+  scripts/desktop_trigger_request_preflight_smoke.rb
   scripts/dbus_controlled_launch_owner_fixture_smoke.rb
   scripts/runtime_contract_drift_report.rb
   scripts/implementation_evidence_report.rb
@@ -663,6 +665,7 @@ REQUIRED_FILES = %w[
   test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
   test/test_kde_controlled_launch_action_stub.rb
   test/test_kde_controlled_launch_action_smoke_script.rb
+  test/test_desktop_trigger_request_preflight_smoke_script.rb
   test/test_runtime_dbus_smoke_script.rb
   test/test_kde_center_model.rb
   test/test_kde_first_presence_smoke_script.rb
@@ -6611,6 +6614,13 @@ kde_controlled_launch_action_smoke_source = read_project_file("scripts/kde_contr
                                             read_project_file("lib/xnix/container.rb")
 %w[kde-controlled-launch-action-smoke KDE\ controlled\ launch\ action\ smoke kde-controlled-launch-session-bus-smoke-plan-preview known-app-runtime-status-launch-owner-fixture-record XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE runtime_status_owner_session_smoke_command dbus_controlled_launch_fixture_command dbus_controlled_launch_fixture_container_command expected_dbus_fixture_pass_marker expected_dbus_fixture_skip_marker PASS:\ KDE\ controlled\ launch\ action\ smoke SKIP:\ KDE\ controlled\ launch\ action\ smoke kde_forwards_only_evidence_handle owner_service_args_exposed_to_kde desktop_kde_state_root_access desktop_receipt_fields_reconstructed smoke_executed_by_preview docker.sock --privileged --network\ host kde_controlled_launch_action_smoke_command].each do |token|
   assert(kde_controlled_launch_action_smoke_source.include?(token.gsub("\\ ", " ")), "KDE controlled launch action smoke must include #{token}")
+end
+desktop_trigger_request_preflight_smoke_source = read_project_file("scripts/desktop_trigger_request_preflight_smoke.rb") +
+                                                read_project_file("test/test_desktop_trigger_request_preflight_smoke_script.rb") +
+                                                read_project_file("scripts/container.rb") +
+                                                read_project_file("lib/xnix/container.rb")
+%w[desktop-trigger-request-preflight-smoke desktop-trigger\ request\ preflight\ smoke known-app-kde-runtime-status-launch-evidence-record desktop-trigger-request-preflight-preview blocked-missing-promotion ready-for-operator-request owner_service_call_shape_verified owner_service_call_ready operator_request_ready formal_promotion_observed formal_release_ready kde_receives_materialized_owner_args service_call_dispatch_enabled service_call_dispatched dbus_called desktop_launch_enabled backend_launch_enabled runtime_state_written kde_configuration_written network_required host_root_modified assert_no_forbidden owner_service_call_args owner_service_cli_args qemu-system wine\  PASS:\ desktop-trigger\ request\ preflight\ smoke desktop_trigger_request_preflight_smoke_command].each do |token|
+  assert(desktop_trigger_request_preflight_smoke_source.include?(token.gsub("\\ ", " ")), "Desktop-trigger request preflight smoke must include #{token}")
 end
 dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/dbus_controlled_launch_owner_fixture_smoke.rb") +
                                                     read_project_file("test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb") +

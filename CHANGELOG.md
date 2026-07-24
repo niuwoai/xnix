@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc16] - 2026-07-24
+
+### Added
+
+- Added `scripts/desktop_trigger_request_preflight_smoke.rb`, a lightweight targeted smoke that records safe Runtime-status handoff evidence and invokes the Go-owned `desktop-trigger-request-preflight-preview`.
+- Added container and script tests for the preflight smoke, including restricted container command coverage and redaction/no-side-effect assertions.
+- Added `docs/claude-code-next-dispatch-brief.md` as a short copy-first handoff for the next Claude Code task batch.
+
+### Fixed
+
+- Kept the desktop-trigger request preflight automation fail-closed before formal promotion while verifying the promoted fixture path becomes `ready-for-operator-request` without dispatching service calls, calling D-Bus, launching desktop actions, starting backends, writing Runtime/KDE state, or mutating the host.
+
 ## [0.2.640-rc15] - 2026-07-24
 
 ### Added

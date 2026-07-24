@@ -1,6 +1,6 @@
 # Claude Code Next Mainline Work Pack
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc15 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc16 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is a copy-first task pack for asking Claude Code to implement the next Xnix mainline work while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -10,7 +10,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current Mainline State
 
-The current local baseline is `v0.2.640-rc15`.
+The current local baseline is `v0.2.640-rc16`.
 
 Already present in the current checkpoint candidate:
 
@@ -28,6 +28,8 @@ Already present in the current checkpoint candidate:
 - `scripts/release_evidence_index.rb` consumes the promotion packet and keeps historical product smoke evidence separate from current formal release readiness.
 - `docs/post-checkpoint-promotion-checklist-0640.md` defines the human-owned promotion checklist.
 - `desktop-trigger-request-preflight-preview` is present as a Go-owned post-release request preflight that remains fail-closed with `blocked-missing-promotion` until formal full checkpoint promotion is observed.
+- `scripts/desktop_trigger_request_preflight_smoke.rb` is present as a targeted smoke for the request preflight lane; it verifies blocked and promoted fixture states without running Docker, QEMU, Wine, D-Bus, KDE, or a backend.
+- `docs/claude-code-next-dispatch-brief.md` is present as the current short copy-first dispatch brief.
 
 The formal `v0.2.640` release must not be promoted until this operator-owned command passes:
 
@@ -83,7 +85,8 @@ Use this order unless Codex or a reviewer asks for a repair branch:
 | Done | `C8W13` Release evidence index aligns with promotion packet | `codex/release-evidence-promotion-claim` | Present locally in v0.2.640-rc13. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W14` Operator promotion checklist refresh | `codex/operator-promotion-checklist-0640` | Present locally in v0.2.640-rc14. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C9W1` Post-release desktop-trigger request preflight | `codex/desktop-trigger-request-preflight` | Present locally in v0.2.640-rc15 as a read-only fail-closed preflight. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C9W2` Human-authorized desktop-trigger staged request smoke | `codex/desktop-trigger-staged-request-smoke` | Dispatch only after formal `v0.2.640` is promoted or explicitly skipped by Codex. |
+| Done | `C9W2` Desktop-trigger request preflight smoke | `codex/desktop-trigger-request-preflight-smoke` | Present locally in v0.2.640-rc16 as a targeted smoke. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C9W3` Merge readiness consumes request preflight smoke evidence | `codex/merge-readiness-preflight-smoke-evidence` | Dispatch after Codex reviews the v0.2.640-rc16 targeted smoke. |
 
 Stop after each task. Return the branch or diff for Codex review. Do not chain tasks.
 

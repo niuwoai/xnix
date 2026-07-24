@@ -97,6 +97,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/kde_controlled_launch_action_smoke.rb"])
     end
 
+    def desktop_trigger_request_preflight_smoke_command
+      tools_cache_run_command(["ruby", "scripts/desktop_trigger_request_preflight_smoke.rb"])
+    end
+
     def kde_controlled_launch_action_dbus_fixture_smoke_command
       runtime_command(
         network: "none",

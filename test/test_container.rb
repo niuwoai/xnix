@@ -31,6 +31,7 @@ known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
 staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
 runtime_status_owner_service_session_bus_command = container.runtime_status_owner_service_session_bus_smoke_command
 kde_controlled_launch_action_smoke_command = container.kde_controlled_launch_action_smoke_command
+desktop_trigger_request_preflight_smoke_command = container.desktop_trigger_request_preflight_smoke_command
 kde_controlled_launch_action_dbus_fixture_smoke_command = container.kde_controlled_launch_action_dbus_fixture_smoke_command
 dbus_controlled_launch_owner_fixture_command = container.dbus_controlled_launch_owner_fixture_smoke_command
 dockerignore_entries = Pathname.new(PROJECT_ROOT).join(".dockerignore").read.lines.map(&:strip)
@@ -144,6 +145,16 @@ assert(!kde_controlled_launch_action_smoke_mount.include?("type=bind"), "KDE con
 assert(!kde_controlled_launch_action_smoke_command.include?("--privileged"), "KDE controlled launch action smoke must not be privileged")
 assert(!kde_controlled_launch_action_smoke_command.any? { |argument| argument.include?("docker.sock") }, "KDE controlled launch action smoke must not mount the Docker socket")
 assert(kde_controlled_launch_action_smoke_command.last(2) == ["ruby", "scripts/kde_controlled_launch_action_smoke.rb"], "KDE controlled launch action smoke must run through the KDE action harness")
+
+assert(desktop_trigger_request_preflight_smoke_command.fetch(desktop_trigger_request_preflight_smoke_command.index("--network") + 1) == "none", "Desktop-trigger request preflight smoke must run without container networking")
+assert(desktop_trigger_request_preflight_smoke_command.include?("--read-only"), "Desktop-trigger request preflight smoke must keep the container root read-only")
+assert(desktop_trigger_request_preflight_smoke_command.include?("--mount"), "Desktop-trigger request preflight smoke must mount its managed cache volume")
+desktop_trigger_request_preflight_smoke_mount = desktop_trigger_request_preflight_smoke_command.fetch(desktop_trigger_request_preflight_smoke_command.index("--mount") + 1)
+assert(desktop_trigger_request_preflight_smoke_mount == expected_source_mount, "Desktop-trigger request preflight smoke must use the managed source cache volume")
+assert(!desktop_trigger_request_preflight_smoke_mount.include?("type=bind"), "Desktop-trigger request preflight smoke must not bind mount a host directory")
+assert(!desktop_trigger_request_preflight_smoke_command.include?("--privileged"), "Desktop-trigger request preflight smoke must not be privileged")
+assert(!desktop_trigger_request_preflight_smoke_command.any? { |argument| argument.include?("docker.sock") }, "Desktop-trigger request preflight smoke must not mount the Docker socket")
+assert(desktop_trigger_request_preflight_smoke_command.last(2) == ["ruby", "scripts/desktop_trigger_request_preflight_smoke.rb"], "Desktop-trigger request preflight smoke must run through the preflight smoke harness")
 
 assert(kde_controlled_launch_action_dbus_fixture_smoke_command.fetch(kde_controlled_launch_action_dbus_fixture_smoke_command.index("--network") + 1) == "none", "KDE controlled launch action D-Bus fixture smoke must run without container networking")
 assert(kde_controlled_launch_action_dbus_fixture_smoke_command.include?("--read-only"), "KDE controlled launch action D-Bus fixture smoke must keep the container root read-only")
