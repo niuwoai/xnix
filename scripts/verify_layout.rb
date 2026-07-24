@@ -992,7 +992,7 @@ end
   assert(wine_guest_config.include?(line), "Wine guest GUI defconfig must include #{line}")
 end
 wine_guest_gui_smoke = read_project_file("scripts/wine_guest_gui_smoke.rb")
-%w[xnix.scripts.wine_guest_gui_smoke.v1 --execute --plan-only Xvfb winemine.exe windows-app-guest-wine-gui-smoke runtime_go_owned_gui_smoke qemu-guest-wine-x11 qemu_user_network_restrict_disabled_for_display loopback_ssh_forwarding_only privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+%w[xnix.scripts.wine_guest_gui_smoke.v1 --execute --plan-only Xvfb winemine.exe windows-app-guest-wine-gui-smoke runtime_go_owned_gui_smoke --evidence-app-id --evidence-display-name --evidence-app-version evidence_app_id qemu-guest-wine-x11 qemu_user_network_restrict_disabled_for_display loopback_ssh_forwarding_only privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(wine_guest_gui_smoke.include?(token), "Wine guest GUI smoke script must include #{token}")
 end
 wine_guest_gui_runtime = read_project_file("internal/runtime/winapp/guest_gui_smoke.go")
@@ -1000,7 +1000,7 @@ wine_guest_gui_runtime = read_project_file("internal/runtime/winapp/guest_gui_sm
   assert(wine_guest_gui_runtime.include?(token), "Go Wine guest GUI smoke must include #{token}")
 end
 remote_wine_guest_gui_smoke = read_project_file("scripts/remote_wine_guest_gui_smoke.rb")
-%w[xnix.scripts.remote_wine_guest_gui_smoke.v1 remote-wine-guest-gui-smoke root@q4 --execute --no-sync-source --source-sync-mode source_sync_entries source_sync_mode runtime full --remote-executable --evidence-output evidence_preview_planned gui-smoke-evidence-preview remote-timeout-seconds ServerAliveInterval --timeout --contimeout /home/xnix-build /home/xnix-run-materials /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_go build runtime_build_planned remote_runtime_bin wine-gui-smoke qemu-guest-wine-x11 winemine.exe requires_rebuilt_wine_guest_with_x11 privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified docs/claude-code-implementation-packages.md].each do |token|
+%w[xnix.scripts.remote_wine_guest_gui_smoke.v1 remote-wine-guest-gui-smoke root@q4 --execute --no-sync-source --source-sync-mode source_sync_entries source_sync_mode runtime full --remote-executable --evidence-output --evidence-app-id --evidence-display-name --evidence-app-version evidence_preview_planned gui-smoke-evidence-preview remote-timeout-seconds ServerAliveInterval --timeout --contimeout /home/xnix-build /home/xnix-run-materials /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_go build runtime_build_planned remote_runtime_bin wine-gui-smoke qemu-guest-wine-x11 winemine.exe requires_rebuilt_wine_guest_with_x11 privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified docs/claude-code-implementation-packages.md].each do |token|
   assert(remote_wine_guest_gui_smoke.include?(token), "remote Wine guest GUI smoke script must include #{token}")
 end
 

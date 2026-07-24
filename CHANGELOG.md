@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc99] - 2026-07-25
+
+### Added
+
+- Added configurable Runtime GUI evidence identity flags to `scripts/wine_guest_gui_smoke.rb` and forwarded them through `scripts/remote_wine_guest_gui_smoke.rb`.
+
+### Changed
+
+- Changed owner-controlled MessageBox GUI smoke planning so the Go GUI evidence projection and Runtime-status owner fixture can use `org.xnix.apps.messagebox` instead of borrowing the Mines identity.
+
 ## [0.2.640-rc98] - 2026-07-25
 
 ### Added

@@ -291,6 +291,9 @@ remote_args = [
   "--wait-seconds", options.fetch(:wait_seconds).to_s,
   "--launch-mode", launch_mode,
   "--runtime-bin", remote_runtime_bin,
+  "--evidence-app-id", options.fetch(:evidence_app_id),
+  "--evidence-display-name", options.fetch(:evidence_display_name),
+  "--evidence-app-version", options.fetch(:evidence_app_version),
   "--report-output", report_output
 ]
 if launch_mode == "owner-controlled-launch"

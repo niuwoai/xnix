@@ -26,6 +26,9 @@ DEFAULT_LAUNCH_MODE = ENV.fetch("XNIX_WINE_GUI_LAUNCH_MODE", "direct")
 DEFAULT_OWNER_BIN = ENV.fetch("XNIX_RUNTIME_OWNER_BIN", "go")
 DEFAULT_LAUNCHER_BIN = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "")
 DEFAULT_KNOWN_APP_CACHE_ROOT = ENV.fetch("XNIX_KNOWN_APP_CACHE_ROOT", "")
+DEFAULT_EVIDENCE_APP_ID = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_ID", "org.xnix.apps.mines")
+DEFAULT_EVIDENCE_DISPLAY_NAME = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_DISPLAY_NAME", "Mines")
+DEFAULT_EVIDENCE_APP_VERSION = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_VERSION", VERSION)
 
 options = {
   execute: false,
@@ -45,6 +48,9 @@ options = {
   owner_bin: DEFAULT_OWNER_BIN,
   launcher_bin: DEFAULT_LAUNCHER_BIN,
   known_app_cache_root: DEFAULT_KNOWN_APP_CACHE_ROOT,
+  evidence_app_id: DEFAULT_EVIDENCE_APP_ID,
+  evidence_display_name: DEFAULT_EVIDENCE_DISPLAY_NAME,
+  evidence_app_version: DEFAULT_EVIDENCE_APP_VERSION,
   wait_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_WAIT_SECONDS", DEFAULT_WAIT_SECONDS.to_s), 10),
   boot_timeout_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_BOOT_TIMEOUT_SECONDS", DEFAULT_BOOT_TIMEOUT_SECONDS.to_s), 10)
 }
@@ -68,6 +74,9 @@ OptionParser.new do |parser|
   parser.on("--owner-bin PATH", "Runtime owner binary; use `go` to run ./cmd/xnix-runtime-owner from source.") { |value| options[:owner_bin] = value }
   parser.on("--launcher-bin PATH", "Managed xnix-compat-launch binary for owner-controlled launch mode.") { |value| options[:launcher_bin] = value }
   parser.on("--known-app-cache-root PATH", "Known Windows app cache root supplied to the Runtime owner.") { |value| options[:known_app_cache_root] = value }
+  parser.on("--evidence-app-id ID", "Application id used for Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
+  parser.on("--evidence-display-name NAME", "Display name used for Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
+  parser.on("--evidence-app-version VERSION", "Application version used for Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
   parser.on("--wait-seconds SECONDS", Integer, "Seconds to wait for the GUI window.") { |value| options[:wait_seconds] = value }
   parser.on("--boot-timeout-seconds SECONDS", Integer, "Seconds to wait for guest SSH.") { |value| options[:boot_timeout_seconds] = value }
   parser.on("--plan-only", "Emit the non-executing plan.") { options[:execute] = false }
@@ -200,9 +209,9 @@ def runtime_gui_evidence_command(options, report_path, evidence_path)
     *runtime_base_command(options),
     "gui-smoke-evidence-preview",
     "--gui-smoke-report", report_path.to_s,
-    "--app-id", "org.xnix.apps.mines",
-    "--display-name", "Mines",
-    "--app-version", VERSION,
+    "--app-id", options.fetch(:evidence_app_id),
+    "--display-name", options.fetch(:evidence_display_name),
+    "--app-version", options.fetch(:evidence_app_version),
     "--output", evidence_path.to_s
   ]
 end
@@ -211,6 +220,7 @@ def runtime_owner_fixture_command(options, evidence_path, owner_state_root, cach
   [
     *runtime_base_command(options),
     "known-app-runtime-status-launch-owner-fixture-record",
+    "--app", options.fetch(:evidence_app_id),
     "--state-root", owner_state_root.to_s,
     "--cache-root", cache_root.to_s,
     "--gui-smoke-evidence-file", evidence_path.to_s
@@ -294,6 +304,9 @@ def base_report(options)
     "owner_external_gui_app_requested" => options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:executable).strip.empty?,
     "owner_external_gui_app_path_exposed" => false,
     "owner_external_gui_app_delivery" => options.fetch(:executable).strip.empty? ? "" : "owner-managed-copy",
+    "evidence_app_id" => options.fetch(:evidence_app_id),
+    "evidence_display_name" => options.fetch(:evidence_display_name),
+    "evidence_app_version" => options.fetch(:evidence_app_version),
     "runtime_bin_configured" => !options.fetch(:runtime_bin).strip.empty?,
     "state_root" => state_root.to_s,
     "qemu_binary" => options.fetch(:qemu_binary),

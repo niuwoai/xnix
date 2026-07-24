@@ -68,6 +68,7 @@ assert(owner_payload["owner_controlled_launch_requested"] == true, "remote GUI s
 assert(owner_payload["owner_build_planned"] == true, "remote GUI smoke owner mode must build the Runtime owner")
 assert(owner_payload["launcher_build_planned"] == true, "remote GUI smoke owner mode must build the managed launcher")
 assert(owner_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke must forward owner launch mode")
+assert(owner_payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke owner mode must default evidence identity to Mines")
 
 bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
   "ruby", script.to_s,
@@ -109,6 +110,22 @@ exe_payload = JSON.parse(exe_stdout)
 assert(exe_payload["remote_executable"] == "/home/xnix-run-materials/fixtures/xnix-messagebox-smoke.exe", "remote GUI smoke must expose the managed remote executable")
 assert(exe_payload["remote_gui_executable_configured"] == true, "remote GUI smoke must mark remote executable configuration")
 assert(exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "remote GUI smoke must show the executable basename")
+
+messagebox_stdout, messagebox_stderr, messagebox_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-executable", "/home/xnix-run-materials/fixtures/xnix-messagebox-smoke.exe",
+  "--launch-mode", "owner-controlled-launch",
+  "--evidence-app-id", "org.xnix.apps.messagebox",
+  "--evidence-display-name", "Xnix MessageBox",
+  chdir: project_root.to_s
+)
+assert(messagebox_status.success?, "remote GUI smoke MessageBox identity plan must succeed: #{messagebox_stderr}")
+messagebox_payload = JSON.parse(messagebox_stdout)
+assert(messagebox_payload["remote_gui_executable_configured"] == true, "remote GUI smoke MessageBox identity plan must configure the executable")
+assert(messagebox_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "remote GUI smoke MessageBox identity plan must expose the executable basename")
+assert(messagebox_payload["evidence_app_id"] == "org.xnix.apps.messagebox", "remote GUI smoke MessageBox identity plan must expose MessageBox evidence app id")
+assert(messagebox_payload["evidence_display_name"] == "Xnix MessageBox", "remote GUI smoke MessageBox identity plan must expose MessageBox evidence display name")
+assert(messagebox_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke MessageBox identity plan must keep owner mode")
 
 bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
   "ruby", script.to_s,

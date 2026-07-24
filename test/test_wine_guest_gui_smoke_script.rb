@@ -88,6 +88,8 @@ assert(owner_payload["owner_service_call_planned"] == true, "GUI smoke owner mod
 assert(owner_payload["owner_seed_gui_smoke_planned"] == true, "GUI smoke owner mode must plan seed GUI evidence")
 assert(owner_payload["runtime_owner_bin_configured"] == true, "GUI smoke owner mode must configure the Runtime owner binary")
 assert(owner_payload["managed_launcher_bin_configured"] == true, "GUI smoke owner mode must configure the managed launcher")
+assert(owner_payload["evidence_app_id"] == "org.xnix.apps.mines", "GUI smoke owner mode must default evidence identity to Mines")
+assert(owner_payload["evidence_display_name"] == "Mines", "GUI smoke owner mode must default evidence display name to Mines")
 assert(owner_payload["owner_external_gui_app_requested"] == false, "GUI smoke owner mode must default to the built-in GUI app")
 assert(owner_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner mode must not expose owner guest GUI paths")
 assert(owner_payload["owner_external_gui_app_delivery"] == "", "GUI smoke owner mode must not plan external GUI app delivery by default")
@@ -123,5 +125,23 @@ assert(owner_exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI sm
 assert(owner_exe_payload["owner_external_gui_app_requested"] == true, "GUI smoke owner executable plan must request owner external GUI app launch")
 assert(owner_exe_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner executable plan must not expose owner guest GUI paths")
 assert(owner_exe_payload["owner_external_gui_app_delivery"] == "owner-managed-copy", "GUI smoke owner executable plan must use owner-managed copy delivery")
+
+messagebox_stdout, messagebox_stderr, messagebox_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--launch-mode", "owner-controlled-launch",
+  "--launcher-bin", "/home/xnix-build-cache/bin/xnix-compat-launch",
+  "--executable", fixture_executable.to_s,
+  "--evidence-app-id", "org.xnix.apps.messagebox",
+  "--evidence-display-name", "Xnix MessageBox",
+  chdir: project_root.to_s
+)
+assert(messagebox_status.success?, "Wine guest GUI smoke MessageBox identity plan must succeed: #{messagebox_stderr}")
+messagebox_payload = JSON.parse(messagebox_stdout)
+assert(messagebox_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke MessageBox identity plan must preserve the executable basename")
+assert(messagebox_payload["evidence_app_id"] == "org.xnix.apps.messagebox", "GUI smoke MessageBox identity plan must expose MessageBox evidence app id")
+assert(messagebox_payload["evidence_display_name"] == "Xnix MessageBox", "GUI smoke MessageBox identity plan must expose MessageBox evidence display name")
+assert(messagebox_payload["evidence_app_version"] == project_root.join("VERSION").read.strip, "GUI smoke MessageBox identity plan must default evidence version to the project version")
 
 puts "PASS: Wine guest GUI smoke script plan"

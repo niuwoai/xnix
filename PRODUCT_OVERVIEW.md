@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc98
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc99
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc99 checkpoint candidate lets the real Wine GUI smoke harness carry the target application identity into owner-controlled Runtime evidence. `scripts/wine_guest_gui_smoke.rb` now accepts `--evidence-app-id`, `--evidence-display-name`, and `--evidence-app-version`, uses those values when calling Go `gui-smoke-evidence-preview`, and passes the same app id to `known-app-runtime-status-launch-owner-fixture-record`. `scripts/remote_wine_guest_gui_smoke.rb` forwards the same identity flags, so q4 MessageBox owner-controlled runs can produce MessageBox-owned Runtime-status handoff evidence instead of borrowing the Mines handoff identity.
 
 The v0.2.640-rc98 checkpoint candidate adds a restricted KDE controlled-launch action smoke lane for the owner-controlled MessageBox GUI handoff. `scripts/kde_controlled_launch_action_smoke.rb` now creates a Runtime-status MessageBox handoff, projects a safe owner GUI report through `gui-smoke-evidence-preview`, renders the full `kde-center-page-preview`, and feeds that page back into `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID`. The default smoke remains a safe SKIP after validation, so it verifies the desktop handoff contract without launching a backend unless an operator explicitly opts into execution.
 
