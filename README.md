@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc1`.
+The project is currently at `v0.2.640-rc2`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc1`.
 
 ## Current Checkpoint
 
-v0.2.640-rc1 prepares the formal full checkpoint gate. The full smoke now requires a PASS from the KDE controlled-launch action D-Bus fixture lane in addition to the base QEMU boot, staged known Windows app dispatch smoke, and QEMU guest real Windows app Wine smoke. The formal `v0.2.640` tag remains pending because Colima Docker currently fails to pull `debian:bookworm-slim` from Docker Hub with EOF during token/layer fetch.
+v0.2.640-rc2 keeps the formal full checkpoint gate pending and adds structured full-smoke failure classification. Failed full-smoke runs now write JSON and Markdown reports that distinguish infrastructure blockers, missing local images, Buildroot failures, QEMU serial failures, known Windows app smoke failures, fixture Windows app smoke failures, and KDE action fixture failures. The formal `v0.2.640` tag remains pending because Colima Docker currently fails to pull `debian:bookworm-slim` from Docker Hub with EOF during token/layer fetch.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.639 connected the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane.
 
@@ -49,4 +49,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc1`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc2`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.

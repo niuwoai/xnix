@@ -325,6 +325,7 @@ LANES = [
       %r{\Adocs/release-evidence/},
       %r{\Aimage/},
       %r{\Ainternal/runtime/image/},
+      %r{\Alib/xnix/full_smoke_report\.rb\z},
       %r{\Acmd/xnix-runtime-go/restricted_product_smoke_packet_},
       %r{\Ascripts/full_smoke\.rb\z},
       %r{\Ascripts/restricted_product_smoke_packet\.rb\z},

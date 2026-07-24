@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc1
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc2
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.640-rc1 by resolving the external Docker Hub pull blocker and rerunning the formal full checkpoint. The full checkpoint candidate now includes the KDE controlled-launch action D-Bus fixture lane as a required PASS gate, but the formal `v0.2.640` tag must wait until `ruby scripts/full_smoke.rb` passes. If full smoke fails after the Docker pull issue is resolved, fix the concrete project defect and rerun the complete checkpoint before moving on. If it passes, promote to `v0.2.640` and move beyond fixture validation toward a real desktop-triggered staged `xnix-compat-launch` invocation while preserving evidence-only KDE forwarding and Runtime-owned execution policy.
+Continue from v0.2.640-rc2 by resolving the external Docker Hub pull blocker and rerunning the formal full checkpoint. The full checkpoint candidate now includes the KDE controlled-launch action D-Bus fixture lane as a required PASS gate and structured full-smoke failure classification, but the formal `v0.2.640` tag must wait until `ruby scripts/full_smoke.rb` passes. If full smoke fails after the Docker pull issue is resolved, fix the concrete project defect and rerun the complete checkpoint before moving on. If it passes, promote to `v0.2.640` and move beyond fixture validation toward a real desktop-triggered staged `xnix-compat-launch` invocation while preserving evidence-only KDE forwarding and Runtime-owned execution policy.
+
+The v0.2.640-rc2 checkpoint candidate adds structured full-smoke failure classification. Failed full-smoke runs now write JSON and Markdown reports before exiting nonzero, including `failure_class`, `failed_step`, `operator_action_required`, `project_defect_possible`, `safe_retry_command`, `failure_summary`, `full_smoke_failed`, and `formal_release_ready=false`. The classifier distinguishes Docker daemon blockers, Docker Hub EOF failures, missing local base images, Buildroot build failures, QEMU serial failures, known Windows app smoke failures, fixture Windows app smoke failures, and KDE action fixture failures while redacting host paths in report summaries.
 
 The v0.2.640-rc1 checkpoint candidate promotes `kde-controlled-launch-action-dbus-fixture-smoke` into `scripts/full_smoke.rb` as a required PASS lane. The container command runs the plan-consuming KDE action harness in the tested Runtime image with explicit D-Bus fixture execution enabled, no container networking, no privileged container, no Docker socket, managed cache volume access, and the controlled-launch scratch tmpfs. `FullSmokeReport` now records KDE action smoke inclusion/pass status. Full execution is currently blocked before project tests by Colima Docker EOF failures while pulling `debian:bookworm-slim` from Docker Hub.
 

@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc2] - 2026-07-24
+
+### Changed
+
+- Added structured full-smoke failure classification for Docker daemon blockers, Docker Hub EOF failures, missing local base images, Buildroot build failures, QEMU serial failures, known Windows app smoke failures, fixture Windows app smoke failures, and KDE action fixture failures.
+- Updated `scripts/full_smoke.rb` so failed runs write JSON and Markdown reports before exiting nonzero, preserving the safe retry command and redacted failure summary without claiming formal release readiness from partial smoke evidence.
+- Extended full-smoke report tests to cover the KDE action smoke lane and failed-report release readiness guards.
+
 ## [0.2.640-rc1] - 2026-07-24
 
 ### Changed
