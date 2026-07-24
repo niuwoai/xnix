@@ -4,10 +4,12 @@
 require "fileutils"
 require "json"
 require "open3"
+require "optparse"
 require "pathname"
 require "securerandom"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
+VERSION = PROJECT_ROOT.join("VERSION").read.strip
 SMOKE_NAME = "desktop-trigger request preflight smoke"
 PASS_MARKER = "PASS: desktop-trigger request preflight smoke"
 APP_ID = "7zr"
@@ -23,6 +25,16 @@ STATE_ROOT = WORK_ROOT.join("state")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
 DESKTOP_ENTRY_FILE = PROJECT_ROOT.join("kde", "actions", "xnix-runtime-status-controlled-launch.desktop")
+
+def parse_options(argv)
+  options = { format: "text" }
+  OptionParser.new do |parser|
+    parser.banner = "Usage: ruby scripts/desktop_trigger_request_preflight_smoke.rb [--format text|json]"
+    parser.on("--format FORMAT", "Output format: text or json") { |value| options[:format] = value }
+  end.parse!(argv)
+  assert(%w[text json].include?(options.fetch(:format)), "format must be text or json")
+  options
+end
 
 def assert(condition, message)
   return if condition
@@ -81,6 +93,59 @@ def assert_false_payload(payload, fields, label)
   fields.each do |field|
     assert(payload[field] == false, "#{label} must keep #{field}=false")
   end
+end
+
+def smoke_report(blocked, ready, record)
+  {
+    "version" => VERSION,
+    "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
+    "report_type" => "desktop-trigger-request-preflight-smoke",
+    "smoke_passed" => true,
+    "preflight_smoke_state" => "passed",
+    "record_request_type" => record.fetch("request_type"),
+    "record_evidence_state" => record.fetch("evidence_state"),
+    "evidence_relative_path" => record.fetch("evidence_relative_path"),
+    "evidence_sha256" => record.fetch("evidence_sha256"),
+    "blocked_preflight_state" => blocked.fetch("preflight_state"),
+    "blocked_materialization_state" => blocked.fetch("materialization_state"),
+    "blocked_full_checkpoint_state" => blocked.fetch("full_checkpoint_state"),
+    "ready_preflight_state" => ready.fetch("preflight_state"),
+    "ready_materialization_state" => ready.fetch("materialization_state"),
+    "ready_full_checkpoint_state" => ready.fetch("full_checkpoint_state"),
+    "owner_service_call_shape_verified" => ready.fetch("owner_service_call_shape_verified"),
+    "owner_service_call_ready" => ready.fetch("owner_service_call_ready"),
+    "operator_request_ready" => ready.fetch("operator_request_ready"),
+    "formal_promotion_observed_in_ready_fixture" => ready.fetch("formal_promotion_observed"),
+    "formal_release_ready" => false,
+    "runtime_owned" => true,
+    "go_runtime_backed" => true,
+    "ruby_smoke_orchestration_only" => true,
+    "kde_presentation_only" => true,
+    "kde_forwards_only_evidence_handle" => true,
+    "kde_receives_materialized_owner_args" => false,
+    "owner_call_arguments_exposed" => false,
+    "owner_cli_arguments_exposed" => false,
+    "request_object_written" => false,
+    "permission_grant_created" => false,
+    "service_call_dispatch_enabled" => false,
+    "service_call_dispatched" => false,
+    "dbus_called" => false,
+    "desktop_launch_enabled" => false,
+    "backend_launch_enabled" => false,
+    "execution_started" => false,
+    "runtime_state_written" => false,
+    "kde_configuration_written" => false,
+    "docker_executed" => false,
+    "qemu_executed" => false,
+    "wine_executed" => false,
+    "colima_executed" => false,
+    "network_required" => false,
+    "network_checks_run" => false,
+    "package_manager_invoked" => false,
+    "privileged_container_required" => false,
+    "host_root_modified" => false,
+    "desktop_safe_summary" => "Desktop-trigger request preflight smoke verified blocked and promoted fixture states without dispatching service calls, calling D-Bus, launching a desktop action, starting a backend, or mutating the host."
+  }
 end
 
 def runtime_status_projection
@@ -152,6 +217,8 @@ unless runtime_command
   warn "FAIL: #{SMOKE_NAME} requires xnix-runtime-go or go"
   exit 1
 end
+
+options = parse_options(ARGV)
 
 record, record_stdout = run_json(
   go_env,
@@ -237,4 +304,12 @@ assert_false_payload(
 )
 assert_no_forbidden(ready_stdout, common_forbidden_terms, "ready preflight output")
 
-puts PASS_MARKER
+report = smoke_report(blocked, ready, record)
+assert_no_forbidden(JSON.generate(report), [PROJECT_ROOT.to_s, STATE_ROOT.to_s, DESKTOP_ENTRY_FILE.to_s, "owner_service_call_args", "owner_service_cli_args", " --service-call ", "XNIX_RUNTIME_OWNER_", "qemu-system", "wine ", ".wine", "program files", ".exe", ENV.fetch("USER", "")], "smoke report")
+
+case options.fetch(:format)
+when "json"
+  puts JSON.pretty_generate(report)
+else
+  puts PASS_MARKER
+end

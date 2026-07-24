@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "json"
 require "pathname"
 
 def assert(condition, message)
@@ -47,5 +48,16 @@ assert(container_model.read.include?("desktop_trigger_request_preflight_smoke_co
 stdout, stderr, status = Open3.capture3("ruby", script.to_s, chdir: project_root.to_s)
 assert(status.success?, "Desktop-trigger request preflight smoke must pass cleanly: #{stderr}\n#{stdout}")
 assert(stdout.include?("PASS: desktop-trigger request preflight smoke"), "Desktop-trigger request preflight smoke must print the PASS marker")
+
+json_stdout, json_stderr, json_status = Open3.capture3("ruby", script.to_s, "--format", "json", chdir: project_root.to_s)
+assert(json_status.success?, "Desktop-trigger request preflight smoke JSON must pass cleanly: #{json_stderr}\n#{json_stdout}")
+json_payload = JSON.parse(json_stdout)
+assert(json_payload.fetch("schema_version") == "xnix.runtime.desktop_trigger_request_preflight_smoke.v1", "preflight smoke JSON must expose its schema")
+assert(json_payload.fetch("smoke_passed") == true, "preflight smoke JSON must report pass state")
+assert(json_payload.fetch("blocked_preflight_state") == "blocked-missing-promotion", "preflight smoke JSON must report blocked state")
+assert(json_payload.fetch("ready_preflight_state") == "ready-for-operator-request", "preflight smoke JSON must report ready state")
+assert(json_payload.fetch("service_call_dispatched") == false, "preflight smoke JSON must keep service dispatch disabled")
+assert(!json_stdout.include?("owner_service_cli_args"), "preflight smoke JSON must not expose owner service CLI args")
+assert(!json_stdout.include?("owner_service_call_args"), "preflight smoke JSON must not expose owner service call args")
 
 puts "PASS: desktop-trigger request preflight smoke script unit tests"

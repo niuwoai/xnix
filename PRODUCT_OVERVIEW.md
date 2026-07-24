@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc16
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc17
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc17 checkpoint candidate makes merge readiness consume existing desktop-trigger request preflight smoke JSON evidence without running the smoke. `scripts/merge_readiness_packet.rb --desktop-trigger-request-preflight-smoke <path>` now surfaces `desktop_trigger_request_preflight_smoke_status`, treats missing optional evidence as non-blocking, and turns failed or malformed supplied evidence into a release-only blocker. `scripts/desktop_trigger_request_preflight_smoke.rb --format json` now emits a redacted smoke evidence packet while keeping service dispatch, D-Bus calls, desktop launch, backend launch, Runtime writes, KDE writes, network checks, package-manager calls, and host mutation disabled.
 
 The v0.2.640-rc16 checkpoint candidate adds `scripts/desktop_trigger_request_preflight_smoke.rb`, a lightweight targeted smoke for the desktop-trigger request preflight lane. The smoke records safe Runtime-status handoff evidence through the Runtime CLI, invokes the Go-owned `desktop-trigger-request-preflight-preview`, proves the lane remains `blocked-missing-promotion` before formal promotion, proves explicit promoted fixture evidence reaches `ready-for-operator-request`, and keeps service dispatch, D-Bus calls, desktop launch, backend launch, Runtime writes, KDE writes, backend exposure, owner service argument exposure, and host mutation disabled. It also adds a restricted container command and a short Claude Code dispatch brief for the next handoff batch.
 

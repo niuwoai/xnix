@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc17] - 2026-07-24
+
+### Added
+
+- Added `--format json` support to `scripts/desktop_trigger_request_preflight_smoke.rb` so targeted preflight smoke evidence can be consumed by read-only release tooling.
+- Added optional `--desktop-trigger-request-preflight-smoke PATH` fixture support to `scripts/merge_readiness_packet.rb`.
+- Added merge readiness tests for supplied, missing, failed, and malformed desktop-trigger request preflight smoke evidence.
+
+### Fixed
+
+- Kept merge readiness from running the preflight smoke by default, while making failed or malformed supplied preflight smoke evidence a release-only blocker instead of a merge blocker.
+
 ## [0.2.640-rc16] - 2026-07-24
 
 ### Added

@@ -53,6 +53,13 @@ TOOL_DEFINITIONS = {
     parser: "json",
     required: false
   },
+  "desktop_trigger_request_preflight_smoke" => {
+    title: "Desktop-trigger request preflight smoke evidence",
+    command: ["ruby", "scripts/desktop_trigger_request_preflight_smoke.rb", "--format", "json"],
+    parser: "json",
+    required: false,
+    fixture_only: true
+  },
   "offline_fixture_matrix" => {
     title: "Offline application fixture matrix",
     command: ["ruby", "scripts/offline_application_fixture_matrix.rb", "--format", "json"],
@@ -69,6 +76,7 @@ FIXTURE_OPTIONS = {
   "mainline_review" => :mainline_review,
   "release_evidence" => :release_evidence_index,
   "full_checkpoint_promotion" => :full_checkpoint_promotion,
+  "desktop_trigger_request_preflight_smoke" => :desktop_trigger_request_preflight_smoke,
   "offline_fixture_matrix" => :fixture_matrix_report
 }.freeze
 
@@ -95,6 +103,7 @@ UNSAFE_KEYS = %w[
 RELEASE_ONLY_BLOCKERS = %w[
   restricted-docker-or-qemu-smoke-requires-human-authorization
   full-checkpoint-promotion-not-allowed
+  desktop-trigger-request-preflight-smoke-not-passed
   production-runtime-and-windows-execution-remain-disabled
 ].freeze
 
@@ -127,6 +136,7 @@ def parse_options(argv)
     parser.on("--mainline-review PATH", "Use an existing mainline integration review JSON report") { |value| options[:fixtures][:mainline_review] = value }
     parser.on("--release-evidence-index PATH", "Use an existing release evidence index JSON report") { |value| options[:fixtures][:release_evidence_index] = value }
     parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:fixtures][:full_checkpoint_promotion] = value }
+    parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:fixtures][:desktop_trigger_request_preflight_smoke] = value }
     parser.on("--fixture-matrix-report PATH", "Use an existing offline fixture matrix JSON report") { |value| options[:fixtures][:fixture_matrix_report] = value }
   end.parse!(argv)
 
@@ -176,6 +186,14 @@ def load_tool(tool_id, definition, options)
   if fixture_path
     text = Pathname.new(fixture_path).read
     return parse_tool_output(base.merge("fixture_used" => true, "command" => "fixture:#{tool_id}"), text)
+  end
+
+  if definition.fetch(:fixture_only, false)
+    return base.merge(
+      "status" => "skipped",
+      "summary" => "Optional evidence was not supplied; no command was executed.",
+      "error" => "fixture-not-supplied"
+    )
   end
 
   stdout, stderr, status = Open3.capture3(*command, chdir: PROJECT_ROOT.to_s)
@@ -234,6 +252,8 @@ def json_tool_summary(tool_id, data)
     "#{data.fetch("claim_count", data.fetch("claims", []).length)} release evidence claim(s) reported."
   when "full_checkpoint_promotion"
     "Full checkpoint promotion decision: #{data.fetch("promotion_decision", "unknown")}."
+  when "desktop_trigger_request_preflight_smoke"
+    "Desktop-trigger request preflight smoke state: #{data.fetch("preflight_smoke_state", "unknown")}."
   when "offline_fixture_matrix"
     counts = data.fetch("counts", {})
     row_count = data.fetch("row_count", data.fetch("rows", []).length)
@@ -279,6 +299,7 @@ def tool_blockers(tools)
   tools.filter_map do |tool|
     next if tool.fetch("status") == "pass"
     next if !tool.fetch("required") && tool.fetch("status") == "skipped"
+    next if tool.fetch("id") == "desktop_trigger_request_preflight_smoke"
 
     "#{tool.fetch("id")}:#{tool.fetch("status")}"
   end
@@ -337,7 +358,26 @@ def checkpoint_promotion_allowed?(full_checkpoint_promotion)
     full_checkpoint_promotion.fetch("formal_release_ready", false) == true
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings)
+def desktop_trigger_request_preflight_smoke_passed?(tools)
+  tool = tools.find { |candidate| candidate.fetch("id") == "desktop_trigger_request_preflight_smoke" }
+  return nil unless tool
+  return nil if tool.fetch("status") == "skipped"
+  return false unless tool.fetch("status") == "pass"
+
+  data = tool.fetch("data") || {}
+  data.fetch("smoke_passed", false) == true &&
+    data.fetch("preflight_smoke_state", "") == "passed" &&
+    data.fetch("blocked_preflight_state", "") == "blocked-missing-promotion" &&
+    data.fetch("ready_preflight_state", "") == "ready-for-operator-request" &&
+    data.fetch("owner_service_call_shape_verified", false) == true &&
+    data.fetch("operator_request_ready", false) == true &&
+    data.fetch("service_call_dispatched", true) == false &&
+    data.fetch("dbus_called", true) == false &&
+    data.fetch("backend_launch_enabled", true) == false &&
+    data.fetch("host_root_modified", true) == false
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -347,6 +387,7 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release
   reasons << "unsafe-operation-detected" unless unsafe_findings.empty?
   reasons << "restricted-docker-or-qemu-smoke-requires-human-authorization" unless authorized_product_smoke_complete?(release_evidence)
   reasons << "full-checkpoint-promotion-not-allowed" unless checkpoint_promotion_allowed?(full_checkpoint_promotion)
+  reasons << "desktop-trigger-request-preflight-smoke-not-passed" if preflight_smoke_passed == false
   reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
@@ -362,7 +403,8 @@ def build_packet(options)
   release_evidence = tool_data(tools, "release_evidence") || {}
   full_checkpoint_promotion = tool_data(tools, "full_checkpoint_promotion") || {}
   unsafe = unsafe_findings(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe)
+  preflight_smoke_passed = desktop_trigger_request_preflight_smoke_passed?(tools)
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed)
   merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
@@ -407,6 +449,12 @@ def build_packet(options)
       "formal_release_ready" => full_checkpoint_promotion.fetch("formal_release_ready", false),
       "operator_required_command" => full_checkpoint_promotion.fetch("operator_required_command", "ruby scripts/full_smoke.rb")
     },
+    "desktop_trigger_request_preflight_smoke_status" => {
+      "evidence_supplied" => !preflight_smoke_passed.nil?,
+      "smoke_passed" => preflight_smoke_passed == true,
+      "status" => preflight_smoke_passed.nil? ? "not-supplied" : (preflight_smoke_passed ? "passed" : "blocked"),
+      "release_blocking_reason" => preflight_smoke_passed == false ? "desktop-trigger-request-preflight-smoke-not-passed" : nil
+    },
     "desktop_safe_summary" => "Merge readiness is aggregated offline from local reports; staging, committing, tagging, pushing, Docker, QEMU, network fetch, package managers, backend launch, and host-root mutation remain disabled."
   }
 end
@@ -421,6 +469,7 @@ def render_markdown(packet)
   lines << "- Offline only: #{packet.fetch("offline_only")}"
   lines << "- Protected Claude file: #{packet.fetch("protected_file_status").fetch("status")}"
   lines << "- Full checkpoint promotion: #{packet.fetch("full_checkpoint_promotion_status").fetch("promotion_decision")}"
+  lines << "- Desktop-trigger request preflight smoke: #{packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status")}"
   lines << ""
   lines << "## Tool Statuses"
   lines << ""

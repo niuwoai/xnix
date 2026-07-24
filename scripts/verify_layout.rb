@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc16"
+EXPECTED_VERSION = "0.2.640-rc17"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6619,7 +6619,7 @@ desktop_trigger_request_preflight_smoke_source = read_project_file("scripts/desk
                                                 read_project_file("test/test_desktop_trigger_request_preflight_smoke_script.rb") +
                                                 read_project_file("scripts/container.rb") +
                                                 read_project_file("lib/xnix/container.rb")
-%w[desktop-trigger-request-preflight-smoke desktop-trigger\ request\ preflight\ smoke known-app-kde-runtime-status-launch-evidence-record desktop-trigger-request-preflight-preview blocked-missing-promotion ready-for-operator-request owner_service_call_shape_verified owner_service_call_ready operator_request_ready formal_promotion_observed formal_release_ready kde_receives_materialized_owner_args service_call_dispatch_enabled service_call_dispatched dbus_called desktop_launch_enabled backend_launch_enabled runtime_state_written kde_configuration_written network_required host_root_modified assert_no_forbidden owner_service_call_args owner_service_cli_args qemu-system wine\  PASS:\ desktop-trigger\ request\ preflight\ smoke desktop_trigger_request_preflight_smoke_command].each do |token|
+%w[desktop-trigger-request-preflight-smoke desktop-trigger\ request\ preflight\ smoke xnix.runtime.desktop_trigger_request_preflight_smoke.v1 known-app-kde-runtime-status-launch-evidence-record desktop-trigger-request-preflight-preview --format json blocked-missing-promotion ready-for-operator-request preflight_smoke_state smoke_passed blocked_preflight_state ready_preflight_state owner_service_call_shape_verified owner_service_call_ready operator_request_ready formal_promotion_observed formal_release_ready kde_receives_materialized_owner_args service_call_dispatch_enabled service_call_dispatched dbus_called desktop_launch_enabled backend_launch_enabled runtime_state_written kde_configuration_written network_required network_checks_run package_manager_invoked host_root_modified assert_no_forbidden owner_service_call_args owner_service_cli_args qemu-system wine\  PASS:\ desktop-trigger\ request\ preflight\ smoke desktop_trigger_request_preflight_smoke_command].each do |token|
   assert(desktop_trigger_request_preflight_smoke_source.include?(token.gsub("\\ ", " ")), "Desktop-trigger request preflight smoke must include #{token}")
 end
 dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/dbus_controlled_launch_owner_fixture_smoke.rb") +
@@ -7148,8 +7148,10 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   mainline_review
   release_evidence
   full_checkpoint_promotion
+  desktop_trigger_request_preflight_smoke
   offline_fixture_matrix
   --full-checkpoint-promotion
+  --desktop-trigger-request-preflight-smoke
   --offline-only
   --skip-tool
   --tool-command
@@ -7163,7 +7165,9 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   release_blocking_reasons
   restricted-docker-or-qemu-smoke-requires-human-authorization
   full-checkpoint-promotion-not-allowed
+  desktop-trigger-request-preflight-smoke-not-passed
   full_checkpoint_promotion_status
+  desktop_trigger_request_preflight_smoke_status
   promotion_allowed
   promotion_decision
   full_smoke_state
@@ -7203,10 +7207,13 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   unclassified-files-present
   unsafe-operation-detected
   full_checkpoint_promotion
+  desktop_trigger_request_preflight_smoke
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
+  desktop-trigger-request-preflight-smoke-not-passed
   promotion_allowed
   full_checkpoint_promotion_status
+  desktop_trigger_request_preflight_smoke_status
   docker_executed
   qemu_executed
   network_checks_run

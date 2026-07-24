@@ -1,6 +1,6 @@
 # Claude Code Next Dispatch Brief
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc16 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc17 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is the short operator handoff for asking Claude Code to implement the next bounded Xnix tasks while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -10,7 +10,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current State
 
-The local baseline is `v0.2.640-rc16`.
+The local baseline is `v0.2.640-rc17`.
 
 Already present in the current candidate:
 
@@ -20,6 +20,7 @@ Already present in the current candidate:
 - Full checkpoint promotion, merge readiness, and release evidence packets exist as read-only release decision tools.
 - `docs/post-checkpoint-promotion-checklist-0640.md` defines the human-owned promotion checklist.
 - `scripts/desktop_trigger_request_preflight_smoke.rb` is present as a targeted smoke for the request preflight lane.
+- `scripts/merge_readiness_packet.rb` consumes existing desktop-trigger request preflight smoke JSON evidence without running that smoke by default.
 
 The formal `v0.2.640` release is still blocked until this operator-owned command passes:
 
@@ -72,10 +73,10 @@ Assign exactly one task at a time. Stop after each task and return the branch or
 | Order | Task | Suggested branch | Dispatch condition |
 | --- | --- | --- | --- |
 | Done | `C9W2` Desktop-trigger request preflight smoke | `codex/desktop-trigger-request-preflight-smoke` | Present locally in v0.2.640-rc16. Do not dispatch again unless Codex or a reviewer asks for repair. |
-| 1 | `C9W3` Merge readiness consumes request preflight smoke evidence | `codex/merge-readiness-preflight-smoke-evidence` | Dispatch after `C9W2` is reviewed. |
-| 2 | `C9W4` Release evidence index consumes request preflight smoke evidence | `codex/release-evidence-preflight-smoke-evidence` | Dispatch after `C9W2` lands and `C9W3` is reviewed. |
-| 3 | `C9W5` Runtime owner request receipt preview | `codex/runtime-owner-request-receipt-preview` | Dispatch after formal `v0.2.640` promotion or explicit Codex approval to continue pre-release modeling. |
-| 4 | `C9W6` KDE Center desktop-trigger preflight card | `codex/kde-center-desktop-trigger-preflight-card` | Dispatch after `C9W5` lands. |
+| Done | `C9W3` Merge readiness consumes request preflight smoke evidence | `codex/merge-readiness-preflight-smoke-evidence` | Present locally in v0.2.640-rc17. Do not dispatch again unless Codex or a reviewer asks for repair. |
+| 1 | `C9W4` Release evidence index consumes request preflight smoke evidence | `codex/release-evidence-preflight-smoke-evidence` | Dispatch after `C9W3` is reviewed. |
+| 2 | `C9W5` Runtime owner request receipt preview | `codex/runtime-owner-request-receipt-preview` | Dispatch after formal `v0.2.640` promotion or explicit Codex approval to continue pre-release modeling. |
+| 3 | `C9W6` KDE Center desktop-trigger preflight card | `codex/kde-center-desktop-trigger-preflight-card` | Dispatch after `C9W5` lands. |
 
 ## Task C9W2: Desktop-Trigger Request Preflight Smoke
 

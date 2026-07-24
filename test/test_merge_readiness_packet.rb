@@ -104,6 +104,36 @@ completed_promotion = write_json_fixture(
   "host_root_modified" => false
 )
 fixture_matrix = write_json_fixture("row_count" => 7, "counts" => { "blocked" => 1 })
+preflight_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
+  "report_type" => "desktop-trigger-request-preflight-smoke",
+  "smoke_passed" => true,
+  "preflight_smoke_state" => "passed",
+  "blocked_preflight_state" => "blocked-missing-promotion",
+  "ready_preflight_state" => "ready-for-operator-request",
+  "owner_service_call_shape_verified" => true,
+  "operator_request_ready" => true,
+  "service_call_dispatched" => false,
+  "dbus_called" => false,
+  "backend_launch_enabled" => false,
+  "host_root_modified" => false
+)
+failed_preflight_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
+  "report_type" => "desktop-trigger-request-preflight-smoke",
+  "smoke_passed" => false,
+  "preflight_smoke_state" => "failed",
+  "blocked_preflight_state" => "blocked-missing-promotion",
+  "ready_preflight_state" => "blocked",
+  "owner_service_call_shape_verified" => false,
+  "operator_request_ready" => false,
+  "service_call_dispatched" => false,
+  "dbus_called" => false,
+  "backend_launch_enabled" => false,
+  "host_root_modified" => false
+)
 malformed = write_text_fixture("{not-json")
 protected_mainline = write_json_fixture(
   "changed_file_count" => 2,
@@ -123,6 +153,7 @@ base_args = [
   "--mainline-review", mainline.path,
   "--release-evidence-index", release_evidence.path,
   "--full-checkpoint-promotion", blocked_promotion.path,
+  "--desktop-trigger-request-preflight-smoke", preflight_smoke.path,
   "--fixture-matrix-report", fixture_matrix.path
 ]
 
@@ -148,11 +179,16 @@ begin
   assert(!promotion_status.fetch("promotion_allowed"), "packet must expose denied promotion status")
   assert(promotion_status.fetch("promotion_decision") == "blocked-incomplete-full-smoke-report", "packet must expose promotion decision")
   assert(promotion_status.fetch("operator_required_command") == "ruby scripts/full_smoke.rb", "packet must expose promotion operator command")
+  preflight_status = packet.fetch("desktop_trigger_request_preflight_smoke_status")
+  assert(preflight_status.fetch("evidence_supplied"), "packet must report supplied desktop-trigger request preflight smoke evidence")
+  assert(preflight_status.fetch("smoke_passed"), "packet must report passing desktop-trigger request preflight smoke evidence")
+  assert(preflight_status.fetch("status") == "passed", "packet must expose preflight smoke status")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(tool_statuses.values.all? { |tool| tool.fetch("status") == "pass" }, "all fixture-backed tools must pass")
   assert(tool_statuses.fetch("layout").fetch("command") == "fixture:layout", "fixture command must not expose fixture path")
   assert(tool_statuses.fetch("full_checkpoint_promotion").fetch("command") == "fixture:full_checkpoint_promotion", "promotion fixture command must not expose fixture path")
+  assert(tool_statuses.fetch("desktop_trigger_request_preflight_smoke").fetch("command") == "fixture:desktop_trigger_request_preflight_smoke", "preflight smoke fixture command must not expose fixture path")
   assert(packet.fetch("changed_file_counts").fetch("total") == 3, "packet must include changed file counts")
   assert(packet.fetch("lane_classification").any? { |lane| lane.fetch("id") == "cw10-evidence-drift-harness" }, "packet must include lane classification")
   assert(packet.fetch("required_follow_up_commands").include?("ruby scripts/verify_layout.rb"), "packet must include follow-up commands")
@@ -170,6 +206,31 @@ begin
   assert(markdown.include?("cw10-evidence-drift-harness"), "Markdown must include lane classification")
   assert(markdown.include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "Markdown must include release blocker")
   assert(markdown.include?("Full checkpoint promotion: blocked-incomplete-full-smoke-report"), "Markdown must include promotion decision")
+  assert(markdown.include?("Desktop-trigger request preflight smoke: passed"), "Markdown must include preflight smoke status")
+
+  no_preflight_args = base_args.each_slice(2).reject { |option, _path| option == "--desktop-trigger-request-preflight-smoke" }.flatten
+  no_preflight_stdout, no_preflight_stderr, no_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_preflight_args)
+  assert(no_preflight_status.success?, "missing preflight smoke evidence case must still emit packet: #{no_preflight_stderr}")
+  no_preflight_packet = JSON.parse(no_preflight_stdout)
+  assert(no_preflight_packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "not-supplied", "missing preflight smoke evidence must be non-blocking")
+  assert(!no_preflight_packet.fetch("release_blocking_reasons").include?("desktop-trigger-request-preflight-smoke-not-passed"), "missing preflight smoke evidence must not block release by itself")
+
+  failed_preflight_args = base_args.dup
+  failed_preflight_args[failed_preflight_args.index("--desktop-trigger-request-preflight-smoke") + 1] = failed_preflight_smoke.path
+  failed_preflight_stdout, failed_preflight_stderr, failed_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *failed_preflight_args)
+  assert(failed_preflight_status.success?, "failed preflight smoke evidence case must still emit packet: #{failed_preflight_stderr}")
+  failed_preflight_packet = JSON.parse(failed_preflight_stdout)
+  assert(failed_preflight_packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "blocked", "failed preflight smoke evidence must be visible")
+  assert(failed_preflight_packet.fetch("release_blocking_reasons").include?("desktop-trigger-request-preflight-smoke-not-passed"), "failed preflight smoke evidence must add a release-only blocker")
+  assert(!failed_preflight_packet.fetch("merge_blocking_reasons").include?("desktop-trigger-request-preflight-smoke-not-passed"), "failed preflight smoke evidence must not block merge")
+
+  malformed_preflight_args = base_args.dup
+  malformed_preflight_args[malformed_preflight_args.index("--desktop-trigger-request-preflight-smoke") + 1] = malformed.path
+  malformed_preflight_stdout, malformed_preflight_stderr, malformed_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *malformed_preflight_args)
+  assert(malformed_preflight_status.success?, "malformed preflight smoke evidence case must still emit packet: #{malformed_preflight_stderr}")
+  malformed_preflight_packet = JSON.parse(malformed_preflight_stdout)
+  assert(malformed_preflight_packet.fetch("release_blocking_reasons").include?("desktop-trigger-request-preflight-smoke-not-passed"), "malformed preflight smoke evidence must add a release-only blocker")
+  assert(malformed_preflight_packet.fetch("merge_blocking_reasons").empty?, "malformed optional preflight smoke evidence must not block merge")
 
   completed_args = base_args.dup
   completed_args[completed_args.index("--release-evidence-index") + 1] = completed_release_evidence.path
@@ -283,6 +344,8 @@ ensure
     blocked_promotion,
     completed_promotion,
     fixture_matrix,
+    preflight_smoke,
+    failed_preflight_smoke,
     malformed,
     protected_mainline,
     unsafe_kde
