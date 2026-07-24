@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -762,6 +764,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	var qemuCPU string
 	var qemuBootTimeoutText string
 	var qemuSerialLog string
+	var reportOutput string
 	var allowDownload bool
 	var skipBootstrap bool
 	var startQEMU bool
@@ -791,6 +794,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	flags.StringVar(&qemuCPU, "qemu-cpu", winapp.DefaultQEMUCPUModel, "QEMU CPU model used only when --start-qemu is set")
 	flags.StringVar(&qemuBootTimeoutText, "qemu-boot-timeout", winapp.DefaultQEMUBootTimeout.String(), "QEMU guest SSH boot timeout used only when --start-qemu is set")
 	flags.StringVar(&qemuSerialLog, "qemu-serial-log", "", "serial log path used only when --start-qemu is set")
+	flags.StringVar(&reportOutput, "report-output", "", "optional JSON report output path for operator-controlled evidence capture")
 	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app artifact when it is missing")
 	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a local launch profile that skips runner bootstrap")
 	flags.BoolVar(&startQEMU, "start-qemu", false, "start and stop a loopback-only QEMU guest for the guest-wine backend")
@@ -859,9 +863,31 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	encoder := json.NewEncoder(stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
+	return writeJSONResponse(stdout, reportOutput, result)
+}
+
+func writeJSONResponse(stdout io.Writer, reportOutput string, value any) error {
+	payload, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	payload = append(payload, '\n')
+
+	if strings.TrimSpace(reportOutput) != "" {
+		reportPath, err := filepath.Abs(reportOutput)
+		if err != nil {
+			return fmt.Errorf("resolve report output path: %w", err)
+		}
+		if err := os.MkdirAll(filepath.Dir(reportPath), 0o700); err != nil {
+			return fmt.Errorf("create report output directory: %w", err)
+		}
+		if err := os.WriteFile(reportPath, payload, 0o600); err != nil {
+			return fmt.Errorf("write report output: %w", err)
+		}
+	}
+
+	_, err = stdout.Write(payload)
+	return err
 }
 
 func runWindowsKnownAppManagedLaunchPreview(args []string, stdout io.Writer) error {

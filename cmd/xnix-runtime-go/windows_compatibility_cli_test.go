@@ -1932,6 +1932,49 @@ func TestWindowsKnownAppRunCommandGuestWineBackendSkipsOfflineMissingArtifact(t 
 	}
 }
 
+func TestWindowsKnownAppRunCommandWritesReportOutput(t *testing.T) {
+	tempDir := t.TempDir()
+	reportPath := filepath.Join(tempDir, "evidence", "known-run.json")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-known-app-run",
+		"--backend", "guest-wine",
+		"--app", "7zr",
+		"--cache-root", tempDir,
+		"--timeout", "5s",
+		"--redact-output",
+		"--report-output", reportPath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	reportBytes, err := os.ReadFile(reportPath)
+	if err != nil {
+		t.Fatalf("ReadFile report returned error: %v", err)
+	}
+	if string(reportBytes) != output.String() {
+		t.Fatalf("report output must match stdout:\nstdout=%s\nreport=%s", output.String(), string(reportBytes))
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(reportBytes, &payload); err != nil {
+		t.Fatalf("Unmarshal report returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_windows_app_run.v1" ||
+		payload["request_type"] != "windows-known-app-run" ||
+		payload["status"] != "skipped" ||
+		payload["backend"] != "guest-wine" ||
+		payload["raw_output_redacted"] != true ||
+		payload["skip_reason"] != "known Windows app artifact unavailable or checksum mismatch" {
+		t.Fatalf("unexpected report payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), reportPath) {
+		t.Fatalf("known app run output leaked report path: %s", output.String())
+	}
+}
+
 func TestWindowsKnownAppRunCommandRejectsUnsupportedBackend(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"windows-known-app-run", "--backend", "missing-backend"}, &output)

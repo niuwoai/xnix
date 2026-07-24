@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc66] - 2026-07-24
+
+### Added
+
+- Added `--report-output` to `windows-known-app-run` so operator-controlled real Windows app runs can persist the same redacted JSON evidence emitted to stdout.
+- Added `scripts/remote_known_winapp_guest_wine_smoke.rb`, an execute-gated q4 harness that syncs source, builds the Go Runtime with the managed remote Go toolchain, runs the known Windows app through Runtime-started QEMU/Wine, and records report plus serial-log evidence under the managed q4 run materials root.
+
 ## [0.2.640-rc65] - 2026-07-24
 
 ### Added
