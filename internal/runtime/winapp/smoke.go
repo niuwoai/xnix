@@ -25,20 +25,23 @@ const (
 	SuccessModeMarker              = "marker"
 	SuccessModeExitCode            = "exit-code"
 	SuccessModeStartupWindow       = "startup-window"
+	WorkingDirectoryModeExecutable = "executable-directory"
+	WorkingDirectoryModeOperator   = "operator-supplied"
 	DefaultMarker                  = "XNIX_WINAPP_SMOKE_OK"
 )
 
 type Request struct {
-	ExecutablePath  string
-	Arguments       []string
-	RunnerArguments []string
-	RunnerBottle    string
-	StateRoot       string
-	RunnerPath      string
-	Timeout         time.Duration
-	ExpectedMarker  string
-	SuccessMode     string
-	RedactOutput    bool
+	ExecutablePath   string
+	Arguments        []string
+	RunnerArguments  []string
+	RunnerBottle     string
+	StateRoot        string
+	WorkingDirectory string
+	RunnerPath       string
+	Timeout          time.Duration
+	ExpectedMarker   string
+	SuccessMode      string
+	RedactOutput     bool
 }
 
 type Result struct {
@@ -56,6 +59,7 @@ type Result struct {
 	SuccessMode                 string `json:"success_mode"`
 	MarkerObserved              bool   `json:"marker_observed"`
 	StartupWindowObserved       bool   `json:"startup_window_observed"`
+	WorkingDirectoryMode        string `json:"working_directory_mode"`
 	ExitCode                    int    `json:"exit_code"`
 	DurationMillis              int64  `json:"duration_millis"`
 	Stdout                      string `json:"stdout"`
@@ -141,6 +145,11 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, fmt.Errorf("create isolated state root: %w", err)
 	}
 	result.IsolatedStateRoot = true
+	workingDirectory, workingDirectoryMode, err := resolveWorkingDirectory(request.WorkingDirectory, executablePath)
+	if err != nil {
+		return result, err
+	}
+	result.WorkingDirectoryMode = workingDirectoryMode
 
 	runnerPath, err := resolveRunner(request.RunnerPath)
 	if err != nil {
@@ -166,6 +175,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		bootstrapArgs = append(bootstrapArgs, "--init")
 		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, bootstrapArgs...)
 		bootstrapCommand.Env = runnerEnvironment(stateRoot)
+		bootstrapCommand.Dir = workingDirectory
 		var bootstrapStderr bytes.Buffer
 		bootstrapCommand.Stderr = &bootstrapStderr
 		bootstrapErr := bootstrapCommand.Run()
@@ -191,6 +201,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	args = append(args, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
 	command.Env = runnerEnvironment(stateRoot)
+	command.Dir = workingDirectory
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -251,6 +262,27 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 
 	result.Status = PassedStatus
 	return result, nil
+}
+
+func resolveWorkingDirectory(path string, executablePath string) (string, string, error) {
+	path = strings.TrimSpace(path)
+	mode := WorkingDirectoryModeOperator
+	if path == "" {
+		path = filepath.Dir(executablePath)
+		mode = WorkingDirectoryModeExecutable
+	}
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "", "", fmt.Errorf("resolve working directory: %w", err)
+	}
+	info, err := os.Stat(absolutePath)
+	if err != nil {
+		return "", "", fmt.Errorf("inspect working directory: %w", err)
+	}
+	if !info.IsDir() {
+		return "", "", errors.New("working directory must be a directory")
+	}
+	return absolutePath, mode, nil
 }
 
 func normalizeSuccessMode(mode string) (string, error) {
@@ -359,6 +391,7 @@ func baseResult(request Request) Result {
 		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
 		SuccessMode:                 SuccessModeMarker,
+		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		ExitCode:                    -1,
 		RawOutputIncluded:           !request.RedactOutput,
 		RawOutputRedacted:           request.RedactOutput,

@@ -133,6 +133,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["executable_name"] != "hello.exe" ||
 		payload["runner_available"] != true ||
 		payload["success_mode"] != "marker" ||
+		payload["working_directory_mode"] != "executable-directory" ||
 		payload["runner_argument_count"] != float64(3) ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
@@ -151,6 +152,60 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		strings.Contains(output.String(), "private-bottle-name") ||
 		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	workingDir := filepath.Join(tempDir, "runtime-cwd")
+	if err := os.Mkdir(workingDir, 0o700); err != nil {
+		t.Fatalf("Mkdir working dir returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workingDir, "sidecar.ini"), []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -f sidecar.ini || exit 74\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--working-dir", workingDir,
+		"--runner", runnerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["working_directory_mode"] != "operator-supplied" ||
+		payload["marker_observed"] != true {
+		t.Fatalf("unexpected working directory payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), runnerPath) ||
+		strings.Contains(output.String(), workingDir) {
+		t.Fatalf("working directory smoke output leaked host paths: %s", output.String())
 	}
 }
 

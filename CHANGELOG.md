@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc38] - 2026-07-24
+
+### Added
+
+- Defaulted local Windows app smoke execution to the executable directory so sidecar DLLs, config files, and resources are discoverable.
+- Added `--working-dir` support to the Go-owned smoke command and `scripts/winapp_smoke.rb`, reporting only `working_directory_mode` without exposing raw paths.
+
 ## [0.2.640-rc37] - 2026-07-24
 
 ### Added

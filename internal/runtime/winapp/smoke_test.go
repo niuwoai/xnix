@@ -67,6 +67,85 @@ func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
 	}
 }
 
+func TestRunSmokeDefaultsWorkingDirectoryToExecutableDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "companion.dll"), []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -f companion.dll || exit 74\n" +
+		"printf '" + DefaultMarker + "\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.WorkingDirectoryMode != WorkingDirectoryModeExecutable ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected executable-directory working dir result: %#v", result)
+	}
+}
+
+func TestRunSmokeUsesOperatorWorkingDirectoryWithoutReportingPath(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	workingDir := filepath.Join(tempDir, "runtime-cwd")
+	if err := os.Mkdir(workingDir, 0o700); err != nil {
+		t.Fatalf("Mkdir working dir returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workingDir, "sidecar.ini"), []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -f sidecar.ini || exit 74\n" +
+		"printf '" + DefaultMarker + "\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath:   executablePath,
+		StateRoot:        filepath.Join(tempDir, "state"),
+		WorkingDirectory: workingDir,
+		RunnerPath:       runnerPath,
+		Timeout:          5 * time.Second,
+		RedactOutput:     true,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.WorkingDirectoryMode != WorkingDirectoryModeOperator ||
+		!result.MarkerObserved ||
+		strings.Contains(result.KDESafeOutputSummary, workingDir) {
+		t.Fatalf("unexpected operator working dir result: %#v", result)
+	}
+}
+
 func TestRunSmokePassesRunnerArgumentsBeforeExecutable(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

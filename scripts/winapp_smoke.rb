@@ -25,6 +25,7 @@ options = {
   image: ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local"),
   platform: ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64"),
   state_root: STATE_ROOT.to_s,
+  working_dir: nil,
   timeout: "30s",
   bootstrap_timeout: "300s",
   expected_marker: MARKER,
@@ -45,6 +46,7 @@ OptionParser.new do |parser|
   parser.on("--image IMAGE", "Local Wine container image for container backend") { |value| options[:image] = value }
   parser.on("--platform PLATFORM", "Container platform for container backend") { |value| options[:platform] = value }
   parser.on("--state-root PATH", "Isolated Runtime state root") { |value| options[:state_root] = value }
+  parser.on("--working-dir PATH", "Working directory for the compatibility runner; defaults to the executable directory") { |value| options[:working_dir] = value }
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
@@ -90,6 +92,7 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "status" => "failed",
     "marker" => expected_marker,
     "success_mode" => success_mode,
+    "working_directory_mode" => "executable-directory",
     "runner_available" => false,
     "runner_argument_count" => 0,
     "runner_diagnostics_status" => "not-run",
@@ -144,6 +147,7 @@ def emit_report(report)
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
     puts "- Success mode: #{report.fetch("success_mode")}"
+    puts "- Working directory mode: #{report.fetch("working_directory_mode")}"
     puts "- Runner argument count: #{report.fetch("runner_argument_count")}"
     unless report.fetch("runner_command_hints").empty?
       puts "- Runner command hints:"
@@ -327,6 +331,7 @@ smoke_command = [
   "--success-mode", options.fetch(:success_mode)
 ]
 smoke_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+smoke_command.concat(["--working-dir", options.fetch(:working_dir)]) unless options[:working_dir].to_s.strip.empty?
 smoke_command.concat(["--runner-bottle", options.fetch(:runner_bottle)]) unless options[:runner_bottle].to_s.strip.empty?
 options.fetch(:runner_args).each { |value| smoke_command.concat(["--runner-arg", value]) }
 options.fetch(:app_args).each { |value| smoke_command.concat(["--arg", value]) }
@@ -350,6 +355,7 @@ report["runtime_payload"] = payload
 report["status"] = payload.fetch("status")
 report["runner_available"] = payload.fetch("runner_available", false)
 report["success_mode"] = payload.fetch("success_mode", options.fetch(:success_mode))
+report["working_directory_mode"] = payload.fetch("working_directory_mode", "executable-directory")
 report["runner_argument_count"] = payload.fetch("runner_argument_count", 0)
 report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
 report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)

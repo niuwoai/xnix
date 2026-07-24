@@ -82,6 +82,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       runner_arg_count += 2 if args.include?("--runner-bottle")
       marker_observed = success_mode == "marker"
       startup_window_observed = success_mode == "startup-window"
+      working_directory_mode = args.include?("--working-dir") ? "operator-supplied" : "executable-directory"
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
@@ -97,6 +98,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "success_mode" => success_mode,
         "marker_observed" => marker_observed,
         "startup_window_observed" => startup_window_observed,
+        "working_directory_mode" => working_directory_mode,
         "exit_code" => 0,
         "duration_millis" => 1,
         "stdout" => redacted ? "" : (marker_observed ? "#{marker}\\n" : "GUI app exited cleanly\\n"),
@@ -179,6 +181,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
+  assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
   assert(report.fetch("backend") == "local", "JSON report must default to the local backend")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
@@ -204,6 +207,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
   assert(markdown_stdout.include?("Success mode: marker"), "Markdown report must expose success mode")
+  assert(markdown_stdout.include?("Working directory mode: executable-directory"), "Markdown report must expose working directory mode")
   assert(markdown_stdout.include?("Runner argument count: 0"), "Markdown report must expose runner argument count")
   assert(markdown_stdout.include?("Runner command hints:"), "Markdown report must expose runner command hints")
   assert(markdown_stdout.include?("ruby scripts/winapp_smoke.rb --exe path/to/app.exe"), "Markdown report must include safe smoke command hint")
@@ -216,12 +220,15 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   custom_exe.write("custom fixture")
   custom_runner = temp_root.join("custom-runner")
   custom_runner.write("runner")
+  custom_working_dir = temp_root.join("custom-working-dir")
+  custom_working_dir.mkdir
   custom_stdout, custom_stderr, custom_status = Open3.capture3(
     env,
     "ruby", script.to_s,
     "--format", "json",
     "--exe", custom_exe.to_s,
     "--runner", custom_runner.to_s,
+    "--working-dir", custom_working_dir.to_s,
     "--runner-bottle", "private-bottle-name",
     "--runner-arg", "--shim-mode",
     "--expected-marker", "CUSTOM_APP_OK",
@@ -235,11 +242,13 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("runner_diagnostics_payload").fetch("explicit_runner_supplied"), "custom report must pass runner into diagnostics")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("success_mode") == "marker", "custom report must preserve default success mode")
+  assert(custom_report.fetch("working_directory_mode") == "operator-supplied", "custom report must preserve working directory mode")
   assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
   assert(custom_report.fetch("runner_argument_count") == 3, "custom report must preserve runner argument count")
   assert(!custom_stdout.include?(custom_exe.to_s), "custom report must not leak executable path")
   assert(!custom_stdout.include?(custom_runner.to_s), "custom report must not leak runner path")
+  assert(!custom_stdout.include?(custom_working_dir.to_s), "custom report must not leak working directory path")
   assert(!custom_stdout.include?("private-bottle-name"), "custom report must not leak runner arguments")
   assert(!custom_stdout.include?("--shim-mode"), "custom report must not leak raw runner arguments")
   assert(!custom_report.fetch("runner_command_hints").join("\n").include?(custom_runner.to_s), "custom command hints must not leak runner path")
@@ -248,6 +257,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   last_invocation = custom_invocations.last
   assert(!last_invocation.include?("build"), "custom executable mode must not build the fixture")
   assert(last_invocation.include?("--runner"), "custom executable mode must forward explicit runner")
+  assert(last_invocation.include?("--working-dir"), "custom executable mode must forward working directory")
   assert(last_invocation.include?("--runner-bottle"), "custom executable mode must forward runner bottle")
   assert(last_invocation.include?("--runner-arg"), "custom executable mode must forward runner arguments")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")

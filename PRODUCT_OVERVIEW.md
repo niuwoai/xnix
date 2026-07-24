@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc37
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc38
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc38 checkpoint candidate makes local real Windows app smoke use an app-friendly working directory. `windows-app-run-smoke` now defaults the runner working directory to the executable directory and accepts `--working-dir` for explicit operator overrides. JSON/Markdown reports expose only `working_directory_mode`, not the raw path, so apps with sidecar DLLs, config files, or resource folders can be tested without leaking host locations.
 
 The v0.2.640-rc37 checkpoint candidate adds a startup-window success mode for local real Windows app smoke attempts. `windows-app-run-smoke` and `scripts/winapp_smoke.rb` now accept `--success-mode startup-window`, which treats a process that survives until the configured timeout as first-start evidence and reports `startup_window_observed`. This gives GUI-style apps that keep a window/process alive a safer first PASS lane while preserving marker mode as the default stronger proof.
 

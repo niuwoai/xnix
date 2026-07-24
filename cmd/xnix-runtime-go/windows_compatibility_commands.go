@@ -32,6 +32,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 
 	var exePath string
 	var stateRoot string
+	var workingDir string
 	var runnerPath string
 	var timeoutText string
 	var expectedMarker string
@@ -40,11 +41,12 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	var redactOutput bool
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
+	flags.StringVar(&workingDir, "working-dir", "", "working directory for the compatibility runner; defaults to the executable directory")
 	flags.StringVar(&runnerPath, "runner", "", "explicit compatibility runner path")
 	flags.StringVar(&runnerBottle, "runner-bottle", "", "compatibility runner bottle name passed before the executable path")
 	flags.StringVar(&timeoutText, "timeout", "20s", "execution timeout")
 	flags.StringVar(&expectedMarker, "expected-marker", winapp.DefaultMarker, "expected stdout marker")
-	flags.StringVar(&successMode, "success-mode", winapp.SuccessModeMarker, "success mode: marker or exit-code")
+	flags.StringVar(&successMode, "success-mode", winapp.SuccessModeMarker, "success mode: marker, exit-code, or startup-window")
 	flags.BoolVar(&redactOutput, "redact-output", false, "omit raw stdout and stderr while preserving safe output evidence")
 
 	var appArgs repeatedStringFlag
@@ -65,16 +67,17 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	}
 
 	result, err := winapp.RunSmoke(context.Background(), winapp.Request{
-		ExecutablePath:  exePath,
-		Arguments:       []string(appArgs),
-		RunnerArguments: []string(runnerArgs),
-		RunnerBottle:    runnerBottle,
-		StateRoot:       stateRoot,
-		RunnerPath:      runnerPath,
-		Timeout:         timeout,
-		ExpectedMarker:  expectedMarker,
-		SuccessMode:     successMode,
-		RedactOutput:    redactOutput,
+		ExecutablePath:   exePath,
+		Arguments:        []string(appArgs),
+		RunnerArguments:  []string(runnerArgs),
+		RunnerBottle:     runnerBottle,
+		StateRoot:        stateRoot,
+		WorkingDirectory: workingDir,
+		RunnerPath:       runnerPath,
+		Timeout:          timeout,
+		ExpectedMarker:   expectedMarker,
+		SuccessMode:      successMode,
+		RedactOutput:     redactOutput,
 	})
 	if err != nil {
 		return err
