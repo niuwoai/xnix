@@ -1,6 +1,6 @@
 # Claude Code Next Mainline Work Pack
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc12 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc13 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is a copy-first task pack for asking Claude Code to implement the next Xnix mainline work while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -10,7 +10,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current Mainline State
 
-The current local baseline is `v0.2.640-rc12`.
+The current local baseline is `v0.2.640-rc13`.
 
 Already present in the current checkpoint candidate:
 
@@ -25,6 +25,7 @@ Already present in the current checkpoint candidate:
 - Structured full-smoke failure reports exist when full smoke fails.
 - `scripts/full_checkpoint_promotion_packet.rb` reads existing full-smoke reports and produces the release-promotion decision without running full smoke.
 - `scripts/merge_readiness_packet.rb` consumes the promotion packet and exposes `full_checkpoint_promotion_status`.
+- `scripts/release_evidence_index.rb` consumes the promotion packet and keeps historical product smoke evidence separate from current formal release readiness.
 
 The formal `v0.2.640` release must not be promoted until this operator-owned command passes:
 
@@ -77,9 +78,9 @@ Use this order unless Codex or a reviewer asks for a repair branch:
 | --- | --- | --- | --- |
 | Done | `C8W11` Full checkpoint promotion packet | `codex/full-checkpoint-promotion-packet` | Present locally in v0.2.640-rc11. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W12` Merge readiness consumes promotion packet | `codex/merge-readiness-promotion-gate` | Present locally in v0.2.640-rc12. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C8W13` Release evidence index aligns with promotion packet | `codex/release-evidence-promotion-claim` | Dispatch now. |
-| 2 | `C8W14` Operator promotion checklist refresh | `codex/operator-promotion-checklist-0640` | Dispatch after `C8W13`, or after a full-smoke PASS report exists. |
-| 3 | `C9W1` Post-release desktop-trigger request preflight | `codex/desktop-trigger-request-preflight` | Dispatch only after formal `v0.2.640` is promoted or explicitly skipped. |
+| Done | `C8W13` Release evidence index aligns with promotion packet | `codex/release-evidence-promotion-claim` | Present locally in v0.2.640-rc13. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C8W14` Operator promotion checklist refresh | `codex/operator-promotion-checklist-0640` | Dispatch now, or after a full-smoke PASS report exists. |
+| 2 | `C9W1` Post-release desktop-trigger request preflight | `codex/desktop-trigger-request-preflight` | Dispatch only after formal `v0.2.640` is promoted or explicitly skipped. |
 
 Stop after each task. Return the branch or diff for Codex review. Do not chain tasks.
 

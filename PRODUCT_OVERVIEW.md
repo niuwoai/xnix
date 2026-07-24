@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc12
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc13
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc13 checkpoint candidate makes `scripts/release_evidence_index.rb` consume `scripts/full_checkpoint_promotion_packet.rb` as part of release evidence indexing. The index now adds a `full-checkpoint-promotion` claim and updates `product-image-qemu-acceptance` so historical product smoke evidence remains visible but does not imply current formal release readiness unless the promotion packet allows `v0.2.640`. Current local evidence remains blocked by `full-checkpoint-promotion-not-allowed` until the human-authorized full smoke passes.
 
 The v0.2.640-rc12 checkpoint candidate makes `scripts/merge_readiness_packet.rb` consume `scripts/full_checkpoint_promotion_packet.rb` as a first-class release gate. Merge readiness now supports `--full-checkpoint-promotion` fixtures, exposes `full_checkpoint_promotion_status`, includes the stable `full-checkpoint-promotion-not-allowed` release blocker when the promotion packet is denied, and keeps that blocker release-only rather than merge-blocking. It preserves the promotion packet as the single full-smoke readiness decision source.
 

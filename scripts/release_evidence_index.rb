@@ -14,7 +14,8 @@ REPORT_COMMANDS = {
   implementation: ["ruby", "scripts/implementation_evidence_report.rb", "--format", "json"],
   contract_drift: ["ruby", "scripts/runtime_contract_drift_report.rb", "--format", "json"],
   mainline_review: ["ruby", "scripts/mainline_integration_review.rb", "--format", "json"],
-  kde_smoke: ["ruby", "scripts/kde_first_presence_smoke.rb", "--format", "json"]
+  kde_smoke: ["ruby", "scripts/kde_first_presence_smoke.rb", "--format", "json"],
+  full_checkpoint_promotion: ["ruby", "scripts/full_checkpoint_promotion_packet.rb", "--format", "json"]
 }.freeze
 
 CLAIM_DEFINITIONS = [
@@ -180,6 +181,7 @@ def parse_options
     parser.on("--contract-drift-report PATH", "Use an existing Runtime contract drift JSON report") { |value| options[:reports][:contract_drift] = value }
     parser.on("--mainline-review PATH", "Use an existing mainline integration review JSON report") { |value| options[:reports][:mainline_review] = value }
     parser.on("--kde-smoke-report PATH", "Use an existing KDE-first presence smoke JSON report") { |value| options[:reports][:kde_smoke] = value }
+    parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:reports][:full_checkpoint_promotion] = value }
   end.parse!
 
   unless %w[json markdown].include?(options[:format])
@@ -292,6 +294,11 @@ def build_report(options)
   mainline = reports[:mainline_review] || {}
   contract_drift = reports[:contract_drift] || {}
   kde_smoke = reports[:kde_smoke] || {}
+  full_checkpoint_promotion = reports[:full_checkpoint_promotion] || {}
+  full_checkpoint_promotion_error = report_errors.find do |error|
+    source = error.fetch(:source).to_s
+    source.include?("full_checkpoint_promotion") || source.include?("full-checkpoint") || source.include?("full_checkpoint")
+  end
   product_smoke_evidence, product_smoke_error = load_product_smoke_evidence
   report_errors << product_smoke_error if product_smoke_error
 
@@ -301,14 +308,15 @@ def build_report(options)
   claims << unclassified_file_claim(mainline)
   claims << contract_drift_claim(contract_drift)
   claims << kde_presence_claim(kde_smoke)
-  claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error)
+  claims << full_checkpoint_promotion_claim(full_checkpoint_promotion, full_checkpoint_promotion_error)
+  claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error, full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << skipped_heavy_smoke_claim
 
   {
     "version" => VERSION,
     "schema_version" => "xnix.runtime.release_evidence_index.v1",
     "report_type" => "release-evidence-index",
-    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence",
+    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion",
     "runtime_owned" => true,
     "go_runtime_backed" => false,
     "ruby_report_only" => true,
@@ -432,7 +440,53 @@ def kde_presence_claim(kde_smoke)
   }
 end
 
-def product_image_claim(domain, evidence, evidence_error)
+def promotion_packet_valid?(promotion)
+  promotion.is_a?(Hash) &&
+    promotion.fetch("schema_version", nil) == "xnix.runtime.full_checkpoint_promotion_packet.v1" &&
+    promotion.fetch("report_type", nil) == "full-checkpoint-promotion-packet"
+end
+
+def checkpoint_promotion_allowed?(promotion)
+  promotion_packet_valid?(promotion) &&
+    promotion.fetch("promotion_allowed", false) == true &&
+    promotion.fetch("formal_release_ready", false) == true &&
+    promotion.fetch("promotion_decision", "") == "promote"
+end
+
+def checkpoint_promotion_blockers(promotion, error)
+  return ["full-checkpoint-promotion-report:#{error.fetch(:error)}"] if error
+  return ["full-checkpoint-promotion-report:missing"] unless promotion.is_a?(Hash) && !promotion.empty?
+  return ["full-checkpoint-promotion-report:malformed-schema"] unless promotion_packet_valid?(promotion)
+  return [] if checkpoint_promotion_allowed?(promotion)
+
+  ["full-checkpoint-promotion-not-allowed"]
+end
+
+def full_checkpoint_promotion_claim(promotion, error)
+  blockers = checkpoint_promotion_blockers(promotion, error)
+  level = blockers.empty? ? "implemented" : "blocked"
+  decision = promotion.is_a?(Hash) ? promotion.fetch("promotion_decision", "missing") : "missing"
+  full_smoke_state = promotion.is_a?(Hash) ? promotion.fetch("full_smoke_state", "missing") : "missing"
+  {
+    id: "full-checkpoint-promotion",
+    title: "Current full checkpoint promotion packet allows the formal release",
+    release_claim: "Formal release readiness is decided by the full checkpoint promotion packet, not by older product smoke evidence.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[scripts/full_checkpoint_promotion_packet.rb output/full-smoke-report.json output/full-smoke-report.md],
+    verification_commands: ["ruby scripts/full_checkpoint_promotion_packet.rb --format json", "ruby scripts/release_evidence_index.rb --format json"],
+    current_evidence: "Promotion decision is #{decision}; full-smoke state is #{full_smoke_state}.",
+    formal_release_ready: checkpoint_promotion_allowed?(promotion),
+    promotion_decision: decision,
+    full_smoke_state: full_smoke_state,
+    unsafe_gates: disabled_unsafe_gates,
+    human_authorization_required: !blockers.empty?,
+    blockers: blockers,
+    next_branch_sized_follow_up: blockers.empty? ? "Use the human-owned release workflow to promote the formal tag." : "Run the human-authorized full smoke and review the promotion packet before release."
+  }
+end
+
+def product_image_claim(domain, evidence, evidence_error, promotion, promotion_error)
   checks = {
     "schema" => evidence&.fetch("schema_version", nil) == "xnix.release.kde_product_smoke_evidence.v1",
     "container-build" => evidence&.dig("container", "build_passed") == true,
@@ -448,21 +502,33 @@ def product_image_claim(domain, evidence, evidence_error)
       evidence&.dig("safety", "host_root_modified") == false,
     "production-gates" => evidence&.fetch("production_runtime_ready", nil) == false && evidence&.fetch("windows_application_executed", nil) == false
   }
-  passed = evidence_error.nil? && checks.values.all?
+  historical_evidence_passed = evidence_error.nil? && checks.values.all?
+  promotion_blockers = checkpoint_promotion_blockers(promotion, promotion_error)
+  passed = historical_evidence_passed && promotion_blockers.empty?
   blockers = checks.reject { |_id, status| status }.keys
   blockers.unshift(evidence_error.fetch(:error)) if evidence_error
+  blockers += promotion_blockers
   level = passed ? "implemented" : "blocked"
   {
     id: "product-image-qemu-acceptance",
     title: "Authorized product image and KVM smoke evidence is persisted",
-    release_claim: "The Fedora Kinoite container, qcow2 integrity check, and restricted KVM graphical-login smoke have authorized evidence.",
+    release_claim: "The historical product image smoke evidence is present, and the current full checkpoint promotion packet allows the formal release.",
     evidence_level: level,
     state: claim_state(level),
-    evidence_source_files: %w[docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json scripts/boot_kde_image.rb internal/runtime/image/restricted_smoke_packet.go],
-    verification_commands: ["ruby -rjson -e 'JSON.parse(File.read(\"docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json\"))'", "ruby scripts/release_evidence_index.rb --format json"],
-    current_evidence: passed ? "Authorized q4 evidence records a successful Fedora Kinoite container build, clean qcow2, persisted serial log, and KVM graphical-login pass while production Runtime and Windows application execution remain disabled." : (domain ? domain.fetch("summary", "Authorized product smoke evidence is incomplete.") : "Authorized product smoke evidence is incomplete."),
+    evidence_source_files: %w[docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json scripts/full_checkpoint_promotion_packet.rb scripts/boot_kde_image.rb internal/runtime/image/restricted_smoke_packet.go],
+    verification_commands: ["ruby -rjson -e 'JSON.parse(File.read(\"docs/release-evidence/v0.2.320-rc7-kde-product-smoke.json\"))'", "ruby scripts/full_checkpoint_promotion_packet.rb --format json", "ruby scripts/release_evidence_index.rb --format json"],
+    current_evidence: if passed
+                        "Authorized q4 evidence is present and the current full checkpoint promotion packet allows the formal release."
+                      elsif historical_evidence_passed
+                        "Historical q4 product smoke evidence is present, but current full checkpoint promotion is #{promotion.fetch("promotion_decision", "missing")}."
+                      else
+                        domain ? domain.fetch("summary", "Authorized product smoke evidence is incomplete.") : "Authorized product smoke evidence is incomplete."
+                      end,
+    historical_product_smoke_evidence_passed: historical_evidence_passed,
+    formal_release_ready: checkpoint_promotion_allowed?(promotion),
+    promotion_decision: promotion.fetch("promotion_decision", "missing"),
     unsafe_gates: disabled_unsafe_gates,
-    human_authorization_required: false,
+    human_authorization_required: !blockers.empty?,
     blockers: blockers,
     next_branch_sized_follow_up: "Keep future heavy smoke reruns separately authorized and implement a real production Runtime owner before Windows application execution."
   }

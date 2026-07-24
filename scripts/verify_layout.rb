@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc12"
+EXPECTED_VERSION = "0.2.640-rc13"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -7039,8 +7039,10 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   release-evidence-index
   xnix.runtime.release_evidence_index.v1
   implementation-evidence+contract-drift+mainline-review+kde-first-presence
+  full-checkpoint-promotion
   REPORT_COMMANDS
   CLAIM_DEFINITIONS
+  --full-checkpoint-promotion
   runtime-owner-read-boundary
   recipe-artifact-trust
   runtime-state-backend-lifecycle
@@ -7052,6 +7054,11 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   protected-claude-file
   unclassified-files
   product-image-qemu-acceptance
+  full-checkpoint-promotion-not-allowed
+  historical_product_smoke_evidence_passed
+  formal_release_ready
+  promotion_decision
+  full_smoke_state
   restricted-heavy-smoke-skipped
   implemented
   fixture-only
@@ -7086,6 +7093,12 @@ release_evidence_index_test_source = read_project_file("test/test_release_eviden
   unclassified-file
   human-authorized
   product-image-qemu-acceptance
+  full-checkpoint-promotion
+  blocked-incomplete-full-smoke-report
+  full-checkpoint-promotion-not-allowed
+  historical_product_smoke_evidence_passed
+  formal_release_ready
+  promotion_decision
   restricted-heavy-smoke-skipped
   docker_executed
   qemu_executed

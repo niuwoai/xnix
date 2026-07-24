@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc12`.
+The project is currently at `v0.2.640-rc13`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.640-rc12`.
 
 ## Current Checkpoint
 
-v0.2.640-rc12 keeps the formal full checkpoint gate pending and makes `scripts/merge_readiness_packet.rb` consume `scripts/full_checkpoint_promotion_packet.rb` as the single release-promotion gate. Merge readiness now exposes `full_checkpoint_promotion_status` and keeps promotion failures release-only while avoiding duplicate full-smoke readiness logic.
+v0.2.640-rc13 keeps the formal full checkpoint gate pending and makes `scripts/release_evidence_index.rb` consume `scripts/full_checkpoint_promotion_packet.rb`. The `product-image-qemu-acceptance` claim now preserves historical product smoke evidence while blocking current formal release acceptance unless the promotion packet allows `v0.2.640`.
 
-The previous v0.2.640-rc11 checkpoint added the read-only promotion packet that reports missing, malformed, failed, incomplete, passing, and version-mismatched full-smoke evidence while keeping full smoke, Docker, QEMU, Wine, Colima, D-Bus, desktop launch, backend launch, network access, and host mutation disabled inside the packet. The earlier v0.2.640-rc10 checkpoint routed the private D-Bus controlled-launch fixture through the same `desktop-trigger-service-call-materialization-preview` packet already consumed by the real staged launcher dispatch smoke.
+The previous v0.2.640-rc12 checkpoint made merge readiness consume the promotion packet as the single release-promotion gate and expose `full_checkpoint_promotion_status`. The earlier v0.2.640-rc11 checkpoint added the read-only promotion packet that reports missing, malformed, failed, incomplete, passing, and version-mismatched full-smoke evidence while keeping full smoke, Docker, QEMU, Wine, Colima, D-Bus, desktop launch, backend launch, network access, and host mutation disabled inside the packet.
 
 ## Main References
 
@@ -49,8 +49,9 @@ ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
 ruby -Ilib test/test_full_smoke_script.rb
 ruby -Ilib test/test_full_checkpoint_promotion_packet.rb
 ruby -Ilib test/test_merge_readiness_packet.rb
+ruby -Ilib test/test_release_evidence_index.rb
 gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xnix-dbus-smoke-check $(pkg-config --cflags --libs gio-2.0)
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc12`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc13`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

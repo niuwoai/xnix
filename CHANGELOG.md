@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc13] - 2026-07-24
+
+### Changed
+
+- Made `scripts/release_evidence_index.rb` consume the full checkpoint promotion packet as part of release evidence indexing.
+- Updated `product-image-qemu-acceptance` so historical product smoke evidence is not treated as current formal release readiness unless the promotion packet allows the release.
+- Added a `full-checkpoint-promotion` claim with promotion decision, full-smoke state, formal readiness, and blocker evidence.
+
+### Fixed
+
+- Kept old authorized product image smoke evidence visible while blocking current `v0.2.640` product image acceptance when `full_checkpoint_promotion_packet` reports incomplete, missing, failed, malformed, or version-mismatched evidence.
+
 ## [0.2.640-rc12] - 2026-07-24
 
 ### Changed
