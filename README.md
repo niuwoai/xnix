@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc29`.
+The project is currently at `v0.2.640-rc30`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc29`.
 
 ## Current Checkpoint
 
-v0.2.640-rc29 adds an explicit `--backend local|container` switch to `scripts/winapp_smoke.rb`. The default local backend is unchanged, while the opt-in container backend reuses `windows-app-container-run-smoke` and emits the same JSON/Markdown report shape with container payload, image availability, Docker execution evidence, and Wine bootstrap evidence. The previous v0.2.640-rc28 path still bootstraps local Wine prefixes when a companion `wineboot` is available.
+v0.2.640-rc30 turns `scripts/winapp_container_smoke.rb` into a compatibility wrapper around `scripts/winapp_smoke.rb --backend container`, so the legacy container smoke command and the unified report path can no longer drift. The previous v0.2.640-rc29 path added the explicit `--backend local|container` switch.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -70,4 +70,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc29`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc30`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

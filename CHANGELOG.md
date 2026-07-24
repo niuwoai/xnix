@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc30] - 2026-07-24
+
+### Changed
+
+- Turned `scripts/winapp_container_smoke.rb` into a compatibility wrapper around `scripts/winapp_smoke.rb --backend container`.
+- Preserved the legacy container smoke environment knobs while making the unified smoke report the single implementation path for future restricted-container Windows app PASS attempts.
+
 ## [0.2.640-rc29] - 2026-07-24
 
 ### Added

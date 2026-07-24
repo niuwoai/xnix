@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc29"
+EXPECTED_VERSION = "0.2.640-rc30"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -863,7 +863,7 @@ windows_app_container_smoke_test = read_project_file("internal/runtime/winapp/co
   assert(windows_app_container_smoke_test.include?(token), "Go Windows app container smoke test must include #{token}")
 end
 windows_app_container_smoke_script = read_project_file("scripts/winapp_container_smoke.rb")
-%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-container-run-smoke XNIX_WINE_IMAGE XNIX_WINE_PLATFORM linux/amd64 xnix-wine-smoke:local bootstrap-timeout 420s 300s SKIP PASS .local XNIX_WINAPP_SMOKE_OK].each do |token|
+%w[winapp_smoke.rb --backend container --format text XNIX_WINE_IMAGE XNIX_WINE_PLATFORM linux/amd64 xnix-wine-smoke:local bootstrap-timeout 420s 300s exec].each do |token|
   assert(windows_app_container_smoke_script.include?(token), "Windows app container smoke script must include #{token}")
 end
 windows_app_guest_smoke_go = read_project_file("internal/runtime/winapp/guest_smoke.go")
