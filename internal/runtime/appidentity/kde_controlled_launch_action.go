@@ -15,6 +15,8 @@ type KDEControlledLaunchActionRequest struct {
 	EvidenceID           string
 	EvidenceRelativePath string
 	KDECenterGUICard     *KDECenterPageKnownAppMatrixCard
+	KDECenterPage        *KDECenterPagePreview
+	KDECenterPageAppID   string
 }
 
 type KDEControlledLaunchActionPreview struct {
@@ -77,9 +79,17 @@ type KDEControlledLaunchActionPreview struct {
 }
 
 func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) (KDEControlledLaunchActionPreview, error) {
+	kdeCenterGUICard := request.KDECenterGUICard
+	if kdeCenterGUICard == nil && request.KDECenterPage != nil {
+		card, err := kdeControlledLaunchActionGUICardFromPage(*request.KDECenterPage, request.KDECenterPageAppID)
+		if err != nil {
+			return KDEControlledLaunchActionPreview{}, err
+		}
+		kdeCenterGUICard = &card
+	}
 	evidenceRelativePath := strings.TrimSpace(request.EvidenceRelativePath)
-	if evidenceRelativePath == "" && request.KDECenterGUICard != nil {
-		evidenceRelativePath = kdeControlledLaunchActionEvidenceRelativePathFromCard(*request.KDECenterGUICard)
+	if evidenceRelativePath == "" && kdeCenterGUICard != nil {
+		evidenceRelativePath = kdeControlledLaunchActionEvidenceRelativePathFromCard(*kdeCenterGUICard)
 	}
 	trigger, err := PreviewKnownAppRuntimeStatusLaunchOwnerTrigger(KnownAppRuntimeStatusLaunchOwnerTriggerRequest{
 		StateRoot:            request.StateRoot,
@@ -151,12 +161,40 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 	if err != nil {
 		return KDEControlledLaunchActionPreview{}, err
 	}
-	if request.KDECenterGUICard != nil {
-		if err := validateKDEControlledLaunchActionGUICard(*request.KDECenterGUICard, preview); err != nil {
+	if kdeCenterGUICard != nil {
+		if err := validateKDEControlledLaunchActionGUICard(*kdeCenterGUICard, preview); err != nil {
 			return KDEControlledLaunchActionPreview{}, err
 		}
 	}
 	return preview, nil
+}
+
+func kdeControlledLaunchActionGUICardFromPage(page KDECenterPagePreview, appID string) (KDECenterPageKnownAppMatrixCard, error) {
+	targetAppID := strings.TrimSpace(appID)
+	if targetAppID == "" {
+		targetAppID = strings.TrimSpace(page.ApplicationID)
+	}
+	switch {
+	case page.SchemaVersion != "xnix.runtime.kde_center_page.v1" || page.RequestType != "kde-center-page-preview":
+		return KDECenterPageKnownAppMatrixCard{}, errors.New("KDE controlled launch action center page has invalid schema")
+	case !page.RuntimeOwned || !page.GoRuntimeBacked || page.KDEPolicyOwner:
+		return KDECenterPageKnownAppMatrixCard{}, errors.New("KDE controlled launch action center page must remain Runtime-owned")
+	case page.HostRootModified || page.BackendDetailsExposed || page.LaunchEnabled || page.ExecutionStarted || page.BackendProcessStarted:
+		return KDECenterPageKnownAppMatrixCard{}, errors.New("KDE controlled launch action center page must keep launch and backend gates closed")
+	case targetAppID == "":
+		return KDECenterPageKnownAppMatrixCard{}, errors.New("KDE controlled launch action center page requires an application id")
+	}
+
+	var matches []KDECenterPageKnownAppMatrixCard
+	for _, card := range page.KnownAppGUIEvidenceCards {
+		if strings.TrimSpace(card.AppID) == targetAppID {
+			matches = append(matches, card)
+		}
+	}
+	if len(matches) != 1 {
+		return KDECenterPageKnownAppMatrixCard{}, errors.New("KDE controlled launch action center page requires exactly one matching GUI evidence card")
+	}
+	return matches[0], nil
 }
 
 func kdeControlledLaunchActionEvidenceRelativePathFromCard(card KDECenterPageKnownAppMatrixCard) string {

@@ -18,6 +18,8 @@ func runKDEControlledLaunchActionPreview(args []string, stdout io.Writer) error 
 	evidenceID := flags.String("evidence-id", "", "opaque Runtime-status launch evidence handoff id")
 	evidenceRelativePath := flags.String("evidence-relative-path", "", "relative Runtime-status launch evidence handoff path")
 	kdeGUICardFile := flags.String("kde-gui-card-file", "", "safe KDE GUI evidence card JSON file")
+	kdeCenterPageFile := flags.String("kde-center-page-file", "", "safe KDE center page JSON file")
+	appID := flags.String("app", "", "application id to select from the KDE center page")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -27,7 +29,14 @@ func runKDEControlledLaunchActionPreview(args []string, stdout io.Writer) error 
 	if strings.TrimSpace(*stateRoot) == "" {
 		return errors.New("kde-controlled-launch-action-preview requires --state-root")
 	}
+	if strings.TrimSpace(*kdeGUICardFile) != "" && strings.TrimSpace(*kdeCenterPageFile) != "" {
+		return errors.New("kde-controlled-launch-action-preview accepts only one of --kde-gui-card-file or --kde-center-page-file")
+	}
 	kdeGUICard, err := readKDEControlledLaunchActionGUICard(*kdeGUICardFile)
+	if err != nil {
+		return err
+	}
+	kdeCenterPage, err := readKDEControlledLaunchActionCenterPage(*kdeCenterPageFile)
 	if err != nil {
 		return err
 	}
@@ -36,6 +45,8 @@ func runKDEControlledLaunchActionPreview(args []string, stdout io.Writer) error 
 		EvidenceID:           *evidenceID,
 		EvidenceRelativePath: *evidenceRelativePath,
 		KDECenterGUICard:     kdeGUICard,
+		KDECenterPage:        kdeCenterPage,
+		KDECenterPageAppID:   *appID,
 	})
 	if err != nil {
 		return err
@@ -57,4 +68,20 @@ func readKDEControlledLaunchActionGUICard(path string) (*appidentity.KDECenterPa
 		return nil, err
 	}
 	return &card, nil
+}
+
+func readKDEControlledLaunchActionCenterPage(path string) (*appidentity.KDECenterPagePreview, error) {
+	cleanPath := strings.TrimSpace(path)
+	if cleanPath == "" {
+		return nil, nil
+	}
+	payload, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return nil, err
+	}
+	var page appidentity.KDECenterPagePreview
+	if err := json.Unmarshal(payload, &page); err != nil {
+		return nil, err
+	}
+	return &page, nil
 }

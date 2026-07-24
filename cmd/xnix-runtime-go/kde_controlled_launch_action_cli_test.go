@@ -119,6 +119,57 @@ func TestKDEControlledLaunchActionPreviewCommandConsumesKDEGUICardFile(t *testin
 	}
 }
 
+func TestKDEControlledLaunchActionPreviewCommandConsumesKDECenterPageFile(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionCLIGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionCLIGUICard(record)
+	page := kdeControlledLaunchActionCLICenterPage(card)
+	pagePath := filepath.Join(t.TempDir(), "messagebox-center-page.json")
+	encodedPage, err := json.Marshal(page)
+	if err != nil {
+		t.Fatalf("Marshal page returned error: %v", err)
+	}
+	if err := os.WriteFile(pagePath, encodedPage, 0o600); err != nil {
+		t.Fatalf("WriteFile page returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"kde-controlled-launch-action-preview",
+		"--state-root", stateRoot,
+		"--kde-center-page-file", pagePath,
+		"--app", "org.xnix.apps.messagebox",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("KDE controlled launch action output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["application_id"] != "org.xnix.apps.messagebox" ||
+		payload["public_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		payload["desktop_callable_route"] != "kde-dbus-runtime-status-action" ||
+		payload["kde_forwards_only_evidence_handle"] != true ||
+		payload["owner_service_args_exposed_to_kde"] != false ||
+		payload["state_root_path_exposed"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false {
+		t.Fatalf("unexpected KDE center page action payload: %#v", payload)
+	}
+	forwardedArgs, ok := payload["kde_forwarded_arguments"].([]any)
+	if !ok || len(forwardedArgs) != 1 || forwardedArgs[0] != record.EvidenceRelativePath {
+		t.Fatalf("KDE center page action must forward only the evidence handle: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), pagePath) ||
+		strings.Contains(output.String(), "owner_service_call_args") {
+		t.Fatalf("KDE center page action output exposed Runtime-owned details: %s", output.String())
+	}
+}
+
 func TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"kde-controlled-launch-action-preview"}, &output)
@@ -262,5 +313,33 @@ func kdeControlledLaunchActionCLIGUICard(record appidentity.KnownAppKDERuntimeSt
 		BackendDetailsExposed:                false,
 		RawArtifactPathExposed:               false,
 		Summary:                              "Xnix MessageBox GUI card can forward only a safe Runtime evidence handle.",
+	}
+}
+
+func kdeControlledLaunchActionCLICenterPage(card appidentity.KDECenterPageKnownAppMatrixCard) appidentity.KDECenterPagePreview {
+	return appidentity.KDECenterPagePreview{
+		SchemaVersion:                           "xnix.runtime.kde_center_page.v1",
+		RequestType:                             "kde-center-page-preview",
+		PageType:                                "compatibility-center-application-page",
+		Desktop:                                 "KDE Plasma",
+		RuntimeMethod:                           "GetKDECenterPage",
+		ReadMethod:                              "GetKDECenterPagePreview",
+		ApplicationID:                           card.AppID,
+		ApplicationName:                         card.DisplayName,
+		KnownAppGUIEvidenceCount:                1,
+		KnownAppOwnerControlledGUIEvidenceCount: 1,
+		KnownAppOwnerManagedCopyVerifiedCount:   1,
+		KnownAppGUIEvidenceCards:                []appidentity.KDECenterPageKnownAppMatrixCard{card},
+		RuntimeOwned:                            true,
+		GoRuntimeBacked:                         true,
+		KDEPolicyOwner:                          false,
+		UserVisible:                             true,
+		PagePreviewCreated:                      true,
+		LaunchEnabled:                           false,
+		ExecutionStarted:                        false,
+		BackendProcessStarted:                   false,
+		HostRootModified:                        false,
+		BackendDetailsExposed:                   false,
+		DesktopSafeSummary:                      "KDE center page carries a safe owner-controlled GUI card.",
 	}
 }

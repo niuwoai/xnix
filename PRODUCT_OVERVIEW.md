@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc96
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc97
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc97 checkpoint candidate lets KDE hand an entire `kde-center-page-preview` payload back to the Go Runtime when preparing the Runtime-controlled launch action. `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID` selects exactly one matching owner-controlled GUI evidence card from the page, derives the handoff from that card's single safe forwarded `evidence-relative-path`, revalidates the persisted Runtime evidence, and returns the controlled-launch action preview. The Runtime rejects unsafe pages with opened launch/backend gates, backend detail exposure, host-root mutation, missing app identity, or ambiguous card matches, keeping KDE as a replaceable shell rather than a launch-policy owner.
 
 The v0.2.640-rc96 checkpoint candidate lets the Go Runtime consume the safe KDE GUI card route directly. `kde-controlled-launch-action-preview --kde-gui-card-file` reads a KDE-rendered owner-controlled GUI evidence card, derives the handoff only from its single `evidence-relative-path` forwarded argument when no explicit evidence path is supplied, revalidates the persisted Runtime evidence under the Runtime state root, and returns the existing controlled-launch action preview. Runtime validation rejects card identity mismatches, wrong route metadata, wrong D-Bus methods, extra forwarded arguments, exposed owner service arguments, opened desktop/backend launch gates, raw artifact paths, backend details, and host-root mutation. This closes the loop from real MessageBox GUI evidence to a desktop-consumable action without moving launch-policy ownership into KDE.
 

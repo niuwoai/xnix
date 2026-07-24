@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc96`.
+The project is currently at `v0.2.640-rc97`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc96`.
 
 ## Current Checkpoint
 
-v0.2.640-rc96 lets the Go Runtime consume a safe KDE GUI card route through `kde-controlled-launch-action-preview --kde-gui-card-file`. The Runtime derives the handoff only from the card's single `evidence-relative-path` forwarded argument, verifies the persisted Runtime evidence and card route metadata, and returns the controlled-launch action preview without exposing owner service arguments or enabling desktop/backend launch.
+v0.2.640-rc97 lets the Go Runtime select the safe owner-controlled GUI card from a full `kde-center-page-preview` payload through `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID`. KDE can hand the page read model back to the Runtime, and the Runtime derives the handoff only from the matching card's single safe `evidence-relative-path` forwarded argument before returning the controlled-launch action preview.
+
+The previous v0.2.640-rc96 checkpoint let the Go Runtime consume a safe KDE GUI card route through `kde-controlled-launch-action-preview --kde-gui-card-file`. The Runtime derives the handoff only from the card's single `evidence-relative-path` forwarded argument, verifies the persisted Runtime evidence and card route metadata, and returns the controlled-launch action preview without exposing owner service arguments or enabling desktop/backend launch.
 
 The previous v0.2.640-rc95 checkpoint added the concrete evidence-only desktop route for handoff-ready owner-controlled GUI cards. KDE now receives `desktop_callable_route=kde-dbus-runtime-status-action`, `desktop_callable_runtime_method=ShowRuntimeControlledLaunch`, `desktop_callable_execution_type=known-app-kde-runtime-status-launch-execution`, `desktop_dbus_method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, and a single safe `evidence-relative-path` argument, while owner service args, state roots, cache roots, launcher paths, raw executable paths, backend commands, desktop launch, and backend launch remain closed.
 
@@ -122,4 +124,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc96 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc97 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

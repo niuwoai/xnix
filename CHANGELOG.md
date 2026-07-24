@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc97] - 2026-07-25
+
+### Added
+
+- Added Go Runtime support for selecting a safe owner-controlled GUI evidence card from a full `kde-center-page-preview` payload before producing a controlled-launch action preview.
+- Added CLI support for `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID`, allowing KDE to hand the page read model back to the Runtime instead of extracting owner handoff details itself.
+
+### Changed
+
+- Changed the KDE controlled-launch action path to reject unsafe center pages with opened launch/backend gates, backend detail exposure, host-root mutation, missing application identity, or non-unique GUI evidence card matches.
+
 ## [0.2.640-rc96] - 2026-07-25
 
 ### Added

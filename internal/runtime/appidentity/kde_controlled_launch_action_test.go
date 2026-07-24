@@ -125,6 +125,49 @@ func TestPreviewKDEControlledLaunchActionRejectsUnsafeKDEGUICardRoute(t *testing
 	}
 }
 
+func TestPreviewKDEControlledLaunchActionSelectsKDECenterPageGUICard(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+	page := kdeControlledLaunchActionCenterPage(card)
+
+	preview, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:          stateRoot,
+		KDECenterPage:      &page,
+		KDECenterPageAppID: "org.xnix.apps.messagebox",
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchAction returned error: %v", err)
+	}
+
+	if preview.ApplicationID != "org.xnix.apps.messagebox" ||
+		preview.EvidenceRelativePath != record.EvidenceRelativePath ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.KDEForwardedArguments, []string{record.EvidenceRelativePath}) ||
+		preview.OwnerServiceArgsExposedToKDE ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.BackendDetailsExposed {
+		t.Fatalf("unexpected center page controlled launch action preview: %#v", preview)
+	}
+}
+
+func TestPreviewKDEControlledLaunchActionRejectsUnsafeKDECenterPage(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionGUIEvidence(t, stateRoot)
+	card := kdeControlledLaunchActionGUICard(record)
+	page := kdeControlledLaunchActionCenterPage(card)
+	page.LaunchEnabled = true
+
+	_, err := PreviewKDEControlledLaunchAction(KDEControlledLaunchActionRequest{
+		StateRoot:          stateRoot,
+		KDECenterPage:      &page,
+		KDECenterPageAppID: "org.xnix.apps.messagebox",
+	})
+	if err == nil {
+		t.Fatalf("unsafe KDE center page must be rejected")
+	}
+}
+
 func recordKDEControlledLaunchActionEvidence(t *testing.T, stateRoot string) KnownAppKDERuntimeStatusLaunchEvidenceRecord {
 	t.Helper()
 
@@ -260,5 +303,33 @@ func kdeControlledLaunchActionGUICard(record KnownAppKDERuntimeStatusLaunchEvide
 		BackendDetailsExposed:                false,
 		RawArtifactPathExposed:               false,
 		Summary:                              "Xnix MessageBox GUI card can forward only a safe Runtime evidence handle.",
+	}
+}
+
+func kdeControlledLaunchActionCenterPage(card KDECenterPageKnownAppMatrixCard) KDECenterPagePreview {
+	return KDECenterPagePreview{
+		SchemaVersion:                           "xnix.runtime.kde_center_page.v1",
+		RequestType:                             "kde-center-page-preview",
+		PageType:                                "compatibility-center-application-page",
+		Desktop:                                 "KDE Plasma",
+		RuntimeMethod:                           "GetKDECenterPage",
+		ReadMethod:                              "GetKDECenterPagePreview",
+		ApplicationID:                           card.AppID,
+		ApplicationName:                         card.DisplayName,
+		KnownAppGUIEvidenceCount:                1,
+		KnownAppOwnerControlledGUIEvidenceCount: 1,
+		KnownAppOwnerManagedCopyVerifiedCount:   1,
+		KnownAppGUIEvidenceCards:                []KDECenterPageKnownAppMatrixCard{card},
+		RuntimeOwned:                            true,
+		GoRuntimeBacked:                         true,
+		KDEPolicyOwner:                          false,
+		UserVisible:                             true,
+		PagePreviewCreated:                      true,
+		LaunchEnabled:                           false,
+		ExecutionStarted:                        false,
+		BackendProcessStarted:                   false,
+		HostRootModified:                        false,
+		BackendDetailsExposed:                   false,
+		DesktopSafeSummary:                      "KDE center page carries a safe owner-controlled GUI card.",
 	}
 }
