@@ -717,6 +717,15 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		card.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
 		card.PrimaryActionLabel != "Show Runtime-controlled launch" ||
 		card.PrimaryActionKind != "runtime-status" ||
+		card.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
+		card.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
+		card.DesktopCallableExecutionType != KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		card.DesktopDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		!card.DesktopEvidenceHandleForwarded ||
+		card.KDEForwardedArgumentKind != "evidence-relative-path" ||
+		len(card.KDEForwardedArguments) != 1 ||
+		card.KDEForwardedArguments[0] != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
+		card.OwnerServiceArgsExposedToKDE ||
 		!card.ExecutionEvidenceRecorded ||
 		!card.StagedLauncherVerified ||
 		!card.OwnerControlledRuntimeLaunchVerified ||

@@ -28,7 +28,15 @@ PlasmoidItem {
         "runtime_dispatch_verified",
         "primary_action_id",
         "primary_action_kind",
-        "primary_action_label"
+        "primary_action_label",
+        "desktop_callable_route",
+        "desktop_callable_runtime_method",
+        "desktop_callable_execution_type",
+        "desktop_dbus_method",
+        "desktop_evidence_handle_forwarded",
+        "kde_forwarded_argument_kind",
+        "kde_forwarded_arguments",
+        "owner_service_args_exposed_to_kde"
     ]
     compactRepresentation: PlasmaComponents.ToolButton {
         icon.name: "preferences-desktop"
@@ -59,7 +67,12 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, and primary_action_label from each safe card."
+            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+        PlasmaComponents.Label {
+            text: "When a card is handoff-ready, KDE forwards only the evidence-relative-path handle to the Runtime D-Bus action; owner service arguments and backend paths stay hidden."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

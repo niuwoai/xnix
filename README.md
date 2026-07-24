@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc94`.
+The project is currently at `v0.2.640-rc95`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc94`.
 
 ## Current Checkpoint
 
-v0.2.640-rc94 promotes handoff-ready owner-controlled GUI evidence cards from review-only status to the evidence-only Runtime-controlled launch action. When `owner_evidence_handoff_ready=true`, the known-app GUI evidence summary and KDE GUI card now expose `primary_action_id=show-runtime-controlled-launch`, `primary_action_kind=runtime-status`, and `primary_action_label=Show Runtime-controlled launch`, while desktop launch, backend launch, owner service args, state roots, cache roots, launcher paths, raw executable paths, and backend commands remain closed.
+v0.2.640-rc95 adds the concrete evidence-only desktop route for handoff-ready owner-controlled GUI cards. KDE now receives `desktop_callable_route=kde-dbus-runtime-status-action`, `desktop_callable_runtime_method=ShowRuntimeControlledLaunch`, `desktop_callable_execution_type=known-app-kde-runtime-status-launch-execution`, `desktop_dbus_method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, and a single safe `evidence-relative-path` argument, while owner service args, state roots, cache roots, launcher paths, raw executable paths, backend commands, desktop launch, and backend launch remain closed.
+
+The previous v0.2.640-rc94 checkpoint promoted handoff-ready owner-controlled GUI evidence cards from review-only status to the evidence-only Runtime-controlled launch action. When `owner_evidence_handoff_ready=true`, the known-app GUI evidence summary and KDE GUI card now expose `primary_action_id=show-runtime-controlled-launch`, `primary_action_kind=runtime-status`, and `primary_action_label=Show Runtime-controlled launch`, while desktop launch, backend launch, owner service args, state roots, cache roots, launcher paths, raw executable paths, and backend commands remain closed.
 
 The previous v0.2.640-rc93 checkpoint carried the Runtime owner evidence handoff from the actual owner-controlled Windows GUI smoke into the safe desktop read model. The GUI smoke harness records `owner_evidence_handoff_ready` and the safe relative `owner_evidence_relative_path` produced by the owner fixture, `gui-smoke-evidence-preview` validates that handoff under `runtime/kde-runtime-status-launch-evidence/`, and KDE GUI cards expose owner service-call readiness without exposing state roots, cache roots, launcher paths, raw executable paths, backend commands, or owner service arguments.
 
@@ -118,4 +120,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc94 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc95 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

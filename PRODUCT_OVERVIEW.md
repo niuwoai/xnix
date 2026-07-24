@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc94
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc95
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc95 checkpoint candidate turns the handoff-ready owner-controlled Windows GUI app card into a concrete evidence-only desktop route. KDE GUI evidence cards now expose `desktop_callable_route=kde-dbus-runtime-status-action`, `desktop_callable_runtime_method=ShowRuntimeControlledLaunch`, `desktop_callable_execution_type=known-app-kde-runtime-status-launch-execution`, `desktop_dbus_method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, `desktop_evidence_handle_forwarded=true`, and a single `evidence-relative-path` argument for the safe owner evidence handoff. This lets KDE know exactly which Runtime-owned action to call for the proven MessageBox GUI lane while still hiding owner service arguments, state roots, cache roots, launcher paths, raw executable paths, backend commands, Docker sockets, broad mounts, host networking, and host-root mutation authority.
 
 The v0.2.640-rc94 checkpoint candidate turns a handoff-ready real Windows GUI app card into an evidence-only desktop action surface. When an owner-controlled GUI smoke report carries a safe owner evidence handoff, `gui-smoke-evidence-preview` and Compatibility Center normalization now project `show-runtime-controlled-launch` as the primary action with `runtime-status` semantics. KDE can therefore render the next user-facing step for the already-proven MessageBox GUI lane, but the card still cannot directly launch, start a backend, reconstruct owner service arguments, read state roots, read cache roots, see launcher paths, see raw executable paths, see backend commands, mount Docker sockets, request broad mounts, use host networking, or mutate the host root.
 

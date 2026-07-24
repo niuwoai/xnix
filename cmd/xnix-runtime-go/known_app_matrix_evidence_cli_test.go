@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestKnownAppMatrixEvidencePreviewCommandConsumesAggregateReport(t *testing.T) {
@@ -468,6 +470,13 @@ func TestKDECenterPagePreviewCommandConsumesOwnerControlledGUIEvidenceFile(t *te
 		card["primary_action_id"] != "show-runtime-controlled-launch" ||
 		card["primary_action_label"] != "Show Runtime-controlled launch" ||
 		card["primary_action_kind"] != "runtime-status" ||
+		card["desktop_callable_route"] != "kde-dbus-runtime-status-action" ||
+		card["desktop_callable_runtime_method"] != "ShowRuntimeControlledLaunch" ||
+		card["desktop_callable_execution_type"] != appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType ||
+		card["desktop_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		card["desktop_evidence_handle_forwarded"] != true ||
+		card["kde_forwarded_argument_kind"] != "evidence-relative-path" ||
+		card["owner_service_args_exposed_to_kde"] != false ||
 		card["execution_evidence_recorded"] != true ||
 		card["staged_launcher_verified"] != true ||
 		card["owner_controlled_runtime_launch_verified"] != true ||
@@ -482,6 +491,10 @@ func TestKDECenterPagePreviewCommandConsumesOwnerControlledGUIEvidenceFile(t *te
 		card["backend_details_exposed"] != false ||
 		card["raw_artifact_path_exposed"] != false {
 		t.Fatalf("unexpected owner-controlled KDE GUI card: %#v", card)
+	}
+	forwarded := card["kde_forwarded_arguments"].([]any)
+	if len(forwarded) != 1 || forwarded[0] != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" {
+		t.Fatalf("unexpected owner-controlled KDE forwarded arguments: %#v", forwarded)
 	}
 	if strings.Contains(output.String(), "/home/xnix-run-materials") || strings.Contains(output.String(), reportPath) {
 		t.Fatalf("owner-controlled KDE projection exposed raw path: %s", output.String())

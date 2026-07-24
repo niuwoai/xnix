@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc95] - 2026-07-25
+
+### Added
+
+- Added evidence-only desktop callable route metadata to handoff-ready owner-controlled GUI evidence cards, including the Runtime owner method, D-Bus action method, Runtime execution request type, and forwarded evidence handle.
+- Added KDE bridge and Plasma stub coverage for the safe GUI handoff route while keeping owner service arguments hidden from desktop surfaces.
+
+### Changed
+
+- Changed KDE GUI evidence cards to forward only the safe `evidence-relative-path` handle for Runtime-controlled launch handoff, leaving desktop launch and backend launch disabled.
+
 ## [0.2.640-rc94] - 2026-07-25
 
 ### Changed

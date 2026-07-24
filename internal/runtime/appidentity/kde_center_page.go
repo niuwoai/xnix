@@ -161,38 +161,46 @@ type KDECenterPageKnownAppSessionGateCard struct {
 }
 
 type KDECenterPageKnownAppMatrixCard struct {
-	AppID                                string `json:"app_id"`
-	DisplayName                          string `json:"display_name"`
-	AppVersion                           string `json:"app_version"`
-	EvidenceKind                         string `json:"evidence_kind"`
-	EvidenceSource                       string `json:"evidence_source"`
-	SmokeStatus                          string `json:"smoke_status"`
-	CompatibilityState                   string `json:"compatibility_state"`
-	CenterCardState                      string `json:"center_card_state"`
-	PrimaryActionID                      string `json:"primary_action_id"`
-	PrimaryActionLabel                   string `json:"primary_action_label"`
-	PrimaryActionKind                    string `json:"primary_action_kind"`
-	PrimaryActionEnabled                 bool   `json:"primary_action_enabled"`
-	MarkerObserved                       bool   `json:"marker_observed"`
-	ChecksumVerified                     bool   `json:"checksum_verified"`
-	ExecutionEvidenceRecorded            bool   `json:"execution_evidence_recorded"`
-	StagedLauncherVerified               bool   `json:"staged_launcher_verified"`
-	OwnerControlledRuntimeLaunchVerified bool   `json:"owner_controlled_runtime_launch_verified"`
-	OwnerManagedCopyVerified             bool   `json:"owner_managed_copy_verified"`
-	OwnerServiceCallReady                bool   `json:"owner_service_call_ready"`
-	OwnerEvidenceHandoffReady            bool   `json:"owner_evidence_handoff_ready"`
-	OwnerEvidenceRelativePath            string `json:"owner_evidence_relative_path,omitempty"`
-	RuntimeDispatchVerified              bool   `json:"runtime_dispatch_verified"`
-	LaunchAuthorizationRequired          bool   `json:"launch_authorization_required"`
-	DesktopLaunchEnabled                 bool   `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled                 bool   `json:"backend_launch_enabled"`
-	RuntimeOwned                         bool   `json:"runtime_owned"`
-	GoRuntimeBacked                      bool   `json:"go_runtime_backed"`
-	KDEPolicyOwner                       bool   `json:"kde_policy_owner"`
-	HostRootModified                     bool   `json:"host_root_modified"`
-	BackendDetailsExposed                bool   `json:"backend_details_exposed"`
-	RawArtifactPathExposed               bool   `json:"raw_artifact_path_exposed"`
-	Summary                              string `json:"summary"`
+	AppID                                string   `json:"app_id"`
+	DisplayName                          string   `json:"display_name"`
+	AppVersion                           string   `json:"app_version"`
+	EvidenceKind                         string   `json:"evidence_kind"`
+	EvidenceSource                       string   `json:"evidence_source"`
+	SmokeStatus                          string   `json:"smoke_status"`
+	CompatibilityState                   string   `json:"compatibility_state"`
+	CenterCardState                      string   `json:"center_card_state"`
+	PrimaryActionID                      string   `json:"primary_action_id"`
+	PrimaryActionLabel                   string   `json:"primary_action_label"`
+	PrimaryActionKind                    string   `json:"primary_action_kind"`
+	PrimaryActionEnabled                 bool     `json:"primary_action_enabled"`
+	DesktopCallableRoute                 string   `json:"desktop_callable_route,omitempty"`
+	DesktopCallableRuntimeMethod         string   `json:"desktop_callable_runtime_method,omitempty"`
+	DesktopCallableExecutionType         string   `json:"desktop_callable_execution_type,omitempty"`
+	DesktopDBusMethod                    string   `json:"desktop_dbus_method,omitempty"`
+	DesktopEvidenceHandleForwarded       bool     `json:"desktop_evidence_handle_forwarded"`
+	KDEForwardedArgumentKind             string   `json:"kde_forwarded_argument_kind,omitempty"`
+	KDEForwardedArguments                []string `json:"kde_forwarded_arguments,omitempty"`
+	OwnerServiceArgsExposedToKDE         bool     `json:"owner_service_args_exposed_to_kde"`
+	MarkerObserved                       bool     `json:"marker_observed"`
+	ChecksumVerified                     bool     `json:"checksum_verified"`
+	ExecutionEvidenceRecorded            bool     `json:"execution_evidence_recorded"`
+	StagedLauncherVerified               bool     `json:"staged_launcher_verified"`
+	OwnerControlledRuntimeLaunchVerified bool     `json:"owner_controlled_runtime_launch_verified"`
+	OwnerManagedCopyVerified             bool     `json:"owner_managed_copy_verified"`
+	OwnerServiceCallReady                bool     `json:"owner_service_call_ready"`
+	OwnerEvidenceHandoffReady            bool     `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath            string   `json:"owner_evidence_relative_path,omitempty"`
+	RuntimeDispatchVerified              bool     `json:"runtime_dispatch_verified"`
+	LaunchAuthorizationRequired          bool     `json:"launch_authorization_required"`
+	DesktopLaunchEnabled                 bool     `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                 bool     `json:"backend_launch_enabled"`
+	RuntimeOwned                         bool     `json:"runtime_owned"`
+	GoRuntimeBacked                      bool     `json:"go_runtime_backed"`
+	KDEPolicyOwner                       bool     `json:"kde_policy_owner"`
+	HostRootModified                     bool     `json:"host_root_modified"`
+	BackendDetailsExposed                bool     `json:"backend_details_exposed"`
+	RawArtifactPathExposed               bool     `json:"raw_artifact_path_exposed"`
+	Summary                              string   `json:"summary"`
 }
 
 type KDECenterPageBackend struct {
@@ -1278,6 +1286,7 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 		if item.EvidenceSource != "wine-guest-gui-smoke" {
 			continue
 		}
+		routeReady := kdeCenterPageOwnerGUIRouteReady(item)
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{
 			AppID:                                item.AppID,
 			DisplayName:                          item.DisplayName,
@@ -1291,6 +1300,14 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			PrimaryActionLabel:                   item.PrimaryActionLabel,
 			PrimaryActionKind:                    item.PrimaryActionKind,
 			PrimaryActionEnabled:                 item.PrimaryActionEnabled,
+			DesktopCallableRoute:                 kdeCenterPageOwnerGUIDesktopRoute(routeReady),
+			DesktopCallableRuntimeMethod:         kdeCenterPageOwnerGUIRuntimeMethod(routeReady),
+			DesktopCallableExecutionType:         kdeCenterPageOwnerGUIExecutionType(routeReady),
+			DesktopDBusMethod:                    kdeCenterPageOwnerGUIDBusMethod(routeReady),
+			DesktopEvidenceHandleForwarded:       routeReady,
+			KDEForwardedArgumentKind:             kdeCenterPageOwnerGUIForwardedArgumentKind(routeReady),
+			KDEForwardedArguments:                kdeCenterPageOwnerGUIForwardedArguments(item, routeReady),
+			OwnerServiceArgsExposedToKDE:         false,
 			MarkerObserved:                       item.MarkerObserved,
 			ChecksumVerified:                     item.ChecksumVerified,
 			ExecutionEvidenceRecorded:            item.ExecutionEvidenceRecorded,
@@ -1314,6 +1331,56 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 		})
 	}
 	return cards
+}
+
+func kdeCenterPageOwnerGUIRouteReady(item KnownAppSmokeEvidenceSummary) bool {
+	return item.OwnerControlledRuntimeLaunchVerified &&
+		item.OwnerManagedCopyVerified &&
+		item.OwnerServiceCallReady &&
+		item.OwnerEvidenceHandoffReady &&
+		safeKnownAppOwnerEvidenceRelativePath(item.OwnerEvidenceRelativePath)
+}
+
+func kdeCenterPageOwnerGUIDesktopRoute(ready bool) string {
+	if !ready {
+		return ""
+	}
+	return "kde-dbus-runtime-status-action"
+}
+
+func kdeCenterPageOwnerGUIRuntimeMethod(ready bool) string {
+	if !ready {
+		return ""
+	}
+	return "ShowRuntimeControlledLaunch"
+}
+
+func kdeCenterPageOwnerGUIExecutionType(ready bool) string {
+	if !ready {
+		return ""
+	}
+	return KnownAppKDERuntimeStatusLaunchExecutionRequestType
+}
+
+func kdeCenterPageOwnerGUIDBusMethod(ready bool) string {
+	if !ready {
+		return ""
+	}
+	return "org.xnix.Compatibility1.ShowRuntimeControlledLaunch"
+}
+
+func kdeCenterPageOwnerGUIForwardedArgumentKind(ready bool) string {
+	if !ready {
+		return ""
+	}
+	return "evidence-relative-path"
+}
+
+func kdeCenterPageOwnerGUIForwardedArguments(item KnownAppSmokeEvidenceSummary, ready bool) []string {
+	if !ready {
+		return nil
+	}
+	return []string{strings.TrimSpace(item.OwnerEvidenceRelativePath)}
 }
 
 func countOwnerControlledKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {

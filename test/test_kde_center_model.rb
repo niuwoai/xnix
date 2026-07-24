@@ -296,6 +296,14 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "primary_action_label" => "Show Runtime-controlled launch",
           "primary_action_kind" => "runtime-status",
           "primary_action_enabled" => true,
+          "desktop_callable_route" => "kde-dbus-runtime-status-action",
+          "desktop_callable_runtime_method" => "ShowRuntimeControlledLaunch",
+          "desktop_callable_execution_type" => "known-app-kde-runtime-status-launch-execution",
+          "desktop_dbus_method" => "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+          "desktop_evidence_handle_forwarded" => true,
+          "kde_forwarded_argument_kind" => "evidence-relative-path",
+          "kde_forwarded_arguments" => ["runtime/kde-runtime-status-launch-evidence/owner-messagebox.json"],
+          "owner_service_args_exposed_to_kde" => false,
           "marker_observed" => false,
           "checksum_verified" => false,
           "execution_evidence_recorded" => true,
@@ -367,6 +375,14 @@ assert(gui_card["evidence_source"] == "wine-guest-gui-smoke", "KDE GUI evidence 
 assert(gui_card["center_card_state"] == "validated-owner-controlled-gui-runtime-run", "KDE GUI evidence card must expose card state")
 assert(gui_card["primary_action_id"] == "show-runtime-controlled-launch", "KDE GUI evidence card must expose the Runtime-controlled launch action")
 assert(gui_card["primary_action_kind"] == "runtime-status", "KDE GUI evidence card must expose runtime-status action kind")
+assert(gui_card["desktop_callable_route"] == "kde-dbus-runtime-status-action", "KDE GUI evidence card must expose the desktop callable route")
+assert(gui_card["desktop_callable_runtime_method"] == "ShowRuntimeControlledLaunch", "KDE GUI evidence card must expose the Runtime owner method")
+assert(gui_card["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "KDE GUI evidence card must expose the Runtime execution request type")
+assert(gui_card["desktop_dbus_method"] == "org.xnix.Compatibility1.ShowRuntimeControlledLaunch", "KDE GUI evidence card must expose the D-Bus action method")
+assert(gui_card["desktop_evidence_handle_forwarded"], "KDE GUI evidence card must expose evidence handle forwarding")
+assert(gui_card["kde_forwarded_argument_kind"] == "evidence-relative-path", "KDE GUI evidence card must restrict forwarded arguments to the evidence handle")
+assert(gui_card["kde_forwarded_arguments"] == ["runtime/kde-runtime-status-launch-evidence/owner-messagebox.json"], "KDE GUI evidence card must forward only the safe evidence handle")
+assert(!gui_card["owner_service_args_exposed_to_kde"], "KDE GUI evidence card must hide owner service arguments")
 assert(gui_card["execution_evidence_recorded"], "KDE GUI evidence card must expose execution evidence status")
 assert(gui_card["staged_launcher_verified"], "KDE GUI evidence card must expose staged launcher status")
 assert(gui_card["owner_controlled_runtime_launch_verified"], "KDE GUI evidence card must expose owner-controlled Runtime launch status")

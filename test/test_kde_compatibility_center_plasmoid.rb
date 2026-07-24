@@ -44,8 +44,17 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   primary_action_id
   primary_action_kind
   primary_action_label
+  desktop_callable_route
+  desktop_callable_runtime_method
+  desktop_callable_execution_type
+  desktop_dbus_method
+  desktop_evidence_handle_forwarded
+  kde_forwarded_argument_kind
+  kde_forwarded_arguments
+  owner_service_args_exposed_to_kde
   wine-guest-gui-smoke
   known-application-gui-smoke
+  evidence-relative-path
   Real\ Windows\ GUI\ evidence
 ].each do |token|
   assert(qml.include?(token.gsub("\\ ", " ")), "Plasmoid QML must include #{token}")
