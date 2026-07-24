@@ -94,6 +94,7 @@ type runtimeControlledLaunchOwnerConfig struct {
 	GuestSSHPath      string
 	GuestSCPPath      string
 	GuestXWinInfoPath string
+	GUIExecutablePath string
 	GuestGUIAppPath   string
 	GuestDisplay      string
 	HostDisplay       string
@@ -191,6 +192,7 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 		GuestSSHPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
 		GuestSCPPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
 		GuestXWinInfoPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
+		GUIExecutablePath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_EXECUTABLE")),
 		GuestGUIAppPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_GUI_APP")),
 		GuestDisplay:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
 		HostDisplay:       strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
@@ -208,7 +210,7 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 	if config.OwnerTimeout == "" {
 		config.OwnerTimeout = "5m"
 	}
-	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestHost, config.GuestPort, config.GuestUser, config.GuestKeyPath, config.GuestRemoteDir, config.GuestSSHPath, config.GuestSCPPath, config.GuestXWinInfoPath, config.GuestGUIAppPath, config.GuestDisplay, config.HostDisplay, config.GUIWait} {
+	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestHost, config.GuestPort, config.GuestUser, config.GuestKeyPath, config.GuestRemoteDir, config.GuestSSHPath, config.GuestSCPPath, config.GuestXWinInfoPath, config.GUIExecutablePath, config.GuestGUIAppPath, config.GuestDisplay, config.HostDisplay, config.GUIWait} {
 		if strings.ContainsAny(value, "\r\n") {
 			return runtimeControlledLaunchOwnerConfig{}, errors.New("ShowRuntimeControlledLaunch Runtime owner configuration requires single-line values")
 		}
@@ -241,6 +243,9 @@ func runtimeControlledLaunchExtraArgs(config runtimeControlledLaunchOwnerConfig)
 	}
 	if config.GuestXWinInfoPath != "" {
 		args = append(args, "--xwininfo", config.GuestXWinInfoPath)
+	}
+	if config.GUIExecutablePath != "" {
+		args = append(args, "--executable", config.GUIExecutablePath)
 	}
 	if config.GuestGUIAppPath != "" {
 		args = append(args, "--gui-app", config.GuestGUIAppPath)

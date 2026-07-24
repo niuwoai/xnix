@@ -233,6 +233,12 @@ def owner_guest_gui_app_path(options)
   "/tmp/xnix-wine-guest-gui-smoke/#{File.basename(options.fetch(:executable))}"
 end
 
+def owner_gui_executable_path(options)
+  return "" if options.fetch(:executable).strip.empty?
+
+  options.fetch(:executable)
+end
+
 def owner_controlled_launch_env(options, owner_state_root, cache_root)
   display_number = options.fetch(:display_number)
   {
@@ -249,7 +255,8 @@ def owner_controlled_launch_env(options, owner_state_root, cache_root)
     "XNIX_RUNTIME_OWNER_GUEST_SSH" => "ssh",
     "XNIX_RUNTIME_OWNER_GUEST_SCP" => "scp",
     "XNIX_RUNTIME_OWNER_GUEST_XWININFO" => "xwininfo",
-    "XNIX_RUNTIME_OWNER_GUEST_GUI_APP" => owner_guest_gui_app_path(options),
+    "XNIX_RUNTIME_OWNER_GUI_EXECUTABLE" => owner_gui_executable_path(options),
+    "XNIX_RUNTIME_OWNER_GUEST_GUI_APP" => "",
     "XNIX_RUNTIME_OWNER_GUEST_DISPLAY" => "#{options.fetch(:guest_display_host)}:#{display_number}",
     "XNIX_RUNTIME_OWNER_HOST_DISPLAY" => ":#{display_number}",
     "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
@@ -286,6 +293,7 @@ def base_report(options)
     "owner_seed_gui_smoke_planned" => options.fetch(:launch_mode) == "owner-controlled-launch",
     "owner_external_gui_app_requested" => options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:executable).strip.empty?,
     "owner_external_gui_app_path_exposed" => false,
+    "owner_external_gui_app_delivery" => options.fetch(:executable).strip.empty? ? "" : "owner-managed-copy",
     "runtime_bin_configured" => !options.fetch(:runtime_bin).strip.empty?,
     "state_root" => state_root.to_s,
     "qemu_binary" => options.fetch(:qemu_binary),

@@ -41,6 +41,7 @@ func run(args []string, stdout io.Writer) error {
 	var sshPath string
 	var scpPath string
 	var xwininfoPath string
+	var executablePath string
 	var guiAppPath string
 	var guestDisplay string
 	var hostDisplay string
@@ -61,6 +62,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&sshPath, "ssh", "", "explicit ssh client path")
 	flags.StringVar(&scpPath, "scp", "", "explicit scp client path")
 	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo client path for guest GUI dispatch")
+	flags.StringVar(&executablePath, "executable", "", "Runtime-owner supplied local Windows GUI executable copied into the guest")
 	flags.StringVar(&guiAppPath, "gui-app", "", "Runtime-owner supplied guest GUI app path for guest GUI dispatch")
 	flags.StringVar(&guestDisplay, "guest-display", "", "guest DISPLAY value for guest GUI dispatch")
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
@@ -129,23 +131,24 @@ func run(args []string, stdout io.Writer) error {
 
 	if app.GuestBuiltinGUI {
 		result, err := winapp.RunKnownPortableGuestGUIDispatchSmoke(context.Background(), winapp.KnownDispatchSmokeRequest{
-			AppID:         appID,
-			CacheRoot:     cacheRoot,
-			Arguments:     []string(appArgs),
-			GuestBoundary: guestBoundary,
-			Host:          host,
-			Port:          parsedPort,
-			User:          user,
-			KeyPath:       keyPath,
-			RemoteDir:     remoteDir,
-			SSHPath:       sshPath,
-			SCPPath:       scpPath,
-			XWinInfoPath:  xwininfoPath,
-			GUIAppPath:    guiAppPath,
-			GuestDisplay:  guestDisplay,
-			HostDisplay:   hostDisplay,
-			Timeout:       timeout,
-			Wait:          guiWait,
+			AppID:          appID,
+			CacheRoot:      cacheRoot,
+			Arguments:      []string(appArgs),
+			GuestBoundary:  guestBoundary,
+			Host:           host,
+			Port:           parsedPort,
+			User:           user,
+			KeyPath:        keyPath,
+			RemoteDir:      remoteDir,
+			SSHPath:        sshPath,
+			SCPPath:        scpPath,
+			XWinInfoPath:   xwininfoPath,
+			ExecutablePath: executablePath,
+			GUIAppPath:     guiAppPath,
+			GuestDisplay:   guestDisplay,
+			HostDisplay:    hostDisplay,
+			Timeout:        timeout,
+			Wait:           guiWait,
 		})
 		if err != nil {
 			return err

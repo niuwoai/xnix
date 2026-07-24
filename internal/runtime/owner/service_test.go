@@ -144,7 +144,7 @@ func TestServiceCallDispatchesShowRuntimeControlledLaunch(t *testing.T) {
 	t.Setenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER", fakeLauncher)
 	t.Setenv("XNIX_RUNTIME_OWNER_TIMEOUT", "5s")
 	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT", "1s")
-	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_GUI_APP", "/tmp/xnix-owner-controlled-wine-gui-smoke/owner-messagebox.exe")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUI_EXECUTABLE", "/tmp/xnix-owner-controlled-input/owner-messagebox.exe")
 
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {
@@ -237,7 +237,7 @@ func TestServiceCallDispatchesShowRuntimeControlledLaunch(t *testing.T) {
 		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
 	}
 	argsText := string(argsData)
-	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--timeout\n1s", "--gui-app\n/tmp/xnix-owner-controlled-wine-gui-smoke/owner-messagebox.exe"} {
+	for _, token := range []string{"--state-root\n" + stateRoot, "--receipt-id\n" + launchReceiptID, "--review-receipt-id\n" + reviewReceiptID, "--session-id\n" + sessionID, "--timeout\n1s", "--executable\n/tmp/xnix-owner-controlled-input/owner-messagebox.exe"} {
 		if !strings.Contains(argsText, token) {
 			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
 		}

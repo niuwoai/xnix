@@ -377,6 +377,7 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	sshPath := flags.String("ssh", "", "optional ssh client path forwarded to the managed launcher")
 	scpPath := flags.String("scp", "", "optional scp client path forwarded to the managed launcher")
 	xwininfoPath := flags.String("xwininfo", "", "optional xwininfo client path forwarded to the managed launcher")
+	executablePath := flags.String("executable", "", "optional Runtime-owner supplied local Windows GUI executable copied into the guest")
 	guiAppPath := flags.String("gui-app", "", "optional Runtime-owner supplied guest GUI app path forwarded to the managed launcher")
 	guestDisplay := flags.String("guest-display", "", "optional guest DISPLAY forwarded to the managed launcher")
 	hostDisplay := flags.String("host-display", "", "optional host DISPLAY forwarded to the managed launcher")
@@ -401,20 +402,21 @@ func runKnownAppKDERuntimeStatusLaunchExecutionCommand(commandName string, args 
 	resolvedLauncherPath := *launcherPath
 	resolvedOwnerTimeoutText := *ownerTimeoutText
 	resolvedExtraOptions := knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
-		Host:         *host,
-		Port:         *port,
-		User:         *user,
-		KeyPath:      *keyPath,
-		RemoteDir:    *remoteDir,
-		SSHPath:      *sshPath,
-		SCPPath:      *scpPath,
-		XWinInfoPath: *xwininfoPath,
-		GUIAppPath:   *guiAppPath,
-		GuestDisplay: *guestDisplay,
-		HostDisplay:  *hostDisplay,
-		Timeout:      *timeoutText,
-		GUIWait:      *guiWaitText,
-		AppArgs:      []string(appArgs),
+		Host:           *host,
+		Port:           *port,
+		User:           *user,
+		KeyPath:        *keyPath,
+		RemoteDir:      *remoteDir,
+		SSHPath:        *sshPath,
+		SCPPath:        *scpPath,
+		XWinInfoPath:   *xwininfoPath,
+		ExecutablePath: *executablePath,
+		GUIAppPath:     *guiAppPath,
+		GuestDisplay:   *guestDisplay,
+		HostDisplay:    *hostDisplay,
+		Timeout:        *timeoutText,
+		GUIWait:        *guiWaitText,
+		AppArgs:        []string(appArgs),
 	}
 	var ownerConfig knownAppKDEShowRuntimeControlledLaunchOwnerConfig
 	if desktopActionRoute {
@@ -545,19 +547,20 @@ func knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv() (knownAppKDEShow
 		LauncherPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER")),
 		OwnerTimeout: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_TIMEOUT")),
 		ExtraOptions: knownAppKDERuntimeStatusLaunchExecutionExtraOptions{
-			Host:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
-			Port:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
-			User:         strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
-			KeyPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
-			RemoteDir:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
-			SSHPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
-			SCPPath:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
-			XWinInfoPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
-			GUIAppPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_GUI_APP")),
-			GuestDisplay: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
-			HostDisplay:  strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
-			Timeout:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
-			GUIWait:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_WAIT")),
+			Host:           strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_HOST")),
+			Port:           strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_PORT")),
+			User:           strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_USER")),
+			KeyPath:        strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_KEY")),
+			RemoteDir:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_REMOTE_DIR")),
+			SSHPath:        strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SSH")),
+			SCPPath:        strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_SCP")),
+			XWinInfoPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
+			ExecutablePath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_EXECUTABLE")),
+			GUIAppPath:     strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_GUI_APP")),
+			GuestDisplay:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
+			HostDisplay:    strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
+			Timeout:        strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT")),
+			GUIWait:        strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_WAIT")),
 		},
 	}
 	if config.StateRoot == "" {
@@ -585,6 +588,7 @@ func knownAppKDEShowRuntimeControlledLaunchOwnerConfigFromEnv() (knownAppKDEShow
 		config.ExtraOptions.SSHPath,
 		config.ExtraOptions.SCPPath,
 		config.ExtraOptions.XWinInfoPath,
+		config.ExtraOptions.ExecutablePath,
 		config.ExtraOptions.GUIAppPath,
 		config.ExtraOptions.GuestDisplay,
 		config.ExtraOptions.HostDisplay,
@@ -777,20 +781,21 @@ type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 }
 
 type knownAppKDERuntimeStatusLaunchExecutionExtraOptions struct {
-	Host         string
-	Port         string
-	User         string
-	KeyPath      string
-	RemoteDir    string
-	SSHPath      string
-	SCPPath      string
-	XWinInfoPath string
-	GUIAppPath   string
-	GuestDisplay string
-	HostDisplay  string
-	Timeout      string
-	GUIWait      string
-	AppArgs      []string
+	Host           string
+	Port           string
+	User           string
+	KeyPath        string
+	RemoteDir      string
+	SSHPath        string
+	SCPPath        string
+	XWinInfoPath   string
+	ExecutablePath string
+	GUIAppPath     string
+	GuestDisplay   string
+	HostDisplay    string
+	Timeout        string
+	GUIWait        string
+	AppArgs        []string
 }
 
 func knownAppKDERuntimeStatusLaunchExecutionExtraArgs(options knownAppKDERuntimeStatusLaunchExecutionExtraOptions) ([]string, error) {
@@ -807,6 +812,7 @@ func knownAppKDERuntimeStatusLaunchExecutionExtraArgs(options knownAppKDERuntime
 		{"--ssh", options.SSHPath},
 		{"--scp", options.SCPPath},
 		{"--xwininfo", options.XWinInfoPath},
+		{"--executable", options.ExecutablePath},
 		{"--gui-app", options.GUIAppPath},
 		{"--guest-display", options.GuestDisplay},
 		{"--host-display", options.HostDisplay},

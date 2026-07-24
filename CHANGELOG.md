@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc90] - 2026-07-25
+
+### Added
+
+- Added Runtime-owner-supplied external executable forwarding through `XNIX_RUNTIME_OWNER_GUI_EXECUTABLE` and `xnix-compat-launch --executable`, allowing owner-controlled launches to copy a Windows GUI executable into the QEMU guest before Wine starts it.
+- Added launcher coverage for owner-managed external GUI executable copy delivery while preserving redacted product-facing output.
+
+### Changed
+
+- Changed owner-controlled external GUI smoke delivery to prefer owner-managed copy through the launcher instead of relying on a seed run's pre-copied guest path.
+- Verified the q4 owner-controlled MessageBox run with `owner_external_gui_app_delivery=owner-managed-copy`, `executable_copied=true`, `owner_managed_launcher_invoked=true`, `owner_delegated_smoke_passed=true`, `owner_delegated_evidence_source=wine-guest-gui-smoke`, `x_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc90.json`.
+
 ## [0.2.640-rc89] - 2026-07-25
 
 ### Added

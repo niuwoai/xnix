@@ -268,6 +268,87 @@ func TestCompatLaunchRunsMinesThroughGuestGUIDispatchSmoke(t *testing.T) {
 	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, xwininfoPath)
 }
 
+func TestCompatLaunchCopiesOwnerSuppliedGUIExecutable(t *testing.T) {
+	app, err := winapp.LookupKnownPortableApp("org.xnix.apps.messagebox")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixtureForApp(t, stateRoot, app.ID, app.Version)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+	sshPath, xwininfoPath := writeGuestGUIFakeTools(t)
+	scpPath, scpLogPath := writeGuestGUIFakeSCPTool(t)
+	executablePath := filepath.Join(t.TempDir(), "owner-messagebox.exe")
+	if err := os.WriteFile(executablePath, []byte("MZ"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", app.ID,
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
+		"--ssh", sshPath,
+		"--scp", scpPath,
+		"--xwininfo", xwininfoPath,
+		"--executable", executablePath,
+		"--guest-display", "10.0.2.2:127",
+		"--host-display", ":127",
+		"--timeout", "5s",
+		"--gui-wait", (1 * time.Millisecond).String(),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["app_id"] != app.ID ||
+		payload["evidence_source"] != "wine-guest-gui-smoke" ||
+		payload["managed_artifact_copied"] != true ||
+		payload["smoke_passed"] != true ||
+		payload["execution_started"] != true ||
+		payload["controlled_session_window_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected owner-supplied executable GUI payload: %#v", payload)
+	}
+	scpLog, err := os.ReadFile(scpLogPath)
+	if err != nil {
+		t.Fatalf("ReadFile scp log returned error: %v", err)
+	}
+	if !strings.Contains(string(scpLog), executablePath) ||
+		!strings.Contains(string(scpLog), "/tmp/xnix-known-winapp-smoke/owner-messagebox.exe") {
+		t.Fatalf("fake scp did not copy the owner-supplied executable into the guest work dir: %s", string(scpLog))
+	}
+	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, scpPath, xwininfoPath, executablePath)
+}
+
 func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, string) {
 	t.Helper()
 	return recordLauncherSessionGateFixtureForApp(t, stateRoot, "7zr", "26.02")
@@ -335,6 +416,20 @@ func writeGuestGUIFakeTools(t *testing.T) (string, string) {
 		t.Fatalf("WriteFile xwininfo returned error: %v", err)
 	}
 	return sshPath, xwininfoPath
+}
+
+func writeGuestGUIFakeSCPTool(t *testing.T) (string, string) {
+	t.Helper()
+	tempDir := t.TempDir()
+	scpPath := filepath.Join(tempDir, "fake-scp")
+	logPath := filepath.Join(tempDir, "scp-args.txt")
+	body := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" > \"" + logPath + "\"\n" +
+		"exit 0\n"
+	if err := os.WriteFile(scpPath, []byte(body), 0o700); err != nil {
+		t.Fatalf("WriteFile scp returned error: %v", err)
+	}
+	return scpPath, logPath
 }
 
 func TestCompatLaunchSessionGateRejectsMissingSessionWithoutPathLeak(t *testing.T) {

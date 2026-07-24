@@ -90,6 +90,7 @@ assert(owner_payload["runtime_owner_bin_configured"] == true, "GUI smoke owner m
 assert(owner_payload["managed_launcher_bin_configured"] == true, "GUI smoke owner mode must configure the managed launcher")
 assert(owner_payload["owner_external_gui_app_requested"] == false, "GUI smoke owner mode must default to the built-in GUI app")
 assert(owner_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner mode must not expose owner guest GUI paths")
+assert(owner_payload["owner_external_gui_app_delivery"] == "", "GUI smoke owner mode must not plan external GUI app delivery by default")
 
 bad_mode_stdout, bad_mode_stderr, bad_mode_status = Open3.capture3(
   "ruby", script.to_s,
@@ -121,5 +122,6 @@ owner_exe_payload = JSON.parse(owner_exe_stdout)
 assert(owner_exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke owner executable plan must expose the executable basename")
 assert(owner_exe_payload["owner_external_gui_app_requested"] == true, "GUI smoke owner executable plan must request owner external GUI app launch")
 assert(owner_exe_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner executable plan must not expose owner guest GUI paths")
+assert(owner_exe_payload["owner_external_gui_app_delivery"] == "owner-managed-copy", "GUI smoke owner executable plan must use owner-managed copy delivery")
 
 puts "PASS: Wine guest GUI smoke script plan"
