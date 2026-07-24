@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc3"
+EXPECTED_VERSION = "0.2.640-rc4"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -216,6 +216,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_cli_test.go
   cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_commands.go
   cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_cli_test.go
+  cmd/xnix-runtime-go/owner_service_launch_envelope_guard_commands.go
+  cmd/xnix-runtime-go/owner_service_launch_envelope_guard_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
   cmd/xnix-runtime-go/ai_diagnostics_cli_test.go
   cmd/xnix-runtime-go/desktop_safety_policy_commands.go
@@ -443,6 +445,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/restricted_smoke_receipt_lookup_test.go
   internal/runtime/owner/restricted_smoke_receipt_fanout_owner_route_audit.go
   internal/runtime/owner/restricted_smoke_receipt_fanout_owner_route_audit_test.go
+  internal/runtime/owner/launch_envelope_guard.go
+  internal/runtime/owner/launch_envelope_guard_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -6595,6 +6599,15 @@ end
 
 %w[DesktopTriggerStagedInvocationReadinessSchemaVersion DesktopTriggerStagedInvocationReadinessRequestType DesktopTriggerStagedInvocationReadinessRequest DesktopTriggerStagedInvocationReadinessPreview PreviewDesktopTriggerStagedInvocationReadiness desktop-trigger-staged-invocation-readiness-preview expected_evidence_sha256 readiness_state release_gate_state kde_action_state public_dbus_route_state owner_service_trigger_state runtime_status_evidence_state managed_launcher_request_state known_app_artifact_state guest_smoke_boundary_state stale-evidence missing-evidence needs-full-checkpoint full-checkpoint-promoted formal_release_ready next_human_authorized_smoke desktop-triggered-staged-launch-smoke owner_service_args_exposed_to_kde desktop_receipt_fields_reconstructed desktop_kde_state_root_access runtime_state_written kde_configuration_written dbus_called smoke_executed_by_preview network_fetch_required].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go desktop-trigger staged invocation readiness preview must include #{token}")
+end
+
+go_owner_launch_envelope_guard_source = read_project_file("internal/runtime/owner/launch_envelope_guard.go") +
+                                        read_project_file("internal/runtime/owner/launch_envelope_guard_test.go") +
+                                        read_project_file("cmd/xnix-runtime-go/owner_service_launch_envelope_guard_commands.go") +
+                                        read_project_file("cmd/xnix-runtime-go/owner_service_launch_envelope_guard_cli_test.go") +
+                                        read_project_file("cmd/xnix-runtime-go/main.go")
+%w[LaunchEnvelopeGuardSchemaVersion LaunchEnvelopeGuardRequestType LaunchEnvelopeGuardRequest LaunchEnvelopeGuardPreview PreviewLaunchEnvelopeGuard owner-service-launch-envelope-guard-preview xnix.runtime.owner_service_launch_envelope_guard.v1 accepted-for-review blocked-missing-evidence blocked-mismatched-route blocked-stale blocked-replay blocked-owner-args malformed unsupported evidence-handle-kind evidence-relative-path evidence-id expected-evidence-sha256 kde-dbus-runtime-status-action ShowRuntimeControlledLaunch xnix.runtime-status.controlled-launch kde-presentation-shell request_freshness replay_marker_state route_matched method_matched action_matched caller_role_accepted evidence_handle_shape_accepted evidence_digest_verified evidence_digest_matched owner_only_arguments_present owner_only_argument_count kde_can_only_forward_evidence_handle kde_state_root_rejected kde_cache_root_rejected kde_launcher_path_rejected kde_timeout_value_rejected kde_raw_executable_path_rejected kde_backend_command_rejected kde_receipt_fields_rejected kde_session_fields_rejected kde_dispatch_fields_rejected runtime_owned go_runtime_backed kde_policy_owner desktop_receipt_fields_reconstructed desktop_kde_state_root_access state_root_path_exposed cache_root_path_exposed launcher_path_exposed raw_executable_path_exposed raw_command_exposed backend_details_exposed receipt_write_enabled receipt_accepted production_authorization_accepted service_call_dispatched dbus_ownership_enabled desktop_launch_enabled backend_launch_enabled execution_started backend_process_started runtime_state_written network_required host_root_modified privileged_container_required PreviewKnownAppKDERuntimeStatusLaunchEvidence validateNoBackendTerms TestPreviewLaunchEnvelopeGuardAcceptsEvidenceOnlyEnvelope TestPreviewLaunchEnvelopeGuardBlocksMismatchedRouteStaleReplayOwnerArgsAndMalformed TestOwnerServiceLaunchEnvelopeGuardPreviewCommandBlocksOwnerOnlyArgsWithoutLeakingValues].each do |token|
+  assert(go_owner_launch_envelope_guard_source.include?(token), "Go owner launch envelope guard must include #{token}")
 end
 
 kde_controlled_launch_action_source = read_project_file("kde/actions/xnix-runtime-status-controlled-launch.desktop") +

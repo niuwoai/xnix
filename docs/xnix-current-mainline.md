@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc3
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc4
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.640-rc3 by resolving the external Docker Hub pull blocker and rerunning the formal full checkpoint. The full checkpoint candidate now includes the KDE controlled-launch action D-Bus fixture lane, structured full-smoke failure classification, and the Go-owned desktop-trigger staged invocation readiness packet, but the formal `v0.2.640` tag must wait until `ruby scripts/full_smoke.rb` passes. If full smoke fails after the Docker pull issue is resolved, fix the concrete project defect and rerun the complete checkpoint before moving on. If it passes, promote to `v0.2.640` and move beyond fixture validation toward a real desktop-triggered staged `xnix-compat-launch` invocation while preserving evidence-only KDE forwarding and Runtime-owned execution policy.
+Continue from v0.2.640-rc4 by resolving the external Docker Hub pull blocker and rerunning the formal full checkpoint. The full checkpoint candidate now includes the KDE controlled-launch action D-Bus fixture lane, structured full-smoke failure classification, the Go-owned desktop-trigger staged invocation readiness packet, and the fail-closed Runtime owner service launch envelope guard, but the formal `v0.2.640` tag must wait until `ruby scripts/full_smoke.rb` passes. If full smoke fails after the Docker pull issue is resolved, fix the concrete project defect and rerun the complete checkpoint before moving on. If it passes, promote to `v0.2.640` and move beyond fixture validation toward a real desktop-triggered staged `xnix-compat-launch` invocation while preserving evidence-only KDE forwarding and Runtime-owned execution policy.
+
+The v0.2.640-rc4 checkpoint candidate adds `owner-service-launch-envelope-guard-preview`, a Go-owned fail-closed Runtime owner guard for future desktop-triggered launch requests. The guard accepts only evidence-id or evidence-relative-path handles from KDE, binds them to Runtime-status launch evidence, rejects stale digest and replay states, blocks KDE-supplied owner-only launch inputs, and keeps service dispatch, D-Bus ownership, receipt writes, production authorization acceptance, backend launch, Runtime writes, network access, privileged containers, and host mutation disabled.
 
 The v0.2.640-rc3 checkpoint candidate adds `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet that consumes KDE controlled-launch action metadata, the D-Bus fixture smoke plan, Runtime-status handoff evidence, owner trigger state, managed launcher request readiness, known-app artifact evidence, guest smoke evidence, and the full-checkpoint release gate. The packet exposes deterministic ready, blocked, missing-evidence, stale-evidence, malformed, unsupported, unsafe, and needs-full-checkpoint states without exposing owner-service arguments, state-root paths, raw launcher output, backend details, D-Bus calls, Runtime writes, KDE configuration writes, network fetches, or host mutation.
 

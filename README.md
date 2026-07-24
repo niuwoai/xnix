@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc3`.
+The project is currently at `v0.2.640-rc4`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc3`.
 
 ## Current Checkpoint
 
-v0.2.640-rc3 keeps the formal full checkpoint gate pending and adds `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet for the next human-authorized desktop-triggered staged launch smoke. It combines the KDE action, D-Bus smoke plan, Runtime-status handoff, owner trigger, managed launcher request, known-app artifact evidence, guest smoke evidence, and release gate while keeping launch, writes, D-Bus calls, network fetches, and host mutation disabled. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
+v0.2.640-rc4 keeps the formal full checkpoint gate pending and adds `owner-service-launch-envelope-guard-preview`, a Go-owned fail-closed Runtime owner guard for future desktop-triggered launch requests. It accepts only evidence-id or evidence-relative-path handles from KDE, binds them to Runtime-status launch evidence, rejects owner-only launch inputs, and keeps service dispatch, writes, D-Bus ownership, backend launch, network access, and host mutation disabled. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.639 connected the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane.
 
@@ -49,4 +49,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc3`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc4`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.

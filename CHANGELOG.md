@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc4] - 2026-07-24
+
+### Added
+
+- Added `owner-service-launch-envelope-guard-preview`, a Go-owned fail-closed Runtime owner guard that validates future desktop-triggered launch envelopes before service dispatch.
+
+### Changed
+
+- The guard accepts only safe evidence handles from KDE, binds them to Runtime-status launch evidence, rejects owner-only state/cache/launcher/timeout/executable/backend/receipt/session/dispatch inputs, and keeps service dispatch, D-Bus ownership, writes, backend launch, network access, and host mutation disabled.
+- Added targeted Go and CLI tests for accepted, missing-evidence, mismatched-route, stale, replay, owner-argument, malformed, redaction, and no-side-effect behavior.
+- Added `docs/claude-code-live-delegation-brief.md` as the current one-task-at-a-time Claude Code delegation brief.
+
 ## [0.2.640-rc3] - 2026-07-24
 
 ### Added

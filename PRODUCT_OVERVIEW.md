@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc3
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc4
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc4 checkpoint candidate adds `owner-service-launch-envelope-guard-preview`, a Go-owned fail-closed Runtime owner guard for future desktop-triggered launch requests. The guard validates the public route, owner service method, action id, caller role, freshness state, replay marker, safe evidence handle shape, and Runtime-status launch evidence digest before any service dispatch can be considered. It blocks KDE-supplied state roots, cache roots, launcher paths, timeout values, raw executable paths, backend commands, receipt ids, session ids, and dispatch ids while keeping receipt writes, production authorization acceptance, service calls, D-Bus ownership, desktop launch, backend launch, execution, Runtime state writes, network fetches, privileged containers, and host mutation disabled. The formal `v0.2.640` release remains pending until full smoke passes.
 
 The v0.2.640-rc3 checkpoint candidate adds `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet for the next human-authorized desktop-triggered staged launch smoke. The packet consumes the existing KDE controlled-launch action metadata, D-Bus fixture smoke plan, Runtime-status handoff evidence, owner trigger state, managed launcher request readiness, known-app artifact evidence, guest smoke evidence, and the full-checkpoint release gate. It reports ready, blocked, missing-evidence, stale-evidence, malformed, unsupported, unsafe, or needs-full-checkpoint states while keeping owner-service arguments, state-root paths, raw launcher output, backend details, D-Bus calls, Runtime writes, KDE configuration writes, network fetches, and host mutation disabled. The formal `v0.2.640` release remains pending until full smoke passes.
 
