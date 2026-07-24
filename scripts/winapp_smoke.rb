@@ -69,6 +69,9 @@ def base_report(format, redact_output, expected_marker, executable_source)
     "env_runner_configured" => false,
     "runner_candidate_count" => 0,
     "runner_diagnostics_next_action" => "",
+    "wine_bootstrap_attempted" => false,
+    "wine_bootstrap_succeeded" => false,
+    "wine_bootstrap_exit_code" => -1,
     "marker_observed" => false,
     "raw_output_included" => false,
     "raw_output_redacted" => redact_output,
@@ -107,6 +110,9 @@ def emit_report(report)
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
     puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
     puts "- Runner available: #{report.fetch("runner_available")}"
+    puts "- Wine bootstrap attempted: #{report.fetch("wine_bootstrap_attempted")}"
+    puts "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
+    puts "- Wine bootstrap exit code: #{report.fetch("wine_bootstrap_exit_code")}"
     puts "- Marker observed: #{report.fetch("marker_observed")}"
     puts "- Raw output redacted: #{report.fetch("raw_output_redacted")}"
     puts "- KDE-safe output summary: #{report.fetch("kde_safe_output_summary")}"
@@ -223,6 +229,9 @@ payload = JSON.parse(smoke_stdout)
 report["runtime_payload"] = payload
 report["status"] = payload.fetch("status")
 report["runner_available"] = payload.fetch("runner_available", false)
+report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
+report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)
+report["wine_bootstrap_exit_code"] = payload.fetch("wine_bootstrap_exit_code", -1)
 report["marker_observed"] = payload.fetch("marker_observed", false)
 report["raw_output_included"] = payload.fetch("raw_output_included", false)
 report["raw_output_redacted"] = payload.fetch("raw_output_redacted", options.fetch(:redact_output))

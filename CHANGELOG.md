@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc28] - 2026-07-24
+
+### Added
+
+- Added managed Wine prefix bootstrap support to local `windows-app-run-smoke` when a companion `wineboot` is available beside the selected runner.
+- Added bootstrap attempted, succeeded, and exit-code evidence to Runtime and `scripts/winapp_smoke.rb` reports while preserving custom runner compatibility when `wineboot` is unavailable.
+
 ## [0.2.640-rc27] - 2026-07-24
 
 ### Added

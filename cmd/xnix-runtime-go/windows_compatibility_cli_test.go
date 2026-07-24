@@ -130,6 +130,9 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["executable_name"] != "hello.exe" ||
 		payload["runner_available"] != true ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
+		payload["wine_bootstrap_attempted"] != false ||
+		payload["wine_bootstrap_succeeded"] != false ||
+		payload["wine_bootstrap_exit_code"] != float64(-1) ||
 		payload["marker_observed"] != true ||
 		payload["host_root_modified"] != false ||
 		payload["privileged_container_required"] != false ||

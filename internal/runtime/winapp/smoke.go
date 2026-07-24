@@ -42,6 +42,9 @@ type Result struct {
 	ExecutableName              string `json:"executable_name"`
 	RunnerAvailable             bool   `json:"runner_available"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
+	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
+	WineBootstrapSucceeded      bool   `json:"wine_bootstrap_succeeded"`
+	WineBootstrapExitCode       int    `json:"wine_bootstrap_exit_code"`
 	ExpectedMarker              string `json:"expected_marker"`
 	MarkerObserved              bool   `json:"marker_observed"`
 	ExitCode                    int    `json:"exit_code"`
@@ -138,6 +141,31 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	}
 	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
+	bootstrapPath, bootstrapAvailable := resolveWineboot(runnerPath)
+	if bootstrapAvailable {
+		result.WineBootstrapAttempted = true
+		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, "--init")
+		bootstrapCommand.Env = runnerEnvironment(stateRoot)
+		var bootstrapStderr bytes.Buffer
+		bootstrapCommand.Stderr = &bootstrapStderr
+		bootstrapErr := bootstrapCommand.Run()
+		result.WineBootstrapExitCode = exitCode(bootstrapErr)
+		if runCtx.Err() == context.DeadlineExceeded {
+			result.Status = FailedStatus
+			result.FailureReason = "Wine prefix bootstrap timed out"
+			return result, nil
+		}
+		if bootstrapErr != nil {
+			result.Status = FailedStatus
+			result.FailureReason = "Wine prefix bootstrap failed"
+			result.StderrBytes = len(bootstrapStderr.String())
+			result.StderrLineCount = lineCount(bootstrapStderr.String())
+			result.KDESafeOutputSummary = kdeSafeOutputSummary(result)
+			return result, nil
+		}
+		result.WineBootstrapSucceeded = true
+	}
 
 	args := append([]string{executablePath}, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
@@ -253,6 +281,7 @@ func baseResult(request Request) Result {
 		RequestType:                 RequestType,
 		Status:                      FailedStatus,
 		CompatibilityLayer:          "windows-compatibility-layer",
+		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
 		ExitCode:                    -1,
 		RawOutputIncluded:           !request.RedactOutput,
@@ -397,6 +426,26 @@ func probeRunnerCandidate(candidate runnerCandidate) (RunnerCandidateEvidence, s
 	evidence.Available = true
 	evidence.Reason = "available"
 	return evidence, filepath.Base(runnerPath)
+}
+
+func resolveWineboot(runnerPath string) (string, bool) {
+	runnerPath = strings.TrimSpace(runnerPath)
+	if runnerPath == "" {
+		return "", false
+	}
+	runnerDir := filepath.Dir(runnerPath)
+	for _, candidate := range []string{
+		filepath.Join(runnerDir, "wineboot"),
+		filepath.Join(runnerDir, "wineboot64"),
+	} {
+		if path, err := validateRunnerPath(candidate); err == nil {
+			return path, true
+		}
+	}
+	if path, err := exec.LookPath("wineboot"); err == nil {
+		return path, true
+	}
+	return "", false
 }
 
 func validateRunnerPath(path string) (string, error) {

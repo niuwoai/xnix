@@ -80,6 +80,9 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "executable_name" => File.basename(exe_path),
         "runner_available" => true,
         "compatibility_layer" => "windows-compatibility-layer",
+        "wine_bootstrap_attempted" => false,
+        "wine_bootstrap_succeeded" => false,
+        "wine_bootstrap_exit_code" => -1,
         "expected_marker" => marker,
         "marker_observed" => true,
         "exit_code" => 0,
@@ -131,6 +134,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("runner_candidate_count") == 1, "JSON report must preserve runner candidate count")
   assert(report.fetch("runner_diagnostics_payload").fetch("request_type") == "windows-app-runner-diagnostics", "JSON report must embed diagnostics payload")
   assert(report.fetch("smoke_invoked"), "JSON report must record smoke invocation")
+  assert(!report.fetch("wine_bootstrap_attempted"), "JSON report must preserve bootstrap attempted state")
   assert(report.fetch("redacted_output_requested"), "JSON report must request redacted output by default")
   assert(report.fetch("raw_output_redacted"), "JSON report must preserve redacted output state")
   assert(!report.fetch("raw_output_included"), "JSON report must not include raw output by default")
@@ -144,6 +148,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
+  assert(markdown_stdout.include?("Wine bootstrap attempted: false"), "Markdown report must expose bootstrap attempted state")
   assert(markdown_stdout.include?("Raw output redacted: true"), "Markdown report must expose redaction")
   assert(markdown_stdout.include?("Wine executed by script: false"), "Markdown report must keep Wine execution-by-script false")
 

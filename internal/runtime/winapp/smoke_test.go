@@ -67,6 +67,43 @@ func TestRunSmokeUsesManagedWineEnvironment(t *testing.T) {
 	}
 }
 
+func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
+	bootstrapMarker := filepath.Join(tempDir, "bootstrap.marker")
+	winebootBody := "#!/bin/sh\n" +
+		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"test \"$WINEARCH\" = win64 || exit 88\n" +
+		"printf bootstrapped > '" + strings.ReplaceAll(bootstrapMarker, "'", "'\\''") + "'\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "wineboot"), []byte(winebootBody), 0o700); err != nil {
+		t.Fatalf("WriteFile wineboot returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.WineBootstrapAttempted ||
+		!result.WineBootstrapSucceeded ||
+		result.WineBootstrapExitCode != 0 ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected bootstrap smoke result: %#v", result)
+	}
+	if _, err := os.Stat(bootstrapMarker); err != nil {
+		t.Fatalf("expected wineboot marker to exist: %v", err)
+	}
+}
+
 func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
