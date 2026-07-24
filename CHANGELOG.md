@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc100] - 2026-07-25
+
+### Added
+
+- Added automatic KDE center page and owner-controlled KDE action preview evidence generation to the q4 remote Wine GUI smoke after a real GUI run passes.
+- Added `--kde-page-output` and `--kde-action-output` options to `scripts/remote_wine_guest_gui_smoke.rb` for persisted desktop handoff evidence.
+
+### Changed
+
+- Changed the remote real GUI smoke plan to report whether KDE page and controlled-launch action evidence will be generated for direct versus owner-controlled runs.
+
 ## [0.2.640-rc99] - 2026-07-25
 
 ### Added

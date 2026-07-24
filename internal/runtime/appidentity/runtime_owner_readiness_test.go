@@ -94,7 +94,7 @@ func TestRuntimeOwnerReadinessPreviewAggregatesOwnerGates(t *testing.T) {
 	if preview.RecipeTrust.RequestType != "runtime-owner-recipe-trust-preview" ||
 		preview.RecipeTrust.TrustType != "runtime-owner-recipe-trust" ||
 		preview.RecipeTrust.RegistryName != "xnix-local-development" ||
-		preview.RecipeTrust.RecipeCount != 1 ||
+		preview.RecipeTrust.RecipeCount != 3 ||
 		!preview.RecipeTrust.DigestVerified ||
 		preview.RecipeTrust.SignedRecipeValidation ||
 		!preview.RecipeTrust.DevelopmentRegistry ||

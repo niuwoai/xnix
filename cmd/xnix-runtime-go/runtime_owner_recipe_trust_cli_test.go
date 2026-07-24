@@ -29,7 +29,7 @@ func TestRuntimeOwnerRecipeTrustPreviewCommandRendersGoReadModel(t *testing.T) {
 		t.Fatalf("unexpected Runtime owner recipe trust CLI schema: %#v", payload)
 	}
 	if payload["registry_name"] != "xnix-local-development" ||
-		payload["recipe_count"] != float64(1) ||
+		payload["recipe_count"] != float64(3) ||
 		payload["digest_verified"] != true ||
 		payload["signed_recipe_validation"] != false ||
 		payload["development_registry"] != true ||
@@ -42,7 +42,7 @@ func TestRuntimeOwnerRecipeTrustPreviewCommandRendersGoReadModel(t *testing.T) {
 		t.Fatalf("unexpected signature status count: %#v", statuses)
 	}
 	status := statuses[0].(map[string]any)
-	if status["status"] != "development-only" || status["count"] != float64(1) {
+	if status["status"] != "development-only" || status["count"] != float64(3) {
 		t.Fatalf("unexpected signature status: %#v", status)
 	}
 	checks := payload["checks"].([]any)

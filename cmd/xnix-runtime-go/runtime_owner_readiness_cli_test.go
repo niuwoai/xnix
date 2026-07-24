@@ -96,7 +96,7 @@ func TestRuntimeOwnerReadinessPreviewCommandRendersGoReadModel(t *testing.T) {
 	if recipeTrust["request_type"] != "runtime-owner-recipe-trust-preview" ||
 		recipeTrust["trust_type"] != "runtime-owner-recipe-trust" ||
 		recipeTrust["registry_name"] != "xnix-local-development" ||
-		recipeTrust["recipe_count"] != float64(1) ||
+		recipeTrust["recipe_count"] != float64(3) ||
 		recipeTrust["digest_verified"] != true ||
 		recipeTrust["signed_recipe_validation"] != false ||
 		recipeTrust["development_registry"] != true ||

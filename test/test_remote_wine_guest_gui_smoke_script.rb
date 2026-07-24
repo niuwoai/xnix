@@ -47,6 +47,10 @@ assert(payload["remote_source_root"].include?("runtime"), "remote source root mu
 assert(payload["report_output"].start_with?("/home/xnix-"), "remote report output must stay under /home/xnix-*")
 assert(payload["evidence_output"].start_with?("/home/xnix-"), "remote evidence output must stay under /home/xnix-*")
 assert(payload["evidence_preview_planned"] == true, "remote GUI smoke must project Runtime GUI evidence after a pass")
+assert(payload["kde_page_output"].start_with?("/home/xnix-"), "remote KDE page output must stay under /home/xnix-*")
+assert(payload["kde_action_output"].start_with?("/home/xnix-"), "remote KDE action output must stay under /home/xnix-*")
+assert(payload["kde_center_page_preview_planned"] == true, "remote GUI smoke must plan KDE center page evidence after a pass")
+assert(payload["kde_controlled_launch_action_preview_planned"] == false, "remote GUI smoke direct mode must not plan a controlled-launch action preview")
 assert(payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke must expose the default evidence app id")
 assert(payload["evidence_display_name"] == "Mines", "remote GUI smoke must expose the default evidence display name")
 assert(payload["state_root"].start_with?("/home/xnix-"), "remote state root must stay under /home/xnix-*")
@@ -69,6 +73,8 @@ assert(owner_payload["owner_build_planned"] == true, "remote GUI smoke owner mod
 assert(owner_payload["launcher_build_planned"] == true, "remote GUI smoke owner mode must build the managed launcher")
 assert(owner_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke must forward owner launch mode")
 assert(owner_payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke owner mode must default evidence identity to Mines")
+assert(owner_payload["kde_controlled_launch_action_preview_planned"] == true, "remote GUI smoke owner mode must plan KDE controlled-launch action evidence")
+assert(owner_payload["kde_action_state_root"].end_with?("/owner-controlled-launch-state"), "remote GUI smoke owner mode must expose the owner action state root")
 
 bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
   "ruby", script.to_s,
@@ -92,6 +98,8 @@ tmp_stdout, tmp_stderr, tmp_status = Open3.capture3(
   "--remote-build-root", "/tmp/xnix-build-cache",
   "--report-output", "/tmp/xnix-run-materials/state/report.json",
   "--evidence-output", "/tmp/xnix-run-materials/state/evidence.json",
+  "--kde-page-output", "/tmp/xnix-run-materials/state/kde-page.json",
+  "--kde-action-output", "/tmp/xnix-run-materials/state/kde-action.json",
   "--state-root", "/tmp/xnix-run-materials/state/gui",
   chdir: project_root.to_s
 )
@@ -126,6 +134,8 @@ assert(messagebox_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "remot
 assert(messagebox_payload["evidence_app_id"] == "org.xnix.apps.messagebox", "remote GUI smoke MessageBox identity plan must expose MessageBox evidence app id")
 assert(messagebox_payload["evidence_display_name"] == "Xnix MessageBox", "remote GUI smoke MessageBox identity plan must expose MessageBox evidence display name")
 assert(messagebox_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke MessageBox identity plan must keep owner mode")
+assert(messagebox_payload["kde_center_page_preview_planned"] == true, "remote GUI smoke MessageBox identity plan must plan KDE page evidence")
+assert(messagebox_payload["kde_controlled_launch_action_preview_planned"] == true, "remote GUI smoke MessageBox identity plan must plan KDE action evidence")
 
 bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
   "ruby", script.to_s,
@@ -142,6 +152,14 @@ bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
 )
 assert(!bad_evidence_status.success?, "remote GUI smoke must reject evidence output outside /home/xnix-*")
 assert((bad_evidence_stdout + bad_evidence_stderr).include?("evidence output must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe evidence output paths")
+
+bad_kde_page_stdout, bad_kde_page_stderr, bad_kde_page_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--kde-page-output", "/tmp/wine-gui-kde-page.json",
+  chdir: project_root.to_s
+)
+assert(!bad_kde_page_status.success?, "remote GUI smoke must reject KDE page output outside /home/xnix-*")
+assert((bad_kde_page_stdout + bad_kde_page_stderr).include?("KDE page output must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe KDE page output paths")
 
 full_stdout, full_stderr, full_status = Open3.capture3(
   "ruby", script.to_s,

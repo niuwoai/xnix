@@ -25,7 +25,7 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 		t.Fatalf("unexpected Runtime owner recipe trust schema: %#v", preview)
 	}
 	if preview.RegistryName != "xnix-local-development" ||
-		preview.RecipeCount != 2 ||
+		preview.RecipeCount != 3 ||
 		!preview.DigestVerified ||
 		preview.SignedRecipeValidation ||
 		!preview.DevelopmentRegistry ||
@@ -35,7 +35,7 @@ func TestRuntimeOwnerRecipeTrustPreviewReportsDevelopmentRegistryPending(t *test
 	}
 	if len(preview.SignatureStatuses) != 1 ||
 		preview.SignatureStatuses[0].Status != "development-only" ||
-		preview.SignatureStatuses[0].Count != 2 {
+		preview.SignatureStatuses[0].Count != 3 {
 		t.Fatalf("unexpected signature status counts: %#v", preview.SignatureStatuses)
 	}
 	expectedIDs := []string{"registry-present", "recipe-digests", "signed-recipe-validation", "development-registry", "unsigned-recipes"}

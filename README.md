@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc99`.
+The project is currently at `v0.2.640-rc100`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc99`.
 
 ## Current Checkpoint
 
-v0.2.640-rc99 lets the real Wine GUI smoke harness carry the requested application identity into owner-controlled Runtime evidence. MessageBox runs can now pass `--evidence-app-id org.xnix.apps.messagebox --evidence-display-name "Xnix MessageBox"` through the remote q4 harness, the local Xvfb/QEMU/Wine harness, Go `gui-smoke-evidence-preview`, and the Runtime-status owner fixture instead of reusing the Mines identity for the owner handoff.
+v0.2.640-rc100 makes the q4 real GUI harness produce desktop-consumable evidence automatically after a successful run. `scripts/remote_wine_guest_gui_smoke.rb --execute` now writes the Runtime GUI evidence, a `kde-center-page-preview` JSON payload, and, for owner-controlled launches, a `kde-controlled-launch-action-preview` JSON payload from the same real MessageBox run.
+
+The previous v0.2.640-rc99 checkpoint let the real Wine GUI smoke harness carry the requested application identity into owner-controlled Runtime evidence. MessageBox runs can now pass `--evidence-app-id org.xnix.apps.messagebox --evidence-display-name "Xnix MessageBox"` through the remote q4 harness, the local Xvfb/QEMU/Wine harness, Go `gui-smoke-evidence-preview`, and the Runtime-status owner fixture instead of reusing the Mines identity for the owner handoff.
 
 The previous v0.2.640-rc98 checkpoint added a restricted KDE controlled-launch action smoke lane for the owner-controlled MessageBox GUI handoff. The smoke creates Runtime-status MessageBox handoff evidence, projects the owner GUI report through `gui-smoke-evidence-preview`, renders a full `kde-center-page-preview`, then feeds that full page back into `kde-controlled-launch-action-preview --kde-center-page-file FILE --app APP_ID` without launching a backend by default.
 
@@ -128,4 +130,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc99 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc100 is a cadence-boundary candidate and should receive an explicitly approved restricted full-smoke run before any formal promotion.

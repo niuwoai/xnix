@@ -33,6 +33,8 @@ options = {
   launch_mode: ENV.fetch("XNIX_WINE_GUI_REMOTE_LAUNCH_MODE", "direct"),
   report_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REPORT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}.json"),
   evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
+  kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-page-#{VERSION}.json"),
+  kde_action_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_ACTION", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-action-#{VERSION}.json"),
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
   evidence_display_name: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_DISPLAY_NAME", "Mines"),
   evidence_app_version: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_VERSION", VERSION),
@@ -60,6 +62,8 @@ OptionParser.new do |parser|
   parser.on("--launch-mode MODE", "Launch mode: direct or owner-controlled-launch.") { |value| options[:launch_mode] = value }
   parser.on("--report-output PATH", "Remote JSON report output path under /home/xnix*.") { |value| options[:report_output] = value }
   parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
+  parser.on("--kde-page-output PATH", "Remote KDE center page JSON output path under /home/xnix*.") { |value| options[:kde_page_output] = value }
+  parser.on("--kde-action-output PATH", "Remote KDE controlled-launch action JSON output path under /home/xnix*.") { |value| options[:kde_action_output] = value }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
   parser.on("--evidence-display-name NAME", "Display name for the Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
   parser.on("--evidence-app-version VERSION", "Application version for the Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
@@ -151,6 +155,15 @@ def ssh_command(remote_host, remote_command)
   ]
 end
 
+def remote_json_command(remote_source_root, output_path, argv)
+  writer = "stdout, stderr, status = Open3.capture3(*ARGV[1..]); warn stderr unless stderr.empty?; exit 1 unless status.success?; payload = JSON.parse(stdout); File.write(ARGV[0], JSON.pretty_generate(payload) + \"\\n\")"
+  [
+    "set -eu",
+    "cd #{Shellwords.escape(remote_source_root)}",
+    shell_join(["ruby", "-rjson", "-ropen3", "-e", writer, output_path, *argv])
+  ].join("\n")
+end
+
 remote_host = options.fetch(:remote_host)
 source_sync_mode = options.fetch(:source_sync_mode)
 source_entries = source_sync_entries(source_sync_mode)
@@ -163,6 +176,8 @@ remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(
 launch_mode = options.fetch(:launch_mode)
 report_output = ensure_remote_xnix_path!("report output", options.fetch(:report_output))
 evidence_output = ensure_remote_xnix_path!("evidence output", options.fetch(:evidence_output))
+kde_page_output = ensure_remote_xnix_path!("KDE page output", options.fetch(:kde_page_output))
+kde_action_output = ensure_remote_xnix_path!("KDE action output", options.fetch(:kde_action_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
 remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
 remote_owner_bin = "#{remote_build_root}/bin/xnix-runtime-owner"
@@ -197,6 +212,11 @@ plan = {
   "report_output" => report_output,
   "evidence_output" => evidence_output,
   "evidence_preview_planned" => true,
+  "kde_page_output" => kde_page_output,
+  "kde_action_output" => kde_action_output,
+  "kde_center_page_preview_planned" => true,
+  "kde_controlled_launch_action_preview_planned" => launch_mode == "owner-controlled-launch",
+  "kde_action_state_root" => "#{state_root}/owner-controlled-launch-state",
   "evidence_app_id" => options.fetch(:evidence_app_id),
   "evidence_display_name" => options.fetch(:evidence_display_name),
   "evidence_app_version" => options.fetch(:evidence_app_version),
@@ -336,4 +356,39 @@ evidence_command = [
 ].join("\n")
 _evidence_stdout, evidence_stderr, evidence_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, evidence_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
 warn evidence_stderr unless evidence_stderr.empty?
-exit evidence_status.zero? ? 0 : 1
+exit 1 unless evidence_status.zero?
+
+kde_page_args = [
+  remote_runtime_bin,
+  "kde-center-page-preview",
+  "--registry", "#{remote_source_root}/runtime/recipes/registry.json",
+  "--app", options.fetch(:evidence_app_id),
+  "--decision", "approved",
+  "--known-app-evidence-file", evidence_output
+]
+kde_page_stdout, kde_page_stderr, kde_page_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, kde_page_output, kde_page_args))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+warn kde_page_stdout unless kde_page_stdout.empty?
+warn kde_page_stderr unless kde_page_stderr.empty?
+exit 1 unless kde_page_status.zero?
+
+exit 0 unless launch_mode == "owner-controlled-launch"
+
+kde_action_args = [
+  remote_runtime_bin,
+  "kde-controlled-launch-action-preview",
+  "--state-root", "#{state_root}/owner-controlled-launch-state",
+  "--kde-center-page-file", kde_page_output,
+  "--app", options.fetch(:evidence_app_id)
+]
+kde_action_stdout, kde_action_stderr, kde_action_status = run_shell(
+  options.fetch(:local_shell),
+  shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, kde_action_output, kde_action_args))),
+  timeout_seconds: options.fetch(:remote_timeout_seconds)
+)
+warn kde_action_stdout unless kde_action_stdout.empty?
+warn kde_action_stderr unless kde_action_stderr.empty?
+exit kde_action_status.zero? ? 0 : 1
