@@ -47,6 +47,12 @@ TOOL_DEFINITIONS = {
     parser: "json",
     required: false
   },
+  "full_checkpoint_promotion" => {
+    title: "Full checkpoint promotion packet",
+    command: ["ruby", "scripts/full_checkpoint_promotion_packet.rb", "--format", "json"],
+    parser: "json",
+    required: false
+  },
   "offline_fixture_matrix" => {
     title: "Offline application fixture matrix",
     command: ["ruby", "scripts/offline_application_fixture_matrix.rb", "--format", "json"],
@@ -62,6 +68,7 @@ FIXTURE_OPTIONS = {
   "kde_smoke" => :kde_smoke_report,
   "mainline_review" => :mainline_review,
   "release_evidence" => :release_evidence_index,
+  "full_checkpoint_promotion" => :full_checkpoint_promotion,
   "offline_fixture_matrix" => :fixture_matrix_report
 }.freeze
 
@@ -87,6 +94,7 @@ UNSAFE_KEYS = %w[
 
 RELEASE_ONLY_BLOCKERS = %w[
   restricted-docker-or-qemu-smoke-requires-human-authorization
+  full-checkpoint-promotion-not-allowed
   production-runtime-and-windows-execution-remain-disabled
 ].freeze
 
@@ -118,6 +126,7 @@ def parse_options(argv)
     parser.on("--kde-smoke-report PATH", "Use an existing KDE-first presence smoke JSON report") { |value| options[:fixtures][:kde_smoke_report] = value }
     parser.on("--mainline-review PATH", "Use an existing mainline integration review JSON report") { |value| options[:fixtures][:mainline_review] = value }
     parser.on("--release-evidence-index PATH", "Use an existing release evidence index JSON report") { |value| options[:fixtures][:release_evidence_index] = value }
+    parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:fixtures][:full_checkpoint_promotion] = value }
     parser.on("--fixture-matrix-report PATH", "Use an existing offline fixture matrix JSON report") { |value| options[:fixtures][:fixture_matrix_report] = value }
   end.parse!(argv)
 
@@ -223,6 +232,8 @@ def json_tool_summary(tool_id, data)
     "#{data.fetch("changed_file_count", 0)} changed file(s), #{data.fetch("unclassified_file_count", 0)} unclassified."
   when "release_evidence"
     "#{data.fetch("claim_count", data.fetch("claims", []).length)} release evidence claim(s) reported."
+  when "full_checkpoint_promotion"
+    "Full checkpoint promotion decision: #{data.fetch("promotion_decision", "unknown")}."
   when "offline_fixture_matrix"
     counts = data.fetch("counts", {})
     row_count = data.fetch("row_count", data.fetch("rows", []).length)
@@ -321,7 +332,12 @@ def authorized_product_smoke_complete?(release_evidence)
   claim && claim.fetch("evidence_level", "") == "implemented" && claim.fetch("blockers", []).empty?
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, unsafe_findings)
+def checkpoint_promotion_allowed?(full_checkpoint_promotion)
+  full_checkpoint_promotion.fetch("promotion_allowed", false) == true &&
+    full_checkpoint_promotion.fetch("formal_release_ready", false) == true
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -330,6 +346,7 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release
   reasons << "kde-seven-entrypoint-smoke-incomplete" if kde_smoke.fetch("entrypoint_count", 0).to_i != 7
   reasons << "unsafe-operation-detected" unless unsafe_findings.empty?
   reasons << "restricted-docker-or-qemu-smoke-requires-human-authorization" unless authorized_product_smoke_complete?(release_evidence)
+  reasons << "full-checkpoint-promotion-not-allowed" unless checkpoint_promotion_allowed?(full_checkpoint_promotion)
   reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
@@ -343,8 +360,9 @@ def build_packet(options)
   contract_drift = tool_data(tools, "contract_drift") || {}
   kde_smoke = tool_data(tools, "kde_smoke") || {}
   release_evidence = tool_data(tools, "release_evidence") || {}
+  full_checkpoint_promotion = tool_data(tools, "full_checkpoint_promotion") || {}
   unsafe = unsafe_findings(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, unsafe)
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe)
   merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
@@ -382,6 +400,13 @@ def build_packet(options)
     "required_follow_up_commands" => required_follow_up_commands(mainline),
     "merge_blocking_reasons" => merge_blockers,
     "release_blocking_reasons" => release_blockers,
+    "full_checkpoint_promotion_status" => {
+      "promotion_allowed" => checkpoint_promotion_allowed?(full_checkpoint_promotion),
+      "promotion_decision" => full_checkpoint_promotion.fetch("promotion_decision", "missing"),
+      "full_smoke_state" => full_checkpoint_promotion.fetch("full_smoke_state", "missing"),
+      "formal_release_ready" => full_checkpoint_promotion.fetch("formal_release_ready", false),
+      "operator_required_command" => full_checkpoint_promotion.fetch("operator_required_command", "ruby scripts/full_smoke.rb")
+    },
     "desktop_safe_summary" => "Merge readiness is aggregated offline from local reports; staging, committing, tagging, pushing, Docker, QEMU, network fetch, package managers, backend launch, and host-root mutation remain disabled."
   }
 end
@@ -395,6 +420,7 @@ def render_markdown(packet)
   lines << "- Release ready: #{packet.fetch("release_ready")}"
   lines << "- Offline only: #{packet.fetch("offline_only")}"
   lines << "- Protected Claude file: #{packet.fetch("protected_file_status").fetch("status")}"
+  lines << "- Full checkpoint promotion: #{packet.fetch("full_checkpoint_promotion_status").fetch("promotion_decision")}"
   lines << ""
   lines << "## Tool Statuses"
   lines << ""

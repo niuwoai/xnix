@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc12] - 2026-07-24
+
+### Changed
+
+- Made `scripts/merge_readiness_packet.rb` consume the full checkpoint promotion packet as a first-class release gate.
+- Added `--full-checkpoint-promotion` fixture support and exposed `full_checkpoint_promotion_status` in merge readiness output.
+- Updated merge readiness tests for denied and passing promotion packet fixtures while keeping promotion failures release-only rather than merge-blocking.
+
+### Fixed
+
+- Kept release readiness dependent on the promotion packet's `promotion_allowed` and `formal_release_ready` values instead of duplicating full-smoke promotion logic inside merge readiness.
+
 ## [0.2.640-rc11] - 2026-07-24
 
 ### Added

@@ -75,6 +75,34 @@ completed_release_evidence = write_json_fixture(
   ],
   "claim_count" => 1
 )
+blocked_promotion = write_json_fixture(
+  "schema_version" => "xnix.runtime.full_checkpoint_promotion_packet.v1",
+  "report_type" => "full-checkpoint-promotion-packet",
+  "promotion_allowed" => false,
+  "promotion_decision" => "blocked-incomplete-full-smoke-report",
+  "full_smoke_state" => "blocked-incomplete-report",
+  "formal_release_ready" => false,
+  "operator_required_command" => "ruby scripts/full_smoke.rb",
+  "full_smoke_executed_by_packet" => false,
+  "docker_executed_by_packet" => false,
+  "qemu_executed_by_packet" => false,
+  "wine_executed_by_packet" => false,
+  "host_root_modified" => false
+)
+completed_promotion = write_json_fixture(
+  "schema_version" => "xnix.runtime.full_checkpoint_promotion_packet.v1",
+  "report_type" => "full-checkpoint-promotion-packet",
+  "promotion_allowed" => true,
+  "promotion_decision" => "promote",
+  "full_smoke_state" => "passed",
+  "formal_release_ready" => true,
+  "operator_required_command" => nil,
+  "full_smoke_executed_by_packet" => false,
+  "docker_executed_by_packet" => false,
+  "qemu_executed_by_packet" => false,
+  "wine_executed_by_packet" => false,
+  "host_root_modified" => false
+)
 fixture_matrix = write_json_fixture("row_count" => 7, "counts" => { "blocked" => 1 })
 malformed = write_text_fixture("{not-json")
 protected_mainline = write_json_fixture(
@@ -94,6 +122,7 @@ base_args = [
   "--kde-smoke-report", kde_smoke.path,
   "--mainline-review", mainline.path,
   "--release-evidence-index", release_evidence.path,
+  "--full-checkpoint-promotion", blocked_promotion.path,
   "--fixture-matrix-report", fixture_matrix.path
 ]
 
@@ -112,12 +141,18 @@ begin
   assert(packet.fetch("merge_ready"), "packet must be merge-ready when only restricted smoke remains")
   assert(!packet.fetch("release_ready"), "packet must keep release readiness gated")
   assert(packet.fetch("release_blocking_reasons").include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "packet must keep restricted Docker/QEMU as release blocker")
+  assert(packet.fetch("release_blocking_reasons").include?("full-checkpoint-promotion-not-allowed"), "packet must include the full checkpoint promotion blocker")
   assert(packet.fetch("release_blocking_reasons").include?("production-runtime-and-windows-execution-remain-disabled"), "packet must keep production execution as a product release blocker")
   assert(packet.fetch("merge_blocking_reasons").empty?, "packet must not merge-block the clean fixture case")
+  promotion_status = packet.fetch("full_checkpoint_promotion_status")
+  assert(!promotion_status.fetch("promotion_allowed"), "packet must expose denied promotion status")
+  assert(promotion_status.fetch("promotion_decision") == "blocked-incomplete-full-smoke-report", "packet must expose promotion decision")
+  assert(promotion_status.fetch("operator_required_command") == "ruby scripts/full_smoke.rb", "packet must expose promotion operator command")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(tool_statuses.values.all? { |tool| tool.fetch("status") == "pass" }, "all fixture-backed tools must pass")
   assert(tool_statuses.fetch("layout").fetch("command") == "fixture:layout", "fixture command must not expose fixture path")
+  assert(tool_statuses.fetch("full_checkpoint_promotion").fetch("command") == "fixture:full_checkpoint_promotion", "promotion fixture command must not expose fixture path")
   assert(packet.fetch("changed_file_counts").fetch("total") == 3, "packet must include changed file counts")
   assert(packet.fetch("lane_classification").any? { |lane| lane.fetch("id") == "cw10-evidence-drift-harness" }, "packet must include lane classification")
   assert(packet.fetch("required_follow_up_commands").include?("ruby scripts/verify_layout.rb"), "packet must include follow-up commands")
@@ -134,13 +169,16 @@ begin
   assert(markdown.include?("# Merge Readiness Packet"), "Markdown must include title")
   assert(markdown.include?("cw10-evidence-drift-harness"), "Markdown must include lane classification")
   assert(markdown.include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "Markdown must include release blocker")
+  assert(markdown.include?("Full checkpoint promotion: blocked-incomplete-full-smoke-report"), "Markdown must include promotion decision")
 
   completed_args = base_args.dup
   completed_args[completed_args.index("--release-evidence-index") + 1] = completed_release_evidence.path
+  completed_args[completed_args.index("--full-checkpoint-promotion") + 1] = completed_promotion.path
   completed_stdout, completed_stderr, completed_status = Open3.capture3("ruby", script.to_s, "--format", "json", *completed_args)
   assert(completed_status.success?, "completed product smoke case must emit a packet: #{completed_stderr}")
   completed_packet = JSON.parse(completed_stdout)
   assert(!completed_packet.fetch("release_blocking_reasons").include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "persisted authorized smoke evidence must close the QEMU authorization blocker")
+  assert(!completed_packet.fetch("release_blocking_reasons").include?("full-checkpoint-promotion-not-allowed"), "passing promotion packet must close the promotion blocker")
   assert(completed_packet.fetch("release_blocking_reasons").include?("production-runtime-and-windows-execution-remain-disabled"), "product release must remain gated by production execution")
   assert(completed_packet.fetch("merge_ready"), "production execution gates must not block the completed stabilization train merge")
 
@@ -242,6 +280,8 @@ ensure
     mainline,
     release_evidence,
     completed_release_evidence,
+    blocked_promotion,
+    completed_promotion,
     fixture_matrix,
     malformed,
     protected_mainline,

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc11"
+EXPECTED_VERSION = "0.2.640-rc12"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -7110,7 +7110,9 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   kde_smoke
   mainline_review
   release_evidence
+  full_checkpoint_promotion
   offline_fixture_matrix
+  --full-checkpoint-promotion
   --offline-only
   --skip-tool
   --tool-command
@@ -7123,6 +7125,12 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   merge_blocking_reasons
   release_blocking_reasons
   restricted-docker-or-qemu-smoke-requires-human-authorization
+  full-checkpoint-promotion-not-allowed
+  full_checkpoint_promotion_status
+  promotion_allowed
+  promotion_decision
+  full_smoke_state
+  operator_required_command
   staging
   committing
   tagging
@@ -7157,6 +7165,11 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   protected-claude-file-modified
   unclassified-files-present
   unsafe-operation-detected
+  full_checkpoint_promotion
+  blocked-incomplete-full-smoke-report
+  full-checkpoint-promotion-not-allowed
+  promotion_allowed
+  full_checkpoint_promotion_status
   docker_executed
   qemu_executed
   network_checks_run
