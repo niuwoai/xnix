@@ -469,6 +469,9 @@ func TestKDECenterPagePreviewCommandConsumesOwnerControlledGUIEvidenceFile(t *te
 		card["staged_launcher_verified"] != true ||
 		card["owner_controlled_runtime_launch_verified"] != true ||
 		card["owner_managed_copy_verified"] != true ||
+		card["owner_service_call_ready"] != true ||
+		card["owner_evidence_handoff_ready"] != true ||
+		card["owner_evidence_relative_path"] != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		card["runtime_dispatch_verified"] != true ||
 		card["desktop_launch_enabled"] != false ||
 		card["backend_launch_enabled"] != false ||
@@ -598,6 +601,8 @@ func ownerControlledGUISmokeEvidenceCLIFixture() string {
   "owner_delegated_broad_host_mount_required": false,
   "owner_delegated_raw_command_exposed": false,
   "owner_delegated_backend_details_exposed": false,
+  "owner_evidence_handoff_ready": true,
+  "owner_evidence_relative_path": "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
   "state_root": "/home/xnix-run-materials/state/wine-gui-messagebox-owner-version-under-test",
   "kernel_image": "/home/xnix-run-materials/wine-guest/bzImage",
   "host_root_modified": false,

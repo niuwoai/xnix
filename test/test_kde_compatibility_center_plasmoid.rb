@@ -37,6 +37,9 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   staged_launcher_verified
   owner_controlled_runtime_launch_verified
   owner_managed_copy_verified
+  owner_service_call_ready
+  owner_evidence_handoff_ready
+  owner_evidence_relative_path
   runtime_dispatch_verified
   primary_action_label
   wine-guest-gui-smoke

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -869,6 +870,9 @@ type KnownAppSmokeEvidenceSummary struct {
 	StagedLauncherVerified                bool   `json:"staged_launcher_verified"`
 	OwnerControlledRuntimeLaunchVerified  bool   `json:"owner_controlled_runtime_launch_verified"`
 	OwnerManagedCopyVerified              bool   `json:"owner_managed_copy_verified"`
+	OwnerServiceCallReady                 bool   `json:"owner_service_call_ready"`
+	OwnerEvidenceHandoffReady             bool   `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath             string `json:"owner_evidence_relative_path,omitempty"`
 	RuntimeDispatchVerified               bool   `json:"runtime_dispatch_verified"`
 	LaunchAuthorizationRequired           bool   `json:"launch_authorization_required"`
 	DesktopLaunchEnabled                  bool   `json:"desktop_launch_enabled"`
@@ -2769,6 +2773,14 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	guiRunVerified := evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded
 	ownerControlledGUIRunVerified := guiRunVerified && (item.OwnerControlledRuntimeLaunchVerified || item.StagedLauncherVerified || item.CompatibilityState == "owner-controlled-gui-qemu-wine-verified")
 	ownerManagedCopyVerified := ownerControlledGUIRunVerified && (item.OwnerManagedCopyVerified || strings.Contains(item.Summary, "managed launcher copied"))
+	ownerEvidenceRelativePath := strings.TrimSpace(item.OwnerEvidenceRelativePath)
+	if (item.OwnerServiceCallReady || item.OwnerEvidenceHandoffReady || ownerEvidenceRelativePath != "") && !ownerControlledGUIRunVerified {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app owner evidence handoff requires owner-controlled GUI evidence")
+	}
+	if item.OwnerEvidenceHandoffReady && !safeKnownAppOwnerEvidenceRelativePath(ownerEvidenceRelativePath) {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app owner evidence handoff requires a safe relative evidence path")
+	}
+	ownerEvidenceHandoffReady := ownerControlledGUIRunVerified && item.OwnerServiceCallReady && item.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(ownerEvidenceRelativePath)
 	runtimeStatusLaunchVerified := stagedLauncherVerified || guiRunVerified
 	runtimeDispatchVerified := ((evidenceSource == "staged-launcher-dispatch-smoke" || evidenceSource == "remote-known-winapp-matrix-smoke") && passed) || guiRunVerified
 	evidenceKind := "known-application-managed-smoke"
@@ -2897,6 +2909,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		StagedLauncherVerified:                stagedLauncherVerified,
 		OwnerControlledRuntimeLaunchVerified:  ownerControlledGUIRunVerified,
 		OwnerManagedCopyVerified:              ownerManagedCopyVerified,
+		OwnerServiceCallReady:                 ownerEvidenceHandoffReady,
+		OwnerEvidenceHandoffReady:             ownerEvidenceHandoffReady,
+		OwnerEvidenceRelativePath:             ownerEvidenceRelativePath,
 		RuntimeDispatchVerified:               runtimeDispatchVerified,
 		LaunchAuthorizationRequired:           true,
 		DesktopLaunchEnabled:                  false,
@@ -2909,6 +2924,14 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		RawArtifactPathExposed:                false,
 		Summary:                               summary,
 	}, nil
+}
+
+func safeKnownAppOwnerEvidenceRelativePath(path string) bool {
+	path = strings.TrimSpace(path)
+	if path == "" || filepath.IsAbs(path) || strings.Contains(filepath.Clean(path), "..") {
+		return false
+	}
+	return strings.HasPrefix(filepath.ToSlash(path), knownAppKDERuntimeStatusLaunchEvidenceRecordDir+"/")
 }
 
 func countPassedKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {

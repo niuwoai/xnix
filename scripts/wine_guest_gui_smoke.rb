@@ -316,6 +316,8 @@ def base_report(options)
     "owner_seed_gui_smoke_passed" => false,
     "owner_fixture_ready" => false,
     "owner_service_call_ready" => false,
+    "owner_evidence_handoff_ready" => false,
+    "owner_evidence_relative_path" => "",
     "owner_managed_launcher_invoked" => false,
     "owner_delegated_smoke_passed" => false,
     "owner_delegated_evidence_source" => "",
@@ -490,6 +492,8 @@ begin
     report["owner_fixture_ready"] = fixture_payload.fetch("fixture_ready", false)
     report["owner_service_call_ready"] = fixture_payload.fetch("owner_service_call_ready", false)
     evidence_relative_path = fixture_payload.fetch("evidence_relative_path", "")
+    report["owner_evidence_handoff_ready"] = report["owner_service_call_ready"] && !evidence_relative_path.empty?
+    report["owner_evidence_relative_path"] = evidence_relative_path
     unless report["owner_fixture_ready"] && report["owner_service_call_ready"] && !evidence_relative_path.empty?
       report["status"] = "failed"
       report["failure_reason"] = "Runtime owner launch fixture was not ready"

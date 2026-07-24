@@ -112,6 +112,8 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		!preview.OwnerDelegatedWindowObserved ||
 		!preview.OwnerControlledLaunchVerified ||
 		!preview.OwnerManagedCopyVerified ||
+		!preview.OwnerEvidenceHandoffReady ||
+		preview.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		preview.RemotePathExposed ||
 		preview.BackendDetailsExposed ||
 		preview.HostRootModified {
@@ -125,6 +127,9 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		!evidence.StagedLauncherVerified ||
 		!evidence.OwnerControlledRuntimeLaunchVerified ||
 		!evidence.OwnerManagedCopyVerified ||
+		!evidence.OwnerServiceCallReady ||
+		!evidence.OwnerEvidenceHandoffReady ||
+		evidence.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.RawArtifactPathExposed ||
 		!strings.Contains(evidence.Summary, "managed launcher copied") {
@@ -198,6 +203,8 @@ func ownerControlledGUISmokeEvidenceFixture() string {
   "owner_delegated_broad_host_mount_required": false,
   "owner_delegated_raw_command_exposed": false,
   "owner_delegated_backend_details_exposed": false,
+  "owner_evidence_handoff_ready": true,
+  "owner_evidence_relative_path": "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
   "host_root_modified": false,
   "privileged_container_required": false,
   "host_networking_required": false,

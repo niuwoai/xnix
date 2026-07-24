@@ -691,6 +691,9 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 			StagedLauncherVerified:               true,
 			OwnerControlledRuntimeLaunchVerified: true,
 			OwnerManagedCopyVerified:             true,
+			OwnerServiceCallReady:                true,
+			OwnerEvidenceHandoffReady:            true,
+			OwnerEvidenceRelativePath:            "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
 			RuntimeDispatchVerified:              true,
 			Summary:                              "Xnix MessageBox passed after the managed launcher copied the Windows executable into the guest.",
 		}},
@@ -715,6 +718,9 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		!card.StagedLauncherVerified ||
 		!card.OwnerControlledRuntimeLaunchVerified ||
 		!card.OwnerManagedCopyVerified ||
+		!card.OwnerServiceCallReady ||
+		!card.OwnerEvidenceHandoffReady ||
+		card.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		!card.RuntimeDispatchVerified ||
 		card.DesktopLaunchEnabled ||
 		card.BackendLaunchEnabled ||

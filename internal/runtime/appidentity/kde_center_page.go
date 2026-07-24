@@ -179,6 +179,9 @@ type KDECenterPageKnownAppMatrixCard struct {
 	StagedLauncherVerified               bool   `json:"staged_launcher_verified"`
 	OwnerControlledRuntimeLaunchVerified bool   `json:"owner_controlled_runtime_launch_verified"`
 	OwnerManagedCopyVerified             bool   `json:"owner_managed_copy_verified"`
+	OwnerServiceCallReady                bool   `json:"owner_service_call_ready"`
+	OwnerEvidenceHandoffReady            bool   `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath            string `json:"owner_evidence_relative_path,omitempty"`
 	RuntimeDispatchVerified              bool   `json:"runtime_dispatch_verified"`
 	LaunchAuthorizationRequired          bool   `json:"launch_authorization_required"`
 	DesktopLaunchEnabled                 bool   `json:"desktop_launch_enabled"`
@@ -1250,6 +1253,9 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			StagedLauncherVerified:               item.StagedLauncherVerified,
 			OwnerControlledRuntimeLaunchVerified: item.OwnerControlledRuntimeLaunchVerified,
 			OwnerManagedCopyVerified:             item.OwnerManagedCopyVerified,
+			OwnerServiceCallReady:                item.OwnerServiceCallReady,
+			OwnerEvidenceHandoffReady:            item.OwnerEvidenceHandoffReady,
+			OwnerEvidenceRelativePath:            item.OwnerEvidenceRelativePath,
 			RuntimeDispatchVerified:              item.RuntimeDispatchVerified,
 			LaunchAuthorizationRequired:          item.LaunchAuthorizationRequired,
 			DesktopLaunchEnabled:                 false,
@@ -1291,6 +1297,9 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			StagedLauncherVerified:               item.StagedLauncherVerified,
 			OwnerControlledRuntimeLaunchVerified: item.OwnerControlledRuntimeLaunchVerified,
 			OwnerManagedCopyVerified:             item.OwnerManagedCopyVerified,
+			OwnerServiceCallReady:                item.OwnerServiceCallReady,
+			OwnerEvidenceHandoffReady:            item.OwnerEvidenceHandoffReady,
+			OwnerEvidenceRelativePath:            item.OwnerEvidenceRelativePath,
 			RuntimeDispatchVerified:              item.RuntimeDispatchVerified,
 			LaunchAuthorizationRequired:          item.LaunchAuthorizationRequired,
 			DesktopLaunchEnabled:                 false,

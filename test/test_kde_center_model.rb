@@ -302,6 +302,9 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "staged_launcher_verified" => true,
           "owner_controlled_runtime_launch_verified" => true,
           "owner_managed_copy_verified" => true,
+          "owner_service_call_ready" => true,
+          "owner_evidence_handoff_ready" => true,
+          "owner_evidence_relative_path" => "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
           "runtime_dispatch_verified" => true,
           "launch_authorization_required" => true,
           "desktop_launch_enabled" => false,
@@ -366,6 +369,9 @@ assert(gui_card["execution_evidence_recorded"], "KDE GUI evidence card must expo
 assert(gui_card["staged_launcher_verified"], "KDE GUI evidence card must expose staged launcher status")
 assert(gui_card["owner_controlled_runtime_launch_verified"], "KDE GUI evidence card must expose owner-controlled Runtime launch status")
 assert(gui_card["owner_managed_copy_verified"], "KDE GUI evidence card must expose owner-managed copy status")
+assert(gui_card["owner_service_call_ready"], "KDE GUI evidence card must expose owner service-call readiness")
+assert(gui_card["owner_evidence_handoff_ready"], "KDE GUI evidence card must expose owner evidence handoff readiness")
+assert(gui_card["owner_evidence_relative_path"] == "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json", "KDE GUI evidence card must expose the safe relative owner evidence handoff")
 assert(gui_card["runtime_dispatch_verified"], "KDE GUI evidence card must expose Runtime dispatch status")
 assert(!gui_card["primary_action_enabled"], "KDE GUI evidence card must keep action execution disabled")
 assert(!gui_card["desktop_launch_enabled"], "KDE GUI evidence card must keep desktop launch disabled")

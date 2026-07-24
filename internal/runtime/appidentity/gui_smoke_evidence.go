@@ -48,6 +48,8 @@ type GUISmokeEvidencePreview struct {
 	OwnerDelegatedWindowObserved        bool                         `json:"owner_delegated_controlled_session_window_observed"`
 	OwnerControlledLaunchVerified       bool                         `json:"owner_controlled_launch_verified"`
 	OwnerManagedCopyVerified            bool                         `json:"owner_managed_copy_verified"`
+	OwnerEvidenceHandoffReady           bool                         `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath           string                       `json:"owner_evidence_relative_path,omitempty"`
 	WinebootInvoked                     bool                         `json:"wineboot_invoked"`
 	XWindowObserved                     bool                         `json:"x_window_observed"`
 	XWindowChildCount                   int                          `json:"x_window_child_count"`
@@ -98,6 +100,8 @@ type guiSmokeReport struct {
 	OwnerDelegatedBroadHostMountRequired bool   `json:"owner_delegated_broad_host_mount_required"`
 	OwnerDelegatedRawCommandExposed      bool   `json:"owner_delegated_raw_command_exposed"`
 	OwnerDelegatedBackendDetailsExposed  bool   `json:"owner_delegated_backend_details_exposed"`
+	OwnerEvidenceHandoffReady            bool   `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath            string `json:"owner_evidence_relative_path"`
 	RuntimeGoOwnedGUISmoke               bool   `json:"runtime_go_owned_gui_smoke"`
 	RuntimePayloadSchemaVersion          string `json:"runtime_payload_schema_version"`
 	WinebootInvoked                      bool   `json:"wineboot_invoked"`
@@ -150,7 +154,8 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	projectionReady := report.Status == "passed" && report.Execute && report.RuntimeGoOwnedGUISmoke && report.WinebootInvoked && report.XWindowObserved && report.XWindowChildCount > 0
 	ownerControlledLaunchVerified := guiSmokeOwnerControlledLaunchVerified(report, projectionReady)
 	ownerManagedCopyVerified := ownerControlledLaunchVerified && report.OwnerExternalGUIAppRequested && report.OwnerExternalGUIAppDelivery == "owner-managed-copy" && report.OwnerDelegatedManagedArtifactCopied
-	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified)
+	ownerEvidenceHandoffReady := ownerControlledLaunchVerified && report.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(report.OwnerEvidenceRelativePath)
+	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerEvidenceHandoffReady)
 
 	return GUISmokeEvidencePreview{
 		SchemaVersion:                       GUISmokeEvidencePreviewSchemaVersion,
@@ -180,6 +185,8 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		OwnerDelegatedWindowObserved:        report.OwnerDelegatedWindowObserved,
 		OwnerControlledLaunchVerified:       ownerControlledLaunchVerified,
 		OwnerManagedCopyVerified:            ownerManagedCopyVerified,
+		OwnerEvidenceHandoffReady:           ownerEvidenceHandoffReady,
+		OwnerEvidenceRelativePath:           strings.TrimSpace(report.OwnerEvidenceRelativePath),
 		WinebootInvoked:                     report.WinebootInvoked,
 		XWindowObserved:                     report.XWindowObserved,
 		XWindowChildCount:                   report.XWindowChildCount,
@@ -294,6 +301,8 @@ func validateGUISmokeReport(report guiSmokeReport) error {
 			return errors.New("owner-controlled external GUI smoke evidence requires owner-managed copy delivery")
 		case report.OwnerExternalGUIAppRequested && !report.OwnerDelegatedManagedArtifactCopied:
 			return errors.New("owner-controlled external GUI smoke evidence requires delegated managed artifact copy")
+		case report.OwnerEvidenceHandoffReady && !safeKnownAppOwnerEvidenceRelativePath(report.OwnerEvidenceRelativePath):
+			return errors.New("owner-controlled GUI smoke evidence requires a safe owner evidence handoff path")
 		}
 	}
 	return nil
@@ -326,7 +335,7 @@ func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 		report.OwnerDelegatedManagedArtifactCopied
 }
 
-func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool) KnownAppSmokeEvidenceSummary {
+func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
 	compatibilityState := "gui-smoke-review-required"
 	centerCardState := "gui-smoke-evidence-review-required"
@@ -367,6 +376,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		StagedLauncherVerified:               ownerControlledLaunchVerified,
 		OwnerControlledRuntimeLaunchVerified: ownerControlledLaunchVerified,
 		OwnerManagedCopyVerified:             ownerManagedCopyVerified,
+		OwnerServiceCallReady:                ownerEvidenceHandoffReady,
+		OwnerEvidenceHandoffReady:            ownerEvidenceHandoffReady,
+		OwnerEvidenceRelativePath:            strings.TrimSpace(report.OwnerEvidenceRelativePath),
 		RuntimeDispatchVerified:              projectionReady,
 		LaunchAuthorizationRequired:          true,
 		DesktopLaunchEnabled:                 false,

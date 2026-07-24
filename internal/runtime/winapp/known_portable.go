@@ -776,7 +776,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc92",
+		Version:         "0.2.640-rc93",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -786,7 +786,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc92",
+		Version:         "0.2.640-rc93",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",

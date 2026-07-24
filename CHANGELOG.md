@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc93] - 2026-07-25
+
+### Added
+
+- Added owner evidence handoff fields for owner-controlled GUI smoke reports, Runtime GUI evidence projections, known-app smoke summaries, KDE GUI evidence cards, and the KDE model bridge.
+- Added safe relative owner evidence handoff validation for `runtime/kde-runtime-status-launch-evidence/` paths before exposing desktop-readable owner service-call readiness.
+
+### Changed
+
+- Changed the owner-controlled GUI smoke harness to preserve the owner fixture's reusable evidence handoff after the actual Runtime owner service launch passes.
+- Changed the Plasma Compatibility Center stub to document owner evidence handoff readiness while keeping owner service arguments and backend details hidden.
+
 ## [0.2.640-rc92] - 2026-07-25
 
 ### Added

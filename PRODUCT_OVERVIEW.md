@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc92
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc93
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc93 checkpoint candidate links a real owner-controlled Windows GUI app run to a reusable Runtime owner evidence handoff. `scripts/wine_guest_gui_smoke.rb --launch-mode owner-controlled-launch` now records the owner fixture's safe relative `owner_evidence_relative_path` after the Runtime owner service call is ready, and the Go Runtime validates that the handoff remains under `runtime/kde-runtime-status-launch-evidence/` before projecting it to Compatibility Center and KDE GUI cards. KDE can now show that a real GUI app run has an owner service-call handoff ready while still receiving no state root, cache root, launcher path, raw executable path, backend command, receipt/session reconstruction authority, owner service arguments, Docker socket, broad mount, host networking, raw command, backend detail, or host-root mutation authority.
 
 The v0.2.640-rc92 checkpoint candidate makes owner-controlled Windows GUI app evidence explicit in the KDE/Compatibility Center read model. `KnownAppSmokeEvidenceSummary` now carries structured `owner_controlled_runtime_launch_verified` and `owner_managed_copy_verified` facts, while KDE Center pages expose owner-controlled GUI evidence counts and per-card owner verification fields. The Plasma shell stub documents these read-only fields so KDE can present a real Runtime-owner managed launch as stronger evidence than a generic GUI smoke without gaining launch, backend, raw path, receipt/session reconstruction, Docker socket, broad mount, host networking, raw command, backend detail, or host-root mutation authority.
 
