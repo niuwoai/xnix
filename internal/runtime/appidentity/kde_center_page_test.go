@@ -372,6 +372,47 @@ func TestKDECenterPagePreviewComposesSummaryDeckAndSettings(t *testing.T) {
 	}
 }
 
+func TestKDECenterPagePreviewSupportsApplicationsWithoutFileAssociations(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.xnix.apps.mines",
+		Name:                "Mines",
+		Icon:                "applications-games",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}
+	preview, err := NewKDECenterPagePreview(recipe, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	}, "approved", nil)
+	if err != nil {
+		t.Fatalf("NewKDECenterPagePreview returned error for no-file-association app: %v", err)
+	}
+	if preview.ApplicationID != "org.xnix.apps.mines" ||
+		preview.ApplicationName != "Mines" ||
+		preview.FileAssociationSnapshot.MIMETypeCount != 0 ||
+		len(preview.FileAssociationSnapshot.MIMETypes) != 0 ||
+		preview.FileAssociationSnapshot.FileAssociationReady ||
+		preview.FileAssociationSnapshot.FileOpenPreviewAvailable ||
+		preview.FileAssociationSnapshot.PortalRequiredForFileOpen ||
+		preview.FileAssociationSnapshot.MIMEAppsWritten ||
+		preview.FileAssociationSnapshot.HostRootModified ||
+		preview.FileAssociationSnapshot.BackendDetailsExposed {
+		t.Fatalf("unexpected no-file-association KDE page: %#v", preview.FileAssociationSnapshot)
+	}
+	encoded, err := json.Marshal(preview)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	text := strings.ToLower(string(encoded))
+	for _, forbidden := range []string{"prefix", ".exe", "program files", "qemu-system", "proton", "wine ", ".wine", "virtual machine"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("no-file-association KDE page exposes forbidden term %q: %s", forbidden, text)
+		}
+	}
+}
+
 func TestKDECenterPagePreviewConsumesActivationReceipt(t *testing.T) {
 	recipe := Recipe{
 		ID:                  "org.example.ledger",

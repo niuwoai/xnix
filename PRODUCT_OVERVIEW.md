@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc84
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc85
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc85 checkpoint candidate promotes the first real Windows GUI smoke target into the Runtime recipe library. `runtime/recipes/org.xnix.apps.mines.json` gives the verified Mines GUI app a backend-neutral application identity, and `runtime/recipes/registry.json` now carries its digest-verified development entry. This lets q4 GUI evidence generated for `org.xnix.apps.mines` render on its own KDE/Compatibility Center page, rather than using `org.xnix.sample.notepad` as a temporary host, while keeping backend selection and launch execution behind the Runtime gates.
 
 The v0.2.640-rc84 checkpoint candidate makes the q4 real Windows GUI smoke path fast enough for normal development loops. `scripts/remote_wine_guest_gui_smoke.rb` now defaults to `--source-sync-mode runtime`, syncing only `VERSION`, `go.mod`, `cmd`, `internal`, `runtime`, `scripts`, and `lib` into a mode-specific `/home/xnix-build/xnix-runtime-source-gui-runtime-<version>` tree before building the Go Runtime. Operators can still request `--source-sync-mode full`, but the default no longer copies the full checkout while preserving the same loopback SSH, Xvfb/QEMU/Wine execution, automatic Runtime evidence projection, and closed host-boundary guarantees.
 

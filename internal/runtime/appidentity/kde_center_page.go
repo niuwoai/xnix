@@ -773,8 +773,11 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	if err != nil {
 		return KDECenterPagePreview{}, err
 	}
-	if _, err := plan.RenderMIMEApps(); err != nil {
-		return KDECenterPagePreview{}, err
+	fileAssociationReady := len(plan.MIMETypes) > 0
+	if fileAssociationReady {
+		if _, err := plan.RenderMIMEApps(); err != nil {
+			return KDECenterPagePreview{}, err
+		}
 	}
 	trayStatus, err := plan.TrayStatusPreviewWithOptions(TrayStatusOptions{
 		ActivationRoot:            options.ActivationRoot,
@@ -988,9 +991,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 			StandardMIMEAppsList:      true,
 			StagedRootOnly:            true,
 			OverwriteExistingMIMEApps: false,
-			PortalRequiredForFileOpen: true,
-			FileAssociationReady:      true,
-			FileOpenPreviewAvailable:  true,
+			PortalRequiredForFileOpen: fileAssociationReady,
+			FileAssociationReady:      fileAssociationReady,
+			FileOpenPreviewAvailable:  fileAssociationReady,
 			DirectHostFileAccess:      false,
 			RequestObjectCreated:      false,
 			PermissionGranted:         false,
@@ -998,7 +1001,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 			MIMEAppsWritten:           false,
 			HostRootModified:          false,
 			BackendDetailsExposed:     false,
-			Summary:                   "Dolphin can show Runtime-owned file associations and portal-mediated open actions without writing MIME defaults or reading host files.",
+			Summary:                   kdeCenterPageFileAssociationSummary(fileAssociationReady),
 		},
 		TrayStatusSnapshot: KDECenterPageTray{
 			StatusType:                   trayStatus.StatusType,
@@ -1802,4 +1805,11 @@ func kdeCenterPageBadgeTone(deck KDEActionCardDeckPreview) string {
 		return "neutral"
 	}
 	return "warning"
+}
+
+func kdeCenterPageFileAssociationSummary(ready bool) string {
+	if ready {
+		return "Dolphin can show Runtime-owned file associations and portal-mediated open actions without writing MIME defaults or reading host files."
+	}
+	return "This application has no file associations yet; KDE can still show the Runtime-owned application page without writing MIME defaults or reading host files."
 }

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc85] - 2026-07-25
+
+### Added
+
+- Added `org.xnix.apps.mines` as the first backend-neutral Runtime recipe for a real Windows GUI smoke target.
+- Added the Mines recipe to the development registry with digest verification so KDE/Compatibility Center pages can consume q4 GUI evidence against the real app identity.
+
 ## [0.2.640-rc84] - 2026-07-25
 
 ### Changed

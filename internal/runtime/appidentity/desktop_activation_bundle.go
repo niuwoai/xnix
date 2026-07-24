@@ -88,9 +88,13 @@ func (plan Plan) DesktopActivationBundlePreview() (DesktopActivationBundlePrevie
 	if err != nil {
 		return DesktopActivationBundlePreview{}, err
 	}
-	mimeapps, err := plan.RenderMIMEApps()
-	if err != nil {
-		return DesktopActivationBundlePreview{}, err
+	mimeapps := ""
+	if len(plan.MIMETypes) > 0 {
+		rendered, err := plan.RenderMIMEApps()
+		if err != nil {
+			return DesktopActivationBundlePreview{}, err
+		}
+		mimeapps = rendered
 	}
 	desktopIcon, err := plan.DesktopIconPreview()
 	if err != nil {
