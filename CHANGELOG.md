@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc40] - 2026-07-24
+
+### Added
+
+- Added a copy-ready Windows app smoke profile template for repeatable local real `.exe` smoke attempts.
+- Added a Windows app smoke profile runbook and template checks covering safe entrypoints, success modes, working-directory reporting, and redaction boundaries.
+
 ## [0.2.640-rc39] - 2026-07-24
 
 ### Added

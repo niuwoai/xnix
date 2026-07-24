@@ -1,0 +1,14 @@
+{
+  "schema_version": "xnix.runtime.windows_app_smoke_profile.v1",
+  "executable_path": "path/to/application.exe",
+  "working_directory": "path/to/application-directory",
+  "runner_path": "path/to/wine",
+  "runner_bottle": "",
+  "runner_arguments": [],
+  "arguments": [],
+  "state_root": ".local/xnix/winapp-smoke/profile-state",
+  "timeout": "30s",
+  "expected_marker": "XNIX_WINAPP_SMOKE_OK",
+  "success_mode": "marker",
+  "redact_output": true
+}

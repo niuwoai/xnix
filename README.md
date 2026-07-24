@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc39`.
+The project is currently at `v0.2.640-rc40`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc39`.
 
 ## Current Checkpoint
 
-v0.2.640-rc39 adds a reusable Windows app smoke profile JSON input for local real app attempts, so operators can preserve executable, runner, working-directory, argument, timeout, marker, and success-mode settings as a repeatable profile without exposing raw paths in reports. The previous v0.2.640-rc38 checkpoint made local smoke run from the executable directory by default and added `--working-dir`.
+v0.2.640-rc40 adds a copy-ready Windows app smoke profile template and runbook so a real `.exe` attempt can move from one-off flags to a repeatable local profile. The previous v0.2.640-rc39 checkpoint added `--profile` support to the Go Runtime smoke command and Ruby report script.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -33,6 +33,7 @@ The previous v0.2.640-rc14 checkpoint kept the formal full checkpoint gate pendi
 ## Main References
 
 - [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) describes the current product state, architecture, and release notes.
+- [docs/windows-app-smoke-profile-runbook.md](docs/windows-app-smoke-profile-runbook.md) is the operator runbook for repeatable local real Windows app smoke profiles.
 - [docs/xnix-current-mainline.md](docs/xnix-current-mainline.md) is the Codex-owned implementation mainline.
 - [docs/mainline-integration-checkpoint.md](docs/mainline-integration-checkpoint.md) captures merge-lane review rules.
 - [AGENTS.md](AGENTS.md) defines repository contribution and safety rules.
@@ -70,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc39`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc40`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
