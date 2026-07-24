@@ -35,7 +35,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -48,7 +48,7 @@ OptionParser.new do |parser|
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
-  parser.on("--success-mode MODE", "Success mode: marker or exit-code") { |value| options[:success_mode] = value }
+  parser.on("--success-mode MODE", "Success mode: marker, exit-code, or startup-window") { |value| options[:success_mode] = value }
   parser.on("--runner-bottle NAME", "Compatibility runner bottle name passed before the executable path") { |value| options[:runner_bottle] = value }
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
@@ -62,7 +62,7 @@ unless %w[local container].include?(options[:backend])
   warn "FAIL: unsupported backend #{options[:backend]}"
   exit 1
 end
-unless %w[marker exit-code].include?(options[:success_mode])
+unless %w[marker exit-code startup-window].include?(options[:success_mode])
   warn "FAIL: unsupported success mode #{options[:success_mode]}"
   exit 1
 end
@@ -101,6 +101,7 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "wine_bootstrap_succeeded" => false,
     "wine_bootstrap_exit_code" => -1,
     "marker_observed" => false,
+    "startup_window_observed" => false,
     "raw_output_included" => false,
     "raw_output_redacted" => redact_output,
     "host_root_modified" => false,
@@ -156,6 +157,7 @@ def emit_report(report)
     puts "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
     puts "- Wine bootstrap exit code: #{report.fetch("wine_bootstrap_exit_code")}"
     puts "- Marker observed: #{report.fetch("marker_observed")}"
+    puts "- Startup window observed: #{report.fetch("startup_window_observed")}"
     puts "- Raw output redacted: #{report.fetch("raw_output_redacted")}"
     puts "- KDE-safe output summary: #{report.fetch("kde_safe_output_summary")}"
     puts "- Host root modified: #{report.fetch("host_root_modified")}"
@@ -353,6 +355,7 @@ report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", f
 report["wine_bootstrap_succeeded"] = payload.fetch("wine_bootstrap_succeeded", false)
 report["wine_bootstrap_exit_code"] = payload.fetch("wine_bootstrap_exit_code", -1)
 report["marker_observed"] = payload.fetch("marker_observed", false)
+report["startup_window_observed"] = payload.fetch("startup_window_observed", false)
 report["raw_output_included"] = payload.fetch("raw_output_included", false)
 report["raw_output_redacted"] = payload.fetch("raw_output_redacted", options.fetch(:redact_output))
 report["host_root_modified"] = payload.fetch("host_root_modified", false)
@@ -366,7 +369,7 @@ report["skip_reason"] = payload.fetch("skip_reason", "")
 
 case payload.fetch("status")
 when "passed"
-  if report.fetch("success_mode") == "exit-code"
+  if %w[exit-code startup-window].include?(report.fetch("success_mode"))
     puts "PASS: real Windows app smoke" if options.fetch(:format) == "text"
     finish(report, 0)
   end

@@ -169,6 +169,65 @@ func TestRunSmokeCanPassOnExitCodeWithoutMarker(t *testing.T) {
 	}
 }
 
+func TestRunSmokeCanPassWhenProcessSurvivesStartupWindow(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nsleep 1\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        50 * time.Millisecond,
+		SuccessMode:    SuccessModeStartupWindow,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.SuccessMode != SuccessModeStartupWindow ||
+		!result.StartupWindowObserved ||
+		result.MarkerObserved ||
+		result.FailureReason != "" {
+		t.Fatalf("unexpected startup-window result: %#v", result)
+	}
+}
+
+func TestRunSmokeFailsStartupWindowWhenProcessExitsEarly(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, "closed quickly\n")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		RunnerPath:     runnerPath,
+		Timeout:        5 * time.Second,
+		SuccessMode:    SuccessModeStartupWindow,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != FailedStatus ||
+		result.StartupWindowObserved ||
+		result.FailureReason != "process exited before startup window elapsed" {
+		t.Fatalf("unexpected early-exit startup-window result: %#v", result)
+	}
+}
+
 func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")

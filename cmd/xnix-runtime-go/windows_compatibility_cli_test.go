@@ -198,6 +198,51 @@ func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandCanUseStartupWindowSuccessMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nsleep 1\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+		"--success-mode", "startup-window",
+		"--timeout", "50ms",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["success_mode"] != "startup-window" ||
+		payload["startup_window_observed"] != true ||
+		payload["marker_observed"] != false ||
+		payload["failure_reason"] != nil {
+		t.Fatalf("unexpected startup-window payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) || strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("startup-window smoke output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunnerDiagnosticsCommandUsesExplicitRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

@@ -24,6 +24,7 @@ const (
 	SkippedStatus                  = "skipped"
 	SuccessModeMarker              = "marker"
 	SuccessModeExitCode            = "exit-code"
+	SuccessModeStartupWindow       = "startup-window"
 	DefaultMarker                  = "XNIX_WINAPP_SMOKE_OK"
 )
 
@@ -54,6 +55,7 @@ type Result struct {
 	ExpectedMarker              string `json:"expected_marker"`
 	SuccessMode                 string `json:"success_mode"`
 	MarkerObserved              bool   `json:"marker_observed"`
+	StartupWindowObserved       bool   `json:"startup_window_observed"`
 	ExitCode                    int    `json:"exit_code"`
 	DurationMillis              int64  `json:"duration_millis"`
 	Stdout                      string `json:"stdout"`
@@ -218,6 +220,11 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	result.ExitCode = exitCode(err)
 
 	if runCtx.Err() == context.DeadlineExceeded {
+		if successMode == SuccessModeStartupWindow {
+			result.Status = PassedStatus
+			result.StartupWindowObserved = true
+			return result, nil
+		}
 		result.Status = FailedStatus
 		result.FailureReason = "execution timed out"
 		return result, nil
@@ -229,6 +236,11 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	}
 	if successMode == SuccessModeExitCode {
 		result.Status = PassedStatus
+		return result, nil
+	}
+	if successMode == SuccessModeStartupWindow {
+		result.Status = FailedStatus
+		result.FailureReason = "process exited before startup window elapsed"
 		return result, nil
 	}
 	if !result.MarkerObserved {
@@ -247,7 +259,7 @@ func normalizeSuccessMode(mode string) (string, error) {
 		return SuccessModeMarker, nil
 	}
 	switch mode {
-	case SuccessModeMarker, SuccessModeExitCode:
+	case SuccessModeMarker, SuccessModeExitCode, SuccessModeStartupWindow:
 		return mode, nil
 	default:
 		return "", fmt.Errorf("unsupported success mode %q", mode)

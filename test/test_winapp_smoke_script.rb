@@ -81,6 +81,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       runner_arg_count = args.each_with_index.count { |value, index| value == "--runner-arg" && index + 1 < args.length }
       runner_arg_count += 2 if args.include?("--runner-bottle")
       marker_observed = success_mode == "marker"
+      startup_window_observed = success_mode == "startup-window"
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
@@ -95,6 +96,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "expected_marker" => marker,
         "success_mode" => success_mode,
         "marker_observed" => marker_observed,
+        "startup_window_observed" => startup_window_observed,
         "exit_code" => 0,
         "duration_millis" => 1,
         "stdout" => redacted ? "" : (marker_observed ? "#{marker}\\n" : "GUI app exited cleanly\\n"),
@@ -190,6 +192,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("raw_output_redacted"), "JSON report must preserve redacted output state")
   assert(!report.fetch("raw_output_included"), "JSON report must not include raw output by default")
   assert(report.fetch("marker_observed"), "JSON report must preserve marker observation")
+  assert(!report.fetch("startup_window_observed"), "JSON report must preserve startup window state")
   assert(report.fetch("runtime_payload").fetch("stdout") == "", "JSON runtime payload must omit raw stdout")
   assert(!json_stdout.include?("raw-host-path"), "JSON report must not leak raw runner output")
 
@@ -205,6 +208,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Runner command hints:"), "Markdown report must expose runner command hints")
   assert(markdown_stdout.include?("ruby scripts/winapp_smoke.rb --exe path/to/app.exe"), "Markdown report must include safe smoke command hint")
   assert(markdown_stdout.include?("Wine bootstrap attempted: false"), "Markdown report must expose bootstrap attempted state")
+  assert(markdown_stdout.include?("Startup window observed: false"), "Markdown report must expose startup window state")
   assert(markdown_stdout.include?("Raw output redacted: true"), "Markdown report must expose redaction")
   assert(markdown_stdout.include?("Wine executed by script: false"), "Markdown report must keep Wine execution-by-script false")
 
@@ -262,6 +266,22 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(exit_code_report.fetch("success_mode") == "exit-code", "exit-code report must preserve success mode")
   assert(!exit_code_report.fetch("marker_observed"), "exit-code report must not require marker observation")
   assert(!exit_code_stdout.include?(custom_exe.to_s), "exit-code report must not leak executable path")
+
+  startup_stdout, startup_stderr, startup_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--exe", custom_exe.to_s,
+    "--runner", custom_runner.to_s,
+    "--success-mode", "startup-window"
+  )
+  assert(startup_status.success?, "winapp smoke startup-window success mode report must succeed: #{startup_stderr}")
+  startup_report = JSON.parse(startup_stdout)
+  assert(startup_report.fetch("status") == "passed", "startup-window report must pass on startup window observation")
+  assert(startup_report.fetch("success_mode") == "startup-window", "startup-window report must preserve success mode")
+  assert(startup_report.fetch("startup_window_observed"), "startup-window report must preserve startup observation")
+  assert(!startup_report.fetch("marker_observed"), "startup-window report must not require marker observation")
+  assert(!startup_stdout.include?(custom_exe.to_s), "startup-window report must not leak executable path")
 
   container_stdout, container_stderr, container_status = Open3.capture3(
     env,

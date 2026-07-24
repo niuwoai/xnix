@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc37] - 2026-07-24
+
+### Added
+
+- Added `--success-mode startup-window` to the Go-owned local Windows app smoke command for GUI-style apps that remain running through the configured startup timeout.
+- Added `startup_window_observed` reporting and startup-window forwarding to `scripts/winapp_smoke.rb`.
+
 ## [0.2.640-rc36] - 2026-07-24
 
 ### Added
