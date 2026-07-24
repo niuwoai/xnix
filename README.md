@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc57`.
+The project is currently at `v0.2.640-rc58`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc57`.
 
 ## Current Checkpoint
 
-v0.2.640-rc57 carries explicit runner settings through the known-app launch-profile prepare and materialization path. `windows-known-app-launch-profile-materialize` and `windows-known-app-prepare-launch-profile` now accept `--runner`, `--runner-bottle`, repeated `--runner-arg`, and `--skip-bootstrap`, store those values in the reusable smoke profile, and report only safe runner summary fields (`runner_configured`, `runner_bottle_configured`, `runner_argument_count`, and `skip_bootstrap`). The previous v0.2.640-rc56 checkpoint added the one-step known-app prepare path.
+v0.2.640-rc58 adds `windows-known-app-prepare-and-launch-profile`, a Go-owned one-step path that checks or prepares a known Windows app, writes the reusable launch profile when the artifact is verified, and immediately calls `windows-app-launch-profile`. The command produces combined prepare and launch evidence: it blocks safely before execution when no runner is available, and it will actually run the Windows app through the same redacted Runtime launch path when a runner is ready. The previous v0.2.640-rc57 checkpoint carried explicit runner settings through known-app profile preparation and materialization.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc57`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc58`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

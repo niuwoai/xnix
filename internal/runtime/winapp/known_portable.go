@@ -16,32 +16,34 @@ import (
 )
 
 const (
-	KnownFetchSchemaVersion         = "xnix.runtime.known_windows_app_fetch.v1"
-	KnownFetchRequestType           = "windows-known-app-fetch"
-	KnownGuestSchemaVersion         = "xnix.runtime.known_windows_app_guest_wine_smoke.v1"
-	KnownGuestRequestType           = "windows-known-app-guest-wine-smoke"
-	KnownManagedLaunchSchemaVersion = "xnix.runtime.known_windows_app_managed_launch.v1"
-	KnownManagedLaunchRequestType   = "windows-known-app-managed-launch-preview"
-	KnownKDELauncherSchemaVersion   = "xnix.runtime.known_windows_app_kde_launcher.v1"
-	KnownKDELauncherRequestType     = "windows-known-app-kde-launcher-preview"
-	KnownLaunchRequestSchemaVersion = "xnix.runtime.known_windows_app_launch_request.v1"
-	KnownLaunchRequestType          = "windows-known-app-launch-request-preview"
-	KnownDispatchSchemaVersion      = "xnix.runtime.known_windows_app_dispatch.v1"
-	KnownDispatchRequestType        = "windows-known-app-dispatch-preview"
-	KnownDispatchSmokeSchemaVersion = "xnix.runtime.known_windows_app_dispatch_smoke.v1"
-	KnownDispatchSmokeRequestType   = "windows-known-app-dispatch-smoke"
-	KnownLaunchBridgeSchemaVersion  = "xnix.runtime.known_windows_app_launch_bridge.v1"
-	KnownLaunchBridgeRequestType    = "windows-known-app-launch-bridge-preview"
-	KnownLaunchProfileSchemaVersion = "xnix.runtime.known_windows_app_launch_profile_materialize.v1"
-	KnownLaunchProfileRequestType   = "windows-known-app-launch-profile-materialize"
-	KnownPrepareLaunchSchemaVersion = "xnix.runtime.known_windows_app_prepare_launch_profile.v1"
-	KnownPrepareLaunchRequestType   = "windows-known-app-prepare-launch-profile"
-	KnownDispatchGuestBoundary      = "managed-known-app-guest-smoke"
-	DefaultKnownAppID               = "7zr"
-	DefaultKnownAppCacheRoot        = ".cache/xnix/known-winapps"
-	DefaultKnownAppFetchTimeout     = 60 * time.Second
-	DefaultKnownAppGuestTimeout     = 90 * time.Second
-	defaultKnownAppDownloadLimit    = 32 << 20
+	KnownFetchSchemaVersion            = "xnix.runtime.known_windows_app_fetch.v1"
+	KnownFetchRequestType              = "windows-known-app-fetch"
+	KnownGuestSchemaVersion            = "xnix.runtime.known_windows_app_guest_wine_smoke.v1"
+	KnownGuestRequestType              = "windows-known-app-guest-wine-smoke"
+	KnownManagedLaunchSchemaVersion    = "xnix.runtime.known_windows_app_managed_launch.v1"
+	KnownManagedLaunchRequestType      = "windows-known-app-managed-launch-preview"
+	KnownKDELauncherSchemaVersion      = "xnix.runtime.known_windows_app_kde_launcher.v1"
+	KnownKDELauncherRequestType        = "windows-known-app-kde-launcher-preview"
+	KnownLaunchRequestSchemaVersion    = "xnix.runtime.known_windows_app_launch_request.v1"
+	KnownLaunchRequestType             = "windows-known-app-launch-request-preview"
+	KnownDispatchSchemaVersion         = "xnix.runtime.known_windows_app_dispatch.v1"
+	KnownDispatchRequestType           = "windows-known-app-dispatch-preview"
+	KnownDispatchSmokeSchemaVersion    = "xnix.runtime.known_windows_app_dispatch_smoke.v1"
+	KnownDispatchSmokeRequestType      = "windows-known-app-dispatch-smoke"
+	KnownLaunchBridgeSchemaVersion     = "xnix.runtime.known_windows_app_launch_bridge.v1"
+	KnownLaunchBridgeRequestType       = "windows-known-app-launch-bridge-preview"
+	KnownLaunchProfileSchemaVersion    = "xnix.runtime.known_windows_app_launch_profile_materialize.v1"
+	KnownLaunchProfileRequestType      = "windows-known-app-launch-profile-materialize"
+	KnownPrepareLaunchSchemaVersion    = "xnix.runtime.known_windows_app_prepare_launch_profile.v1"
+	KnownPrepareLaunchRequestType      = "windows-known-app-prepare-launch-profile"
+	KnownPrepareAndLaunchSchemaVersion = "xnix.runtime.known_windows_app_prepare_and_launch_profile.v1"
+	KnownPrepareAndLaunchRequestType   = "windows-known-app-prepare-and-launch-profile"
+	KnownDispatchGuestBoundary         = "managed-known-app-guest-smoke"
+	DefaultKnownAppID                  = "7zr"
+	DefaultKnownAppCacheRoot           = ".cache/xnix/known-winapps"
+	DefaultKnownAppFetchTimeout        = 60 * time.Second
+	DefaultKnownAppGuestTimeout        = 90 * time.Second
+	defaultKnownAppDownloadLimit       = 32 << 20
 )
 
 type KnownPortableApp struct {
@@ -509,6 +511,76 @@ type KnownPrepareLaunchProfileResult struct {
 	RawRuntimeArgvExposed       bool                                 `json:"raw_runtime_argv_exposed"`
 	SkipReason                  string                               `json:"skip_reason,omitempty"`
 	FailureReason               string                               `json:"failure_reason,omitempty"`
+}
+
+type KnownPrepareAndLaunchProfileRequest struct {
+	AppID            string
+	CacheRoot        string
+	StateRoot        string
+	ProfileOutput    string
+	ApplicationID    string
+	DisplayName      string
+	RuntimeBinary    string
+	RuntimeArguments []string
+	RunnerPath       string
+	RunnerBottle     string
+	RunnerArguments  []string
+	SkipBootstrap    bool
+	AllowDownload    bool
+	HTTPClient       *http.Client
+	Timeout          time.Duration
+}
+
+type KnownPrepareAndLaunchProfileResult struct {
+	SchemaVersion               string                          `json:"schema_version"`
+	RequestType                 string                          `json:"request_type"`
+	Status                      string                          `json:"status"`
+	AppID                       string                          `json:"app_id"`
+	DisplayName                 string                          `json:"display_name"`
+	AppVersion                  string                          `json:"app_version"`
+	Architecture                string                          `json:"architecture"`
+	ExecutableName              string                          `json:"executable_name"`
+	AllowDownload               bool                            `json:"allow_download"`
+	PrepareStatus               string                          `json:"prepare_status"`
+	LaunchStatus                string                          `json:"launch_status"`
+	ProfileWritten              bool                            `json:"profile_written"`
+	LauncherBundleWritten       bool                            `json:"launcher_bundle_written"`
+	LaunchAttempted             bool                            `json:"launch_attempted"`
+	RunnerConfigured            bool                            `json:"runner_configured"`
+	RunnerBottleConfigured      bool                            `json:"runner_bottle_configured"`
+	RunnerArgumentCount         int                             `json:"runner_argument_count"`
+	RunnerAvailable             bool                            `json:"runner_available"`
+	SkipBootstrap               bool                            `json:"skip_bootstrap"`
+	ExecutableFormat            string                          `json:"executable_format"`
+	WindowsExecutableSignature  bool                            `json:"windows_executable_signature_observed"`
+	ExecutableArchitecture      string                          `json:"executable_architecture"`
+	ExecutableArchitectureReady bool                            `json:"executable_architecture_supported"`
+	WineArchitecture            string                          `json:"wine_architecture"`
+	ApplicationWorkspaceMode    string                          `json:"application_workspace_mode"`
+	RawOutputRedacted           bool                            `json:"raw_output_redacted"`
+	PreparePayload              KnownPrepareLaunchProfileResult `json:"prepare_payload"`
+	LaunchPayload               *LaunchProfileResult            `json:"launch_payload,omitempty"`
+	NetworkRequired             bool                            `json:"network_required"`
+	HostRootModified            bool                            `json:"host_root_modified"`
+	PrivilegedContainerRequired bool                            `json:"privileged_container_required"`
+	HostNetworkingRequired      bool                            `json:"host_networking_required"`
+	DockerSocketMounted         bool                            `json:"docker_socket_mounted"`
+	BroadHostMountRequired      bool                            `json:"broad_host_mount_required"`
+	DockerExecuted              bool                            `json:"docker_executed"`
+	QEMUExecuted                bool                            `json:"qemu_executed"`
+	WineExecuted                bool                            `json:"wine_executed"`
+	ColimaExecuted              bool                            `json:"colima_executed"`
+	NetworkChecksRun            bool                            `json:"network_checks_run"`
+	PackageManagerInvoked       bool                            `json:"package_manager_invoked"`
+	RawHostPathExposed          bool                            `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed    bool                            `json:"raw_executable_path_exposed"`
+	RawProfilePathExposed       bool                            `json:"raw_profile_path_exposed"`
+	RawStateRootPathExposed     bool                            `json:"raw_state_root_path_exposed"`
+	RawRuntimeArgvExposed       bool                            `json:"raw_runtime_argv_exposed"`
+	RawRunnerPathExposed        bool                            `json:"raw_runner_path_exposed"`
+	NextAction                  string                          `json:"next_action"`
+	SkipReason                  string                          `json:"skip_reason,omitempty"`
+	FailureReason               string                          `json:"failure_reason,omitempty"`
 }
 
 type KnownLaunchBridgeResult struct {
@@ -1130,6 +1202,102 @@ func PrepareKnownPortableLaunchProfile(ctx context.Context, request KnownPrepare
 	return result, nil
 }
 
+func PrepareAndLaunchKnownPortableProfile(ctx context.Context, request KnownPrepareAndLaunchProfileRequest) (KnownPrepareAndLaunchProfileResult, error) {
+	app, err := LookupKnownPortableApp(request.AppID)
+	if err != nil {
+		return KnownPrepareAndLaunchProfileResult{}, err
+	}
+	result := baseKnownPrepareAndLaunchProfileResult(app, request)
+	prepare, err := PrepareKnownPortableLaunchProfile(ctx, KnownPrepareLaunchProfileRequest{
+		AppID:            app.ID,
+		CacheRoot:        request.CacheRoot,
+		StateRoot:        request.StateRoot,
+		ProfileOutput:    request.ProfileOutput,
+		ApplicationID:    request.ApplicationID,
+		DisplayName:      request.DisplayName,
+		RuntimeBinary:    request.RuntimeBinary,
+		RuntimeArguments: append([]string{}, request.RuntimeArguments...),
+		RunnerPath:       request.RunnerPath,
+		RunnerBottle:     request.RunnerBottle,
+		RunnerArguments:  append([]string{}, request.RunnerArguments...),
+		SkipBootstrap:    request.SkipBootstrap,
+		AllowDownload:    request.AllowDownload,
+		HTTPClient:       request.HTTPClient,
+		Timeout:          request.Timeout,
+	})
+	if err != nil {
+		return result, err
+	}
+	result.PreparePayload = prepare
+	result.PrepareStatus = prepare.Status
+	result.ProfileWritten = prepare.ProfileWritten
+	result.LauncherBundleWritten = prepare.LauncherBundleWritten
+	result.RunnerConfigured = prepare.RunnerConfigured
+	result.RunnerBottleConfigured = prepare.RunnerBottleConfigured
+	result.RunnerArgumentCount = prepare.RunnerArgumentCount
+	result.SkipBootstrap = prepare.SkipBootstrap
+	result.NetworkRequired = prepare.NetworkRequired
+	result.HostRootModified = prepare.HostRootModified
+	result.PrivilegedContainerRequired = prepare.PrivilegedContainerRequired
+	result.HostNetworkingRequired = prepare.HostNetworkingRequired
+	result.DockerSocketMounted = prepare.DockerSocketMounted
+	result.BroadHostMountRequired = prepare.BroadHostMountRequired
+	result.RawHostPathExposed = prepare.RawHostPathExposed
+	result.RawExecutablePathExposed = prepare.RawExecutablePathExposed
+	result.RawProfilePathExposed = prepare.RawProfilePathExposed
+	result.RawStateRootPathExposed = prepare.RawStateRootPathExposed
+	result.RawRuntimeArgvExposed = prepare.RawRuntimeArgvExposed
+	if prepare.Status != PassedStatus || !prepare.ProfileWritten {
+		result.Status = prepare.Status
+		result.SkipReason = prepare.SkipReason
+		result.FailureReason = prepare.FailureReason
+		return result, nil
+	}
+
+	stateRoot, err := knownLaunchProfileStateRoot(request.StateRoot, request.CacheRoot, app)
+	if err != nil {
+		return result, err
+	}
+	profilePath, err := knownLaunchProfileOutputPath(request.ProfileOutput, stateRoot, app)
+	if err != nil {
+		return result, err
+	}
+	launch, err := LaunchProfile(ctx, LaunchProfileRequest{ProfilePath: profilePath})
+	if err != nil {
+		return result, err
+	}
+	result.LaunchPayload = &launch
+	result.LaunchStatus = launch.Status
+	result.Status = launch.Status
+	result.LaunchAttempted = launch.LaunchAttempted
+	result.RunnerAvailable = launch.RunnerAvailable
+	result.ExecutableFormat = launch.ExecutableFormat
+	result.WindowsExecutableSignature = launch.WindowsExecutableSignature
+	result.ExecutableArchitecture = launch.ExecutableArchitecture
+	result.ExecutableArchitectureReady = launch.ExecutableArchitectureReady
+	result.WineArchitecture = launch.WineArchitecture
+	result.ApplicationWorkspaceMode = launch.ApplicationWorkspaceMode
+	result.RawOutputRedacted = launch.RawOutputRedacted
+	result.NextAction = launch.NextAction
+	result.SkipReason = launch.SkipReason
+	result.FailureReason = launch.FailureReason
+	result.HostRootModified = result.HostRootModified || launch.HostRootModified
+	result.PrivilegedContainerRequired = result.PrivilegedContainerRequired || launch.PrivilegedContainerRequired
+	result.HostNetworkingRequired = result.HostNetworkingRequired || launch.HostNetworkingRequired
+	result.DockerSocketMounted = result.DockerSocketMounted || launch.DockerSocketMounted
+	result.BroadHostMountRequired = result.BroadHostMountRequired || launch.BroadHostMountRequired
+	result.DockerExecuted = launch.DockerExecuted
+	result.QEMUExecuted = launch.QEMUExecuted
+	result.WineExecuted = launch.WineExecuted
+	result.ColimaExecuted = launch.ColimaExecuted
+	result.NetworkChecksRun = launch.NetworkChecksRun
+	result.PackageManagerInvoked = launch.PackageManagerInvoked
+	result.RawProfilePathExposed = result.RawProfilePathExposed || launch.RawProfilePathExposed
+	result.RawExecutablePathExposed = result.RawExecutablePathExposed || launch.RawExecutablePathExposed
+	result.RawRunnerPathExposed = launch.RawRunnerPathExposed
+	return result, nil
+}
+
 func baseKnownFetchResult(app KnownPortableApp) KnownFetchResult {
 	return KnownFetchResult{
 		SchemaVersion:          KnownFetchSchemaVersion,
@@ -1211,6 +1379,49 @@ func baseKnownPrepareLaunchProfileResult(app KnownPortableApp, allowDownload boo
 		RawProfilePathExposed:       false,
 		RawStateRootPathExposed:     false,
 		RawRuntimeArgvExposed:       false,
+	}
+}
+
+func baseKnownPrepareAndLaunchProfileResult(app KnownPortableApp, request KnownPrepareAndLaunchProfileRequest) KnownPrepareAndLaunchProfileResult {
+	return KnownPrepareAndLaunchProfileResult{
+		SchemaVersion:               KnownPrepareAndLaunchSchemaVersion,
+		RequestType:                 KnownPrepareAndLaunchRequestType,
+		Status:                      SkippedStatus,
+		AppID:                       app.ID,
+		DisplayName:                 app.DisplayName,
+		AppVersion:                  app.Version,
+		Architecture:                app.Architecture,
+		ExecutableName:              app.ExecutableName,
+		AllowDownload:               request.AllowDownload,
+		PrepareStatus:               "not-run",
+		LaunchStatus:                "not-run",
+		RunnerConfigured:            strings.TrimSpace(request.RunnerPath) != "",
+		RunnerBottleConfigured:      strings.TrimSpace(request.RunnerBottle) != "",
+		RunnerArgumentCount:         len(runnerInvocationArguments(Request{RunnerBottle: request.RunnerBottle, RunnerArguments: append([]string{}, request.RunnerArguments...)})),
+		SkipBootstrap:               request.SkipBootstrap,
+		ExecutableFormat:            "unknown",
+		ExecutableArchitecture:      "unknown",
+		WineArchitecture:            "unknown",
+		ApplicationWorkspaceMode:    ApplicationWorkspaceModeDirect,
+		RawOutputRedacted:           true,
+		NetworkRequired:             request.AllowDownload,
+		HostRootModified:            false,
+		PrivilegedContainerRequired: false,
+		HostNetworkingRequired:      false,
+		DockerSocketMounted:         false,
+		BroadHostMountRequired:      false,
+		DockerExecuted:              false,
+		QEMUExecuted:                false,
+		WineExecuted:                false,
+		ColimaExecuted:              false,
+		NetworkChecksRun:            false,
+		PackageManagerInvoked:       false,
+		RawHostPathExposed:          false,
+		RawExecutablePathExposed:    false,
+		RawProfilePathExposed:       false,
+		RawStateRootPathExposed:     false,
+		RawRuntimeArgvExposed:       false,
+		RawRunnerPathExposed:        false,
 	}
 }
 

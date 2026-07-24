@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc57
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc58
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc58 checkpoint candidate adds `windows-known-app-prepare-and-launch-profile`, a Go-owned one-step known app path that performs offline cache checking or explicit download preparation, materializes the reusable launch profile when the artifact is verified, and immediately calls `windows-app-launch-profile`. It reports both `prepare_payload` and `launch_payload`, blocks safely before execution when a runner is unavailable, and will run the Windows app through the redacted Runtime launch path when an operator supplies an existing runner. The command keeps raw cache paths, executable paths, profile paths, state roots, runner paths, bottle names, runner argv values, runtime argv details, Docker, QEMU, Colima, network checks, package-manager calls, and host-root mutation out of product-facing output.
 
 The v0.2.640-rc57 checkpoint candidate carries explicit runner settings through the known Windows app launch-profile path. `windows-known-app-launch-profile-materialize` and `windows-known-app-prepare-launch-profile` accept `--runner`, `--runner-bottle`, repeated `--runner-arg`, and `--skip-bootstrap`, store those launch controls in the reusable smoke profile, and keep product-facing output limited to `runner_configured`, `runner_bottle_configured`, `runner_argument_count`, and `skip_bootstrap`. This lets operators prepare a known app for an existing Wine/CrossOver-style runner while reports still hide raw runner paths, bottle names, runner argv values, cache paths, executable paths, profile paths, state roots, and runtime argv details.
 

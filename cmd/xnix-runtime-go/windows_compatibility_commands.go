@@ -664,6 +664,75 @@ func runWindowsKnownAppPrepareLaunchProfile(args []string, stdout io.Writer) err
 	return encoder.Encode(result)
 }
 
+func runWindowsKnownAppPrepareAndLaunchProfile(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-known-app-prepare-and-launch-profile", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var appID string
+	var cacheRoot string
+	var stateRoot string
+	var profileOutput string
+	var applicationID string
+	var name string
+	var runtimeBinary string
+	var runnerPath string
+	var runnerBottle string
+	var timeoutText string
+	var allowDownload bool
+	var skipBootstrap bool
+	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
+	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "known app cache root")
+	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root for the launch profile")
+	flags.StringVar(&profileOutput, "profile-output", "", "profile output path; defaults under the state root")
+	flags.StringVar(&applicationID, "app-id", "", "desktop-safe application id")
+	flags.StringVar(&name, "name", "", "desktop display name")
+	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+	flags.StringVar(&runnerPath, "runner", "", "Windows compatibility runner path stored in the launch profile")
+	flags.StringVar(&runnerBottle, "runner-bottle", "", "runner bottle name stored in the launch profile")
+	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppFetchTimeout.String(), "known app fetch timeout when downloads are allowed")
+	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app artifact when it is missing")
+	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a launch profile that skips runner bootstrap")
+	var runtimeArgs repeatedStringFlag
+	var runnerArgs repeatedStringFlag
+	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-launch-profile")
+	flags.Var(&runnerArgs, "runner-arg", "argument passed to the compatibility runner when launching the app")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-known-app-prepare-and-launch-profile")
+	}
+	timeout, err := time.ParseDuration(timeoutText)
+	if err != nil {
+		return fmt.Errorf("parse timeout: %w", err)
+	}
+
+	result, err := winapp.PrepareAndLaunchKnownPortableProfile(context.Background(), winapp.KnownPrepareAndLaunchProfileRequest{
+		AppID:            appID,
+		CacheRoot:        cacheRoot,
+		StateRoot:        stateRoot,
+		ProfileOutput:    profileOutput,
+		ApplicationID:    applicationID,
+		DisplayName:      name,
+		RuntimeBinary:    runtimeBinary,
+		RuntimeArguments: []string(runtimeArgs),
+		RunnerPath:       runnerPath,
+		RunnerBottle:     runnerBottle,
+		RunnerArguments:  []string(runnerArgs),
+		SkipBootstrap:    skipBootstrap,
+		AllowDownload:    allowDownload,
+		Timeout:          timeout,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsKnownAppManagedLaunchPreview(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-known-app-managed-launch-preview", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

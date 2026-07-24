@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc57
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc58
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -105,6 +105,14 @@ go run ./cmd/xnix-runtime-go windows-known-app-prepare-launch-profile --app 7zr 
 ```
 
 The command is offline by default. Add `--allow-download` only when the operator intends to fetch the pinned artifact from the catalog. After checksum verification, it writes the same launch profile and managed launcher bundle as the materializer, including any explicit runner and bootstrap settings supplied by the operator.
+
+To prepare and immediately attempt a Runtime-owned launch in one step:
+
+```text
+go run ./cmd/xnix-runtime-go windows-known-app-prepare-and-launch-profile --app 7zr --cache-root .cache/xnix/known-winapps --state-root .local/xnix/known-apps/7zr-state --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go --runner path/to/wine --runner-bottle bottle-name --runner-arg "--private-runner-option" --skip-bootstrap
+```
+
+The command emits combined `prepare_payload` and `launch_payload` evidence. It still checks the cache offline by default and still requires `--allow-download` for acquisition. If the artifact is verified but the runner is unavailable, the launch payload reports `blocked` with `launch_attempted=false`. If the runner is ready, the same command launches through `windows-app-launch-profile`, forces redacted output, and reports Runtime smoke evidence without exposing raw local paths or runner details.
 
 Or use the report script without launching the Windows app:
 

@@ -679,6 +679,8 @@ func run(args []string, stdout io.Writer) error {
 		return runWindowsKnownAppLaunchProfileMaterialize(args[1:], stdout)
 	case "windows-known-app-prepare-launch-profile":
 		return runWindowsKnownAppPrepareLaunchProfile(args[1:], stdout)
+	case "windows-known-app-prepare-and-launch-profile":
+		return runWindowsKnownAppPrepareAndLaunchProfile(args[1:], stdout)
 	case "windows-known-app-managed-launch-preview":
 		return runWindowsKnownAppManagedLaunchPreview(args[1:], stdout)
 	case "windows-known-app-kde-launcher-preview":

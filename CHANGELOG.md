@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc58] - 2026-07-24
+
+### Added
+
+- Added `windows-known-app-prepare-and-launch-profile`, a Go-owned one-step known app path that prepares or verifies the artifact, materializes the launch profile, and immediately calls `windows-app-launch-profile`.
+- Added combined prepare and launch evidence with safe `prepare_payload`, `launch_payload`, launch-attempt, runner, PE architecture, redaction, and host-boundary fields.
+- Added targeted tests proving missing artifacts do not launch and verified artifacts can launch through the redacted Runtime path when a runner is ready.
+
 ## [0.2.640-rc57] - 2026-07-24
 
 ### Added

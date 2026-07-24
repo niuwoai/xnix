@@ -295,6 +295,129 @@ func TestPrepareKnownPortableLaunchProfileDownloadsAndMaterializesWhenAllowed(t 
 	assertKnownPrepareLaunchProfileSafe(t, result, cacheRoot, "private-bottle", "--private-runner-arg")
 }
 
+func TestPrepareAndLaunchKnownPortableProfileSkipsOfflineMissingArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+
+	result, err := PrepareAndLaunchKnownPortableProfile(context.Background(), KnownPrepareAndLaunchProfileRequest{
+		AppID:     "7zr",
+		CacheRoot: tempDir,
+		StateRoot: filepath.Join(tempDir, "state"),
+	})
+	if err != nil {
+		t.Fatalf("PrepareAndLaunchKnownPortableProfile returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownPrepareAndLaunchSchemaVersion ||
+		result.RequestType != KnownPrepareAndLaunchRequestType ||
+		result.Status != SkippedStatus ||
+		result.AppID != "7zr" ||
+		result.AllowDownload ||
+		result.PrepareStatus != SkippedStatus ||
+		result.LaunchStatus != "not-run" ||
+		result.ProfileWritten ||
+		result.LauncherBundleWritten ||
+		result.LaunchAttempted ||
+		result.LaunchPayload != nil ||
+		result.RunnerAvailable ||
+		result.WineExecuted ||
+		result.DockerExecuted ||
+		result.QEMUExecuted ||
+		result.NetworkChecksRun ||
+		result.PackageManagerInvoked ||
+		result.SkipReason != "known Windows app artifact unavailable" {
+		t.Fatalf("unexpected offline prepare-and-launch result: %#v", result)
+	}
+	if _, err := os.Stat(filepath.Join(tempDir, "state")); err == nil {
+		t.Fatalf("offline missing prepare-and-launch must not create state root")
+	}
+}
+
+func TestPrepareAndLaunchKnownPortableProfileRunsVerifiedArtifactWithReadyRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	body := minimalPEFixture(0x014c)
+	sum := sha256.Sum256(body)
+	cacheRoot := t.TempDir()
+	appDir := filepath.Join(cacheRoot, "fixture")
+	if err := os.MkdirAll(appDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(appDir, "fixture.exe"), body, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(cacheRoot, "private-runner")
+	if err := os.WriteFile(runnerPath, []byte("#!/bin/sh\nprintf 'FIXTURE_OK\\nraw-host-path=/private/tmp/secret\\n'\n"), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	stateRoot := filepath.Join(cacheRoot, "fixture-state")
+
+	withKnownPortableCatalog(t, []KnownPortableApp{{
+		ID:             "fixture",
+		DisplayName:    "Fixture console executable",
+		Version:        "1.0.0",
+		Architecture:   "windows-x86",
+		ExecutableName: "fixture.exe",
+		SourcePageURL:  "https://example.invalid/download",
+		DownloadURL:    "https://example.invalid/fixture.exe",
+		SHA256:         hex.EncodeToString(sum[:]),
+		ExpectedMarker: "FIXTURE_OK",
+		Arguments:      []string{"--help"},
+	}})
+
+	result, err := PrepareAndLaunchKnownPortableProfile(context.Background(), KnownPrepareAndLaunchProfileRequest{
+		AppID:            "fixture",
+		CacheRoot:        cacheRoot,
+		StateRoot:        stateRoot,
+		RuntimeBinary:    "go",
+		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
+		RunnerPath:       runnerPath,
+		RunnerBottle:     "private-bottle",
+		RunnerArguments:  []string{"--private-runner-arg"},
+		SkipBootstrap:    true,
+	})
+	if err != nil {
+		t.Fatalf("PrepareAndLaunchKnownPortableProfile returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.PrepareStatus != PassedStatus ||
+		result.LaunchStatus != PassedStatus ||
+		!result.ProfileWritten ||
+		!result.LauncherBundleWritten ||
+		!result.LaunchAttempted ||
+		!result.RunnerConfigured ||
+		!result.RunnerBottleConfigured ||
+		result.RunnerArgumentCount != 3 ||
+		!result.RunnerAvailable ||
+		!result.SkipBootstrap ||
+		result.ExecutableName != "fixture.exe" ||
+		result.ExecutableFormat != "pe-mz" ||
+		!result.WindowsExecutableSignature ||
+		result.ExecutableArchitecture != "x86" ||
+		result.WineArchitecture != "win32" ||
+		result.ApplicationWorkspaceMode != ApplicationWorkspaceModeStaged ||
+		!result.RawOutputRedacted ||
+		result.LaunchPayload == nil ||
+		result.LaunchPayload.RuntimePayload == nil ||
+		!result.WineExecuted ||
+		result.DockerExecuted ||
+		result.QEMUExecuted ||
+		result.NetworkChecksRun ||
+		result.PackageManagerInvoked ||
+		result.RawExecutablePathExposed ||
+		result.RawProfilePathExposed ||
+		result.RawRunnerPathExposed ||
+		result.HostRootModified {
+		t.Fatalf("unexpected ready prepare-and-launch result: %#v", result)
+	}
+	if result.LaunchPayload.RuntimePayload.Stdout != "" ||
+		result.LaunchPayload.RuntimePayload.Stderr != "" ||
+		!strings.Contains(result.LaunchPayload.RuntimePayload.KDESafeOutputSummary, "expected smoke marker observed") {
+		t.Fatalf("unexpected redacted runtime payload: %#v", result.LaunchPayload.RuntimePayload)
+	}
+	assertKnownPrepareAndLaunchProfileSafe(t, result, cacheRoot, "private-bottle", "--private-runner-arg", "/private/tmp/secret")
+}
+
 func TestMaterializeKnownPortableLaunchProfileWritesProfileAndLaunchBundleForVerifiedArtifact(t *testing.T) {
 	body := minimalPEFixture(0x014c)
 	sum := sha256.Sum256(body)
@@ -1236,6 +1359,16 @@ func assertKnownPrepareLaunchProfileSafe(t *testing.T, result KnownPrepareLaunch
 	for _, forbidden := range forbiddenValues {
 		if strings.TrimSpace(forbidden) != "" && strings.Contains(text, forbidden) {
 			t.Fatalf("known launch profile preparation exposed forbidden value %q: %#v", forbidden, result)
+		}
+	}
+}
+
+func assertKnownPrepareAndLaunchProfileSafe(t *testing.T, result KnownPrepareAndLaunchProfileResult, forbiddenValues ...string) {
+	t.Helper()
+	text := fmt.Sprintf("%#v", result)
+	for _, forbidden := range forbiddenValues {
+		if strings.TrimSpace(forbidden) != "" && strings.Contains(text, forbidden) {
+			t.Fatalf("known prepare-and-launch profile exposed forbidden value %q: %#v", forbidden, result)
 		}
 	}
 }
