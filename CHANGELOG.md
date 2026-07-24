@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc69] - 2026-07-24
+
+### Added
+
+- Added `scripts/remote_known_winapp_matrix_smoke.rb`, an execute-gated q4 matrix harness that syncs and builds the Go Runtime once, then runs the default `7zr` and `busybox-w32` known apps sequentially through Runtime-started QEMU/Wine.
+- Added matrix dry-run and script-shape coverage proving per-app report paths, serial-log paths, aggregate pass counts, redacted output, loopback networking, and protected Claude document exclusion.
+
 ## [0.2.640-rc68] - 2026-07-24
 
 ### Added
