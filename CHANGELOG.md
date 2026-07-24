@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc47] - 2026-07-24
+
+### Added
+
+- Added architecture-scoped local Wine prefixes under the managed state root for direct Windows app smoke execution.
+- Added `wine_prefix_mode` and `wine_prefix_prepared` evidence to Go Runtime smoke, profile preflight, and Ruby JSON/Markdown smoke reports without exposing prefix paths.
+
 ## [0.2.640-rc46] - 2026-07-24
 
 ### Added

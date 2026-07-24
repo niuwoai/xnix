@@ -51,6 +51,8 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		result.ExecutableArchitecture != "x86_64" ||
 		!result.ExecutableArchitectureReady ||
 		result.WineArchitecture != "win64" ||
+		result.WinePrefixMode != "architecture-scoped" ||
+		result.WinePrefixPrepared ||
 		result.WorkingDirectoryMode != WorkingDirectoryModeOperator ||
 		!result.WorkingDirectoryValid ||
 		!result.StateRootConfigured ||

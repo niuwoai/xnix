@@ -38,6 +38,8 @@ func TestRunSmokeUsesIsolatedStateRootAndObservesMarker(t *testing.T) {
 		result.ExecutableArchitecture != "x86_64" ||
 		!result.ExecutableArchitectureReady ||
 		result.WineArchitecture != "win64" ||
+		result.WinePrefixMode != "architecture-scoped" ||
+		!result.WinePrefixPrepared ||
 		result.CompatibilityLayer != "windows-compatibility-layer" {
 		t.Fatalf("unexpected result: %#v", result)
 	}
@@ -94,6 +96,8 @@ func TestRunSmokeUsesWin32WineArchitectureForX86Executable(t *testing.T) {
 		result.ExecutableArchitecture != "x86" ||
 		!result.ExecutableArchitectureReady ||
 		result.WineArchitecture != "win32" ||
+		result.WinePrefixMode != "architecture-scoped" ||
+		!result.WinePrefixPrepared ||
 		!result.MarkerObserved {
 		t.Fatalf("unexpected win32 architecture smoke result: %#v", result)
 	}
@@ -430,6 +434,7 @@ func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	}
 	if result.Status != SkippedStatus ||
 		result.RunnerAvailable ||
+		result.WinePrefixPrepared ||
 		!strings.Contains(result.SkipReason, "runner unavailable") {
 		t.Fatalf("unexpected skip result: %#v", result)
 	}
@@ -700,6 +705,7 @@ func TestRunSmokeBlocksUnsupportedArchitectureBeforeRunnerResolution(t *testing.
 		result.ExecutableArchitectureReady ||
 		result.FailureReason != "Windows executable architecture is not supported" ||
 		result.RunnerAvailable ||
+		result.WinePrefixPrepared ||
 		result.IsolatedStateRoot {
 		t.Fatalf("unexpected unsupported architecture result: %#v", result)
 	}
@@ -731,6 +737,7 @@ func writeNamedFakeRunner(t *testing.T, tempDir string, name string, wineArchite
 	path := filepath.Join(tempDir, name)
 	body := "#!/bin/sh\n" +
 		"test -n \"$WINEPREFIX\" || exit 89\n" +
+		"case \"$WINEPREFIX\" in */wineprefix-" + wineArchitecture + ") ;; *) exit 85 ;; esac\n" +
 		"test \"$WINEARCH\" = " + wineArchitecture + " || exit 88\n" +
 		"test \"$WINEDEBUG\" = -all || exit 87\n" +
 		"case \"$WINEDLLOVERRIDES\" in *winemenubuilder.exe=d*mscoree=d*mshtml=d*) ;; *) exit 86 ;; esac\n" +

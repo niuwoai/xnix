@@ -137,6 +137,8 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["executable_architecture"] != "x86_64" ||
 		payload["executable_architecture_supported"] != true ||
 		payload["wine_architecture"] != "win64" ||
+		payload["wine_prefix_mode"] != "architecture-scoped" ||
+		payload["wine_prefix_prepared"] != true ||
 		payload["runner_available"] != true ||
 		payload["success_mode"] != "marker" ||
 		payload["working_directory_mode"] != "executable-directory" ||
@@ -230,6 +232,8 @@ func TestWindowsAppRunSmokeCommandReportsUnsupportedArchitecture(t *testing.T) {
 		payload["executable_architecture"] != "arm64" ||
 		payload["executable_architecture_supported"] != false ||
 		payload["wine_architecture"] != "unknown" ||
+		payload["wine_prefix_mode"] != "unknown" ||
+		payload["wine_prefix_prepared"] != false ||
 		payload["failure_reason"] != "Windows executable architecture is not supported" ||
 		payload["runner_available"] != false ||
 		payload["isolated_state_root"] != false {
@@ -429,6 +433,8 @@ func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
 		payload["executable_architecture"] != "x86_64" ||
 		payload["executable_architecture_supported"] != true ||
 		payload["wine_architecture"] != "win64" ||
+		payload["wine_prefix_mode"] != "architecture-scoped" ||
+		payload["wine_prefix_prepared"] != false ||
 		payload["working_directory_mode"] != "operator-supplied" ||
 		payload["runner_available"] != true ||
 		payload["runner_argument_count"] != float64(1) ||

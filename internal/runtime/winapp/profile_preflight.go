@@ -27,6 +27,8 @@ type SmokeProfilePreflightResult struct {
 	ExecutableArchitecture      string                  `json:"executable_architecture"`
 	ExecutableArchitectureReady bool                    `json:"executable_architecture_supported"`
 	WineArchitecture            string                  `json:"wine_architecture"`
+	WinePrefixMode              string                  `json:"wine_prefix_mode"`
+	WinePrefixPrepared          bool                    `json:"wine_prefix_prepared"`
 	WorkingDirectoryMode        string                  `json:"working_directory_mode"`
 	WorkingDirectoryValid       bool                    `json:"working_directory_valid"`
 	StateRootConfigured         bool                    `json:"state_root_configured"`
@@ -110,6 +112,7 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 		return result, nil
 	}
 	result.WineArchitecture = wineArchitectureForExecutable(executableArchitecture)
+	result.WinePrefixMode = "architecture-scoped"
 
 	workingDirectoryMode, workingDirectoryErr := inspectProfileWorkingDirectory(request.WorkingDirectory, executablePath)
 	if workingDirectoryErr != nil {
@@ -148,6 +151,7 @@ func baseSmokeProfilePreflightResult() SmokeProfilePreflightResult {
 		ExecutableFormat:            "unknown",
 		ExecutableArchitecture:      "unknown",
 		WineArchitecture:            "unknown",
+		WinePrefixMode:              "unknown",
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		SuccessMode:                 SuccessModeMarker,
 		RawProfilePathExposed:       false,

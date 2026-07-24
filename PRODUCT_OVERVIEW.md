@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc46
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc47
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc47 checkpoint candidate isolates local Wine prefixes by executable architecture. When a runner is available, direct smoke now prepares `wineprefix-win64` or `wineprefix-win32` under the managed state root, reports `wine_prefix_mode=architecture-scoped` and `wine_prefix_prepared`, and still avoids exposing the actual prefix path. Profile preflight reports the intended prefix mode without creating the prefix. This prevents 32-bit and 64-bit Windows apps from sharing an incompatible Wine prefix.
 
 The v0.2.640-rc46 checkpoint candidate turns parsed PE architecture into a concrete local Wine execution policy. The Go Runtime now maps x86_64 executables to `WINEARCH=win64` and x86 executables to `WINEARCH=win32`, reports the selected `wine_architecture`, and keeps unsupported architectures blocked before state-root creation or runner execution. This moves the local smoke path closer to a real Wine manager instead of treating every Windows app as 64-bit.
 

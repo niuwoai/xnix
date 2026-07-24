@@ -122,6 +122,8 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "executable_architecture" => "unknown",
     "executable_architecture_supported" => false,
     "wine_architecture" => "unknown",
+    "wine_prefix_mode" => "unknown",
+    "wine_prefix_prepared" => false,
     "profile_supplied" => profile_supplied,
     "profile_preflight_invoked" => false,
     "profile_preflight_status" => "not-run",
@@ -190,6 +192,8 @@ def emit_report(report)
     puts "- Executable architecture: #{report.fetch("executable_architecture")}"
     puts "- Executable architecture supported: #{report.fetch("executable_architecture_supported")}"
     puts "- Wine architecture: #{report.fetch("wine_architecture")}"
+    puts "- Wine prefix mode: #{report.fetch("wine_prefix_mode")}"
+    puts "- Wine prefix prepared: #{report.fetch("wine_prefix_prepared")}"
     puts "- Runner diagnostics invoked: #{report.fetch("runner_diagnostics_invoked")}"
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
@@ -315,6 +319,8 @@ if profile_supplied
   report["executable_architecture"] = preflight_payload.fetch("executable_architecture", "unknown")
   report["executable_architecture_supported"] = preflight_payload.fetch("executable_architecture_supported", false)
   report["wine_architecture"] = preflight_payload.fetch("wine_architecture", "unknown")
+  report["wine_prefix_mode"] = preflight_payload.fetch("wine_prefix_mode", "unknown")
+  report["wine_prefix_prepared"] = preflight_payload.fetch("wine_prefix_prepared", false)
   report["runner_available"] = preflight_payload.fetch("runner_available", false)
   report["runner_argument_count"] = preflight_payload.fetch("runner_argument_count", 0)
   report["working_directory_mode"] = preflight_payload.fetch("working_directory_mode", "executable-directory")
@@ -476,6 +482,8 @@ report["windows_executable_signature_observed"] = payload.fetch("windows_executa
 report["executable_architecture"] = payload.fetch("executable_architecture", "unknown")
 report["executable_architecture_supported"] = payload.fetch("executable_architecture_supported", false)
 report["wine_architecture"] = payload.fetch("wine_architecture", "unknown")
+report["wine_prefix_mode"] = payload.fetch("wine_prefix_mode", "unknown")
+report["wine_prefix_prepared"] = payload.fetch("wine_prefix_prepared", false)
 report["runner_available"] = payload.fetch("runner_available", false)
 report["success_mode"] = payload.fetch("success_mode", options.fetch(:success_mode))
 report["working_directory_mode"] = payload.fetch("working_directory_mode", "executable-directory")

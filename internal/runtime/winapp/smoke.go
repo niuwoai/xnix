@@ -54,6 +54,8 @@ type Result struct {
 	ExecutableArchitecture      string `json:"executable_architecture"`
 	ExecutableArchitectureReady bool   `json:"executable_architecture_supported"`
 	WineArchitecture            string `json:"wine_architecture"`
+	WinePrefixMode              string `json:"wine_prefix_mode"`
+	WinePrefixPrepared          bool   `json:"wine_prefix_prepared"`
 	RunnerAvailable             bool   `json:"runner_available"`
 	RunnerArgumentCount         int    `json:"runner_argument_count"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
@@ -178,6 +180,12 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, nil
 	}
 	result.RunnerAvailable = true
+	winePrefix, winePrefixMode, err := prepareWinePrefix(stateRoot, wineArchitecture)
+	if err != nil {
+		return result, err
+	}
+	result.WinePrefixMode = winePrefixMode
+	result.WinePrefixPrepared = true
 	runnerArguments := runnerInvocationArguments(request)
 	result.RunnerArgumentCount = len(runnerArguments)
 
@@ -194,7 +202,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		bootstrapArgs := append([]string{}, runnerArguments...)
 		bootstrapArgs = append(bootstrapArgs, "--init")
 		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, bootstrapArgs...)
-		bootstrapCommand.Env = runnerEnvironment(stateRoot, wineArchitecture)
+		bootstrapCommand.Env = runnerEnvironment(winePrefix, wineArchitecture)
 		bootstrapCommand.Dir = workingDirectory
 		var bootstrapStderr bytes.Buffer
 		bootstrapCommand.Stderr = &bootstrapStderr
@@ -220,7 +228,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	args = append(args, executablePath)
 	args = append(args, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
-	command.Env = runnerEnvironment(stateRoot, wineArchitecture)
+	command.Env = runnerEnvironment(winePrefix, wineArchitecture)
 	command.Dir = workingDirectory
 
 	var stdout bytes.Buffer
@@ -410,6 +418,7 @@ func baseResult(request Request) Result {
 		ExecutableFormat:            "unknown",
 		ExecutableArchitecture:      "unknown",
 		WineArchitecture:            "unknown",
+		WinePrefixMode:              "unknown",
 		CompatibilityLayer:          "windows-compatibility-layer",
 		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
@@ -446,17 +455,34 @@ func kdeSafeOutputSummary(result Result) string {
 	return "expected smoke marker not observed; " + streamSummary
 }
 
-func runnerEnvironment(stateRoot string, wineArchitecture string) []string {
+func runnerEnvironment(winePrefix string, wineArchitecture string) []string {
 	if strings.TrimSpace(wineArchitecture) == "" {
 		wineArchitecture = "unknown"
 	}
 	return append(
 		os.Environ(),
-		"WINEPREFIX="+stateRoot,
+		"WINEPREFIX="+winePrefix,
 		"WINEARCH="+wineArchitecture,
 		"WINEDEBUG=-all",
 		"WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d",
 	)
+}
+
+func prepareWinePrefix(stateRoot string, wineArchitecture string) (string, string, error) {
+	var prefixName string
+	switch wineArchitecture {
+	case "win64":
+		prefixName = "wineprefix-win64"
+	case "win32":
+		prefixName = "wineprefix-win32"
+	default:
+		return "", "", fmt.Errorf("unsupported Wine architecture %q", wineArchitecture)
+	}
+	winePrefix := filepath.Join(stateRoot, prefixName)
+	if err := os.MkdirAll(winePrefix, 0o700); err != nil {
+		return "", "", fmt.Errorf("create architecture-scoped Wine prefix: %w", err)
+	}
+	return winePrefix, "architecture-scoped", nil
 }
 
 func wineArchitectureForExecutable(executableArchitecture string) string {
