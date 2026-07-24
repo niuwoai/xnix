@@ -64,6 +64,29 @@ func LoadSmokeProfile(path string) (Request, error) {
 	}, nil
 }
 
+func SmokeProfileFromRequest(request Request) SmokeProfile {
+	timeout := ""
+	if request.Timeout > 0 {
+		timeout = request.Timeout.String()
+	}
+	return SmokeProfile{
+		SchemaVersion:    SmokeProfileSchemaVersion,
+		ExecutablePath:   request.ExecutablePath,
+		Arguments:        append([]string{}, request.Arguments...),
+		RunnerArguments:  append([]string{}, request.RunnerArguments...),
+		RunnerBottle:     request.RunnerBottle,
+		StateRoot:        request.StateRoot,
+		WorkingDirectory: request.WorkingDirectory,
+		RunnerPath:       request.RunnerPath,
+		Timeout:          timeout,
+		ExpectedMarker:   request.ExpectedMarker,
+		SuccessMode:      request.SuccessMode,
+		RedactOutput:     request.RedactOutput,
+		SkipBootstrap:    request.SkipBootstrap,
+		StageAppDir:      request.StageAppDir,
+	}
+}
+
 func parseProfileDuration(value string) (time.Duration, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {

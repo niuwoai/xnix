@@ -20,6 +20,7 @@ options = {
   redact_output: nil,
   backend: "local",
   profile: nil,
+  write_profile: nil,
   preflight_only: false,
   exe: nil,
   runner: nil,
@@ -40,11 +41,12 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
   parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
+  parser.on("--write-profile PATH", "Write a reusable Windows app smoke profile for the resolved settings") { |value| options[:write_profile] = value }
   parser.on("--preflight-only", "Validate a profile and emit readiness without launching the Windows app") { options[:preflight_only] = true }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
@@ -131,6 +133,8 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "wine_prefix_mode" => "unknown",
     "wine_prefix_prepared" => false,
     "profile_supplied" => profile_supplied,
+    "profile_write_invoked" => false,
+    "profile_written" => false,
     "profile_preflight_invoked" => false,
     "profile_preflight_status" => "not-run",
     "profile_preflight_next_action" => "",
@@ -211,6 +215,7 @@ def emit_report(report)
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
     puts "- Profile preflight invoked: #{report.fetch("profile_preflight_invoked")}"
     puts "- Profile preflight status: #{report.fetch("profile_preflight_status")}"
+    puts "- Profile written: #{report.fetch("profile_written")}"
     puts "- Success mode: #{report.fetch("success_mode")}"
     puts "- Working directory mode: #{report.fetch("working_directory_mode")}"
     puts "- Application workspace mode: #{report.fetch("application_workspace_mode")}"
@@ -306,6 +311,43 @@ go_env = {
   "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
   "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
 }
+
+unless options[:write_profile].to_s.strip.empty?
+  render_command = [
+    "go", "run", "./cmd/xnix-runtime-go", "windows-app-smoke-profile-render",
+    "--exe", selected_exe_path.to_s,
+    "--state-root", options.fetch(:state_root),
+    "--timeout", options.fetch(:timeout),
+    "--expected-marker", options.fetch(:expected_marker),
+    "--success-mode", options.fetch(:success_mode)
+  ]
+  render_command.concat(["--profile", options.fetch(:profile)]) unless options[:profile].to_s.strip.empty?
+  render_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+  render_command.concat(["--working-dir", options.fetch(:working_dir)]) unless options[:working_dir].to_s.strip.empty?
+  render_command.concat(["--runner-bottle", options.fetch(:runner_bottle)]) unless options[:runner_bottle].to_s.strip.empty?
+  options.fetch(:runner_args).each { |value| render_command.concat(["--runner-arg", value]) }
+  options.fetch(:app_args).each { |value| render_command.concat(["--arg", value]) }
+  render_command << "--redact-output" if options.fetch(:redact_output)
+  render_command << "--skip-bootstrap" if options.fetch(:skip_bootstrap)
+  render_command << "--stage-app-dir" if options.fetch(:stage_app_dir)
+
+  profile_stdout, profile_stderr, profile_status = run_command(go_env, *render_command)
+  report["profile_write_invoked"] = true
+  unless profile_status.zero?
+    report["failure_reason"] = "Windows app smoke profile render command failed"
+    if options.fetch(:format) == "text"
+      warn profile_stdout unless profile_stdout.empty?
+      warn profile_stderr unless profile_stderr.empty?
+      warn "FAIL: Windows app smoke profile render command failed"
+    end
+    finish(report, 1)
+  end
+  write_profile_path = Pathname.new(options.fetch(:write_profile))
+  write_profile_path = PROJECT_ROOT.join(write_profile_path) unless write_profile_path.absolute?
+  FileUtils.mkdir_p(write_profile_path.dirname)
+  File.write(write_profile_path, profile_stdout)
+  report["profile_written"] = true
+end
 
 if profile_supplied
   preflight_command = [

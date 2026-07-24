@@ -1,9 +1,11 @@
 package winapp
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadSmokeProfileParsesReusableRealAppSettings(t *testing.T) {
@@ -63,5 +65,42 @@ func TestLoadSmokeProfileRejectsUnsupportedSchema(t *testing.T) {
 
 	if _, err := LoadSmokeProfile(profilePath); err == nil {
 		t.Fatalf("LoadSmokeProfile must reject unsupported schemas")
+	}
+}
+
+func TestSmokeProfileFromRequestRendersReusableSettings(t *testing.T) {
+	profile := SmokeProfileFromRequest(Request{
+		ExecutablePath:   "path/to/app.exe",
+		WorkingDirectory: "path/to/app",
+		RunnerPath:       "path/to/wine",
+		RunnerBottle:     "operator-bottle",
+		RunnerArguments:  []string{"--runner-shim"},
+		Arguments:        []string{"--open"},
+		StateRoot:        ".local/xnix/winapp-smoke/profile-state",
+		Timeout:          45 * time.Second,
+		ExpectedMarker:   "APP_OK",
+		SuccessMode:      SuccessModeExitCode,
+		RedactOutput:     true,
+		SkipBootstrap:    true,
+		StageAppDir:      true,
+	})
+	if profile.SchemaVersion != SmokeProfileSchemaVersion ||
+		profile.ExecutablePath != "path/to/app.exe" ||
+		profile.WorkingDirectory != "path/to/app" ||
+		profile.RunnerPath != "path/to/wine" ||
+		profile.RunnerBottle != "operator-bottle" ||
+		profile.StateRoot != ".local/xnix/winapp-smoke/profile-state" ||
+		profile.Timeout != "45s" ||
+		profile.ExpectedMarker != "APP_OK" ||
+		profile.SuccessMode != SuccessModeExitCode ||
+		!profile.RedactOutput ||
+		!profile.SkipBootstrap ||
+		!profile.StageAppDir ||
+		len(profile.RunnerArguments) != 1 ||
+		len(profile.Arguments) != 1 {
+		t.Fatalf("unexpected rendered profile: %#v", profile)
+	}
+	if _, err := json.Marshal(profile); err != nil {
+		t.Fatalf("Marshal rendered profile returned error: %v", err)
 	}
 }

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc49`.
+The project is currently at `v0.2.640-rc50`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc49`.
 
 ## Current Checkpoint
 
-v0.2.640-rc49 lets local real Windows app smoke stage an application directory into `state_root/app-workspace` through `--stage-app-dir` or profile `stage_app_dir`, reporting workspace mode and staged file counts without exposing paths. The previous v0.2.640-rc48 checkpoint added the bootstrap skip switch.
+v0.2.640-rc50 adds Go-rendered reusable Windows app smoke profiles through `windows-app-smoke-profile-render` and `scripts/winapp_smoke.rb --write-profile`, preserving staged workspace, bootstrap, runner, app argument, and success-mode settings for repeatable real app attempts. The previous v0.2.640-rc49 checkpoint added managed app workspace staging.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc49`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc50`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

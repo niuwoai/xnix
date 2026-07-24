@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc49
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc50
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc50 checkpoint candidate makes real Windows app smoke settings repeatable. The Go Runtime now exposes `windows-app-smoke-profile-render`, and `scripts/winapp_smoke.rb --write-profile <path>` can save a reusable profile containing the executable, state root, runner, staged workspace, bootstrap, arguments, timeout, marker, success mode, and redaction settings. Reports expose only `profile_write_invoked` and `profile_written`, not the written profile path, so operators can iterate on a real `.exe` without repeatedly rebuilding long commands.
 
 The v0.2.640-rc49 checkpoint candidate adds a managed application workspace for local real Windows app smoke attempts. `windows-app-run-smoke` and `scripts/winapp_smoke.rb` now accept `--stage-app-dir`, reusable profiles can set `stage_app_dir`, and direct smoke copies the executable directory or explicit working directory into `state_root/app-workspace` before launching the staged `.exe`. Reports expose `application_workspace_mode`, `application_staged`, staged file counts, and staged byte counts without exposing source paths, staged paths, runner paths, Docker, QEMU, Colima, networking, package-manager actions, privileged containers, or host-root mutation.
 

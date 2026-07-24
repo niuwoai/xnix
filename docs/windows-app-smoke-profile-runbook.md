@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc49
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc50
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -15,6 +15,14 @@ Copy it to an ignored local path, then replace the placeholder values:
 ```text
 cp docs/examples/windows-app-smoke-profile.template.json .local/xnix/winapp-smoke/my-app.profile.json
 ```
+
+Or render a reusable profile from CLI settings:
+
+```text
+ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir --write-profile .local/xnix/winapp-smoke/my-app.profile.json
+```
+
+The script asks the Go Runtime to render the profile through `windows-app-smoke-profile-render`, then writes the JSON to the requested operator-local path. Reports expose `profile_write_invoked` and `profile_written`; they do not expose the profile path.
 
 Profile fields:
 
@@ -62,6 +70,12 @@ Or call the Go Runtime command directly:
 
 ```text
 go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile .local/xnix/winapp-smoke/my-app.profile.json
+```
+
+To render the profile JSON without the Ruby wrapper:
+
+```text
+go run ./cmd/xnix-runtime-go windows-app-smoke-profile-render --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir
 ```
 
 Both paths keep Docker, QEMU, Colima, network checks, package managers, privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation disabled.

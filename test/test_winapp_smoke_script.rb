@@ -130,6 +130,28 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-smoke-profile-render")
+      marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_smoke_profile.v1",
+        "executable_path" => args[args.index("--exe") + 1],
+        "working_directory" => args.include?("--working-dir") ? args[args.index("--working-dir") + 1] : "",
+        "runner_path" => args.include?("--runner") ? args[args.index("--runner") + 1] : "",
+        "runner_bottle" => args.include?("--runner-bottle") ? args[args.index("--runner-bottle") + 1] : "",
+        "runner_arguments" => args.each_with_index.filter_map { |value, index| args[index + 1] if value == "--runner-arg" },
+        "arguments" => args.each_with_index.filter_map { |value, index| args[index + 1] if value == "--arg" },
+        "state_root" => args[args.index("--state-root") + 1],
+        "timeout" => args[args.index("--timeout") + 1],
+        "expected_marker" => marker,
+        "success_mode" => args[args.index("--success-mode") + 1],
+        "redact_output" => args.include?("--redact-output"),
+        "skip_bootstrap" => args.include?("--skip-bootstrap"),
+        "stage_app_dir" => args.include?("--stage-app-dir")
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     if args[0] == "run" && args.include?("windows-app-run-smoke")
       redacted = args.include?("--redact-output")
       marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
@@ -251,6 +273,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("schema_version") == "xnix.runtime.winapp_smoke_report.v1", "JSON report must expose schema")
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(!report.fetch("profile_preflight_invoked"), "JSON fixture report must not run profile preflight")
+  assert(!report.fetch("profile_written"), "JSON fixture report must not write a profile by default")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
   assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
@@ -370,6 +393,35 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(last_invocation.include?("--skip-bootstrap"), "custom executable mode must forward bootstrap skip")
   assert(last_invocation.include?("--stage-app-dir"), "custom executable mode must forward application staging")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
+
+  generated_profile = temp_root.join("generated.profile.json")
+  write_profile_stdout, write_profile_stderr, write_profile_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--exe", custom_exe.to_s,
+    "--runner", custom_runner.to_s,
+    "--working-dir", custom_working_dir.to_s,
+    "--runner-bottle", "private-bottle-name",
+    "--runner-arg", "--shim-mode",
+    "--expected-marker", "CUSTOM_APP_OK",
+    "--skip-bootstrap",
+    "--stage-app-dir",
+    "--arg", "--custom-flag",
+    "--write-profile", generated_profile.to_s
+  )
+  assert(write_profile_status.success?, "winapp smoke profile write report must succeed: #{write_profile_stderr}")
+  write_profile_report = JSON.parse(write_profile_stdout)
+  assert(write_profile_report.fetch("profile_write_invoked"), "profile write report must invoke profile rendering")
+  assert(write_profile_report.fetch("profile_written"), "profile write report must record profile write")
+  rendered_profile = JSON.parse(generated_profile.read)
+  assert(rendered_profile.fetch("schema_version") == "xnix.runtime.windows_app_smoke_profile.v1", "written profile must preserve schema")
+  assert(rendered_profile.fetch("expected_marker") == "CUSTOM_APP_OK", "written profile must preserve marker")
+  assert(rendered_profile.fetch("skip_bootstrap"), "written profile must preserve bootstrap skip")
+  assert(rendered_profile.fetch("stage_app_dir"), "written profile must preserve application staging")
+  assert(rendered_profile.fetch("runner_arguments") == ["--shim-mode"], "written profile must preserve runner args")
+  assert(rendered_profile.fetch("arguments") == ["--custom-flag"], "written profile must preserve app args")
+  assert(!write_profile_stdout.include?(generated_profile.to_s), "profile write report must not leak written profile path")
 
   profile_path = temp_root.join("winapp-profile.json")
   profile_working_dir = temp_root.join("profile-working-dir")

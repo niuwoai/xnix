@@ -166,6 +166,54 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppSmokeProfileRenderCommand(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-smoke-profile-render",
+		"--exe", "path/to/app.exe",
+		"--working-dir", "path/to/app",
+		"--state-root", ".local/xnix/winapp-smoke/profile-state",
+		"--runner", "path/to/wine",
+		"--runner-bottle", "operator-bottle",
+		"--runner-arg", "--shim",
+		"--arg", "--open",
+		"--timeout", "45s",
+		"--expected-marker", "APP_OK",
+		"--success-mode", "exit-code",
+		"--redact-output",
+		"--skip-bootstrap",
+		"--stage-app-dir",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_smoke_profile.v1" ||
+		payload["executable_path"] != "path/to/app.exe" ||
+		payload["working_directory"] != "path/to/app" ||
+		payload["state_root"] != ".local/xnix/winapp-smoke/profile-state" ||
+		payload["runner_path"] != "path/to/wine" ||
+		payload["runner_bottle"] != "operator-bottle" ||
+		payload["timeout"] != "45s" ||
+		payload["expected_marker"] != "APP_OK" ||
+		payload["success_mode"] != "exit-code" ||
+		payload["redact_output"] != true ||
+		payload["skip_bootstrap"] != true ||
+		payload["stage_app_dir"] != true {
+		t.Fatalf("unexpected profile render payload: %#v", payload)
+	}
+	runnerArgs := payload["runner_arguments"].([]any)
+	appArgs := payload["arguments"].([]any)
+	if len(runnerArgs) != 1 || runnerArgs[0] != "--shim" ||
+		len(appArgs) != 1 || appArgs[0] != "--open" {
+		t.Fatalf("unexpected profile render args: %#v", payload)
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanStageApplicationDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

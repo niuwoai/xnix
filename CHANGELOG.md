@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc50] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `windows-app-smoke-profile-render` command for generating reusable local Windows app smoke profile JSON.
+- Added `scripts/winapp_smoke.rb --write-profile <path>` so operators can save repeatable real app settings without exposing the written profile path in reports.
+
 ## [0.2.640-rc49] - 2026-07-24
 
 ### Added

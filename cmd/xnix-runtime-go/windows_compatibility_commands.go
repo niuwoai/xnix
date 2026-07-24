@@ -95,6 +95,70 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppSmokeProfileRender(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-smoke-profile-render", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var exePath string
+	var stateRoot string
+	var workingDir string
+	var profilePath string
+	var runnerPath string
+	var timeoutText string
+	var expectedMarker string
+	var successMode string
+	var runnerBottle string
+	var redactOutput bool
+	var skipBootstrap bool
+	var stageAppDir bool
+	flags.StringVar(&exePath, "exe", "", "Windows executable path")
+	flags.StringVar(&profilePath, "profile", "", "base Windows app smoke profile JSON path")
+	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
+	flags.StringVar(&workingDir, "working-dir", "", "working directory for the compatibility runner")
+	flags.StringVar(&runnerPath, "runner", "", "explicit compatibility runner path")
+	flags.StringVar(&runnerBottle, "runner-bottle", "", "compatibility runner bottle name")
+	flags.StringVar(&timeoutText, "timeout", "30s", "execution timeout")
+	flags.StringVar(&expectedMarker, "expected-marker", winapp.DefaultMarker, "expected stdout marker")
+	flags.StringVar(&successMode, "success-mode", winapp.SuccessModeMarker, "success mode: marker, exit-code, or startup-window")
+	flags.BoolVar(&redactOutput, "redact-output", false, "request redacted Runtime smoke output")
+	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "skip Wine prefix bootstrap before application execution")
+	flags.BoolVar(&stageAppDir, "stage-app-dir", false, "stage the application directory into the isolated Runtime state root before execution")
+
+	var appArgs repeatedStringFlag
+	var runnerArgs repeatedStringFlag
+	flags.Var(&appArgs, "arg", "argument passed to the Windows executable")
+	flags.Var(&runnerArgs, "runner-arg", "argument passed to the compatibility runner before the executable path")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-smoke-profile-render")
+	}
+	visitedFlags := map[string]bool{}
+	flags.Visit(func(flag *flag.Flag) {
+		visitedFlags[flag.Name] = true
+	})
+
+	request, err := winapp.LoadSmokeProfile(profilePath)
+	if err != nil {
+		return err
+	}
+	if visitedFlags["timeout"] || request.Timeout == 0 {
+		timeout, err := time.ParseDuration(timeoutText)
+		if err != nil {
+			return fmt.Errorf("parse timeout: %w", err)
+		}
+		request.Timeout = timeout
+	}
+	applySmokeCLIOverrides(&request, visitedFlags, exePath, []string(appArgs), []string(runnerArgs), runnerBottle, stateRoot, workingDir, runnerPath, expectedMarker, successMode, redactOutput, skipBootstrap, stageAppDir)
+
+	profile := winapp.SmokeProfileFromRequest(request)
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(profile)
+}
+
 func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]bool, exePath string, appArgs []string, runnerArgs []string, runnerBottle string, stateRoot string, workingDir string, runnerPath string, expectedMarker string, successMode string, redactOutput bool, skipBootstrap bool, stageAppDir bool) {
 	if strings.TrimSpace(exePath) != "" {
 		request.ExecutablePath = exePath
