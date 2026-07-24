@@ -1,6 +1,6 @@
 # Claude Code Live Delegation Brief
 
-> Last updated: 2026-07-24 | Mainline checkpoint: v0.2.640-rc5 | Formal release: v0.2.640 pending full smoke
+> Last updated: 2026-07-24 | Mainline checkpoint: v0.2.640-rc6 | Formal release: v0.2.640 pending full smoke
 
 This is the short live brief for handing the next Xnix work to Claude Code. It is meant to be copied into a Claude Code session one task at a time.
 
@@ -16,13 +16,15 @@ git status --short --branch
 
 If the workspace contains Codex-owned work in progress, do not ask Claude Code to start a different task in the same checkout. Either let Codex finish and commit that work first, or explicitly assign Claude Code to finish only that in-progress task.
 
-No Codex-owned dirty lane should be present after the local v0.2.640-rc5 checkpoint. If C8W3 or C8W4 files are dirty, treat that as interrupted repair work rather than permission to start a new lane:
+No Codex-owned dirty lane should be present after the local v0.2.640-rc6 checkpoint. If C8W3, C8W4, or C8W5 files are dirty, treat that as interrupted repair work rather than permission to start a new lane:
 
 ```text
 C8W3 Runtime owner service launch request envelope guard
+C8W4 KDE controlled-launch action surface audit
+C8W5 Managed launcher acceptance report
 ```
 
-If those files are dirty, Claude Code must not start `C8W5`, `C8W6`, or `C8W7` in the same checkout.
+If those files are dirty, Claude Code must not start `C8W6` or `C8W7` in the same checkout.
 
 ## Global Rules for Every Claude Code Task
 
@@ -61,9 +63,9 @@ Use this order unless Codex or the human operator explicitly chooses a repair br
 | --- | --- | --- | --- | --- |
 | Done | `C8W3` Runtime owner service launch request envelope guard | `codex/owner-service-launch-envelope-guard` | Repair only | Present locally in v0.2.640-rc4. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W4` KDE controlled-launch action surface audit | `codex/kde-controlled-launch-action-surface-audit` | Repair only | Present locally in v0.2.640-rc5. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C8W5` Managed launcher acceptance report | `codex/managed-launcher-acceptance-report` | No | Tie known-app smoke evidence, launcher bridge evidence, and Compatibility Center projection into a safe acceptance report. |
-| 2 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | No | Produce a deterministic checklist for promoting `v0.2.640` after full smoke passes. |
-| 3 | `C8W7` Desktop-trigger dry-run request review | `codex/desktop-trigger-dry-run-request-review` | No | Add the next dry-run review packet before any real desktop-triggered launch attempt. |
+| Done | `C8W5` Managed launcher acceptance report | `codex/managed-launcher-acceptance-report` | Repair only | Present locally in v0.2.640-rc6. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | No | Produce a deterministic checklist for promoting `v0.2.640` after full smoke passes. |
+| 2 | `C8W7` Desktop-trigger dry-run request review | `codex/desktop-trigger-dry-run-request-review` | No | Add the next dry-run review packet before any real desktop-triggered launch attempt. |
 
 ## Task C8W3: Finish Runtime Owner Service Launch Request Envelope Guard
 
@@ -233,7 +235,7 @@ What evidence proves that the managed known Windows app lane is ready for the ne
 ### Required verification
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity ./internal/runtime/winapp ./cmd/xnix-runtime-go -run 'TestManagedLauncherAcceptance|TestDesktopTriggerStagedInvocationReadiness|TestKnownApp' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity ./internal/runtime/winapp ./cmd/xnix-runtime-go -run 'TestPreviewManagedLauncherAcceptance|TestManagedLauncherAcceptance|TestDesktopTriggerStagedInvocationReadiness|TestKnownApp' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
 ruby scripts/verify_layout.rb
 ruby scripts/mainline_integration_review.rb --format json

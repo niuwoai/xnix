@@ -1,6 +1,6 @@
 # Claude Code Next Actions Handoff
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc5
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc6
 
 This document is the short, copyable handoff for asking Claude Code to continue Xnix mainline work without drifting into unsafe or overly broad implementation.
 
@@ -8,7 +8,7 @@ Use this document when the human operator wants Claude Code to implement the nex
 
 ## Current Situation
 
-Xnix is currently at the local `v0.2.640-rc5` checkpoint candidate.
+Xnix is currently at the local `v0.2.640-rc6` checkpoint candidate.
 
 The formal `v0.2.640` release is not promoted yet because the full-smoke gate still needs a passing run:
 
@@ -60,10 +60,10 @@ Use this order unless a reviewer explicitly asks for a repair branch:
 | Done | `C8W2` Desktop-trigger staged invocation readiness packet | `codex/desktop-trigger-staged-invocation-readiness` | Present locally in v0.2.640-rc3. Do not dispatch again unless a reviewer requests repair. |
 | Done | `C8W3` Runtime owner service launch request envelope guard | `codex/owner-service-launch-envelope-guard` | Present locally in v0.2.640-rc4. Do not dispatch again unless a reviewer requests repair. |
 | Done | `C8W4` KDE controlled-launch action surface audit | `codex/kde-controlled-launch-action-surface-audit` | Present locally in v0.2.640-rc5. Do not dispatch again unless a reviewer requests repair. |
-| 1 | `C8W5` Managed launcher acceptance report | `codex/managed-launcher-acceptance-report` | Tie known-app smoke evidence, launcher bridge evidence, and Compatibility Center projection into a user-safe acceptance report. |
-| 2 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | Produce a deterministic promotion checklist for `v0.2.640` after full smoke passes. |
+| Done | `C8W5` Managed launcher acceptance report | `codex/managed-launcher-acceptance-report` | Present locally in v0.2.640-rc6. Do not dispatch again unless a reviewer requests repair. |
+| 1 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | Produce a deterministic promotion checklist for `v0.2.640` after full smoke passes. |
 
-Prefer `C8W5` next. It connects the managed launcher evidence chain without needing Docker, QEMU, network access, or host changes.
+Prefer `C8W6` next. It makes formal promotion review deterministic without needing Docker, QEMU, network access, or host changes.
 
 ## Task C8W2: Desktop-Trigger Staged Invocation Readiness Packet
 

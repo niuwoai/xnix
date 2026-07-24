@@ -4,6 +4,22 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc6] - 2026-07-24
+
+### Added
+
+- Added `managed-launcher-acceptance-report-preview`, a Go-owned user-safe acceptance report that joins Runtime-status launch evidence, known-app identity, artifact digest evidence, launch authorization, session-gated review, controlled execution session, managed launcher request readiness, guest smoke evidence, KDE-safe projection state, and the full-checkpoint dependency.
+- Added `docs/claude-code-current-execution-queue.md` as the current copy-first Claude Code execution queue for `C8W5`, `C8W6`, and `C8W7`.
+
+### Changed
+
+- Updated Claude Code dispatch guidance so the short current handoff points at the new execution queue.
+- Updated layout and mainline review gates so the managed launcher acceptance report is classified with the KDE-first Runtime-owned evidence lane.
+
+### Fixed
+
+- Kept the acceptance report fail-closed for missing, malformed, stale, incomplete, or not-yet-promoted evidence while preserving disabled D-Bus calls, desktop launch, backend launch, Runtime writes, KDE configuration writes, network access, and host mutation.
+
 ## [0.2.640-rc5] - 2026-07-24
 
 ### Added

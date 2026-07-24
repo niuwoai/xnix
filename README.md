@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc5`.
+The project is currently at `v0.2.640-rc6`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.640-rc5`.
 
 ## Current Checkpoint
 
-v0.2.640-rc5 keeps the formal full checkpoint gate pending and adds `kde-controlled-launch-action-surface-audit-preview`, a Go-owned audit of the KDE controlled-launch desktop metadata. It verifies the action id, public D-Bus method, evidence-only forwarded argument, missing or malformed metadata, unsafe owner-only arguments, backend terms, and no-side-effect gates before any human-authorized desktop-triggered smoke. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
+v0.2.640-rc6 keeps the formal full checkpoint gate pending and adds `managed-launcher-acceptance-report-preview`, a Go-owned report that ties Runtime-status launch handoff evidence, known-app identity, artifact digest evidence, launch authorization, session-gated review, controlled execution session, managed launcher request readiness, guest smoke evidence, KDE-safe projection state, and the full-checkpoint dependency into one user-safe acceptance packet. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.639 connected the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.640-rc5 audited the KDE controlled-launch action surface before any human-authorized desktop-triggered smoke.
 
 ## Main References
 
@@ -49,4 +49,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc5`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc6`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
