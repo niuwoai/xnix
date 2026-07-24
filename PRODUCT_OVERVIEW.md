@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc2
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc3
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc3 checkpoint candidate adds `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet for the next human-authorized desktop-triggered staged launch smoke. The packet consumes the existing KDE controlled-launch action metadata, D-Bus fixture smoke plan, Runtime-status handoff evidence, owner trigger state, managed launcher request readiness, known-app artifact evidence, guest smoke evidence, and the full-checkpoint release gate. It reports ready, blocked, missing-evidence, stale-evidence, malformed, unsupported, unsafe, or needs-full-checkpoint states while keeping owner-service arguments, state-root paths, raw launcher output, backend details, D-Bus calls, Runtime writes, KDE configuration writes, network fetches, and host mutation disabled. The formal `v0.2.640` release remains pending until full smoke passes.
 
 The v0.2.640-rc2 checkpoint candidate adds structured full-smoke failure classification while keeping the formal `v0.2.640` release pending. `scripts/full_smoke.rb` now writes JSON and Markdown reports before exiting nonzero on failed steps, and the report classifies Docker daemon blockers, Docker Hub EOF failures, missing local base images, Buildroot build failures, QEMU serial failures, known Windows app smoke failures, fixture Windows app smoke failures, and KDE action fixture failures. Failed reports expose the failed step, operator-action flag, project-defect flag, safe retry command, and redacted failure summary without claiming formal release readiness from partial smoke evidence. The previous rc1 candidate already promoted `kde-controlled-launch-action-dbus-fixture-smoke` into the formal gate after the base QEMU boot, staged known Windows app dispatch smoke, and QEMU guest real Windows app Wine smoke.
 

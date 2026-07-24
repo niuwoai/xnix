@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc2`.
+The project is currently at `v0.2.640-rc3`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc2`.
 
 ## Current Checkpoint
 
-v0.2.640-rc2 keeps the formal full checkpoint gate pending and adds structured full-smoke failure classification. Failed full-smoke runs now write JSON and Markdown reports that distinguish infrastructure blockers, missing local images, Buildroot failures, QEMU serial failures, known Windows app smoke failures, fixture Windows app smoke failures, and KDE action fixture failures. The formal `v0.2.640` tag remains pending because Colima Docker currently fails to pull `debian:bookworm-slim` from Docker Hub with EOF during token/layer fetch.
+v0.2.640-rc3 keeps the formal full checkpoint gate pending and adds `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet for the next human-authorized desktop-triggered staged launch smoke. It combines the KDE action, D-Bus smoke plan, Runtime-status handoff, owner trigger, managed launcher request, known-app artifact evidence, guest smoke evidence, and release gate while keeping launch, writes, D-Bus calls, network fetches, and host mutation disabled. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.639 connected the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane.
 
@@ -32,8 +32,8 @@ Historical `docs/claude-code-*` files remain repository evidence, but new implem
 Run targeted checks for small versions:
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewKDEControlledLaunchSessionBusSmokePlanLinksActionToRestrictedSmoke|TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle|TestPreviewKnownAppRuntimeStatusLaunchOwnerTriggerConsumesVerifiedHandoff' -count=1
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestrictedSmoke|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandRejectsMissingStateRoot|TestKDEControlledLaunchActionPreviewCommandForwardsOnlyEvidenceHandle|TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandConsumesVerifiedHandoff' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewDesktopTriggerStagedInvocationReadiness|TestPreviewKDEControlledLaunchSessionBusSmokePlanLinksActionToRestrictedSmoke|TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle|TestPreviewKnownAppRuntimeStatusLaunchOwnerTriggerConsumesVerifiedHandoff' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestDesktopTriggerStagedInvocationReadiness|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestrictedSmoke|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandRejectsMissingStateRoot|TestKDEControlledLaunchActionPreviewCommandForwardsOnlyEvidenceHandle|TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandConsumesVerifiedHandoff' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner -run 'TestServiceCallDispatchesShowRuntimeControlledLaunch|TestServiceCallServesReadDispatchInProcess' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner -run 'TestRuntimeOwnerCommandRendersShowRuntimeControlledLaunchServiceCall|TestRuntimeOwnerCommandRendersRedactedAdapterProfileOwnerLocalReadDispatch' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureBlocksWithoutVerifiedArtifact' -count=1
@@ -49,4 +49,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc2`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc3`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.

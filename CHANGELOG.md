@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc3] - 2026-07-24
+
+### Added
+
+- Added `desktop-trigger-staged-invocation-readiness-preview`, a Go-owned read-only packet that combines KDE controlled-launch action metadata, the D-Bus smoke plan, Runtime-status handoff evidence, owner trigger state, managed launcher request readiness, known-app artifact evidence, guest smoke evidence, and the full-checkpoint release gate.
+
+### Changed
+
+- Added stale-digest, missing-evidence, malformed-evidence, missing-artifact, blocked guest-smoke, redaction, no-side-effect, and CLI tests for the desktop-trigger staged invocation readiness packet.
+- Added `docs/claude-code-next-actions-handoff.md` as the short bounded Claude Code dispatch sheet for the next implementation branches.
+
 ## [0.2.640-rc2] - 2026-07-24
 
 ### Changed
