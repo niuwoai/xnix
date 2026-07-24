@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc45] - 2026-07-24
+
+### Added
+
+- Added PE machine architecture parsing for direct and profile-backed Windows app smoke inputs.
+- Added `executable_architecture` and `executable_architecture_supported` evidence to Go Runtime and Ruby smoke reports, blocking unsupported non-x86 Windows executables before runner execution.
+
 ## [0.2.640-rc44] - 2026-07-24
 
 ### Added

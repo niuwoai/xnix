@@ -119,6 +119,8 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "executable_source" => executable_source,
     "executable_format" => "unknown",
     "windows_executable_signature_observed" => false,
+    "executable_architecture" => "unknown",
+    "executable_architecture_supported" => false,
     "profile_supplied" => profile_supplied,
     "profile_preflight_invoked" => false,
     "profile_preflight_status" => "not-run",
@@ -184,6 +186,8 @@ def emit_report(report)
     puts "- Fixture built: #{report.fetch("fixture_built")}"
     puts "- Executable format: #{report.fetch("executable_format")}"
     puts "- Windows executable signature observed: #{report.fetch("windows_executable_signature_observed")}"
+    puts "- Executable architecture: #{report.fetch("executable_architecture")}"
+    puts "- Executable architecture supported: #{report.fetch("executable_architecture_supported")}"
     puts "- Runner diagnostics invoked: #{report.fetch("runner_diagnostics_invoked")}"
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
@@ -306,6 +310,8 @@ if profile_supplied
   report["profile_preflight_next_action"] = preflight_payload.fetch("next_action", "")
   report["executable_format"] = preflight_payload.fetch("executable_format", "unknown")
   report["windows_executable_signature_observed"] = preflight_payload.fetch("windows_executable_signature_observed", false)
+  report["executable_architecture"] = preflight_payload.fetch("executable_architecture", "unknown")
+  report["executable_architecture_supported"] = preflight_payload.fetch("executable_architecture_supported", false)
   report["runner_available"] = preflight_payload.fetch("runner_available", false)
   report["runner_argument_count"] = preflight_payload.fetch("runner_argument_count", 0)
   report["working_directory_mode"] = preflight_payload.fetch("working_directory_mode", "executable-directory")
@@ -464,6 +470,8 @@ report["runtime_payload"] = payload
 report["status"] = payload.fetch("status")
 report["executable_format"] = payload.fetch("executable_format", "unknown")
 report["windows_executable_signature_observed"] = payload.fetch("windows_executable_signature_observed", false)
+report["executable_architecture"] = payload.fetch("executable_architecture", "unknown")
+report["executable_architecture_supported"] = payload.fetch("executable_architecture_supported", false)
 report["runner_available"] = payload.fetch("runner_available", false)
 report["success_mode"] = payload.fetch("success_mode", options.fetch(:success_mode))
 report["working_directory_mode"] = payload.fetch("working_directory_mode", "executable-directory")

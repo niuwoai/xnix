@@ -1,6 +1,7 @@
 package winapp
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,6 +24,8 @@ type SmokeProfilePreflightResult struct {
 	ExecutableExists            bool                    `json:"executable_exists"`
 	ExecutableFormat            string                  `json:"executable_format"`
 	WindowsExecutableSignature  bool                    `json:"windows_executable_signature_observed"`
+	ExecutableArchitecture      string                  `json:"executable_architecture"`
+	ExecutableArchitectureReady bool                    `json:"executable_architecture_supported"`
 	WorkingDirectoryMode        string                  `json:"working_directory_mode"`
 	WorkingDirectoryValid       bool                    `json:"working_directory_valid"`
 	StateRootConfigured         bool                    `json:"state_root_configured"`
@@ -90,14 +93,21 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 	}
 	result.ExecutableExists = true
 	result.ExecutableName = filepath.Base(executablePath)
-	executableFormat, signatureObserved, signatureErr := inspectWindowsExecutableSignature(executablePath)
+	executableFormat, signatureObserved, executableArchitecture, architectureReady, signatureErr := inspectWindowsExecutableSignature(executablePath)
 	if signatureErr != nil {
 		result.FailureReason = signatureErr.Error()
-		result.NextAction = "Use a Windows PE executable with an MZ header in executable_path before running the app."
+		result.NextAction = "Use a Windows PE executable with an MZ header and PE machine header in executable_path before running the app."
 		return result, nil
 	}
 	result.ExecutableFormat = executableFormat
 	result.WindowsExecutableSignature = signatureObserved
+	result.ExecutableArchitecture = executableArchitecture
+	result.ExecutableArchitectureReady = architectureReady
+	if !architectureReady {
+		result.FailureReason = "Windows executable architecture is not supported"
+		result.NextAction = "Use an x86_64 or x86 Windows PE executable before running the app."
+		return result, nil
+	}
 
 	workingDirectoryMode, workingDirectoryErr := inspectProfileWorkingDirectory(request.WorkingDirectory, executablePath)
 	if workingDirectoryErr != nil {
@@ -134,6 +144,7 @@ func baseSmokeProfilePreflightResult() SmokeProfilePreflightResult {
 		RequestType:                 SmokeProfilePreflightRequestType,
 		Status:                      ProfileBlockedStatus,
 		ExecutableFormat:            "unknown",
+		ExecutableArchitecture:      "unknown",
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		SuccessMode:                 SuccessModeMarker,
 		RawProfilePathExposed:       false,
@@ -195,21 +206,54 @@ func inspectProfileWorkingDirectory(path string, executablePath string) (string,
 	return mode, nil
 }
 
-func inspectWindowsExecutableSignature(path string) (string, bool, error) {
+func inspectWindowsExecutableSignature(path string) (string, bool, string, bool, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return "unknown", false, fmt.Errorf("executable signature is not readable")
+		return "unknown", false, "unknown", false, fmt.Errorf("executable signature is not readable")
 	}
 	defer func() {
 		_ = file.Close()
 	}()
-	header := make([]byte, 2)
-	read, err := file.Read(header)
-	if err != nil || read < len(header) {
-		return "unknown", false, fmt.Errorf("executable signature is not readable")
+	mzHeader := make([]byte, 2)
+	read, err := file.ReadAt(mzHeader, 0)
+	if err != nil || read < len(mzHeader) {
+		return "unknown", false, "unknown", false, fmt.Errorf("executable signature is not readable")
 	}
-	if string(header) != "MZ" {
-		return "unknown", false, fmt.Errorf("executable is not a Windows PE file")
+	if string(mzHeader) != "MZ" {
+		return "unknown", false, "unknown", false, fmt.Errorf("executable is not a Windows PE file")
 	}
-	return "pe-mz", true, nil
+	dosHeader := make([]byte, 64)
+	read, err = file.ReadAt(dosHeader, 0)
+	if err != nil && read < len(dosHeader) {
+		return "pe-mz", true, "unknown", false, fmt.Errorf("executable PE header is not readable")
+	}
+	peHeaderOffset := int64(binary.LittleEndian.Uint32(dosHeader[0x3c:0x40]))
+	if peHeaderOffset < 64 {
+		return "pe-mz", true, "unknown", false, fmt.Errorf("executable PE header is not readable")
+	}
+	peHeader := make([]byte, 6)
+	read, err = file.ReadAt(peHeader, peHeaderOffset)
+	if err != nil && read < len(peHeader) {
+		return "pe-mz", true, "unknown", false, fmt.Errorf("executable PE header is not readable")
+	}
+	if string(peHeader[0:4]) != "PE\x00\x00" {
+		return "pe-mz", true, "unknown", false, fmt.Errorf("executable is not a Windows PE file")
+	}
+	architecture, ready := windowsPEMachineArchitecture(binary.LittleEndian.Uint16(peHeader[4:6]))
+	return "pe-mz", true, architecture, ready, nil
+}
+
+func windowsPEMachineArchitecture(machine uint16) (string, bool) {
+	switch machine {
+	case 0x8664:
+		return "x86_64", true
+	case 0x014c:
+		return "x86", true
+	case 0xaa64:
+		return "arm64", false
+	case 0x01c4:
+		return "arm", false
+	default:
+		return "unknown", false
+	}
 }

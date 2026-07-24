@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc44`.
+The project is currently at `v0.2.640-rc45`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc44`.
 
 ## Current Checkpoint
 
-v0.2.640-rc44 makes direct `windows-app-run-smoke --exe <path>` validate the executable's Windows `MZ` signature before runner resolution and report `executable_format` plus `windows_executable_signature_observed`. The previous v0.2.640-rc43 checkpoint added the same validation to profile preflight.
+v0.2.640-rc45 parses the PE machine architecture for direct and profile-backed Windows app smoke inputs, reporting `executable_architecture` and `executable_architecture_supported` before any runner execution. The previous v0.2.640-rc44 checkpoint made direct `windows-app-run-smoke --exe <path>` validate the executable's Windows `MZ` signature.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc44`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc45`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

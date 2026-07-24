@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -98,7 +99,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -133,6 +134,8 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["executable_name"] != "hello.exe" ||
 		payload["executable_format"] != "pe-mz" ||
 		payload["windows_executable_signature_observed"] != true ||
+		payload["executable_architecture"] != "x86_64" ||
+		payload["executable_architecture_supported"] != true ||
 		payload["runner_available"] != true ||
 		payload["success_mode"] != "marker" ||
 		payload["working_directory_mode"] != "executable-directory" ||
@@ -188,6 +191,54 @@ func TestWindowsAppRunSmokeCommandRejectsNonPEExecutable(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandReportsUnsupportedArchitecture(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "arm-app.exe")
+	if err := os.WriteFile(exePath, minimalPEFixture(0xaa64), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nprintf 'should-not-run\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(tempDir, "state"),
+		"--runner", runnerPath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "failed" ||
+		payload["executable_name"] != "arm-app.exe" ||
+		payload["executable_format"] != "pe-mz" ||
+		payload["windows_executable_signature_observed"] != true ||
+		payload["executable_architecture"] != "arm64" ||
+		payload["executable_architecture_supported"] != false ||
+		payload["failure_reason"] != "Windows executable architecture is not supported" ||
+		payload["runner_available"] != false ||
+		payload["isolated_state_root"] != false {
+		t.Fatalf("unexpected unsupported architecture payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("unsupported architecture output leaked host paths: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")
@@ -195,7 +246,7 @@ func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "runtime-cwd")
@@ -249,7 +300,7 @@ func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "profile-app.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "profile-cwd")
@@ -322,7 +373,7 @@ func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
 func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "profile-app.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "profile-cwd")
@@ -373,6 +424,8 @@ func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
 		payload["executable_name"] != "profile-app.exe" ||
 		payload["executable_format"] != "pe-mz" ||
 		payload["windows_executable_signature_observed"] != true ||
+		payload["executable_architecture"] != "x86_64" ||
+		payload["executable_architecture_supported"] != true ||
 		payload["working_directory_mode"] != "operator-supplied" ||
 		payload["runner_available"] != true ||
 		payload["runner_argument_count"] != float64(1) ||
@@ -399,7 +452,7 @@ func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -443,7 +496,7 @@ func TestWindowsAppRunSmokeCommandCanUseStartupWindowSuccessMode(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -572,7 +625,7 @@ func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -623,7 +676,7 @@ func TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "custom.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -669,7 +722,7 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	dockerPath := filepath.Join(tempDir, "fake-docker")
@@ -734,7 +787,7 @@ func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	logPath := filepath.Join(tempDir, "guest.log")
@@ -1300,6 +1353,16 @@ func anyStrings(values []any) []string {
 		result = append(result, value.(string))
 	}
 	return result
+}
+
+func minimalPEFixture(machine uint16) []byte {
+	data := make([]byte, 0x88)
+	data[0] = 'M'
+	data[1] = 'Z'
+	binary.LittleEndian.PutUint32(data[0x3c:0x40], 0x80)
+	copy(data[0x80:0x84], []byte{'P', 'E', 0, 0})
+	binary.LittleEndian.PutUint16(data[0x84:0x86], machine)
+	return data
 }
 
 func assertWindowsCompatibilityCLISafe(t *testing.T, text string) {

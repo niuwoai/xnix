@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc44
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc45
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -46,7 +46,7 @@ Or use the report script without launching the Windows app:
 ruby scripts/winapp_smoke.rb --format json --profile .local/xnix/winapp-smoke/my-app.profile.json --preflight-only
 ```
 
-Preflight checks the schema, executable file, Windows `MZ` signature, working directory, state-root setting, success mode, runner argument count, app argument count, and runner diagnostics. It does not start Wine or the Windows application.
+Preflight checks the schema, executable file, Windows `MZ` signature, PE machine architecture, working directory, state-root setting, success mode, runner argument count, app argument count, and runner diagnostics. It does not start Wine or the Windows application.
 
 ## Local Smoke
 
@@ -64,7 +64,7 @@ go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile .local/xnix/winapp-
 
 Both paths keep Docker, QEMU, Colima, network checks, package managers, privileged containers, host networking, Docker socket mounts, broad host mounts, and host-root mutation disabled.
 
-Direct `--exe` smoke runs also validate the Windows `MZ` executable signature before runner resolution, working-directory setup, or app execution.
+Direct `--exe` smoke runs also validate the Windows `MZ` executable signature and PE machine architecture before runner resolution, working-directory setup, or app execution.
 
 ## Choosing Success Mode
 
@@ -79,6 +79,8 @@ Direct `--exe` smoke runs also validate the Windows `MZ` executable signature be
 - `profile_supplied: true` proves the report used a profile input.
 - `windows_executable_signature_observed: true` proves the profile points to a Windows PE-style executable header.
 - Direct smoke reports also expose `executable_format: pe-mz` when the supplied `--exe` target is a Windows PE-style executable.
+- `executable_architecture: x86_64` or `x86` proves the Runtime parsed the PE machine field for Wine prefix policy.
+- `executable_architecture_supported: true` means the current smoke path accepts the executable architecture before invoking a runner.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

@@ -51,6 +51,8 @@ type Result struct {
 	ExecutableName              string `json:"executable_name"`
 	ExecutableFormat            string `json:"executable_format"`
 	WindowsExecutableSignature  bool   `json:"windows_executable_signature_observed"`
+	ExecutableArchitecture      string `json:"executable_architecture"`
+	ExecutableArchitectureReady bool   `json:"executable_architecture_supported"`
 	RunnerAvailable             bool   `json:"runner_available"`
 	RunnerArgumentCount         int    `json:"runner_argument_count"`
 	CompatibilityLayer          string `json:"compatibility_layer"`
@@ -135,12 +137,19 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, err
 	}
 	result.ExecutableName = filepath.Base(executablePath)
-	executableFormat, signatureObserved, err := inspectWindowsExecutableSignature(executablePath)
+	executableFormat, signatureObserved, executableArchitecture, architectureReady, err := inspectWindowsExecutableSignature(executablePath)
 	if err != nil {
 		return result, err
 	}
 	result.ExecutableFormat = executableFormat
 	result.WindowsExecutableSignature = signatureObserved
+	result.ExecutableArchitecture = executableArchitecture
+	result.ExecutableArchitectureReady = architectureReady
+	if !architectureReady {
+		result.Status = FailedStatus
+		result.FailureReason = "Windows executable architecture is not supported"
+		return result, nil
+	}
 
 	if strings.TrimSpace(request.StateRoot) == "" {
 		return result, errors.New("state root is required")
@@ -396,6 +405,7 @@ func baseResult(request Request) Result {
 		RequestType:                 RequestType,
 		Status:                      FailedStatus,
 		ExecutableFormat:            "unknown",
+		ExecutableArchitecture:      "unknown",
 		CompatibilityLayer:          "windows-compatibility-layer",
 		WineBootstrapExitCode:       -1,
 		ExpectedMarker:              marker,
