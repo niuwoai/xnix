@@ -241,6 +241,7 @@ app_plans.each do |app_plan|
       "guest_start_mode" => payload.fetch("guest_start_mode", ""),
       "guest_started" => payload.fetch("guest_started", false),
       "guest_port_auto" => payload.fetch("guest_port_auto", false),
+      "checksum_verified" => payload.fetch("checksum_verified", false),
       "raw_output_redacted" => payload.fetch("raw_output_redacted", false),
       "marker_observed" => payload.fetch("marker_observed", false),
       "qemu_serial_log_written" => payload.fetch("qemu_serial_log_written", false),

@@ -23,6 +23,7 @@ assert(script.include?("\"--qemu-serial-log\", app_plan.fetch(\"serial_log_outpu
 assert(script.include?("DEFAULT_MATRIX_REPORT_OUTPUT"), "matrix smoke must define a default aggregate report output")
 assert(script.include?("\"matrix_report_output_written\" => true"), "matrix smoke must mark successful aggregate report persistence")
 assert(script.include?("\"scp\", file.path"), "matrix smoke must upload the aggregate matrix report to the remote state directory")
+assert(script.include?("\"checksum_verified\" => payload.fetch(\"checksum_verified\", false)"), "matrix smoke must preserve per-app checksum evidence")
 assert(script.include?("DEFAULT_APP_IDS"), "matrix smoke must define default app ids")
 assert(script.include?("\"7zr,busybox-w32\""), "matrix smoke must default to the first two real known apps")
 assert(script.include?("%w[go.mod cmd internal runtime]"), "matrix smoke must default to the lightweight Runtime source set")

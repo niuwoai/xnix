@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc70`.
+The project is currently at `v0.2.640-rc71`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc70`.
 
 ## Current Checkpoint
 
-v0.2.640-rc70 makes the q4 real Windows app matrix evidence easier for downstream consumers to find. `scripts/remote_known_winapp_matrix_smoke.rb --execute` still syncs/builds once and runs the default `7zr` and `busybox-w32` guest-wine apps sequentially through the Go Runtime, but now also persists the aggregate matrix JSON to `/home/xnix-run-materials/state/known-run-matrix-0.2.640-rc70.json` by default, or to an operator-selected `--matrix-report-output` path under `/home/xnix-*`.
+v0.2.640-rc71 adds a Go-owned known-app matrix evidence consumer. `xnix-runtime-go known-app-matrix-evidence-preview --matrix-report FILE` reads the aggregate q4 matrix JSON, validates the executed two-app QEMU/Wine evidence, preserves checksum, marker, redaction, serial-log, QEMU, and Wine counts, and projects KDE-safe per-app `known_app_smoke_evidence` without exposing remote paths or raw output.
+
+The previous v0.2.640-rc70 checkpoint made the q4 real Windows app matrix evidence easier for downstream consumers to find. `scripts/remote_known_winapp_matrix_smoke.rb --execute` persists the aggregate matrix JSON to `/home/xnix-run-materials/state/known-run-matrix-<version>.json` by default, or to an operator-selected `--matrix-report-output` path under `/home/xnix-*`.
 
 The previous v0.2.640-rc69 checkpoint added the remote known-app matrix smoke for the q4 real Windows app lane, recording per-app JSON and serial-log evidence plus aggregate pass/fail counts. The earlier v0.2.640-rc68 checkpoint added BusyBox-w32 as the second pinned real known app.
 
@@ -73,4 +75,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc70 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc71 is a targeted follow-up and does not reset the next full-checkpoint cadence.

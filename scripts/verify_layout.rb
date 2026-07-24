@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc70"
+EXPECTED_VERSION = "0.2.640-rc71"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -243,6 +243,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/window_identity_cli_test.go
   cmd/xnix-runtime-go/windows_compatibility_commands.go
   cmd/xnix-runtime-go/windows_compatibility_cli_test.go
+  cmd/xnix-runtime-go/known_app_matrix_evidence_commands.go
+  cmd/xnix-runtime-go/known_app_matrix_evidence_cli_test.go
   internal/runtime/winapp/smoke.go
   internal/runtime/winapp/smoke_test.go
   internal/runtime/winapp/profile.go
@@ -257,6 +259,8 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/guest_smoke_test.go
   internal/runtime/winapp/known_portable.go
   internal/runtime/winapp/known_portable_test.go
+  internal/runtime/appidentity/known_app_matrix_evidence.go
+  internal/runtime/appidentity/known_app_matrix_evidence_test.go
   scripts/build_wine_smoke_image.rb
   scripts/winapp_smoke.rb
   test/test_winapp_smoke_script.rb
@@ -6707,6 +6711,7 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_execution.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_evidence_record.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_action_trigger.go") +
+                                 read_project_file("internal/runtime/appidentity/known_app_matrix_evidence.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_fixture.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_trigger.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_action.go") +
@@ -6718,6 +6723,7 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("internal/runtime/appidentity/known_app_session_gated_launch_review_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_request_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_kde_runtime_status_launch_execution_test.go") +
+                                 read_project_file("internal/runtime/appidentity/known_app_matrix_evidence_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_fixture_test.go") +
                                  read_project_file("internal/runtime/appidentity/known_app_runtime_status_launch_owner_trigger_test.go") +
                                  read_project_file("internal/runtime/appidentity/kde_controlled_launch_action_test.go") +
@@ -6730,6 +6736,8 @@ go_compatibility_center_source = read_project_file("internal/runtime/appidentity
                                  read_project_file("cmd/xnix-runtime-go/kde_center_page_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/known_app_launch_authorization_receipt_commands.go") +
                                  read_project_file("cmd/xnix-runtime-go/known_app_launch_authorization_receipt_cli_test.go") +
+                                 read_project_file("cmd/xnix-runtime-go/known_app_matrix_evidence_commands.go") +
+                                 read_project_file("cmd/xnix-runtime-go/known_app_matrix_evidence_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/known_app_runtime_status_launch_owner_fixture_commands.go") +
                                  read_project_file("cmd/xnix-runtime-go/known_app_runtime_status_launch_owner_fixture_cli_test.go") +
                                  read_project_file("cmd/xnix-runtime-go/known_app_runtime_status_launch_owner_trigger_commands.go") +
@@ -6754,6 +6762,9 @@ end
 end
 %w[KnownAppKDERuntimeStatusLaunchEvidencePreviewSchemaVersion KnownAppKDERuntimeStatusLaunchEvidencePreviewRequestType KnownAppKDERuntimeStatusLaunchEvidencePreviewRequest KnownAppKDERuntimeStatusLaunchEvidencePreview PreviewKnownAppKDERuntimeStatusLaunchEvidence known-app-kde-runtime-status-launch-evidence-preview evidence_read_state evidence_handoff_consumed evidence_digest_verified known_app_smoke_evidence].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch evidence handoff preview must include #{token}")
+end
+%w[KnownAppMatrixEvidencePreviewSchemaVersion KnownAppMatrixEvidencePreviewRequestType KnownAppMatrixEvidencePreviewRequest KnownAppMatrixEvidencePreview PreviewKnownAppMatrixEvidence known-app-matrix-evidence-preview --matrix-report matrix_report_consumed matrix_report_output_written compatibility_center_projection_ready kde_center_projection_ready known_app_smoke_evidence qemu_executed_count wine_executed_count checksum_verified_count raw_output_redacted_count remote_path_exposed raw_output_exposed known-application-matrix-smoke remote-known-winapp-matrix-smoke review-known-app-matrix-evidence TestKnownAppMatrixEvidencePreviewCommandConsumesAggregateReport TestPreviewKnownAppMatrixEvidenceRejectsPassedAppWithoutChecksum].each do |token|
+  assert(go_compatibility_center_source.include?(token), "Go known app matrix evidence consumer must include #{token}")
 end
 %w[KnownAppKDERuntimeStatusLaunchActionTriggerSchemaVersion KnownAppKDERuntimeStatusLaunchActionTriggerRequestType KnownAppKDERuntimeStatusLaunchActionTriggerRequest KnownAppKDERuntimeStatusLaunchActionTriggerPreview PreviewKnownAppKDERuntimeStatusLaunchActionTrigger GetKnownAppKDERuntimeStatusLaunchActionTrigger KnownAppKDERuntimeStatusLaunchExecutionFromActionTriggerRequest PrepareKnownAppKDERuntimeStatusLaunchExecutionFromActionTrigger known-app-kde-runtime-status-launch-action-trigger-preview trigger_state runtime-launch-request-assembled runtime_owned_trigger launch_request_type launch_request_runtime_method launch_request_read_method action_trigger_type action_trigger_runtime_method action_trigger_read_method action_trigger_state evidence_handoff_consumed evidence_digest_verified].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go Runtime-status launch action trigger must include #{token}")

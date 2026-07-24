@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc71] - 2026-07-24
+
+### Added
+
+- Added the Go-owned `known-app-matrix-evidence-preview` Runtime command for consuming aggregate q4 known-app matrix JSON reports.
+- Added KDE-safe matrix evidence projection for per-app known Windows app smoke summaries, including checksum, marker, redaction, serial-log, QEMU, and Wine execution counts without exposing remote paths or raw output.
+
+### Changed
+
+- Changed the remote known-app matrix smoke aggregate to preserve per-app `checksum_verified` evidence for downstream Runtime consumers.
+
 ## [0.2.640-rc70] - 2026-07-24
 
 ### Changed
