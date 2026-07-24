@@ -78,6 +78,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
       exe_path = args[args.index("--exe") + 1]
       runner_arg_count = args.each_with_index.count { |value, index| value == "--runner-arg" && index + 1 < args.length }
+      runner_arg_count += 2 if args.include?("--runner-bottle")
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
@@ -212,8 +213,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--format", "json",
     "--exe", custom_exe.to_s,
     "--runner", custom_runner.to_s,
-    "--runner-arg", "--bottle",
-    "--runner-arg", "private-bottle-name",
+    "--runner-bottle", "private-bottle-name",
+    "--runner-arg", "--shim-mode",
     "--expected-marker", "CUSTOM_APP_OK",
     "--arg", "--custom-flag"
   )
@@ -226,16 +227,18 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
-  assert(custom_report.fetch("runner_argument_count") == 2, "custom report must preserve runner argument count")
+  assert(custom_report.fetch("runner_argument_count") == 3, "custom report must preserve runner argument count")
   assert(!custom_stdout.include?(custom_exe.to_s), "custom report must not leak executable path")
   assert(!custom_stdout.include?(custom_runner.to_s), "custom report must not leak runner path")
   assert(!custom_stdout.include?("private-bottle-name"), "custom report must not leak runner arguments")
+  assert(!custom_stdout.include?("--shim-mode"), "custom report must not leak raw runner arguments")
   assert(!custom_report.fetch("runner_command_hints").join("\n").include?(custom_runner.to_s), "custom command hints must not leak runner path")
 
   custom_invocations = fake_go_log.read.lines.map { |line| line.split("\u0001") }
   last_invocation = custom_invocations.last
   assert(!last_invocation.include?("build"), "custom executable mode must not build the fixture")
   assert(last_invocation.include?("--runner"), "custom executable mode must forward explicit runner")
+  assert(last_invocation.include?("--runner-bottle"), "custom executable mode must forward runner bottle")
   assert(last_invocation.include?("--runner-arg"), "custom executable mode must forward runner arguments")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
 

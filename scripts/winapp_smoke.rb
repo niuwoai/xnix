@@ -28,12 +28,13 @@ options = {
   timeout: "30s",
   bootstrap_timeout: "300s",
   expected_marker: MARKER,
+  runner_bottle: nil,
   runner_args: [],
   app_args: []
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-arg VALUE] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -46,6 +47,7 @@ OptionParser.new do |parser|
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
   parser.on("--bootstrap-timeout DURATION", "Wine prefix bootstrap timeout") { |value| options[:bootstrap_timeout] = value }
   parser.on("--expected-marker MARKER", "Expected stdout marker") { |value| options[:expected_marker] = value }
+  parser.on("--runner-bottle NAME", "Compatibility runner bottle name passed before the executable path") { |value| options[:runner_bottle] = value }
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
 end.parse!
@@ -313,6 +315,7 @@ smoke_command = [
   "--expected-marker", options.fetch(:expected_marker)
 ]
 smoke_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+smoke_command.concat(["--runner-bottle", options.fetch(:runner_bottle)]) unless options[:runner_bottle].to_s.strip.empty?
 options.fetch(:runner_args).each { |value| smoke_command.concat(["--runner-arg", value]) }
 options.fetch(:app_args).each { |value| smoke_command.concat(["--arg", value]) }
 smoke_command << "--redact-output" if options.fetch(:redact_output)

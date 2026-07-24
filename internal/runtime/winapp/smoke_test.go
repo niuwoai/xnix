@@ -105,6 +105,44 @@ func TestRunSmokePassesRunnerArgumentsBeforeExecutable(t *testing.T) {
 	}
 }
 
+func TestRunSmokeExpandsRunnerBottleBeforeRunnerArguments(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test \"$1\" = --bottle || exit 78\n" +
+		"test \"$2\" = smoke-bottle || exit 77\n" +
+		"test \"$3\" = --shim-mode || exit 76\n" +
+		"test \"$4\" = '" + strings.ReplaceAll(executablePath, "'", "'\\''") + "' || exit 75\n" +
+		"printf '" + DefaultMarker + "\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath:  executablePath,
+		RunnerBottle:    "smoke-bottle",
+		RunnerArguments: []string{"--shim-mode"},
+		StateRoot:       filepath.Join(tempDir, "state"),
+		RunnerPath:      runnerPath,
+		Timeout:         5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.RunnerArgumentCount != 3 ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected runner bottle smoke result: %#v", result)
+	}
+}
+
 func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
@@ -229,7 +267,7 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 		t.Fatalf("unexpected candidate evidence: %#v", result.Candidates)
 	}
 	if !strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json") ||
-		!strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "--runner-arg --bottle") ||
+		!strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), "--runner-bottle bottle-name") ||
 		strings.Contains(strings.Join(result.RunnerCommandHints, "\n"), runnerPath) {
 		t.Fatalf("unexpected available runner command hints: %#v", result.RunnerCommandHints)
 	}
@@ -301,7 +339,7 @@ func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 	hints := strings.Join(result.RunnerCommandHints, "\n")
 	if !strings.Contains(hints, "XNIX_WINDOWS_RUNNER=path/to/wine") ||
 		!strings.Contains(hints, "--runner path/to/wine") ||
-		!strings.Contains(hints, "--runner-arg --bottle") ||
+		!strings.Contains(hints, "--runner-bottle bottle-name") ||
 		strings.Contains(hints, missingRunner) {
 		t.Fatalf("unexpected missing runner command hints: %#v", result.RunnerCommandHints)
 	}

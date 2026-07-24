@@ -115,6 +115,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		"--exe", exePath,
 		"--state-root", filepath.Join(tempDir, "state"),
 		"--runner", runnerPath,
+		"--runner-bottle", "private-bottle-name",
 		"--runner-arg", "--shim-mode",
 		"--timeout", "5s",
 	}, &output)
@@ -131,7 +132,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["status"] != "passed" ||
 		payload["executable_name"] != "hello.exe" ||
 		payload["runner_available"] != true ||
-		payload["runner_argument_count"] != float64(1) ||
+		payload["runner_argument_count"] != float64(3) ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
 		payload["wine_bootstrap_succeeded"] != false ||
@@ -146,6 +147,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 	}
 	if strings.Contains(output.String(), exePath) ||
 		strings.Contains(output.String(), runnerPath) ||
+		strings.Contains(output.String(), "private-bottle-name") ||
 		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
 	}

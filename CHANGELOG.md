@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc35] - 2026-07-24
+
+### Added
+
+- Added local `--runner-bottle NAME` support to the Go-owned Windows app smoke command, expanding it to runner bottle arguments without exposing the raw bottle name.
+- Added `--runner-bottle` forwarding to `scripts/winapp_smoke.rb` and updated safe command hints to prefer the simpler bottle selector.
+
 ## [0.2.640-rc34] - 2026-07-24
 
 ### Fixed

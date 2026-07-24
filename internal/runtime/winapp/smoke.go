@@ -29,6 +29,7 @@ type Request struct {
 	ExecutablePath  string
 	Arguments       []string
 	RunnerArguments []string
+	RunnerBottle    string
 	StateRoot       string
 	RunnerPath      string
 	Timeout         time.Duration
@@ -137,7 +138,8 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, nil
 	}
 	result.RunnerAvailable = true
-	result.RunnerArgumentCount = len(request.RunnerArguments)
+	runnerArguments := runnerInvocationArguments(request)
+	result.RunnerArgumentCount = len(runnerArguments)
 
 	timeout := request.Timeout
 	if timeout <= 0 {
@@ -149,7 +151,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	bootstrapPath, bootstrapAvailable := resolveWineboot(runnerPath)
 	if bootstrapAvailable {
 		result.WineBootstrapAttempted = true
-		bootstrapArgs := append([]string{}, request.RunnerArguments...)
+		bootstrapArgs := append([]string{}, runnerArguments...)
 		bootstrapArgs = append(bootstrapArgs, "--init")
 		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, bootstrapArgs...)
 		bootstrapCommand.Env = runnerEnvironment(stateRoot)
@@ -173,7 +175,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		result.WineBootstrapSucceeded = true
 	}
 
-	args := append([]string{}, request.RunnerArguments...)
+	args := append([]string{}, runnerArguments...)
 	args = append(args, executablePath)
 	args = append(args, request.Arguments...)
 	command := exec.CommandContext(runCtx, runnerPath, args...)
@@ -286,15 +288,24 @@ func runnerCommandHints(runnerAvailable bool) []string {
 		return []string{
 			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
 			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
-			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-arg --bottle --runner-arg bottle-name --format json",
+			"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-bottle bottle-name --format json",
 		}
 	}
 	return []string{
 		"XNIX_WINDOWS_RUNNER=path/to/wine ruby scripts/winapp_smoke.rb --exe path/to/app.exe --format json",
 		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --format json",
-		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-arg --bottle --runner-arg bottle-name --format json",
+		"ruby scripts/winapp_smoke.rb --exe path/to/app.exe --runner path/to/wine --runner-bottle bottle-name --format json",
 		"ruby scripts/winapp_smoke.rb --format json",
 	}
+}
+
+func runnerInvocationArguments(request Request) []string {
+	args := []string{}
+	if bottle := strings.TrimSpace(request.RunnerBottle); bottle != "" {
+		args = append(args, "--bottle", bottle)
+	}
+	args = append(args, request.RunnerArguments...)
+	return args
 }
 
 func baseResult(request Request) Result {
