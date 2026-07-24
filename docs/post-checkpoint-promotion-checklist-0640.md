@@ -1,6 +1,6 @@
 # v0.2.640 Post-Checkpoint Promotion Checklist
 
-> Last updated: 2026-07-24 | Active candidate: v0.2.640-rc14 | Target formal release: v0.2.640
+> Last updated: 2026-07-24 | Active candidate: v0.2.640-rc15 | Target formal release: v0.2.640
 
 This checklist is the human-operator runbook for promoting the active `v0.2.640` release candidate to the formal `v0.2.640` tag.
 

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc14
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc15
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc15 checkpoint candidate adds `desktop-trigger-request-preflight-preview`, a Go-owned read-only preflight for the future real desktop-triggered `ShowRuntimeControlledLaunch` request lane. It consumes `desktop-trigger-service-call-materialization-preview`, verifies the owner service call shape inside Runtime, returns `ready-for-operator-request` only after formal promotion is observed, defaults to `blocked-missing-promotion`, and keeps KDE evidence-only without exposing owner service call arguments, state roots, launcher paths, backend details, D-Bus calls, desktop launch, backend launch, Runtime writes, or host mutation.
 
 The v0.2.640-rc14 checkpoint candidate adds `docs/post-checkpoint-promotion-checklist-0640.md`, a human-operator runbook for promoting `v0.2.640` only after full smoke passes and the promotion packet allows the release. The checklist ties together full-smoke PASS evidence, restricted container safety, QEMU serial evidence, `sshd`, known Windows app smoke, fixture Windows app smoke, KDE controlled-launch D-Bus fixture smoke, promotion packet, release evidence index, merge readiness, layout verification, mainline review, protected Claude file review, diff hygiene, formal tag steps, and rollback notes without claiming the release has passed.
 

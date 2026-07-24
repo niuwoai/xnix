@@ -1,6 +1,6 @@
 # Claude Code Next Mainline Work Pack
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc14 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc15 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is a copy-first task pack for asking Claude Code to implement the next Xnix mainline work while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -10,7 +10,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current Mainline State
 
-The current local baseline is `v0.2.640-rc14`.
+The current local baseline is `v0.2.640-rc15`.
 
 Already present in the current checkpoint candidate:
 
@@ -27,6 +27,7 @@ Already present in the current checkpoint candidate:
 - `scripts/merge_readiness_packet.rb` consumes the promotion packet and exposes `full_checkpoint_promotion_status`.
 - `scripts/release_evidence_index.rb` consumes the promotion packet and keeps historical product smoke evidence separate from current formal release readiness.
 - `docs/post-checkpoint-promotion-checklist-0640.md` defines the human-owned promotion checklist.
+- `desktop-trigger-request-preflight-preview` is present as a Go-owned post-release request preflight that remains fail-closed with `blocked-missing-promotion` until formal full checkpoint promotion is observed.
 
 The formal `v0.2.640` release must not be promoted until this operator-owned command passes:
 
@@ -81,7 +82,8 @@ Use this order unless Codex or a reviewer asks for a repair branch:
 | Done | `C8W12` Merge readiness consumes promotion packet | `codex/merge-readiness-promotion-gate` | Present locally in v0.2.640-rc12. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W13` Release evidence index aligns with promotion packet | `codex/release-evidence-promotion-claim` | Present locally in v0.2.640-rc13. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W14` Operator promotion checklist refresh | `codex/operator-promotion-checklist-0640` | Present locally in v0.2.640-rc14. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C9W1` Post-release desktop-trigger request preflight | `codex/desktop-trigger-request-preflight` | Dispatch only after formal `v0.2.640` is promoted or explicitly skipped. |
+| Done | `C9W1` Post-release desktop-trigger request preflight | `codex/desktop-trigger-request-preflight` | Present locally in v0.2.640-rc15 as a read-only fail-closed preflight. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C9W2` Human-authorized desktop-trigger staged request smoke | `codex/desktop-trigger-staged-request-smoke` | Dispatch only after formal `v0.2.640` is promoted or explicitly skipped by Codex. |
 
 Stop after each task. Return the branch or diff for Codex review. Do not chain tasks.
 
@@ -342,9 +344,11 @@ Run the C8W14 verification commands and report exact commands run and skipped.
 
 ## Task C9W1: Post-Release Desktop-Trigger Request Preflight
 
+Status: present locally in `v0.2.640-rc15`. Do not dispatch again unless Codex or a reviewer asks for a repair branch.
+
 ### Mission
 
-After formal `v0.2.640` is promoted, add the next read-only preflight for a future real desktop-triggered staged `ShowRuntimeControlledLaunch` request.
+Add the next read-only preflight for a future real desktop-triggered staged `ShowRuntimeControlledLaunch` request. In `v0.2.640-rc15`, this is implemented fail-closed before formal promotion: it returns `blocked-missing-promotion` unless promoted evidence is explicitly supplied.
 
 This task moves beyond fixture validation, but it still must not execute the request.
 
@@ -373,7 +377,7 @@ docs/xnix-current-mainline.md
 ### Verification
 
 ```text
-GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner ./internal/runtime/appidentity ./cmd/xnix-runtime-go -run 'TestDesktopTriggerRequestPreflight|TestDesktopTriggerServiceCallMaterialization|TestLaunchEnvelopeGuard|TestKDEControlledLaunchActionSurfaceAudit|TestManagedLauncherAcceptance' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner ./internal/runtime/appidentity ./cmd/xnix-runtime-go -run 'TestPreviewDesktopTriggerRequestPreflight|TestDesktopTriggerRequestPreflight|TestPreviewDesktopTriggerServiceCallMaterialization|TestDesktopTriggerServiceCallMaterialization|TestPreviewLaunchEnvelopeGuard|TestKDEControlledLaunchActionSurfaceAudit|TestPreviewManagedLauncherAcceptance' -count=1
 ruby scripts/verify_layout.rb
 ruby scripts/mainline_integration_review.rb --format json
 git diff --check
@@ -393,3 +397,27 @@ Scope:
 
 Run the C9W1 verification commands and report exact commands run and skipped.
 ```
+
+## Task C9W2: Human-Authorized Desktop-Trigger Staged Request Smoke
+
+### Mission
+
+After formal `v0.2.640` is promoted or Codex explicitly skips that dependency, wire a bounded smoke path that asks the operator for approval before using the preflight-approved desktop-trigger request lane.
+
+This task must still keep production D-Bus ownership, real desktop launch, broad host mounts, host networking, Docker socket mounts, and host-root mutation disabled unless Codex explicitly expands the scope.
+
+### Expected starting evidence
+
+```text
+desktop-trigger-request-preflight-preview
+desktop-trigger-service-call-materialization-preview
+scripts/staged_launcher_dispatch_smoke.rb
+scripts/dbus_controlled_launch_owner_fixture_smoke.rb
+```
+
+### Required behavior
+
+- Require `desktop-trigger-request-preflight-preview` to return `ready-for-operator-request` before any staged request smoke proceeds.
+- Keep KDE-facing inputs limited to an opaque evidence id or safe evidence-relative-path.
+- Keep Runtime owner-only inputs inside the Go Runtime owner boundary.
+- Report exact commands run and skipped.

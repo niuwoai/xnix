@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc14"
+EXPECTED_VERSION = "0.2.640-rc15"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -225,6 +225,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_cli_test.go
   cmd/xnix-runtime-go/desktop_trigger_service_call_materialization_commands.go
   cmd/xnix-runtime-go/desktop_trigger_service_call_materialization_cli_test.go
+  cmd/xnix-runtime-go/desktop_trigger_request_preflight_commands.go
+  cmd/xnix-runtime-go/desktop_trigger_request_preflight_cli_test.go
   cmd/xnix-runtime-go/owner_service_launch_envelope_guard_commands.go
   cmd/xnix-runtime-go/owner_service_launch_envelope_guard_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
@@ -462,6 +464,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/desktop_trigger_dry_run_request_review_test.go
   internal/runtime/owner/desktop_trigger_service_call_materialization.go
   internal/runtime/owner/desktop_trigger_service_call_materialization_test.go
+  internal/runtime/owner/desktop_trigger_request_preflight.go
+  internal/runtime/owner/desktop_trigger_request_preflight_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -6733,6 +6737,15 @@ go_desktop_trigger_service_call_materialization_source = read_project_file("inte
                                                         read_project_file("cmd/xnix-runtime-go/main.go")
 %w[DesktopTriggerServiceCallMaterializationSchemaVersion DesktopTriggerServiceCallMaterializationRequestType DesktopTriggerServiceCallMaterializationRequest DesktopTriggerServiceCallMaterializationPreview PreviewDesktopTriggerServiceCallMaterialization desktop-trigger-service-call-materialization-preview xnix.runtime.desktop_trigger_service_call_materialization.v1 ready-for-human-authorized-service-call materialization_state dry_run_review_state owner_trigger_state full_checkpoint_state owner_service_call_ready owner_service_call_args owner_service_cli_args human_authorized_smoke full_checkpoint_promotion_claimed formal_release_ready human_authorization_required materialized_for_human_smoke runtime_owner_service_supplies_inputs desktop_evidence_handle_forwarded kde_receives_materialized_owner_args request_object_written permission_grant_created service_call_dispatch_enabled service_call_dispatched dbus_called desktop_launch_enabled backend_launch_enabled execution_started runtime_state_written kde_configuration_written network_required host_root_modified --human-authorized-smoke PreviewDesktopTriggerDryRunRequestReview PreviewKnownAppRuntimeStatusLaunchOwnerTrigger TestPreviewDesktopTriggerServiceCallMaterializationEmitsEvidenceOnlyServiceCall TestPreviewDesktopTriggerServiceCallMaterializationAllowsHumanAuthorizedSmokeCandidate TestDesktopTriggerServiceCallMaterializationPreviewCommandAllowsHumanAuthorizedSmokeCandidate].each do |token|
   assert(go_desktop_trigger_service_call_materialization_source.include?(token), "Go desktop-trigger service call materialization must include #{token}")
+end
+
+go_desktop_trigger_request_preflight_source = read_project_file("internal/runtime/owner/desktop_trigger_request_preflight.go") +
+                                             read_project_file("internal/runtime/owner/desktop_trigger_request_preflight_test.go") +
+                                             read_project_file("cmd/xnix-runtime-go/desktop_trigger_request_preflight_commands.go") +
+                                             read_project_file("cmd/xnix-runtime-go/desktop_trigger_request_preflight_cli_test.go") +
+                                             read_project_file("cmd/xnix-runtime-go/main.go")
+%w[DesktopTriggerRequestPreflightSchemaVersion DesktopTriggerRequestPreflightRequestType DesktopTriggerRequestPreflightRequest DesktopTriggerRequestPreflightPreview PreviewDesktopTriggerRequestPreflight desktop-trigger-request-preflight-preview xnix.runtime.desktop_trigger_request_preflight.v1 ready-for-operator-request blocked-missing-promotion blocked-unsafe-envelope blocked-unsafe-action blocked-stale-evidence malformed missing-evidence preflight_state materialization_state dry_run_review_state owner_trigger_state full_checkpoint_state runtime_status_evidence_state owner_service_call_shape_verified operator_request_ready formal_promotion_required formal_promotion_observed formal_release_ready human_authorization_required runtime_owner_service_supplies_inputs desktop_evidence_handle_forwarded kde_receives_materialized_owner_args request_object_written permission_grant_created service_call_dispatch_enabled service_call_dispatched dbus_called desktop_launch_enabled backend_launch_enabled execution_started runtime_state_written kde_configuration_written network_required host_root_modified PreviewDesktopTriggerServiceCallMaterialization TestPreviewDesktopTriggerRequestPreflightReadyForOperatorRequest TestPreviewDesktopTriggerRequestPreflightBlocksMissingPromotion TestDesktopTriggerRequestPreflightPreviewCommandReady].each do |token|
+  assert(go_desktop_trigger_request_preflight_source.include?(token), "Go desktop-trigger request preflight must include #{token}")
 end
 
 kde_controlled_launch_action_source = read_project_file("kde/actions/xnix-runtime-status-controlled-launch.desktop") +

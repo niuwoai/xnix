@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc15] - 2026-07-24
+
+### Added
+
+- Added Go-owned `desktop-trigger-request-preflight-preview` to consume service-call materialization for the future real desktop-triggered `ShowRuntimeControlledLaunch` request lane.
+- Added owner and CLI tests for ready, missing-promotion, unsafe-envelope, stale-evidence, malformed, no-dispatch, and redaction behavior.
+
+### Fixed
+
+- Kept post-release desktop-trigger request preparation fail-closed with `blocked-missing-promotion` until formal full checkpoint promotion is observed, while hiding owner service call arguments from KDE-facing output.
+
 ## [0.2.640-rc14] - 2026-07-24
 
 ### Added

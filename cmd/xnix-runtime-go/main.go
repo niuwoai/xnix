@@ -255,6 +255,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopTriggerDryRunRequestReviewPreview(args[1:], stdout)
 	case "desktop-trigger-service-call-materialization-preview":
 		return runDesktopTriggerServiceCallMaterializationPreview(args[1:], stdout)
+	case "desktop-trigger-request-preflight-preview":
+		return runDesktopTriggerRequestPreflightPreview(args[1:], stdout)
 	case "kde-controlled-launch-action-preview":
 		return runKDEControlledLaunchActionPreview(args[1:], stdout)
 	case "kde-controlled-launch-action-surface-audit-preview":

@@ -1,6 +1,6 @@
 # Claude Code Immediate Mainline Handoff
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc14 | Formal release: v0.2.640 is still blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc15 | Formal release: v0.2.640 is still blocked until full smoke passes
 
 This is the short handoff document for asking Claude Code to perform the next Xnix mainline implementation work. It is intentionally separate from `docs/claude-code-implementation-packages.md`; do not edit that protected file while working from this handoff.
 
@@ -20,7 +20,7 @@ The current near-term milestone is still:
 
 ## Baseline State
 
-The local baseline is `v0.2.640-rc14`.
+The local baseline is `v0.2.640-rc15`.
 
 Already present:
 
@@ -36,6 +36,7 @@ Already present:
 - `scripts/merge_readiness_packet.rb` consumes the promotion packet as a first-class release gate from `v0.2.640-rc12`.
 - `scripts/release_evidence_index.rb` consumes the promotion packet from `v0.2.640-rc13`, keeping old product smoke evidence separate from current formal release readiness.
 - `docs/post-checkpoint-promotion-checklist-0640.md` defines the human-owned formal promotion checklist from `v0.2.640-rc14`.
+- `desktop-trigger-request-preflight-preview` is present from `v0.2.640-rc15`; it consumes service-call materialization but stays `blocked-missing-promotion` until formal full checkpoint promotion is observed.
 - The existing staged smoke already reaches the Runtime owner service through `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch ...` when QEMU/Wine prerequisites are available.
 
 Do not ask Claude Code to reimplement completed checkpoint packets unless Codex or a reviewer explicitly asks for a repair branch.
