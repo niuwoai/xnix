@@ -107,6 +107,44 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-container-run-smoke")
+      exe_path = args[args.index("--exe") + 1]
+      image = args[args.index("--image") + 1]
+      platform = args[args.index("--platform") + 1]
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_container_smoke.v1",
+        "request_type" => "windows-app-container-run-smoke",
+        "status" => "passed",
+        "executable_name" => File.basename(exe_path),
+        "container_image" => image,
+        "container_platform" => platform,
+        "container_state_mode" => "tmpfs",
+        "pull_policy" => "never",
+        "network_mode" => "none",
+        "wine_bootstrap_required" => true,
+        "wine_bootstrap_timed_out" => false,
+        "wine_bootstrap_exit_code" => -1,
+        "runner_available" => true,
+        "image_available" => true,
+        "compatibility_layer" => "containerized-windows-compatibility-layer",
+        "expected_marker" => "XNIX_WINAPP_SMOKE_OK",
+        "marker_observed" => true,
+        "exit_code" => 0,
+        "duration_millis" => 2,
+        "stdout" => "XNIX_WINAPP_SMOKE_OK\\n",
+        "stderr" => "",
+        "isolated_state_root" => true,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false,
+        "host_mount_count" => 1
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     warn "unexpected fake go invocation: #{args.join(" ")}"
     exit 2
   RUBY
@@ -128,6 +166,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("schema_version") == "xnix.runtime.winapp_smoke_report.v1", "JSON report must expose schema")
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
+  assert(report.fetch("backend") == "local", "JSON report must default to the local backend")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
   assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
   assert(report.fetch("runner_diagnostics_status") == "passed", "JSON report must preserve diagnostics status")
@@ -145,6 +184,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   markdown_stdout, markdown_stderr, markdown_status = Open3.capture3(env, "ruby", script.to_s, "--format", "markdown")
   assert(markdown_status.success?, "winapp smoke Markdown report must succeed: #{markdown_stderr}")
   assert(markdown_stdout.include?("# Windows App Smoke Report"), "Markdown report must include title")
+  assert(markdown_stdout.include?("Backend: local"), "Markdown report must include backend")
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
@@ -182,4 +222,24 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(!last_invocation.include?("build"), "custom executable mode must not build the fixture")
   assert(last_invocation.include?("--runner"), "custom executable mode must forward explicit runner")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
+
+  container_stdout, container_stderr, container_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--backend", "container",
+    "--image", "local/wine-smoke:test",
+    "--platform", "linux/amd64"
+  )
+  assert(container_status.success?, "winapp smoke container backend JSON report must succeed: #{container_stderr}")
+  container_report = JSON.parse(container_stdout)
+  assert(container_report.fetch("backend") == "container", "container report must record container backend")
+  assert(container_report.fetch("container_smoke_invoked"), "container report must record container smoke invocation")
+  assert(container_report.fetch("container_image") == "local/wine-smoke:test", "container report must preserve image name")
+  assert(container_report.fetch("container_image_available"), "container report must preserve image availability")
+  assert(container_report.fetch("docker_executed"), "container report must record Docker execution evidence")
+  assert(container_report.fetch("wine_bootstrap_attempted"), "container report must expose bootstrap attempt")
+  assert(container_report.fetch("wine_bootstrap_succeeded"), "container report must expose bootstrap success")
+  assert(container_report.fetch("container_payload").fetch("request_type") == "windows-app-container-run-smoke", "container report must embed container payload")
+  assert(!container_stdout.include?(stale_fixture_output.to_s), "container report must not leak fixture executable host path")
 end

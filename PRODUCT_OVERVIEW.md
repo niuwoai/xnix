@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc28
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc29
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc29 checkpoint candidate makes `scripts/winapp_smoke.rb` a single report surface for local and restricted-container real Windows app smoke attempts. `--backend local` remains the default and unchanged for host-safe local runner checks; explicit `--backend container` delegates to the Go-owned `windows-app-container-run-smoke` path and carries container payload, image availability, Docker execution evidence, and Wine bootstrap evidence in the same JSON/Markdown report shape. This prepares the next human-authorized container PASS attempt without running Docker unless the operator explicitly selects the container backend.
 
 The v0.2.640-rc28 checkpoint candidate adds managed Wine prefix bootstrap evidence to local real Windows app smoke execution. When the selected runner has a companion `wineboot`, `windows-app-run-smoke` initializes the isolated Wine prefix before launching the `.exe` and reports whether bootstrap was attempted, succeeded, and which exit code was observed. Custom runners without a companion `wineboot` remain supported and continue straight to the app run, keeping local testing flexible while making real Wine runs closer to the container and guest paths.
 

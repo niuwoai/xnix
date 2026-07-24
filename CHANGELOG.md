@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc29] - 2026-07-24
+
+### Added
+
+- Added an explicit `--backend local|container` switch to `scripts/winapp_smoke.rb`, keeping the default local backend unchanged while allowing the same report path to opt into the restricted container smoke.
+- Added container backend report fields for the embedded container payload, image availability, Docker execution evidence, and Wine bootstrap evidence.
+
 ## [0.2.640-rc28] - 2026-07-24
 
 ### Added

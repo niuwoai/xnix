@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc28"
+EXPECTED_VERSION = "0.2.640-rc29"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -839,7 +839,7 @@ windows_app_smoke_script = read_project_file("scripts/winapp_smoke.rb")
   assert(windows_app_smoke_script.include?(token), "Windows app smoke script must include #{token}")
 end
 windows_app_smoke_script_test = read_project_file("test/test_winapp_smoke_script.rb")
-%w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke windows-app-runner-diagnostics runner_diagnostics_payload runner_diagnostics_invoked wine_bootstrap_attempted --format json --format markdown --exe --runner CUSTOM_APP_OK user-supplied raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
+%w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke windows-app-runner-diagnostics windows-app-container-run-smoke runner_diagnostics_payload runner_diagnostics_invoked container_payload container_smoke_invoked wine_bootstrap_attempted --backend --format json --format markdown --exe --runner CUSTOM_APP_OK user-supplied raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
   assert(windows_app_smoke_script_test.include?(token.gsub("\\ ", " ")), "Windows app smoke script test must include #{token}")
 end
 windows_app_container_smoke_go = read_project_file("internal/runtime/winapp/container_smoke.go")
