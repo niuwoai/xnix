@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc70] - 2026-07-24
+
+### Changed
+
+- Changed `scripts/remote_known_winapp_matrix_smoke.rb --execute` to persist the aggregate known-app matrix JSON report to a managed remote `/home/xnix-*` state path by default.
+- Added `--matrix-report-output` and dry-run coverage so operators and future desktop/release consumers can locate the aggregate matrix evidence without scraping stdout.
+
 ## [0.2.640-rc69] - 2026-07-24
 
 ### Added

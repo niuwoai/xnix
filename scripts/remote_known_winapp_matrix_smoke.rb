@@ -6,6 +6,7 @@ require "open3"
 require "optparse"
 require "pathname"
 require "shellwords"
+require "tempfile"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -15,6 +16,7 @@ DEFAULT_SOURCE_SYNC_MODE = ENV.fetch("XNIX_SOURCE_SYNC_MODE", "runtime")
 DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-matrix-#{DEFAULT_SOURCE_SYNC_MODE}-#{VERSION}")
 DEFAULT_REMOTE_BUILD_ROOT = ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
+DEFAULT_MATRIX_REPORT_OUTPUT = ENV.fetch("XNIX_KNOWN_WINAPP_MATRIX_REPORT_OUTPUT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/known-run-matrix-#{VERSION}.json")
 DEFAULT_REMOTE_GO = ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
 DEFAULT_APP_IDS = ENV.fetch("XNIX_KNOWN_WINAPP_MATRIX", "7zr,busybox-w32").split(",").map(&:strip).reject(&:empty?)
@@ -28,6 +30,7 @@ options = {
   remote_source_root: DEFAULT_REMOTE_SOURCE_ROOT,
   remote_build_root: DEFAULT_REMOTE_BUILD_ROOT,
   remote_materials_root: DEFAULT_REMOTE_MATERIALS_ROOT,
+  matrix_report_output: DEFAULT_MATRIX_REPORT_OUTPUT,
   remote_go: DEFAULT_REMOTE_GO,
   app_ids: DEFAULT_APP_IDS,
   timeout: ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
@@ -44,6 +47,7 @@ OptionParser.new do |parser|
   parser.on("--remote-source-root PATH", "Remote source root under /home/xnix*.") { |value| options[:remote_source_root] = value }
   parser.on("--remote-build-root PATH", "Remote build cache root under /home/xnix*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-materials-root PATH", "Remote run materials root under /home/xnix*.") { |value| options[:remote_materials_root] = value }
+  parser.on("--matrix-report-output PATH", "Remote aggregate matrix JSON report path under /home/xnix*.") { |value| options[:matrix_report_output] = value }
   parser.on("--remote-go PATH", "Remote Go binary path.") { |value| options[:remote_go] = value }
   parser.on("--app APP_ID", "Known Windows app id to include; repeatable.") do |value|
     options[:app_ids] = [] if options[:app_ids] == DEFAULT_APP_IDS
@@ -58,6 +62,10 @@ abort "remote known Windows app matrix smoke requires at least one app" if optio
 
 if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
   options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-matrix-#{options.fetch(:source_sync_mode)}-#{VERSION}"
+end
+
+if !ENV.key?("XNIX_KNOWN_WINAPP_MATRIX_REPORT_OUTPUT") && options.fetch(:matrix_report_output) == DEFAULT_MATRIX_REPORT_OUTPUT
+  options[:matrix_report_output] = "#{options.fetch(:remote_materials_root)}/state/known-run-matrix-#{VERSION}.json"
 end
 
 def ensure_remote_xnix_path!(label, path)
@@ -100,6 +108,7 @@ source_entries = source_sync_entries(source_sync_mode)
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
+matrix_report_output = ensure_remote_xnix_path!("matrix report output", options.fetch(:matrix_report_output))
 remote_bin = "#{remote_build_root}/bin/xnix-runtime-go"
 remote_key = "#{remote_materials_root}/ssh/id_ed25519"
 remote_kernel = "#{remote_materials_root}/wine-guest/bzImage"
@@ -130,6 +139,8 @@ base_plan = {
   "remote_source_root" => remote_source_root,
   "remote_build_root" => remote_build_root,
   "remote_materials_root" => remote_materials_root,
+  "matrix_report_output" => matrix_report_output,
+  "matrix_report_output_written" => false,
   "app_count" => app_plans.length,
   "app_ids" => app_plans.map { |entry| entry.fetch("app_id") },
   "backend" => "guest-wine",
@@ -254,8 +265,32 @@ matrix = base_plan.merge(
   "execute" => true,
   "passed_count" => passed_count,
   "failed_count" => results.length - passed_count,
-  "apps" => results
+  "apps" => results,
+  "matrix_report_output_written" => true
 )
+
+Tempfile.create(["xnix-known-winapp-matrix-", ".json"]) do |file|
+  file.write(JSON.pretty_generate(matrix))
+  file.write("\n")
+  file.flush
+
+  remote_report_dir = Pathname.new(matrix_report_output).dirname.to_s
+  mkdir_stdout, mkdir_stderr, mkdir_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(["mkdir", "-p", remote_report_dir])]))
+  unless mkdir_status.zero?
+    warn mkdir_stdout unless mkdir_stdout.empty?
+    warn mkdir_stderr unless mkdir_stderr.empty?
+    warn "FAIL: remote known Windows app matrix report directory preparation failed"
+    exit 1
+  end
+
+  scp_stdout, scp_stderr, scp_status = run_shell(options.fetch(:local_shell), shell_join(["scp", file.path, "#{remote_host}:#{matrix_report_output}"]))
+  unless scp_status.zero?
+    warn scp_stdout unless scp_stdout.empty?
+    warn scp_stderr unless scp_stderr.empty?
+    warn "FAIL: remote known Windows app matrix report upload failed"
+    exit 1
+  end
+end
 
 puts JSON.pretty_generate(matrix)
 exit(matrix.fetch("status") == "passed" ? 0 : 1)

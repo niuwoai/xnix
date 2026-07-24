@@ -20,6 +20,9 @@ assert(script.include?("\"--port\", \"auto\""), "matrix smoke must avoid fixed h
 assert(script.include?("\"--redact-output\""), "matrix smoke must keep real app output product-safe")
 assert(script.include?("\"--report-output\", app_plan.fetch(\"report_output\")"), "matrix smoke must persist per-app JSON evidence")
 assert(script.include?("\"--qemu-serial-log\", app_plan.fetch(\"serial_log_output\")"), "matrix smoke must persist per-app serial logs")
+assert(script.include?("DEFAULT_MATRIX_REPORT_OUTPUT"), "matrix smoke must define a default aggregate report output")
+assert(script.include?("\"matrix_report_output_written\" => true"), "matrix smoke must mark successful aggregate report persistence")
+assert(script.include?("\"scp\", file.path"), "matrix smoke must upload the aggregate matrix report to the remote state directory")
 assert(script.include?("DEFAULT_APP_IDS"), "matrix smoke must define default app ids")
 assert(script.include?("\"7zr,busybox-w32\""), "matrix smoke must default to the first two real known apps")
 assert(script.include?("%w[go.mod cmd internal runtime]"), "matrix smoke must default to the lightweight Runtime source set")
@@ -40,6 +43,8 @@ assert(payload.fetch("execute") == false, "dry-run matrix must require explicit 
 assert(payload.fetch("source_sync_mode") == "runtime", "dry-run matrix must default to lightweight Runtime source sync")
 assert(payload.fetch("source_sync_entries") == %w[go.mod cmd internal runtime], "dry-run matrix must expose lightweight source entries")
 assert(payload.fetch("remote_source_root").include?("xnix-runtime-source-matrix-runtime-"), "dry-run matrix must use a versioned matrix source root")
+assert(payload.fetch("matrix_report_output").include?("known-run-matrix-"), "dry-run matrix must expose the aggregate matrix report path")
+assert(payload.fetch("matrix_report_output_written") == false, "dry-run matrix must not claim aggregate report persistence")
 assert(payload.fetch("app_count") == 2, "dry-run matrix must include both default apps")
 assert(payload.fetch("app_ids") == %w[7zr busybox-w32], "dry-run matrix must default to 7zr and BusyBox-w32")
 assert(payload.fetch("backend") == "guest-wine", "dry-run matrix must select the guest backend")
@@ -65,5 +70,18 @@ abort single_stderr unless single_status.success?
 single_payload = JSON.parse(single_stdout)
 assert(single_payload.fetch("app_ids") == ["busybox-w32"], "explicit --app must replace the default matrix")
 assert(single_payload.fetch("app_count") == 1, "explicit --app matrix must use the requested app count")
+
+custom_stdout, custom_stderr, custom_status = Open3.capture3(
+  { "XNIX_LOCAL_SHELL" => "/bin/zsh" },
+  "ruby",
+  SCRIPT.to_s,
+  "--remote-materials-root",
+  "/home/xnix-custom-materials",
+  chdir: ROOT.to_s
+)
+abort custom_stderr unless custom_status.success?
+
+custom_payload = JSON.parse(custom_stdout)
+assert(custom_payload.fetch("matrix_report_output").start_with?("/home/xnix-custom-materials/state/known-run-matrix-"), "default aggregate report output must follow the selected materials root")
 
 puts "PASS: remote known Windows app matrix smoke script is execute-gated and Runtime-owned"
