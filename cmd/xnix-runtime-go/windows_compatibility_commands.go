@@ -765,6 +765,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	var allowDownload bool
 	var skipBootstrap bool
 	var startQEMU bool
+	var redactOutput bool
 	flags.StringVar(&appID, "app", winapp.DefaultKnownAppID, "known Windows app id")
 	flags.StringVar(&backend, "backend", winapp.KnownRunBackendLocal, "known app backend: local or guest-wine")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "known app cache root")
@@ -793,6 +794,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	flags.BoolVar(&allowDownload, "allow-download", false, "download the known app artifact when it is missing")
 	flags.BoolVar(&skipBootstrap, "skip-bootstrap", false, "store a local launch profile that skips runner bootstrap")
 	flags.BoolVar(&startQEMU, "start-qemu", false, "start and stop a loopback-only QEMU guest for the guest-wine backend")
+	flags.BoolVar(&redactOutput, "redact-output", false, "redact raw known app stdout and stderr while preserving output evidence")
 	var runtimeArgs repeatedStringFlag
 	var runnerArgs repeatedStringFlag
 	var appArgs repeatedStringFlag
@@ -843,6 +845,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 		SSHPath:          sshPath,
 		SCPPath:          scpPath,
 		Timeout:          timeout,
+		RedactOutput:     redactOutput,
 		StartQEMU:        startQEMU,
 		QEMUBinary:       qemuBinary,
 		QEMUKernelImage:  qemuKernel,

@@ -13,6 +13,7 @@ assert(script.include?("\"windows-known-app-run\""), "known app guest smoke must
 assert(script.include?("\"--backend\", \"guest-wine\""), "known app guest smoke must select the guest-wine backend")
 assert(script.include?("\"--start-qemu\""), "known app guest smoke must let the Go Runtime start the QEMU guest")
 assert(script.include?("\"--port\", \"auto\""), "known app guest smoke must avoid a fixed host SSH port for Go-started QEMU")
+assert(script.include?("\"--redact-output\""), "known app guest smoke must keep real app output product-safe")
 assert(script.include?("\"--qemu-kernel\", qemu.kernel_image"), "known app guest smoke must pass the managed QEMU kernel to the Runtime")
 assert(script.include?("\"--key\", Xnix::SshTestKey::PRIVATE_KEY_PATH"), "known app guest smoke must pass the loopback SSH key to the Runtime")
 assert(script.include?("payload.fetch(\"backend\") == \"guest-wine\""), "known app guest smoke must validate the returned backend")

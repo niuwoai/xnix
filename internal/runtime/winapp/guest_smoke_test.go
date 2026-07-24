@@ -112,6 +112,43 @@ func TestRunGuestSmokeSkipsWhenGuestWineUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunGuestSmokeCanRedactRawOutput(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	logPath := filepath.Join(tempDir, "guest.log")
+	sshPath := writeFakeGuestSSH(t, tempDir, logPath, true)
+	scpPath := writeFakeGuestSCP(t, tempDir, logPath)
+
+	result, err := RunGuestSmoke(context.Background(), GuestRequest{
+		ExecutablePath: executablePath,
+		SSHPath:        sshPath,
+		SCPPath:        scpPath,
+		Timeout:        5 * time.Second,
+		RedactOutput:   true,
+	})
+	if err != nil {
+		t.Fatalf("RunGuestSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.MarkerObserved ||
+		!result.RawOutputRedacted ||
+		result.RawOutputIncluded ||
+		result.Stdout != "" ||
+		result.Stderr != "" ||
+		result.StdoutBytes == 0 ||
+		result.StdoutLineCount != 1 ||
+		!strings.Contains(result.KDESafeOutputSummary, "expected guest smoke marker observed") {
+		t.Fatalf("unexpected redacted guest smoke result: %#v", result)
+	}
+}
+
 func TestResolveToolAcceptsPathCommandNames(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell PATH fixture is not portable to Windows hosts")

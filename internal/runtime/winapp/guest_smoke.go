@@ -35,6 +35,7 @@ type GuestRequest struct {
 	SCPPath        string
 	Timeout        time.Duration
 	ExpectedMarker string
+	RedactOutput   bool
 }
 
 type GuestResult struct {
@@ -52,6 +53,13 @@ type GuestResult struct {
 	DurationMillis              int64  `json:"duration_millis"`
 	Stdout                      string `json:"stdout"`
 	Stderr                      string `json:"stderr"`
+	StdoutBytes                 int    `json:"stdout_bytes"`
+	StderrBytes                 int    `json:"stderr_bytes"`
+	StdoutLineCount             int    `json:"stdout_line_count"`
+	StderrLineCount             int    `json:"stderr_line_count"`
+	RawOutputIncluded           bool   `json:"raw_output_included"`
+	RawOutputRedacted           bool   `json:"raw_output_redacted"`
+	KDESafeOutputSummary        string `json:"kde_safe_output_summary"`
 	SkipReason                  string `json:"skip_reason,omitempty"`
 	FailureReason               string `json:"failure_reason,omitempty"`
 	LoopbackOnlyNetworking      bool   `json:"loopback_only_networking"`
@@ -139,9 +147,23 @@ func RunGuestSmoke(ctx context.Context, request GuestRequest) (GuestResult, erro
 	remoteCommand := guestWineCommand(remoteDir, remoteExe, request.Arguments)
 	err = runGuestSSH(runCtx, sshPath, sshBase, guest, remoteCommand, &stdout, &stderr)
 	result.DurationMillis = time.Since(startedAt).Milliseconds()
-	result.Stdout = stdout.String()
-	result.Stderr = stderr.String()
-	result.MarkerObserved = strings.Contains(result.Stdout, result.ExpectedMarker)
+	stdoutText := stdout.String()
+	stderrText := stderr.String()
+	result.StdoutBytes = len(stdoutText)
+	result.StderrBytes = len(stderrText)
+	result.StdoutLineCount = lineCount(stdoutText)
+	result.StderrLineCount = lineCount(stderrText)
+	result.RawOutputIncluded = !request.RedactOutput
+	result.RawOutputRedacted = request.RedactOutput
+	result.MarkerObserved = strings.Contains(stdoutText, result.ExpectedMarker)
+	result.KDESafeOutputSummary = guestKDESafeOutputSummary(result)
+	if request.RedactOutput {
+		result.Stdout = ""
+		result.Stderr = ""
+	} else {
+		result.Stdout = stdoutText
+		result.Stderr = stderrText
+	}
 	result.ExitCode = exitCode(err)
 
 	if runCtx.Err() == context.DeadlineExceeded {
@@ -176,6 +198,8 @@ func baseGuestResult(request GuestRequest) GuestResult {
 		GuestTransport:              "loopback-ssh",
 		ExpectedMarker:              marker,
 		ExitCode:                    -1,
+		RawOutputIncluded:           !request.RedactOutput,
+		RawOutputRedacted:           request.RedactOutput,
 		LoopbackOnlyNetworking:      true,
 		QEMURequired:                true,
 		HostRootModified:            false,
@@ -185,6 +209,14 @@ func baseGuestResult(request GuestRequest) GuestResult {
 		BroadHostMountRequired:      false,
 		RawHostPathExposed:          false,
 	}
+}
+
+func guestKDESafeOutputSummary(result GuestResult) string {
+	streamSummary := fmt.Sprintf("stdout_bytes=%d stderr_bytes=%d stdout_lines=%d stderr_lines=%d", result.StdoutBytes, result.StderrBytes, result.StdoutLineCount, result.StderrLineCount)
+	if result.MarkerObserved {
+		return "expected guest smoke marker observed; " + streamSummary
+	}
+	return "expected guest smoke marker not observed; " + streamSummary
 }
 
 func resolveTool(path string, name string) (string, error) {

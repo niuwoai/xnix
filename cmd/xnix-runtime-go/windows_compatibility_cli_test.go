@@ -1893,6 +1893,7 @@ func TestWindowsKnownAppRunCommandGuestWineBackendSkipsOfflineMissingArtifact(t 
 		"--app", "7zr",
 		"--cache-root", tempDir,
 		"--timeout", "5s",
+		"--redact-output",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -1913,6 +1914,7 @@ func TestWindowsKnownAppRunCommandGuestWineBackendSkipsOfflineMissingArtifact(t 
 		payload["checksum_verified"] != false ||
 		payload["loopback_only_networking"] != true ||
 		payload["qemu_required"] != true ||
+		payload["raw_output_redacted"] != true ||
 		payload["wine_executed"] != false ||
 		payload["docker_executed"] != false ||
 		payload["qemu_executed"] != false ||

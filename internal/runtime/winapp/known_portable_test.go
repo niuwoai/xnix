@@ -572,6 +572,7 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		SSHPath:         writeFakeKnownAppGuestSSH(t, guestRoot, guestLogPath),
 		SCPPath:         writeFakeGuestSCP(t, guestRoot, guestLogPath),
 		Timeout:         5 * time.Second,
+		RedactOutput:    true,
 		StartQEMU:       true,
 		QEMUBinary:      writeFakeQEMU(t, guestRoot),
 		QEMUKernelImage: kernelPath,
@@ -590,6 +591,7 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		result.GuestPort == "" ||
 		!result.GuestPortAuto ||
 		!result.QEMUSerialLogWritten ||
+		!result.RawOutputRedacted ||
 		!result.QEMUExecuted ||
 		!result.BackendReady ||
 		!result.WineExecuted ||
@@ -606,6 +608,15 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 	}
 	if !strings.Contains(string(serialBytes), "fake qemu boot") {
 		t.Fatalf("serial log did not capture fake qemu output: %s", string(serialBytes))
+	}
+	if result.GuestPayload == nil ||
+		!result.GuestPayload.Guest.RawOutputRedacted ||
+		result.GuestPayload.Guest.RawOutputIncluded ||
+		result.GuestPayload.Guest.Stdout != "" ||
+		result.GuestPayload.Guest.Stderr != "" ||
+		result.GuestPayload.Guest.StdoutBytes == 0 ||
+		!strings.Contains(result.GuestPayload.Guest.KDESafeOutputSummary, "expected guest smoke marker observed") {
+		t.Fatalf("unexpected redacted guest payload: %#v", result.GuestPayload)
 	}
 	if !strings.Contains(string(serialBytes), "hostfwd=tcp:127.0.0.1:"+result.GuestPort+"-:22") {
 		t.Fatalf("serial log did not capture allocated loopback port %q: %s", result.GuestPort, string(serialBytes))

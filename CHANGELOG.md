@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc65] - 2026-07-24
+
+### Added
+
+- Added `--redact-output` support to `windows-known-app-run`, including guest-wine runs, so real Windows app stdout and stderr can be omitted while preserving marker, byte-count, line-count, and KDE-safe output summary evidence.
+
+### Changed
+
+- Updated the known Windows app QEMU/Wine smoke harness to request redacted Runtime output by default.
+
 ## [0.2.640-rc64] - 2026-07-24
 
 ### Fixed

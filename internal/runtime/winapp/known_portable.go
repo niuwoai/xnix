@@ -103,17 +103,18 @@ type KnownFetchResult struct {
 }
 
 type KnownGuestRequest struct {
-	AppID     string
-	CacheRoot string
-	Arguments []string
-	Host      string
-	Port      string
-	User      string
-	KeyPath   string
-	RemoteDir string
-	SSHPath   string
-	SCPPath   string
-	Timeout   time.Duration
+	AppID        string
+	CacheRoot    string
+	Arguments    []string
+	Host         string
+	Port         string
+	User         string
+	KeyPath      string
+	RemoteDir    string
+	SSHPath      string
+	SCPPath      string
+	Timeout      time.Duration
+	RedactOutput bool
 }
 
 type KnownGuestResult struct {
@@ -614,6 +615,7 @@ type KnownRunRequest struct {
 	SSHPath          string
 	SCPPath          string
 	Timeout          time.Duration
+	RedactOutput     bool
 	StartQEMU        bool
 	QEMUBinary       string
 	QEMUKernelImage  string
@@ -889,6 +891,7 @@ func RunKnownPortableGuestSmoke(ctx context.Context, request KnownGuestRequest) 
 		SCPPath:        request.SCPPath,
 		Timeout:        timeout,
 		ExpectedMarker: app.ExpectedMarker,
+		RedactOutput:   request.RedactOutput,
 	})
 	if err != nil {
 		return result, err
@@ -1405,6 +1408,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 	}
 	backend := knownRunBackend(request.Backend)
 	result := baseKnownRunResult(app, backend)
+	result.RawOutputRedacted = request.RedactOutput
 	switch backend {
 	case KnownRunBackendLocal:
 		local, err := PrepareAndLaunchKnownPortableProfile(ctx, KnownPrepareAndLaunchProfileRequest{
@@ -1517,17 +1521,18 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 			qemuGuest = guest
 		}
 		guest, err := RunKnownPortableGuestSmoke(ctx, KnownGuestRequest{
-			AppID:     app.ID,
-			CacheRoot: request.CacheRoot,
-			Arguments: append([]string{}, request.Arguments...),
-			Host:      stringDefault(result.GuestHost, request.Host),
-			Port:      stringDefault(result.GuestPort, request.Port),
-			User:      request.User,
-			KeyPath:   request.KeyPath,
-			RemoteDir: request.RemoteDir,
-			SSHPath:   request.SSHPath,
-			SCPPath:   request.SCPPath,
-			Timeout:   request.Timeout,
+			AppID:        app.ID,
+			CacheRoot:    request.CacheRoot,
+			Arguments:    append([]string{}, request.Arguments...),
+			Host:         stringDefault(result.GuestHost, request.Host),
+			Port:         stringDefault(result.GuestPort, request.Port),
+			User:         request.User,
+			KeyPath:      request.KeyPath,
+			RemoteDir:    request.RemoteDir,
+			SSHPath:      request.SSHPath,
+			SCPPath:      request.SCPPath,
+			Timeout:      request.Timeout,
+			RedactOutput: request.RedactOutput,
 		})
 		if err != nil {
 			return result, err
@@ -1540,7 +1545,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.ChecksumVerified = guest.ChecksumVerified
 		result.ExecutableCopied = guest.Guest.ExecutableCopied
 		result.MarkerObserved = guest.Guest.MarkerObserved
-		result.RawOutputRedacted = false
+		result.RawOutputRedacted = request.RedactOutput || guest.Guest.RawOutputRedacted
 		result.LoopbackOnlyNetworking = guest.LoopbackOnlyNetworking
 		result.QEMURequired = guest.QEMURequired
 		result.NetworkRequired = false

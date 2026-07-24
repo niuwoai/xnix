@@ -50,6 +50,7 @@ smoke_stdout, smoke_stderr, smoke_status = run_command(
   "--backend", "guest-wine",
   "--start-qemu",
   "--port", "auto",
+  "--redact-output",
   "--app", APP_ID,
   "--cache-root", KNOWN_APP_CACHE_ROOT.to_s,
   "--key", Xnix::SshTestKey::PRIVATE_KEY_PATH,
