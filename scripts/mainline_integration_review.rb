@@ -338,6 +338,7 @@ LANES = [
       %r{\Ascripts/winapp_container_smoke\.rb\z},
       %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
       %r{\Ascripts/known_winapp_},
+      %r{\Atest/test_winapp_smoke_script\.rb\z},
       %r{\Atest/fixtures/winapp/}
     ]
   },

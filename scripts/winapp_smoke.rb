@@ -4,6 +4,7 @@
 require "fileutils"
 require "json"
 require "open3"
+require "optparse"
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
@@ -12,11 +13,96 @@ GO_CACHE_ROOT = PROJECT_ROOT.join(".gocache")
 EXE_PATH = WORK_ROOT.join("hello.exe")
 STATE_ROOT = WORK_ROOT.join("state")
 MARKER = "XNIX_WINAPP_SMOKE_OK"
+SCHEMA_VERSION = "xnix.runtime.winapp_smoke_report.v1"
+
+options = {
+  format: "text",
+  redact_output: nil
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--redact-output]"
+  parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
+  parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
+end.parse!
+
+unless %w[text json markdown].include?(options[:format])
+  warn "FAIL: unsupported output format #{options[:format]}"
+  exit 1
+end
+
+options[:redact_output] = options[:format] != "text" if options[:redact_output].nil?
 
 def run_command(env, *argv)
   stdout, stderr, status = Open3.capture3(env, *argv, chdir: PROJECT_ROOT.to_s)
   [stdout, stderr, status.exitstatus]
 end
+
+def base_report(format, redact_output)
+  {
+    "version" => PROJECT_ROOT.join("VERSION").read.strip,
+    "schema_version" => SCHEMA_VERSION,
+    "report_type" => "winapp-smoke",
+    "format" => format,
+    "redacted_output_requested" => redact_output,
+    "fixture_built" => false,
+    "smoke_invoked" => false,
+    "status" => "failed",
+    "marker" => MARKER,
+    "runner_available" => false,
+    "marker_observed" => false,
+    "raw_output_included" => false,
+    "raw_output_redacted" => redact_output,
+    "host_root_modified" => false,
+    "privileged_container_required" => false,
+    "host_networking_required" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "docker_executed" => false,
+    "qemu_executed" => false,
+    "wine_executed_by_script" => false,
+    "colima_executed" => false,
+    "network_checks_run" => false,
+    "package_manager_invoked" => false,
+    "kde_safe_output_summary" => "smoke has not run",
+    "failure_reason" => "",
+    "skip_reason" => "",
+    "runtime_payload" => nil
+  }
+end
+
+def emit_report(report)
+  case report.fetch("format")
+  when "json"
+    puts JSON.pretty_generate(report)
+  when "markdown"
+    puts "# Windows App Smoke Report"
+    puts
+    puts "- Version: #{report.fetch("version")}"
+    puts "- Status: #{report.fetch("status")}"
+    puts "- Fixture built: #{report.fetch("fixture_built")}"
+    puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
+    puts "- Runner available: #{report.fetch("runner_available")}"
+    puts "- Marker observed: #{report.fetch("marker_observed")}"
+    puts "- Raw output redacted: #{report.fetch("raw_output_redacted")}"
+    puts "- KDE-safe output summary: #{report.fetch("kde_safe_output_summary")}"
+    puts "- Host root modified: #{report.fetch("host_root_modified")}"
+    puts "- Docker executed: #{report.fetch("docker_executed")}"
+    puts "- QEMU executed: #{report.fetch("qemu_executed")}"
+    puts "- Wine executed by script: #{report.fetch("wine_executed_by_script")}"
+    puts "- Network checks run: #{report.fetch("network_checks_run")}"
+    puts "- Package manager invoked: #{report.fetch("package_manager_invoked")}"
+    puts "- Failure reason: #{report.fetch("failure_reason")}" unless report.fetch("failure_reason").empty?
+    puts "- Skip reason: #{report.fetch("skip_reason")}" unless report.fetch("skip_reason").empty?
+  end
+end
+
+def finish(report, exit_code)
+  emit_report(report) unless report.fetch("format") == "text"
+  exit exit_code
+end
+
+report = base_report(options.fetch(:format), options.fetch(:redact_output))
 
 FileUtils.mkdir_p(WORK_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
@@ -33,45 +119,79 @@ build_stdout, build_stderr, build_status = run_command(
 )
 
 unless build_status.zero?
-  warn build_stdout unless build_stdout.empty?
-  warn build_stderr unless build_stderr.empty?
-  warn "FAIL: Windows app fixture build failed"
-  exit 1
+  report["failure_reason"] = "Windows app fixture build failed"
+  if options.fetch(:format) == "text"
+    warn build_stdout unless build_stdout.empty?
+    warn build_stderr unless build_stderr.empty?
+    warn "FAIL: Windows app fixture build failed"
+  end
+  finish(report, 1)
 end
+report["fixture_built"] = true
+
+smoke_command = [
+  "go", "run", "./cmd/xnix-runtime-go", "windows-app-run-smoke",
+  "--exe", EXE_PATH.to_s,
+  "--state-root", STATE_ROOT.to_s,
+  "--timeout", "30s"
+]
+smoke_command << "--redact-output" if options.fetch(:redact_output)
 
 smoke_stdout, smoke_stderr, smoke_status = run_command(
   {
     "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
     "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
   },
-  "go", "run", "./cmd/xnix-runtime-go", "windows-app-run-smoke",
-  "--exe", EXE_PATH.to_s,
-  "--state-root", STATE_ROOT.to_s,
-  "--timeout", "30s"
+  *smoke_command
 )
+report["smoke_invoked"] = true
 
 unless smoke_status.zero?
-  warn smoke_stdout unless smoke_stdout.empty?
-  warn smoke_stderr unless smoke_stderr.empty?
-  warn "FAIL: Windows app runtime smoke command failed"
-  exit 1
+  report["failure_reason"] = "Windows app runtime smoke command failed"
+  if options.fetch(:format) == "text"
+    warn smoke_stdout unless smoke_stdout.empty?
+    warn smoke_stderr unless smoke_stderr.empty?
+    warn "FAIL: Windows app runtime smoke command failed"
+  end
+  finish(report, 1)
 end
 
 payload = JSON.parse(smoke_stdout)
+report["runtime_payload"] = payload
+report["status"] = payload.fetch("status")
+report["runner_available"] = payload.fetch("runner_available", false)
+report["marker_observed"] = payload.fetch("marker_observed", false)
+report["raw_output_included"] = payload.fetch("raw_output_included", false)
+report["raw_output_redacted"] = payload.fetch("raw_output_redacted", options.fetch(:redact_output))
+report["host_root_modified"] = payload.fetch("host_root_modified", false)
+report["privileged_container_required"] = payload.fetch("privileged_container_required", false)
+report["host_networking_required"] = payload.fetch("host_networking_required", false)
+report["docker_socket_mounted"] = payload.fetch("docker_socket_mounted", false)
+report["broad_host_mount_required"] = payload.fetch("broad_host_mount_required", false)
+report["kde_safe_output_summary"] = payload.fetch("kde_safe_output_summary", "")
+report["failure_reason"] = payload.fetch("failure_reason", "")
+report["skip_reason"] = payload.fetch("skip_reason", "")
+
 case payload.fetch("status")
 when "passed"
   if payload["marker_observed"] && payload["stdout"].include?(MARKER)
     puts "PASS: real Windows app smoke"
     exit 0
   end
-  warn "FAIL: Windows app smoke marker missing"
-  exit 1
+  if payload["marker_observed"] && options.fetch(:redact_output)
+    finish(report, 0)
+  end
+  report["failure_reason"] = "Windows app smoke marker missing"
+  warn "FAIL: Windows app smoke marker missing" if options.fetch(:format) == "text"
+  finish(report, 1)
 when "skipped"
-  puts "SKIP: real Windows app smoke (windows compatibility runner unavailable)"
-  exit 0
+  puts "SKIP: real Windows app smoke (windows compatibility runner unavailable)" if options.fetch(:format) == "text"
+  finish(report, 0)
 else
-  warn smoke_stdout
-  warn smoke_stderr unless smoke_stderr.empty?
-  warn "FAIL: real Windows app smoke"
-  exit 1
+  if options.fetch(:format) == "text"
+    warn smoke_stdout
+    warn smoke_stderr unless smoke_stderr.empty?
+    warn "FAIL: real Windows app smoke"
+  end
+  finish(report, 1)
 end

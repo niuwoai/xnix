@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc19`.
+The project is currently at `v0.2.640-rc20`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc19`.
 
 ## Current Checkpoint
 
-v0.2.640-rc19 adds `--redact-output` to the Go-owned `windows-app-run-smoke` path. The local Windows app smoke still keeps raw output by default for developer marker checks, but product-facing consumers can now request marker, byte, and line-count evidence without raw stdout or stderr, moving the real executable runner closer to KDE-safe Compatibility Center consumption.
+v0.2.640-rc20 adds JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
+
+The previous v0.2.640-rc19 checkpoint added `--redact-output` to the Go-owned `windows-app-run-smoke` path. The local Windows app smoke still keeps raw output by default for developer marker checks, but product-facing consumers can now request marker, byte, and line-count evidence without raw stdout or stderr, moving the real executable runner closer to KDE-safe Compatibility Center consumption.
 
 The previous v0.2.640-rc18 checkpoint made `scripts/release_evidence_index.rb` optionally classify existing desktop-trigger request preflight smoke JSON evidence through `--desktop-trigger-request-preflight-smoke`. The index never runs the smoke, emits a `desktop-trigger-request-preflight-smoke` claim, treats missing evidence as skipped, and blocks failed or malformed supplied evidence while keeping release evidence indexing offline and side-effect free. `docs/claude-code-active-work-order.md` is the short current handoff for dispatching the next Claude Code task without reworking completed C9W2 through C9W4 lanes.
 
@@ -66,4 +68,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc19`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc20`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc19"
+EXPECTED_VERSION = "0.2.640-rc20"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -251,6 +251,7 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/known_portable_test.go
   scripts/build_wine_smoke_image.rb
   scripts/winapp_smoke.rb
+  test/test_winapp_smoke_script.rb
   scripts/winapp_container_smoke.rb
   scripts/winapp_guest_wine_smoke.rb
   scripts/known_winapp_fetch.rb
@@ -834,8 +835,12 @@ windows_app_fixture = read_project_file("test/fixtures/winapp/hello/main.go")
 assert(windows_app_fixture.include?("XNIX_WINAPP_SMOKE_OK"),
        "Windows app smoke fixture must emit the smoke marker")
 windows_app_smoke_script = read_project_file("scripts/winapp_smoke.rb")
-%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-run-smoke SKIP PASS .local XNIX_WINAPP_SMOKE_OK].each do |token|
+%w[GOOS GOARCH GOCACHE GOMODCACHE windows-app-run-smoke SKIP PASS .local XNIX_WINAPP_SMOKE_OK --format markdown --redact-output redacted_output_requested wine_executed_by_script].each do |token|
   assert(windows_app_smoke_script.include?(token), "Windows app smoke script must include #{token}")
+end
+windows_app_smoke_script_test = read_project_file("test/test_winapp_smoke_script.rb")
+%w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke --format json --format markdown raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
+  assert(windows_app_smoke_script_test.include?(token.gsub("\\ ", " ")), "Windows app smoke script test must include #{token}")
 end
 windows_app_container_smoke_go = read_project_file("internal/runtime/winapp/container_smoke.go")
 %w[xnix.runtime.windows_app_container_smoke.v1 windows-app-container-run-smoke xnix-wine-smoke:local linux/amd64 --platform --pull never --network none --cpus 2 --memory 2g --security-opt no-new-privileges --cap-drop ALL --tmpfs /state:rw,nosuid,nodev,size=768m WINEPREFIX=/state/wineprefix WINEARCH=win64 WINEDEBUG=-all WINEDLLOVERRIDES=winemenubuilder.exe=d,mscoree=d,mshtml=d XNIX_WINE_BOOTSTRAP_EXIT WineBootstrapTimedOut ContainerStateMode HostMountCount DockerSocketMounted BroadHostMountRequired].each do |token|

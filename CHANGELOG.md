@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc20] - 2026-07-24
+
+### Added
+
+- Added JSON and Markdown report formats to `scripts/winapp_smoke.rb`.
+- Added default redacted output reporting for non-text Windows app smoke reports, preserving marker and safe output-summary evidence without raw stdout or stderr.
+- Added `test/test_winapp_smoke_script.rb` coverage for the report modes using a fake Go runner.
+
+### Fixed
+
+- Kept `windows-app-run-smoke` skip evidence consistent with `--redact-output` when a compatibility runner is unavailable.
+
 ## [0.2.640-rc19] - 2026-07-24
 
 ### Added

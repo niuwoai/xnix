@@ -1,6 +1,6 @@
 # Claude Code Next Dispatch Brief
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc19 | Formal release: v0.2.640 remains blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc20 | Formal release: v0.2.640 remains blocked until full smoke passes
 
 This document is the short operator handoff for asking Claude Code to implement the next bounded Xnix tasks while Codex keeps review, merge, release-promotion, and host-safety decisions.
 
@@ -12,7 +12,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current State
 
-The local baseline is `v0.2.640-rc19`.
+The local baseline is `v0.2.640-rc20`.
 
 Already present in the current candidate:
 
