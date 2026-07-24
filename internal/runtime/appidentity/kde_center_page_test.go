@@ -714,6 +714,9 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 	if card.AppID != "org.xnix.apps.messagebox" ||
 		card.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
 		card.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		card.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
+		card.PrimaryActionLabel != "Show Runtime-controlled launch" ||
+		card.PrimaryActionKind != "runtime-status" ||
 		!card.ExecutionEvidenceRecorded ||
 		!card.StagedLauncherVerified ||
 		!card.OwnerControlledRuntimeLaunchVerified ||

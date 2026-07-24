@@ -123,6 +123,9 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 	if evidence.AppID != "org.xnix.apps.messagebox" ||
 		evidence.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
 		evidence.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		evidence.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
+		evidence.PrimaryActionLabel != "Show Runtime-controlled launch" ||
+		evidence.PrimaryActionKind != "runtime-status" ||
 		!evidence.ExecutionEvidenceRecorded ||
 		!evidence.StagedLauncherVerified ||
 		!evidence.OwnerControlledRuntimeLaunchVerified ||
@@ -132,6 +135,7 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		evidence.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.RawArtifactPathExposed ||
+		!strings.Contains(evidence.Summary, "handoff ready") ||
 		!strings.Contains(evidence.Summary, "managed launcher copied") {
 		t.Fatalf("unexpected owner-controlled GUI known app evidence: %#v", evidence)
 	}

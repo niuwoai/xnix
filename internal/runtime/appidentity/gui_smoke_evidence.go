@@ -339,6 +339,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 	status := report.Status
 	compatibilityState := "gui-smoke-review-required"
 	centerCardState := "gui-smoke-evidence-review-required"
+	primaryActionID := "review-known-app-gui-evidence"
+	primaryActionLabel := "Review GUI run evidence"
+	primaryActionKind := "review"
 	summary := displayName + " GUI smoke evidence is available for review."
 	if projectionReady {
 		compatibilityState = "real-gui-qemu-wine-verified"
@@ -353,6 +356,15 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 	if ownerManagedCopyVerified {
 		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch after the managed launcher copied the Windows executable into the guest."
 	}
+	if ownerEvidenceHandoffReady {
+		primaryActionID = KnownAppKDERuntimeStatusLaunchAction
+		primaryActionLabel = "Show Runtime-controlled launch"
+		primaryActionKind = "runtime-status"
+		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch with a desktop evidence-only owner handoff ready."
+		if ownerManagedCopyVerified {
+			summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch with a desktop evidence-only owner handoff ready after the managed launcher copied the Windows executable into the guest."
+		}
+	}
 	return KnownAppSmokeEvidenceSummary{
 		AppID:                                appID,
 		DisplayName:                          displayName,
@@ -363,9 +375,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,
 		LaunchAuthorizationState:             "review-required",
-		PrimaryActionID:                      "review-known-app-gui-evidence",
-		PrimaryActionLabel:                   "Review GUI run evidence",
-		PrimaryActionKind:                    "review",
+		PrimaryActionID:                      primaryActionID,
+		PrimaryActionLabel:                   primaryActionLabel,
+		PrimaryActionKind:                    primaryActionKind,
 		PrimaryActionEnabled:                 true,
 		DirectLaunchEnabled:                  false,
 		LaunchAuthorizationReceiptRequired:   true,

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc93
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc94
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc94 checkpoint candidate turns a handoff-ready real Windows GUI app card into an evidence-only desktop action surface. When an owner-controlled GUI smoke report carries a safe owner evidence handoff, `gui-smoke-evidence-preview` and Compatibility Center normalization now project `show-runtime-controlled-launch` as the primary action with `runtime-status` semantics. KDE can therefore render the next user-facing step for the already-proven MessageBox GUI lane, but the card still cannot directly launch, start a backend, reconstruct owner service arguments, read state roots, read cache roots, see launcher paths, see raw executable paths, see backend commands, mount Docker sockets, request broad mounts, use host networking, or mutate the host root.
 
 The v0.2.640-rc93 checkpoint candidate links a real owner-controlled Windows GUI app run to a reusable Runtime owner evidence handoff. `scripts/wine_guest_gui_smoke.rb --launch-mode owner-controlled-launch` now records the owner fixture's safe relative `owner_evidence_relative_path` after the Runtime owner service call is ready, and the Go Runtime validates that the handoff remains under `runtime/kde-runtime-status-launch-evidence/` before projecting it to Compatibility Center and KDE GUI cards. KDE can now show that a real GUI app run has an owner service-call handoff ready while still receiving no state root, cache root, launcher path, raw executable path, backend command, receipt/session reconstruction authority, owner service arguments, Docker socket, broad mount, host networking, raw command, backend detail, or host-root mutation authority.
 

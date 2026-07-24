@@ -292,10 +292,10 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "smoke_status" => "passed",
           "compatibility_state" => "owner-controlled-gui-qemu-wine-verified",
           "center_card_state" => "validated-owner-controlled-gui-runtime-run",
-          "primary_action_id" => "review-real-gui-evidence",
-          "primary_action_label" => "Review real GUI evidence",
-          "primary_action_kind" => "review",
-          "primary_action_enabled" => false,
+          "primary_action_id" => "show-runtime-controlled-launch",
+          "primary_action_label" => "Show Runtime-controlled launch",
+          "primary_action_kind" => "runtime-status",
+          "primary_action_enabled" => true,
           "marker_observed" => false,
           "checksum_verified" => false,
           "execution_evidence_recorded" => true,
@@ -365,6 +365,8 @@ assert(gui_card["display_name"] == "Xnix MessageBox Smoke", "KDE GUI evidence ca
 assert(gui_card["evidence_kind"] == "known-application-gui-smoke", "KDE GUI evidence card must preserve evidence kind")
 assert(gui_card["evidence_source"] == "wine-guest-gui-smoke", "KDE GUI evidence card must preserve evidence source")
 assert(gui_card["center_card_state"] == "validated-owner-controlled-gui-runtime-run", "KDE GUI evidence card must expose card state")
+assert(gui_card["primary_action_id"] == "show-runtime-controlled-launch", "KDE GUI evidence card must expose the Runtime-controlled launch action")
+assert(gui_card["primary_action_kind"] == "runtime-status", "KDE GUI evidence card must expose runtime-status action kind")
 assert(gui_card["execution_evidence_recorded"], "KDE GUI evidence card must expose execution evidence status")
 assert(gui_card["staged_launcher_verified"], "KDE GUI evidence card must expose staged launcher status")
 assert(gui_card["owner_controlled_runtime_launch_verified"], "KDE GUI evidence card must expose owner-controlled Runtime launch status")
@@ -373,7 +375,7 @@ assert(gui_card["owner_service_call_ready"], "KDE GUI evidence card must expose 
 assert(gui_card["owner_evidence_handoff_ready"], "KDE GUI evidence card must expose owner evidence handoff readiness")
 assert(gui_card["owner_evidence_relative_path"] == "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json", "KDE GUI evidence card must expose the safe relative owner evidence handoff")
 assert(gui_card["runtime_dispatch_verified"], "KDE GUI evidence card must expose Runtime dispatch status")
-assert(!gui_card["primary_action_enabled"], "KDE GUI evidence card must keep action execution disabled")
+assert(gui_card["primary_action_enabled"], "KDE GUI evidence card must expose the evidence-only Runtime-controlled launch action")
 assert(!gui_card["desktop_launch_enabled"], "KDE GUI evidence card must keep desktop launch disabled")
 assert(!gui_card["backend_launch_enabled"], "KDE GUI evidence card must keep backend launch disabled")
 assert(!gui_card["host_root_modified"], "KDE GUI evidence card must keep host mutation disabled")

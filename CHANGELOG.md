@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc94] - 2026-07-25
+
+### Changed
+
+- Changed handoff-ready owner-controlled GUI evidence cards to expose `show-runtime-controlled-launch` as the safe Runtime-status primary action.
+- Changed GUI evidence projection and Compatibility Center normalization to keep ordinary GUI smoke review-only while promoting only safe owner evidence handoffs.
+- Changed the Plasma Compatibility Center stub to include `primary_action_id` and `primary_action_kind` in the GUI evidence card contract.
+
 ## [0.2.640-rc93] - 2026-07-25
 
 ### Added

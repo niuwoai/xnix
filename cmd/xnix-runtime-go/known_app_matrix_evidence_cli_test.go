@@ -465,6 +465,9 @@ func TestKDECenterPagePreviewCommandConsumesOwnerControlledGUIEvidenceFile(t *te
 	if card["app_id"] != "org.xnix.apps.messagebox" ||
 		card["compatibility_state"] != "owner-controlled-gui-qemu-wine-verified" ||
 		card["center_card_state"] != "validated-owner-controlled-gui-runtime-run" ||
+		card["primary_action_id"] != "show-runtime-controlled-launch" ||
+		card["primary_action_label"] != "Show Runtime-controlled launch" ||
+		card["primary_action_kind"] != "runtime-status" ||
 		card["execution_evidence_recorded"] != true ||
 		card["staged_launcher_verified"] != true ||
 		card["owner_controlled_runtime_launch_verified"] != true ||

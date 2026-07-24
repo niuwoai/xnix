@@ -26,6 +26,8 @@ PlasmoidItem {
         "owner_evidence_handoff_ready",
         "owner_evidence_relative_path",
         "runtime_dispatch_verified",
+        "primary_action_id",
+        "primary_action_kind",
         "primary_action_label"
     ]
     compactRepresentation: PlasmaComponents.ToolButton {
@@ -57,7 +59,7 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, and primary_action_label from each safe card."
+            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, and primary_action_label from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

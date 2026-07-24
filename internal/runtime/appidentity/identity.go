@@ -2867,6 +2867,15 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 			if ownerManagedCopyVerified {
 				summary = displayName + " has redacted Runtime-owner controlled GUI window evidence after the managed launcher copied the Windows executable into the guest."
 			}
+			if ownerEvidenceHandoffReady {
+				primaryActionID = KnownAppKDERuntimeStatusLaunchAction
+				primaryActionLabel = "Show Runtime-controlled launch"
+				primaryActionKind = "runtime-status"
+				summary = displayName + " has a Runtime-owner controlled GUI launch handoff ready for a desktop evidence-only action."
+				if ownerManagedCopyVerified {
+					summary = displayName + " has a Runtime-owner controlled GUI launch handoff ready after the managed launcher copied the Windows executable into the guest."
+				}
+			}
 		}
 	}
 
