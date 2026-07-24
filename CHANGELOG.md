@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc103] - 2026-07-25
+
+### Fixed
+
+- Fixed desktop activation staging for launcher-only known GUI apps without MIME/file associations, such as `org.xnix.apps.mines`.
+
+### Changed
+
+- Changed desktop activation bundle and staging output to mark file associations as not applicable when an app has no MIME types, while preserving start-menu launcher, KDE service-menu, manifest, managed-launcher, and receipt materials.
+
 ## [0.2.640-rc102] - 2026-07-25
 
 ### Added

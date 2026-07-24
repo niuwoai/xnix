@@ -137,3 +137,56 @@ func TestDesktopActivationStagingPreviewPlansFilesWithoutWriting(t *testing.T) {
 		}
 	}
 }
+
+func TestDesktopActivationStagingPreviewSupportsLauncherOnlyApplication(t *testing.T) {
+	plan, err := NewPlanWithProvenance(Recipe{
+		ID:                  "org.xnix.apps.mines",
+		Name:                "Mines",
+		Icon:                "applications-games",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	}, Provenance{
+		Source:          "registry",
+		RegistryName:    "test-registry",
+		DigestVerified:  true,
+		SignatureStatus: "development-only",
+	})
+	if err != nil {
+		t.Fatalf("NewPlanWithProvenance returned error: %v", err)
+	}
+
+	preview, err := plan.DesktopActivationStagingPreview("development")
+	if err != nil {
+		t.Fatalf("DesktopActivationStagingPreview returned error: %v", err)
+	}
+
+	if preview.ApplicationID != "org.xnix.apps.mines" ||
+		preview.DisplayName != "Mines" ||
+		preview.DesktopFile != "xnix-org.xnix.apps.mines.desktop" ||
+		preview.PlannedFileCount != 5 ||
+		len(preview.PlannedFiles) != 5 ||
+		containsString(preview.PlannedFileIDs, "mimeapps-list") ||
+		preview.MIMEAppsWritten ||
+		preview.LaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.HostRootModified {
+		t.Fatalf("unexpected launcher-only staging preview: %#v", preview)
+	}
+	expectedPaths := []string{
+		"usr/share/applications/xnix-org.xnix.apps.mines.desktop",
+		"usr/share/kio/servicemenus/xnix-open-with-compatibility.desktop",
+		"usr/share/xnix/compatibility/manifests/org.xnix.apps.mines.json",
+		"usr/share/xnix/compatibility/launcher-artifacts/xnix-compat-launch.json",
+		"usr/share/xnix/compatibility/activation-receipts/org.xnix.apps.mines.json",
+	}
+	for index, file := range preview.PlannedFiles {
+		if file.RelativePath != expectedPaths[index] ||
+			file.ID == "mimeapps-list" ||
+			file.Written ||
+			file.HostRootModified ||
+			file.BackendDetailsExposed {
+			t.Fatalf("unexpected launcher-only planned file at %d: %#v", index, file)
+		}
+	}
+}

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc102`.
+The project is currently at `v0.2.640-rc103`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc102`.
 
 ## Current Checkpoint
 
-v0.2.640-rc102 lets the Go Runtime launch known Wine GUI apps by catalog id. `xnix-runtime-go windows-app-guest-wine-gui-smoke --app org.xnix.apps.mines` resolves the builtin Mines runner and emits the known app id, display name, and version in the JSON result. The local and q4 Wine GUI smoke harnesses can now pass `--known-app-id org.xnix.apps.mines` so real runs exercise the catalog-selected path instead of hand-written guest paths.
+v0.2.640-rc103 fixes desktop activation staging for launcher-only known GUI apps such as Mines. The Runtime now treats empty MIME/file-association data as not applicable, while still staging the normal KDE launcher files, manifest, managed-launcher artifact, and activation receipt needed for a desktop entry.
+
+The previous v0.2.640-rc102 checkpoint let the Go Runtime launch known Wine GUI apps by catalog id. `xnix-runtime-go windows-app-guest-wine-gui-smoke --app org.xnix.apps.mines` resolves the builtin Mines runner and emits the known app id, display name, and version in the JSON result. The local and q4 Wine GUI smoke harnesses can now pass `--known-app-id org.xnix.apps.mines` so real runs exercise the catalog-selected path instead of hand-written guest paths.
 
 The previous v0.2.640-rc101 checkpoint fixed the KDE controlled-launch action route for owner-controlled Wine builtin GUI apps such as Mines. A real q4 `winemine.exe` desktop run can now keep `owner_managed_copy_verified=false` while still producing the safe KDE page and action evidence when the Runtime owner handoff is ready.
 

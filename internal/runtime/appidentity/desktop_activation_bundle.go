@@ -117,7 +117,8 @@ func (plan Plan) DesktopActivationBundlePreview() (DesktopActivationBundlePrevie
 		return DesktopActivationBundlePreview{}, err
 	}
 
-	materials := desktopActivationMaterials()
+	fileAssociationReady := len(plan.MIMETypes) > 0
+	materials := desktopActivationMaterials(fileAssociationReady)
 	preview := DesktopActivationBundlePreview{
 		SchemaVersion:               "xnix.runtime.desktop_activation_bundle.v1",
 		RequestType:                 "desktop-activation-bundle-preview",
@@ -148,7 +149,7 @@ func (plan Plan) DesktopActivationBundlePreview() (DesktopActivationBundlePrevie
 		OfficialDesktopOnly:         true,
 		NormalApplicationSurface:    true,
 		StandardDesktopEntry:        true,
-		FileAssociationReady:        true,
+		FileAssociationReady:        fileAssociationReady,
 		TaskManagerIdentityReady:    true,
 		KWinIdentityReady:           true,
 		TrayStatusReady:             true,
@@ -189,10 +190,10 @@ func (plan Plan) DesktopActivationBundlePreview() (DesktopActivationBundlePrevie
 	return preview, nil
 }
 
-func desktopActivationMaterials() []DesktopActivationMaterial {
+func desktopActivationMaterials(fileAssociationReady bool) []DesktopActivationMaterial {
 	return []DesktopActivationMaterial{
 		desktopActivationMaterial("launcher", "Start menu launcher", "Plasma application launcher", "desktop-entry-preview", "Launch"),
-		desktopActivationMaterial("file-association", "File association", "Dolphin and MIME applications", "mimeapps-preview", "Launch"),
+		desktopActivationMaterialWithState("file-association", "File association", "Dolphin and MIME applications", "mimeapps-preview", "Launch", desktopActivationFileAssociationState(fileAssociationReady), fileAssociationReady),
 		desktopActivationMaterial("desktop-icon", "Desktop icon", "Plasma desktop", "desktop-icon-preview", "GetDesktopIconPlan"),
 		desktopActivationMaterial("task-manager", "Task manager identity", "Plasma task manager", "window-identity-preview", "GetTaskManagerIdentityPlan"),
 		desktopActivationMaterial("kwin-window-rule", "KWin window identity", "KWin", "window-identity-preview", "GetKWinWindowRulePlan"),
@@ -204,19 +205,30 @@ func desktopActivationMaterials() []DesktopActivationMaterial {
 }
 
 func desktopActivationMaterial(id string, label string, component string, source string, method string) DesktopActivationMaterial {
+	return desktopActivationMaterialWithState(id, label, component, source, method, "preview-ready", true)
+}
+
+func desktopActivationMaterialWithState(id string, label string, component string, source string, method string, state string, required bool) DesktopActivationMaterial {
 	return DesktopActivationMaterial{
 		ID:                    id,
 		Label:                 label,
 		KDEComponent:          component,
 		RuntimeSource:         source,
 		RuntimeMethod:         method,
-		State:                 "preview-ready",
+		State:                 state,
 		UserVisible:           true,
-		RequiredForNormalApp:  true,
+		RequiredForNormalApp:  required,
 		WritesHost:            false,
 		StartsBackend:         false,
 		BackendDetailsExposed: false,
 	}
+}
+
+func desktopActivationFileAssociationState(ready bool) string {
+	if ready {
+		return "preview-ready"
+	}
+	return "not-applicable"
 }
 
 func desktopActivationMaterialIDs(materials []DesktopActivationMaterial) []string {

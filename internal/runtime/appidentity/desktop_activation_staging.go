@@ -263,10 +263,14 @@ func desktopActivationStagedFiles(plan Plan, bundle DesktopActivationBundlePrevi
 	files := []DesktopActivationStagedFile{
 		desktopActivationStagedFile("desktop-entry", "desktop-entry", "launcher", desktopActivationApplicationsDir+"/"+plan.DesktopFile, "0644", bundle.DesktopEntryPreview, "desktop-entry-preview"),
 		desktopActivationStagedFile("dolphin-service-menu", "dolphin-service-menu", "file-manager", desktopActivationServiceMenusDir+"/"+dolphinServiceMenuFileName, "0644", renderDolphinServiceMenuPreview(), "dolphin-service-menu-preview"),
-		desktopActivationStagedFile("mimeapps-list", "mimeapps-list", "file-manager", desktopActivationApplicationsDir+"/mimeapps.list", "0644", bundle.MIMEAppsPreview, "mimeapps-preview"),
+	}
+	if bundle.MIMEAppsPreview != "" {
+		files = append(files, desktopActivationStagedFile("mimeapps-list", "mimeapps-list", "file-manager", desktopActivationApplicationsDir+"/mimeapps.list", "0644", bundle.MIMEAppsPreview, "mimeapps-preview"))
+	}
+	files = append(files,
 		desktopActivationStagedFile("desktop-integration-manifest", "desktop-integration-manifest", "all", desktopActivationManifestsDir+"/"+plan.ApplicationID+".json", "0644", manifestContent, "desktop-activation-staging-preview"),
 		desktopActivationStagedFile("managed-launcher-artifact", "managed-launcher-artifact", "launcher", desktopActivationLauncherDir+"/xnix-compat-launch.json", "0644", renderManagedLauncherArtifactPreview(), "cmd/xnix-compat-launch"),
-	}
+	)
 	receiptContent, err := desktopActivationReceiptPreviewContent(plan, files)
 	if err != nil {
 		return nil, err

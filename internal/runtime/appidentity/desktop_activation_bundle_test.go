@@ -94,3 +94,44 @@ func TestDesktopActivationBundlePreviewAggregatesNormalApplicationMaterials(t *t
 		}
 	}
 }
+
+func TestDesktopActivationBundlePreviewSupportsLauncherOnlyApplication(t *testing.T) {
+	plan, err := NewPlan(Recipe{
+		ID:                  "org.xnix.apps.mines",
+		Name:                "Mines",
+		Icon:                "applications-games",
+		Mode:                "automatic",
+		SupportedExtensions: []string{},
+	})
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+
+	preview, err := plan.DesktopActivationBundlePreview()
+	if err != nil {
+		t.Fatalf("DesktopActivationBundlePreview returned error: %v", err)
+	}
+
+	if preview.ApplicationID != "org.xnix.apps.mines" ||
+		preview.DisplayName != "Mines" ||
+		preview.DesktopFile != "xnix-org.xnix.apps.mines.desktop" ||
+		preview.MIMEAppsPreview != "" ||
+		len(preview.MIMETypes) != 0 ||
+		preview.FileAssociationReady ||
+		!preview.StandardDesktopEntry ||
+		!strings.Contains(preview.DesktopEntryPreview, "Exec=xnix-compat-launch --app org.xnix.apps.mines %U\n") ||
+		strings.Contains(preview.DesktopEntryPreview, "MimeType=") {
+		t.Fatalf("unexpected launcher-only bundle preview: %#v", preview)
+	}
+	var fileAssociation DesktopActivationMaterial
+	for _, material := range preview.Materials {
+		if material.ID == "file-association" {
+			fileAssociation = material
+		}
+	}
+	if fileAssociation.ID != "file-association" ||
+		fileAssociation.State != "not-applicable" ||
+		fileAssociation.RequiredForNormalApp {
+		t.Fatalf("unexpected launcher-only file association material: %#v", fileAssociation)
+	}
+}

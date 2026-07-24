@@ -100,6 +100,61 @@ func TestDesktopActivationStageCommandWritesOnlyInsideStagingRoot(t *testing.T) 
 	}
 }
 
+func TestDesktopActivationStageCommandStagesCanonicalLauncherOnlyGUIApp(t *testing.T) {
+	stagingRoot := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"desktop-activation-stage",
+		"--registry", "../../runtime/recipes/registry.json",
+		"--app", "org.xnix.apps.mines",
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["application_id"] != "org.xnix.apps.mines" ||
+		payload["display_name"] != "Mines" ||
+		payload["desktop_file"] != "xnix-org.xnix.apps.mines.desktop" ||
+		payload["written_file_count"] != float64(5) ||
+		payload["mimeapps_written"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected launcher-only desktop activation stage payload: %#v", payload)
+	}
+	writtenFileIDs := payload["written_file_ids"].([]any)
+	if containsAnyString(writtenFileIDs, "mimeapps-list") {
+		t.Fatalf("launcher-only stage must not write mimeapps-list: %#v", writtenFileIDs)
+	}
+
+	desktopEntryPath := filepath.Join(stagingRoot, "usr/share/applications/xnix-org.xnix.apps.mines.desktop")
+	desktopEntry, err := os.ReadFile(desktopEntryPath)
+	if err != nil {
+		t.Fatalf("desktop entry was not staged: %v", err)
+	}
+	if !bytes.Contains(desktopEntry, []byte("Name=Mines\n")) ||
+		!bytes.Contains(desktopEntry, []byte("Icon=applications-games\n")) ||
+		!bytes.Contains(desktopEntry, []byte("Exec=xnix-compat-launch --app org.xnix.apps.mines %U\n")) ||
+		!bytes.Contains(desktopEntry, []byte("X-Xnix-ApplicationId=org.xnix.apps.mines\n")) ||
+		bytes.Contains(desktopEntry, []byte("MimeType=")) ||
+		bytes.Contains(desktopEntry, []byte("winemine.exe")) ||
+		bytes.Contains(desktopEntry, []byte("qemu-system")) ||
+		bytes.Contains(desktopEntry, []byte("wine ")) {
+		t.Fatalf("unexpected launcher-only desktop entry:\n%s", desktopEntry)
+	}
+	if _, err := os.Stat(filepath.Join(stagingRoot, "usr/share/applications/mimeapps.list")); !os.IsNotExist(err) {
+		t.Fatalf("launcher-only stage must not create mimeapps.list, stat error: %v", err)
+	}
+}
+
 func TestDesktopActivationStageCommandRejectsMissingRoot(t *testing.T) {
 	registryPath := writeStageCommandRegistry(t)
 

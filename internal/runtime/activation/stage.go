@@ -216,7 +216,7 @@ func Stage(req StageRequest) (StageResult, error) {
 		HostRootAllowed:             false,
 		FileWritesPerformed:         true,
 		DesktopFilesWritten:         true,
-		MIMEAppsWritten:             true,
+		MIMEAppsWritten:             containsStagedFileID(files, "mimeapps-list"),
 		ManifestWritten:             true,
 		ReceiptWritten:              true,
 		RollbackReceiptWritten:      true,
@@ -249,17 +249,19 @@ func stageArtifacts(plan appidentity.Plan, managedLauncherBinary string) ([]stag
 	if err != nil {
 		return nil, err
 	}
-	mimeapps, err := plan.RenderMIMEApps()
-	if err != nil {
-		return nil, err
-	}
 
 	initial := []stageArtifact{
 		newArtifact("desktop-entry", "desktop-entry", "launcher", applicationsDir+"/"+plan.DesktopFile, desktopEntry, "desktop-entry-preview"),
 		newArtifact("dolphin-service-menu", "dolphin-service-menu", "file-manager", serviceMenusDir+"/"+dolphinServiceMenu, renderDolphinServiceMenu(), "dolphin-service-menu-preview"),
-		newArtifact("mimeapps-list", "mimeapps-list", "file-manager", applicationsDir+"/mimeapps.list", mimeapps, "mimeapps-preview"),
-		newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/"+managedLauncherName+".json", renderManagedLauncherArtifact(managedLauncherBinary != ""), "cmd/xnix-compat-launch"),
 	}
+	if len(plan.MIMETypes) > 0 {
+		mimeapps, err := plan.RenderMIMEApps()
+		if err != nil {
+			return nil, err
+		}
+		initial = append(initial, newArtifact("mimeapps-list", "mimeapps-list", "file-manager", applicationsDir+"/mimeapps.list", mimeapps, "mimeapps-preview"))
+	}
+	initial = append(initial, newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/"+managedLauncherName+".json", renderManagedLauncherArtifact(managedLauncherBinary != ""), "cmd/xnix-compat-launch"))
 	if managedLauncherBinary != "" {
 		launcherExecutable, err := newExecutableArtifact(
 			"managed-launcher-executable",
@@ -513,6 +515,15 @@ func stagedFileIDs(files []StagedFile) []string {
 	}
 	sort.Strings(ids)
 	return ids
+}
+
+func containsStagedFileID(files []StagedFile, id string) bool {
+	for _, file := range files {
+		if file.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func sha256Hex(content string) string {
