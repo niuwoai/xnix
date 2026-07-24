@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc73
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc74
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc74 checkpoint candidate makes the q4 real Windows GUI-app lane repeatable. `scripts/remote_wine_guest_gui_smoke.rb` has a non-executing plan mode plus an explicit `--execute` mode that syncs this checkout to q4, runs the Xvfb/QEMU/Wine GUI smoke against the q4 Wine guest kernel, and persists JSON evidence under `/home/xnix-run-materials/state/`. The remote plan records that passing requires a rebuilt Wine guest with X11 support while preserving closed privileged-container, host-networking, Docker-socket, broad-mount, and host-root-mutation boundaries.
 
 The v0.2.640-rc73 checkpoint candidate starts the real Windows GUI-app lane. The Wine i386 guest defconfig now brings in X.org client libraries plus font and image dependencies so Wine can be rebuilt with its X11 graphics driver, and `scripts/wine_guest_gui_smoke.rb` provides an execute-gated Xvfb/QEMU/Wine smoke that verifies a real Wine GUI app creates an X window while keeping SSH loopback-bound, privileged containers, host networking, broad host mounts, Docker socket mounts, and host-root mutation disabled.
 

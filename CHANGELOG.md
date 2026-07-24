@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc74] - 2026-07-24
+
+### Added
+
+- Added `scripts/remote_wine_guest_gui_smoke.rb`, an execute-gated q4 harness that syncs this checkout, runs the Wine guest GUI smoke remotely, and persists JSON evidence under managed `/home/xnix-*` paths.
+- Added plan-only coverage for the remote GUI smoke so the q4 command shape, safe path boundaries, and rebuilt-X11 Wine guest requirement are testable without SSH execution.
+
 ## [0.2.640-rc73] - 2026-07-24
 
 ### Added
