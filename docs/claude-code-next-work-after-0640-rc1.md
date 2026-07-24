@@ -1,12 +1,12 @@
-# Claude Code Next Work After v0.2.640-rc6
+# Claude Code Next Work After v0.2.640-rc7
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc6
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc7
 
-This handoff is the next Claude Code dispatch sheet for the KDE-first Windows application compatibility mainline after the original `v0.2.640-rc1` checkpoint candidate, the local `v0.2.640-rc2` failure-classification update, the local `v0.2.640-rc3` desktop-trigger readiness packet, the local `v0.2.640-rc4` owner-service launch envelope guard, the local `v0.2.640-rc5` KDE action surface audit, and the local `v0.2.640-rc6` managed launcher acceptance report.
+This handoff is the next Claude Code dispatch sheet for the KDE-first Windows application compatibility mainline after the original `v0.2.640-rc1` checkpoint candidate, the local `v0.2.640-rc2` failure-classification update, the local `v0.2.640-rc3` desktop-trigger readiness packet, the local `v0.2.640-rc4` owner-service launch envelope guard, the local `v0.2.640-rc5` KDE action surface audit, the local `v0.2.640-rc6` managed launcher acceptance report, and the local `v0.2.640-rc7` desktop-trigger dry-run request review.
 
 Use this document for bounded Claude Code implementation branches while Codex or the human operator resolves the external Docker Hub pull blocker. Do not treat this document as permission to run Docker, QEMU, network fetches, package-manager calls, privileged containers, host networking, Docker socket mounts, broad host-directory mounts, or host-root mutation.
 
-`C8W1` is implemented locally in v0.2.640-rc2, `C8W2` is implemented locally in v0.2.640-rc3, `C8W3` is implemented locally in v0.2.640-rc4, `C8W4` is implemented locally in v0.2.640-rc5, and `C8W5` is implemented locally in v0.2.640-rc6. Use this document for `C8W6` unless a reviewer explicitly asks for a repair branch.
+`C8W1` is implemented locally in v0.2.640-rc2, `C8W2` is implemented locally in v0.2.640-rc3, `C8W3` is implemented locally in v0.2.640-rc4, `C8W4` is implemented locally in v0.2.640-rc5, `C8W5` is implemented locally in v0.2.640-rc6, and `C8W7` is implemented locally in v0.2.640-rc7. Use this document for `C8W6` unless a reviewer explicitly asks for a repair branch.
 
 The immediate formal release gate is still:
 
@@ -20,7 +20,7 @@ Do not modify `docs/claude-code-implementation-packages.md` from any task in thi
 
 ## Current Mainline State
 
-The `v0.2.640-rc6` candidate already promotes `kde-controlled-launch-action-dbus-fixture-smoke` into `scripts/full_smoke.rb` as a required PASS lane, adds structured full-smoke failure classification, adds a Go-owned desktop-trigger staged invocation readiness packet, adds a fail-closed owner-service launch envelope guard, audits the KDE controlled-launch action surface, and adds a managed launcher acceptance report. The restricted container command runs the plan-consuming KDE controlled-launch action harness in the tested Runtime image with explicit D-Bus fixture execution enabled, no container networking, no privileged container, no Docker socket, managed cache volume access, and the controlled-launch scratch tmpfs.
+The `v0.2.640-rc7` candidate already promotes `kde-controlled-launch-action-dbus-fixture-smoke` into `scripts/full_smoke.rb` as a required PASS lane, adds structured full-smoke failure classification, adds a Go-owned desktop-trigger staged invocation readiness packet, adds a fail-closed owner-service launch envelope guard, audits the KDE controlled-launch action surface, adds a managed launcher acceptance report, and adds a desktop-trigger dry-run request review. The restricted container command runs the plan-consuming KDE controlled-launch action harness in the tested Runtime image with explicit D-Bus fixture execution enabled, no container networking, no privileged container, no Docker socket, managed cache volume access, and the controlled-launch scratch tmpfs.
 
 The formal `v0.2.640` tag must wait until full smoke passes. If full smoke fails after the Docker pull blocker is resolved, fix the concrete project defect and rerun the complete checkpoint before promoting the version.
 
@@ -66,7 +66,8 @@ Unsafe behavior remains disabled:
 | Done | `C8W3` Runtime owner service launch request envelope guard | Runtime owner service | Implemented locally in v0.2.640-rc4. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W4` KDE controlled-launch action surface audit | KDE shell presentation | Implemented locally in v0.2.640-rc5. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W5` Managed launcher acceptance report | known Windows app / Compatibility Center | Implemented locally in v0.2.640-rc6. Do not dispatch again unless a reviewer asks for repair. |
-| 1 | `C8W6` Post-checkpoint promotion checklist | release train | Give Codex a deterministic checklist for promoting `0.2.640-rc6` to `0.2.640` only after full smoke passes. |
+| Done | `C8W7` Desktop-trigger dry-run request review | desktop-trigger gate | Implemented locally in v0.2.640-rc7. Do not dispatch again unless a reviewer asks for repair. |
+| 1 | `C8W6` Post-checkpoint promotion checklist | release train | Give Codex a deterministic checklist for promoting `0.2.640-rc7` to `0.2.640` only after full smoke passes. |
 
 Prefer dispatching `C8W6` next. It improves release promotion safety without relying on Docker, QEMU, or the current external registry problem.
 
@@ -390,7 +391,7 @@ Required handoff:
 
 ### Mission
 
-Create a deterministic promotion checklist that Codex can use after `ruby scripts/full_smoke.rb` passes to promote `0.2.640-rc6` to formal `0.2.640` without accidentally skipping evidence, retaining stale release-blocked wording, or claiming success from a partial smoke.
+Create a deterministic promotion checklist that Codex can use after `ruby scripts/full_smoke.rb` passes to promote `0.2.640-rc7` to formal `0.2.640` without accidentally skipping evidence, retaining stale release-blocked wording, or claiming success from a partial smoke.
 
 ### Start from
 
@@ -407,7 +408,7 @@ Create a deterministic promotion checklist that Codex can use after `ruby script
 
 - A documentation-only checklist or a Ruby dry-run checklist command such as `scripts/promote_full_checkpoint_checklist.rb`.
 - Required evidence rows for full-smoke JSON, full-smoke Markdown, serial log, builder tools image, Runtime image, Buildroot image, SSH Wine guest image, known-app cache, base QEMU boot smoke, known-app QEMU Wine smoke, fixture QEMU Wine smoke, and KDE controlled-launch action D-Bus fixture smoke.
-- Version-promotion steps that replace `0.2.640-rc6` with `0.2.640` only after all required PASS markers exist.
+- Version-promotion steps that replace `0.2.640-rc7` with `0.2.640` only after all required PASS markers exist.
 - Tests if code is added; otherwise include a clear manual checklist and no-code verification commands.
 
 ### Keep disabled
@@ -441,7 +442,7 @@ git diff --check
 Implement C8W6 from docs/claude-code-next-work-after-0640-rc1.md.
 
 Target outcome:
-- Add a deterministic post-checkpoint promotion checklist for turning 0.2.640-rc6 into 0.2.640 only after full smoke passes.
+- Add a deterministic post-checkpoint promotion checklist for turning 0.2.640-rc7 into 0.2.640 only after full smoke passes.
 
 Hard constraints:
 - Do not automatically promote the version, commit, tag, run full smoke, run Docker, run QEMU, or mutate the host root.
@@ -479,7 +480,7 @@ Do not dispatch these as Claude Code tasks from this document:
 - Pull `debian:bookworm-slim`.
 - Restart Colima.
 - Run `ruby scripts/full_smoke.rb`.
-- Promote `0.2.640-rc6` to `0.2.640` without full-smoke PASS evidence.
+- Promote `0.2.640-rc7` to `0.2.640` without full-smoke PASS evidence.
 - Enable production D-Bus ownership.
 - Enable Runtime write methods for KDE.
 - Start Wine, Proton, QEMU, or VM backends from KDE.

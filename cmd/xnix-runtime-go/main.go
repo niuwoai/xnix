@@ -251,6 +251,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppRuntimeStatusLaunchOwnerTriggerPreview(args[1:], stdout)
 	case "managed-launcher-acceptance-report-preview":
 		return runManagedLauncherAcceptanceReportPreview(args[1:], stdout)
+	case "desktop-trigger-dry-run-request-review-preview":
+		return runDesktopTriggerDryRunRequestReviewPreview(args[1:], stdout)
 	case "kde-controlled-launch-action-preview":
 		return runKDEControlledLaunchActionPreview(args[1:], stdout)
 	case "kde-controlled-launch-action-surface-audit-preview":

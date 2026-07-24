@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc6
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc7
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc7 checkpoint candidate adds `desktop-trigger-dry-run-request-review-preview`, a Go-owned review packet for the next human-authorized desktop-triggered staged launch attempt. The packet consumes the Runtime owner launch envelope guard, KDE controlled-launch action surface audit, managed launcher acceptance report, Runtime-status evidence digest state, and the full-checkpoint dependency. It returns accepted-review, blocked-missing-full-checkpoint, blocked-unsafe-envelope, blocked-unsafe-action, blocked-acceptance, missing-evidence, stale-evidence, malformed, or unsafe states without dispatching service calls, calling D-Bus, writing request objects, creating permission grants, writing Runtime state, writing KDE configuration, enabling desktop launch, starting a backend, requiring network access, or mutating the host root. The formal `v0.2.640` release remains pending until full smoke passes.
 
 The v0.2.640-rc6 checkpoint candidate adds `managed-launcher-acceptance-report-preview`, a Go-owned acceptance report for the managed known Windows app lane. The report consumes Runtime-status launch handoff evidence, known-app identity, artifact digest evidence, launch authorization, session-gated review, controlled execution session, managed launcher request readiness, guest smoke evidence, KDE-safe projection state, and the full-checkpoint dependency. It returns accepted, blocked, missing-evidence, stale-evidence, malformed, unsafe, or needs-full-checkpoint states without exposing local paths, launcher paths, raw launcher output, backend details, D-Bus calls, KDE configuration writes, Runtime writes, desktop launch, backend launch, network access, or host mutation. The formal `v0.2.640` release remains pending until full smoke passes.
 

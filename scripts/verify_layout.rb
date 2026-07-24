@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc6"
+EXPECTED_VERSION = "0.2.640-rc7"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -219,6 +219,8 @@ REQUIRED_FILES = %w[
   cmd/xnix-runtime-go/kde_controlled_launch_session_bus_smoke_plan_cli_test.go
   cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_commands.go
   cmd/xnix-runtime-go/kde_desktop_trigger_staged_invocation_readiness_cli_test.go
+  cmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_commands.go
+  cmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_cli_test.go
   cmd/xnix-runtime-go/owner_service_launch_envelope_guard_commands.go
   cmd/xnix-runtime-go/owner_service_launch_envelope_guard_cli_test.go
   cmd/xnix-runtime-go/ai_diagnostics_commands.go
@@ -452,6 +454,8 @@ REQUIRED_FILES = %w[
   internal/runtime/owner/restricted_smoke_receipt_fanout_owner_route_audit_test.go
   internal/runtime/owner/launch_envelope_guard.go
   internal/runtime/owner/launch_envelope_guard_test.go
+  internal/runtime/owner/desktop_trigger_dry_run_request_review.go
+  internal/runtime/owner/desktop_trigger_dry_run_request_review_test.go
   internal/runtime/portal/broker.go
   internal/runtime/portal/broker_test.go
   internal/runtime/portal/request.go
@@ -6629,6 +6633,15 @@ go_owner_launch_envelope_guard_source = read_project_file("internal/runtime/owne
                                         read_project_file("cmd/xnix-runtime-go/main.go")
 %w[LaunchEnvelopeGuardSchemaVersion LaunchEnvelopeGuardRequestType LaunchEnvelopeGuardRequest LaunchEnvelopeGuardPreview PreviewLaunchEnvelopeGuard owner-service-launch-envelope-guard-preview xnix.runtime.owner_service_launch_envelope_guard.v1 accepted-for-review blocked-missing-evidence blocked-mismatched-route blocked-stale blocked-replay blocked-owner-args malformed unsupported evidence-handle-kind evidence-relative-path evidence-id expected-evidence-sha256 kde-dbus-runtime-status-action ShowRuntimeControlledLaunch xnix.runtime-status.controlled-launch kde-presentation-shell request_freshness replay_marker_state route_matched method_matched action_matched caller_role_accepted evidence_handle_shape_accepted evidence_digest_verified evidence_digest_matched owner_only_arguments_present owner_only_argument_count kde_can_only_forward_evidence_handle kde_state_root_rejected kde_cache_root_rejected kde_launcher_path_rejected kde_timeout_value_rejected kde_raw_executable_path_rejected kde_backend_command_rejected kde_receipt_fields_rejected kde_session_fields_rejected kde_dispatch_fields_rejected runtime_owned go_runtime_backed kde_policy_owner desktop_receipt_fields_reconstructed desktop_kde_state_root_access state_root_path_exposed cache_root_path_exposed launcher_path_exposed raw_executable_path_exposed raw_command_exposed backend_details_exposed receipt_write_enabled receipt_accepted production_authorization_accepted service_call_dispatched dbus_ownership_enabled desktop_launch_enabled backend_launch_enabled execution_started backend_process_started runtime_state_written network_required host_root_modified privileged_container_required PreviewKnownAppKDERuntimeStatusLaunchEvidence validateNoBackendTerms TestPreviewLaunchEnvelopeGuardAcceptsEvidenceOnlyEnvelope TestPreviewLaunchEnvelopeGuardBlocksMismatchedRouteStaleReplayOwnerArgsAndMalformed TestOwnerServiceLaunchEnvelopeGuardPreviewCommandBlocksOwnerOnlyArgsWithoutLeakingValues].each do |token|
   assert(go_owner_launch_envelope_guard_source.include?(token), "Go owner launch envelope guard must include #{token}")
+end
+
+go_desktop_trigger_dry_run_request_review_source = read_project_file("internal/runtime/owner/desktop_trigger_dry_run_request_review.go") +
+                                                   read_project_file("internal/runtime/owner/desktop_trigger_dry_run_request_review_test.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_commands.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_cli_test.go") +
+                                                   read_project_file("cmd/xnix-runtime-go/main.go")
+%w[DesktopTriggerDryRunRequestReviewSchemaVersion DesktopTriggerDryRunRequestReviewRequestType DesktopTriggerDryRunRequestReviewRequest DesktopTriggerDryRunRequestReviewPreview PreviewDesktopTriggerDryRunRequestReview desktop-trigger-dry-run-request-review-preview xnix.runtime.desktop_trigger_dry_run_request_review.v1 accepted-review blocked-missing-full-checkpoint blocked-unsafe-envelope blocked-unsafe-action blocked-acceptance malformed missing-evidence stale-evidence review_state envelope_guard_state action_surface_state managed_launcher_acceptance_state full_checkpoint_state runtime_status_evidence_state dry_run_review_only request_object_written permission_grant_created service_call_dispatch_enabled service_call_dispatched dbus_called dbus_ownership_enabled desktop_launch_enabled backend_launch_enabled execution_started runtime_state_written kde_configuration_written network_required host_root_modified production_authorization_accepted PreviewLaunchEnvelopeGuard PreviewKDEControlledLaunchActionSurfaceAudit PreviewManagedLauncherAcceptanceReport TestPreviewDesktopTriggerDryRunRequestReviewAcceptsSafeInputs TestDesktopTriggerDryRunRequestReviewPreviewCommand].each do |token|
+  assert(go_desktop_trigger_dry_run_request_review_source.include?(token), "Go desktop-trigger dry-run request review must include #{token}")
 end
 
 kde_controlled_launch_action_source = read_project_file("kde/actions/xnix-runtime-status-controlled-launch.desktop") +

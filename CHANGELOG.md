@@ -4,6 +4,23 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc7] - 2026-07-24
+
+### Added
+
+- Added `desktop-trigger-dry-run-request-review-preview`, a Go-owned review packet that combines the Runtime owner launch envelope guard, KDE controlled-launch action surface audit, managed launcher acceptance report, Runtime-status evidence digest state, and the full-checkpoint dependency before any desktop-triggered staged launch attempt.
+- Added targeted Go and CLI tests for accepted-review, missing full checkpoint, unsafe envelope, unsafe KDE action surface, malformed evidence, stale evidence, redaction, and no-side-effect behavior.
+- Added `docs/claude-code-next-delegation-pack.md` as a copy-first Claude Code handoff pack for the next bounded tasks.
+
+### Changed
+
+- Updated layout and mainline review gates so the desktop-trigger dry-run request review is classified with the Runtime owner read boundary.
+- Updated current Claude Code dispatch guidance to point at the new short delegation pack.
+
+### Fixed
+
+- Kept the desktop-trigger request review fail-closed without dispatching service calls, calling D-Bus, writing request objects, creating permission grants, writing Runtime state, writing KDE configuration, enabling desktop launch, starting a backend, requiring network access, or mutating the host root.
+
 ## [0.2.640-rc6] - 2026-07-24
 
 ### Added

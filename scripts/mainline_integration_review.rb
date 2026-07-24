@@ -97,6 +97,7 @@ LANES = [
       %r{\Acmd/xnix-runtime-go/runtime_owner_},
       %r{\Acmd/xnix-runtime-go/runtime_route_convergence_},
       %r{\Acmd/xnix-runtime-go/owner_service_launch_envelope_guard_},
+      %r{\Acmd/xnix-runtime-go/desktop_trigger_dry_run_request_review_},
       %r{\Acmd/xnix-runtime-go/runtime_live_owner_gate_cli_test\.go\z},
       %r{\Acmd/xnix-runtime-go/runtime_method_parity_manifest_cli_test\.go\z},
       %r{\Acmd/xnix-runtime-go/runtime_service_binding_cli_test\.go\z},
