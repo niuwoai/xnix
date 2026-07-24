@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc102] - 2026-07-25
+
+### Added
+
+- Added known-app identity selection to `xnix-runtime-go windows-app-guest-wine-gui-smoke` through `--app`, so Wine builtin GUI apps such as Mines can be launched by catalog id instead of guest filesystem path.
+- Added `--known-app-id` forwarding to the local and q4 Wine GUI smoke harnesses so real runs can exercise the catalog-selected Go Runtime path.
+- Added known app identity fields to GUI smoke JSON output for desktop and Runtime handoff consumers.
+
+### Changed
+
+- Changed the owner-controlled known GUI dispatch path to preserve catalog identity when it delegates to the guest Wine GUI runner.
+
 ## [0.2.640-rc101] - 2026-07-25
 
 ### Fixed

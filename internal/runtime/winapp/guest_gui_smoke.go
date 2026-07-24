@@ -22,26 +22,32 @@ const (
 )
 
 type GuestGUIRequest struct {
-	ExecutablePath string
-	GUIAppPath     string
-	Host           string
-	Port           string
-	User           string
-	KeyPath        string
-	RemoteDir      string
-	SSHPath        string
-	SCPPath        string
-	XWinInfoPath   string
-	GuestDisplay   string
-	HostDisplay    string
-	Timeout        time.Duration
-	Wait           time.Duration
+	ExecutablePath  string
+	GUIAppPath      string
+	KnownAppID      string
+	KnownAppName    string
+	KnownAppVersion string
+	Host            string
+	Port            string
+	User            string
+	KeyPath         string
+	RemoteDir       string
+	SSHPath         string
+	SCPPath         string
+	XWinInfoPath    string
+	GuestDisplay    string
+	HostDisplay     string
+	Timeout         time.Duration
+	Wait            time.Duration
 }
 
 type GuestGUIResult struct {
 	SchemaVersion                             string `json:"schema_version"`
 	RequestType                               string `json:"request_type"`
 	Status                                    string `json:"status"`
+	KnownAppID                                string `json:"known_app_id,omitempty"`
+	KnownAppName                              string `json:"known_app_name,omitempty"`
+	KnownAppVersion                           string `json:"known_app_version,omitempty"`
 	GUIAppName                                string `json:"gui_app_name"`
 	Backend                                   string `json:"backend"`
 	GuestTransport                            string `json:"guest_transport"`
@@ -246,6 +252,9 @@ func baseGuestGUIResult(request GuestGUIRequest) GuestGUIResult {
 		SchemaVersion:             GuestGUISchemaVersion,
 		RequestType:               GuestGUIRequestType,
 		Status:                    FailedStatus,
+		KnownAppID:                strings.TrimSpace(request.KnownAppID),
+		KnownAppName:              strings.TrimSpace(request.KnownAppName),
+		KnownAppVersion:           strings.TrimSpace(request.KnownAppVersion),
 		GUIAppName:                filepath.Base(guiAppPath(request)),
 		Backend:                   "qemu-guest-wine-x11",
 		GuestTransport:            "loopback-ssh",

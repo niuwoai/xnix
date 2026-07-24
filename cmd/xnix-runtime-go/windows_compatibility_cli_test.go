@@ -1275,7 +1275,7 @@ func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{
 		"windows-app-guest-wine-gui-smoke",
-		"--gui-app", "/usr/lib/wine/i386-windows/winemine.exe",
+		"--app", "org.xnix.apps.mines",
 		"--host", "127.0.0.1",
 		"--port", "2222",
 		"--user", "root",
@@ -1299,6 +1299,9 @@ func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
 	if payload["schema_version"] != "xnix.runtime.windows_app_guest_wine_gui_smoke.v1" ||
 		payload["request_type"] != "windows-app-guest-wine-gui-smoke" ||
 		payload["status"] != "passed" ||
+		payload["known_app_id"] != "org.xnix.apps.mines" ||
+		payload["known_app_name"] != "Mines" ||
+		payload["known_app_version"] != currentProjectVersion(t) ||
 		payload["gui_app_name"] != "winemine.exe" ||
 		payload["backend"] != "qemu-guest-wine-x11" ||
 		payload["wineboot_invoked"] != true ||
@@ -1326,6 +1329,20 @@ func TestWindowsAppGuestWineGUISmokeCommandObservesWindow(t *testing.T) {
 		if strings.Contains(output.String(), forbidden) {
 			t.Fatalf("guest GUI smoke output leaked raw path %q: %s", forbidden, output.String())
 		}
+	}
+}
+
+func TestWindowsAppGuestWineGUISmokeCommandRejectsConsoleKnownApp(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-guest-wine-gui-smoke",
+		"--app", "7zr",
+	}, &output)
+	if err == nil {
+		t.Fatalf("console known app must not be accepted by the GUI runner")
+	}
+	if !strings.Contains(err.Error(), "not a guest GUI app") {
+		t.Fatalf("unexpected console app rejection: %v", err)
 	}
 }
 

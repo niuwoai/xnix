@@ -51,6 +51,8 @@ assert(payload["kde_page_output"].start_with?("/home/xnix-"), "remote KDE page o
 assert(payload["kde_action_output"].start_with?("/home/xnix-"), "remote KDE action output must stay under /home/xnix-*")
 assert(payload["kde_center_page_preview_planned"] == true, "remote GUI smoke must plan KDE center page evidence after a pass")
 assert(payload["kde_controlled_launch_action_preview_planned"] == false, "remote GUI smoke direct mode must not plan a controlled-launch action preview")
+assert(payload["known_app_id"] == "", "remote GUI smoke must not force known app selection by default")
+assert(payload["known_app_selection_planned"] == false, "remote GUI smoke must keep known app selection explicit")
 assert(payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke must expose the default evidence app id")
 assert(payload["evidence_display_name"] == "Mines", "remote GUI smoke must expose the default evidence display name")
 assert(payload["state_root"].start_with?("/home/xnix-"), "remote state root must stay under /home/xnix-*")
@@ -107,6 +109,16 @@ assert(tmp_status.success?, "remote GUI smoke must accept constrained /tmp/xnix-
 tmp_payload = JSON.parse(tmp_stdout)
 assert(tmp_payload["remote_source_root"].start_with?("/tmp/xnix-"), "remote GUI smoke must expose constrained /tmp source roots")
 assert(tmp_payload["remote_build_root"].start_with?("/tmp/xnix-"), "remote GUI smoke must expose constrained /tmp build roots")
+
+known_stdout, known_stderr, known_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--known-app-id", "org.xnix.apps.mines",
+  chdir: project_root.to_s
+)
+assert(known_status.success?, "remote GUI smoke known-app plan must succeed: #{known_stderr}")
+known_payload = JSON.parse(known_stdout)
+assert(known_payload["known_app_id"] == "org.xnix.apps.mines", "remote GUI smoke known-app plan must expose the selected app id")
+assert(known_payload["known_app_selection_planned"] == true, "remote GUI smoke known-app plan must route app selection through the remote Go Runtime")
 
 exe_stdout, exe_stderr, exe_status = Open3.capture3(
   "ruby", script.to_s,

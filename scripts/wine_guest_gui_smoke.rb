@@ -26,6 +26,7 @@ DEFAULT_LAUNCH_MODE = ENV.fetch("XNIX_WINE_GUI_LAUNCH_MODE", "direct")
 DEFAULT_OWNER_BIN = ENV.fetch("XNIX_RUNTIME_OWNER_BIN", "go")
 DEFAULT_LAUNCHER_BIN = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "")
 DEFAULT_KNOWN_APP_CACHE_ROOT = ENV.fetch("XNIX_KNOWN_APP_CACHE_ROOT", "")
+DEFAULT_KNOWN_APP_ID = ENV.fetch("XNIX_WINE_GUI_KNOWN_APP_ID", "")
 DEFAULT_EVIDENCE_APP_ID = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_ID", "org.xnix.apps.mines")
 DEFAULT_EVIDENCE_DISPLAY_NAME = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_DISPLAY_NAME", "Mines")
 DEFAULT_EVIDENCE_APP_VERSION = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_VERSION", VERSION)
@@ -48,6 +49,7 @@ options = {
   owner_bin: DEFAULT_OWNER_BIN,
   launcher_bin: DEFAULT_LAUNCHER_BIN,
   known_app_cache_root: DEFAULT_KNOWN_APP_CACHE_ROOT,
+  known_app_id: DEFAULT_KNOWN_APP_ID,
   evidence_app_id: DEFAULT_EVIDENCE_APP_ID,
   evidence_display_name: DEFAULT_EVIDENCE_DISPLAY_NAME,
   evidence_app_version: DEFAULT_EVIDENCE_APP_VERSION,
@@ -74,6 +76,7 @@ OptionParser.new do |parser|
   parser.on("--owner-bin PATH", "Runtime owner binary; use `go` to run ./cmd/xnix-runtime-owner from source.") { |value| options[:owner_bin] = value }
   parser.on("--launcher-bin PATH", "Managed xnix-compat-launch binary for owner-controlled launch mode.") { |value| options[:launcher_bin] = value }
   parser.on("--known-app-cache-root PATH", "Known Windows app cache root supplied to the Runtime owner.") { |value| options[:known_app_cache_root] = value }
+  parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the Go Runtime.") { |value| options[:known_app_id] = value }
   parser.on("--evidence-app-id ID", "Application id used for Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
   parser.on("--evidence-display-name NAME", "Display name used for Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
   parser.on("--evidence-app-version VERSION", "Application version used for Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
@@ -187,7 +190,6 @@ def runtime_command(options)
   command = [
     *base,
     "windows-app-guest-wine-gui-smoke",
-    "--gui-app", options.fetch(:gui_app),
     "--host", "127.0.0.1",
     "--port", options.fetch(:ssh_port),
     "--user", "root",
@@ -198,6 +200,12 @@ def runtime_command(options)
     "--wait", "#{options.fetch(:wait_seconds)}s",
     "--timeout", "#{options.fetch(:boot_timeout_seconds)}s"
   ]
+  if options.fetch(:known_app_id).strip.empty?
+    command.push("--gui-app", options.fetch(:gui_app))
+  else
+    command.push("--app", options.fetch(:known_app_id))
+    command.push("--gui-app", options.fetch(:gui_app)) if options.fetch(:gui_app) != DEFAULT_GUI_APP
+  end
   unless options.fetch(:executable).strip.empty?
     command.push("--executable", options.fetch(:executable))
   end
@@ -304,6 +312,8 @@ def base_report(options)
     "owner_external_gui_app_requested" => options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:executable).strip.empty?,
     "owner_external_gui_app_path_exposed" => false,
     "owner_external_gui_app_delivery" => options.fetch(:executable).strip.empty? ? "" : "owner-managed-copy",
+    "known_app_id" => options.fetch(:known_app_id),
+    "known_app_selection_planned" => !options.fetch(:known_app_id).strip.empty?,
     "evidence_app_id" => options.fetch(:evidence_app_id),
     "evidence_display_name" => options.fetch(:evidence_display_name),
     "evidence_app_version" => options.fetch(:evidence_app_version),
@@ -343,6 +353,9 @@ end
 
 def apply_runtime_payload(report, runtime_payload)
   report["runtime_payload_schema_version"] = runtime_payload.fetch("schema_version")
+  report["known_app_id"] = runtime_payload.fetch("known_app_id", report.fetch("known_app_id", ""))
+  report["known_app_name"] = runtime_payload.fetch("known_app_name", "")
+  report["known_app_version"] = runtime_payload.fetch("known_app_version", "")
   report["gui_app_name"] = runtime_payload.fetch("gui_app_name", report.fetch("gui_app_name"))
   report["executable_copied"] = runtime_payload.fetch("executable_copied", false)
   report["guest_x11_driver_available"] = runtime_payload.fetch("guest_x11_driver_available", false)

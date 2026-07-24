@@ -439,6 +439,7 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	flags.SetOutput(io.Discard)
 
 	var guiAppPath string
+	var appID string
 	var executablePath string
 	var host string
 	var port string
@@ -452,6 +453,7 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	var hostDisplay string
 	var timeoutText string
 	var waitText string
+	flags.StringVar(&appID, "app", "", "known Windows GUI app id")
 	flags.StringVar(&guiAppPath, "gui-app", winapp.DefaultGuestGUIApp, "Windows GUI app path inside the Wine guest")
 	flags.StringVar(&executablePath, "executable", "", "local Windows GUI .exe to copy into the guest before launch")
 	flags.StringVar(&host, "host", winapp.DefaultGuestHost, "guest SSH host")
@@ -473,6 +475,29 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", "windows-app-guest-wine-gui-smoke")
 	}
+	guiAppExplicit := false
+	flags.Visit(func(flag *flag.Flag) {
+		if flag.Name == "gui-app" {
+			guiAppExplicit = true
+		}
+	})
+	var knownApp winapp.KnownPortableApp
+	if strings.TrimSpace(appID) != "" {
+		var lookupErr error
+		knownApp, lookupErr = winapp.LookupKnownPortableApp(appID)
+		if lookupErr != nil {
+			return lookupErr
+		}
+		if !knownApp.GuestBuiltinGUI {
+			return fmt.Errorf("known app %s is not a guest GUI app", knownApp.ID)
+		}
+		if !guiAppExplicit && strings.TrimSpace(knownApp.GuestGUIAppPath) != "" {
+			guiAppPath = knownApp.GuestGUIAppPath
+		}
+		if strings.TrimSpace(knownApp.GuestGUIAppPath) == "" && !guiAppExplicit && strings.TrimSpace(executablePath) == "" {
+			return fmt.Errorf("known GUI app %s requires --gui-app or --executable", knownApp.ID)
+		}
+	}
 	timeout, err := time.ParseDuration(timeoutText)
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
@@ -487,20 +512,23 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	}
 
 	result, err := winapp.RunGuestGUISmoke(context.Background(), winapp.GuestGUIRequest{
-		ExecutablePath: executablePath,
-		GUIAppPath:     guiAppPath,
-		Host:           host,
-		Port:           parsedPort,
-		User:           user,
-		KeyPath:        keyPath,
-		RemoteDir:      remoteDir,
-		SSHPath:        sshPath,
-		SCPPath:        scpPath,
-		XWinInfoPath:   xwininfoPath,
-		GuestDisplay:   guestDisplay,
-		HostDisplay:    hostDisplay,
-		Timeout:        timeout,
-		Wait:           wait,
+		ExecutablePath:  executablePath,
+		GUIAppPath:      guiAppPath,
+		KnownAppID:      knownApp.ID,
+		KnownAppName:    knownApp.DisplayName,
+		KnownAppVersion: knownApp.Version,
+		Host:            host,
+		Port:            parsedPort,
+		User:            user,
+		KeyPath:         keyPath,
+		RemoteDir:       remoteDir,
+		SSHPath:         sshPath,
+		SCPPath:         scpPath,
+		XWinInfoPath:    xwininfoPath,
+		GuestDisplay:    guestDisplay,
+		HostDisplay:     hostDisplay,
+		Timeout:         timeout,
+		Wait:            wait,
 	})
 	if err != nil {
 		return err

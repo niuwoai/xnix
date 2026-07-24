@@ -35,6 +35,7 @@ options = {
   evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
   kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-page-#{VERSION}.json"),
   kde_action_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_ACTION", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-action-#{VERSION}.json"),
+  known_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_KNOWN_APP_ID", ""),
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
   evidence_display_name: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_DISPLAY_NAME", "Mines"),
   evidence_app_version: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_VERSION", VERSION),
@@ -64,6 +65,7 @@ OptionParser.new do |parser|
   parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
   parser.on("--kde-page-output PATH", "Remote KDE center page JSON output path under /home/xnix*.") { |value| options[:kde_page_output] = value }
   parser.on("--kde-action-output PATH", "Remote KDE controlled-launch action JSON output path under /home/xnix*.") { |value| options[:kde_action_output] = value }
+  parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the remote Go Runtime.") { |value| options[:known_app_id] = value }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
   parser.on("--evidence-display-name NAME", "Display name for the Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
   parser.on("--evidence-app-version VERSION", "Application version for the Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
@@ -217,6 +219,8 @@ plan = {
   "kde_center_page_preview_planned" => true,
   "kde_controlled_launch_action_preview_planned" => launch_mode == "owner-controlled-launch",
   "kde_action_state_root" => "#{state_root}/owner-controlled-launch-state",
+  "known_app_id" => options.fetch(:known_app_id),
+  "known_app_selection_planned" => !options.fetch(:known_app_id).strip.empty?,
   "evidence_app_id" => options.fetch(:evidence_app_id),
   "evidence_display_name" => options.fetch(:evidence_display_name),
   "evidence_app_version" => options.fetch(:evidence_app_version),
@@ -316,6 +320,7 @@ remote_args = [
   "--evidence-app-version", options.fetch(:evidence_app_version),
   "--report-output", report_output
 ]
+remote_args.push("--known-app-id", options.fetch(:known_app_id)) unless options.fetch(:known_app_id).strip.empty?
 if launch_mode == "owner-controlled-launch"
   remote_args.push("--owner-bin", remote_owner_bin)
   remote_args.push("--launcher-bin", remote_launcher_bin)

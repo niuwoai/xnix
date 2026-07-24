@@ -59,6 +59,8 @@ assert(payload["execute"] == false, "GUI smoke plan must keep execution disabled
 assert(payload["backend"] == "qemu-guest-wine-x11", "GUI smoke must target the QEMU guest Wine X11 backend")
 assert(payload["gui_app_name"] == "winemine.exe", "GUI smoke must use a real Wine GUI Windows app by default")
 assert(payload["local_gui_executable_configured"] == false, "GUI smoke plan must default to the in-guest app path")
+assert(payload["known_app_id"] == "", "GUI smoke plan must not force known app selection by default")
+assert(payload["known_app_selection_planned"] == false, "GUI smoke plan must keep known app selection explicit")
 assert(payload["launch_mode"] == "direct", "GUI smoke plan must default to direct launch mode")
 assert(payload["owner_controlled_launch_requested"] == false, "GUI smoke direct plan must not request owner-controlled launch")
 assert(payload["owner_service_call_planned"] == false, "GUI smoke direct plan must not plan an owner service call")
@@ -71,6 +73,19 @@ assert(payload["broad_host_mount_required"] == false, "GUI smoke must not requir
 assert(payload["host_root_modified"] == false, "GUI smoke must not mutate the host root")
 assert(payload["wineboot_invoked"] == false, "GUI smoke plan must not invoke wineboot")
 assert(payload["runtime_go_owned_gui_smoke"] == true, "GUI smoke must report Go-owned Runtime GUI execution")
+
+known_stdout, known_stderr, known_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--known-app-id", "org.xnix.apps.mines",
+  chdir: project_root.to_s
+)
+assert(known_status.success?, "Wine guest GUI smoke known-app plan must succeed: #{known_stderr}")
+known_payload = JSON.parse(known_stdout)
+assert(known_payload["known_app_id"] == "org.xnix.apps.mines", "GUI smoke known-app plan must expose the selected app id")
+assert(known_payload["known_app_selection_planned"] == true, "GUI smoke known-app plan must route app selection through the Go Runtime")
+assert(known_payload["gui_app_name"] == "winemine.exe", "GUI smoke known-app plan must preserve the Mines GUI app name")
 
 owner_stdout, owner_stderr, owner_status = Open3.capture3(
   "ruby", script.to_s,

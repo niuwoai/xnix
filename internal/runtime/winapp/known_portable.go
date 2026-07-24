@@ -66,6 +66,7 @@ type KnownPortableApp struct {
 	ExpectedMarker  string
 	Arguments       []string
 	GuestBuiltinGUI bool
+	GuestGUIAppPath string
 }
 
 type KnownFetchRequest struct {
@@ -776,17 +777,18 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc101",
+		Version:         "0.2.640-rc102",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
 		ExpectedMarker:  "Mines",
 		GuestBuiltinGUI: true,
+		GuestGUIAppPath: DefaultGuestGUIApp,
 	},
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc101",
+		Version:         "0.2.640-rc102",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -1189,20 +1191,23 @@ func RunKnownPortableGuestGUIDispatchSmoke(ctx context.Context, request KnownDis
 	}
 
 	gui, err := RunGuestGUISmoke(ctx, GuestGUIRequest{
-		ExecutablePath: request.ExecutablePath,
-		GUIAppPath:     knownPortableGuestGUIAppPath(request.GUIAppPath),
-		Host:           request.Host,
-		Port:           request.Port,
-		User:           request.User,
-		KeyPath:        request.KeyPath,
-		RemoteDir:      request.RemoteDir,
-		SSHPath:        request.SSHPath,
-		SCPPath:        request.SCPPath,
-		XWinInfoPath:   request.XWinInfoPath,
-		GuestDisplay:   request.GuestDisplay,
-		HostDisplay:    request.HostDisplay,
-		Timeout:        request.Timeout,
-		Wait:           request.Wait,
+		ExecutablePath:  request.ExecutablePath,
+		GUIAppPath:      knownPortableGuestGUIAppPath(request.GUIAppPath),
+		KnownAppID:      app.ID,
+		KnownAppName:    app.DisplayName,
+		KnownAppVersion: app.Version,
+		Host:            request.Host,
+		Port:            request.Port,
+		User:            request.User,
+		KeyPath:         request.KeyPath,
+		RemoteDir:       request.RemoteDir,
+		SSHPath:         request.SSHPath,
+		SCPPath:         request.SCPPath,
+		XWinInfoPath:    request.XWinInfoPath,
+		GuestDisplay:    request.GuestDisplay,
+		HostDisplay:     request.HostDisplay,
+		Timeout:         request.Timeout,
+		Wait:            request.Wait,
 	})
 	if err != nil {
 		return result, err
