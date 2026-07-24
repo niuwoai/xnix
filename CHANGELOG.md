@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc27] - 2026-07-24
+
+### Added
+
+- Embedded Go-owned runner diagnostics into `scripts/winapp_smoke.rb` JSON and Markdown reports before invoking the real Windows app smoke.
+- Added script coverage proving smoke reports carry diagnostics status, candidate counts, next-action evidence, and explicit-runner diagnostics without leaking executable or runner paths.
+
 ## [0.2.640-rc26] - 2026-07-24
 
 ### Added

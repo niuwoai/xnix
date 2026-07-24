@@ -34,6 +34,41 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-runner-diagnostics")
+      explicit = args.include?("--runner")
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_runner_diagnostics.v1",
+        "request_type" => "windows-app-runner-diagnostics",
+        "status" => "passed",
+        "runner_available" => true,
+        "explicit_runner_supplied" => explicit,
+        "env_runner_configured" => false,
+        "candidate_count" => 1,
+        "candidates" => [{
+          "id" => explicit ? "explicit-runner" : "path-wine",
+          "source" => explicit ? "operator-supplied-runner" : "path-command",
+          "available" => true,
+          "selected" => true,
+          "reason" => "available"
+        }],
+        "selected_runner_name" => "fake-runner",
+        "next_action" => "Run windows-app-run-smoke with the selected runner.",
+        "raw_path_exposed" => false,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false,
+        "docker_executed" => false,
+        "qemu_executed" => false,
+        "colima_executed" => false,
+        "network_checks_run" => false,
+        "package_manager_invoked" => false
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     if args[0] == "run" && args.include?("windows-app-run-smoke")
       redacted = args.include?("--redact-output")
       marker = args.include?("--expected-marker") ? args[args.index("--expected-marker") + 1] : "XNIX_WINAPP_SMOKE_OK"
@@ -91,6 +126,10 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
+  assert(report.fetch("runner_diagnostics_invoked"), "JSON report must record runner diagnostics invocation")
+  assert(report.fetch("runner_diagnostics_status") == "passed", "JSON report must preserve diagnostics status")
+  assert(report.fetch("runner_candidate_count") == 1, "JSON report must preserve runner candidate count")
+  assert(report.fetch("runner_diagnostics_payload").fetch("request_type") == "windows-app-runner-diagnostics", "JSON report must embed diagnostics payload")
   assert(report.fetch("smoke_invoked"), "JSON report must record smoke invocation")
   assert(report.fetch("redacted_output_requested"), "JSON report must request redacted output by default")
   assert(report.fetch("raw_output_redacted"), "JSON report must preserve redacted output state")
@@ -103,6 +142,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_status.success?, "winapp smoke Markdown report must succeed: #{markdown_stderr}")
   assert(markdown_stdout.include?("# Windows App Smoke Report"), "Markdown report must include title")
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
+  assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
+  assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
   assert(markdown_stdout.include?("Raw output redacted: true"), "Markdown report must expose redaction")
   assert(markdown_stdout.include?("Wine executed by script: false"), "Markdown report must keep Wine execution-by-script false")
 
@@ -124,6 +165,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("executable_source") == "user-supplied", "custom report must identify user-supplied source")
   assert(custom_report.fetch("user_executable_supplied"), "custom report must mark user executable supplied")
   assert(!custom_report.fetch("fixture_built"), "custom report must skip fixture build")
+  assert(custom_report.fetch("runner_diagnostics_payload").fetch("explicit_runner_supplied"), "custom report must pass runner into diagnostics")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")

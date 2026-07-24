@@ -60,10 +60,15 @@ def base_report(format, redact_output, expected_marker, executable_source)
     "executable_source" => executable_source,
     "user_executable_supplied" => executable_source == "user-supplied",
     "fixture_built" => false,
+    "runner_diagnostics_invoked" => false,
     "smoke_invoked" => false,
     "status" => "failed",
     "marker" => expected_marker,
     "runner_available" => false,
+    "runner_diagnostics_status" => "not-run",
+    "env_runner_configured" => false,
+    "runner_candidate_count" => 0,
+    "runner_diagnostics_next_action" => "",
     "marker_observed" => false,
     "raw_output_included" => false,
     "raw_output_redacted" => redact_output,
@@ -81,6 +86,7 @@ def base_report(format, redact_output, expected_marker, executable_source)
     "kde_safe_output_summary" => "smoke has not run",
     "failure_reason" => "",
     "skip_reason" => "",
+    "runner_diagnostics_payload" => nil,
     "runtime_payload" => nil
   }
 end
@@ -95,6 +101,10 @@ def emit_report(report)
     puts "- Version: #{report.fetch("version")}"
     puts "- Status: #{report.fetch("status")}"
     puts "- Fixture built: #{report.fetch("fixture_built")}"
+    puts "- Runner diagnostics invoked: #{report.fetch("runner_diagnostics_invoked")}"
+    puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
+    puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
+    puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
     puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
     puts "- Runner available: #{report.fetch("runner_available")}"
     puts "- Marker observed: #{report.fetch("marker_observed")}"
@@ -106,6 +116,7 @@ def emit_report(report)
     puts "- Wine executed by script: #{report.fetch("wine_executed_by_script")}"
     puts "- Network checks run: #{report.fetch("network_checks_run")}"
     puts "- Package manager invoked: #{report.fetch("package_manager_invoked")}"
+    puts "- Runner diagnostics next action: #{report.fetch("runner_diagnostics_next_action")}" unless report.fetch("runner_diagnostics_next_action").empty?
     puts "- Failure reason: #{report.fetch("failure_reason")}" unless report.fetch("failure_reason").empty?
     puts "- Skip reason: #{report.fetch("skip_reason")}" unless report.fetch("skip_reason").empty?
   end
@@ -148,6 +159,35 @@ if executable_source == "fixture"
   report["fixture_built"] = true
   selected_exe_path = EXE_PATH.to_s
 end
+
+diagnostics_command = ["go", "run", "./cmd/xnix-runtime-go", "windows-app-runner-diagnostics"]
+diagnostics_command.concat(["--runner", options.fetch(:runner)]) unless options[:runner].to_s.strip.empty?
+diagnostics_stdout, diagnostics_stderr, diagnostics_status = run_command(
+  {
+    "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
+    "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
+  },
+  *diagnostics_command
+)
+report["runner_diagnostics_invoked"] = true
+
+unless diagnostics_status.zero?
+  report["failure_reason"] = "Windows app runner diagnostics command failed"
+  if options.fetch(:format) == "text"
+    warn diagnostics_stdout unless diagnostics_stdout.empty?
+    warn diagnostics_stderr unless diagnostics_stderr.empty?
+    warn "FAIL: Windows app runner diagnostics command failed"
+  end
+  finish(report, 1)
+end
+
+diagnostics_payload = JSON.parse(diagnostics_stdout)
+report["runner_diagnostics_payload"] = diagnostics_payload
+report["runner_diagnostics_status"] = diagnostics_payload.fetch("status")
+report["env_runner_configured"] = diagnostics_payload.fetch("env_runner_configured", false)
+report["runner_candidate_count"] = diagnostics_payload.fetch("candidate_count", 0)
+report["runner_diagnostics_next_action"] = diagnostics_payload.fetch("next_action", "")
+report["runner_available"] = diagnostics_payload.fetch("runner_available", false)
 
 smoke_command = [
   "go", "run", "./cmd/xnix-runtime-go", "windows-app-run-smoke",

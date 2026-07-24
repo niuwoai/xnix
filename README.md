@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc26`.
+The project is currently at `v0.2.640-rc27`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc26`.
 
 ## Current Checkpoint
 
-v0.2.640-rc26 lets operators configure the local Wine-compatible runner once through `XNIX_WINDOWS_RUNNER`, which is now honored by both `windows-app-run-smoke` and `windows-app-runner-diagnostics` after any explicit `--runner` value and before auto-discovery. Diagnostics still report only path-safe evidence and do not expose the configured host path. The previous v0.2.640-rc25 path added the Go-owned runner diagnostics command.
+v0.2.640-rc27 embeds Go runner diagnostics into `scripts/winapp_smoke.rb` JSON and Markdown reports before invoking the real `.exe` smoke. A single local smoke report now shows fixture build state, runner candidate evidence, environment-runner configuration, smoke invocation state, and PASS/SKIP outcome without requiring a separate diagnostics command. The previous v0.2.640-rc26 path still lets operators configure a runner once through `XNIX_WINDOWS_RUNNER`.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -70,4 +70,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc26`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc27`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
