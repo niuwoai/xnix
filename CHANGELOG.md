@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc84] - 2026-07-25
+
+### Changed
+
+- Changed `scripts/remote_wine_guest_gui_smoke.rb` to default to Runtime-only source sync so q4 real GUI smoke runs copy only `VERSION`, `go.mod`, `cmd`, `internal`, `runtime`, `scripts`, and `lib` before rebuilding the Go Runtime.
+- Added `--source-sync-mode runtime|full` plus plan evidence for the remote GUI smoke harness so operators can explicitly choose the small development sync or the previous full-checkout sync.
+
 ## [0.2.640-rc83] - 2026-07-25
 
 ### Added

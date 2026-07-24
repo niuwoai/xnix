@@ -12,13 +12,15 @@ PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
-DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-gui-#{VERSION}")
+DEFAULT_SOURCE_SYNC_MODE = ENV.fetch("XNIX_SOURCE_SYNC_MODE", "runtime")
+DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-gui-#{DEFAULT_SOURCE_SYNC_MODE}-#{VERSION}")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
 
 options = {
   execute: false,
   sync_source: true,
+  source_sync_mode: DEFAULT_SOURCE_SYNC_MODE,
   local_shell: DEFAULT_LOCAL_SHELL,
   remote_host: DEFAULT_REMOTE_HOST,
   remote_source_root: DEFAULT_REMOTE_SOURCE_ROOT,
@@ -44,6 +46,7 @@ OptionParser.new do |parser|
   parser.banner = "Usage: ruby scripts/remote_wine_guest_gui_smoke.rb [--execute]"
   parser.on("--execute", "Sync and run the q4 Wine guest GUI smoke.") { options[:execute] = true }
   parser.on("--no-sync-source", "Use the existing remote source tree.") { options[:sync_source] = false }
+  parser.on("--source-sync-mode MODE", "Source sync mode: runtime or full.") { |value| options[:source_sync_mode] = value }
   parser.on("--local-shell PATH", "Local shell used for ssh/rsync alias resolution.") { |value| options[:local_shell] = value }
   parser.on("--remote HOST", "Remote SSH target.") { |value| options[:remote_host] = value }
   parser.on("--remote-source-root PATH", "Remote source root under /home/xnix*.") { |value| options[:remote_source_root] = value }
@@ -66,6 +69,10 @@ OptionParser.new do |parser|
 end.parse!
 
 abort "remote Wine guest GUI smoke does not accept positional arguments" unless ARGV.empty?
+
+if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
+  options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-gui-#{options.fetch(:source_sync_mode)}-#{VERSION}"
+end
 
 def ensure_remote_xnix_path!(label, path)
   clean = Pathname.new(path).cleanpath.to_s
@@ -118,6 +125,17 @@ def shell_join(argv)
   Shellwords.join(argv)
 end
 
+def source_sync_entries(mode)
+  case mode
+  when "runtime"
+    %w[VERSION go.mod cmd internal runtime scripts lib]
+  when "full"
+    ["."]
+  else
+    abort "source sync mode must be runtime or full"
+  end
+end
+
 def ssh_command(remote_host, remote_command)
   [
     "ssh",
@@ -131,6 +149,8 @@ def ssh_command(remote_host, remote_command)
 end
 
 remote_host = options.fetch(:remote_host)
+source_sync_mode = options.fetch(:source_sync_mode)
+source_entries = source_sync_entries(source_sync_mode)
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_materials_root = ensure_remote_xnix_path!("remote materials root", options.fetch(:remote_materials_root))
 remote_kernel = ensure_remote_xnix_path!("remote kernel", options.fetch(:remote_kernel))
@@ -151,6 +171,9 @@ plan = {
   "execute" => options.fetch(:execute),
   "remote_host" => remote_host,
   "source_sync_planned" => options.fetch(:sync_source),
+  "source_sync_mode" => source_sync_mode,
+  "source_sync_entry_count" => source_entries.length,
+  "source_sync_entries" => source_entries,
   "remote_source_root" => remote_source_root,
   "remote_materials_root" => remote_materials_root,
   "remote_kernel" => remote_kernel,
@@ -196,6 +219,11 @@ if options.fetch(:sync_source)
     exit 1
   end
 
+  rsync_sources = if source_sync_mode == "full"
+                    ["#{PROJECT_ROOT}/"]
+                  else
+                    source_entries.map { |entry| "#{PROJECT_ROOT}/#{entry}" }
+                  end
   rsync_args = [
     "rsync",
     "-az",
@@ -205,7 +233,7 @@ if options.fetch(:sync_source)
     "--exclude", ".cache",
     "--exclude", "buildroot/output",
     "--exclude", "docs/claude-code-implementation-packages.md",
-    "#{PROJECT_ROOT}/",
+    *rsync_sources,
     "#{remote_host}:#{remote_source_root}/"
   ]
   rsync_stdout, rsync_stderr, rsync_status = run_shell(options.fetch(:local_shell), shell_join(rsync_args), timeout_seconds: options.fetch(:remote_timeout_seconds))

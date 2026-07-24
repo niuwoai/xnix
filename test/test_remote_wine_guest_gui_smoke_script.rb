@@ -29,8 +29,14 @@ assert(payload["remote_gui_executable_configured"] == false, "remote GUI smoke m
 assert(payload["requires_rebuilt_wine_guest_with_x11"] == true, "remote GUI smoke must document the rebuilt Wine guest requirement")
 assert(payload["remote_timeout_seconds"] == 300, "remote GUI smoke must expose a bounded remote timeout")
 assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build the Go Runtime before execution")
+assert(payload["source_sync_mode"] == "runtime", "remote GUI smoke must default to Runtime-only source sync")
+assert(payload["source_sync_entry_count"] == 7, "remote GUI smoke Runtime-only sync must include the minimal source entries")
+%w[VERSION go.mod cmd internal runtime scripts lib].each do |entry|
+  assert(payload["source_sync_entries"].include?(entry), "remote GUI smoke Runtime-only sync must include #{entry}")
+end
 assert(payload["remote_runtime_bin"].end_with?("/bin/xnix-runtime-go"), "remote GUI smoke must expose the managed Runtime binary location")
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")
+assert(payload["remote_source_root"].include?("runtime"), "remote source root must reflect the Runtime-only sync mode")
 assert(payload["report_output"].start_with?("/home/xnix-"), "remote report output must stay under /home/xnix-*")
 assert(payload["evidence_output"].start_with?("/home/xnix-"), "remote evidence output must stay under /home/xnix-*")
 assert(payload["evidence_preview_planned"] == true, "remote GUI smoke must project Runtime GUI evidence after a pass")
@@ -77,5 +83,24 @@ bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
 )
 assert(!bad_evidence_status.success?, "remote GUI smoke must reject evidence output outside /home/xnix-*")
 assert((bad_evidence_stdout + bad_evidence_stderr).include?("evidence output must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe evidence output paths")
+
+full_stdout, full_stderr, full_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--source-sync-mode", "full",
+  chdir: project_root.to_s
+)
+assert(full_status.success?, "remote GUI smoke full source sync plan must succeed: #{full_stderr}")
+full_payload = JSON.parse(full_stdout)
+assert(full_payload["source_sync_mode"] == "full", "remote GUI smoke must support explicit full source sync")
+assert(full_payload["source_sync_entries"] == ["."], "remote GUI smoke full source sync must include the whole checkout")
+assert(full_payload["remote_source_root"].include?("full"), "remote source root must reflect full source sync mode")
+
+bad_mode_stdout, bad_mode_stderr, bad_mode_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--source-sync-mode", "everything",
+  chdir: project_root.to_s
+)
+assert(!bad_mode_status.success?, "remote GUI smoke must reject unsupported source sync modes")
+assert((bad_mode_stdout + bad_mode_stderr).include?("source sync mode must be runtime or full"), "remote GUI smoke must explain unsupported source sync modes")
 
 puts "PASS: remote Wine guest GUI smoke script plan"

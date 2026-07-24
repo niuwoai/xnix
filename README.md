@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc83`.
+The project is currently at `v0.2.640-rc84`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc83`.
 
 ## Current Checkpoint
 
-v0.2.640-rc83 makes real Wine guest GUI runs produce Runtime/KDE-consumable evidence in the same remote harness pass. `gui-smoke-evidence-preview --output FILE` writes the safe evidence projection, `scripts/remote_wine_guest_gui_smoke.rb` emits that projection after a passed q4 Xvfb/QEMU/Wine run, and Compatibility Center/KDE Center can consume the projected evidence file directly while keeping paths constrained to `/home/xnix-*`.
+v0.2.640-rc84 makes the q4 real Windows GUI smoke loop practical for daily iteration by defaulting `scripts/remote_wine_guest_gui_smoke.rb` to Runtime-only source sync. The remote harness now syncs only `VERSION`, `go.mod`, `cmd`, `internal`, `runtime`, `scripts`, and `lib` unless `--source-sync-mode full` is requested, keeping the actual Xvfb/QEMU/Wine run and automatic evidence projection intact without copying the full checkout.
 
 The previous v0.2.640-rc81 checkpoint tightened and verified the real Windows GUI app smoke loop after q4 showed QEMU, guest SSH, Wine boot, and executable copy succeeding while Xvfb saw no child window. `windows-app-guest-wine-gui-smoke` now polls X window state throughout the observation window, keeps suppressing Wine first-run installer prompts while observing, verifies `guest_x11_driver_available`, and reports `x_window_observation_attempts` for failed real Xvfb/QEMU/Wine runs. The q4 managed Wine guest run material was updated to the rebuilt X11-driver image, and an unattended `winemine.exe` smoke passed with `x_window_observed=true` in `/home/xnix-run-materials/state/wine-gui-winemine-0.2.640-rc81-final.json`.
 
@@ -100,4 +100,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc83 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc84 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

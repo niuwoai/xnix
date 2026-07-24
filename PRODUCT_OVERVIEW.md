@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc83
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc84
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc84 checkpoint candidate makes the q4 real Windows GUI smoke path fast enough for normal development loops. `scripts/remote_wine_guest_gui_smoke.rb` now defaults to `--source-sync-mode runtime`, syncing only `VERSION`, `go.mod`, `cmd`, `internal`, `runtime`, `scripts`, and `lib` into a mode-specific `/home/xnix-build/xnix-runtime-source-gui-runtime-<version>` tree before building the Go Runtime. Operators can still request `--source-sync-mode full`, but the default no longer copies the full checkout while preserving the same loopback SSH, Xvfb/QEMU/Wine execution, automatic Runtime evidence projection, and closed host-boundary guarantees.
 
 The v0.2.640-rc83 checkpoint candidate turns a passed real Wine guest GUI run into a persisted Runtime evidence projection without a second manual step. `xnix-runtime-go gui-smoke-evidence-preview --output FILE` now writes the same redacted JSON projection it prints, `scripts/remote_wine_guest_gui_smoke.rb` automatically invokes that Go projection after a passed q4 Xvfb/QEMU/Wine run, and both Compatibility Center and KDE Center previews can consume the projected evidence file directly. The remote evidence output is constrained to `/home/xnix-*`, preserving the closed host-root, privileged-container, host-networking, Docker-socket, broad-mount, backend-detail, and raw-path boundaries while making the real GUI evidence directly consumable by the desktop read models.
 
