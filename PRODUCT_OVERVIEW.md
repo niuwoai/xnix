@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc42
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc43
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc43 checkpoint candidate makes profile preflight verify that the target executable starts with the Windows `MZ` signature before reporting readiness. The Go-owned preflight now reports `executable_format` and `windows_executable_signature_observed`, blocks non-Windows files before smoke execution, and still keeps raw paths, runner arguments, Wine execution, Docker, QEMU, Colima, networking, package managers, and host-root mutation disabled.
 
 The v0.2.640-rc42 checkpoint candidate wires profile preflight into the Ruby report harness while keeping the readiness decision Go-owned. When `scripts/winapp_smoke.rb --profile <json>` is used, the script first calls `windows-app-smoke-profile-preflight` and embeds the safe preflight payload. Operators can also use `--preflight-only` to emit readiness JSON without invoking runner diagnostics, smoke execution, Wine, Docker, QEMU, Colima, networking, package managers, or host-root mutation.
 

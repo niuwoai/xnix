@@ -21,6 +21,8 @@ type SmokeProfilePreflightResult struct {
 	ProfileSupplied             bool                    `json:"profile_supplied"`
 	ExecutableName              string                  `json:"executable_name"`
 	ExecutableExists            bool                    `json:"executable_exists"`
+	ExecutableFormat            string                  `json:"executable_format"`
+	WindowsExecutableSignature  bool                    `json:"windows_executable_signature_observed"`
 	WorkingDirectoryMode        string                  `json:"working_directory_mode"`
 	WorkingDirectoryValid       bool                    `json:"working_directory_valid"`
 	StateRootConfigured         bool                    `json:"state_root_configured"`
@@ -88,6 +90,14 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 	}
 	result.ExecutableExists = true
 	result.ExecutableName = filepath.Base(executablePath)
+	executableFormat, signatureObserved, signatureErr := inspectWindowsExecutableSignature(executablePath)
+	if signatureErr != nil {
+		result.FailureReason = signatureErr.Error()
+		result.NextAction = "Use a Windows PE executable with an MZ header in executable_path before running the app."
+		return result, nil
+	}
+	result.ExecutableFormat = executableFormat
+	result.WindowsExecutableSignature = signatureObserved
 
 	workingDirectoryMode, workingDirectoryErr := inspectProfileWorkingDirectory(request.WorkingDirectory, executablePath)
 	if workingDirectoryErr != nil {
@@ -123,6 +133,7 @@ func baseSmokeProfilePreflightResult() SmokeProfilePreflightResult {
 		SchemaVersion:               SmokeProfilePreflightSchemaVersion,
 		RequestType:                 SmokeProfilePreflightRequestType,
 		Status:                      ProfileBlockedStatus,
+		ExecutableFormat:            "unknown",
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		SuccessMode:                 SuccessModeMarker,
 		RawProfilePathExposed:       false,
@@ -182,4 +193,23 @@ func inspectProfileWorkingDirectory(path string, executablePath string) (string,
 		return "", fmt.Errorf("working directory must be a directory")
 	}
 	return mode, nil
+}
+
+func inspectWindowsExecutableSignature(path string) (string, bool, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "unknown", false, fmt.Errorf("executable signature is not readable")
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+	header := make([]byte, 2)
+	read, err := file.Read(header)
+	if err != nil || read < len(header) {
+		return "unknown", false, fmt.Errorf("executable signature is not readable")
+	}
+	if string(header) != "MZ" {
+		return "unknown", false, fmt.Errorf("executable is not a Windows PE file")
+	}
+	return "pe-mz", true, nil
 }

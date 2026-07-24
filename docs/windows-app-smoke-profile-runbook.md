@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc42
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc43
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -46,7 +46,7 @@ Or use the report script without launching the Windows app:
 ruby scripts/winapp_smoke.rb --format json --profile .local/xnix/winapp-smoke/my-app.profile.json --preflight-only
 ```
 
-Preflight checks the schema, executable file, working directory, state-root setting, success mode, runner argument count, app argument count, and runner diagnostics. It does not start Wine or the Windows application.
+Preflight checks the schema, executable file, Windows `MZ` signature, working directory, state-root setting, success mode, runner argument count, app argument count, and runner diagnostics. It does not start Wine or the Windows application.
 
 ## Local Smoke
 
@@ -75,6 +75,7 @@ Both paths keep Docker, QEMU, Colima, network checks, package managers, privileg
 - `passed` means the configured success mode observed its proof.
 - `skipped` with `windows compatibility runner unavailable` means no Wine-compatible runner was found or supplied.
 - `profile_supplied: true` proves the report used a profile input.
+- `windows_executable_signature_observed: true` proves the profile points to a Windows PE-style executable header.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

@@ -42,6 +42,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "profile_supplied" => true,
         "executable_name" => "custom.exe",
         "executable_exists" => true,
+        "executable_format" => "pe-mz",
+        "windows_executable_signature_observed" => true,
         "working_directory_mode" => "operator-supplied",
         "working_directory_valid" => true,
         "state_root_configured" => true,
@@ -341,6 +343,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("profile_preflight_invoked"), "profile report must run preflight before smoke")
   assert(profile_report.fetch("profile_preflight_status") == "ready", "profile report must preserve preflight readiness")
   assert(profile_report.fetch("profile_preflight_payload").fetch("request_type") == "windows-app-smoke-profile-preflight", "profile report must embed preflight payload")
+  assert(profile_report.fetch("profile_preflight_payload").fetch("executable_format") == "pe-mz", "profile report must preserve preflight executable format")
+  assert(profile_report.fetch("profile_preflight_payload").fetch("windows_executable_signature_observed"), "profile report must preserve Windows executable signature evidence")
   assert(profile_report.fetch("executable_source") == "profile", "profile report must identify profile executable source")
   assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
   assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")

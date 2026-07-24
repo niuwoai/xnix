@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc43] - 2026-07-24
+
+### Added
+
+- Added Windows `MZ` executable signature validation to profile preflight before readiness can be reported.
+- Added `executable_format` and `windows_executable_signature_observed` evidence to profile preflight reports.
+
 ## [0.2.640-rc42] - 2026-07-24
 
 ### Added

@@ -37,6 +37,7 @@ assert(template.fetch("arguments").is_a?(Array), "profile template app arguments
   "ruby scripts/winapp_smoke.rb --format json --profile",
   "go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile",
   "profile_supplied",
+  "windows_executable_signature_observed",
   "working_directory_mode",
   "runner_argument_count",
   "startup-window"

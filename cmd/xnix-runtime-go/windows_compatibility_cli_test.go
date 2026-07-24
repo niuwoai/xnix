@@ -98,7 +98,7 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "hello.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	runnerPath := filepath.Join(tempDir, "fake-runner")
@@ -216,7 +216,7 @@ func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
 
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "profile-app.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "profile-cwd")
@@ -289,7 +289,7 @@ func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
 func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
 	tempDir := t.TempDir()
 	exePath := filepath.Join(tempDir, "profile-app.exe")
-	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(exePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "profile-cwd")
@@ -338,6 +338,8 @@ func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
 		payload["status"] != "ready" ||
 		payload["profile_supplied"] != true ||
 		payload["executable_name"] != "profile-app.exe" ||
+		payload["executable_format"] != "pe-mz" ||
+		payload["windows_executable_signature_observed"] != true ||
 		payload["working_directory_mode"] != "operator-supplied" ||
 		payload["runner_available"] != true ||
 		payload["runner_argument_count"] != float64(1) ||

@@ -11,7 +11,7 @@ import (
 func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "real-app.exe")
-	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+	if err := os.WriteFile(executablePath, []byte("MZfixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
 	workingDir := filepath.Join(tempDir, "app-dir")
@@ -46,6 +46,8 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		!result.ProfileSupplied ||
 		result.ExecutableName != "real-app.exe" ||
 		!result.ExecutableExists ||
+		result.ExecutableFormat != "pe-mz" ||
+		!result.WindowsExecutableSignature ||
 		result.WorkingDirectoryMode != WorkingDirectoryModeOperator ||
 		!result.WorkingDirectoryValid ||
 		!result.StateRootConfigured ||
@@ -70,6 +72,38 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		if strings.Contains(output, leaked) {
 			t.Fatalf("preflight output leaked private value %q: %s", leaked, output)
 		}
+	}
+}
+
+func TestPreflightSmokeProfileBlocksNonWindowsExecutable(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "not-windows.exe")
+	if err := os.WriteFile(executablePath, []byte("plain text"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "wine")
+	if err := os.WriteFile(runnerPath, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	profilePath := filepath.Join(tempDir, "app.profile.json")
+	writeSmokeProfile(t, profilePath, map[string]any{
+		"schema_version":  SmokeProfileSchemaVersion,
+		"executable_path": executablePath,
+		"runner_path":     runnerPath,
+		"state_root":      filepath.Join(tempDir, "state"),
+	})
+
+	result, err := PreflightSmokeProfile(profilePath)
+	if err != nil {
+		t.Fatalf("PreflightSmokeProfile returned error: %v", err)
+	}
+	if result.Status != ProfileBlockedStatus ||
+		result.ExecutableFormat != "unknown" ||
+		result.WindowsExecutableSignature ||
+		result.FailureReason != "executable is not a Windows PE file" ||
+		result.WineExecuted ||
+		result.HostRootModified {
+		t.Fatalf("unexpected non-Windows executable preflight result: %#v", result)
 	}
 }
 
