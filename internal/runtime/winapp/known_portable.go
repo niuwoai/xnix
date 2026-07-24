@@ -1465,6 +1465,12 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.FailureReason = local.FailureReason
 	case KnownRunBackendGuestWine:
 		result.GuestStartMode = "external"
+		var qemuGuest *QEMUStartedGuest
+		defer func() {
+			if qemuGuest != nil {
+				qemuGuest.Stop()
+			}
+		}()
 		if request.StartQEMU {
 			result.GuestStartMode = "go-qemu"
 			guestPreflight, ok, err := preflightKnownGuestArtifact(request.CacheRoot, app)
@@ -1508,10 +1514,7 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 			result.GuestPort = guest.Port
 			result.GuestPortAuto = guest.AutoPort
 			result.QEMUExecuted = true
-			defer func() {
-				guest.Stop()
-				result.QEMUSerialLogWritten = strings.TrimSpace(request.QEMUSerialLog) != ""
-			}()
+			qemuGuest = guest
 		}
 		guest, err := RunKnownPortableGuestSmoke(ctx, KnownGuestRequest{
 			AppID:     app.ID,
@@ -1555,6 +1558,10 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 		result.RawHostPathExposed = guest.RawHostPathExposed
 		result.SkipReason = guest.SkipReason
 		result.FailureReason = guest.FailureReason
+		if qemuGuest != nil {
+			result.QEMUSerialLogWritten = qemuGuest.Stop()
+			qemuGuest = nil
+		}
 	default:
 		result.Status = FailedStatus
 		result.FailureReason = "unsupported known app run backend"

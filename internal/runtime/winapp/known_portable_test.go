@@ -589,6 +589,7 @@ func TestRunKnownPortableAppGuestWineBackendCanStartQEMUFromRuntime(t *testing.T
 		result.GuestHost != "127.0.0.1" ||
 		result.GuestPort == "" ||
 		!result.GuestPortAuto ||
+		!result.QEMUSerialLogWritten ||
 		!result.QEMUExecuted ||
 		!result.BackendReady ||
 		!result.WineExecuted ||

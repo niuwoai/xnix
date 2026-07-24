@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc64] - 2026-07-24
+
+### Fixed
+
+- Fixed Go-owned QEMU guest run results so `qemu_serial_log_written` reflects the serial log written during explicit guest shutdown instead of being lost by deferred cleanup.
+
 ## [0.2.640-rc63] - 2026-07-24
 
 ### Fixed

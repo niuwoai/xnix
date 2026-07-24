@@ -124,9 +124,9 @@ func StartQEMUStartedGuest(ctx context.Context, request QEMUStartedGuestRequest)
 	}
 }
 
-func (guest *QEMUStartedGuest) Stop() {
+func (guest *QEMUStartedGuest) Stop() bool {
 	if guest == nil || guest.command == nil || guest.command.Process == nil || guest.stopped {
-		return
+		return false
 	}
 	guest.stopped = true
 	_ = guest.command.Process.Signal(syscall.SIGTERM)
@@ -136,19 +136,22 @@ func (guest *QEMUStartedGuest) Stop() {
 		_ = guest.command.Process.Kill()
 		<-guest.waitDone
 	}
-	guest.writeSerialLog()
+	return guest.writeSerialLog()
 }
 
-func (guest *QEMUStartedGuest) writeSerialLog() {
+func (guest *QEMUStartedGuest) writeSerialLog() bool {
 	if guest == nil || strings.TrimSpace(guest.serialLogPath) == "" || guest.serialBuffer == nil || guest.serialBuffer.Len() == 0 {
-		return
+		return false
 	}
 	path, err := filepath.Abs(guest.serialLogPath)
 	if err != nil {
-		return
+		return false
 	}
 	_ = os.MkdirAll(filepath.Dir(path), 0o700)
-	_ = os.WriteFile(path, guest.serialBuffer.Bytes(), 0o600)
+	if err := os.WriteFile(path, guest.serialBuffer.Bytes(), 0o600); err != nil {
+		return false
+	}
+	return true
 }
 
 func validateQEMUKernelImage(path string) (string, error) {
