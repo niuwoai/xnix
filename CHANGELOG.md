@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc34] - 2026-07-24
+
+### Fixed
+
+- Passed local Windows app smoke `--runner-arg` values into companion `wineboot` bootstrap before `--init`.
+- Moved `runner_argument_count` reporting earlier so bootstrap failures still preserve safe runner-argument evidence without exposing raw values.
+
 ## [0.2.640-rc33] - 2026-07-24
 
 ### Added

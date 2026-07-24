@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc33`.
+The project is currently at `v0.2.640-rc34`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc33`.
 
 ## Current Checkpoint
 
-v0.2.640-rc33 adds local `--runner-arg` support to the Go-owned Windows app smoke path and `scripts/winapp_smoke.rb`, allowing compatibility runners that need pre-executable arguments such as bottle selectors while reports expose only the runner argument count. The previous v0.2.640-rc32 checkpoint broadened local runner discovery for CrossOver and Whisky Wine candidates on macOS.
+v0.2.640-rc34 makes Wine prefix bootstrap consume the same local `--runner-arg` values as execution, so bottle selectors or runner shim arguments no longer apply only to the final app launch. The previous v0.2.640-rc33 checkpoint added local `--runner-arg` support to the Go-owned Windows app smoke path and `scripts/winapp_smoke.rb`.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -70,4 +70,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc33`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc34`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.

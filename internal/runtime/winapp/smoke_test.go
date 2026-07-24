@@ -142,6 +142,42 @@ func TestRunSmokeBootstrapsWinePrefixWhenWinebootIsAvailable(t *testing.T) {
 	}
 }
 
+func TestRunSmokePassesRunnerArgumentsToWineboot(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeNamedFakeRunner(t, tempDir, "wine", 0, DefaultMarker+"\n")
+	winebootBody := "#!/bin/sh\n" +
+		"test \"$1\" = --bottle || exit 78\n" +
+		"test \"$2\" = smoke-bottle || exit 77\n" +
+		"test \"$3\" = --init || exit 76\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "wineboot"), []byte(winebootBody), 0o700); err != nil {
+		t.Fatalf("WriteFile wineboot returned error: %v", err)
+	}
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath:  executablePath,
+		RunnerArguments: []string{"--bottle", "smoke-bottle"},
+		StateRoot:       filepath.Join(tempDir, "state"),
+		RunnerPath:      runnerPath,
+		Timeout:         5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.RunnerArgumentCount != 2 ||
+		!result.WineBootstrapSucceeded ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected runner-argument bootstrap result: %#v", result)
+	}
+}
+
 func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")

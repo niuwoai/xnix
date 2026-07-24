@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc33
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc34
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc34 checkpoint candidate makes local Wine prefix bootstrap use the same runner pre-arguments as the app execution path. When an operator supplies repeated `--runner-arg` values, `windows-app-run-smoke` now invokes companion `wineboot` as `wineboot [runner args...] --init` before launching `runner [runner args...] exe [app args...]`. This keeps CrossOver-style bottle selection or runner shim arguments consistent across bootstrap and execution while still reporting only `runner_argument_count`.
 
 The v0.2.640-rc33 checkpoint candidate adds runner pre-argument support for local real Windows app smoke attempts. `windows-app-run-smoke` now accepts repeated `--runner-arg` values, and `scripts/winapp_smoke.rb` forwards them before the executable path, enabling runner forms such as bottle selectors without leaking those values into JSON or Markdown reports. Reports expose only `runner_argument_count`, keeping compatibility-specific details path-safe while making CrossOver-style runner invocation closer to a real app PASS path.
 

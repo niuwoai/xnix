@@ -137,6 +137,7 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, nil
 	}
 	result.RunnerAvailable = true
+	result.RunnerArgumentCount = len(request.RunnerArguments)
 
 	timeout := request.Timeout
 	if timeout <= 0 {
@@ -148,7 +149,9 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 	bootstrapPath, bootstrapAvailable := resolveWineboot(runnerPath)
 	if bootstrapAvailable {
 		result.WineBootstrapAttempted = true
-		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, "--init")
+		bootstrapArgs := append([]string{}, request.RunnerArguments...)
+		bootstrapArgs = append(bootstrapArgs, "--init")
+		bootstrapCommand := exec.CommandContext(runCtx, bootstrapPath, bootstrapArgs...)
 		bootstrapCommand.Env = runnerEnvironment(stateRoot)
 		var bootstrapStderr bytes.Buffer
 		bootstrapCommand.Stderr = &bootstrapStderr
@@ -170,7 +173,6 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		result.WineBootstrapSucceeded = true
 	}
 
-	result.RunnerArgumentCount = len(request.RunnerArguments)
 	args := append([]string{}, request.RunnerArguments...)
 	args = append(args, executablePath)
 	args = append(args, request.Arguments...)
