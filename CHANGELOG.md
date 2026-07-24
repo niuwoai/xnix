@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc53] - 2026-07-24
+
+### Added
+
+- Added `execute` and `preflight` modes to managed Windows app launcher bundles.
+- Added `--launcher-mode execute|preflight` to `windows-app-launcher-bundle-record` and `scripts/winapp_smoke.rb`, enabling desktop launchers that validate a real Windows PE profile without starting Wine or the app.
+
 ## [0.2.640-rc52] - 2026-07-24
 
 ### Added

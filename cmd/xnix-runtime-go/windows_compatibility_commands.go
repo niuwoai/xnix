@@ -167,10 +167,12 @@ func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
 	var appID string
 	var name string
 	var runtimeBinary string
+	var launcherMode string
 	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
 	flags.StringVar(&appID, "app-id", "", "desktop-safe application id")
 	flags.StringVar(&name, "name", "", "desktop display name")
 	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+	flags.StringVar(&launcherMode, "launcher-mode", "", "launcher mode: execute or preflight")
 	var runtimeArgs repeatedStringFlag
 	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-run-smoke")
 
@@ -187,6 +189,7 @@ func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
 		DisplayName:      name,
 		RuntimeBinary:    runtimeBinary,
 		RuntimeArguments: []string(runtimeArgs),
+		LauncherMode:     launcherMode,
 	})
 	if err != nil {
 		return err

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc52
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc53
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc53 checkpoint candidate lets managed launcher bundles choose between `execute` and `preflight` mode. Execute mode keeps the existing `windows-app-run-smoke --profile <profile>` behavior, while preflight mode writes launchers that call `windows-app-smoke-profile-preflight --profile <profile>` so KDE or development desktop entries can validate a real Windows PE profile, architecture, working directory, state-root setting, and runner readiness without starting Wine or the application. Reports expose only safe `launcher_mode` and `launcher_command` values plus existing runtime argument counts, while keeping profile paths, state roots, runner paths, runtime argv details, Docker, QEMU, Colima, networking, package managers, Wine execution, and host-root mutation out of report output.
 
 The v0.2.640-rc52 checkpoint candidate makes managed launcher bundles executable in development environments without requiring an installed `xnix-runtime-go` binary. `windows-app-launcher-bundle-record` and `scripts/winapp_smoke.rb --write-launcher-bundle` now accept repeated runtime arguments, so a launcher can invoke `go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile <profile>` while production launchers still default to `xnix-runtime-go`. Reports expose only `runtime_argument_count` and `raw_runtime_argv_exposed=false`, keeping runtime argv details, profile paths, state roots, runner paths, Docker, QEMU, Colima, networking, package managers, and host-root mutation out of report output.
 

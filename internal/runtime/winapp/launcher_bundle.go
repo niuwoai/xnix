@@ -14,6 +14,8 @@ const (
 	LauncherBundleSchemaVersion = "xnix.runtime.windows_app_launcher_bundle.v1"
 	LauncherBundleRequestType   = "windows-app-launcher-bundle-record"
 	defaultRuntimeBinary        = "xnix-runtime-go"
+	LauncherModeExecute         = "execute"
+	LauncherModePreflight       = "preflight"
 )
 
 type LauncherBundleRequest struct {
@@ -22,6 +24,7 @@ type LauncherBundleRequest struct {
 	DisplayName      string
 	RuntimeBinary    string
 	RuntimeArguments []string
+	LauncherMode     string
 }
 
 type LauncherBundleRecord struct {
@@ -36,6 +39,8 @@ type LauncherBundleRecord struct {
 	ProfileSupplied                     bool   `json:"profile_supplied"`
 	ProfileSchemaVersion                string `json:"profile_schema_version"`
 	StateRootConfigured                 bool   `json:"state_root_configured"`
+	LauncherMode                        string `json:"launcher_mode"`
+	LauncherCommand                     string `json:"launcher_command"`
 	RuntimeArgumentCount                int    `json:"runtime_argument_count"`
 	FilesWritten                        bool   `json:"files_written"`
 	LauncherScriptWritten               bool   `json:"launcher_script_written"`
@@ -96,6 +101,13 @@ func RecordLauncherBundle(request LauncherBundleRequest) (LauncherBundleRecord, 
 		return record, nil
 	}
 	record.RuntimeArgumentCount = len(runtimeArguments)
+	launcherMode, launcherCommand, err := normalizeLauncherMode(request.LauncherMode)
+	if err != nil {
+		record.FailureReason = err.Error()
+		return record, nil
+	}
+	record.LauncherMode = launcherMode
+	record.LauncherCommand = launcherCommand
 
 	stateRoot, err := filepath.Abs(profileRequest.StateRoot)
 	if err != nil {
@@ -126,7 +138,7 @@ func RecordLauncherBundle(request LauncherBundleRequest) (LauncherBundleRecord, 
 	desktopFilePath := filepath.Join(desktopDir, desktopFileName)
 	receiptFilePath := filepath.Join(receiptDir, receiptFileName)
 
-	launcherScript := renderLauncherScript(runtimeBinary, runtimeArguments, profilePath)
+	launcherScript := renderLauncherScript(runtimeBinary, runtimeArguments, launcherCommand, profilePath)
 	if err := os.WriteFile(launcherScriptPath, []byte(launcherScript), 0o700); err != nil {
 		return record, fmt.Errorf("write launcher script: %w", err)
 	}
@@ -172,6 +184,8 @@ func baseLauncherBundleRecord(request LauncherBundleRequest) LauncherBundleRecor
 		Status:                              FailedStatus,
 		ApplicationID:                       strings.TrimSpace(request.ApplicationID),
 		DisplayName:                         strings.TrimSpace(request.DisplayName),
+		LauncherMode:                        LauncherModeExecute,
+		LauncherCommand:                     RequestType,
 		ProfileSupplied:                     strings.TrimSpace(request.ProfilePath) != "",
 		DesktopEntryExecUsesManagedLauncher: false,
 		DesktopEntryTerminalDisabled:        false,
@@ -184,6 +198,21 @@ func baseLauncherBundleRecord(request LauncherBundleRequest) LauncherBundleRecor
 		HostNetworkingRequired:              false,
 		DockerSocketMounted:                 false,
 		BroadHostMountRequired:              false,
+	}
+}
+
+func normalizeLauncherMode(value string) (string, string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return LauncherModeExecute, RequestType, nil
+	}
+	switch value {
+	case LauncherModeExecute:
+		return LauncherModeExecute, RequestType, nil
+	case LauncherModePreflight:
+		return LauncherModePreflight, SmokeProfilePreflightRequestType, nil
+	default:
+		return "", "", errors.New("launcher mode must be execute or preflight")
 	}
 }
 
@@ -237,12 +266,12 @@ func sanitizeRuntimeArguments(values []string) ([]string, error) {
 	return args, nil
 }
 
-func renderLauncherScript(runtimeBinary string, runtimeArguments []string, profilePath string) string {
+func renderLauncherScript(runtimeBinary string, runtimeArguments []string, launcherCommand string, profilePath string) string {
 	parts := []string{"exec", shellQuote(runtimeBinary)}
 	for _, arg := range runtimeArguments {
 		parts = append(parts, shellQuote(arg))
 	}
-	parts = append(parts, "windows-app-run-smoke", "--profile", shellQuote(profilePath))
+	parts = append(parts, launcherCommand, "--profile", shellQuote(profilePath))
 	return "#!/bin/sh\n" +
 		"set -eu\n" +
 		strings.Join(parts, " ") + "\n"

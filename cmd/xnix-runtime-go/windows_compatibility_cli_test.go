@@ -252,6 +252,8 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		payload["display_name"] != "Real Windows App" ||
 		payload["desktop_file_name"] != "org.xnix.realapp.desktop" ||
 		payload["launcher_script_name"] != "org.xnix.realapp.sh" ||
+		payload["launcher_mode"] != "execute" ||
+		payload["launcher_command"] != "windows-app-run-smoke" ||
 		payload["runtime_argument_count"] != float64(2) ||
 		payload["files_written"] != true ||
 		payload["launcher_script_written"] != true ||
@@ -279,6 +281,37 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		!strings.Contains(string(desktopText), "Exec=") ||
 		!strings.Contains(string(desktopText), "X-Xnix-RuntimeOwned=true") {
 		t.Fatalf("unexpected desktop entry: %s", string(desktopText))
+	}
+
+	var preflightOutput bytes.Buffer
+	err = run([]string{
+		"windows-app-launcher-bundle-record",
+		"--profile", profilePath,
+		"--app-id", "org.xnix.realapp.preflight",
+		"--launcher-mode", "preflight",
+	}, &preflightOutput)
+	if err != nil {
+		t.Fatalf("preflight run returned error: %v", err)
+	}
+	var preflightPayload map[string]any
+	if err := json.Unmarshal(preflightOutput.Bytes(), &preflightPayload); err != nil {
+		t.Fatalf("Unmarshal preflight returned error: %v", err)
+	}
+	if preflightPayload["status"] != "passed" ||
+		preflightPayload["launcher_mode"] != "preflight" ||
+		preflightPayload["launcher_command"] != "windows-app-smoke-profile-preflight" ||
+		preflightPayload["raw_profile_path_exposed"] != false ||
+		preflightPayload["raw_runtime_argv_exposed"] != false {
+		t.Fatalf("unexpected preflight launcher payload: %#v", preflightPayload)
+	}
+	preflightLauncherPath := filepath.Join(stateRoot, "launcher-bundle", "launchers", "org.xnix.realapp.preflight.sh")
+	preflightLauncherText, err := os.ReadFile(preflightLauncherPath)
+	if err != nil {
+		t.Fatalf("ReadFile preflight launcher returned error: %v", err)
+	}
+	if !strings.Contains(string(preflightLauncherText), "windows-app-smoke-profile-preflight --profile") ||
+		strings.Contains(string(preflightLauncherText), "windows-app-run-smoke") {
+		t.Fatalf("unexpected preflight launcher script: %s", string(preflightLauncherText))
 	}
 }
 

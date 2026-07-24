@@ -157,12 +157,14 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       profile_path = args[args.index("--profile") + 1]
       app_id = args[args.index("--app-id") + 1]
       app_name = args.include?("--name") ? args[args.index("--name") + 1] : app_id
+      launcher_mode = args.include?("--launcher-mode") ? args[args.index("--launcher-mode") + 1] : "execute"
+      launcher_command = launcher_mode == "preflight" ? "windows-app-smoke-profile-preflight" : "windows-app-run-smoke"
       profile = JSON.parse(File.read(profile_path))
       state_root = profile.fetch("state_root")
       bundle_root = File.join(state_root, "launcher-bundle")
       FileUtils.mkdir_p(File.join(bundle_root, "launchers"))
       FileUtils.mkdir_p(File.join(bundle_root, "applications"))
-      File.write(File.join(bundle_root, "launchers", "#{app_id}.sh"), "#!/bin/sh\nexec xnix-runtime-go windows-app-run-smoke --profile '#{profile_path}'\n")
+      File.write(File.join(bundle_root, "launchers", "#{app_id}.sh"), "#!/bin/sh\nexec xnix-runtime-go #{launcher_command} --profile '#{profile_path}'\n")
       File.write(File.join(bundle_root, "applications", "#{app_id}.desktop"), "[Desktop Entry]\nName=#{app_name}\nExec=#{File.join(bundle_root, "launchers", "#{app_id}.sh")}\nTerminal=false\nX-Xnix-RuntimeOwned=true\n")
       payload = {
         "schema_version" => "xnix.runtime.windows_app_launcher_bundle.v1",
@@ -174,6 +176,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "launcher_script_name" => "#{app_id}.sh",
         "receipt_file_name" => "#{app_id}.launcher-bundle.json",
         "profile_supplied" => true,
+        "launcher_mode" => launcher_mode,
+        "launcher_command" => launcher_command,
         "runtime_argument_count" => args.each_with_index.count { |value, index| value == "--runtime-arg" && index + 1 < args.length },
         "files_written" => true,
         "launcher_script_written" => true,
@@ -458,7 +462,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--app-name", "Generated Windows App",
     "--runtime-bin", "go",
     "--runtime-arg", "run",
-    "--runtime-arg", "./cmd/xnix-runtime-go"
+    "--runtime-arg", "./cmd/xnix-runtime-go",
+    "--launcher-mode", "preflight"
   )
   assert(write_profile_status.success?, "winapp smoke profile write report must succeed: #{write_profile_stderr}")
   write_profile_report = JSON.parse(write_profile_stdout)
@@ -468,6 +473,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(write_profile_report.fetch("launcher_bundle_written"), "launcher bundle report must record bundle write")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("request_type") == "windows-app-launcher-bundle-record", "launcher bundle report must embed safe payload")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("desktop_file_name") == "org.xnix.generated.desktop", "launcher bundle report must preserve desktop file name")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_mode") == "preflight", "launcher bundle report must preserve launcher mode")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("launcher_command") == "windows-app-smoke-profile-preflight", "launcher bundle report must preserve launcher command")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("runtime_argument_count") == 2, "launcher bundle report must preserve runtime argument count")
   rendered_profile = JSON.parse(generated_profile.read)
   assert(rendered_profile.fetch("schema_version") == "xnix.runtime.windows_app_smoke_profile.v1", "written profile must preserve schema")

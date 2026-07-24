@@ -39,6 +39,8 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 		record.DesktopFileName != "org.xnix.realapp.desktop" ||
 		record.LauncherScriptName != "org.xnix.realapp.sh" ||
 		record.ReceiptFileName != "org.xnix.realapp.launcher-bundle.json" ||
+		record.LauncherMode != LauncherModeExecute ||
+		record.LauncherCommand != RequestType ||
 		record.RuntimeArgumentCount != 2 ||
 		!record.FilesWritten ||
 		!record.LauncherScriptWritten ||
@@ -95,6 +97,62 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 		if strings.Contains(string(output), leaked) {
 			t.Fatalf("launcher bundle record leaked private value %q: %s", leaked, string(output))
 		}
+	}
+}
+
+func TestRecordLauncherBundleCanWritePreflightLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	profilePath := filepath.Join(tempDir, "real-app.profile.json")
+	writeSmokeProfile(t, profilePath, map[string]any{
+		"schema_version":  SmokeProfileSchemaVersion,
+		"executable_path": filepath.Join(tempDir, "app", "hello.exe"),
+		"state_root":      stateRoot,
+		"timeout":         "30s",
+	})
+
+	record, err := RecordLauncherBundle(LauncherBundleRequest{
+		ProfilePath:   profilePath,
+		ApplicationID: "org.xnix.realapp.preflight",
+		DisplayName:   "Real Windows App Preflight",
+		RuntimeBinary: "xnix-runtime-go",
+		LauncherMode:  LauncherModePreflight,
+	})
+	if err != nil {
+		t.Fatalf("RecordLauncherBundle returned error: %v", err)
+	}
+	if record.Status != PassedStatus ||
+		record.LauncherMode != LauncherModePreflight ||
+		record.LauncherCommand != SmokeProfilePreflightRequestType ||
+		record.RawProfilePathExposed ||
+		record.RawRuntimeArgvExposed ||
+		record.HostRootModified {
+		t.Fatalf("unexpected preflight launcher record: %#v", record)
+	}
+	launcherPath := filepath.Join(stateRoot, "launcher-bundle", "launchers", "org.xnix.realapp.preflight.sh")
+	launcherText, err := os.ReadFile(launcherPath)
+	if err != nil {
+		t.Fatalf("ReadFile launcher returned error: %v", err)
+	}
+	if !strings.Contains(string(launcherText), "exec 'xnix-runtime-go' windows-app-smoke-profile-preflight --profile") ||
+		strings.Contains(string(launcherText), "windows-app-run-smoke") ||
+		!strings.Contains(string(launcherText), shellQuote(profilePath)) {
+		t.Fatalf("preflight launcher script did not preserve safe profile preflight: %s", string(launcherText))
+	}
+	receiptPath := filepath.Join(stateRoot, "launcher-bundle", "receipts", "org.xnix.realapp.preflight.launcher-bundle.json")
+	receiptData, err := os.ReadFile(receiptPath)
+	if err != nil {
+		t.Fatalf("ReadFile receipt returned error: %v", err)
+	}
+	var receipt LauncherBundleRecord
+	if err := json.Unmarshal(receiptData, &receipt); err != nil {
+		t.Fatalf("Unmarshal receipt returned error: %v", err)
+	}
+	if receipt.LauncherMode != LauncherModePreflight ||
+		receipt.LauncherCommand != SmokeProfilePreflightRequestType ||
+		receipt.RawProfilePathExposed ||
+		receipt.RawRuntimeArgvExposed {
+		t.Fatalf("unexpected preflight launcher receipt: %#v", receipt)
 	}
 }
 
