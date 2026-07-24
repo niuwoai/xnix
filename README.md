@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.634`.
+The project is currently at `v0.2.635`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.634`.
 
 ## Current Checkpoint
 
-v0.2.634 makes the D-Bus controlled-launch fixture lane consume the same Go-owned Runtime-status owner trigger preview used by the real staged launcher lane. The D-Bus smoke now asks `known-app-runtime-status-launch-owner-trigger-preview` for the public D-Bus method and evidence handoff before calling `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
+v0.2.635 makes the C D-Bus smoke adapter consume Go owner-trigger metadata before dispatching `ShowRuntimeControlledLaunch`. The adapter now asks `known-app-runtime-status-launch-owner-trigger-preview` for owner-service call arguments, route metadata, and handoff kind, then calls `xnix-runtime-owner` with those Go-provided values.
 
 The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON.
 
@@ -39,8 +39,10 @@ GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-owner
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureBlocksWithoutVerifiedArtifact' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandBlocksWithoutArtifact|TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandRejectsMissingStateRoot' -count=1
 ruby -Ilib test/test_staged_launcher_dispatch_smoke_script.rb
+ruby -Ilib test/test_runtime_dbus_smoke_script.rb
 ruby -Ilib test/test_runtime_status_owner_service_session_bus_smoke_script.rb
 ruby -Ilib test/test_dbus_controlled_launch_owner_fixture_smoke_script.rb
+gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xnix-dbus-smoke-check $(pkg-config --cflags --libs gio-2.0)
 ruby scripts/verify_layout.rb
 ```
 

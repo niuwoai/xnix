@@ -39,6 +39,8 @@ assert(contents.include?("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER"), "D-Bus controll
 assert(contents.include?("XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE"), "D-Bus controlled launch owner fixture smoke must capture delegated launcher argv")
 assert(contents.include?(".xnix-dbus-controlled-launch-scratch"), "D-Bus controlled launch owner fixture smoke must prefer the managed container scratch volume")
 assert(contents.include?("go_owner_service_call_json"), "D-Bus controlled launch owner fixture smoke must parse the nested owner service-call payload")
+assert(contents.include?("go_owner_trigger_json"), "D-Bus controlled launch owner fixture smoke must parse the nested Go owner trigger payload")
+assert(contents.include?("assert_owner_trigger_response"), "D-Bus controlled launch owner fixture smoke must verify the Go owner trigger response")
 assert(contents.include?("runtime-owner-service-call"), "D-Bus controlled launch owner fixture smoke must verify the owner service-call envelope")
 assert(contents.include?("desktop-action-dispatch"), "D-Bus controlled launch owner fixture smoke must verify desktop action dispatch")
 assert(contents.include?("kde-dbus-runtime-status-action"), "D-Bus controlled launch owner fixture smoke must verify the KDE Runtime-status action route")

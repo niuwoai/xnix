@@ -30,6 +30,8 @@ assert(source.read.include?("xnix_compatd_kde_center.inc"), "D-Bus smoke adapter
 assert(source.read.include?("xnix_compatd_runtime_models.inc"), "D-Bus smoke adapter must include its Runtime read models")
 assert(source.read.include?("go_owner_service_call5"), "D-Bus smoke adapter must call the Go owner service boundary")
 assert(source.read.include?("go_owner_service_call_available"), "D-Bus smoke adapter must expose Go owner service-call availability")
+assert(source.read.include?("go_owner_trigger_available"), "D-Bus smoke adapter must expose Go owner trigger availability")
+assert(source.read.include?("known-app-runtime-status-launch-owner-trigger-preview"), "D-Bus smoke adapter must consume Go owner trigger preview metadata")
 assert(source.read.include?("xnix.runtime.owner_service_call.v1"), "D-Bus smoke adapter must expose Go owner service-call schema evidence")
 assert(source.read.include?("build_runtime_controlled_launch_action"), "D-Bus smoke adapter must build controlled Runtime launch actions")
 assert(source.read.include?("safe_evidence_relative_path"), "D-Bus smoke adapter must validate controlled-launch evidence paths")

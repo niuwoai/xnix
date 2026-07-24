@@ -5,6 +5,8 @@
 
 static GDBusNodeInfo *introspection_data = NULL;
 
+static gboolean safe_evidence_relative_path(const gchar *evidence_relative_path);
+
 static gchar *
 go_owner_read_dispatch5(const gchar *method_name,
                         const gchar *dispatch_arg,
@@ -117,6 +119,170 @@ go_owner_service_call5(const gchar *method_name,
   }
   g_strchomp(stdout_data);
   return stdout_data;
+}
+
+static gchar *
+go_runtime_owner_trigger_preview(const gchar *evidence_relative_path)
+{
+  const gchar *state_root = g_getenv("XNIX_RUNTIME_OWNER_STATE_ROOT");
+  gchar *stdout_data = NULL;
+  gchar *stderr_data = NULL;
+  GError *error = NULL;
+  gint wait_status = 0;
+  gchar *argv[7] = {0};
+
+  if (state_root == NULL || state_root[0] == '\0' || !safe_evidence_relative_path(evidence_relative_path)) {
+    return NULL;
+  }
+
+  argv[0] = "xnix-runtime-go";
+  argv[1] = "known-app-runtime-status-launch-owner-trigger-preview";
+  argv[2] = "--state-root";
+  argv[3] = (gchar *)state_root;
+  argv[4] = "--evidence-relative-path";
+  argv[5] = (gchar *)evidence_relative_path;
+  argv[6] = NULL;
+
+  if (!g_spawn_sync(NULL,
+                    argv,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH,
+                    NULL,
+                    NULL,
+                    &stdout_data,
+                    &stderr_data,
+                    &wait_status,
+                    &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  if (!g_spawn_check_wait_status(wait_status, &error)) {
+    g_clear_error(&error);
+    g_free(stdout_data);
+    g_free(stderr_data);
+    return NULL;
+  }
+  g_free(stderr_data);
+  if (stdout_data == NULL || stdout_data[0] == '\0') {
+    g_free(stdout_data);
+    return NULL;
+  }
+  g_strchomp(stdout_data);
+  return stdout_data;
+}
+
+static const gchar *
+json_skip_string(const gchar *cursor)
+{
+  if (cursor == NULL || *cursor != '"') {
+    return NULL;
+  }
+  cursor++;
+  while (*cursor != '\0') {
+    if (*cursor == '\\' && cursor[1] != '\0') {
+      cursor += 2;
+      continue;
+    }
+    if (*cursor == '"') {
+      return cursor + 1;
+    }
+    cursor++;
+  }
+  return NULL;
+}
+
+static gchar *
+json_read_string(const gchar *cursor)
+{
+  GString *value = NULL;
+
+  if (cursor == NULL || *cursor != '"') {
+    return NULL;
+  }
+  cursor++;
+  value = g_string_new("");
+  while (*cursor != '\0') {
+    if (*cursor == '\\' && cursor[1] != '\0') {
+      cursor++;
+      g_string_append_c(value, *cursor);
+      cursor++;
+      continue;
+    }
+    if (*cursor == '"') {
+      return g_string_free(value, FALSE);
+    }
+    g_string_append_c(value, *cursor);
+    cursor++;
+  }
+  g_string_free(value, TRUE);
+  return NULL;
+}
+
+static const gchar *
+json_find_key_value(const gchar *json, const gchar *key)
+{
+  gchar *quoted_key = NULL;
+  const gchar *cursor = NULL;
+
+  if (json == NULL || key == NULL || key[0] == '\0') {
+    return NULL;
+  }
+
+  quoted_key = g_strdup_printf("\"%s\"", key);
+  cursor = strstr(json, quoted_key);
+  g_free(quoted_key);
+  if (cursor == NULL) {
+    return NULL;
+  }
+  cursor = strchr(cursor, ':');
+  if (cursor == NULL) {
+    return NULL;
+  }
+  cursor++;
+  while (*cursor == ' ' || *cursor == '\n' || *cursor == '\r' || *cursor == '\t') {
+    cursor++;
+  }
+  return cursor;
+}
+
+static gchar *
+json_string_value(const gchar *json, const gchar *key)
+{
+  return json_read_string(json_find_key_value(json, key));
+}
+
+static gchar *
+json_string_array_value(const gchar *json, const gchar *key, guint index)
+{
+  const gchar *cursor = json_find_key_value(json, key);
+  guint current_index = 0;
+
+  if (cursor == NULL || *cursor != '[') {
+    return NULL;
+  }
+  cursor++;
+  while (*cursor != '\0') {
+    while (*cursor == ' ' || *cursor == '\n' || *cursor == '\r' || *cursor == '\t' || *cursor == ',') {
+      cursor++;
+    }
+    if (*cursor == ']') {
+      return NULL;
+    }
+    if (*cursor != '"') {
+      return NULL;
+    }
+    if (current_index == index) {
+      return json_read_string(cursor);
+    }
+    cursor = json_skip_string(cursor);
+    if (cursor == NULL) {
+      return NULL;
+    }
+    current_index++;
+  }
+  return NULL;
 }
 
 static gchar *
@@ -954,27 +1120,53 @@ static GVariant *
 build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
 {
   GVariantBuilder action;
+  gchar *go_owner_trigger_json = NULL;
   gchar *go_owner_service_call_json = NULL;
+  gchar *trigger_runtime_method = NULL;
+  gchar *trigger_action_type = NULL;
+  gchar *trigger_call_type = NULL;
+  gchar *trigger_handoff_kind = NULL;
+  gchar *trigger_handoff_value = NULL;
+  gchar *trigger_owner_service_method = NULL;
+  gboolean go_owner_trigger_available = FALSE;
   gboolean go_owner_service_call_available = FALSE;
 
-  go_owner_service_call_json = go_owner_service_call5("ShowRuntimeControlledLaunch",
-                                                      "evidence-relative-path",
-                                                      evidence_relative_path,
-                                                      NULL,
-                                                      NULL,
-                                                      NULL);
+  go_owner_trigger_json = go_runtime_owner_trigger_preview(evidence_relative_path);
+  go_owner_trigger_available = go_owner_trigger_json != NULL && go_owner_trigger_json[0] != '\0';
+  if (go_owner_trigger_available) {
+    trigger_runtime_method = json_string_value(go_owner_trigger_json, "desktop_callable_runtime_method");
+    trigger_action_type = json_string_value(go_owner_trigger_json, "desktop_callable_route");
+    trigger_call_type = json_string_value(go_owner_trigger_json, "owner_service_call_type");
+    trigger_owner_service_method = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 0);
+    trigger_handoff_kind = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 1);
+    trigger_handoff_value = json_string_array_value(go_owner_trigger_json, "owner_service_call_args", 2);
+  }
+  if (trigger_owner_service_method != NULL && trigger_owner_service_method[0] != '\0' &&
+      trigger_handoff_kind != NULL && trigger_handoff_kind[0] != '\0' &&
+      trigger_handoff_value != NULL && safe_evidence_relative_path(trigger_handoff_value)) {
+    go_owner_service_call_json = go_owner_service_call5(trigger_owner_service_method,
+                                                        trigger_handoff_kind,
+                                                        trigger_handoff_value,
+                                                        NULL,
+                                                        NULL,
+                                                        NULL);
+  }
   go_owner_service_call_available = go_owner_service_call_json != NULL && go_owner_service_call_json[0] != '\0';
 
   g_variant_builder_init(&action, G_VARIANT_TYPE("a{sv}"));
   g_variant_builder_add(&action, "{sv}", "schema_version", g_variant_new_string("xnix.runtime.dbus_runtime_controlled_launch_action.v1"));
   g_variant_builder_add(&action, "{sv}", "request_type", g_variant_new_string("runtime-controlled-launch-dbus-action"));
-  g_variant_builder_add(&action, "{sv}", "runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
-  g_variant_builder_add(&action, "{sv}", "owner_runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
-  g_variant_builder_add(&action, "{sv}", "desktop_callable_runtime_method", g_variant_new_string("ShowRuntimeControlledLaunch"));
-  g_variant_builder_add(&action, "{sv}", "action_type", g_variant_new_string("kde-dbus-runtime-status-action"));
-  g_variant_builder_add(&action, "{sv}", "action_trigger_handoff_type", g_variant_new_string("evidence-relative-path"));
+  g_variant_builder_add(&action, "{sv}", "runtime_method", g_variant_new_string(trigger_runtime_method == NULL ? "" : trigger_runtime_method));
+  g_variant_builder_add(&action, "{sv}", "owner_runtime_method", g_variant_new_string(trigger_owner_service_method == NULL ? "" : trigger_owner_service_method));
+  g_variant_builder_add(&action, "{sv}", "desktop_callable_runtime_method", g_variant_new_string(trigger_runtime_method == NULL ? "" : trigger_runtime_method));
+  g_variant_builder_add(&action, "{sv}", "action_type", g_variant_new_string(trigger_action_type == NULL ? "" : trigger_action_type));
+  g_variant_builder_add(&action, "{sv}", "action_trigger_handoff_type", g_variant_new_string(trigger_handoff_kind == NULL ? "" : trigger_handoff_kind));
   g_variant_builder_add(&action, "{sv}", "evidence_relative_path", g_variant_new_string(evidence_relative_path));
-  g_variant_builder_add(&action, "{sv}", "call_type", g_variant_new_string("desktop-action-dispatch"));
+  g_variant_builder_add(&action, "{sv}", "call_type", g_variant_new_string(trigger_call_type == NULL ? "" : trigger_call_type));
+  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_available", g_variant_new_boolean(go_owner_trigger_available));
+  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_schema", g_variant_new_string(go_owner_trigger_available ? "xnix.runtime.known_app_runtime_status_launch_owner_trigger.v1" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_request_type", g_variant_new_string(go_owner_trigger_available ? "known-app-runtime-status-launch-owner-trigger-preview" : ""));
+  g_variant_builder_add(&action, "{sv}", "go_owner_trigger_json", g_variant_new_string(go_owner_trigger_available ? go_owner_trigger_json : ""));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_available", g_variant_new_boolean(go_owner_service_call_available));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_schema", g_variant_new_string(go_owner_service_call_available ? "xnix.runtime.owner_service_call.v1" : ""));
   g_variant_builder_add(&action, "{sv}", "go_owner_service_call_request_type", g_variant_new_string(go_owner_service_call_available ? "runtime-owner-service-call" : ""));
@@ -997,7 +1189,14 @@ build_runtime_controlled_launch_action(const gchar *evidence_relative_path)
   g_variant_builder_add(&action, "{sv}", "backend_details_exposed", g_variant_new_boolean(FALSE));
   g_variant_builder_add(&action, "{sv}", "desktop_safe_summary", g_variant_new_string("D-Bus forwards a Runtime-status evidence handoff to the Go Runtime Owner controlled launch boundary."));
 
+  g_free(go_owner_trigger_json);
   g_free(go_owner_service_call_json);
+  g_free(trigger_runtime_method);
+  g_free(trigger_action_type);
+  g_free(trigger_call_type);
+  g_free(trigger_handoff_kind);
+  g_free(trigger_handoff_value);
+  g_free(trigger_owner_service_method);
   return g_variant_builder_end(&action);
 }
 
@@ -1869,9 +2068,9 @@ handle_method_call(GDBusConnection *connection,
 }
 
 static const GDBusInterfaceVTable interface_vtable = {
-  handle_method_call,
-  NULL,
-  NULL
+  .method_call = handle_method_call,
+  .get_property = NULL,
+  .set_property = NULL
 };
 
 static void

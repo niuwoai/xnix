@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.635] - 2026-07-24
+
+### Changed
+
+- Updated the C D-Bus smoke adapter to call `known-app-runtime-status-launch-owner-trigger-preview` and consume Go-provided owner-service call arguments before dispatching `ShowRuntimeControlledLaunch`.
+- Extended the D-Bus controlled-launch fixture smoke to parse `go_owner_trigger_json` and verify trigger digest parity, owner-service args, evidence-only KDE forwarding, and disabled unsafe gates.
+- Added Claude's next Runtime work handoff document with prioritized implementation packages for the remaining D-Bus/KDE controlled-launch lane.
+
 ## [0.2.634] - 2026-07-24
 
 ### Changed
