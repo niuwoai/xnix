@@ -1,6 +1,6 @@
 # Claude Code Next Delegation Pack
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc7 | Owner: Codex mainline review
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc8 | Owner: Codex mainline review
 
 This document is a copy-first handoff pack for assigning the next bounded Xnix work to Claude Code.
 
@@ -8,7 +8,7 @@ It does not replace `docs/xnix-current-mainline.md`. The mainline document remai
 
 ## Current Baseline
 
-The local checkpoint candidate is `v0.2.640-rc7`.
+The local checkpoint candidate is `v0.2.640-rc8`.
 
 Already present locally:
 
@@ -17,6 +17,7 @@ Already present locally:
 - `C8W4` KDE controlled-launch action surface audit in `v0.2.640-rc5`.
 - `C8W5` Managed launcher acceptance report in `v0.2.640-rc6`.
 - `C8W7` Desktop-trigger dry-run request review in `v0.2.640-rc7`.
+- `C8W8` Desktop-trigger service call materialization in `v0.2.640-rc8`.
 
 Do not ask Claude Code to reimplement those completed tasks unless Codex or a reviewer asks for a repair branch.
 
@@ -76,6 +77,7 @@ Every task from this pack must not:
 
 | Order | Task | Suggested branch | Outcome |
 | --- | --- | --- | --- |
+| Done | `C8W8` Desktop-trigger service call materialization | `codex/desktop-trigger-service-call-materialization` | Present locally in v0.2.640-rc8. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W7` Desktop-trigger dry-run request review | `codex/desktop-trigger-dry-run-request-review` | Present locally in v0.2.640-rc7. Do not dispatch again unless a reviewer asks for repair. |
 | 1 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | Produce a deterministic checklist for promoting `v0.2.640` only after full smoke passes. |
 

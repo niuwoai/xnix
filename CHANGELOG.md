@@ -4,6 +4,21 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc8] - 2026-07-24
+
+### Added
+
+- Added `desktop-trigger-service-call-materialization-preview`, a Go-owned materialization packet that consumes the accepted desktop-trigger dry-run review and the Runtime-status owner trigger to emit evidence-only `ShowRuntimeControlledLaunch` owner service call arguments for a future human-authorized staged launch smoke.
+- Added targeted Go and CLI tests for ready materialization, blocked full-checkpoint dependency, unsafe envelope rejection without emitted service call arguments, malformed evidence, stale evidence, redaction, and no-side-effect behavior.
+
+### Changed
+
+- Updated layout and mainline review gates so the desktop-trigger service call materialization lane is classified with the Runtime owner read boundary.
+
+### Fixed
+
+- Kept owner service dispatch, D-Bus calls, request-object writes, permission grants, Runtime state writes, KDE configuration writes, desktop launch, backend launch, network access, and host mutation disabled while still exposing only safe evidence-relative-path service call arguments for operator-owned smoke execution.
+
 ## [0.2.640-rc7] - 2026-07-24
 
 ### Added

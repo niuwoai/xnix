@@ -1,6 +1,6 @@
 # Claude Code Current Execution Queue
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc7 | Formal release: v0.2.640 blocked until full smoke passes
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc8 | Formal release: v0.2.640 blocked until full smoke passes
 
 This is the copy-first execution queue for asking Claude Code to implement the next bounded Xnix branches.
 
@@ -10,7 +10,7 @@ This document intentionally does not replace the larger task archive. It narrows
 
 ## Current State
 
-The local checkpoint candidate is `v0.2.640-rc7`.
+The local checkpoint candidate is `v0.2.640-rc8`.
 
 Already present locally:
 
@@ -19,6 +19,7 @@ Already present locally:
 - `C8W4` KDE controlled-launch action surface audit in `v0.2.640-rc5`.
 - `C8W5` Managed launcher acceptance report in `v0.2.640-rc6`.
 - `C8W7` Desktop-trigger dry-run request review in `v0.2.640-rc7`.
+- `C8W8` Desktop-trigger service call materialization in `v0.2.640-rc8`.
 
 Do not ask Claude Code to reimplement those tasks unless Codex or a reviewer explicitly asks for a repair branch.
 
@@ -81,11 +82,12 @@ Use this order unless Codex or a reviewer asks for a repair branch:
 | --- | --- | --- | --- |
 | Done | `C8W5` Managed launcher acceptance report | `codex/managed-launcher-acceptance-report` | Present locally in v0.2.640-rc6. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W7` Desktop-trigger dry-run request review | `codex/desktop-trigger-dry-run-request-review` | Present locally in v0.2.640-rc7. Do not dispatch again unless a reviewer asks for repair. |
+| Done | `C8W8` Desktop-trigger service call materialization | `codex/desktop-trigger-service-call-materialization` | Present locally in v0.2.640-rc8. Do not dispatch again unless a reviewer asks for repair. |
 | 1 | `C8W6` Post-checkpoint promotion checklist | `codex/post-checkpoint-promotion-checklist` | Produce a deterministic checklist for promoting `v0.2.640` only after full smoke passes. |
 
 Stop after each task and return the branch for Codex review. Do not chain tasks together.
 
-`C8W5` and `C8W7` remain below as historical repair guidance only. Use `C8W6` for the next new Claude Code task.
+`C8W5`, `C8W7`, and `C8W8` remain below as historical repair guidance only. Use `C8W6` for the next new Claude Code task.
 
 ## Task C8W5: Managed Launcher Acceptance Report
 
@@ -361,6 +363,6 @@ When Claude Code returns a branch, Codex should:
 
 ## If Claude Finishes the Queue
 
-If `C8W5`, `C8W6`, and `C8W7` are all present locally, stop and ask Codex for a refreshed mainline plan before assigning more work.
+If `C8W5`, `C8W6`, `C8W7`, and `C8W8` are all present locally, stop and ask Codex for a refreshed mainline plan before assigning more work.
 
 Do not invent a ninth-wave task from this document.

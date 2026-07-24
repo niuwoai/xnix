@@ -1,10 +1,10 @@
 # Claude Code Current Dispatch Picks
 
-> Last updated: 2026-07-24 | Baseline: v0.2.640-rc7
+> Last updated: 2026-07-24 | Baseline: v0.2.640-rc8
 
 This is the current short dispatch sheet for Claude Code. It is intentionally smaller than the full wave documents and should be used when choosing the next independent branch.
 
-Use `docs/claude-code-next-delegation-pack.md` when the human operator wants a short copyable task pack for Claude Code. Use `docs/claude-code-current-execution-queue.md` as the larger current execution queue, `docs/claude-code-live-delegation-brief.md` as the longer prompt-ready task sheet, `docs/claude-code-next-actions-handoff.md` as the eighth-wave task reference, and `docs/claude-code-next-work-after-0640-rc1.md` as the detailed background. Use `docs/xnix-current-mainline.md` as the Codex-owned mainline state and `docs/claude-code-stability-release-train.md` as the cadence authority where it does not conflict with the current goal: one coherent small version per local commit, targeted tests on every small version, and a full build plus complete tests every twenty small versions. The `v0.2.640-rc7` checkpoint candidate is present locally, but the formal `v0.2.640` tag must wait until the full-smoke gate passes.
+Use `docs/claude-code-next-delegation-pack.md` when the human operator wants a short copyable task pack for Claude Code. Use `docs/claude-code-current-execution-queue.md` as the larger current execution queue, `docs/claude-code-live-delegation-brief.md` as the longer prompt-ready task sheet, `docs/claude-code-next-actions-handoff.md` as the eighth-wave task reference, and `docs/claude-code-next-work-after-0640-rc1.md` as the detailed background. Use `docs/xnix-current-mainline.md` as the Codex-owned mainline state and `docs/claude-code-stability-release-train.md` as the cadence authority where it does not conflict with the current goal: one coherent small version per local commit, targeted tests on every small version, and a full build plus complete tests every twenty small versions. The `v0.2.640-rc8` checkpoint candidate is present locally, but the formal `v0.2.640` tag must wait until the full-smoke gate passes.
 
 The current formal full-smoke gate is blocked before project build/test steps because Colima Docker cannot pull `debian:bookworm-slim` from Docker Hub and fails with EOF while resolving Docker Hub auth or manifest endpoints. Do not dispatch that environment repair to Claude Code from this sheet. Claude Code should work on bounded offline implementation branches from `docs/claude-code-next-work-after-0640-rc1.md` unless the human operator explicitly asks for a separate environment-support task.
 
@@ -44,13 +44,14 @@ A task is suitable for Claude Code now if it is:
 | Done | `C8W4` KDE controlled-launch action surface audit | `docs/claude-code-live-delegation-brief.md` | `codex/kde-controlled-launch-action-surface-audit` | Present locally in v0.2.640-rc5. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W5` Managed launcher acceptance report | `docs/claude-code-current-execution-queue.md` | `codex/managed-launcher-acceptance-report` | Present locally in v0.2.640-rc6. Do not dispatch again unless a reviewer asks for repair. |
 | Done | `C8W7` Desktop-trigger dry-run request review | `docs/claude-code-current-execution-queue.md` | `codex/desktop-trigger-dry-run-request-review` | Present locally in v0.2.640-rc7. Do not dispatch again unless a reviewer asks for repair. |
+| Done | `C8W8` Desktop-trigger service call materialization | `docs/xnix-current-mainline.md` | `codex/desktop-trigger-service-call-materialization` | Present locally in v0.2.640-rc8. Do not dispatch again unless a reviewer asks for repair. |
 | 1 | `C8W6` Post-checkpoint promotion checklist | `docs/claude-code-current-execution-queue.md` | `codex/post-checkpoint-promotion-checklist` | Produce a deterministic promotion checklist for `v0.2.640` after full smoke passes. |
 
 ## Best First Pick
 
 Start with `C8W6` from `docs/claude-code-current-execution-queue.md`.
 
-`C8W1` is already present locally in v0.2.640-rc2, `C8W2` is present locally in v0.2.640-rc3, `C8W3` is present locally in v0.2.640-rc4, `C8W4` is present locally in v0.2.640-rc5, `C8W5` is present locally in v0.2.640-rc6, and `C8W7` is present locally in v0.2.640-rc7. Dispatch `C8W6` next to make the post-checkpoint promotion review deterministic before the formal `v0.2.640` tag.
+`C8W1` is already present locally in v0.2.640-rc2, `C8W2` is present locally in v0.2.640-rc3, `C8W3` is present locally in v0.2.640-rc4, `C8W4` is present locally in v0.2.640-rc5, `C8W5` is present locally in v0.2.640-rc6, `C8W7` is present locally in v0.2.640-rc7, and `C8W8` is present locally in v0.2.640-rc8. Dispatch `C8W6` next to make the post-checkpoint promotion review deterministic before the formal `v0.2.640` tag.
 
 The historical context below is retained as implementation evidence. Do not use it as the current dispatch target when it conflicts with `docs/claude-code-next-work-after-0640-rc1.md`.
 

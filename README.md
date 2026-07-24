@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc7`.
+The project is currently at `v0.2.640-rc8`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.640-rc7`.
 
 ## Current Checkpoint
 
-v0.2.640-rc7 keeps the formal full checkpoint gate pending and adds `desktop-trigger-dry-run-request-review-preview`, a Go-owned review packet for the next human-authorized desktop-triggered staged launch attempt. The packet combines the Runtime owner launch envelope guard, KDE controlled-launch action surface audit, managed launcher acceptance report, evidence digest checks, and the full-checkpoint dependency without dispatching a service call. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
+v0.2.640-rc8 keeps the formal full checkpoint gate pending and adds `desktop-trigger-service-call-materialization-preview`, a Go-owned materialization packet that turns an accepted desktop-trigger dry-run review into evidence-only `ShowRuntimeControlledLaunch` owner service call arguments for a future human-authorized staged launch smoke. The formal `v0.2.640` tag remains pending because full smoke still needs a passing run after the external Docker pull blocker is resolved.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, service dispatch, D-Bus calls, Runtime writes, KDE configuration writes, desktop launch, backend launch, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.640-rc6 added the managed launcher acceptance report before any human-authorized desktop-triggered smoke.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, request-object writes, permission grants, service dispatch, D-Bus calls, Runtime writes, KDE configuration writes, desktop launch, backend launch, Docker socket mounts, broad host mounts, and host-root mutation disabled. v0.2.640-rc7 added the accepted dry-run review gate before any human-authorized desktop-triggered smoke.
 
 ## Main References
 
@@ -33,6 +33,7 @@ Run targeted checks for small versions:
 
 ```text
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner ./internal/runtime/appidentity ./cmd/xnix-runtime-go -run 'TestDesktopTriggerDryRunRequestReview|TestPreviewLaunchEnvelopeGuard|TestKDEControlledLaunchActionSurfaceAudit|TestPreviewManagedLauncherAcceptance' -count=1
+GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner ./internal/runtime/appidentity ./cmd/xnix-runtime-go -run 'TestDesktopTriggerServiceCallMaterialization|TestDesktopTriggerDryRunRequestReview|TestKnownAppRuntimeStatusLaunchOwnerTrigger' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/appidentity -run 'TestPreviewDesktopTriggerStagedInvocationReadiness|TestPreviewKDEControlledLaunchSessionBusSmokePlanLinksActionToRestrictedSmoke|TestPreviewKDEControlledLaunchActionForwardsOnlyEvidenceHandle|TestPreviewKnownAppRuntimeStatusLaunchOwnerTriggerConsumesVerifiedHandoff' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./cmd/xnix-runtime-go -run 'TestDesktopTriggerStagedInvocationReadiness|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestrictedSmoke|TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandRejectsMissingStateRoot|TestKDEControlledLaunchActionPreviewCommandForwardsOnlyEvidenceHandle|TestKDEControlledLaunchActionPreviewCommandRejectsMissingStateRoot|TestKnownAppRuntimeStatusLaunchOwnerTriggerPreviewCommandConsumesVerifiedHandoff' -count=1
 GOCACHE=/Users/rocky/Sites/xnix/.cache/go-build go test ./internal/runtime/owner -run 'TestServiceCallDispatchesShowRuntimeControlledLaunch|TestServiceCallServesReadDispatchInProcess' -count=1
@@ -50,4 +51,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc7`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc8`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes.

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc7
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc8
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc8 checkpoint candidate adds `desktop-trigger-service-call-materialization-preview`, a Go-owned materialization packet for the next human-authorized desktop-triggered staged launch attempt. The packet consumes the accepted desktop-trigger dry-run review and the Runtime-status owner trigger, then emits only the evidence-relative-path `ShowRuntimeControlledLaunch` owner service call arguments needed by a future smoke harness. It keeps human authorization required and keeps request-object writes, permission grants, service dispatch, D-Bus calls, Runtime state writes, KDE configuration writes, desktop launch, backend launch, network access, and host mutation disabled. The formal `v0.2.640` release remains pending until full smoke passes.
 
 The v0.2.640-rc7 checkpoint candidate adds `desktop-trigger-dry-run-request-review-preview`, a Go-owned review packet for the next human-authorized desktop-triggered staged launch attempt. The packet consumes the Runtime owner launch envelope guard, KDE controlled-launch action surface audit, managed launcher acceptance report, Runtime-status evidence digest state, and the full-checkpoint dependency. It returns accepted-review, blocked-missing-full-checkpoint, blocked-unsafe-envelope, blocked-unsafe-action, blocked-acceptance, missing-evidence, stale-evidence, malformed, or unsafe states without dispatching service calls, calling D-Bus, writing request objects, creating permission grants, writing Runtime state, writing KDE configuration, enabling desktop launch, starting a backend, requiring network access, or mutating the host root. The formal `v0.2.640` release remains pending until full smoke passes.
 
