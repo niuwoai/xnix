@@ -20,6 +20,7 @@ options = {
   redact_output: nil,
   backend: "local",
   profile: nil,
+  preflight_only: false,
   exe: nil,
   runner: nil,
   docker: nil,
@@ -37,11 +38,12 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
   parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
+  parser.on("--preflight-only", "Validate a profile and emit readiness without launching the Windows app") { options[:preflight_only] = true }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
   parser.on("--docker PATH", "Explicit Docker runner path for container backend") { |value| options[:docker] = value }
@@ -94,6 +96,10 @@ unless %w[marker exit-code startup-window].include?(options[:success_mode])
   warn "FAIL: unsupported success mode #{options[:success_mode]}"
   exit 1
 end
+if options.fetch(:preflight_only) && options[:profile].to_s.strip.empty?
+  warn "FAIL: --preflight-only requires --profile"
+  exit 1
+end
 
 options[:redact_output] = options[:format] != "text" if options[:redact_output].nil?
 
@@ -112,6 +118,11 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "redacted_output_requested" => redact_output,
     "executable_source" => executable_source,
     "profile_supplied" => profile_supplied,
+    "profile_preflight_invoked" => false,
+    "profile_preflight_status" => "not-run",
+    "profile_preflight_next_action" => "",
+    "profile_preflight_payload" => nil,
+    "preflight_only" => false,
     "user_executable_supplied" => executable_source != "fixture",
     "fixture_built" => false,
     "runner_diagnostics_invoked" => false,
@@ -173,6 +184,8 @@ def emit_report(report)
     puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
     puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
     puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
+    puts "- Profile preflight invoked: #{report.fetch("profile_preflight_invoked")}"
+    puts "- Profile preflight status: #{report.fetch("profile_preflight_status")}"
     puts "- Success mode: #{report.fetch("success_mode")}"
     puts "- Working directory mode: #{report.fetch("working_directory_mode")}"
     puts "- Runner argument count: #{report.fetch("runner_argument_count")}"
@@ -197,6 +210,7 @@ def emit_report(report)
     puts "- Wine executed by script: #{report.fetch("wine_executed_by_script")}"
     puts "- Network checks run: #{report.fetch("network_checks_run")}"
     puts "- Package manager invoked: #{report.fetch("package_manager_invoked")}"
+    puts "- Profile preflight next action: #{report.fetch("profile_preflight_next_action")}" unless report.fetch("profile_preflight_next_action").empty?
     puts "- Runner diagnostics next action: #{report.fetch("runner_diagnostics_next_action")}" unless report.fetch("runner_diagnostics_next_action").empty?
     puts "- Failure reason: #{report.fetch("failure_reason")}" unless report.fetch("failure_reason").empty?
     puts "- Skip reason: #{report.fetch("skip_reason")}" unless report.fetch("skip_reason").empty?
@@ -227,6 +241,7 @@ report = base_report(
   options.fetch(:image),
   options.fetch(:platform)
 )
+report["preflight_only"] = options.fetch(:preflight_only)
 
 FileUtils.mkdir_p(WORK_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
@@ -262,6 +277,59 @@ go_env = {
   "GOCACHE" => GO_CACHE_ROOT.join("build").to_s,
   "GOMODCACHE" => GO_CACHE_ROOT.join("mod").to_s
 }
+
+if profile_supplied
+  preflight_command = [
+    "go", "run", "./cmd/xnix-runtime-go", "windows-app-smoke-profile-preflight",
+    "--profile", options.fetch(:profile)
+  ]
+  preflight_stdout, preflight_stderr, preflight_status = run_command(go_env, *preflight_command)
+  report["profile_preflight_invoked"] = true
+
+  unless preflight_status.zero?
+    report["failure_reason"] = "Windows app profile preflight command failed"
+    if options.fetch(:format) == "text"
+      warn preflight_stdout unless preflight_stdout.empty?
+      warn preflight_stderr unless preflight_stderr.empty?
+      warn "FAIL: Windows app profile preflight command failed"
+    end
+    finish(report, 1)
+  end
+
+  preflight_payload = JSON.parse(preflight_stdout)
+  report["profile_preflight_payload"] = preflight_payload
+  report["profile_preflight_status"] = preflight_payload.fetch("status")
+  report["profile_preflight_next_action"] = preflight_payload.fetch("next_action", "")
+  report["runner_available"] = preflight_payload.fetch("runner_available", false)
+  report["runner_argument_count"] = preflight_payload.fetch("runner_argument_count", 0)
+  report["working_directory_mode"] = preflight_payload.fetch("working_directory_mode", "executable-directory")
+  report["host_root_modified"] = preflight_payload.fetch("host_root_modified", false)
+  report["privileged_container_required"] = preflight_payload.fetch("privileged_container_required", false)
+  report["host_networking_required"] = preflight_payload.fetch("host_networking_required", false)
+  report["docker_socket_mounted"] = preflight_payload.fetch("docker_socket_mounted", false)
+  report["broad_host_mount_required"] = preflight_payload.fetch("broad_host_mount_required", false)
+  report["docker_executed"] = preflight_payload.fetch("docker_executed", false)
+  report["qemu_executed"] = preflight_payload.fetch("qemu_executed", false)
+  report["wine_executed_by_script"] = preflight_payload.fetch("wine_executed", false)
+  report["colima_executed"] = preflight_payload.fetch("colima_executed", false)
+  report["network_checks_run"] = preflight_payload.fetch("network_checks_run", false)
+  report["package_manager_invoked"] = preflight_payload.fetch("package_manager_invoked", false)
+
+  if preflight_payload.fetch("status") == "ready"
+    report["status"] = "ready"
+    finish(report, 0) if options.fetch(:preflight_only)
+  elsif preflight_payload.fetch("skip_reason", "") != ""
+    report["status"] = "skipped"
+    report["skip_reason"] = preflight_payload.fetch("skip_reason")
+    puts "SKIP: Windows app profile preflight (#{report.fetch("skip_reason")})" if options.fetch(:format) == "text"
+    finish(report, 0)
+  else
+    report["status"] = "blocked"
+    report["failure_reason"] = preflight_payload.fetch("failure_reason", "Windows app profile preflight blocked")
+    warn "FAIL: Windows app profile preflight blocked" if options.fetch(:format) == "text"
+    finish(report, 1)
+  end
+end
 
 if options.fetch(:backend) == "container"
   container_command = [

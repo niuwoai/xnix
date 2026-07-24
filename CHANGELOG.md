@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc42] - 2026-07-24
+
+### Added
+
+- Added `scripts/winapp_smoke.rb --preflight-only --profile <json>` for safe readiness reports without launching the Windows app.
+- Embedded Go-owned profile preflight payloads into profile-backed `scripts/winapp_smoke.rb` reports before any smoke execution.
+
 ## [0.2.640-rc41] - 2026-07-24
 
 ### Added

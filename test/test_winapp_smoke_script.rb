@@ -34,6 +34,51 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-smoke-profile-preflight")
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_smoke_profile_preflight.v1",
+        "request_type" => "windows-app-smoke-profile-preflight",
+        "status" => "ready",
+        "profile_supplied" => true,
+        "executable_name" => "custom.exe",
+        "executable_exists" => true,
+        "working_directory_mode" => "operator-supplied",
+        "working_directory_valid" => true,
+        "state_root_configured" => true,
+        "runner_available" => true,
+        "runner_argument_count" => 1,
+        "app_argument_count" => 1,
+        "success_mode" => "marker",
+        "timeout_configured" => true,
+        "expected_marker_configured" => true,
+        "runner_diagnostics_payload" => {
+          "schema_version" => "xnix.runtime.windows_app_runner_diagnostics.v1",
+          "request_type" => "windows-app-runner-diagnostics",
+          "status" => "passed",
+          "runner_available" => true
+        },
+        "next_action" => "Run profile smoke.",
+        "raw_profile_path_exposed" => false,
+        "raw_executable_path_exposed" => false,
+        "raw_runner_path_exposed" => false,
+        "raw_working_directory_exposed" => false,
+        "raw_runner_arguments_exposed" => false,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false,
+        "docker_executed" => false,
+        "qemu_executed" => false,
+        "wine_executed" => false,
+        "colima_executed" => false,
+        "network_checks_run" => false,
+        "package_manager_invoked" => false
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     if args[0] == "run" && args.include?("windows-app-runner-diagnostics")
       explicit = args.include?("--runner")
       payload = {
@@ -179,6 +224,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   report = JSON.parse(json_stdout)
   assert(report.fetch("schema_version") == "xnix.runtime.winapp_smoke_report.v1", "JSON report must expose schema")
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
+  assert(!report.fetch("profile_preflight_invoked"), "JSON fixture report must not run profile preflight")
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
   assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
@@ -206,6 +252,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Status: passed"), "Markdown report must include status")
   assert(markdown_stdout.include?("Runner diagnostics invoked: true"), "Markdown report must expose runner diagnostics invocation")
   assert(markdown_stdout.include?("Runner candidate count: 1"), "Markdown report must expose runner candidate count")
+  assert(markdown_stdout.include?("Profile preflight invoked: false"), "Markdown report must expose profile preflight invocation")
   assert(markdown_stdout.include?("Success mode: marker"), "Markdown report must expose success mode")
   assert(markdown_stdout.include?("Working directory mode: executable-directory"), "Markdown report must expose working directory mode")
   assert(markdown_stdout.include?("Runner argument count: 0"), "Markdown report must expose runner argument count")
@@ -275,6 +322,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "runner_path" => custom_runner.to_s,
         "runner_arguments" => ["--profile-shim"],
         "arguments" => ["--profile-flag"],
+        "state_root" => temp_root.join("profile-state").to_s,
         "expected_marker" => "PROFILE_APP_OK",
         "success_mode" => "marker",
         "timeout" => "7s"
@@ -290,6 +338,9 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_status.success?, "winapp smoke profile JSON report must succeed: #{profile_stderr}")
   profile_report = JSON.parse(profile_stdout)
   assert(profile_report.fetch("profile_supplied"), "profile report must mark profile supplied")
+  assert(profile_report.fetch("profile_preflight_invoked"), "profile report must run preflight before smoke")
+  assert(profile_report.fetch("profile_preflight_status") == "ready", "profile report must preserve preflight readiness")
+  assert(profile_report.fetch("profile_preflight_payload").fetch("request_type") == "windows-app-smoke-profile-preflight", "profile report must embed preflight payload")
   assert(profile_report.fetch("executable_source") == "profile", "profile report must identify profile executable source")
   assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
   assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")
@@ -297,12 +348,29 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("working_directory_mode") == "operator-supplied", "profile report must preserve profile working directory mode")
   assert(profile_report.fetch("runner_argument_count") == 1, "profile report must preserve profile runner argument count")
   assert(!profile_stdout.include?(profile_path.to_s), "profile report must not leak profile path")
+  assert(!profile_stdout.include?(temp_root.join("profile-state").to_s), "profile report must not leak profile state root")
   assert(!profile_stdout.include?(profile_working_dir.to_s), "profile report must not leak profile working directory")
   assert(!profile_stdout.include?("--profile-shim"), "profile report must not leak profile runner arguments")
   profile_invocation = fake_go_log.read.lines.map { |line| line.split("\u0001") }.last
   assert(profile_invocation.include?("--runner"), "profile mode must forward profile runner")
   assert(profile_invocation.include?("--working-dir"), "profile mode must forward profile working directory")
   assert(profile_invocation.include?("--profile-flag"), "profile mode must forward profile app arguments")
+
+  preflight_stdout, preflight_stderr, preflight_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--profile", profile_path.to_s,
+    "--preflight-only"
+  )
+  assert(preflight_status.success?, "winapp smoke preflight-only report must succeed: #{preflight_stderr}")
+  preflight_report = JSON.parse(preflight_stdout)
+  assert(preflight_report.fetch("status") == "ready", "preflight-only report must expose ready status")
+  assert(preflight_report.fetch("preflight_only"), "preflight-only report must mark preflight-only mode")
+  assert(preflight_report.fetch("profile_preflight_invoked"), "preflight-only report must invoke profile preflight")
+  assert(!preflight_report.fetch("smoke_invoked"), "preflight-only report must not invoke smoke")
+  assert(preflight_report.fetch("runtime_payload").nil?, "preflight-only report must not embed runtime smoke payload")
+  assert(!preflight_stdout.include?(profile_path.to_s), "preflight-only report must not leak profile path")
 
   exit_code_stdout, exit_code_stderr, exit_code_status = Open3.capture3(
     env,
