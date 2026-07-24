@@ -187,6 +187,42 @@ func TestWindowsAppRunnerDiagnosticsCommandUsesExplicitRunner(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunnerDiagnosticsCommandUsesEnvRunner(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\nprintf 'ready\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	t.Setenv("XNIX_WINDOWS_RUNNER", runnerPath)
+
+	var output bytes.Buffer
+	err := run([]string{"windows-app-runner-diagnostics"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["runner_available"] != true ||
+		payload["explicit_runner_supplied"] != false ||
+		payload["env_runner_configured"] != true ||
+		payload["selected_runner_name"] != "fake-runner" ||
+		payload["raw_path_exposed"] != false {
+		t.Fatalf("unexpected env runner diagnostics payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), runnerPath) || strings.Contains(output.String(), tempDir) {
+		t.Fatalf("env runner diagnostics leaked raw host paths: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanRedactRawOutput(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

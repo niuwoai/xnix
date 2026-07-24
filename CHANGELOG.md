@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc26] - 2026-07-24
+
+### Added
+
+- Added `XNIX_WINDOWS_RUNNER` as a Go Runtime-managed local Wine runner configuration path for both `windows-app-run-smoke` and `windows-app-runner-diagnostics`.
+- Added tests proving the environment-configured runner path is honored without exposing raw host paths in diagnostics output.
+
 ## [0.2.640-rc25] - 2026-07-24
 
 ### Added

@@ -18,6 +18,7 @@ const (
 	RunnerDiagnosticsSchemaVersion = "xnix.runtime.windows_app_runner_diagnostics.v1"
 	RequestType                    = "windows-app-run-smoke"
 	RunnerDiagnosticsRequestType   = "windows-app-runner-diagnostics"
+	RunnerEnvVar                   = "XNIX_WINDOWS_RUNNER"
 	PassedStatus                   = "passed"
 	FailedStatus                   = "failed"
 	SkippedStatus                  = "skipped"
@@ -70,6 +71,7 @@ type RunnerDiagnosticsResult struct {
 	Status                      string                    `json:"status"`
 	RunnerAvailable             bool                      `json:"runner_available"`
 	ExplicitRunnerSupplied      bool                      `json:"explicit_runner_supplied"`
+	EnvRunnerConfigured         bool                      `json:"env_runner_configured"`
 	CandidateCount              int                       `json:"candidate_count"`
 	Candidates                  []RunnerCandidateEvidence `json:"candidates"`
 	SelectedRunnerName          string                    `json:"selected_runner_name"`
@@ -190,13 +192,10 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 
 func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
 	explicitRunner = strings.TrimSpace(explicitRunner)
-	candidates := runnerCandidates()
+	envRunner := strings.TrimSpace(os.Getenv(RunnerEnvVar))
+	candidates := configuredRunnerCandidates(explicitRunner, envRunner)
 	if explicitRunner != "" {
-		candidates = []runnerCandidate{{
-			id:     "explicit-runner",
-			source: "operator-supplied-runner",
-			path:   explicitRunner,
-		}}
+		envRunner = ""
 	}
 
 	result := RunnerDiagnosticsResult{
@@ -204,6 +203,7 @@ func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
 		RequestType:                 RunnerDiagnosticsRequestType,
 		Status:                      SkippedStatus,
 		ExplicitRunnerSupplied:      explicitRunner != "",
+		EnvRunnerConfigured:         envRunner != "",
 		CandidateCount:              len(candidates),
 		RawPathExposed:              false,
 		HostRootModified:            false,
@@ -235,6 +235,8 @@ func RunnerDiagnostics(explicitRunner string) RunnerDiagnosticsResult {
 	}
 	if explicitRunner != "" {
 		result.NextAction = "Provide an existing Wine-compatible runner file through `--runner PATH` or install Wine so `wine` or `wine64` is discoverable."
+	} else if envRunner != "" {
+		result.NextAction = "Fix the XNIX_WINDOWS_RUNNER value so it points to an existing Wine-compatible runner file, or unset it and install Wine so `wine` or `wine64` is discoverable."
 	} else {
 		result.NextAction = "Install or provide a Wine-compatible runner, then rerun `windows-app-run-smoke`; no Docker, QEMU, Colima, network, or package-manager action was attempted by this diagnostic."
 	}
@@ -315,10 +317,7 @@ func validateExecutable(path string) (string, error) {
 }
 
 func resolveRunner(path string) (string, error) {
-	if strings.TrimSpace(path) != "" {
-		return validateRunnerPath(path)
-	}
-	for _, candidate := range runnerCandidates() {
+	for _, candidate := range configuredRunnerCandidates(path, os.Getenv(RunnerEnvVar)) {
 		if strings.ContainsRune(candidate.path, os.PathSeparator) {
 			runnerPath, err := validateRunnerPath(candidate.path)
 			if err == nil {
@@ -332,6 +331,26 @@ func resolveRunner(path string) (string, error) {
 		}
 	}
 	return "", errors.New("windows compatibility runner unavailable")
+}
+
+func configuredRunnerCandidates(explicitRunner string, envRunner string) []runnerCandidate {
+	explicitRunner = strings.TrimSpace(explicitRunner)
+	if explicitRunner != "" {
+		return []runnerCandidate{{
+			id:     "explicit-runner",
+			source: "operator-supplied-runner",
+			path:   explicitRunner,
+		}}
+	}
+	envRunner = strings.TrimSpace(envRunner)
+	if envRunner != "" {
+		return []runnerCandidate{{
+			id:     "env-runner",
+			source: "env-configured-runner",
+			path:   envRunner,
+		}}
+	}
+	return runnerCandidates()
 }
 
 func runnerCandidates() []runnerCandidate {

@@ -118,6 +118,54 @@ func TestRunnerDiagnosticsReportsExplicitRunnerWithoutRawPath(t *testing.T) {
 	}
 }
 
+func TestRunSmokeUsesConfiguredRunnerEnvironmentVariable(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
+	t.Setenv(RunnerEnvVar, runnerPath)
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.RunnerAvailable ||
+		!result.MarkerObserved {
+		t.Fatalf("unexpected env runner smoke result: %#v", result)
+	}
+}
+
+func TestRunnerDiagnosticsReportsEnvRunnerWithoutRawPath(t *testing.T) {
+	tempDir := t.TempDir()
+	runnerPath := writeFakeRunner(t, tempDir, 0, DefaultMarker+"\n")
+	t.Setenv(RunnerEnvVar, runnerPath)
+
+	result := RunnerDiagnostics("")
+	if result.Status != PassedStatus ||
+		!result.RunnerAvailable ||
+		result.ExplicitRunnerSupplied ||
+		!result.EnvRunnerConfigured ||
+		result.CandidateCount != 1 ||
+		result.SelectedRunnerName != "fake-runner" ||
+		result.RawPathExposed {
+		t.Fatalf("unexpected env runner diagnostics: %#v", result)
+	}
+	if len(result.Candidates) != 1 ||
+		result.Candidates[0].ID != "env-runner" ||
+		result.Candidates[0].Source != "env-configured-runner" ||
+		!result.Candidates[0].Available ||
+		!result.Candidates[0].Selected {
+		t.Fatalf("unexpected env candidate evidence: %#v", result.Candidates)
+	}
+}
+
 func TestRunnerDiagnosticsReportsUnavailableWithoutRawPath(t *testing.T) {
 	tempDir := t.TempDir()
 	missingRunner := filepath.Join(tempDir, "missing-runner")
