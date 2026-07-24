@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.638`.
+The project is currently at `v0.2.639`.
 
 ## Product Direction
 
@@ -14,9 +14,9 @@ The project is currently at `v0.2.638`.
 
 ## Current Checkpoint
 
-v0.2.638 adds `kde_controlled_launch_action_smoke.rb`, a restricted KDE action smoke harness that consumes the Go-owned session-bus smoke plan before deciding whether to execute the private-session D-Bus smoke. By default it validates the plan and safely skips execution; setting `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE=1` lets it run the plan-provided restricted session-bus smoke command.
+v0.2.639 connects the Go-owned KDE controlled-launch smoke plan and plan-consuming harness to the D-Bus controlled-launch owner fixture lane. The plan now exposes both the private session-bus smoke command and the D-Bus fixture command; the harness validates both lanes from Go metadata and still requires explicit environment opt-in before executing either restricted smoke.
 
-The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.637 also added the Go-owned KDE controlled-launch session-bus smoke plan.
+The desktop-safe result keeps state-root paths, raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of KDE-facing JSON. v0.2.638 also added the first plan-consuming KDE action smoke harness.
 
 ## Main References
 

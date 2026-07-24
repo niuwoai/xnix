@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.638"
+EXPECTED_VERSION = "0.2.639"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -6505,7 +6505,7 @@ kde_controlled_launch_action_smoke_source = read_project_file("scripts/kde_contr
                                             read_project_file("test/test_kde_controlled_launch_action_smoke_script.rb") +
                                             read_project_file("scripts/container.rb") +
                                             read_project_file("lib/xnix/container.rb")
-%w[kde-controlled-launch-action-smoke KDE\ controlled\ launch\ action\ smoke kde-controlled-launch-session-bus-smoke-plan-preview known-app-runtime-status-launch-owner-fixture-record XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE runtime_status_owner_session_smoke_command PASS:\ KDE\ controlled\ launch\ action\ smoke SKIP:\ KDE\ controlled\ launch\ action\ smoke kde_forwards_only_evidence_handle owner_service_args_exposed_to_kde desktop_kde_state_root_access desktop_receipt_fields_reconstructed smoke_executed_by_preview docker.sock --privileged --network\ host kde_controlled_launch_action_smoke_command].each do |token|
+%w[kde-controlled-launch-action-smoke KDE\ controlled\ launch\ action\ smoke kde-controlled-launch-session-bus-smoke-plan-preview known-app-runtime-status-launch-owner-fixture-record XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE runtime_status_owner_session_smoke_command dbus_controlled_launch_fixture_command dbus_controlled_launch_fixture_container_command expected_dbus_fixture_pass_marker expected_dbus_fixture_skip_marker PASS:\ KDE\ controlled\ launch\ action\ smoke SKIP:\ KDE\ controlled\ launch\ action\ smoke kde_forwards_only_evidence_handle owner_service_args_exposed_to_kde desktop_kde_state_root_access desktop_receipt_fields_reconstructed smoke_executed_by_preview docker.sock --privileged --network\ host kde_controlled_launch_action_smoke_command].each do |token|
   assert(kde_controlled_launch_action_smoke_source.include?(token.gsub("\\ ", " ")), "KDE controlled launch action smoke must include #{token}")
 end
 dbus_controlled_launch_owner_fixture_smoke_source = read_project_file("scripts/dbus_controlled_launch_owner_fixture_smoke.rb") +
@@ -6580,7 +6580,7 @@ end
   assert(go_compatibility_center_source.include?(token.gsub("\\ ", " ")), "Go KDE controlled launch action preview must include #{token}")
 end
 
-%w[KDEControlledLaunchSessionBusSmokePlanSchemaVersion KDEControlledLaunchSessionBusSmokePlanRequestType KDEControlledLaunchSessionBusSmokePlanRequest KDEControlledLaunchSessionBusSmokePlanPreview PreviewKDEControlledLaunchSessionBusSmokePlan GetKDEControlledLaunchSessionBusSmokePlan kde-controlled-launch-session-bus-smoke-plan-preview restricted_session_bus_plan_ready private_session_bus_required dbus_session_bus_address_required outer_private_session_bus_command runtime_status_owner_session_smoke_command inner_staged_launcher_dispatch_command container_smoke_command smoke_executed_by_preview runtime-status-owner-service-session-bus-smoke scripts/runtime_status_owner_service_session_bus_smoke.rb scripts/staged_launcher_dispatch_smoke.rb].each do |token|
+%w[KDEControlledLaunchSessionBusSmokePlanSchemaVersion KDEControlledLaunchSessionBusSmokePlanRequestType KDEControlledLaunchSessionBusSmokePlanRequest KDEControlledLaunchSessionBusSmokePlanPreview PreviewKDEControlledLaunchSessionBusSmokePlan GetKDEControlledLaunchSessionBusSmokePlan kde-controlled-launch-session-bus-smoke-plan-preview restricted_session_bus_plan_ready private_session_bus_required dbus_session_bus_address_required outer_private_session_bus_command runtime_status_owner_session_smoke_command inner_staged_launcher_dispatch_command container_smoke_command dbus_controlled_launch_fixture_plan_ready dbus_controlled_launch_fixture_command dbus_controlled_launch_fixture_container_command expected_dbus_fixture_pass_marker expected_dbus_fixture_skip_marker smoke_executed_by_preview runtime-status-owner-service-session-bus-smoke dbus-controlled-launch-owner-fixture-smoke scripts/runtime_status_owner_service_session_bus_smoke.rb scripts/staged_launcher_dispatch_smoke.rb scripts/dbus_controlled_launch_owner_fixture_smoke.rb].each do |token|
   assert(go_compatibility_center_source.include?(token), "Go KDE controlled launch session-bus smoke plan must include #{token}")
 end
 

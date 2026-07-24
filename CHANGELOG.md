@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.639] - 2026-07-24
+
+### Changed
+
+- Extended `kde-controlled-launch-session-bus-smoke-plan-preview` to expose the D-Bus controlled-launch owner fixture command, restricted container command, and fixture PASS/SKIP markers.
+- Updated `kde_controlled_launch_action_smoke.rb` to validate both the private session-bus smoke lane and the D-Bus fixture lane from Go-owned metadata, with a separate explicit execution opt-in for the D-Bus fixture path.
+
 ## [0.2.638] - 2026-07-24
 
 ### Added

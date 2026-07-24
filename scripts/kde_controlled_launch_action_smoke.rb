@@ -20,6 +20,7 @@ CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
 GO_TMP_ROOT = GO_CACHE_ROOT.join("tmp")
 EXECUTE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE"
+EXECUTE_DBUS_FIXTURE_ENV = "XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE"
 
 def assert(condition, message)
   return if condition
@@ -145,8 +146,13 @@ assert(plan["outer_private_session_bus_command"] == ["dbus-run-session", "--", "
 assert(plan["runtime_status_owner_session_smoke_command"] == ["ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"], "plan must expose the Runtime-status owner session smoke command")
 assert(plan["inner_staged_launcher_dispatch_command"] == ["ruby", "scripts/staged_launcher_dispatch_smoke.rb"], "plan must expose the staged launcher dispatch smoke command")
 assert(plan["container_smoke_command"] == ["ruby", "scripts/container.rb", "runtime-status-owner-service-session-bus-smoke"], "plan must expose the restricted container smoke command")
+assert(plan["dbus_controlled_launch_fixture_plan_ready"] == true, "plan must expose the D-Bus controlled-launch fixture lane")
+assert(plan["dbus_controlled_launch_fixture_command"] == ["ruby", "scripts/dbus_controlled_launch_owner_fixture_smoke.rb"], "plan must expose the D-Bus controlled-launch fixture command")
+assert(plan["dbus_controlled_launch_fixture_container_command"] == ["ruby", "scripts/container.rb", "dbus-controlled-launch-owner-fixture-smoke"], "plan must expose the restricted D-Bus fixture container command")
 assert(plan["expected_pass_marker"] == "PASS: Runtime-status owner service session-bus smoke", "plan must expose the pass marker")
 assert(plan["expected_skip_marker"] == "SKIP: Runtime-status owner service session-bus smoke", "plan must expose the skip marker")
+assert(plan["expected_dbus_fixture_pass_marker"] == "PASS: D-Bus controlled launch owner fixture smoke", "plan must expose the D-Bus fixture pass marker")
+assert(plan["expected_dbus_fixture_skip_marker"] == "SKIP: D-Bus controlled launch owner fixture smoke", "plan must expose the D-Bus fixture skip marker")
 assert(plan["runtime_owned"] == true, "plan must keep Runtime ownership")
 assert(plan["go_runtime_backed"] == true, "plan must be Go backed")
 assert_false_payload(
@@ -156,12 +162,26 @@ assert_false_payload(
 )
 assert_no_forbidden(plan_stdout, [STATE_ROOT.to_s, "owner_service_call_args", "wine ", "wine/", ".wine", "qemu-system", "program files"], "plan output")
 
-unless ENV.fetch(EXECUTE_ENV, "") == "1"
-  puts "#{SKIP_MARKER} (validated Go-owned plan; set #{EXECUTE_ENV}=1 to execute restricted session-bus smoke)"
+unless ENV.fetch(EXECUTE_ENV, "") == "1" || ENV.fetch(EXECUTE_DBUS_FIXTURE_ENV, "") == "1"
+  puts "#{SKIP_MARKER} (validated Go-owned plan and D-Bus fixture lane; set #{EXECUTE_ENV}=1 or #{EXECUTE_DBUS_FIXTURE_ENV}=1 to execute a restricted smoke)"
   exit 0
 end
 
-command = plan.fetch("runtime_status_owner_session_smoke_command")
+command = if ENV.fetch(EXECUTE_DBUS_FIXTURE_ENV, "") == "1"
+            plan.fetch("dbus_controlled_launch_fixture_command")
+          else
+            plan.fetch("runtime_status_owner_session_smoke_command")
+          end
+expected_pass_marker = if ENV.fetch(EXECUTE_DBUS_FIXTURE_ENV, "") == "1"
+                         plan.fetch("expected_dbus_fixture_pass_marker")
+                       else
+                         plan.fetch("expected_pass_marker")
+                       end
+expected_skip_marker = if ENV.fetch(EXECUTE_DBUS_FIXTURE_ENV, "") == "1"
+                         plan.fetch("expected_dbus_fixture_skip_marker")
+                       else
+                         plan.fetch("expected_skip_marker")
+                       end
 stdout, stderr, status = run_command({}, *command)
 print stdout
 warn stderr unless stderr.empty?
@@ -170,10 +190,10 @@ assert_no_forbidden(stdout, [STATE_ROOT.to_s, "docker.sock", "--privileged", "--
 assert_no_forbidden(stderr, [STATE_ROOT.to_s, "docker.sock", "--privileged", "--network host", "type=bind", "program files", ".wine", "qemu-system"], "KDE action smoke stderr")
 
 case stdout
-when /#{Regexp.escape(plan.fetch("expected_pass_marker"))}/
+when /#{Regexp.escape(expected_pass_marker)}/
   puts PASS_MARKER
-when /#{Regexp.escape(plan.fetch("expected_skip_marker"))}/
-  reason = stdout.lines.find { |line| line.include?(plan.fetch("expected_skip_marker")) }.to_s.sub(plan.fetch("expected_skip_marker"), "").strip
+when /#{Regexp.escape(expected_skip_marker)}/
+  reason = stdout.lines.find { |line| line.include?(expected_skip_marker) }.to_s.sub(expected_skip_marker, "").strip
   puts "#{SKIP_MARKER} #{reason}".rstrip
 else
   warn stdout

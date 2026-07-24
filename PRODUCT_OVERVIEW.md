@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.638
+> Last updated: 2026-07-24 | Current version: v0.2.639
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.639 checkpoint connects the KDE controlled-launch smoke plan to the D-Bus controlled-launch owner fixture lane. `kde-controlled-launch-session-bus-smoke-plan-preview` now exposes the D-Bus fixture script command, the restricted container command, and plan-defined D-Bus fixture PASS/SKIP markers alongside the private session-bus smoke lane. `kde_controlled_launch_action_smoke.rb` validates both lanes from Go-owned metadata and adds a separate `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE=1` opt-in for the fixture path, while keeping the default run a safe SKIP after plan validation. v0.2.639 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 
 The v0.2.638 checkpoint adds `kde_controlled_launch_action_smoke.rb`, a restricted KDE action smoke harness that consumes `kde-controlled-launch-session-bus-smoke-plan-preview`. The harness prepares Runtime-owned fixture evidence, asks Go for the KDE action smoke plan, validates the evidence-only D-Bus route and closed safety gates, and by default returns a safe SKIP instead of launching the heavier private-session D-Bus smoke. When `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE=1` is set, it executes the plan-provided `runtime_status_owner_service_session_bus_smoke.rb` command and accepts the plan-defined PASS/SKIP markers. v0.2.638 uses targeted validation only; the next formal full Buildroot/QEMU checkpoint is v0.2.640.
 

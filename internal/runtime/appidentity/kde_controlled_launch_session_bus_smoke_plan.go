@@ -40,8 +40,13 @@ type KDEControlledLaunchSessionBusSmokePlanPreview struct {
 	RuntimeStatusOwnerSessionSmokeCommand []string `json:"runtime_status_owner_session_smoke_command"`
 	InnerStagedLauncherDispatchCommand    []string `json:"inner_staged_launcher_dispatch_command"`
 	ContainerSmokeCommand                 []string `json:"container_smoke_command"`
+	DBusControlledLaunchFixturePlanReady  bool     `json:"dbus_controlled_launch_fixture_plan_ready"`
+	DBusControlledLaunchFixtureCommand    []string `json:"dbus_controlled_launch_fixture_command"`
+	DBusControlledLaunchFixtureContainer  []string `json:"dbus_controlled_launch_fixture_container_command"`
 	ExpectedPassMarker                    string   `json:"expected_pass_marker"`
 	ExpectedSkipMarker                    string   `json:"expected_skip_marker"`
+	ExpectedDBusFixturePassMarker         string   `json:"expected_dbus_fixture_pass_marker"`
+	ExpectedDBusFixtureSkipMarker         string   `json:"expected_dbus_fixture_skip_marker"`
 	RuntimeOwned                          bool     `json:"runtime_owned"`
 	GoRuntimeBacked                       bool     `json:"go_runtime_backed"`
 	KDEPolicyOwner                        bool     `json:"kde_policy_owner"`
@@ -98,8 +103,13 @@ func PreviewKDEControlledLaunchSessionBusSmokePlan(request KDEControlledLaunchSe
 		RuntimeStatusOwnerSessionSmokeCommand: []string{"ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"},
 		InnerStagedLauncherDispatchCommand:    []string{"ruby", "scripts/staged_launcher_dispatch_smoke.rb"},
 		ContainerSmokeCommand:                 []string{"ruby", "scripts/container.rb", "runtime-status-owner-service-session-bus-smoke"},
+		DBusControlledLaunchFixturePlanReady:  true,
+		DBusControlledLaunchFixtureCommand:    []string{"ruby", "scripts/dbus_controlled_launch_owner_fixture_smoke.rb"},
+		DBusControlledLaunchFixtureContainer:  []string{"ruby", "scripts/container.rb", "dbus-controlled-launch-owner-fixture-smoke"},
 		ExpectedPassMarker:                    "PASS: Runtime-status owner service session-bus smoke",
 		ExpectedSkipMarker:                    "SKIP: Runtime-status owner service session-bus smoke",
+		ExpectedDBusFixturePassMarker:         "PASS: D-Bus controlled launch owner fixture smoke",
+		ExpectedDBusFixtureSkipMarker:         "SKIP: D-Bus controlled launch owner fixture smoke",
 		RuntimeOwned:                          true,
 		GoRuntimeBacked:                       true,
 		KDEPolicyOwner:                        false,
@@ -142,8 +152,14 @@ func validateKDEControlledLaunchSessionBusSmokePlan(preview KDEControlledLaunchS
 		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires the staged launcher smoke chain")
 	case !sameRuntimeStatusLaunchOwnerFixtureArgs(preview.ContainerSmokeCommand, []string{"ruby", "scripts/container.rb", "runtime-status-owner-service-session-bus-smoke"}):
 		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires the restricted container smoke command")
+	case !preview.DBusControlledLaunchFixturePlanReady || !sameRuntimeStatusLaunchOwnerFixtureArgs(preview.DBusControlledLaunchFixtureCommand, []string{"ruby", "scripts/dbus_controlled_launch_owner_fixture_smoke.rb"}):
+		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires the D-Bus controlled-launch fixture command")
+	case !sameRuntimeStatusLaunchOwnerFixtureArgs(preview.DBusControlledLaunchFixtureContainer, []string{"ruby", "scripts/container.rb", "dbus-controlled-launch-owner-fixture-smoke"}):
+		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires the restricted D-Bus fixture container command")
 	case preview.ExpectedPassMarker != "PASS: Runtime-status owner service session-bus smoke" || preview.ExpectedSkipMarker != "SKIP: Runtime-status owner service session-bus smoke":
 		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires stable result markers")
+	case preview.ExpectedDBusFixturePassMarker != "PASS: D-Bus controlled launch owner fixture smoke" || preview.ExpectedDBusFixtureSkipMarker != "SKIP: D-Bus controlled launch owner fixture smoke":
+		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires stable D-Bus fixture result markers")
 	case !preview.RuntimeOwned || !preview.GoRuntimeBacked || preview.KDEPolicyOwner || preview.OwnerServiceArgsExposedToKDE:
 		return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan must preserve Runtime ownership")
 	case preview.DesktopKDEStateRootAccess || preview.DesktopReceiptFieldsReconstructed || preview.StateRootPathExposed || preview.RawLauncherOutputExposed || preview.BackendDetailsExposed:
@@ -171,13 +187,22 @@ func validateKDEControlledLaunchSessionBusSmokePlan(preview KDEControlledLaunchS
 		preview.KDEForwardedArgumentKind,
 		preview.ExpectedPassMarker,
 		preview.ExpectedSkipMarker,
+		preview.ExpectedDBusFixturePassMarker,
+		preview.ExpectedDBusFixtureSkipMarker,
 		preview.DesktopSafeSummary,
 	} {
 		if value != "" && !singleLine(value) {
 			return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires single-line fields")
 		}
 	}
-	for _, value := range append(append(append(append(append([]string{}, preview.KDEForwardedArguments...), preview.OuterPrivateSessionBusCommand...), preview.RuntimeStatusOwnerSessionSmokeCommand...), preview.InnerStagedLauncherDispatchCommand...), preview.ContainerSmokeCommand...) {
+	listValues := append([]string{}, preview.KDEForwardedArguments...)
+	listValues = append(listValues, preview.OuterPrivateSessionBusCommand...)
+	listValues = append(listValues, preview.RuntimeStatusOwnerSessionSmokeCommand...)
+	listValues = append(listValues, preview.InnerStagedLauncherDispatchCommand...)
+	listValues = append(listValues, preview.ContainerSmokeCommand...)
+	listValues = append(listValues, preview.DBusControlledLaunchFixtureCommand...)
+	listValues = append(listValues, preview.DBusControlledLaunchFixtureContainer...)
+	for _, value := range listValues {
 		if value != "" && !singleLine(value) {
 			return KDEControlledLaunchSessionBusSmokePlanPreview{}, errors.New("KDE controlled launch session-bus smoke plan requires single-line list values")
 		}

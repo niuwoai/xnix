@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.638
+> Last updated: 2026-07-24 | Baseline: v0.2.639
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.638 by tightening the KDE controlled-launch action smoke harness into the actual restricted execution lane. The harness now consumes the Go plan and validates the KDE action route, but it defaults to a safe SKIP unless `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE=1` is set. The next step should either run that guarded path under the approved restricted container smoke or connect the harness to the D-Bus fixture lane so it can observe a plan-defined PASS/SKIP without reconstructing Runtime arguments. Keep Ruby as orchestration only, keep KDE forwarding only evidence handles, preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.639 by preparing the v0.2.640 full checkpoint path. The KDE action smoke harness now consumes Go metadata for both the private session-bus smoke lane and the D-Bus controlled-launch owner fixture lane, but neither path is executed by default. The next step should run the appropriate restricted smoke under explicit approval and then perform the formal full Buildroot/QEMU checkpoint at v0.2.640. Keep Ruby as orchestration only, keep KDE forwarding only evidence handles, preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output.
+
+The v0.2.639 checkpoint extends `kde-controlled-launch-session-bus-smoke-plan-preview` with the D-Bus controlled-launch owner fixture script command, restricted container command, and fixture PASS/SKIP markers. `kde_controlled_launch_action_smoke.rb` now validates both the private session-bus smoke lane and the D-Bus fixture lane from Go-owned metadata, with a separate explicit `XNIX_KDE_CONTROLLED_LAUNCH_ACTION_SMOKE_EXECUTE_DBUS_FIXTURE=1` opt-in for the fixture path.
 
 The v0.2.638 checkpoint adds `scripts/kde_controlled_launch_action_smoke.rb` and the container command `kde-controlled-launch-action-smoke`. The smoke prepares Runtime-owned fixture evidence, consumes `kde-controlled-launch-session-bus-smoke-plan-preview`, validates the evidence-only KDE action route and closed safety gates, then safely skips actual execution unless explicitly enabled. When enabled, it executes the plan-provided `runtime_status_owner_service_session_bus_smoke.rb` command and accepts only the plan-defined PASS/SKIP markers.
 

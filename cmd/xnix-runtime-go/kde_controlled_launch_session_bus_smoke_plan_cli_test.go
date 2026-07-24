@@ -31,6 +31,7 @@ func TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestri
 		payload["kde_action_preview_request_type"] != "kde-controlled-launch-action-preview" ||
 		payload["public_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
 		payload["restricted_session_bus_plan_ready"] != true ||
+		payload["dbus_controlled_launch_fixture_plan_ready"] != true ||
 		payload["private_session_bus_required"] != true ||
 		payload["dbus_session_bus_address_required"] != true ||
 		payload["kde_forwards_only_evidence_handle"] != true ||
@@ -63,6 +64,19 @@ func TestKDEControlledLaunchSessionBusSmokePlanPreviewCommandLinksActionToRestri
 		containerCommand[1] != "scripts/container.rb" ||
 		containerCommand[2] != "runtime-status-owner-service-session-bus-smoke" {
 		t.Fatalf("unexpected container smoke command: %#v", payload)
+	}
+	dbusFixtureCommand, ok := payload["dbus_controlled_launch_fixture_command"].([]any)
+	if !ok || len(dbusFixtureCommand) != 2 ||
+		dbusFixtureCommand[0] != "ruby" ||
+		dbusFixtureCommand[1] != "scripts/dbus_controlled_launch_owner_fixture_smoke.rb" {
+		t.Fatalf("unexpected D-Bus fixture command: %#v", payload)
+	}
+	dbusFixtureContainerCommand, ok := payload["dbus_controlled_launch_fixture_container_command"].([]any)
+	if !ok || len(dbusFixtureContainerCommand) != 3 ||
+		dbusFixtureContainerCommand[0] != "ruby" ||
+		dbusFixtureContainerCommand[1] != "scripts/container.rb" ||
+		dbusFixtureContainerCommand[2] != "dbus-controlled-launch-owner-fixture-smoke" {
+		t.Fatalf("unexpected D-Bus fixture container command: %#v", payload)
 	}
 	forwardedArgs, ok := payload["kde_forwarded_arguments"].([]any)
 	if !ok || len(forwardedArgs) != 1 || forwardedArgs[0] != record.EvidenceRelativePath {

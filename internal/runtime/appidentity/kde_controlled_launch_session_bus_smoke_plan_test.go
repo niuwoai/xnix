@@ -40,8 +40,13 @@ func TestPreviewKDEControlledLaunchSessionBusSmokePlanLinksActionToRestrictedSmo
 		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.RuntimeStatusOwnerSessionSmokeCommand, []string{"ruby", "scripts/runtime_status_owner_service_session_bus_smoke.rb"}) ||
 		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.InnerStagedLauncherDispatchCommand, []string{"ruby", "scripts/staged_launcher_dispatch_smoke.rb"}) ||
 		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.ContainerSmokeCommand, []string{"ruby", "scripts/container.rb", "runtime-status-owner-service-session-bus-smoke"}) ||
+		!preview.DBusControlledLaunchFixturePlanReady ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.DBusControlledLaunchFixtureCommand, []string{"ruby", "scripts/dbus_controlled_launch_owner_fixture_smoke.rb"}) ||
+		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.DBusControlledLaunchFixtureContainer, []string{"ruby", "scripts/container.rb", "dbus-controlled-launch-owner-fixture-smoke"}) ||
 		preview.ExpectedPassMarker != "PASS: Runtime-status owner service session-bus smoke" ||
 		preview.ExpectedSkipMarker != "SKIP: Runtime-status owner service session-bus smoke" ||
+		preview.ExpectedDBusFixturePassMarker != "PASS: D-Bus controlled launch owner fixture smoke" ||
+		preview.ExpectedDBusFixtureSkipMarker != "SKIP: D-Bus controlled launch owner fixture smoke" ||
 		!preview.RuntimeOwned ||
 		!preview.GoRuntimeBacked ||
 		preview.KDEPolicyOwner ||
