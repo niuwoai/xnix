@@ -209,6 +209,83 @@ func TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory(t *testing.T) {
 	}
 }
 
+func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "profile-app.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	workingDir := filepath.Join(tempDir, "profile-cwd")
+	if err := os.Mkdir(workingDir, 0o700); err != nil {
+		t.Fatalf("Mkdir working dir returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workingDir, "profile-sidecar.ini"), []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test \"$1\" = \"--shim-mode\" || exit 73\n" +
+		"test \"$3\" = \"--profile-arg\" || exit 74\n" +
+		"test -f profile-sidecar.ini || exit 75\n" +
+		"printf 'CUSTOM_PROFILE_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	profilePath := filepath.Join(tempDir, "profile.json")
+	profile := map[string]any{
+		"schema_version":    "xnix.runtime.windows_app_smoke_profile.v1",
+		"executable_path":   exePath,
+		"state_root":        filepath.Join(tempDir, "state"),
+		"working_directory": workingDir,
+		"runner_path":       runnerPath,
+		"runner_arguments":  []string{"--shim-mode"},
+		"arguments":         []string{"--profile-arg"},
+		"timeout":           "5s",
+		"expected_marker":   "CUSTOM_PROFILE_OK",
+		"success_mode":      "marker",
+	}
+	profileData, err := json.Marshal(profile)
+	if err != nil {
+		t.Fatalf("Marshal profile returned error: %v", err)
+	}
+	if err := os.WriteFile(profilePath, profileData, 0o600); err != nil {
+		t.Fatalf("WriteFile profile returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"windows-app-run-smoke",
+		"--profile", profilePath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["executable_name"] != "profile-app.exe" ||
+		payload["expected_marker"] != "CUSTOM_PROFILE_OK" ||
+		payload["working_directory_mode"] != "operator-supplied" ||
+		payload["runner_argument_count"] != float64(1) ||
+		payload["marker_observed"] != true {
+		t.Fatalf("unexpected profile smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), runnerPath) ||
+		strings.Contains(output.String(), workingDir) ||
+		strings.Contains(output.String(), profilePath) ||
+		strings.Contains(output.String(), "--shim-mode") {
+		t.Fatalf("profile smoke output leaked host paths or runner args: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

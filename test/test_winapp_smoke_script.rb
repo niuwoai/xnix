@@ -262,6 +262,48 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(last_invocation.include?("--runner-arg"), "custom executable mode must forward runner arguments")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
 
+  profile_path = temp_root.join("winapp-profile.json")
+  profile_working_dir = temp_root.join("profile-working-dir")
+  profile_working_dir.mkdir
+  File.write(
+    profile_path,
+    JSON.pretty_generate(
+      {
+        "schema_version" => "xnix.runtime.windows_app_smoke_profile.v1",
+        "executable_path" => custom_exe.to_s,
+        "working_directory" => profile_working_dir.to_s,
+        "runner_path" => custom_runner.to_s,
+        "runner_arguments" => ["--profile-shim"],
+        "arguments" => ["--profile-flag"],
+        "expected_marker" => "PROFILE_APP_OK",
+        "success_mode" => "marker",
+        "timeout" => "7s"
+      }
+    )
+  )
+  profile_stdout, profile_stderr, profile_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--profile", profile_path.to_s
+  )
+  assert(profile_status.success?, "winapp smoke profile JSON report must succeed: #{profile_stderr}")
+  profile_report = JSON.parse(profile_stdout)
+  assert(profile_report.fetch("profile_supplied"), "profile report must mark profile supplied")
+  assert(profile_report.fetch("executable_source") == "profile", "profile report must identify profile executable source")
+  assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
+  assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")
+  assert(profile_report.fetch("marker") == "PROFILE_APP_OK", "profile report must preserve profile marker")
+  assert(profile_report.fetch("working_directory_mode") == "operator-supplied", "profile report must preserve profile working directory mode")
+  assert(profile_report.fetch("runner_argument_count") == 1, "profile report must preserve profile runner argument count")
+  assert(!profile_stdout.include?(profile_path.to_s), "profile report must not leak profile path")
+  assert(!profile_stdout.include?(profile_working_dir.to_s), "profile report must not leak profile working directory")
+  assert(!profile_stdout.include?("--profile-shim"), "profile report must not leak profile runner arguments")
+  profile_invocation = fake_go_log.read.lines.map { |line| line.split("\u0001") }.last
+  assert(profile_invocation.include?("--runner"), "profile mode must forward profile runner")
+  assert(profile_invocation.include?("--working-dir"), "profile mode must forward profile working directory")
+  assert(profile_invocation.include?("--profile-flag"), "profile mode must forward profile app arguments")
+
   exit_code_stdout, exit_code_stderr, exit_code_status = Open3.capture3(
     env,
     "ruby", script.to_s,

@@ -19,6 +19,7 @@ options = {
   format: "text",
   redact_output: nil,
   backend: "local",
+  profile: nil,
   exe: nil,
   runner: nil,
   docker: nil,
@@ -36,10 +37,11 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
+  parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
   parser.on("--docker PATH", "Explicit Docker runner path for container backend") { |value| options[:docker] = value }
@@ -55,6 +57,30 @@ OptionParser.new do |parser|
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
 end.parse!
+
+unless options[:profile].to_s.strip.empty?
+  begin
+    profile = JSON.parse(File.read(options.fetch(:profile)))
+    unless profile.fetch("schema_version", "") == "xnix.runtime.windows_app_smoke_profile.v1"
+      warn "FAIL: unsupported Windows app smoke profile schema"
+      exit 1
+    end
+    options[:exe] = profile["executable_path"] if options[:exe].to_s.strip.empty? && !profile["executable_path"].to_s.strip.empty?
+    options[:state_root] = profile["state_root"] if options[:state_root] == STATE_ROOT.to_s && !profile["state_root"].to_s.strip.empty?
+    options[:working_dir] = profile["working_directory"] if options[:working_dir].to_s.strip.empty? && !profile["working_directory"].to_s.strip.empty?
+    options[:runner] = profile["runner_path"] if options[:runner].to_s.strip.empty? && !profile["runner_path"].to_s.strip.empty?
+    options[:runner_bottle] = profile["runner_bottle"] if options[:runner_bottle].to_s.strip.empty? && !profile["runner_bottle"].to_s.strip.empty?
+    options[:timeout] = profile["timeout"] if options[:timeout] == "30s" && !profile["timeout"].to_s.strip.empty?
+    options[:expected_marker] = profile["expected_marker"] if options[:expected_marker] == MARKER && !profile["expected_marker"].to_s.strip.empty?
+    options[:success_mode] = profile["success_mode"] if options[:success_mode] == "marker" && !profile["success_mode"].to_s.strip.empty?
+    options[:redact_output] = profile["redact_output"] unless options.key?(:redact_output) && !options[:redact_output].nil?
+    options[:runner_args] = Array(profile["runner_arguments"]) + options.fetch(:runner_args)
+    options[:app_args] = Array(profile["arguments"]) + options.fetch(:app_args)
+  rescue JSON::ParserError, KeyError, Errno::ENOENT
+    warn "FAIL: Windows app smoke profile invalid"
+    exit 1
+  end
+end
 
 unless %w[text json markdown].include?(options[:format])
   warn "FAIL: unsupported output format #{options[:format]}"
@@ -76,7 +102,7 @@ def run_command(env, *argv)
   [stdout, stderr, status.exitstatus]
 end
 
-def base_report(format, redact_output, expected_marker, success_mode, executable_source, backend, image, platform)
+def base_report(format, redact_output, expected_marker, success_mode, executable_source, profile_supplied, backend, image, platform)
   {
     "version" => PROJECT_ROOT.join("VERSION").read.strip,
     "schema_version" => SCHEMA_VERSION,
@@ -85,7 +111,8 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "backend" => backend,
     "redacted_output_requested" => redact_output,
     "executable_source" => executable_source,
-    "user_executable_supplied" => executable_source == "user-supplied",
+    "profile_supplied" => profile_supplied,
+    "user_executable_supplied" => executable_source != "fixture",
     "fixture_built" => false,
     "runner_diagnostics_invoked" => false,
     "smoke_invoked" => false,
@@ -181,13 +208,21 @@ def finish(report, exit_code)
   exit exit_code
 end
 
-executable_source = options[:exe].to_s.strip.empty? ? "fixture" : "user-supplied"
+profile_supplied = !options[:profile].to_s.strip.empty?
+executable_source = if options[:exe].to_s.strip.empty?
+                      "fixture"
+                    elsif profile_supplied
+                      "profile"
+                    else
+                      "user-supplied"
+                    end
 report = base_report(
   options.fetch(:format),
   options.fetch(:redact_output),
   options.fetch(:expected_marker),
   options.fetch(:success_mode),
   executable_source,
+  profile_supplied,
   options.fetch(:backend),
   options.fetch(:image),
   options.fetch(:platform)

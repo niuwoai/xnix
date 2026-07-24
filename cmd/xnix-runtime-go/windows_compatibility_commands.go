@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
@@ -33,6 +34,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	var exePath string
 	var stateRoot string
 	var workingDir string
+	var profilePath string
 	var runnerPath string
 	var timeoutText string
 	var expectedMarker string
@@ -40,6 +42,7 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	var runnerBottle string
 	var redactOutput bool
 	flags.StringVar(&exePath, "exe", "", "Windows executable path")
+	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
 	flags.StringVar(&stateRoot, "state-root", "", "isolated Runtime state root")
 	flags.StringVar(&workingDir, "working-dir", "", "working directory for the compatibility runner; defaults to the executable directory")
 	flags.StringVar(&runnerPath, "runner", "", "explicit compatibility runner path")
@@ -60,25 +63,25 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", "windows-app-run-smoke")
 	}
-
-	timeout, err := time.ParseDuration(timeoutText)
-	if err != nil {
-		return fmt.Errorf("parse timeout: %w", err)
-	}
-
-	result, err := winapp.RunSmoke(context.Background(), winapp.Request{
-		ExecutablePath:   exePath,
-		Arguments:        []string(appArgs),
-		RunnerArguments:  []string(runnerArgs),
-		RunnerBottle:     runnerBottle,
-		StateRoot:        stateRoot,
-		WorkingDirectory: workingDir,
-		RunnerPath:       runnerPath,
-		Timeout:          timeout,
-		ExpectedMarker:   expectedMarker,
-		SuccessMode:      successMode,
-		RedactOutput:     redactOutput,
+	visitedFlags := map[string]bool{}
+	flags.Visit(func(flag *flag.Flag) {
+		visitedFlags[flag.Name] = true
 	})
+
+	request, err := winapp.LoadSmokeProfile(profilePath)
+	if err != nil {
+		return err
+	}
+	if visitedFlags["timeout"] || request.Timeout == 0 {
+		timeout, err := time.ParseDuration(timeoutText)
+		if err != nil {
+			return fmt.Errorf("parse timeout: %w", err)
+		}
+		request.Timeout = timeout
+	}
+	applySmokeCLIOverrides(&request, visitedFlags, exePath, []string(appArgs), []string(runnerArgs), runnerBottle, stateRoot, workingDir, runnerPath, expectedMarker, successMode, redactOutput)
+
+	result, err := winapp.RunSmoke(context.Background(), request)
 	if err != nil {
 		return err
 	}
@@ -86,6 +89,39 @@ func runWindowsAppRunSmoke(args []string, stdout io.Writer) error {
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+func applySmokeCLIOverrides(request *winapp.Request, visitedFlags map[string]bool, exePath string, appArgs []string, runnerArgs []string, runnerBottle string, stateRoot string, workingDir string, runnerPath string, expectedMarker string, successMode string, redactOutput bool) {
+	if strings.TrimSpace(exePath) != "" {
+		request.ExecutablePath = exePath
+	}
+	if len(appArgs) > 0 {
+		request.Arguments = append(request.Arguments, appArgs...)
+	}
+	if len(runnerArgs) > 0 {
+		request.RunnerArguments = append(request.RunnerArguments, runnerArgs...)
+	}
+	if strings.TrimSpace(runnerBottle) != "" {
+		request.RunnerBottle = runnerBottle
+	}
+	if strings.TrimSpace(stateRoot) != "" {
+		request.StateRoot = stateRoot
+	}
+	if strings.TrimSpace(workingDir) != "" {
+		request.WorkingDirectory = workingDir
+	}
+	if strings.TrimSpace(runnerPath) != "" {
+		request.RunnerPath = runnerPath
+	}
+	if visitedFlags["expected-marker"] || strings.TrimSpace(request.ExpectedMarker) == "" {
+		request.ExpectedMarker = expectedMarker
+	}
+	if visitedFlags["success-mode"] || strings.TrimSpace(request.SuccessMode) == "" {
+		request.SuccessMode = successMode
+	}
+	if redactOutput {
+		request.RedactOutput = true
+	}
 }
 
 func runWindowsAppRunnerDiagnostics(args []string, stdout io.Writer) error {
