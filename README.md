@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc87`.
+The project is currently at `v0.2.640-rc88`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc87`.
 
 ## Current Checkpoint
 
-v0.2.640-rc87 promotes `org.xnix.apps.mines` from GUI evidence handoff into the first Runtime-owner-managed GUI launch execution path. `xnix-compat-launch` can now dispatch guest-builtin GUI known apps through the Go-owned Wine GUI smoke lane after human authorization and controlled execution session gates, while `ShowRuntimeControlledLaunch` forwards only owner-side guest parameters and preserves `wine-guest-gui-smoke` delegated evidence for KDE-safe projections.
+v0.2.640-rc88 makes the real Mines GUI path repeatable through the Runtime owner entrypoint. `scripts/wine_guest_gui_smoke.rb --launch-mode owner-controlled-launch` now starts Xvfb and QEMU, generates a real GUI smoke evidence seed, records the Runtime-status launch owner fixture, calls `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch`, and verifies that `xnix-compat-launch` launches `winemine.exe` through Wine with `wine-guest-gui-smoke` delegated evidence and a host-observed X window. `scripts/remote_wine_guest_gui_smoke.rb --launch-mode owner-controlled-launch --execute` builds `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` on q4 before running the same restricted chain.
+
+The previous v0.2.640-rc87 checkpoint promoted `org.xnix.apps.mines` from GUI evidence handoff into the first Runtime-owner-managed GUI launch execution path. `xnix-compat-launch` can now dispatch guest-builtin GUI known apps through the Go-owned Wine GUI smoke lane after human authorization and controlled execution session gates, while `ShowRuntimeControlledLaunch` forwards only owner-side guest parameters and preserves `wine-guest-gui-smoke` delegated evidence for KDE-safe projections.
 
 The previous v0.2.640-rc86 checkpoint connected the first real Windows GUI app evidence to the Runtime-owned desktop trigger path. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file FILE` can consume a passed `gui-smoke-evidence-preview` projection for `org.xnix.apps.mines`, record Runtime launch authorization/session/review handoff evidence, and let the owner trigger plus KDE action trigger assemble a `ShowRuntimeControlledLaunch` request from an evidence handle. KDE still receives no Runtime state-root, cache-root, launcher path, raw executable path, backend command, or receipt/session reconstruction authority, and the preview does not start a process.
 
@@ -104,4 +106,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc87 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc88 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

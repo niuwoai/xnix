@@ -46,6 +46,7 @@ assert(go_gui_smoke_source.include?("\"&\"") && go_gui_smoke_source.include?("pr
 assert(!script_source.include?("&;"), "GUI smoke must not emit an invalid background shell separator")
 assert(script_source.include?("windows-app-guest-wine-gui-smoke"), "GUI smoke must delegate Wine GUI execution to the Go Runtime")
 assert(script_source.include?("--executable"), "GUI smoke must expose a local Windows GUI executable delivery path")
+assert(script_source.include?("\"evidence-relative-path\", evidence_relative_path"), "GUI smoke owner path must call xnix-runtime-owner with positional evidence handoff")
 assert(go_gui_smoke_source.include?("\"wineboot\"") && go_gui_smoke_source.include?("\"--init\""), "Go Runtime must initialize the Wine prefix before launching the GUI app")
 
 stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--plan-only", "--format", "json", chdir: project_root.to_s)
@@ -58,6 +59,9 @@ assert(payload["execute"] == false, "GUI smoke plan must keep execution disabled
 assert(payload["backend"] == "qemu-guest-wine-x11", "GUI smoke must target the QEMU guest Wine X11 backend")
 assert(payload["gui_app_name"] == "winemine.exe", "GUI smoke must use a real Wine GUI Windows app by default")
 assert(payload["local_gui_executable_configured"] == false, "GUI smoke plan must default to the in-guest app path")
+assert(payload["launch_mode"] == "direct", "GUI smoke plan must default to direct launch mode")
+assert(payload["owner_controlled_launch_requested"] == false, "GUI smoke direct plan must not request owner-controlled launch")
+assert(payload["owner_service_call_planned"] == false, "GUI smoke direct plan must not plan an owner service call")
 assert(payload["qemu_user_network_restrict_disabled_for_display"] == true, "GUI smoke must disclose the temporary display networking exception")
 assert(payload["loopback_ssh_forwarding_only"] == true, "GUI smoke must keep SSH forwarding loopback-bound")
 assert(payload["privileged_container_required"] == false, "GUI smoke must not require privileged containers")
@@ -67,6 +71,32 @@ assert(payload["broad_host_mount_required"] == false, "GUI smoke must not requir
 assert(payload["host_root_modified"] == false, "GUI smoke must not mutate the host root")
 assert(payload["wineboot_invoked"] == false, "GUI smoke plan must not invoke wineboot")
 assert(payload["runtime_go_owned_gui_smoke"] == true, "GUI smoke must report Go-owned Runtime GUI execution")
+
+owner_stdout, owner_stderr, owner_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--launch-mode", "owner-controlled-launch",
+  "--launcher-bin", "/home/xnix-build-cache/bin/xnix-compat-launch",
+  chdir: project_root.to_s
+)
+assert(owner_status.success?, "Wine guest GUI smoke owner-controlled plan must succeed: #{owner_stderr}")
+owner_payload = JSON.parse(owner_stdout)
+assert(owner_payload["launch_mode"] == "owner-controlled-launch", "GUI smoke must expose owner-controlled launch mode")
+assert(owner_payload["owner_controlled_launch_requested"] == true, "GUI smoke owner mode must request controlled launch")
+assert(owner_payload["owner_service_call_planned"] == true, "GUI smoke owner mode must plan the owner service call")
+assert(owner_payload["owner_seed_gui_smoke_planned"] == true, "GUI smoke owner mode must plan seed GUI evidence")
+assert(owner_payload["runtime_owner_bin_configured"] == true, "GUI smoke owner mode must configure the Runtime owner binary")
+assert(owner_payload["managed_launcher_bin_configured"] == true, "GUI smoke owner mode must configure the managed launcher")
+
+bad_mode_stdout, bad_mode_stderr, bad_mode_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--launch-mode", "free-for-all",
+  chdir: project_root.to_s
+)
+assert(!bad_mode_status.success?, "Wine guest GUI smoke must reject unsupported launch modes")
+assert((bad_mode_stdout + bad_mode_stderr).include?("unsupported launch mode free-for-all"), "Wine guest GUI smoke must explain unsupported launch modes")
 
 fixture_executable = project_root.join("test/fixtures/winapp/messagebox/xnix-messagebox-smoke.exe")
 stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--plan-only", "--format", "json", "--executable", fixture_executable.to_s, chdir: project_root.to_s)

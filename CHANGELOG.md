@@ -4,6 +4,20 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc88] - 2026-07-25
+
+### Added
+
+- Added `scripts/wine_guest_gui_smoke.rb --launch-mode owner-controlled-launch`, which runs a real Mines GUI evidence seed, records the Runtime-status launch owner fixture, invokes `xnix-runtime-owner --service-call ShowRuntimeControlledLaunch`, and verifies that the managed launcher starts `winemine.exe` through the Go-owned Wine GUI smoke lane.
+- Added remote q4 owner-controlled GUI smoke planning and execution support, including q4 builds for `xnix-runtime-owner` and `xnix-compat-launch` alongside `xnix-runtime-go`.
+- Added constrained `/tmp/xnix-*` remote scratch path support for q4 smoke runs when `/home` is full, while still rejecting unconstrained temporary or host paths.
+
+### Fixed
+
+- Fixed the owner-controlled smoke handoff to call `xnix-runtime-owner` with the positional `evidence-relative-path <relative>` service argument shape expected by the owner service boundary.
+- Fixed owner-controlled smoke report parsing for the `runtime-owner-service-call` envelope returned by `xnix-runtime-owner`.
+- Verified the q4 owner-controlled `winemine.exe` run with `owner_managed_launcher_invoked=true`, `owner_delegated_smoke_passed=true`, `owner_delegated_evidence_source=wine-guest-gui-smoke`, `x_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-mines-owner-0.2.640-rc88.json`.
+
 ## [0.2.640-rc87] - 2026-07-25
 
 ### Added

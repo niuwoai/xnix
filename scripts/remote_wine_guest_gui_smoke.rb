@@ -30,6 +30,7 @@ options = {
   remote_executable: ENV.fetch("XNIX_WINE_GUI_REMOTE_EXECUTABLE", ""),
   remote_build_root: ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache"),
   remote_go: ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go"),
+  launch_mode: ENV.fetch("XNIX_WINE_GUI_REMOTE_LAUNCH_MODE", "direct"),
   report_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REPORT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}.json"),
   evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
@@ -56,6 +57,7 @@ OptionParser.new do |parser|
   parser.on("--remote-executable PATH", "Remote Windows GUI .exe under /home/xnix*.") { |value| options[:remote_executable] = value }
   parser.on("--remote-build-root PATH", "Remote build cache root under /home/xnix*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-go PATH", "Remote Go binary used to build xnix-runtime-go.") { |value| options[:remote_go] = value }
+  parser.on("--launch-mode MODE", "Launch mode: direct or owner-controlled-launch.") { |value| options[:launch_mode] = value }
   parser.on("--report-output PATH", "Remote JSON report output path under /home/xnix*.") { |value| options[:report_output] = value }
   parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
@@ -69,6 +71,7 @@ OptionParser.new do |parser|
 end.parse!
 
 abort "remote Wine guest GUI smoke does not accept positional arguments" unless ARGV.empty?
+abort "launch mode must be direct or owner-controlled-launch" unless %w[direct owner-controlled-launch].include?(options.fetch(:launch_mode))
 
 if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
   options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-gui-#{options.fetch(:source_sync_mode)}-#{VERSION}"
@@ -76,9 +79,9 @@ end
 
 def ensure_remote_xnix_path!(label, path)
   clean = Pathname.new(path).cleanpath.to_s
-  return clean if clean.start_with?("/home/xnix-")
+  return clean if clean.start_with?("/home/xnix-") || clean.start_with?("/tmp/xnix-")
 
-  abort "#{label} must stay under /home/xnix-* on the remote build host"
+  abort "#{label} must stay under /home/xnix-* or /tmp/xnix-* on the remote build host"
 end
 
 def ensure_optional_remote_xnix_path!(label, path)
@@ -157,10 +160,14 @@ remote_kernel = ensure_remote_xnix_path!("remote kernel", options.fetch(:remote_
 remote_ssh_key = ensure_remote_xnix_path!("remote SSH key", options.fetch(:remote_ssh_key))
 remote_executable = ensure_optional_remote_xnix_path!("remote executable", options.fetch(:remote_executable))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
+launch_mode = options.fetch(:launch_mode)
 report_output = ensure_remote_xnix_path!("report output", options.fetch(:report_output))
 evidence_output = ensure_remote_xnix_path!("evidence output", options.fetch(:evidence_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
 remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
+remote_owner_bin = "#{remote_build_root}/bin/xnix-runtime-owner"
+remote_launcher_bin = "#{remote_build_root}/bin/xnix-compat-launch"
+remote_known_app_cache_root = "#{remote_build_root}/known-winapps"
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
 
 plan = {
@@ -181,7 +188,12 @@ plan = {
   "remote_executable" => remote_executable,
   "remote_build_root" => remote_build_root,
   "remote_runtime_bin" => remote_runtime_bin,
+  "remote_owner_bin" => remote_owner_bin,
+  "remote_launcher_bin" => remote_launcher_bin,
+  "remote_known_app_cache_root" => remote_known_app_cache_root,
   "runtime_build_planned" => true,
+  "owner_build_planned" => launch_mode == "owner-controlled-launch",
+  "launcher_build_planned" => launch_mode == "owner-controlled-launch",
   "report_output" => report_output,
   "evidence_output" => evidence_output,
   "evidence_preview_planned" => true,
@@ -193,7 +205,9 @@ plan = {
   "display_number" => options.fetch(:display_number),
   "wait_seconds" => options.fetch(:wait_seconds),
   "remote_timeout_seconds" => options.fetch(:remote_timeout_seconds),
-  "remote_command" => "ruby scripts/wine_guest_gui_smoke.rb --execute",
+  "launch_mode" => launch_mode,
+  "owner_controlled_launch_requested" => launch_mode == "owner-controlled-launch",
+  "remote_command" => "ruby scripts/wine_guest_gui_smoke.rb --execute --launch-mode #{launch_mode}",
   "backend" => "qemu-guest-wine-x11",
   "gui_app_name" => remote_executable.empty? ? "winemine.exe" : File.basename(remote_executable),
   "remote_gui_executable_configured" => !remote_executable.empty?,
@@ -247,10 +261,16 @@ end
 
 build_command = [
   "set -eu",
-  shell_join(["mkdir", "-p", "#{remote_build_root}/bin", "#{remote_build_root}/go-build", "#{remote_build_root}/go-mod", "#{remote_build_root}/tmp"]),
+  shell_join(["mkdir", "-p", "#{remote_build_root}/bin", "#{remote_build_root}/go-build", "#{remote_build_root}/go-mod", "#{remote_build_root}/tmp", remote_known_app_cache_root]),
   "cd #{Shellwords.escape(remote_source_root)}",
   "PATH=#{Shellwords.escape(remote_go_dir)}:$PATH GOCACHE=#{Shellwords.escape("#{remote_build_root}/go-build")} GOMODCACHE=#{Shellwords.escape("#{remote_build_root}/go-mod")} GOTMPDIR=#{Shellwords.escape("#{remote_build_root}/tmp")} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_runtime_bin, "./cmd/xnix-runtime-go"])}"
-].join("\n")
+]
+if launch_mode == "owner-controlled-launch"
+  build_env = "PATH=#{Shellwords.escape(remote_go_dir)}:$PATH GOCACHE=#{Shellwords.escape("#{remote_build_root}/go-build")} GOMODCACHE=#{Shellwords.escape("#{remote_build_root}/go-mod")} GOTMPDIR=#{Shellwords.escape("#{remote_build_root}/tmp")}"
+  build_command.push("#{build_env} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_owner_bin, "./cmd/xnix-runtime-owner"])}")
+  build_command.push("#{build_env} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_launcher_bin, "./cmd/xnix-compat-launch"])}")
+end
+build_command = build_command.join("\n")
 build_stdout, build_stderr, build_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, build_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
 unless build_status.zero?
   warn build_stdout unless build_stdout.empty?
@@ -269,9 +289,15 @@ remote_args = [
   "--ssh-port", options.fetch(:ssh_port),
   "--display-number", options.fetch(:display_number).to_s,
   "--wait-seconds", options.fetch(:wait_seconds).to_s,
+  "--launch-mode", launch_mode,
   "--runtime-bin", remote_runtime_bin,
   "--report-output", report_output
 ]
+if launch_mode == "owner-controlled-launch"
+  remote_args.push("--owner-bin", remote_owner_bin)
+  remote_args.push("--launcher-bin", remote_launcher_bin)
+  remote_args.push("--known-app-cache-root", remote_known_app_cache_root)
+end
 remote_args.push("--executable", remote_executable) unless remote_executable.empty?
 remote_command = [
   "set -eu",

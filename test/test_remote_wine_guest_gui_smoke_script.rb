@@ -29,12 +29,19 @@ assert(payload["remote_gui_executable_configured"] == false, "remote GUI smoke m
 assert(payload["requires_rebuilt_wine_guest_with_x11"] == true, "remote GUI smoke must document the rebuilt Wine guest requirement")
 assert(payload["remote_timeout_seconds"] == 300, "remote GUI smoke must expose a bounded remote timeout")
 assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build the Go Runtime before execution")
+assert(payload["launch_mode"] == "direct", "remote GUI smoke must default to direct launch mode")
+assert(payload["owner_controlled_launch_requested"] == false, "remote GUI smoke direct mode must not request owner-controlled launch")
+assert(payload["owner_build_planned"] == false, "remote GUI smoke direct mode must not build the Runtime owner")
+assert(payload["launcher_build_planned"] == false, "remote GUI smoke direct mode must not build the managed launcher")
 assert(payload["source_sync_mode"] == "runtime", "remote GUI smoke must default to Runtime-only source sync")
 assert(payload["source_sync_entry_count"] == 7, "remote GUI smoke Runtime-only sync must include the minimal source entries")
 %w[VERSION go.mod cmd internal runtime scripts lib].each do |entry|
   assert(payload["source_sync_entries"].include?(entry), "remote GUI smoke Runtime-only sync must include #{entry}")
 end
 assert(payload["remote_runtime_bin"].end_with?("/bin/xnix-runtime-go"), "remote GUI smoke must expose the managed Runtime binary location")
+assert(payload["remote_owner_bin"].end_with?("/bin/xnix-runtime-owner"), "remote GUI smoke must expose the managed Runtime owner binary location")
+assert(payload["remote_launcher_bin"].end_with?("/bin/xnix-compat-launch"), "remote GUI smoke must expose the managed launcher binary location")
+assert(payload["remote_known_app_cache_root"].start_with?("/home/xnix-"), "remote known-app cache root must stay under /home/xnix-*")
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")
 assert(payload["remote_source_root"].include?("runtime"), "remote source root must reflect the Runtime-only sync mode")
 assert(payload["report_output"].start_with?("/home/xnix-"), "remote report output must stay under /home/xnix-*")
@@ -49,13 +56,48 @@ assert(payload["docker_socket_mounted"] == false, "remote GUI smoke must not mou
 assert(payload["broad_host_mount_required"] == false, "remote GUI smoke must not require broad host mounts")
 assert(payload["host_root_modified"] == false, "remote GUI smoke must not mutate the host root")
 
+owner_stdout, owner_stderr, owner_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--launch-mode", "owner-controlled-launch",
+  chdir: project_root.to_s
+)
+assert(owner_status.success?, "remote GUI smoke owner-controlled plan must succeed: #{owner_stderr}")
+owner_payload = JSON.parse(owner_stdout)
+assert(owner_payload["launch_mode"] == "owner-controlled-launch", "remote GUI smoke must expose owner-controlled launch mode")
+assert(owner_payload["owner_controlled_launch_requested"] == true, "remote GUI smoke owner mode must request controlled launch")
+assert(owner_payload["owner_build_planned"] == true, "remote GUI smoke owner mode must build the Runtime owner")
+assert(owner_payload["launcher_build_planned"] == true, "remote GUI smoke owner mode must build the managed launcher")
+assert(owner_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke must forward owner launch mode")
+
+bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--launch-mode", "unsafe",
+  chdir: project_root.to_s
+)
+assert(!bad_launch_mode_status.success?, "remote GUI smoke must reject unsupported launch modes")
+assert((bad_launch_mode_stdout + bad_launch_mode_stderr).include?("launch mode must be direct or owner-controlled-launch"), "remote GUI smoke must explain unsupported launch modes")
+
 bad_stdout, bad_stderr, bad_status = Open3.capture3(
   "ruby", script.to_s,
   "--remote-source-root", "/tmp/not-xnix",
   chdir: project_root.to_s
 )
 assert(!bad_status.success?, "remote GUI smoke must reject source roots outside /home/xnix-*")
-assert((bad_stdout + bad_stderr).include?("remote source root must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe source roots")
+assert((bad_stdout + bad_stderr).include?("remote source root must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe source roots")
+
+tmp_stdout, tmp_stderr, tmp_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-source-root", "/tmp/xnix-build/runtime",
+  "--remote-build-root", "/tmp/xnix-build-cache",
+  "--report-output", "/tmp/xnix-run-materials/state/report.json",
+  "--evidence-output", "/tmp/xnix-run-materials/state/evidence.json",
+  "--state-root", "/tmp/xnix-run-materials/state/gui",
+  chdir: project_root.to_s
+)
+assert(tmp_status.success?, "remote GUI smoke must accept constrained /tmp/xnix-* scratch paths: #{tmp_stderr}")
+tmp_payload = JSON.parse(tmp_stdout)
+assert(tmp_payload["remote_source_root"].start_with?("/tmp/xnix-"), "remote GUI smoke must expose constrained /tmp source roots")
+assert(tmp_payload["remote_build_root"].start_with?("/tmp/xnix-"), "remote GUI smoke must expose constrained /tmp build roots")
 
 exe_stdout, exe_stderr, exe_status = Open3.capture3(
   "ruby", script.to_s,
@@ -70,11 +112,11 @@ assert(exe_payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "remote GUI s
 
 bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
   "ruby", script.to_s,
-  "--remote-executable", "/tmp/xnix-messagebox-smoke.exe",
+  "--remote-executable", "/tmp/not-xnix/xnix-messagebox-smoke.exe",
   chdir: project_root.to_s
 )
 assert(!bad_exe_status.success?, "remote GUI smoke must reject executables outside /home/xnix-*")
-assert((bad_exe_stdout + bad_exe_stderr).include?("remote executable must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe executable paths")
+assert((bad_exe_stdout + bad_exe_stderr).include?("remote executable must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe executable paths")
 
 bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
   "ruby", script.to_s,
@@ -82,7 +124,7 @@ bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
   chdir: project_root.to_s
 )
 assert(!bad_evidence_status.success?, "remote GUI smoke must reject evidence output outside /home/xnix-*")
-assert((bad_evidence_stdout + bad_evidence_stderr).include?("evidence output must stay under /home/xnix-*"), "remote GUI smoke must explain unsafe evidence output paths")
+assert((bad_evidence_stdout + bad_evidence_stderr).include?("evidence output must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe evidence output paths")
 
 full_stdout, full_stderr, full_status = Open3.capture3(
   "ruby", script.to_s,
