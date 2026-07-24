@@ -17,10 +17,11 @@ const (
 )
 
 type LauncherBundleRequest struct {
-	ProfilePath   string
-	ApplicationID string
-	DisplayName   string
-	RuntimeBinary string
+	ProfilePath      string
+	ApplicationID    string
+	DisplayName      string
+	RuntimeBinary    string
+	RuntimeArguments []string
 }
 
 type LauncherBundleRecord struct {
@@ -35,6 +36,7 @@ type LauncherBundleRecord struct {
 	ProfileSupplied                     bool   `json:"profile_supplied"`
 	ProfileSchemaVersion                string `json:"profile_schema_version"`
 	StateRootConfigured                 bool   `json:"state_root_configured"`
+	RuntimeArgumentCount                int    `json:"runtime_argument_count"`
 	FilesWritten                        bool   `json:"files_written"`
 	LauncherScriptWritten               bool   `json:"launcher_script_written"`
 	DesktopEntryWritten                 bool   `json:"desktop_entry_written"`
@@ -44,6 +46,7 @@ type LauncherBundleRecord struct {
 	RawProfilePathExposed               bool   `json:"raw_profile_path_exposed"`
 	RawStateRootPathExposed             bool   `json:"raw_state_root_path_exposed"`
 	RawRunnerPathExposed                bool   `json:"raw_runner_path_exposed"`
+	RawRuntimeArgvExposed               bool   `json:"raw_runtime_argv_exposed"`
 	HostRootModified                    bool   `json:"host_root_modified"`
 	PrivilegedContainerRequired         bool   `json:"privileged_container_required"`
 	HostNetworkingRequired              bool   `json:"host_networking_required"`
@@ -87,6 +90,12 @@ func RecordLauncherBundle(request LauncherBundleRequest) (LauncherBundleRecord, 
 		record.FailureReason = err.Error()
 		return record, nil
 	}
+	runtimeArguments, err := sanitizeRuntimeArguments(request.RuntimeArguments)
+	if err != nil {
+		record.FailureReason = err.Error()
+		return record, nil
+	}
+	record.RuntimeArgumentCount = len(runtimeArguments)
 
 	stateRoot, err := filepath.Abs(profileRequest.StateRoot)
 	if err != nil {
@@ -117,7 +126,7 @@ func RecordLauncherBundle(request LauncherBundleRequest) (LauncherBundleRecord, 
 	desktopFilePath := filepath.Join(desktopDir, desktopFileName)
 	receiptFilePath := filepath.Join(receiptDir, receiptFileName)
 
-	launcherScript := renderLauncherScript(runtimeBinary, profilePath)
+	launcherScript := renderLauncherScript(runtimeBinary, runtimeArguments, profilePath)
 	if err := os.WriteFile(launcherScriptPath, []byte(launcherScript), 0o700); err != nil {
 		return record, fmt.Errorf("write launcher script: %w", err)
 	}
@@ -169,6 +178,7 @@ func baseLauncherBundleRecord(request LauncherBundleRequest) LauncherBundleRecor
 		RawProfilePathExposed:               false,
 		RawStateRootPathExposed:             false,
 		RawRunnerPathExposed:                false,
+		RawRuntimeArgvExposed:               false,
 		HostRootModified:                    false,
 		PrivilegedContainerRequired:         false,
 		HostNetworkingRequired:              false,
@@ -212,10 +222,30 @@ func sanitizeRuntimeBinary(value string) (string, error) {
 	return value, nil
 }
 
-func renderLauncherScript(runtimeBinary string, profilePath string) string {
+func sanitizeRuntimeArguments(values []string) ([]string, error) {
+	args := []string{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if strings.ContainsAny(value, "\r\n") {
+			return nil, errors.New("runtime arguments must be single-line")
+		}
+		args = append(args, value)
+	}
+	return args, nil
+}
+
+func renderLauncherScript(runtimeBinary string, runtimeArguments []string, profilePath string) string {
+	parts := []string{"exec", shellQuote(runtimeBinary)}
+	for _, arg := range runtimeArguments {
+		parts = append(parts, shellQuote(arg))
+	}
+	parts = append(parts, "windows-app-run-smoke", "--profile", shellQuote(profilePath))
 	return "#!/bin/sh\n" +
 		"set -eu\n" +
-		"exec " + shellQuote(runtimeBinary) + " windows-app-run-smoke --profile " + shellQuote(profilePath) + "\n"
+		strings.Join(parts, " ") + "\n"
 }
 
 func renderDesktopEntry(applicationID string, displayName string, launcherScriptPath string) string {

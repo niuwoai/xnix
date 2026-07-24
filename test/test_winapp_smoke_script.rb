@@ -174,6 +174,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "launcher_script_name" => "#{app_id}.sh",
         "receipt_file_name" => "#{app_id}.launcher-bundle.json",
         "profile_supplied" => true,
+        "runtime_argument_count" => args.each_with_index.count { |value, index| value == "--runtime-arg" && index + 1 < args.length },
         "files_written" => true,
         "launcher_script_written" => true,
         "desktop_entry_written" => true,
@@ -183,6 +184,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "raw_profile_path_exposed" => false,
         "raw_state_root_path_exposed" => false,
         "raw_runner_path_exposed" => false,
+        "raw_runtime_argv_exposed" => false,
         "host_root_modified" => false,
         "privileged_container_required" => false,
         "host_networking_required" => false,
@@ -453,7 +455,10 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--write-profile", generated_profile.to_s,
     "--write-launcher-bundle",
     "--app-id", "org.xnix.generated",
-    "--app-name", "Generated Windows App"
+    "--app-name", "Generated Windows App",
+    "--runtime-bin", "go",
+    "--runtime-arg", "run",
+    "--runtime-arg", "./cmd/xnix-runtime-go"
   )
   assert(write_profile_status.success?, "winapp smoke profile write report must succeed: #{write_profile_stderr}")
   write_profile_report = JSON.parse(write_profile_stdout)
@@ -463,6 +468,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(write_profile_report.fetch("launcher_bundle_written"), "launcher bundle report must record bundle write")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("request_type") == "windows-app-launcher-bundle-record", "launcher bundle report must embed safe payload")
   assert(write_profile_report.fetch("launcher_bundle_payload").fetch("desktop_file_name") == "org.xnix.generated.desktop", "launcher bundle report must preserve desktop file name")
+  assert(write_profile_report.fetch("launcher_bundle_payload").fetch("runtime_argument_count") == 2, "launcher bundle report must preserve runtime argument count")
   rendered_profile = JSON.parse(generated_profile.read)
   assert(rendered_profile.fetch("schema_version") == "xnix.runtime.windows_app_smoke_profile.v1", "written profile must preserve schema")
   assert(rendered_profile.fetch("expected_marker") == "CUSTOM_APP_OK", "written profile must preserve marker")

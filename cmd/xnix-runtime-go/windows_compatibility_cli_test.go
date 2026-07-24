@@ -233,7 +233,9 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		"--profile", profilePath,
 		"--app-id", "org.xnix.realapp",
 		"--name", "Real Windows App",
-		"--runtime-bin", "xnix-runtime-go",
+		"--runtime-bin", "go",
+		"--runtime-arg", "run",
+		"--runtime-arg", "./cmd/xnix-runtime-go",
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -250,6 +252,7 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		payload["display_name"] != "Real Windows App" ||
 		payload["desktop_file_name"] != "org.xnix.realapp.desktop" ||
 		payload["launcher_script_name"] != "org.xnix.realapp.sh" ||
+		payload["runtime_argument_count"] != float64(2) ||
 		payload["files_written"] != true ||
 		payload["launcher_script_written"] != true ||
 		payload["desktop_entry_written"] != true ||
@@ -258,6 +261,7 @@ func TestWindowsAppLauncherBundleRecordCommand(t *testing.T) {
 		payload["raw_profile_path_exposed"] != false ||
 		payload["raw_state_root_path_exposed"] != false ||
 		payload["raw_runner_path_exposed"] != false ||
+		payload["raw_runtime_argv_exposed"] != false ||
 		payload["host_root_modified"] != false {
 		t.Fatalf("unexpected launcher bundle payload: %#v", payload)
 	}

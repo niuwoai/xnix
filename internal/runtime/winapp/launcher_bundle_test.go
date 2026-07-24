@@ -22,10 +22,11 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 	})
 
 	record, err := RecordLauncherBundle(LauncherBundleRequest{
-		ProfilePath:   profilePath,
-		ApplicationID: "org.xnix.realapp",
-		DisplayName:   "Real Windows App",
-		RuntimeBinary: "xnix-runtime-go",
+		ProfilePath:      profilePath,
+		ApplicationID:    "org.xnix.realapp",
+		DisplayName:      "Real Windows App",
+		RuntimeBinary:    "go",
+		RuntimeArguments: []string{"run", "./cmd/xnix-runtime-go"},
 	})
 	if err != nil {
 		t.Fatalf("RecordLauncherBundle returned error: %v", err)
@@ -38,6 +39,7 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 		record.DesktopFileName != "org.xnix.realapp.desktop" ||
 		record.LauncherScriptName != "org.xnix.realapp.sh" ||
 		record.ReceiptFileName != "org.xnix.realapp.launcher-bundle.json" ||
+		record.RuntimeArgumentCount != 2 ||
 		!record.FilesWritten ||
 		!record.LauncherScriptWritten ||
 		!record.DesktopEntryWritten ||
@@ -47,6 +49,7 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 		record.RawProfilePathExposed ||
 		record.RawStateRootPathExposed ||
 		record.RawRunnerPathExposed ||
+		record.RawRuntimeArgvExposed ||
 		record.HostRootModified {
 		t.Fatalf("unexpected launcher bundle record: %#v", record)
 	}
@@ -56,7 +59,7 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 	if err != nil {
 		t.Fatalf("ReadFile launcher returned error: %v", err)
 	}
-	if !strings.Contains(string(launcherText), "windows-app-run-smoke --profile") ||
+	if !strings.Contains(string(launcherText), "exec 'go' 'run' './cmd/xnix-runtime-go' windows-app-run-smoke --profile") ||
 		!strings.Contains(string(launcherText), shellQuote(profilePath)) {
 		t.Fatalf("launcher script did not preserve managed profile launch: %s", string(launcherText))
 	}
@@ -81,7 +84,7 @@ func TestRecordLauncherBundleWritesManagedLauncherAndDesktopEntry(t *testing.T) 
 	if err := json.Unmarshal(receiptData, &receipt); err != nil {
 		t.Fatalf("Unmarshal receipt returned error: %v", err)
 	}
-	if !receipt.ReceiptWritten || receipt.RawProfilePathExposed || receipt.RawRunnerPathExposed {
+	if !receipt.ReceiptWritten || receipt.RawProfilePathExposed || receipt.RawRunnerPathExposed || receipt.RawRuntimeArgvExposed {
 		t.Fatalf("unexpected receipt: %#v", receipt)
 	}
 	output, err := json.Marshal(record)

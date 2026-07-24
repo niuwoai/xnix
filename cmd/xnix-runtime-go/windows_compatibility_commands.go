@@ -171,6 +171,8 @@ func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
 	flags.StringVar(&appID, "app-id", "", "desktop-safe application id")
 	flags.StringVar(&name, "name", "", "desktop display name")
 	flags.StringVar(&runtimeBinary, "runtime-bin", "", "runtime binary used by the managed launcher")
+	var runtimeArgs repeatedStringFlag
+	flags.Var(&runtimeArgs, "runtime-arg", "argument passed to the runtime binary before windows-app-run-smoke")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -180,10 +182,11 @@ func runWindowsAppLauncherBundleRecord(args []string, stdout io.Writer) error {
 	}
 
 	record, err := winapp.RecordLauncherBundle(winapp.LauncherBundleRequest{
-		ProfilePath:   profilePath,
-		ApplicationID: appID,
-		DisplayName:   name,
-		RuntimeBinary: runtimeBinary,
+		ProfilePath:      profilePath,
+		ApplicationID:    appID,
+		DisplayName:      name,
+		RuntimeBinary:    runtimeBinary,
+		RuntimeArguments: []string(runtimeArgs),
 	})
 	if err != nil {
 		return err

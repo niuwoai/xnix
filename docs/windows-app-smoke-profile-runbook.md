@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc51
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc52
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -31,6 +31,14 @@ ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state
 ```
 
 The launcher bundle is written by `windows-app-launcher-bundle-record`. Reports expose `launcher_bundle_write_invoked`, `launcher_bundle_written`, safe desktop file names, and safe launcher script names; they do not expose profile paths, state-root paths, or runner paths.
+
+For development checkouts where `xnix-runtime-go` is not installed into `PATH`, add runtime argv pieces:
+
+```text
+ruby scripts/winapp_smoke.rb --format json --exe path/to/application.exe --state-root .local/xnix/winapp-smoke/my-app-state --stage-app-dir --write-profile .local/xnix/winapp-smoke/my-app.profile.json --write-launcher-bundle --app-id org.xnix.myapp --runtime-bin go --runtime-arg run --runtime-arg ./cmd/xnix-runtime-go
+```
+
+Reports expose only `runtime_argument_count`; they do not expose the runtime argv values.
 
 Profile fields:
 

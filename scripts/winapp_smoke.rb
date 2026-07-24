@@ -25,6 +25,7 @@ options = {
   app_id: nil,
   app_name: nil,
   runtime_bin: nil,
+  runtime_args: [],
   preflight_only: false,
   exe: nil,
   runner: nil,
@@ -45,7 +46,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
   parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
@@ -55,6 +56,7 @@ OptionParser.new do |parser|
   parser.on("--app-id ID", "Desktop-safe application id for the launcher bundle") { |value| options[:app_id] = value }
   parser.on("--app-name NAME", "Display name for the launcher bundle") { |value| options[:app_name] = value }
   parser.on("--runtime-bin PATH", "Runtime binary used by the managed launcher bundle") { |value| options[:runtime_bin] = value }
+  parser.on("--runtime-arg VALUE", "Argument passed to the runtime binary before windows-app-run-smoke") { |value| options[:runtime_args] << value }
   parser.on("--preflight-only", "Validate a profile and emit readiness without launching the Windows app") { options[:preflight_only] = true }
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
@@ -378,6 +380,7 @@ if options.fetch(:write_launcher_bundle)
   ]
   launcher_command.concat(["--name", options.fetch(:app_name)]) unless options[:app_name].to_s.strip.empty?
   launcher_command.concat(["--runtime-bin", options.fetch(:runtime_bin)]) unless options[:runtime_bin].to_s.strip.empty?
+  options.fetch(:runtime_args).each { |value| launcher_command.concat(["--runtime-arg", value]) }
   launcher_stdout, launcher_stderr, launcher_status = run_command(go_env, *launcher_command)
   report["launcher_bundle_write_invoked"] = true
   unless launcher_status.zero?

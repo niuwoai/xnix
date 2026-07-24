@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc52] - 2026-07-24
+
+### Added
+
+- Added runtime argv support to managed Windows app launcher bundles, enabling development launchers such as `go run ./cmd/xnix-runtime-go` without shell-command string parsing.
+- Added path-safe `runtime_argument_count` and `raw_runtime_argv_exposed=false` evidence to launcher bundle records and reports.
+
 ## [0.2.640-rc51] - 2026-07-24
 
 ### Added

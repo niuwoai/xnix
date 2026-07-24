@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc51`.
+The project is currently at `v0.2.640-rc52`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc51`.
 
 ## Current Checkpoint
 
-v0.2.640-rc51 adds Go-owned launcher bundle recording from a Windows app smoke profile, writing a managed shell launcher, `.desktop` file, and receipt under the profile state root while keeping reports path-safe. The previous v0.2.640-rc50 checkpoint added reusable profile rendering.
+v0.2.640-rc52 lets managed launcher bundles carry a safe runtime argv, so development launchers can call `go run ./cmd/xnix-runtime-go` while production launchers still default to `xnix-runtime-go`. The previous v0.2.640-rc51 checkpoint added launcher bundle recording.
 
 The previous v0.2.640-rc20 checkpoint added JSON and Markdown evidence reports to `scripts/winapp_smoke.rb`. Text mode remains the quick developer PASS/SKIP path, while JSON and Markdown default to `windows-app-run-smoke --redact-output` so future merge and release tooling can consume real Windows executable smoke evidence without raw stdout or stderr.
 
@@ -71,4 +71,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc51`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc52`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion.
