@@ -33,6 +33,8 @@ options = {
   docker: nil,
   image: ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local"),
   platform: ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64"),
+  gui_app: ENV.fetch("XNIX_WINE_GUI_CONTAINER_APP", "notepad.exe"),
+  window_match: ENV.fetch("XNIX_WINE_GUI_CONTAINER_WINDOW_MATCH", "notepad.exe"),
   state_root: STATE_ROOT.to_s,
   working_dir: nil,
   timeout: "30s",
@@ -47,9 +49,9 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container|container-x-gui] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
-  parser.on("--backend BACKEND", "Execution backend: local or container") { |value| options[:backend] = value }
+  parser.on("--backend BACKEND", "Execution backend: local, container, or container-x-gui") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
   parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
   parser.on("--write-profile PATH", "Write a reusable Windows app smoke profile for the resolved settings") { |value| options[:write_profile] = value }
@@ -65,6 +67,8 @@ OptionParser.new do |parser|
   parser.on("--docker PATH", "Explicit Docker runner path for container backend") { |value| options[:docker] = value }
   parser.on("--image IMAGE", "Local Wine container image for container backend") { |value| options[:image] = value }
   parser.on("--platform PLATFORM", "Container platform for container backend") { |value| options[:platform] = value }
+  parser.on("--gui-app APP", "Windows GUI app available inside the Wine container for container-x-gui backend") { |value| options[:gui_app] = value }
+  parser.on("--window-match TEXT", "Case-insensitive X window match text for container-x-gui backend") { |value| options[:window_match] = value }
   parser.on("--state-root PATH", "Isolated Runtime state root") { |value| options[:state_root] = value }
   parser.on("--working-dir PATH", "Working directory for the compatibility runner; defaults to the executable directory") { |value| options[:working_dir] = value }
   parser.on("--timeout DURATION", "Execution timeout") { |value| options[:timeout] = value }
@@ -108,7 +112,7 @@ unless %w[text json markdown].include?(options[:format])
   warn "FAIL: unsupported output format #{options[:format]}"
   exit 1
 end
-unless %w[local container].include?(options[:backend])
+unless %w[local container container-x-gui].include?(options[:backend])
   warn "FAIL: unsupported backend #{options[:backend]}"
   exit 1
 end
@@ -163,7 +167,7 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "profile_preflight_next_action" => "",
     "profile_preflight_payload" => nil,
     "preflight_only" => false,
-    "user_executable_supplied" => executable_source != "fixture",
+    "user_executable_supplied" => !%w[fixture container-builtin-gui-app].include?(executable_source),
     "fixture_built" => false,
     "runner_diagnostics_invoked" => false,
     "smoke_invoked" => false,
@@ -206,9 +210,15 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "skip_reason" => "",
     "runner_diagnostics_payload" => nil,
     "container_smoke_invoked" => false,
+    "container_x_gui_smoke_invoked" => false,
     "container_image" => image,
     "container_platform" => platform,
     "container_image_available" => false,
+    "container_gui_app" => "",
+    "container_window_match" => "",
+    "x_server_started" => false,
+    "x_window_observed" => false,
+    "x_window_evidence_summary" => "",
     "container_payload" => nil,
     "runtime_payload" => nil
   }
@@ -252,7 +262,12 @@ def emit_report(report)
     end
     puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
     puts "- Container smoke invoked: #{report.fetch("container_smoke_invoked")}"
+    puts "- Container X GUI smoke invoked: #{report.fetch("container_x_gui_smoke_invoked")}"
     puts "- Container image available: #{report.fetch("container_image_available")}"
+    puts "- Container GUI app: #{report.fetch("container_gui_app")}" unless report.fetch("container_gui_app").empty?
+    puts "- X server started: #{report.fetch("x_server_started")}"
+    puts "- X window observed: #{report.fetch("x_window_observed")}"
+    puts "- X window evidence summary: #{report.fetch("x_window_evidence_summary")}" unless report.fetch("x_window_evidence_summary").empty?
     puts "- Runner available: #{report.fetch("runner_available")}"
     puts "- Wine bootstrap attempted: #{report.fetch("wine_bootstrap_attempted")}"
     puts "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
@@ -282,7 +297,7 @@ end
 
 profile_supplied = !options[:profile].to_s.strip.empty?
 executable_source = if options[:exe].to_s.strip.empty?
-                      "fixture"
+                      options.fetch(:backend) == "container-x-gui" ? "container-builtin-gui-app" : "fixture"
                     elsif profile_supplied
                       "profile"
                     else
@@ -306,7 +321,7 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 
 selected_exe_path = options[:exe]
-if executable_source == "fixture"
+if executable_source == "fixture" && options.fetch(:backend) != "container-x-gui"
   FileUtils.rm_f(EXE_PATH)
   build_stdout, build_stderr, build_status = run_command(
     {
@@ -459,6 +474,81 @@ if profile_supplied
     report["status"] = "blocked"
     report["failure_reason"] = preflight_payload.fetch("failure_reason", "Windows app profile preflight blocked")
     warn "FAIL: Windows app profile preflight blocked" if options.fetch(:format) == "text"
+    finish(report, 1)
+  end
+end
+
+if options.fetch(:backend) == "container-x-gui"
+  container_command = [
+    "go", "run", "./cmd/xnix-runtime-go", "windows-app-container-x-gui-smoke",
+    "--app", options.fetch(:gui_app),
+    "--window-match", options.fetch(:window_match),
+    "--image", options.fetch(:image),
+    "--platform", options.fetch(:platform),
+    "--timeout", options.fetch(:timeout)
+  ]
+  container_command.concat(["--docker", options.fetch(:docker)]) unless options[:docker].to_s.strip.empty?
+
+  container_stdout, container_stderr, container_status = run_command(go_env, *container_command)
+  report["container_x_gui_smoke_invoked"] = true
+  report["container_smoke_invoked"] = true
+  report["smoke_invoked"] = true
+
+  unless container_status.zero?
+    report["failure_reason"] = "Windows app container X GUI smoke command failed"
+    if options.fetch(:format) == "text"
+      warn container_stdout unless container_stdout.empty?
+      warn container_stderr unless container_stderr.empty?
+      warn "FAIL: Windows app container X GUI smoke command failed"
+    end
+    finish(report, 1)
+  end
+
+  payload = JSON.parse(container_stdout)
+  report["container_payload"] = payload
+  report["runtime_payload"] = payload
+  report["status"] = payload.fetch("status")
+  report["success_mode"] = "startup-window"
+  report["runner_available"] = payload.fetch("runner_available", false)
+  report["container_image"] = payload.fetch("container_image", options.fetch(:image))
+  report["container_platform"] = payload.fetch("container_platform", options.fetch(:platform))
+  report["container_image_available"] = payload.fetch("image_available", false)
+  report["container_gui_app"] = payload.fetch("application_name", options.fetch(:gui_app))
+  report["container_window_match"] = payload.fetch("window_match", options.fetch(:window_match))
+  report["x_server_started"] = payload.fetch("x_server_started", false)
+  report["x_window_observed"] = payload.fetch("x_window_observed", false)
+  report["startup_window_observed"] = payload.fetch("x_window_observed", false)
+  report["x_window_evidence_summary"] = payload.fetch("window_evidence_summary", "")
+  report["kde_safe_output_summary"] = payload.fetch("window_evidence_summary", "")
+  report["wine_bootstrap_attempted"] = payload.fetch("wine_bootstrap_attempted", false)
+  report["wine_bootstrap_succeeded"] = payload.fetch("status") == "passed" && payload.fetch("wine_bootstrap_attempted", false)
+  report["host_root_modified"] = payload.fetch("host_root_modified", false)
+  report["privileged_container_required"] = payload.fetch("privileged_container_required", false)
+  report["host_networking_required"] = payload.fetch("host_networking_required", false)
+  report["docker_socket_mounted"] = payload.fetch("docker_socket_mounted", false)
+  report["broad_host_mount_required"] = payload.fetch("broad_host_mount_required", false)
+  report["docker_executed"] = payload.fetch("runner_available", false)
+  report["failure_reason"] = payload.fetch("failure_reason", "")
+  report["skip_reason"] = payload.fetch("skip_reason", "")
+
+  case payload.fetch("status")
+  when "passed"
+    if payload.fetch("x_window_observed", false)
+      puts "PASS: containerized Windows X GUI smoke" if options.fetch(:format) == "text"
+      finish(report, 0)
+    end
+    report["failure_reason"] = "Containerized Windows X GUI smoke window missing"
+    warn "FAIL: containerized Windows X GUI smoke window missing" if options.fetch(:format) == "text"
+    finish(report, 1)
+  when "skipped"
+    puts "SKIP: containerized Windows X GUI smoke (#{payload.fetch("skip_reason")})" if options.fetch(:format) == "text"
+    finish(report, 0)
+  else
+    if options.fetch(:format) == "text"
+      warn container_stdout
+      warn container_stderr unless container_stderr.empty?
+      warn "FAIL: containerized Windows X GUI smoke"
+    end
     finish(report, 1)
   end
 end

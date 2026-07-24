@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc105] - 2026-07-25
+
+### Added
+
+- Added `container-x-gui` support to `scripts/winapp_smoke.rb`, forwarding to the Go Runtime `windows-app-container-x-gui-smoke` command and reporting Xvfb/X window evidence.
+- Added the `ruby scripts/container.rb winapp-container-x-gui-smoke` entrypoint for running the real Windows GUI smoke through the constrained project container harness.
+
 ## [0.2.640-rc104] - 2026-07-25
 
 ### Added

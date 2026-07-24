@@ -28,6 +28,7 @@ runtime_owner_candidate_command = container.runtime_owner_candidate_smoke_comman
 kde_center_dbus_command = container.kde_center_dbus_smoke_command
 known_winapp_fetch_command = container.known_winapp_fetch_command
 known_winapp_guest_command = container.known_winapp_guest_wine_smoke_command
+winapp_container_x_gui_command = container.winapp_container_x_gui_smoke_command
 staged_launcher_dispatch_command = container.staged_launcher_dispatch_smoke_command
 runtime_status_owner_service_session_bus_command = container.runtime_status_owner_service_session_bus_smoke_command
 kde_controlled_launch_action_smoke_command = container.kde_controlled_launch_action_smoke_command
@@ -115,6 +116,16 @@ assert(!known_guest_mount.include?("type=bind"), "known Windows app guest smoke 
 assert(!known_winapp_guest_command.include?("--privileged"), "known Windows app guest smoke must not be privileged")
 assert(!known_winapp_guest_command.any? { |argument| argument.include?("docker.sock") }, "known Windows app guest smoke must not mount the Docker socket")
 assert(known_winapp_guest_command.last(2) == ["ruby", "scripts/known_winapp_guest_wine_smoke.rb"], "known Windows app guest smoke must run the QEMU Wine harness")
+
+assert(winapp_container_x_gui_command.fetch(winapp_container_x_gui_command.index("--network") + 1) == "none", "Windows app container X GUI smoke must run without container networking")
+assert(winapp_container_x_gui_command.include?("--read-only"), "Windows app container X GUI smoke must keep the container root read-only")
+assert(winapp_container_x_gui_command.include?("--mount"), "Windows app container X GUI smoke must mount its managed cache volume")
+winapp_container_x_gui_mount = winapp_container_x_gui_command.fetch(winapp_container_x_gui_command.index("--mount") + 1)
+assert(winapp_container_x_gui_mount == expected_source_mount, "Windows app container X GUI smoke must use the managed source cache volume")
+assert(!winapp_container_x_gui_mount.include?("type=bind"), "Windows app container X GUI smoke must not bind mount a host directory")
+assert(!winapp_container_x_gui_command.include?("--privileged"), "Windows app container X GUI smoke must not be privileged")
+assert(!winapp_container_x_gui_command.any? { |argument| argument.include?("docker.sock") }, "Windows app container X GUI smoke must not mount the Docker socket")
+assert(winapp_container_x_gui_command.last(4) == ["ruby", "scripts/winapp_smoke.rb", "--backend", "container-x-gui"], "Windows app container X GUI smoke must run through the real GUI Windows app harness")
 
 assert(staged_launcher_dispatch_command.fetch(staged_launcher_dispatch_command.index("--network") + 1) == "none", "staged launcher dispatch smoke must run without container networking")
 assert(staged_launcher_dispatch_command.include?("--read-only"), "staged launcher dispatch smoke must keep the container root read-only")

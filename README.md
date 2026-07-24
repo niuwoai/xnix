@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc104`.
+The project is currently at `v0.2.640-rc105`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc104`.
 
 ## Current Checkpoint
 
-v0.2.640-rc104 adds `xnix-runtime-go windows-app-container-x-gui-smoke`, a restricted Docker fallback that starts Wine on an Xvfb desktop and verifies a real Windows GUI window with `xwininfo`. This gives the project a repeatable local `notepad.exe`-style GUI proof when q4 is unavailable, while the q4/QEMU/Wine guest lane remains the stricter product-grade run.
+v0.2.640-rc105 promotes the local real GUI proof into maintained smoke entrypoints. `scripts/winapp_smoke.rb --backend container-x-gui` now produces JSON/Markdown evidence for Xvfb startup, Wine bootstrap, and `x_window_observed`, while `ruby scripts/container.rb winapp-container-x-gui-smoke` exposes the path through the constrained project container harness.
+
+The previous v0.2.640-rc104 checkpoint added `xnix-runtime-go windows-app-container-x-gui-smoke`, a restricted Docker fallback that starts Wine on an Xvfb desktop and verifies a real Windows GUI window with `xwininfo`. This gives the project a repeatable local `notepad.exe`-style GUI proof when q4 is unavailable, while the q4/QEMU/Wine guest lane remains the stricter product-grade run.
 
 The previous v0.2.640-rc103 checkpoint fixed desktop activation staging for launcher-only known GUI apps such as Mines. The Runtime now treats empty MIME/file-association data as not applicable, while still staging the normal KDE launcher files, manifest, managed-launcher artifact, and activation receipt needed for a desktop entry.
 

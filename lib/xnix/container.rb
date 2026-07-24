@@ -85,6 +85,10 @@ module Xnix
       tools_cache_run_command(["ruby", "scripts/known_winapp_guest_wine_smoke.rb"])
     end
 
+    def winapp_container_x_gui_smoke_command
+      tools_cache_run_command(["ruby", "scripts/winapp_smoke.rb", "--backend", "container-x-gui"])
+    end
+
     def staged_launcher_dispatch_smoke_command
       tools_cache_run_command(["ruby", "scripts/staged_launcher_dispatch_smoke.rb"])
     end

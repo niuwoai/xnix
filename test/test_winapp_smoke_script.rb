@@ -306,6 +306,42 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       exit 0
     end
 
+    if args[0] == "run" && args.include?("windows-app-container-x-gui-smoke")
+      image = args[args.index("--image") + 1]
+      platform = args[args.index("--platform") + 1]
+      app = args[args.index("--app") + 1]
+      window_match = args[args.index("--window-match") + 1]
+      payload = {
+        "schema_version" => "xnix.runtime.windows_app_container_x_gui_smoke.v1",
+        "request_type" => "windows-app-container-x-gui-smoke",
+        "status" => "passed",
+        "application_name" => app,
+        "window_match" => window_match,
+        "container_image" => image,
+        "container_platform" => platform,
+        "container_state_mode" => "tmpfs",
+        "pull_policy" => "never",
+        "network_mode" => "none",
+        "desktop_display" => "Xvfb",
+        "x_server_started" => true,
+        "wine_bootstrap_attempted" => true,
+        "runner_available" => true,
+        "image_available" => true,
+        "x_window_observed" => true,
+        "window_evidence_summary" => "0x800001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
+        "exit_code" => 0,
+        "duration_millis" => 3,
+        "host_root_modified" => false,
+        "privileged_container_required" => false,
+        "host_networking_required" => false,
+        "docker_socket_mounted" => false,
+        "broad_host_mount_required" => false,
+        "host_mount_count" => 0
+      }
+      puts JSON.pretty_generate(payload)
+      exit 0
+    end
+
     warn "unexpected fake go invocation: #{args.join(" ")}"
     exit 2
   RUBY
@@ -629,4 +665,32 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(container_report.fetch("wine_bootstrap_succeeded"), "container report must expose bootstrap success")
   assert(container_report.fetch("container_payload").fetch("request_type") == "windows-app-container-run-smoke", "container report must embed container payload")
   assert(!container_stdout.include?(stale_fixture_output.to_s), "container report must not leak fixture executable host path")
+
+  container_x_gui_stdout, container_x_gui_stderr, container_x_gui_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--backend", "container-x-gui",
+    "--image", "local/wine-x-gui:test",
+    "--platform", "linux/arm64",
+    "--gui-app", "notepad.exe",
+    "--window-match", "notepad.exe"
+  )
+  assert(container_x_gui_status.success?, "winapp smoke container X GUI backend JSON report must succeed: #{container_x_gui_stderr}")
+  container_x_gui_report = JSON.parse(container_x_gui_stdout)
+  assert(container_x_gui_report.fetch("backend") == "container-x-gui", "container X GUI report must record backend")
+  assert(container_x_gui_report.fetch("executable_source") == "container-builtin-gui-app", "container X GUI report must not claim the console fixture")
+  assert(!container_x_gui_report.fetch("user_executable_supplied"), "container X GUI report must not claim a user-supplied executable")
+  assert(container_x_gui_report.fetch("success_mode") == "startup-window", "container X GUI report must use startup-window success mode")
+  assert(container_x_gui_report.fetch("container_smoke_invoked"), "container X GUI report must record container smoke invocation")
+  assert(container_x_gui_report.fetch("container_x_gui_smoke_invoked"), "container X GUI report must record X GUI invocation")
+  assert(!container_x_gui_report.fetch("fixture_built"), "container X GUI report must not build the console fixture")
+  assert(container_x_gui_report.fetch("container_image") == "local/wine-x-gui:test", "container X GUI report must preserve image")
+  assert(container_x_gui_report.fetch("container_platform") == "linux/arm64", "container X GUI report must preserve platform")
+  assert(container_x_gui_report.fetch("container_gui_app") == "notepad.exe", "container X GUI report must preserve app")
+  assert(container_x_gui_report.fetch("x_server_started"), "container X GUI report must expose X server start")
+  assert(container_x_gui_report.fetch("x_window_observed"), "container X GUI report must expose observed X window")
+  assert(container_x_gui_report.fetch("startup_window_observed"), "container X GUI report must map X observation to startup window evidence")
+  assert(container_x_gui_report.fetch("container_payload").fetch("request_type") == "windows-app-container-x-gui-smoke", "container X GUI report must embed Runtime payload")
+  assert(!container_x_gui_stdout.include?(stale_fixture_output.to_s), "container X GUI report must not leak fixture executable host path")
 end
