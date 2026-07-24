@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc75`.
+The project is currently at `v0.2.640-rc79`.
 
 ## Product Direction
 
@@ -14,7 +14,13 @@ The project is currently at `v0.2.640-rc75`.
 
 ## Current Checkpoint
 
-v0.2.640-rc75 moves the Wine GUI smoke core into Go. `xnix-runtime-go windows-app-guest-wine-gui-smoke` now owns guest `wineboot`, GUI app launch, host `xwininfo` observation, and KDE-safe evidence, while `scripts/wine_guest_gui_smoke.rb` remains the Xvfb/QEMU harness. The remote q4 GUI harness now builds the current Go Runtime before running the smoke so it does not depend on stale binaries.
+v0.2.640-rc79 carries real Windows GUI evidence into the KDE shell package. The Compatibility Center plasmoid now has a read-only GUI evidence card entry that points KDE surfaces at `kde-center-page-preview`, `known_app_gui_evidence_count`, and `known_app_gui_evidence_cards`, while keeping launch, backend startup, repair, snapshot, restore, and host mutation disabled.
+
+The previous v0.2.640-rc78 checkpoint connected the real Windows GUI smoke lane to product-facing Runtime read models. `xnix-runtime-go gui-smoke-evidence-preview --gui-smoke-report FILE` consumes executed Wine guest GUI smoke JSON, verifies Go-owned QEMU/Wine/X11 evidence, and emits KDE-safe GUI run evidence for Compatibility Center and KDE Center previews.
+
+The previous v0.2.640-rc77 checkpoint turned the guest Wine GUI smoke from an in-guest-only launcher into a repeatable local-artifact delivery path. `xnix-runtime-go windows-app-guest-wine-gui-smoke --executable FILE.exe` validates a local Windows executable, copies it into the QEMU guest over loopback SCP, launches the copied guest path with Wine on the X display, and observes the resulting X window.
+
+The previous v0.2.640-rc75 checkpoint moved the Wine GUI smoke core into Go. `xnix-runtime-go windows-app-guest-wine-gui-smoke` owns guest `wineboot`, GUI app launch, host `xwininfo` observation, and KDE-safe evidence, while `scripts/wine_guest_gui_smoke.rb` remains the Xvfb/QEMU harness. The remote q4 GUI harness builds the current Go Runtime before running the smoke so it does not depend on stale binaries.
 
 The previous v0.2.640-rc74 checkpoint made the q4 Wine GUI lane reproducible from the repository. `scripts/remote_wine_guest_gui_smoke.rb --execute` syncs the checkout to a managed `/home/xnix-*` source root, runs `scripts/wine_guest_gui_smoke.rb` remotely against the q4 Wine guest kernel, and persists JSON evidence under the q4 run-materials state directory. The plan-only mode records that the pass condition requires a rebuilt Wine guest with X11 support.
 
@@ -76,6 +82,7 @@ ruby -Ilib test/test_kde_controlled_launch_action_smoke_script.rb
 ruby -Ilib test/test_desktop_trigger_request_preflight_smoke_script.rb
 ruby -Ilib test/test_wine_guest_gui_smoke_script.rb
 ruby -Ilib test/test_remote_wine_guest_gui_smoke_script.rb
+ruby -Ilib test/test_kde_compatibility_center_plasmoid.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb
 ruby scripts/desktop_trigger_request_preflight_smoke.rb --format json
 ruby -Ilib test/test_full_smoke_script.rb
@@ -86,4 +93,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc75 is a targeted follow-up and does not reset the next full-checkpoint cadence.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc79 is a targeted follow-up and does not reset the next full-checkpoint cadence.

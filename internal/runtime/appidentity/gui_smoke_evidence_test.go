@@ -9,7 +9,7 @@ func TestPreviewGUISmokeEvidenceConsumesPassedMessageBoxReport(t *testing.T) {
 	preview, err := PreviewGUISmokeEvidenceJSON([]byte(guiSmokeEvidenceFixture(true)), GUISmokeEvidencePreviewRequest{
 		AppID:       "org.xnix.fixture.messagebox",
 		DisplayName: "Xnix MessageBox",
-		AppVersion:  "0.2.640-rc77-fixture",
+		AppVersion:  "fixture-version",
 	})
 	if err != nil {
 		t.Fatalf("PreviewGUISmokeEvidenceJSON returned error: %v", err)
@@ -24,7 +24,7 @@ func TestPreviewGUISmokeEvidenceConsumesPassedMessageBoxReport(t *testing.T) {
 		preview.ReportPathExposed ||
 		preview.AppID != "org.xnix.fixture.messagebox" ||
 		preview.DisplayName != "Xnix MessageBox" ||
-		preview.AppVersion != "0.2.640-rc77-fixture" ||
+		preview.AppVersion != "fixture-version" ||
 		preview.GUIAppName != "xnix-messagebox-smoke.exe" ||
 		!preview.LocalGUIExecutableConfigured ||
 		!preview.ExecutableCopied ||
@@ -103,7 +103,7 @@ func guiSmokeEvidenceFixture(windowObserved bool) string {
 		windowObservedValue = "false"
 	}
 	return `{
-  "version": "0.2.640-rc77",
+  "version": "version-under-test",
   "schema_version": "xnix.scripts.wine_guest_gui_smoke.v1",
   "request_type": "wine-guest-gui-smoke",
   "status": "passed",

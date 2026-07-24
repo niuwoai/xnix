@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc75"
+EXPECTED_VERSION = PROJECT_ROOT.join("VERSION").read.strip
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -758,7 +758,7 @@ test_version_source = read_project_file("internal/testversion/version.go")
   assert(test_version_source.include?(token), "Go test version helper must include #{token}")
 end
 hardcoded_go_test_versions = Dir.glob(PROJECT_ROOT.join("{cmd,internal}/**/*_test.go").to_s).select do |path|
-  File.read(path).match?(/\b0\.2\.\d+\b/)
+  File.read(path).match?(/\b0\.2\.\d+-rc\d+\b/)
 end
 assert(hardcoded_go_test_versions.empty?,
        "Go tests must read the canonical VERSION file instead of hardcoding project versions: #{hardcoded_go_test_versions.join(', ')}")

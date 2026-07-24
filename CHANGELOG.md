@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc79] - 2026-07-25
+
+### Added
+
+- Added a KDE Compatibility Center plasmoid GUI evidence card entry that names the `known_app_gui_evidence_count` and `known_app_gui_evidence_cards` read-model fields for real Windows GUI smoke evidence while keeping desktop actions read-only.
+
+### Changed
+
+- Updated the KDE Compatibility Center plasmoid metadata version to match the Runtime version.
+- Changed the layout verifier to read the expected version from `VERSION` so package metadata checks stay aligned after each small version bump.
+- Updated the Claude collaboration index version to match the Runtime and KDE package version.
+- Updated the C Runtime core version define to match the Runtime and KDE package version.
+
 ## [0.2.640-rc78] - 2026-07-25
 
 ### Added

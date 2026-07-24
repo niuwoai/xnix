@@ -202,7 +202,7 @@ func TestGUISmokeEvidencePreviewCommandConsumesMessageBoxReport(t *testing.T) {
 		"--gui-smoke-report", reportPath,
 		"--app-id", "org.xnix.fixture.messagebox",
 		"--display-name", "Xnix MessageBox",
-		"--app-version", "0.2.640-rc77-fixture",
+		"--app-version", "fixture-version",
 	}, &output); err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
@@ -414,7 +414,7 @@ func knownAppMatrixEvidenceCLIFixture() string {
 
 func guiSmokeEvidenceCLIFixture() string {
 	return `{
-  "version": "0.2.640-rc77",
+  "version": "version-under-test",
   "schema_version": "xnix.scripts.wine_guest_gui_smoke.v1",
   "request_type": "wine-guest-gui-smoke",
   "status": "passed",
@@ -423,8 +423,8 @@ func guiSmokeEvidenceCLIFixture() string {
   "gui_app_name": "xnix-messagebox-smoke.exe",
   "local_gui_executable_configured": true,
   "runtime_go_owned_gui_smoke": true,
-  "state_root": "/home/xnix-run-materials/state/wine-gui-messagebox-0.2.640-rc77-v2",
-  "kernel_image": "/home/xnix-build/xnix-wine-i386-output-gui-0.2.640-rc75/images/bzImage",
+  "state_root": "/home/xnix-run-materials/state/wine-gui-messagebox-version-under-test",
+  "kernel_image": "/home/xnix-build/xnix-wine-i386-output-gui-version-under-test/images/bzImage",
   "host_root_modified": false,
   "privileged_container_required": false,
   "host_networking_required": false,
