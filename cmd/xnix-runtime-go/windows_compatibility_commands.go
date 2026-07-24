@@ -144,6 +144,30 @@ func runWindowsAppRunnerDiagnostics(args []string, stdout io.Writer) error {
 	return encoder.Encode(result)
 }
 
+func runWindowsAppSmokeProfilePreflight(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet("windows-app-smoke-profile-preflight", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	var profilePath string
+	flags.StringVar(&profilePath, "profile", "", "Windows app smoke profile JSON path")
+
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", "windows-app-smoke-profile-preflight")
+	}
+
+	result, err := winapp.PreflightSmokeProfile(profilePath)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(result)
+}
+
 func runWindowsAppContainerRunSmoke(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet("windows-app-container-run-smoke", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)

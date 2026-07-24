@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc40
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc41
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -31,6 +31,16 @@ Profile fields:
 | `expected_marker` | Strong marker proof for console fixtures | Marker value |
 | `success_mode` | `marker`, `exit-code`, or `startup-window` | Mode only |
 | `redact_output` | Omit raw stdout and stderr from report payloads | Boolean |
+
+## Preflight
+
+Validate the profile before launch:
+
+```text
+go run ./cmd/xnix-runtime-go windows-app-smoke-profile-preflight --profile .local/xnix/winapp-smoke/my-app.profile.json
+```
+
+Preflight checks the schema, executable file, working directory, state-root setting, success mode, runner argument count, app argument count, and runner diagnostics. It does not start Wine or the Windows application.
 
 ## Local Smoke
 

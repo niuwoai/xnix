@@ -32,6 +32,7 @@ assert(template.fetch("arguments").is_a?(Array), "profile template app arguments
 
 [
   "docs/examples/windows-app-smoke-profile.template.json",
+  "windows-app-smoke-profile-preflight",
   "ruby scripts/winapp_smoke.rb --format json --profile",
   "go run ./cmd/xnix-runtime-go windows-app-run-smoke --profile",
   "profile_supplied",

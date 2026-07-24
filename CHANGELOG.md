@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc41] - 2026-07-24
+
+### Added
+
+- Added `windows-app-smoke-profile-preflight --profile <json>` to validate reusable real Windows app smoke profiles before execution.
+- Added profile preflight tests proving safe readiness output, runner diagnostics integration, path redaction, and no Wine/Docker/QEMU execution.
+
 ## [0.2.640-rc40] - 2026-07-24
 
 ### Added

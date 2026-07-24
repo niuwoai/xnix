@@ -4,7 +4,7 @@
 require "pathname"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
-EXPECTED_VERSION = "0.2.640-rc40"
+EXPECTED_VERSION = "0.2.640-rc41"
 REQUIRED_FILES = %w[
   .dockerignore
   Dockerfile
@@ -247,6 +247,8 @@ REQUIRED_FILES = %w[
   internal/runtime/winapp/smoke_test.go
   internal/runtime/winapp/profile.go
   internal/runtime/winapp/profile_test.go
+  internal/runtime/winapp/profile_preflight.go
+  internal/runtime/winapp/profile_preflight_test.go
   internal/runtime/winapp/container_smoke.go
   internal/runtime/winapp/container_smoke_test.go
   internal/runtime/winapp/guest_smoke.go
@@ -824,16 +826,16 @@ assert(windows_workstreams_cli.include?("windows-compatibility-workstreams-previ
 assert(windows_workstreams_cli.include?("NewWindowsCompatibilityWorkstreamsPreview"),
        "Windows compatibility workstreams CLI must use the Go Runtime read model")
 
-windows_app_smoke_go = read_project_file("internal/runtime/winapp/smoke.go") + read_project_file("internal/runtime/winapp/profile.go")
-%w[xnix.runtime.windows_app_smoke.v1 xnix.runtime.windows_app_runner_diagnostics.v1 xnix.runtime.windows_app_smoke_profile.v1 windows-app-run-smoke windows-app-runner-diagnostics XNIX_WINAPP_SMOKE_OK XNIX_WINDOWS_RUNNER WINEPREFIX WINEARCH WINEDEBUG WINEDLLOVERRIDES wineboot SuccessModeMarker SuccessModeExitCode SuccessModeStartupWindow SmokeProfile LoadSmokeProfile success_mode startup_window_observed WorkingDirectoryModeExecutable WorkingDirectoryModeOperator working_directory_mode resolveWorkingDirectory WineBootstrapAttempted WineBootstrapSucceeded HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired RawOutputRedacted KDESafeOutputSummary RunnerArgumentCount RunnerCommandHints RunnerBottle runnerInvocationArguments bootstrapArgs crossover-system-wine whisky-user-wine windows-compatibility-layer validateExecutable resolveRunner RunnerDiagnostics].each do |token|
+windows_app_smoke_go = read_project_file("internal/runtime/winapp/smoke.go") + read_project_file("internal/runtime/winapp/profile.go") + read_project_file("internal/runtime/winapp/profile_preflight.go")
+%w[xnix.runtime.windows_app_smoke.v1 xnix.runtime.windows_app_runner_diagnostics.v1 xnix.runtime.windows_app_smoke_profile.v1 xnix.runtime.windows_app_smoke_profile_preflight.v1 windows-app-run-smoke windows-app-runner-diagnostics windows-app-smoke-profile-preflight XNIX_WINAPP_SMOKE_OK XNIX_WINDOWS_RUNNER WINEPREFIX WINEARCH WINEDEBUG WINEDLLOVERRIDES wineboot SuccessModeMarker SuccessModeExitCode SuccessModeStartupWindow SmokeProfile LoadSmokeProfile PreflightSmokeProfile success_mode startup_window_observed WorkingDirectoryModeExecutable WorkingDirectoryModeOperator working_directory_mode resolveWorkingDirectory WineBootstrapAttempted WineBootstrapSucceeded HostRootModified PrivilegedContainerRequired HostNetworkingRequired DockerSocketMounted BroadHostMountRequired RawOutputRedacted KDESafeOutputSummary RunnerArgumentCount RunnerCommandHints RunnerBottle runnerInvocationArguments bootstrapArgs crossover-system-wine whisky-user-wine windows-compatibility-layer validateExecutable resolveRunner RunnerDiagnostics].each do |token|
   assert(windows_app_smoke_go.include?(token), "Go Windows app smoke runner must include #{token}")
 end
 windows_app_smoke_cli = read_project_file("cmd/xnix-runtime-go/windows_compatibility_commands.go")
-%w[windows-app-run-smoke windows-app-runner-diagnostics RunSmoke RunnerDiagnostics exe profile state-root working-dir runner runner-bottle runner-arg timeout expected-marker success-mode redact-output].each do |token|
+%w[windows-app-run-smoke windows-app-runner-diagnostics windows-app-smoke-profile-preflight RunSmoke RunnerDiagnostics PreflightSmokeProfile exe profile state-root working-dir runner runner-bottle runner-arg timeout expected-marker success-mode redact-output].each do |token|
   assert(windows_app_smoke_cli.include?(token), "Windows app smoke CLI must include #{token}")
 end
 windows_app_smoke_test = read_project_file("cmd/xnix-runtime-go/windows_compatibility_cli_test.go")
-%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory TestWindowsAppRunSmokeCommandCanUseProfile TestWindowsAppRunSmokeCommandCanRedactRawOutput TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker XNIX_WINAPP_SMOKE_OK CUSTOM_APP_OK working_directory_mode raw_output_redacted kde_safe_output_summary host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
+%w[TestWindowsAppRunSmokeCommandUsesRuntimeRunner TestWindowsAppRunSmokeCommandCanUseOperatorWorkingDirectory TestWindowsAppRunSmokeCommandCanUseProfile TestWindowsAppSmokeProfilePreflightCommandReportsReady TestWindowsAppRunSmokeCommandCanRedactRawOutput TestWindowsAppRunSmokeCommandUsesCustomExpectedMarker XNIX_WINAPP_SMOKE_OK CUSTOM_APP_OK working_directory_mode raw_output_redacted kde_safe_output_summary host_root_modified privileged_container_required docker_socket_mounted broad_host_mount_required].each do |token|
   assert(windows_app_smoke_test.include?(token), "Windows app smoke CLI test must include #{token}")
 end
 windows_app_smoke_go_test = read_project_file("internal/runtime/winapp/smoke_test.go")
@@ -844,6 +846,10 @@ windows_app_smoke_profile_test = read_project_file("internal/runtime/winapp/prof
 %w[TestLoadSmokeProfileParsesReusableRealAppSettings TestLoadSmokeProfileRejectsUnsupportedSchema xnix.runtime.windows_app_smoke_profile.v1 APP_OK].each do |token|
   assert(windows_app_smoke_profile_test.include?(token), "Go Windows app smoke profile test must include #{token}")
 end
+windows_app_smoke_profile_preflight_test = read_project_file("internal/runtime/winapp/profile_preflight_test.go")
+%w[TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner TestPreflightSmokeProfileBlocksMissingExecutable SmokeProfilePreflightSchemaVersion ready blocked WineExecuted DockerExecuted QEMUExecuted].each do |token|
+  assert(windows_app_smoke_profile_preflight_test.include?(token), "Go Windows app smoke profile preflight test must include #{token}")
+end
 windows_app_fixture = read_project_file("test/fixtures/winapp/hello/main.go")
 assert(windows_app_fixture.include?("XNIX_WINAPP_SMOKE_OK"),
        "Windows app smoke fixture must emit the smoke marker")
@@ -852,7 +858,7 @@ windows_app_smoke_profile_template = read_project_file("docs/examples/windows-ap
   assert(windows_app_smoke_profile_template.include?(token), "Windows app smoke profile template must include #{token}")
 end
 windows_app_smoke_profile_runbook = read_project_file("docs/windows-app-smoke-profile-runbook.md")
-%w[windows-app-smoke-profile.template.json ruby\ scripts/winapp_smoke.rb\ --format\ json\ --profile go\ run\ ./cmd/xnix-runtime-go\ windows-app-run-smoke\ --profile profile_supplied working_directory_mode runner_argument_count startup-window].each do |token|
+%w[windows-app-smoke-profile.template.json windows-app-smoke-profile-preflight ruby\ scripts/winapp_smoke.rb\ --format\ json\ --profile go\ run\ ./cmd/xnix-runtime-go\ windows-app-run-smoke\ --profile profile_supplied working_directory_mode runner_argument_count startup-window].each do |token|
   assert(windows_app_smoke_profile_runbook.include?(token.gsub("\\ ", " ")), "Windows app smoke profile runbook must include #{token}")
 end
 windows_app_smoke_script = read_project_file("scripts/winapp_smoke.rb")

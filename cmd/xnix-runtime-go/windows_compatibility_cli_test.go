@@ -286,6 +286,77 @@ func TestWindowsAppRunSmokeCommandCanUseProfile(t *testing.T) {
 	}
 }
 
+func TestWindowsAppSmokeProfilePreflightCommandReportsReady(t *testing.T) {
+	tempDir := t.TempDir()
+	exePath := filepath.Join(tempDir, "profile-app.exe")
+	if err := os.WriteFile(exePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	workingDir := filepath.Join(tempDir, "profile-cwd")
+	if err := os.Mkdir(workingDir, 0o700); err != nil {
+		t.Fatalf("Mkdir working dir returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	if err := os.WriteFile(runnerPath, []byte("#!/bin/sh\nexit 99\n"), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+	profilePath := filepath.Join(tempDir, "profile.json")
+	profileData, err := json.Marshal(map[string]any{
+		"schema_version":    "xnix.runtime.windows_app_smoke_profile.v1",
+		"executable_path":   exePath,
+		"state_root":        filepath.Join(tempDir, "state"),
+		"working_directory": workingDir,
+		"runner_path":       runnerPath,
+		"runner_arguments":  []string{"--private-shim"},
+		"arguments":         []string{"--profile-arg"},
+		"timeout":           "5s",
+		"expected_marker":   "CUSTOM_PROFILE_OK",
+		"success_mode":      "marker",
+	})
+	if err != nil {
+		t.Fatalf("Marshal profile returned error: %v", err)
+	}
+	if err := os.WriteFile(profilePath, profileData, 0o600); err != nil {
+		t.Fatalf("WriteFile profile returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"windows-app-smoke-profile-preflight",
+		"--profile", profilePath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_smoke_profile_preflight.v1" ||
+		payload["request_type"] != "windows-app-smoke-profile-preflight" ||
+		payload["status"] != "ready" ||
+		payload["profile_supplied"] != true ||
+		payload["executable_name"] != "profile-app.exe" ||
+		payload["working_directory_mode"] != "operator-supplied" ||
+		payload["runner_available"] != true ||
+		payload["runner_argument_count"] != float64(1) ||
+		payload["app_argument_count"] != float64(1) ||
+		payload["wine_executed"] != false ||
+		payload["docker_executed"] != false ||
+		payload["qemu_executed"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected profile preflight payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), profilePath) ||
+		strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), workingDir) ||
+		strings.Contains(output.String(), runnerPath) ||
+		strings.Contains(output.String(), "--private-shim") {
+		t.Fatalf("profile preflight output leaked private values: %s", output.String())
+	}
+}
+
 func TestWindowsAppRunSmokeCommandCanUseExitCodeSuccessMode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")

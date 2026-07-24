@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc40
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc41
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc41 checkpoint candidate adds a Go-owned local Windows app smoke profile preflight. `windows-app-smoke-profile-preflight --profile <json>` validates the profile schema, executable file, working directory, state-root configuration, success mode, runner argument counts, app argument counts, and runner diagnostics without starting Wine, Docker, QEMU, Colima, networking, package managers, or mutating the host. The preflight returns safe readiness JSON before the operator launches a real `.exe`.
 
 The v0.2.640-rc40 checkpoint candidate adds a copy-ready local Windows app smoke profile template and operator runbook. `docs/examples/windows-app-smoke-profile.template.json` gives the repeatable profile shape, and `docs/windows-app-smoke-profile-runbook.md` explains the two supported entrypoints, success modes, working-directory behavior, and redaction boundary. This turns the rc39 `--profile` support into a practical path for the next real `.exe` smoke attempt.
 
