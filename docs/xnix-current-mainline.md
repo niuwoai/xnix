@@ -1,6 +1,6 @@
 # Xnix Current Mainline
 
-> Last updated: 2026-07-24 | Baseline: v0.2.630
+> Last updated: 2026-07-24 | Baseline: v0.2.631
 
 This is the Codex-owned current mainline for Xnix. It replaces ad-hoc external-agent dispatch as the default planning source for new implementation work. Historical `claude-code-*` documents remain repository evidence, but new mainline work should use this document unless a user explicitly asks for a different handoff artifact.
 
@@ -42,7 +42,9 @@ The first KDE release line must converge on these seven user-facing entrypoints:
 
 The next Codex-owned mainline task is:
 
-Continue from v0.2.630 by turning the Go-owned D-Bus controlled-launch owner fixture helper into the next smallest production-shaped Runtime owner adapter step: keep the Ruby smoke as orchestration only, keep KDE forwarding only evidence handles, and make the owner helper's ready-path evidence usable by a real desktop-triggered managed Windows app launch lane. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+Continue from v0.2.631 by consuming the Go-owned desktop trigger fields from the D-Bus controlled-launch owner fixture in the next smallest real managed Windows app lane step. Keep Ruby as orchestration only, keep KDE forwarding only evidence handles, and move toward a real desktop-triggered staged `xnix-compat-launch` path that can run the managed 7zr smoke when prerequisites are present. Preserve Runtime ownership and Go evidence normalization, and keep raw launcher output, backend details, Docker socket mounts, broad host mounts, and host-root mutation out of user-facing output. The next formal full checkpoint is v0.2.640.
+
+The v0.2.631 checkpoint extends `known-app-runtime-status-launch-owner-fixture-record` so ready fixture output now carries the desktop trigger bridge owned by Go: `desktop_trigger_ready`, `desktop_callable_route=kde-dbus-runtime-status-action`, `desktop_callable_runtime_method=ShowRuntimeControlledLaunch`, `desktop_callable_execution_type=known-app-kde-runtime-status-launch-execution`, `desktop_dbus_method=org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, and evidence-only `owner_service_call_args=["ShowRuntimeControlledLaunch","evidence-relative-path","<relative>"]`. `dbus_controlled_launch_owner_fixture_smoke.rb` verifies those fields before calling the public D-Bus method, proving the ready-path evidence is directly usable by the desktop-triggered Runtime owner service lane without handing KDE state-root access or reconstructed receipt/session fields.
 
 The v0.2.630 checkpoint adds `known-app-runtime-status-launch-owner-fixture-record`, a Go Runtime owner helper that prepares the D-Bus controlled-launch owner fixture state behind one reusable command. The helper records launch authorization, controlled execution session, session-gated review receipt, and Runtime-status evidence handoff state when the managed known-app artifact is available, while returning a safe blocked fixture record when prerequisites are missing. `dbus_controlled_launch_owner_fixture_smoke.rb` now delegates fixture setup to that helper before invoking `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`, so Ruby no longer reconstructs the product evidence chain command by command. The targeted guards verify KDE evidence-only handoff, disabled receipt reconstruction, disabled KDE state-root access, Go-owned receipt/session evidence, hidden backend/local-path output, no Docker socket, no privileged container, no bind mount, no host networking, and no host-root mutation.
 

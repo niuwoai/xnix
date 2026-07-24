@@ -30,6 +30,10 @@ func TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandBlocksWithoutArtifa
 		payload["fixture_ready"] != false ||
 		payload["launch_authorization_receipt_id"] != "known-app-launch-authorization-7zr-26.02" ||
 		payload["launch_authorization_receipt_recorded"] != true ||
+		payload["desktop_trigger_ready"] != false ||
+		payload["owner_service_call_ready"] != false ||
+		payload["desktop_evidence_handle_forwarded"] != false ||
+		payload["runtime_owner_service_supplies_inputs"] != false ||
 		payload["kde_forwards_only_evidence_handle"] != true ||
 		payload["desktop_receipt_fields_reconstructed"] != false ||
 		payload["desktop_kde_state_root_access"] != false {

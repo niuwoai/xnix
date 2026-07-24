@@ -24,6 +24,13 @@ func TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureBlocksWithoutVerifiedArtif
 		record.LaunchAuthorizationReceiptRecorded != true {
 		t.Fatalf("blocked fixture did not preserve safe receipt evidence: %#v", record)
 	}
+	if record.DesktopTriggerReady ||
+		record.OwnerServiceCallReady ||
+		record.DesktopEvidenceHandleForwarded ||
+		record.RuntimeOwnerServiceSuppliesInputs ||
+		len(record.OwnerServiceCallArgs) != 0 {
+		t.Fatalf("blocked fixture must not expose a ready desktop trigger: %#v", record)
+	}
 	if record.StateRootPathExposed ||
 		record.EvidencePathExposed ||
 		record.ManagedLauncherPathExposed ||

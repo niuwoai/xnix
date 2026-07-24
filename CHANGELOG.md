@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.631] - 2026-07-24
+
+### Changed
+
+- Extended `known-app-runtime-status-launch-owner-fixture-record` ready output with the KDE D-Bus Runtime-status route, `ShowRuntimeControlledLaunch` method, Runtime launch execution type, desktop trigger readiness, and evidence-only owner service call arguments.
+- Updated the D-Bus controlled-launch owner fixture smoke to verify the Go-owned desktop trigger bridge before invoking `org.xnix.Compatibility1.ShowRuntimeControlledLaunch`.
+- Tightened layout and unit guards so blocked fixtures do not expose ready desktop triggers, while ready fixtures must map to `ShowRuntimeControlledLaunch evidence-relative-path <relative>`.
+
 ## [0.2.630] - 2026-07-24
 
 ### Added
