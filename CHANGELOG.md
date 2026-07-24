@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc91] - 2026-07-25
+
+### Added
+
+- Added owner-controlled GUI evidence projection fields for seed projection, owner service handoff, delegated Wine GUI source, delegated execution/window observation, and owner-managed artifact copy.
+- Added Runtime/KDE known-app evidence states for `owner-controlled-gui-qemu-wine-verified` and `validated-owner-controlled-gui-runtime-run`.
+
+### Changed
+
+- Changed GUI smoke evidence consumption to preserve owner-managed external executable copy proof through normalized Compatibility Center evidence.
+- Changed Runtime owner and KDE-status launch execution results to surface delegated managed artifact copy evidence without exposing raw backend paths or commands.
+- Verified the q4 owner-controlled MessageBox run with `owner_managed_copy_verified=true`, `owner_delegated_managed_artifact_copied=true`, `owner_delegated_controlled_session_window_observed=true`, `x_window_observed=true`, `compatibility_state=owner-controlled-gui-qemu-wine-verified`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc91-final-evidence.json`.
+
 ## [0.2.640-rc90] - 2026-07-25
 
 ### Added

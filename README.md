@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc90`.
+The project is currently at `v0.2.640-rc91`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc90`.
 
 ## Current Checkpoint
 
-v0.2.640-rc90 moves external GUI executable delivery into the owner-controlled launch path. `XNIX_RUNTIME_OWNER_GUI_EXECUTABLE` is consumed only by the Runtime owner boundary and forwarded to `xnix-compat-launch --executable`, letting the managed launcher copy the external `.exe` into the QEMU guest with SCP before starting it through the Go-owned Wine GUI smoke lane. `XNIX_RUNTIME_OWNER_GUEST_GUI_APP` remains available for already-present guest paths, but the q4 MessageBox path now proves owner-managed copy delivery.
+v0.2.640-rc91 projects owner-controlled external GUI launch evidence into the Runtime/KDE read model. `gui-smoke-evidence-preview` now verifies the owner seed projection, owner service handoff, managed launcher invocation, delegated `wine-guest-gui-smoke` source, delegated execution/window observation, and owner-managed artifact copy before marking `org.xnix.apps.messagebox` as `owner-controlled-gui-qemu-wine-verified`. Unsafe delegated host mutation, Docker socket, broad mount, raw command, backend detail, and raw path details remain closed. The q4 owner-controlled MessageBox run passed with `owner_managed_copy_verified=true`, `owner_delegated_managed_artifact_copied=true`, `owner_delegated_controlled_session_window_observed=true`, and evidence persisted at `/tmp/xnix-run-materials/state/wine-gui-messagebox-owner-0.2.640-rc91-final-evidence.json`.
+
+The previous v0.2.640-rc90 checkpoint moved external GUI executable delivery into the owner-controlled launch path. `XNIX_RUNTIME_OWNER_GUI_EXECUTABLE` is consumed only by the Runtime owner boundary and forwarded to `xnix-compat-launch --executable`, letting the managed launcher copy the external `.exe` into the QEMU guest with SCP before starting it through the Go-owned Wine GUI smoke lane. `XNIX_RUNTIME_OWNER_GUEST_GUI_APP` remains available for already-present guest paths, but the q4 MessageBox path now proves owner-managed copy delivery.
 
 The previous v0.2.640-rc89 checkpoint extended the owner-controlled GUI path from Wine's built-in Mines target to a Runtime-owner-supplied external Windows GUI executable already copied into the managed guest. `XNIX_RUNTIME_OWNER_GUEST_GUI_APP` is consumed only by the Runtime owner boundary and forwarded to `xnix-compat-launch --gui-app`, so KDE still forwards only the evidence handle while the launcher can start the controlled guest `.exe` through Wine without exposing raw paths in product JSON. `org.xnix.apps.messagebox` is now a development recipe identity for the q4 `xnix-messagebox-smoke.exe` GUI fixture.
 
@@ -110,4 +112,4 @@ gcc -std=c11 -Wall -Wextra -Werror runtime/dbus/xnix_compatd_smoke.c -o /tmp/xni
 ruby scripts/verify_layout.rb
 ```
 
-Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc90 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.
+Run full Buildroot/QEMU smoke at the configured checkpoint cadence. The current formal full checkpoint candidate is `v0.2.640-rc60`; promote to `v0.2.640` only after `ruby scripts/full_smoke.rb` passes and the promotion packet allows the promotion. v0.2.640-rc91 is a targeted follow-up after the rc80 cadence-boundary decision point; keep using targeted checks until the next explicitly approved restricted full-smoke run.

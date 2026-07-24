@@ -754,6 +754,7 @@ type knownAppKDERuntimeStatusLaunchExecutionResult struct {
 	DelegatedGuestBoundary                          string                                                      `json:"delegated_guest_boundary"`
 	DelegatedRuntimeOwnedDispatch                   bool                                                        `json:"delegated_runtime_owned_dispatch"`
 	DelegatedArtifactVerified                       bool                                                        `json:"delegated_artifact_verified"`
+	DelegatedManagedArtifactCopied                  bool                                                        `json:"delegated_managed_artifact_copied"`
 	DelegatedMarkerObserved                         bool                                                        `json:"delegated_marker_observed"`
 	DelegatedSmokePassed                            bool                                                        `json:"delegated_smoke_passed"`
 	DelegatedExecutionStarted                       bool                                                        `json:"delegated_execution_started"`
@@ -857,6 +858,7 @@ func knownAppKDERuntimeStatusLaunchExecutionResultFromOutput(plan appidentity.Kn
 		DelegatedGuestBoundary:                          stringJSONField(delegated, "guest_boundary"),
 		DelegatedRuntimeOwnedDispatch:                   boolJSONField(delegated, "runtime_owned_dispatch"),
 		DelegatedArtifactVerified:                       boolJSONField(delegated, "artifact_verified"),
+		DelegatedManagedArtifactCopied:                  boolJSONField(delegated, "managed_artifact_copied"),
 		DelegatedMarkerObserved:                         boolJSONField(delegated, "marker_observed"),
 		DelegatedSmokePassed:                            boolJSONField(delegated, "smoke_passed"),
 		DelegatedExecutionStarted:                       boolJSONField(delegated, "execution_started"),

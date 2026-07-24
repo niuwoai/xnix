@@ -516,6 +516,7 @@ begin
     report["owner_existing_managed_launcher_invoked"] = owner_action.fetch("existing_managed_launcher_invoked", false)
     report["owner_delegated_evidence_source"] = owner_action.fetch("delegated_evidence_source", "")
     report["owner_delegated_status"] = owner_action.fetch("delegated_status", "")
+    report["owner_delegated_managed_artifact_copied"] = owner_action.fetch("delegated_managed_artifact_copied", false)
     report["owner_delegated_smoke_passed"] = owner_action.fetch("delegated_smoke_passed", false)
     report["owner_delegated_execution_started"] = owner_action.fetch("delegated_execution_started", false)
     report["owner_delegated_controlled_session_window_observed"] = owner_action.fetch("delegated_controlled_session_window_observed", false)
