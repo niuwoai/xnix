@@ -68,6 +68,34 @@ func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	}
 }
 
+func TestRunSmokeDiscoversWine64OnPath(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("PATH-based shell runner fixture is not portable to Windows hosts")
+	}
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "hello.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	writeNamedFakeRunner(t, tempDir, "wine64", 0, DefaultMarker+"\n")
+	t.Setenv("PATH", tempDir)
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      filepath.Join(tempDir, "state"),
+		Timeout:        5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		!result.RunnerAvailable ||
+		!result.MarkerObserved ||
+		result.ExitCode != 0 {
+		t.Fatalf("unexpected discovered runner result: %#v", result)
+	}
+}
+
 func TestRunSmokeCanRedactRawOutputForDesktopConsumers(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")
@@ -121,11 +149,15 @@ func TestRunSmokeRejectsNonWindowsExecutable(t *testing.T) {
 }
 
 func writeFakeRunner(t *testing.T, tempDir string, exitCode int, stdout string) string {
+	return writeNamedFakeRunner(t, tempDir, "fake-runner", exitCode, stdout)
+}
+
+func writeNamedFakeRunner(t *testing.T, tempDir string, name string, exitCode int, stdout string) string {
 	t.Helper()
 	if runtime.GOOS == "windows" {
 		t.Skip("shell runner fixture is not portable to Windows hosts")
 	}
-	path := filepath.Join(tempDir, "fake-runner")
+	path := filepath.Join(tempDir, name)
 	body := "#!/bin/sh\n" +
 		"test -n \"$WINEPREFIX\" || exit 89\n" +
 		"printf '%s' '" + strings.ReplaceAll(stdout, "'", "'\\''") + "'\n" +

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc23] - 2026-07-24
+
+### Fixed
+
+- Broadened Windows app smoke runner discovery to try `wine`, `wine64`, Homebrew Wine paths, and common macOS Wine app bundle runner paths before reporting a runner-unavailable SKIP.
+- Added Runtime coverage proving the smoke can discover `wine64` from `PATH` and run the fixture through the same marker-observation path.
+
 ## [0.2.640-rc22] - 2026-07-24
 
 ### Fixed

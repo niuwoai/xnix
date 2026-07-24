@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -213,20 +214,56 @@ func validateExecutable(path string) (string, error) {
 
 func resolveRunner(path string) (string, error) {
 	if strings.TrimSpace(path) != "" {
-		absolutePath, err := filepath.Abs(path)
-		if err != nil {
-			return "", err
-		}
-		info, err := os.Stat(absolutePath)
-		if err != nil {
-			return "", err
-		}
-		if info.IsDir() {
-			return "", errors.New("runner path must be a file")
-		}
-		return absolutePath, nil
+		return validateRunnerPath(path)
 	}
-	return exec.LookPath("wine")
+	for _, candidate := range runnerCandidates() {
+		if strings.ContainsRune(candidate, os.PathSeparator) {
+			runnerPath, err := validateRunnerPath(candidate)
+			if err == nil {
+				return runnerPath, nil
+			}
+			continue
+		}
+		runnerPath, err := exec.LookPath(candidate)
+		if err == nil {
+			return runnerPath, nil
+		}
+	}
+	return "", errors.New("windows compatibility runner unavailable")
+}
+
+func runnerCandidates() []string {
+	candidates := []string{"wine", "wine64"}
+	if runtime.GOOS == "darwin" {
+		candidates = append(candidates,
+			"/opt/homebrew/bin/wine",
+			"/opt/homebrew/bin/wine64",
+			"/usr/local/bin/wine",
+			"/usr/local/bin/wine64",
+			"/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine",
+			"/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine64",
+			"/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine",
+			"/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine64",
+			"/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine",
+			"/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine64",
+		)
+	}
+	return candidates
+}
+
+func validateRunnerPath(path string) (string, error) {
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Stat(absolutePath)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir() {
+		return "", errors.New("runner path must be a file")
+	}
+	return absolutePath, nil
 }
 
 func exitCode(err error) int {
