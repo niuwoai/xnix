@@ -11,5 +11,6 @@
   "expected_marker": "XNIX_WINAPP_SMOKE_OK",
   "success_mode": "marker",
   "skip_bootstrap": false,
+  "stage_app_dir": false,
   "redact_output": true
 }

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc49] - 2026-07-24
+
+### Added
+
+- Added `--stage-app-dir` to local Windows app smoke so the Go Runtime can copy an executable's application directory into `state_root/app-workspace` before launch.
+- Added `stage_app_dir` profile support plus `application_workspace_mode`, `application_staged`, and staged file/byte-count evidence to Go Runtime, Ruby JSON, and Markdown reports.
+
 ## [0.2.640-rc48] - 2026-07-24
 
 ### Added

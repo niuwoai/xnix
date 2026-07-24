@@ -459,6 +459,55 @@ func TestRunSmokeCanSkipWineBootstrap(t *testing.T) {
 	}
 }
 
+func TestRunSmokeStagesApplicationDirectoryBeforeRunnerResolution(t *testing.T) {
+	tempDir := t.TempDir()
+	appDir := filepath.Join(tempDir, "app")
+	if err := os.Mkdir(appDir, 0o700); err != nil {
+		t.Fatalf("Mkdir app dir returned error: %v", err)
+	}
+	executablePath := filepath.Join(appDir, "hello.exe")
+	if err := os.WriteFile(executablePath, minimalPEFixture(0x8664), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	sidecarPath := filepath.Join(appDir, "sidecar.dll")
+	if err := os.WriteFile(sidecarPath, []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	stateRoot := filepath.Join(appDir, "state")
+
+	result, err := RunSmoke(context.Background(), Request{
+		ExecutablePath: executablePath,
+		StateRoot:      stateRoot,
+		RunnerPath:     filepath.Join(tempDir, "missing-runner"),
+		Timeout:        5 * time.Second,
+		StageAppDir:    true,
+	})
+	if err != nil {
+		t.Fatalf("RunSmoke returned error: %v", err)
+	}
+	if result.Status != SkippedStatus ||
+		result.RunnerAvailable ||
+		!result.ApplicationStaged ||
+		result.ApplicationWorkspaceMode != ApplicationWorkspaceModeStaged ||
+		result.WorkingDirectoryMode != WorkingDirectoryModeStaged ||
+		result.ApplicationStagedFileCount != 2 ||
+		result.ApplicationStagedBytes <= int64(len("sidecar")) ||
+		result.HostRootModified {
+		t.Fatalf("unexpected staged application result: %#v", result)
+	}
+	stagedExe := filepath.Join(stateRoot, "app-workspace", "hello.exe")
+	if _, err := os.Stat(stagedExe); err != nil {
+		t.Fatalf("expected staged executable to exist: %v", err)
+	}
+	stagedSidecar := filepath.Join(stateRoot, "app-workspace", "sidecar.dll")
+	if _, err := os.Stat(stagedSidecar); err != nil {
+		t.Fatalf("expected staged sidecar to exist: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(stateRoot, "app-workspace", "state")); !os.IsNotExist(err) {
+		t.Fatalf("managed state root must not be recursively staged: %v", err)
+	}
+}
+
 func TestRunSmokeSkipsWhenRunnerUnavailable(t *testing.T) {
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "hello.exe")

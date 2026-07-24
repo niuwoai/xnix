@@ -1,6 +1,6 @@
 # Windows App Smoke Profile Runbook
 
-> Last updated: 2026-07-24 | Current version: v0.2.640-rc48
+> Last updated: 2026-07-24 | Current version: v0.2.640-rc49
 
 This runbook is the shortest path from an existing Windows executable to repeatable Xnix smoke evidence.
 
@@ -31,6 +31,7 @@ Profile fields:
 | `expected_marker` | Strong marker proof for console fixtures | Marker value |
 | `success_mode` | `marker`, `exit-code`, or `startup-window` | Mode only |
 | `skip_bootstrap` | Optional local-runner bypass for Wine prefix bootstrap when first-run bootstrap hangs or is already complete | Boolean |
+| `stage_app_dir` | Optional copy of the application directory into the isolated Runtime state root before launch | Boolean and counts |
 | `redact_output` | Omit raw stdout and stderr from report payloads | Boolean |
 
 ## Preflight
@@ -69,6 +70,8 @@ Direct `--exe` smoke runs also validate the Windows `MZ` executable signature an
 
 When diagnosing an existing Wine prefix or a runner whose `wineboot --init` hangs, use `--skip-bootstrap` or set `skip_bootstrap: true` in a local profile. This still prepares the architecture-scoped prefix directory and launches through the managed runner environment, but it does not invoke companion `wineboot` before the app.
 
+When an app depends on sidecar DLLs, config files, or resource folders next to the executable, use `--stage-app-dir` or set `stage_app_dir: true` in a local profile. The Runtime copies the executable's directory, or the explicit `working_directory` when supplied, into `state_root/app-workspace` and launches the staged executable from that managed workspace. Reports expose only `application_workspace_mode`, `application_staged`, file counts, and byte counts, not source or staged paths.
+
 ## Choosing Success Mode
 
 - Use `marker` when the app or fixture can print `expected_marker`.
@@ -88,6 +91,8 @@ When diagnosing an existing Wine prefix or a runner whose `wineboot --init` hang
 - `wine_prefix_mode: architecture-scoped` proves the Runtime will keep win64 and win32 prefixes separate under the managed state root.
 - `wine_prefix_prepared: true` appears only after a direct smoke run creates the architecture-scoped prefix; profile preflight reports the intended mode without creating it.
 - `wine_bootstrap_skipped: true` proves the operator requested the local smoke to bypass companion `wineboot` before app execution.
+- `application_workspace_mode: staged-application-directory` proves the Runtime copied the application directory into its managed workspace before launch.
+- `application_staged: true` proves direct smoke completed that copy; profile preflight reports only the intended workspace mode.
 - `working_directory_mode: operator-supplied` proves the profile or CLI supplied an explicit working directory.
 - `runner_argument_count` proves runner argument forwarding without exposing the raw values.
 

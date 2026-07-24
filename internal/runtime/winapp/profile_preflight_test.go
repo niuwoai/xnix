@@ -35,6 +35,7 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		"expected_marker":   "APP_OK",
 		"success_mode":      SuccessModeMarker,
 		"skip_bootstrap":    true,
+		"stage_app_dir":     true,
 	})
 
 	result, err := PreflightSmokeProfile(profilePath)
@@ -54,6 +55,8 @@ func TestPreflightSmokeProfileReportsReadyWithoutExecutingRunner(t *testing.T) {
 		result.WineArchitecture != "win64" ||
 		result.WinePrefixMode != "architecture-scoped" ||
 		result.WinePrefixPrepared ||
+		result.ApplicationWorkspaceMode != ApplicationWorkspaceModeStaged ||
+		!result.StageAppDir ||
 		result.WorkingDirectoryMode != WorkingDirectoryModeOperator ||
 		!result.WorkingDirectoryValid ||
 		!result.StateRootConfigured ||

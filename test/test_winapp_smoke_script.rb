@@ -51,6 +51,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "wine_architecture" => "win64",
         "wine_prefix_mode" => "architecture-scoped",
         "wine_prefix_prepared" => false,
+        "application_workspace_mode" => profile.fetch("stage_app_dir", false) ? "staged-application-directory" : "direct-executable",
+        "stage_app_dir" => profile.fetch("stage_app_dir", false),
         "working_directory_mode" => "operator-supplied",
         "working_directory_valid" => true,
         "state_root_configured" => true,
@@ -139,6 +141,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
       startup_window_observed = success_mode == "startup-window"
       working_directory_mode = args.include?("--working-dir") ? "operator-supplied" : "executable-directory"
       bootstrap_skipped = args.include?("--skip-bootstrap")
+      app_staged = args.include?("--stage-app-dir")
       payload = {
         "schema_version" => "xnix.runtime.windows_app_smoke.v1",
         "request_type" => "windows-app-run-smoke",
@@ -162,7 +165,11 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "success_mode" => success_mode,
         "marker_observed" => marker_observed,
         "startup_window_observed" => startup_window_observed,
-        "working_directory_mode" => working_directory_mode,
+        "working_directory_mode" => app_staged ? "staged-application-workspace" : working_directory_mode,
+        "application_workspace_mode" => app_staged ? "staged-application-directory" : "direct-executable",
+        "application_staged" => app_staged,
+        "application_staged_file_count" => app_staged ? 2 : 0,
+        "application_staged_bytes" => app_staged ? 2048 : 0,
         "exit_code" => 0,
         "duration_millis" => 1,
         "stdout" => redacted ? "" : (marker_observed ? "#{marker}\\n" : "GUI app exited cleanly\\n"),
@@ -247,6 +254,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(report.fetch("status") == "passed", "JSON report must preserve passed smoke state")
   assert(report.fetch("success_mode") == "marker", "JSON report must default to marker success mode")
   assert(report.fetch("working_directory_mode") == "executable-directory", "JSON report must default to executable directory working mode")
+  assert(report.fetch("application_workspace_mode") == "direct-executable", "JSON report must default to direct executable workspace mode")
+  assert(!report.fetch("application_staged"), "JSON report must not stage applications by default")
   assert(report.fetch("backend") == "local", "JSON report must default to the local backend")
   assert(report.fetch("fixture_built"), "JSON report must record fixture build")
   assert(report.fetch("executable_format") == "pe-mz", "JSON report must preserve executable format evidence")
@@ -289,6 +298,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(markdown_stdout.include?("Profile preflight invoked: false"), "Markdown report must expose profile preflight invocation")
   assert(markdown_stdout.include?("Success mode: marker"), "Markdown report must expose success mode")
   assert(markdown_stdout.include?("Working directory mode: executable-directory"), "Markdown report must expose working directory mode")
+  assert(markdown_stdout.include?("Application workspace mode: direct-executable"), "Markdown report must expose application workspace mode")
+  assert(markdown_stdout.include?("Application staged: false"), "Markdown report must expose application staging state")
   assert(markdown_stdout.include?("Runner argument count: 0"), "Markdown report must expose runner argument count")
   assert(markdown_stdout.include?("Runner command hints:"), "Markdown report must expose runner command hints")
   assert(markdown_stdout.include?("ruby scripts/winapp_smoke.rb --exe path/to/app.exe"), "Markdown report must include safe smoke command hint")
@@ -315,6 +326,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     "--runner-arg", "--shim-mode",
     "--expected-marker", "CUSTOM_APP_OK",
     "--skip-bootstrap",
+    "--stage-app-dir",
     "--arg", "--custom-flag"
   )
   assert(custom_status.success?, "winapp smoke custom executable JSON report must succeed: #{custom_stderr}")
@@ -332,7 +344,10 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(custom_report.fetch("wine_prefix_prepared"), "custom report must preserve Wine prefix preparation state")
   assert(custom_report.fetch("marker") == "CUSTOM_APP_OK", "custom report must preserve custom marker")
   assert(custom_report.fetch("success_mode") == "marker", "custom report must preserve default success mode")
-  assert(custom_report.fetch("working_directory_mode") == "operator-supplied", "custom report must preserve working directory mode")
+  assert(custom_report.fetch("working_directory_mode") == "staged-application-workspace", "custom report must preserve staged working directory mode")
+  assert(custom_report.fetch("application_workspace_mode") == "staged-application-directory", "custom report must preserve staged workspace mode")
+  assert(custom_report.fetch("application_staged"), "custom report must preserve application staging")
+  assert(custom_report.fetch("application_staged_file_count") == 2, "custom report must preserve staged file count")
   assert(custom_report.fetch("runtime_payload").fetch("expected_marker") == "CUSTOM_APP_OK", "custom report must pass custom marker to Runtime")
   assert(custom_report.fetch("runtime_payload").fetch("executable_name") == "custom.exe", "custom report must preserve safe executable basename")
   assert(custom_report.fetch("wine_bootstrap_skipped"), "custom report must preserve bootstrap skip")
@@ -353,6 +368,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(last_invocation.include?("--runner-bottle"), "custom executable mode must forward runner bottle")
   assert(last_invocation.include?("--runner-arg"), "custom executable mode must forward runner arguments")
   assert(last_invocation.include?("--skip-bootstrap"), "custom executable mode must forward bootstrap skip")
+  assert(last_invocation.include?("--stage-app-dir"), "custom executable mode must forward application staging")
   assert(last_invocation.include?("--custom-flag"), "custom executable mode must forward app arguments")
 
   profile_path = temp_root.join("winapp-profile.json")
@@ -372,6 +388,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
         "expected_marker" => "PROFILE_APP_OK",
         "success_mode" => "marker",
         "skip_bootstrap" => true,
+        "stage_app_dir" => true,
         "timeout" => "7s"
       }
     )
@@ -396,6 +413,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("profile_preflight_payload").fetch("wine_prefix_mode") == "architecture-scoped", "profile report must preserve preflight Wine prefix mode")
   assert(!profile_report.fetch("profile_preflight_payload").fetch("wine_prefix_prepared"), "profile report must preserve preflight Wine prefix preparation state")
   assert(profile_report.fetch("profile_preflight_payload").fetch("skip_bootstrap"), "profile report must preserve preflight bootstrap skip")
+  assert(profile_report.fetch("profile_preflight_payload").fetch("stage_app_dir"), "profile report must preserve preflight application staging")
   assert(profile_report.fetch("executable_format") == "pe-mz", "profile report must preserve report-level executable format")
   assert(profile_report.fetch("windows_executable_signature_observed"), "profile report must preserve report-level Windows signature evidence")
   assert(profile_report.fetch("executable_architecture") == "x86_64", "profile report must preserve report-level executable architecture")
@@ -407,7 +425,9 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_report.fetch("user_executable_supplied"), "profile report must treat profile executables as user supplied")
   assert(!profile_report.fetch("fixture_built"), "profile report must skip fixture build")
   assert(profile_report.fetch("marker") == "PROFILE_APP_OK", "profile report must preserve profile marker")
-  assert(profile_report.fetch("working_directory_mode") == "operator-supplied", "profile report must preserve profile working directory mode")
+  assert(profile_report.fetch("working_directory_mode") == "staged-application-workspace", "profile report must preserve profile staged working directory mode")
+  assert(profile_report.fetch("application_workspace_mode") == "staged-application-directory", "profile report must preserve profile staged workspace mode")
+  assert(profile_report.fetch("application_staged"), "profile report must preserve profile application staging")
   assert(profile_report.fetch("wine_bootstrap_skipped"), "profile report must preserve profile bootstrap skip")
   assert(profile_report.fetch("runner_argument_count") == 1, "profile report must preserve profile runner argument count")
   assert(!profile_stdout.include?(profile_path.to_s), "profile report must not leak profile path")
@@ -418,6 +438,7 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(profile_invocation.include?("--runner"), "profile mode must forward profile runner")
   assert(profile_invocation.include?("--working-dir"), "profile mode must forward profile working directory")
   assert(profile_invocation.include?("--skip-bootstrap"), "profile mode must forward profile bootstrap skip")
+  assert(profile_invocation.include?("--stage-app-dir"), "profile mode must forward profile application staging")
   assert(profile_invocation.include?("--profile-flag"), "profile mode must forward profile app arguments")
 
   preflight_stdout, preflight_stderr, preflight_status = Open3.capture3(

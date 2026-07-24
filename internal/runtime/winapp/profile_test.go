@@ -22,7 +22,8 @@ func TestLoadSmokeProfileParsesReusableRealAppSettings(t *testing.T) {
   "expected_marker": "APP_OK",
   "success_mode": "marker",
   "redact_output": true,
-  "skip_bootstrap": true
+  "skip_bootstrap": true,
+  "stage_app_dir": true
 }`)
 	if err := os.WriteFile(profilePath, profile, 0o600); err != nil {
 		t.Fatalf("WriteFile profile returned error: %v", err)
@@ -41,7 +42,8 @@ func TestLoadSmokeProfileParsesReusableRealAppSettings(t *testing.T) {
 		request.ExpectedMarker != "APP_OK" ||
 		request.SuccessMode != "marker" ||
 		!request.RedactOutput ||
-		!request.SkipBootstrap {
+		!request.SkipBootstrap ||
+		!request.StageAppDir {
 		t.Fatalf("unexpected profile request: %#v", request)
 	}
 	if len(request.RunnerArguments) != 1 ||

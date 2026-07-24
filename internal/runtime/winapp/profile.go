@@ -24,6 +24,7 @@ type SmokeProfile struct {
 	SuccessMode      string   `json:"success_mode"`
 	RedactOutput     bool     `json:"redact_output"`
 	SkipBootstrap    bool     `json:"skip_bootstrap"`
+	StageAppDir      bool     `json:"stage_app_dir"`
 }
 
 func LoadSmokeProfile(path string) (Request, error) {
@@ -59,6 +60,7 @@ func LoadSmokeProfile(path string) (Request, error) {
 		SuccessMode:      profile.SuccessMode,
 		RedactOutput:     profile.RedactOutput,
 		SkipBootstrap:    profile.SkipBootstrap,
+		StageAppDir:      profile.StageAppDir,
 	}, nil
 }
 

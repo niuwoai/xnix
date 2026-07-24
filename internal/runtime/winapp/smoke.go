@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +28,9 @@ const (
 	SuccessModeStartupWindow       = "startup-window"
 	WorkingDirectoryModeExecutable = "executable-directory"
 	WorkingDirectoryModeOperator   = "operator-supplied"
+	WorkingDirectoryModeStaged     = "staged-application-workspace"
+	ApplicationWorkspaceModeDirect = "direct-executable"
+	ApplicationWorkspaceModeStaged = "staged-application-directory"
 	DefaultMarker                  = "XNIX_WINAPP_SMOKE_OK"
 )
 
@@ -43,6 +47,7 @@ type Request struct {
 	SuccessMode      string
 	RedactOutput     bool
 	SkipBootstrap    bool
+	StageAppDir      bool
 }
 
 type Result struct {
@@ -69,6 +74,10 @@ type Result struct {
 	MarkerObserved              bool   `json:"marker_observed"`
 	StartupWindowObserved       bool   `json:"startup_window_observed"`
 	WorkingDirectoryMode        string `json:"working_directory_mode"`
+	ApplicationWorkspaceMode    string `json:"application_workspace_mode"`
+	ApplicationStaged           bool   `json:"application_staged"`
+	ApplicationStagedFileCount  int    `json:"application_staged_file_count"`
+	ApplicationStagedBytes      int64  `json:"application_staged_bytes"`
 	ExitCode                    int    `json:"exit_code"`
 	DurationMillis              int64  `json:"duration_millis"`
 	Stdout                      string `json:"stdout"`
@@ -170,9 +179,25 @@ func RunSmoke(ctx context.Context, request Request) (Result, error) {
 		return result, fmt.Errorf("create isolated state root: %w", err)
 	}
 	result.IsolatedStateRoot = true
-	workingDirectory, workingDirectoryMode, err := resolveWorkingDirectory(request.WorkingDirectory, executablePath)
-	if err != nil {
-		return result, err
+	workingDirectory := ""
+	workingDirectoryMode := ""
+	if request.StageAppDir {
+		stagedExecutablePath, stagedWorkingDirectory, fileCount, byteCount, stageErr := stageApplicationDirectory(stateRoot, executablePath, request.WorkingDirectory)
+		if stageErr != nil {
+			return result, stageErr
+		}
+		executablePath = stagedExecutablePath
+		workingDirectory = stagedWorkingDirectory
+		workingDirectoryMode = WorkingDirectoryModeStaged
+		result.ApplicationWorkspaceMode = ApplicationWorkspaceModeStaged
+		result.ApplicationStaged = true
+		result.ApplicationStagedFileCount = fileCount
+		result.ApplicationStagedBytes = byteCount
+	} else {
+		workingDirectory, workingDirectoryMode, err = resolveWorkingDirectory(request.WorkingDirectory, executablePath)
+		if err != nil {
+			return result, err
+		}
 	}
 	result.WorkingDirectoryMode = workingDirectoryMode
 
@@ -427,6 +452,7 @@ func baseResult(request Request) Result {
 		ExpectedMarker:              marker,
 		SuccessMode:                 SuccessModeMarker,
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
+		ApplicationWorkspaceMode:    ApplicationWorkspaceModeDirect,
 		ExitCode:                    -1,
 		RawOutputIncluded:           !request.RedactOutput,
 		RawOutputRedacted:           request.RedactOutput,
@@ -437,6 +463,119 @@ func baseResult(request Request) Result {
 		DockerSocketMounted:         false,
 		BroadHostMountRequired:      false,
 	}
+}
+
+func stageApplicationDirectory(stateRoot string, executablePath string, workingDirectory string) (string, string, int, int64, error) {
+	sourceDir := strings.TrimSpace(workingDirectory)
+	if sourceDir == "" {
+		sourceDir = filepath.Dir(executablePath)
+	}
+	sourceDir, err := filepath.Abs(sourceDir)
+	if err != nil {
+		return "", "", 0, 0, fmt.Errorf("resolve application source directory: %w", err)
+	}
+	info, err := os.Stat(sourceDir)
+	if err != nil {
+		return "", "", 0, 0, fmt.Errorf("inspect application source directory: %w", err)
+	}
+	if !info.IsDir() {
+		return "", "", 0, 0, errors.New("application source directory must be a directory")
+	}
+	relativeExecutablePath, err := filepath.Rel(sourceDir, executablePath)
+	if err != nil {
+		return "", "", 0, 0, fmt.Errorf("resolve executable path relative to application source directory: %w", err)
+	}
+	if relativeExecutablePath == "." || strings.HasPrefix(relativeExecutablePath, ".."+string(os.PathSeparator)) || relativeExecutablePath == ".." || filepath.IsAbs(relativeExecutablePath) {
+		return "", "", 0, 0, errors.New("executable must be inside the staged application source directory")
+	}
+
+	workspaceRoot := filepath.Join(stateRoot, "app-workspace")
+	nextWorkspaceRoot := filepath.Join(stateRoot, "app-workspace.next")
+	if err := os.RemoveAll(nextWorkspaceRoot); err != nil {
+		return "", "", 0, 0, fmt.Errorf("clear pending application workspace: %w", err)
+	}
+	if err := os.MkdirAll(nextWorkspaceRoot, 0o700); err != nil {
+		return "", "", 0, 0, fmt.Errorf("create pending application workspace: %w", err)
+	}
+
+	stateRootClean := filepath.Clean(stateRoot)
+	fileCount := 0
+	var byteCount int64
+	walkErr := filepath.WalkDir(sourceDir, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		cleanPath := filepath.Clean(path)
+		if cleanPath == stateRootClean {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		relativePath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return err
+		}
+		if relativePath == "." {
+			return nil
+		}
+		destinationPath := filepath.Join(nextWorkspaceRoot, relativePath)
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+		if entry.IsDir() {
+			return os.MkdirAll(destinationPath, 0o700)
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		if err := copyRegularFile(path, destinationPath, info.Mode().Perm()); err != nil {
+			return err
+		}
+		fileCount++
+		byteCount += info.Size()
+		return nil
+	})
+	if walkErr != nil {
+		return "", "", 0, 0, fmt.Errorf("stage application directory: %w", walkErr)
+	}
+	if err := os.RemoveAll(workspaceRoot); err != nil {
+		return "", "", 0, 0, fmt.Errorf("clear previous application workspace: %w", err)
+	}
+	if err := os.Rename(nextWorkspaceRoot, workspaceRoot); err != nil {
+		return "", "", 0, 0, fmt.Errorf("publish application workspace: %w", err)
+	}
+	stagedExecutablePath := filepath.Join(workspaceRoot, relativeExecutablePath)
+	return stagedExecutablePath, workspaceRoot, fileCount, byteCount, nil
+}
+
+func copyRegularFile(sourcePath string, destinationPath string, mode os.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(destinationPath), 0o700); err != nil {
+		return err
+	}
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = sourceFile.Close()
+	}()
+	destinationFile, err := os.OpenFile(destinationPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(destinationFile, sourceFile); err != nil {
+		_ = destinationFile.Close()
+		return err
+	}
+	if err := destinationFile.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func lineCount(text string) int {

@@ -29,6 +29,8 @@ type SmokeProfilePreflightResult struct {
 	WineArchitecture            string                  `json:"wine_architecture"`
 	WinePrefixMode              string                  `json:"wine_prefix_mode"`
 	WinePrefixPrepared          bool                    `json:"wine_prefix_prepared"`
+	ApplicationWorkspaceMode    string                  `json:"application_workspace_mode"`
+	StageAppDir                 bool                    `json:"stage_app_dir"`
 	WorkingDirectoryMode        string                  `json:"working_directory_mode"`
 	WorkingDirectoryValid       bool                    `json:"working_directory_valid"`
 	StateRootConfigured         bool                    `json:"state_root_configured"`
@@ -85,6 +87,7 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 	result.SuccessMode = successMode
 	result.TimeoutConfigured = request.Timeout > 0
 	result.SkipBootstrap = request.SkipBootstrap
+	result.StageAppDir = request.StageAppDir
 	result.ExpectedMarkerConfigured = strings.TrimSpace(request.ExpectedMarker) != ""
 	result.RunnerArgumentCount = len(runnerInvocationArguments(request))
 	result.AppArgumentCount = len(request.Arguments)
@@ -115,6 +118,11 @@ func PreflightSmokeProfile(profilePath string) (SmokeProfilePreflightResult, err
 	}
 	result.WineArchitecture = wineArchitectureForExecutable(executableArchitecture)
 	result.WinePrefixMode = "architecture-scoped"
+	if request.StageAppDir {
+		result.ApplicationWorkspaceMode = ApplicationWorkspaceModeStaged
+	} else {
+		result.ApplicationWorkspaceMode = ApplicationWorkspaceModeDirect
+	}
 
 	workingDirectoryMode, workingDirectoryErr := inspectProfileWorkingDirectory(request.WorkingDirectory, executablePath)
 	if workingDirectoryErr != nil {
@@ -154,6 +162,7 @@ func baseSmokeProfilePreflightResult() SmokeProfilePreflightResult {
 		ExecutableArchitecture:      "unknown",
 		WineArchitecture:            "unknown",
 		WinePrefixMode:              "unknown",
+		ApplicationWorkspaceMode:    ApplicationWorkspaceModeDirect,
 		WorkingDirectoryMode:        WorkingDirectoryModeExecutable,
 		SuccessMode:                 SuccessModeMarker,
 		RawProfilePathExposed:       false,

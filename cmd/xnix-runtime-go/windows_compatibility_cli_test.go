@@ -142,6 +142,8 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		payload["runner_available"] != true ||
 		payload["success_mode"] != "marker" ||
 		payload["working_directory_mode"] != "executable-directory" ||
+		payload["application_workspace_mode"] != "direct-executable" ||
+		payload["application_staged"] != false ||
 		payload["runner_argument_count"] != float64(3) ||
 		payload["compatibility_layer"] != "windows-compatibility-layer" ||
 		payload["wine_bootstrap_attempted"] != false ||
@@ -161,6 +163,65 @@ func TestWindowsAppRunSmokeCommandUsesRuntimeRunner(t *testing.T) {
 		strings.Contains(output.String(), "private-bottle-name") ||
 		strings.Contains(output.String(), "--shim-mode") {
 		t.Fatalf("smoke output leaked host paths: %s", output.String())
+	}
+}
+
+func TestWindowsAppRunSmokeCommandCanStageApplicationDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell runner fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	appDir := filepath.Join(tempDir, "app")
+	if err := os.Mkdir(appDir, 0o700); err != nil {
+		t.Fatalf("Mkdir app dir returned error: %v", err)
+	}
+	exePath := filepath.Join(appDir, "hello.exe")
+	if err := os.WriteFile(exePath, minimalPEFixture(0x8664), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	sidecarPath := filepath.Join(appDir, "sidecar.dat")
+	if err := os.WriteFile(sidecarPath, []byte("sidecar"), 0o600); err != nil {
+		t.Fatalf("WriteFile sidecar returned error: %v", err)
+	}
+	runnerPath := filepath.Join(tempDir, "fake-runner")
+	runnerBody := "#!/bin/sh\n" +
+		"test -f \"$(dirname \"$1\")/sidecar.dat\" || exit 77\n" +
+		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
+	if err := os.WriteFile(runnerPath, []byte(runnerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile runner returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-run-smoke",
+		"--exe", exePath,
+		"--state-root", filepath.Join(appDir, "state"),
+		"--runner", runnerPath,
+		"--stage-app-dir",
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["application_workspace_mode"] != "staged-application-directory" ||
+		payload["application_staged"] != true ||
+		payload["application_staged_file_count"] != float64(2) ||
+		payload["working_directory_mode"] != "staged-application-workspace" ||
+		payload["marker_observed"] != true ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected staged application payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), exePath) ||
+		strings.Contains(output.String(), sidecarPath) ||
+		strings.Contains(output.String(), runnerPath) {
+		t.Fatalf("staged smoke output leaked host paths: %s", output.String())
 	}
 }
 
