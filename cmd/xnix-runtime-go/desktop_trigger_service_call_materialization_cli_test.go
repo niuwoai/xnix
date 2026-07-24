@@ -38,6 +38,9 @@ func TestDesktopTriggerServiceCallMaterializationPreviewCommand(t *testing.T) {
 		payload["runtime_status_evidence_state"] != "ready" ||
 		payload["evidence_digest_verified"] != true ||
 		payload["expected_digest_matched"] != true ||
+		payload["human_authorized_smoke"] != false ||
+		payload["full_checkpoint_promotion_claimed"] != true ||
+		payload["formal_release_ready"] != false ||
 		payload["desktop_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
 		payload["owner_service_boundary"] != "go-runtime-owner-in-process-service" ||
 		payload["owner_service_method"] != "ShowRuntimeControlledLaunch" ||
@@ -93,6 +96,63 @@ func TestDesktopTriggerServiceCallMaterializationPreviewCommand(t *testing.T) {
 	}
 }
 
+func TestDesktopTriggerServiceCallMaterializationPreviewCommandAllowsHumanAuthorizedSmokeCandidate(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordKDEControlledLaunchActionCLIEvidence(t, stateRoot)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"desktop-trigger-service-call-materialization-preview",
+		"--state-root", stateRoot,
+		"--desktop-entry-file", filepath.Join(projectRootForRuntimeServiceBindingCommandTest(t), "kde/actions/xnix-runtime-status-controlled-launch.desktop"),
+		"--evidence-relative-path", record.EvidenceRelativePath,
+		"--expected-evidence-sha256", record.EvidenceSHA256,
+		"--human-authorized-smoke",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("service call materialization output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["materialization_state"] != "ready-for-human-authorized-service-call" ||
+		payload["dry_run_review_state"] != "blocked-missing-full-checkpoint" ||
+		payload["owner_trigger_state"] != "ready" ||
+		payload["full_checkpoint_state"] != "needs-full-checkpoint" ||
+		payload["runtime_status_evidence_state"] != "ready" ||
+		payload["human_authorized_smoke"] != true ||
+		payload["full_checkpoint_promotion_claimed"] != false ||
+		payload["formal_release_ready"] != false ||
+		payload["owner_service_call_ready"] != true ||
+		payload["materialized_for_human_smoke"] != true ||
+		payload["service_call_dispatch_enabled"] != false ||
+		payload["service_call_dispatched"] != false ||
+		payload["dbus_called"] != false ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["runtime_state_written"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected human-authorized smoke candidate materialization payload: %#v", payload)
+	}
+	ownerServiceCLIArgs, ok := payload["owner_service_cli_args"].([]any)
+	if !ok || len(ownerServiceCLIArgs) != 4 ||
+		ownerServiceCLIArgs[0] != "--service-call" ||
+		ownerServiceCLIArgs[1] != "ShowRuntimeControlledLaunch" ||
+		ownerServiceCLIArgs[2] != "evidence-relative-path" ||
+		ownerServiceCLIArgs[3] != record.EvidenceRelativePath {
+		t.Fatalf("unexpected owner service CLI args: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), "XNIX_RUNTIME_OWNER_") ||
+		strings.Contains(output.String(), " --state-root ") ||
+		strings.Contains(output.String(), ".exe") {
+		t.Fatalf("service call materialization output exposed unsafe details: %s", output.String())
+	}
+}
+
 func TestDesktopTriggerServiceCallMaterializationPreviewCommandRequiresInputs(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"desktop-trigger-service-call-materialization-preview"}, &output)
@@ -131,6 +191,9 @@ func TestDesktopTriggerServiceCallMaterializationPreviewCommandDoesNotEmitArgsWh
 	}
 	if payload["materialization_state"] != "blocked-missing-full-checkpoint" ||
 		payload["dry_run_review_state"] != "blocked-missing-full-checkpoint" ||
+		payload["human_authorized_smoke"] != false ||
+		payload["full_checkpoint_promotion_claimed"] != false ||
+		payload["formal_release_ready"] != false ||
 		payload["owner_service_call_ready"] != false ||
 		payload["materialized_for_human_smoke"] != false ||
 		payload["service_call_dispatched"] != false ||

@@ -735,36 +735,54 @@ begin
   assert(action_trigger["docker_socket_mounted"] == false, "Runtime status launch action trigger must not mount Docker socket")
   assert(action_trigger["broad_host_mount_required"] == false, "Runtime status launch action trigger must not require broad host mounts")
   assert_no_forbidden(action_trigger_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch action trigger output")
-  owner_trigger, owner_trigger_stdout = run_json(
+  service_call_materialization, service_call_materialization_stdout = run_json(
     go_env,
     "go", "run", "./cmd/xnix-runtime-go",
-    "known-app-runtime-status-launch-owner-trigger-preview",
+    "desktop-trigger-service-call-materialization-preview",
     "--state-root", AUTHORIZATION_STATE_ROOT.to_s,
+    "--desktop-entry-file", PROJECT_ROOT.join("kde/actions/xnix-runtime-status-controlled-launch.desktop").to_s,
+    "--expected-evidence-sha256", evidence_record.fetch("evidence_sha256"),
+    "--human-authorized-smoke",
     "--evidence-relative-path", evidence_record.fetch("evidence_relative_path")
   )
-  assert(owner_trigger["request_type"] == "known-app-runtime-status-launch-owner-trigger-preview", "Runtime status launch owner trigger must use the Go-owned trigger type")
-  assert(owner_trigger["runtime_method"] == "PreviewKnownAppRuntimeStatusLaunchOwnerTrigger", "Runtime status launch owner trigger must be owned by Go Runtime")
-  assert(owner_trigger["read_method"] == "GetKnownAppRuntimeStatusLaunchOwnerTrigger", "Runtime status launch owner trigger must expose a KDE-safe read method")
-  assert(owner_trigger["desktop_trigger_ready"] == true, "Runtime status launch owner trigger must be ready for desktop forwarding")
-  assert(owner_trigger["desktop_callable_route"] == "kde-dbus-runtime-status-action", "Runtime status launch owner trigger must target the KDE D-Bus Runtime-status route")
-  assert(owner_trigger["desktop_callable_runtime_method"] == "ShowRuntimeControlledLaunch", "Runtime status launch owner trigger must target the owner Runtime method")
-  assert(owner_trigger["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "Runtime status launch owner trigger must target the Runtime launch execution")
-  assert(owner_trigger["desktop_dbus_method"] == "org.xnix.Compatibility1.ShowRuntimeControlledLaunch", "Runtime status launch owner trigger must expose the public D-Bus method")
-  assert(owner_trigger["owner_service_call_ready"] == true, "Runtime status launch owner trigger must expose a ready owner service call")
-  assert(owner_trigger["owner_service_call_type"] == "desktop-action-dispatch", "Runtime status launch owner trigger must classify the owner call as desktop action dispatch")
-  assert(owner_trigger["owner_service_call_args"] == ["ShowRuntimeControlledLaunch", "evidence-relative-path", evidence_record.fetch("evidence_relative_path")], "Runtime status launch owner trigger must expose evidence-only owner service args")
-  assert(owner_trigger["owner_service_cli_args"] == ["--service-call", "ShowRuntimeControlledLaunch", "evidence-relative-path", evidence_record.fetch("evidence_relative_path")], "Runtime status launch owner trigger must expose evidence-only owner service CLI args")
-  assert(owner_trigger["runtime_owner_service_supplies_inputs"] == true, "Runtime status launch owner trigger must keep owner-only inputs supplied by Runtime")
-  assert(owner_trigger["kde_forwards_only_evidence_handle"] == true, "Runtime status launch owner trigger must keep KDE evidence-only")
-  assert(owner_trigger["desktop_receipt_fields_reconstructed"] == false, "Runtime status launch owner trigger must not reconstruct receipt fields")
-  assert(owner_trigger["desktop_kde_state_root_access"] == false, "Runtime status launch owner trigger must not give KDE state-root access")
-  assert(owner_trigger["state_root_path_exposed"] == false, "Runtime status launch owner trigger must not expose state-root paths")
-  assert(owner_trigger["evidence_path_exposed"] == false, "Runtime status launch owner trigger must not expose evidence absolute paths")
-  assert(owner_trigger["managed_launcher_path_exposed"] == false, "Runtime status launch owner trigger must not expose launcher paths")
-  assert(owner_trigger["raw_launcher_output_exposed"] == false, "Runtime status launch owner trigger must not expose launcher output")
-  assert(owner_trigger["backend_details_exposed"] == false, "Runtime status launch owner trigger must not expose backend details")
-  assert(owner_trigger["host_root_modified"] == false, "Runtime status launch owner trigger must not mutate host root")
-  assert_no_forbidden(owner_trigger_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch owner trigger output")
+  assert(service_call_materialization["request_type"] == "desktop-trigger-service-call-materialization-preview", "Runtime status launch service call materialization must use the Go-owned materialization type")
+  assert(service_call_materialization["runtime_method"] == "PreviewDesktopTriggerServiceCallMaterialization", "Runtime status launch service call materialization must be owned by Go Runtime")
+  assert(service_call_materialization["read_method"] == "GetDesktopTriggerServiceCallMaterialization", "Runtime status launch service call materialization must expose a KDE-safe read method")
+  assert(service_call_materialization["materialization_state"] == "ready-for-human-authorized-service-call", "Runtime status launch service call materialization must be ready for a human-authorized smoke candidate")
+  assert(service_call_materialization["dry_run_review_state"] == "blocked-missing-full-checkpoint", "Runtime status launch service call materialization must not claim full checkpoint promotion during candidate smoke")
+  assert(service_call_materialization["owner_trigger_state"] == "ready", "Runtime status launch service call materialization must consume the owner trigger internally")
+  assert(service_call_materialization["full_checkpoint_state"] == "needs-full-checkpoint", "Runtime status launch service call materialization must keep the formal full checkpoint pending")
+  assert(service_call_materialization["runtime_status_evidence_state"] == "ready", "Runtime status launch service call materialization must consume verified Runtime-status evidence")
+  assert(service_call_materialization["human_authorized_smoke"] == true, "Runtime status launch service call materialization must require explicit human smoke authorization")
+  assert(service_call_materialization["full_checkpoint_promotion_claimed"] == false, "Runtime status launch service call materialization must not claim checkpoint promotion")
+  assert(service_call_materialization["formal_release_ready"] == false, "Runtime status launch service call materialization must not claim release readiness")
+  assert(service_call_materialization["desktop_callable_route"] == "kde-dbus-runtime-status-action", "Runtime status launch service call materialization must target the KDE D-Bus Runtime-status route")
+  assert(service_call_materialization["desktop_callable_runtime_method"] == "ShowRuntimeControlledLaunch", "Runtime status launch service call materialization must target the owner Runtime method")
+  assert(service_call_materialization["desktop_callable_execution_type"] == "known-app-kde-runtime-status-launch-execution", "Runtime status launch service call materialization must target the Runtime launch execution")
+  assert(service_call_materialization["desktop_dbus_method"] == "org.xnix.Compatibility1.ShowRuntimeControlledLaunch", "Runtime status launch service call materialization must expose the public D-Bus method")
+  assert(service_call_materialization["owner_service_call_ready"] == true, "Runtime status launch service call materialization must expose a ready owner service call")
+  assert(service_call_materialization["owner_service_call_type"] == "desktop-action-dispatch", "Runtime status launch service call materialization must classify the owner call as desktop action dispatch")
+  assert(service_call_materialization["owner_service_call_args"] == ["ShowRuntimeControlledLaunch", "evidence-relative-path", evidence_record.fetch("evidence_relative_path")], "Runtime status launch service call materialization must expose evidence-only owner service args")
+  assert(service_call_materialization["owner_service_cli_args"] == ["--service-call", "ShowRuntimeControlledLaunch", "evidence-relative-path", evidence_record.fetch("evidence_relative_path")], "Runtime status launch service call materialization must expose evidence-only owner service CLI args")
+  assert(service_call_materialization["runtime_owner_service_supplies_inputs"] == true, "Runtime status launch service call materialization must keep owner-only inputs supplied by Runtime")
+  assert(service_call_materialization["kde_forwards_only_evidence_handle"] == true, "Runtime status launch service call materialization must keep KDE evidence-only")
+  assert(service_call_materialization["kde_receives_materialized_owner_args"] == false, "Runtime status launch service call materialization must not hand owner args to KDE")
+  assert(service_call_materialization["desktop_receipt_fields_reconstructed"] == false, "Runtime status launch service call materialization must not reconstruct receipt fields")
+  assert(service_call_materialization["desktop_kde_state_root_access"] == false, "Runtime status launch service call materialization must not give KDE state-root access")
+  assert(service_call_materialization["state_root_path_exposed"] == false, "Runtime status launch service call materialization must not expose state-root paths")
+  assert(service_call_materialization["cache_root_path_exposed"] == false, "Runtime status launch service call materialization must not expose cache-root paths")
+  assert(service_call_materialization["launcher_path_exposed"] == false, "Runtime status launch service call materialization must not expose launcher paths")
+  assert(service_call_materialization["raw_launcher_output_exposed"] == false, "Runtime status launch service call materialization must not expose launcher output")
+  assert(service_call_materialization["backend_details_exposed"] == false, "Runtime status launch service call materialization must not expose backend details")
+  assert(service_call_materialization["service_call_dispatch_enabled"] == false, "Runtime status launch service call materialization preview must not dispatch the owner service call")
+  assert(service_call_materialization["service_call_dispatched"] == false, "Runtime status launch service call materialization preview must not dispatch the owner service call")
+  assert(service_call_materialization["dbus_called"] == false, "Runtime status launch service call materialization preview must not call D-Bus")
+  assert(service_call_materialization["desktop_launch_enabled"] == false, "Runtime status launch service call materialization preview must not enable desktop launch")
+  assert(service_call_materialization["backend_launch_enabled"] == false, "Runtime status launch service call materialization preview must not enable backend launch")
+  assert(service_call_materialization["execution_started"] == false, "Runtime status launch service call materialization preview must not start execution")
+  assert(service_call_materialization["runtime_state_written"] == false, "Runtime status launch service call materialization preview must not write Runtime state")
+  assert(service_call_materialization["host_root_modified"] == false, "Runtime status launch service call materialization must not mutate host root")
+  assert_no_forbidden(service_call_materialization_stdout, [PROJECT_ROOT.to_s, AUTHORIZATION_STATE_ROOT.to_s, RUNTIME_STATUS_LAUNCH_EVIDENCE_PATH.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime status launch service call materialization output")
   runtime_owner_env = go_env.merge(
     "XNIX_RUNTIME_OWNER_STATE_ROOT" => AUTHORIZATION_STATE_ROOT.to_s,
     "XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT" => KNOWN_APP_CACHE_ROOT.to_s,
@@ -778,7 +796,7 @@ begin
     "go", "run", "./cmd/xnix-runtime-owner",
     "--root", ".",
     "--mode", "smoke-owner",
-    *owner_trigger.fetch("owner_service_cli_args")
+    *service_call_materialization.fetch("owner_service_cli_args")
   )
   unless trigger_launcher_status.zero?
     warn "QEMU serial log: #{SERIAL_LOG_PATH}"

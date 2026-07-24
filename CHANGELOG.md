@@ -4,6 +4,24 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc9] - 2026-07-24
+
+### Added
+
+- Added an explicit human-authorized smoke candidate path to `desktop-trigger-service-call-materialization-preview`, allowing evidence-only `ShowRuntimeControlledLaunch` owner service call arguments to be materialized without claiming formal full-checkpoint promotion.
+- Added Go and CLI tests for the human-authorized smoke candidate path, checkpoint-promotion honesty, release-readiness non-claiming, redaction, and disabled side effects.
+- Added `docs/claude-code-immediate-mainline-handoff.md` as the current copy-first Claude Code handoff for the next bounded C8W9-C8W11 mainline tasks.
+
+### Changed
+
+- Routed `scripts/staged_launcher_dispatch_smoke.rb` through `desktop-trigger-service-call-materialization-preview` before invoking `xnix-runtime-owner`, so the real staged launcher path consumes the same Go-owned service-call materialization gate that future desktop-triggered launch work will rely on.
+- Updated layout and smoke-script unit gates to require the staged smoke materialization path, the explicit human-authorized smoke flag, and release-promotion non-claim fields.
+
+### Fixed
+
+- Avoided the full-checkpoint deadlock where the staged smoke needed materialized owner service arguments but materialization previously required full-checkpoint promotion before the smoke could run.
+- Fixed desktop-trigger dry-run review classification so malformed evidence handles are not masked as missing evidence when the full-checkpoint gate is otherwise ready.
+
 ## [0.2.640-rc8] - 2026-07-24
 
 ### Added

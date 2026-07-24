@@ -301,11 +301,11 @@ func desktopTriggerDryRunOverallState(preview DesktopTriggerDryRunRequestReviewP
 	if preview.FullCheckpointState != "ready" {
 		return "blocked-missing-full-checkpoint"
 	}
-	if preview.RuntimeStatusEvidenceState == "missing-evidence" || preview.EnvelopeGuardState == "blocked-missing-evidence" || preview.ActionSurfaceState == "missing-evidence-handle" || preview.ManagedLauncherAcceptanceState == "missing-evidence" {
-		return "missing-evidence"
-	}
 	if preview.RuntimeStatusEvidenceState == "malformed" || preview.EnvelopeGuardState == "malformed" || preview.ActionSurfaceState == "malformed" || preview.ManagedLauncherAcceptanceState == "malformed" {
 		return "malformed"
+	}
+	if preview.RuntimeStatusEvidenceState == "missing-evidence" || preview.EnvelopeGuardState == "blocked-missing-evidence" || preview.ActionSurfaceState == "missing-evidence-handle" || preview.ManagedLauncherAcceptanceState == "missing-evidence" {
+		return "missing-evidence"
 	}
 	if preview.RuntimeStatusEvidenceState == "stale-evidence" || preview.EnvelopeGuardState == "blocked-stale" || preview.ManagedLauncherAcceptanceState == "stale-evidence" {
 		return "stale-evidence"

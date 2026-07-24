@@ -31,6 +31,9 @@ func TestPreviewDesktopTriggerServiceCallMaterializationEmitsEvidenceOnlyService
 		preview.EvidenceSHA256 != record.EvidenceSHA256 ||
 		!preview.EvidenceDigestVerified ||
 		!preview.ExpectedDigestMatched ||
+		preview.HumanAuthorizedSmoke ||
+		!preview.FullCheckpointPromotionClaimed ||
+		preview.FormalReleaseReady ||
 		preview.DesktopCallableRoute != "kde-dbus-runtime-status-action" ||
 		preview.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
 		preview.DesktopDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
@@ -86,6 +89,48 @@ func TestPreviewDesktopTriggerServiceCallMaterializationEmitsEvidenceOnlyService
 	assertDesktopTriggerServiceCallMaterializationRedacted(t, preview, stateRoot)
 }
 
+func TestPreviewDesktopTriggerServiceCallMaterializationAllowsHumanAuthorizedSmokeCandidate(t *testing.T) {
+	stateRoot := t.TempDir()
+	record := recordLaunchEnvelopeGuardEvidence(t, stateRoot)
+
+	preview, err := PreviewDesktopTriggerServiceCallMaterialization(DesktopTriggerServiceCallMaterializationRequest{
+		StateRoot:              stateRoot,
+		DesktopEntryContent:    safeDesktopTriggerDryRunActionMetadata(),
+		EvidenceRelativePath:   record.EvidenceRelativePath,
+		ExpectedEvidenceSHA256: record.EvidenceSHA256,
+		HumanAuthorizedSmoke:   true,
+	})
+	if err != nil {
+		t.Fatalf("PreviewDesktopTriggerServiceCallMaterialization returned error: %v", err)
+	}
+	if preview.MaterializationState != "ready-for-human-authorized-service-call" ||
+		preview.DryRunReviewState != "blocked-missing-full-checkpoint" ||
+		preview.OwnerTriggerState != "ready" ||
+		preview.FullCheckpointState != "needs-full-checkpoint" ||
+		preview.RuntimeStatusEvidenceState != "ready" ||
+		!preview.HumanAuthorizedSmoke ||
+		preview.FullCheckpointPromotionClaimed ||
+		preview.FormalReleaseReady ||
+		!preview.OwnerServiceCallReady ||
+		!preview.MaterializedForHumanSmoke ||
+		preview.ServiceCallDispatchEnabled ||
+		preview.ServiceCallDispatched ||
+		preview.DBusCalled ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ExecutionStarted ||
+		preview.RuntimeStateWritten ||
+		preview.KDEConfigurationWritten ||
+		preview.HostRootModified {
+		t.Fatalf("unexpected human-authorized smoke candidate materialization: %#v", preview)
+	}
+	if !sameDesktopTriggerServiceCallMaterializationArgs(preview.OwnerServiceCallArgs, []string{"ShowRuntimeControlledLaunch", "evidence-relative-path", record.EvidenceRelativePath}) ||
+		!sameDesktopTriggerServiceCallMaterializationArgs(preview.OwnerServiceCLIArgs, []string{"--service-call", "ShowRuntimeControlledLaunch", "evidence-relative-path", record.EvidenceRelativePath}) {
+		t.Fatalf("unexpected human-authorized smoke candidate service call args: %#v", preview)
+	}
+	assertDesktopTriggerServiceCallMaterializationRedacted(t, preview, stateRoot)
+}
+
 func TestPreviewDesktopTriggerServiceCallMaterializationBlocksUntilDryRunAccepted(t *testing.T) {
 	stateRoot := t.TempDir()
 	record := recordLaunchEnvelopeGuardEvidence(t, stateRoot)
@@ -102,6 +147,9 @@ func TestPreviewDesktopTriggerServiceCallMaterializationBlocksUntilDryRunAccepte
 	if preview.MaterializationState != "blocked-missing-full-checkpoint" ||
 		preview.DryRunReviewState != "blocked-missing-full-checkpoint" ||
 		preview.OwnerTriggerState != "blocked" ||
+		preview.HumanAuthorizedSmoke ||
+		preview.FullCheckpointPromotionClaimed ||
+		preview.FormalReleaseReady ||
 		preview.OwnerServiceCallReady ||
 		preview.MaterializedForHumanSmoke ||
 		len(preview.OwnerServiceCallArgs) != 0 ||

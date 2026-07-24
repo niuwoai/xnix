@@ -20,6 +20,7 @@ type DesktopTriggerServiceCallMaterializationRequest struct {
 	EvidenceRelativePath   string
 	ExpectedEvidenceSHA256 string
 	FullCheckpointPromoted bool
+	HumanAuthorizedSmoke   bool
 	RouteID                string
 	MethodID               string
 	ActionID               string
@@ -54,6 +55,9 @@ type DesktopTriggerServiceCallMaterializationPreview struct {
 	ExpectedEvidenceSHA256            string   `json:"expected_evidence_sha256,omitempty"`
 	EvidenceDigestVerified            bool     `json:"evidence_digest_verified"`
 	ExpectedDigestMatched             bool     `json:"expected_digest_matched"`
+	HumanAuthorizedSmoke              bool     `json:"human_authorized_smoke"`
+	FullCheckpointPromotionClaimed    bool     `json:"full_checkpoint_promotion_claimed"`
+	FormalReleaseReady                bool     `json:"formal_release_ready"`
 	DesktopCallableRoute              string   `json:"desktop_callable_route"`
 	DesktopCallableRuntimeMethod      string   `json:"desktop_callable_runtime_method"`
 	DesktopCallableExecutionType      string   `json:"desktop_callable_execution_type"`
@@ -131,7 +135,7 @@ func PreviewDesktopTriggerServiceCallMaterialization(request DesktopTriggerServi
 	preview.EvidenceSHA256 = review.EvidenceSHA256
 	preview.EvidenceDigestVerified = review.EvidenceDigestVerified
 	preview.ExpectedDigestMatched = review.ExpectedDigestMatched
-	if review.ReviewState != "accepted-review" {
+	if !desktopTriggerServiceCallReviewAllowsMaterialization(review, request) {
 		preview.MaterializationState = review.ReviewState
 		preview.OwnerTriggerState = "blocked"
 		preview.BlockedReason = "desktop-trigger service call materialization requires an accepted dry-run review"
@@ -194,6 +198,9 @@ func baseDesktopTriggerServiceCallMaterialization(request DesktopTriggerServiceC
 		FullCheckpointState:               fullCheckpointState,
 		RuntimeStatusEvidenceState:        "blocked",
 		ExpectedEvidenceSHA256:            strings.TrimSpace(request.ExpectedEvidenceSHA256),
+		HumanAuthorizedSmoke:              request.HumanAuthorizedSmoke,
+		FullCheckpointPromotionClaimed:    request.FullCheckpointPromoted,
+		FormalReleaseReady:                false,
 		DesktopCallableRoute:              "kde-dbus-runtime-status-action",
 		DesktopCallableRuntimeMethod:      "ShowRuntimeControlledLaunch",
 		DesktopCallableExecutionType:      appidentity.KnownAppKDERuntimeStatusLaunchExecutionRequestType,
@@ -271,8 +278,27 @@ func desktopTriggerServiceCallReviewRequest(request DesktopTriggerServiceCallMat
 	}
 }
 
+func desktopTriggerServiceCallReviewAllowsMaterialization(review DesktopTriggerDryRunRequestReviewPreview, request DesktopTriggerServiceCallMaterializationRequest) bool {
+	if review.ReviewState == "accepted-review" {
+		return true
+	}
+	if !request.HumanAuthorizedSmoke || review.ReviewState != "blocked-missing-full-checkpoint" {
+		return false
+	}
+	return review.EnvelopeGuardState == "accepted-for-review" &&
+		review.ActionSurfaceState == "safe" &&
+		review.ManagedLauncherAcceptanceState == "needs-full-checkpoint" &&
+		review.FullCheckpointState == "needs-full-checkpoint" &&
+		review.RuntimeStatusEvidenceState == "ready" &&
+		review.EvidenceDigestVerified &&
+		review.ExpectedDigestMatched
+}
+
 func desktopTriggerServiceCallMaterializationSummary(preview DesktopTriggerServiceCallMaterializationPreview) string {
 	if preview.MaterializationState == "ready-for-human-authorized-service-call" {
+		if preview.HumanAuthorizedSmoke && !preview.FullCheckpointPromotionClaimed {
+			return "Desktop-trigger owner service call arguments are materialized for a human-authorized smoke candidate without claiming formal full-checkpoint promotion."
+		}
 		return "Desktop-trigger owner service call arguments are materialized for the next human-authorized staged launch smoke without dispatching the service call."
 	}
 	if preview.MaterializationState == "blocked-missing-full-checkpoint" {
@@ -322,13 +348,21 @@ func validateDesktopTriggerServiceCallMaterializationPreview(preview DesktopTrig
 			return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization has invalid state")
 		}
 	}
+	reviewAllowsReady := preview.DryRunReviewState == "accepted-review" ||
+		(preview.HumanAuthorizedSmoke && preview.DryRunReviewState == "blocked-missing-full-checkpoint")
+	checkpointAllowsReady := preview.FullCheckpointState == "ready" ||
+		(preview.HumanAuthorizedSmoke && !preview.FullCheckpointPromotionClaimed && preview.FullCheckpointState == "needs-full-checkpoint")
 	switch {
 	case preview.SchemaVersion != DesktopTriggerServiceCallMaterializationSchemaVersion || preview.RequestType != DesktopTriggerServiceCallMaterializationRequestType:
 		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization has invalid schema")
-	case preview.MaterializationState == "ready-for-human-authorized-service-call" && (!preview.OwnerServiceCallReady || !preview.MaterializedForHumanSmoke || preview.DryRunReviewState != "accepted-review" || preview.OwnerTriggerState != "ready" || preview.FullCheckpointState != "ready"):
+	case preview.MaterializationState == "ready-for-human-authorized-service-call" && (!preview.OwnerServiceCallReady || !preview.MaterializedForHumanSmoke || !reviewAllowsReady || preview.OwnerTriggerState != "ready" || !checkpointAllowsReady):
 		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization accepted incomplete dependencies")
 	case preview.MaterializationState != "ready-for-human-authorized-service-call" && (preview.OwnerServiceCallReady || preview.MaterializedForHumanSmoke || len(preview.OwnerServiceCallArgs) > 0 || len(preview.OwnerServiceCLIArgs) > 0):
 		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization must not emit service call args while blocked")
+	case preview.FullCheckpointPromotionClaimed && preview.FullCheckpointState != "ready":
+		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization claimed checkpoint promotion without a ready checkpoint")
+	case preview.FormalReleaseReady:
+		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization must not claim formal release readiness")
 	case preview.MaterializationState == "ready-for-human-authorized-service-call" && (!sameDesktopTriggerServiceCallMaterializationArgs(preview.OwnerServiceCallArgs, []string{"ShowRuntimeControlledLaunch", "evidence-relative-path", preview.EvidenceRelativePath}) || !sameDesktopTriggerServiceCallMaterializationArgs(preview.OwnerServiceCLIArgs, []string{"--service-call", "ShowRuntimeControlledLaunch", "evidence-relative-path", preview.EvidenceRelativePath})):
 		return DesktopTriggerServiceCallMaterializationPreview{}, errors.New("desktop-trigger service call materialization requires evidence-only service call args")
 	case !preview.HumanAuthorizationRequired || !preview.RuntimeOwnerServiceSuppliesInputs || !preview.DesktopEvidenceHandleForwarded:

@@ -19,6 +19,7 @@ func runDesktopTriggerServiceCallMaterializationPreview(args []string, stdout io
 	evidenceRelativePath := flags.String("evidence-relative-path", "", "relative Runtime-status launch evidence handoff path")
 	expectedEvidenceSHA256 := flags.String("expected-evidence-sha256", "", "expected Runtime-status launch evidence digest")
 	fullCheckpointPromoted := flags.Bool("full-checkpoint-promoted", false, "treat the formal full checkpoint as promoted")
+	humanAuthorizedSmoke := flags.Bool("human-authorized-smoke", false, "materialize evidence-only owner service arguments for an explicitly human-authorized smoke candidate without claiming checkpoint promotion")
 	routeID := flags.String("route-id", "", "desktop route id")
 	methodID := flags.String("method-id", "", "Runtime owner service method id")
 	actionID := flags.String("action-id", "", "desktop action id")
@@ -57,6 +58,7 @@ func runDesktopTriggerServiceCallMaterializationPreview(args []string, stdout io
 		EvidenceRelativePath:   *evidenceRelativePath,
 		ExpectedEvidenceSHA256: *expectedEvidenceSHA256,
 		FullCheckpointPromoted: *fullCheckpointPromoted,
+		HumanAuthorizedSmoke:   *humanAuthorizedSmoke,
 		RouteID:                *routeID,
 		MethodID:               *methodID,
 		ActionID:               *actionID,
