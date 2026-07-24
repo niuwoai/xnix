@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.630] - 2026-07-24
+
+### Added
+
+- Added `known-app-runtime-status-launch-owner-fixture-record`, a Go Runtime owner helper that prepares D-Bus controlled-launch fixture state behind one reusable command.
+- Added targeted Go CLI and appidentity tests for the helper's safe blocked path when the managed known-app artifact is unavailable.
+
+### Changed
+
+- Updated `dbus_controlled_launch_owner_fixture_smoke.rb` to delegate launch authorization, controlled session, review receipt, and Runtime-status evidence handoff setup to the Go helper instead of assembling the fixture through multiple Ruby-owned command calls.
+- Extended layout and script guards to verify the helper keeps KDE evidence-only, receipt reconstruction disabled, KDE state-root access disabled, local/backend details hidden, and host/container safety gates closed.
+
 ## [0.2.629] - 2026-07-24
 
 ### Added

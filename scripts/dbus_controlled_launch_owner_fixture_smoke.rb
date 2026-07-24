@@ -34,7 +34,6 @@ WORK_ROOT = Pathname.new(ENV.fetch("XNIX_DBUS_CONTROLLED_LAUNCH_WORK_ROOT", DEFA
 RUN_ROOT = WORK_ROOT.join(RUN_ID)
 STATE_ROOT = RUN_ROOT.join("state")
 CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
-PROJECTION_FILE = RUN_ROOT.join("runtime-status-launch-projection.json")
 FAKE_LAUNCHER = RUN_ROOT.join("fake-xnix-compat-launch")
 FAKE_LAUNCHER_ARGS = RUN_ROOT.join("fake-launcher-args.txt")
 
@@ -69,26 +68,6 @@ DELEGATED_PAYLOAD = {
   "raw_command_exposed" => false,
   "backend_details_exposed" => false
 }.freeze
-
-PROJECTION_PAYLOAD = DELEGATED_PAYLOAD.merge(
-  "projection_type" => "known-app-kde-runtime-status-launch-delegated-evidence",
-  "runtime_method" => "ProjectKnownAppKDERuntimeStatusLaunchDelegatedEvidence",
-  "app_id" => APP_ID,
-  "display_name" => "7-Zip Console",
-  "app_version" => APP_VERSION,
-  "launch_authorization_receipt_state" => "recorded",
-  "launch_gate_state" => "controlled-dispatch-ready",
-  "launch_gate_consumed" => true,
-  "launch_gate_receipt_accepted" => true,
-  "launch_gate_guest_boundary_accepted" => true,
-  "controlled_dispatch_ready" => true,
-  "state_root_path_exposed" => false,
-  "managed_launcher_path_exposed" => false,
-  "raw_launcher_output_exposed" => false,
-  "compatibility_center_projection_ready" => true,
-  "kde_center_projection_ready" => true,
-  "desktop_safe_summary" => "7-Zip Console delegated Runtime launcher evidence is projected for Compatibility Center and KDE Center consumption without exposing launcher output or state-root paths."
-).freeze
 
 def assert(condition, message)
   return if condition
@@ -160,62 +139,31 @@ end
 
 def prepare_fixture(runtime_command)
   env = {}
-  launch_receipt, launch_receipt_stdout = run_json(
+  fixture, fixture_stdout = run_json(
     env,
     *runtime_command,
-    "known-app-launch-authorization-receipt-preview",
+    "known-app-runtime-status-launch-owner-fixture-record",
     "--app", APP_ID,
     "--state-root", STATE_ROOT.to_s,
-    "--authorize", "review-launch-authorization"
-  )
-  assert(launch_receipt["receipt_id"] == LAUNCH_RECEIPT_ID, "launch receipt fixture id must be stable")
-  assert_no_forbidden(launch_receipt_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "launch receipt fixture output")
-
-  session_record, session_record_stdout = run_json(
-    env,
-    *runtime_command,
-    "known-app-controlled-execution-session-record",
-    "--app", APP_ID,
-    "--state-root", STATE_ROOT.to_s,
-    "--receipt-id", LAUNCH_RECEIPT_ID,
     "--cache-root", CACHE_ROOT.to_s,
     "--guest-boundary", GUEST_BOUNDARY
   )
-  unless session_record["session_handoff_ready"] == true
-    puts "#{SKIP_MARKER} (known Windows app artifact unavailable; run `ruby scripts/container.rb fetch-known-winapp` first)"
+  unless fixture["fixture_ready"] == true
+    reason = fixture.fetch("skip_reason", "known Windows app artifact unavailable")
+    puts "#{SKIP_MARKER} (#{reason})"
     exit 0
   end
-  assert(session_record["execution_session_id"] == SESSION_ID, "controlled session fixture id must be stable")
-  assert(session_record["record_state"] == "persisted", "controlled session fixture must be persisted")
-  assert_no_forbidden(session_record_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "controlled session fixture output")
-
-  review_receipt, review_receipt_stdout = run_json(
-    env,
-    *runtime_command,
-    "known-app-session-gated-launch-review-receipt-record",
-    "--app", APP_ID,
-    "--state-root", STATE_ROOT.to_s,
-    "--session-id", SESSION_ID,
-    "--action", "review-session-gated-dispatch",
-    "--decision", "approved"
-  )
-  assert(review_receipt["receipt_id"] == REVIEW_RECEIPT_ID, "review receipt fixture id must be stable")
-  assert(review_receipt["review_receipt_recorded"] == true, "review receipt fixture must be recorded")
-  assert_no_forbidden(review_receipt_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "review receipt fixture output")
-
-  File.write(PROJECTION_FILE, JSON.pretty_generate(PROJECTION_PAYLOAD) + "\n")
-  evidence_record, evidence_record_stdout = run_json(
-    env,
-    *runtime_command,
-    "known-app-kde-runtime-status-launch-evidence-record",
-    "--state-root", STATE_ROOT.to_s,
-    "--evidence-file", PROJECTION_FILE.to_s
-  )
-  assert(evidence_record["evidence_relative_path"].to_s.start_with?("runtime/kde-runtime-status-launch-evidence/"), "Runtime-status evidence fixture must expose only a relative path")
-  assert(evidence_record["runtime_owned"] == true, "Runtime-status evidence fixture must be Runtime-owned")
-  assert(evidence_record["go_runtime_backed"] == true, "Runtime-status evidence fixture must be Go backed")
-  assert_no_forbidden(evidence_record_stdout, [STATE_ROOT.to_s, PROJECTION_FILE.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status evidence fixture output")
-  evidence_record
+  assert(fixture["launch_authorization_receipt_id"] == LAUNCH_RECEIPT_ID, "launch receipt fixture id must be stable")
+  assert(fixture["controlled_execution_session_id"] == SESSION_ID, "controlled session fixture id must be stable")
+  assert(fixture["session_gated_review_receipt_id"] == REVIEW_RECEIPT_ID, "review receipt fixture id must be stable")
+  assert(fixture["evidence_relative_path"].to_s.start_with?("runtime/kde-runtime-status-launch-evidence/"), "Runtime-status evidence fixture must expose only a relative path")
+  assert(fixture["runtime_owned"] == true, "Runtime-status evidence fixture must be Runtime-owned")
+  assert(fixture["go_runtime_backed"] == true, "Runtime-status evidence fixture must be Go backed")
+  assert(fixture["kde_forwards_only_evidence_handle"] == true, "Runtime-status evidence fixture must keep KDE evidence-only")
+  assert(fixture["desktop_receipt_fields_reconstructed"] == false, "Runtime-status evidence fixture must not reconstruct receipt fields in KDE")
+  assert(fixture["desktop_kde_state_root_access"] == false, "Runtime-status evidence fixture must not grant KDE state-root access")
+  assert_no_forbidden(fixture_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status owner fixture output")
+  fixture
 end
 
 def assert_owner_service_call(stdout, evidence_record)
@@ -360,7 +308,7 @@ begin
   assert(stdout.include?("desktop_receipt_fields_reconstructed"), "D-Bus response must keep receipt reconstruction gates observable")
   assert(stdout.include?("desktop_kde_state_root_access"), "D-Bus response must keep KDE state-root gates observable")
   assert_owner_service_call(stdout, evidence_record)
-  assert_no_forbidden(stdout, [STATE_ROOT.to_s, PROJECTION_FILE.to_s, FAKE_LAUNCHER.to_s, ".exe", "wine ", "wine/", ".wine", "qemu-system", "program files", "docker.sock", "--privileged", "--network host", "type=bind"], "D-Bus controlled launch response")
+  assert_no_forbidden(stdout, [STATE_ROOT.to_s, FAKE_LAUNCHER.to_s, ".exe", "wine ", "wine/", ".wine", "qemu-system", "program files", "docker.sock", "--privileged", "--network host", "type=bind"], "D-Bus controlled launch response")
 
   launcher_args = FAKE_LAUNCHER_ARGS.read
   assert(launcher_args.include?("--state-root\n#{STATE_ROOT}"), "fake managed launcher must receive Runtime-injected state root")
