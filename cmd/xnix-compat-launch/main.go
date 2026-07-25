@@ -73,7 +73,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
 	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
 	flags.StringVar(&containerImage, "image", winapp.DefaultContainerImage, "local Wine X GUI container image for recipe-backed container GUI dispatch")
-	flags.StringVar(&containerPlatform, "platform", winapp.DefaultWinePlatform, "container platform for recipe-backed container GUI dispatch")
+	flags.StringVar(&containerPlatform, "platform", "", "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
 	flags.StringVar(&containerDockerPath, "docker", "", "explicit docker runner path for recipe-backed container GUI dispatch")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
 	flags.StringVar(&guiWaitText, "gui-wait", "10s", "guest GUI observation wait")

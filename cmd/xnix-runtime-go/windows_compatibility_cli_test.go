@@ -1101,7 +1101,7 @@ func TestWindowsAppContainerRunSmokeCommandUsesRestrictedRuntimeRunner(t *testin
 	}
 	dockerPath := filepath.Join(tempDir, "fake-docker")
 	dockerBody := "#!/bin/sh\n" +
-		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
 		"printf 'XNIX_WINAPP_SMOKE_OK\\n'\n"
 	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
 		t.Fatalf("WriteFile docker returned error: %v", err)
@@ -1162,7 +1162,7 @@ func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) 
 	tempDir := t.TempDir()
 	dockerPath := filepath.Join(tempDir, "fake-docker")
 	dockerBody := "#!/bin/sh\n" +
-		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
 		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
@@ -1177,7 +1177,6 @@ func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) 
 		"--app", "notepad.exe",
 		"--window-match", "notepad.exe",
 		"--image", "local/wine-x-gui:test",
-		"--platform", "linux/amd64",
 		"--docker", dockerPath,
 		"--timeout", "5s",
 	}, &output)
@@ -1258,7 +1257,7 @@ func TestWindowsAppContainerXGUISmokeCommandUsesRecipeHints(t *testing.T) {
 	dockerPath := filepath.Join(tempDir, "fake-docker")
 	dockerBody := "#!/bin/sh\n" +
 		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
-		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
 		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +

@@ -20,6 +20,7 @@ const (
 	ContainerXGUIRequestType    = "windows-app-container-x-gui-smoke"
 	DefaultContainerImage       = "xnix-wine-smoke:local"
 	DefaultWinePlatform         = "linux/amd64"
+	AutoContainerPlatform       = "auto"
 	DefaultContainerGUIApp      = "notepad.exe"
 	DefaultContainerWindowMatch = "notepad.exe"
 	DefaultWineBootstrapTimeout = 300 * time.Second
@@ -233,12 +234,16 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 
 	imageCtx, imageCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer imageCancel()
-	if err := inspectLocalImage(imageCtx, dockerPath, result.ContainerImage); err != nil {
+	detectedPlatform, err := inspectLocalImagePlatform(imageCtx, dockerPath, result.ContainerImage)
+	if err != nil {
 		result.Status = SkippedStatus
 		result.SkipReason = "local Wine X GUI container image unavailable"
 		return result, nil
 	}
 	result.ImageAvailable = true
+	if strings.TrimSpace(request.Platform) == "" && detectedPlatform != "" {
+		result.ContainerPlatform = detectedPlatform
+	}
 
 	timeout := request.Timeout
 	if timeout <= 0 {
@@ -338,7 +343,7 @@ func baseContainerXGUIResult(request ContainerXGUIRequest) ContainerXGUIResult {
 	}
 	platform := request.Platform
 	if strings.TrimSpace(platform) == "" {
-		platform = DefaultWinePlatform
+		platform = AutoContainerPlatform
 	}
 	return ContainerXGUIResult{
 		SchemaVersion:               ContainerXGUISchemaVersion,
@@ -389,6 +394,15 @@ func inspectLocalImage(ctx context.Context, dockerPath string, image string) err
 	return command.Run()
 }
 
+func inspectLocalImagePlatform(ctx context.Context, dockerPath string, image string) (string, error) {
+	command := exec.CommandContext(ctx, dockerPath, "image", "inspect", image, "--format", "{{.Os}}/{{.Architecture}}")
+	output, err := command.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
 func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image string, platform string) []string {
 	launcher := strings.Join([]string{
 		"set -eu",
@@ -433,7 +447,7 @@ func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image strin
 		"--env", "XNIX_GUI_APP=" + appName,
 		"--env", "XNIX_WINDOW_MATCH=" + windowMatch,
 	}
-	if strings.TrimSpace(platform) != "" {
+	if strings.TrimSpace(platform) != "" && strings.TrimSpace(platform) != AutoContainerPlatform {
 		args = append(args, "--platform", platform)
 	}
 	args = append(args, image, "sh", "-lc", launcher)

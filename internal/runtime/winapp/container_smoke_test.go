@@ -137,7 +137,7 @@ func TestRunContainerSmokeReportsWineBootstrapTimeout(t *testing.T) {
 	}
 	dockerPath := filepath.Join(tempDir, "fake-docker")
 	body := "#!/bin/sh\n" +
-		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
 		"printf 'XNIX_WINE_BOOTSTRAP_EXIT:124\\n' >&2\n" +
 		"exit 124\n"
 	if err := os.WriteFile(dockerPath, []byte(body), 0o700); err != nil {

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc114
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc115
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc115 checkpoint candidate makes the real local Notepad GUI path less host-specific. The container X GUI Runtime now inspects the local Wine image platform and uses that platform when `--platform` is omitted, so Colima arm64 images can run recipe-backed Notepad without manually adding `--platform linux/arm64`. The path still uses tmpfs container state, no host networking, no Docker socket mount, no host mounts, no privileged container, and no host-root mutation.
 
 The v0.2.640-rc114 checkpoint candidate fixes the Go desktop identity Ruby smoke so its Dockerfile check follows the current `go test -timeout 90m ./...` validation command. The v0.2.640-rc113 packaged-registry Notepad launcher contract remains the active desktop-path checkpoint.
 

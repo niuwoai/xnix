@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc115] - 2026-07-25
+
+### Changed
+
+- Changed the container X GUI Runtime to inspect the local Wine image platform and use it when `--platform` is omitted, making recipe-backed Notepad runnable on local arm64 Colima images without manual platform flags.
+- Changed `xnix-compat-launch`, `xnix-runtime-go windows-app-container-x-gui-smoke`, and the Ruby `container-x-gui` harness to allow empty platform selection for local-image platform detection.
+
 ## [0.2.640-rc114] - 2026-07-25
 
 ### Fixed

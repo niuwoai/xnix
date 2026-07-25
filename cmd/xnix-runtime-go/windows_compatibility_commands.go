@@ -386,7 +386,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&recipeApp, "recipe-app", "", "registered application id with container GUI smoke hints")
 	flags.StringVar(&registryPath, "registry", "", "recipe registry path used with --recipe-app")
 	flags.StringVar(&image, "image", winapp.DefaultContainerImage, "local Wine X GUI container image")
-	flags.StringVar(&platform, "platform", winapp.DefaultWinePlatform, "container platform, or empty to use the local image platform")
+	flags.StringVar(&platform, "platform", "", "container platform, or empty to use the local image platform")
 	flags.StringVar(&dockerPath, "docker", "", "explicit docker runner path")
 	flags.StringVar(&timeoutText, "timeout", "90s", "execution timeout")
 

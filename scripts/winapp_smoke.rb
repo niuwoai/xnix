@@ -51,6 +51,8 @@ options = {
   app_args: []
 }
 
+platform_supplied = false
+
 OptionParser.new do |parser|
   parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--report-output PATH] [--backend local|container|container-x-gui] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
@@ -72,7 +74,10 @@ OptionParser.new do |parser|
   parser.on("--registry PATH", "Recipe registry path for recipe-backed container GUI smoke") { |value| options[:registry] = value }
   parser.on("--recipe-app ID", "Registered application id for recipe-backed container GUI smoke") { |value| options[:recipe_app] = value }
   parser.on("--image IMAGE", "Local Wine container image for container backend") { |value| options[:image] = value }
-  parser.on("--platform PLATFORM", "Container platform for container backend") { |value| options[:platform] = value }
+  parser.on("--platform PLATFORM", "Container platform for container backend") do |value|
+    platform_supplied = true
+    options[:platform] = value
+  end
   parser.on("--gui-app APP", "Windows GUI app available inside the Wine container for container-x-gui backend") { |value| options[:gui_app] = value }
   parser.on("--window-match TEXT", "Case-insensitive X window match text for container-x-gui backend") { |value| options[:window_match] = value }
   parser.on("--state-root PATH", "Isolated Runtime state root") { |value| options[:state_root] = value }
@@ -87,6 +92,10 @@ OptionParser.new do |parser|
   parser.on("--runner-arg VALUE", "Argument passed to the compatibility runner before the executable path") { |value| options[:runner_args] << value }
   parser.on("--arg VALUE", "Argument passed to the Windows executable") { |value| options[:app_args] << value }
 end.parse!
+
+if options.fetch(:backend) == "container-x-gui" && !platform_supplied && !ENV.key?("XNIX_WINE_PLATFORM")
+  options[:platform] = ""
+end
 
 unless options[:profile].to_s.strip.empty?
   begin
