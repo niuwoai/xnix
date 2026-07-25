@@ -13,6 +13,7 @@ const (
 	desktopActivationManifestsDir    = "usr/share/xnix/compatibility/manifests"
 	desktopActivationReceiptsDir     = "usr/share/xnix/compatibility/activation-receipts"
 	desktopActivationLauncherDir     = "usr/share/xnix/compatibility/launcher-artifacts"
+	desktopActivationRecipesDir      = "usr/share/xnix/compatibility/recipes"
 	dolphinServiceMenuFileName       = "xnix-open-with-compatibility.desktop"
 )
 
@@ -267,6 +268,16 @@ func desktopActivationStagedFiles(plan Plan, bundle DesktopActivationBundlePrevi
 	if bundle.MIMEAppsPreview != "" {
 		files = append(files, desktopActivationStagedFile("mimeapps-list", "mimeapps-list", "file-manager", desktopActivationApplicationsDir+"/mimeapps.list", "0644", bundle.MIMEAppsPreview, "mimeapps-preview"))
 	}
+	if plan.ContainerGUISmoke != (ContainerGUISmokeHints{}) {
+		recipeContent, registryContent, err := desktopActivationRecipeRegistryContents(plan)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files,
+			desktopActivationStagedFile("recipe-registry", "recipe-registry", "launcher", desktopActivationRecipesDir+"/registry.json", "0644", registryContent, "desktop-activation-staging-preview"),
+			desktopActivationStagedFile("application-recipe", "application-recipe", "launcher", desktopActivationRecipesDir+"/"+plan.ApplicationID+".json", "0644", recipeContent, "desktop-activation-staging-preview"),
+		)
+	}
 	files = append(files,
 		desktopActivationStagedFile("desktop-integration-manifest", "desktop-integration-manifest", "all", desktopActivationManifestsDir+"/"+plan.ApplicationID+".json", "0644", manifestContent, "desktop-activation-staging-preview"),
 		desktopActivationStagedFile("managed-launcher-artifact", "managed-launcher-artifact", "launcher", desktopActivationLauncherDir+"/xnix-compat-launch.json", "0644", renderManagedLauncherArtifactPreview(), "cmd/xnix-compat-launch"),
@@ -277,6 +288,54 @@ func desktopActivationStagedFiles(plan Plan, bundle DesktopActivationBundlePrevi
 	}
 	files = append(files, desktopActivationStagedFile("desktop-activation-receipt", "desktop-activation-receipt", "rollback", desktopActivationReceiptsDir+"/"+plan.ApplicationID+".json", "0644", receiptContent, "desktop-activation-staging-preview"))
 	return files, nil
+}
+
+func desktopActivationRecipeRegistryContents(plan Plan) (string, string, error) {
+	recipe := Recipe{
+		ID:                  plan.ApplicationID,
+		Name:                plan.DisplayName,
+		Version:             plan.ApplicationVersion,
+		Icon:                plan.Icon,
+		Mode:                plan.RecipeMode,
+		SupportedExtensions: desktopActivationExtensionsFromMIMETypes(plan.MIMETypes),
+		ContainerGUISmoke:   plan.ContainerGUISmoke,
+	}
+	recipeData, err := json.MarshalIndent(recipe, "", "  ")
+	if err != nil {
+		return "", "", err
+	}
+	recipeContent := string(recipeData) + "\n"
+	registry := Registry{
+		SchemaVersion: 1,
+		RegistryName:  "xnix-desktop-activation",
+		Recipes: []RegistryEntry{
+			{
+				ID:              plan.ApplicationID,
+				Path:            plan.ApplicationID + ".json",
+				SHA256:          sha256Hex(recipeContent),
+				SignatureStatus: plan.RecipeSignatureStatus,
+			},
+		},
+	}
+	if registry.Recipes[0].SignatureStatus == "" {
+		registry.Recipes[0].SignatureStatus = "development-only"
+	}
+	registryData, err := json.MarshalIndent(registry, "", "  ")
+	if err != nil {
+		return "", "", err
+	}
+	return recipeContent, string(registryData) + "\n", nil
+}
+
+func desktopActivationExtensionsFromMIMETypes(mimeTypes []string) []string {
+	extensions := make([]string, 0, len(mimeTypes))
+	for _, mimeType := range mimeTypes {
+		const prefix = "application/x-xnix-"
+		if len(mimeType) > len(prefix) && mimeType[:len(prefix)] == prefix {
+			extensions = append(extensions, "."+mimeType[len(prefix):])
+		}
+	}
+	return extensions
 }
 
 func desktopActivationStagedFile(id string, kind string, entryPoint string, relativePath string, mode string, content string, source string) DesktopActivationStagedFile {

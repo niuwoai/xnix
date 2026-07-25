@@ -20,6 +20,8 @@ var (
 	versionPattern   = regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$`)
 )
 
+const packagedRecipeRegistryPath = "/usr/share/xnix/compatibility/recipes/registry.json"
+
 type Recipe struct {
 	ID                  string                 `json:"id"`
 	Name                string                 `json:"name"`
@@ -36,36 +38,38 @@ type ContainerGUISmokeHints struct {
 }
 
 type Plan struct {
-	RecipeMode                  string            `json:"-"`
-	SchemaVersion               string            `json:"schema_version"`
-	ApplicationID               string            `json:"application_id"`
-	DisplayName                 string            `json:"display_name"`
-	Icon                        string            `json:"icon"`
-	DesktopFile                 string            `json:"desktop_file"`
-	StartupWMClass              string            `json:"startup_wm_class"`
-	Categories                  []string          `json:"categories"`
-	MIMETypes                   []string          `json:"mime_types"`
-	LauncherAction              string            `json:"launcher_action"`
-	LaunchCommand               []string          `json:"launch_command"`
-	UserVisible                 bool              `json:"user_visible"`
-	StandardDesktopEntry        bool              `json:"standard_desktop_entry"`
-	AcceptsFileURIs             bool              `json:"accepts_file_uris"`
-	RuntimeOwned                bool              `json:"runtime_owned"`
-	BackendTerminologyHidden    bool              `json:"backend_terminology_hidden"`
-	DesktopFileWriteEnabled     bool              `json:"desktop_file_write_enabled"`
-	BackendLaunchEnabled        bool              `json:"backend_launch_enabled"`
-	BackendDetailsExposed       bool              `json:"backend_details_exposed"`
-	RawWindowsExecutableExposed bool              `json:"raw_windows_executable_exposed"`
-	CompatibilityStorageExposed bool              `json:"compatibility_storage_exposed"`
-	HostRootMutationEnabled     bool              `json:"host_root_mutation_enabled"`
-	StableIdentityDigest        string            `json:"stable_identity_digest"`
-	RecipeSource                string            `json:"recipe_source"`
-	RegistryName                string            `json:"registry_name,omitempty"`
-	RecipeDigestVerified        bool              `json:"recipe_digest_verified"`
-	RecipeSignatureStatus       string            `json:"recipe_signature_status,omitempty"`
-	KDEEntryPoints              []string          `json:"kde_entry_points"`
-	UserFacingSettings          map[string]string `json:"user_facing_settings"`
-	Summary                     string            `json:"summary"`
+	RecipeMode                  string                 `json:"-"`
+	SchemaVersion               string                 `json:"schema_version"`
+	ApplicationID               string                 `json:"application_id"`
+	DisplayName                 string                 `json:"display_name"`
+	ApplicationVersion          string                 `json:"application_version,omitempty"`
+	Icon                        string                 `json:"icon"`
+	DesktopFile                 string                 `json:"desktop_file"`
+	StartupWMClass              string                 `json:"startup_wm_class"`
+	Categories                  []string               `json:"categories"`
+	MIMETypes                   []string               `json:"mime_types"`
+	LauncherAction              string                 `json:"launcher_action"`
+	LaunchCommand               []string               `json:"launch_command"`
+	UserVisible                 bool                   `json:"user_visible"`
+	StandardDesktopEntry        bool                   `json:"standard_desktop_entry"`
+	AcceptsFileURIs             bool                   `json:"accepts_file_uris"`
+	RuntimeOwned                bool                   `json:"runtime_owned"`
+	BackendTerminologyHidden    bool                   `json:"backend_terminology_hidden"`
+	DesktopFileWriteEnabled     bool                   `json:"desktop_file_write_enabled"`
+	BackendLaunchEnabled        bool                   `json:"backend_launch_enabled"`
+	BackendDetailsExposed       bool                   `json:"backend_details_exposed"`
+	RawWindowsExecutableExposed bool                   `json:"raw_windows_executable_exposed"`
+	CompatibilityStorageExposed bool                   `json:"compatibility_storage_exposed"`
+	HostRootMutationEnabled     bool                   `json:"host_root_mutation_enabled"`
+	StableIdentityDigest        string                 `json:"stable_identity_digest"`
+	RecipeSource                string                 `json:"recipe_source"`
+	RegistryName                string                 `json:"registry_name,omitempty"`
+	RecipeDigestVerified        bool                   `json:"recipe_digest_verified"`
+	RecipeSignatureStatus       string                 `json:"recipe_signature_status,omitempty"`
+	KDEEntryPoints              []string               `json:"kde_entry_points"`
+	UserFacingSettings          map[string]string      `json:"user_facing_settings"`
+	Summary                     string                 `json:"summary"`
+	ContainerGUISmoke           ContainerGUISmokeHints `json:"-"`
 }
 
 type WindowIdentityPreview struct {
@@ -1010,13 +1014,14 @@ func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 		SchemaVersion:            "xnix.runtime.desktop_identity.v1",
 		ApplicationID:            recipe.ID,
 		DisplayName:              recipe.Name,
+		ApplicationVersion:       recipe.Version,
 		Icon:                     recipe.Icon,
 		DesktopFile:              fmt.Sprintf("xnix-%s.desktop", recipe.ID),
 		StartupWMClass:           fmt.Sprintf("xnix-%s", recipe.ID),
 		Categories:               []string{"Utility"},
 		MIMETypes:                mimeTypes,
 		LauncherAction:           "runtime-launch",
-		LaunchCommand:            []string{"xnix-compat-launch", "--app", recipe.ID, "%U"},
+		LaunchCommand:            launchCommandForRecipe(recipe),
 		UserVisible:              true,
 		StandardDesktopEntry:     true,
 		AcceptsFileURIs:          len(mimeTypes) > 0,
@@ -1041,8 +1046,16 @@ func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 			"resource_access": "review-required",
 			"snapshot":        "enabled",
 		},
-		Summary: "desktop identity plan presents a compatibility application as a normal Linux application while keeping backend details hidden behind the Runtime.",
+		Summary:           "desktop identity plan presents a compatibility application as a normal Linux application while keeping backend details hidden behind the Runtime.",
+		ContainerGUISmoke: recipe.ContainerGUISmoke,
 	}, nil
+}
+
+func launchCommandForRecipe(recipe Recipe) []string {
+	if recipe.ContainerGUISmoke != (ContainerGUISmokeHints{}) {
+		return []string{"xnix-compat-launch", "--app", recipe.ID, "--registry", packagedRecipeRegistryPath, "%U"}
+	}
+	return []string{"xnix-compat-launch", "--app", recipe.ID, "%U"}
 }
 
 func ParseRecipe(data []byte) (Recipe, error) {
@@ -1149,7 +1162,7 @@ func (plan Plan) RenderDesktopEntryWithOptions(options DesktopEntryOptions) (str
 	if !plan.StandardDesktopEntry || !plan.UserVisible {
 		return "", errors.New("desktop entry requires a standard user-visible plan")
 	}
-	if len(plan.LaunchCommand) != 4 {
+	if !plan.hasCompleteManagedLauncherCommand() {
 		return "", errors.New("desktop entry requires a complete managed launcher command")
 	}
 	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile, plan.StartupWMClass} {
@@ -1181,6 +1194,19 @@ func (plan Plan) RenderDesktopEntryWithOptions(options DesktopEntryOptions) (str
 		lines = append(lines, "MimeType="+strings.Join(plan.MIMETypes, ";")+";")
 	}
 	return strings.Join(lines, "\n") + "\n", nil
+}
+
+func (plan Plan) hasCompleteManagedLauncherCommand() bool {
+	if len(plan.LaunchCommand) != 4 && len(plan.LaunchCommand) != 6 {
+		return false
+	}
+	if plan.LaunchCommand[0] != "xnix-compat-launch" || plan.LaunchCommand[1] != "--app" || plan.LaunchCommand[2] != plan.ApplicationID || plan.LaunchCommand[len(plan.LaunchCommand)-1] != "%U" {
+		return false
+	}
+	if len(plan.LaunchCommand) == 6 {
+		return plan.LaunchCommand[3] == "--registry" && plan.LaunchCommand[4] == packagedRecipeRegistryPath
+	}
+	return true
 }
 
 func (plan Plan) RenderMIMEApps() (string, error) {
@@ -1285,7 +1311,7 @@ func (plan Plan) DesktopIconPreviewWithOptions(options DesktopIconOptions) (Desk
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return DesktopIconPreview{}, err
 	}
-	if len(plan.LaunchCommand) != 4 {
+	if !plan.hasCompleteManagedLauncherCommand() {
 		return DesktopIconPreview{}, errors.New("desktop icon preview requires a complete managed launcher command")
 	}
 	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {

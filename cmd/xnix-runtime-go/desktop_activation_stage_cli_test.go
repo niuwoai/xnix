@@ -155,6 +155,74 @@ func TestDesktopActivationStageCommandStagesCanonicalLauncherOnlyGUIApp(t *testi
 	}
 }
 
+func TestDesktopActivationStageCommandStagesRecipeBackedContainerGUIApp(t *testing.T) {
+	stagingRoot := t.TempDir()
+
+	var output bytes.Buffer
+	err := run([]string{
+		"desktop-activation-stage",
+		"--registry", "../../runtime/recipes/registry.json",
+		"--app", "org.xnix.sample.notepad",
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["application_id"] != "org.xnix.sample.notepad" ||
+		payload["display_name"] != "Sample Notepad" ||
+		payload["desktop_file"] != "xnix-org.xnix.sample.notepad.desktop" ||
+		payload["written_file_count"] != float64(8) ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected recipe-backed container GUI stage payload: %#v", payload)
+	}
+	writtenFileIDs := payload["written_file_ids"].([]any)
+	for _, id := range []string{"desktop-entry", "mimeapps-list", "recipe-registry", "application-recipe", "managed-launcher-artifact"} {
+		if !containsAnyString(writtenFileIDs, id) {
+			t.Fatalf("recipe-backed stage missing file id %q: %#v", id, writtenFileIDs)
+		}
+	}
+
+	desktopEntryPath := filepath.Join(stagingRoot, "usr/share/applications/xnix-org.xnix.sample.notepad.desktop")
+	desktopEntry, err := os.ReadFile(desktopEntryPath)
+	if err != nil {
+		t.Fatalf("desktop entry was not staged: %v", err)
+	}
+	if !bytes.Contains(desktopEntry, []byte("Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U\n")) ||
+		bytes.Contains(desktopEntry, []byte("notepad.exe")) ||
+		bytes.Contains(desktopEntry, []byte("docker")) ||
+		bytes.Contains(desktopEntry, []byte("wine ")) {
+		t.Fatalf("unexpected recipe-backed desktop entry:\n%s", desktopEntry)
+	}
+
+	registryPath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/recipes/registry.json")
+	registryData, err := os.ReadFile(registryPath)
+	if err != nil {
+		t.Fatalf("recipe registry was not staged: %v", err)
+	}
+	if !bytes.Contains(registryData, []byte(`"id": "org.xnix.sample.notepad"`)) ||
+		!bytes.Contains(registryData, []byte(`"path": "org.xnix.sample.notepad.json"`)) {
+		t.Fatalf("unexpected staged recipe registry:\n%s", registryData)
+	}
+	recipePath := filepath.Join(stagingRoot, "usr/share/xnix/compatibility/recipes/org.xnix.sample.notepad.json")
+	recipeData, err := os.ReadFile(recipePath)
+	if err != nil {
+		t.Fatalf("application recipe was not staged: %v", err)
+	}
+	if !bytes.Contains(recipeData, []byte(`"app": "notepad.exe"`)) ||
+		!bytes.Contains(recipeData, []byte(`"window_match": "notepad.exe"`)) {
+		t.Fatalf("staged recipe must preserve Runtime container GUI hints:\n%s", recipeData)
+	}
+}
+
 func TestDesktopActivationStageCommandRejectsMissingRoot(t *testing.T) {
 	registryPath := writeStageCommandRegistry(t)
 

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc111
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc112
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc112 checkpoint candidate makes the recipe-backed Notepad desktop entry point at installable Runtime-owned recipe materials. For apps with `container_gui_smoke` hints, `desktop-entry-preview` now renders `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json %U` and `desktop-activation-stage` plans the matching packaged registry plus application recipe under `/usr/share/xnix/compatibility/recipes/`. KDE still receives a normal `.desktop` entry and never receives Wine, Docker, raw executable, temporary registry, or backend command details.
 
 The v0.2.640-rc111 checkpoint candidate makes the real recipe-backed Notepad path callable from the Go Runtime launcher. `org.xnix.sample.notepad` is now registered in the Go known Windows app catalog as a recipe-backed container GUI application, and `xnix-compat-launch --app org.xnix.sample.notepad --registry PATH` can run the digest-verified recipe through the restricted Docker/Wine/Xvfb backend after the existing launch authorization, session-gated review, and controlled execution session gates pass. This moves Notepad from a script-only proof toward a desktop-launchable Runtime path while keeping KDE replaceable and keeping Docker socket, host networking, broad host mount, raw command, backend detail, and host-root mutation exposure closed.
 

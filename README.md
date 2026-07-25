@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc111`.
+The project is currently at `v0.2.640-rc112`.
 
 ## Product Direction
 
@@ -14,7 +14,7 @@ The project is currently at `v0.2.640-rc111`.
 
 ## Current Checkpoint
 
-v0.2.640-rc111 makes recipe-backed Notepad callable from the Go Runtime launcher. `xnix-compat-launch --app org.xnix.sample.notepad --registry PATH` now runs the digest-verified Notepad recipe through the restricted Docker/Wine/Xvfb backend after the existing authorization, review, and controlled execution session gates pass, while KDE remains a presentation shell and unsafe host/container exposure stays closed.
+v0.2.640-rc112 makes recipe-backed Notepad desktop entries self-contained for installed systems. `desktop-entry-preview` now renders `xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U`, while activation staging plans the matching packaged recipe registry and application recipe files so KDE still calls only the Runtime launcher and never sees Wine, Docker, or raw executable details.
 
 The previous v0.2.640-rc109 checkpoint tied the local real GUI proof to an application recipe. `org.xnix.sample.notepad` now carries `container_gui_smoke` hints, and `xnix-runtime-go windows-app-container-x-gui-smoke --registry PATH --recipe-app org.xnix.sample.notepad` resolves `notepad.exe` through the digest-verified recipe before running the restricted Docker/Wine/Xvfb smoke.
 

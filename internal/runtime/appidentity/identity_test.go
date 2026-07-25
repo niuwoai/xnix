@@ -88,12 +88,25 @@ func TestRecipeContainerGUISmokeHintsValidateWithoutDesktopLeak(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewPlan returned error: %v", err)
 	}
+	if got, want := plan.LaunchCommand, []string{"xnix-compat-launch", "--app", "org.xnix.sample.notepad", "--registry", packagedRecipeRegistryPath, "%U"}; !sameStrings(got, want) {
+		t.Fatalf("LaunchCommand = %#v, want %#v", got, want)
+	}
 	encoded, err := json.Marshal(plan)
 	if err != nil {
 		t.Fatalf("Marshal returned error: %v", err)
 	}
 	if strings.Contains(strings.ToLower(string(encoded)), ".exe") {
 		t.Fatalf("desktop plan leaked container GUI smoke executable: %s", string(encoded))
+	}
+	entry, err := plan.RenderDesktopEntry()
+	if err != nil {
+		t.Fatalf("RenderDesktopEntry returned error: %v", err)
+	}
+	if !strings.Contains(entry, "Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry "+packagedRecipeRegistryPath+" %U\n") ||
+		strings.Contains(strings.ToLower(entry), "notepad.exe") ||
+		strings.Contains(strings.ToLower(entry), "wine ") ||
+		strings.Contains(strings.ToLower(entry), "docker") {
+		t.Fatalf("desktop entry did not route through the packaged registry safely:\n%s", entry)
 	}
 }
 

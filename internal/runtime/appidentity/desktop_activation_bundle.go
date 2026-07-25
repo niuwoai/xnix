@@ -75,7 +75,7 @@ func (plan Plan) DesktopActivationBundlePreview() (DesktopActivationBundlePrevie
 	if err := plan.ValidateSafeForDesktop(); err != nil {
 		return DesktopActivationBundlePreview{}, err
 	}
-	if len(plan.LaunchCommand) != 4 {
+	if !plan.hasCompleteManagedLauncherCommand() {
 		return DesktopActivationBundlePreview{}, errors.New("desktop activation bundle preview requires a complete managed launcher command")
 	}
 	for _, value := range []string{plan.ApplicationID, plan.DisplayName, plan.Icon, plan.DesktopFile} {

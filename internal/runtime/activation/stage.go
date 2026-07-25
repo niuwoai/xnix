@@ -21,6 +21,7 @@ const (
 	manifestsDir         = "usr/share/xnix/compatibility/manifests"
 	receiptsDir          = "usr/share/xnix/compatibility/activation-receipts"
 	launcherArtifactsDir = "usr/share/xnix/compatibility/launcher-artifacts"
+	recipesDir           = "usr/share/xnix/compatibility/recipes"
 	launcherBinDir       = "usr/local/bin"
 	managedLauncherName  = "xnix-compat-launch"
 	dolphinServiceMenu   = "xnix-open-with-compatibility.desktop"
@@ -261,6 +262,16 @@ func stageArtifacts(plan appidentity.Plan, managedLauncherBinary string) ([]stag
 		}
 		initial = append(initial, newArtifact("mimeapps-list", "mimeapps-list", "file-manager", applicationsDir+"/mimeapps.list", mimeapps, "mimeapps-preview"))
 	}
+	if plan.ContainerGUISmoke != (appidentity.ContainerGUISmokeHints{}) {
+		recipeContent, registryContent, err := renderRecipeRegistry(plan)
+		if err != nil {
+			return nil, err
+		}
+		initial = append(initial,
+			newArtifact("recipe-registry", "recipe-registry", "launcher", recipesDir+"/registry.json", registryContent, "desktop-activation-stage"),
+			newArtifact("application-recipe", "application-recipe", "launcher", recipesDir+"/"+plan.ApplicationID+".json", recipeContent, "desktop-activation-stage"),
+		)
+	}
 	initial = append(initial, newArtifact("managed-launcher-artifact", "managed-launcher-artifact", "launcher", launcherArtifactsDir+"/"+managedLauncherName+".json", renderManagedLauncherArtifact(managedLauncherBinary != ""), "cmd/xnix-compat-launch"))
 	if managedLauncherBinary != "" {
 		launcherExecutable, err := newExecutableArtifact(
@@ -287,6 +298,53 @@ func stageArtifacts(plan appidentity.Plan, managedLauncherBinary string) ([]stag
 	}
 	initial = append(initial, newArtifact("desktop-activation-receipt", "desktop-activation-receipt", "rollback", receiptsDir+"/"+plan.ApplicationID+".json", receiptContent, "desktop-activation-stage"))
 	return initial, nil
+}
+
+func renderRecipeRegistry(plan appidentity.Plan) (string, string, error) {
+	recipe := appidentity.Recipe{
+		ID:                  plan.ApplicationID,
+		Name:                plan.DisplayName,
+		Version:             plan.ApplicationVersion,
+		Icon:                plan.Icon,
+		Mode:                plan.RecipeMode,
+		SupportedExtensions: extensionsFromMIMETypes(plan.MIMETypes),
+		ContainerGUISmoke:   plan.ContainerGUISmoke,
+	}
+	recipeContent, err := encodeJSON(recipe)
+	if err != nil {
+		return "", "", err
+	}
+	signatureStatus := plan.RecipeSignatureStatus
+	if signatureStatus == "" {
+		signatureStatus = "development-only"
+	}
+	registryContent, err := encodeJSON(appidentity.Registry{
+		SchemaVersion: 1,
+		RegistryName:  "xnix-desktop-activation",
+		Recipes: []appidentity.RegistryEntry{
+			{
+				ID:              plan.ApplicationID,
+				Path:            plan.ApplicationID + ".json",
+				SHA256:          sha256Hex(recipeContent),
+				SignatureStatus: signatureStatus,
+			},
+		},
+	})
+	if err != nil {
+		return "", "", err
+	}
+	return recipeContent, registryContent, nil
+}
+
+func extensionsFromMIMETypes(mimeTypes []string) []string {
+	const prefix = "application/x-xnix-"
+	extensions := make([]string, 0, len(mimeTypes))
+	for _, mimeType := range mimeTypes {
+		if strings.HasPrefix(mimeType, prefix) {
+			extensions = append(extensions, "."+strings.TrimPrefix(mimeType, prefix))
+		}
+	}
+	return extensions
 }
 
 func newArtifact(id string, kind string, entryPoint string, relativePath string, content string, source string) stageArtifact {

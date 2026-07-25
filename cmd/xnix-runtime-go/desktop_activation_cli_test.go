@@ -76,6 +76,31 @@ func TestDesktopEntryPreviewCommandRendersManagedLauncher(t *testing.T) {
 	}
 }
 
+func TestDesktopEntryPreviewCommandRendersRecipeBackedContainerGUILauncher(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"desktop-entry-preview", "--registry", "../../runtime/recipes/registry.json", "--app", "org.xnix.sample.notepad"}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	entry := output.String()
+	required := []string{
+		"[Desktop Entry]\n",
+		"Name=Sample Notepad\n",
+		"Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U\n",
+		"MimeType=application/x-xnix-log;application/x-xnix-txt;\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(entry, fragment) {
+			t.Fatalf("recipe-backed container GUI desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+	for _, forbidden := range []string{"notepad.exe", "wine ", "docker", "qemu-system", "../../runtime/recipes"} {
+		if strings.Contains(strings.ToLower(entry), forbidden) {
+			t.Fatalf("recipe-backed desktop entry exposes forbidden term %q: %s", forbidden, entry)
+		}
+	}
+}
+
 func TestDesktopEntryPreviewCommandConsumesActivationRoot(t *testing.T) {
 	registryPath, app := writeTestRepairGroupRegistry(t)
 	stageRoot := t.TempDir()

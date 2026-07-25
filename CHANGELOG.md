@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc112] - 2026-07-25
+
+### Added
+
+- Added packaged recipe registry routing for `container_gui_smoke` applications in generated desktop entries, so `org.xnix.sample.notepad` launches through `xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U` instead of depending on a temporary development registry path.
+- Added desktop activation staging for recipe-backed container GUI apps to plan the packaged recipe registry and application recipe under `/usr/share/xnix/compatibility/recipes/`.
+- Added unit and CLI coverage proving the Notepad desktop entry hides Wine, Docker, raw executable, and temporary registry details while staging the Runtime-owned recipe materials needed by the launcher.
+
 ## [0.2.640-rc111] - 2026-07-25
 
 ### Added
