@@ -1384,6 +1384,25 @@ func TestKRunnerQueryPreviewReturnsSafeLauncherMatches(t *testing.T) {
 		t.Fatalf("unexpected KRunner safety flags: %#v", preview)
 	}
 
+	recipeBacked, err := NewKRunnerQueryPreview([]Recipe{{
+		ID:      "org.xnix.sample.notepad",
+		Name:    "Sample Notepad",
+		Version: currentProjectVersion(t),
+		Icon:    "accessories-text-editor",
+		Mode:    "automatic",
+		ContainerGUISmoke: ContainerGUISmokeHints{
+			App:         "notepad.exe",
+			WindowMatch: "notepad.exe",
+		},
+	}}, Provenance{Source: "registry"}, "notepad")
+	if err != nil {
+		t.Fatalf("recipe-backed NewKRunnerQueryPreview returned error: %v", err)
+	}
+	if len(recipeBacked.Matches) != 1 ||
+		!sameStrings(recipeBacked.Matches[0].Action.Argv, []string{"xnix-compat-launch", "--app", "org.xnix.sample.notepad", "--registry", packagedRecipeRegistryPath}) {
+		t.Fatalf("recipe-backed KRunner action did not preserve the packaged registry launcher: %#v", recipeBacked.Matches)
+	}
+
 	blank, err := NewKRunnerQueryPreview([]Recipe{{
 		ID:                  "org.example.ledger",
 		Name:                "Example Ledger",

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc115
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc116
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc116 checkpoint candidate aligns KRunner search actions with the packaged recipe-backed launcher. Recipe-backed container GUI matches now return `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json`, so KDE search no longer drops the registry argument needed by installed Notepad desktop launches. Generic non-recipe-backed apps still use the short managed launcher form.
 
 The v0.2.640-rc115 checkpoint candidate makes the real local Notepad GUI path less host-specific. The container X GUI Runtime now inspects the local Wine image platform and uses that platform when `--platform` is omitted, so Colima arm64 images can run recipe-backed Notepad without manually adding `--platform linux/arm64`. The path still uses tmpfs container state, no host networking, no Docker socket mount, no host mounts, no privileged container, and no host-root mutation.
 

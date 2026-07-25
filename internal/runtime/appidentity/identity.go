@@ -3318,9 +3318,17 @@ func krunnerMatch(plan Plan, recipe Recipe, relevancePercent int) KRunnerMatch {
 		Action: KRunnerAction{
 			Type:           "runtime-launch",
 			DesktopEntryID: plan.DesktopFile,
-			Argv:           []string{"xnix-compat-launch", "--app", plan.ApplicationID},
+			Argv:           launcherActionArgv(plan),
 		},
 	}
+}
+
+func launcherActionArgv(plan Plan) []string {
+	argv := append([]string{}, plan.LaunchCommand...)
+	if len(argv) > 0 && argv[len(argv)-1] == "%U" {
+		argv = argv[:len(argv)-1]
+	}
+	return argv
 }
 
 func krunnerRelevancePercent(recipe Recipe, normalizedQuery string) int {

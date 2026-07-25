@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc116] - 2026-07-25
+
+### Changed
+
+- Changed Go KRunner query actions to derive their argv from the Runtime managed launch command, preserving the packaged recipe registry argument for recipe-backed container GUI applications.
+
 ## [0.2.640-rc115] - 2026-07-25
 
 ### Changed
