@@ -59,6 +59,61 @@ func TestPlanJSONHidesBackendTerminology(t *testing.T) {
 	}
 }
 
+func TestRecipeContainerGUISmokeHintsValidateWithoutDesktopLeak(t *testing.T) {
+	version := currentProjectVersion(t)
+	recipe, err := ParseRecipe([]byte(`{
+  "id": "org.xnix.sample.notepad",
+  "name": "Sample Notepad",
+  "version": "` + version + `",
+  "icon": "accessories-text-editor",
+  "mode": "automatic",
+  "supported_extensions": [".txt"],
+  "container_gui_smoke": {
+    "app": "notepad.exe",
+    "window_match": "notepad.exe"
+  }
+}`))
+	if err != nil {
+		t.Fatalf("ParseRecipe returned error: %v", err)
+	}
+	if err := recipe.Validate(); err != nil {
+		t.Fatalf("Validate returned error: %v", err)
+	}
+	if recipe.ContainerGUISmoke.App != "notepad.exe" ||
+		recipe.ContainerGUISmoke.WindowMatch != "notepad.exe" {
+		t.Fatalf("unexpected container GUI smoke hints: %#v", recipe.ContainerGUISmoke)
+	}
+
+	plan, err := NewPlan(recipe)
+	if err != nil {
+		t.Fatalf("NewPlan returned error: %v", err)
+	}
+	encoded, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+	if strings.Contains(strings.ToLower(string(encoded)), ".exe") {
+		t.Fatalf("desktop plan leaked container GUI smoke executable: %s", string(encoded))
+	}
+}
+
+func TestRecipeContainerGUISmokeHintsRejectPaths(t *testing.T) {
+	recipe := Recipe{
+		ID:                  "org.xnix.sample.notepad",
+		Name:                "Sample Notepad",
+		Icon:                "accessories-text-editor",
+		Mode:                "automatic",
+		SupportedExtensions: []string{".txt"},
+		ContainerGUISmoke: ContainerGUISmokeHints{
+			App:         "C:/Windows/notepad.exe",
+			WindowMatch: "notepad.exe",
+		},
+	}
+	if err := recipe.Validate(); err == nil {
+		t.Fatal("Validate must reject path-like container GUI smoke app hints")
+	}
+}
+
 func TestRenderDesktopEntryUsesManagedRuntimeLauncher(t *testing.T) {
 	plan, err := NewPlan(Recipe{
 		ID:                  "org.example.ledger",

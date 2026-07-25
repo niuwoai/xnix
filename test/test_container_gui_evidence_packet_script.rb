@@ -31,10 +31,16 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
     File.open(ENV.fetch("XNIX_FAKE_GO_LOG"), "a") { |file| file.puts(args.join("\u0001")) } if ENV["XNIX_FAKE_GO_LOG"]
 
     if args[0] == "run" && args.include?("windows-app-container-x-gui-smoke")
+      recipe_backed = args.include?("--recipe-app")
+      recipe_app = recipe_backed ? args[args.index("--recipe-app") + 1] : ""
       payload = {
         "schema_version" => "xnix.runtime.windows_app_container_x_gui_smoke.v1",
         "request_type" => "windows-app-container-x-gui-smoke",
         "status" => "passed",
+        "application_id" => recipe_app,
+        "display_name" => recipe_backed ? "Sample Notepad" : "",
+        "app_version" => recipe_backed ? "test-version" : "",
+        "recipe_backed" => recipe_backed,
         "application_name" => args[args.index("--app") + 1],
         "window_match" => args[args.index("--window-match") + 1],
         "container_image" => args[args.index("--image") + 1],
@@ -152,6 +158,8 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
     "--report-output", report_output.to_s,
     "--evidence-output", evidence_output.to_s,
     "--kde-page-output", kde_page_output.to_s,
+    "--registry", temp_root.join("registry.json").to_s,
+    "--recipe-app", "org.xnix.sample.notepad",
     "--platform", "linux/arm64",
     "--image", "local/wine-x-gui:test",
     "--gui-app", "notepad.exe",
@@ -170,6 +178,9 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(packet.fetch("evidence_output_written"), "packet must write projected evidence")
   assert(packet.fetch("kde_page_output_written"), "packet must write the KDE page")
   assert(packet.fetch("x_window_observed"), "packet must carry observed X window evidence")
+  assert(packet.fetch("recipe_app") == "org.xnix.sample.notepad", "packet must preserve recipe app id")
+  assert(packet.fetch("container_recipe_backed"), "packet must carry recipe-backed container evidence")
+  assert(packet.fetch("container_application_id") == "org.xnix.sample.notepad", "packet must preserve container app id")
   assert(packet.fetch("evidence_source") == "winapp-smoke-container-x-gui", "packet must preserve container X GUI source")
   assert(packet.fetch("compatibility_state") == "real-gui-container-wine-verified", "packet must preserve compatibility state")
   assert(packet.fetch("known_app_gui_evidence_count") == 1, "packet must expose one GUI evidence card")
@@ -199,7 +210,7 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(kde_page.fetch("known_app_gui_evidence_cards").first.fetch("app_id") == "org.xnix.sample.notepad", "KDE page must bind the app id")
 
   invocations = fake_go_log.read.lines.map { |line| line.split("\u0001").map(&:chomp) }
-  assert(invocations.any? { |argv| argv.include?("windows-app-container-x-gui-smoke") }, "packet must run the container X GUI smoke")
+  assert(invocations.any? { |argv| argv.include?("windows-app-container-x-gui-smoke") && argv.include?("--recipe-app") }, "packet must run the recipe-backed container X GUI smoke")
   assert(invocations.any? { |argv| argv.include?("gui-smoke-evidence-preview") && argv.include?("--output") }, "packet must persist the evidence projection")
   assert(invocations.any? { |argv| argv.include?("kde-center-page-preview") && argv.include?("--known-app-evidence-file") }, "packet must render the KDE page from evidence")
 end

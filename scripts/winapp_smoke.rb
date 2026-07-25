@@ -32,6 +32,8 @@ options = {
   exe: nil,
   runner: nil,
   docker: nil,
+  registry: nil,
+  recipe_app: nil,
   image: ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local"),
   platform: ENV.fetch("XNIX_WINE_PLATFORM", "linux/amd64"),
   gui_app: ENV.fetch("XNIX_WINE_GUI_CONTAINER_APP", "notepad.exe"),
@@ -67,6 +69,8 @@ OptionParser.new do |parser|
   parser.on("--exe PATH", "Existing Windows executable path; defaults to the built fixture") { |value| options[:exe] = value }
   parser.on("--runner PATH", "Explicit compatibility runner path") { |value| options[:runner] = value }
   parser.on("--docker PATH", "Explicit Docker runner path for container backend") { |value| options[:docker] = value }
+  parser.on("--registry PATH", "Recipe registry path for recipe-backed container GUI smoke") { |value| options[:registry] = value }
+  parser.on("--recipe-app ID", "Registered application id for recipe-backed container GUI smoke") { |value| options[:recipe_app] = value }
   parser.on("--image IMAGE", "Local Wine container image for container backend") { |value| options[:image] = value }
   parser.on("--platform PLATFORM", "Container platform for container backend") { |value| options[:platform] = value }
   parser.on("--gui-app APP", "Windows GUI app available inside the Wine container for container-x-gui backend") { |value| options[:gui_app] = value }
@@ -223,6 +227,10 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "container_image" => image,
     "container_platform" => platform,
     "container_image_available" => false,
+    "container_recipe_backed" => false,
+    "container_application_id" => "",
+    "container_display_name" => "",
+    "container_app_version" => "",
     "container_gui_app" => "",
     "container_window_match" => "",
     "x_server_started" => false,
@@ -526,6 +534,8 @@ if options.fetch(:backend) == "container-x-gui"
     "--timeout", options.fetch(:timeout)
   ]
   container_command.concat(["--docker", options.fetch(:docker)]) unless options[:docker].to_s.strip.empty?
+  container_command.concat(["--registry", options.fetch(:registry)]) unless options[:registry].to_s.strip.empty?
+  container_command.concat(["--recipe-app", options.fetch(:recipe_app)]) unless options[:recipe_app].to_s.strip.empty?
 
   container_stdout, container_stderr, container_status = run_command(go_env, *container_command)
   report["container_x_gui_smoke_invoked"] = true
@@ -551,6 +561,10 @@ if options.fetch(:backend) == "container-x-gui"
   report["container_image"] = payload.fetch("container_image", options.fetch(:image))
   report["container_platform"] = payload.fetch("container_platform", options.fetch(:platform))
   report["container_image_available"] = payload.fetch("image_available", false)
+  report["container_recipe_backed"] = payload.fetch("recipe_backed", false)
+  report["container_application_id"] = payload.fetch("application_id", "")
+  report["container_display_name"] = payload.fetch("display_name", "")
+  report["container_app_version"] = payload.fetch("app_version", "")
   report["container_gui_app"] = payload.fetch("application_name", options.fetch(:gui_app))
   report["container_window_match"] = payload.fetch("window_match", options.fetch(:window_match))
   report["x_server_started"] = payload.fetch("x_server_started", false)

@@ -309,12 +309,18 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
     if args[0] == "run" && args.include?("windows-app-container-x-gui-smoke")
       image = args[args.index("--image") + 1]
       platform = args[args.index("--platform") + 1]
-      app = args[args.index("--app") + 1]
-      window_match = args[args.index("--window-match") + 1]
+      recipe_backed = args.include?("--recipe-app")
+      recipe_app = recipe_backed ? args[args.index("--recipe-app") + 1] : ""
+      app = recipe_backed ? "notepad.exe" : args[args.index("--app") + 1]
+      window_match = recipe_backed ? "notepad.exe" : args[args.index("--window-match") + 1]
       payload = {
         "schema_version" => "xnix.runtime.windows_app_container_x_gui_smoke.v1",
         "request_type" => "windows-app-container-x-gui-smoke",
         "status" => "passed",
+        "application_id" => recipe_app,
+        "display_name" => recipe_backed ? "Sample Notepad" : "",
+        "app_version" => recipe_backed ? "test-version" : "",
+        "recipe_backed" => recipe_backed,
         "application_name" => app,
         "window_match" => window_match,
         "container_image" => image,
@@ -695,6 +701,30 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(container_x_gui_report.fetch("startup_window_observed"), "container X GUI report must map X observation to startup window evidence")
   assert(container_x_gui_report.fetch("container_payload").fetch("request_type") == "windows-app-container-x-gui-smoke", "container X GUI report must embed Runtime payload")
   assert(!container_x_gui_stdout.include?(stale_fixture_output.to_s), "container X GUI report must not leak fixture executable host path")
+
+  recipe_container_x_gui_stdout, recipe_container_x_gui_stderr, recipe_container_x_gui_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--backend", "container-x-gui",
+    "--registry", temp_root.join("registry.json").to_s,
+    "--recipe-app", "org.xnix.sample.notepad",
+    "--image", "local/wine-x-gui:test",
+    "--platform", "linux/arm64"
+  )
+  assert(recipe_container_x_gui_status.success?, "recipe-backed container X GUI report must succeed: #{recipe_container_x_gui_stderr}")
+  recipe_container_x_gui_report = JSON.parse(recipe_container_x_gui_stdout)
+  assert(recipe_container_x_gui_report.fetch("container_recipe_backed"), "recipe-backed container X GUI report must mark recipe backing")
+  assert(recipe_container_x_gui_report.fetch("container_application_id") == "org.xnix.sample.notepad", "recipe-backed container X GUI report must preserve app id")
+  assert(recipe_container_x_gui_report.fetch("container_display_name") == "Sample Notepad", "recipe-backed container X GUI report must preserve display name")
+  assert(recipe_container_x_gui_report.fetch("container_app_version") == "test-version", "recipe-backed container X GUI report must preserve app version")
+  assert(recipe_container_x_gui_report.fetch("container_gui_app") == "notepad.exe", "recipe-backed container X GUI report must resolve GUI app")
+  assert(recipe_container_x_gui_report.fetch("container_window_match") == "notepad.exe", "recipe-backed container X GUI report must resolve window match")
+  assert(recipe_container_x_gui_report.fetch("x_window_observed"), "recipe-backed container X GUI report must observe the app window")
+  recipe_invocation = fake_go_log.read.lines.map { |line| line.split("\u0001").map(&:chomp) }.last
+  assert(recipe_invocation.include?("--recipe-app"), "recipe-backed container X GUI report must forward recipe app")
+  assert(recipe_invocation.include?("--registry"), "recipe-backed container X GUI report must forward registry")
+  assert(!recipe_container_x_gui_stdout.include?(temp_root.join("registry.json").to_s), "recipe-backed container X GUI report must not leak registry path")
 
   container_x_gui_report_output = temp_root.join("reports/container-x-gui.json")
   persisted_container_x_gui_stdout, persisted_container_x_gui_stderr, persisted_container_x_gui_status = Open3.capture3(

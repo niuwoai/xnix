@@ -18,8 +18,9 @@ options = {
   evidence_output: DEFAULT_PACKET_ROOT.join("winapp-container-x-gui-evidence.json").to_s,
   kde_page_output: DEFAULT_PACKET_ROOT.join("winapp-container-x-gui-kde-page.json").to_s,
   registry: PROJECT_ROOT.join("runtime/recipes/registry.json").to_s,
+  recipe_app: "org.xnix.sample.notepad",
   app_id: "org.xnix.sample.notepad",
-  display_name: "Notepad",
+  display_name: "Sample Notepad",
   app_version: VERSION,
   decision: "approved",
   image: ENV.fetch("XNIX_WINE_IMAGE", "xnix-wine-smoke:local"),
@@ -36,6 +37,7 @@ OptionParser.new do |parser|
   parser.on("--evidence-output PATH", "Runtime GUI evidence output path") { |value| options[:evidence_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--registry PATH", "Recipe registry path") { |value| options[:registry] = value }
+  parser.on("--recipe-app ID", "Registered app id with container GUI smoke hints") { |value| options[:recipe_app] = value }
   parser.on("--app-id ID", "Application id for evidence and KDE page") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Display name for evidence") { |value| options[:display_name] = value }
   parser.on("--app-version VERSION", "Application version for evidence") { |value| options[:app_version] = value }
@@ -50,6 +52,7 @@ end.parse!
 
 abort "container GUI evidence packet does not accept positional arguments" unless ARGV.empty?
 abort "container GUI evidence packet requires --app-id" if options.fetch(:app_id).to_s.strip.empty?
+abort "container GUI evidence packet requires --recipe-app" if options.fetch(:recipe_app).to_s.strip.empty?
 abort "container GUI evidence packet requires --display-name" if options.fetch(:display_name).to_s.strip.empty?
 abort "container GUI evidence packet requires --app-version" if options.fetch(:app_version).to_s.strip.empty?
 abort "container GUI evidence packet decision must be reviewed, approved, deferred, or rejected" unless %w[reviewed approved deferred rejected].include?(options.fetch(:decision))
@@ -102,6 +105,8 @@ smoke_command = [
   "--platform", options.fetch(:platform),
   "--gui-app", options.fetch(:gui_app),
   "--window-match", options.fetch(:window_match),
+  "--registry", options.fetch(:registry),
+  "--recipe-app", options.fetch(:recipe_app),
   "--timeout", options.fetch(:timeout)
 ]
 smoke_command.concat(["--docker", options.fetch(:docker)]) unless options[:docker].to_s.strip.empty?
@@ -113,6 +118,8 @@ smoke_report = load_json(smoke_stdout, "container X GUI smoke")
 unless smoke_report.fetch("status") == "passed" &&
        smoke_report.fetch("report_output_written") &&
        smoke_report.fetch("x_window_observed") &&
+       smoke_report.fetch("container_recipe_backed") &&
+       smoke_report.fetch("container_application_id") == options.fetch(:recipe_app) &&
        smoke_report.fetch("container_payload").fetch("network_mode") == "none" &&
        smoke_report.fetch("container_payload").fetch("host_mount_count") == 0
   warn "FAIL: container X GUI smoke report did not pass the evidence packet gate"
@@ -173,11 +180,14 @@ packet = {
   "version" => VERSION,
   "status" => "passed",
   "app_id" => options.fetch(:app_id),
+  "recipe_app" => options.fetch(:recipe_app),
   "display_name" => options.fetch(:display_name),
   "app_version" => options.fetch(:app_version),
   "gui_app" => options.fetch(:gui_app),
   "window_match" => options.fetch(:window_match),
   "container_platform" => smoke_report.fetch("container_platform"),
+  "container_recipe_backed" => smoke_report.fetch("container_recipe_backed"),
+  "container_application_id" => smoke_report.fetch("container_application_id"),
   "report_output_written" => report_output.file?,
   "evidence_output_written" => evidence_output.file?,
   "kde_page_output_written" => kde_page_output.file?,

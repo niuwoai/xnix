@@ -1,7 +1,12 @@
 {
   "id": "org.xnix.sample.notepad",
   "name": "Sample Notepad",
+  "version": "0.2.640-rc109",
   "icon": "accessories-text-editor",
   "mode": "automatic",
-  "supported_extensions": [".txt", ".log"]
+  "supported_extensions": [".txt", ".log"],
+  "container_gui_smoke": {
+    "app": "notepad.exe",
+    "window_match": "notepad.exe"
+  }
 }

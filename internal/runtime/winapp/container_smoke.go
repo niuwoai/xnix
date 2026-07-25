@@ -41,6 +41,10 @@ type ContainerRequest struct {
 type ContainerXGUIRequest struct {
 	ApplicationName string
 	WindowMatch     string
+	ApplicationID   string
+	DisplayName     string
+	AppVersion      string
+	RecipeBacked    bool
 	Image           string
 	Platform        string
 	DockerPath      string
@@ -84,6 +88,10 @@ type ContainerXGUIResult struct {
 	SchemaVersion               string `json:"schema_version"`
 	RequestType                 string `json:"request_type"`
 	Status                      string `json:"status"`
+	ApplicationID               string `json:"application_id,omitempty"`
+	DisplayName                 string `json:"display_name,omitempty"`
+	AppVersion                  string `json:"app_version,omitempty"`
+	RecipeBacked                bool   `json:"recipe_backed"`
 	ApplicationName             string `json:"application_name"`
 	WindowMatch                 string `json:"window_match"`
 	ContainerImage              string `json:"container_image"`
@@ -336,6 +344,10 @@ func baseContainerXGUIResult(request ContainerXGUIRequest) ContainerXGUIResult {
 		SchemaVersion:               ContainerXGUISchemaVersion,
 		RequestType:                 ContainerXGUIRequestType,
 		Status:                      FailedStatus,
+		ApplicationID:               strings.TrimSpace(request.ApplicationID),
+		DisplayName:                 strings.TrimSpace(request.DisplayName),
+		AppVersion:                  strings.TrimSpace(request.AppVersion),
+		RecipeBacked:                request.RecipeBacked,
 		ApplicationName:             appName,
 		WindowMatch:                 windowMatch,
 		ContainerImage:              image,

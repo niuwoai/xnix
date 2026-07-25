@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -374,12 +375,16 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 
 	var appName string
 	var windowMatch string
+	var recipeApp string
+	var registryPath string
 	var image string
 	var platform string
 	var dockerPath string
 	var timeoutText string
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
+	flags.StringVar(&recipeApp, "recipe-app", "", "registered application id with container GUI smoke hints")
+	flags.StringVar(&registryPath, "registry", "", "recipe registry path used with --recipe-app")
 	flags.StringVar(&image, "image", winapp.DefaultContainerImage, "local Wine X GUI container image")
 	flags.StringVar(&platform, "platform", winapp.DefaultWinePlatform, "container platform, or empty to use the local image platform")
 	flags.StringVar(&dockerPath, "docker", "", "explicit docker runner path")
@@ -396,15 +401,37 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
-
-	result, err := winapp.RunContainerXGUISmoke(context.Background(), winapp.ContainerXGUIRequest{
+	request := winapp.ContainerXGUIRequest{
 		ApplicationName: appName,
 		WindowMatch:     windowMatch,
 		Image:           image,
 		Platform:        platform,
 		DockerPath:      dockerPath,
 		Timeout:         timeout,
-	})
+	}
+	if strings.TrimSpace(recipeApp) != "" {
+		if strings.TrimSpace(registryPath) == "" {
+			return errors.New("windows-app-container-x-gui-smoke --recipe-app requires --registry")
+		}
+		recipe, _, err := appidentity.LoadRecipeFromRegistry(registryPath, "", recipeApp)
+		if err != nil {
+			return err
+		}
+		if err := recipe.Validate(); err != nil {
+			return err
+		}
+		if recipe.ContainerGUISmoke == (appidentity.ContainerGUISmokeHints{}) {
+			return fmt.Errorf("recipe %s does not define container_gui_smoke hints", recipe.ID)
+		}
+		request.ApplicationName = recipe.ContainerGUISmoke.App
+		request.WindowMatch = recipe.ContainerGUISmoke.WindowMatch
+		request.ApplicationID = recipe.ID
+		request.DisplayName = recipe.Name
+		request.AppVersion = recipe.Version
+		request.RecipeBacked = true
+	}
+
+	result, err := winapp.RunContainerXGUISmoke(context.Background(), request)
 	if err != nil {
 		return err
 	}

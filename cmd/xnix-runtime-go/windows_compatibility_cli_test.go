@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -1220,6 +1221,100 @@ func TestWindowsAppContainerXGUISmokeCommandObservesNotepadWindow(t *testing.T) 
 		strings.Contains(output.String(), "--privileged") ||
 		strings.Contains(output.String(), "--network host") {
 		t.Fatalf("container X GUI smoke output leaked unsafe details: %s", output.String())
+	}
+}
+
+func TestWindowsAppContainerXGUISmokeCommandUsesRecipeHints(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	version := currentProjectVersion(t)
+	recipeData := []byte(`{
+  "id": "org.xnix.sample.notepad",
+  "name": "Sample Notepad",
+  "version": "` + version + `",
+  "icon": "accessories-text-editor",
+  "mode": "automatic",
+  "supported_extensions": [".txt"],
+  "container_gui_smoke": {
+    "app": "notepad.exe",
+    "window_match": "notepad.exe"
+  }
+}`)
+	recipePath := filepath.Join(tempDir, "org.xnix.sample.notepad.json")
+	if err := os.WriteFile(recipePath, recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	digest := sha256.Sum256(recipeData)
+	registryData := []byte(fmt.Sprintf(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.xnix.sample.notepad","path":"org.xnix.sample.notepad.json","sha256":"%x","signature_status":"development-only"}]}`, digest[:]))
+	registryPath := filepath.Join(tempDir, "registry.json")
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-container-x-gui-smoke",
+		"--registry", registryPath,
+		"--recipe-app", "org.xnix.sample.notepad",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["recipe_backed"] != true ||
+		payload["application_id"] != "org.xnix.sample.notepad" ||
+		payload["display_name"] != "Sample Notepad" ||
+		payload["app_version"] != version ||
+		payload["application_name"] != "notepad.exe" ||
+		payload["window_match"] != "notepad.exe" ||
+		payload["x_window_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["host_mount_count"] != float64(0) {
+		t.Fatalf("unexpected recipe-backed container X GUI smoke payload: %#v", payload)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "XNIX_GUI_APP=notepad.exe") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=notepad.exe") {
+		t.Fatalf("docker invocation did not receive recipe GUI hints: %s", string(dockerInvocation))
+	}
+	if strings.Contains(output.String(), registryPath) ||
+		strings.Contains(output.String(), recipePath) ||
+		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "docker.sock") ||
+		strings.Contains(output.String(), "--privileged") ||
+		strings.Contains(output.String(), "--network host") {
+		t.Fatalf("recipe-backed container X GUI smoke output leaked unsafe details: %s", output.String())
 	}
 }
 

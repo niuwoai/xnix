@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc109] - 2026-07-25
+
+### Added
+
+- Added `container_gui_smoke` recipe hints for `org.xnix.sample.notepad`, letting the Go Runtime resolve the real container GUI smoke target from the registered application id instead of only from a raw executable name.
+- Added `windows-app-container-x-gui-smoke --registry PATH --recipe-app ID` so recipe-backed local Docker/Wine/Xvfb GUI runs preserve application id, display name, version, and safe container evidence.
+- Changed `scripts/winapp_smoke.rb` and `scripts/container_gui_evidence_packet.rb` to forward recipe-backed container GUI smoke requests and require the one-shot packet to prove the local GUI run was tied to the registered Notepad recipe.
+- Verified a restricted recipe-backed local Docker/Wine/Xvfb `org.xnix.sample.notepad` run with `container_recipe_backed=true`, `container_application_id=org.xnix.sample.notepad`, `x_window_observed=true`, `container_network_mode=none`, `container_host_mount_count=0`, no Docker socket mount, no broad host mount, no host networking, and no host-root mutation.
+
 ## [0.2.640-rc108] - 2026-07-25
 
 ### Added

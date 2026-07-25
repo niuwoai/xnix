@@ -21,12 +21,18 @@ var (
 )
 
 type Recipe struct {
-	ID                  string   `json:"id"`
-	Name                string   `json:"name"`
-	Version             string   `json:"version,omitempty"`
-	Icon                string   `json:"icon"`
-	Mode                string   `json:"mode"`
-	SupportedExtensions []string `json:"supported_extensions"`
+	ID                  string                 `json:"id"`
+	Name                string                 `json:"name"`
+	Version             string                 `json:"version,omitempty"`
+	Icon                string                 `json:"icon"`
+	Mode                string                 `json:"mode"`
+	SupportedExtensions []string               `json:"supported_extensions"`
+	ContainerGUISmoke   ContainerGUISmokeHints `json:"container_gui_smoke,omitempty"`
+}
+
+type ContainerGUISmokeHints struct {
+	App         string `json:"app,omitempty"`
+	WindowMatch string `json:"window_match,omitempty"`
 }
 
 type Plan struct {
@@ -1067,6 +1073,28 @@ func (recipe Recipe) Validate() error {
 		if !extensionPattern.MatchString(extension) {
 			return fmt.Errorf("invalid supported extension: %s", extension)
 		}
+	}
+	if err := recipe.ContainerGUISmoke.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (hints ContainerGUISmokeHints) Validate() error {
+	if hints == (ContainerGUISmokeHints{}) {
+		return nil
+	}
+	if !singleLine(hints.App) {
+		return errors.New("container_gui_smoke app must be a non-empty single-line string")
+	}
+	if strings.ContainsAny(hints.App, `/\`) {
+		return errors.New("container_gui_smoke app must be a container application name, not a path")
+	}
+	if !strings.HasSuffix(strings.ToLower(hints.App), ".exe") {
+		return errors.New("container_gui_smoke app must name a Windows executable")
+	}
+	if !singleLine(hints.WindowMatch) {
+		return errors.New("container_gui_smoke window_match must be a non-empty single-line string")
 	}
 	return nil
 }
