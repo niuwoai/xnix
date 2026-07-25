@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc118] - 2026-07-25
+
+### Added
+
+- Added `scripts/staged_desktop_notepad_smoke.rb`, which stages the KDE desktop entry and managed launcher, reads the real packaged-registry `Exec=` line, injects Runtime-owned launch/session receipts, and runs recipe-backed Notepad through the restricted Docker/Wine/Xvfb path without mutating the host root.
+
 ## [0.2.640-rc117] - 2026-07-25
 
 ### Changed

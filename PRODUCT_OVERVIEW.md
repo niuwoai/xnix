@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc117
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc118
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc118 checkpoint candidate adds a repeatable staged desktop Notepad smoke. `scripts/staged_desktop_notepad_smoke.rb` stages the KDE `.desktop` entry and managed launcher into a temporary root, reads the real packaged-registry `Exec=` line, injects Runtime-owned launch/session receipts, and runs recipe-backed Notepad through the restricted Docker/Wine/Xvfb path without writing to the host root.
 
 The v0.2.640-rc117 checkpoint candidate makes the packaged-registry desktop launcher shape executable in safe local staging. `xnix-compat-launch` now resolves `/usr/share/xnix/compatibility/recipes/registry.json` through `XNIX_STAGING_ROOT` when the host path is absent, so staged `.desktop` and KRunner launcher arguments can exercise recipe-backed Notepad dispatch without writing to the host root.
 

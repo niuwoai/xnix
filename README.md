@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc117`.
+The project is currently at `v0.2.640-rc118`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc117`.
 
 ## Current Checkpoint
 
-v0.2.640-rc117 makes the packaged-registry desktop launcher shape executable in safe local staging. `xnix-compat-launch` now resolves `/usr/share/xnix/compatibility/recipes/registry.json` through `XNIX_STAGING_ROOT` when the host path is absent, so staged `.desktop` and KRunner launcher arguments can exercise recipe-backed Notepad dispatch without writing to the host root.
+v0.2.640-rc118 adds a repeatable staged desktop Notepad smoke. `scripts/staged_desktop_notepad_smoke.rb` stages the KDE `.desktop` entry and managed launcher into a temporary root, reads the real packaged-registry `Exec=` line, injects Runtime-owned launch/session receipts, and runs recipe-backed Notepad through the restricted Docker/Wine/Xvfb path without writing to the host root.
+
+The previous v0.2.640-rc117 checkpoint made the packaged-registry desktop launcher shape executable in safe local staging. `xnix-compat-launch` now resolves `/usr/share/xnix/compatibility/recipes/registry.json` through `XNIX_STAGING_ROOT` when the host path is absent, so staged `.desktop` and KRunner launcher arguments can exercise recipe-backed Notepad dispatch without writing to the host root.
 
 The previous v0.2.640-rc116 checkpoint aligned KRunner search actions with the packaged recipe-backed launcher. Recipe-backed container GUI matches now return `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json`, so KDE search no longer drops the registry argument needed by installed Notepad desktop launches.
 
