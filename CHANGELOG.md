@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc108] - 2026-07-25
+
+### Added
+
+- Added `scripts/container_gui_evidence_packet.rb`, a one-shot local container GUI evidence packet that runs the restricted `container-x-gui` smoke, persists the redacted report, projects Runtime GUI evidence, renders a KDE Center page, and emits a path-redacted summary packet.
+- Added script-level coverage for the packet path so the `winapp_smoke.rb`, `gui-smoke-evidence-preview`, and `kde-center-page-preview` handoff remains guarded without invoking Docker in unit tests.
+- Verified a restricted local Docker/Wine/Xvfb `notepad.exe` run through `scripts/container_gui_evidence_packet.rb` with `x_window_observed=true`, `container_network_mode=none`, `container_host_mount_count=0`, no Docker socket mount, no broad host mount, no host networking, and no host-root mutation.
+
 ## [0.2.640-rc107] - 2026-07-25
 
 ### Added

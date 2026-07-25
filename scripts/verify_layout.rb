@@ -263,7 +263,9 @@ REQUIRED_FILES = %w[
   internal/runtime/appidentity/known_app_matrix_evidence_test.go
   scripts/build_wine_smoke_image.rb
   scripts/winapp_smoke.rb
+  scripts/container_gui_evidence_packet.rb
   test/test_winapp_smoke_script.rb
+  test/test_container_gui_evidence_packet_script.rb
   test/test_winapp_smoke_profile_template.rb
   scripts/winapp_container_smoke.rb
   scripts/winapp_guest_wine_smoke.rb
@@ -882,6 +884,14 @@ end
 windows_app_smoke_script_test = read_project_file("test/test_winapp_smoke_script.rb")
 %w[xnix.runtime.winapp_smoke_report.v1 winapp-smoke windows-app-run-smoke windows-app-launch-profile windows-app-runner-diagnostics windows-app-smoke-profile-preflight windows-app-smoke-profile-render windows-app-launcher-bundle-record windows-app-container-run-smoke windows-app-container-x-gui-smoke runner_diagnostics_payload runner_diagnostics_invoked profile_write_invoked profile_written launcher_bundle_write_invoked launcher_bundle_written launcher_bundle_payload runtime_argument_count launcher_mode launcher_command profile_preflight_invoked profile_preflight_status executable_format windows_executable_signature_observed executable_architecture executable_architecture_supported wine_architecture wine_prefix_mode wine_prefix_prepared preflight_only success_mode startup_window_observed x_window_observed working_directory_mode application_workspace_mode application_staged runner_argument_count runner_command_hints container_payload container_smoke_invoked container_x_gui_smoke_invoked wine_bootstrap_attempted wine_bootstrap_skipped --backend --format json --format markdown --profile --write-profile --write-launcher-bundle --preflight-only --exe --runner --working-dir --runner-bottle --runner-arg --success-mode startup-window --skip-bootstrap --stage-app-dir container-x-gui notepad.exe CUSTOM_APP_OK user-supplied profile profile_supplied raw_output_redacted Wine\ executed\ by\ script:\ false].each do |token|
   assert(windows_app_smoke_script_test.include?(token.gsub("\\ ", " ")), "Windows app smoke script test must include #{token}")
+end
+container_gui_evidence_packet_script = read_project_file("scripts/container_gui_evidence_packet.rb")
+%w[xnix.scripts.container_gui_evidence_packet.v1 container-gui-evidence-packet scripts/winapp_smoke.rb container-x-gui --report-output gui-smoke-evidence-preview --evidence-output kde-center-page-preview --known-app-evidence-file known_app_gui_evidence_count known_app_gui_evidence_cards winapp-smoke-container-x-gui real-gui-container-wine-verified report_path_exposed evidence_path_exposed kde_page_path_exposed desktop_launch_enabled backend_launch_enabled backend_details_exposed host_root_modified docker_socket_mounted host_networking_required host_mount_count notepad.exe].each do |token|
+  assert(container_gui_evidence_packet_script.include?(token), "Container GUI evidence packet script must include #{token}")
+end
+container_gui_evidence_packet_script_test = read_project_file("test/test_container_gui_evidence_packet_script.rb")
+%w[xnix.scripts.container_gui_evidence_packet.v1 container-gui-evidence-packet windows-app-container-x-gui-smoke gui-smoke-evidence-preview kde-center-page-preview --known-app-evidence-file --output report_output_written evidence_output_written kde_page_output_written x_window_observed winapp-smoke-container-x-gui real-gui-container-wine-verified desktop_launch_enabled backend_launch_enabled docker_socket_mounted host_networking_required container_network_mode].each do |token|
+  assert(container_gui_evidence_packet_script_test.include?(token), "Container GUI evidence packet script test must include #{token}")
 end
 windows_app_smoke_profile_template_test = read_project_file("test/test_winapp_smoke_profile_template.rb")
 %w[windows-app-smoke-profile.template.json ruby\ scripts/winapp_smoke.rb\ --format\ json\ --profile go\ run\ ./cmd/xnix-runtime-go\ windows-app-run-smoke\ --profile redacted\ output].each do |token|
