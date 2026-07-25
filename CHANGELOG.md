@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc114] - 2026-07-25
+
+### Fixed
+
+- Fixed the Go desktop identity Ruby smoke to assert the current Dockerfile `go test -timeout 90m ./...` validation command instead of the obsolete unbounded command.
+
 ## [0.2.640-rc113] - 2026-07-25
 
 ### Changed

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc113
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc114
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc114 checkpoint candidate fixes the Go desktop identity Ruby smoke so its Dockerfile check follows the current `go test -timeout 90m ./...` validation command. The v0.2.640-rc113 packaged-registry Notepad launcher contract remains the active desktop-path checkpoint.
 
 The v0.2.640-rc113 checkpoint candidate aligns the packaged-registry Notepad launcher contract across the Ruby desktop-entry renderer, Ruby Runtime daemon previews, the C Runtime core, D-Bus smoke fixtures, and installer tests. Recipe-backed container GUI apps now consistently render `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json %U`, while desktop-facing materials still hide Wine, Docker, raw executable, temporary development registry, and backend command details.
 
