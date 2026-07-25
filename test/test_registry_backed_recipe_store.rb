@@ -20,8 +20,8 @@ recipes = store.all
 
 assert(store.is_a?(Xnix::Compatibility::RegistryBackedRecipeStore), "default recipe directory must use the registry-backed store")
 assert(store.registry_report["trust"]["digest_verified"], "registry-backed store must verify digests before loading recipes")
-assert(recipes.length == 1, "registry-backed store must load registered recipes")
-assert(recipes.first.id == "org.xnix.sample.notepad", "registry-backed store must expose registered recipe ids")
+assert(recipes.length == 3, "registry-backed store must load registered recipes")
+assert(recipes.map(&:id).include?("org.xnix.sample.notepad"), "registry-backed store must expose registered recipe ids")
 assert(store.find("org.xnix.sample.notepad").name == "Sample Notepad", "registry-backed store must find registered recipes")
 
 Dir.mktmpdir("xnix-registry-store") do |dir|

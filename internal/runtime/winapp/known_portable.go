@@ -55,18 +55,19 @@ const (
 )
 
 type KnownPortableApp struct {
-	ID              string
-	DisplayName     string
-	Version         string
-	Architecture    string
-	ExecutableName  string
-	SourcePageURL   string
-	DownloadURL     string
-	SHA256          string
-	ExpectedMarker  string
-	Arguments       []string
-	GuestBuiltinGUI bool
-	GuestGUIAppPath string
+	ID                       string
+	DisplayName              string
+	Version                  string
+	Architecture             string
+	ExecutableName           string
+	SourcePageURL            string
+	DownloadURL              string
+	SHA256                   string
+	ExpectedMarker           string
+	Arguments                []string
+	GuestBuiltinGUI          bool
+	GuestGUIAppPath          string
+	RecipeBackedContainerGUI bool
 }
 
 type KnownFetchRequest struct {
@@ -777,7 +778,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc110",
+		Version:         "0.2.640-rc111",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -788,12 +789,22 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc110",
+		Version:         "0.2.640-rc111",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
 		ExpectedMarker:  "MessageBox",
 		GuestBuiltinGUI: true,
+	},
+	{
+		ID:                       "org.xnix.sample.notepad",
+		DisplayName:              "Sample Notepad",
+		Version:                  "0.2.640-rc111",
+		Architecture:             "windows-x86-gui",
+		ExecutableName:           "notepad.exe",
+		SourcePageURL:            "runtime-recipe-container-gui-fixture",
+		ExpectedMarker:           "Notepad",
+		RecipeBackedContainerGUI: true,
 	},
 }
 
@@ -977,13 +988,16 @@ func PreviewKnownPortableManagedLaunch(request KnownManagedLaunchRequest) (Known
 		return KnownManagedLaunchResult{}, err
 	}
 	result := baseKnownManagedLaunchResult(app)
-	if app.GuestBuiltinGUI {
+	if app.GuestBuiltinGUI || app.RecipeBackedContainerGUI {
 		result.Status = "ready"
 		result.CacheStatus = "guest-builtin-gui"
+		if app.RecipeBackedContainerGUI {
+			result.CacheStatus = "recipe-backed-container-gui"
+		}
 		result.ArtifactVerified = true
 		result.LaunchEnabled = true
 		result.PreparationRequired = false
-		result.DesktopSafeSummary = app.DisplayName + " is ready for Runtime-managed GUI launch using recorded guest GUI evidence instead of a host-cached download artifact."
+		result.DesktopSafeSummary = app.DisplayName + " is ready for Runtime-managed GUI launch using Runtime-owned GUI evidence instead of a host-cached download artifact."
 		result.BlockedReason = ""
 		return result, nil
 	}

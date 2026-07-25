@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"xnix.local/xnix/internal/runtime/appidentity"
@@ -45,6 +46,10 @@ func run(args []string, stdout io.Writer) error {
 	var guiAppPath string
 	var guestDisplay string
 	var hostDisplay string
+	var registryPath string
+	var containerImage string
+	var containerPlatform string
+	var containerDockerPath string
 	var timeoutText string
 	var guiWaitText string
 	flags.StringVar(&appID, "app", "", "known Windows app id")
@@ -66,6 +71,10 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&guiAppPath, "gui-app", "", "Runtime-owner supplied guest GUI app path for guest GUI dispatch")
 	flags.StringVar(&guestDisplay, "guest-display", "", "guest DISPLAY value for guest GUI dispatch")
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
+	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
+	flags.StringVar(&containerImage, "image", winapp.DefaultContainerImage, "local Wine X GUI container image for recipe-backed container GUI dispatch")
+	flags.StringVar(&containerPlatform, "platform", winapp.DefaultWinePlatform, "container platform for recipe-backed container GUI dispatch")
+	flags.StringVar(&containerDockerPath, "docker", "", "explicit docker runner path for recipe-backed container GUI dispatch")
 	flags.StringVar(&timeoutText, "timeout", winapp.DefaultKnownAppGuestTimeout.String(), "guest execution timeout")
 	flags.StringVar(&guiWaitText, "gui-wait", "10s", "guest GUI observation wait")
 
@@ -127,6 +136,64 @@ func run(args []string, stdout io.Writer) error {
 	parsedPort, err := winapp.ParseGuestPort(port)
 	if err != nil {
 		return err
+	}
+
+	if app.RecipeBackedContainerGUI {
+		if strings.TrimSpace(registryPath) == "" {
+			return fmt.Errorf("--registry is required for recipe-backed container GUI dispatch")
+		}
+		recipe, _, err := appidentity.LoadRecipeFromRegistry(registryPath, "", appID)
+		if err != nil {
+			return err
+		}
+		if err := recipe.Validate(); err != nil {
+			return err
+		}
+		if recipe.ContainerGUISmoke == (appidentity.ContainerGUISmokeHints{}) {
+			return fmt.Errorf("recipe %s does not define container_gui_smoke hints", recipe.ID)
+		}
+		result, err := winapp.RunContainerXGUISmoke(context.Background(), winapp.ContainerXGUIRequest{
+			ApplicationName: recipe.ContainerGUISmoke.App,
+			WindowMatch:     recipe.ContainerGUISmoke.WindowMatch,
+			ApplicationID:   recipe.ID,
+			DisplayName:     recipe.Name,
+			AppVersion:      recipe.Version,
+			RecipeBacked:    true,
+			Image:           containerImage,
+			Platform:        containerPlatform,
+			DockerPath:      containerDockerPath,
+			Timeout:         timeout,
+		})
+		if err != nil {
+			return err
+		}
+		return encode(stdout, recipeBackedContainerGUILaunchResult{
+			ContainerXGUIResult:                    result,
+			EvidenceSource:                         "winapp-smoke-container-x-gui",
+			DispatchGate:                           winapp.KnownDispatchGuestBoundary,
+			DispatchStarted:                        result.RunnerAvailable,
+			ExecutionStarted:                       result.RunnerAvailable && result.ImageAvailable,
+			SmokePassed:                            result.Status == winapp.PassedStatus,
+			RuntimeOwnedDispatch:                   true,
+			KDEPresentationOnly:                    true,
+			SessionGatedControlledDispatchConsumed: controlledDispatch.ControlledDispatchRequestCreated,
+			SessionGatedControlledDispatchState:    controlledDispatch.ControlledDispatchRequestState,
+			SessionGatedReviewReceiptID:            controlledDispatch.ReviewReceiptID,
+			LaunchAuthorizationReceiptID:           controlledDispatch.LaunchAuthorizationReceiptID,
+			ControlledExecutionSessionConsumed:     controlledSession.RecordConsumed,
+			ControlledExecutionSessionID:           controlledSession.ExecutionSessionID,
+			ControlledSessionDigestVerified:        controlledSession.SessionDigestVerified,
+			ControlledSessionRelativePath:          controlledSession.SessionRelativePath,
+			RuntimeOwnerConsumableSession:          controlledSession.RuntimeOwnerConsumable,
+			KDEReadModelConsumableSession:          controlledSession.KDEReadModelConsumable,
+			ControlledSessionLiveStateObserved:     result.Status == winapp.PassedStatus,
+			ControlledSessionRegistered:            controlledSession.SessionRegistered,
+			ControlledSessionWindowObserved:        result.XWindowObserved,
+			ControlledSessionHostRootModified:      controlledSession.HostRootModified || result.HostRootModified,
+			ControlledSessionContainerProcessStart: result.XServerStarted && result.WineBootstrapAttempted,
+			RawCommandExposed:                      false,
+			BackendDetailsExposed:                  false,
+		})
 	}
 
 	if app.GuestBuiltinGUI {
@@ -257,6 +324,34 @@ type launcherDispatchResult struct {
 	ControlledSessionWindowObserved        bool   `json:"controlled_session_window_observed"`
 	ControlledSessionHostRootModified      bool   `json:"controlled_session_host_root_modified"`
 	ControlledSessionBackendProcessStart   bool   `json:"controlled_session_backend_process_start"`
+}
+
+type recipeBackedContainerGUILaunchResult struct {
+	winapp.ContainerXGUIResult
+	EvidenceSource                         string `json:"evidence_source"`
+	DispatchGate                           string `json:"dispatch_gate"`
+	DispatchStarted                        bool   `json:"dispatch_started"`
+	ExecutionStarted                       bool   `json:"execution_started"`
+	SmokePassed                            bool   `json:"smoke_passed"`
+	RuntimeOwnedDispatch                   bool   `json:"runtime_owned_dispatch"`
+	KDEPresentationOnly                    bool   `json:"kde_presentation_only"`
+	SessionGatedControlledDispatchConsumed bool   `json:"session_gated_controlled_dispatch_consumed"`
+	SessionGatedControlledDispatchState    string `json:"session_gated_controlled_dispatch_state"`
+	SessionGatedReviewReceiptID            string `json:"session_gated_review_receipt_id"`
+	LaunchAuthorizationReceiptID           string `json:"launch_authorization_receipt_id"`
+	ControlledExecutionSessionConsumed     bool   `json:"controlled_execution_session_consumed"`
+	ControlledExecutionSessionID           string `json:"controlled_execution_session_id"`
+	ControlledSessionDigestVerified        bool   `json:"controlled_session_digest_verified"`
+	ControlledSessionRelativePath          string `json:"controlled_session_relative_path"`
+	RuntimeOwnerConsumableSession          bool   `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession          bool   `json:"kde_read_model_consumable_session"`
+	ControlledSessionLiveStateObserved     bool   `json:"controlled_session_live_state_observed"`
+	ControlledSessionRegistered            bool   `json:"controlled_session_registered"`
+	ControlledSessionWindowObserved        bool   `json:"controlled_session_window_observed"`
+	ControlledSessionHostRootModified      bool   `json:"controlled_session_host_root_modified"`
+	ControlledSessionContainerProcessStart bool   `json:"controlled_session_container_process_start"`
+	RawCommandExposed                      bool   `json:"raw_command_exposed"`
+	BackendDetailsExposed                  bool   `json:"backend_details_exposed"`
 }
 
 func encode(stdout io.Writer, payload any) error {

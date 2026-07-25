@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc110
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc111
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc111 checkpoint candidate makes the real recipe-backed Notepad path callable from the Go Runtime launcher. `org.xnix.sample.notepad` is now registered in the Go known Windows app catalog as a recipe-backed container GUI application, and `xnix-compat-launch --app org.xnix.sample.notepad --registry PATH` can run the digest-verified recipe through the restricted Docker/Wine/Xvfb backend after the existing launch authorization, session-gated review, and controlled execution session gates pass. This moves Notepad from a script-only proof toward a desktop-launchable Runtime path while keeping KDE replaceable and keeping Docker socket, host networking, broad host mount, raw command, backend detail, and host-root mutation exposure closed.
 
 The v0.2.640-rc110 checkpoint candidate carries recipe-backed Notepad proof into the desktop read model. `gui-smoke-evidence-preview` now preserves `recipe_backed=true` and `recipe_app_id=org.xnix.sample.notepad` from the real container GUI report, `kde-center-page-preview` forwards those fields on safe GUI evidence cards, and the Compatibility Center plasmoid declares the fields it expects. The one-shot packet now fails unless the KDE card itself shows the recipe-backed identity while all launch, backend, raw-path, Docker socket, host-networking, broad-mount, and host-root mutation gates remain closed.
 

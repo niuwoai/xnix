@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -349,6 +351,137 @@ func TestCompatLaunchCopiesOwnerSuppliedGUIExecutable(t *testing.T) {
 	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, scpPath, xwininfoPath, executablePath)
 }
 
+func TestCompatLaunchRunsRecipeBackedNotepadThroughContainerXGUI(t *testing.T) {
+	app, err := winapp.LookupKnownPortableApp("org.xnix.sample.notepad")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	if !app.RecipeBackedContainerGUI {
+		t.Fatalf("sample Notepad must be marked as recipe-backed container GUI")
+	}
+	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixtureForApp(t, stateRoot, app.ID, app.Version)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	tempDir := t.TempDir()
+	recipeData := []byte(`{
+  "id": "org.xnix.sample.notepad",
+  "name": "Sample Notepad",
+  "version": "` + app.Version + `",
+  "icon": "accessories-text-editor",
+  "mode": "automatic",
+  "supported_extensions": [".txt"],
+  "container_gui_smoke": {
+    "app": "notepad.exe",
+    "window_match": "notepad.exe"
+  }
+}`)
+	recipePath := filepath.Join(tempDir, "org.xnix.sample.notepad.json")
+	if err := os.WriteFile(recipePath, recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	digest := sha256.Sum256(recipeData)
+	registryPath := filepath.Join(tempDir, "registry.json")
+	registryData := []byte(fmt.Sprintf(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.xnix.sample.notepad","path":"org.xnix.sample.notepad.json","sha256":"%x","signature_status":"development-only"}]}`, digest[:]))
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", app.ID,
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", winapp.KnownDispatchGuestBoundary,
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
+		"--registry", registryPath,
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
+		payload["request_type"] != "windows-app-container-x-gui-smoke" ||
+		payload["status"] != "passed" ||
+		payload["evidence_source"] != "winapp-smoke-container-x-gui" ||
+		payload["application_id"] != app.ID ||
+		payload["display_name"] != "Sample Notepad" ||
+		payload["app_version"] != app.Version ||
+		payload["recipe_backed"] != true ||
+		payload["application_name"] != "notepad.exe" ||
+		payload["window_match"] != "notepad.exe" ||
+		payload["x_window_observed"] != true ||
+		payload["dispatch_started"] != true ||
+		payload["execution_started"] != true ||
+		payload["smoke_passed"] != true ||
+		payload["runtime_owned_dispatch"] != true ||
+		payload["session_gated_controlled_dispatch_consumed"] != true ||
+		payload["session_gated_controlled_dispatch_state"] != "created-after-session-gated-review" ||
+		payload["controlled_execution_session_consumed"] != true ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["controlled_session_window_observed"] != true ||
+		payload["controlled_session_host_root_modified"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["network_mode"] != "none" ||
+		payload["host_mount_count"] != float64(0) ||
+		payload["docker_socket_mounted"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected recipe-backed Notepad launcher payload: %#v", payload)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "XNIX_GUI_APP=notepad.exe") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=notepad.exe") {
+		t.Fatalf("docker invocation did not receive recipe GUI hints: %s", string(dockerInvocation))
+	}
+	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, registryPath, recipePath, dockerPath)
+}
+
 func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, string) {
 	t.Helper()
 	return recordLauncherSessionGateFixtureForApp(t, stateRoot, "7zr", "26.02")
@@ -477,6 +610,21 @@ func assertCompatLaunchGUIDispatchSafe(t *testing.T, text string, hostPaths ...s
 	for _, hostPath := range hostPaths {
 		if strings.Contains(serialized, strings.ToLower(hostPath)) {
 			t.Fatalf("compat launch GUI dispatch exposed host path %q: %s", hostPath, text)
+		}
+	}
+}
+
+func assertCompatLaunchContainerGUIDispatchSafe(t *testing.T, text string, hostPaths ...string) {
+	t.Helper()
+	serialized := strings.ToLower(text)
+	for _, forbidden := range []string{"docker.sock", "--privileged", "--network host", "qemu-system", "program files", "/usr/lib/wine", ".wine"} {
+		if strings.Contains(serialized, forbidden) {
+			t.Fatalf("compat launch container GUI dispatch exposed forbidden term %q: %s", forbidden, text)
+		}
+	}
+	for _, hostPath := range hostPaths {
+		if strings.Contains(serialized, strings.ToLower(hostPath)) {
+			t.Fatalf("compat launch container GUI dispatch exposed host path %q: %s", hostPath, text)
 		}
 	}
 }

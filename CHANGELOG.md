@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc111] - 2026-07-25
+
+### Added
+
+- Added `org.xnix.sample.notepad` to the Go Runtime known Windows app catalog as a recipe-backed container GUI application.
+- Added a recipe-backed container X GUI dispatch path to `xnix-compat-launch`, allowing the Runtime launcher to run the digest-verified Notepad recipe through the restricted Docker/Wine/Xvfb backend after the existing launch authorization, session-gated review, and controlled execution session gates pass.
+- Added launcher coverage proving `xnix-compat-launch --app org.xnix.sample.notepad --registry PATH` resolves `notepad.exe` from the recipe, observes the X window, preserves recipe identity, and keeps Docker socket, host networking, broad host mount, raw command, backend detail, and host-root mutation exposure closed.
+
 ## [0.2.640-rc110] - 2026-07-25
 
 ### Changed
