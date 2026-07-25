@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc110] - 2026-07-25
+
+### Changed
+
+- Changed `gui-smoke-evidence-preview` to preserve recipe-backed container GUI smoke identity as `recipe_backed` and `recipe_app_id` when consuming `org.xnix.sample.notepad` real Notepad evidence.
+- Changed KDE Center GUI evidence cards and the Compatibility Center plasmoid field contract to expose safe recipe-backed GUI evidence identity while keeping launch, backend, raw path, Docker socket, host networking, broad mount, and host-root mutation gates closed.
+- Changed `scripts/container_gui_evidence_packet.rb` to require the KDE GUI card itself to carry recipe-backed Notepad evidence, not just the underlying smoke report.
+- Verified a restricted recipe-backed local Docker/Wine/Xvfb Notepad packet with `kde_card_recipe_backed=true`, `kde_card_recipe_app_id=org.xnix.sample.notepad`, `x_window_observed=true`, `container_network_mode=none`, `container_host_mount_count=0`, no Docker socket mount, no broad host mount, no host networking, and no host-root mutation.
+
 ## [0.2.640-rc109] - 2026-07-25
 
 ### Added

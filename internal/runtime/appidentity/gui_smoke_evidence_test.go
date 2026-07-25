@@ -153,6 +153,8 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 	if preview.Source != "winapp-smoke-container-x-gui+runtime-evidence-consumer" ||
 		preview.ReportStatus != "passed" ||
 		!preview.ReportConsumed ||
+		!preview.RecipeBacked ||
+		preview.RecipeAppID != "org.xnix.sample.notepad" ||
 		preview.GUIAppName != "notepad.exe" ||
 		!preview.WinebootInvoked ||
 		!preview.XWindowObserved ||
@@ -177,6 +179,8 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 		evidence.DisplayName != "Notepad" ||
 		evidence.EvidenceKind != "known-application-gui-smoke" ||
 		evidence.EvidenceSource != "winapp-smoke-container-x-gui" ||
+		!evidence.RecipeBacked ||
+		evidence.RecipeAppID != "org.xnix.sample.notepad" ||
 		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
 		evidence.CenterCardState != "validated-real-gui-container-run" ||
 		!evidence.ExecutionEvidenceRecorded ||
@@ -192,6 +196,8 @@ func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
 		t.Fatalf("normalizeKnownAppSmokeEvidenceItem returned error: %v", err)
 	}
 	if normalized.EvidenceSource != "winapp-smoke-container-x-gui" ||
+		!normalized.RecipeBacked ||
+		normalized.RecipeAppID != "org.xnix.sample.notepad" ||
 		normalized.CompatibilityState != "real-gui-container-wine-verified" ||
 		normalized.CenterCardState != "validated-real-gui-container-run" ||
 		!normalized.ExecutionEvidenceRecorded ||
@@ -255,6 +261,10 @@ func containerXGUISmokeEvidenceFixture() string {
   "container_x_gui_smoke_invoked": true,
   "smoke_invoked": true,
   "container_image_available": true,
+  "container_recipe_backed": true,
+  "container_application_id": "org.xnix.sample.notepad",
+  "container_display_name": "Sample Notepad",
+  "container_app_version": "container-local",
   "container_gui_app": "notepad.exe",
   "container_window_match": "notepad.exe",
   "x_server_started": true,
@@ -272,6 +282,10 @@ func containerXGUISmokeEvidenceFixture() string {
     "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
     "request_type": "windows-app-container-x-gui-smoke",
     "status": "passed",
+    "application_id": "org.xnix.sample.notepad",
+    "display_name": "Sample Notepad",
+    "app_version": "container-local",
+    "recipe_backed": true,
     "network_mode": "none",
     "x_server_started": true,
     "wine_bootstrap_attempted": true,

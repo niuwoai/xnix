@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc109`.
+The project is currently at `v0.2.640-rc110`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc109`.
 
 ## Current Checkpoint
 
-v0.2.640-rc109 ties the local real GUI proof to an application recipe. `org.xnix.sample.notepad` now carries `container_gui_smoke` hints, and `xnix-runtime-go windows-app-container-x-gui-smoke --registry PATH --recipe-app org.xnix.sample.notepad` resolves `notepad.exe` through the digest-verified recipe before running the restricted Docker/Wine/Xvfb smoke.
+v0.2.640-rc110 carries recipe-backed Notepad proof into the KDE-facing read model. `gui-smoke-evidence-preview` and `kde-center-page-preview` now preserve `recipe_backed=true` and `recipe_app_id=org.xnix.sample.notepad` on safe GUI evidence cards, and the Compatibility Center plasmoid declares those fields without enabling launch or exposing backend details.
+
+The previous v0.2.640-rc109 checkpoint tied the local real GUI proof to an application recipe. `org.xnix.sample.notepad` now carries `container_gui_smoke` hints, and `xnix-runtime-go windows-app-container-x-gui-smoke --registry PATH --recipe-app org.xnix.sample.notepad` resolves `notepad.exe` through the digest-verified recipe before running the restricted Docker/Wine/Xvfb smoke.
 
 The previous v0.2.640-rc108 checkpoint made the local real GUI proof a one-shot evidence packet. `scripts/container_gui_evidence_packet.rb` runs the restricted `container-x-gui` Windows GUI smoke, saves the redacted report, projects Runtime GUI evidence, renders a KDE Center page, and prints a path-redacted packet proving X window observation while keeping desktop/backend launch, host networking, Docker socket mounts, broad host mounts, and host-root mutation closed.
 

@@ -95,6 +95,8 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
           "app_version" => app_version,
           "smoke_status" => "passed",
           "evidence_source" => "winapp-smoke-container-x-gui",
+          "recipe_backed" => report.fetch("container_recipe_backed"),
+          "recipe_app_id" => report.fetch("container_application_id"),
           "compatibility_state" => "real-gui-container-wine-verified",
           "desktop_launch_enabled" => false,
           "backend_launch_enabled" => false,
@@ -181,6 +183,8 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(packet.fetch("recipe_app") == "org.xnix.sample.notepad", "packet must preserve recipe app id")
   assert(packet.fetch("container_recipe_backed"), "packet must carry recipe-backed container evidence")
   assert(packet.fetch("container_application_id") == "org.xnix.sample.notepad", "packet must preserve container app id")
+  assert(packet.fetch("kde_card_recipe_backed"), "packet must carry recipe-backed KDE card evidence")
+  assert(packet.fetch("kde_card_recipe_app_id") == "org.xnix.sample.notepad", "packet must preserve KDE card recipe app id")
   assert(packet.fetch("evidence_source") == "winapp-smoke-container-x-gui", "packet must preserve container X GUI source")
   assert(packet.fetch("compatibility_state") == "real-gui-container-wine-verified", "packet must preserve compatibility state")
   assert(packet.fetch("known_app_gui_evidence_count") == 1, "packet must expose one GUI evidence card")
@@ -208,6 +212,7 @@ Dir.mktmpdir("xnix-container-gui-evidence-packet-test") do |dir|
   assert(evidence.fetch("report_consumed"), "persisted evidence must consume the report")
   kde_page = JSON.parse(kde_page_output.read)
   assert(kde_page.fetch("known_app_gui_evidence_cards").first.fetch("app_id") == "org.xnix.sample.notepad", "KDE page must bind the app id")
+  assert(kde_page.fetch("known_app_gui_evidence_cards").first.fetch("recipe_backed"), "KDE page must carry recipe-backed GUI evidence")
 
   invocations = fake_go_log.read.lines.map { |line| line.split("\u0001").map(&:chomp) }
   assert(invocations.any? { |argv| argv.include?("windows-app-container-x-gui-smoke") && argv.include?("--recipe-app") }, "packet must run the recipe-backed container X GUI smoke")

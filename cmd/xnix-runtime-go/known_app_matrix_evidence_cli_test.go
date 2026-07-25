@@ -466,6 +466,8 @@ func TestKDECenterPagePreviewCommandConsumesContainerXGUISmokeReport(t *testing.
 		card["display_name"] != "Notepad" ||
 		card["evidence_kind"] != "known-application-gui-smoke" ||
 		card["evidence_source"] != "winapp-smoke-container-x-gui" ||
+		card["recipe_backed"] != true ||
+		card["recipe_app_id"] != "org.xnix.sample.notepad" ||
 		card["smoke_status"] != "passed" ||
 		card["compatibility_state"] != "real-gui-container-wine-verified" ||
 		card["center_card_state"] != "validated-real-gui-container-run" ||
@@ -670,6 +672,10 @@ func containerXGUISmokeEvidenceCLIFixture() string {
   "container_x_gui_smoke_invoked": true,
   "smoke_invoked": true,
   "container_image_available": true,
+  "container_recipe_backed": true,
+  "container_application_id": "org.xnix.sample.notepad",
+  "container_display_name": "Sample Notepad",
+  "container_app_version": "container-local",
   "container_gui_app": "notepad.exe",
   "container_window_match": "notepad.exe",
   "x_server_started": true,
@@ -687,6 +693,10 @@ func containerXGUISmokeEvidenceCLIFixture() string {
     "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
     "request_type": "windows-app-container-x-gui-smoke",
     "status": "passed",
+    "application_id": "org.xnix.sample.notepad",
+    "display_name": "Sample Notepad",
+    "app_version": "container-local",
+    "recipe_backed": true,
     "network_mode": "none",
     "x_server_started": true,
     "wine_bootstrap_attempted": true,

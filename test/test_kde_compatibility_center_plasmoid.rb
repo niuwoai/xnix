@@ -30,6 +30,8 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   known_app_gui_evidence_cards
   guiEvidenceCardFields
   display_name
+  recipe_backed
+  recipe_app_id
   smoke_status
   compatibility_state
   center_card_state
@@ -53,6 +55,7 @@ assert(metadata.fetch("KPlugin").fetch("X-Xnix-RuntimeModelCommand") == "xnix-kd
   kde_forwarded_arguments
   owner_service_args_exposed_to_kde
   wine-guest-gui-smoke
+  winapp-smoke-container-x-gui
   known-application-gui-smoke
   evidence-relative-path
   Real\ Windows\ GUI\ evidence

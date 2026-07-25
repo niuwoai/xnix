@@ -34,6 +34,8 @@ type GUISmokeEvidencePreview struct {
 	AppID                               string                       `json:"app_id"`
 	DisplayName                         string                       `json:"display_name"`
 	AppVersion                          string                       `json:"app_version"`
+	RecipeBacked                        bool                         `json:"recipe_backed"`
+	RecipeAppID                         string                       `json:"recipe_app_id,omitempty"`
 	GUIAppName                          string                       `json:"gui_app_name"`
 	LocalGUIExecutableConfigured        bool                         `json:"local_gui_executable_configured"`
 	ExecutableCopied                    bool                         `json:"executable_copied"`
@@ -93,10 +95,18 @@ type guiSmokeReport struct {
 	XServerStarted            bool   `json:"x_server_started"`
 	StartupWindowObserved     bool   `json:"startup_window_observed"`
 	ContainerImageAvailable   bool   `json:"container_image_available"`
+	ContainerRecipeBacked     bool   `json:"container_recipe_backed"`
+	ContainerApplicationID    string `json:"container_application_id"`
+	ContainerDisplayName      string `json:"container_display_name"`
+	ContainerAppVersion       string `json:"container_app_version"`
 	ContainerPayload          struct {
 		SchemaVersion               string `json:"schema_version"`
 		RequestType                 string `json:"request_type"`
 		Status                      string `json:"status"`
+		ApplicationID               string `json:"application_id"`
+		DisplayName                 string `json:"display_name"`
+		AppVersion                  string `json:"app_version"`
+		RecipeBacked                bool   `json:"recipe_backed"`
 		NetworkMode                 string `json:"network_mode"`
 		XServerStarted              bool   `json:"x_server_started"`
 		WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
@@ -179,6 +189,16 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	if appVersion == "" {
 		appVersion = "local-fixture"
 	}
+	recipeBacked := guiSmokeRecipeBacked(report)
+	recipeAppID := guiSmokeRecipeAppID(report)
+	if recipeBacked {
+		if !idPattern.MatchString(recipeAppID) {
+			return GUISmokeEvidencePreview{}, errors.New("recipe-backed GUI smoke evidence requires a reverse-DNS recipe app id")
+		}
+		if recipeAppID != appID {
+			return GUISmokeEvidencePreview{}, errors.New("recipe-backed GUI smoke evidence must match the requested app id")
+		}
+	}
 	evidenceSource := guiSmokeEvidenceSource(report)
 	guiAppName := guiSmokeReportGUIAppName(report)
 	winebootInvoked := guiSmokeWinebootInvoked(report)
@@ -204,6 +224,8 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		AppID:                               appID,
 		DisplayName:                         displayName,
 		AppVersion:                          appVersion,
+		RecipeBacked:                        recipeBacked,
+		RecipeAppID:                         recipeAppID,
 		GUIAppName:                          guiAppName,
 		LocalGUIExecutableConfigured:        report.LocalGUIExecutableConfigured,
 		ExecutableCopied:                    report.ExecutableCopied,
@@ -371,6 +393,16 @@ func validateContainerXGUISmokeReport(report guiSmokeReport) error {
 	case report.ContainerPayload.HostRootModified || report.ContainerPayload.PrivilegedContainerRequired || report.ContainerPayload.HostNetworkingRequired || report.ContainerPayload.DockerSocketMounted || report.ContainerPayload.BroadHostMountRequired:
 		return errors.New("container X GUI Runtime payload must keep host and container boundaries closed")
 	}
+	if guiSmokeRecipeBacked(report) {
+		switch {
+		case !report.ContainerPayload.RecipeBacked:
+			return errors.New("recipe-backed container X GUI evidence requires recipe-backed Runtime payload")
+		case !idPattern.MatchString(guiSmokeRecipeAppID(report)):
+			return errors.New("recipe-backed container X GUI evidence requires a reverse-DNS recipe app id")
+		case strings.TrimSpace(report.ContainerPayload.ApplicationID) != guiSmokeRecipeAppID(report):
+			return errors.New("recipe-backed container X GUI evidence requires matching Runtime payload app id")
+		}
+	}
 	if report.Status == "passed" {
 		switch {
 		case report.ContainerPayload.Status != "passed":
@@ -458,6 +490,8 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		AppVersion:                           appVersion,
 		EvidenceKind:                         "known-application-gui-smoke",
 		EvidenceSource:                       evidenceSource,
+		RecipeBacked:                         guiSmokeRecipeBacked(report),
+		RecipeAppID:                          guiSmokeRecipeAppID(report),
 		SmokeStatus:                          status,
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,
@@ -518,6 +552,20 @@ func guiSmokeReportGUIAppName(report guiSmokeReport) string {
 		return strings.TrimSpace(report.GUIAppName)
 	}
 	return strings.TrimSpace(report.ContainerGUIApp)
+}
+
+func guiSmokeRecipeBacked(report guiSmokeReport) bool {
+	if report.SchemaVersion != "xnix.runtime.winapp_smoke_report.v1" {
+		return false
+	}
+	return report.ContainerRecipeBacked || report.ContainerPayload.RecipeBacked
+}
+
+func guiSmokeRecipeAppID(report guiSmokeReport) string {
+	if strings.TrimSpace(report.ContainerApplicationID) != "" {
+		return strings.TrimSpace(report.ContainerApplicationID)
+	}
+	return strings.TrimSpace(report.ContainerPayload.ApplicationID)
 }
 
 func guiSmokeWinebootInvoked(report guiSmokeReport) bool {

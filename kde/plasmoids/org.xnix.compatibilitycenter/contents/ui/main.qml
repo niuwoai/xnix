@@ -11,10 +11,12 @@ PlasmoidItem {
     readonly property string ownerControlledGuiEvidenceCountField: "known_app_owner_controlled_gui_evidence_count"
     readonly property string ownerManagedCopyVerifiedCountField: "known_app_owner_managed_copy_verified_count"
     readonly property string guiEvidenceCardsField: "known_app_gui_evidence_cards"
-    readonly property string guiEvidenceSource: "wine-guest-gui-smoke"
+    readonly property string guiEvidenceSource: "wine-guest-gui-smoke-or-winapp-smoke-container-x-gui"
     readonly property string guiEvidenceKind: "known-application-gui-smoke"
     readonly property var guiEvidenceCardFields: [
         "display_name",
+        "recipe_backed",
+        "recipe_app_id",
         "smoke_status",
         "compatibility_state",
         "center_card_state",
@@ -62,12 +64,12 @@ PlasmoidItem {
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count, known_app_owner_controlled_gui_evidence_count, known_app_owner_managed_copy_verified_count, and known_app_gui_evidence_cards from wine-guest-gui-smoke."
+            text: "This page expects kde-center-page-preview to provide known_app_gui_evidence_count, known_app_owner_controlled_gui_evidence_count, known_app_owner_managed_copy_verified_count, and known_app_gui_evidence_cards from wine-guest-gui-smoke or recipe-backed winapp-smoke-container-x-gui."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }
         PlasmaComponents.Label {
-            text: "The KDE read model renders display_name, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
+            text: "The KDE read model renders display_name, recipe_backed, recipe_app_id, smoke_status, compatibility_state, center_card_state, execution_evidence_recorded, owner_controlled_runtime_launch_verified, owner_managed_copy_verified, owner_evidence_handoff_ready, runtime_dispatch_verified, primary_action_id, primary_action_kind, primary_action_label, desktop_callable_route, desktop_dbus_method, and desktop_evidence_handle_forwarded from each safe card."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

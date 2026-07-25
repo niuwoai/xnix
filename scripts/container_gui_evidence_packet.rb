@@ -165,6 +165,8 @@ unless kde_page.fetch("known_app_gui_evidence_count") == 1 &&
        cards.length == 1 &&
        cards.first.fetch("app_id") == options.fetch(:app_id) &&
        cards.first.fetch("evidence_source") == "winapp-smoke-container-x-gui" &&
+       cards.first.fetch("recipe_backed") &&
+       cards.first.fetch("recipe_app_id") == options.fetch(:recipe_app) &&
        cards.first.fetch("compatibility_state") == "real-gui-container-wine-verified" &&
        !cards.first.fetch("desktop_launch_enabled") &&
        !cards.first.fetch("backend_launch_enabled") &&
@@ -188,6 +190,8 @@ packet = {
   "container_platform" => smoke_report.fetch("container_platform"),
   "container_recipe_backed" => smoke_report.fetch("container_recipe_backed"),
   "container_application_id" => smoke_report.fetch("container_application_id"),
+  "kde_card_recipe_backed" => cards.first.fetch("recipe_backed"),
+  "kde_card_recipe_app_id" => cards.first.fetch("recipe_app_id"),
   "report_output_written" => report_output.file?,
   "evidence_output_written" => evidence_output.file?,
   "kde_page_output_written" => kde_page_output.file?,

@@ -843,6 +843,8 @@ type KnownAppSmokeEvidenceSummary struct {
 	AppVersion                            string `json:"app_version"`
 	EvidenceKind                          string `json:"evidence_kind"`
 	EvidenceSource                        string `json:"evidence_source"`
+	RecipeBacked                          bool   `json:"recipe_backed"`
+	RecipeAppID                           string `json:"recipe_app_id,omitempty"`
 	SmokeStatus                           string `json:"smoke_status"`
 	CompatibilityState                    string `json:"compatibility_state"`
 	CenterCardState                       string `json:"center_card_state"`
@@ -2715,6 +2717,20 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	default:
 		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app smoke evidence source %q is not supported", evidenceSource)
 	}
+	recipeAppID := strings.TrimSpace(item.RecipeAppID)
+	if item.RecipeBacked {
+		if recipeAppID == "" {
+			recipeAppID = appID
+		}
+		if !idPattern.MatchString(recipeAppID) {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("recipe-backed known app smoke evidence requires a reverse-DNS recipe app id")
+		}
+		if recipeAppID != appID {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("recipe-backed known app smoke evidence must match the application id")
+		}
+	} else if recipeAppID != "" {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("recipe app id requires recipe-backed known app smoke evidence")
+	}
 
 	compatibilityState := "review-required"
 	centerCardState := "smoke-evidence-review-required"
@@ -2918,6 +2934,8 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		AppVersion:                            appVersion,
 		EvidenceKind:                          evidenceKind,
 		EvidenceSource:                        evidenceSource,
+		RecipeBacked:                          item.RecipeBacked,
+		RecipeAppID:                           recipeAppID,
 		SmokeStatus:                           status,
 		CompatibilityState:                    compatibilityState,
 		CenterCardState:                       centerCardState,

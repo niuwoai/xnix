@@ -166,6 +166,8 @@ type KDECenterPageKnownAppMatrixCard struct {
 	AppVersion                           string   `json:"app_version"`
 	EvidenceKind                         string   `json:"evidence_kind"`
 	EvidenceSource                       string   `json:"evidence_source"`
+	RecipeBacked                         bool     `json:"recipe_backed"`
+	RecipeAppID                          string   `json:"recipe_app_id,omitempty"`
 	SmokeStatus                          string   `json:"smoke_status"`
 	CompatibilityState                   string   `json:"compatibility_state"`
 	CenterCardState                      string   `json:"center_card_state"`
@@ -1248,6 +1250,8 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			AppVersion:                           item.AppVersion,
 			EvidenceKind:                         item.EvidenceKind,
 			EvidenceSource:                       item.EvidenceSource,
+			RecipeBacked:                         item.RecipeBacked,
+			RecipeAppID:                          item.RecipeAppID,
 			SmokeStatus:                          item.SmokeStatus,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,
@@ -1293,6 +1297,8 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			AppVersion:                           item.AppVersion,
 			EvidenceKind:                         item.EvidenceKind,
 			EvidenceSource:                       item.EvidenceSource,
+			RecipeBacked:                         item.RecipeBacked,
+			RecipeAppID:                          item.RecipeAppID,
 			SmokeStatus:                          item.SmokeStatus,
 			CompatibilityState:                   item.CompatibilityState,
 			CenterCardState:                      item.CenterCardState,

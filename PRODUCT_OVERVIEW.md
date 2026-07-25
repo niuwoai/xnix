@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc109
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc110
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc110 checkpoint candidate carries recipe-backed Notepad proof into the desktop read model. `gui-smoke-evidence-preview` now preserves `recipe_backed=true` and `recipe_app_id=org.xnix.sample.notepad` from the real container GUI report, `kde-center-page-preview` forwards those fields on safe GUI evidence cards, and the Compatibility Center plasmoid declares the fields it expects. The one-shot packet now fails unless the KDE card itself shows the recipe-backed identity while all launch, backend, raw-path, Docker socket, host-networking, broad-mount, and host-root mutation gates remain closed.
 
 The v0.2.640-rc109 checkpoint candidate ties the local real GUI proof to an application recipe. `org.xnix.sample.notepad` now declares `container_gui_smoke` hints, and `xnix-runtime-go windows-app-container-x-gui-smoke --registry PATH --recipe-app org.xnix.sample.notepad` resolves `notepad.exe` and its X window match from the digest-verified registry recipe before running the restricted Docker/Wine/Xvfb smoke. The one-shot packet now requires recipe-backed evidence, so the local real GUI proof is associated with an Xnix application id instead of only a raw executable name.
 
