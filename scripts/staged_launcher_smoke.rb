@@ -69,8 +69,10 @@ stage = parse_json(stage_stdout, "desktop activation stage")
 
 assert(stage["schema_version"] == "xnix.runtime.desktop_activation_stage.v1", "desktop activation stage schema must match")
 assert(stage["request_type"] == "desktop-activation-stage", "desktop activation stage request type must match")
-assert(stage["written_file_count"] == 7, "desktop activation stage must write the managed launcher executable")
-assert(stage.fetch("written_file_ids").include?("managed-launcher-executable"), "desktop activation stage must report managed-launcher-executable")
+assert(stage["written_file_count"] == 9, "desktop activation stage must write the managed launcher executable and recipe-backed materials")
+%w[application-recipe managed-launcher-executable recipe-registry].each do |id|
+  assert(stage.fetch("written_file_ids").include?(id), "desktop activation stage must report #{id}")
+end
 %w[
   runtime_owned
   go_runtime_backed

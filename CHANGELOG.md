@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc120] - 2026-07-25
+
+### Fixed
+
+- Fixed `scripts/staged_launcher_dispatch_smoke.rb` and `scripts/staged_launcher_smoke.rb` to expect recipe-backed Notepad desktop activation to stage the managed launcher plus packaged recipe registry and application recipe materials.
+- Recorded operator-authorized restricted full smoke evidence for the v0.2.640-rc120 boundary: full Buildroot/QEMU boot, Wine guest build, real known Windows app staged launcher dispatch, fixture Windows app Wine smoke, and KDE controlled-launch action smoke all passed with host-root mutation, privileged containers, host networking, and Docker socket mounts disabled.
+
 ## [0.2.640-rc119] - 2026-07-25
 
 ### Changed

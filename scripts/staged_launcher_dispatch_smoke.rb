@@ -142,8 +142,10 @@ stage, stage_stdout = run_json(
   "--staging-root", STAGE_ROOT.to_s,
   "--managed-launcher-bin", LAUNCHER_BIN.to_s
 )
-assert(stage["written_file_count"] == 7, "desktop activation stage must copy the managed launcher")
-assert(stage.fetch("written_file_ids").include?("managed-launcher-executable"), "desktop activation stage must report managed-launcher-executable")
+assert(stage["written_file_count"] == 9, "desktop activation stage must copy the managed launcher and recipe-backed materials")
+%w[application-recipe managed-launcher-executable recipe-registry].each do |id|
+  assert(stage.fetch("written_file_ids").include?(id), "desktop activation stage must report #{id}")
+end
 assert(stage["launch_enabled"] == false, "desktop activation stage must not enable desktop launch")
 assert(stage["execution_started"] == false, "desktop activation stage must not start execution")
 assert(stage["host_root_modified"] == false, "desktop activation stage must not mutate the host root")
