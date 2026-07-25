@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 )
 
 const launcherName = "xnix-compat-launch"
+const stagingRootEnv = "XNIX_STAGING_ROOT"
+const packagedRecipeRegistryDir = "/usr/share/xnix/compatibility/recipes"
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -142,7 +145,11 @@ func run(args []string, stdout io.Writer) error {
 		if strings.TrimSpace(registryPath) == "" {
 			return fmt.Errorf("--registry is required for recipe-backed container GUI dispatch")
 		}
-		recipe, _, err := appidentity.LoadRecipeFromRegistry(registryPath, "", appID)
+		resolvedRegistryPath, err := resolveStagedRegistryPath(registryPath)
+		if err != nil {
+			return err
+		}
+		recipe, _, err := appidentity.LoadRecipeFromRegistry(resolvedRegistryPath, "", appID)
 		if err != nil {
 			return err
 		}
@@ -304,6 +311,58 @@ func consumeSessionGatedControlledDispatchForLaunch(appID string, stateRoot stri
 		return appidentity.KnownAppSessionGatedControlledDispatchPreview{}, fmt.Errorf("session-gated controlled dispatch gate rejected dispatch: %w", err)
 	}
 	return preview, nil
+}
+
+func resolveStagedRegistryPath(registryPath string) (string, error) {
+	trimmedPath := strings.TrimSpace(registryPath)
+	info, err := os.Stat(trimmedPath)
+	if err == nil {
+		if info.IsDir() {
+			return "", fmt.Errorf("registry path must reference a file")
+		}
+		return trimmedPath, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", fmt.Errorf("inspect registry path: %w", err)
+	}
+
+	stagingRoot := strings.TrimSpace(os.Getenv(stagingRootEnv))
+	if stagingRoot == "" {
+		return trimmedPath, nil
+	}
+	cleanRegistryPath := filepath.Clean(trimmedPath)
+	if !filepath.IsAbs(cleanRegistryPath) {
+		return trimmedPath, nil
+	}
+	cleanRegistryPathSlash := filepath.ToSlash(cleanRegistryPath)
+	if cleanRegistryPathSlash != packagedRecipeRegistryDir+"/registry.json" &&
+		!strings.HasPrefix(cleanRegistryPathSlash, packagedRecipeRegistryDir+"/") {
+		return trimmedPath, nil
+	}
+
+	absoluteStagingRoot, err := filepath.Abs(stagingRoot)
+	if err != nil {
+		return "", fmt.Errorf("resolve staging root: %w", err)
+	}
+	candidatePath := filepath.Join(absoluteStagingRoot, strings.TrimPrefix(cleanRegistryPath, string(filepath.Separator)))
+	relativeCandidate, err := filepath.Rel(absoluteStagingRoot, candidatePath)
+	if err != nil {
+		return "", fmt.Errorf("resolve staged registry path: %w", err)
+	}
+	if relativeCandidate == ".." || strings.HasPrefix(filepath.ToSlash(relativeCandidate), "../") {
+		return "", fmt.Errorf("staged registry path escaped staging root")
+	}
+	info, err = os.Stat(candidatePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return trimmedPath, nil
+		}
+		return "", fmt.Errorf("inspect staged registry path: %w", err)
+	}
+	if info.IsDir() {
+		return "", fmt.Errorf("staged registry path must reference a file")
+	}
+	return candidatePath, nil
 }
 
 type launcherDispatchResult struct {

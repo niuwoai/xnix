@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc117] - 2026-07-25
+
+### Changed
+
+- Changed `xnix-compat-launch` to resolve packaged recipe registries under `XNIX_STAGING_ROOT`, allowing local staged desktop-launch smoke tests to use the installed `/usr/share/xnix/compatibility/recipes/registry.json` launcher argument without mutating the host root.
+- Added targeted coverage for staged packaged-registry Notepad launcher dispatch through the recipe-backed container GUI path.
+
 ## [0.2.640-rc116] - 2026-07-25
 
 ### Changed

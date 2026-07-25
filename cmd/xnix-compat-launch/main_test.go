@@ -381,41 +381,8 @@ func TestCompatLaunchRunsRecipeBackedNotepadThroughContainerXGUI(t *testing.T) {
 	}
 
 	tempDir := t.TempDir()
-	recipeData := []byte(`{
-  "id": "org.xnix.sample.notepad",
-  "name": "Sample Notepad",
-  "version": "` + app.Version + `",
-  "icon": "accessories-text-editor",
-  "mode": "automatic",
-  "supported_extensions": [".txt"],
-  "container_gui_smoke": {
-    "app": "notepad.exe",
-    "window_match": "notepad.exe"
-  }
-}`)
-	recipePath := filepath.Join(tempDir, "org.xnix.sample.notepad.json")
-	if err := os.WriteFile(recipePath, recipeData, 0o600); err != nil {
-		t.Fatalf("WriteFile recipe returned error: %v", err)
-	}
-	digest := sha256.Sum256(recipeData)
-	registryPath := filepath.Join(tempDir, "registry.json")
-	registryData := []byte(fmt.Sprintf(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.xnix.sample.notepad","path":"org.xnix.sample.notepad.json","sha256":"%x","signature_status":"development-only"}]}`, digest[:]))
-	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
-		t.Fatalf("WriteFile registry returned error: %v", err)
-	}
-
-	dockerLog := filepath.Join(tempDir, "fake-docker.log")
-	dockerPath := filepath.Join(tempDir, "fake-docker")
-	dockerBody := "#!/bin/sh\n" +
-		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
-		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
-		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
-		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
-		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
-		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'\n"
-	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
-		t.Fatalf("WriteFile docker returned error: %v", err)
-	}
+	registryPath, recipePath := writeNotepadRecipeRegistryFixture(t, tempDir, app.Version)
+	dockerPath, dockerLog := writeRecipeBackedFakeDocker(t, tempDir)
 
 	var output bytes.Buffer
 	err = run([]string{
@@ -480,6 +447,161 @@ func TestCompatLaunchRunsRecipeBackedNotepadThroughContainerXGUI(t *testing.T) {
 		t.Fatalf("docker invocation did not receive recipe GUI hints: %s", string(dockerInvocation))
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, registryPath, recipePath, dockerPath)
+}
+
+func TestResolveStagedRegistryPathMapsPackagedRegistryUnderStagingRoot(t *testing.T) {
+	stagingRoot := t.TempDir()
+	packagedRegistryPath := packagedRecipeRegistryDir + "/registry.json"
+	stagedRegistryDir := filepath.Join(stagingRoot, strings.TrimPrefix(packagedRecipeRegistryDir, "/"))
+	if err := os.MkdirAll(stagedRegistryDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll staged registry dir returned error: %v", err)
+	}
+	stagedRegistryPath := filepath.Join(stagedRegistryDir, "registry.json")
+	if err := os.WriteFile(stagedRegistryPath, []byte(`{"schema_version":1,"registry_name":"staged","recipes":[]}`), 0o600); err != nil {
+		t.Fatalf("WriteFile staged registry returned error: %v", err)
+	}
+
+	t.Setenv(stagingRootEnv, stagingRoot)
+	got, err := resolveStagedRegistryPath(packagedRegistryPath)
+	if err != nil {
+		t.Fatalf("resolveStagedRegistryPath returned error: %v", err)
+	}
+	if got != stagedRegistryPath {
+		t.Fatalf("expected staged registry path %q, got %q", stagedRegistryPath, got)
+	}
+
+	otherPath := "/opt/xnix/registry.json"
+	got, err = resolveStagedRegistryPath(otherPath)
+	if err != nil {
+		t.Fatalf("resolveStagedRegistryPath non-packaged path returned error: %v", err)
+	}
+	if got != otherPath {
+		t.Fatalf("expected non-packaged path to remain unchanged, got %q", got)
+	}
+}
+
+func TestCompatLaunchRunsRecipeBackedNotepadThroughStagedPackagedRegistry(t *testing.T) {
+	app, err := winapp.LookupKnownPortableApp("org.xnix.sample.notepad")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixtureForApp(t, stateRoot, app.ID, app.Version)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+
+	stagingRoot := t.TempDir()
+	stagedRegistryDir := filepath.Join(stagingRoot, strings.TrimPrefix(packagedRecipeRegistryDir, "/"))
+	if err := os.MkdirAll(stagedRegistryDir, 0o700); err != nil {
+		t.Fatalf("MkdirAll staged registry dir returned error: %v", err)
+	}
+	stagedRegistryPath, stagedRecipePath := writeNotepadRecipeRegistryFixture(t, stagedRegistryDir, app.Version)
+	dockerPath, dockerLog := writeRecipeBackedFakeDocker(t, t.TempDir())
+	t.Setenv(stagingRootEnv, stagingRoot)
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", app.ID,
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", winapp.KnownDispatchGuestBoundary,
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
+		"--registry", packagedRecipeRegistryDir + "/registry.json",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["application_id"] != app.ID ||
+		payload["app_version"] != app.Version ||
+		payload["recipe_backed"] != true ||
+		payload["smoke_passed"] != true ||
+		payload["controlled_execution_session_id"] != sessionID ||
+		payload["network_mode"] != "none" ||
+		payload["host_mount_count"] != float64(0) ||
+		payload["host_root_modified"] != false {
+		t.Fatalf("unexpected staged packaged Notepad launcher payload: %#v", payload)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "XNIX_GUI_APP=notepad.exe") ||
+		!strings.Contains(string(dockerInvocation), "XNIX_WINDOW_MATCH=notepad.exe") {
+		t.Fatalf("docker invocation did not receive staged recipe GUI hints: %s", string(dockerInvocation))
+	}
+	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, stagingRoot, stagedRegistryPath, stagedRecipePath, dockerPath)
+}
+
+func writeNotepadRecipeRegistryFixture(t *testing.T, registryDir string, version string) (string, string) {
+	t.Helper()
+	recipeData := []byte(`{
+  "id": "org.xnix.sample.notepad",
+  "name": "Sample Notepad",
+  "version": "` + version + `",
+  "icon": "accessories-text-editor",
+  "mode": "automatic",
+  "supported_extensions": [".txt"],
+  "container_gui_smoke": {
+    "app": "notepad.exe",
+    "window_match": "notepad.exe"
+  }
+}`)
+	recipePath := filepath.Join(registryDir, "org.xnix.sample.notepad.json")
+	if err := os.WriteFile(recipePath, recipeData, 0o600); err != nil {
+		t.Fatalf("WriteFile recipe returned error: %v", err)
+	}
+	digest := sha256.Sum256(recipeData)
+	registryPath := filepath.Join(registryDir, "registry.json")
+	registryData := []byte(fmt.Sprintf(`{"schema_version":1,"registry_name":"test-registry","recipes":[{"id":"org.xnix.sample.notepad","path":"org.xnix.sample.notepad.json","sha256":"%x","signature_status":"development-only"}]}`, digest[:]))
+	if err := os.WriteFile(registryPath, registryData, 0o600); err != nil {
+		t.Fatalf("WriteFile registry returned error: %v", err)
+	}
+	return registryPath, recipePath
+}
+
+func writeRecipeBackedFakeDocker(t *testing.T, tempDir string) (string, string) {
+	t.Helper()
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	return dockerPath, dockerLog
 }
 
 func recordLauncherSessionGateFixture(t *testing.T, stateRoot string) (string, string) {

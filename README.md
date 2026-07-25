@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc116`.
+The project is currently at `v0.2.640-rc117`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc116`.
 
 ## Current Checkpoint
 
-v0.2.640-rc116 aligns KRunner search actions with the packaged recipe-backed launcher. Recipe-backed container GUI matches now return `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json`, so KDE search no longer drops the registry argument needed by installed Notepad desktop launches.
+v0.2.640-rc117 makes the packaged-registry desktop launcher shape executable in safe local staging. `xnix-compat-launch` now resolves `/usr/share/xnix/compatibility/recipes/registry.json` through `XNIX_STAGING_ROOT` when the host path is absent, so staged `.desktop` and KRunner launcher arguments can exercise recipe-backed Notepad dispatch without writing to the host root.
+
+The previous v0.2.640-rc116 checkpoint aligned KRunner search actions with the packaged recipe-backed launcher. Recipe-backed container GUI matches now return `xnix-compat-launch --app APP --registry /usr/share/xnix/compatibility/recipes/registry.json`, so KDE search no longer drops the registry argument needed by installed Notepad desktop launches.
 
 The previous v0.2.640-rc115 checkpoint made the real local Notepad GUI path less host-specific. The container X GUI Runtime now inspects the local Wine image platform and uses that platform when `--platform` is omitted, so Colima arm64 images can run recipe-backed Notepad without manually adding `--platform linux/arm64`.
 
