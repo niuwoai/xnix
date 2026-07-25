@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc112`.
+The project is currently at `v0.2.640-rc113`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc112`.
 
 ## Current Checkpoint
 
-v0.2.640-rc112 makes recipe-backed Notepad desktop entries self-contained for installed systems. `desktop-entry-preview` now renders `xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U`, while activation staging plans the matching packaged recipe registry and application recipe files so KDE still calls only the Runtime launcher and never sees Wine, Docker, or raw executable details.
+v0.2.640-rc113 aligns the packaged-registry Notepad launcher contract across the Ruby desktop-entry renderer, Ruby Runtime daemon previews, the C Runtime core, D-Bus smoke fixtures, and installer tests. Both Go and Ruby desktop material now route recipe-backed container GUI apps through `xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U`, while the desktop entry still hides Wine, Docker, and raw executable details.
+
+The previous v0.2.640-rc112 checkpoint made recipe-backed Notepad desktop entries self-contained for installed systems. `desktop-entry-preview` now renders `xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U`, while activation staging plans the matching packaged recipe registry and application recipe files so KDE still calls only the Runtime launcher and never sees Wine, Docker, or raw executable details.
 
 The previous v0.2.640-rc109 checkpoint tied the local real GUI proof to an application recipe. `org.xnix.sample.notepad` now carries `container_gui_smoke` hints, and `xnix-runtime-go windows-app-container-x-gui-smoke --registry PATH --recipe-app org.xnix.sample.notepad` resolves `notepad.exe` through the digest-verified recipe before running the restricted Docker/Wine/Xvfb smoke.
 

@@ -6,6 +6,7 @@ module Xnix
   module Compatibility
     class DesktopEntry
       LAUNCHER = "xnix-compat-launch"
+      PACKAGED_RECIPE_REGISTRY = "/usr/share/xnix/compatibility/recipes/registry.json"
 
       def initialize(recipe)
         @recipe = recipe
@@ -22,7 +23,7 @@ module Xnix
           "Version=1.0",
           "Name=#{@recipe.name}",
           "Comment=Run with Xnix Compatibility Runtime",
-          "Exec=#{LAUNCHER} --app #{@recipe.id} %U",
+          "Exec=#{exec_command}",
           "Icon=#{@recipe.icon}",
           "Categories=Utility;",
           "StartupNotify=true",
@@ -30,6 +31,12 @@ module Xnix
         ]
         lines << "MimeType=#{@recipe.mime_types.join(";")};" unless @recipe.mime_types.empty?
         "#{lines.join("\n")}\n"
+      end
+
+      def exec_command
+        command = "#{LAUNCHER} --app #{@recipe.id}"
+        command = "#{command} --registry #{PACKAGED_RECIPE_REGISTRY}" if @recipe.container_gui_smoke?
+        "#{command} %U"
       end
     end
   end

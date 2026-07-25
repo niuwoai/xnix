@@ -59,7 +59,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["safety"]["rollback_receipt_written"], "desktop activation installer must report rollback receipt writing")
 
   assert(desktop_entry.file?, "desktop activation installer must install the generated desktop entry")
-  assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad %U"), "installed desktop entry must call the managed launcher")
+  assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U"), "installed desktop entry must call the managed launcher")
   assert((desktop_entry.stat.mode & 0o777) == 0o644, "installed desktop entry must be non-executable")
 
   assert(mimeapps_list.file?, "desktop activation installer must install the MIME association list")
@@ -151,7 +151,7 @@ Dir.mktmpdir("xnix-desktop-root") do |root|
   assert(result["safety"]["desktop_entry_source"] == "runtime-go", "desktop activation installer must report Runtime Go desktop entry source")
   assert(result["safety"]["file_association_source"] == "runtime-go", "desktop activation installer must report Runtime Go file association source")
   assert(desktop_entry.read.include?("X-Xnix-Renderer=fake-runtime-go"), "Runtime Go renderer output must be staged as the desktop entry")
-  assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad %U"), "Runtime Go renderer output must keep the managed launcher")
+  assert(desktop_entry.read.include?("Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U"), "Runtime Go renderer output must keep the managed launcher")
   assert(!desktop_entry.read.match?(/wine|prefix|\.exe|proton|qemu-system|program files/i), "Runtime Go renderer output must not expose backend details")
   assert(mimeapps_list.read.include?("[Default Applications]\n"), "Runtime Go file association renderer output must include default associations")
   assert(mimeapps_list.read.include?("application/x-xnix-txt=xnix-org.xnix.sample.notepad.desktop"), "Runtime Go file association renderer output must map text files")

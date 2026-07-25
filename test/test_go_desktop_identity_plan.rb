@@ -146,7 +146,7 @@ if go_available
   )
   assert(entry_status.success?, "Go desktop entry preview CLI must run successfully")
   assert(desktop_entry.include?("[Desktop Entry]\n"), "desktop entry preview must use the desktop entry header")
-  assert(desktop_entry.include?("Exec=xnix-compat-launch --app #{recipe.id} %U\n"), "desktop entry preview must use the managed Runtime launcher")
+  assert(desktop_entry.include?("Exec=xnix-compat-launch --app #{recipe.id} --registry /usr/share/xnix/compatibility/recipes/registry.json %U\n"), "desktop entry preview must use the managed Runtime launcher")
   assert(desktop_entry.include?("X-Xnix-ApplicationId=#{recipe.id}\n"), "desktop entry preview must include the Runtime application id")
   assert(!desktop_entry.downcase.include?("prefix"), "desktop entry preview must not expose implementation storage")
   assert(!desktop_entry.include?(".exe"), "desktop entry preview must not expose a Windows executable")

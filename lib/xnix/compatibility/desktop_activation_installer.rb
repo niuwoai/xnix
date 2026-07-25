@@ -301,7 +301,7 @@ module Xnix
         def validate_output!(output, recipe)
           required = [
             "[Desktop Entry]\n",
-            "Exec=xnix-compat-launch --app #{recipe.id} %U\n",
+            "Exec=#{DesktopEntry.new(recipe).exec_command}\n",
             "X-Xnix-ApplicationId=#{recipe.id}\n"
           ]
           missing = required.reject { |fragment| output.include?(fragment) }

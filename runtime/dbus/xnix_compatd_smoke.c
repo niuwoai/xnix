@@ -872,7 +872,7 @@ build_desktop_entry_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "desktop", g_variant_new_string("KDE Plasma"));
   g_variant_builder_add(&plan, "{sv}", "desktop_file", g_variant_new_string("xnix-org.xnix.sample.notepad.desktop"));
   g_variant_builder_add(&plan, "{sv}", "name", g_variant_new_string("Sample Notepad"));
-  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad %U"));
+  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U"));
   g_variant_builder_add(&plan, "{sv}", "standard_desktop_entry", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "launch_uses_runtime", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "accepts_file_uris", g_variant_new_boolean(TRUE));
@@ -903,7 +903,7 @@ build_desktop_icon_plan(const gchar *application_id)
   g_variant_builder_add(&plan, "{sv}", "launcher_url", g_variant_new_string("applications:xnix-org.xnix.sample.notepad.desktop"));
   g_variant_builder_add(&plan, "{sv}", "target_directory", g_variant_new_string("xdg-desktop-dir"));
   g_variant_builder_add(&plan, "{sv}", "placement", g_variant_new_string("user-desktop"));
-  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad %U"));
+  g_variant_builder_add(&plan, "{sv}", "exec", g_variant_new_string("xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U"));
   g_variant_builder_add(&plan, "{sv}", "icon", g_variant_new_string("accessories-text-editor"));
   g_variant_builder_add(&plan, "{sv}", "standard_desktop_entry", g_variant_new_boolean(TRUE));
   g_variant_builder_add(&plan, "{sv}", "desktop_icon_visible", g_variant_new_boolean(TRUE));

@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc113] - 2026-07-25
+
+### Changed
+
+- Changed the Ruby desktop-entry renderer and Runtime daemon desktop plan to emit the packaged recipe registry launcher for `container_gui_smoke` applications.
+- Changed the C Runtime core and D-Bus smoke fixtures to expose the same packaged-registry Notepad launcher contract as the Go Runtime.
+- Added Ruby desktop-entry coverage for recipe-backed container GUI applications while keeping raw Windows executable and backend details out of desktop files.
+
 ## [0.2.640-rc112] - 2026-07-25
 
 ### Added

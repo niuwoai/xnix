@@ -17,7 +17,7 @@ when ["desktop-entry-preview", *common_args]
     "Version=1.0",
     "Name=Sample Notepad",
     "Comment=Run with Xnix Compatibility Runtime",
-    "Exec=xnix-compat-launch --app org.xnix.sample.notepad %U",
+    "Exec=xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U",
     "Icon=accessories-text-editor",
     "Categories=Utility;",
     "StartupNotify=true",

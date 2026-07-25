@@ -69,7 +69,7 @@ class FakeCapture
       ]
     when "org.xnix.Compatibility1.GetDesktopEntryPlan"
       [
-        "({'plan_type': <'desktop-entry-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'name': <'Sample Notepad'>, 'exec': <'xnix-compat-launch --app org.xnix.sample.notepad %U'>, 'standard_desktop_entry': <true>, 'launch_uses_runtime': <true>, 'accepts_file_uris': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_command_exposed': <false>, 'raw_windows_executable_exposed': <false>, 'compatibility_storage_path_exposed': <false>, 'backend_details_exposed': <false>},)\n",
+        "({'plan_type': <'desktop-entry-plan'>, 'desktop_file': <'xnix-org.xnix.sample.notepad.desktop'>, 'name': <'Sample Notepad'>, 'exec': <'xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U'>, 'standard_desktop_entry': <true>, 'launch_uses_runtime': <true>, 'accepts_file_uris': <true>, 'files_written': <false>, 'host_root_modified': <false>, 'backend_command_exposed': <false>, 'raw_windows_executable_exposed': <false>, 'compatibility_storage_path_exposed': <false>, 'backend_details_exposed': <false>},)\n",
         "",
         Status.new(true)
       ]
@@ -481,7 +481,7 @@ assert(!activation_status["backend_details_exposed"], "D-Bus client must parse a
 desktop_entry_plan = client.desktop_entry_plan("org.xnix.sample.notepad")
 assert(desktop_entry_plan["plan_type"] == "desktop-entry-plan", "D-Bus client must parse desktop entry plans")
 assert(desktop_entry_plan["desktop_file"] == "xnix-org.xnix.sample.notepad.desktop", "D-Bus client must parse desktop file names")
-assert(desktop_entry_plan["exec"] == "xnix-compat-launch --app org.xnix.sample.notepad %U", "D-Bus client must parse managed launcher commands")
+assert(desktop_entry_plan["exec"] == "xnix-compat-launch --app org.xnix.sample.notepad --registry /usr/share/xnix/compatibility/recipes/registry.json %U", "D-Bus client must parse managed launcher commands")
 assert(desktop_entry_plan["standard_desktop_entry"], "D-Bus client must parse standard desktop entry status")
 assert(desktop_entry_plan["launch_uses_runtime"], "D-Bus client must parse Runtime launcher status")
 assert(desktop_entry_plan["accepts_file_uris"], "D-Bus client must parse file URI status")

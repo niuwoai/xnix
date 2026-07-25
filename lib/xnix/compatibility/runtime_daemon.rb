@@ -388,7 +388,7 @@ module Xnix
           "relative_path" => File.join("applications", desktop_entry.file_name),
           "name" => recipe.name,
           "comment" => "Run with Xnix Compatibility Runtime",
-          "exec" => "#{DesktopEntry::LAUNCHER} --app #{recipe.id} %U",
+          "exec" => desktop_entry.exec_command,
           "icon" => recipe.icon,
           "categories" => ["Utility"],
           "mime_types" => recipe.mime_types,
