@@ -4,6 +4,12 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc119] - 2026-07-25
+
+### Changed
+
+- Changed `scripts/staged_desktop_notepad_smoke.rb` to persist the delegated `xnix-compat-launch` JSON payload before pass/fail assertions, leaving concrete `/tmp` evidence for skipped or failed staged desktop Notepad runs.
+
 ## [0.2.640-rc118] - 2026-07-25
 
 ### Added

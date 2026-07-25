@@ -25,6 +25,7 @@ options = {
   run_root: DEFAULT_RUN_ROOT.join(RUN_ID).to_s,
   report_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-smoke.json").to_s,
   markdown_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-smoke.md").to_s,
+  delegated_output: DEFAULT_RUN_ROOT.join("staged-desktop-notepad-delegated-launcher.json").to_s,
   registry: PROJECT_ROOT.join("runtime/recipes/registry.json").to_s,
   image: ENV.fetch("XNIX_WINE_IMAGE", DEFAULT_IMAGE),
   docker: ENV.fetch("XNIX_DOCKER_BIN", "docker"),
@@ -36,6 +37,7 @@ OptionParser.new do |parser|
   parser.on("--run-root PATH", "Temporary run root") { |value| options[:run_root] = value }
   parser.on("--report-output PATH", "JSON packet output path") { |value| options[:report_output] = value }
   parser.on("--markdown-output PATH", "Markdown packet output path") { |value| options[:markdown_output] = value }
+  parser.on("--delegated-output PATH", "Delegated launcher JSON output path") { |value| options[:delegated_output] = value }
   parser.on("--registry PATH", "Development recipe registry path") { |value| options[:registry] = value }
   parser.on("--image IMAGE", "Local Wine GUI smoke image") { |value| options[:image] = value }
   parser.on("--docker PATH", "Docker runner path") { |value| options[:docker] = value }
@@ -116,6 +118,7 @@ end
 run_root = absolute_path(options.fetch(:run_root))
 report_output = absolute_path(options.fetch(:report_output))
 markdown_output = absolute_path(options.fetch(:markdown_output))
+delegated_output = absolute_path(options.fetch(:delegated_output))
 build_root = run_root.join("build")
 stage_root = run_root.join("stage")
 state_root = run_root.join("state")
@@ -137,6 +140,7 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
 FileUtils.mkdir_p(report_output.dirname)
 FileUtils.mkdir_p(markdown_output.dirname)
+FileUtils.mkdir_p(delegated_output.dirname)
 
 if docker_bin.nil?
   puts "SKIP: staged desktop Notepad smoke (Docker runner #{options.fetch(:docker)} is unavailable)"
@@ -246,8 +250,43 @@ launcher_stdout, launcher_stderr, launcher_status = run_command(launcher_env, *l
 abort "staged launcher failed:\n#{launcher_stderr}\n#{launcher_stdout}" unless launcher_status.success?
 
 payload = JSON.parse(launcher_stdout)
+File.write(delegated_output, JSON.pretty_generate(payload) + "\n")
+
+unless payload.fetch("status") == "passed"
+  failure_packet = {
+    "schema_version" => SCHEMA_VERSION,
+    "status" => "failed",
+    "app_id" => APP_ID,
+    "display_name" => APP_NAME,
+    "version" => VERSION,
+    "desktop_exec_uses_packaged_registry" => desktop_tokens.include?(PACKAGED_REGISTRY),
+    "staged_registry_resolved" => true,
+    "delegated_status" => payload.fetch("status"),
+    "delegated_skip_reason" => payload["skip_reason"],
+    "delegated_launcher_payload_path" => delegated_output.to_s,
+    "report_path" => report_output.to_s,
+    "markdown_path" => markdown_output.to_s
+  }
+  File.write(report_output, JSON.pretty_generate(failure_packet) + "\n")
+  File.write(
+    markdown_output,
+    [
+      "# Staged Desktop Notepad Smoke",
+      "",
+      "- Status: failed",
+      "- App: #{APP_NAME} (`#{APP_ID}`)",
+      "- Version: #{VERSION}",
+      "- Delegated status: #{payload.fetch("status")}",
+      "- Delegated skip reason: #{payload["skip_reason"]}",
+      "- Delegated payload: #{delegated_output}",
+      ""
+    ].join("\n")
+  )
+  warn "FAIL: launcher smoke must pass; delegated payload written to #{delegated_output}"
+  exit 1
+end
+
 assert(payload.fetch("request_type") == "windows-app-container-x-gui-smoke", "launcher must enter the container X GUI smoke")
-assert(payload.fetch("status") == "passed", "launcher smoke must pass")
 assert(payload.fetch("application_id") == APP_ID, "launcher smoke must preserve the Notepad app id")
 assert(payload.fetch("display_name") == APP_NAME, "launcher smoke must preserve the Notepad display name")
 assert(payload.fetch("app_version") == VERSION, "launcher smoke must preserve the current app version")
@@ -278,6 +317,7 @@ packet = {
   "host_root_modified" => payload.fetch("host_root_modified"),
   "docker_socket_mounted" => payload.fetch("docker_socket_mounted"),
   "broad_host_mount_required" => payload.fetch("broad_host_mount_required"),
+  "delegated_launcher_payload_path" => delegated_output.to_s,
   "report_path" => report_output.to_s,
   "markdown_path" => markdown_output.to_s
 }
