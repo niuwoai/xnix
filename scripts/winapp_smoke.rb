@@ -17,6 +17,7 @@ SCHEMA_VERSION = "xnix.runtime.winapp_smoke_report.v1"
 
 options = {
   format: "text",
+  report_output: nil,
   redact_output: nil,
   backend: "local",
   profile: nil,
@@ -49,8 +50,9 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--backend local|container|container-x-gui] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
+  parser.banner = "Usage: winapp_smoke.rb [--format text|json|markdown] [--report-output PATH] [--backend local|container|container-x-gui] [--profile PATH] [--write-profile PATH] [--write-launcher-bundle] [--app-id ID] [--app-name NAME] [--runtime-bin PATH] [--runtime-arg VALUE] [--launcher-mode launch|execute|preflight] [--preflight-only] [--exe PATH] [--runner PATH] [--runner-bottle NAME] [--runner-arg VALUE] [--success-mode marker|exit-code|startup-window] [--skip-bootstrap] [--stage-app-dir] [--arg VALUE]"
   parser.on("--format FORMAT", "Output format: text, json, or markdown") { |value| options[:format] = value }
+  parser.on("--report-output PATH", "Write the rendered JSON or Markdown report to PATH") { |value| options[:report_output] = value }
   parser.on("--backend BACKEND", "Execution backend: local, container, or container-x-gui") { |value| options[:backend] = value }
   parser.on("--redact-output", "Request redacted Runtime smoke output") { options[:redact_output] = true }
   parser.on("--profile PATH", "Windows app smoke profile JSON path") { |value| options[:profile] = value }
@@ -112,6 +114,10 @@ unless %w[text json markdown].include?(options[:format])
   warn "FAIL: unsupported output format #{options[:format]}"
   exit 1
 end
+if !options[:report_output].to_s.strip.empty? && options[:format] == "text"
+  warn "FAIL: --report-output requires --format json or --format markdown"
+  exit 1
+end
 unless %w[local container container-x-gui].include?(options[:backend])
   warn "FAIL: unsupported backend #{options[:backend]}"
   exit 1
@@ -146,6 +152,9 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
     "schema_version" => SCHEMA_VERSION,
     "report_type" => "winapp-smoke",
     "format" => format,
+    "report_output_requested" => false,
+    "report_output_written" => false,
+    "report_output_format" => "",
     "backend" => backend,
     "redacted_output_requested" => redact_output,
     "executable_source" => executable_source,
@@ -224,74 +233,102 @@ def base_report(format, redact_output, expected_marker, success_mode, executable
   }
 end
 
-def emit_report(report)
+def rendered_report(report)
   case report.fetch("format")
   when "json"
-    puts JSON.pretty_generate(report)
+    "#{JSON.pretty_generate(report)}\n"
   when "markdown"
-    puts "# Windows App Smoke Report"
-    puts
-    puts "- Version: #{report.fetch("version")}"
-    puts "- Backend: #{report.fetch("backend")}"
-    puts "- Status: #{report.fetch("status")}"
-    puts "- Fixture built: #{report.fetch("fixture_built")}"
-    puts "- Executable format: #{report.fetch("executable_format")}"
-    puts "- Windows executable signature observed: #{report.fetch("windows_executable_signature_observed")}"
-    puts "- Executable architecture: #{report.fetch("executable_architecture")}"
-    puts "- Executable architecture supported: #{report.fetch("executable_architecture_supported")}"
-    puts "- Wine architecture: #{report.fetch("wine_architecture")}"
-    puts "- Wine prefix mode: #{report.fetch("wine_prefix_mode")}"
-    puts "- Wine prefix prepared: #{report.fetch("wine_prefix_prepared")}"
-    puts "- Runner diagnostics invoked: #{report.fetch("runner_diagnostics_invoked")}"
-    puts "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}"
-    puts "- Runner candidate count: #{report.fetch("runner_candidate_count")}"
-    puts "- Env runner configured: #{report.fetch("env_runner_configured")}"
-    puts "- Profile preflight invoked: #{report.fetch("profile_preflight_invoked")}"
-    puts "- Profile preflight status: #{report.fetch("profile_preflight_status")}"
-    puts "- Profile written: #{report.fetch("profile_written")}"
-    puts "- Launcher bundle written: #{report.fetch("launcher_bundle_written")}"
-    puts "- Success mode: #{report.fetch("success_mode")}"
-    puts "- Working directory mode: #{report.fetch("working_directory_mode")}"
-    puts "- Application workspace mode: #{report.fetch("application_workspace_mode")}"
-    puts "- Application staged: #{report.fetch("application_staged")}"
-    puts "- Application staged file count: #{report.fetch("application_staged_file_count")}"
-    puts "- Runner argument count: #{report.fetch("runner_argument_count")}"
+    lines = [
+      "# Windows App Smoke Report",
+      "",
+      "- Version: #{report.fetch("version")}",
+      "- Backend: #{report.fetch("backend")}",
+      "- Status: #{report.fetch("status")}",
+      "- Report output requested: #{report.fetch("report_output_requested")}",
+      "- Report output written: #{report.fetch("report_output_written")}",
+      "- Fixture built: #{report.fetch("fixture_built")}",
+      "- Executable format: #{report.fetch("executable_format")}",
+      "- Windows executable signature observed: #{report.fetch("windows_executable_signature_observed")}",
+      "- Executable architecture: #{report.fetch("executable_architecture")}",
+      "- Executable architecture supported: #{report.fetch("executable_architecture_supported")}",
+      "- Wine architecture: #{report.fetch("wine_architecture")}",
+      "- Wine prefix mode: #{report.fetch("wine_prefix_mode")}",
+      "- Wine prefix prepared: #{report.fetch("wine_prefix_prepared")}",
+      "- Runner diagnostics invoked: #{report.fetch("runner_diagnostics_invoked")}",
+      "- Runner diagnostics status: #{report.fetch("runner_diagnostics_status")}",
+      "- Runner candidate count: #{report.fetch("runner_candidate_count")}",
+      "- Env runner configured: #{report.fetch("env_runner_configured")}",
+      "- Profile preflight invoked: #{report.fetch("profile_preflight_invoked")}",
+      "- Profile preflight status: #{report.fetch("profile_preflight_status")}",
+      "- Profile written: #{report.fetch("profile_written")}",
+      "- Launcher bundle written: #{report.fetch("launcher_bundle_written")}",
+      "- Success mode: #{report.fetch("success_mode")}",
+      "- Working directory mode: #{report.fetch("working_directory_mode")}",
+      "- Application workspace mode: #{report.fetch("application_workspace_mode")}",
+      "- Application staged: #{report.fetch("application_staged")}",
+      "- Application staged file count: #{report.fetch("application_staged_file_count")}",
+      "- Runner argument count: #{report.fetch("runner_argument_count")}"
+    ]
     unless report.fetch("runner_command_hints").empty?
-      puts "- Runner command hints:"
-      report.fetch("runner_command_hints").each { |hint| puts "  - #{hint}" }
+      lines << "- Runner command hints:"
+      report.fetch("runner_command_hints").each { |hint| lines << "  - #{hint}" }
     end
-    puts "- Smoke invoked: #{report.fetch("smoke_invoked")}"
-    puts "- Container smoke invoked: #{report.fetch("container_smoke_invoked")}"
-    puts "- Container X GUI smoke invoked: #{report.fetch("container_x_gui_smoke_invoked")}"
-    puts "- Container image available: #{report.fetch("container_image_available")}"
-    puts "- Container GUI app: #{report.fetch("container_gui_app")}" unless report.fetch("container_gui_app").empty?
-    puts "- X server started: #{report.fetch("x_server_started")}"
-    puts "- X window observed: #{report.fetch("x_window_observed")}"
-    puts "- X window evidence summary: #{report.fetch("x_window_evidence_summary")}" unless report.fetch("x_window_evidence_summary").empty?
-    puts "- Runner available: #{report.fetch("runner_available")}"
-    puts "- Wine bootstrap attempted: #{report.fetch("wine_bootstrap_attempted")}"
-    puts "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
-    puts "- Wine bootstrap skipped: #{report.fetch("wine_bootstrap_skipped")}"
-    puts "- Wine bootstrap exit code: #{report.fetch("wine_bootstrap_exit_code")}"
-    puts "- Marker observed: #{report.fetch("marker_observed")}"
-    puts "- Startup window observed: #{report.fetch("startup_window_observed")}"
-    puts "- Raw output redacted: #{report.fetch("raw_output_redacted")}"
-    puts "- KDE-safe output summary: #{report.fetch("kde_safe_output_summary")}"
-    puts "- Host root modified: #{report.fetch("host_root_modified")}"
-    puts "- Docker executed: #{report.fetch("docker_executed")}"
-    puts "- QEMU executed: #{report.fetch("qemu_executed")}"
-    puts "- Wine executed by script: #{report.fetch("wine_executed_by_script")}"
-    puts "- Network checks run: #{report.fetch("network_checks_run")}"
-    puts "- Package manager invoked: #{report.fetch("package_manager_invoked")}"
-    puts "- Profile preflight next action: #{report.fetch("profile_preflight_next_action")}" unless report.fetch("profile_preflight_next_action").empty?
-    puts "- Runner diagnostics next action: #{report.fetch("runner_diagnostics_next_action")}" unless report.fetch("runner_diagnostics_next_action").empty?
-    puts "- Failure reason: #{report.fetch("failure_reason")}" unless report.fetch("failure_reason").empty?
-    puts "- Skip reason: #{report.fetch("skip_reason")}" unless report.fetch("skip_reason").empty?
+    lines << "- Smoke invoked: #{report.fetch("smoke_invoked")}"
+    lines << "- Container smoke invoked: #{report.fetch("container_smoke_invoked")}"
+    lines << "- Container X GUI smoke invoked: #{report.fetch("container_x_gui_smoke_invoked")}"
+    lines << "- Container image available: #{report.fetch("container_image_available")}"
+    lines << "- Container GUI app: #{report.fetch("container_gui_app")}" unless report.fetch("container_gui_app").empty?
+    lines << "- X server started: #{report.fetch("x_server_started")}"
+    lines << "- X window observed: #{report.fetch("x_window_observed")}"
+    lines << "- X window evidence summary: #{report.fetch("x_window_evidence_summary")}" unless report.fetch("x_window_evidence_summary").empty?
+    lines << "- Runner available: #{report.fetch("runner_available")}"
+    lines << "- Wine bootstrap attempted: #{report.fetch("wine_bootstrap_attempted")}"
+    lines << "- Wine bootstrap succeeded: #{report.fetch("wine_bootstrap_succeeded")}"
+    lines << "- Wine bootstrap skipped: #{report.fetch("wine_bootstrap_skipped")}"
+    lines << "- Wine bootstrap exit code: #{report.fetch("wine_bootstrap_exit_code")}"
+    lines << "- Marker observed: #{report.fetch("marker_observed")}"
+    lines << "- Startup window observed: #{report.fetch("startup_window_observed")}"
+    lines << "- Raw output redacted: #{report.fetch("raw_output_redacted")}"
+    lines << "- KDE-safe output summary: #{report.fetch("kde_safe_output_summary")}"
+    lines << "- Host root modified: #{report.fetch("host_root_modified")}"
+    lines << "- Docker executed: #{report.fetch("docker_executed")}"
+    lines << "- QEMU executed: #{report.fetch("qemu_executed")}"
+    lines << "- Wine executed by script: #{report.fetch("wine_executed_by_script")}"
+    lines << "- Network checks run: #{report.fetch("network_checks_run")}"
+    lines << "- Package manager invoked: #{report.fetch("package_manager_invoked")}"
+    lines << "- Profile preflight next action: #{report.fetch("profile_preflight_next_action")}" unless report.fetch("profile_preflight_next_action").empty?
+    lines << "- Runner diagnostics next action: #{report.fetch("runner_diagnostics_next_action")}" unless report.fetch("runner_diagnostics_next_action").empty?
+    lines << "- Failure reason: #{report.fetch("failure_reason")}" unless report.fetch("failure_reason").empty?
+    lines << "- Skip reason: #{report.fetch("skip_reason")}" unless report.fetch("skip_reason").empty?
+    "#{lines.join("\n")}\n"
   end
 end
 
+def emit_report(report)
+  output = rendered_report(report)
+  print output unless output.nil?
+  output
+end
+
+def write_rendered_report(path, output)
+  clean_path = Pathname.new(path)
+  clean_path = PROJECT_ROOT.join(clean_path) unless clean_path.absolute?
+  FileUtils.mkdir_p(clean_path.dirname)
+  File.write(clean_path, output)
+rescue SystemCallError
+  warn "FAIL: unable to write Windows app smoke report output"
+  exit 1
+end
+
 def finish(report, exit_code)
-  emit_report(report) unless report.fetch("format") == "text"
+  report_output_path = report.delete("__report_output_path")
+  unless report_output_path.to_s.strip.empty?
+    report["report_output_requested"] = true
+    report["report_output_written"] = true
+    report["report_output_format"] = report.fetch("format")
+  end
+  output = emit_report(report) unless report.fetch("format") == "text"
+  write_rendered_report(report_output_path, output) unless report_output_path.to_s.strip.empty?
   exit exit_code
 end
 
@@ -315,6 +352,7 @@ report = base_report(
   options.fetch(:platform)
 )
 report["preflight_only"] = options.fetch(:preflight_only)
+report["__report_output_path"] = options.fetch(:report_output)
 
 FileUtils.mkdir_p(WORK_ROOT)
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))

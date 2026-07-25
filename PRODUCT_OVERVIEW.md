@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc106
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc107
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc107 checkpoint candidate makes the local real GUI proof reproducible as a saved artifact. `scripts/winapp_smoke.rb --report-output PATH --format json|markdown` now writes the rendered report to an operator-selected file while the report itself only records requested/written/format state, not the raw output path. This lets the passed `container-x-gui` run produce a durable JSON report that can immediately feed `gui-smoke-evidence-preview`, `compatibility-center-preview`, and `kde-center-page-preview` without copying stdout by hand.
 
 The v0.2.640-rc106 checkpoint candidate connects the local container GUI proof to the product read models. `gui-smoke-evidence-preview` can now consume passed `scripts/winapp_smoke.rb --backend container-x-gui` JSON reports, project them as `winapp-smoke-container-x-gui` evidence, and feed the same safe GUI evidence cards into `compatibility-center-preview` and `kde-center-page-preview` with explicit `--known-app-gui-smoke-app`, `--known-app-gui-smoke-name`, and `--known-app-gui-smoke-version` identity binding. The projection preserves the distinction between local container GUI proof and q4/QEMU guest proof, while hiding report paths, raw output, backend commands, host mounts, Docker sockets, host networking, and host-root mutation authority from KDE-facing output.
 

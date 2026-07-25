@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc106`.
+The project is currently at `v0.2.640-rc107`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc106`.
 
 ## Current Checkpoint
 
-v0.2.640-rc106 connects the local container GUI proof to the Runtime/KDE read model. `gui-smoke-evidence-preview` now consumes passed `scripts/winapp_smoke.rb --backend container-x-gui` JSON reports as `winapp-smoke-container-x-gui` evidence, and `compatibility-center-preview` / `kde-center-page-preview` can bind that report to an explicit app id, display name, and app version before rendering safe GUI cards without exposing report paths, raw output, backend commands, host mounts, Docker sockets, host networking, or host-root mutation authority.
+v0.2.640-rc107 makes the local real GUI proof durable. `scripts/winapp_smoke.rb --format json --report-output PATH --backend container-x-gui` now writes the same redacted report it prints, so the passed Windows GUI run can feed `gui-smoke-evidence-preview`, `compatibility-center-preview`, and `kde-center-page-preview` without manually copying stdout.
+
+The previous v0.2.640-rc106 checkpoint connected the local container GUI proof to the Runtime/KDE read model. `gui-smoke-evidence-preview` now consumes passed `scripts/winapp_smoke.rb --backend container-x-gui` JSON reports as `winapp-smoke-container-x-gui` evidence, and `compatibility-center-preview` / `kde-center-page-preview` can bind that report to an explicit app id, display name, and app version before rendering safe GUI cards without exposing report paths, raw output, backend commands, host mounts, Docker sockets, host networking, or host-root mutation authority.
 
 The previous v0.2.640-rc105 checkpoint promoted the local real GUI proof into maintained smoke entrypoints. `scripts/winapp_smoke.rb --backend container-x-gui` now produces JSON/Markdown evidence for Xvfb startup, Wine bootstrap, and `x_window_observed`, while `ruby scripts/container.rb winapp-container-x-gui-smoke` exposes the path through the constrained project container harness.
 

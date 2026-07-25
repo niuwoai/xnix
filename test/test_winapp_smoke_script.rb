@@ -362,6 +362,8 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   report = JSON.parse(json_stdout)
   assert(report.fetch("schema_version") == "xnix.runtime.winapp_smoke_report.v1", "JSON report must expose schema")
   assert(report.fetch("report_type") == "winapp-smoke", "JSON report must expose report type")
+  assert(!report.fetch("report_output_requested"), "JSON report must not request report output by default")
+  assert(!report.fetch("report_output_written"), "JSON report must not write report output by default")
   assert(!report.fetch("profile_preflight_invoked"), "JSON fixture report must not run profile preflight")
   assert(!report.fetch("profile_written"), "JSON fixture report must not write a profile by default")
   assert(!report.fetch("launcher_bundle_written"), "JSON fixture report must not write a launcher bundle by default")
@@ -693,4 +695,35 @@ Dir.mktmpdir("xnix-winapp-smoke-test") do |dir|
   assert(container_x_gui_report.fetch("startup_window_observed"), "container X GUI report must map X observation to startup window evidence")
   assert(container_x_gui_report.fetch("container_payload").fetch("request_type") == "windows-app-container-x-gui-smoke", "container X GUI report must embed Runtime payload")
   assert(!container_x_gui_stdout.include?(stale_fixture_output.to_s), "container X GUI report must not leak fixture executable host path")
+
+  container_x_gui_report_output = temp_root.join("reports/container-x-gui.json")
+  persisted_container_x_gui_stdout, persisted_container_x_gui_stderr, persisted_container_x_gui_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--format", "json",
+    "--report-output", container_x_gui_report_output.to_s,
+    "--backend", "container-x-gui",
+    "--image", "local/wine-x-gui:test",
+    "--platform", "linux/arm64",
+    "--gui-app", "notepad.exe",
+    "--window-match", "notepad.exe"
+  )
+  assert(persisted_container_x_gui_status.success?, "persisted container X GUI report must succeed: #{persisted_container_x_gui_stderr}")
+  persisted_container_x_gui_report = JSON.parse(persisted_container_x_gui_stdout)
+  assert(persisted_container_x_gui_report.fetch("report_output_requested"), "persisted container X GUI report must mark output requested")
+  assert(persisted_container_x_gui_report.fetch("report_output_written"), "persisted container X GUI report must mark output written")
+  assert(persisted_container_x_gui_report.fetch("report_output_format") == "json", "persisted container X GUI report must record output format")
+  assert(container_x_gui_report_output.file?, "persisted container X GUI report must write the report file")
+  assert(container_x_gui_report_output.read == persisted_container_x_gui_stdout, "persisted container X GUI report file must match stdout")
+  assert(!persisted_container_x_gui_stdout.include?(container_x_gui_report_output.to_s), "persisted container X GUI stdout must not expose output path")
+  assert(!container_x_gui_report_output.read.include?(container_x_gui_report_output.to_s), "persisted container X GUI file must not expose output path")
+
+  text_report_output_stdout, text_report_output_stderr, text_report_output_status = Open3.capture3(
+    env,
+    "ruby", script.to_s,
+    "--report-output", temp_root.join("text-report.txt").to_s
+  )
+  assert(!text_report_output_status.success?, "text report output must be rejected")
+  assert(text_report_output_stdout.empty?, "text report output rejection must not print stdout")
+  assert(text_report_output_stderr.include?("--report-output requires --format json or --format markdown"), "text report output rejection must explain required format")
 end

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc107] - 2026-07-25
+
+### Added
+
+- Added `scripts/winapp_smoke.rb --report-output PATH` for persisting JSON and Markdown Windows app smoke reports without exposing the output path in the report payload.
+- Added container X GUI report-output coverage so the real local GUI app proof can be saved and then consumed by Go Runtime evidence and KDE Center read models.
+
 ## [0.2.640-rc106] - 2026-07-25
 
 ### Changed
