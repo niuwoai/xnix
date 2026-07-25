@@ -2413,6 +2413,9 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
+	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
+	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
+	knownAppGUISmokeVersion := flags.String("known-app-gui-smoke-version", "", "known Windows GUI app version for a GUI smoke report")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2446,7 +2449,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	}
 
 	options := appidentity.CompatibilityCenterOptions{}
-	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
 	}
@@ -2487,7 +2490,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	return recipes, provenance, options, nil
 }
 
-func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON string, projectionFile string, matrixReport string, guiSmokeReport string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON string, projectionFile string, matrixReport string, guiSmokeReport string, guiSmokeApp string, guiSmokeName string, guiSmokeVersion string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
 	projectionJSON = strings.TrimSpace(projectionJSON)
 	projectionFile = strings.TrimSpace(projectionFile)
 	matrixReport = strings.TrimSpace(matrixReport)
@@ -2519,7 +2522,12 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 		return preview.KnownAppSmokeEvidence, nil
 	}
 	if guiSmokeReport != "" {
-		preview, err := appidentity.PreviewGUISmokeEvidence(appidentity.GUISmokeEvidencePreviewRequest{ReportPath: guiSmokeReport})
+		preview, err := appidentity.PreviewGUISmokeEvidence(appidentity.GUISmokeEvidencePreviewRequest{
+			ReportPath:  guiSmokeReport,
+			AppID:       guiSmokeApp,
+			DisplayName: guiSmokeName,
+			AppVersion:  guiSmokeVersion,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("consume GUI smoke evidence: %w", err)
 		}
@@ -2556,7 +2564,7 @@ func loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) ([]appident
 }
 
 func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
-	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "", "")
+	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "", "", "", "", "")
 }
 
 func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {
@@ -2732,6 +2740,9 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
+	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
+	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
+	knownAppGUISmokeVersion := flags.String("known-app-gui-smoke-version", "", "known Windows GUI app version for a GUI smoke report")
 	knownAppLaunchAuthorizationReceiptState := flags.String("known-app-launch-authorization-receipt-state", "", "known Windows app launch authorization receipt state")
 	knownAppLaunchAuthorizationReceiptID := flags.String("known-app-launch-authorization-receipt-id", "", "opaque known Windows app launch authorization receipt id")
 	knownAppLaunchGateState := flags.String("known-app-launch-gate-state", "", "known Windows app launch gate state")
@@ -2776,7 +2787,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 		receipt = &loaded
 	}
 	knownAppSmokeEvidence := []appidentity.KnownAppSmokeEvidenceSummary(nil)
-	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}

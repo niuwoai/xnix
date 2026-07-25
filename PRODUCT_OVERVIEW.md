@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-25 | Current version: v0.2.640-rc105
+> Last updated: 2026-07-25 | Current version: v0.2.640-rc106
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc106 checkpoint candidate connects the local container GUI proof to the product read models. `gui-smoke-evidence-preview` can now consume passed `scripts/winapp_smoke.rb --backend container-x-gui` JSON reports, project them as `winapp-smoke-container-x-gui` evidence, and feed the same safe GUI evidence cards into `compatibility-center-preview` and `kde-center-page-preview` with explicit `--known-app-gui-smoke-app`, `--known-app-gui-smoke-name`, and `--known-app-gui-smoke-version` identity binding. The projection preserves the distinction between local container GUI proof and q4/QEMU guest proof, while hiding report paths, raw output, backend commands, host mounts, Docker sockets, host networking, and host-root mutation authority from KDE-facing output.
 
 The v0.2.640-rc105 checkpoint candidate promotes the local real GUI proof into the maintained smoke entrypoints. `scripts/winapp_smoke.rb --backend container-x-gui` now calls the Go Runtime `windows-app-container-x-gui-smoke` command, records Xvfb startup, Wine bootstrap, `x_window_observed`, and a KDE-safe window evidence summary, and avoids building the console fixture for GUI-only runs. `ruby scripts/container.rb winapp-container-x-gui-smoke` exposes the same path through the constrained project container harness.
 

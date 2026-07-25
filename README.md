@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc105`.
+The project is currently at `v0.2.640-rc106`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc105`.
 
 ## Current Checkpoint
 
-v0.2.640-rc105 promotes the local real GUI proof into maintained smoke entrypoints. `scripts/winapp_smoke.rb --backend container-x-gui` now produces JSON/Markdown evidence for Xvfb startup, Wine bootstrap, and `x_window_observed`, while `ruby scripts/container.rb winapp-container-x-gui-smoke` exposes the path through the constrained project container harness.
+v0.2.640-rc106 connects the local container GUI proof to the Runtime/KDE read model. `gui-smoke-evidence-preview` now consumes passed `scripts/winapp_smoke.rb --backend container-x-gui` JSON reports as `winapp-smoke-container-x-gui` evidence, and `compatibility-center-preview` / `kde-center-page-preview` can bind that report to an explicit app id, display name, and app version before rendering safe GUI cards without exposing report paths, raw output, backend commands, host mounts, Docker sockets, host networking, or host-root mutation authority.
+
+The previous v0.2.640-rc105 checkpoint promoted the local real GUI proof into maintained smoke entrypoints. `scripts/winapp_smoke.rb --backend container-x-gui` now produces JSON/Markdown evidence for Xvfb startup, Wine bootstrap, and `x_window_observed`, while `ruby scripts/container.rb winapp-container-x-gui-smoke` exposes the path through the constrained project container harness.
 
 The previous v0.2.640-rc104 checkpoint added `xnix-runtime-go windows-app-container-x-gui-smoke`, a restricted Docker fallback that starts Wine on an Xvfb desktop and verifies a real Windows GUI window with `xwininfo`. This gives the project a repeatable local `notepad.exe`-style GUI proof when q4 is unavailable, while the q4/QEMU/Wine guest lane remains the stricter product-grade run.
 

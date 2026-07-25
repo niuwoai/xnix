@@ -11,6 +11,8 @@ import (
 const (
 	GUISmokeEvidencePreviewSchemaVersion = "xnix.runtime.gui_smoke_evidence_preview.v1"
 	GUISmokeEvidencePreviewRequestType   = "gui-smoke-evidence-preview"
+	GUISmokeEvidenceSourceWineGuest      = "wine-guest-gui-smoke"
+	GUISmokeEvidenceSourceContainerXGUI  = "winapp-smoke-container-x-gui"
 )
 
 type GUISmokeEvidencePreviewRequest struct {
@@ -77,11 +79,37 @@ type GUISmokeEvidencePreview struct {
 }
 
 type guiSmokeReport struct {
-	SchemaVersion                        string `json:"schema_version"`
-	RequestType                          string `json:"request_type"`
-	Status                               string `json:"status"`
-	Execute                              bool   `json:"execute"`
-	GUIAppName                           string `json:"gui_app_name"`
+	SchemaVersion             string `json:"schema_version"`
+	RequestType               string `json:"request_type"`
+	ReportType                string `json:"report_type"`
+	Status                    string `json:"status"`
+	Execute                   bool   `json:"execute"`
+	Backend                   string `json:"backend"`
+	GUIAppName                string `json:"gui_app_name"`
+	ContainerGUIApp           string `json:"container_gui_app"`
+	ContainerSmokeInvoked     bool   `json:"container_smoke_invoked"`
+	ContainerXGUISmokeInvoked bool   `json:"container_x_gui_smoke_invoked"`
+	SmokeInvoked              bool   `json:"smoke_invoked"`
+	XServerStarted            bool   `json:"x_server_started"`
+	StartupWindowObserved     bool   `json:"startup_window_observed"`
+	ContainerImageAvailable   bool   `json:"container_image_available"`
+	ContainerPayload          struct {
+		SchemaVersion               string `json:"schema_version"`
+		RequestType                 string `json:"request_type"`
+		Status                      string `json:"status"`
+		NetworkMode                 string `json:"network_mode"`
+		XServerStarted              bool   `json:"x_server_started"`
+		WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
+		ImageAvailable              bool   `json:"image_available"`
+		XWindowObserved             bool   `json:"x_window_observed"`
+		WindowEvidenceSummary       string `json:"window_evidence_summary"`
+		HostRootModified            bool   `json:"host_root_modified"`
+		PrivilegedContainerRequired bool   `json:"privileged_container_required"`
+		HostNetworkingRequired      bool   `json:"host_networking_required"`
+		DockerSocketMounted         bool   `json:"docker_socket_mounted"`
+		BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
+		HostMountCount              int    `json:"host_mount_count"`
+	} `json:"container_payload"`
 	LocalGUIExecutableConfigured         bool   `json:"local_gui_executable_configured"`
 	ExecutableCopied                     bool   `json:"executable_copied"`
 	OwnerControlledLaunchRequested       bool   `json:"owner_controlled_launch_requested"`
@@ -151,16 +179,23 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	if appVersion == "" {
 		appVersion = "local-fixture"
 	}
-	projectionReady := report.Status == "passed" && report.Execute && report.RuntimeGoOwnedGUISmoke && report.WinebootInvoked && report.XWindowObserved && report.XWindowChildCount > 0
+	evidenceSource := guiSmokeEvidenceSource(report)
+	guiAppName := guiSmokeReportGUIAppName(report)
+	winebootInvoked := guiSmokeWinebootInvoked(report)
+	xWindowObserved := guiSmokeXWindowObserved(report)
+	xWindowChildCount := guiSmokeXWindowChildCount(report)
+	xWinInfoBytes := guiSmokeXWinInfoBytes(report)
+	safeOutputSummary := guiSmokeSafeOutputSummary(report)
+	projectionReady := report.Status == "passed" && guiSmokeReportExecuted(report) && guiSmokeRuntimeOwned(report) && winebootInvoked && xWindowObserved && xWindowChildCount > 0
 	ownerControlledLaunchVerified := guiSmokeOwnerControlledLaunchVerified(report, projectionReady)
 	ownerManagedCopyVerified := ownerControlledLaunchVerified && report.OwnerExternalGUIAppRequested && report.OwnerExternalGUIAppDelivery == "owner-managed-copy" && report.OwnerDelegatedManagedArtifactCopied
 	ownerEvidenceHandoffReady := ownerControlledLaunchVerified && report.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(report.OwnerEvidenceRelativePath)
-	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerEvidenceHandoffReady)
+	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, evidenceSource, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerEvidenceHandoffReady)
 
 	return GUISmokeEvidencePreview{
 		SchemaVersion:                       GUISmokeEvidencePreviewSchemaVersion,
 		RequestType:                         GUISmokeEvidencePreviewRequestType,
-		Source:                              "wine-guest-gui-smoke+runtime-evidence-consumer",
+		Source:                              evidenceSource + "+runtime-evidence-consumer",
 		RuntimeMethod:                       "PreviewGUISmokeEvidence",
 		ReadMethod:                          "GetGUISmokeEvidence",
 		ReportStatus:                        report.Status,
@@ -169,7 +204,7 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		AppID:                               appID,
 		DisplayName:                         displayName,
 		AppVersion:                          appVersion,
-		GUIAppName:                          report.GUIAppName,
+		GUIAppName:                          guiAppName,
 		LocalGUIExecutableConfigured:        report.LocalGUIExecutableConfigured,
 		ExecutableCopied:                    report.ExecutableCopied,
 		OwnerControlledLaunchRequested:      report.OwnerControlledLaunchRequested,
@@ -187,10 +222,10 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		OwnerManagedCopyVerified:            ownerManagedCopyVerified,
 		OwnerEvidenceHandoffReady:           ownerEvidenceHandoffReady,
 		OwnerEvidenceRelativePath:           strings.TrimSpace(report.OwnerEvidenceRelativePath),
-		WinebootInvoked:                     report.WinebootInvoked,
-		XWindowObserved:                     report.XWindowObserved,
-		XWindowChildCount:                   report.XWindowChildCount,
-		XWinInfoBytes:                       report.XWinInfoBytes,
+		WinebootInvoked:                     winebootInvoked,
+		XWindowObserved:                     xWindowObserved,
+		XWindowChildCount:                   xWindowChildCount,
+		XWinInfoBytes:                       xWinInfoBytes,
 		GuestStderrBytes:                    report.GuestStderrBytes,
 		GuestGraphicsDriverErrorObserved:    report.GuestGraphicsDriverErrorObserved,
 		CompatibilityCenterProjectionReady:  projectionReady,
@@ -210,7 +245,7 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		HostNetworkingRequired:              false,
 		DockerSocketMounted:                 false,
 		BroadHostMountRequired:              false,
-		DesktopSafeSummary:                  fmt.Sprintf("%s GUI smoke evidence observed a real window with %d X child windows.", displayName, report.XWindowChildCount),
+		DesktopSafeSummary:                  guiSmokeDesktopSafeSummary(displayName, evidenceSource, xWindowChildCount, safeOutputSummary),
 	}, nil
 }
 
@@ -236,7 +271,7 @@ func KnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) (KnownAppSmokeE
 		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection must remain Runtime-owned and Go-backed")
 	}
 	evidence := projection.KnownAppSmokeEvidence
-	if evidence.EvidenceSource != "wine-guest-gui-smoke" || !evidence.ExecutionEvidenceRecorded || !evidence.RuntimeDispatchVerified {
+	if !knownAppGUIEvidenceSource(evidence.EvidenceSource) || !evidence.ExecutionEvidenceRecorded || !evidence.RuntimeDispatchVerified {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("GUI smoke Runtime evidence projection requires recorded Runtime dispatch evidence")
 	}
 	normalized, err := normalizeKnownAppSmokeEvidenceItem(evidence)
@@ -247,6 +282,9 @@ func KnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) (KnownAppSmokeE
 }
 
 func validateGUISmokeReport(report guiSmokeReport) error {
+	if report.SchemaVersion == "xnix.runtime.winapp_smoke_report.v1" {
+		return validateContainerXGUISmokeReport(report)
+	}
 	switch {
 	case report.SchemaVersion != "xnix.scripts.wine_guest_gui_smoke.v1":
 		return errors.New("GUI smoke evidence requires the Wine guest GUI smoke schema")
@@ -308,6 +346,50 @@ func validateGUISmokeReport(report guiSmokeReport) error {
 	return nil
 }
 
+func validateContainerXGUISmokeReport(report guiSmokeReport) error {
+	switch {
+	case report.ReportType != "winapp-smoke":
+		return errors.New("GUI smoke evidence requires the Windows app smoke report type")
+	case report.Backend != "container-x-gui":
+		return errors.New("Windows app smoke GUI evidence requires the container-x-gui backend")
+	case report.Status == "":
+		return errors.New("GUI smoke evidence requires report status")
+	case !report.SmokeInvoked || !report.ContainerSmokeInvoked || !report.ContainerXGUISmokeInvoked:
+		return errors.New("container X GUI evidence requires an invoked smoke report")
+	case guiSmokeReportGUIAppName(report) == "" || !singleLine(guiSmokeReportGUIAppName(report)):
+		return errors.New("GUI smoke evidence requires a safe GUI app name")
+	case report.ContainerPayload.SchemaVersion != "xnix.runtime.windows_app_container_x_gui_smoke.v1":
+		return errors.New("container X GUI evidence requires the Runtime container X GUI payload schema")
+	case report.ContainerPayload.RequestType != "windows-app-container-x-gui-smoke":
+		return errors.New("container X GUI evidence requires the Runtime container X GUI request type")
+	case report.ContainerPayload.NetworkMode != "none":
+		return errors.New("container X GUI evidence requires a network-isolated container")
+	case report.ContainerPayload.HostMountCount != 0:
+		return errors.New("container X GUI evidence must not mount host paths")
+	case report.HostRootModified || report.PrivilegedContainerRequired || report.HostNetworkingRequired || report.DockerSocketMounted || report.BroadHostMountRequired:
+		return errors.New("GUI smoke evidence must keep host and container boundaries closed")
+	case report.ContainerPayload.HostRootModified || report.ContainerPayload.PrivilegedContainerRequired || report.ContainerPayload.HostNetworkingRequired || report.ContainerPayload.DockerSocketMounted || report.ContainerPayload.BroadHostMountRequired:
+		return errors.New("container X GUI Runtime payload must keep host and container boundaries closed")
+	}
+	if report.Status == "passed" {
+		switch {
+		case report.ContainerPayload.Status != "passed":
+			return errors.New("passed container X GUI evidence requires a passed Runtime payload")
+		case !report.ContainerImageAvailable || !report.ContainerPayload.ImageAvailable:
+			return errors.New("passed container X GUI evidence requires a local container image")
+		case !guiSmokeWinebootInvoked(report):
+			return errors.New("passed GUI smoke evidence requires wineboot")
+		case !report.XServerStarted || !report.ContainerPayload.XServerStarted:
+			return errors.New("passed container X GUI evidence requires an X server")
+		case !guiSmokeXWindowObserved(report):
+			return errors.New("passed GUI smoke evidence requires an observed X window")
+		case strings.TrimSpace(guiSmokeSafeOutputSummary(report)) == "":
+			return errors.New("passed GUI smoke evidence requires a KDE-safe window summary")
+		}
+	}
+	return nil
+}
+
 func guiSmokeOwnerControlledLaunchVerified(report guiSmokeReport, projectionReady bool) bool {
 	return projectionReady &&
 		report.OwnerControlledLaunchRequested &&
@@ -335,7 +417,7 @@ func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 		report.OwnerDelegatedManagedArtifactCopied
 }
 
-func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
+func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
 	compatibilityState := "gui-smoke-review-required"
 	centerCardState := "gui-smoke-evidence-review-required"
@@ -347,6 +429,11 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		compatibilityState = "real-gui-qemu-wine-verified"
 		centerCardState = "validated-real-gui-runtime-run"
 		summary = displayName + " passed a real Runtime-owned QEMU/Wine GUI smoke with an observed X window."
+		if evidenceSource == GUISmokeEvidenceSourceContainerXGUI {
+			compatibilityState = "real-gui-container-wine-verified"
+			centerCardState = "validated-real-gui-container-run"
+			summary = displayName + " passed a real Runtime-owned isolated container GUI smoke with an observed window."
+		}
 	}
 	if ownerControlledLaunchVerified {
 		compatibilityState = "owner-controlled-gui-qemu-wine-verified"
@@ -370,7 +457,7 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		DisplayName:                          displayName,
 		AppVersion:                           appVersion,
 		EvidenceKind:                         "known-application-gui-smoke",
-		EvidenceSource:                       "wine-guest-gui-smoke",
+		EvidenceSource:                       evidenceSource,
 		SmokeStatus:                          status,
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,
@@ -403,4 +490,75 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		RawArtifactPathExposed:               false,
 		Summary:                              summary,
 	}
+}
+
+func guiSmokeEvidenceSource(report guiSmokeReport) string {
+	if report.SchemaVersion == "xnix.runtime.winapp_smoke_report.v1" {
+		return GUISmokeEvidenceSourceContainerXGUI
+	}
+	return GUISmokeEvidenceSourceWineGuest
+}
+
+func guiSmokeReportExecuted(report guiSmokeReport) bool {
+	if report.SchemaVersion == "xnix.runtime.winapp_smoke_report.v1" {
+		return report.SmokeInvoked && report.ContainerSmokeInvoked && report.ContainerXGUISmokeInvoked
+	}
+	return report.Execute
+}
+
+func guiSmokeRuntimeOwned(report guiSmokeReport) bool {
+	if report.SchemaVersion == "xnix.runtime.winapp_smoke_report.v1" {
+		return report.ContainerPayload.SchemaVersion == "xnix.runtime.windows_app_container_x_gui_smoke.v1"
+	}
+	return report.RuntimeGoOwnedGUISmoke
+}
+
+func guiSmokeReportGUIAppName(report guiSmokeReport) string {
+	if strings.TrimSpace(report.GUIAppName) != "" {
+		return strings.TrimSpace(report.GUIAppName)
+	}
+	return strings.TrimSpace(report.ContainerGUIApp)
+}
+
+func guiSmokeWinebootInvoked(report guiSmokeReport) bool {
+	return report.WinebootInvoked || report.ContainerPayload.WineBootstrapAttempted
+}
+
+func guiSmokeXWindowObserved(report guiSmokeReport) bool {
+	return report.XWindowObserved || report.StartupWindowObserved || report.ContainerPayload.XWindowObserved
+}
+
+func guiSmokeXWindowChildCount(report guiSmokeReport) int {
+	if report.XWindowChildCount > 0 {
+		return report.XWindowChildCount
+	}
+	if guiSmokeXWindowObserved(report) {
+		return 1
+	}
+	return 0
+}
+
+func guiSmokeXWinInfoBytes(report guiSmokeReport) int {
+	if report.XWinInfoBytes > 0 {
+		return report.XWinInfoBytes
+	}
+	return len(guiSmokeSafeOutputSummary(report))
+}
+
+func guiSmokeSafeOutputSummary(report guiSmokeReport) string {
+	if strings.TrimSpace(report.KDESafeOutputSummary) != "" {
+		return strings.TrimSpace(report.KDESafeOutputSummary)
+	}
+	return strings.TrimSpace(report.ContainerPayload.WindowEvidenceSummary)
+}
+
+func guiSmokeDesktopSafeSummary(displayName string, evidenceSource string, childCount int, safeOutputSummary string) string {
+	if evidenceSource == GUISmokeEvidenceSourceContainerXGUI {
+		return fmt.Sprintf("%s container X GUI smoke evidence observed a real isolated GUI window with %d window evidence item.", displayName, childCount)
+	}
+	return fmt.Sprintf("%s GUI smoke evidence observed a real window with %d X child windows.", displayName, childCount)
+}
+
+func knownAppGUIEvidenceSource(source string) bool {
+	return source == GUISmokeEvidenceSourceWineGuest || source == GUISmokeEvidenceSourceContainerXGUI
 }

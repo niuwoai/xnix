@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc106] - 2026-07-25
+
+### Changed
+
+- Changed `gui-smoke-evidence-preview` to consume passed `scripts/winapp_smoke.rb --backend container-x-gui` reports as `winapp-smoke-container-x-gui` evidence without exposing report paths, raw output, backend commands, host mounts, Docker sockets, host networking, or host-root mutation.
+- Changed KDE Center GUI evidence cards and known-app evidence normalization to preserve local container GUI proof separately from q4/QEMU Wine GUI proof while keeping desktop and backend launch gates closed.
+- Added `--known-app-gui-smoke-app`, `--known-app-gui-smoke-name`, and `--known-app-gui-smoke-version` identity binding for GUI smoke report consumption in Compatibility Center and KDE Center previews.
+
 ## [0.2.640-rc105] - 2026-07-25
 
 ### Added

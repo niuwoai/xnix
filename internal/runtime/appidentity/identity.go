@@ -2683,7 +2683,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		evidenceSource = "known-app-guest-smoke"
 	}
 	switch evidenceSource {
-	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke", "remote-known-winapp-matrix-smoke", "wine-guest-gui-smoke":
+	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke", "remote-known-winapp-matrix-smoke", GUISmokeEvidenceSourceWineGuest, GUISmokeEvidenceSourceContainerXGUI:
 	default:
 		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app smoke evidence source %q is not supported", evidenceSource)
 	}
@@ -2768,9 +2768,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	summary := displayName + " smoke evidence is available for review."
 	passed := status == "passed" && item.MarkerObserved && item.ChecksumVerified
 	stagedLauncherVerified := (evidenceSource == "staged-launcher-dispatch-smoke" && passed) ||
-		(evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded && item.StagedLauncherVerified)
+		(knownAppGUIEvidenceSource(evidenceSource) && status == "passed" && item.ExecutionEvidenceRecorded && item.StagedLauncherVerified)
 	matrixRunVerified := evidenceSource == "remote-known-winapp-matrix-smoke" && passed
-	guiRunVerified := evidenceSource == "wine-guest-gui-smoke" && status == "passed" && item.ExecutionEvidenceRecorded
+	guiRunVerified := knownAppGUIEvidenceSource(evidenceSource) && status == "passed" && item.ExecutionEvidenceRecorded
 	ownerControlledGUIRunVerified := guiRunVerified && (item.OwnerControlledRuntimeLaunchVerified || item.StagedLauncherVerified || item.CompatibilityState == "owner-controlled-gui-qemu-wine-verified")
 	ownerManagedCopyVerified := ownerControlledGUIRunVerified && (item.OwnerManagedCopyVerified || strings.Contains(item.Summary, "managed launcher copied"))
 	ownerEvidenceRelativePath := strings.TrimSpace(item.OwnerEvidenceRelativePath)
@@ -2860,6 +2860,11 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		primaryActionLabel = "Review GUI run evidence"
 		primaryActionKind = "review"
 		summary = displayName + " has redacted real Runtime-owned GUI window evidence."
+		if evidenceSource == GUISmokeEvidenceSourceContainerXGUI {
+			compatibilityState = "real-gui-container-wine-verified"
+			centerCardState = "validated-real-gui-container-run"
+			summary = displayName + " has redacted real Runtime-owned isolated container GUI window evidence."
+		}
 		if ownerControlledGUIRunVerified {
 			compatibilityState = "owner-controlled-gui-qemu-wine-verified"
 			centerCardState = "validated-owner-controlled-gui-runtime-run"
@@ -2957,7 +2962,7 @@ func knownAppSmokeEvidencePassed(item KnownAppSmokeEvidenceSummary) bool {
 	if item.SmokeStatus != "passed" {
 		return false
 	}
-	if item.EvidenceSource == "wine-guest-gui-smoke" {
+	if knownAppGUIEvidenceSource(item.EvidenceSource) {
 		return item.ExecutionEvidenceRecorded
 	}
 	return item.MarkerObserved && item.ChecksumVerified

@@ -141,6 +141,65 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 	}
 }
 
+func TestPreviewGUISmokeEvidenceConsumesContainerXGUIReport(t *testing.T) {
+	preview, err := PreviewGUISmokeEvidenceJSON([]byte(containerXGUISmokeEvidenceFixture()), GUISmokeEvidencePreviewRequest{
+		AppID:       "org.xnix.sample.notepad",
+		DisplayName: "Notepad",
+		AppVersion:  "container-local",
+	})
+	if err != nil {
+		t.Fatalf("PreviewGUISmokeEvidenceJSON returned error: %v", err)
+	}
+	if preview.Source != "winapp-smoke-container-x-gui+runtime-evidence-consumer" ||
+		preview.ReportStatus != "passed" ||
+		!preview.ReportConsumed ||
+		preview.GUIAppName != "notepad.exe" ||
+		!preview.WinebootInvoked ||
+		!preview.XWindowObserved ||
+		preview.XWindowChildCount != 1 ||
+		preview.XWinInfoBytes == 0 ||
+		!preview.CompatibilityCenterProjectionReady ||
+		!preview.KDECenterProjectionReady ||
+		preview.DesktopLaunchEnabled ||
+		preview.BackendLaunchEnabled ||
+		preview.ActionExecutionEnabled ||
+		preview.BackendDetailsExposed ||
+		preview.RawOutputExposed ||
+		preview.HostRootModified ||
+		preview.PrivilegedContainerRequired ||
+		preview.HostNetworkingRequired ||
+		preview.DockerSocketMounted ||
+		preview.BroadHostMountRequired {
+		t.Fatalf("unexpected container X GUI smoke evidence preview: %#v", preview)
+	}
+	evidence := preview.KnownAppSmokeEvidence
+	if evidence.AppID != "org.xnix.sample.notepad" ||
+		evidence.DisplayName != "Notepad" ||
+		evidence.EvidenceKind != "known-application-gui-smoke" ||
+		evidence.EvidenceSource != "winapp-smoke-container-x-gui" ||
+		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
+		evidence.CenterCardState != "validated-real-gui-container-run" ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeDispatchVerified ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.BackendDetailsExposed ||
+		!strings.Contains(evidence.Summary, "isolated container GUI") {
+		t.Fatalf("unexpected container X GUI known app smoke evidence: %#v", evidence)
+	}
+	normalized, err := normalizeKnownAppSmokeEvidenceItem(evidence)
+	if err != nil {
+		t.Fatalf("normalizeKnownAppSmokeEvidenceItem returned error: %v", err)
+	}
+	if normalized.EvidenceSource != "winapp-smoke-container-x-gui" ||
+		normalized.CompatibilityState != "real-gui-container-wine-verified" ||
+		normalized.CenterCardState != "validated-real-gui-container-run" ||
+		!normalized.ExecutionEvidenceRecorded ||
+		!normalized.RuntimeDispatchVerified {
+		t.Fatalf("unexpected normalized container X GUI evidence: %#v", normalized)
+	}
+}
+
 func TestPreviewGUISmokeEvidenceRejectsExecutedReportWithoutWindow(t *testing.T) {
 	_, err := PreviewGUISmokeEvidenceJSON([]byte(guiSmokeEvidenceFixture(false)), GUISmokeEvidencePreviewRequest{})
 	if err == nil || !strings.Contains(err.Error(), "observed X window") {
@@ -177,6 +236,55 @@ func guiSmokeEvidenceFixture(windowObserved bool) string {
   "guest_stderr_bytes": 0,
   "guest_graphics_driver_error_observed": false,
   "kde_safe_output_summary": "Wine GUI window observed; child_windows=14 xwininfo_bytes=1228 guest_stderr_bytes=0"
+}`
+}
+
+func containerXGUISmokeEvidenceFixture() string {
+	return `{
+  "version": "version-under-test",
+  "schema_version": "xnix.runtime.winapp_smoke_report.v1",
+  "report_type": "winapp-smoke",
+  "format": "json",
+  "backend": "container-x-gui",
+  "status": "passed",
+  "executable_source": "container-builtin-gui-app",
+  "user_executable_supplied": false,
+  "fixture_built": false,
+  "success_mode": "startup-window",
+  "container_smoke_invoked": true,
+  "container_x_gui_smoke_invoked": true,
+  "smoke_invoked": true,
+  "container_image_available": true,
+  "container_gui_app": "notepad.exe",
+  "container_window_match": "notepad.exe",
+  "x_server_started": true,
+  "x_window_observed": true,
+  "startup_window_observed": true,
+  "x_window_evidence_summary": "0x800001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
+  "wine_bootstrap_attempted": true,
+  "wine_bootstrap_succeeded": true,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "container_payload": {
+    "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
+    "request_type": "windows-app-container-x-gui-smoke",
+    "status": "passed",
+    "network_mode": "none",
+    "x_server_started": true,
+    "wine_bootstrap_attempted": true,
+    "image_available": true,
+    "x_window_observed": true,
+    "window_evidence_summary": "0x800001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
+    "host_root_modified": false,
+    "privileged_container_required": false,
+    "host_networking_required": false,
+    "docker_socket_mounted": false,
+    "broad_host_mount_required": false,
+    "host_mount_count": 0
+  }
 }`
 }
 

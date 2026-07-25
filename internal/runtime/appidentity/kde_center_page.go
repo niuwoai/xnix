@@ -1283,7 +1283,7 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KDECenterPageKnownAppMatrixCard {
 	cards := make([]KDECenterPageKnownAppMatrixCard, 0, len(evidence))
 	for _, item := range evidence {
-		if item.EvidenceSource != "wine-guest-gui-smoke" {
+		if !knownAppGUIEvidenceSource(item.EvidenceSource) {
 			continue
 		}
 		routeReady := kdeCenterPageOwnerGUIRouteReady(item)
@@ -1385,7 +1385,7 @@ func kdeCenterPageOwnerGUIForwardedArguments(item KnownAppSmokeEvidenceSummary, 
 func countOwnerControlledKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {
 	count := 0
 	for _, item := range evidence {
-		if item.EvidenceSource == "wine-guest-gui-smoke" &&
+		if knownAppGUIEvidenceSource(item.EvidenceSource) &&
 			item.SmokeStatus == "passed" &&
 			item.ExecutionEvidenceRecorded &&
 			item.RuntimeDispatchVerified &&
@@ -1401,7 +1401,7 @@ func countOwnerControlledKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSum
 func countOwnerManagedCopyVerifiedKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {
 	count := 0
 	for _, item := range evidence {
-		if item.EvidenceSource == "wine-guest-gui-smoke" &&
+		if knownAppGUIEvidenceSource(item.EvidenceSource) &&
 			item.SmokeStatus == "passed" &&
 			item.OwnerControlledRuntimeLaunchVerified &&
 			item.OwnerManagedCopyVerified {
