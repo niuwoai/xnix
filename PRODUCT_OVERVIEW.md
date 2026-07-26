@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc156
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc157
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc157 checkpoint candidate turns the q4 real Windows GUI smoke into a self-contained remote execution evidence summary. After a passed `scripts/remote_wine_guest_gui_smoke.rb --execute` run, the script now prints an execute-result JSON summary that proves the remote build completed, the q4 QEMU/Wine GUI smoke passed, Runtime GUI evidence consumed the report, and the KDE page consumed one real GUI evidence card. The current q4 Mines run passed with `x_window_observed=true`, `x_window_child_count=13`, `runtime_go_owned_gui_smoke=true`, `kde_page_known_app_gui_evidence_count=1`, and closed host-root, Docker socket, host-networking, privileged-container, and broad-mount boundaries.
 
 The v0.2.640-rc156 checkpoint candidate makes q4 the default operator path for compile-heavy Go Runtime work. `scripts/remote_go_build.rb` provides an execute-gated remote build planner that syncs only the constrained Runtime source set by default, excludes `docs/claude-code-implementation-packages.md`, validates remote writable paths under `/home/xnix-*` or `/tmp/xnix-*`, and builds the core Go command binaries on `root@q4` with remote Go caches. This keeps the macOS host responsive while the project continues moving real Windows app execution through Go-owned Runtime binaries.
 

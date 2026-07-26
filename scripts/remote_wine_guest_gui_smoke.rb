@@ -335,15 +335,21 @@ remote_command = [
 
 stdout, stderr, status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, remote_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
 warn stderr unless stderr.empty?
-puts stdout unless stdout.empty?
-exit 1 unless status.zero?
-
-smoke_status = begin
-  JSON.parse(stdout).fetch("status", "")
-rescue JSON::ParserError
-  ""
+unless status.zero?
+  puts stdout unless stdout.empty?
+  exit 1
 end
-exit 0 unless smoke_status == "passed"
+
+smoke_payload = begin
+  JSON.parse(stdout)
+rescue JSON::ParserError
+  {}
+end
+smoke_status = smoke_payload.fetch("status", "")
+if smoke_status != "passed"
+  puts stdout unless stdout.empty?
+  exit 0
+end
 
 evidence_args = [
   remote_runtime_bin,
@@ -380,20 +386,103 @@ warn kde_page_stdout unless kde_page_stdout.empty?
 warn kde_page_stderr unless kde_page_stderr.empty?
 exit 1 unless kde_page_status.zero?
 
-exit 0 unless launch_mode == "owner-controlled-launch"
+kde_action_output_written = false
+if launch_mode == "owner-controlled-launch"
+  kde_action_args = [
+    remote_runtime_bin,
+    "kde-controlled-launch-action-preview",
+    "--state-root", "#{state_root}/owner-controlled-launch-state",
+    "--kde-center-page-file", kde_page_output,
+    "--app", options.fetch(:evidence_app_id)
+  ]
+  kde_action_stdout, kde_action_stderr, kde_action_status = run_shell(
+    options.fetch(:local_shell),
+    shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, kde_action_output, kde_action_args))),
+    timeout_seconds: options.fetch(:remote_timeout_seconds)
+  )
+  warn kde_action_stdout unless kde_action_stdout.empty?
+  warn kde_action_stderr unless kde_action_stderr.empty?
+  exit 1 unless kde_action_status.zero?
 
-kde_action_args = [
+  kde_action_output_written = true
+end
+
+summary_reader = <<~RUBY
+  smoke = JSON.parse(File.read(ARGV.fetch(0)))
+  evidence = JSON.parse(File.read(ARGV.fetch(1)))
+  kde = JSON.parse(File.read(ARGV.fetch(2)))
+  action_output = ARGV.fetch(3)
+  action_written = ARGV.fetch(4) == "true" && File.exist?(action_output)
+  summary = {
+    "schema_version" => "xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1",
+    "request_type" => "remote-wine-guest-gui-smoke",
+    "version" => smoke.fetch("version"),
+    "status" => "passed",
+    "execute" => true,
+    "remote_host" => ARGV.fetch(5),
+    "remote_build_completed" => true,
+    "remote_runtime_bin" => ARGV.fetch(6),
+    "remote_owner_bin" => ARGV.fetch(7),
+    "remote_launcher_bin" => ARGV.fetch(8),
+    "report_output" => ARGV.fetch(0),
+    "evidence_output" => ARGV.fetch(1),
+    "kde_page_output" => ARGV.fetch(2),
+    "kde_action_output" => action_output,
+    "evidence_output_written" => File.exist?(ARGV.fetch(1)),
+    "kde_page_output_written" => File.exist?(ARGV.fetch(2)),
+    "kde_action_output_written" => action_written,
+    "smoke_status" => smoke.fetch("status"),
+    "backend" => smoke.fetch("backend"),
+    "launch_mode" => smoke.fetch("launch_mode"),
+    "known_app_id" => smoke.fetch("known_app_id"),
+    "known_app_name" => smoke.fetch("known_app_name", ""),
+    "known_app_version" => smoke.fetch("known_app_version", ""),
+    "gui_app_name" => smoke.fetch("gui_app_name"),
+    "runtime_go_owned_gui_smoke" => smoke.fetch("runtime_go_owned_gui_smoke"),
+    "qemu_started" => smoke.fetch("qemu_started"),
+    "guest_ssh_ready" => smoke.fetch("guest_ssh_ready"),
+    "wineboot_invoked" => smoke.fetch("wineboot_invoked"),
+    "guest_x11_driver_available" => smoke.fetch("guest_x11_driver_available"),
+    "x_window_observed" => smoke.fetch("x_window_observed"),
+    "x_window_child_count" => smoke.fetch("x_window_child_count"),
+    "x_window_observation_attempts" => smoke.fetch("x_window_observation_attempts"),
+    "runtime_evidence_report_consumed" => evidence.fetch("report_consumed"),
+    "runtime_evidence_app_id" => evidence.fetch("app_id"),
+    "runtime_evidence_window_observed" => evidence.fetch("x_window_observed"),
+    "kde_page_app_id" => kde.fetch("application_id"),
+    "kde_page_known_app_gui_evidence_count" => kde.fetch("known_app_gui_evidence_count"),
+    "kde_page_backend_details_exposed" => kde.fetch("backend_details_exposed"),
+    "owner_controlled_launch_requested" => smoke.fetch("owner_controlled_launch_requested"),
+    "owner_evidence_handoff_ready" => smoke.fetch("owner_evidence_handoff_ready"),
+    "host_root_modified" => smoke.fetch("host_root_modified"),
+    "privileged_container_required" => smoke.fetch("privileged_container_required"),
+    "host_networking_required" => smoke.fetch("host_networking_required"),
+    "docker_socket_mounted" => smoke.fetch("docker_socket_mounted"),
+    "broad_host_mount_required" => smoke.fetch("broad_host_mount_required")
+  }
+  puts JSON.pretty_generate(summary)
+RUBY
+summary_args = [
+  "ruby",
+  "-rjson",
+  "-e",
+  summary_reader,
+  report_output,
+  evidence_output,
+  kde_page_output,
+  kde_action_output,
+  kde_action_output_written.to_s,
+  remote_host,
   remote_runtime_bin,
-  "kde-controlled-launch-action-preview",
-  "--state-root", "#{state_root}/owner-controlled-launch-state",
-  "--kde-center-page-file", kde_page_output,
-  "--app", options.fetch(:evidence_app_id)
+  remote_owner_bin,
+  remote_launcher_bin
 ]
-kde_action_stdout, kde_action_stderr, kde_action_status = run_shell(
+summary_stdout, summary_stderr, summary_status = run_shell(
   options.fetch(:local_shell),
-  shell_join(ssh_command(remote_host, remote_json_command(remote_source_root, kde_action_output, kde_action_args))),
+  shell_join(ssh_command(remote_host, ["set -eu", shell_join(summary_args)].join("\n"))),
   timeout_seconds: options.fetch(:remote_timeout_seconds)
 )
-warn kde_action_stdout unless kde_action_stdout.empty?
-warn kde_action_stderr unless kde_action_stderr.empty?
-exit kde_action_status.zero? ? 0 : 1
+warn summary_stderr unless summary_stderr.empty?
+exit 1 unless summary_status.zero?
+
+puts summary_stdout

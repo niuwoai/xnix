@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc157] - 2026-07-26
+
+### Changed
+
+- Added a q4 remote Wine/QEMU GUI smoke execute-result summary that reports remote build completion, Runtime evidence output, KDE page output, and KDE GUI evidence consumption after a pass.
+- Verified the q4 Mines GUI lane with `x_window_observed=true`, `kde_page_known_app_gui_evidence_count=1`, and closed host-root, Docker socket, host-networking, privileged-container, and broad-mount boundaries.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc157`.
+
 ## [0.2.640-rc156] - 2026-07-26
 
 ### Changed

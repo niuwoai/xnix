@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc156`.
+The project is currently at `v0.2.640-rc157`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc156`.
 
 ## Current Checkpoint
 
-v0.2.640-rc156 makes q4 the first-class compile-heavy path for core Go command binaries. `scripts/remote_go_build.rb` now renders an execute-gated JSON plan by default, and `--execute` syncs the constrained Runtime source set to `root@q4`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and builds `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` remotely. This keeps the macOS host focused on lightweight targeted checks while preserving explicit execution, constrained remote paths, and the protected Claude implementation-package document exclusion.
+v0.2.640-rc157 makes the q4 real Windows GUI smoke return a single remote execution summary after a pass. `scripts/remote_wine_guest_gui_smoke.rb --execute` now waits for the remote Go build, Wine/QEMU GUI smoke, Runtime GUI evidence projection, and KDE page projection before printing `xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1` with the evidence paths, window observation, KDE GUI evidence count, and safety flags. The current q4 Mines run passed with `x_window_observed=true`, `kde_page_known_app_gui_evidence_count=1`, and no host-root mutation, Docker socket mount, host networking, or privileged container requirement.
+
+The previous v0.2.640-rc156 checkpoint made q4 the first-class compile-heavy path for core Go command binaries. `scripts/remote_go_build.rb` now renders an execute-gated JSON plan by default, and `--execute` syncs the constrained Runtime source set to `root@q4`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and builds `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` remotely. This keeps the macOS host focused on lightweight targeted checks while preserving explicit execution, constrained remote paths, and the protected Claude implementation-package document exclusion.
 
 The previous v0.2.640-rc155 checkpoint added process-level file-open evidence to the staged external desktop smoke using a real Wine Notepad GUI app. `scripts/staged_desktop_external_winapp_smoke.rb --fixture notepad-file-argument` imports Wine Notepad as an external app, launches it through the exact KDE handle route with one `file://` argument, and requires the observed X window title to include `sample-document.txt`. This proves the file-open argument reached the Windows GUI process itself while keeping raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation closed.
 
