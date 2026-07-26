@@ -369,6 +369,8 @@ func wrapExternalWinAppRunPayload(content []byte) (containerXGUIRuntimePayload, 
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires an executed Runtime run")
 	case !run.ContainerRuntimeUsed || run.ContainerNetworkMode != "none" || run.ContainerHostMountCount != 0:
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires a network-isolated container without host mounts")
+	case !run.XWindowObserved || !run.WindowObserved:
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires generic and X-specific observed-window evidence")
 	case !run.ExternalAppImportRecordConsumed || !run.ImportedArtifactDigestVerified || !validSHA256Hex(run.ImportedArtifactSHA256):
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires digest-verified import record evidence")
 	case run.KDEPolicyOwner || run.DesktopLaunchEnabled || run.ActionExecutionEnabled || run.BackendDetailsExposed:
@@ -536,8 +538,8 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet is not ready for center consumption")
 	case !packet.RuntimeOwned || !packet.GoRuntimeBacked || packet.KDEPolicyOwner:
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet must remain Runtime-owned and Go-backed")
-	case !packet.XWindowObserved || packet.XWindowChildCount <= 0:
-		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires observed X window evidence")
+	case !packet.XWindowObserved || !packet.WindowObserved || packet.XWindowChildCount <= 0:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires generic and X-specific observed-window evidence")
 	case packet.KnownAppGUIEvidenceCount != 1 || packet.KnownAppGUIEvidenceVerifiedCount != 1:
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires exactly one verified GUI evidence item")
 	}

@@ -134,6 +134,7 @@ func TestCompatLaunchRunsExternalImportedAppThroughRuntimeRun(t *testing.T) {
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["desktop_launch_enabled"] != false ||
 		payload["action_execution_enabled"] != false ||
 		payload["backend_details_exposed"] != false ||
@@ -213,7 +214,8 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		payload["raw_executable_path_exposed"] != false ||
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
-		payload["x_window_observed"] != true {
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true {
 		t.Fatalf("unexpected external handle launcher payload: %#v", payload)
 	}
 	dockerInvocation, err := os.ReadFile(dockerLog)
@@ -270,7 +272,8 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeDefaultStateRoot
 		payload["imported_artifact_sha256"] != record.ArtifactSHA256 ||
 		payload["raw_external_app_handle_path_exposed"] != false ||
 		payload["raw_state_root_path_exposed"] != false ||
-		payload["x_window_observed"] != true {
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true {
 		t.Fatalf("unexpected external handle default state root payload: %#v", payload)
 	}
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)

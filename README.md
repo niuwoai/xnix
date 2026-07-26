@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc142`.
+The project is currently at `v0.2.640-rc143`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc142`.
 
 ## Current Checkpoint
 
-v0.2.640-rc142 makes the real imported Windows GUI app run evidence easier to consume across Runtime and KDE surfaces. The Go Runtime external app run result and the real GUI evidence packet now emit generic `window_observed` evidence alongside `x_window_observed`, and the staged external desktop smoke requires both fields before accepting the `.desktop` handle launch path as a passed real-window run.
+v0.2.640-rc143 tightens the observed-window evidence chain for imported external Windows GUI apps. Runtime evidence consumers now reject external app run packets or real GUI evidence packets that lack either generic `window_observed` or X-specific `x_window_observed` evidence, and the Go CLIs verify the field across import-record, handle, and default-state-root launch paths.
+
+The previous v0.2.640-rc142 checkpoint made the real imported Windows GUI app run evidence easier to consume across Runtime and KDE surfaces. The Go Runtime external app run result and the real GUI evidence packet now emit generic `window_observed` evidence alongside `x_window_observed`, and the staged external desktop smoke requires both fields before accepting the `.desktop` handle launch path as a passed real-window run.
 
 The previous v0.2.640-rc141 checkpoint made the formal full smoke report explicitly account for the imported external Windows GUI app desktop lane. `Xnix::FullSmokeReport` now emits `external_imported_app_smoke_included` and `external_imported_app_smoke_passed`, and `formal_release_ready` requires the staged external Windows app desktop smoke in addition to QEMU boot, known app, fixture app, and KDE controlled-launch action evidence.
 

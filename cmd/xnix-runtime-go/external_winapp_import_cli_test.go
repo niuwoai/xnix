@@ -208,6 +208,7 @@ func TestExternalWinAppRunCommandRunsImportedExecutable(t *testing.T) {
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["desktop_launch_enabled"] != false ||
 		payload["action_execution_enabled"] != false ||
 		payload["backend_details_exposed"] != false ||
@@ -307,7 +308,8 @@ func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
 		payload["raw_executable_path_exposed"] != false ||
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
-		payload["x_window_observed"] != true {
+		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true {
 		t.Fatalf("unexpected external app handle run payload: %#v", payload)
 	}
 	if strings.Contains(output.String(), stateRoot) ||

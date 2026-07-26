@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc143] - 2026-07-26
+
+### Changed
+
+- Tightened external Windows GUI app evidence consumers so external run payloads and real GUI evidence packets require both generic `window_observed` and X-specific `x_window_observed` evidence.
+- Updated `xnix-compat-launch` and `xnix-runtime-go` CLI tests to verify the generic observed-window field across direct import-record, handle, and default-state-root launch paths.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc143`.
+
 ## [0.2.640-rc142] - 2026-07-26
 
 ### Changed

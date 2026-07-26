@@ -60,6 +60,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesContainerNotepadReport
 		payload["known_app_gui_evidence_count"] != float64(1) ||
 		payload["known_app_gui_evidence_verified_count"] != float64(1) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["compatibility_center_projection_ready"] != true ||
 		payload["kde_center_projection_ready"] != true ||
 		payload["container_runtime_used"] != true ||
@@ -179,6 +180,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawContainerRuntimePay
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["desktop_launch_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["backend_details_exposed"] != false ||
@@ -253,6 +255,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawExternalExecutableR
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["desktop_launch_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["backend_details_exposed"] != false ||
@@ -375,6 +378,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 		payload["container_network_mode"] != "none" ||
 		payload["container_host_mount_count"] != float64(0) ||
 		payload["x_window_observed"] != true ||
+		payload["window_observed"] != true ||
 		payload["desktop_launch_enabled"] != false ||
 		payload["backend_launch_enabled"] != false ||
 		payload["backend_details_exposed"] != false ||
@@ -536,6 +540,7 @@ func rawExternalWinAppRunPayloadCLIFixture() string {
   "x_server_started": true,
   "wine_bootstrap_attempted": true,
   "x_window_observed": true,
+  "window_observed": true,
   "window_evidence_summary": "0xa00001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
   "runtime_payload": {
     "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",

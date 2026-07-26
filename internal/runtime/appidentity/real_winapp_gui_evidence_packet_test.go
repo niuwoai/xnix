@@ -464,6 +464,7 @@ func rawExternalWinAppRunPayloadFixture() string {
   "x_server_started": true,
   "wine_bootstrap_attempted": true,
   "x_window_observed": true,
+  "window_observed": true,
   "window_evidence_summary": "0xa00001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
   "runtime_payload": {
     "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
