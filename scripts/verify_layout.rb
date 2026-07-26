@@ -1674,6 +1674,11 @@ end
 %w[host_root_modified network_required privileged_container_required backend_details_exposed raw_command_exposed raw_windows_executable_exposed execution_started backend_launch_enabled launch_enabled request_object_created permission_granted file_content_read file_paths_exposed ai_provider_call_enabled].each do |token|
   assert(kde_first_presence_smoke_source.include?(token), "KDE-first presence smoke must enforce #{token}")
 end
+
+staged_external_winapp_smoke_source = read_project_file("scripts/staged_desktop_external_winapp_smoke.rb")
+%w[desktop-external-winapp-launch-packet-preview desktop_launch_packet_ready desktop_launch_packet_safe_for_kde runtime_launch_authority kde_launch_authority].each do |token|
+  assert(staged_external_winapp_smoke_source.include?(token), "Staged external Windows app desktop smoke must inspect #{token}")
+end
 %w[
   desktop-entry
   dolphin-service-menu

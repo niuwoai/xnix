@@ -97,6 +97,8 @@ func run(args []string, stdout io.Writer) error {
 		return runDesktopActivationTransactionPreview(args[1:], stdout)
 	case "desktop-entry-preview":
 		return runDesktopEntryPreview(args[1:], stdout)
+	case "desktop-external-winapp-launch-packet-preview":
+		return runDesktopExternalWinAppLaunchPacketPreview(args[1:], stdout)
 	case "desktop-icon-preview":
 		return runDesktopIconPreview(args[1:], stdout)
 	case "desktop-identity-plan":

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc148`.
+The project is currently at `v0.2.640-rc149`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc148`.
 
 ## Current Checkpoint
 
-v0.2.640-rc148 persists imported external Windows app desktop-handle evidence into the activation manifest and receipt files. `desktop-activation-status-preview --external-app-import-record RECORD.json --activation-root ROOT` now reads those receipt fields back as `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so KDE-facing status surfaces can consume durable Runtime activation evidence instead of relying on transient stage stdout.
+v0.2.640-rc149 adds the Go Runtime `desktop-external-winapp-launch-packet-preview` read model for the actual imported Windows app desktop path. It consumes a staged activation receipt plus the real `windows-external-app-run` record from the handle-only launcher path, verifies receipt safety, handle consumption, digest verification, observed-window evidence, network isolation, zero host mounts, and closed raw path/backend exposure, then emits a KDE-safe launch packet for desktop surfaces.
+
+The previous v0.2.640-rc148 checkpoint persisted imported external Windows app desktop-handle evidence into the activation manifest and receipt files. `desktop-activation-status-preview --external-app-import-record RECORD.json --activation-root ROOT` now reads those receipt fields back as `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so KDE-facing status surfaces can consume durable Runtime activation evidence instead of relying on transient stage stdout.
 
 The previous v0.2.640-rc147 checkpoint moved the imported external Windows app desktop-handle staging proof into the Go Runtime activation result. `desktop-activation-stage --external-app-import-record RECORD.json` now reports `external_app_handle`, `desktop_exec_uses_external_app_handle`, `external_app_desktop_handle_ready`, and closed raw import-record/state-root Exec routing, so the staged desktop smoke can rely on Runtime-owned activation evidence instead of parsing the `.desktop` file by itself.
 

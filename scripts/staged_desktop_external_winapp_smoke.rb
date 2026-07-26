@@ -34,6 +34,7 @@ options = {
   markdown_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-smoke.md").to_s,
   delegated_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-delegated-launcher.json").to_s,
   activation_status_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-activation-status.json").to_s,
+  launch_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-launch-packet.json").to_s,
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
   executable: "",
@@ -49,6 +50,7 @@ OptionParser.new do |parser|
   parser.on("--markdown-output PATH", "Markdown packet output path") { |value| options[:markdown_output] = value }
   parser.on("--delegated-output PATH", "Delegated launcher JSON output path") { |value| options[:delegated_output] = value }
   parser.on("--activation-status-output PATH", "Go Runtime activation status JSON output path") { |value| options[:activation_status_output] = value }
+  parser.on("--launch-packet-output PATH", "Go Runtime desktop external Windows app launch packet output path") { |value| options[:launch_packet_output] = value }
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
   parser.on("--executable PATH", "Optional existing Windows GUI executable; defaults to Wine Notepad from the local image") { |value| options[:executable] = value }
@@ -188,6 +190,8 @@ def write_markdown_report(markdown_output, packet)
       "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
       "- External app desktop handle ready: #{packet.fetch("external_app_desktop_handle_ready")}",
       "- Activation receipt desktop handle ready: #{packet.fetch("activation_receipt_external_app_desktop_handle_ready")}",
+      "- Desktop launch packet ready: #{packet.fetch("desktop_launch_packet_ready")}",
+      "- Desktop launch packet safe for KDE: #{packet.fetch("desktop_launch_packet_safe_for_kde")}",
       "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
       "- External app handle consumed: #{packet.fetch("external_app_handle_consumed")}",
       "- Runtime packet external app handle consumed: #{packet.fetch("runtime_packet_external_app_handle_consumed")}",
@@ -204,6 +208,7 @@ def write_markdown_report(markdown_output, packet)
       "- Delegated launcher payload: #{packet.fetch("delegated_launcher_payload_path")}",
       "- Runtime packet: #{packet.fetch("runtime_packet_path")}",
       "- Activation status: #{packet.fetch("activation_status_path")}",
+      "- Desktop launch packet: #{packet.fetch("desktop_launch_packet_path")}",
       "- KDE page: #{packet.fetch("kde_page_path")}",
       "- KDE card window observed: #{packet.fetch("kde_page_card_window_observed")}",
       "- KDE card X window observed: #{packet.fetch("kde_page_card_x_window_observed")}",
@@ -217,6 +222,7 @@ report_output = absolute_path(options.fetch(:report_output))
 markdown_output = absolute_path(options.fetch(:markdown_output))
 delegated_output = absolute_path(options.fetch(:delegated_output))
 activation_status_output = absolute_path(options.fetch(:activation_status_output))
+launch_packet_output = absolute_path(options.fetch(:launch_packet_output))
 runtime_packet_output = absolute_path(options.fetch(:runtime_packet_output))
 kde_page_output = absolute_path(options.fetch(:kde_page_output))
 build_root = run_root.join("build")
@@ -243,6 +249,7 @@ FileUtils.mkdir_p(report_output.dirname)
 FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
 FileUtils.mkdir_p(activation_status_output.dirname)
+FileUtils.mkdir_p(launch_packet_output.dirname)
 FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
@@ -375,6 +382,51 @@ assert(payload.fetch("broad_host_mount_required") == false, "launcher smoke must
 assert(payload.fetch("host_root_modified") == false, "launcher smoke must not mutate the host root")
 assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, executable_path.to_s, docker_bin], "staged launcher output")
 
+launch_packet, launch_packet_stdout = run_json(
+  go_env,
+  "go", "run", "./cmd/xnix-runtime-go",
+  "desktop-external-winapp-launch-packet-preview",
+  "--external-app-import-record", import_record_path.to_s,
+  "--activation-root", stage_root.to_s,
+  "--run-record", delegated_output.to_s,
+  "--mode", "development",
+  "--output", launch_packet_output.to_s
+)
+assert(launch_packet.fetch("request_type") == "desktop-external-winapp-launch-packet-preview", "desktop launch packet must use the external launch packet request type")
+assert(launch_packet.fetch("status") == "passed", "desktop launch packet must pass")
+assert(launch_packet.fetch("application_id") == APP_ID, "desktop launch packet must target the imported app")
+assert(launch_packet.fetch("external_app_handle") == APP_ID, "desktop launch packet must preserve the opaque external app handle")
+assert(launch_packet.fetch("activation_receipt_backed") == true, "desktop launch packet must consume activation receipt evidence")
+assert(launch_packet.fetch("activation_receipt_safe_for_kde") == true, "desktop launch packet must keep receipt evidence safe for KDE")
+assert(launch_packet.fetch("desktop_exec_uses_external_app_handle") == true, "desktop launch packet must prove handle-only desktop Exec routing")
+assert(launch_packet.fetch("external_app_desktop_handle_ready") == true, "desktop launch packet must preserve desktop handle readiness")
+assert(launch_packet.fetch("desktop_exec_uses_raw_import_record") == false, "desktop launch packet must keep raw import-record Exec routing closed")
+assert(launch_packet.fetch("desktop_exec_uses_state_root") == false, "desktop launch packet must keep state-root Exec routing closed")
+assert(launch_packet.fetch("run_record_consumed") == true, "desktop launch packet must consume the actual launcher run record")
+assert(launch_packet.fetch("external_app_run_record_consumed") == true, "desktop launch packet must mark the external run record consumed")
+assert(launch_packet.fetch("external_app_import_record_consumed") == true, "desktop launch packet must preserve import-record consumption")
+assert(launch_packet.fetch("external_app_handle_consumed") == true, "desktop launch packet must preserve handle consumption")
+assert(launch_packet.fetch("imported_artifact_digest_verified") == true, "desktop launch packet must preserve imported artifact digest verification")
+assert(launch_packet.fetch("runtime_launch_executed") == true, "desktop launch packet must prove Runtime launch execution")
+assert(launch_packet.fetch("window_observed") == true, "desktop launch packet must preserve generic observed-window evidence")
+assert(launch_packet.fetch("x_window_observed") == true, "desktop launch packet must preserve X observed-window evidence")
+assert(launch_packet.fetch("container_network_mode") == "none", "desktop launch packet must preserve container network isolation")
+assert(launch_packet.fetch("container_host_mount_count") == 0, "desktop launch packet must preserve zero host mounts")
+assert(launch_packet.fetch("runtime_launch_authority") == true, "desktop launch packet must keep launch authority in Runtime")
+assert(launch_packet.fetch("kde_launch_authority") == false, "desktop launch packet must not give launch authority to KDE")
+assert(launch_packet.fetch("desktop_launch_packet_ready") == true, "desktop launch packet must be ready")
+assert(launch_packet.fetch("safe_for_kde") == true, "desktop launch packet must be safe for KDE")
+assert(launch_packet.fetch("unsafe_reason_ids").empty?, "desktop launch packet must not report unsafe reasons")
+assert(launch_packet.fetch("backend_details_exposed") == false, "desktop launch packet must not expose backend details")
+assert(launch_packet.fetch("raw_import_record_path_exposed") == false, "desktop launch packet must not expose raw import-record paths")
+assert(launch_packet.fetch("raw_state_root_path_exposed") == false, "desktop launch packet must not expose raw state-root paths")
+assert(launch_packet.fetch("raw_executable_path_exposed") == false, "desktop launch packet must not expose raw executable paths")
+assert(launch_packet.fetch("host_root_modified") == false, "desktop launch packet must not mutate the host root")
+assert(launch_packet.fetch("docker_socket_mounted") == false, "desktop launch packet must not mount the Docker socket")
+assert(launch_packet.fetch("broad_host_mount_required") == false, "desktop launch packet must not require broad host mounts")
+assert(launch_packet_output.file?, "desktop launch packet file must be written")
+assert_no_forbidden(launch_packet_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_root.to_s, state_root.to_s, import_record_path.to_s, delegated_output.to_s, executable_path.to_s, docker_bin, "notepad.exe", "wine ", "docker run", "/var/run/docker.sock"], "desktop launch packet output")
+
 runtime_packet, = run_json(
   go_env,
   "go", "run", "./cmd/xnix-runtime-go",
@@ -431,6 +483,12 @@ packet = {
   "external_app_desktop_handle_ready" => stage.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_external_app_desktop_handle_ready" => receipt_evidence.fetch("external_app_desktop_handle_ready"),
   "activation_receipt_safe_for_kde" => receipt_evidence.fetch("safe_for_kde"),
+  "desktop_launch_packet_output_written" => launch_packet_output.file?,
+  "desktop_launch_packet_ready" => launch_packet.fetch("desktop_launch_packet_ready"),
+  "desktop_launch_packet_safe_for_kde" => launch_packet.fetch("safe_for_kde"),
+  "desktop_launch_packet_external_app_handle_consumed" => launch_packet.fetch("external_app_handle_consumed"),
+  "desktop_launch_packet_window_observed" => launch_packet.fetch("window_observed"),
+  "desktop_launch_packet_x_window_observed" => launch_packet.fetch("x_window_observed"),
   "external_app_import_record_consumed" => payload.fetch("external_app_import_record_consumed"),
   "external_app_handle_consumed" => payload.fetch("external_app_handle_consumed"),
   "imported_artifact_digest_verified" => payload.fetch("imported_artifact_digest_verified"),
@@ -455,6 +513,7 @@ packet = {
   "delegated_launcher_payload_path" => delegated_output.to_s,
   "runtime_packet_path" => runtime_packet_output.to_s,
   "activation_status_path" => activation_status_output.to_s,
+  "desktop_launch_packet_path" => launch_packet_output.to_s,
   "kde_page_path" => kde_page_output.to_s,
   "report_path" => report_output.to_s,
   "markdown_path" => markdown_output.to_s

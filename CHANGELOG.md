@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc149] - 2026-07-26
+
+### Added
+
+- Added the Go Runtime `desktop-external-winapp-launch-packet-preview` read model for actual imported Windows app desktop launches.
+- Added CLI and Runtime tests that consume staged activation receipt evidence plus a handle-routed external app run record.
+
+### Changed
+
+- Updated the staged external Windows GUI desktop smoke to persist and verify the Go-owned desktop launch packet before projecting Runtime/KDE evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc149`.
+
 ## [0.2.640-rc148] - 2026-07-26
 
 ### Changed
