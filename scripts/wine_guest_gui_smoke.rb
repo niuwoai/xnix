@@ -51,6 +51,7 @@ OWNER_FILE_OPEN_ENV_KEYS = %w[
   XNIX_COMPAT_OPEN_WINDOW_MATCH
   XNIX_COMPAT_OPEN_TIMEOUT
   XNIX_COMPAT_OPEN_GUI_WAIT
+  XNIX_COMPAT_OPEN_EXECUTABLE
 ].freeze
 DEFAULT_KNOWN_APP_CACHE_ROOT = ENV.fetch("XNIX_KNOWN_APP_CACHE_ROOT", "")
 DEFAULT_KNOWN_APP_ID = ENV.fetch("XNIX_WINE_GUI_KNOWN_APP_ID", "")
@@ -324,7 +325,8 @@ def owner_file_open_runtime_env(options, owner_state_root, cache_root)
     "XNIX_COMPAT_OPEN_HOST_DISPLAY" => ":#{display_number}",
     "XNIX_COMPAT_OPEN_WINDOW_MATCH" => options.fetch(:window_match),
     "XNIX_COMPAT_OPEN_TIMEOUT" => "#{options.fetch(:boot_timeout_seconds)}s",
-    "XNIX_COMPAT_OPEN_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
+    "XNIX_COMPAT_OPEN_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s",
+    "XNIX_COMPAT_OPEN_EXECUTABLE" => owner_gui_executable_path(options)
   }
 end
 

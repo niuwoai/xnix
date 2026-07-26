@@ -43,7 +43,7 @@ OptionParser.new do |parser|
   parser.on("--remote-file-argument PATH", "Remote file under /home/xnix-* or /tmp/xnix-* copied into the Wine guest and passed to the app.") { |value| options[:remote_file_argument] = value }
   parser.on("--sample-file-argument NAME", "Create a remote sample file under the smoke state root and pass it to the app.") { |value| options[:sample_file_argument] = value }
   parser.on("--window-match TEXT", "Case-insensitive X window title/text required for GUI observation.") { |value| options[:window_match] = value }
-  parser.on("--owner-file-open", "Route known-app runs through the owner-controlled xnix-compat-open file-open entrypoint.") { options[:owner_file_open] = true }
+  parser.on("--owner-file-open", "Route known-app or remote-executable runs through the owner-controlled xnix-compat-open file-open entrypoint.") { options[:owner_file_open] = true }
   parser.on("--require-real-run-acceptance", "Require the Go real-run acceptance summary to be ready.") { options[:require_real_run_acceptance] = true }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for delegated q4 smoke operations.") { |value| options[:remote_timeout_seconds] = value }
   parser.on("--output PATH", "Write the plan or passed result JSON under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
@@ -130,7 +130,6 @@ abort "use exactly one of --known-app-id or --remote-executable" if known_app_id
 abort "window match must not be empty" if window_match.empty?
 abort "sample file argument must be a simple file name" if !sample_file_argument.empty? && File.basename(sample_file_argument) != sample_file_argument
 abort "use either --remote-file-argument or --sample-file-argument, not both" if !remote_file_argument.empty? && !sample_file_argument.empty?
-abort "--owner-file-open requires --known-app-id" if options.fetch(:owner_file_open) && known_app_id.empty?
 abort "--require-real-run-acceptance requires --owner-file-open" if options.fetch(:require_real_run_acceptance) && !options.fetch(:owner_file_open)
 
 app_id = options.fetch(:app_id).strip
@@ -240,10 +239,15 @@ result = plan.merge(
   "kde_action_output_written" => bool(delegated, "kde_action_output_written"),
   "window_observed" => window_observed,
   "window_match_observed" => bool(delegated, "window_match_observed"),
+  "real_run_receipt_summary_ready" => bool(delegated, "real_run_receipt_summary_ready"),
+  "real_run_receipt_summary_file_open_verified" => bool(delegated, "real_run_receipt_summary_file_open_verified"),
   "real_run_acceptance_output_written" => bool(delegated, "real_run_acceptance_output_written"),
   "real_run_acceptance_ready" => bool(delegated, "real_run_acceptance_ready"),
   "real_run_acceptance_center_projection_consumed" => bool(delegated, "real_run_acceptance_center_projection_consumed"),
   "real_run_acceptance_kde_page_projection_consumed" => bool(delegated, "real_run_acceptance_kde_page_projection_consumed"),
+  "owner_file_open_entrypoint_invoked" => bool(delegated, "owner_file_open_entrypoint_invoked"),
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => bool(delegated, "runtime_evidence_owner_file_open_entrypoint_invoked"),
+  "kde_page_known_app_owner_file_open_entrypoint_count" => delegated.fetch("kde_page_known_app_owner_file_open_entrypoint_count", 0),
   "host_root_modified" => bool(delegated, "host_root_modified"),
   "privileged_container_required" => bool(delegated, "privileged_container_required"),
   "host_networking_required" => bool(delegated, "host_networking_required"),

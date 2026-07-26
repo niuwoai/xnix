@@ -23,6 +23,8 @@ assert(source.include?("--known-app-id"), "q4 Windows app smoke must support kno
 assert(source.include?("--remote-executable"), "q4 Windows app smoke must support remote Windows executables")
 assert(source.include?("--owner-file-open"), "q4 Windows app smoke must support owner-controlled file-open runs")
 assert(source.include?("--require-real-run-acceptance"), "q4 Windows app smoke must optionally require real-run acceptance")
+assert(source.include?("owner_file_open_entrypoint_invoked"), "q4 Windows app smoke must preserve owner file-open entrypoint evidence")
+assert(!source.include?("--owner-file-open requires --known-app-id"), "q4 Windows app smoke must allow remote executables through owner file-open")
 assert(source.include?("q4-winapp-acceptance-preview"), "q4 Windows app smoke must call the Go-owned generic q4 acceptance")
 assert(source.include?("go_owned_q4_winapp_acceptance_ready"), "q4 Windows app smoke must expose Go-owned q4 acceptance readiness")
 assert(source.include?("go_owned_q4_winapp_acceptance_schema"), "q4 Windows app smoke must expose Go-owned q4 acceptance schema")
@@ -86,6 +88,29 @@ assert(remote.fetch("host_compilation_avoided") == true, "remote-executable plan
 assert(remote.fetch("delegated_command").include?("--remote-executable"), "remote-executable plan must delegate remote executable")
 assert(remote.fetch("delegated_command").include?("--remote-file-argument"), "remote-executable plan must delegate remote file argument")
 assert(!remote.fetch("delegated_command").include?("--execute"), "remote-executable plan must not delegate execute by default")
+
+remote_owner_stdout, remote_owner_stderr, remote_owner_status = Open3.capture3(
+  "ruby",
+  script.to_s,
+  "--remote-executable", "/home/xnix-run-materials/apps/demo-tool.exe",
+  "--app-id", "org.example.demo-tool",
+  "--display-name", "Demo Tool",
+  "--window-match", "Demo Tool",
+  "--sample-file-argument", "demo-document.txt",
+  "--owner-file-open",
+  "--require-real-run-acceptance"
+)
+assert(remote_owner_status.success?, "q4 Windows app remote-executable owner file-open plan must exit successfully: #{remote_owner_stderr}")
+remote_owner = JSON.parse(remote_owner_stdout)
+assert(remote_owner.fetch("known_app_id") == "", "remote-executable owner plan must not require known app ids")
+assert(remote_owner.fetch("remote_executable_configured") == true, "remote-executable owner plan must keep the remote executable")
+assert(remote_owner.fetch("launch_mode") == "owner-controlled-launch", "remote-executable owner plan must use owner-controlled launch")
+assert(remote_owner.fetch("file_open_entrypoint_requested") == true, "remote-executable owner plan must request the file-open entrypoint")
+assert(remote_owner.fetch("real_run_acceptance_required") == true, "remote-executable owner plan must require real-run acceptance")
+assert(remote_owner.fetch("sample_file_argument") == "demo-document.txt", "remote-executable owner plan must preserve the sample file name")
+assert(remote_owner.fetch("delegated_command").include?("--remote-executable"), "remote-executable owner plan must delegate the executable")
+assert(remote_owner.fetch("delegated_command").include?("--file-open-entrypoint"), "remote-executable owner plan must delegate file-open entrypoint")
+assert(remote_owner.fetch("delegated_command").include?("--sample-file-argument"), "remote-executable owner plan must delegate sample file")
 
 _stdout, stderr, status = Open3.capture3("ruby", script.to_s, "--window-match", "Demo")
 assert(!status.success?, "q4 Windows app smoke must reject missing app selectors")

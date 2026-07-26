@@ -80,6 +80,27 @@ func TestPreviewRealWinAppRunAcceptanceRejectsIncompleteReceiptProjection(t *tes
 	}
 }
 
+func TestPreviewRealWinAppRunAcceptanceConsumesExternalAppIdentity(t *testing.T) {
+	version := currentProjectVersion(t)
+	fixture := realWinAppRunAcceptanceExecuteResultFixture(version)
+	fixture = strings.Replace(fixture, `"known_app_id": "org.xnix.sample.notepad"`, `"known_app_id": ""`, 1)
+	fixture = strings.Replace(fixture, `"known_app_name": "Sample Notepad"`, `"known_app_name": ""`, 1)
+	fixture = strings.Replace(fixture, `"known_app_version": "VERSION_PLACEHOLDER"`, `"known_app_version": ""`, 1)
+	fixture = strings.Replace(fixture, `"runtime_evidence_app_id": "org.xnix.sample.notepad"`, `"runtime_evidence_app_id": "org.xnix.apps.messagebox"`, 1)
+	fixture = strings.Replace(fixture, `"runtime_evidence_display_name": "Sample Notepad"`, `"runtime_evidence_display_name": "Xnix MessageBox"`, 1)
+
+	acceptance, err := PreviewRealWinAppRunAcceptanceJSON([]byte(fixture))
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppRunAcceptanceJSON returned error for external identity: %v", err)
+	}
+	if acceptance.AppID != "org.xnix.apps.messagebox" ||
+		acceptance.DisplayName != "Xnix MessageBox" ||
+		acceptance.AppVersion != version ||
+		!acceptance.AcceptanceReady {
+		t.Fatalf("unexpected external app acceptance: %#v", acceptance)
+	}
+}
+
 func realWinAppRunAcceptanceExecuteResultFixture(version string) string {
 	return strings.ReplaceAll(`{
   "schema_version": "xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1",
@@ -135,6 +156,9 @@ func realWinAppRunAcceptanceExecuteResultFixture(version string) string {
   "window_evidence_summary": "0xa00003 \"file-1-sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
   "x_window_observed": true,
   "runtime_evidence_report_consumed": true,
+  "runtime_evidence_app_id": "org.xnix.sample.notepad",
+  "runtime_evidence_display_name": "Sample Notepad",
+  "runtime_evidence_app_version": "VERSION_PLACEHOLDER",
   "runtime_evidence_window_observed": true,
   "runtime_evidence_owner_file_open_verified": true,
   "runtime_evidence_owner_file_open_entrypoint_invoked": true,

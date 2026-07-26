@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc184
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc185
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc185 checkpoint turns the q4 MessageBox external executable smoke into an owner-controlled file-open run by default. The q4-built `.exe` now runs through `xnix-compat-open %U` with a generated sample document, and `xnix-compat-open` forwards the Runtime-owner supplied executable to `xnix-compat-launch` so managed artifact copy evidence remains intact. Real-run receipts and acceptance summaries now accept safe Runtime/KDE app identity for q4-hosted external executables instead of requiring a built-in known-app id. The real-run acceptance chain must prove owner-managed launch, file-argument delivery, guest path translation, Runtime evidence consumption, KDE page file-open evidence, and Go-owned generic q4 acceptance. This moves the real app lane closer to the desktop goal: a Linux shell action opens a document with a Windows GUI app through the independent Runtime rather than merely direct-launching a Windows process.
 
 The v0.2.640-rc184 checkpoint adds a q4-first real external Windows GUI executable smoke for Xnix MessageBox. `scripts/q4_messagebox_smoke.rb` builds the repository-owned `test/fixtures/winapp/messagebox` source into a 32-bit Windows `.exe` on q4, stores it under managed q4 run materials, then runs it through the generic q4 remote-executable smoke path. This proves the current real app lane can run more than Wine built-ins: q4 owns Windows fixture compilation, QEMU/Wine GUI execution, window-title observation, KDE page evidence, and Go-owned generic q4 acceptance, while the macOS host stays limited to lightweight orchestration.
 

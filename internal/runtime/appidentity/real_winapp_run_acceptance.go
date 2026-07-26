@@ -88,8 +88,14 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 	if remoteString(result, "status") != "passed" || remoteString(result, "smoke_status") != "passed" {
 		return RealWinAppRunAcceptance{}, errors.New("real Windows app run acceptance requires a passed remote GUI smoke")
 	}
-	if remoteString(result, "known_app_id") == "" {
-		return RealWinAppRunAcceptance{}, errors.New("real Windows app run acceptance requires known app identity")
+	appID := firstRemoteString(result, "known_app_id", "runtime_evidence_app_id", "kde_page_app_id")
+	if appID == "" {
+		return RealWinAppRunAcceptance{}, errors.New("real Windows app run acceptance requires safe app identity")
+	}
+	displayName := firstRemoteString(result, "known_app_name", "runtime_evidence_display_name", "kde_page_display_name")
+	appVersion := firstRemoteString(result, "known_app_version", "runtime_evidence_app_version")
+	if displayName == "" {
+		displayName = appID
 	}
 
 	unsafeGateOpen := remoteBool(result, "host_root_modified") ||
@@ -144,9 +150,9 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 		CenterProjectionPathExposed:           false,
 		KDEPageProjectionPathExposed:          false,
 		RemoteHostExposed:                     false,
-		AppID:                                 remoteString(result, "known_app_id"),
-		DisplayName:                           remoteString(result, "known_app_name"),
-		AppVersion:                            remoteString(result, "known_app_version"),
+		AppID:                                 appID,
+		DisplayName:                           displayName,
+		AppVersion:                            appVersion,
 		LaunchMode:                            remoteString(result, "launch_mode"),
 		RunPassed:                             true,
 		RealExecutionObserved:                 true,
@@ -174,7 +180,7 @@ func PreviewRealWinAppRunAcceptanceJSON(content []byte) (RealWinAppRunAcceptance
 		RawWindowEvidenceExposed:                      false,
 		ExecutableNameExposed:                         false,
 		AcceptanceReady:                               true,
-		DesktopSafeSummary:                            remoteString(result, "known_app_name") + " completed a Runtime-owner file-open GUI run and produced desktop compatibility cards.",
+		DesktopSafeSummary:                            displayName + " completed a Runtime-owner file-open GUI run and produced desktop compatibility cards.",
 	}
 	if acceptance.DisplayName == "" {
 		acceptance.DisplayName = acceptance.AppID

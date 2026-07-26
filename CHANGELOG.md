@@ -4,6 +4,20 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc185] - 2026-07-26
+
+### Added
+
+- Added owner-controlled file-open coverage for q4-hosted remote Windows executables in `scripts/q4_winapp_smoke.rb`.
+- Added default q4 MessageBox owner file-open execution with a generated sample document and real-run acceptance requirement.
+
+### Changed
+
+- Changed generic q4 Windows app Go acceptance to require explicit owner file-open, Runtime evidence, and KDE page file-open evidence when real-run acceptance is requested.
+- Changed `xnix-compat-open` to forward Runtime-owner supplied external Windows GUI executables to `xnix-compat-launch`, preserving managed artifact copy evidence for owner-controlled file-open runs.
+- Changed real Windows app run receipt and acceptance summaries to accept safe Runtime/KDE app identity for q4-hosted external executables when no known-app id is present.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc185`.
+
 ## [0.2.640-rc184] - 2026-07-26
 
 ### Added

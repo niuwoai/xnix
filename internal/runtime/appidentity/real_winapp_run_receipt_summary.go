@@ -92,8 +92,14 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 	if remoteString(report, "smoke_status") != "passed" && remoteString(report, "status") != "passed" {
 		return RealWinAppRunReceiptSummary{}, errors.New("real Windows app run receipt summary requires a passed remote smoke report")
 	}
-	if remoteString(report, "known_app_id") == "" {
-		return RealWinAppRunReceiptSummary{}, errors.New("real Windows app run receipt summary requires known app identity")
+	appID := firstRemoteString(report, "known_app_id", "runtime_evidence_app_id", "kde_page_app_id")
+	if appID == "" {
+		return RealWinAppRunReceiptSummary{}, errors.New("real Windows app run receipt summary requires safe app identity")
+	}
+	displayName := firstRemoteString(report, "known_app_name", "runtime_evidence_display_name", "kde_page_display_name")
+	appVersion := firstRemoteString(report, "known_app_version", "runtime_evidence_app_version")
+	if displayName == "" {
+		displayName = appID
 	}
 
 	windowObserved := remoteBool(report, "x_window_observed") || remoteBool(report, "runtime_evidence_window_observed")
@@ -137,9 +143,9 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 		ReportConsumed:                       true,
 		ReportPathExposed:                    false,
 		RemoteHostExposed:                    false,
-		AppID:                                remoteString(report, "known_app_id"),
-		DisplayName:                          remoteString(report, "known_app_name"),
-		AppVersion:                           remoteString(report, "known_app_version"),
+		AppID:                                appID,
+		DisplayName:                          displayName,
+		AppVersion:                           appVersion,
 		GUIAppName:                           "known-gui-app",
 		ExecutionHostClass:                   "q4-remote-validation-host",
 		BackendClass:                         "managed-guest-gui",
@@ -175,7 +181,7 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 		BackendDetailsExposed:                         false,
 		RawLauncherOutputExposed:                      false,
 		ReceiptReady:                                  true,
-		DesktopSafeSummary:                            remoteString(report, "known_app_name") + " has a q4-verified Runtime-owner file-open GUI run with observed window and closed unsafe host gates.",
+		DesktopSafeSummary:                            displayName + " has a q4-verified Runtime-owner file-open GUI run with observed window and closed unsafe host gates.",
 	}
 	if summary.DisplayName == "" {
 		summary.DisplayName = summary.AppID
@@ -257,6 +263,15 @@ func KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(payload []byte) (Known
 func remoteString(payload map[string]any, key string) string {
 	value, _ := payload[key].(string)
 	return strings.TrimSpace(value)
+}
+
+func firstRemoteString(payload map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value := remoteString(payload, key); value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func remoteBool(payload map[string]any, key string) bool {

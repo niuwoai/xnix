@@ -82,6 +82,27 @@ func TestPreviewRealWinAppRunReceiptSummaryRejectsIncompleteEvidence(t *testing.
 	}
 }
 
+func TestPreviewRealWinAppRunReceiptSummaryConsumesExternalAppIdentity(t *testing.T) {
+	version := currentProjectVersion(t)
+	fixture := realWinAppRunReceiptSummaryRemoteSmokeFixture(version)
+	fixture = strings.Replace(fixture, `"known_app_id": "org.xnix.sample.notepad"`, `"known_app_id": ""`, 1)
+	fixture = strings.Replace(fixture, `"known_app_name": "Sample Notepad"`, `"known_app_name": ""`, 1)
+	fixture = strings.Replace(fixture, `"known_app_version": "VERSION_PLACEHOLDER"`, `"known_app_version": ""`, 1)
+	fixture = strings.Replace(fixture, `"runtime_evidence_app_id": "org.xnix.sample.notepad"`, `"runtime_evidence_app_id": "org.xnix.apps.messagebox"`, 1)
+	fixture = strings.Replace(fixture, `"runtime_evidence_display_name": "Sample Notepad"`, `"runtime_evidence_display_name": "Xnix MessageBox"`, 1)
+
+	summary, err := PreviewRealWinAppRunReceiptSummaryJSON([]byte(fixture))
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppRunReceiptSummaryJSON returned error for external identity: %v", err)
+	}
+	if summary.AppID != "org.xnix.apps.messagebox" ||
+		summary.DisplayName != "Xnix MessageBox" ||
+		summary.AppVersion != version ||
+		!summary.ReceiptReady {
+		t.Fatalf("unexpected external app receipt summary: %#v", summary)
+	}
+}
+
 func TestKnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(t *testing.T) {
 	summary, err := PreviewRealWinAppRunReceiptSummaryJSON([]byte(realWinAppRunReceiptSummaryRemoteSmokeFixture(currentProjectVersion(t))))
 	if err != nil {
@@ -161,6 +182,9 @@ func realWinAppRunReceiptSummaryRemoteSmokeFixture(version string) string {
   "window_evidence_summary": "0xa00003 \"file-1-sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
   "x_window_observed": true,
   "runtime_evidence_report_consumed": true,
+  "runtime_evidence_app_id": "org.xnix.sample.notepad",
+  "runtime_evidence_display_name": "Sample Notepad",
+  "runtime_evidence_app_version": "VERSION_PLACEHOLDER",
   "runtime_evidence_window_observed": true,
   "runtime_evidence_owner_file_open_verified": true,
   "runtime_evidence_owner_file_open_entrypoint_invoked": true,

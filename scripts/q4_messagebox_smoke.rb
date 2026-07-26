@@ -22,6 +22,7 @@ DEFAULT_REMOTE_GO = ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-
 DEFAULT_APP_ID = "org.xnix.apps.messagebox"
 DEFAULT_DISPLAY_NAME = "Xnix MessageBox"
 DEFAULT_WINDOW_MATCH = "Xnix Windows GUI Smoke"
+DEFAULT_SAMPLE_FILE_ARGUMENT = ENV.fetch("XNIX_Q4_MESSAGEBOX_SAMPLE_FILE", "messagebox-document.txt")
 
 options = {
   execute: false,
@@ -35,6 +36,8 @@ options = {
   app_id: DEFAULT_APP_ID,
   display_name: DEFAULT_DISPLAY_NAME,
   window_match: DEFAULT_WINDOW_MATCH,
+  owner_file_open: ENV.fetch("XNIX_Q4_MESSAGEBOX_OWNER_FILE_OPEN", "1") != "0",
+  sample_file_argument: DEFAULT_SAMPLE_FILE_ARGUMENT,
   remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
   output: ENV.fetch("XNIX_Q4_MESSAGEBOX_OUTPUT", "")
 }
@@ -52,6 +55,9 @@ OptionParser.new do |parser|
   parser.on("--app-id ID", "Evidence application id, default: #{DEFAULT_APP_ID}") { |value| options[:app_id] = value }
   parser.on("--display-name NAME", "Evidence display name, default: #{DEFAULT_DISPLAY_NAME}") { |value| options[:display_name] = value }
   parser.on("--window-match TEXT", "Window title/text required for GUI observation, default: #{DEFAULT_WINDOW_MATCH}") { |value| options[:window_match] = value }
+  parser.on("--direct", "Run the q4 MessageBox executable directly instead of through owner-controlled file-open.") { options[:owner_file_open] = false }
+  parser.on("--owner-file-open", "Run the q4 MessageBox executable through owner-controlled file-open; default.") { options[:owner_file_open] = true }
+  parser.on("--sample-file-argument NAME", "Sample file name passed through the owner file-open path, default: #{DEFAULT_SAMPLE_FILE_ARGUMENT}") { |value| options[:sample_file_argument] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for remote q4 operations.") { |value| options[:remote_timeout_seconds] = value }
   parser.on("--output PATH", "Write the plan or passed result JSON under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
 end.parse!
@@ -143,6 +149,8 @@ remote_executable = "#{remote_fixture_root}/xnix-messagebox-smoke-#{VERSION}.exe
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
 output_path = ensure_local_output_path!(options.fetch(:output))
 delegated_output = "/tmp/xnix-q4-messagebox-winapp-#{VERSION}.json"
+sample_file_argument = options.fetch(:sample_file_argument).strip
+abort "sample file argument must be a simple file name" if !sample_file_argument.empty? && File.basename(sample_file_argument) != sample_file_argument
 
 delegated_command = [
   "ruby",
@@ -156,6 +164,11 @@ delegated_command = [
   "--remote-timeout-seconds", options.fetch(:remote_timeout_seconds).to_s,
   "--output", delegated_output
 ]
+delegated_command.concat(["--sample-file-argument", sample_file_argument]) if options.fetch(:owner_file_open) && !sample_file_argument.empty?
+if options.fetch(:owner_file_open)
+  delegated_command << "--owner-file-open"
+  delegated_command << "--require-real-run-acceptance"
+end
 
 plan = {
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
@@ -179,6 +192,10 @@ plan = {
   "app_id" => options.fetch(:app_id),
   "display_name" => options.fetch(:display_name),
   "window_match" => options.fetch(:window_match),
+  "sample_file_argument" => options.fetch(:owner_file_open) ? sample_file_argument : "",
+  "launch_mode" => options.fetch(:owner_file_open) ? "owner-controlled-launch" : "direct",
+  "file_open_entrypoint_requested" => options.fetch(:owner_file_open),
+  "real_run_acceptance_required" => options.fetch(:owner_file_open),
   "delegated_script" => "scripts/q4_winapp_smoke.rb",
   "delegated_command" => delegated_command,
   "delegated_output" => delegated_output,
@@ -283,6 +300,15 @@ result = plan.merge(
   "kde_page_output_written" => bool(delegated, "kde_page_output_written"),
   "window_observed" => bool(delegated, "window_observed"),
   "window_match_observed" => bool(delegated, "window_match_observed"),
+  "real_run_receipt_summary_ready" => bool(delegated, "real_run_receipt_summary_ready"),
+  "real_run_receipt_summary_file_open_verified" => bool(delegated, "real_run_receipt_summary_file_open_verified"),
+  "real_run_acceptance_output_written" => bool(delegated, "real_run_acceptance_output_written"),
+  "real_run_acceptance_ready" => bool(delegated, "real_run_acceptance_ready"),
+  "real_run_acceptance_center_projection_consumed" => bool(delegated, "real_run_acceptance_center_projection_consumed"),
+  "real_run_acceptance_kde_page_projection_consumed" => bool(delegated, "real_run_acceptance_kde_page_projection_consumed"),
+  "owner_file_open_entrypoint_invoked" => bool(delegated, "owner_file_open_entrypoint_invoked"),
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => bool(delegated, "runtime_evidence_owner_file_open_entrypoint_invoked"),
+  "kde_page_known_app_owner_file_open_entrypoint_count" => delegated.fetch("kde_page_known_app_owner_file_open_entrypoint_count", 0),
   "go_owned_q4_winapp_acceptance_schema" => delegated.fetch("go_owned_q4_winapp_acceptance_schema"),
   "go_owned_q4_winapp_acceptance_request_type" => delegated.fetch("go_owned_q4_winapp_acceptance_request_type"),
   "go_owned_q4_winapp_acceptance_ready" => delegated.fetch("go_owned_q4_winapp_acceptance_ready"),

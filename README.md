@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc184`.
+The project is currently at `v0.2.640-rc185`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc184`.
 
 ## Current Checkpoint
 
-v0.2.640-rc184 adds `scripts/q4_messagebox_smoke.rb`, a q4-first real external Windows GUI executable lane. The wrapper syncs the repository-owned MessageBox fixture source to q4, cross-compiles it there with `GOOS=windows GOARCH=386`, writes the `.exe` under managed q4 run materials, then delegates execution to `scripts/q4_winapp_smoke.rb` through the remote-executable path. The final result must include observed and matched `Xnix Windows GUI Smoke` window evidence plus Go-owned generic q4 Windows app acceptance readiness, while keeping macOS host work limited to orchestration and lightweight checks.
+v0.2.640-rc185 makes the q4 MessageBox lane desktop-file-open shaped by default. `scripts/q4_messagebox_smoke.rb` now runs the q4-built external Windows `.exe` through `scripts/q4_winapp_smoke.rb --owner-file-open --require-real-run-acceptance` with a generated sample file, while `xnix-compat-open` forwards the owner-supplied external executable into `xnix-compat-launch` so managed artifact copy evidence remains intact. Real-run receipts and acceptance summaries also accept safe Runtime/KDE app identity for q4-hosted external executables instead of requiring a built-in known-app id. The real q4 run must prove owner-controlled launch, the `xnix-compat-open %U` file-open entrypoint, Runtime evidence consumption, KDE page file-open consumption, real-run acceptance readiness, and Go-owned generic q4 acceptance. The generic q4 wrapper allows q4-hosted remote executables, not only known app ids, to use the owner file-open path.
+
+The previous v0.2.640-rc184 checkpoint added `scripts/q4_messagebox_smoke.rb`, a q4-first real external Windows GUI executable lane. The wrapper syncs the repository-owned MessageBox fixture source to q4, cross-compiles it there with `GOOS=windows GOARCH=386`, writes the `.exe` under managed q4 run materials, then delegates execution to `scripts/q4_winapp_smoke.rb` through the remote-executable path. The final result must include observed and matched `Xnix Windows GUI Smoke` window evidence plus Go-owned generic q4 Windows app acceptance readiness, while keeping macOS host work limited to orchestration and lightweight checks.
 
 The previous v0.2.640-rc183 checkpoint moved the generic q4 Windows app acceptance decision into the Go Runtime. `xnix-runtime-go q4-winapp-acceptance-preview --q4-winapp-smoke REPORT.json` now consumes `scripts/q4_winapp_smoke.rb` output, verifies generic known-app or q4-hosted executable identity, q4 compilation ownership, delegated GUI smoke evidence, matched window observation, optional owner-controlled real-run acceptance, and closed host/container safety gates, then emits a desktop-safe `xnix.runtime.q4_winapp_acceptance.v1` result. The generic wrapper now calls this Go preview on q4 before returning a passed result, keeping the macOS host limited to lightweight Ruby/layout checks while q4 owns compile-heavy validation.
 

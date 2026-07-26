@@ -42,6 +42,7 @@ const (
 	windowMatchEnv      = "XNIX_COMPAT_OPEN_WINDOW_MATCH"
 	timeoutEnv          = "XNIX_COMPAT_OPEN_TIMEOUT"
 	guiWaitEnv          = "XNIX_COMPAT_OPEN_GUI_WAIT"
+	executableEnv       = "XNIX_COMPAT_OPEN_EXECUTABLE"
 )
 
 type launchOptions struct {
@@ -67,6 +68,7 @@ type launchOptions struct {
 	WindowMatch            string
 	Timeout                string
 	GUIWait                string
+	ExecutablePath         string
 	FileArguments          repeatedStringFlag
 	ExternalDesktopAppMode bool
 }
@@ -110,6 +112,7 @@ func run(args []string, stdout io.Writer) error {
 		WindowMatch:      envOrDefault(windowMatchEnv, ""),
 		Timeout:          envOrDefault(timeoutEnv, ""),
 		GUIWait:          envOrDefault(guiWaitEnv, ""),
+		ExecutablePath:   envOrDefault(executableEnv, ""),
 	}
 	flags.StringVar(&applicationID, "app", "", "application id to use for the file-open preview")
 	flags.StringVar(&registryPath, "registry", envOrDefault(registryPathEnv, ""), "path to an Xnix recipe registry JSON file")
@@ -138,6 +141,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&launch.WindowMatch, "window-match", launch.WindowMatch, "case-insensitive X window title/text required by the launcher")
 	flags.StringVar(&launch.Timeout, "timeout", launch.Timeout, "launcher execution timeout")
 	flags.StringVar(&launch.GUIWait, "gui-wait", launch.GUIWait, "launcher GUI observation wait")
+	flags.StringVar(&launch.ExecutablePath, "executable", launch.ExecutablePath, "Runtime-owner supplied Windows GUI executable copied into the guest")
 	flags.Var(&launch.FileArguments, "file-argument", "local file path delegated by the Runtime owner and passed to the managed launcher; may be repeated")
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -214,6 +218,7 @@ func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, f
 	appendOptionalFlag("--window-match", options.WindowMatch)
 	appendOptionalFlag("--timeout", options.Timeout)
 	appendOptionalFlag("--gui-wait", options.GUIWait)
+	appendOptionalFlag("--executable", options.ExecutablePath)
 	for _, fileURI := range fileURIs {
 		path, err := localFilePath(fileURI)
 		if err != nil {

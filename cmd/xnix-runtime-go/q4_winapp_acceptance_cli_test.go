@@ -102,9 +102,14 @@ func q4WinAppAcceptanceCLIFixture(version string) string {
   "kde_action_output_written": true,
   "window_observed": true,
   "window_match_observed": true,
+  "real_run_receipt_summary_ready": true,
+  "real_run_receipt_summary_file_open_verified": true,
   "real_run_acceptance_output_written": true,
   "real_run_acceptance_ready": true,
   "real_run_acceptance_center_projection_consumed": true,
-  "real_run_acceptance_kde_page_projection_consumed": true
+  "real_run_acceptance_kde_page_projection_consumed": true,
+  "owner_file_open_entrypoint_invoked": true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked": true,
+  "kde_page_known_app_owner_file_open_entrypoint_count": 1
 }`, "VERSION_PLACEHOLDER", version)
 }

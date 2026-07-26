@@ -214,6 +214,7 @@ func TestCompatOpenExecuteUsesRuntimeOwnerEnvironmentDefaults(t *testing.T) {
 	t.Setenv("XNIX_COMPAT_OPEN_WINDOW_MATCH", "owner-env-report.txt")
 	t.Setenv("XNIX_COMPAT_OPEN_TIMEOUT", "7s")
 	t.Setenv("XNIX_COMPAT_OPEN_GUI_WAIT", "3s")
+	t.Setenv("XNIX_COMPAT_OPEN_EXECUTABLE", "/runtime/apps/owner-messagebox.exe")
 
 	var output bytes.Buffer
 	err := run([]string{
@@ -253,6 +254,7 @@ func TestCompatOpenExecuteUsesRuntimeOwnerEnvironmentDefaults(t *testing.T) {
 		"--window-match\nowner-env-report.txt\n",
 		"--timeout\n7s\n",
 		"--gui-wait\n3s\n",
+		"--executable\n/runtime/apps/owner-messagebox.exe\n",
 		"--file-argument\n" + documentPath + "\n",
 	} {
 		if !strings.Contains(argvText, token) {

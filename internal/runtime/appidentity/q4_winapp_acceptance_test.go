@@ -41,7 +41,12 @@ func TestPreviewQ4WinAppAcceptanceConsumesGenericKnownAppEvidence(t *testing.T) 
 		acceptance.KDEActionOutputWritten != true ||
 		acceptance.WindowObserved != true ||
 		acceptance.WindowMatchObserved != true ||
+		acceptance.RealRunReceiptSummaryReady != true ||
+		acceptance.RealRunReceiptSummaryFileOpenVerified != true ||
 		acceptance.RealRunAcceptanceReady != true ||
+		acceptance.OwnerFileOpenEntrypointInvoked != true ||
+		acceptance.RuntimeEvidenceOwnerFileOpenEntrypointInvoked != true ||
+		acceptance.KDEPageOwnerFileOpenEntrypointCount != 1 ||
 		acceptance.AcceptanceReady != true {
 		t.Fatalf("unexpected q4 Windows app acceptance: %#v", acceptance)
 	}
@@ -103,6 +108,11 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
 	realRunAcceptanceReady := false
 	realRunAcceptanceCenterProjectionConsumed := false
 	realRunAcceptanceKDEPageProjectionConsumed := false
+	realRunReceiptSummaryReady := false
+	realRunReceiptSummaryFileOpenVerified := false
+	ownerFileOpenEntrypointInvoked := false
+	runtimeEvidenceOwnerFileOpenEntrypointInvoked := false
+	kdePageOwnerFileOpenEntrypointCount := 0
 	if knownAppID != "" {
 		appID = knownAppID
 		displayName = "Mines"
@@ -113,6 +123,11 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
 		realRunAcceptanceReady = true
 		realRunAcceptanceCenterProjectionConsumed = true
 		realRunAcceptanceKDEPageProjectionConsumed = true
+		realRunReceiptSummaryReady = true
+		realRunReceiptSummaryFileOpenVerified = true
+		ownerFileOpenEntrypointInvoked = true
+		runtimeEvidenceOwnerFileOpenEntrypointInvoked = true
+		kdePageOwnerFileOpenEntrypointCount = 1
 	}
 	return fmt.Sprintf(`{
   "schema_version": "xnix.scripts.q4_winapp_smoke.v1",
@@ -152,9 +167,14 @@ func q4WinAppAcceptanceFixture(version string, knownAppID string, remoteExecutab
   "kde_action_output_written": true,
   "window_observed": true,
   "window_match_observed": true,
+  "real_run_receipt_summary_ready": %t,
+  "real_run_receipt_summary_file_open_verified": %t,
   "real_run_acceptance_output_written": %t,
   "real_run_acceptance_ready": %t,
   "real_run_acceptance_center_projection_consumed": %t,
-  "real_run_acceptance_kde_page_projection_consumed": %t
-}`, version, knownAppID, remoteExecutableConfigured, appID, displayName, sampleFileArgument, launchMode, fileOpenEntrypointRequested, requireRealRunAcceptance, realRunAcceptanceOutputWritten, realRunAcceptanceReady, realRunAcceptanceCenterProjectionConsumed, realRunAcceptanceKDEPageProjectionConsumed)
+  "real_run_acceptance_kde_page_projection_consumed": %t,
+  "owner_file_open_entrypoint_invoked": %t,
+  "runtime_evidence_owner_file_open_entrypoint_invoked": %t,
+  "kde_page_known_app_owner_file_open_entrypoint_count": %d
+}`, version, knownAppID, remoteExecutableConfigured, appID, displayName, sampleFileArgument, launchMode, fileOpenEntrypointRequested, requireRealRunAcceptance, realRunReceiptSummaryReady, realRunReceiptSummaryFileOpenVerified, realRunAcceptanceOutputWritten, realRunAcceptanceReady, realRunAcceptanceCenterProjectionConsumed, realRunAcceptanceKDEPageProjectionConsumed, ownerFileOpenEntrypointInvoked, runtimeEvidenceOwnerFileOpenEntrypointInvoked, kdePageOwnerFileOpenEntrypointCount)
 }

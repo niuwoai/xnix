@@ -40,6 +40,7 @@ OWNER_FILE_OPEN_ENV_KEYS = %w[
   XNIX_COMPAT_OPEN_WINDOW_MATCH
   XNIX_COMPAT_OPEN_TIMEOUT
   XNIX_COMPAT_OPEN_GUI_WAIT
+  XNIX_COMPAT_OPEN_EXECUTABLE
 ].freeze
 
 options = {
@@ -595,6 +596,8 @@ summary_reader = <<~RUBY
     "x_window_observation_attempts" => smoke.fetch("x_window_observation_attempts"),
     "runtime_evidence_report_consumed" => evidence.fetch("report_consumed"),
     "runtime_evidence_app_id" => evidence.fetch("app_id"),
+    "runtime_evidence_display_name" => evidence.fetch("display_name", ""),
+    "runtime_evidence_app_version" => evidence.fetch("app_version", ""),
     "runtime_evidence_window_observed" => evidence.fetch("x_window_observed"),
     "runtime_evidence_owner_file_open_verified" => evidence.fetch("owner_file_open_verified", false),
     "runtime_evidence_owner_file_open_entrypoint_invoked" => evidence.fetch("owner_file_open_entrypoint_invoked", false),

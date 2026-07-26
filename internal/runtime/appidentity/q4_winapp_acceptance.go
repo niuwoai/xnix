@@ -18,53 +18,58 @@ type Q4WinAppAcceptanceRequest struct {
 }
 
 type Q4WinAppAcceptance struct {
-	Version                                    string `json:"version"`
-	SchemaVersion                              string `json:"schema_version"`
-	RequestType                                string `json:"request_type"`
-	Source                                     string `json:"source"`
-	RuntimeMethod                              string `json:"runtime_method"`
-	ReadMethod                                 string `json:"read_method"`
-	AcceptanceType                             string `json:"acceptance_type"`
-	SmokeReportConsumed                        bool   `json:"smoke_report_consumed"`
-	SmokeReportPathExposed                     bool   `json:"smoke_report_path_exposed"`
-	OutputPathExposed                          bool   `json:"output_path_exposed"`
-	DelegatedCommandExposed                    bool   `json:"delegated_command_exposed"`
-	RemoteHostExposed                          bool   `json:"remote_host_exposed"`
-	AppID                                      string `json:"app_id"`
-	DisplayName                                string `json:"display_name"`
-	KnownAppID                                 string `json:"known_app_id"`
-	KnownAppSelected                           bool   `json:"known_app_selected"`
-	RemoteExecutableConfigured                 bool   `json:"remote_executable_configured"`
-	RemoteExecutablePathExposed                bool   `json:"remote_executable_path_exposed"`
-	RemoteFileArgumentConfigured               bool   `json:"remote_file_argument_configured"`
-	RemoteFileArgumentPathExposed              bool   `json:"remote_file_argument_path_exposed"`
-	SampleFileArgumentConfigured               bool   `json:"sample_file_argument_configured"`
-	LaunchMode                                 string `json:"launch_mode"`
-	FileOpenEntrypointRequested                bool   `json:"file_open_entrypoint_requested"`
-	RealRunAcceptanceRequired                  bool   `json:"real_run_acceptance_required"`
-	Q4CompileRequired                          bool   `json:"q4_compile_required"`
-	HostCompilationAvoided                     bool   `json:"host_compilation_avoided"`
-	DelegatedExecuteResultConsumed             bool   `json:"delegated_execute_result_consumed"`
-	RemoteBuildCompleted                       bool   `json:"remote_build_completed"`
-	EvidenceOutputWritten                      bool   `json:"evidence_output_written"`
-	KDEPageOutputWritten                       bool   `json:"kde_page_output_written"`
-	KDEActionOutputWritten                     bool   `json:"kde_action_output_written"`
-	WindowObserved                             bool   `json:"window_observed"`
-	WindowMatchObserved                        bool   `json:"window_match_observed"`
-	RealRunAcceptanceOutputWritten             bool   `json:"real_run_acceptance_output_written"`
-	RealRunAcceptanceReady                     bool   `json:"real_run_acceptance_ready"`
-	RealRunAcceptanceCenterProjectionConsumed  bool   `json:"real_run_acceptance_center_projection_consumed"`
-	RealRunAcceptanceKDEPageProjectionConsumed bool   `json:"real_run_acceptance_kde_page_projection_consumed"`
-	HostRootModified                           bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired                bool   `json:"privileged_container_required"`
-	HostNetworkingRequired                     bool   `json:"host_networking_required"`
-	DockerSocketMounted                        bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired                     bool   `json:"broad_host_mount_required"`
-	BackendDetailsExposed                      bool   `json:"backend_details_exposed"`
-	RawWindowEvidenceExposed                   bool   `json:"raw_window_evidence_exposed"`
-	ExecutablePathExposed                      bool   `json:"executable_path_exposed"`
-	AcceptanceReady                            bool   `json:"acceptance_ready"`
-	DesktopSafeSummary                         string `json:"desktop_safe_summary"`
+	Version                                       string `json:"version"`
+	SchemaVersion                                 string `json:"schema_version"`
+	RequestType                                   string `json:"request_type"`
+	Source                                        string `json:"source"`
+	RuntimeMethod                                 string `json:"runtime_method"`
+	ReadMethod                                    string `json:"read_method"`
+	AcceptanceType                                string `json:"acceptance_type"`
+	SmokeReportConsumed                           bool   `json:"smoke_report_consumed"`
+	SmokeReportPathExposed                        bool   `json:"smoke_report_path_exposed"`
+	OutputPathExposed                             bool   `json:"output_path_exposed"`
+	DelegatedCommandExposed                       bool   `json:"delegated_command_exposed"`
+	RemoteHostExposed                             bool   `json:"remote_host_exposed"`
+	AppID                                         string `json:"app_id"`
+	DisplayName                                   string `json:"display_name"`
+	KnownAppID                                    string `json:"known_app_id"`
+	KnownAppSelected                              bool   `json:"known_app_selected"`
+	RemoteExecutableConfigured                    bool   `json:"remote_executable_configured"`
+	RemoteExecutablePathExposed                   bool   `json:"remote_executable_path_exposed"`
+	RemoteFileArgumentConfigured                  bool   `json:"remote_file_argument_configured"`
+	RemoteFileArgumentPathExposed                 bool   `json:"remote_file_argument_path_exposed"`
+	SampleFileArgumentConfigured                  bool   `json:"sample_file_argument_configured"`
+	LaunchMode                                    string `json:"launch_mode"`
+	FileOpenEntrypointRequested                   bool   `json:"file_open_entrypoint_requested"`
+	RealRunAcceptanceRequired                     bool   `json:"real_run_acceptance_required"`
+	Q4CompileRequired                             bool   `json:"q4_compile_required"`
+	HostCompilationAvoided                        bool   `json:"host_compilation_avoided"`
+	DelegatedExecuteResultConsumed                bool   `json:"delegated_execute_result_consumed"`
+	RemoteBuildCompleted                          bool   `json:"remote_build_completed"`
+	EvidenceOutputWritten                         bool   `json:"evidence_output_written"`
+	KDEPageOutputWritten                          bool   `json:"kde_page_output_written"`
+	KDEActionOutputWritten                        bool   `json:"kde_action_output_written"`
+	WindowObserved                                bool   `json:"window_observed"`
+	WindowMatchObserved                           bool   `json:"window_match_observed"`
+	RealRunReceiptSummaryReady                    bool   `json:"real_run_receipt_summary_ready"`
+	RealRunReceiptSummaryFileOpenVerified         bool   `json:"real_run_receipt_summary_file_open_verified"`
+	RealRunAcceptanceOutputWritten                bool   `json:"real_run_acceptance_output_written"`
+	RealRunAcceptanceReady                        bool   `json:"real_run_acceptance_ready"`
+	RealRunAcceptanceCenterProjectionConsumed     bool   `json:"real_run_acceptance_center_projection_consumed"`
+	RealRunAcceptanceKDEPageProjectionConsumed    bool   `json:"real_run_acceptance_kde_page_projection_consumed"`
+	OwnerFileOpenEntrypointInvoked                bool   `json:"owner_file_open_entrypoint_invoked"`
+	RuntimeEvidenceOwnerFileOpenEntrypointInvoked bool   `json:"runtime_evidence_owner_file_open_entrypoint_invoked"`
+	KDEPageOwnerFileOpenEntrypointCount           int    `json:"kde_page_owner_file_open_entrypoint_count"`
+	HostRootModified                              bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired                   bool   `json:"privileged_container_required"`
+	HostNetworkingRequired                        bool   `json:"host_networking_required"`
+	DockerSocketMounted                           bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired                        bool   `json:"broad_host_mount_required"`
+	BackendDetailsExposed                         bool   `json:"backend_details_exposed"`
+	RawWindowEvidenceExposed                      bool   `json:"raw_window_evidence_exposed"`
+	ExecutablePathExposed                         bool   `json:"executable_path_exposed"`
+	AcceptanceReady                               bool   `json:"acceptance_ready"`
+	DesktopSafeSummary                            string `json:"desktop_safe_summary"`
 }
 
 func PreviewQ4WinAppAcceptance(request Q4WinAppAcceptanceRequest) (Q4WinAppAcceptance, error) {
@@ -110,10 +115,15 @@ func PreviewQ4WinAppAcceptanceJSON(content []byte) (Q4WinAppAcceptance, error) {
 	realRunAcceptanceReady := !realRunAcceptanceRequired ||
 		(remoteString(report, "launch_mode") == "owner-controlled-launch" &&
 			remoteBool(report, "file_open_entrypoint_requested") &&
+			remoteBool(report, "real_run_receipt_summary_ready") &&
+			remoteBool(report, "real_run_receipt_summary_file_open_verified") &&
 			remoteBool(report, "real_run_acceptance_output_written") &&
 			remoteBool(report, "real_run_acceptance_ready") &&
 			remoteBool(report, "real_run_acceptance_center_projection_consumed") &&
-			remoteBool(report, "real_run_acceptance_kde_page_projection_consumed"))
+			remoteBool(report, "real_run_acceptance_kde_page_projection_consumed") &&
+			remoteBool(report, "owner_file_open_entrypoint_invoked") &&
+			remoteBool(report, "runtime_evidence_owner_file_open_entrypoint_invoked") &&
+			remoteInt(report, "kde_page_known_app_owner_file_open_entrypoint_count") > 0)
 	acceptanceReady := appID != "" &&
 		displayName != "" &&
 		knownAppSelected != remoteExecutableConfigured &&
@@ -134,53 +144,58 @@ func PreviewQ4WinAppAcceptanceJSON(content []byte) (Q4WinAppAcceptance, error) {
 	}
 
 	acceptance := Q4WinAppAcceptance{
-		Version:                                    remoteString(report, "version"),
-		SchemaVersion:                              Q4WinAppAcceptanceSchemaVersion,
-		RequestType:                                Q4WinAppAcceptanceRequestType,
-		Source:                                     "q4-winapp-smoke+go-runtime-acceptance",
-		RuntimeMethod:                              "PreviewQ4WinAppAcceptance",
-		ReadMethod:                                 "GetQ4WinAppAcceptance",
-		AcceptanceType:                             "generic-q4-windows-app-real-run-acceptance",
-		SmokeReportConsumed:                        true,
-		SmokeReportPathExposed:                     false,
-		OutputPathExposed:                          false,
-		DelegatedCommandExposed:                    false,
-		RemoteHostExposed:                          false,
-		AppID:                                      appID,
-		DisplayName:                                displayName,
-		KnownAppID:                                 knownAppID,
-		KnownAppSelected:                           knownAppSelected,
-		RemoteExecutableConfigured:                 remoteExecutableConfigured,
-		RemoteExecutablePathExposed:                false,
-		RemoteFileArgumentConfigured:               remoteFileArgumentConfigured,
-		RemoteFileArgumentPathExposed:              false,
-		SampleFileArgumentConfigured:               sampleFileArgumentConfigured,
-		LaunchMode:                                 remoteString(report, "launch_mode"),
-		FileOpenEntrypointRequested:                remoteBool(report, "file_open_entrypoint_requested"),
-		RealRunAcceptanceRequired:                  realRunAcceptanceRequired,
-		Q4CompileRequired:                          true,
-		HostCompilationAvoided:                     true,
-		DelegatedExecuteResultConsumed:             true,
-		RemoteBuildCompleted:                       true,
-		EvidenceOutputWritten:                      true,
-		KDEPageOutputWritten:                       true,
-		KDEActionOutputWritten:                     remoteBool(report, "kde_action_output_written"),
-		WindowObserved:                             true,
-		WindowMatchObserved:                        true,
-		RealRunAcceptanceOutputWritten:             remoteBool(report, "real_run_acceptance_output_written"),
-		RealRunAcceptanceReady:                     remoteBool(report, "real_run_acceptance_ready"),
-		RealRunAcceptanceCenterProjectionConsumed:  remoteBool(report, "real_run_acceptance_center_projection_consumed"),
-		RealRunAcceptanceKDEPageProjectionConsumed: remoteBool(report, "real_run_acceptance_kde_page_projection_consumed"),
-		HostRootModified:                           false,
-		PrivilegedContainerRequired:                false,
-		HostNetworkingRequired:                     false,
-		DockerSocketMounted:                        false,
-		BroadHostMountRequired:                     false,
-		BackendDetailsExposed:                      false,
-		RawWindowEvidenceExposed:                   false,
-		ExecutablePathExposed:                      false,
-		AcceptanceReady:                            true,
-		DesktopSafeSummary:                         "A q4-hosted Windows GUI app completed the generic Runtime-owned acceptance lane.",
+		Version:                                       remoteString(report, "version"),
+		SchemaVersion:                                 Q4WinAppAcceptanceSchemaVersion,
+		RequestType:                                   Q4WinAppAcceptanceRequestType,
+		Source:                                        "q4-winapp-smoke+go-runtime-acceptance",
+		RuntimeMethod:                                 "PreviewQ4WinAppAcceptance",
+		ReadMethod:                                    "GetQ4WinAppAcceptance",
+		AcceptanceType:                                "generic-q4-windows-app-real-run-acceptance",
+		SmokeReportConsumed:                           true,
+		SmokeReportPathExposed:                        false,
+		OutputPathExposed:                             false,
+		DelegatedCommandExposed:                       false,
+		RemoteHostExposed:                             false,
+		AppID:                                         appID,
+		DisplayName:                                   displayName,
+		KnownAppID:                                    knownAppID,
+		KnownAppSelected:                              knownAppSelected,
+		RemoteExecutableConfigured:                    remoteExecutableConfigured,
+		RemoteExecutablePathExposed:                   false,
+		RemoteFileArgumentConfigured:                  remoteFileArgumentConfigured,
+		RemoteFileArgumentPathExposed:                 false,
+		SampleFileArgumentConfigured:                  sampleFileArgumentConfigured,
+		LaunchMode:                                    remoteString(report, "launch_mode"),
+		FileOpenEntrypointRequested:                   remoteBool(report, "file_open_entrypoint_requested"),
+		RealRunAcceptanceRequired:                     realRunAcceptanceRequired,
+		Q4CompileRequired:                             true,
+		HostCompilationAvoided:                        true,
+		DelegatedExecuteResultConsumed:                true,
+		RemoteBuildCompleted:                          true,
+		EvidenceOutputWritten:                         true,
+		KDEPageOutputWritten:                          true,
+		KDEActionOutputWritten:                        remoteBool(report, "kde_action_output_written"),
+		WindowObserved:                                true,
+		WindowMatchObserved:                           true,
+		RealRunReceiptSummaryReady:                    remoteBool(report, "real_run_receipt_summary_ready"),
+		RealRunReceiptSummaryFileOpenVerified:         remoteBool(report, "real_run_receipt_summary_file_open_verified"),
+		RealRunAcceptanceOutputWritten:                remoteBool(report, "real_run_acceptance_output_written"),
+		RealRunAcceptanceReady:                        remoteBool(report, "real_run_acceptance_ready"),
+		RealRunAcceptanceCenterProjectionConsumed:     remoteBool(report, "real_run_acceptance_center_projection_consumed"),
+		RealRunAcceptanceKDEPageProjectionConsumed:    remoteBool(report, "real_run_acceptance_kde_page_projection_consumed"),
+		OwnerFileOpenEntrypointInvoked:                remoteBool(report, "owner_file_open_entrypoint_invoked"),
+		RuntimeEvidenceOwnerFileOpenEntrypointInvoked: remoteBool(report, "runtime_evidence_owner_file_open_entrypoint_invoked"),
+		KDEPageOwnerFileOpenEntrypointCount:           remoteInt(report, "kde_page_known_app_owner_file_open_entrypoint_count"),
+		HostRootModified:                              false,
+		PrivilegedContainerRequired:                   false,
+		HostNetworkingRequired:                        false,
+		DockerSocketMounted:                           false,
+		BroadHostMountRequired:                        false,
+		BackendDetailsExposed:                         false,
+		RawWindowEvidenceExposed:                      false,
+		ExecutablePathExposed:                         false,
+		AcceptanceReady:                               true,
+		DesktopSafeSummary:                            "A q4-hosted Windows GUI app completed the generic Runtime-owned acceptance lane.",
 	}
 	if err := validateNoBackendTerms(acceptance, "q4 Windows app acceptance"); err != nil {
 		return Q4WinAppAcceptance{}, err
