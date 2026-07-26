@@ -25,6 +25,8 @@ DEFAULT_RUNTIME_BIN = ENV.fetch("XNIX_RUNTIME_GO_BIN", "go")
 DEFAULT_LAUNCH_MODE = ENV.fetch("XNIX_WINE_GUI_LAUNCH_MODE", "direct")
 DEFAULT_OWNER_BIN = ENV.fetch("XNIX_RUNTIME_OWNER_BIN", "go")
 DEFAULT_LAUNCHER_BIN = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "")
+DEFAULT_FILE_OPEN_BIN = ENV.fetch("XNIX_COMPAT_OPEN_BIN", "")
+DEFAULT_FILE_OPEN_REGISTRY = ENV.fetch("XNIX_COMPAT_OPEN_REGISTRY", PROJECT_ROOT.join("runtime", "recipes", "registry.json").to_s)
 DEFAULT_KNOWN_APP_CACHE_ROOT = ENV.fetch("XNIX_KNOWN_APP_CACHE_ROOT", "")
 DEFAULT_KNOWN_APP_ID = ENV.fetch("XNIX_WINE_GUI_KNOWN_APP_ID", "")
 DEFAULT_EVIDENCE_APP_ID = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_ID", "org.xnix.apps.mines")
@@ -49,6 +51,8 @@ options = {
   launch_mode: DEFAULT_LAUNCH_MODE,
   owner_bin: DEFAULT_OWNER_BIN,
   launcher_bin: DEFAULT_LAUNCHER_BIN,
+  file_open_bin: DEFAULT_FILE_OPEN_BIN,
+  file_open_registry: DEFAULT_FILE_OPEN_REGISTRY,
   known_app_cache_root: DEFAULT_KNOWN_APP_CACHE_ROOT,
   known_app_id: DEFAULT_KNOWN_APP_ID,
   evidence_app_id: DEFAULT_EVIDENCE_APP_ID,
@@ -78,6 +82,8 @@ OptionParser.new do |parser|
   parser.on("--launch-mode MODE", "Launch mode: direct or owner-controlled-launch.") { |value| options[:launch_mode] = value }
   parser.on("--owner-bin PATH", "Runtime owner binary; use `go` to run ./cmd/xnix-runtime-owner from source.") { |value| options[:owner_bin] = value }
   parser.on("--launcher-bin PATH", "Managed xnix-compat-launch binary for owner-controlled launch mode.") { |value| options[:launcher_bin] = value }
+  parser.on("--file-open-bin PATH", "Managed xnix-compat-open binary used as the owner-controlled file-open entry point.") { |value| options[:file_open_bin] = value }
+  parser.on("--file-open-registry PATH", "Digest-verified recipe registry supplied to xnix-compat-open.") { |value| options[:file_open_registry] = value }
   parser.on("--known-app-cache-root PATH", "Known Windows app cache root supplied to the Runtime owner.") { |value| options[:known_app_cache_root] = value }
   parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the Go Runtime.") { |value| options[:known_app_id] = value }
   parser.on("--file-argument PATH", "Local file copied into the Wine guest and passed to the Windows GUI app; may be repeated.") { |value| options[:file_arguments] << value }
@@ -270,10 +276,11 @@ end
 
 def owner_controlled_launch_env(options, owner_state_root, cache_root)
   display_number = options.fetch(:display_number)
+  file_open_entrypoint = !options.fetch(:file_open_bin).strip.empty?
   {
     "XNIX_RUNTIME_OWNER_STATE_ROOT" => owner_state_root.to_s,
     "XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT" => cache_root.to_s,
-    "XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER" => options.fetch(:launcher_bin),
+    "XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER" => file_open_entrypoint ? options.fetch(:file_open_bin) : options.fetch(:launcher_bin),
     "XNIX_RUNTIME_OWNER_TIMEOUT" => "#{options.fetch(:boot_timeout_seconds)}s",
     "XNIX_RUNTIME_OWNER_GUEST_TIMEOUT" => "#{options.fetch(:boot_timeout_seconds)}s",
     "XNIX_RUNTIME_OWNER_GUEST_HOST" => "127.0.0.1",
@@ -290,7 +297,10 @@ def owner_controlled_launch_env(options, owner_state_root, cache_root)
     "XNIX_RUNTIME_OWNER_WINDOW_MATCH" => options.fetch(:window_match),
     "XNIX_RUNTIME_OWNER_GUEST_DISPLAY" => "#{options.fetch(:guest_display_host)}:#{display_number}",
     "XNIX_RUNTIME_OWNER_HOST_DISPLAY" => ":#{display_number}",
-    "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
+    "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s",
+    "XNIX_COMPAT_LAUNCH" => options.fetch(:launcher_bin),
+    "XNIX_COMPAT_OPEN_REGISTRY" => options.fetch(:file_open_registry),
+    "XNIX_COMPAT_OPEN_EXECUTE" => file_open_entrypoint ? "1" : ""
   }
 end
 
@@ -321,6 +331,8 @@ def base_report(options)
     "owner_service_call_planned" => options.fetch(:launch_mode) == "owner-controlled-launch",
     "runtime_owner_bin_configured" => !options.fetch(:owner_bin).strip.empty?,
     "managed_launcher_bin_configured" => !options.fetch(:launcher_bin).strip.empty?,
+    "file_open_entrypoint_requested" => !options.fetch(:file_open_bin).strip.empty?,
+    "file_open_bin_configured" => !options.fetch(:file_open_bin).strip.empty?,
     "owner_seed_gui_smoke_planned" => options.fetch(:launch_mode) == "owner-controlled-launch",
     "owner_external_gui_app_requested" => options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:executable).strip.empty?,
     "owner_external_gui_app_path_exposed" => false,
@@ -457,6 +469,12 @@ if options.fetch(:launch_mode) == "owner-controlled-launch" && options.fetch(:la
   emit(report, options)
   exit 1
 end
+if options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:file_open_bin).strip.empty? && options.fetch(:file_open_registry).strip.empty?
+  report["status"] = "failed"
+  report["failure_reason"] = "owner-controlled file-open entrypoint requires --file-open-registry"
+  emit(report, options)
+  exit 1
+end
 
 missing_tools = %w[Xvfb xdpyinfo xwininfo].reject { |tool| command_available?(tool) }
 unless missing_tools.empty?
@@ -584,6 +602,8 @@ begin
     owner_action = owner_payload.fetch("payload", owner_payload)
     report["owner_payload_schema_version"] = owner_action.fetch("owner_schema_version", "")
     report["owner_managed_launcher_invoked"] = owner_action.fetch("managed_launcher_invoked", false)
+    report["owner_file_open_entrypoint_invoked"] = !options.fetch(:file_open_bin).strip.empty? &&
+                                                  owner_action.fetch("managed_launcher_name", "") == File.basename(options.fetch(:file_open_bin))
     report["owner_existing_managed_launcher_invoked"] = owner_action.fetch("existing_managed_launcher_invoked", false)
     report["owner_delegated_evidence_source"] = owner_action.fetch("delegated_evidence_source", "")
     report["owner_delegated_status"] = owner_action.fetch("delegated_status", "")

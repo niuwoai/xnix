@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc167] - 2026-07-26
+
+### Added
+
+- Added q4 remote GUI smoke support for routing owner-controlled file-open execution through `xnix-compat-open` before `xnix-compat-launch`.
+- Added file-open entrypoint evidence fields so smoke summaries can prove `xnix-compat-open` was the Runtime owner managed launcher.
+- Recorded a q4 Sample Notepad file-open entrypoint PASS with `owner_file_open_entrypoint_invoked=true`, copied file arguments, Wine path translation, and observed Notepad window evidence.
+
+### Changed
+
+- Let `xnix-compat-open --execute` accept owner-style `--file-argument` paths and registry/launcher defaults from `XNIX_COMPAT_OPEN_REGISTRY` and `XNIX_COMPAT_LAUNCH`.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc167`.
+
 ## [0.2.640-rc166] - 2026-07-26
 
 ### Added

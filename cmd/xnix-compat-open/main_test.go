@@ -150,6 +150,39 @@ func TestCompatOpenExecuteDelegatesToManagedLauncher(t *testing.T) {
 	}
 }
 
+func TestCompatOpenExecuteAcceptsOwnerFileArgumentAlias(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	documentPath := filepath.Join(t.TempDir(), "owner-report.txt")
+	if err := os.WriteFile(documentPath, []byte("owner file-open execution fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	launcherLog := filepath.Join(t.TempDir(), "launcher-argv.log")
+	launcherPath := writeFakeCompatOpenLauncher(t, launcherLog)
+	t.Setenv("XNIX_COMPAT_OPEN_REGISTRY", registryPath)
+	t.Setenv("XNIX_COMPAT_LAUNCH", launcherPath)
+	t.Setenv("XNIX_COMPAT_OPEN_EXECUTE", "1")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--app", "org.example.notes",
+		"--file-argument", documentPath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	if !strings.Contains(output.String(), `"schema_version":"fake.launcher.v1"`) {
+		t.Fatalf("unexpected managed launcher output: %s", output.String())
+	}
+	launcherArgs, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	if strings.Count(string(launcherArgs), "--file-argument\n") != 1 ||
+		!strings.Contains(string(launcherArgs), "--file-argument\n"+documentPath+"\n") {
+		t.Fatalf("owner file-argument alias did not pass exactly one file to launcher: %s", string(launcherArgs))
+	}
+}
+
 func TestCompatOpenExecuteRejectsRemoteFileURIHosts(t *testing.T) {
 	registryPath := writeCompatOpenRegistry(t)
 	launcherPath := writeFakeCompatOpenLauncher(t, filepath.Join(t.TempDir(), "launcher-argv.log"))

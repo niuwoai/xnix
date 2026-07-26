@@ -39,6 +39,7 @@ options = {
   kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-page-#{VERSION}.json"),
   kde_action_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_ACTION", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-action-#{VERSION}.json"),
   known_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_KNOWN_APP_ID", ""),
+  file_open_entrypoint: ENV.fetch("XNIX_WINE_GUI_REMOTE_FILE_OPEN_ENTRYPOINT", "0") == "1",
   evidence_app_id: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_ID", "org.xnix.apps.mines"),
   evidence_display_name: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_DISPLAY_NAME", "Mines"),
   evidence_app_version: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE_APP_VERSION", VERSION),
@@ -72,6 +73,7 @@ OptionParser.new do |parser|
   parser.on("--kde-page-output PATH", "Remote KDE center page JSON output path under /home/xnix*.") { |value| options[:kde_page_output] = value }
   parser.on("--kde-action-output PATH", "Remote KDE controlled-launch action JSON output path under /home/xnix*.") { |value| options[:kde_action_output] = value }
   parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the remote Go Runtime.") { |value| options[:known_app_id] = value }
+  parser.on("--file-open-entrypoint", "Route owner-controlled file-open runs through xnix-compat-open --execute before xnix-compat-launch.") { options[:file_open_entrypoint] = true }
   parser.on("--evidence-app-id ID", "Application id for the Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
   parser.on("--evidence-display-name NAME", "Display name for the Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
   parser.on("--evidence-app-version VERSION", "Application version for the Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
@@ -199,6 +201,7 @@ remote_file_argument = if sample_file_argument_requested
 remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
 remote_owner_bin = "#{remote_build_root}/bin/xnix-runtime-owner"
 remote_launcher_bin = "#{remote_build_root}/bin/xnix-compat-launch"
+remote_file_open_bin = "#{remote_build_root}/bin/xnix-compat-open"
 remote_known_app_cache_root = "#{remote_build_root}/known-winapps"
 remote_go_dir = Pathname.new(options.fetch(:remote_go)).dirname.to_s
 
@@ -227,10 +230,12 @@ plan = {
   "remote_runtime_bin" => remote_runtime_bin,
   "remote_owner_bin" => remote_owner_bin,
   "remote_launcher_bin" => remote_launcher_bin,
+  "remote_file_open_bin" => remote_file_open_bin,
   "remote_known_app_cache_root" => remote_known_app_cache_root,
   "runtime_build_planned" => true,
   "owner_build_planned" => launch_mode == "owner-controlled-launch",
   "launcher_build_planned" => launch_mode == "owner-controlled-launch",
+  "file_open_build_planned" => launch_mode == "owner-controlled-launch" && options.fetch(:file_open_entrypoint),
   "report_output" => report_output,
   "evidence_output" => evidence_output,
   "evidence_preview_planned" => true,
@@ -251,7 +256,11 @@ plan = {
   "remote_timeout_seconds" => options.fetch(:remote_timeout_seconds),
   "launch_mode" => launch_mode,
   "owner_controlled_launch_requested" => launch_mode == "owner-controlled-launch",
-  "remote_command" => "ruby scripts/wine_guest_gui_smoke.rb --execute --launch-mode #{launch_mode}",
+  "file_open_entrypoint_requested" => options.fetch(:file_open_entrypoint),
+  "remote_command" => [
+    "ruby scripts/wine_guest_gui_smoke.rb --execute --launch-mode #{launch_mode}",
+    (options.fetch(:file_open_entrypoint) ? "--file-open-bin #{remote_file_open_bin} --file-open-registry #{remote_source_root}/runtime/recipes/registry.json" : "")
+  ].reject(&:empty?).join(" "),
   "backend" => "qemu-guest-wine-x11",
   "gui_app_name" => remote_executable.empty? ? "winemine.exe" : File.basename(remote_executable),
   "remote_gui_executable_configured" => !remote_executable.empty?,
@@ -313,6 +322,9 @@ if launch_mode == "owner-controlled-launch"
   build_env = "PATH=#{Shellwords.escape(remote_go_dir)}:$PATH GOCACHE=#{Shellwords.escape("#{remote_build_root}/go-build")} GOMODCACHE=#{Shellwords.escape("#{remote_build_root}/go-mod")} GOTMPDIR=#{Shellwords.escape("#{remote_build_root}/tmp")}"
   build_command.push("#{build_env} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_owner_bin, "./cmd/xnix-runtime-owner"])}")
   build_command.push("#{build_env} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_launcher_bin, "./cmd/xnix-compat-launch"])}")
+  if options.fetch(:file_open_entrypoint)
+    build_command.push("#{build_env} #{shell_join([options.fetch(:remote_go), "build", "-o", remote_file_open_bin, "./cmd/xnix-compat-open"])}")
+  end
 end
 build_command = build_command.join("\n")
 build_stdout, build_stderr, build_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, build_command)), timeout_seconds: options.fetch(:remote_timeout_seconds))
@@ -361,6 +373,10 @@ remote_args.push("--window-match", options.fetch(:window_match)) unless options.
 if launch_mode == "owner-controlled-launch"
   remote_args.push("--owner-bin", remote_owner_bin)
   remote_args.push("--launcher-bin", remote_launcher_bin)
+  if options.fetch(:file_open_entrypoint)
+    remote_args.push("--file-open-bin", remote_file_open_bin)
+    remote_args.push("--file-open-registry", "#{remote_source_root}/runtime/recipes/registry.json")
+  end
   remote_args.push("--known-app-cache-root", remote_known_app_cache_root)
 end
 remote_args.push("--executable", remote_executable) unless remote_executable.empty?
@@ -462,6 +478,7 @@ summary_reader = <<~RUBY
     "remote_runtime_bin" => ARGV.fetch(6),
     "remote_owner_bin" => ARGV.fetch(7),
     "remote_launcher_bin" => ARGV.fetch(8),
+    "remote_file_open_bin" => ARGV.fetch(9),
     "report_output" => ARGV.fetch(0),
     "evidence_output" => ARGV.fetch(1),
     "kde_page_output" => ARGV.fetch(2),
@@ -472,6 +489,7 @@ summary_reader = <<~RUBY
     "smoke_status" => smoke.fetch("status"),
     "backend" => smoke.fetch("backend"),
     "launch_mode" => smoke.fetch("launch_mode"),
+    "file_open_entrypoint_requested" => smoke.fetch("file_open_entrypoint_requested", false),
     "known_app_id" => smoke.fetch("known_app_id"),
     "known_app_name" => smoke.fetch("known_app_name", ""),
     "known_app_version" => smoke.fetch("known_app_version", ""),
@@ -506,6 +524,7 @@ summary_reader = <<~RUBY
     "owner_controlled_launch_requested" => smoke.fetch("owner_controlled_launch_requested"),
     "owner_evidence_handoff_ready" => smoke.fetch("owner_evidence_handoff_ready"),
     "owner_managed_launcher_invoked" => smoke.fetch("owner_managed_launcher_invoked", false),
+    "owner_file_open_entrypoint_invoked" => smoke.fetch("owner_file_open_entrypoint_invoked", false),
     "owner_delegated_smoke_passed" => smoke.fetch("owner_delegated_smoke_passed", false),
     "owner_delegated_evidence_source" => smoke.fetch("owner_delegated_evidence_source", ""),
     "owner_delegated_file_argument_count" => smoke.fetch("owner_delegated_file_argument_count", 0),
@@ -538,7 +557,8 @@ summary_args = [
   remote_host,
   remote_runtime_bin,
   remote_owner_bin,
-  remote_launcher_bin
+  remote_launcher_bin,
+  remote_file_open_bin
 ]
 summary_stdout, summary_stderr, summary_status = run_shell(
   options.fetch(:local_shell),

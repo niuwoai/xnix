@@ -18,6 +18,8 @@ import (
 const commandName = "xnix-compat-open"
 const packagedRecipeRegistryDir = "/usr/share/xnix/compatibility/recipes"
 const launcherBinEnv = "XNIX_COMPAT_LAUNCH"
+const registryPathEnv = "XNIX_COMPAT_OPEN_REGISTRY"
+const executeEnv = "XNIX_COMPAT_OPEN_EXECUTE"
 
 type launchOptions struct {
 	Execute                bool
@@ -42,6 +44,7 @@ type launchOptions struct {
 	WindowMatch            string
 	Timeout                string
 	GUIWait                string
+	FileArguments          repeatedStringFlag
 	ExternalDesktopAppMode bool
 }
 
@@ -61,13 +64,16 @@ func run(args []string, stdout io.Writer) error {
 	var recipeDir string
 	var recipeRoot string
 	var activationRoot string
-	launch := launchOptions{LauncherBin: envOrDefault(launcherBinEnv, "xnix-compat-launch")}
+	launch := launchOptions{
+		Execute:     os.Getenv(executeEnv) == "1",
+		LauncherBin: envOrDefault(launcherBinEnv, "xnix-compat-launch"),
+	}
 	flags.StringVar(&applicationID, "app", "", "application id to use for the file-open preview")
-	flags.StringVar(&registryPath, "registry", "", "path to an Xnix recipe registry JSON file")
+	flags.StringVar(&registryPath, "registry", envOrDefault(registryPathEnv, ""), "path to an Xnix recipe registry JSON file")
 	flags.StringVar(&recipeDir, "recipe-dir", packagedRecipeRegistryDir, "directory containing the default Xnix recipe registry")
 	flags.StringVar(&recipeRoot, "recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	flags.StringVar(&activationRoot, "activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
-	flags.BoolVar(&launch.Execute, "execute", false, "delegate the selected file-open request to the managed Runtime launcher")
+	flags.BoolVar(&launch.Execute, "execute", launch.Execute, "delegate the selected file-open request to the managed Runtime launcher")
 	flags.StringVar(&launch.LauncherBin, "launcher-bin", launch.LauncherBin, "managed Runtime launcher command")
 	flags.StringVar(&launch.LauncherRegistry, "launcher-registry", "", "optional recipe registry path passed through to the managed launcher")
 	flags.StringVar(&launch.CacheRoot, "cache-root", "", "managed known Windows app cache root passed to the launcher")
@@ -89,11 +95,16 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&launch.WindowMatch, "window-match", "", "case-insensitive X window title/text required by the launcher")
 	flags.StringVar(&launch.Timeout, "timeout", "", "launcher execution timeout")
 	flags.StringVar(&launch.GUIWait, "gui-wait", "", "launcher GUI observation wait")
+	flags.Var(&launch.FileArguments, "file-argument", "local file path delegated by the Runtime owner and passed to the managed launcher; may be repeated")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
 
-	fileURIs := flags.Args()
+	positionalFileURIs := flags.Args()
+	fileURIs, err := fileOpenURIs(positionalFileURIs, []string(launch.FileArguments), launch.Execute)
+	if err != nil {
+		return err
+	}
 	if len(fileURIs) == 0 {
 		return fmt.Errorf("%s requires at least one file URI", commandName)
 	}
@@ -121,7 +132,7 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	if launch.Execute {
-		return runManagedLauncher(stdout, preview, fileURIs, launch)
+		return runManagedLauncher(stdout, preview, positionalFileURIs, []string(launch.FileArguments), launch)
 	}
 
 	encoder := json.NewEncoder(stdout)
@@ -129,7 +140,7 @@ func run(args []string, stdout io.Writer) error {
 	return encoder.Encode(preview)
 }
 
-func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, fileURIs []string, options launchOptions) error {
+func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, fileURIs []string, fileArgumentPaths []string, options launchOptions) error {
 	launcher := strings.TrimSpace(options.LauncherBin)
 	if launcher == "" {
 		return fmt.Errorf("%s --execute requires --launcher-bin", commandName)
@@ -167,6 +178,13 @@ func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, f
 		}
 		argv = append(argv, "--file-argument", path)
 	}
+	for _, path := range fileArgumentPaths {
+		cleaned, err := localFileArgumentPath(path)
+		if err != nil {
+			return err
+		}
+		argv = append(argv, "--file-argument", cleaned)
+	}
 
 	command := exec.Command(launcher, argv...)
 	var stderr bytes.Buffer
@@ -180,6 +198,21 @@ func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, f
 		return fmt.Errorf("managed launcher failed: %w: %s", err, detail)
 	}
 	return nil
+}
+
+func fileOpenURIs(positional []string, fileArgumentPaths []string, execute bool) ([]string, error) {
+	if len(fileArgumentPaths) > 0 && !execute {
+		return nil, fmt.Errorf("%s --file-argument requires --execute", commandName)
+	}
+	uris := append([]string{}, positional...)
+	for _, path := range fileArgumentPaths {
+		cleaned, err := localFileArgumentPath(path)
+		if err != nil {
+			return nil, err
+		}
+		uris = append(uris, filePathURI(cleaned))
+	}
+	return uris, nil
 }
 
 func localFilePath(fileURI string) (string, error) {
@@ -203,10 +236,39 @@ func localFilePath(fileURI string) (string, error) {
 	return path, nil
 }
 
+func localFileArgumentPath(path string) (string, error) {
+	cleaned := strings.TrimSpace(path)
+	if cleaned == "" {
+		return "", fmt.Errorf("%s --file-argument requires a non-empty path", commandName)
+	}
+	if strings.ContainsAny(cleaned, "\r\n") {
+		return "", fmt.Errorf("%s --file-argument requires a single-line path", commandName)
+	}
+	if !filepath.IsAbs(cleaned) {
+		return "", fmt.Errorf("%s --file-argument requires an absolute local path", commandName)
+	}
+	return cleaned, nil
+}
+
+func filePathURI(path string) string {
+	return (&url.URL{Scheme: "file", Path: filepath.ToSlash(path)}).String()
+}
+
 func envOrDefault(name string, fallback string) string {
 	value := strings.TrimSpace(os.Getenv(name))
 	if value == "" {
 		return fallback
 	}
 	return value
+}
+
+type repeatedStringFlag []string
+
+func (flag *repeatedStringFlag) String() string {
+	return strings.Join(*flag, ",")
+}
+
+func (flag *repeatedStringFlag) Set(value string) error {
+	*flag = append(*flag, value)
+	return nil
 }

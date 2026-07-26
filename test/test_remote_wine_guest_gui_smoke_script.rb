@@ -45,6 +45,7 @@ end
 assert(payload["remote_runtime_bin"].end_with?("/bin/xnix-runtime-go"), "remote GUI smoke must expose the managed Runtime binary location")
 assert(payload["remote_owner_bin"].end_with?("/bin/xnix-runtime-owner"), "remote GUI smoke must expose the managed Runtime owner binary location")
 assert(payload["remote_launcher_bin"].end_with?("/bin/xnix-compat-launch"), "remote GUI smoke must expose the managed launcher binary location")
+assert(payload["remote_file_open_bin"].end_with?("/bin/xnix-compat-open"), "remote GUI smoke must expose the managed file-open binary location")
 assert(payload["remote_known_app_cache_root"].start_with?("/home/xnix-"), "remote known-app cache root must stay under /home/xnix-*")
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")
 assert(payload["remote_source_root"].include?("runtime"), "remote source root must reflect the Runtime-only sync mode")
@@ -70,6 +71,8 @@ assert(script.read.include?("window_match_observed"), "remote GUI smoke execute 
 assert(script.read.include?("owner_delegated_file_arguments_passed"), "remote GUI smoke execute result must expose owner delegated file argument handoff evidence")
 assert(script.read.include?("owner_delegated_file_argument_winepath_translated"), "remote GUI smoke execute result must expose owner delegated Wine path translation evidence")
 assert(script.read.include?("owner_delegated_window_match_observed"), "remote GUI smoke execute result must expose owner delegated window-match evidence")
+assert(script.read.include?("file_open_entrypoint_requested"), "remote GUI smoke execute result must expose file-open entrypoint selection")
+assert(script.read.include?("owner_file_open_entrypoint_invoked"), "remote GUI smoke execute result must expose owner file-open entrypoint invocation")
 assert(payload["known_app_id"] == "", "remote GUI smoke must not force known app selection by default")
 assert(payload["known_app_selection_planned"] == false, "remote GUI smoke must keep known app selection explicit")
 assert(payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke must expose the default evidence app id")
@@ -92,10 +95,24 @@ assert(owner_payload["launch_mode"] == "owner-controlled-launch", "remote GUI sm
 assert(owner_payload["owner_controlled_launch_requested"] == true, "remote GUI smoke owner mode must request controlled launch")
 assert(owner_payload["owner_build_planned"] == true, "remote GUI smoke owner mode must build the Runtime owner")
 assert(owner_payload["launcher_build_planned"] == true, "remote GUI smoke owner mode must build the managed launcher")
+assert(owner_payload["file_open_entrypoint_requested"] == false, "remote GUI smoke owner mode must not use the file-open entrypoint unless requested")
 assert(owner_payload["remote_command"].include?("--launch-mode owner-controlled-launch"), "remote GUI smoke must forward owner launch mode")
 assert(owner_payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke owner mode must default evidence identity to Mines")
 assert(owner_payload["kde_controlled_launch_action_preview_planned"] == true, "remote GUI smoke owner mode must plan KDE controlled-launch action evidence")
 assert(owner_payload["kde_action_state_root"].end_with?("/owner-controlled-launch-state"), "remote GUI smoke owner mode must expose the owner action state root")
+
+file_open_owner_stdout, file_open_owner_stderr, file_open_owner_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--launch-mode", "owner-controlled-launch",
+  "--file-open-entrypoint",
+  chdir: project_root.to_s
+)
+assert(file_open_owner_status.success?, "remote GUI smoke file-open owner plan must succeed: #{file_open_owner_stderr}")
+file_open_owner_payload = JSON.parse(file_open_owner_stdout)
+assert(file_open_owner_payload["file_open_entrypoint_requested"] == true, "remote GUI smoke file-open owner plan must request the file-open entrypoint")
+assert(file_open_owner_payload["file_open_build_planned"] == true, "remote GUI smoke file-open owner plan must build xnix-compat-open")
+assert(file_open_owner_payload["remote_command"].include?("--file-open-bin"), "remote GUI smoke must forward the file-open entrypoint binary")
+assert(file_open_owner_payload["remote_command"].include?("--file-open-registry"), "remote GUI smoke must forward the file-open registry")
 
 bad_launch_mode_stdout, bad_launch_mode_stderr, bad_launch_mode_status = Open3.capture3(
   "ruby", script.to_s,

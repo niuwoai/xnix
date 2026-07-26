@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc166`.
+The project is currently at `v0.2.640-rc167`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc166`.
 
 ## Current Checkpoint
 
-v0.2.640-rc166 lets the native Go `xnix-compat-open` command cross from preview into the managed launcher path when an operator explicitly passes `--execute`. The command still resolves the target application through the digest-verified recipe registry, then converts accepted local `file://` URIs into `xnix-compat-launch --file-argument` values and forwards only controlled launcher options such as guest boundary, receipts, session id, display, timeout, and window match. Default Dolphin invocation remains preview-only, while compile-heavy validation stays on q4. A q4 owner-controlled Sample Notepad file-open GUI run passed for `sample-document.txt`, with file copy, Wine path translation, window-match observation, Runtime evidence, KDE page evidence, and KDE action owner file-open verification all present while host-root mutation and unsafe container gates stayed closed.
+v0.2.640-rc167 routes the real q4 owner-controlled file-open GUI smoke through the Go `xnix-compat-open` entrypoint before it reaches `xnix-compat-launch`. The smoke can now build `xnix-compat-open`, set it as the Runtime owner managed launcher, pass the real launcher through `XNIX_COMPAT_LAUNCH`, and provide the digest-verified recipe registry through `XNIX_COMPAT_OPEN_REGISTRY`. The q4 Sample Notepad file-open run passed with `file_open_entrypoint_requested=true`, `owner_file_open_entrypoint_invoked=true`, one copied file argument, Wine path translation, `sample-document.txt` window-match observation, Runtime/KDE evidence consumption, and closed unsafe host/container gates, proving the desktop-facing file-open command itself participated in the real QEMU/Wine GUI chain while owner receipts and state roots stayed inside the Runtime owner boundary.
+
+The previous v0.2.640-rc166 checkpoint let the native Go `xnix-compat-open` command cross from preview into the managed launcher path when an operator explicitly passes `--execute`. The command still resolves the target application through the digest-verified recipe registry, then converts accepted local `file://` URIs into `xnix-compat-launch --file-argument` values and forwards only controlled launcher options such as guest boundary, receipts, session id, display, timeout, and window match. Default Dolphin invocation remains preview-only, while compile-heavy validation stays on q4. A q4 owner-controlled Sample Notepad file-open GUI run passed for `sample-document.txt`, with file copy, Wine path translation, window-match observation, Runtime evidence, KDE page evidence, and KDE action owner file-open verification all present while host-root mutation and unsafe container gates stayed closed.
 
 The previous v0.2.640-rc165 checkpoint added a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified recipe registry, supports the existing `--recipe-dir` development alias, defaults production recipe lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, and emits the Go-owned `xnix.runtime.file_open.v1` preview without enabling backend launch, direct host-file access, backend detail exposure, or host-root mutation. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default so compile-heavy validation stays off the macOS host.
 
