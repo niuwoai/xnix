@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc163
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc164
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc164 checkpoint candidate makes Dolphin's `xnix-compat-open` service-menu entry point prefer the Go Runtime file-open preview. The Ruby command remains the installed desktop wrapper, but its default `auto` engine now invokes `xnix-runtime-go file-open-preview --registry <registry> [--app <id>] file://...` when the Go Runtime command and recipe registry are available, returning the Go-owned `xnix.runtime.file_open.v1` preview schema. `--preview-engine ruby` keeps the old lightweight model for development environments, and `--preview-engine go` fail-closes when the Go preview is unavailable. This moves Dolphin file-open intent toward the independent AI Compatibility Runtime without enabling backend launch, owner service argument exposure, state-root access, raw backend details, direct host-file reads, host networking, Docker socket mounts, privileged containers, broad host mounts, or host-root mutation.
 
 The v0.2.640-rc163 checkpoint candidate carries owner-controlled file-open evidence into the KDE controlled-launch action layer. `kde-controlled-launch-action-preview` now copies safe owner file-open facts from the verified KDE GUI card into the action preview, including `owner_file_open_verified`, delegated file-argument counts, copied-argument evidence, Wine path translation status, and safe window-match evidence. The action preview rejects inconsistent file-open claims and still keeps KDE on an evidence-handle-only D-Bus route, with owner service arguments, state roots, raw file argument paths, backend details, desktop launch authority, host networking, Docker socket mounts, privileged containers, broad host mounts, and host-root mutation closed. Compile-heavy builds and real GUI validation remain on q4 while the local macOS host stays limited to lightweight checks.
 

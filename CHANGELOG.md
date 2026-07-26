@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc164] - 2026-07-26
+
+### Changed
+
+- Made the `xnix-compat-open` Dolphin entry point prefer the Go Runtime `file-open-preview` command when the Runtime binary and recipe registry are available.
+- Added explicit `auto`, `go`, and `ruby` preview-engine modes plus Runtime binary and registry overrides for the file-open wrapper.
+- Kept the Ruby file-open request model as a lightweight fallback while preserving closed backend launch, host mutation, and backend-detail gates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc164`.
+
 ## [0.2.640-rc163] - 2026-07-26
 
 ### Changed

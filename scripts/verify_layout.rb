@@ -1084,6 +1084,11 @@ assert(file_association_source.include?("xnix-compat-open"), "File association m
 assert(file_association_source.include?("\"overwrite_existing_mimeapps\" => false"), "File association model must not permit blind mimeapps overwrite")
 assert(file_association_source.include?("\"backend_details_exposed\" => false"), "File association model must hide backend details")
 
+file_open_request_source = read_project_file("lib/xnix/compatibility/file_open_request.rb")
+%w[file-open-preview --preview-engine --runtime-bin --runtime-registry XNIX_RUNTIME_GO xnix-runtime-go Open3.capture2].each do |token|
+  assert(file_open_request_source.include?(token), "File open request wrapper must preserve Go Runtime delegation token #{token}")
+end
+
 engine_catalog_source = read_project_file("lib/xnix/compatibility/compatibility_engine_catalog.rb")
 assert(engine_catalog_source.include?("xnix-compat-engine-catalog"), "Compatibility engine catalog must expose a CLI command")
 %w[automatic-managed local-compatibility-engine isolated-compatibility-engine].each do |engine_id|
