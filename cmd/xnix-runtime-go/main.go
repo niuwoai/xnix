@@ -2543,12 +2543,26 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 		}
 		payload = loaded
 	}
+	var envelope struct {
+		SchemaVersion string `json:"schema_version"`
+		RequestType   string `json:"request_type"`
+	}
+	if err := json.Unmarshal(payload, &envelope); err != nil {
+		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)
+	}
+	if envelope.RequestType == appidentity.GUISmokeEvidencePreviewRequestType {
+		return loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload)
+	}
+	if envelope.RequestType == appidentity.RealWinAppGUIEvidencePacketRequestType {
+		evidence, err := appidentity.KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload)
+		if err != nil {
+			return nil, err
+		}
+		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
+	}
 	var projection appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence
 	if err := json.Unmarshal(payload, &projection); err != nil {
 		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)
-	}
-	if projection.RequestType == appidentity.GUISmokeEvidencePreviewRequestType {
-		return loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload)
 	}
 	evidence, err := appidentity.KnownAppSmokeEvidenceFromKDERuntimeStatusLaunchDelegatedEvidence(projection)
 	if err != nil {

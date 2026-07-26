@@ -186,7 +186,7 @@ kde_command = [
   "--registry", options.fetch(:registry),
   "--app", options.fetch(:app_id),
   "--decision", options.fetch(:decision),
-  "--known-app-evidence-file", evidence_output.to_s
+  "--known-app-evidence-file", runtime_packet_output.to_s
 ]
 kde_stdout, kde_stderr, kde_status = run_command(go_env, *kde_command)
 fail_command("KDE center page projection failed", kde_stdout, kde_stderr) unless kde_status.zero?

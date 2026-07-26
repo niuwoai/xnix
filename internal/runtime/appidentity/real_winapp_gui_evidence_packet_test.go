@@ -1,6 +1,7 @@
 package appidentity
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -69,5 +70,43 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesContainerNotepadReport(t *tes
 	if !strings.Contains(packet.Source, "real-winapp-desktop-packet") ||
 		!strings.Contains(packet.DesktopSafeSummary, "container X GUI smoke evidence observed a real isolated GUI window") {
 		t.Fatalf("unexpected packet source or summary: %#v", packet)
+	}
+}
+
+func TestKnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(t *testing.T) {
+	packet, err := PreviewRealWinAppGUIEvidencePacketJSON([]byte(containerXGUISmokeEvidenceFixture()), RealWinAppGUIEvidencePacketRequest{
+		AppID:       "org.xnix.sample.notepad",
+		DisplayName: "Sample Notepad",
+		AppVersion:  "container-local",
+	})
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppGUIEvidencePacketJSON returned error: %v", err)
+	}
+	payload, err := json.Marshal(packet)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+
+	evidence, err := KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload)
+	if err != nil {
+		t.Fatalf("KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket returned error: %v", err)
+	}
+	if evidence.AppID != "org.xnix.sample.notepad" ||
+		evidence.DisplayName != "Sample Notepad" ||
+		evidence.AppVersion != "container-local" ||
+		evidence.EvidenceKind != "known-application-gui-smoke" ||
+		evidence.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		!evidence.RecipeBacked ||
+		evidence.RecipeAppID != "org.xnix.sample.notepad" ||
+		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
+		evidence.CenterCardState != "validated-real-gui-container-run" ||
+		evidence.SmokeStatus != "passed" ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeDispatchVerified ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.BackendDetailsExposed ||
+		evidence.HostRootModified {
+		t.Fatalf("unexpected evidence from real GUI packet: %#v", evidence)
 	}
 }

@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc123] - 2026-07-26
+
+### Changed
+
+- Changed Runtime known-app evidence loading so `compatibility-center-preview` and `kde-center-page-preview` accept Go Runtime `real-winapp-gui-evidence-packet-preview` files directly through `--known-app-evidence-file`.
+- Changed `scripts/container_gui_evidence_packet.rb` to render the KDE page from the Go-owned real Windows app GUI packet while still writing the legacy GUI evidence projection for diagnostics.
+
 ## [0.2.640-rc122] - 2026-07-26
 
 ### Changed

@@ -170,3 +170,61 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		DesktopSafeSummary:                 projection.DesktopSafeSummary,
 	}, nil
 }
+
+func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (KnownAppSmokeEvidenceSummary, error) {
+	var packet RealWinAppGUIEvidencePacket
+	if err := json.Unmarshal(payload, &packet); err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("parse real Windows app GUI evidence packet: %w", err)
+	}
+	switch {
+	case packet.SchemaVersion != RealWinAppGUIEvidencePacketSchemaVersion:
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("real Windows app GUI evidence packet has unsupported schema %q", packet.SchemaVersion)
+	case packet.RequestType != RealWinAppGUIEvidencePacketRequestType:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet has invalid request type")
+	case packet.PacketType != "real-windows-app-gui-evidence":
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet has invalid packet type")
+	case packet.ReportStatus != "passed" || !packet.ReportConsumed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet has not consumed a passed report")
+	case packet.ReportPathExposed || packet.BackendDetailsExposed || packet.RawOutputExposed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet exposes unsafe details")
+	case packet.DesktopLaunchEnabled || packet.BackendLaunchEnabled || packet.ActionExecutionEnabled || packet.HostRootModified:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet enables unsafe execution")
+	case packet.PrivilegedContainerRequired || packet.HostNetworkingRequired || packet.DockerSocketMounted || packet.BroadHostMountRequired:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires unsafe host or container privileges")
+	case !packet.CompatibilityCenterProjectionReady || !packet.KDECenterProjectionReady:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet is not ready for center consumption")
+	case !packet.RuntimeOwned || !packet.GoRuntimeBacked || packet.KDEPolicyOwner:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet must remain Runtime-owned and Go-backed")
+	case !packet.XWindowObserved || packet.XWindowChildCount <= 0:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires observed X window evidence")
+	case packet.KnownAppGUIEvidenceCount != 1 || packet.KnownAppGUIEvidenceVerifiedCount != 1:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires exactly one verified GUI evidence item")
+	}
+	if packet.ContainerRuntimeUsed {
+		switch {
+		case packet.ContainerNetworkMode != "none":
+			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires a network-isolated container")
+		case packet.ContainerHostMountCount != 0:
+			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet must not mount host paths")
+		}
+	}
+	evidence := packet.KnownAppSmokeEvidence
+	if evidence.AppID != packet.AppID ||
+		evidence.DisplayName != packet.DisplayName ||
+		evidence.AppVersion != packet.AppVersion ||
+		evidence.EvidenceSource != packet.EvidenceSource ||
+		evidence.RecipeBacked != packet.RecipeBacked ||
+		evidence.RecipeAppID != packet.RecipeAppID ||
+		evidence.CompatibilityState != packet.CompatibilityState ||
+		evidence.CenterCardState != packet.CenterCardState {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet summary does not match nested evidence")
+	}
+	if !knownAppGUIEvidenceSource(evidence.EvidenceSource) || !evidence.ExecutionEvidenceRecorded || !evidence.RuntimeDispatchVerified {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet requires recorded Runtime dispatch evidence")
+	}
+	normalized, err := normalizeKnownAppSmokeEvidenceItem(evidence)
+	if err != nil {
+		return KnownAppSmokeEvidenceSummary{}, err
+	}
+	return normalized, nil
+}

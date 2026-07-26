@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc122
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc123
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc123 checkpoint candidate makes the Go Runtime real Windows app GUI packet a first-class desktop evidence source. `compatibility-center-preview` and `kde-center-page-preview` now accept a `real-winapp-gui-evidence-packet-preview` JSON file through `--known-app-evidence-file`, validate the packet's safe nested evidence, and render the same Notepad GUI card without falling back to the older GUI evidence projection. The one-shot container GUI evidence harness now renders the KDE page from the Go-owned packet.
 
 The v0.2.640-rc122 checkpoint candidate makes the one-shot container GUI evidence harness consume the Go Runtime real Windows app GUI packet. `scripts/container_gui_evidence_packet.rb` now calls `xnix-runtime-go real-winapp-gui-evidence-packet-preview`, persists the Go-owned packet, and requires it to prove the consumed report, recipe identity, verified GUI evidence count, network-isolated container state, zero host mounts, closed launch gates, and closed host-root mutation boundaries before rendering the KDE page.
 

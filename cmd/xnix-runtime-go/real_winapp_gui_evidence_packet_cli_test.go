@@ -89,4 +89,56 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesContainerNotepadReport
 		evidence["host_root_modified"] != false {
 		t.Fatalf("unexpected nested evidence item: %#v", evidence)
 	}
+
+	var compatibilityOutput bytes.Buffer
+	if err := run([]string{"compatibility-center-preview", "--registry", "../../runtime/recipes/registry.json", "--known-app-evidence-file", outputPath}, &compatibilityOutput); err != nil {
+		t.Fatalf("compatibility center consumption returned error: %v", err)
+	}
+	var compatibilityPayload map[string]any
+	if err := json.Unmarshal(compatibilityOutput.Bytes(), &compatibilityPayload); err != nil {
+		t.Fatalf("Unmarshal compatibility output returned error: %v", err)
+	}
+	if compatibilityPayload["known_app_smoke_evidence_count"] != float64(1) ||
+		compatibilityPayload["known_app_smoke_passed_count"] != float64(1) ||
+		compatibilityPayload["known_app_launch_authorization_required_count"] != float64(1) ||
+		compatibilityPayload["backend_launch_enabled"] != false ||
+		compatibilityPayload["backend_details_exposed"] != false ||
+		compatibilityPayload["host_root_modified"] != false {
+		t.Fatalf("unexpected compatibility payload from real GUI packet: %#v", compatibilityPayload)
+	}
+
+	var kdeOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--registry", "../../runtime/recipes/registry.json", "--app", "org.xnix.sample.notepad", "--decision", "approved", "--known-app-evidence-file", outputPath}, &kdeOutput); err != nil {
+		t.Fatalf("KDE center consumption returned error: %v", err)
+	}
+	var kdePayload map[string]any
+	if err := json.Unmarshal(kdeOutput.Bytes(), &kdePayload); err != nil {
+		t.Fatalf("Unmarshal KDE output returned error: %v", err)
+	}
+	if !strings.Contains(kdePayload["source"].(string), "known-app-gui-smoke-evidence") ||
+		kdePayload["known_app_gui_evidence_count"] != float64(1) ||
+		kdePayload["launch_enabled"] != false ||
+		kdePayload["backend_details_exposed"] != false ||
+		kdePayload["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE payload from real GUI packet: %#v", kdePayload)
+	}
+	cards := kdePayload["known_app_gui_evidence_cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("unexpected KDE real GUI packet cards: %#v", cards)
+	}
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "org.xnix.sample.notepad" ||
+		card["evidence_source"] != "winapp-smoke-container-x-gui" ||
+		card["recipe_backed"] != true ||
+		card["recipe_app_id"] != "org.xnix.sample.notepad" ||
+		card["compatibility_state"] != "real-gui-container-wine-verified" ||
+		card["center_card_state"] != "validated-real-gui-container-run" ||
+		card["execution_evidence_recorded"] != true ||
+		card["runtime_dispatch_verified"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["backend_details_exposed"] != false ||
+		card["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE card from real GUI packet: %#v", card)
+	}
 }
