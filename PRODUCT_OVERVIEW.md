@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc175
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc176
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc176 checkpoint adds a Go-owned acceptance read model for the real Windows app path. `xnix-runtime-go real-winapp-run-acceptance-preview --remote-execute-result RESULT.json` consumes the q4 remote GUI smoke execute-result after it has generated a real run receipt summary and projected that receipt into Compatibility Center and KDE Center. The command accepts only passed owner-controlled file-open entrypoint runs with observed-window evidence, Runtime evidence consumption, ready receipt summary, positive Center/KDE projection counts, and closed host/container safety gates. Its output hides q4 connection details, remote paths, executable names, raw window evidence, raw launcher output, and backend command details, giving CI, KDE, and AI consumers a single safe `acceptance_ready=true` signal for the real Sample Notepad compatibility lane.
 
 The v0.2.640-rc175 checkpoint makes the q4 real GUI smoke pipeline produce the desktop-ready real run receipt automatically for the owner-controlled file-open path. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch --file-open-entrypoint --sample-file-argument ... --window-match ...` now persists the execute-result JSON, invokes the Go Runtime `real-winapp-run-receipt-summary-preview`, then feeds the resulting summary through `compatibility-center-preview` and `kde-center-page-preview`. The current q4 Sample Notepad file-open run passed with the Windows GUI window observed, one copied and translated file argument, `owner_file_open_entrypoint_invoked=true`, `real_run_receipt_summary_ready=true`, one Compatibility Center known-app evidence item, one KDE known-app GUI card, and one KDE owner file-open entrypoint card. Direct GUI smoke runs do not claim this receipt unless the owner-controlled file-open evidence required by the Go Runtime is present.
 

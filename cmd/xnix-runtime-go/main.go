@@ -259,6 +259,8 @@ func run(args []string, stdout io.Writer) error {
 		return runRealWinAppGUIEvidencePacketPreview(args[1:], stdout)
 	case "real-winapp-run-receipt-summary-preview":
 		return runRealWinAppRunReceiptSummaryPreview(args[1:], stdout)
+	case "real-winapp-run-acceptance-preview":
+		return runRealWinAppRunAcceptancePreview(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-fixture-record":
 		return runKnownAppRuntimeStatusLaunchOwnerFixtureRecord(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-trigger-preview":

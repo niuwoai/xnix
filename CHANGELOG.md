@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc176] - 2026-07-26
+
+### Added
+
+- Added Go Runtime `real-winapp-run-acceptance-preview` to consume receipt-backed q4 GUI smoke execute-results and emit a desktop-safe real Windows app run acceptance summary.
+- Added fail-closed model and CLI tests proving acceptance requires observed execution, owner-controlled file-open entrypoint evidence, a ready receipt summary, Compatibility Center and KDE Center receipt projections, and closed safety gates.
+- Added layout and q4 targeted-test coverage for the new acceptance read model.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc176`.
+
 ## [0.2.640-rc175] - 2026-07-26
 
 ### Added
