@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc182
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc183
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc183 checkpoint makes generic q4 Windows app acceptance Go-owned. `q4-winapp-acceptance-preview` consumes `scripts/q4_winapp_smoke.rb` output and verifies that either a known Runtime app id or a q4-hosted remote executable was selected, q4 compilation was required while host compilation was avoided, delegated GUI smoke evidence was consumed, a matching window was observed, optional owner-controlled real-run acceptance was ready when requested, and host/container safety gates stayed closed. The generic q4 wrapper executes this Go preview on q4 after a real GUI smoke passes and merges only safe readiness fields back into its final JSON, preserving q4 as the default compile-heavy validation host.
 
 The v0.2.640-rc182 checkpoint adds a generic q4 Windows app smoke entrypoint for growing beyond the fixed Sample Notepad lane. `scripts/q4_winapp_smoke.rb` delegates to the maintained remote Wine guest GUI smoke, accepts either a Runtime known-app id or a q4-hosted remote executable, requires window-match evidence, supports remote or generated sample file arguments, and can require the owner-controlled file-open plus Go real-run acceptance path for known apps. Its safe summary hides raw remote executable and file-argument paths while still exposing whether q4 compilation was required, host compilation was avoided, GUI execution was observed, and host/container safety gates stayed closed. The first real generic-wrapper run passed for `org.xnix.apps.mines` on q4 with observed GUI and matched window evidence.
 

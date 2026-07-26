@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc183] - 2026-07-26
+
+### Added
+
+- Added Go Runtime `q4-winapp-acceptance-preview` to consume generic q4 Windows app smoke evidence and emit a desktop-safe Go-owned acceptance result.
+- Added targeted Go, Ruby wrapper, mainline classification, remote Go test regex, and layout coverage for the generic q4 Windows app acceptance lane.
+
+### Changed
+
+- Changed `scripts/q4_winapp_smoke.rb` to run the Go-owned generic q4 Windows app acceptance preview on q4 before returning passed results.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc183`.
+
 ## [0.2.640-rc182] - 2026-07-26
 
 ### Added

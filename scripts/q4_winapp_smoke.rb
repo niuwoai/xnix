@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "optparse"
 require "pathname"
+require "shellwords"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -74,6 +75,45 @@ def emit_json(payload, output_path)
   text = JSON.pretty_generate(payload) + "\n"
   File.write(output_path, text) if output_path
   puts text
+end
+
+def shell_join(argv)
+  Shellwords.join(argv)
+end
+
+def ssh_command(remote_host, remote_command)
+  [
+    "ssh",
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=15",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=4",
+    remote_host,
+    remote_command
+  ]
+end
+
+def remote_q4_acceptance(remote_host, remote_runtime_bin, payload_json)
+  remote_input = "/tmp/xnix-q4-winapp-acceptance-#{VERSION}.json"
+  writer = shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), STDIN.read)", remote_input])
+  _write_stdout, write_stderr, write_status = Open3.capture3(*ssh_command(remote_host, writer), stdin_data: payload_json, chdir: PROJECT_ROOT.to_s)
+  unless write_status.success?
+    warn write_stderr unless write_stderr.empty?
+    abort "FAIL: q4 Windows app Go acceptance input write failed"
+  end
+
+  acceptance_args = [
+    remote_runtime_bin,
+    "q4-winapp-acceptance-preview",
+    "--q4-winapp-smoke", remote_input
+  ]
+  stdout, stderr, status = Open3.capture3(*ssh_command(remote_host, shell_join(acceptance_args)), chdir: PROJECT_ROOT.to_s)
+  unless status.success?
+    warn stdout unless stdout.empty?
+    warn stderr unless stderr.empty?
+    abort "FAIL: q4 Windows app Go acceptance preview failed"
+  end
+  JSON.parse(stdout)
 end
 
 def bool(payload, key)
@@ -147,6 +187,8 @@ plan = {
   "launch_mode" => launch_mode,
   "file_open_entrypoint_requested" => options.fetch(:owner_file_open),
   "real_run_acceptance_required" => options.fetch(:require_real_run_acceptance),
+  "go_owned_q4_winapp_acceptance_planned" => true,
+  "go_owned_q4_winapp_acceptance_ready" => false,
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
   "host_root_modified" => false,
@@ -207,6 +249,29 @@ result = plan.merge(
   "host_networking_required" => bool(delegated, "host_networking_required"),
   "docker_socket_mounted" => bool(delegated, "docker_socket_mounted"),
   "broad_host_mount_required" => bool(delegated, "broad_host_mount_required")
+)
+
+go_acceptance = remote_q4_acceptance(
+  options.fetch(:remote_host),
+  delegated.fetch("remote_runtime_bin"),
+  JSON.pretty_generate(result) + "\n"
+)
+unless go_acceptance.fetch("acceptance_ready")
+  warn JSON.pretty_generate(go_acceptance)
+  warn "FAIL: q4 Windows app Go-owned acceptance did not pass"
+  exit 1
+end
+
+result.merge!(
+  "go_owned_q4_winapp_acceptance_schema" => go_acceptance.fetch("schema_version"),
+  "go_owned_q4_winapp_acceptance_request_type" => go_acceptance.fetch("request_type"),
+  "go_owned_q4_winapp_acceptance_ready" => go_acceptance.fetch("acceptance_ready"),
+  "go_owned_q4_winapp_acceptance_consumed" => go_acceptance.fetch("smoke_report_consumed"),
+  "go_owned_q4_winapp_acceptance_path_exposed" => go_acceptance.fetch("smoke_report_path_exposed"),
+  "go_owned_q4_winapp_acceptance_remote_host_exposed" => go_acceptance.fetch("remote_host_exposed"),
+  "go_owned_q4_winapp_acceptance_delegated_command_exposed" => go_acceptance.fetch("delegated_command_exposed"),
+  "go_owned_q4_winapp_acceptance_remote_executable_path_exposed" => go_acceptance.fetch("remote_executable_path_exposed"),
+  "go_owned_q4_winapp_acceptance_remote_file_argument_path_exposed" => go_acceptance.fetch("remote_file_argument_path_exposed")
 )
 
 emit_json(result, output_path)

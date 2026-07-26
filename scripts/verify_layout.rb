@@ -1026,7 +1026,7 @@ q4_sample_notepad_smoke = read_project_file("scripts/q4_sample_notepad_smoke.rb"
   assert(q4_sample_notepad_smoke.include?(token), "q4 Sample Notepad smoke script must include #{token}")
 end
 q4_winapp_smoke = read_project_file("scripts/q4_winapp_smoke.rb")
-%w[xnix.scripts.q4_winapp_smoke.v1 q4-winapp-smoke scripts/remote_wine_guest_gui_smoke.rb root@q4 --execute --no-sync-source --remote --known-app-id --remote-executable --remote-file-argument --sample-file-argument --window-match --owner-file-open --require-real-run-acceptance owner-controlled-launch direct remote_executable_path_exposed remote_file_argument_path_exposed real_run_acceptance_required window_observed window_match_observed host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+%w[xnix.scripts.q4_winapp_smoke.v1 q4-winapp-smoke scripts/remote_wine_guest_gui_smoke.rb q4-winapp-acceptance-preview root@q4 --execute --no-sync-source --remote --known-app-id --remote-executable --remote-file-argument --sample-file-argument --window-match --owner-file-open --require-real-run-acceptance owner-controlled-launch direct remote_executable_path_exposed remote_file_argument_path_exposed real_run_acceptance_required go_owned_q4_winapp_acceptance_planned go_owned_q4_winapp_acceptance_ready go_owned_q4_winapp_acceptance_schema window_observed window_match_observed host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_winapp_smoke.include?(token), "q4 Windows app smoke script must include #{token}")
 end
 remote_go_build = read_project_file("scripts/remote_go_build.rb")
@@ -1034,11 +1034,11 @@ remote_go_build = read_project_file("scripts/remote_go_build.rb")
   assert(remote_go_build.include?(token), "remote Go build script must include #{token}")
 end
 remote_go_test = read_project_file("scripts/remote_go_test.rb")
-%w[xnix.scripts.remote_go_test.v1 remote-go-test root@q4 --execute --no-sync-source --source-sync-mode --package --run --count --go-test-timeout source_sync_entries source_sync_mode runtime full DEFAULT_PACKAGES DEFAULT_RUN_REGEX ./internal/runtime/owner ./cmd/xnix-runtime-owner ./cmd/xnix-compat-open ./cmd/xnix-compat-launch ./internal/runtime/appidentity ./cmd/xnix-runtime-go TestServiceCallDispatchesShowRuntimeControlledLaunch TestCompatOpen TestCompatLaunchPassesFileArgumentToGuestGUINotepad TestPreviewKDEControlledLaunchAction TestPreviewRealWinAppRunReceiptSummary TestRealWinAppRunReceiptSummaryPreviewCommand TestPreviewRealWinAppRunAcceptance TestRealWinAppRunAcceptancePreviewCommand TestPreviewQ4SampleNotepadAcceptance TestQ4SampleNotepadAcceptancePreviewCommand /home/xnix-build /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_test_planned targeted_test_required host_compilation_avoided GOCACHE GOMODCACHE GOTMPDIR BatchMode=yes ServerAliveInterval=15 --timeout --contimeout docs/claude-code-implementation-packages.md privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+%w[xnix.scripts.remote_go_test.v1 remote-go-test root@q4 --execute --no-sync-source --source-sync-mode --package --run --count --go-test-timeout source_sync_entries source_sync_mode runtime full DEFAULT_PACKAGES DEFAULT_RUN_REGEX ./internal/runtime/owner ./cmd/xnix-runtime-owner ./cmd/xnix-compat-open ./cmd/xnix-compat-launch ./internal/runtime/appidentity ./cmd/xnix-runtime-go TestServiceCallDispatchesShowRuntimeControlledLaunch TestCompatOpen TestCompatLaunchPassesFileArgumentToGuestGUINotepad TestPreviewKDEControlledLaunchAction TestPreviewRealWinAppRunReceiptSummary TestRealWinAppRunReceiptSummaryPreviewCommand TestPreviewRealWinAppRunAcceptance TestRealWinAppRunAcceptancePreviewCommand TestPreviewQ4SampleNotepadAcceptance TestQ4SampleNotepadAcceptancePreviewCommand TestPreviewQ4WinAppAcceptance TestQ4WinAppAcceptancePreviewCommand /home/xnix-build /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_test_planned targeted_test_required host_compilation_avoided GOCACHE GOMODCACHE GOTMPDIR BatchMode=yes ServerAliveInterval=15 --timeout --contimeout docs/claude-code-implementation-packages.md privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(remote_go_test.include?(token), "remote Go test script must include #{token}")
 end
 runtime_main = read_project_file("cmd/xnix-runtime-go/main.go")
-%w[real-winapp-run-receipt-summary-preview runRealWinAppRunReceiptSummaryPreview real-winapp-run-acceptance-preview runRealWinAppRunAcceptancePreview q4-sample-notepad-acceptance-preview runQ4SampleNotepadAcceptancePreview].each do |token|
+%w[real-winapp-run-receipt-summary-preview runRealWinAppRunReceiptSummaryPreview real-winapp-run-acceptance-preview runRealWinAppRunAcceptancePreview q4-sample-notepad-acceptance-preview runQ4SampleNotepadAcceptancePreview q4-winapp-acceptance-preview runQ4WinAppAcceptancePreview].each do |token|
   assert(runtime_main.include?(token), "Runtime Go CLI must include #{token}")
 end
 real_run_receipt_summary = read_project_file("internal/runtime/appidentity/real_winapp_run_receipt_summary.go")
@@ -1052,6 +1052,10 @@ end
 q4_sample_notepad_acceptance = read_project_file("internal/runtime/appidentity/q4_sample_notepad_acceptance.go")
 %w[xnix.runtime.q4_sample_notepad_acceptance.v1 q4-sample-notepad-acceptance-preview q4-sample-notepad-smoke q4-sample-notepad-real-windows-app-acceptance smoke_report_consumed smoke_report_path_exposed output_path_exposed delegated_command_exposed remote_host_exposed go-real-run-acceptance real_run_acceptance_ready window_match_observed owner_file_open_entrypoint_invoked acceptance_ready validateNoBackendTerms].each do |token|
   assert(q4_sample_notepad_acceptance.include?(token), "q4 Sample Notepad acceptance must include #{token}")
+end
+q4_winapp_acceptance = read_project_file("internal/runtime/appidentity/q4_winapp_acceptance.go")
+%w[xnix.runtime.q4_winapp_acceptance.v1 q4-winapp-acceptance-preview q4-winapp-smoke generic-q4-windows-app-real-run-acceptance smoke_report_consumed smoke_report_path_exposed output_path_exposed delegated_command_exposed remote_host_exposed q4-winapp-smoke+go-runtime-acceptance known_app_selected remote_executable_configured remote_executable_path_exposed remote_file_argument_path_exposed real_run_acceptance_required delegated_execute_result_consumed remote_build_completed window_observed window_match_observed acceptance_ready validateNoBackendTerms].each do |token|
+  assert(q4_winapp_acceptance.include?(token), "q4 Windows app acceptance must include #{token}")
 end
 
 buildroot_helper = read_project_file("lib/xnix/buildroot.rb")
@@ -7183,6 +7187,7 @@ mainline_integration_review_source = read_project_file("scripts/mainline_integra
   q4_sample_notepad_smoke
   q4_winapp_smoke
   q4_sample_notepad_acceptance
+  q4_winapp_acceptance
   remote_go_test
   test_local_go_compile_guarded_smoke_scripts
   cw10-evidence-drift-harness
@@ -7231,6 +7236,7 @@ mainline_integration_review_test_source = read_project_file("test/test_mainline_
   q4_sample_notepad_smoke
   q4_winapp_smoke
   q4_sample_notepad_acceptance
+  q4_winapp_acceptance
   remote_go_test
   test_local_go_compile_guarded_smoke_scripts
   cw10-evidence-drift-harness

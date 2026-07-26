@@ -337,8 +337,10 @@ LANES = [
     patterns: [
       %r{\Ainternal/runtime/winapp/},
       %r{\Ainternal/runtime/appidentity/q4_sample_notepad_acceptance},
+      %r{\Ainternal/runtime/appidentity/q4_winapp_acceptance},
       %r{\Acmd/xnix-runtime-go/windows_compatibility_},
       %r{\Acmd/xnix-runtime-go/q4_sample_notepad_acceptance_},
+      %r{\Acmd/xnix-runtime-go/q4_winapp_acceptance_},
       %r{\Adocs/windows-app-smoke-profile-runbook\.md\z},
       %r{\Ascripts/winapp_smoke\.rb\z},
       %r{\Ascripts/winapp_container_smoke\.rb\z},

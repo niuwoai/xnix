@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc182`.
+The project is currently at `v0.2.640-rc183`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc182`.
 
 ## Current Checkpoint
 
-v0.2.640-rc182 adds `scripts/q4_winapp_smoke.rb`, a generic q4-first Windows GUI app smoke wrapper. The new entrypoint can plan or execute either a Go-catalog known app (`--known-app-id`) or an operator-supplied q4-hosted executable (`--remote-executable`), requires window-match evidence, supports optional file arguments, and can route known-app runs through the owner-controlled file-open path with real-run acceptance required. This makes the real app lane less Notepad-specific while preserving q4 compilation, q4/QEMU/Wine execution, loopback-safe evidence, and no host-root mutation by default. A real q4 run of `org.xnix.apps.mines` passed through this generic wrapper with `window_observed=true`, `window_match_observed=true`, and `host_compilation_avoided=true`.
+v0.2.640-rc183 moves the generic q4 Windows app acceptance decision into the Go Runtime. `xnix-runtime-go q4-winapp-acceptance-preview --q4-winapp-smoke REPORT.json` now consumes `scripts/q4_winapp_smoke.rb` output, verifies generic known-app or q4-hosted executable identity, q4 compilation ownership, delegated GUI smoke evidence, matched window observation, optional owner-controlled real-run acceptance, and closed host/container safety gates, then emits a desktop-safe `xnix.runtime.q4_winapp_acceptance.v1` result. The generic wrapper now calls this Go preview on q4 before returning a passed result, keeping the macOS host limited to lightweight Ruby/layout checks while q4 owns compile-heavy validation.
+
+The previous v0.2.640-rc182 checkpoint added `scripts/q4_winapp_smoke.rb`, a generic q4-first Windows GUI app smoke wrapper. The new entrypoint can plan or execute either a Go-catalog known app (`--known-app-id`) or an operator-supplied q4-hosted executable (`--remote-executable`), requires window-match evidence, supports optional file arguments, and can route known-app runs through the owner-controlled file-open path with real-run acceptance required. This makes the real app lane less Notepad-specific while preserving q4 compilation, q4/QEMU/Wine execution, loopback-safe evidence, and no host-root mutation by default. A real q4 run of `org.xnix.apps.mines` passed through this generic wrapper with `window_observed=true`, `window_match_observed=true`, and `host_compilation_avoided=true`.
 
 The previous v0.2.640-rc181 checkpoint guarded older staged desktop and launcher smoke entrypoints from accidentally compiling Go code on the macOS host. `scripts/staged_launcher_smoke.rb`, `scripts/staged_launcher_dispatch_smoke.rb`, `scripts/staged_desktop_notepad_smoke.rb`, and `scripts/staged_desktop_external_winapp_smoke.rb` now default to a clean SKIP when prebuilt Runtime binaries are unavailable and local Go compilation has not been explicitly enabled with `XNIX_ALLOW_LOCAL_GO_COMPILE=1`. The skip messages point compile-heavy work to `scripts/remote_go_build.rb --execute`, while `XNIX_COMPAT_LAUNCH_BIN` can supply a prebuilt launcher for local smoke experiments. This keeps the q4-first compile policy enforceable as real Windows app validation expands.
 
