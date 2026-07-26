@@ -46,8 +46,8 @@ assert(payload["execute"] == false, "remote Go build must not execute without --
 assert(payload["remote_host"] == "root@q4", "remote Go build must default to q4")
 assert(payload["source_sync_planned"] == true, "remote Go build must sync source by default")
 assert(payload["source_sync_mode"] == "runtime", "remote Go build must default to Runtime source sync")
-assert(payload["source_sync_entry_count"] == 7, "remote Go build Runtime sync must expose the source entry count")
-%w[VERSION go.mod cmd internal runtime scripts lib].each do |entry|
+assert(payload["source_sync_entry_count"] == 10, "remote Go build Runtime sync must expose the source entry count")
+%w[.dockerignore Dockerfile VERSION go.mod cmd internal runtime scripts lib kde].each do |entry|
   assert(payload["source_sync_entries"].include?(entry), "remote Go build Runtime sync must include #{entry}")
 end
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote source root must stay under /home/xnix-*")

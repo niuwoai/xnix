@@ -12,6 +12,7 @@ require "timeout"
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
 REMOTE_GO_BUILD = PROJECT_ROOT.join("scripts/remote_go_build.rb")
+Q4_DBUS_FIXTURE = PROJECT_ROOT.join("scripts/q4_dbus_controlled_launch_owner_fixture_smoke.rb")
 DEFAULT_REMOTE_HOST = ENV.fetch("XNIX_REMOTE_HOST", "root@q4")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
 DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_Q4_RUNTIME_SOURCE_ROOT", "/home/xnix-build/xnix-remote-go-build-runtime-#{VERSION}")
@@ -471,6 +472,35 @@ def require_session_bus_plan_from_app_execution!(plan, fixture)
   end
 end
 
+def require_q4_dbus_fixture!(fixture)
+  required = {
+    "request_type" => "q4-dbus-controlled-launch-owner-fixture-smoke",
+    "status" => "passed",
+    "app_id" => MESSAGEBOX_APP_ID,
+    "app_execution_evidence_required" => true,
+    "app_execution_evidence_copied_to_q4" => true,
+    "app_execution_evidence_path_exposed" => false,
+    "linux_runtime_build_planned" => true,
+    "linux_runtime_built_on_q4" => true,
+    "dbus_adapter_compiled_in_q4_container" => true,
+    "dbus_fixture_executed" => true,
+    "dbus_fixture_passed" => true,
+    "container_runtime" => "docker",
+    "container_network_none" => true,
+    "container_read_only" => true,
+    "container_cap_drop_all" => true,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "host_networking_required" => false,
+    "privileged_container_required" => false,
+    "host_compilation_avoided" => true,
+    "host_root_modified" => false
+  }
+  required.each do |key, expected|
+    abort "q4 D-Bus fixture mismatch for #{key}" unless fixture.fetch(key) == expected
+  end
+end
+
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 fetch_root = ensure_fetch_root!(options.fetch(:fetch_root))
@@ -529,6 +559,16 @@ plan = {
   "session_bus_plan_kde_forwards_only_evidence_handle" => false,
   "session_bus_plan_backend_process_started" => false,
   "session_bus_plan_host_root_modified" => false,
+  "q4_dbus_fixture_execute_planned" => true,
+  "q4_dbus_fixture_passed" => false,
+  "q4_dbus_fixture_linux_runtime_built_on_q4" => false,
+  "q4_dbus_fixture_adapter_compiled_in_q4_container" => false,
+  "q4_dbus_fixture_app_execution_evidence_copied_to_q4" => false,
+  "q4_dbus_fixture_app_execution_evidence_path_exposed" => false,
+  "q4_dbus_fixture_docker_socket_mounted" => false,
+  "q4_dbus_fixture_broad_host_mount_required" => false,
+  "q4_dbus_fixture_host_networking_required" => false,
+  "q4_dbus_fixture_privileged_container_required" => false,
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => false,
   "desktop_consumption_host_root_modified" => false,
@@ -631,6 +671,22 @@ session_bus_plan = run_json_command(
 )
 require_session_bus_plan_from_app_execution!(session_bus_plan, owner_fixture)
 
+q4_dbus_fixture = run_json_command(
+  [
+    "ruby", Q4_DBUS_FIXTURE.to_s,
+    "--execute",
+    "--no-sync-source",
+    "--remote", options.fetch(:remote_host),
+    "--remote-source-root", remote_source_root,
+    "--remote-build-root", remote_build_root,
+    "--app", MESSAGEBOX_APP_ID,
+    "--app-execution-file", app_execution_path.to_s,
+    "--timeout-seconds", options.fetch(:timeout_seconds).to_s
+  ],
+  timeout_seconds: options.fetch(:timeout_seconds)
+)
+require_q4_dbus_fixture!(q4_dbus_fixture)
+
 summary = plan.merge(
   "status" => "passed",
   "runtime_binary_built_on_q4" => true,
@@ -684,6 +740,15 @@ summary = plan.merge(
   "session_bus_plan_kde_forwards_only_evidence_handle" => session_bus_plan.fetch("kde_forwards_only_evidence_handle"),
   "session_bus_plan_backend_process_started" => session_bus_plan.fetch("backend_process_started"),
   "session_bus_plan_host_root_modified" => session_bus_plan.fetch("host_root_modified"),
+  "q4_dbus_fixture_passed" => q4_dbus_fixture.fetch("dbus_fixture_passed"),
+  "q4_dbus_fixture_linux_runtime_built_on_q4" => q4_dbus_fixture.fetch("linux_runtime_built_on_q4"),
+  "q4_dbus_fixture_adapter_compiled_in_q4_container" => q4_dbus_fixture.fetch("dbus_adapter_compiled_in_q4_container"),
+  "q4_dbus_fixture_app_execution_evidence_copied_to_q4" => q4_dbus_fixture.fetch("app_execution_evidence_copied_to_q4"),
+  "q4_dbus_fixture_app_execution_evidence_path_exposed" => q4_dbus_fixture.fetch("app_execution_evidence_path_exposed"),
+  "q4_dbus_fixture_docker_socket_mounted" => q4_dbus_fixture.fetch("docker_socket_mounted"),
+  "q4_dbus_fixture_broad_host_mount_required" => q4_dbus_fixture.fetch("broad_host_mount_required"),
+  "q4_dbus_fixture_host_networking_required" => q4_dbus_fixture.fetch("host_networking_required"),
+  "q4_dbus_fixture_privileged_container_required" => q4_dbus_fixture.fetch("privileged_container_required"),
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => center.fetch("backend_launch_enabled") || kde.fetch("backend_process_started"),
   "desktop_consumption_host_root_modified" => center.fetch("host_root_modified") || kde.fetch("host_root_modified"),

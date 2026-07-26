@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc217] - 2026-07-27
+
+### Added
+
+- Added a q4-first D-Bus controlled-launch owner fixture smoke that builds Linux Runtime binaries on q4, copies real MessageBox app-execution evidence to q4, compiles the D-Bus C adapter inside a restricted q4 tools image, and runs the owner fixture with no networking, a read-only root, dropped capabilities, no Docker socket mount, and no broad host mounts.
+- Added a lightweight `dbus-tools` Dockerfile target and q4 tools image build plan so D-Bus fixture validation can use q4-local base images instead of compiling on the macOS host.
+
+### Changed
+
+- Extended the main q4 Runtime run-plan execution smoke to require the q4 D-Bus owner fixture PASS after real MessageBox app execution.
+- Extended q4 runtime source sync to include the minimal Dockerfile and KDE desktop action inputs needed by q4-owned D-Bus fixture validation.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc217`.
+
 ## [0.2.640-rc216] - 2026-07-27
 
 ### Added

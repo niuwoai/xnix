@@ -50,8 +50,8 @@ assert(payload["execute"] == false, "remote Go test must not execute without --e
 assert(payload["remote_host"] == "root@q4", "remote Go test must default to q4")
 assert(payload["source_sync_planned"] == true, "remote Go test must sync source by default")
 assert(payload["source_sync_mode"] == "runtime", "remote Go test must default to Runtime source sync")
-assert(payload["source_sync_entry_count"] == 7, "remote Go test Runtime sync must expose the source entry count")
-%w[VERSION go.mod cmd internal runtime scripts lib].each do |entry|
+assert(payload["source_sync_entry_count"] == 10, "remote Go test Runtime sync must expose the source entry count")
+%w[.dockerignore Dockerfile VERSION go.mod cmd internal runtime scripts lib kde].each do |entry|
   assert(payload["source_sync_entries"].include?(entry), "remote Go test Runtime sync must include #{entry}")
 end
 assert(payload["remote_source_root"].start_with?("/home/xnix-"), "remote Go test source root must stay under /home/xnix-*")

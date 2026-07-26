@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc216
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc217
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc217 checkpoint makes the main q4 Runtime run-plan execution smoke prove the restricted D-Bus controlled-launch owner fixture with real MessageBox app-execution evidence. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` now calls the q4 D-Bus fixture after the Runtime-generated MessageBox execution, and the fixture builds Linux Runtime binaries on q4, prepares a restricted q4 Docker image, compiles the D-Bus C adapter inside that image, and runs the owner fixture with a read-only root, no networking, dropped capabilities, and no Docker socket or host directory mounts. The q4 remote sync now includes the minimal Docker/KDE inputs needed for that path, and the Dockerfile exposes a lightweight `dbus-tools` target that can be built from a q4-local base image without falling back to macOS compilation.
 
 The v0.2.640-rc216 checkpoint makes the restricted D-Bus controlled-launch owner fixture usable by the real MessageBox app-execution path instead of only the older 7zr artifact fixture. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now accepts `--app`, `--gui-smoke-evidence-file`, `--state-root`, `--cache-root`, and `--runtime-command`, preserves those arguments across `dbus-run-session`, and builds its fake delegated launcher payload from the Go owner fixture's receipt, review, and controlled-session ids. The script also refuses implicit local `go run` compilation unless `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is set, keeping q4 as the default build host.
 

@@ -1,38 +1,51 @@
-FROM debian:bookworm-slim AS tools
+ARG XNIX_TOOLS_BASE_IMAGE=debian:bookworm-slim
+FROM ${XNIX_TOOLS_BASE_IMAGE} AS dbus-tools
 
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        dbus \
+        libglib2.0-bin \
+        libglib2.0-dev \
+        pkg-config \
+        ruby \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash xnix
+
+WORKDIR /workspace
+USER xnix
+
+FROM dbus-tools AS tools
+
+USER root
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         bc \
         bison \
-        build-essential \
-        ca-certificates \
+        clang \
         cpio \
-        dbus \
         file \
         flex \
         git \
         golang-go \
-        clang \
-        libglib2.0-bin \
-        libglib2.0-dev \
         libelf-dev \
         libssl-dev \
         lld \
         llvm \
         openssh-client \
-        pkg-config \
         qemu-system-x86 \
         qemu-utils \
-        ruby \
         rsync \
         unzip \
         wget \
         xz-utils \
     && rm -rf /var/lib/apt/lists/*
-
-RUN useradd --create-home --shell /bin/bash xnix
 
 COPY --chown=xnix:xnix . /workspace
 RUN mkdir --parents /workspace/.cache/buildroot \
