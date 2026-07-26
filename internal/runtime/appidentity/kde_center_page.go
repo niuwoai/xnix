@@ -35,6 +35,7 @@ type KDECenterPagePreview struct {
 	KnownAppOwnerControlledGUIEvidenceCount  int                                    `json:"known_app_owner_controlled_gui_evidence_count"`
 	KnownAppOwnerManagedCopyVerifiedCount    int                                    `json:"known_app_owner_managed_copy_verified_count"`
 	KnownAppOwnerFileOpenVerifiedCount       int                                    `json:"known_app_owner_file_open_verified_count"`
+	KnownAppOwnerFileOpenEntrypointCount     int                                    `json:"known_app_owner_file_open_entrypoint_count"`
 	KnownAppGUIEvidenceCards                 []KDECenterPageKnownAppMatrixCard      `json:"known_app_gui_evidence_cards"`
 	BackendSelectionSnapshot                 KDECenterPageBackend                   `json:"backend_selection_snapshot"`
 	ActivationStatusSnapshot                 KDECenterPageActivation                `json:"activation_status_snapshot"`
@@ -198,6 +199,7 @@ type KDECenterPageKnownAppMatrixCard struct {
 	OwnerControlledRuntimeLaunchVerified              bool     `json:"owner_controlled_runtime_launch_verified"`
 	OwnerManagedCopyVerified                          bool     `json:"owner_managed_copy_verified"`
 	OwnerFileOpenVerified                             bool     `json:"owner_file_open_verified"`
+	OwnerFileOpenEntrypointInvoked                    bool     `json:"owner_file_open_entrypoint_invoked"`
 	OwnerDelegatedFileArgumentCount                   int      `json:"owner_delegated_file_argument_count"`
 	OwnerDelegatedFileArgumentCopiedCount             int      `json:"owner_delegated_file_argument_copied_count"`
 	OwnerDelegatedFileArgumentsPassed                 bool     `json:"owner_delegated_file_arguments_passed"`
@@ -835,6 +837,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	knownAppOwnerControlledGUICount := countOwnerControlledKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	knownAppOwnerManagedCopyVerifiedCount := countOwnerManagedCopyVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	knownAppOwnerFileOpenVerifiedCount := countOwnerFileOpenVerifiedKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
+	knownAppOwnerFileOpenEntrypointCount := countOwnerFileOpenEntrypointKnownAppGUIEvidence(center.KnownAppSmokeEvidence)
 	source := "compatibility-center-preview+backend-selection-preview+desktop-activation-status-preview+execution-readiness-preview+application-readiness-preview+launch-intent-preview+window-identity-preview+file-association-plan+tray-status-preview+notification-preview+kde-action-card-deck-preview+kde-action-dependency-graph-preview+settings-preview"
 	if options.ExecutionSessionRoot != "" {
 		source += "+execution-session-record"
@@ -903,6 +906,7 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 		KnownAppOwnerControlledGUIEvidenceCount:  knownAppOwnerControlledGUICount,
 		KnownAppOwnerManagedCopyVerifiedCount:    knownAppOwnerManagedCopyVerifiedCount,
 		KnownAppOwnerFileOpenVerifiedCount:       knownAppOwnerFileOpenVerifiedCount,
+		KnownAppOwnerFileOpenEntrypointCount:     knownAppOwnerFileOpenEntrypointCount,
 		KnownAppGUIEvidenceCards:                 knownAppGUICards,
 		BackendSelectionSnapshot: KDECenterPageBackend{
 			RequestType:                 backendSelection.RequestType,
@@ -1292,6 +1296,7 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			OwnerControlledRuntimeLaunchVerified:         item.OwnerControlledRuntimeLaunchVerified,
 			OwnerManagedCopyVerified:                     item.OwnerManagedCopyVerified,
 			OwnerFileOpenVerified:                        item.OwnerFileOpenVerified,
+			OwnerFileOpenEntrypointInvoked:               item.OwnerFileOpenEntrypointInvoked,
 			OwnerDelegatedFileArgumentCount:              item.OwnerDelegatedFileArgumentCount,
 			OwnerDelegatedFileArgumentCopiedCount:        item.OwnerDelegatedFileArgumentCopiedCount,
 			OwnerDelegatedFileArgumentsPassed:            item.OwnerDelegatedFileArgumentsPassed,
@@ -1327,46 +1332,47 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 		}
 		routeReady := kdeCenterPageOwnerGUIRouteReady(item)
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{
-			AppID:                                        item.AppID,
-			DisplayName:                                  item.DisplayName,
-			AppVersion:                                   item.AppVersion,
-			EvidenceKind:                                 item.EvidenceKind,
-			EvidenceSource:                               item.EvidenceSource,
-			RecipeBacked:                                 item.RecipeBacked,
-			RecipeAppID:                                  item.RecipeAppID,
-			ExternalAppRunRecordConsumed:                 item.ExternalAppRunRecordConsumed,
-			ExternalAppHandleConsumed:                    item.ExternalAppHandleConsumed,
-			ExternalAppImportRecordConsumed:              item.ExternalAppImportRecordConsumed,
-			ImportedArtifactDigestVerified:               item.ImportedArtifactDigestVerified,
-			ImportedArtifactSHA256:                       item.ImportedArtifactSHA256,
-			SmokeStatus:                                  item.SmokeStatus,
-			XWindowObserved:                              item.XWindowObserved,
-			WindowObserved:                               item.WindowObserved,
-			CompatibilityState:                           item.CompatibilityState,
-			CenterCardState:                              item.CenterCardState,
-			PrimaryActionID:                              item.PrimaryActionID,
-			PrimaryActionLabel:                           item.PrimaryActionLabel,
-			PrimaryActionKind:                            item.PrimaryActionKind,
-			PrimaryActionEnabled:                         item.PrimaryActionEnabled,
-			DesktopCallableRoute:                         kdeCenterPageOwnerGUIDesktopRoute(routeReady),
-			DesktopCallableRuntimeMethod:                 kdeCenterPageOwnerGUIRuntimeMethod(routeReady),
-			DesktopCallableExecutionType:                 kdeCenterPageOwnerGUIExecutionType(routeReady),
-			DesktopDBusMethod:                            kdeCenterPageOwnerGUIDBusMethod(routeReady),
-			DesktopEvidenceHandleForwarded:               routeReady,
-			KDEForwardedArgumentKind:                     kdeCenterPageOwnerGUIForwardedArgumentKind(routeReady),
-			KDEForwardedArguments:                        kdeCenterPageOwnerGUIForwardedArguments(item, routeReady),
-			OwnerServiceArgsExposedToKDE:                 false,
-			MarkerObserved:                               item.MarkerObserved,
-			ChecksumVerified:                             item.ChecksumVerified,
-			ExecutionEvidenceRecorded:                    item.ExecutionEvidenceRecorded,
-			StagedLauncherVerified:                       item.StagedLauncherVerified,
-			OwnerControlledRuntimeLaunchVerified:         item.OwnerControlledRuntimeLaunchVerified,
-			OwnerManagedCopyVerified:                     item.OwnerManagedCopyVerified,
-			OwnerFileOpenVerified:                        item.OwnerFileOpenVerified,
-			OwnerDelegatedFileArgumentCount:              item.OwnerDelegatedFileArgumentCount,
-			OwnerDelegatedFileArgumentCopiedCount:        item.OwnerDelegatedFileArgumentCopiedCount,
-			OwnerDelegatedFileArgumentsPassed:            item.OwnerDelegatedFileArgumentsPassed,
-			OwnerDelegatedFileArgumentWinepathTranslated: item.OwnerDelegatedFileArgumentWinepathTranslated,
+			AppID:                                             item.AppID,
+			DisplayName:                                       item.DisplayName,
+			AppVersion:                                        item.AppVersion,
+			EvidenceKind:                                      item.EvidenceKind,
+			EvidenceSource:                                    item.EvidenceSource,
+			RecipeBacked:                                      item.RecipeBacked,
+			RecipeAppID:                                       item.RecipeAppID,
+			ExternalAppRunRecordConsumed:                      item.ExternalAppRunRecordConsumed,
+			ExternalAppHandleConsumed:                         item.ExternalAppHandleConsumed,
+			ExternalAppImportRecordConsumed:                   item.ExternalAppImportRecordConsumed,
+			ImportedArtifactDigestVerified:                    item.ImportedArtifactDigestVerified,
+			ImportedArtifactSHA256:                            item.ImportedArtifactSHA256,
+			SmokeStatus:                                       item.SmokeStatus,
+			XWindowObserved:                                   item.XWindowObserved,
+			WindowObserved:                                    item.WindowObserved,
+			CompatibilityState:                                item.CompatibilityState,
+			CenterCardState:                                   item.CenterCardState,
+			PrimaryActionID:                                   item.PrimaryActionID,
+			PrimaryActionLabel:                                item.PrimaryActionLabel,
+			PrimaryActionKind:                                 item.PrimaryActionKind,
+			PrimaryActionEnabled:                              item.PrimaryActionEnabled,
+			DesktopCallableRoute:                              kdeCenterPageOwnerGUIDesktopRoute(routeReady),
+			DesktopCallableRuntimeMethod:                      kdeCenterPageOwnerGUIRuntimeMethod(routeReady),
+			DesktopCallableExecutionType:                      kdeCenterPageOwnerGUIExecutionType(routeReady),
+			DesktopDBusMethod:                                 kdeCenterPageOwnerGUIDBusMethod(routeReady),
+			DesktopEvidenceHandleForwarded:                    routeReady,
+			KDEForwardedArgumentKind:                          kdeCenterPageOwnerGUIForwardedArgumentKind(routeReady),
+			KDEForwardedArguments:                             kdeCenterPageOwnerGUIForwardedArguments(item, routeReady),
+			OwnerServiceArgsExposedToKDE:                      false,
+			MarkerObserved:                                    item.MarkerObserved,
+			ChecksumVerified:                                  item.ChecksumVerified,
+			ExecutionEvidenceRecorded:                         item.ExecutionEvidenceRecorded,
+			StagedLauncherVerified:                            item.StagedLauncherVerified,
+			OwnerControlledRuntimeLaunchVerified:              item.OwnerControlledRuntimeLaunchVerified,
+			OwnerManagedCopyVerified:                          item.OwnerManagedCopyVerified,
+			OwnerFileOpenVerified:                             item.OwnerFileOpenVerified,
+			OwnerFileOpenEntrypointInvoked:                    item.OwnerFileOpenEntrypointInvoked,
+			OwnerDelegatedFileArgumentCount:                   item.OwnerDelegatedFileArgumentCount,
+			OwnerDelegatedFileArgumentCopiedCount:             item.OwnerDelegatedFileArgumentCopiedCount,
+			OwnerDelegatedFileArgumentsPassed:                 item.OwnerDelegatedFileArgumentsPassed,
+			OwnerDelegatedFileArgumentWinepathTranslated:      item.OwnerDelegatedFileArgumentWinepathTranslated,
 			OwnerDelegatedFileArgumentWinepathTranslatedCount: item.OwnerDelegatedFileArgumentWinepathTranslatedCount,
 			OwnerDelegatedRawFileArgumentPathExposed:          item.OwnerDelegatedRawFileArgumentPathExposed,
 			OwnerDelegatedWindowMatch:                         item.OwnerDelegatedWindowMatch,
@@ -1483,6 +1489,20 @@ func countOwnerFileOpenVerifiedKnownAppGUIEvidence(evidence []KnownAppSmokeEvide
 			!item.OwnerDelegatedRawFileArgumentPathExposed &&
 			strings.TrimSpace(item.OwnerDelegatedWindowMatch) != "" &&
 			item.OwnerDelegatedWindowMatchObserved {
+			count++
+		}
+	}
+	return count
+}
+
+func countOwnerFileOpenEntrypointKnownAppGUIEvidence(evidence []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range evidence {
+		if knownAppGUIEvidenceSource(item.EvidenceSource) &&
+			item.SmokeStatus == "passed" &&
+			item.OwnerControlledRuntimeLaunchVerified &&
+			item.OwnerFileOpenVerified &&
+			item.OwnerFileOpenEntrypointInvoked {
 			count++
 		}
 	}

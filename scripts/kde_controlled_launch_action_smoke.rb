@@ -156,6 +156,8 @@ def messagebox_owner_gui_report(evidence_relative_path)
     "owner_delegated_raw_file_argument_path_exposed" => false,
     "owner_delegated_window_match" => "messagebox-document.txt",
     "owner_delegated_window_match_observed" => true,
+    "file_open_entrypoint_requested" => true,
+    "owner_file_open_entrypoint_invoked" => true,
     "owner_delegated_host_root_modified" => false,
     "owner_delegated_docker_socket_mounted" => false,
     "owner_delegated_broad_host_mount_required" => false,
@@ -300,6 +302,7 @@ assert(gui_evidence["request_type"] == "gui-smoke-evidence-preview", "GUI eviden
 assert(gui_evidence["owner_controlled_launch_verified"] == true, "GUI evidence must verify owner-controlled launch")
 assert(gui_evidence["owner_managed_copy_verified"] == true, "GUI evidence must verify owner-managed copy")
 assert(gui_evidence["owner_file_open_verified"] == true, "GUI evidence must verify owner file-open handoff")
+assert(gui_evidence["owner_file_open_entrypoint_invoked"] == true, "GUI evidence must verify owner file-open entrypoint invocation")
 assert(gui_evidence["owner_delegated_window_match"] == "messagebox-document.txt", "GUI evidence must preserve safe owner window-match evidence")
 assert(gui_evidence["owner_evidence_handoff_ready"] == true, "GUI evidence must preserve owner handoff readiness")
 assert(gui_evidence["owner_evidence_relative_path"] == gui_evidence_relative_path, "GUI evidence must preserve the Runtime-status handoff")
@@ -327,12 +330,14 @@ assert(gui_page["known_app_gui_evidence_count"] == 1, "GUI page must include one
 assert(gui_page["known_app_owner_controlled_gui_evidence_count"] == 1, "GUI page must include owner-controlled GUI evidence")
 assert(gui_page["known_app_owner_managed_copy_verified_count"] == 1, "GUI page must include owner-managed copy evidence")
 assert(gui_page["known_app_owner_file_open_verified_count"] == 1, "GUI page must include owner file-open evidence")
+assert(gui_page["known_app_owner_file_open_entrypoint_count"] == 1, "GUI page must include owner file-open entrypoint evidence")
 assert(gui_page["known_app_gui_evidence_cards"].length == 1, "GUI page must carry one safe GUI card")
 owner_gui_card = gui_page.fetch("known_app_gui_evidence_cards").first
 assert(owner_gui_card.fetch("primary_action_id") == "show-runtime-controlled-launch", "owner GUI card must expose the Runtime-controlled action")
 assert(owner_gui_card.fetch("desktop_callable_route") == "kde-dbus-runtime-status-action", "owner GUI card must expose the controlled desktop route")
 assert(owner_gui_card.fetch("kde_forwarded_arguments") == [gui_evidence_relative_path], "owner GUI card must forward only the Runtime evidence handle")
 assert(owner_gui_card.fetch("owner_file_open_verified") == true, "owner GUI card must expose owner file-open evidence")
+assert(owner_gui_card.fetch("owner_file_open_entrypoint_invoked") == true, "owner GUI card must expose owner file-open entrypoint evidence")
 assert(owner_gui_card.fetch("owner_delegated_window_match") == "messagebox-document.txt", "owner GUI card must expose safe owner window-match evidence")
 assert(owner_gui_card.fetch("owner_service_args_exposed_to_kde") == false, "owner GUI card must hide owner service arguments")
 assert_false_payload(
@@ -357,6 +362,7 @@ assert(gui_action["kde_forwarded_arguments"] == [gui_evidence_relative_path], "G
 assert(gui_action["desktop_callable_route"] == "kde-dbus-runtime-status-action", "GUI page action must preserve the controlled route")
 assert(gui_action["kde_forwards_only_evidence_handle"] == true, "GUI page action must keep KDE evidence-only")
 assert(gui_action["owner_file_open_verified"] == true, "GUI page action must expose owner file-open evidence")
+assert(gui_action["owner_file_open_entrypoint_invoked"] == true, "GUI page action must expose owner file-open entrypoint evidence")
 assert(gui_action["owner_delegated_window_match"] == "messagebox-document.txt", "GUI page action must expose safe owner window-match evidence")
 assert_false_payload(
   gui_action,

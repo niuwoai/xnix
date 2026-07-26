@@ -38,6 +38,7 @@ assert(model["summary"]["known_app_gui_evidence_verified_count"].zero?, "KDE cen
 assert(model["summary"]["known_app_owner_controlled_gui_evidence_count"].zero?, "KDE center model must summarize absent owner-controlled GUI evidence")
 assert(model["summary"]["known_app_owner_managed_copy_verified_count"].zero?, "KDE center model must summarize absent owner-managed copy evidence")
 assert(model["summary"]["known_app_owner_file_open_verified_count"].zero?, "KDE center model must summarize absent owner file-open evidence")
+assert(model["summary"]["known_app_owner_file_open_entrypoint_count"].zero?, "KDE center model must summarize absent owner file-open entrypoint evidence")
 assert(model["summary"]["pending_action_count"] == application_count, "KDE center model must summarize pending compatibility work")
 assert(model["summary"]["queued_compatibility_action_count"] == application_count * 5, "KDE center model must summarize queued Compatibility Center actions")
 assert(model["summary"]["queued_user_review_count"] == application_count * 3, "KDE center model must summarize queued review actions")
@@ -312,6 +313,7 @@ GUIEvidenceRuntime = Struct.new(:application) do
           "owner_controlled_runtime_launch_verified" => true,
           "owner_managed_copy_verified" => true,
           "owner_file_open_verified" => true,
+          "owner_file_open_entrypoint_invoked" => true,
           "owner_delegated_file_argument_count" => 1,
           "owner_delegated_file_argument_copied_count" => 1,
           "owner_delegated_file_arguments_passed" => true,
@@ -375,11 +377,13 @@ assert(gui_model["known_app_gui_evidence_verified_count"] == 1, "KDE center mode
 assert(gui_model["known_app_owner_controlled_gui_evidence_count"] == 1, "KDE center model must render owner-controlled GUI evidence counts")
 assert(gui_model["known_app_owner_managed_copy_verified_count"] == 1, "KDE center model must render owner-managed copy counts")
 assert(gui_model["known_app_owner_file_open_verified_count"] == 1, "KDE center model must render owner file-open counts")
+assert(gui_model["known_app_owner_file_open_entrypoint_count"] == 1, "KDE center model must render owner file-open entrypoint counts")
 assert(gui_model["summary"]["known_app_gui_evidence_count"] == 1, "KDE center summary must count safe GUI evidence cards")
 assert(gui_model["summary"]["known_app_gui_evidence_verified_count"] == 1, "KDE center summary must count passed GUI evidence cards")
 assert(gui_model["summary"]["known_app_owner_controlled_gui_evidence_count"] == 1, "KDE center summary must count owner-controlled GUI evidence cards")
 assert(gui_model["summary"]["known_app_owner_managed_copy_verified_count"] == 1, "KDE center summary must count owner-managed copy evidence cards")
 assert(gui_model["summary"]["known_app_owner_file_open_verified_count"] == 1, "KDE center summary must count owner file-open evidence cards")
+assert(gui_model["summary"]["known_app_owner_file_open_entrypoint_count"] == 1, "KDE center summary must count owner file-open entrypoint evidence cards")
 gui_card = gui_model.fetch("known_app_gui_evidence_cards").first
 assert(gui_card["display_name"] == "Xnix MessageBox Smoke", "KDE GUI evidence card must expose display names")
 assert(gui_card["evidence_kind"] == "known-application-gui-smoke", "KDE GUI evidence card must preserve evidence kind")
@@ -400,6 +404,7 @@ assert(gui_card["staged_launcher_verified"], "KDE GUI evidence card must expose 
 assert(gui_card["owner_controlled_runtime_launch_verified"], "KDE GUI evidence card must expose owner-controlled Runtime launch status")
 assert(gui_card["owner_managed_copy_verified"], "KDE GUI evidence card must expose owner-managed copy status")
 assert(gui_card["owner_file_open_verified"], "KDE GUI evidence card must expose owner file-open status")
+assert(gui_card["owner_file_open_entrypoint_invoked"], "KDE GUI evidence card must expose owner file-open entrypoint status")
 assert(gui_card["owner_delegated_file_argument_count"] == 1, "KDE GUI evidence card must expose owner file argument counts")
 assert(gui_card["owner_delegated_file_argument_copied_count"] == 1, "KDE GUI evidence card must expose owner copied file argument counts")
 assert(gui_card["owner_delegated_file_arguments_passed"], "KDE GUI evidence card must expose owner file argument handoff")

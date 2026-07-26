@@ -890,6 +890,7 @@ type KnownAppSmokeEvidenceSummary struct {
 	OwnerControlledRuntimeLaunchVerified              bool   `json:"owner_controlled_runtime_launch_verified"`
 	OwnerManagedCopyVerified                          bool   `json:"owner_managed_copy_verified"`
 	OwnerFileOpenVerified                             bool   `json:"owner_file_open_verified"`
+	OwnerFileOpenEntrypointInvoked                    bool   `json:"owner_file_open_entrypoint_invoked"`
 	OwnerDelegatedFileArgumentCount                   int    `json:"owner_delegated_file_argument_count"`
 	OwnerDelegatedFileArgumentCopiedCount             int    `json:"owner_delegated_file_argument_copied_count"`
 	OwnerDelegatedFileArgumentsPassed                 bool   `json:"owner_delegated_file_arguments_passed"`
@@ -2895,6 +2896,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	ownerManagedCopyVerified := ownerControlledGUIRunVerified && (item.OwnerManagedCopyVerified || strings.Contains(item.Summary, "managed launcher copied"))
 	ownerDelegatedWindowMatch := strings.TrimSpace(item.OwnerDelegatedWindowMatch)
 	ownerFileOpenEvidencePresent := item.OwnerFileOpenVerified ||
+		item.OwnerFileOpenEntrypointInvoked ||
 		item.OwnerDelegatedFileArgumentCount != 0 ||
 		item.OwnerDelegatedFileArgumentCopiedCount != 0 ||
 		item.OwnerDelegatedFileArgumentsPassed ||
@@ -2935,6 +2937,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		ownerDelegatedWindowMatch != "" &&
 		singleLine(ownerDelegatedWindowMatch) &&
 		item.OwnerDelegatedWindowMatchObserved
+	ownerFileOpenEntrypointInvoked := ownerFileOpenVerified && item.OwnerFileOpenEntrypointInvoked
 	ownerEvidenceRelativePath := strings.TrimSpace(item.OwnerEvidenceRelativePath)
 	if (item.OwnerServiceCallReady || item.OwnerEvidenceHandoffReady || ownerEvidenceRelativePath != "") && !ownerControlledGUIRunVerified {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app owner evidence handoff requires owner-controlled GUI evidence")
@@ -3101,6 +3104,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		OwnerControlledRuntimeLaunchVerified:              ownerControlledGUIRunVerified,
 		OwnerManagedCopyVerified:                          ownerManagedCopyVerified,
 		OwnerFileOpenVerified:                             ownerFileOpenVerified,
+		OwnerFileOpenEntrypointInvoked:                    ownerFileOpenEntrypointInvoked,
 		OwnerDelegatedFileArgumentCount:                   item.OwnerDelegatedFileArgumentCount,
 		OwnerDelegatedFileArgumentCopiedCount:             item.OwnerDelegatedFileArgumentCopiedCount,
 		OwnerDelegatedFileArgumentsPassed:                 item.OwnerDelegatedFileArgumentsPassed,

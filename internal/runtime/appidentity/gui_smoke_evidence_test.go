@@ -123,6 +123,8 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		preview.OwnerDelegatedRawFileArgumentPathExposed ||
 		preview.OwnerDelegatedWindowMatch != "messagebox-document.txt" ||
 		!preview.OwnerDelegatedWindowMatchObserved ||
+		!preview.FileOpenEntrypointRequested ||
+		!preview.OwnerFileOpenEntrypointInvoked ||
 		!preview.XWindowObserved ||
 		!preview.WindowObserved ||
 		!preview.OwnerControlledLaunchVerified ||
@@ -149,6 +151,7 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		!evidence.OwnerControlledRuntimeLaunchVerified ||
 		!evidence.OwnerManagedCopyVerified ||
 		!evidence.OwnerFileOpenVerified ||
+		!evidence.OwnerFileOpenEntrypointInvoked ||
 		evidence.OwnerDelegatedFileArgumentCount != 1 ||
 		evidence.OwnerDelegatedFileArgumentCopiedCount != 1 ||
 		!evidence.OwnerDelegatedFileArgumentsPassed ||
@@ -162,7 +165,7 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		evidence.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.RawArtifactPathExposed ||
-		!strings.Contains(evidence.Summary, "file-open launch") ||
+		!strings.Contains(evidence.Summary, "file-open entrypoint launch") ||
 		!strings.Contains(evidence.Summary, "handoff ready") {
 		t.Fatalf("unexpected owner-controlled GUI known app evidence: %#v", evidence)
 	}
@@ -364,6 +367,8 @@ func ownerControlledGUISmokeEvidenceFixture() string {
   "owner_delegated_raw_file_argument_path_exposed": false,
   "owner_delegated_window_match": "messagebox-document.txt",
   "owner_delegated_window_match_observed": true,
+  "file_open_entrypoint_requested": true,
+  "owner_file_open_entrypoint_invoked": true,
   "owner_delegated_host_root_modified": false,
   "owner_delegated_docker_socket_mounted": false,
   "owner_delegated_broad_host_mount_required": false,

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc168] - 2026-07-26
+
+### Added
+
+- Promoted owner file-open entrypoint invocation evidence into Runtime GUI evidence, known application summaries, KDE Center pages, KDE action previews, and the Ruby KDE read model.
+- Added `known_app_owner_file_open_entrypoint_count` and action-level `owner_file_open_entrypoint_invoked` projection for desktop consumers.
+- Recorded a q4 Sample Notepad file-open entrypoint PASS with Runtime, KDE page, and KDE action entrypoint evidence all consumed.
+
+### Changed
+
+- Added fail-closed validation so invoked file-open entrypoint claims require complete owner file-open evidence and a paired request field, while plain request fields can exist as pre-owner-call planning signals.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc168`.
+
 ## [0.2.640-rc167] - 2026-07-26
 
 ### Added

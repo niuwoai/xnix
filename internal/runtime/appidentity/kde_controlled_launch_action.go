@@ -51,6 +51,7 @@ type KDEControlledLaunchActionPreview struct {
 	DesktopCallableRuntimeMethod                      string   `json:"desktop_callable_runtime_method"`
 	DesktopCallableExecutionType                      string   `json:"desktop_callable_execution_type"`
 	OwnerFileOpenVerified                             bool     `json:"owner_file_open_verified"`
+	OwnerFileOpenEntrypointInvoked                    bool     `json:"owner_file_open_entrypoint_invoked"`
 	OwnerDelegatedFileArgumentCount                   int      `json:"owner_delegated_file_argument_count"`
 	OwnerDelegatedFileArgumentCopiedCount             int      `json:"owner_delegated_file_argument_copied_count"`
 	OwnerDelegatedFileArgumentsPassed                 bool     `json:"owner_delegated_file_arguments_passed"`
@@ -168,6 +169,7 @@ func PreviewKDEControlledLaunchAction(request KDEControlledLaunchActionRequest) 
 	}
 	if kdeCenterGUICard != nil {
 		preview.OwnerFileOpenVerified = kdeCenterGUICard.OwnerFileOpenVerified
+		preview.OwnerFileOpenEntrypointInvoked = kdeCenterGUICard.OwnerFileOpenEntrypointInvoked
 		preview.OwnerDelegatedFileArgumentCount = kdeCenterGUICard.OwnerDelegatedFileArgumentCount
 		preview.OwnerDelegatedFileArgumentCopiedCount = kdeCenterGUICard.OwnerDelegatedFileArgumentCopiedCount
 		preview.OwnerDelegatedFileArgumentsPassed = kdeCenterGUICard.OwnerDelegatedFileArgumentsPassed
@@ -271,6 +273,9 @@ func validateKDEControlledLaunchActionGUICard(card KDECenterPageKnownAppMatrixCa
 			return errors.New("KDE controlled launch action GUI card file-open evidence requires observed window match")
 		}
 	}
+	if card.OwnerFileOpenEntrypointInvoked && !card.OwnerFileOpenVerified {
+		return errors.New("KDE controlled launch action GUI card file-open entrypoint evidence requires verified file-open evidence")
+	}
 	for _, value := range []string{
 		card.AppID,
 		card.DisplayName,
@@ -350,6 +355,9 @@ func validateKDEControlledLaunchActionPreview(preview KDEControlledLaunchActionP
 		case !preview.OwnerDelegatedWindowMatchObserved:
 			return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open evidence requires observed window match")
 		}
+	}
+	if preview.OwnerFileOpenEntrypointInvoked && !preview.OwnerFileOpenVerified {
+		return KDEControlledLaunchActionPreview{}, errors.New("KDE controlled launch action file-open entrypoint evidence requires verified file-open evidence")
 	}
 	for _, value := range []string{
 		preview.SchemaVersion,

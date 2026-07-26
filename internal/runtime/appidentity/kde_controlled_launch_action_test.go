@@ -99,6 +99,7 @@ func TestPreviewKDEControlledLaunchActionConsumesKDEGUICardRoute(t *testing.T) {
 		preview.DesktopCallableRuntimeMethod != card.DesktopCallableRuntimeMethod ||
 		preview.DesktopCallableExecutionType != card.DesktopCallableExecutionType ||
 		!preview.OwnerFileOpenVerified ||
+		!preview.OwnerFileOpenEntrypointInvoked ||
 		preview.OwnerDelegatedFileArgumentCount != 1 ||
 		preview.OwnerDelegatedFileArgumentCopiedCount != 1 ||
 		!preview.OwnerDelegatedFileArgumentsPassed ||
@@ -177,6 +178,7 @@ func TestPreviewKDEControlledLaunchActionSelectsKDECenterPageGUICard(t *testing.
 	if preview.ApplicationID != "org.xnix.apps.messagebox" ||
 		preview.EvidenceRelativePath != record.EvidenceRelativePath ||
 		!preview.OwnerFileOpenVerified ||
+		!preview.OwnerFileOpenEntrypointInvoked ||
 		preview.OwnerDelegatedWindowMatch != "messagebox-document.txt" ||
 		!sameRuntimeStatusLaunchOwnerFixtureArgs(preview.KDEForwardedArguments, []string{record.EvidenceRelativePath}) ||
 		preview.OwnerServiceArgsExposedToKDE ||
@@ -301,37 +303,38 @@ func recordKDEControlledLaunchActionGUIEvidence(t *testing.T, stateRoot string) 
 
 func kdeControlledLaunchActionGUICard(record KnownAppKDERuntimeStatusLaunchEvidenceRecord) KDECenterPageKnownAppMatrixCard {
 	return KDECenterPageKnownAppMatrixCard{
-		AppID:                                        "org.xnix.apps.messagebox",
-		DisplayName:                                  "Xnix MessageBox",
-		AppVersion:                                   record.AppVersion,
-		EvidenceKind:                                 "known-application-gui-smoke",
-		EvidenceSource:                               "wine-guest-gui-smoke",
-		SmokeStatus:                                  "passed",
-		XWindowObserved:                              true,
-		WindowObserved:                               true,
-		CompatibilityState:                           "owner-controlled-gui-qemu-wine-verified",
-		CenterCardState:                              "validated-owner-controlled-gui-runtime-run",
-		PrimaryActionID:                              KnownAppKDERuntimeStatusLaunchAction,
-		PrimaryActionLabel:                           "Show Runtime-controlled launch",
-		PrimaryActionKind:                            "runtime-status",
-		PrimaryActionEnabled:                         true,
-		DesktopCallableRoute:                         "kde-dbus-runtime-status-action",
-		DesktopCallableRuntimeMethod:                 "ShowRuntimeControlledLaunch",
-		DesktopCallableExecutionType:                 KnownAppKDERuntimeStatusLaunchExecutionRequestType,
-		DesktopDBusMethod:                            "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
-		DesktopEvidenceHandleForwarded:               true,
-		KDEForwardedArgumentKind:                     "evidence-relative-path",
-		KDEForwardedArguments:                        []string{record.EvidenceRelativePath},
-		OwnerServiceArgsExposedToKDE:                 false,
-		ExecutionEvidenceRecorded:                    true,
-		StagedLauncherVerified:                       true,
-		OwnerControlledRuntimeLaunchVerified:         true,
-		OwnerManagedCopyVerified:                     true,
-		OwnerFileOpenVerified:                        true,
-		OwnerDelegatedFileArgumentCount:              1,
-		OwnerDelegatedFileArgumentCopiedCount:        1,
-		OwnerDelegatedFileArgumentsPassed:            true,
-		OwnerDelegatedFileArgumentWinepathTranslated: true,
+		AppID:                                             "org.xnix.apps.messagebox",
+		DisplayName:                                       "Xnix MessageBox",
+		AppVersion:                                        record.AppVersion,
+		EvidenceKind:                                      "known-application-gui-smoke",
+		EvidenceSource:                                    "wine-guest-gui-smoke",
+		SmokeStatus:                                       "passed",
+		XWindowObserved:                                   true,
+		WindowObserved:                                    true,
+		CompatibilityState:                                "owner-controlled-gui-qemu-wine-verified",
+		CenterCardState:                                   "validated-owner-controlled-gui-runtime-run",
+		PrimaryActionID:                                   KnownAppKDERuntimeStatusLaunchAction,
+		PrimaryActionLabel:                                "Show Runtime-controlled launch",
+		PrimaryActionKind:                                 "runtime-status",
+		PrimaryActionEnabled:                              true,
+		DesktopCallableRoute:                              "kde-dbus-runtime-status-action",
+		DesktopCallableRuntimeMethod:                      "ShowRuntimeControlledLaunch",
+		DesktopCallableExecutionType:                      KnownAppKDERuntimeStatusLaunchExecutionRequestType,
+		DesktopDBusMethod:                                 "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+		DesktopEvidenceHandleForwarded:                    true,
+		KDEForwardedArgumentKind:                          "evidence-relative-path",
+		KDEForwardedArguments:                             []string{record.EvidenceRelativePath},
+		OwnerServiceArgsExposedToKDE:                      false,
+		ExecutionEvidenceRecorded:                         true,
+		StagedLauncherVerified:                            true,
+		OwnerControlledRuntimeLaunchVerified:              true,
+		OwnerManagedCopyVerified:                          true,
+		OwnerFileOpenVerified:                             true,
+		OwnerFileOpenEntrypointInvoked:                    true,
+		OwnerDelegatedFileArgumentCount:                   1,
+		OwnerDelegatedFileArgumentCopiedCount:             1,
+		OwnerDelegatedFileArgumentsPassed:                 true,
+		OwnerDelegatedFileArgumentWinepathTranslated:      true,
 		OwnerDelegatedFileArgumentWinepathTranslatedCount: 1,
 		OwnerDelegatedRawFileArgumentPathExposed:          false,
 		OwnerDelegatedWindowMatch:                         "messagebox-document.txt",
@@ -367,6 +370,7 @@ func kdeControlledLaunchActionCenterPage(card KDECenterPageKnownAppMatrixCard) K
 		KnownAppOwnerControlledGUIEvidenceCount: 1,
 		KnownAppOwnerManagedCopyVerifiedCount:   1,
 		KnownAppOwnerFileOpenVerifiedCount:      1,
+		KnownAppOwnerFileOpenEntrypointCount:    1,
 		KnownAppGUIEvidenceCards:                []KDECenterPageKnownAppMatrixCard{card},
 		RuntimeOwned:                            true,
 		GoRuntimeBacked:                         true,

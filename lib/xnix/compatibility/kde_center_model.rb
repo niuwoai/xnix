@@ -41,6 +41,7 @@ module Xnix
           "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
           "known_app_owner_file_open_verified_count" => owner_file_open_verified_count(gui_evidence_cards),
+          "known_app_owner_file_open_entrypoint_count" => owner_file_open_entrypoint_count(gui_evidence_cards),
           "known_app_gui_evidence_cards" => gui_evidence_cards,
           "applications" => applications
         }
@@ -118,6 +119,7 @@ module Xnix
           "owner_controlled_runtime_launch_verified" => card.fetch("owner_controlled_runtime_launch_verified", false),
           "owner_managed_copy_verified" => card.fetch("owner_managed_copy_verified", false),
           "owner_file_open_verified" => card.fetch("owner_file_open_verified", false),
+          "owner_file_open_entrypoint_invoked" => card.fetch("owner_file_open_entrypoint_invoked", false),
           "owner_delegated_file_argument_count" => card.fetch("owner_delegated_file_argument_count", 0),
           "owner_delegated_file_argument_copied_count" => card.fetch("owner_delegated_file_argument_copied_count", 0),
           "owner_delegated_file_arguments_passed" => card.fetch("owner_delegated_file_arguments_passed", false),
@@ -178,6 +180,15 @@ module Xnix
             !card.fetch("owner_delegated_raw_file_argument_path_exposed", false) &&
             !card.fetch("owner_delegated_window_match", "").strip.empty? &&
             card.fetch("owner_delegated_window_match_observed", false)
+        end
+      end
+
+      def owner_file_open_entrypoint_count(gui_evidence_cards)
+        gui_evidence_cards.count do |card|
+          card.fetch("smoke_status", nil) == "passed" &&
+            card.fetch("owner_controlled_runtime_launch_verified", false) &&
+            card.fetch("owner_file_open_verified", false) &&
+            card.fetch("owner_file_open_entrypoint_invoked", false)
         end
       end
 
@@ -774,6 +785,7 @@ module Xnix
           "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
           "known_app_owner_file_open_verified_count" => owner_file_open_verified_count(gui_evidence_cards),
+          "known_app_owner_file_open_entrypoint_count" => owner_file_open_entrypoint_count(gui_evidence_cards),
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },

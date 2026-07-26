@@ -679,25 +679,26 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		SignatureStatus: "development-only",
 	}, "approved", nil, KDECenterPageOptions{
 		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
-			AppID:                                 "org.xnix.apps.messagebox",
-			DisplayName:                           "Xnix MessageBox",
-			AppVersion:                            currentProjectVersion(t),
-			EvidenceKind:                          "known-application-gui-smoke",
-			EvidenceSource:                        "wine-guest-gui-smoke",
-			SmokeStatus:                           "passed",
-			XWindowObserved:                       true,
-			WindowObserved:                        true,
-			CompatibilityState:                    "owner-controlled-gui-qemu-wine-verified",
-			CenterCardState:                       "validated-owner-controlled-gui-runtime-run",
-			ExecutionEvidenceRecorded:             true,
-			StagedLauncherVerified:                true,
-			OwnerControlledRuntimeLaunchVerified:  true,
-			OwnerManagedCopyVerified:              true,
-			OwnerFileOpenVerified:                 true,
-			OwnerDelegatedFileArgumentCount:       1,
-			OwnerDelegatedFileArgumentCopiedCount: 1,
-			OwnerDelegatedFileArgumentsPassed:     true,
-			OwnerDelegatedFileArgumentWinepathTranslated:      true,
+			AppID:                                        "org.xnix.apps.messagebox",
+			DisplayName:                                  "Xnix MessageBox",
+			AppVersion:                                   currentProjectVersion(t),
+			EvidenceKind:                                 "known-application-gui-smoke",
+			EvidenceSource:                               "wine-guest-gui-smoke",
+			SmokeStatus:                                  "passed",
+			XWindowObserved:                              true,
+			WindowObserved:                               true,
+			CompatibilityState:                           "owner-controlled-gui-qemu-wine-verified",
+			CenterCardState:                              "validated-owner-controlled-gui-runtime-run",
+			ExecutionEvidenceRecorded:                    true,
+			StagedLauncherVerified:                       true,
+			OwnerControlledRuntimeLaunchVerified:         true,
+			OwnerManagedCopyVerified:                     true,
+			OwnerFileOpenVerified:                        true,
+			OwnerFileOpenEntrypointInvoked:               true,
+			OwnerDelegatedFileArgumentCount:              1,
+			OwnerDelegatedFileArgumentCopiedCount:        1,
+			OwnerDelegatedFileArgumentsPassed:            true,
+			OwnerDelegatedFileArgumentWinepathTranslated: true,
 			OwnerDelegatedFileArgumentWinepathTranslatedCount: 1,
 			OwnerDelegatedRawFileArgumentPathExposed:          false,
 			OwnerDelegatedWindowMatch:                         "messagebox-document.txt",
@@ -719,6 +720,7 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		preview.KnownAppOwnerControlledGUIEvidenceCount != 1 ||
 		preview.KnownAppOwnerManagedCopyVerifiedCount != 1 ||
 		preview.KnownAppOwnerFileOpenVerifiedCount != 1 ||
+		preview.KnownAppOwnerFileOpenEntrypointCount != 1 ||
 		len(preview.KnownAppGUIEvidenceCards) != 1 {
 		t.Fatalf("unexpected owner-controlled GUI counts: %#v", preview)
 	}
@@ -745,6 +747,7 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		!card.OwnerControlledRuntimeLaunchVerified ||
 		!card.OwnerManagedCopyVerified ||
 		!card.OwnerFileOpenVerified ||
+		!card.OwnerFileOpenEntrypointInvoked ||
 		card.OwnerDelegatedFileArgumentCount != 1 ||
 		card.OwnerDelegatedFileArgumentCopiedCount != 1 ||
 		!card.OwnerDelegatedFileArgumentsPassed ||

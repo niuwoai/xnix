@@ -61,6 +61,8 @@ type GUISmokeEvidencePreview struct {
 	OwnerControlledLaunchVerified                     bool                         `json:"owner_controlled_launch_verified"`
 	OwnerManagedCopyVerified                          bool                         `json:"owner_managed_copy_verified"`
 	OwnerFileOpenVerified                             bool                         `json:"owner_file_open_verified"`
+	FileOpenEntrypointRequested                       bool                         `json:"file_open_entrypoint_requested"`
+	OwnerFileOpenEntrypointInvoked                    bool                         `json:"owner_file_open_entrypoint_invoked"`
 	OwnerEvidenceHandoffReady                         bool                         `json:"owner_evidence_handoff_ready"`
 	OwnerEvidenceRelativePath                         string                       `json:"owner_evidence_relative_path,omitempty"`
 	WinebootInvoked                                   bool                         `json:"wineboot_invoked"`
@@ -157,6 +159,8 @@ type guiSmokeReport struct {
 	OwnerDelegatedRawFileArgumentPathExposed          bool   `json:"owner_delegated_raw_file_argument_path_exposed"`
 	OwnerDelegatedWindowMatch                         string `json:"owner_delegated_window_match"`
 	OwnerDelegatedWindowMatchObserved                 bool   `json:"owner_delegated_window_match_observed"`
+	FileOpenEntrypointRequested                       bool   `json:"file_open_entrypoint_requested"`
+	OwnerFileOpenEntrypointInvoked                    bool   `json:"owner_file_open_entrypoint_invoked"`
 	OwnerDelegatedHostRootModified                    bool   `json:"owner_delegated_host_root_modified"`
 	OwnerDelegatedDockerSocketMounted                 bool   `json:"owner_delegated_docker_socket_mounted"`
 	OwnerDelegatedBroadHostMountRequired              bool   `json:"owner_delegated_broad_host_mount_required"`
@@ -235,8 +239,9 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	ownerControlledLaunchVerified := guiSmokeOwnerControlledLaunchVerified(report, projectionReady)
 	ownerManagedCopyVerified := ownerControlledLaunchVerified && report.OwnerExternalGUIAppRequested && report.OwnerExternalGUIAppDelivery == "owner-managed-copy" && report.OwnerDelegatedManagedArtifactCopied
 	ownerFileOpenVerified := guiSmokeOwnerFileOpenVerified(report, ownerControlledLaunchVerified)
+	ownerFileOpenEntrypointInvoked := ownerFileOpenVerified && report.FileOpenEntrypointRequested && report.OwnerFileOpenEntrypointInvoked
 	ownerEvidenceHandoffReady := ownerControlledLaunchVerified && report.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(report.OwnerEvidenceRelativePath)
-	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, evidenceSource, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerFileOpenVerified, ownerEvidenceHandoffReady)
+	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, evidenceSource, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerFileOpenVerified, ownerFileOpenEntrypointInvoked, ownerEvidenceHandoffReady)
 
 	return GUISmokeEvidencePreview{
 		SchemaVersion:                                GUISmokeEvidencePreviewSchemaVersion,
@@ -277,6 +282,8 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		OwnerControlledLaunchVerified:                     ownerControlledLaunchVerified,
 		OwnerManagedCopyVerified:                          ownerManagedCopyVerified,
 		OwnerFileOpenVerified:                             ownerFileOpenVerified,
+		FileOpenEntrypointRequested:                       report.FileOpenEntrypointRequested,
+		OwnerFileOpenEntrypointInvoked:                    ownerFileOpenEntrypointInvoked,
 		OwnerEvidenceHandoffReady:                         ownerEvidenceHandoffReady,
 		OwnerEvidenceRelativePath:                         strings.TrimSpace(report.OwnerEvidenceRelativePath),
 		WinebootInvoked:                                   winebootInvoked,
@@ -424,6 +431,14 @@ func validateGUISmokeReport(report guiSmokeReport) error {
 			return errors.New("owner-controlled GUI file-open evidence requires observed delegated window match")
 		}
 	}
+	if report.OwnerFileOpenEntrypointInvoked {
+		switch {
+		case !guiSmokeOwnerFileOpenEvidencePresent(report):
+			return errors.New("owner-controlled GUI file-open entrypoint invocation requires file-open evidence")
+		case !report.FileOpenEntrypointRequested:
+			return errors.New("owner-controlled GUI file-open entrypoint invocation requires an entrypoint request")
+		}
+	}
 	return nil
 }
 
@@ -531,10 +546,11 @@ func guiSmokeOwnerFileOpenEvidencePresent(report guiSmokeReport) bool {
 		report.OwnerDelegatedFileArgumentWinepathTranslatedCount != 0 ||
 		report.OwnerDelegatedRawFileArgumentPathExposed ||
 		strings.TrimSpace(report.OwnerDelegatedWindowMatch) != "" ||
-		report.OwnerDelegatedWindowMatchObserved
+		report.OwnerDelegatedWindowMatchObserved ||
+		report.OwnerFileOpenEntrypointInvoked
 }
 
-func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerFileOpenVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
+func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerFileOpenVerified bool, ownerFileOpenEntrypointInvoked bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
 	xWindowObserved := guiSmokeXWindowObserved(report)
 	recipeBacked := guiSmokeRecipeBacked(report)
@@ -569,6 +585,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 	if ownerFileOpenVerified {
 		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with copied file arguments, Wine path translation, and matched window evidence."
 	}
+	if ownerFileOpenEntrypointInvoked {
+		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch through the desktop file-open entrypoint with copied file arguments, Wine path translation, and matched window evidence."
+	}
 	if ownerEvidenceHandoffReady {
 		primaryActionID = KnownAppKDERuntimeStatusLaunchAction
 		primaryActionLabel = "Show Runtime-controlled launch"
@@ -579,6 +598,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		}
 		if ownerFileOpenVerified {
 			summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with a desktop evidence-only owner handoff ready."
+		}
+		if ownerFileOpenEntrypointInvoked {
+			summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open entrypoint launch with a desktop evidence-only owner handoff ready."
 		}
 	}
 	return KnownAppSmokeEvidenceSummary{
@@ -614,6 +636,7 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		OwnerControlledRuntimeLaunchVerified:         ownerControlledLaunchVerified,
 		OwnerManagedCopyVerified:                     ownerManagedCopyVerified,
 		OwnerFileOpenVerified:                        ownerFileOpenVerified,
+		OwnerFileOpenEntrypointInvoked:               ownerFileOpenEntrypointInvoked,
 		OwnerDelegatedFileArgumentCount:              report.OwnerDelegatedFileArgumentCount,
 		OwnerDelegatedFileArgumentCopiedCount:        report.OwnerDelegatedFileArgumentCopiedCount,
 		OwnerDelegatedFileArgumentsPassed:            report.OwnerDelegatedFileArgumentsPassed,
