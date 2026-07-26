@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc215
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc216
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc216 checkpoint makes the restricted D-Bus controlled-launch owner fixture usable by the real MessageBox app-execution path instead of only the older 7zr artifact fixture. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now accepts `--app`, `--gui-smoke-evidence-file`, `--state-root`, `--cache-root`, and `--runtime-command`, preserves those arguments across `dbus-run-session`, and builds its fake delegated launcher payload from the Go owner fixture's receipt, review, and controlled-session ids. The script also refuses implicit local `go run` compilation unless `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is set, keeping q4 as the default build host.
 
 The v0.2.640-rc215 checkpoint connects real q4 MessageBox app-execution evidence to the Runtime-owned action preparation lane. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file APP_EXECUTION.json` now accepts the verified-catalog app-execution result, records the owner fixture handoff, and allows `kde-controlled-launch-session-bus-smoke-plan-preview` to derive a restricted private-session D-Bus smoke plan from that same evidence handle. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4, then requires owner fixture readiness, owner service-call readiness, evidence-only KDE forwarding, and session-bus plan readiness while backend launch, process start, raw paths, state roots, host-root mutation, and unsafe host/container gates stay closed.
 

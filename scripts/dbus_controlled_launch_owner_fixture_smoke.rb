@@ -4,23 +4,46 @@
 require "fileutils"
 require "json"
 require "open3"
+require "optparse"
 require "pathname"
 require "securerandom"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
+ORIGINAL_ARGV = ARGV.dup
 BUS_NAME = "org.xnix.Compatibility1"
 OBJECT_PATH = "/org/xnix/Compatibility1"
 INTERFACE = "org.xnix.Compatibility1"
 PUBLIC_METHOD = "org.xnix.Compatibility1.ShowRuntimeControlledLaunch"
-APP_ID = "7zr"
-APP_VERSION = "26.02"
-GUEST_BOUNDARY = "managed-known-app-guest-smoke"
-SESSION_ID = "known-app-controlled-execution-session-7zr-26.02"
-LAUNCH_RECEIPT_ID = "known-app-launch-authorization-7zr-26.02"
-REVIEW_RECEIPT_ID = "known-app-session-gated-launch-review-7zr-26.02-#{SESSION_ID}"
+DEFAULT_APP_ID = "7zr"
+DEFAULT_GUEST_BOUNDARY = "managed-known-app-guest-smoke"
 SMOKE_NAME = "D-Bus controlled launch owner fixture smoke"
 PASS_MARKER = "PASS: #{SMOKE_NAME}"
 SKIP_MARKER = "SKIP: #{SMOKE_NAME}"
+ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
+
+options = {
+  app_id: DEFAULT_APP_ID,
+  guest_boundary: DEFAULT_GUEST_BOUNDARY,
+  state_root: "",
+  cache_root: "",
+  gui_smoke_evidence_file: "",
+  runtime_command: ""
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: ruby scripts/dbus_controlled_launch_owner_fixture_smoke.rb [--app APP_ID] [--gui-smoke-evidence-file PATH]"
+  parser.on("--app APP_ID", "Known Windows application id for the Runtime owner fixture.") { |value| options[:app_id] = value }
+  parser.on("--guest-boundary NAME", "Runtime guest boundary, default: #{DEFAULT_GUEST_BOUNDARY}.") { |value| options[:guest_boundary] = value }
+  parser.on("--state-root PATH", "Existing or creatable Runtime owner state root for the fixture run.") { |value| options[:state_root] = value }
+  parser.on("--cache-root PATH", "Known Windows app cache root for the fixture run.") { |value| options[:cache_root] = value }
+  parser.on("--gui-smoke-evidence-file PATH", "Optional GUI smoke or verified-catalog app-execution evidence file.") { |value| options[:gui_smoke_evidence_file] = value }
+  parser.on("--runtime-command PATH", "Use an existing xnix-runtime-go binary instead of PATH discovery.") { |value| options[:runtime_command] = value }
+end.parse!
+
+abort "D-Bus controlled launch owner fixture smoke does not accept positional arguments" unless ARGV.empty?
+
+APP_ID = options.fetch(:app_id).to_s.strip
+GUEST_BOUNDARY = options.fetch(:guest_boundary).to_s.strip
 RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
 CONTAINER_SCRATCH_ROOT = "/workspace/.xnix-dbus-controlled-launch-scratch"
 DEFAULT_WORK_ROOT = if Dir.exist?(CONTAINER_SCRATCH_ROOT)
@@ -32,42 +55,12 @@ DEFAULT_WORK_ROOT = if Dir.exist?(CONTAINER_SCRATCH_ROOT)
                     end
 WORK_ROOT = Pathname.new(ENV.fetch("XNIX_DBUS_CONTROLLED_LAUNCH_WORK_ROOT", DEFAULT_WORK_ROOT))
 RUN_ROOT = WORK_ROOT.join(RUN_ID)
-STATE_ROOT = RUN_ROOT.join("state")
-CACHE_ROOT = PROJECT_ROOT.join(".cache", "xnix", "known-winapps")
+STATE_ROOT = options.fetch(:state_root).to_s.strip.empty? ? RUN_ROOT.join("state") : Pathname.new(options.fetch(:state_root)).expand_path(PROJECT_ROOT).cleanpath
+CACHE_ROOT = options.fetch(:cache_root).to_s.strip.empty? ? PROJECT_ROOT.join(".cache", "xnix", "known-winapps") : Pathname.new(options.fetch(:cache_root)).expand_path(PROJECT_ROOT).cleanpath
+GUI_SMOKE_EVIDENCE_FILE = options.fetch(:gui_smoke_evidence_file).to_s.strip
+RUNTIME_COMMAND_OVERRIDE = options.fetch(:runtime_command).to_s.strip
 FAKE_LAUNCHER = RUN_ROOT.join("fake-xnix-compat-launch")
 FAKE_LAUNCHER_ARGS = RUN_ROOT.join("fake-launcher-args.txt")
-
-DELEGATED_PAYLOAD = {
-  "request_type" => "windows-known-app-dispatch-smoke",
-  "status" => "passed",
-  "guest_boundary" => GUEST_BOUNDARY,
-  "runtime_owned_dispatch" => true,
-  "artifact_verified" => true,
-  "marker_observed" => true,
-  "smoke_passed" => true,
-  "execution_started" => true,
-  "backend_process_started" => false,
-  "session_gated_controlled_dispatch_consumed" => true,
-  "session_gated_controlled_dispatch_state" => "created-after-session-gated-review",
-  "session_gated_review_receipt_id" => REVIEW_RECEIPT_ID,
-  "launch_authorization_receipt_id" => LAUNCH_RECEIPT_ID,
-  "controlled_execution_session_consumed" => true,
-  "controlled_execution_session_id" => SESSION_ID,
-  "controlled_session_digest_verified" => true,
-  "controlled_session_relative_path" => "execution-ledger/sessions/#{SESSION_ID}.json",
-  "runtime_owner_consumable_session" => true,
-  "kde_read_model_consumable_session" => true,
-  "controlled_session_live_state_observed" => false,
-  "controlled_session_registered" => false,
-  "controlled_session_window_observed" => false,
-  "controlled_session_host_root_modified" => false,
-  "controlled_session_backend_process_start" => false,
-  "host_root_modified" => false,
-  "docker_socket_mounted" => false,
-  "broad_host_mount_required" => false,
-  "raw_command_exposed" => false,
-  "backend_details_exposed" => false
-}.freeze
 
 def assert(condition, message)
   return if condition
@@ -84,8 +77,9 @@ def command_available?(name)
 end
 
 def runtime_go_command
+  return [RUNTIME_COMMAND_OVERRIDE] unless RUNTIME_COMMAND_OVERRIDE.empty?
   return ["xnix-runtime-go"] if command_available?("xnix-runtime-go")
-  return ["go", "run", "./cmd/xnix-runtime-go"] if command_available?("go")
+  return ["go", "run", "./cmd/xnix-runtime-go"] if ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
 
   nil
 end
@@ -124,14 +118,48 @@ def assert_no_forbidden(text, forbidden_terms, label)
   end
 end
 
-def write_fake_launcher
+def delegated_payload(fixture)
+  {
+    "request_type" => "windows-known-app-dispatch-smoke",
+    "status" => "passed",
+    "guest_boundary" => GUEST_BOUNDARY,
+    "runtime_owned_dispatch" => true,
+    "artifact_verified" => true,
+    "marker_observed" => true,
+    "smoke_passed" => true,
+    "execution_started" => true,
+    "backend_process_started" => false,
+    "session_gated_controlled_dispatch_consumed" => true,
+    "session_gated_controlled_dispatch_state" => "created-after-session-gated-review",
+    "session_gated_review_receipt_id" => fixture.fetch("session_gated_review_receipt_id"),
+    "launch_authorization_receipt_id" => fixture.fetch("launch_authorization_receipt_id"),
+    "controlled_execution_session_consumed" => true,
+    "controlled_execution_session_id" => fixture.fetch("controlled_execution_session_id"),
+    "controlled_session_digest_verified" => true,
+    "controlled_session_relative_path" => fixture.fetch("controlled_session_relative_path"),
+    "runtime_owner_consumable_session" => true,
+    "kde_read_model_consumable_session" => true,
+    "controlled_session_live_state_observed" => false,
+    "controlled_session_registered" => false,
+    "controlled_session_window_observed" => false,
+    "controlled_session_host_root_modified" => false,
+    "controlled_session_backend_process_start" => false,
+    "host_root_modified" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "raw_command_exposed" => false,
+    "backend_details_exposed" => false
+  }
+end
+
+def write_fake_launcher(payload)
   source = [
     "#!/usr/bin/env ruby",
     "# frozen_string_literal: true",
     "require \"json\"",
     "args_path = ENV.fetch(\"XNIX_DBUS_CONTROLLED_LAUNCH_ARGS_FILE\")",
     "File.write(args_path, ARGV.join(\"\\n\") + \"\\n\")",
-    "puts JSON.generate(#{DELEGATED_PAYLOAD.inspect})"
+    "puts JSON.generate(#{payload.inspect})"
   ].join("\n")
   File.write(FAKE_LAUNCHER, source)
   File.chmod(0o755, FAKE_LAUNCHER)
@@ -139,23 +167,27 @@ end
 
 def prepare_fixture(runtime_command)
   env = {}
-  fixture, fixture_stdout = run_json(
-    env,
+  args = [
     *runtime_command,
     "known-app-runtime-status-launch-owner-fixture-record",
     "--app", APP_ID,
     "--state-root", STATE_ROOT.to_s,
     "--cache-root", CACHE_ROOT.to_s,
     "--guest-boundary", GUEST_BOUNDARY
+  ]
+  args += ["--gui-smoke-evidence-file", GUI_SMOKE_EVIDENCE_FILE] unless GUI_SMOKE_EVIDENCE_FILE.empty?
+  fixture, fixture_stdout = run_json(
+    env,
+    *args
   )
   unless fixture["fixture_ready"] == true
     reason = fixture.fetch("skip_reason", "known Windows app artifact unavailable")
     puts "#{SKIP_MARKER} (#{reason})"
     exit 0
   end
-  assert(fixture["launch_authorization_receipt_id"] == LAUNCH_RECEIPT_ID, "launch receipt fixture id must be stable")
-  assert(fixture["controlled_execution_session_id"] == SESSION_ID, "controlled session fixture id must be stable")
-  assert(fixture["session_gated_review_receipt_id"] == REVIEW_RECEIPT_ID, "review receipt fixture id must be stable")
+  assert(fixture["launch_authorization_receipt_id"].to_s.start_with?("known-app-launch-authorization-"), "launch receipt fixture id must be stable")
+  assert(fixture["controlled_execution_session_id"].to_s.start_with?("known-app-controlled-execution-session-"), "controlled session fixture id must be stable")
+  assert(fixture["session_gated_review_receipt_id"].to_s.start_with?("known-app-session-gated-launch-review-"), "review receipt fixture id must be stable")
   assert(fixture["evidence_relative_path"].to_s.start_with?("runtime/kde-runtime-status-launch-evidence/"), "Runtime-status evidence fixture must expose only a relative path")
   assert(fixture["runtime_owned"] == true, "Runtime-status evidence fixture must be Runtime-owned")
   assert(fixture["go_runtime_backed"] == true, "Runtime-status evidence fixture must be Go backed")
@@ -174,7 +206,7 @@ def prepare_fixture(runtime_command)
   assert(fixture["kde_forwards_only_evidence_handle"] == true, "Runtime-status evidence fixture must keep KDE evidence-only")
   assert(fixture["desktop_receipt_fields_reconstructed"] == false, "Runtime-status evidence fixture must not reconstruct receipt fields in KDE")
   assert(fixture["desktop_kde_state_root_access"] == false, "Runtime-status evidence fixture must not grant KDE state-root access")
-  assert_no_forbidden(fixture_stdout, [STATE_ROOT.to_s, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status owner fixture output")
+  assert_no_forbidden(fixture_stdout, [STATE_ROOT.to_s, GUI_SMOKE_EVIDENCE_FILE, "wine ", "wine/", ".wine", "qemu-system", "program files"], "Runtime-status owner fixture output")
   fixture
 end
 
@@ -290,9 +322,9 @@ def assert_owner_service_call(stdout, evidence_record, desktop_trigger)
     "action_trigger_type" => "known-app-kde-runtime-status-launch-action-trigger-preview",
     "delegated_status" => "passed",
     "delegated_guest_boundary" => GUEST_BOUNDARY,
-    "delegated_session_gated_review_receipt_id" => REVIEW_RECEIPT_ID,
-    "delegated_launch_authorization_receipt_id" => LAUNCH_RECEIPT_ID,
-    "delegated_controlled_execution_session_id" => SESSION_ID
+    "delegated_session_gated_review_receipt_id" => evidence_record.fetch("session_gated_review_receipt_id"),
+    "delegated_launch_authorization_receipt_id" => evidence_record.fetch("launch_authorization_receipt_id"),
+    "delegated_controlled_execution_session_id" => evidence_record.fetch("controlled_execution_session_id")
   }.each do |key, expected|
     assert(action[key] == expected, "D-Bus owner action payload must preserve #{key}")
   end
@@ -354,7 +386,7 @@ end
 
 runtime_command = runtime_go_command
 unless runtime_command
-  puts "#{SKIP_MARKER} (xnix-runtime-go and go are unavailable)"
+  puts "#{SKIP_MARKER} (xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with scripts/remote_go_build.rb --execute)"
   exit 0
 end
 unless command_available?("dbus-run-session") && command_available?("gdbus") && command_available?("xnix-dbus-smoke")
@@ -363,7 +395,7 @@ unless command_available?("dbus-run-session") && command_available?("gdbus") && 
 end
 
 unless ENV["DBUS_SESSION_BUS_ADDRESS"]
-  stdout, stderr, status = Open3.capture3("dbus-run-session", "--", "ruby", __FILE__, chdir: PROJECT_ROOT.to_s)
+  stdout, stderr, status = Open3.capture3("dbus-run-session", "--", "ruby", __FILE__, *ORIGINAL_ARGV, chdir: PROJECT_ROOT.to_s)
   print stdout
   warn stderr unless stderr.empty?
   exit status.exitstatus
@@ -371,8 +403,8 @@ end
 
 FileUtils.mkdir_p(RUN_ROOT)
 FileUtils.mkdir_p(STATE_ROOT)
-write_fake_launcher
 evidence_record = prepare_fixture(runtime_command)
+write_fake_launcher(delegated_payload(evidence_record))
 desktop_trigger = service_call_materialization_from_runtime(runtime_command, evidence_record)
 
 server_log = RUN_ROOT.join("xnix-dbus-smoke.log")
@@ -414,9 +446,9 @@ begin
 
   launcher_args = FAKE_LAUNCHER_ARGS.read
   assert(launcher_args.include?("--state-root\n#{STATE_ROOT}"), "fake managed launcher must receive Runtime-injected state root")
-  assert(launcher_args.include?("--receipt-id\n#{LAUNCH_RECEIPT_ID}"), "fake managed launcher must receive the launch authorization receipt")
-  assert(launcher_args.include?("--review-receipt-id\n#{REVIEW_RECEIPT_ID}"), "fake managed launcher must receive the session-gated review receipt")
-  assert(launcher_args.include?("--session-id\n#{SESSION_ID}"), "fake managed launcher must receive the controlled execution session")
+  assert(launcher_args.include?("--receipt-id\n#{evidence_record.fetch("launch_authorization_receipt_id")}"), "fake managed launcher must receive the launch authorization receipt")
+  assert(launcher_args.include?("--review-receipt-id\n#{evidence_record.fetch("session_gated_review_receipt_id")}"), "fake managed launcher must receive the session-gated review receipt")
+  assert(launcher_args.include?("--session-id\n#{evidence_record.fetch("controlled_execution_session_id")}"), "fake managed launcher must receive the controlled execution session")
   assert(launcher_args.include?("--timeout\n1s"), "fake managed launcher must receive the owner-supplied guest timeout")
 
   puts PASS_MARKER

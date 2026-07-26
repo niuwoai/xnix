@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc215`.
+The project is currently at `v0.2.640-rc216`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc215`.
 
 ## Current Checkpoint
 
-v0.2.640-rc215 connects real q4 MessageBox app-execution evidence to the Runtime-owned action preparation lane. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file APP_EXECUTION.json` now accepts the verified-catalog app-execution result, records the owner fixture handoff, and allows `kde-controlled-launch-session-bus-smoke-plan-preview` to derive a restricted private-session D-Bus smoke plan from that same evidence handle. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4, then requires owner fixture readiness, owner service-call readiness, evidence-only KDE forwarding, and session-bus plan readiness while backend launch, process start, raw paths, state roots, host-root mutation, and unsafe host/container gates stay closed.
+v0.2.640-rc216 makes the restricted D-Bus controlled-launch owner fixture usable by the real MessageBox app-execution path instead of only the older 7zr artifact fixture. `scripts/dbus_controlled_launch_owner_fixture_smoke.rb` now accepts `--app`, `--gui-smoke-evidence-file`, `--state-root`, `--cache-root`, and `--runtime-command`, preserves those arguments across `dbus-run-session`, and builds its fake delegated launcher payload from the Go owner fixture's receipt, review, and controlled-session ids. The script also refuses implicit local `go run` compilation unless `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is set, keeping q4 as the default build host.
+
+The previous v0.2.640-rc215 checkpoint connects real q4 MessageBox app-execution evidence to the Runtime-owned action preparation lane. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file APP_EXECUTION.json` now accepts the verified-catalog app-execution result, records the owner fixture handoff, and allows `kde-controlled-launch-session-bus-smoke-plan-preview` to derive a restricted private-session D-Bus smoke plan from that same evidence handle. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4, then requires owner fixture readiness, owner service-call readiness, evidence-only KDE forwarding, and session-bus plan readiness while backend launch, process start, raw paths, state roots, host-root mutation, and unsafe host/container gates stay closed.
 
 The previous v0.2.640-rc214 checkpoint carries the real q4 MessageBox app-execution evidence one step closer to a desktop action. The q4 GUI smoke wrappers now propagate the Runtime-status controlled-launch action preview facts produced by the owner-controlled run, and `known-app-verified-catalog-app-execution` consumes those facts into its desktop-safe result. When that app-execution JSON is fed into Compatibility Center or KDE Center page previews, the GUI evidence card can surface `show-runtime-controlled-launch` as the primary Runtime-status action while KDE still forwards only the safe evidence handle and backend launch, process start, host-root mutation, raw paths, and owner environment values stay closed.
 

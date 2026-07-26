@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc216] - 2026-07-27
+
+### Added
+
+- Added parameterized D-Bus controlled-launch owner fixture smoke inputs for known app id, GUI/app-execution evidence, Runtime owner state root, cache root, and a prebuilt `xnix-runtime-go` command.
+- Added dynamic delegated launcher evidence for the D-Bus fixture so receipt, review, and controlled-session ids come from the Go owner fixture instead of 7zr-only constants.
+
+### Changed
+
+- Guarded the D-Bus fixture smoke against accidental local Go compilation unless `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is explicitly set, preserving the q4-first build strategy.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc216`.
+
 ## [0.2.640-rc215] - 2026-07-27
 
 ### Added
