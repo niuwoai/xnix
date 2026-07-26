@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc165`.
+The project is currently at `v0.2.640-rc166`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc165`.
 
 ## Current Checkpoint
 
-v0.2.640-rc165 adds a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified recipe registry, supports the existing `--recipe-dir` development alias, defaults production recipe lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, and emits the Go-owned `xnix.runtime.file_open.v1` preview without enabling backend launch, direct host-file access, backend detail exposure, or host-root mutation. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default so compile-heavy validation stays off the macOS host.
+v0.2.640-rc166 lets the native Go `xnix-compat-open` command cross from preview into the managed launcher path when an operator explicitly passes `--execute`. The command still resolves the target application through the digest-verified recipe registry, then converts accepted local `file://` URIs into `xnix-compat-launch --file-argument` values and forwards only controlled launcher options such as guest boundary, receipts, session id, display, timeout, and window match. Default Dolphin invocation remains preview-only, while compile-heavy validation stays on q4. A q4 owner-controlled Sample Notepad file-open GUI run passed for `sample-document.txt`, with file copy, Wine path translation, window-match observation, Runtime evidence, KDE page evidence, and KDE action owner file-open verification all present while host-root mutation and unsafe container gates stayed closed.
+
+The previous v0.2.640-rc165 checkpoint added a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified recipe registry, supports the existing `--recipe-dir` development alias, defaults production recipe lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, and emits the Go-owned `xnix.runtime.file_open.v1` preview without enabling backend launch, direct host-file access, backend detail exposure, or host-root mutation. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default so compile-heavy validation stays off the macOS host.
 
 The previous v0.2.640-rc164 checkpoint made the Dolphin `xnix-compat-open` entry point Go Runtime-first. The Ruby command remains a lightweight compatibility wrapper, but in `auto` mode it now delegates to `xnix-runtime-go file-open-preview --registry ...` whenever the Go Runtime command and recipe registry are available, preserving a Ruby fallback only for environments without the Go preview binary. This moves the user-facing Dolphin file-open path closer to the independent AI Compatibility Runtime while keeping backend launch, host mutation, owner service arguments, and raw backend details closed.
 

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc166] - 2026-07-26
+
+### Added
+
+- Added explicit `xnix-compat-open --execute` delegation into `xnix-compat-launch` with controlled launcher pass-through options.
+- Added Go command tests proving file-open execution passes selected local files as managed launcher `--file-argument` values.
+- Recorded q4 owner-controlled Sample Notepad file-open GUI PASS evidence with file-copy, Wine path translation, Runtime/KDE consumption, and owner file-open verification.
+
+### Changed
+
+- Kept default Dolphin file-open behavior preview-only while allowing operator-selected execution to reach the managed Windows app launcher.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc166`.
+
 ## [0.2.640-rc165] - 2026-07-26
 
 ### Added

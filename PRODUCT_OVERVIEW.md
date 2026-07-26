@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc165
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc166
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc166 checkpoint candidate lets the native Go `xnix-compat-open` command explicitly delegate a resolved file-open request into the managed launcher path. Preview remains the default; when an operator passes `--execute`, the command selects the application from the digest-verified recipe registry, converts accepted local `file://` URIs into `xnix-compat-launch --file-argument` values, and forwards controlled launcher parameters for guest boundary, receipts, session id, display, timeout, and window matching. Remote `file://host/...` URIs are rejected for execution, launcher dispatch uses `exec.Command` without a shell, and q4 remains the default compile-heavy validation host. The current q4 owner-controlled Sample Notepad file-open GUI run passed with one copied file argument, Wine path translation, `sample-document.txt` window-match observation, Runtime evidence consumption, KDE page consumption, KDE controlled-launch action owner file-open verification, and closed host-root, host-networking, Docker-socket, privileged-container, and broad-mount gates.
 
 The v0.2.640-rc165 checkpoint candidate adds a native Go `xnix-compat-open` command for Dolphin file-open previews. The command loads the digest-verified Runtime recipe registry directly, preserves the existing `--recipe-dir` development alias, defaults production lookup to `/usr/share/xnix/compatibility/recipes/registry.json`, supports explicit application selection and activation receipt evidence, and emits the Go-owned `xnix.runtime.file_open.v1` preview schema. The q4 remote Go build now includes `./cmd/xnix-compat-open` by default, keeping compile-heavy validation on q4 while the macOS host stays limited to lightweight checks. Backend launch, owner service argument exposure, state-root path exposure, raw backend details, direct host-file reads, host networking, Docker socket mounts, privileged containers, broad host mounts, and host-root mutation remain closed.
 

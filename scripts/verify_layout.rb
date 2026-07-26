@@ -1089,11 +1089,11 @@ file_open_request_source = read_project_file("lib/xnix/compatibility/file_open_r
   assert(file_open_request_source.include?(token), "File open request wrapper must preserve Go Runtime delegation token #{token}")
 end
 compat_open_command = read_project_file("cmd/xnix-compat-open/main.go")
-%w[xnix-compat-open packagedRecipeRegistryDir /usr/share/xnix/compatibility/recipes recipe-dir registry recipe-root activation-root LoadRecipesFromRegistry NewFileOpenPreviewWithOptions].each do |token|
+%w[xnix-compat-open packagedRecipeRegistryDir /usr/share/xnix/compatibility/recipes recipe-dir registry recipe-root activation-root execute launcher-bin launcher-registry guest-boundary receipt-id review-receipt-id session-id file-argument XNIX_COMPAT_LAUNCH exec.Command LoadRecipesFromRegistry NewFileOpenPreviewWithOptions].each do |token|
   assert(compat_open_command.include?(token), "Go file-open command must include #{token}")
 end
 compat_open_test = read_project_file("cmd/xnix-compat-open/main_test.go")
-%w[xnix.runtime.file_open.v1 host_root_modified backend_launch_enabled direct_host_file_access backend_details_exposed].each do |token|
+%w[xnix.runtime.file_open.v1 TestCompatOpenExecuteDelegatesToManagedLauncher TestCompatOpenExecuteRejectsRemoteFileURIHosts host_root_modified backend_launch_enabled direct_host_file_access backend_details_exposed].each do |token|
   assert(compat_open_test.include?(token), "Go file-open command tests must include #{token}")
 end
 

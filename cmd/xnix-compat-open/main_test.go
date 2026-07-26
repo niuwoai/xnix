@@ -98,6 +98,74 @@ func TestCompatOpenAcceptsRecipeDirAlias(t *testing.T) {
 	}
 }
 
+func TestCompatOpenExecuteDelegatesToManagedLauncher(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	documentPath := filepath.Join(t.TempDir(), "report with spaces.txt")
+	if err := os.WriteFile(documentPath, []byte("file-open execution fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	launcherLog := filepath.Join(t.TempDir(), "launcher-argv.log")
+	launcherPath := writeFakeCompatOpenLauncher(t, launcherLog)
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--registry", registryPath,
+		"--execute",
+		"--launcher-bin", launcherPath,
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--state-root", "/tmp/xnix-state",
+		"--receipt-id", "known-app-launch-receipt-org-example-notes",
+		"--review-receipt-id", "known-app-session-gated-launch-review-receipt-org-example-notes",
+		"--session-id", "controlled-execution-session-org-example-notes",
+		"--window-match", "report with spaces.txt",
+		"--timeout", "5s",
+		"file://" + filepath.ToSlash(documentPath),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	if !strings.Contains(output.String(), `"schema_version":"fake.launcher.v1"`) ||
+		!strings.Contains(output.String(), `"status":"passed"`) {
+		t.Fatalf("unexpected managed launcher output: %s", output.String())
+	}
+	launcherArgs, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	argvText := string(launcherArgs)
+	for _, token := range []string{
+		"--app\norg.example.notes\n",
+		"--guest-boundary\nmanaged-known-app-guest-smoke\n",
+		"--state-root\n/tmp/xnix-state\n",
+		"--receipt-id\nknown-app-launch-receipt-org-example-notes\n",
+		"--review-receipt-id\nknown-app-session-gated-launch-review-receipt-org-example-notes\n",
+		"--session-id\ncontrolled-execution-session-org-example-notes\n",
+		"--window-match\nreport with spaces.txt\n",
+		"--timeout\n5s\n",
+		"--file-argument\n" + documentPath + "\n",
+	} {
+		if !strings.Contains(argvText, token) {
+			t.Fatalf("managed launcher argv missing %q in %s", token, argvText)
+		}
+	}
+}
+
+func TestCompatOpenExecuteRejectsRemoteFileURIHosts(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	launcherPath := writeFakeCompatOpenLauncher(t, filepath.Join(t.TempDir(), "launcher-argv.log"))
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--registry", registryPath,
+		"--execute",
+		"--launcher-bin", launcherPath,
+		"file://remote-host/home/test/Documents/report.txt",
+	}, &output)
+	if err == nil || !strings.Contains(err.Error(), "file URI host must be empty or localhost") {
+		t.Fatalf("expected remote file URI host rejection, got %v", err)
+	}
+}
+
 func TestCompatOpenRejectsUnsafeRequests(t *testing.T) {
 	registryPath := writeCompatOpenRegistry(t)
 	tests := []struct {
@@ -154,6 +222,17 @@ func writeCompatOpenRegistry(t *testing.T) string {
 		t.Fatalf("WriteFile registry returned error: %v", err)
 	}
 	return registryPath
+}
+
+func writeFakeCompatOpenLauncher(t *testing.T, logPath string) string {
+	t.Helper()
+	launcherPath := filepath.Join(t.TempDir(), "xnix-compat-launch")
+	script := "#!/bin/sh\n: > \"$XNIX_TEST_LAUNCHER_LOG\"\nfor arg in \"$@\"; do printf '%s\\n' \"$arg\" >> \"$XNIX_TEST_LAUNCHER_LOG\"; done\nprintf '{\"schema_version\":\"fake.launcher.v1\",\"status\":\"passed\"}\\n'\n"
+	if err := os.WriteFile(launcherPath, []byte(script), 0o700); err != nil {
+		t.Fatalf("WriteFile fake launcher returned error: %v", err)
+	}
+	t.Setenv("XNIX_TEST_LAUNCHER_LOG", logPath)
+	return launcherPath
 }
 
 func assertCompatOpenSafe(t *testing.T, text string) {
