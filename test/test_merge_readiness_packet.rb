@@ -27,8 +27,90 @@ def write_text_fixture(text)
   file
 end
 
+def known_app_matrix_payload(version)
+  app_defaults = {
+    "smoke_status" => "passed",
+    "compatibility_state" => "real-qemu-wine-verified",
+    "marker_observed" => true,
+    "checksum_verified" => true,
+    "qemu_executed" => true,
+    "wine_executed" => true,
+    "guest_started" => true,
+    "guest_port_auto" => true,
+    "raw_output_redacted" => true,
+    "serial_log_evidence" => true,
+    "report_evidence" => true,
+    "runtime_owned" => true,
+    "go_runtime_backed" => true,
+    "kde_policy_owner" => false,
+    "desktop_launch_enabled" => false,
+    "backend_launch_enabled" => false,
+    "backend_details_exposed" => false,
+    "raw_output_exposed" => false,
+    "remote_path_exposed" => false,
+    "host_root_modified" => false
+  }
+  {
+    "version" => version,
+    "schema_version" => "xnix.runtime.known_app_matrix_evidence_preview.v1",
+    "request_type" => "known-app-matrix-evidence-preview",
+    "source" => "remote-known-winapp-matrix-smoke+runtime-evidence-consumer",
+    "runtime_method" => "PreviewKnownAppMatrixEvidence",
+    "read_method" => "GetKnownAppMatrixEvidence",
+    "matrix_status" => "passed",
+    "matrix_report_consumed" => true,
+    "matrix_report_path_exposed" => false,
+    "matrix_report_output_written" => true,
+    "app_count" => 2,
+    "passed_count" => 2,
+    "failed_count" => 0,
+    "evidence_count" => 2,
+    "passed_evidence_count" => 2,
+    "failed_evidence_count" => 0,
+    "qemu_executed_count" => 2,
+    "wine_executed_count" => 2,
+    "marker_observed_count" => 2,
+    "checksum_verified_count" => 2,
+    "raw_output_redacted_count" => 2,
+    "serial_log_evidence_count" => 2,
+    "guest_started_count" => 2,
+    "guest_port_auto_count" => 2,
+    "compatibility_center_projection_ready" => true,
+    "kde_center_projection_ready" => true,
+    "runtime_owned" => true,
+    "go_runtime_backed" => true,
+    "kde_policy_owner" => false,
+    "desktop_launch_enabled" => false,
+    "backend_launch_enabled" => false,
+    "action_execution_enabled" => false,
+    "backend_details_exposed" => false,
+    "raw_output_exposed" => false,
+    "remote_path_exposed" => false,
+    "host_root_modified" => false,
+    "privileged_container_required" => false,
+    "host_networking_required" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "apps" => [
+      app_defaults.merge(
+        "app_id" => "7zr",
+        "display_name" => "7-Zip standalone console executable",
+        "app_version" => "26.02",
+        "executable_name" => "7zr.exe"
+      ),
+      app_defaults.merge(
+        "app_id" => "busybox-w32",
+        "display_name" => "BusyBox-w32 standalone console executable",
+        "app_version" => "current-2026-07-24",
+        "executable_name" => "busybox.exe"
+      )
+    ]
+  }
+end
+
 project_root = Pathname.new(__dir__).join("..").realpath
 script = project_root.join("scripts/merge_readiness_packet.rb")
+version = File.read(project_root.join("VERSION")).strip
 
 layout = write_text_fixture("PASS: Xnix fixture scaffold is consistent\n")
 implementation = write_json_fixture(
@@ -272,6 +354,22 @@ failed_known_existing_winapp_acceptance = write_json_fixture(
   "network_checks_run" => false,
   "package_manager_invoked" => false
 )
+known_app_matrix_evidence = write_json_fixture(known_app_matrix_payload(version))
+failed_known_app_matrix_payload = known_app_matrix_payload(version)
+failed_known_app_matrix_payload["app_count"] = 1
+failed_known_app_matrix_payload["passed_count"] = 1
+failed_known_app_matrix_payload["evidence_count"] = 1
+failed_known_app_matrix_payload["passed_evidence_count"] = 1
+failed_known_app_matrix_payload["qemu_executed_count"] = 1
+failed_known_app_matrix_payload["wine_executed_count"] = 1
+failed_known_app_matrix_payload["marker_observed_count"] = 1
+failed_known_app_matrix_payload["checksum_verified_count"] = 1
+failed_known_app_matrix_payload["raw_output_redacted_count"] = 1
+failed_known_app_matrix_payload["serial_log_evidence_count"] = 1
+failed_known_app_matrix_payload["compatibility_center_projection_ready"] = false
+failed_known_app_matrix_payload["kde_center_projection_ready"] = false
+failed_known_app_matrix_payload["apps"] = failed_known_app_matrix_payload.fetch("apps").first(1)
+failed_known_app_matrix_evidence = write_json_fixture(failed_known_app_matrix_payload)
 failed_q4_messagebox_smoke = write_json_fixture(
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
   "request_type" => "q4-messagebox-smoke",
@@ -364,6 +462,7 @@ base_args = [
   "--q4-sample-notepad-smoke", q4_sample_notepad_smoke.path,
   "--q4-messagebox-smoke", q4_messagebox_smoke.path,
   "--known-existing-winapp-acceptance", known_existing_winapp_acceptance.path,
+  "--known-app-matrix-evidence", known_app_matrix_evidence.path,
   "--fixture-matrix-report", fixture_matrix.path
 ]
 
@@ -408,6 +507,12 @@ begin
   assert(known_existing_status.fetch("acceptance_passed"), "packet must report passing known existing Windows app acceptance evidence")
   assert(known_existing_status.fetch("status") == "passed", "packet must expose known existing Windows app acceptance status")
   assert(!packet.fetch("release_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "passing known existing Windows app evidence must close its release blocker")
+  known_app_matrix_status = packet.fetch("known_app_matrix_evidence_status")
+  assert(known_app_matrix_status.fetch("evidence_supplied"), "packet must report supplied known app matrix evidence")
+  assert(known_app_matrix_status.fetch("matrix_passed"), "packet must report passing known app matrix evidence")
+  assert(known_app_matrix_status.fetch("status") == "passed", "packet must expose known app matrix status")
+  assert(known_app_matrix_status.fetch("required_app_ids").sort == %w[7zr busybox-w32].sort, "packet must expose required matrix app ids")
+  assert(!packet.fetch("release_blocking_reasons").include?("known-app-matrix-evidence-not-passed"), "passing known app matrix evidence must close its release blocker")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(tool_statuses.values.all? { |tool| tool.fetch("status") == "pass" }, "all fixture-backed tools must pass")
@@ -417,6 +522,7 @@ begin
   assert(tool_statuses.fetch("q4_sample_notepad_smoke").fetch("command") == "fixture:q4_sample_notepad_smoke", "q4 Sample Notepad fixture command must not expose fixture path")
   assert(tool_statuses.fetch("q4_messagebox_smoke").fetch("command") == "fixture:q4_messagebox_smoke", "q4 MessageBox fixture command must not expose fixture path")
   assert(tool_statuses.fetch("known_existing_winapp_acceptance").fetch("command") == "fixture:known_existing_winapp_acceptance", "known existing Windows app fixture command must not expose fixture path")
+  assert(tool_statuses.fetch("known_app_matrix_evidence").fetch("command") == "fixture:known_app_matrix_evidence", "known app matrix fixture command must not expose fixture path")
   assert(packet.fetch("changed_file_counts").fetch("total") == 3, "packet must include changed file counts")
   assert(packet.fetch("lane_classification").any? { |lane| lane.fetch("id") == "cw10-evidence-drift-harness" }, "packet must include lane classification")
   assert(packet.fetch("required_follow_up_commands").include?("ruby scripts/verify_layout.rb"), "packet must include follow-up commands")
@@ -438,6 +544,7 @@ begin
   assert(markdown.include?("q4 Sample Notepad acceptance smoke: passed"), "Markdown must include q4 Sample Notepad acceptance status")
   assert(markdown.include?("q4 MessageBox document smoke: passed"), "Markdown must include q4 MessageBox document status")
   assert(markdown.include?("Known existing Windows app acceptance: passed"), "Markdown must include known existing Windows app acceptance status")
+  assert(markdown.include?("Known Windows app matrix evidence: passed"), "Markdown must include known app matrix status")
 
   no_preflight_args = base_args.each_slice(2).reject { |option, _path| option == "--desktop-trigger-request-preflight-smoke" }.flatten
   no_preflight_stdout, no_preflight_stderr, no_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_preflight_args)
@@ -496,6 +603,23 @@ begin
   assert(failed_known_existing_packet.fetch("known_existing_winapp_acceptance_status").fetch("status") == "blocked", "failed known existing Windows app evidence must be visible")
   assert(failed_known_existing_packet.fetch("release_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "failed known existing Windows app evidence must add a release blocker")
   assert(!failed_known_existing_packet.fetch("merge_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "failed known existing Windows app evidence must not block merge")
+
+  no_matrix_args = base_args.each_slice(2).reject { |option, _path| option == "--known-app-matrix-evidence" }.flatten
+  no_matrix_stdout, no_matrix_stderr, no_matrix_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_matrix_args)
+  assert(no_matrix_status.success?, "missing known app matrix evidence case must still emit packet: #{no_matrix_stderr}")
+  no_matrix_packet = JSON.parse(no_matrix_stdout)
+  assert(no_matrix_packet.fetch("known_app_matrix_evidence_status").fetch("status") == "not-supplied", "missing known app matrix evidence must be visible")
+  assert(no_matrix_packet.fetch("release_blocking_reasons").include?("known-app-matrix-evidence-not-passed"), "missing known app matrix evidence must block release")
+  assert(!no_matrix_packet.fetch("merge_blocking_reasons").include?("known-app-matrix-evidence-not-passed"), "missing known app matrix evidence must not block merge")
+
+  failed_matrix_args = base_args.dup
+  failed_matrix_args[failed_matrix_args.index("--known-app-matrix-evidence") + 1] = failed_known_app_matrix_evidence.path
+  failed_matrix_stdout, failed_matrix_stderr, failed_matrix_status = Open3.capture3("ruby", script.to_s, "--format", "json", *failed_matrix_args)
+  assert(failed_matrix_status.success?, "failed known app matrix evidence case must still emit packet: #{failed_matrix_stderr}")
+  failed_matrix_packet = JSON.parse(failed_matrix_stdout)
+  assert(failed_matrix_packet.fetch("known_app_matrix_evidence_status").fetch("status") == "blocked", "failed known app matrix evidence must be visible")
+  assert(failed_matrix_packet.fetch("release_blocking_reasons").include?("known-app-matrix-evidence-not-passed"), "failed known app matrix evidence must add a release blocker")
+  assert(!failed_matrix_packet.fetch("merge_blocking_reasons").include?("known-app-matrix-evidence-not-passed"), "failed known app matrix evidence must not block merge")
 
   failed_preflight_args = base_args.dup
   failed_preflight_args[failed_preflight_args.index("--desktop-trigger-request-preflight-smoke") + 1] = failed_preflight_smoke.path
@@ -592,9 +716,11 @@ ensure
     q4_sample_notepad_smoke,
     q4_messagebox_smoke,
     known_existing_winapp_acceptance,
+    known_app_matrix_evidence,
     failed_q4_sample_notepad_smoke,
     failed_q4_messagebox_smoke,
     failed_known_existing_winapp_acceptance,
+    failed_known_app_matrix_evidence,
     malformed,
     protected_mainline,
     unsafe_kde

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc190
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc191
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc191 checkpoint makes multi-app known Windows app matrix evidence part of release/readiness classification. Release evidence and merge readiness can now consume a Go-owned `known-app-matrix-evidence-preview` JSON report, require both 7zr and busybox-w32 to have passed q4 QEMU/Wine evidence with checksum verification, marker observation, serial logs, Compatibility Center and KDE projection readiness, redacted output, and closed host/container gates, and report a release-only blocker when the matrix is missing or incomplete. These Ruby reports treat q4/QEMU/Wine execution as external evidence only; they do not execute q4, compile Go, run QEMU/Wine, call Docker, fetch the network, invoke package managers, stage, tag, push, or mutate the macOS host.
 
 The v0.2.640-rc190 checkpoint makes real third-party Windows app evidence part of release/readiness classification. Release evidence and merge readiness can now consume a Go-owned `known-existing-winapp-acceptance-preview` JSON report for a catalog-backed app such as 7zr, verify that it is an existing Windows app with checksum and marker evidence, isolated guest execution, compatibility-engine execution, redacted output, and closed safety gates, and report a release-only blocker when that evidence is missing or blocked. These Ruby reports stay offline fixture consumers; they do not execute q4, QEMU, Wine, Docker, network checks, package managers, staging, tagging, pushing, or host-root mutation.
 

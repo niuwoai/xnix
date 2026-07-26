@@ -7268,12 +7268,14 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   optional-desktop-trigger-request-preflight-smoke
   optional-q4-messagebox-document-smoke
   optional-known-existing-winapp-acceptance
+  optional-known-app-matrix-evidence
   REPORT_COMMANDS
   CLAIM_DEFINITIONS
   --full-checkpoint-promotion
   --desktop-trigger-request-preflight-smoke
   --q4-messagebox-smoke
   --known-existing-winapp-acceptance
+  --known-app-matrix-evidence
   desktop-trigger-request-preflight-smoke
   desktop_trigger_request_preflight_smoke_status
   desktop-trigger-request-preflight-smoke-not-passed
@@ -7285,6 +7287,17 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   known-existing-winapp-acceptance-not-ready
   known-existing-winapp-identity-missing
   known-existing-winapp-safety-gate-open
+  known-app-matrix-evidence
+  known_app_matrix_evidence_status
+  known-app-matrix-required-app-missing
+  known-app-matrix-app-not-verified
+  known-app-matrix-safety-gate-open
+  known_app_matrix_evidence_passed?
+  evidence_count
+  qemu_executed_count
+  wine_executed_count
+  raw_output_redacted_count
+  busybox-w32
   runtime-owner-read-boundary
   recipe-artifact-trust
   runtime-state-backend-lifecycle
@@ -7350,6 +7363,13 @@ release_evidence_index_test_source = read_project_file("test/test_release_eviden
   known-existing-winapp-acceptance
   known_existing_winapp_acceptance_status
   known-existing-winapp-identity-missing
+  known-app-matrix-evidence
+  known_app_matrix_evidence_status
+  known-app-matrix-required-app-missing
+  matrix_passed
+  qemu_executed_count
+  wine_executed_count
+  busybox-w32
   document_content_marker_observed
   go_owned_q4_winapp_acceptance_ready
   isolated_guest_execution_observed
@@ -7388,12 +7408,14 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   q4_sample_notepad_smoke
   q4_messagebox_smoke
   known_existing_winapp_acceptance
+  known_app_matrix_evidence
   offline_fixture_matrix
   --full-checkpoint-promotion
   --desktop-trigger-request-preflight-smoke
   --q4-sample-notepad-smoke
   --q4-messagebox-smoke
   --known-existing-winapp-acceptance
+  --known-app-matrix-evidence
   --offline-only
   --skip-tool
   --tool-command
@@ -7411,14 +7433,17 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
   known-existing-winapp-acceptance-not-passed
+  known-app-matrix-evidence-not-passed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
   q4_sample_notepad_smoke_status
   q4_messagebox_smoke_status
   known_existing_winapp_acceptance_status
+  known_app_matrix_evidence_status
   q4_sample_notepad_smoke_passed?
   q4_messagebox_smoke_passed?
   known_existing_winapp_acceptance_passed?
+  known_app_matrix_evidence_passed?
   promotion_allowed
   promotion_decision
   full_smoke_state
@@ -7462,18 +7487,22 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   q4_sample_notepad_smoke
   q4_messagebox_smoke
   known_existing_winapp_acceptance
+  known_app_matrix_evidence
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
   desktop-trigger-request-preflight-smoke-not-passed
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
   known-existing-winapp-acceptance-not-passed
+  known-app-matrix-evidence-not-passed
   promotion_allowed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
   q4_sample_notepad_smoke_status
   q4_messagebox_smoke_status
   known_existing_winapp_acceptance_status
+  known_app_matrix_evidence_status
+  matrix_passed
   document_content_marker_observed
   go_owned_q4_winapp_acceptance_ready
   isolated_guest_execution_observed

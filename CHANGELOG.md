@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc191] - 2026-07-27
+
+### Added
+
+- Added `--known-app-matrix-evidence` fixture consumption to `scripts/release_evidence_index.rb` and `scripts/merge_readiness_packet.rb` so release/readiness reports can classify Go-owned q4 known Windows app matrix evidence without executing q4/QEMU/Wine themselves.
+- Added release-only readiness blocking for missing or incomplete multi-app known Windows app matrix evidence covering both 7zr and busybox-w32.
+
+### Changed
+
+- Treated q4/QEMU/Wine matrix execution flags inside Go-owned evidence as external evidence during merge readiness unsafe scanning, preserving the local no-execution boundary.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc191`.
+
 ## [0.2.640-rc190] - 2026-07-27
 
 ### Added

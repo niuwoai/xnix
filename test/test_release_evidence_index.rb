@@ -262,6 +262,163 @@ failed_known_existing_winapp_acceptance = write_json_fixture(
   "network_checks_run" => false,
   "package_manager_invoked" => false
 )
+known_app_matrix_evidence = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.known_app_matrix_evidence_preview.v1",
+  "request_type" => "known-app-matrix-evidence-preview",
+  "source" => "remote-known-winapp-matrix-smoke+runtime-evidence-consumer",
+  "runtime_method" => "PreviewKnownAppMatrixEvidence",
+  "read_method" => "GetKnownAppMatrixEvidence",
+  "matrix_status" => "passed",
+  "matrix_report_consumed" => true,
+  "matrix_report_path_exposed" => false,
+  "matrix_report_output_written" => true,
+  "app_count" => 2,
+  "passed_count" => 2,
+  "failed_count" => 0,
+  "evidence_count" => 2,
+  "passed_evidence_count" => 2,
+  "failed_evidence_count" => 0,
+  "qemu_executed_count" => 2,
+  "wine_executed_count" => 2,
+  "marker_observed_count" => 2,
+  "checksum_verified_count" => 2,
+  "raw_output_redacted_count" => 2,
+  "serial_log_evidence_count" => 2,
+  "guest_started_count" => 2,
+  "guest_port_auto_count" => 2,
+  "compatibility_center_projection_ready" => true,
+  "kde_center_projection_ready" => true,
+  "runtime_owned" => true,
+  "go_runtime_backed" => true,
+  "kde_policy_owner" => false,
+  "desktop_launch_enabled" => false,
+  "backend_launch_enabled" => false,
+  "action_execution_enabled" => false,
+  "backend_details_exposed" => false,
+  "raw_output_exposed" => false,
+  "remote_path_exposed" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "apps" => [
+    {
+      "app_id" => "7zr",
+      "display_name" => "7-Zip standalone console executable",
+      "app_version" => "26.02",
+      "executable_name" => "7zr.exe",
+      "smoke_status" => "passed",
+      "compatibility_state" => "real-qemu-wine-verified",
+      "marker_observed" => true,
+      "checksum_verified" => true,
+      "qemu_executed" => true,
+      "wine_executed" => true,
+      "guest_started" => true,
+      "guest_port_auto" => true,
+      "raw_output_redacted" => true,
+      "serial_log_evidence" => true,
+      "report_evidence" => true,
+      "runtime_owned" => true,
+      "go_runtime_backed" => true,
+      "kde_policy_owner" => false,
+      "desktop_launch_enabled" => false,
+      "backend_launch_enabled" => false,
+      "backend_details_exposed" => false,
+      "raw_output_exposed" => false,
+      "remote_path_exposed" => false,
+      "host_root_modified" => false
+    },
+    {
+      "app_id" => "busybox-w32",
+      "display_name" => "BusyBox-w32 standalone console executable",
+      "app_version" => "current-2026-07-24",
+      "executable_name" => "busybox.exe",
+      "smoke_status" => "passed",
+      "compatibility_state" => "real-qemu-wine-verified",
+      "marker_observed" => true,
+      "checksum_verified" => true,
+      "qemu_executed" => true,
+      "wine_executed" => true,
+      "guest_started" => true,
+      "guest_port_auto" => true,
+      "raw_output_redacted" => true,
+      "serial_log_evidence" => true,
+      "report_evidence" => true,
+      "runtime_owned" => true,
+      "go_runtime_backed" => true,
+      "kde_policy_owner" => false,
+      "desktop_launch_enabled" => false,
+      "backend_launch_enabled" => false,
+      "backend_details_exposed" => false,
+      "raw_output_exposed" => false,
+      "remote_path_exposed" => false,
+      "host_root_modified" => false
+    }
+  ]
+)
+failed_known_app_matrix_evidence = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.known_app_matrix_evidence_preview.v1",
+  "request_type" => "known-app-matrix-evidence-preview",
+  "matrix_status" => "passed",
+  "matrix_report_consumed" => true,
+  "matrix_report_path_exposed" => false,
+  "matrix_report_output_written" => true,
+  "app_count" => 1,
+  "passed_count" => 1,
+  "failed_count" => 0,
+  "evidence_count" => 1,
+  "passed_evidence_count" => 1,
+  "qemu_executed_count" => 1,
+  "wine_executed_count" => 1,
+  "marker_observed_count" => 1,
+  "checksum_verified_count" => 1,
+  "raw_output_redacted_count" => 1,
+  "serial_log_evidence_count" => 1,
+  "compatibility_center_projection_ready" => false,
+  "kde_center_projection_ready" => false,
+  "runtime_owned" => true,
+  "go_runtime_backed" => true,
+  "kde_policy_owner" => false,
+  "desktop_launch_enabled" => false,
+  "backend_launch_enabled" => false,
+  "action_execution_enabled" => false,
+  "backend_details_exposed" => false,
+  "raw_output_exposed" => false,
+  "remote_path_exposed" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "apps" => [
+    {
+      "app_id" => "7zr",
+      "smoke_status" => "passed",
+      "compatibility_state" => "real-qemu-wine-verified",
+      "marker_observed" => true,
+      "checksum_verified" => true,
+      "qemu_executed" => true,
+      "wine_executed" => true,
+      "guest_started" => true,
+      "guest_port_auto" => true,
+      "raw_output_redacted" => true,
+      "serial_log_evidence" => true,
+      "report_evidence" => true,
+      "runtime_owned" => true,
+      "go_runtime_backed" => true,
+      "kde_policy_owner" => false,
+      "desktop_launch_enabled" => false,
+      "backend_launch_enabled" => false,
+      "backend_details_exposed" => false,
+      "raw_output_exposed" => false,
+      "remote_path_exposed" => false,
+      "host_root_modified" => false
+    }
+  ]
+)
 failed_q4_messagebox_smoke = write_json_fixture(
   "version" => File.read(project_root.join("VERSION")).strip,
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
@@ -326,6 +483,7 @@ failed_preflight_smoke = write_json_fixture(
 malformed_preflight_smoke = write_text_fixture("{not-json")
 malformed_messagebox_smoke = write_text_fixture("{not-json")
 malformed_known_existing_winapp_acceptance = write_text_fixture("{not-json")
+malformed_known_app_matrix_evidence = write_text_fixture("{not-json")
 malformed = nil
 
 begin
@@ -349,7 +507,9 @@ begin
     "--q4-messagebox-smoke",
     q4_messagebox_smoke.path,
     "--known-existing-winapp-acceptance",
-    known_existing_winapp_acceptance.path
+    known_existing_winapp_acceptance.path,
+    "--known-app-matrix-evidence",
+    known_app_matrix_evidence.path
   )
   assert(status.success?, "release evidence index JSON must exit successfully: #{stderr}")
   report = JSON.parse(stdout)
@@ -369,6 +529,10 @@ begin
   assert(known_existing_status.fetch("evidence_supplied"), "release evidence index must report supplied known existing Windows app acceptance evidence")
   assert(known_existing_status.fetch("acceptance_passed"), "release evidence index must report passing known existing Windows app acceptance evidence")
   assert(known_existing_status.fetch("status") == "implemented", "release evidence index must expose implemented known existing Windows app acceptance evidence")
+  known_app_matrix_status = report.fetch("known_app_matrix_evidence_status")
+  assert(known_app_matrix_status.fetch("evidence_supplied"), "release evidence index must report supplied known app matrix evidence")
+  assert(known_app_matrix_status.fetch("matrix_passed"), "release evidence index must report passing known app matrix evidence")
+  assert(known_app_matrix_status.fetch("status") == "implemented", "release evidence index must expose implemented known app matrix evidence")
   assert(report.fetch("runtime_owned"), "release evidence index must keep Runtime ownership explicit")
   assert(!report.fetch("go_runtime_backed"), "release evidence index must identify itself as a Ruby report, not Go Runtime business logic")
   assert(report.fetch("ruby_report_only"), "release evidence index must be marked Ruby report only")
@@ -422,6 +586,12 @@ begin
   assert(claims.fetch("known-existing-winapp-acceptance").fetch("app_id") == "7zr", "known existing Windows app claim must expose the accepted app id")
   assert(claims.fetch("known-existing-winapp-acceptance").fetch("isolated_guest_execution_observed"), "known existing Windows app claim must expose isolated guest execution evidence")
   assert(claims.fetch("known-existing-winapp-acceptance").fetch("compatibility_engine_execution_observed"), "known existing Windows app claim must expose compatibility engine evidence")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("evidence_level") == "implemented", "known app matrix claim must be implemented when supplied evidence passes")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("matrix_passed"), "known app matrix claim must expose matrix pass state")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("required_app_ids").sort == %w[7zr busybox-w32].sort, "known app matrix claim must expose required app ids")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("observed_required_app_ids").sort == %w[7zr busybox-w32].sort, "known app matrix claim must expose observed required app ids")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("qemu_executed_count") == 2, "known app matrix claim must expose QEMU execution count")
+  assert(claims.fetch("known-app-matrix-evidence").fetch("wine_executed_count") == 2, "known app matrix claim must expose Wine execution count")
   assert(claims.fetch("restricted-heavy-smoke-skipped").fetch("evidence_level") == "skipped", "heavy smoke claim must be skipped by default")
   assert(claims.fetch("kde-first-presence").fetch("evidence_level") == "implemented", "KDE presence claim must be implemented when seven entry points are present")
   assert(claims.fetch("contract-drift").fetch("evidence_level") == "implemented", "contract drift claim must be implemented when no drift is reported")
@@ -447,7 +617,9 @@ begin
     "--q4-messagebox-smoke",
     q4_messagebox_smoke.path,
     "--known-existing-winapp-acceptance",
-    known_existing_winapp_acceptance.path
+    known_existing_winapp_acceptance.path,
+    "--known-app-matrix-evidence",
+    known_app_matrix_evidence.path
   )
   assert(markdown_status.success?, "release evidence index Markdown must exit successfully: #{markdown_stderr}")
   assert(markdown.include?("# Release Evidence Index"), "Markdown report must include a title")
@@ -457,6 +629,7 @@ begin
   assert(markdown.include?("desktop-trigger-request-preflight-smoke"), "Markdown report must include preflight smoke claim")
   assert(markdown.include?("q4-messagebox-document-smoke"), "Markdown report must include q4 MessageBox claim")
   assert(markdown.include?("known-existing-winapp-acceptance"), "Markdown report must include known existing Windows app claim")
+  assert(markdown.include?("known-app-matrix-evidence"), "Markdown report must include known app matrix claim")
 
   missing_preflight_stdout, missing_preflight_stderr, missing_preflight_status = Open3.capture3(
     "ruby",
@@ -585,6 +758,37 @@ begin
   assert(failed_known_existing_claim.fetch("evidence_level") == "blocked", "failed known existing Windows app claim must be blocked")
   assert(failed_known_existing_claim.fetch("blockers").include?("known-existing-winapp-identity-missing"), "failed known existing Windows app claim must name identity blocker")
 
+  failed_matrix_stdout, failed_matrix_stderr, failed_matrix_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    known_existing_winapp_acceptance.path,
+    "--known-app-matrix-evidence",
+    failed_known_app_matrix_evidence.path
+  )
+  assert(failed_matrix_status.success?, "failed known app matrix evidence case must still emit a release index: #{failed_matrix_stderr}")
+  failed_matrix_report = JSON.parse(failed_matrix_stdout)
+  failed_matrix_claim = failed_matrix_report.fetch("claims").find { |claim| claim.fetch("id") == "known-app-matrix-evidence" }
+  assert(failed_matrix_report.fetch("known_app_matrix_evidence_status").fetch("status") == "blocked", "failed known app matrix evidence must be blocked")
+  assert(failed_matrix_claim.fetch("evidence_level") == "blocked", "failed known app matrix claim must be blocked")
+  assert(failed_matrix_claim.fetch("blockers").include?("known-app-matrix-required-app-missing"), "failed known app matrix claim must name required app blocker")
+
   malformed_preflight_stdout, malformed_preflight_stderr, malformed_preflight_status = Open3.capture3(
     "ruby",
     script.to_s,
@@ -666,6 +870,37 @@ begin
   assert(malformed_known_existing_claim.fetch("evidence_level") == "blocked", "malformed known existing Windows app claim must be blocked")
   assert(malformed_known_existing_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed known existing Windows app claim must name malformed-report blocker")
 
+  malformed_matrix_stdout, malformed_matrix_stderr, malformed_matrix_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    known_existing_winapp_acceptance.path,
+    "--known-app-matrix-evidence",
+    malformed_known_app_matrix_evidence.path
+  )
+  assert(malformed_matrix_status.success?, "malformed known app matrix evidence case must still emit a release index: #{malformed_matrix_stderr}")
+  malformed_matrix_report = JSON.parse(malformed_matrix_stdout)
+  malformed_matrix_claim = malformed_matrix_report.fetch("claims").find { |claim| claim.fetch("id") == "known-app-matrix-evidence" }
+  assert(malformed_matrix_report.fetch("known_app_matrix_evidence_status").fetch("status") == "blocked", "malformed known app matrix evidence must be blocked")
+  assert(malformed_matrix_claim.fetch("evidence_level") == "blocked", "malformed known app matrix claim must be blocked")
+  assert(malformed_matrix_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed known app matrix claim must name malformed-report blocker")
+
   blocked_stdout, blocked_stderr, blocked_status = Open3.capture3(
     "ruby",
     script.to_s,
@@ -721,7 +956,7 @@ begin
   malformed_claims = malformed_report.fetch("claims").to_h { |claim| [claim.fetch("id"), claim] }
   assert(malformed_claims.fetch("report-integrity").fetch("evidence_level") == "blocked", "report integrity claim must block malformed reports")
 ensure
-  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, q4_messagebox_smoke, known_existing_winapp_acceptance, failed_preflight_smoke, failed_q4_messagebox_smoke, failed_known_existing_winapp_acceptance, malformed_preflight_smoke, malformed_messagebox_smoke, malformed_known_existing_winapp_acceptance, malformed].compact.each do |file|
+  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, q4_messagebox_smoke, known_existing_winapp_acceptance, known_app_matrix_evidence, failed_preflight_smoke, failed_q4_messagebox_smoke, failed_known_existing_winapp_acceptance, failed_known_app_matrix_evidence, malformed_preflight_smoke, malformed_messagebox_smoke, malformed_known_existing_winapp_acceptance, malformed_known_app_matrix_evidence, malformed].compact.each do |file|
     file.close
     file.unlink
   end

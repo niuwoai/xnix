@@ -81,6 +81,13 @@ TOOL_DEFINITIONS = {
     required: false,
     fixture_only: true
   },
+  "known_app_matrix_evidence" => {
+    title: "Known Windows app matrix Go evidence",
+    command: ["xnix-runtime-go", "known-app-matrix-evidence-preview", "--matrix-report", "REPORT.json"],
+    parser: "json",
+    required: false,
+    fixture_only: true
+  },
   "offline_fixture_matrix" => {
     title: "Offline application fixture matrix",
     command: ["ruby", "scripts/offline_application_fixture_matrix.rb", "--format", "json"],
@@ -101,6 +108,7 @@ FIXTURE_OPTIONS = {
   "q4_sample_notepad_smoke" => :q4_sample_notepad_smoke,
   "q4_messagebox_smoke" => :q4_messagebox_smoke,
   "known_existing_winapp_acceptance" => :known_existing_winapp_acceptance,
+  "known_app_matrix_evidence" => :known_app_matrix_evidence,
   "offline_fixture_matrix" => :fixture_matrix_report
 }.freeze
 
@@ -131,6 +139,7 @@ RELEASE_ONLY_BLOCKERS = %w[
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
   known-existing-winapp-acceptance-not-passed
+  known-app-matrix-evidence-not-passed
   production-runtime-and-windows-execution-remain-disabled
 ].freeze
 
@@ -167,6 +176,7 @@ def parse_options(argv)
     parser.on("--q4-sample-notepad-smoke PATH", "Use an existing q4 Sample Notepad acceptance smoke JSON report") { |value| options[:fixtures][:q4_sample_notepad_smoke] = value }
     parser.on("--q4-messagebox-smoke PATH", "Use an existing q4 MessageBox external Windows app document smoke JSON report") { |value| options[:fixtures][:q4_messagebox_smoke] = value }
     parser.on("--known-existing-winapp-acceptance PATH", "Use an existing Go-owned known existing Windows app acceptance JSON report") { |value| options[:fixtures][:known_existing_winapp_acceptance] = value }
+    parser.on("--known-app-matrix-evidence PATH", "Use an existing Go-owned known Windows app matrix evidence JSON report") { |value| options[:fixtures][:known_app_matrix_evidence] = value }
     parser.on("--fixture-matrix-report PATH", "Use an existing offline fixture matrix JSON report") { |value| options[:fixtures][:fixture_matrix_report] = value }
   end.parse!(argv)
 
@@ -290,6 +300,8 @@ def json_tool_summary(tool_id, data)
     "q4 MessageBox document smoke state: #{data.fetch("status", "unknown")}."
   when "known_existing_winapp_acceptance"
     "Known existing Windows app acceptance state: #{data.fetch("status", "unknown")}."
+  when "known_app_matrix_evidence"
+    "Known Windows app matrix state: #{data.fetch("matrix_status", "unknown")}."
   when "offline_fixture_matrix"
     counts = data.fetch("counts", {})
     row_count = data.fetch("row_count", data.fetch("rows", []).length)
@@ -313,6 +325,8 @@ end
 def unsafe_findings(tools)
   findings = []
   tools.each do |tool|
+    next if tool.fetch("id") == "known_app_matrix_evidence"
+
     data = tool.fetch("data")
     next unless data
 
@@ -337,6 +351,7 @@ def tool_blockers(tools)
     next if !tool.fetch("required") && tool.fetch("status") == "skipped"
     next if tool.fetch("id") == "desktop_trigger_request_preflight_smoke"
     next if tool.fetch("id") == "known_existing_winapp_acceptance"
+    next if tool.fetch("id") == "known_app_matrix_evidence"
 
     "#{tool.fetch("id")}:#{tool.fetch("status")}"
   end
@@ -522,7 +537,82 @@ def known_existing_winapp_acceptance_passed?(tools)
     ].all? { |key| data.fetch(key, true) == false }
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed)
+KNOWN_APP_MATRIX_REQUIRED_APP_IDS = %w[7zr busybox-w32].freeze
+
+def known_app_matrix_evidence_app_verified?(app)
+  app.is_a?(Hash) &&
+    KNOWN_APP_MATRIX_REQUIRED_APP_IDS.include?(app.fetch("app_id", "")) &&
+    app.fetch("smoke_status", "") == "passed" &&
+    app.fetch("compatibility_state", "") == "real-qemu-wine-verified" &&
+    app.fetch("marker_observed", false) == true &&
+    app.fetch("checksum_verified", false) == true &&
+    app.fetch("qemu_executed", false) == true &&
+    app.fetch("wine_executed", false) == true &&
+    app.fetch("guest_started", false) == true &&
+    app.fetch("guest_port_auto", false) == true &&
+    app.fetch("raw_output_redacted", false) == true &&
+    app.fetch("serial_log_evidence", false) == true &&
+    app.fetch("report_evidence", false) == true &&
+    app.fetch("runtime_owned", false) == true &&
+    app.fetch("go_runtime_backed", false) == true &&
+    app.fetch("kde_policy_owner", true) == false &&
+    app.fetch("desktop_launch_enabled", true) == false &&
+    app.fetch("backend_launch_enabled", true) == false &&
+    app.fetch("backend_details_exposed", true) == false &&
+    app.fetch("raw_output_exposed", true) == false &&
+    app.fetch("remote_path_exposed", true) == false &&
+    app.fetch("host_root_modified", true) == false
+end
+
+def known_app_matrix_evidence_passed?(tools)
+  tool = tools.find { |candidate| candidate.fetch("id") == "known_app_matrix_evidence" }
+  return nil unless tool
+  return nil if tool.fetch("status") == "skipped"
+  return false unless tool.fetch("status") == "pass"
+
+  data = tool.fetch("data") || {}
+  apps = data.fetch("apps", [])
+  required_apps = apps.select { |app| app.is_a?(Hash) && KNOWN_APP_MATRIX_REQUIRED_APP_IDS.include?(app.fetch("app_id", "")) }
+  data.fetch("schema_version", "") == "xnix.runtime.known_app_matrix_evidence_preview.v1" &&
+    data.fetch("request_type", "") == "known-app-matrix-evidence-preview" &&
+    data.fetch("matrix_status", "") == "passed" &&
+    data.fetch("matrix_report_consumed", false) == true &&
+    data.fetch("matrix_report_path_exposed", true) == false &&
+    data.fetch("matrix_report_output_written", false) == true &&
+    data.fetch("app_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("passed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("failed_count", 1).to_i.zero? &&
+    data.fetch("evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("passed_evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("qemu_executed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("wine_executed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("marker_observed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("checksum_verified_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("raw_output_redacted_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("serial_log_evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    data.fetch("compatibility_center_projection_ready", false) == true &&
+    data.fetch("kde_center_projection_ready", false) == true &&
+    data.fetch("runtime_owned", false) == true &&
+    data.fetch("go_runtime_backed", false) == true &&
+    data.fetch("kde_policy_owner", true) == false &&
+    data.fetch("desktop_launch_enabled", true) == false &&
+    data.fetch("backend_launch_enabled", true) == false &&
+    data.fetch("action_execution_enabled", true) == false &&
+    data.fetch("backend_details_exposed", true) == false &&
+    data.fetch("raw_output_exposed", true) == false &&
+    data.fetch("remote_path_exposed", true) == false &&
+    %w[
+      host_root_modified
+      privileged_container_required
+      host_networking_required
+      docker_socket_mounted
+      broad_host_mount_required
+    ].all? { |key| data.fetch(key, true) == false } &&
+    required_apps.map { |app| app.fetch("app_id") }.sort == KNOWN_APP_MATRIX_REQUIRED_APP_IDS.sort &&
+    required_apps.all? { |app| known_app_matrix_evidence_app_verified?(app) }
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed, known_app_matrix_evidence_passed)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -536,6 +626,7 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release
   reasons << "q4-sample-notepad-acceptance-smoke-not-passed" unless q4_sample_notepad_smoke_passed == true
   reasons << "q4-messagebox-document-content-smoke-not-passed" unless q4_messagebox_smoke_passed == true
   reasons << "known-existing-winapp-acceptance-not-passed" unless known_existing_winapp_acceptance_passed == true
+  reasons << "known-app-matrix-evidence-not-passed" unless known_app_matrix_evidence_passed == true
   reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
@@ -555,7 +646,8 @@ def build_packet(options)
   q4_sample_notepad_smoke_passed = q4_sample_notepad_smoke_passed?(tools)
   q4_messagebox_smoke_passed = q4_messagebox_smoke_passed?(tools)
   known_existing_winapp_acceptance_passed = known_existing_winapp_acceptance_passed?(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed)
+  known_app_matrix_evidence_passed = known_app_matrix_evidence_passed?(tools)
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed, known_app_matrix_evidence_passed)
   merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
@@ -624,6 +716,13 @@ def build_packet(options)
       "status" => known_existing_winapp_acceptance_passed.nil? ? "not-supplied" : (known_existing_winapp_acceptance_passed ? "passed" : "blocked"),
       "release_blocking_reason" => known_existing_winapp_acceptance_passed == true ? nil : "known-existing-winapp-acceptance-not-passed"
     },
+    "known_app_matrix_evidence_status" => {
+      "evidence_supplied" => !known_app_matrix_evidence_passed.nil?,
+      "matrix_passed" => known_app_matrix_evidence_passed == true,
+      "status" => known_app_matrix_evidence_passed.nil? ? "not-supplied" : (known_app_matrix_evidence_passed ? "passed" : "blocked"),
+      "required_app_ids" => KNOWN_APP_MATRIX_REQUIRED_APP_IDS,
+      "release_blocking_reason" => known_app_matrix_evidence_passed == true ? nil : "known-app-matrix-evidence-not-passed"
+    },
     "desktop_safe_summary" => "Merge readiness is aggregated offline from local reports; staging, committing, tagging, pushing, Docker, QEMU, network fetch, package managers, backend launch, and host-root mutation remain disabled."
   }
 end
@@ -642,6 +741,7 @@ def render_markdown(packet)
   lines << "- q4 Sample Notepad acceptance smoke: #{packet.fetch("q4_sample_notepad_smoke_status").fetch("status")}"
   lines << "- q4 MessageBox document smoke: #{packet.fetch("q4_messagebox_smoke_status").fetch("status")}"
   lines << "- Known existing Windows app acceptance: #{packet.fetch("known_existing_winapp_acceptance_status").fetch("status")}"
+  lines << "- Known Windows app matrix evidence: #{packet.fetch("known_app_matrix_evidence_status").fetch("status")}"
   lines << ""
   lines << "## Tool Statuses"
   lines << ""

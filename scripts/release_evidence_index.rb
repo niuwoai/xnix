@@ -185,6 +185,7 @@ def parse_options
     parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:reports][:desktop_trigger_request_preflight_smoke] = value }
     parser.on("--q4-messagebox-smoke PATH", "Use an existing q4 MessageBox external Windows app document smoke JSON report") { |value| options[:reports][:q4_messagebox_smoke] = value }
     parser.on("--known-existing-winapp-acceptance PATH", "Use an existing Go-owned known existing Windows app acceptance JSON report") { |value| options[:reports][:known_existing_winapp_acceptance] = value }
+    parser.on("--known-app-matrix-evidence PATH", "Use an existing Go-owned known Windows app matrix evidence JSON report") { |value| options[:reports][:known_app_matrix_evidence] = value }
   end.parse!
 
   unless %w[json markdown].include?(options[:format])
@@ -239,6 +240,14 @@ def load_optional_known_existing_winapp_acceptance(fixture_path)
   parse_report_json(Pathname.new(fixture_path).read, fixture_path)
 rescue Errno::ENOENT
   [nil, { source: fixture_path, error: "missing-report", detail: "known existing Windows app acceptance evidence is missing" }]
+end
+
+def load_optional_known_app_matrix_evidence(fixture_path)
+  return [nil, nil] if fixture_path.to_s.strip.empty?
+
+  parse_report_json(Pathname.new(fixture_path).read, fixture_path)
+rescue Errno::ENOENT
+  [nil, { source: fixture_path, error: "missing-report", detail: "known Windows app matrix evidence is missing" }]
 end
 
 def evidence_level_from_status(status)
@@ -331,6 +340,7 @@ def build_report(options)
   preflight_smoke_evidence, preflight_smoke_error = load_optional_desktop_trigger_request_preflight_smoke(options[:reports][:desktop_trigger_request_preflight_smoke])
   messagebox_smoke_evidence, messagebox_smoke_error = load_optional_q4_messagebox_smoke(options[:reports][:q4_messagebox_smoke])
   known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error = load_optional_known_existing_winapp_acceptance(options[:reports][:known_existing_winapp_acceptance])
+  known_app_matrix_evidence, known_app_matrix_error = load_optional_known_app_matrix_evidence(options[:reports][:known_app_matrix_evidence])
 
   claims = CLAIM_DEFINITIONS.map { |definition| domain_claim(definition, domains, report_errors) }
   claims << report_integrity_claim(report_errors)
@@ -342,6 +352,7 @@ def build_report(options)
   claims << desktop_trigger_request_preflight_smoke_claim(preflight_smoke_evidence, preflight_smoke_error)
   claims << q4_messagebox_smoke_claim(messagebox_smoke_evidence, messagebox_smoke_error)
   claims << known_existing_winapp_acceptance_claim(known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error)
+  claims << known_app_matrix_evidence_claim(known_app_matrix_evidence, known_app_matrix_error)
   claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error, full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << skipped_heavy_smoke_claim
 
@@ -349,7 +360,7 @@ def build_report(options)
     "version" => VERSION,
     "schema_version" => "xnix.runtime.release_evidence_index.v1",
     "report_type" => "release-evidence-index",
-    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke+optional-q4-messagebox-document-smoke+optional-known-existing-winapp-acceptance",
+    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke+optional-q4-messagebox-document-smoke+optional-known-existing-winapp-acceptance+optional-known-app-matrix-evidence",
     "runtime_owned" => true,
     "go_runtime_backed" => false,
     "ruby_report_only" => true,
@@ -368,6 +379,7 @@ def build_report(options)
     "desktop_trigger_request_preflight_smoke_status" => desktop_trigger_request_preflight_smoke_status(preflight_smoke_evidence, preflight_smoke_error),
     "q4_messagebox_smoke_status" => q4_messagebox_smoke_status(messagebox_smoke_evidence, messagebox_smoke_error),
     "known_existing_winapp_acceptance_status" => known_existing_winapp_acceptance_status(known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error),
+    "known_app_matrix_evidence_status" => known_app_matrix_evidence_status(known_app_matrix_evidence, known_app_matrix_error),
     "claims" => claims,
     "claim_count" => claims.length,
     "counts" => count_claims(claims),
@@ -604,6 +616,121 @@ def known_existing_winapp_acceptance_status(evidence, error)
                 else
                   "not-supplied"
                 end,
+    "blockers" => blockers
+  }
+end
+
+KNOWN_APP_MATRIX_REQUIRED_APP_IDS = %w[7zr busybox-w32].freeze
+
+def known_app_matrix_evidence_app_verified?(app)
+  app.is_a?(Hash) &&
+    KNOWN_APP_MATRIX_REQUIRED_APP_IDS.include?(app.fetch("app_id", nil)) &&
+    app.fetch("smoke_status", nil) == "passed" &&
+    app.fetch("compatibility_state", nil) == "real-qemu-wine-verified" &&
+    app.fetch("marker_observed", false) == true &&
+    app.fetch("checksum_verified", false) == true &&
+    app.fetch("qemu_executed", false) == true &&
+    app.fetch("wine_executed", false) == true &&
+    app.fetch("guest_started", false) == true &&
+    app.fetch("guest_port_auto", false) == true &&
+    app.fetch("raw_output_redacted", false) == true &&
+    app.fetch("serial_log_evidence", false) == true &&
+    app.fetch("report_evidence", false) == true &&
+    app.fetch("runtime_owned", false) == true &&
+    app.fetch("go_runtime_backed", false) == true &&
+    app.fetch("kde_policy_owner", true) == false &&
+    app.fetch("desktop_launch_enabled", true) == false &&
+    app.fetch("backend_launch_enabled", true) == false &&
+    app.fetch("backend_details_exposed", true) == false &&
+    app.fetch("raw_output_exposed", true) == false &&
+    app.fetch("remote_path_exposed", true) == false &&
+    app.fetch("host_root_modified", true) == false
+end
+
+def known_app_matrix_evidence_passed?(evidence)
+  return false unless evidence.is_a?(Hash)
+
+  apps = evidence.fetch("apps", [])
+  required_apps = apps.select { |app| app.is_a?(Hash) && KNOWN_APP_MATRIX_REQUIRED_APP_IDS.include?(app.fetch("app_id", nil)) }
+  evidence.fetch("schema_version", nil) == "xnix.runtime.known_app_matrix_evidence_preview.v1" &&
+    evidence.fetch("request_type", nil) == "known-app-matrix-evidence-preview" &&
+    evidence.fetch("matrix_status", nil) == "passed" &&
+    evidence.fetch("matrix_report_consumed", false) == true &&
+    evidence.fetch("matrix_report_path_exposed", true) == false &&
+    evidence.fetch("matrix_report_output_written", false) == true &&
+    evidence.fetch("app_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("passed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("failed_count", 1).to_i.zero? &&
+    evidence.fetch("evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("passed_evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("qemu_executed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("wine_executed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("marker_observed_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("checksum_verified_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("raw_output_redacted_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("serial_log_evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length &&
+    evidence.fetch("compatibility_center_projection_ready", false) == true &&
+    evidence.fetch("kde_center_projection_ready", false) == true &&
+    evidence.fetch("runtime_owned", false) == true &&
+    evidence.fetch("go_runtime_backed", false) == true &&
+    evidence.fetch("kde_policy_owner", true) == false &&
+    evidence.fetch("desktop_launch_enabled", true) == false &&
+    evidence.fetch("backend_launch_enabled", true) == false &&
+    evidence.fetch("action_execution_enabled", true) == false &&
+    evidence.fetch("backend_details_exposed", true) == false &&
+    evidence.fetch("raw_output_exposed", true) == false &&
+    evidence.fetch("remote_path_exposed", true) == false &&
+    %w[
+      host_root_modified
+      privileged_container_required
+      host_networking_required
+      docker_socket_mounted
+      broad_host_mount_required
+    ].all? { |key| evidence.fetch(key, true) == false } &&
+    required_apps.map { |app| app.fetch("app_id") }.sort == KNOWN_APP_MATRIX_REQUIRED_APP_IDS.sort &&
+    required_apps.all? { |app| known_app_matrix_evidence_app_verified?(app) }
+end
+
+def known_app_matrix_evidence_blockers(evidence, error)
+  return ["known-app-matrix-evidence-report:#{error.fetch(:error)}"] if error
+  return [] unless evidence
+  return [] if known_app_matrix_evidence_passed?(evidence)
+
+  apps = evidence.fetch("apps", [])
+  required_app_ids = apps.select { |app| app.is_a?(Hash) }.map { |app| app.fetch("app_id", nil) } & KNOWN_APP_MATRIX_REQUIRED_APP_IDS
+  blockers = []
+  blockers << "known-app-matrix-evidence-schema" unless evidence.fetch("schema_version", nil) == "xnix.runtime.known_app_matrix_evidence_preview.v1" && evidence.fetch("request_type", nil) == "known-app-matrix-evidence-preview"
+  blockers << "known-app-matrix-evidence-incomplete" unless evidence.fetch("matrix_status", nil) == "passed" && evidence.fetch("app_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length && evidence.fetch("evidence_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length && evidence.fetch("failed_count", 1).to_i.zero?
+  blockers << "known-app-matrix-required-app-missing" unless required_app_ids.sort == KNOWN_APP_MATRIX_REQUIRED_APP_IDS.sort
+  blockers << "known-app-matrix-app-not-verified" unless apps.select { |app| app.is_a?(Hash) && KNOWN_APP_MATRIX_REQUIRED_APP_IDS.include?(app.fetch("app_id", nil)) }.all? { |app| known_app_matrix_evidence_app_verified?(app) }
+  blockers << "known-app-matrix-redaction-incomplete" unless evidence.fetch("matrix_report_path_exposed", true) == false && evidence.fetch("raw_output_exposed", true) == false && evidence.fetch("remote_path_exposed", true) == false && evidence.fetch("raw_output_redacted_count", 0).to_i >= KNOWN_APP_MATRIX_REQUIRED_APP_IDS.length
+  blockers << "known-app-matrix-safety-gate-open" unless %w[
+    host_root_modified
+    privileged_container_required
+    host_networking_required
+    docker_socket_mounted
+    broad_host_mount_required
+    desktop_launch_enabled
+    backend_launch_enabled
+    action_execution_enabled
+    backend_details_exposed
+  ].all? { |key| evidence.fetch(key, true) == false }
+  blockers.uniq
+end
+
+def known_app_matrix_evidence_status(evidence, error)
+  blockers = known_app_matrix_evidence_blockers(evidence, error)
+  {
+    "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
+    "matrix_passed" => evidence.is_a?(Hash) && blockers.empty?,
+    "status" => if error
+                  "blocked"
+                elsif evidence.is_a?(Hash)
+                  blockers.empty? ? "implemented" : "blocked"
+                else
+                  "not-supplied"
+                end,
+    "required_app_ids" => KNOWN_APP_MATRIX_REQUIRED_APP_IDS,
     "blockers" => blockers
   }
 end
@@ -853,6 +980,48 @@ def known_existing_winapp_acceptance_claim(evidence, error)
     human_authorization_required: !blockers.empty?,
     blockers: blockers,
     next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this Go-owned acceptance evidence available to release review; do not rerun q4 from the index." : "Supply a passing Go-owned known existing Windows app acceptance JSON report before relying on this release claim."
+  }
+end
+
+def known_app_matrix_evidence_claim(evidence, error)
+  blockers = known_app_matrix_evidence_blockers(evidence, error)
+  level = if error || evidence
+            blockers.empty? ? "implemented" : "blocked"
+          else
+            "skipped"
+          end
+  apps = evidence.is_a?(Hash) ? evidence.fetch("apps", []) : []
+  required_app_ids = apps.select { |app| app.is_a?(Hash) }.map { |app| app.fetch("app_id", nil) } & KNOWN_APP_MATRIX_REQUIRED_APP_IDS
+  {
+    id: "known-app-matrix-evidence",
+    title: "Known Windows app matrix evidence is classified without execution",
+    release_claim: "The release index can consume Go-owned evidence proving multiple catalog-backed Windows apps completed isolated q4 QEMU/Wine runs.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[internal/runtime/appidentity/known_app_matrix_evidence.go cmd/xnix-runtime-go/known_app_matrix_evidence_commands.go scripts/remote_known_winapp_matrix_smoke.rb scripts/release_evidence_index.rb scripts/merge_readiness_packet.rb],
+    verification_commands: ["ruby scripts/remote_known_winapp_matrix_smoke.rb --execute", "xnix-runtime-go known-app-matrix-evidence-preview --matrix-report REPORT.json", "ruby scripts/release_evidence_index.rb --format json --known-app-matrix-evidence MATRIX.json"],
+    current_evidence: if error
+                        "Known Windows app matrix evidence could not be loaded."
+                      elsif evidence
+                        "Known Windows app matrix evidence is #{blockers.empty? ? "passing for 7zr and busybox-w32" : "present but blocked"}."
+                      else
+                        "Known Windows app matrix evidence was not supplied; the release index did not run q4 or the Runtime."
+                      end,
+    matrix_passed: evidence.is_a?(Hash) && blockers.empty?,
+    required_app_ids: KNOWN_APP_MATRIX_REQUIRED_APP_IDS,
+    observed_required_app_ids: required_app_ids,
+    app_count: evidence.is_a?(Hash) ? evidence.fetch("app_count", 0).to_i : 0,
+    evidence_count: evidence.is_a?(Hash) ? evidence.fetch("evidence_count", 0).to_i : 0,
+    qemu_executed_count: evidence.is_a?(Hash) ? evidence.fetch("qemu_executed_count", 0).to_i : 0,
+    wine_executed_count: evidence.is_a?(Hash) ? evidence.fetch("wine_executed_count", 0).to_i : 0,
+    checksum_verified_count: evidence.is_a?(Hash) ? evidence.fetch("checksum_verified_count", 0).to_i : 0,
+    raw_output_redacted_count: evidence.is_a?(Hash) ? evidence.fetch("raw_output_redacted_count", 0).to_i : 0,
+    compatibility_center_projection_ready: evidence.is_a?(Hash) && evidence.fetch("compatibility_center_projection_ready", false) == true,
+    kde_center_projection_ready: evidence.is_a?(Hash) && evidence.fetch("kde_center_projection_ready", false) == true,
+    unsafe_gates: disabled_unsafe_gates,
+    human_authorization_required: !blockers.empty?,
+    blockers: blockers,
+    next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this Go-owned matrix evidence available to release review; run future matrix rebuilds on q4, not on the host." : "Supply a passing Go-owned known app matrix evidence JSON report before relying on this release claim."
   }
 end
 
