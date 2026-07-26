@@ -48,6 +48,8 @@ assert(script_source.include?("windows-app-guest-wine-gui-smoke"), "GUI smoke mu
 assert(script_source.include?("--executable"), "GUI smoke must expose a local Windows GUI executable delivery path")
 assert(script_source.include?("--file-argument"), "GUI smoke must expose file-argument delivery to the Go Runtime")
 assert(script_source.include?("--window-match"), "GUI smoke must expose an X window title match gate")
+assert(script_source.include?("XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON"), "GUI smoke owner path must pass file arguments through the Runtime owner boundary")
+assert(script_source.include?("XNIX_RUNTIME_OWNER_WINDOW_MATCH"), "GUI smoke owner path must pass window matching through the Runtime owner boundary")
 assert(script_source.include?("\"evidence-relative-path\", evidence_relative_path"), "GUI smoke owner path must call xnix-runtime-owner with positional evidence handoff")
 assert(go_gui_smoke_source.include?("\"wineboot\"") && go_gui_smoke_source.include?("\"--init\""), "Go Runtime must initialize the Wine prefix before launching the GUI app")
 
@@ -115,6 +117,11 @@ assert(owner_payload["evidence_display_name"] == "Mines", "GUI smoke owner mode 
 assert(owner_payload["owner_external_gui_app_requested"] == false, "GUI smoke owner mode must default to the built-in GUI app")
 assert(owner_payload["owner_external_gui_app_path_exposed"] == false, "GUI smoke owner mode must not expose owner guest GUI paths")
 assert(owner_payload["owner_external_gui_app_delivery"] == "", "GUI smoke owner mode must not plan external GUI app delivery by default")
+assert(owner_payload["owner_delegated_file_argument_count"] == 0, "GUI smoke owner mode must default delegated file argument count to zero")
+assert(owner_payload["owner_delegated_file_arguments_passed"] == false, "GUI smoke owner mode must default delegated file handoff evidence to false")
+assert(owner_payload["owner_delegated_raw_file_argument_path_exposed"] == false, "GUI smoke owner mode must keep delegated raw file paths hidden")
+assert(owner_payload["owner_delegated_window_match"] == "", "GUI smoke owner mode must default delegated window match to empty")
+assert(owner_payload["owner_delegated_window_match_observed"] == false, "GUI smoke owner mode must default delegated window match evidence to false")
 
 bad_mode_stdout, bad_mode_stderr, bad_mode_status = Open3.capture3(
   "ruby", script.to_s,
@@ -149,6 +156,25 @@ assert(file_arg_payload["file_argument_count"] == 1, "GUI smoke file argument pl
 assert(file_arg_payload["file_argument_delivery"] == "guest-copy-and-winepath", "GUI smoke file argument plan must describe guest copy and Wine path translation")
 assert(file_arg_payload["window_match"] == "sample-document.txt", "GUI smoke file argument plan must expose the required window match")
 assert(file_arg_payload["raw_file_argument_path_exposed"] == false, "GUI smoke file argument plan must keep raw paths out of report fields")
+
+owner_file_arg_stdout, owner_file_arg_stderr, owner_file_arg_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--launch-mode", "owner-controlled-launch",
+  "--launcher-bin", "/home/xnix-build-cache/bin/xnix-compat-launch",
+  "--known-app-id", "org.xnix.sample.notepad",
+  "--file-argument", fixture_document.to_s,
+  "--window-match", "sample-document.txt",
+  chdir: project_root.to_s
+)
+assert(owner_file_arg_status.success?, "Wine guest GUI smoke owner file argument plan must succeed: #{owner_file_arg_stderr}")
+owner_file_arg_payload = JSON.parse(owner_file_arg_stdout)
+assert(owner_file_arg_payload["owner_controlled_launch_requested"] == true, "GUI smoke owner file argument plan must request owner-controlled launch")
+assert(owner_file_arg_payload["file_argument_count"] == 1, "GUI smoke owner file argument plan must count the requested document")
+assert(owner_file_arg_payload["file_argument_delivery"] == "guest-copy-and-winepath", "GUI smoke owner file argument plan must describe owner delegated guest copy")
+assert(owner_file_arg_payload["window_match"] == "sample-document.txt", "GUI smoke owner file argument plan must preserve the window match")
+assert(owner_file_arg_payload["raw_file_argument_path_exposed"] == false, "GUI smoke owner file argument plan must keep raw paths out of report fields")
 
 owner_exe_stdout, owner_exe_stderr, owner_exe_status = Open3.capture3(
   "ruby", script.to_s,

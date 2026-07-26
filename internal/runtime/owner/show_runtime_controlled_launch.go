@@ -59,6 +59,15 @@ type ShowRuntimeControlledLaunchResult struct {
 	DelegatedSmokePassed                            bool                                                        `json:"delegated_smoke_passed"`
 	DelegatedExecutionStarted                       bool                                                        `json:"delegated_execution_started"`
 	DelegatedBackendProcessStarted                  bool                                                        `json:"delegated_backend_process_started"`
+	DelegatedFileArgumentCount                      int                                                         `json:"delegated_file_argument_count"`
+	DelegatedFileArgumentCopiedCount                int                                                         `json:"delegated_file_argument_copied_count"`
+	DelegatedFileArgumentsPassed                    bool                                                        `json:"delegated_file_arguments_passed"`
+	DelegatedFileArgumentWinePathTranslated         bool                                                        `json:"delegated_file_argument_winepath_translated"`
+	DelegatedFileArgumentWinePathTranslatedCount    int                                                         `json:"delegated_file_argument_winepath_translated_count"`
+	DelegatedRawFileArgumentPathExposed             bool                                                        `json:"delegated_raw_file_argument_path_exposed"`
+	DelegatedWindowMatch                            string                                                      `json:"delegated_window_match,omitempty"`
+	DelegatedWindowMatchObserved                    bool                                                        `json:"delegated_window_match_observed"`
+	DelegatedWindowEvidenceSummary                  string                                                      `json:"delegated_window_evidence_summary,omitempty"`
 	DelegatedSessionGatedControlledDispatchConsumed bool                                                        `json:"delegated_session_gated_controlled_dispatch_consumed"`
 	DelegatedSessionGatedControlledDispatchState    string                                                      `json:"delegated_session_gated_controlled_dispatch_state"`
 	DelegatedSessionGatedReviewReceiptID            string                                                      `json:"delegated_session_gated_review_receipt_id"`
@@ -97,6 +106,8 @@ type runtimeControlledLaunchOwnerConfig struct {
 	GuestXWinInfoPath string
 	GUIExecutablePath string
 	GuestGUIAppPath   string
+	FileArgumentPaths []string
+	WindowMatch       string
 	GuestDisplay      string
 	HostDisplay       string
 	GUIWait           string
@@ -195,10 +206,16 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 		GuestXWinInfoPath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_XWININFO")),
 		GUIExecutablePath: strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_EXECUTABLE")),
 		GuestGUIAppPath:   strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_GUI_APP")),
+		WindowMatch:       strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_WINDOW_MATCH")),
 		GuestDisplay:      strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUEST_DISPLAY")),
 		HostDisplay:       strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_HOST_DISPLAY")),
 		GUIWait:           strings.TrimSpace(os.Getenv("XNIX_RUNTIME_OWNER_GUI_WAIT")),
 	}
+	fileArgumentPaths, err := runtimeControlledLaunchFileArgumentPathsFromEnv(os.Getenv("XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON"))
+	if err != nil {
+		return runtimeControlledLaunchOwnerConfig{}, err
+	}
+	config.FileArgumentPaths = fileArgumentPaths
 	if config.StateRoot == "" {
 		return runtimeControlledLaunchOwnerConfig{}, errors.New("ShowRuntimeControlledLaunch requires XNIX_RUNTIME_OWNER_STATE_ROOT from the Runtime owner service boundary")
 	}
@@ -211,12 +228,35 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 	if config.OwnerTimeout == "" {
 		config.OwnerTimeout = "5m"
 	}
-	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestHost, config.GuestPort, config.GuestUser, config.GuestKeyPath, config.GuestRemoteDir, config.GuestSSHPath, config.GuestSCPPath, config.GuestXWinInfoPath, config.GUIExecutablePath, config.GuestGUIAppPath, config.GuestDisplay, config.HostDisplay, config.GUIWait} {
+	for _, value := range []string{config.StateRoot, config.CacheRoot, config.LauncherPath, config.OwnerTimeout, config.GuestTimeout, config.GuestHost, config.GuestPort, config.GuestUser, config.GuestKeyPath, config.GuestRemoteDir, config.GuestSSHPath, config.GuestSCPPath, config.GuestXWinInfoPath, config.GUIExecutablePath, config.GuestGUIAppPath, config.WindowMatch, config.GuestDisplay, config.HostDisplay, config.GUIWait} {
 		if strings.ContainsAny(value, "\r\n") {
 			return runtimeControlledLaunchOwnerConfig{}, errors.New("ShowRuntimeControlledLaunch Runtime owner configuration requires single-line values")
 		}
 	}
 	return config, nil
+}
+
+func runtimeControlledLaunchFileArgumentPathsFromEnv(raw string) ([]string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil
+	}
+	var values []string
+	if err := json.Unmarshal([]byte(raw), &values); err != nil {
+		return nil, fmt.Errorf("parse XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON: %w", err)
+	}
+	paths := make([]string, 0, len(values))
+	for _, value := range values {
+		path := strings.TrimSpace(value)
+		if path == "" {
+			return nil, errors.New("ShowRuntimeControlledLaunch Runtime owner file arguments require non-empty paths")
+		}
+		if strings.ContainsAny(path, "\r\n") {
+			return nil, errors.New("ShowRuntimeControlledLaunch Runtime owner file arguments require single-line paths")
+		}
+		paths = append(paths, path)
+	}
+	return paths, nil
 }
 
 func runtimeControlledLaunchExtraArgs(config runtimeControlledLaunchOwnerConfig) ([]string, error) {
@@ -250,6 +290,12 @@ func runtimeControlledLaunchExtraArgs(config runtimeControlledLaunchOwnerConfig)
 	}
 	if config.GuestGUIAppPath != "" {
 		args = append(args, "--gui-app", config.GuestGUIAppPath)
+	}
+	for _, path := range config.FileArgumentPaths {
+		args = append(args, "--file-argument", path)
+	}
+	if config.WindowMatch != "" {
+		args = append(args, "--window-match", config.WindowMatch)
 	}
 	if config.GuestDisplay != "" {
 		args = append(args, "--guest-display", config.GuestDisplay)
@@ -318,6 +364,15 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 		DelegatedSmokePassed:                            ownerBoolJSONField(delegated, "smoke_passed"),
 		DelegatedExecutionStarted:                       ownerBoolJSONField(delegated, "execution_started"),
 		DelegatedBackendProcessStarted:                  ownerBoolJSONField(delegated, "backend_process_started"),
+		DelegatedFileArgumentCount:                      ownerIntJSONField(delegated, "file_argument_count"),
+		DelegatedFileArgumentCopiedCount:                ownerIntJSONField(delegated, "file_argument_copied_count"),
+		DelegatedFileArgumentsPassed:                    ownerBoolJSONField(delegated, "file_arguments_passed"),
+		DelegatedFileArgumentWinePathTranslated:         ownerBoolJSONField(delegated, "file_argument_winepath_translated"),
+		DelegatedFileArgumentWinePathTranslatedCount:    ownerIntJSONField(delegated, "file_argument_winepath_translated_count"),
+		DelegatedRawFileArgumentPathExposed:             ownerBoolJSONField(delegated, "raw_file_argument_path_exposed"),
+		DelegatedWindowMatch:                            ownerStringJSONField(delegated, "window_match"),
+		DelegatedWindowMatchObserved:                    ownerBoolJSONField(delegated, "window_match_observed"),
+		DelegatedWindowEvidenceSummary:                  ownerSafeWindowEvidenceSummaryJSONField(delegated),
 		DelegatedSessionGatedControlledDispatchConsumed: ownerBoolJSONField(delegated, "session_gated_controlled_dispatch_consumed"),
 		DelegatedSessionGatedControlledDispatchState:    ownerStringJSONField(delegated, "session_gated_controlled_dispatch_state"),
 		DelegatedSessionGatedReviewReceiptID:            ownerStringJSONField(delegated, "session_gated_review_receipt_id"),
@@ -351,6 +406,7 @@ func showRuntimeControlledLaunchResultFromOutput(plan appidentity.KnownAppKDERun
 		result.DelegatedDockerSocketMounted ||
 		result.DelegatedBroadHostMountRequired ||
 		result.DelegatedRawCommandExposed ||
+		result.DelegatedRawFileArgumentPathExposed ||
 		result.DelegatedBackendDetailsExposed {
 		return ShowRuntimeControlledLaunchResult{}, errors.New("Runtime owner action managed launcher reported an unsafe delegated result")
 	}
@@ -411,4 +467,26 @@ func ownerStringJSONField(payload map[string]any, key string) string {
 func ownerBoolJSONField(payload map[string]any, key string) bool {
 	value, _ := payload[key].(bool)
 	return value
+}
+
+func ownerSafeWindowEvidenceSummaryJSONField(payload map[string]any) string {
+	summary := ownerStringJSONField(payload, "window_evidence_summary")
+	if summary == "" {
+		return ""
+	}
+	if _, unsafe := forbiddenBackendTermInString(summary); unsafe {
+		return "window-match-observed"
+	}
+	return summary
+}
+
+func ownerIntJSONField(payload map[string]any, key string) int {
+	switch value := payload[key].(type) {
+	case float64:
+		return int(value)
+	case int:
+		return value
+	default:
+		return 0
+	}
 }

@@ -286,6 +286,8 @@ def owner_controlled_launch_env(options, owner_state_root, cache_root)
     "XNIX_RUNTIME_OWNER_GUEST_XWININFO" => "xwininfo",
     "XNIX_RUNTIME_OWNER_GUI_EXECUTABLE" => owner_gui_executable_path(options),
     "XNIX_RUNTIME_OWNER_GUEST_GUI_APP" => "",
+    "XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON" => JSON.generate(options.fetch(:file_arguments)),
+    "XNIX_RUNTIME_OWNER_WINDOW_MATCH" => options.fetch(:window_match),
     "XNIX_RUNTIME_OWNER_GUEST_DISPLAY" => "#{options.fetch(:guest_display_host)}:#{display_number}",
     "XNIX_RUNTIME_OWNER_HOST_DISPLAY" => ":#{display_number}",
     "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
@@ -365,6 +367,15 @@ def base_report(options)
     "owner_managed_launcher_invoked" => false,
     "owner_delegated_smoke_passed" => false,
     "owner_delegated_evidence_source" => "",
+    "owner_delegated_file_argument_count" => 0,
+    "owner_delegated_file_argument_copied_count" => 0,
+    "owner_delegated_file_arguments_passed" => false,
+    "owner_delegated_file_argument_winepath_translated" => false,
+    "owner_delegated_file_argument_winepath_translated_count" => 0,
+    "owner_delegated_raw_file_argument_path_exposed" => false,
+    "owner_delegated_window_match" => "",
+    "owner_delegated_window_match_observed" => false,
+    "owner_delegated_window_evidence_summary" => "",
     "x_window_observed" => false,
     "x_window_child_count" => 0,
     "failure_reason" => "",
@@ -579,6 +590,15 @@ begin
     report["owner_delegated_managed_artifact_copied"] = owner_action.fetch("delegated_managed_artifact_copied", false)
     report["owner_delegated_smoke_passed"] = owner_action.fetch("delegated_smoke_passed", false)
     report["owner_delegated_execution_started"] = owner_action.fetch("delegated_execution_started", false)
+    report["owner_delegated_file_argument_count"] = owner_action.fetch("delegated_file_argument_count", 0)
+    report["owner_delegated_file_argument_copied_count"] = owner_action.fetch("delegated_file_argument_copied_count", 0)
+    report["owner_delegated_file_arguments_passed"] = owner_action.fetch("delegated_file_arguments_passed", false)
+    report["owner_delegated_file_argument_winepath_translated"] = owner_action.fetch("delegated_file_argument_winepath_translated", false)
+    report["owner_delegated_file_argument_winepath_translated_count"] = owner_action.fetch("delegated_file_argument_winepath_translated_count", 0)
+    report["owner_delegated_raw_file_argument_path_exposed"] = owner_action.fetch("delegated_raw_file_argument_path_exposed", false)
+    report["owner_delegated_window_match"] = owner_action.fetch("delegated_window_match", "")
+    report["owner_delegated_window_match_observed"] = owner_action.fetch("delegated_window_match_observed", false)
+    report["owner_delegated_window_evidence_summary"] = owner_action.fetch("delegated_window_evidence_summary", "")
     report["owner_delegated_controlled_session_window_observed"] = owner_action.fetch("delegated_controlled_session_window_observed", false)
     report["owner_delegated_host_root_modified"] = owner_action.fetch("delegated_host_root_modified", false)
     report["owner_delegated_docker_socket_mounted"] = owner_action.fetch("delegated_docker_socket_mounted", false)
@@ -586,10 +606,19 @@ begin
     report["owner_delegated_raw_command_exposed"] = owner_action.fetch("delegated_raw_command_exposed", false)
     report["owner_delegated_backend_details_exposed"] = owner_action.fetch("delegated_backend_details_exposed", false)
 
+    owner_file_arguments_satisfied = report.fetch("file_argument_count", 0).zero? ||
+                                     (report["owner_delegated_file_arguments_passed"] &&
+                                      report["owner_delegated_file_argument_copied_count"] == report.fetch("file_argument_count", 0) &&
+                                      report["owner_delegated_file_argument_winepath_translated"])
+    owner_window_match_satisfied = options.fetch(:window_match).strip.empty? ||
+                                   report["owner_delegated_window_match_observed"]
+
     if report["owner_managed_launcher_invoked"] &&
        report["owner_delegated_smoke_passed"] &&
        report["owner_delegated_evidence_source"] == "wine-guest-gui-smoke" &&
-       report["owner_delegated_controlled_session_window_observed"]
+       report["owner_delegated_controlled_session_window_observed"] &&
+       owner_file_arguments_satisfied &&
+       owner_window_match_satisfied
       report["status"] = "passed"
       emit(report, options)
       exit 0

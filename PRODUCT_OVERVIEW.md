@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc159
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc160
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc160 checkpoint candidate makes q4 the default path for compile-heavy work and closes the owner-controlled file-open handoff. Runtime owner controlled launch can now read owner-supplied file arguments and window-match text from its restricted environment, pass those inputs to the managed launcher for q4/QEMU Wine GUI execution, and return only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving that Sample Notepad file-open intent can survive the desktop action, Runtime owner, managed launcher, and guest GUI boundaries without exposing raw local file paths.
 
 The v0.2.640-rc159 checkpoint candidate moves q4 guest file-open evidence up into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and returns redacted known-app dispatch evidence for file copy count, Wine path translation, argument handoff, and matched window text. This keeps the existing KDE recipe-backed container path intact when `--registry` is supplied, while allowing Sample Notepad to use the q4/QEMU guest GUI backend when the controlled launcher omits a registry and provides the guest boundary.
 

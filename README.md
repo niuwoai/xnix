@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc159`.
+The project is currently at `v0.2.640-rc160`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc159`.
 
 ## Current Checkpoint
 
-v0.2.640-rc159 moves q4 guest file-open proof into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and reports redacted known-app dispatch evidence for file copy, Wine path translation, argument handoff, and matched window text. Existing KDE recipe-backed container dispatch remains selected when `--registry` is supplied; the q4/QEMU guest GUI backend is available for Sample Notepad when the controlled launcher omits the registry and supplies the managed guest boundary.
+v0.2.640-rc160 makes q4 the default compile-heavy path and closes the owner-controlled file-open handoff. Runtime owner controlled launch can now receive owner-supplied file arguments and window-match text through restricted environment values, pass those inputs to `xnix-compat-launch`, and surface only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving Sample Notepad file-open intent can pass through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundaries without exposing raw local file paths.
+
+The previous v0.2.640-rc159 checkpoint moved q4 guest file-open proof into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and reports redacted known-app dispatch evidence for file copy, Wine path translation, argument handoff, and matched window text. Existing KDE recipe-backed container dispatch remains selected when `--registry` is supplied; the q4/QEMU guest GUI backend is available for Sample Notepad when the controlled launcher omits the registry and supplies the managed guest boundary.
 
 The previous v0.2.640-rc158 checkpoint moved file-open proof onto the q4 QEMU/Wine guest path. The Go Runtime guest GUI smoke can now copy file arguments into the guest, translate them through guest `winepath -w`, pass them to a Windows GUI app, and require a matching X window title before accepting the run. The remote smoke can create a q4-hosted `sample-document.txt` and launch Sample Notepad against it, so compile-heavy and real GUI work stay on q4 while the macOS host only does lightweight planning and checks.
 

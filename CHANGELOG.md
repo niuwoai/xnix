@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc160] - 2026-07-26
+
+### Changed
+
+- Extended the Runtime owner controlled-launch boundary so owner-supplied file arguments and window-match text are passed to the managed launcher for q4/QEMU Wine GUI runs.
+- Surfaced redacted owner-delegated file-copy, argument handoff, Wine path translation, and window-match evidence without exposing raw file argument paths to KDE-facing owner results.
+- Made q4 the documented default for compile-heavy work, keeping the macOS host limited to lightweight targeted checks unless an operator explicitly authorizes a local restricted smoke.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc160`.
+
 ## [0.2.640-rc159] - 2026-07-26
 
 ### Changed

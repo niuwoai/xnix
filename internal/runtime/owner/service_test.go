@@ -250,6 +250,61 @@ func TestServiceCallDispatchesShowRuntimeControlledLaunch(t *testing.T) {
 	}
 }
 
+func TestServiceCallDispatchesShowRuntimeControlledLaunchFileArgumentThroughOwnerBoundary(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeOwnerRuntimeStatusLaunchExecutionFixture(t, stateRoot)
+	evidenceRecord := recordOwnerRuntimeStatusLaunchEvidenceFixture(t, stateRoot)
+	fakeLauncher, fakeArgsPath := writeOwnerFakeRuntimeStatusManagedLauncherWithPayload(t, "{\"request_type\":\"windows-known-app-dispatch-smoke\",\"evidence_source\":\"wine-guest-gui-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"file_argument_count\":1,\"file_argument_copied_count\":1,\"file_arguments_passed\":true,\"file_argument_winepath_translated\":true,\"file_argument_winepath_translated_count\":1,\"raw_file_argument_path_exposed\":false,\"window_match\":\"sample-document.txt\",\"window_match_observed\":true,\"window_evidence_summary\":\"sample-document.txt - Notepad notepad.exe\",\"session_gated_controlled_dispatch_consumed\":true,\"session_gated_controlled_dispatch_state\":\"created-after-session-gated-review\",\"session_gated_review_receipt_id\":\"known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02\",\"launch_authorization_receipt_id\":\"known-app-launch-authorization-7zr-26.02\",\"controlled_execution_session_consumed\":true,\"controlled_execution_session_id\":\"known-app-controlled-execution-session-7zr-26.02\",\"controlled_session_digest_verified\":true,\"controlled_session_relative_path\":\"execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json\",\"runtime_owner_consumable_session\":true,\"kde_read_model_consumable_session\":true,\"controlled_session_live_state_observed\":true,\"controlled_session_registered\":true,\"controlled_session_window_observed\":true,\"controlled_session_host_root_modified\":false,\"controlled_session_backend_process_start\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}")
+	fileArgumentPath := "/tmp/xnix-owner-controlled-input/sample-document.txt"
+	t.Setenv("XNIX_RUNTIME_OWNER_STATE_ROOT", stateRoot)
+	t.Setenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT", t.TempDir())
+	t.Setenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER", fakeLauncher)
+	t.Setenv("XNIX_RUNTIME_OWNER_TIMEOUT", "5s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT", "1s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON", `["`+fileArgumentPath+`"]`)
+	t.Setenv("XNIX_RUNTIME_OWNER_WINDOW_MATCH", "sample-document.txt")
+
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("ShowRuntimeControlledLaunch", []string{"--evidence-relative-path", evidenceRecord.EvidenceRelativePath})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(call.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["delegated_file_argument_count"] != float64(1) ||
+		payload["delegated_file_argument_copied_count"] != float64(1) ||
+		payload["delegated_file_arguments_passed"] != true ||
+		payload["delegated_file_argument_winepath_translated"] != true ||
+		payload["delegated_file_argument_winepath_translated_count"] != float64(1) ||
+		payload["delegated_raw_file_argument_path_exposed"] != false ||
+		payload["delegated_window_match"] != "sample-document.txt" ||
+		payload["delegated_window_match_observed"] != true ||
+		payload["delegated_window_evidence_summary"] != "window-match-observed" ||
+		payload["delegated_controlled_session_window_observed"] != true ||
+		payload["delegated_controlled_execution_session_id"] != sessionID {
+		t.Fatalf("unexpected owner file argument delegation payload: %#v", payload)
+	}
+	argsData, err := os.ReadFile(fakeArgsPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
+	}
+	argsText := string(argsData)
+	for _, token := range []string{"--file-argument\n" + fileArgumentPath, "--window-match\nsample-document.txt"} {
+		if !strings.Contains(argsText, token) {
+			t.Fatalf("fake launcher args missing %q: %s", token, argsText)
+		}
+	}
+	if strings.Contains(string(call.Payload), fileArgumentPath) {
+		t.Fatalf("Runtime owner payload exposed raw file argument path: %s", string(call.Payload))
+	}
+}
+
 func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptLookup(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {
@@ -683,6 +738,19 @@ func writeOwnerFakeRuntimeStatusManagedLauncher(t *testing.T) (string, string) {
 	argsPath := filepath.Join(dir, "launcher-args.txt")
 	t.Setenv("XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE", argsPath)
 	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"session_gated_controlled_dispatch_consumed\":true,\"session_gated_controlled_dispatch_state\":\"created-after-session-gated-review\",\"session_gated_review_receipt_id\":\"known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02\",\"launch_authorization_receipt_id\":\"known-app-launch-authorization-7zr-26.02\",\"controlled_execution_session_consumed\":true,\"controlled_execution_session_id\":\"known-app-controlled-execution-session-7zr-26.02\",\"controlled_session_digest_verified\":true,\"controlled_session_relative_path\":\"execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json\",\"runtime_owner_consumable_session\":true,\"kde_read_model_consumable_session\":true,\"controlled_session_live_state_observed\":false,\"controlled_session_registered\":false,\"controlled_session_window_observed\":false,\"controlled_session_host_root_modified\":false,\"controlled_session_backend_process_start\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
+	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("WriteFile fake launcher returned error: %v", err)
+	}
+	return launcherPath, argsPath
+}
+
+func writeOwnerFakeRuntimeStatusManagedLauncherWithPayload(t *testing.T, payload string) (string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	launcherPath := filepath.Join(dir, "fake-xnix-compat-launch")
+	argsPath := filepath.Join(dir, "launcher-args.txt")
+	t.Setenv("XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE", argsPath)
+	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '" + payload + "'\n"
 	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
 		t.Fatalf("WriteFile fake launcher returned error: %v", err)
 	}
