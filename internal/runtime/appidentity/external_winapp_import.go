@@ -17,6 +17,8 @@ const (
 	ExternalWinAppImportRecordRequestType   = "external-winapp-import-record"
 	ExternalWinAppImportRecordFileName      = "import-record.json"
 	ExternalWinAppImportHandleRoot          = "external-apps"
+	ExternalWinAppStateRootEnv              = "XNIX_EXTERNAL_APP_STATE_ROOT"
+	DefaultExternalWinAppStateRoot          = "/var/lib/xnix/compatibility/runtime"
 )
 
 var externalWinAppDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
@@ -366,6 +368,13 @@ func ExternalAppRecipeFromImportRecord(record ExternalWinAppImportRecord) (Recip
 		DigestVerified:  true,
 		SignatureStatus: "local-import-digest-verified",
 	}, nil
+}
+
+func DefaultExternalWinAppRuntimeStateRoot() string {
+	if stateRoot := strings.TrimSpace(os.Getenv(ExternalWinAppStateRootEnv)); stateRoot != "" {
+		return stateRoot
+	}
+	return DefaultExternalWinAppStateRoot
 }
 
 func safeExternalExecutableName(name string) bool {

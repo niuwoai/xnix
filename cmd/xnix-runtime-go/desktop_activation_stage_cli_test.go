@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestDesktopActivationStageCommandWritesOnlyInsideStagingRoot(t *testing.T) {
@@ -97,6 +99,70 @@ func TestDesktopActivationStageCommandWritesOnlyInsideStagingRoot(t *testing.T) 
 		!bytes.Contains(receipt, []byte(`"host_root_modified": false`)) ||
 		!bytes.Contains(receipt, []byte(`"id": "managed-launcher-artifact"`)) {
 		t.Fatalf("unexpected receipt:\n%s", receipt)
+	}
+}
+
+func TestDesktopActivationStageCommandStagesExternalImportedAppHandleLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	stagingRoot := filepath.Join(tempDir, "stage")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	record, err := appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.gui",
+		DisplayName:    "External GUI",
+		AppVersion:     "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	recordPath := filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath))
+
+	var output bytes.Buffer
+	err = run([]string{
+		"desktop-activation-stage",
+		"--external-app-import-record", recordPath,
+		"--mode", "development",
+		"--staging-root", stagingRoot,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["application_id"] != "org.xnix.external.gui" ||
+		payload["display_name"] != "External GUI" ||
+		payload["desktop_file"] != "xnix-org.xnix.external.gui.desktop" ||
+		payload["written_file_count"] != float64(5) ||
+		payload["mimeapps_written"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["staging_root_path_exposed"] != false {
+		t.Fatalf("unexpected external imported app stage payload: %#v", payload)
+	}
+	desktopEntryPath := filepath.Join(stagingRoot, "usr/share/applications/xnix-org.xnix.external.gui.desktop")
+	desktopEntry, err := os.ReadFile(desktopEntryPath)
+	if err != nil {
+		t.Fatalf("external imported app desktop entry was not staged: %v", err)
+	}
+	if !bytes.Contains(desktopEntry, []byte("Exec=xnix-compat-launch --external-app-handle org.xnix.external.gui %U\n")) ||
+		bytes.Contains(desktopEntry, []byte("MimeType=")) {
+		t.Fatalf("unexpected external imported app desktop entry:\n%s", desktopEntry)
+	}
+	for _, forbidden := range []string{recordPath, stateRoot, stagingRoot, executablePath, "ExternalGui.exe", "wine ", "docker", "qemu-system", "--state-root", "--external-app-import-record"} {
+		if strings.Contains(strings.ToLower(output.String()), strings.ToLower(forbidden)) ||
+			strings.Contains(strings.ToLower(string(desktopEntry)), strings.ToLower(forbidden)) {
+			t.Fatalf("external imported app staging exposed forbidden term %q\noutput=%s\nentry=%s", forbidden, output.String(), string(desktopEntry))
+		}
 	}
 }
 

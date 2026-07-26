@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"xnix.local/xnix/internal/runtime/appidentity"
 )
 
 func TestDesktopIdentityPlanCommandLoadsRegistryApplication(t *testing.T) {
@@ -97,6 +99,51 @@ func TestDesktopEntryPreviewCommandRendersRecipeBackedContainerGUILauncher(t *te
 	for _, forbidden := range []string{"notepad.exe", "wine ", "docker", "qemu-system", "../../runtime/recipes"} {
 		if strings.Contains(strings.ToLower(entry), forbidden) {
 			t.Fatalf("recipe-backed desktop entry exposes forbidden term %q: %s", forbidden, entry)
+		}
+	}
+}
+
+func TestDesktopEntryPreviewCommandRendersExternalImportedAppHandleLauncher(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	record, err := appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.gui",
+		DisplayName:    "External GUI",
+		AppVersion:     "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	recordPath := filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath))
+
+	var output bytes.Buffer
+	err = run([]string{"desktop-entry-preview", "--external-app-import-record", recordPath}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	entry := output.String()
+	required := []string{
+		"[Desktop Entry]\n",
+		"Name=External GUI\n",
+		"Exec=xnix-compat-launch --external-app-handle org.xnix.external.gui %U\n",
+		"X-Xnix-ApplicationId=org.xnix.external.gui\n",
+		"X-Xnix-RuntimeOwned=true\n",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(entry, fragment) {
+			t.Fatalf("external imported app desktop entry missing %q in:\n%s", fragment, entry)
+		}
+	}
+	for _, forbidden := range []string{recordPath, stateRoot, executablePath, "ExternalGui.exe", "wine ", "docker", "qemu-system", "--state-root", "--external-app-import-record"} {
+		if strings.Contains(strings.ToLower(entry), strings.ToLower(forbidden)) {
+			t.Fatalf("external imported app desktop entry exposes forbidden term %q: %s", forbidden, entry)
 		}
 	}
 }

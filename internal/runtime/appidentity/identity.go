@@ -1025,7 +1025,7 @@ func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 		Categories:               []string{"Utility"},
 		MIMETypes:                mimeTypes,
 		LauncherAction:           "runtime-launch",
-		LaunchCommand:            launchCommandForRecipe(recipe),
+		LaunchCommand:            launchCommandForRecipe(recipe, provenance),
 		UserVisible:              true,
 		StandardDesktopEntry:     true,
 		AcceptsFileURIs:          len(mimeTypes) > 0,
@@ -1055,7 +1055,10 @@ func NewPlanWithProvenance(recipe Recipe, provenance Provenance) (Plan, error) {
 	}, nil
 }
 
-func launchCommandForRecipe(recipe Recipe) []string {
+func launchCommandForRecipe(recipe Recipe, provenance Provenance) []string {
+	if provenance.Source == "external-winapp-import-record" {
+		return []string{"xnix-compat-launch", "--external-app-handle", recipe.ID, "%U"}
+	}
 	if recipe.ContainerGUISmoke != (ContainerGUISmokeHints{}) {
 		return []string{"xnix-compat-launch", "--app", recipe.ID, "--registry", packagedRecipeRegistryPath, "%U"}
 	}
@@ -1204,13 +1207,16 @@ func (plan Plan) hasCompleteManagedLauncherCommand() bool {
 	if len(plan.LaunchCommand) != 4 && len(plan.LaunchCommand) != 6 {
 		return false
 	}
-	if plan.LaunchCommand[0] != "xnix-compat-launch" || plan.LaunchCommand[1] != "--app" || plan.LaunchCommand[2] != plan.ApplicationID || plan.LaunchCommand[len(plan.LaunchCommand)-1] != "%U" {
+	if plan.LaunchCommand[0] != "xnix-compat-launch" || plan.LaunchCommand[2] != plan.ApplicationID || plan.LaunchCommand[len(plan.LaunchCommand)-1] != "%U" {
 		return false
 	}
-	if len(plan.LaunchCommand) == 6 {
-		return plan.LaunchCommand[3] == "--registry" && plan.LaunchCommand[4] == packagedRecipeRegistryPath
+	if len(plan.LaunchCommand) == 4 {
+		return plan.LaunchCommand[1] == "--app" || plan.LaunchCommand[1] == "--external-app-handle"
 	}
-	return true
+	if len(plan.LaunchCommand) == 6 {
+		return plan.LaunchCommand[1] == "--app" && plan.LaunchCommand[3] == "--registry" && plan.LaunchCommand[4] == packagedRecipeRegistryPath
+	}
+	return false
 }
 
 func (plan Plan) RenderMIMEApps() (string, error) {

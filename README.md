@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc136`.
+The project is currently at `v0.2.640-rc137`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc136`.
 
 ## Current Checkpoint
 
-v0.2.640-rc136 lets the Go Runtime and managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--state-root ROOT --external-app-handle APPID`. The Runtime resolves the handle to `external-apps/APPID/import-record.json`, revalidates the imported artifact digest and MZ executable shape, and returns the same safe run evidence without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details.
+v0.2.640-rc137 makes imported external Windows GUI apps desktop-launchable through a KDE-safe handle entry. `desktop-entry-preview --external-app-import-record RECORD.json` and `desktop-activation-stage --external-app-import-record RECORD.json` now render/stage `Exec=xnix-compat-launch --external-app-handle APPID %U`, while `xnix-compat-launch` can resolve the handle through Runtime state-root defaults or `XNIX_EXTERNAL_APP_STATE_ROOT` without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details in the desktop file.
+
+The previous v0.2.640-rc136 checkpoint let the Go Runtime and managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--state-root ROOT --external-app-handle APPID`. The Runtime resolves the handle to `external-apps/APPID/import-record.json`, revalidates the imported artifact digest and MZ executable shape, and returns the same safe run evidence without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details.
 
 The previous v0.2.640-rc135 checkpoint let the managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--external-app-import-record RECORD.json`. The launcher delegates to the Go Runtime `windows-external-app-run` implementation, returns the same digest-verified run record, and keeps known-app launch gates separate from imported-app execution while raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation stay closed.
 

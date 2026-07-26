@@ -82,8 +82,11 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 	if importRecordPath != "" && (stateRoot != "" || externalAppHandle != "") {
 		return ExternalWinAppRunResult{}, fmt.Errorf("external Windows app run accepts either --external-app-import-record or --state-root with --external-app-handle")
 	}
-	if importRecordPath == "" && (stateRoot == "" || externalAppHandle == "") {
-		return ExternalWinAppRunResult{}, fmt.Errorf("external Windows app run requires --external-app-import-record or --state-root with --external-app-handle")
+	if importRecordPath == "" && externalAppHandle == "" {
+		return ExternalWinAppRunResult{}, fmt.Errorf("external Windows app run requires --external-app-import-record or --external-app-handle")
+	}
+	if importRecordPath == "" && stateRoot == "" {
+		stateRoot = DefaultExternalWinAppRuntimeStateRoot()
 	}
 	var record ExternalWinAppImportRecord
 	var importedExecutablePath string

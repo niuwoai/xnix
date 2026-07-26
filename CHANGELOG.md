@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc137] - 2026-07-26
+
+### Added
+
+- Added external import-record support to `desktop-entry-preview` and `desktop-activation-stage`, producing a KDE-safe `xnix-compat-launch --external-app-handle APPID %U` launcher entry for imported Windows GUI apps.
+- Added handle-only `xnix-compat-launch` resolution through Runtime state-root defaults or `XNIX_EXTERNAL_APP_STATE_ROOT`, keeping raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, and host-root mutation details out of desktop material.
+
 ## [0.2.640-rc136] - 2026-07-26
 
 ### Added

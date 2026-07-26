@@ -101,9 +101,6 @@ func run(args []string, stdout io.Writer) error {
 		if strings.TrimSpace(externalAppImportRecord) != "" && strings.TrimSpace(externalAppHandle) != "" {
 			return fmt.Errorf("--external-app-import-record cannot be combined with --external-app-handle")
 		}
-		if strings.TrimSpace(externalAppHandle) != "" && strings.TrimSpace(stateRoot) == "" {
-			return fmt.Errorf("--state-root is required with --external-app-handle")
-		}
 		timeout, err := time.ParseDuration(timeoutText)
 		if err != nil {
 			return fmt.Errorf("parse timeout: %w", err)

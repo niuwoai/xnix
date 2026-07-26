@@ -1837,12 +1837,19 @@ func parseDesktopEntryPreviewSource(args []string) (appidentity.Recipe, appident
 	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	externalAppImportRecord := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
 	activationRoot := flags.String("activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, err
 	}
-	if (*recipePath == "") == (*registryPath == "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview requires exactly one source: --recipe or --registry")
+	sourceCount := 0
+	for _, source := range []string{*recipePath, *registryPath, *externalAppImportRecord} {
+		if source != "" {
+			sourceCount++
+		}
+	}
+	if sourceCount != 1 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview requires exactly one source: --recipe, --registry, or --external-app-import-record")
 	}
 	if *registryPath != "" && *applicationID == "" {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview requires --app when --registry is used")
@@ -1850,10 +1857,21 @@ func parseDesktopEntryPreviewSource(args []string) (appidentity.Recipe, appident
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview --recipe cannot be combined with --app or --recipe-root")
 	}
+	if *externalAppImportRecord != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview --external-app-import-record cannot be combined with --app or --recipe-root")
+	}
 	if flags.NArg() != 0 {
 		return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, errors.New("desktop-entry-preview does not accept positional arguments")
 	}
 
+	if *externalAppImportRecord != "" {
+		record, err := appidentity.LoadExternalWinAppImportRecord(*externalAppImportRecord)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, appidentity.DesktopEntryOptions{}, err
+		}
+		recipe, provenance, err := appidentity.ExternalAppRecipeFromImportRecord(record)
+		return recipe, provenance, appidentity.DesktopEntryOptions{ActivationRoot: *activationRoot}, err
+	}
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 	return recipe, provenance, appidentity.DesktopEntryOptions{ActivationRoot: *activationRoot}, err
 }

@@ -42,20 +42,30 @@ func parseDesktopActivationStageSource(args []string) (appidentity.Recipe, appid
 	registryPath := flags.String("registry", "", "path to an Xnix recipe registry JSON file")
 	recipeRoot := flags.String("recipe-root", "", "directory containing registered recipe files; defaults to the registry directory")
 	recipePath := flags.String("recipe", "", "path to an Xnix application recipe JSON file")
+	externalAppImportRecord := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
 	mode := flags.String("mode", "development", "activation staging mode: production or development")
 	stagingRoot := flags.String("staging-root", "", "test root where desktop activation files may be staged")
 	managedLauncherBinary := flags.String("managed-launcher-bin", "", "optional path to a prebuilt xnix-compat-launch binary to copy into the staging root")
 	if err := flags.Parse(args); err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", err
 	}
-	if (*recipePath == "") == (*registryPath == "") {
-		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires exactly one source: --recipe or --registry")
+	sourceCount := 0
+	for _, source := range []string{*recipePath, *registryPath, *externalAppImportRecord} {
+		if source != "" {
+			sourceCount++
+		}
+	}
+	if sourceCount != 1 {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires exactly one source: --recipe, --registry, or --external-app-import-record")
 	}
 	if *registryPath != "" && *applicationID == "" {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires --app when --registry is used")
 	}
 	if *recipePath != "" && (*applicationID != "" || *recipeRoot != "") {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage --recipe cannot be combined with --app or --recipe-root")
+	}
+	if *externalAppImportRecord != "" && (*applicationID != "" || *recipeRoot != "") {
+		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage --external-app-import-record cannot be combined with --app or --recipe-root")
 	}
 	if *stagingRoot == "" {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage requires --staging-root")
@@ -64,6 +74,14 @@ func parseDesktopActivationStageSource(args []string) (appidentity.Recipe, appid
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", errors.New("desktop-activation-stage does not accept positional arguments")
 	}
 
+	if *externalAppImportRecord != "" {
+		record, err := appidentity.LoadExternalWinAppImportRecord(*externalAppImportRecord)
+		if err != nil {
+			return appidentity.Recipe{}, appidentity.Provenance{}, "", "", "", err
+		}
+		recipe, provenance, err := appidentity.ExternalAppRecipeFromImportRecord(record)
+		return recipe, provenance, *mode, *stagingRoot, *managedLauncherBinary, err
+	}
 	recipe, provenance, err := loadRecipe(*recipePath, *registryPath, *recipeRoot, *applicationID)
 	return recipe, provenance, *mode, *stagingRoot, *managedLauncherBinary, err
 }
