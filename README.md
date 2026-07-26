@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc140`.
+The project is currently at `v0.2.640-rc141`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc140`.
 
 ## Current Checkpoint
 
-v0.2.640-rc140 promotes the staged imported external Windows GUI app desktop smoke into the formal full smoke gate. `scripts/full_smoke.rb` now requires `ruby scripts/container.rb staged-external-winapp-desktop-smoke` to pass, so twentieth-version validation covers the KDE `.desktop` handle path that imports a real Windows executable, launches it through `xnix-compat-launch`, observes a Wine/Xvfb window, and persists Runtime/KDE evidence without enabling host networking, host mounts, Docker socket mounts, or host-root mutation.
+v0.2.640-rc141 makes the formal full smoke report explicitly account for the imported external Windows GUI app desktop lane. `Xnix::FullSmokeReport` now emits `external_imported_app_smoke_included` and `external_imported_app_smoke_passed`, and `formal_release_ready` requires the staged external Windows app desktop smoke in addition to QEMU boot, known app, fixture app, and KDE controlled-launch action evidence.
+
+The previous v0.2.640-rc140 checkpoint promoted the staged imported external Windows GUI app desktop smoke into the formal full smoke gate. `scripts/full_smoke.rb` now requires `ruby scripts/container.rb staged-external-winapp-desktop-smoke` to pass, so twentieth-version validation covers the KDE `.desktop` handle path that imports a real Windows executable, launches it through `xnix-compat-launch`, observes a Wine/Xvfb window, and persists Runtime/KDE evidence without enabling host networking, host mounts, Docker socket mounts, or host-root mutation.
 
 The previous v0.2.640-rc139 checkpoint made the staged desktop external Windows app smoke a complete evidence-producing host-side entry. `scripts/staged_desktop_external_winapp_smoke.rb` now writes both JSON and Markdown reports for passed or skipped runs, while `ruby scripts/container.rb staged-external-winapp-desktop-smoke` deliberately dispatches the smoke from the host-side Colima Docker context so it can control the isolated Wine/Xvfb test container without mounting a Docker socket into a project tools container.
 

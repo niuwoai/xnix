@@ -29,6 +29,7 @@ report = Xnix::FullSmokeReport.new(
     fetch-known-winapp
     boot-system
     staged-launcher-dispatch-smoke
+    staged-external-winapp-desktop-smoke
     winapp-guest-wine-smoke
     kde-controlled-launch-action-dbus-fixture-smoke
   ],
@@ -40,7 +41,7 @@ data = report.to_h
 assert(data.fetch("version") == version, "full smoke report must expose the canonical version")
 assert(data.fetch("schema_version") == "xnix.full_smoke_report.v1", "full smoke report must expose its schema")
 assert(data.fetch("report_type") == "full-build-qemu-smoke-report", "full smoke report must identify its type")
-assert(data.fetch("step_count") == 15, "full smoke report must count smoke steps")
+assert(data.fetch("step_count") == 16, "full smoke report must count smoke steps")
 assert(data.fetch("steps").last == "kde-controlled-launch-action-dbus-fixture-smoke", "full smoke report must include the KDE action smoke step")
 assert(data.fetch("serial_log_path") == "output/serial.log", "full smoke report must expose the serial log path")
 assert(data.fetch("serial_log_persisted"), "full smoke report must record serial log persistence")
@@ -55,6 +56,8 @@ assert(data.fetch("network_required_for_source_download"), "full smoke report mu
 assert(data.fetch("wine_guest_built"), "full smoke report must record Wine guest build coverage")
 assert(data.fetch("known_app_smoke_included"), "full smoke report must record known Windows app smoke coverage")
 assert(data.fetch("known_app_smoke_passed"), "full smoke report must record known Windows app smoke pass evidence")
+assert(data.fetch("external_imported_app_smoke_included"), "full smoke report must record external imported Windows app desktop smoke coverage")
+assert(data.fetch("external_imported_app_smoke_passed"), "full smoke report must record external imported Windows app desktop smoke pass evidence")
 assert(data.fetch("fixture_app_smoke_included"), "full smoke report must record fixture Windows app smoke coverage")
 assert(data.fetch("fixture_app_smoke_passed"), "full smoke report must record fixture Windows app smoke pass evidence")
 assert(data.fetch("kde_action_smoke_included"), "full smoke report must record KDE action smoke coverage")
@@ -70,9 +73,11 @@ markdown = report.to_markdown
 assert(markdown.include?("# Full Build and QEMU Smoke Report"), "full smoke report markdown must include a title")
 assert(markdown.include?("- QEMU booted: true"), "full smoke report markdown must include boot status")
 assert(markdown.include?("- Known Windows app smoke passed: true"), "full smoke report markdown must include known app smoke status")
+assert(markdown.include?("- External imported Windows app desktop smoke passed: true"), "full smoke report markdown must include external imported app smoke status")
 assert(markdown.include?("12. boot-system"), "full smoke report markdown must list the boot step")
-assert(markdown.include?("14. winapp-guest-wine-smoke"), "full smoke report markdown must list the fixture app smoke step")
-assert(markdown.include?("15. kde-controlled-launch-action-dbus-fixture-smoke"), "full smoke report markdown must list the KDE action smoke step")
+assert(markdown.include?("14. staged-external-winapp-desktop-smoke"), "full smoke report markdown must list the external imported app smoke step")
+assert(markdown.include?("15. winapp-guest-wine-smoke"), "full smoke report markdown must list the fixture app smoke step")
+assert(markdown.include?("16. kde-controlled-launch-action-dbus-fixture-smoke"), "full smoke report markdown must list the KDE action smoke step")
 assert(markdown.include?("- Failure class: none"), "full smoke report markdown must include failure class")
 assert(markdown.include?("- Formal release ready: true"), "full smoke report markdown must include release readiness")
 
@@ -116,6 +121,13 @@ classification_cases = [
     "staged-launcher-dispatch-smoke",
     "missing PASS: staged managed launcher dispatch smoke",
     "known-windows-app-smoke-failure",
+    false,
+    true
+  ],
+  [
+    "staged-external-winapp-desktop-smoke",
+    "missing PASS: staged desktop external Windows app smoke",
+    "external-windows-app-desktop-smoke-failure",
     false,
     true
   ],

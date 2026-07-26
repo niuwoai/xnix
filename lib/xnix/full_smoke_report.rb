@@ -26,6 +26,8 @@ module Xnix
                         "qemu-serial-timeout"
                       elsif step == "staged-launcher-dispatch-smoke"
                         "known-windows-app-smoke-failure"
+                      elsif step == "staged-external-winapp-desktop-smoke"
+                        "external-windows-app-desktop-smoke-failure"
                       elsif step == "winapp-guest-wine-smoke"
                         "fixture-windows-app-smoke-failure"
                       elsif step == "kde-controlled-launch-action-dbus-fixture-smoke"
@@ -119,6 +121,8 @@ module Xnix
         "wine_guest_built" => wine_guest_built?,
         "known_app_smoke_included" => known_app_smoke_included?,
         "known_app_smoke_passed" => smoke_passed?("staged-launcher-dispatch-smoke"),
+        "external_imported_app_smoke_included" => external_imported_app_smoke_included?,
+        "external_imported_app_smoke_passed" => smoke_passed?("staged-external-winapp-desktop-smoke"),
         "fixture_app_smoke_included" => fixture_app_smoke_included?,
         "fixture_app_smoke_passed" => smoke_passed?("winapp-guest-wine-smoke"),
         "kde_action_smoke_included" => kde_action_smoke_included?,
@@ -155,6 +159,8 @@ module Xnix
         "- Wine guest built: #{data.fetch("wine_guest_built")}",
         "- Known Windows app smoke included: #{data.fetch("known_app_smoke_included")}",
         "- Known Windows app smoke passed: #{data.fetch("known_app_smoke_passed")}",
+        "- External imported Windows app desktop smoke included: #{data.fetch("external_imported_app_smoke_included")}",
+        "- External imported Windows app desktop smoke passed: #{data.fetch("external_imported_app_smoke_passed")}",
         "- Fixture Windows app smoke included: #{data.fetch("fixture_app_smoke_included")}",
         "- Fixture Windows app smoke passed: #{data.fetch("fixture_app_smoke_passed")}",
         "- KDE action smoke included: #{data.fetch("kde_action_smoke_included")}",
@@ -192,6 +198,10 @@ module Xnix
       @steps.include?("staged-launcher-dispatch-smoke")
     end
 
+    def external_imported_app_smoke_included?
+      @steps.include?("staged-external-winapp-desktop-smoke")
+    end
+
     def fixture_app_smoke_included?
       @steps.include?("winapp-guest-wine-smoke")
     end
@@ -213,7 +223,7 @@ module Xnix
     end
 
     def formal_release_ready?
-      !failed? && @serial_log.booted? && known_app_smoke_included? && fixture_app_smoke_included? && kde_action_smoke_included?
+      !failed? && @serial_log.booted? && known_app_smoke_included? && external_imported_app_smoke_included? && fixture_app_smoke_included? && kde_action_smoke_included?
     end
 
     def desktop_safe_summary
@@ -222,7 +232,7 @@ module Xnix
       end
 
       if formal_release_ready?
-        return "Full build, constrained QEMU serial smoke, Wine guest, real Windows app smokes, and KDE controlled-launch action smoke reached the expected markers."
+        return "Full build, constrained QEMU serial smoke, Wine guest, known Windows app smoke, imported external Windows app desktop smoke, fixture app smoke, and KDE controlled-launch action smoke reached the expected markers."
       end
 
       return "Full build and constrained QEMU serial smoke reached the expected boot markers." if @serial_log.booted?

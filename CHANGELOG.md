@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc141] - 2026-07-26
+
+### Changed
+
+- Changed the structured full smoke report to expose `external_imported_app_smoke_included` and `external_imported_app_smoke_passed`, and to require the staged imported external Windows GUI app desktop smoke before marking a formal release ready.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc141`.
+
 ## [0.2.640-rc140] - 2026-07-26
 
 ### Changed
