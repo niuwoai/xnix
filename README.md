@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc160`.
+The project is currently at `v0.2.640-rc161`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc160`.
 
 ## Current Checkpoint
 
-v0.2.640-rc160 makes q4 the default compile-heavy path and closes the owner-controlled file-open handoff. Runtime owner controlled launch can now receive owner-supplied file arguments and window-match text through restricted environment values, pass those inputs to `xnix-compat-launch`, and surface only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving Sample Notepad file-open intent can pass through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundaries without exposing raw local file paths.
+v0.2.640-rc161 makes the q4 real GUI execute-result summary self-contained for owner-controlled file-open runs. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch` now lifts owner delegated launcher invocation, file-copy count, argument handoff, Wine path translation, raw-path redaction, and window-match evidence into the top-level summary. Downstream review can verify that Sample Notepad file-open intent passed through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundary without opening nested report files.
+
+The previous v0.2.640-rc160 checkpoint made q4 the default compile-heavy path and closed the owner-controlled file-open handoff. Runtime owner controlled launch can now receive owner-supplied file arguments and window-match text through restricted environment values, pass those inputs to `xnix-compat-launch`, and surface only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving Sample Notepad file-open intent can pass through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundaries without exposing raw local file paths.
 
 The previous v0.2.640-rc159 checkpoint moved q4 guest file-open proof into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and reports redacted known-app dispatch evidence for file copy, Wine path translation, argument handoff, and matched window text. Existing KDE recipe-backed container dispatch remains selected when `--registry` is supplied; the q4/QEMU guest GUI backend is available for Sample Notepad when the controlled launcher omits the registry and supplies the managed guest boundary.
 

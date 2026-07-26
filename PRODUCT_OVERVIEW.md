@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc160
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc161
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc161 checkpoint candidate makes q4 owner-controlled real GUI smoke results easier to consume. The remote execute-result summary now includes owner delegated launcher invocation, delegated smoke pass state, file argument count, copied-file count, file handoff, Wine path translation, raw-path redaction, and window-match evidence at the top level, so release/readiness tooling can verify the Sample Notepad file-open chain without opening nested smoke reports. The actual execution still runs on q4, builds the Go Runtime binaries remotely, writes Runtime/KDE evidence artifacts, and preserves the closed privileged-container, host-networking, Docker-socket, broad-host-mount, and host-root-mutation boundaries.
 
 The v0.2.640-rc160 checkpoint candidate makes q4 the default path for compile-heavy work and closes the owner-controlled file-open handoff. Runtime owner controlled launch can now read owner-supplied file arguments and window-match text from its restricted environment, pass those inputs to the managed launcher for q4/QEMU Wine GUI execution, and return only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving that Sample Notepad file-open intent can survive the desktop action, Runtime owner, managed launcher, and guest GUI boundaries without exposing raw local file paths.
 

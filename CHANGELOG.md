@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc161] - 2026-07-26
+
+### Changed
+
+- Extended the q4 remote Wine GUI execute-result summary with owner delegated launcher invocation, smoke pass, file-copy, file-argument handoff, Wine path translation, raw-path redaction, and window-match evidence.
+- Added script and layout checks so owner-controlled Sample Notepad file-open evidence remains visible at the top-level q4 smoke summary.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc161`.
+
 ## [0.2.640-rc160] - 2026-07-26
 
 ### Changed
