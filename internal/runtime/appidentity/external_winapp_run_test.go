@@ -79,6 +79,7 @@ func TestRunExternalWinAppConsumesImportRecordAndRunsContainerGUI(t *testing.T) 
 		result.ContainerNetworkMode != "none" ||
 		result.ContainerHostMountCount != 0 ||
 		!result.XWindowObserved ||
+		!result.WindowObserved ||
 		result.DesktopLaunchEnabled ||
 		result.ActionExecutionEnabled ||
 		result.BackendDetailsExposed ||
@@ -103,6 +104,10 @@ func TestRunExternalWinAppConsumesImportRecordAndRunsContainerGUI(t *testing.T) 
 		strings.Contains(string(payload), "--privileged") ||
 		strings.Contains(string(payload), "--network host") {
 		t.Fatalf("external app run result exposed unsafe details: %s", string(payload))
+	}
+	if !strings.Contains(string(payload), `"window_observed":true`) ||
+		!strings.Contains(string(payload), `"x_window_observed":true`) {
+		t.Fatalf("external app run result must expose both generic and X-specific window evidence: %s", string(payload))
 	}
 	dockerInvocation, err := os.ReadFile(dockerLog)
 	if err != nil {
@@ -182,6 +187,7 @@ func TestRunExternalWinAppConsumesHandleAndRunsContainerGUI(t *testing.T) {
 		result.ContainerNetworkMode != "none" ||
 		result.ContainerHostMountCount != 0 ||
 		result.XWindowObserved != true ||
+		result.WindowObserved != true ||
 		result.RuntimePayload.ExternalAppImportRecordConsumed != true {
 		t.Fatalf("unexpected external app handle run result: %#v", result)
 	}

@@ -53,6 +53,7 @@ type ExternalWinAppRunResult struct {
 	XServerStarted                  bool                       `json:"x_server_started"`
 	WineBootstrapAttempted          bool                       `json:"wine_bootstrap_attempted"`
 	XWindowObserved                 bool                       `json:"x_window_observed"`
+	WindowObserved                  bool                       `json:"window_observed"`
 	WindowEvidenceSummary           string                     `json:"window_evidence_summary,omitempty"`
 	RuntimePayload                  winapp.ContainerXGUIResult `json:"runtime_payload"`
 	RuntimeOwned                    bool                       `json:"runtime_owned"`
@@ -149,6 +150,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		XServerStarted:                  runtimePayload.XServerStarted,
 		WineBootstrapAttempted:          runtimePayload.WineBootstrapAttempted,
 		XWindowObserved:                 runtimePayload.XWindowObserved,
+		WindowObserved:                  runtimePayload.XWindowObserved,
 		WindowEvidenceSummary:           runtimePayload.WindowEvidenceSummary,
 		RuntimePayload:                  runtimePayload,
 		RuntimeOwned:                    true,

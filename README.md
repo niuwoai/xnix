@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc141`.
+The project is currently at `v0.2.640-rc142`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc141`.
 
 ## Current Checkpoint
 
-v0.2.640-rc141 makes the formal full smoke report explicitly account for the imported external Windows GUI app desktop lane. `Xnix::FullSmokeReport` now emits `external_imported_app_smoke_included` and `external_imported_app_smoke_passed`, and `formal_release_ready` requires the staged external Windows app desktop smoke in addition to QEMU boot, known app, fixture app, and KDE controlled-launch action evidence.
+v0.2.640-rc142 makes the real imported Windows GUI app run evidence easier to consume across Runtime and KDE surfaces. The Go Runtime external app run result and the real GUI evidence packet now emit generic `window_observed` evidence alongside `x_window_observed`, and the staged external desktop smoke requires both fields before accepting the `.desktop` handle launch path as a passed real-window run.
+
+The previous v0.2.640-rc141 checkpoint made the formal full smoke report explicitly account for the imported external Windows GUI app desktop lane. `Xnix::FullSmokeReport` now emits `external_imported_app_smoke_included` and `external_imported_app_smoke_passed`, and `formal_release_ready` requires the staged external Windows app desktop smoke in addition to QEMU boot, known app, fixture app, and KDE controlled-launch action evidence.
 
 The previous v0.2.640-rc140 checkpoint promoted the staged imported external Windows GUI app desktop smoke into the formal full smoke gate. `scripts/full_smoke.rb` now requires `ruby scripts/container.rb staged-external-winapp-desktop-smoke` to pass, so twentieth-version validation covers the KDE `.desktop` handle path that imports a real Windows executable, launches it through `xnix-compat-launch`, observes a Wine/Xvfb window, and persists Runtime/KDE evidence without enabling host networking, host mounts, Docker socket mounts, or host-root mutation.
 

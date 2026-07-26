@@ -331,6 +331,7 @@ assert(payload.fetch("external_app_import_record_consumed") == true, "launcher s
 assert(payload.fetch("external_app_handle_consumed") == true, "launcher smoke must consume the desktop handle")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
 assert(payload.fetch("x_window_observed") == true, "launcher smoke must observe a Windows GUI X window")
+assert(payload.fetch("window_observed") == true, "launcher smoke must expose generic observed-window evidence")
 assert(payload.fetch("container_network_mode") == "none", "launcher smoke must disable container networking")
 assert(payload.fetch("container_host_mount_count") == 0, "launcher smoke must not mount host directories")
 assert(payload.fetch("docker_socket_mounted") == false, "launcher smoke must not mount the Docker socket")
@@ -391,7 +392,8 @@ packet = {
   "external_app_import_record_consumed" => payload.fetch("external_app_import_record_consumed"),
   "external_app_handle_consumed" => payload.fetch("external_app_handle_consumed"),
   "imported_artifact_digest_verified" => payload.fetch("imported_artifact_digest_verified"),
-  "window_observed" => payload.fetch("x_window_observed"),
+  "window_observed" => payload.fetch("window_observed"),
+  "x_window_observed" => payload.fetch("x_window_observed"),
   "container_network_mode" => payload.fetch("container_network_mode"),
   "container_host_mount_count" => payload.fetch("container_host_mount_count"),
   "host_root_modified" => payload.fetch("host_root_modified"),

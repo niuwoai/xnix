@@ -36,6 +36,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesContainerNotepadReport(t *tes
 		packet.KnownAppGUIEvidenceVerifiedCount != 1 ||
 		!packet.WinebootInvoked ||
 		!packet.XWindowObserved ||
+		!packet.WindowObserved ||
 		packet.XWindowChildCount != 1 ||
 		!packet.CompatibilityCenterProjectionReady ||
 		!packet.KDECenterProjectionReady ||
@@ -138,6 +139,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawContainerRuntimePayload(t 
 		packet.ContainerNetworkMode != "none" ||
 		packet.ContainerHostMountCount != 0 ||
 		!packet.XWindowObserved ||
+		!packet.WindowObserved ||
 		packet.XWindowChildCount != 1 ||
 		packet.DesktopLaunchEnabled ||
 		packet.BackendLaunchEnabled ||
@@ -192,6 +194,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimeP
 		packet.ContainerNetworkMode != "none" ||
 		packet.ContainerHostMountCount != 0 ||
 		!packet.XWindowObserved ||
+		!packet.WindowObserved ||
 		packet.XWindowChildCount != 1 ||
 		packet.DesktopLaunchEnabled ||
 		packet.BackendLaunchEnabled ||
@@ -244,6 +247,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 		packet.ContainerNetworkMode != "none" ||
 		packet.ContainerHostMountCount != 0 ||
 		!packet.XWindowObserved ||
+		!packet.WindowObserved ||
 		packet.DesktopLaunchEnabled ||
 		packet.BackendLaunchEnabled ||
 		packet.BackendDetailsExposed ||
@@ -422,6 +426,7 @@ func rawExternalExecutableContainerXGUIRuntimePayloadFixture() string {
   "wine_bootstrap_attempted": true,
   "image_available": true,
   "x_window_observed": true,
+  "window_observed": true,
   "window_evidence_summary": "0xa00001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
   "host_root_modified": false,
   "privileged_container_required": false,

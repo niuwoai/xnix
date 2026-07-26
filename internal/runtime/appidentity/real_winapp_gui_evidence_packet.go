@@ -45,6 +45,7 @@ type RealWinAppGUIEvidencePacket struct {
 	KnownAppSmokeEvidence              KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
 	WinebootInvoked                    bool                         `json:"wineboot_invoked"`
 	XWindowObserved                    bool                         `json:"x_window_observed"`
+	WindowObserved                     bool                         `json:"window_observed"`
 	XWindowChildCount                  int                          `json:"x_window_child_count"`
 	CompatibilityCenterProjectionReady bool                         `json:"compatibility_center_projection_ready"`
 	KDECenterProjectionReady           bool                         `json:"kde_center_projection_ready"`
@@ -263,6 +264,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		KnownAppSmokeEvidence:              evidence,
 		WinebootInvoked:                    projection.WinebootInvoked,
 		XWindowObserved:                    projection.XWindowObserved,
+		WindowObserved:                     projection.XWindowObserved,
 		XWindowChildCount:                  projection.XWindowChildCount,
 		CompatibilityCenterProjectionReady: projection.CompatibilityCenterProjectionReady,
 		KDECenterProjectionReady:           projection.KDECenterProjectionReady,

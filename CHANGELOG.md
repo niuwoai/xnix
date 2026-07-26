@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc142] - 2026-07-26
+
+### Changed
+
+- Changed the Go Runtime external Windows app run result and real GUI evidence packet to expose generic `window_observed` evidence alongside the existing X-specific `x_window_observed` field.
+- Updated the staged external Windows GUI desktop smoke to require and persist both generic and X-specific observed-window evidence from the Go Runtime launcher payload.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc142`.
+
 ## [0.2.640-rc141] - 2026-07-26
 
 ### Changed
