@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc155
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc156
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc156 checkpoint candidate makes q4 the default operator path for compile-heavy Go Runtime work. `scripts/remote_go_build.rb` provides an execute-gated remote build planner that syncs only the constrained Runtime source set by default, excludes `docs/claude-code-implementation-packages.md`, validates remote writable paths under `/home/xnix-*` or `/tmp/xnix-*`, and builds the core Go command binaries on `root@q4` with remote Go caches. This keeps the macOS host responsive while the project continues moving real Windows app execution through Go-owned Runtime binaries.
 
 The v0.2.640-rc155 checkpoint candidate adds Windows-process-level file argument evidence to the external desktop smoke with a real Wine Notepad GUI app. The staged external Windows app smoke now supports `--fixture notepad-file-argument`, imports Wine Notepad as an external app, launches it through the KDE `%U` handle route with one copied file argument, and requires the observed X window title to include `sample-document.txt`. The resulting real Wine/Xvfb run proves the file-open argument reached the Windows GUI process, not just the container launcher, while preserving zero host mounts, no raw URI/path exposure, no Docker socket mounts, no host networking, no privileged containers, no broad host mounts, and no host-root mutation.
 

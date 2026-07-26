@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc155`.
+The project is currently at `v0.2.640-rc156`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc155`.
 
 ## Current Checkpoint
 
-v0.2.640-rc155 adds process-level file-open evidence to the staged external desktop smoke using a real Wine Notepad GUI app. `scripts/staged_desktop_external_winapp_smoke.rb --fixture notepad-file-argument` imports Wine Notepad as an external app, launches it through the exact KDE handle route with one `file://` argument, and requires the observed X window title to include `sample-document.txt`. This proves the file-open argument reached the Windows GUI process itself while keeping raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation closed.
+v0.2.640-rc156 makes q4 the first-class compile-heavy path for core Go command binaries. `scripts/remote_go_build.rb` now renders an execute-gated JSON plan by default, and `--execute` syncs the constrained Runtime source set to `root@q4`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and builds `xnix-runtime-go`, `xnix-runtime-owner`, and `xnix-compat-launch` remotely. This keeps the macOS host focused on lightweight targeted checks while preserving explicit execution, constrained remote paths, and the protected Claude implementation-package document exclusion.
+
+The previous v0.2.640-rc155 checkpoint added process-level file-open evidence to the staged external desktop smoke using a real Wine Notepad GUI app. `scripts/staged_desktop_external_winapp_smoke.rb --fixture notepad-file-argument` imports Wine Notepad as an external app, launches it through the exact KDE handle route with one `file://` argument, and requires the observed X window title to include `sample-document.txt`. This proves the file-open argument reached the Windows GUI process itself while keeping raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation closed.
 
 The previous v0.2.640-rc154 checkpoint tightened copy-only external file bridge evidence for imported external Windows GUI apps. The Wine/Xvfb container launcher now translates copied files through `winepath -w`, prints redacted launch-boundary markers for passed and translated file-argument counts, and Runtime/KDE run records expose `external_file_bridge_arguments_passed`, `external_file_bridge_argument_observed_count`, `external_file_bridge_winepath_translated`, and `external_file_bridge_winepath_translated_count`. `external_file_bridge_ready` now requires copied files, observed container launch-boundary arguments, and Wine path translation, while raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation remain closed.
 

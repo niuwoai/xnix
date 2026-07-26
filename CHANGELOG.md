@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc156] - 2026-07-26
+
+### Changed
+
+- Added an execute-gated q4 remote Go build helper for core Runtime command binaries.
+- Planned remote Go builds now use constrained source sync, remote caches, bounded SSH options, and protected Claude package document exclusion.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc156`.
+
 ## [0.2.640-rc155] - 2026-07-26
 
 ### Changed
