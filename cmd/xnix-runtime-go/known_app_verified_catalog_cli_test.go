@@ -813,10 +813,62 @@ func TestKnownAppVerifiedCatalogAppExecutionCommandConsumesGUIRunReport(t *testi
 		payload["smoke_status"] != "passed" ||
 		payload["smoke_passed"] != true ||
 		payload["actual_windows_app_run_observed"] != true ||
+		payload["compatibility_center_projection_ready"] != true ||
+		payload["kde_center_projection_ready"] != true ||
 		payload["go_owned_q4_winapp_acceptance_ready"] != true ||
 		payload["go_owned_q4_winapp_acceptance_consumed"] != true ||
 		payload["go_owned_q4_winapp_acceptance_path_exposed"] != false {
 		t.Fatalf("unexpected app execution evidence: %#v", payload)
+	}
+	centerEvidence, ok := payload["known_app_smoke_evidence"].(map[string]any)
+	if !ok ||
+		centerEvidence["app_id"] != "org.xnix.apps.messagebox" ||
+		centerEvidence["evidence_kind"] != "known-application-gui-smoke" ||
+		centerEvidence["evidence_source"] != "wine-guest-gui-smoke" ||
+		centerEvidence["compatibility_state"] != "owner-controlled-gui-qemu-wine-verified" ||
+		centerEvidence["center_card_state"] != "validated-owner-controlled-gui-runtime-run" ||
+		centerEvidence["primary_action_id"] != "review-known-app-gui-evidence" ||
+		centerEvidence["x_window_observed"] != true ||
+		centerEvidence["window_observed"] != true ||
+		centerEvidence["execution_evidence_recorded"] != true ||
+		centerEvidence["runtime_dispatch_verified"] != true ||
+		centerEvidence["action_execution_enabled"] != false ||
+		centerEvidence["backend_launch_enabled"] != false {
+		t.Fatalf("unexpected app execution center evidence: %#v", centerEvidence)
+	}
+	appExecutionPath := filepath.Join(tempDir, "known-app-verified-catalog-app-execution.json")
+	if err := os.WriteFile(appExecutionPath, output.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile app execution returned error: %v", err)
+	}
+	registryPath := "../../runtime/recipes/registry.json"
+	var centerOutput bytes.Buffer
+	if err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-evidence-file", appExecutionPath}, &centerOutput); err != nil {
+		t.Fatalf("compatibility-center-preview returned error: %v", err)
+	}
+	var centerPayload map[string]any
+	if err := json.Unmarshal(centerOutput.Bytes(), &centerPayload); err != nil {
+		t.Fatalf("Unmarshal center output returned error: %v", err)
+	}
+	if centerPayload["known_app_smoke_evidence_count"] != float64(1) ||
+		centerPayload["known_app_smoke_passed_count"] != float64(1) ||
+		centerPayload["backend_launch_enabled"] != false ||
+		centerPayload["host_root_modified"] != false {
+		t.Fatalf("unexpected Compatibility Center app execution consumption: %#v", centerPayload)
+	}
+	var kdeOutput bytes.Buffer
+	if err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", "org.xnix.apps.messagebox", "--decision", "approved", "--known-app-evidence-file", appExecutionPath}, &kdeOutput); err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+	var kdePayload map[string]any
+	if err := json.Unmarshal(kdeOutput.Bytes(), &kdePayload); err != nil {
+		t.Fatalf("Unmarshal KDE output returned error: %v", err)
+	}
+	if kdePayload["known_app_gui_evidence_count"] != float64(1) ||
+		kdePayload["known_app_owner_controlled_gui_evidence_count"] != float64(1) ||
+		kdePayload["launch_enabled"] != false ||
+		kdePayload["backend_process_started"] != false ||
+		kdePayload["host_root_modified"] != false {
+		t.Fatalf("unexpected KDE Center app execution consumption: %#v", kdePayload)
 	}
 	if payload["execution_requested"] != false ||
 		payload["execution_started"] != false ||

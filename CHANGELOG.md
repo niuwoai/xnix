@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc212] - 2026-07-27
+
+### Added
+
+- Added Compatibility Center and KDE Center smoke-evidence projection for `known-app-verified-catalog-app-execution` results, allowing a real q4 MessageBox GUI execution result to be consumed directly as desktop-safe known app GUI evidence.
+- Added Go and CLI coverage proving the app-execution result exposes `known_app_smoke_evidence` for the verified catalog app run while preserving review-only launch gates and closed backend/path/host-container exposure.
+
+### Changed
+
+- Extended center evidence loading so `compatibility-center-preview --known-app-evidence-file APP_EXECUTION.json` and `kde-center-page-preview --known-app-evidence-file APP_EXECUTION.json` can display the one-step verified-catalog GUI run without requiring a separate GUI evidence packet.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc212`.
+
 ## [0.2.640-rc211] - 2026-07-27
 
 ### Added

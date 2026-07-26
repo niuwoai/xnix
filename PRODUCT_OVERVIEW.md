@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc211
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc212
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc212 checkpoint carries the one-step verified-catalog GUI execution result back into the desktop read models. `known-app-verified-catalog-app-execution` now emits desktop-safe `known_app_smoke_evidence`, and both `compatibility-center-preview --known-app-evidence-file APP_EXECUTION.json` and `kde-center-page-preview --known-app-evidence-file APP_EXECUTION.json` can consume that result directly. This means the q4-built Runtime path that actually runs MessageBox can also populate Compatibility Center and KDE Center GUI evidence cards without a separate manual GUI evidence packet, while the app remains review-only and launch/backend/path/host-container gates stay closed.
 
 The v0.2.640-rc211 checkpoint removes the remaining caller-supplied run-plan step from the real MessageBox GUI path. `known-app-verified-catalog-app-execution --verified-catalog CATALOG.json --app org.xnix.apps.messagebox --execute` now consumes the verified catalog and app id, generates the run plan inside the Go Runtime owner, and invokes the real q4 MessageBox GUI smoke while KDE still forwards only the app id. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compile-heavy work on q4 by asking q4 to cross-compile the host `xnix-runtime-go`, fetching that q4-built binary into `/tmp/xnix-*`, and running the one-step Runtime command from that binary. The desktop-facing summary proves verified-catalog consumption, Runtime-generated run planning, actual Windows GUI execution, owner file-open evidence, document-marker observation, q4 compilation ownership, host compilation avoidance, and closed path/raw-output/argument/host-container gates.
 

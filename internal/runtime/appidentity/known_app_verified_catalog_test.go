@@ -455,10 +455,44 @@ func TestRunKnownAppVerifiedCatalogAppExecutionConsumesGUIRunReport(t *testing.T
 		result.SmokeStatus != "passed" ||
 		!result.SmokePassed ||
 		!result.ActualWindowsAppRunObserved ||
+		!result.CompatibilityCenterProjectionReady ||
+		!result.KDECenterProjectionReady ||
 		!result.GoOwnedQ4WinAppAcceptanceReady ||
 		!result.GoOwnedQ4WinAppAcceptanceConsumed ||
 		result.GoOwnedQ4WinAppAcceptancePathExposed {
 		t.Fatalf("unexpected app execution evidence: %#v", result)
+	}
+	if result.KnownAppSmokeEvidence.AppID != "org.xnix.apps.messagebox" ||
+		result.KnownAppSmokeEvidence.EvidenceKind != "known-application-gui-smoke" ||
+		result.KnownAppSmokeEvidence.EvidenceSource != GUISmokeEvidenceSourceWineGuest ||
+		result.KnownAppSmokeEvidence.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
+		result.KnownAppSmokeEvidence.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		!result.KnownAppSmokeEvidence.XWindowObserved ||
+		!result.KnownAppSmokeEvidence.WindowObserved ||
+		!result.KnownAppSmokeEvidence.ExecutionEvidenceRecorded ||
+		!result.KnownAppSmokeEvidence.OwnerControlledRuntimeLaunchVerified ||
+		!result.KnownAppSmokeEvidence.RuntimeDispatchVerified ||
+		result.KnownAppSmokeEvidence.ActionExecutionEnabled ||
+		result.KnownAppSmokeEvidence.BackendLaunchEnabled {
+		t.Fatalf("unexpected app execution center evidence: %#v", result.KnownAppSmokeEvidence)
+	}
+	resultContent, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("Marshal result returned error: %v", err)
+	}
+	centerEvidence, err := KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogAppExecution(resultContent)
+	if err != nil {
+		t.Fatalf("KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogAppExecution returned error: %v", err)
+	}
+	if centerEvidence.AppID != "org.xnix.apps.messagebox" ||
+		centerEvidence.PrimaryActionID != "review-known-app-gui-evidence" ||
+		centerEvidence.PrimaryActionKind != "review" ||
+		!centerEvidence.PrimaryActionEnabled ||
+		!centerEvidence.ExecutionEvidenceRecorded ||
+		!centerEvidence.RuntimeDispatchVerified ||
+		centerEvidence.DesktopLaunchEnabled ||
+		centerEvidence.BackendDetailsExposed {
+		t.Fatalf("unexpected normalized app execution center evidence: %#v", centerEvidence)
 	}
 	if result.ExecutionRequested ||
 		result.ExecutionStarted ||

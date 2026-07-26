@@ -302,6 +302,8 @@ def require_passed_runtime_execution!(result)
     verified_catalog_consumed
     run_plan_generated
     actual_windows_app_run_observed
+    compatibility_center_projection_ready
+    kde_center_projection_ready
     go_owned_q4_winapp_acceptance_ready
     go_owned_q4_winapp_acceptance_consumed
     host_compilation_avoided
@@ -369,6 +371,8 @@ plan = {
   "q4_messagebox_smoke_planned" => true,
   "q4_messagebox_smoke_passed" => false,
   "actual_windows_app_run_observed" => false,
+  "compatibility_center_projection_ready" => false,
+  "kde_center_projection_ready" => false,
   "owner_file_open_entrypoint_invoked" => false,
   "document_content_marker_observed" => false,
   "go_owned_q4_winapp_acceptance_ready" => false,
@@ -449,6 +453,8 @@ summary = plan.merge(
   "runtime_smoke_request_type" => result.fetch("smoke_request_type"),
   "q4_messagebox_smoke_passed" => result.fetch("smoke_passed"),
   "actual_windows_app_run_observed" => result.fetch("actual_windows_app_run_observed"),
+  "compatibility_center_projection_ready" => result.fetch("compatibility_center_projection_ready"),
+  "kde_center_projection_ready" => result.fetch("kde_center_projection_ready"),
   "window_observed" => result.fetch("window_observed"),
   "window_match_observed" => result.fetch("window_match_observed"),
   "owner_file_open_entrypoint_invoked" => result.fetch("owner_file_open_entrypoint_invoked"),
