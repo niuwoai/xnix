@@ -27,7 +27,11 @@ assert(script.include?("%w[VERSION go.mod cmd internal runtime]"), "remote smoke
 assert(script.include?("run_shell(options.fetch(:local_shell), shell_join(rsync_args))"), "remote smoke source sync must use the configured local shell")
 assert(script.include?("run_shell(options.fetch(:local_shell), shell_join([\"ssh\", remote_host, remote_command]))"), "remote smoke execution must use the configured local shell")
 assert(script.include?("\"known-existing-winapp-acceptance-preview\""), "remote smoke must be able to emit Go-owned acceptance JSON")
+assert(script.include?("\"known-app-verified-catalog-run-acceptance-preview\""), "remote smoke must be able to emit Go-owned verified catalog acceptance JSON")
 assert(script.include?("\"--known-winapp-run\", remote_report"), "remote smoke acceptance must consume the persisted known app run report")
+assert(script.include?("\"--run-plan\", remote_run_plan"), "remote smoke verified catalog acceptance must consume a q4-synced run plan")
+assert(script.include?("--verified-catalog-run-plan"), "remote smoke must expose a verified catalog run-plan flag")
+assert(script.include?("--verified-catalog-acceptance-json"), "remote smoke must expose a verified catalog acceptance mode")
 assert(script.include?("/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go"), "remote smoke must default to the q4 private Go toolchain")
 assert(script.include?("ensure_remote_xnix_path!"), "remote smoke must restrict writable remote roots")
 assert(script.include?("\"/home/xnix-run-materials\""), "remote smoke must use the managed q4 run materials root")
@@ -52,7 +56,10 @@ assert(payload.fetch("source_sync_entry_count") == 5, "dry-run plan must expose 
 assert(payload.fetch("source_sync_entries") == %w[VERSION go.mod cmd internal runtime], "dry-run plan must expose the lightweight source entries")
 assert(payload.fetch("remote_source_root").include?("xnix-runtime-source-runtime-"), "dry-run plan must use a versioned lightweight source root")
 assert(payload.fetch("acceptance_json_planned") == false, "dry-run plan must keep acceptance JSON disabled by default")
+assert(payload.fetch("verified_catalog_acceptance_json_planned") == false, "dry-run plan must keep verified catalog acceptance JSON disabled by default")
+assert(payload.fetch("verified_catalog_run_plan_sync_planned") == false, "dry-run plan must not sync a run plan by default")
 assert(payload.fetch("acceptance_request_type") == "known-existing-winapp-acceptance-preview", "dry-run plan must name the Go acceptance request type")
+assert(payload.fetch("verified_catalog_acceptance_request_type") == "known-app-verified-catalog-run-acceptance-preview", "dry-run plan must name the verified catalog acceptance request type")
 assert(payload.fetch("backend") == "guest-wine", "dry-run plan must select the guest backend")
 assert(payload.fetch("start_qemu") == true, "dry-run plan must use Runtime-owned QEMU startup")
 assert(payload.fetch("guest_port") == "auto", "dry-run plan must use automatic loopback port allocation")
@@ -79,5 +86,22 @@ assert(acceptance_payload.fetch("status") == "planned", "acceptance dry-run plan
 assert(acceptance_payload.fetch("acceptance_json_planned") == true, "acceptance dry-run plan must expose acceptance JSON mode")
 assert(acceptance_payload.fetch("acceptance_request_type") == "known-existing-winapp-acceptance-preview", "acceptance dry-run plan must route to Go-owned acceptance")
 assert(acceptance_payload.fetch("host_root_modified") == false, "acceptance dry-run plan must keep host-root mutation closed")
+
+run_plan = ROOT.join("test", "fixtures", "known_app_verified_catalog_run_plan_7zr.json")
+verified_stdout, verified_stderr, verified_status = Open3.capture3({ "XNIX_LOCAL_SHELL" => "/bin/zsh" }, "ruby", SCRIPT.to_s, "--verified-catalog-run-plan", run_plan.to_s, "--verified-catalog-acceptance-json", chdir: ROOT.to_s)
+abort verified_stderr unless verified_status.success?
+
+verified_payload = JSON.parse(verified_stdout)
+assert(verified_payload.fetch("status") == "planned", "verified catalog dry-run plan must not execute")
+assert(verified_payload.fetch("acceptance_json_planned") == false, "verified catalog dry-run plan must not use the generic acceptance mode")
+assert(verified_payload.fetch("verified_catalog_acceptance_json_planned") == true, "verified catalog dry-run plan must expose verified catalog acceptance JSON mode")
+assert(verified_payload.fetch("verified_catalog_run_plan_sync_planned") == true, "verified catalog dry-run plan must sync a run plan")
+assert(verified_payload.fetch("verified_catalog_run_plan_remote_path").include?("/home/xnix-run-materials/state/known-run-plan-"), "verified catalog dry-run plan must use the managed q4 state directory for the run plan")
+assert(verified_payload.fetch("verified_catalog_acceptance_request_type") == "known-app-verified-catalog-run-acceptance-preview", "verified catalog dry-run plan must route to Go-owned verified catalog acceptance")
+assert(verified_payload.fetch("host_root_modified") == false, "verified catalog dry-run plan must keep host-root mutation closed")
+
+mixed_stdout, mixed_stderr, mixed_status = Open3.capture3({ "XNIX_LOCAL_SHELL" => "/bin/zsh" }, "ruby", SCRIPT.to_s, "--acceptance-json", "--verified-catalog-run-plan", run_plan.to_s, "--verified-catalog-acceptance-json", chdir: ROOT.to_s)
+assert(!mixed_status.success?, "remote smoke must reject mixed acceptance JSON modes")
+assert(mixed_stderr.include?("accepts only one acceptance JSON mode") || mixed_stdout.include?("accepts only one acceptance JSON mode"), "mixed acceptance JSON mode error must be explicit")
 
 puts "PASS: remote known Windows app guest Wine smoke script is execute-gated and Runtime-owned"

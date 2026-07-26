@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc199] - 2026-07-27
+
+### Added
+
+- Added `--verified-catalog-run-plan` and `--verified-catalog-acceptance-json` to `scripts/remote_known_winapp_guest_wine_smoke.rb` so a q4 run can return Go-owned `known-app-verified-catalog-run-acceptance-preview` JSON directly.
+- Added a reusable 7zr verified catalog run-plan fixture and lightweight Ruby coverage for verified catalog acceptance dry-run planning, run-plan sync planning, and mixed acceptance-mode rejection.
+
+### Changed
+
+- Kept `--acceptance-json` and `--verified-catalog-acceptance-json` mutually exclusive so the q4 smoke always returns exactly one acceptance envelope.
+- Verified the rc199 one-command verified catalog acceptance JSON path with a q4 `7zr` known Windows app QEMU/Wine run.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc199`.
+
 ## [0.2.640-rc198] - 2026-07-27
 
 ### Added

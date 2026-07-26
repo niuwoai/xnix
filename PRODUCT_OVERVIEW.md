@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc198
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc199
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc199 checkpoint lets the q4 real app smoke return the same verified-catalog acceptance envelope that desktop read models already consume. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan into the managed q4 materials directory, runs the app through Go-started QEMU and guest Wine, then asks `xnix-runtime-go known-app-verified-catalog-run-acceptance-preview` to consume the synced run plan and the fresh run report. This removes another manual JSON stitching step between the real q4 app run and KDE-visible accepted catalog evidence while keeping output redacted and host/container gates closed. rc199 validation ran 7zr 26.02 through this one-command verified catalog acceptance path and returned `acceptance_ready=true` with `run_plan_matched=true`.
 
 The v0.2.640-rc198 checkpoint reduces the real Windows app run path to one q4 operator command. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` still builds and runs on q4, starts QEMU from the Go Runtime, executes the known Windows app through guest Wine, persists the run report and serial log, and then immediately asks `xnix-runtime-go known-existing-winapp-acceptance-preview` to consume that report. The command returns the desktop-safe Go acceptance JSON instead of a PASS line when requested, so operators no longer need to manually locate the q4 report and run the second acceptance command. Host compilation remains avoided, output stays redacted, and unsafe host/container gates stay closed. rc198 validation ran 7zr 26.02 through this one-command q4 acceptance JSON path.
 

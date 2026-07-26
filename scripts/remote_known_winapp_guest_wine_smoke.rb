@@ -31,6 +31,8 @@ options = {
   remote_go: DEFAULT_REMOTE_GO,
   app_id: DEFAULT_APP_ID,
   acceptance_json: false,
+  verified_catalog_acceptance_json: false,
+  verified_catalog_run_plan: "",
   timeout: ENV.fetch("XNIX_KNOWN_WINAPP_GUEST_TIMEOUT", "90s"),
   boot_timeout: ENV.fetch("XNIX_KNOWN_WINAPP_QEMU_BOOT_TIMEOUT", "180s")
 }
@@ -48,11 +50,15 @@ OptionParser.new do |parser|
   parser.on("--remote-go PATH", "Remote Go binary path.") { |value| options[:remote_go] = value }
   parser.on("--app APP_ID", "Known Windows app id, default: #{DEFAULT_APP_ID}") { |value| options[:app_id] = value }
   parser.on("--acceptance-json", "Return Go-owned known existing Windows app acceptance JSON after a passed q4 run.") { options[:acceptance_json] = true }
+  parser.on("--verified-catalog-run-plan PATH", "Local Go-owned verified catalog run-plan JSON to sync to q4 for run acceptance.") { |value| options[:verified_catalog_run_plan] = value }
+  parser.on("--verified-catalog-acceptance-json", "Return Go-owned verified catalog run acceptance JSON after a passed q4 run.") { options[:verified_catalog_acceptance_json] = true }
   parser.on("--timeout DURATION", "Guest Wine execution timeout.") { |value| options[:timeout] = value }
   parser.on("--qemu-boot-timeout DURATION", "QEMU SSH boot timeout.") { |value| options[:boot_timeout] = value }
 end.parse!
 
 abort "remote known Windows app smoke does not accept positional arguments" unless ARGV.empty?
+abort "remote known Windows app smoke accepts only one acceptance JSON mode" if options.fetch(:acceptance_json) && options.fetch(:verified_catalog_acceptance_json)
+abort "remote known Windows app verified catalog acceptance requires --verified-catalog-run-plan" if options.fetch(:verified_catalog_acceptance_json) && options.fetch(:verified_catalog_run_plan).strip.empty?
 
 if !ENV.key?("XNIX_REMOTE_SOURCE_ROOT") && options.fetch(:remote_source_root) == DEFAULT_REMOTE_SOURCE_ROOT
   options[:remote_source_root] = "/home/xnix-build/xnix-runtime-source-#{options.fetch(:source_sync_mode)}-#{VERSION}"
@@ -85,6 +91,13 @@ def source_sync_entries(mode)
   end
 end
 
+def safe_app_id(app_id)
+  clean = app_id.gsub(/[^a-zA-Z0-9_.-]+/, "-")
+  abort "known app id produced an empty safe id" if clean.empty?
+
+  clean
+end
+
 remote_host = options.fetch(:remote_host)
 source_sync_mode = options.fetch(:source_sync_mode)
 source_entries = source_sync_entries(source_sync_mode)
@@ -97,6 +110,8 @@ remote_serial_log = "#{remote_materials_root}/state/qemu-serial-#{VERSION}.log"
 remote_key = "#{remote_materials_root}/ssh/id_ed25519"
 remote_kernel = "#{remote_materials_root}/wine-guest/bzImage"
 remote_cache_root = "#{remote_materials_root}/known-winapps"
+remote_run_plan = "#{remote_materials_root}/state/known-run-plan-#{VERSION}-#{safe_app_id(options.fetch(:app_id))}.json"
+local_run_plan = options.fetch(:verified_catalog_run_plan).strip
 
 runtime_args = [
   remote_bin,
@@ -146,7 +161,11 @@ plan = {
   "remote_materials_root" => remote_materials_root,
   "app_id" => options.fetch(:app_id),
   "acceptance_json_planned" => options.fetch(:acceptance_json),
+  "verified_catalog_acceptance_json_planned" => options.fetch(:verified_catalog_acceptance_json),
+  "verified_catalog_run_plan_sync_planned" => options.fetch(:verified_catalog_acceptance_json),
+  "verified_catalog_run_plan_remote_path" => options.fetch(:verified_catalog_acceptance_json) ? remote_run_plan : "",
   "acceptance_request_type" => "known-existing-winapp-acceptance-preview",
+  "verified_catalog_acceptance_request_type" => "known-app-verified-catalog-run-acceptance-preview",
   "backend" => "guest-wine",
   "start_qemu" => true,
   "guest_port" => "auto",
@@ -198,6 +217,33 @@ if options.fetch(:sync_source)
   end
 end
 
+if options.fetch(:verified_catalog_acceptance_json)
+  run_plan_path = Pathname.new(local_run_plan).cleanpath
+  abort "remote known Windows app verified catalog run plan does not exist" unless run_plan_path.file?
+
+  run_plan_mkdir_stdout, run_plan_mkdir_stderr, run_plan_mkdir_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(["mkdir", "-p", Pathname.new(remote_run_plan).dirname.to_s])]))
+  unless run_plan_mkdir_status.zero?
+    warn run_plan_mkdir_stdout unless run_plan_mkdir_stdout.empty?
+    warn run_plan_mkdir_stderr unless run_plan_mkdir_stderr.empty?
+    warn "FAIL: remote known Windows app run-plan directory preparation failed"
+    exit 1
+  end
+
+  run_plan_rsync_args = [
+    "rsync",
+    "-az",
+    run_plan_path.to_s,
+    "#{remote_host}:#{remote_run_plan}"
+  ]
+  run_plan_rsync_stdout, run_plan_rsync_stderr, run_plan_rsync_status = run_shell(options.fetch(:local_shell), shell_join(run_plan_rsync_args))
+  unless run_plan_rsync_status.zero?
+    warn run_plan_rsync_stdout unless run_plan_rsync_stdout.empty?
+    warn run_plan_rsync_stderr unless run_plan_rsync_stderr.empty?
+    warn "FAIL: remote known Windows app verified catalog run-plan sync failed"
+    exit 1
+  end
+end
+
 stdout, stderr, status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, remote_command]))
 unless status.zero?
   warn stdout unless stdout.empty?
@@ -214,12 +260,21 @@ when "passed"
   abort "remote known Windows app smoke did not start QEMU from Go" unless payload.fetch("guest_started") == true
   abort "remote known Windows app smoke did not redact output" unless payload.fetch("raw_output_redacted") == true
 
-  if options.fetch(:acceptance_json)
-    acceptance_args = [
-      remote_bin,
-      "known-existing-winapp-acceptance-preview",
-      "--known-winapp-run", remote_report
-    ]
+  if options.fetch(:acceptance_json) || options.fetch(:verified_catalog_acceptance_json)
+    acceptance_args = if options.fetch(:verified_catalog_acceptance_json)
+                        [
+                          remote_bin,
+                          "known-app-verified-catalog-run-acceptance-preview",
+                          "--run-plan", remote_run_plan,
+                          "--known-winapp-run", remote_report
+                        ]
+                      else
+                        [
+                          remote_bin,
+                          "known-existing-winapp-acceptance-preview",
+                          "--known-winapp-run", remote_report
+                        ]
+                      end
     acceptance_stdout, acceptance_stderr, acceptance_status = run_shell(options.fetch(:local_shell), shell_join(["ssh", remote_host, shell_join(acceptance_args)]))
     unless acceptance_status.zero?
       warn acceptance_stdout unless acceptance_stdout.empty?
@@ -229,10 +284,15 @@ when "passed"
     end
 
     acceptance = JSON.parse(acceptance_stdout)
-    abort "remote known Windows app acceptance used unexpected request type" unless acceptance.fetch("request_type") == "known-existing-winapp-acceptance-preview"
+    expected_request_type = options.fetch(:verified_catalog_acceptance_json) ? "known-app-verified-catalog-run-acceptance-preview" : "known-existing-winapp-acceptance-preview"
+    abort "remote known Windows app acceptance used unexpected request type" unless acceptance.fetch("request_type") == expected_request_type
     abort "remote known Windows app acceptance did not match app id" unless acceptance.fetch("app_id") == payload.fetch("app_id")
     abort "remote known Windows app acceptance was not ready" unless acceptance.fetch("acceptance_ready") == true
     abort "remote known Windows app acceptance exposed report path" unless acceptance.fetch("run_report_path_exposed") == false
+    if options.fetch(:verified_catalog_acceptance_json)
+      abort "remote known Windows app acceptance did not match run plan" unless acceptance.fetch("run_plan_matched") == true
+      abort "remote known Windows app acceptance exposed run plan path" unless acceptance.fetch("run_plan_path_exposed") == false
+    end
     abort "remote known Windows app acceptance exposed remote host" unless acceptance.fetch("remote_host_exposed") == false
     abort "remote known Windows app acceptance exposed raw output" unless acceptance.fetch("raw_output_exposed") == false
     abort "remote known Windows app acceptance exposed runtime argv" unless acceptance.fetch("runtime_argv_exposed") == false

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc198`.
+The project is currently at `v0.2.640-rc199`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc198`.
 
 ## Current Checkpoint
 
-v0.2.640-rc198 makes the real known Windows app acceptance path a one-command q4 operation. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` builds and runs on q4, starts QEMU from the Go Runtime, executes the app through guest Wine, persists the report and serial log, and returns the Go-owned `known-existing-winapp-acceptance-preview` JSON instead of requiring a second manual command. rc198 validation ran 7zr 26.02 through this path and returned `acceptance_ready=true`.
+v0.2.640-rc199 lets the q4 real app smoke return verified catalog run acceptance directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan to q4, runs 7zr through Go-started QEMU and guest Wine, and returns `known-app-verified-catalog-run-acceptance-preview` JSON that Compatibility Center and KDE Center page previews can consume. rc199 validation returned `acceptance_ready=true` and `run_plan_matched=true`.
+
+The previous v0.2.640-rc198 checkpoint makes the real known Windows app acceptance path a one-command q4 operation. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --acceptance-json` builds and runs on q4, starts QEMU from the Go Runtime, executes the app through guest Wine, persists the report and serial log, and returns the Go-owned `known-existing-winapp-acceptance-preview` JSON instead of requiring a second manual command. rc198 validation ran 7zr 26.02 through this path and returned `acceptance_ready=true`.
 
 The previous v0.2.640-rc197 checkpoint lets desktop read models consume accepted verified-catalog q4 run evidence. `compatibility-center-preview` and `kde-center-page-preview` now accept `--known-app-verified-catalog-run-acceptance ACCEPTANCE.json`, validate the matched catalog plan plus passed real run evidence, and expose a desktop-safe `verified-catalog-real-q4-run-accepted` card without leaking q4 paths, remote hosts, raw output, runner arguments, artifact paths, backend details, or host/container mutation.
 
