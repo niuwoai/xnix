@@ -1727,6 +1727,117 @@ func TestWindowsAppGuestWineGUISmokeCommandRejectsConsoleKnownApp(t *testing.T) 
 	}
 }
 
+func TestWindowsAppGuestWineGUISmokeCommandPassesFileArgument(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell ssh fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	logPath := filepath.Join(tempDir, "guest-gui-file.log")
+	documentPath := filepath.Join(tempDir, "sample-document.txt")
+	if err := os.WriteFile(documentPath, []byte("Xnix CLI guest GUI file-open document\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	sshPath := filepath.Join(tempDir, "fake-ssh")
+	sshBody := "#!/bin/sh\n" +
+		"printf 'ssh %s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"printf '%s' \"$*\" | grep -q 'cat .*file_args_passed' && { printf '1'; exit 0; }\n" +
+		"printf '%s' \"$*\" | grep -q 'cat .*file_args_winepath_translated' && { printf '1'; exit 0; }\n" +
+		"case \"$*\" in\n" +
+		"  *' true') exit 0 ;;\n" +
+		"  *'command -v wine'*) exit 0 ;;\n" +
+		"  *'winex11'*) exit 0 ;;\n" +
+		"  *'mkdir -p'*) exit 0 ;;\n" +
+		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
+		"  *'wine '*'notepad.exe'*) exit 0 ;;\n" +
+		"  *'cat '*'stderr.txt'*) printf ''; exit 0 ;;\n" +
+		"  *'wineserver -k'*) exit 0 ;;\n" +
+		"esac\n" +
+		"exit 2\n"
+	if err := os.WriteFile(sshPath, []byte(sshBody), 0o700); err != nil {
+		t.Fatalf("WriteFile ssh returned error: %v", err)
+	}
+	scpPath := filepath.Join(tempDir, "fake-scp")
+	scpBody := "#!/bin/sh\n" +
+		"printf 'scp %s\\n' \"$*\" >> '" + logPath + "'\n" +
+		"exit 0\n"
+	if err := os.WriteFile(scpPath, []byte(scpBody), 0o700); err != nil {
+		t.Fatalf("WriteFile scp returned error: %v", err)
+	}
+	xwininfoPath := filepath.Join(tempDir, "fake-xwininfo")
+	xwininfoBody := "#!/bin/sh\n" +
+		"printf 'xwininfo display=%s\\n' \"$DISPLAY\" >> '" + logPath + "'\n" +
+		"printf 'xwininfo: Window id: 0x3a7 (the root window)\\n'\n" +
+		"printf '  0x200001 \"sample-document.txt - Notepad\": ()  320x240+0+0  +0+0\\n'\n"
+	if err := os.WriteFile(xwininfoPath, []byte(xwininfoBody), 0o700); err != nil {
+		t.Fatalf("WriteFile xwininfo returned error: %v", err)
+	}
+	keyPath := filepath.Join(tempDir, "id_ed25519")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-guest-wine-gui-smoke",
+		"--app", "org.xnix.sample.notepad",
+		"--file-argument", documentPath,
+		"--window-match", "sample-document.txt",
+		"--host", "127.0.0.1",
+		"--port", "2222",
+		"--user", "root",
+		"--key", keyPath,
+		"--remote-dir", "/tmp/xnix-wine-guest-gui-smoke",
+		"--ssh", sshPath,
+		"--scp", scpPath,
+		"--xwininfo", xwininfoPath,
+		"--guest-display", "10.0.2.2:100",
+		"--host-display", ":100",
+		"--timeout", "5s",
+		"--wait", "1ms",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["known_app_id"] != "org.xnix.sample.notepad" ||
+		payload["gui_app_name"] != "notepad.exe" ||
+		payload["file_argument_count"] != float64(1) ||
+		payload["file_argument_copied_count"] != float64(1) ||
+		payload["file_arguments_passed"] != true ||
+		payload["file_argument_winepath_translated"] != true ||
+		payload["file_argument_winepath_translated_count"] != float64(1) ||
+		payload["window_match"] != "sample-document.txt" ||
+		payload["window_match_observed"] != true ||
+		payload["x_window_observed"] != true ||
+		!strings.Contains(payload["window_evidence_summary"].(string), "sample-document.txt") ||
+		payload["raw_file_argument_path_exposed"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_guest_gui_app_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false {
+		t.Fatalf("unexpected file-argument guest GUI smoke payload: %#v", payload)
+	}
+	for _, forbidden := range []string{documentPath, sshPath, scpPath, xwininfoPath, keyPath, "/tmp/xnix-wine-guest-gui-smoke/file-1-sample-document.txt"} {
+		if strings.Contains(output.String(), forbidden) {
+			t.Fatalf("guest GUI smoke output leaked raw path %q: %s", forbidden, output.String())
+		}
+	}
+	logBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile log returned error: %v", err)
+	}
+	log := string(logBytes)
+	if !strings.Contains(log, "scp ") ||
+		!strings.Contains(log, documentPath) ||
+		!strings.Contains(log, "root@127.0.0.1:/tmp/xnix-wine-guest-gui-smoke/file-1-sample-document.txt") ||
+		!strings.Contains(log, "winepath -w '/tmp/xnix-wine-guest-gui-smoke/file-1-sample-document.txt'") ||
+		!strings.Contains(log, "wine '/usr/lib/wine/i386-windows/notepad.exe'") {
+		t.Fatalf("guest GUI smoke command did not copy and pass expected file argument: %s", log)
+	}
+}
+
 func TestWindowsAppGuestWineGUISmokeCommandCopiesLocalExecutable(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")

@@ -30,6 +30,7 @@ DEFAULT_KNOWN_APP_ID = ENV.fetch("XNIX_WINE_GUI_KNOWN_APP_ID", "")
 DEFAULT_EVIDENCE_APP_ID = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_ID", "org.xnix.apps.mines")
 DEFAULT_EVIDENCE_DISPLAY_NAME = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_DISPLAY_NAME", "Mines")
 DEFAULT_EVIDENCE_APP_VERSION = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_VERSION", VERSION)
+DEFAULT_WINDOW_MATCH = ENV.fetch("XNIX_WINE_GUI_WINDOW_MATCH", "")
 
 options = {
   execute: false,
@@ -53,6 +54,8 @@ options = {
   evidence_app_id: DEFAULT_EVIDENCE_APP_ID,
   evidence_display_name: DEFAULT_EVIDENCE_DISPLAY_NAME,
   evidence_app_version: DEFAULT_EVIDENCE_APP_VERSION,
+  file_arguments: [],
+  window_match: DEFAULT_WINDOW_MATCH,
   wait_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_WAIT_SECONDS", DEFAULT_WAIT_SECONDS.to_s), 10),
   boot_timeout_seconds: Integer(ENV.fetch("XNIX_WINE_GUI_BOOT_TIMEOUT_SECONDS", DEFAULT_BOOT_TIMEOUT_SECONDS.to_s), 10)
 }
@@ -77,6 +80,8 @@ OptionParser.new do |parser|
   parser.on("--launcher-bin PATH", "Managed xnix-compat-launch binary for owner-controlled launch mode.") { |value| options[:launcher_bin] = value }
   parser.on("--known-app-cache-root PATH", "Known Windows app cache root supplied to the Runtime owner.") { |value| options[:known_app_cache_root] = value }
   parser.on("--known-app-id ID", "Known Windows GUI app id resolved by the Go Runtime.") { |value| options[:known_app_id] = value }
+  parser.on("--file-argument PATH", "Local file copied into the Wine guest and passed to the Windows GUI app; may be repeated.") { |value| options[:file_arguments] << value }
+  parser.on("--window-match TEXT", "Case-insensitive X window title/text required for GUI observation.") { |value| options[:window_match] = value }
   parser.on("--evidence-app-id ID", "Application id used for Runtime GUI evidence projection.") { |value| options[:evidence_app_id] = value }
   parser.on("--evidence-display-name NAME", "Display name used for Runtime GUI evidence projection.") { |value| options[:evidence_display_name] = value }
   parser.on("--evidence-app-version VERSION", "Application version used for Runtime GUI evidence projection.") { |value| options[:evidence_app_version] = value }
@@ -209,6 +214,12 @@ def runtime_command(options)
   unless options.fetch(:executable).strip.empty?
     command.push("--executable", options.fetch(:executable))
   end
+  options.fetch(:file_arguments).each do |path|
+    command.push("--file-argument", path)
+  end
+  unless options.fetch(:window_match).strip.empty?
+    command.push("--window-match", options.fetch(:window_match))
+  end
   command
 end
 
@@ -314,6 +325,16 @@ def base_report(options)
     "owner_external_gui_app_delivery" => options.fetch(:executable).strip.empty? ? "" : "owner-managed-copy",
     "known_app_id" => options.fetch(:known_app_id),
     "known_app_selection_planned" => !options.fetch(:known_app_id).strip.empty?,
+    "file_argument_count" => options.fetch(:file_arguments).length,
+    "file_argument_delivery" => options.fetch(:file_arguments).empty? ? "" : "guest-copy-and-winepath",
+    "file_argument_copied_count" => 0,
+    "file_arguments_passed" => false,
+    "file_argument_winepath_translated" => false,
+    "file_argument_winepath_translated_count" => 0,
+    "raw_file_argument_path_exposed" => false,
+    "window_match" => options.fetch(:window_match),
+    "window_match_observed" => false,
+    "window_evidence_summary" => "",
     "evidence_app_id" => options.fetch(:evidence_app_id),
     "evidence_display_name" => options.fetch(:evidence_display_name),
     "evidence_app_version" => options.fetch(:evidence_app_version),
@@ -358,8 +379,17 @@ def apply_runtime_payload(report, runtime_payload)
   report["known_app_version"] = runtime_payload.fetch("known_app_version", "")
   report["gui_app_name"] = runtime_payload.fetch("gui_app_name", report.fetch("gui_app_name"))
   report["executable_copied"] = runtime_payload.fetch("executable_copied", false)
+  report["file_argument_count"] = runtime_payload.fetch("file_argument_count", report.fetch("file_argument_count", 0))
+  report["file_argument_copied_count"] = runtime_payload.fetch("file_argument_copied_count", 0)
+  report["file_arguments_passed"] = runtime_payload.fetch("file_arguments_passed", false)
+  report["file_argument_winepath_translated"] = runtime_payload.fetch("file_argument_winepath_translated", false)
+  report["file_argument_winepath_translated_count"] = runtime_payload.fetch("file_argument_winepath_translated_count", 0)
+  report["raw_file_argument_path_exposed"] = runtime_payload.fetch("raw_file_argument_path_exposed", false)
   report["guest_x11_driver_available"] = runtime_payload.fetch("guest_x11_driver_available", false)
   report["wineboot_invoked"] = runtime_payload.fetch("wineboot_invoked", false)
+  report["window_match"] = runtime_payload.fetch("window_match", report.fetch("window_match", ""))
+  report["window_match_observed"] = runtime_payload.fetch("window_match_observed", false)
+  report["window_evidence_summary"] = runtime_payload.fetch("window_evidence_summary", "")
   report["x_window_child_count"] = runtime_payload.fetch("x_window_child_count", 0)
   report["x_window_observed"] = runtime_payload.fetch("x_window_observed", false)
   report["x_window_observation_attempts"] = runtime_payload.fetch("x_window_observation_attempts", 0)

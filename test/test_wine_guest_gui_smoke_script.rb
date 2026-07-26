@@ -46,6 +46,8 @@ assert(go_gui_smoke_source.include?("\"&\"") && go_gui_smoke_source.include?("pr
 assert(!script_source.include?("&;"), "GUI smoke must not emit an invalid background shell separator")
 assert(script_source.include?("windows-app-guest-wine-gui-smoke"), "GUI smoke must delegate Wine GUI execution to the Go Runtime")
 assert(script_source.include?("--executable"), "GUI smoke must expose a local Windows GUI executable delivery path")
+assert(script_source.include?("--file-argument"), "GUI smoke must expose file-argument delivery to the Go Runtime")
+assert(script_source.include?("--window-match"), "GUI smoke must expose an X window title match gate")
 assert(script_source.include?("\"evidence-relative-path\", evidence_relative_path"), "GUI smoke owner path must call xnix-runtime-owner with positional evidence handoff")
 assert(go_gui_smoke_source.include?("\"wineboot\"") && go_gui_smoke_source.include?("\"--init\""), "Go Runtime must initialize the Wine prefix before launching the GUI app")
 
@@ -61,6 +63,11 @@ assert(payload["gui_app_name"] == "winemine.exe", "GUI smoke must use a real Win
 assert(payload["local_gui_executable_configured"] == false, "GUI smoke plan must default to the in-guest app path")
 assert(payload["known_app_id"] == "", "GUI smoke plan must not force known app selection by default")
 assert(payload["known_app_selection_planned"] == false, "GUI smoke plan must keep known app selection explicit")
+assert(payload["file_argument_count"] == 0, "GUI smoke plan must default to no file arguments")
+assert(payload["file_argument_delivery"] == "", "GUI smoke plan must not plan file delivery by default")
+assert(payload["window_match"] == "", "GUI smoke plan must not require a window match by default")
+assert(payload["window_match_observed"] == false, "GUI smoke plan must not report observed window matches")
+assert(payload["raw_file_argument_path_exposed"] == false, "GUI smoke plan must not expose raw file argument paths")
 assert(payload["launch_mode"] == "direct", "GUI smoke plan must default to direct launch mode")
 assert(payload["owner_controlled_launch_requested"] == false, "GUI smoke direct plan must not request owner-controlled launch")
 assert(payload["owner_service_call_planned"] == false, "GUI smoke direct plan must not plan an owner service call")
@@ -124,6 +131,24 @@ assert(status.success?, "Wine guest GUI smoke executable plan must succeed: #{st
 payload = JSON.parse(stdout)
 assert(payload["gui_app_name"] == "xnix-messagebox-smoke.exe", "GUI smoke executable plan must surface the executable basename")
 assert(payload["local_gui_executable_configured"] == true, "GUI smoke executable plan must record local executable delivery mode")
+
+fixture_document = project_root.join("test/fixtures/winapp/sample-document.txt")
+file_arg_stdout, file_arg_stderr, file_arg_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--known-app-id", "org.xnix.sample.notepad",
+  "--file-argument", fixture_document.to_s,
+  "--window-match", "sample-document.txt",
+  chdir: project_root.to_s
+)
+assert(file_arg_status.success?, "Wine guest GUI smoke file argument plan must succeed: #{file_arg_stderr}")
+file_arg_payload = JSON.parse(file_arg_stdout)
+assert(file_arg_payload["known_app_id"] == "org.xnix.sample.notepad", "GUI smoke file argument plan must expose the selected Notepad app")
+assert(file_arg_payload["file_argument_count"] == 1, "GUI smoke file argument plan must count the requested document")
+assert(file_arg_payload["file_argument_delivery"] == "guest-copy-and-winepath", "GUI smoke file argument plan must describe guest copy and Wine path translation")
+assert(file_arg_payload["window_match"] == "sample-document.txt", "GUI smoke file argument plan must expose the required window match")
+assert(file_arg_payload["raw_file_argument_path_exposed"] == false, "GUI smoke file argument plan must keep raw paths out of report fields")
 
 owner_exe_stdout, owner_exe_stderr, owner_exe_status = Open3.capture3(
   "ruby", script.to_s,

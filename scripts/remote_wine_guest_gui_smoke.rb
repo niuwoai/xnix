@@ -28,9 +28,12 @@ options = {
   remote_kernel: ENV.fetch("XNIX_WINE_GUI_REMOTE_KERNEL", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/wine-guest/bzImage"),
   remote_ssh_key: ENV.fetch("XNIX_WINE_GUI_REMOTE_SSH_KEY", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/ssh/id_ed25519"),
   remote_executable: ENV.fetch("XNIX_WINE_GUI_REMOTE_EXECUTABLE", ""),
+  remote_file_argument: ENV.fetch("XNIX_WINE_GUI_REMOTE_FILE_ARGUMENT", ""),
+  sample_file_argument: ENV.fetch("XNIX_WINE_GUI_REMOTE_SAMPLE_FILE_ARGUMENT", ""),
   remote_build_root: ENV.fetch("XNIX_REMOTE_BUILD_ROOT", "/home/xnix-build-cache"),
   remote_go: ENV.fetch("XNIX_REMOTE_GO", "/home/xnix-toolchains/go1.24.4-linux-amd64/bin/go"),
   launch_mode: ENV.fetch("XNIX_WINE_GUI_REMOTE_LAUNCH_MODE", "direct"),
+  window_match: ENV.fetch("XNIX_WINE_GUI_REMOTE_WINDOW_MATCH", ""),
   report_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_REPORT", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-smoke-#{VERSION}.json"),
   evidence_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_EVIDENCE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-evidence-#{VERSION}.json"),
   kde_page_output: ENV.fetch("XNIX_WINE_GUI_REMOTE_KDE_PAGE", "#{DEFAULT_REMOTE_MATERIALS_ROOT}/state/wine-gui-kde-page-#{VERSION}.json"),
@@ -58,9 +61,12 @@ OptionParser.new do |parser|
   parser.on("--remote-kernel PATH", "Remote Wine guest kernel image.") { |value| options[:remote_kernel] = value }
   parser.on("--remote-ssh-key PATH", "Remote Wine guest SSH key.") { |value| options[:remote_ssh_key] = value }
   parser.on("--remote-executable PATH", "Remote Windows GUI .exe under /home/xnix*.") { |value| options[:remote_executable] = value }
+  parser.on("--remote-file-argument PATH", "Remote file under /home/xnix* copied into the Wine guest and passed to the Windows GUI app.") { |value| options[:remote_file_argument] = value }
+  parser.on("--sample-file-argument NAME", "Create a remote sample file under the smoke state root and pass it to the Windows GUI app.") { |value| options[:sample_file_argument] = value }
   parser.on("--remote-build-root PATH", "Remote build cache root under /home/xnix*.") { |value| options[:remote_build_root] = value }
   parser.on("--remote-go PATH", "Remote Go binary used to build xnix-runtime-go.") { |value| options[:remote_go] = value }
   parser.on("--launch-mode MODE", "Launch mode: direct or owner-controlled-launch.") { |value| options[:launch_mode] = value }
+  parser.on("--window-match TEXT", "Case-insensitive X window title/text required for GUI observation.") { |value| options[:window_match] = value }
   parser.on("--report-output PATH", "Remote JSON report output path under /home/xnix*.") { |value| options[:report_output] = value }
   parser.on("--evidence-output PATH", "Remote Runtime GUI evidence output path under /home/xnix*.") { |value| options[:evidence_output] = value }
   parser.on("--kde-page-output PATH", "Remote KDE center page JSON output path under /home/xnix*.") { |value| options[:kde_page_output] = value }
@@ -181,6 +187,15 @@ evidence_output = ensure_remote_xnix_path!("evidence output", options.fetch(:evi
 kde_page_output = ensure_remote_xnix_path!("KDE page output", options.fetch(:kde_page_output))
 kde_action_output = ensure_remote_xnix_path!("KDE action output", options.fetch(:kde_action_output))
 state_root = ensure_remote_xnix_path!("state root", options.fetch(:state_root))
+sample_file_argument_value = options.fetch(:sample_file_argument).strip
+abort "use either --remote-file-argument or --sample-file-argument, not both" if !options.fetch(:remote_file_argument).strip.empty? && !sample_file_argument_value.empty?
+sample_file_argument_name = File.basename(sample_file_argument_value)
+sample_file_argument_requested = !sample_file_argument_value.empty?
+remote_file_argument = if sample_file_argument_requested
+                         ensure_remote_xnix_path!("remote sample file argument", "#{state_root}/#{sample_file_argument_name}")
+                       else
+                         ensure_optional_remote_xnix_path!("remote file argument", options.fetch(:remote_file_argument))
+                       end
 remote_runtime_bin = "#{remote_build_root}/bin/xnix-runtime-go"
 remote_owner_bin = "#{remote_build_root}/bin/xnix-runtime-owner"
 remote_launcher_bin = "#{remote_build_root}/bin/xnix-compat-launch"
@@ -203,6 +218,11 @@ plan = {
   "remote_kernel" => remote_kernel,
   "remote_ssh_key" => remote_ssh_key,
   "remote_executable" => remote_executable,
+  "remote_file_argument" => remote_file_argument,
+  "sample_file_argument_requested" => sample_file_argument_requested,
+  "file_argument_count" => remote_file_argument.empty? ? 0 : 1,
+  "file_argument_delivery" => remote_file_argument.empty? ? "" : "remote-file-to-guest-copy-and-winepath",
+  "window_match" => options.fetch(:window_match),
   "remote_build_root" => remote_build_root,
   "remote_runtime_bin" => remote_runtime_bin,
   "remote_owner_bin" => remote_owner_bin,
@@ -303,6 +323,21 @@ unless build_status.zero?
   exit 1
 end
 
+if sample_file_argument_requested
+  sample_prepare = [
+    "set -eu",
+    shell_join(["mkdir", "-p", Pathname.new(remote_file_argument).dirname.to_s]),
+    shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), \"Xnix remote Wine GUI file-open smoke\\n\")", remote_file_argument])
+  ].join("\n")
+  sample_stdout, sample_stderr, sample_status = run_shell(options.fetch(:local_shell), shell_join(ssh_command(remote_host, sample_prepare)), timeout_seconds: options.fetch(:remote_timeout_seconds))
+  warn sample_stdout unless sample_stdout.empty?
+  warn sample_stderr unless sample_stderr.empty?
+  unless sample_status.zero?
+    warn "FAIL: remote Wine guest GUI sample file preparation failed"
+    exit 1
+  end
+end
+
 remote_args = [
   "ruby", "scripts/wine_guest_gui_smoke.rb",
   "--execute",
@@ -321,6 +356,8 @@ remote_args = [
   "--report-output", report_output
 ]
 remote_args.push("--known-app-id", options.fetch(:known_app_id)) unless options.fetch(:known_app_id).strip.empty?
+remote_args.push("--file-argument", remote_file_argument) unless remote_file_argument.empty?
+remote_args.push("--window-match", options.fetch(:window_match)) unless options.fetch(:window_match).strip.empty?
 if launch_mode == "owner-controlled-launch"
   remote_args.push("--owner-bin", remote_owner_bin)
   remote_args.push("--launcher-bin", remote_launcher_bin)
@@ -443,6 +480,15 @@ summary_reader = <<~RUBY
     "guest_ssh_ready" => smoke.fetch("guest_ssh_ready"),
     "wineboot_invoked" => smoke.fetch("wineboot_invoked"),
     "guest_x11_driver_available" => smoke.fetch("guest_x11_driver_available"),
+    "file_argument_count" => smoke.fetch("file_argument_count", 0),
+    "file_argument_copied_count" => smoke.fetch("file_argument_copied_count", 0),
+    "file_arguments_passed" => smoke.fetch("file_arguments_passed", false),
+    "file_argument_winepath_translated" => smoke.fetch("file_argument_winepath_translated", false),
+    "file_argument_winepath_translated_count" => smoke.fetch("file_argument_winepath_translated_count", 0),
+    "raw_file_argument_path_exposed" => smoke.fetch("raw_file_argument_path_exposed", false),
+    "window_match" => smoke.fetch("window_match", ""),
+    "window_match_observed" => smoke.fetch("window_match_observed", false),
+    "window_evidence_summary" => smoke.fetch("window_evidence_summary", ""),
     "x_window_observed" => smoke.fetch("x_window_observed"),
     "x_window_child_count" => smoke.fetch("x_window_child_count"),
     "x_window_observation_attempts" => smoke.fetch("x_window_observation_attempts"),

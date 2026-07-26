@@ -1,0 +1,1 @@
+Xnix sample document for Windows GUI file-open smoke.

@@ -26,6 +26,10 @@ assert(payload["remote_host"] == "root@q4", "remote GUI smoke must default to q4
 assert(payload["backend"] == "qemu-guest-wine-x11", "remote GUI smoke must target QEMU guest Wine X11")
 assert(payload["gui_app_name"] == "winemine.exe", "remote GUI smoke must use a real GUI Windows app")
 assert(payload["remote_gui_executable_configured"] == false, "remote GUI smoke must not configure an executable by default")
+assert(payload["remote_file_argument"] == "", "remote GUI smoke must not configure file arguments by default")
+assert(payload["file_argument_count"] == 0, "remote GUI smoke must default to no file arguments")
+assert(payload["sample_file_argument_requested"] == false, "remote GUI smoke must not create sample files by default")
+assert(payload["window_match"] == "", "remote GUI smoke must not require a window match by default")
 assert(payload["requires_rebuilt_wine_guest_with_x11"] == true, "remote GUI smoke must document the rebuilt Wine guest requirement")
 assert(payload["remote_timeout_seconds"] == 300, "remote GUI smoke must expose a bounded remote timeout")
 assert(payload["runtime_build_planned"] == true, "remote GUI smoke must build the Go Runtime before execution")
@@ -57,6 +61,8 @@ assert(script.read.include?("evidence_output_written"), "remote GUI smoke execut
 assert(script.read.include?("kde_page_output_written"), "remote GUI smoke execute result must expose KDE page output")
 assert(script.read.include?("kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose KDE GUI evidence consumption")
 assert(script.read.include?("runtime_evidence_report_consumed"), "remote GUI smoke execute result must expose Runtime report consumption")
+assert(script.read.include?("file_arguments_passed"), "remote GUI smoke execute result must expose file argument handoff evidence")
+assert(script.read.include?("window_match_observed"), "remote GUI smoke execute result must expose window-match evidence")
 assert(payload["known_app_id"] == "", "remote GUI smoke must not force known app selection by default")
 assert(payload["known_app_selection_planned"] == false, "remote GUI smoke must keep known app selection explicit")
 assert(payload["evidence_app_id"] == "org.xnix.apps.mines", "remote GUI smoke must expose the default evidence app id")
@@ -126,6 +132,25 @@ known_payload = JSON.parse(known_stdout)
 assert(known_payload["known_app_id"] == "org.xnix.apps.mines", "remote GUI smoke known-app plan must expose the selected app id")
 assert(known_payload["known_app_selection_planned"] == true, "remote GUI smoke known-app plan must route app selection through the remote Go Runtime")
 
+file_arg_stdout, file_arg_stderr, file_arg_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--known-app-id", "org.xnix.sample.notepad",
+  "--sample-file-argument", "sample-document.txt",
+  "--window-match", "sample-document.txt",
+  "--evidence-app-id", "org.xnix.sample.notepad",
+  "--evidence-display-name", "Sample Notepad",
+  chdir: project_root.to_s
+)
+assert(file_arg_status.success?, "remote GUI smoke file argument plan must succeed: #{file_arg_stderr}")
+file_arg_payload = JSON.parse(file_arg_stdout)
+assert(file_arg_payload["known_app_id"] == "org.xnix.sample.notepad", "remote GUI smoke file argument plan must expose Sample Notepad")
+assert(file_arg_payload["remote_file_argument"].end_with?("/sample-document.txt"), "remote GUI smoke file argument plan must place the sample document under the smoke state root")
+assert(file_arg_payload["sample_file_argument_requested"] == true, "remote GUI smoke file argument plan must mark sample creation")
+assert(file_arg_payload["file_argument_count"] == 1, "remote GUI smoke file argument plan must count the sample document")
+assert(file_arg_payload["file_argument_delivery"] == "remote-file-to-guest-copy-and-winepath", "remote GUI smoke file argument plan must describe the guest handoff")
+assert(file_arg_payload["window_match"] == "sample-document.txt", "remote GUI smoke file argument plan must expose the required X window match")
+assert(file_arg_payload["remote_command"].include?("--launch-mode direct"), "remote GUI smoke file argument plan must keep direct launch mode")
+
 exe_stdout, exe_stderr, exe_status = Open3.capture3(
   "ruby", script.to_s,
   "--remote-executable", "/home/xnix-run-materials/fixtures/xnix-messagebox-smoke.exe",
@@ -162,6 +187,23 @@ bad_exe_stdout, bad_exe_stderr, bad_exe_status = Open3.capture3(
 )
 assert(!bad_exe_status.success?, "remote GUI smoke must reject executables outside /home/xnix-*")
 assert((bad_exe_stdout + bad_exe_stderr).include?("remote executable must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe executable paths")
+
+bad_file_arg_stdout, bad_file_arg_stderr, bad_file_arg_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-file-argument", "/tmp/not-xnix/sample-document.txt",
+  chdir: project_root.to_s
+)
+assert(!bad_file_arg_status.success?, "remote GUI smoke must reject file arguments outside /home/xnix-*")
+assert((bad_file_arg_stdout + bad_file_arg_stderr).include?("remote file argument must stay under /home/xnix-* or /tmp/xnix-*"), "remote GUI smoke must explain unsafe file argument paths")
+
+mixed_file_arg_stdout, mixed_file_arg_stderr, mixed_file_arg_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--remote-file-argument", "/home/xnix-run-materials/state/sample-document.txt",
+  "--sample-file-argument", "sample-document.txt",
+  chdir: project_root.to_s
+)
+assert(!mixed_file_arg_status.success?, "remote GUI smoke must reject mixed file argument sources")
+assert((mixed_file_arg_stdout + mixed_file_arg_stderr).include?("use either --remote-file-argument or --sample-file-argument, not both"), "remote GUI smoke must explain mixed file argument sources")
 
 bad_evidence_stdout, bad_evidence_stderr, bad_evidence_status = Open3.capture3(
   "ruby", script.to_s,

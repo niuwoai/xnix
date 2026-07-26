@@ -22,23 +22,25 @@ const (
 )
 
 type GuestGUIRequest struct {
-	ExecutablePath  string
-	GUIAppPath      string
-	KnownAppID      string
-	KnownAppName    string
-	KnownAppVersion string
-	Host            string
-	Port            string
-	User            string
-	KeyPath         string
-	RemoteDir       string
-	SSHPath         string
-	SCPPath         string
-	XWinInfoPath    string
-	GuestDisplay    string
-	HostDisplay     string
-	Timeout         time.Duration
-	Wait            time.Duration
+	ExecutablePath    string
+	GUIAppPath        string
+	KnownAppID        string
+	KnownAppName      string
+	KnownAppVersion   string
+	Host              string
+	Port              string
+	User              string
+	KeyPath           string
+	RemoteDir         string
+	SSHPath           string
+	SCPPath           string
+	XWinInfoPath      string
+	GuestDisplay      string
+	HostDisplay       string
+	FileArgumentPaths []string
+	WindowMatch       string
+	Timeout           time.Duration
+	Wait              time.Duration
 }
 
 type GuestGUIResult struct {
@@ -57,10 +59,18 @@ type GuestGUIResult struct {
 	WinebootInvoked                           bool   `json:"wineboot_invoked"`
 	WinebootExitCode                          int    `json:"wineboot_exit_code"`
 	ExecutableCopied                          bool   `json:"executable_copied"`
+	FileArgumentCount                         int    `json:"file_argument_count"`
+	FileArgumentCopiedCount                   int    `json:"file_argument_copied_count"`
+	FileArgumentWinePathTranslated            bool   `json:"file_argument_winepath_translated"`
+	FileArgumentWinePathTranslatedCount       int    `json:"file_argument_winepath_translated_count"`
+	FileArgumentsPassed                       bool   `json:"file_arguments_passed"`
 	LaunchAttempted                           bool   `json:"launch_attempted"`
 	LaunchPIDRecorded                         bool   `json:"launch_pid_recorded"`
 	XWinInfoInvoked                           bool   `json:"xwininfo_invoked"`
 	XWindowObserved                           bool   `json:"x_window_observed"`
+	WindowMatch                               string `json:"window_match,omitempty"`
+	WindowMatchObserved                       bool   `json:"window_match_observed"`
+	WindowEvidenceSummary                     string `json:"window_evidence_summary"`
 	XWindowChildCount                         int    `json:"x_window_child_count"`
 	XWindowObservationAttempts                int    `json:"x_window_observation_attempts"`
 	XWinInfoBytes                             int    `json:"xwininfo_bytes"`
@@ -82,12 +92,17 @@ type GuestGUIResult struct {
 	BroadHostMountRequired                    bool   `json:"broad_host_mount_required"`
 	RawHostPathExposed                        bool   `json:"raw_host_path_exposed"`
 	RawGuestGUIAppPathExposed                 bool   `json:"raw_guest_gui_app_path_exposed"`
+	RawFileArgumentPathExposed                bool   `json:"raw_file_argument_path_exposed"`
 	RawCommandExposed                         bool   `json:"raw_command_exposed"`
 }
 
 func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIResult, error) {
 	result := baseGuestGUIResult(request)
 	executablePath := strings.TrimSpace(request.ExecutablePath)
+	fileArgumentPaths, err := validateGuestGUIFileArgumentPaths(request.FileArgumentPaths)
+	if err != nil {
+		return result, err
+	}
 	if executablePath != "" {
 		validatedExecutablePath, err := validateExecutable(executablePath)
 		if err != nil {
@@ -103,7 +118,7 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		return result, nil
 	}
 	scpPath := ""
-	if executablePath != "" {
+	if executablePath != "" || len(fileArgumentPaths) > 0 {
 		scpPath, err = resolveTool(request.SCPPath, "scp")
 		if err != nil {
 			result.Status = SkippedStatus
@@ -178,6 +193,15 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		}
 		result.ExecutableCopied = true
 	}
+	remoteFileArguments, err := copyGuestGUIFileArguments(runCtx, scpPath, GuestRequest{Host: request.Host, Port: request.Port, User: request.User, KeyPath: request.KeyPath}, remoteDir, guest, fileArgumentPaths)
+	if err != nil {
+		result.DurationMillis = time.Since(startedAt).Milliseconds()
+		result.Status = FailedStatus
+		result.FailureReason = "guest GUI file argument copy failed"
+		result.WinebootExitCode = exitCode(err)
+		return result, nil
+	}
+	result.FileArgumentCopiedCount = len(remoteFileArguments)
 
 	winebootCommand := guestGUIWinebootCommand(remoteDir, guestDisplay(request))
 	var winebootStderr bytes.Buffer
@@ -194,11 +218,14 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		return result, nil
 	}
 
-	launchCommand := guestGUIWineLaunchCommand(remoteDir, guestDisplay(request), remoteGUIApp)
+	launchCommand := guestGUIWineLaunchCommand(remoteDir, guestDisplay(request), remoteGUIApp, remoteFileArguments)
 	var launchStderr bytes.Buffer
 	launchErr := runGuestSSH(runCtx, sshPath, sshBase, guest, launchCommand, nil, &launchStderr)
 	result.LaunchAttempted = true
 	result.LaunchPIDRecorded = launchErr == nil
+	result.FileArgumentWinePathTranslatedCount = readGuestIntFile(runCtx, sshPath, sshBase, guest, remoteDir+"/file_args_winepath_translated")
+	result.FileArgumentWinePathTranslated = result.FileArgumentCount > 0 && result.FileArgumentWinePathTranslatedCount == result.FileArgumentCount
+	result.FileArgumentsPassed = result.FileArgumentCount > 0 && readGuestIntFile(runCtx, sshPath, sshBase, guest, remoteDir+"/file_args_passed") == result.FileArgumentCount
 	if launchErr != nil {
 		result.DurationMillis = time.Since(startedAt).Milliseconds()
 		result.Status = FailedStatus
@@ -216,6 +243,7 @@ func RunGuestGUISmoke(ctx context.Context, request GuestGUIRequest) (GuestGUIRes
 		Guest:        guest,
 		XWinInfoPath: xwininfoPath,
 		HostDisplay:  hostDisplay(request),
+		WindowMatch:  strings.TrimSpace(request.WindowMatch),
 	})
 	if runCtx.Err() == context.DeadlineExceeded {
 		result.DurationMillis = time.Since(startedAt).Milliseconds()
@@ -270,7 +298,10 @@ func baseGuestGUIResult(request GuestGUIRequest) GuestGUIResult {
 		BroadHostMountRequired:      false,
 		RawHostPathExposed:          false,
 		RawGuestGUIAppPathExposed:   false,
+		RawFileArgumentPathExposed:  false,
 		RawCommandExposed:           false,
+		FileArgumentCount:           len(request.FileArgumentPaths),
+		WindowMatch:                 strings.TrimSpace(request.WindowMatch),
 	}
 }
 
@@ -318,22 +349,53 @@ func guestGUIWinebootCommand(remoteDir string, display string) string {
 	}, " ")
 }
 
-func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string) string {
-	return strings.Join([]string{
+func guestGUIWineLaunchCommand(remoteDir string, display string, guiApp string, fileArguments []string) string {
+	command := []string{
 		"DISPLAY=" + shellQuote(display),
 		"WINEPREFIX=" + shellQuote(remoteDir+"/wineprefix"),
 		"WINEDEBUG=" + shellQuote(GuestGUIWineDebug),
 		"WINEDLLOVERRIDES=" + shellQuote(GuestGUIWineDLLOVERRIDES),
+		";",
+		"export DISPLAY WINEPREFIX WINEDEBUG WINEDLLOVERRIDES",
+		";",
+		"_xnix_file_args_winepath_translated=0",
+		";",
+		"set --",
+	}
+	for _, path := range fileArguments {
+		command = append(command,
+			";",
+			"_xnix_file_arg=$(winepath -w "+shellQuote(path)+" 2>/dev/null || true)",
+			";",
+			"if [ -n \"$_xnix_file_arg\" ]; then",
+			"_xnix_file_args_winepath_translated=$((_xnix_file_args_winepath_translated + 1))",
+			";",
+			"set -- \"$@\" \"$_xnix_file_arg\"",
+			";",
+			"else",
+			"set -- \"$@\" "+shellQuote(path),
+			";",
+			"fi",
+		)
+	}
+	command = append(command,
+		";",
+		"printf '%s\\n' \"$#\" >"+shellQuote(remoteDir+"/file_args_passed"),
+		";",
+		"printf '%s\\n' \"$_xnix_file_args_winepath_translated\" >"+shellQuote(remoteDir+"/file_args_winepath_translated"),
+		";",
 		"wine",
 		shellQuote(guiApp),
-		">" + shellQuote(remoteDir+"/stdout.txt"),
-		"2>" + shellQuote(remoteDir+"/stderr.txt"),
+		"\"$@\"",
+		">"+shellQuote(remoteDir+"/stdout.txt"),
+		"2>"+shellQuote(remoteDir+"/stderr.txt"),
 		"&",
 		"printf",
 		"'%s\\n'",
 		"\"$!\"",
-		">" + shellQuote(remoteDir+"/pid"),
-	}, " ")
+		">"+shellQuote(remoteDir+"/pid"),
+	)
+	return strings.Join(command, " ")
 }
 
 func guestGUIX11DriverCheckCommand() string {
@@ -351,6 +413,7 @@ type guestGUIObservationRequest struct {
 	Guest        string
 	XWinInfoPath string
 	HostDisplay  string
+	WindowMatch  string
 }
 
 func observeGuestGUIWindow(ctx context.Context, result *GuestGUIResult, request guestGUIObservationRequest) {
@@ -366,7 +429,13 @@ func observeGuestGUIWindow(ctx context.Context, result *GuestGUIResult, request 
 		result.XWinInfoInvoked = true
 		result.XWinInfoBytes = len(xwininfoText)
 		result.XWindowChildCount = countXWindowChildren(xwininfoText)
-		result.XWindowObserved = result.XWindowChildCount > 0
+		result.WindowMatchObserved = guestXWindowMatchObserved(xwininfoText, request.WindowMatch)
+		result.WindowEvidenceSummary = summarizeGuestXWindowEvidence(xwininfoText, request.WindowMatch)
+		if strings.TrimSpace(request.WindowMatch) == "" {
+			result.XWindowObserved = result.XWindowChildCount > 0
+		} else {
+			result.XWindowObserved = result.WindowMatchObserved
+		}
 		result.FailureReason = xwininfoStderr
 		if result.XWindowObserved || ctx.Err() != nil {
 			return
@@ -390,6 +459,84 @@ func observeGuestGUIWindow(ctx context.Context, result *GuestGUIResult, request 
 		case <-timer.C:
 		}
 	}
+}
+
+func validateGuestGUIFileArgumentPaths(paths []string) ([]string, error) {
+	validated := make([]string, 0, len(paths))
+	for _, path := range paths {
+		trimmed := strings.TrimSpace(path)
+		if trimmed == "" {
+			return nil, fmt.Errorf("guest GUI file argument path is required")
+		}
+		info, err := os.Stat(trimmed)
+		if err != nil {
+			return nil, fmt.Errorf("validate guest GUI file argument: %w", err)
+		}
+		if info.IsDir() {
+			return nil, fmt.Errorf("guest GUI file argument must be a file")
+		}
+		validated = append(validated, trimmed)
+	}
+	return validated, nil
+}
+
+func copyGuestGUIFileArguments(ctx context.Context, scpPath string, guestRequest GuestRequest, remoteDir string, guest string, paths []string) ([]string, error) {
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	if strings.TrimSpace(scpPath) == "" {
+		return nil, fmt.Errorf("guest scp transport unavailable")
+	}
+	remotePaths := make([]string, 0, len(paths))
+	for index, path := range paths {
+		remotePath := fmt.Sprintf("%s/file-%d-%s", remoteDir, index+1, filepath.Base(path))
+		if err := runGuestSCP(ctx, scpPath, guestRequest, path, guest+":"+remotePath); err != nil {
+			return nil, err
+		}
+		remotePaths = append(remotePaths, remotePath)
+	}
+	return remotePaths, nil
+}
+
+func readGuestIntFile(ctx context.Context, sshPath string, sshBase []string, guest string, path string) int {
+	text := strings.TrimSpace(readGuestFile(ctx, sshPath, sshBase, guest, path))
+	if text == "" {
+		return 0
+	}
+	var value int
+	if _, err := fmt.Sscanf(text, "%d", &value); err != nil {
+		return 0
+	}
+	return value
+}
+
+func guestXWindowMatchObserved(text string, match string) bool {
+	trimmed := strings.TrimSpace(match)
+	if trimmed == "" {
+		return false
+	}
+	return strings.Contains(strings.ToLower(text), strings.ToLower(trimmed))
+}
+
+func summarizeGuestXWindowEvidence(text string, match string) string {
+	lines := strings.Split(text, "\n")
+	trimmedMatch := strings.ToLower(strings.TrimSpace(match))
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" {
+			continue
+		}
+		if trimmedMatch != "" && strings.Contains(strings.ToLower(trimmedLine), trimmedMatch) {
+			return trimmedLine
+		}
+	}
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "0x") {
+			return trimmedLine
+		}
+	}
+	return ""
 }
 
 func runXWinInfo(ctx context.Context, xwininfoPath string, display string) (string, string, error) {

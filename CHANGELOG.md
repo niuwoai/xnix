@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc158] - 2026-07-26
+
+### Changed
+
+- Extended the q4 Wine/QEMU GUI smoke path so the Go Runtime can copy file arguments into the guest, translate them with `winepath -w`, pass them to a Windows GUI app, and require a matching X window title.
+- Added a remote Sample Notepad file-open smoke plan that creates a q4-hosted `sample-document.txt`, launches guest Wine Notepad with that file, and reports redacted file-argument and window-match evidence.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc158`.
+
 ## [0.2.640-rc157] - 2026-07-26
 
 ### Changed

@@ -601,8 +601,10 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	var xwininfoPath string
 	var guestDisplay string
 	var hostDisplay string
+	var windowMatch string
 	var timeoutText string
 	var waitText string
+	var fileArguments repeatedStringFlag
 	flags.StringVar(&appID, "app", "", "known Windows GUI app id")
 	flags.StringVar(&guiAppPath, "gui-app", winapp.DefaultGuestGUIApp, "Windows GUI app path inside the Wine guest")
 	flags.StringVar(&executablePath, "executable", "", "local Windows GUI .exe to copy into the guest before launch")
@@ -616,8 +618,10 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&xwininfoPath, "xwininfo", "", "explicit xwininfo path")
 	flags.StringVar(&guestDisplay, "guest-display", winapp.DefaultGuestGUIDisplay, "guest-visible X11 display")
 	flags.StringVar(&hostDisplay, "host-display", winapp.DefaultHostGUIDisplay, "host X11 display inspected by xwininfo")
+	flags.StringVar(&windowMatch, "window-match", "", "case-insensitive X window title/text required for GUI observation")
 	flags.StringVar(&timeoutText, "timeout", "90s", "guest GUI execution timeout")
 	flags.StringVar(&waitText, "wait", "10s", "GUI window observation wait")
+	flags.Var(&fileArguments, "file-argument", "local file copied into the guest and passed to the Windows GUI app; may be repeated")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -662,23 +666,25 @@ func runWindowsAppGuestWineGUISmoke(args []string, stdout io.Writer) error {
 	}
 
 	result, err := winapp.RunGuestGUISmoke(context.Background(), winapp.GuestGUIRequest{
-		ExecutablePath:  executablePath,
-		GUIAppPath:      guiAppPath,
-		KnownAppID:      knownApp.ID,
-		KnownAppName:    knownApp.DisplayName,
-		KnownAppVersion: knownApp.Version,
-		Host:            host,
-		Port:            parsedPort,
-		User:            user,
-		KeyPath:         keyPath,
-		RemoteDir:       remoteDir,
-		SSHPath:         sshPath,
-		SCPPath:         scpPath,
-		XWinInfoPath:    xwininfoPath,
-		GuestDisplay:    guestDisplay,
-		HostDisplay:     hostDisplay,
-		Timeout:         timeout,
-		Wait:            wait,
+		ExecutablePath:    executablePath,
+		GUIAppPath:        guiAppPath,
+		KnownAppID:        knownApp.ID,
+		KnownAppName:      knownApp.DisplayName,
+		KnownAppVersion:   knownApp.Version,
+		Host:              host,
+		Port:              parsedPort,
+		User:              user,
+		KeyPath:           keyPath,
+		RemoteDir:         remoteDir,
+		SSHPath:           sshPath,
+		SCPPath:           scpPath,
+		XWinInfoPath:      xwininfoPath,
+		GuestDisplay:      guestDisplay,
+		HostDisplay:       hostDisplay,
+		FileArgumentPaths: []string(fileArguments),
+		WindowMatch:       windowMatch,
+		Timeout:           timeout,
+		Wait:              wait,
 	})
 	if err != nil {
 		return err
