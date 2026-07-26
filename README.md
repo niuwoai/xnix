@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc168`.
+The project is currently at `v0.2.640-rc169`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc168`.
 
 ## Current Checkpoint
 
-v0.2.640-rc168 promotes the file-open entrypoint invocation proof from the q4 smoke summary into Runtime and KDE read models. `gui-smoke-evidence-preview` now exposes `file_open_entrypoint_requested` and `owner_file_open_entrypoint_invoked`, treats requested-only state as a pre-owner-call planning signal, and requires complete owner file-open proof before accepting invocation. `KnownAppSmokeEvidenceSummary` and KDE GUI cards carry `owner_file_open_entrypoint_invoked`, while KDE pages/actions expose entrypoint counts and action-level evidence. The q4 Sample Notepad run passed with Runtime, KDE page, and KDE action entrypoint evidence all consumed, while compile-heavy validation remains on q4 and the local macOS host stays limited to lightweight Ruby/layout checks.
+v0.2.640-rc169 makes the Go `xnix-compat-open` entrypoint easier for a Runtime-owned desktop session to execute without putting backend or receipt details into static KDE files. The command now accepts `XNIX_COMPAT_OPEN_*` environment defaults for launcher registry, cache root, guest boundary, state root, receipt ids, session id, guest SSH/display settings, window match, timeout, and GUI wait; explicit flags still override those defaults. The packaged Dolphin service menu remains the simple `xnix-compat-open %U` route, while Runtime owner/session infrastructure can inject execution context around it.
+
+The previous v0.2.640-rc168 checkpoint promoted the file-open entrypoint invocation proof from the q4 smoke summary into Runtime and KDE read models. `gui-smoke-evidence-preview` exposes `file_open_entrypoint_requested` and `owner_file_open_entrypoint_invoked`, treats requested-only state as a pre-owner-call planning signal, and requires complete owner file-open proof before accepting invocation. `KnownAppSmokeEvidenceSummary` and KDE GUI cards carry `owner_file_open_entrypoint_invoked`, while KDE pages/actions expose entrypoint counts and action-level evidence. The q4 Sample Notepad run passed with Runtime, KDE page, and KDE action entrypoint evidence all consumed, while compile-heavy validation remains on q4 and the local macOS host stays limited to lightweight Ruby/layout checks.
 
 The previous v0.2.640-rc167 checkpoint routed the real q4 owner-controlled file-open GUI smoke through the Go `xnix-compat-open` entrypoint before it reached `xnix-compat-launch`. The smoke can build `xnix-compat-open`, set it as the Runtime owner managed launcher, pass the real launcher through `XNIX_COMPAT_LAUNCH`, and provide the digest-verified recipe registry through `XNIX_COMPAT_OPEN_REGISTRY`. The q4 Sample Notepad file-open run passed with `file_open_entrypoint_requested=true`, `owner_file_open_entrypoint_invoked=true`, one copied file argument, Wine path translation, `sample-document.txt` window-match observation, Runtime/KDE evidence consumption, and closed unsafe host/container gates, proving the desktop-facing file-open command itself participated in the real QEMU/Wine GUI chain while owner receipts and state roots stayed inside the Runtime owner boundary.
 

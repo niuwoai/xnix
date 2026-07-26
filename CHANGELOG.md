@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc169] - 2026-07-26
+
+### Added
+
+- Added Runtime-owner environment defaults for `xnix-compat-open --execute` launcher registry, cache root, guest boundary, state root, receipt ids, session id, guest connection, display, window-match, timeout, and GUI wait options.
+- Added Go command tests proving a static `xnix-compat-open %U` style invocation can receive execution context from `XNIX_COMPAT_OPEN_*` environment values while explicit flags still override them.
+
+### Changed
+
+- Kept the Dolphin service menu free of backend, state-root, receipt, and guest connection details while making the Go file-open entrypoint more suitable for controlled desktop sessions.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc169`.
+
 ## [0.2.640-rc168] - 2026-07-26
 
 ### Added

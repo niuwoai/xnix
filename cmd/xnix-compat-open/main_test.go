@@ -183,6 +183,121 @@ func TestCompatOpenExecuteAcceptsOwnerFileArgumentAlias(t *testing.T) {
 	}
 }
 
+func TestCompatOpenExecuteUsesRuntimeOwnerEnvironmentDefaults(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	documentPath := filepath.Join(t.TempDir(), "owner-env-report.txt")
+	if err := os.WriteFile(documentPath, []byte("owner environment file-open execution fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	launcherLog := filepath.Join(t.TempDir(), "launcher-argv.log")
+	launcherPath := writeFakeCompatOpenLauncher(t, launcherLog)
+	t.Setenv("XNIX_COMPAT_OPEN_REGISTRY", registryPath)
+	t.Setenv("XNIX_COMPAT_OPEN_EXECUTE", "1")
+	t.Setenv("XNIX_COMPAT_LAUNCH", launcherPath)
+	t.Setenv("XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY", "/runtime/recipes/registry.json")
+	t.Setenv("XNIX_COMPAT_OPEN_CACHE_ROOT", "/runtime/cache")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_BOUNDARY", "managed-known-app-guest-smoke")
+	t.Setenv("XNIX_COMPAT_OPEN_STATE_ROOT", "/runtime/state")
+	t.Setenv("XNIX_COMPAT_OPEN_RECEIPT_ID", "known-app-launch-receipt-org-example-notes")
+	t.Setenv("XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID", "known-app-session-gated-launch-review-receipt-org-example-notes")
+	t.Setenv("XNIX_COMPAT_OPEN_SESSION_ID", "controlled-execution-session-org-example-notes")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_HOST", "127.0.0.1")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_PORT", "40229")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_USER", "root")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_KEY", "/runtime/keys/qemu")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR", "/tmp/xnix-owner-open")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_SSH", "ssh")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_SCP", "scp")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_XWININFO", "xwininfo")
+	t.Setenv("XNIX_COMPAT_OPEN_GUEST_DISPLAY", "10.0.2.2:106")
+	t.Setenv("XNIX_COMPAT_OPEN_HOST_DISPLAY", ":106")
+	t.Setenv("XNIX_COMPAT_OPEN_WINDOW_MATCH", "owner-env-report.txt")
+	t.Setenv("XNIX_COMPAT_OPEN_TIMEOUT", "7s")
+	t.Setenv("XNIX_COMPAT_OPEN_GUI_WAIT", "3s")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--app", "org.example.notes",
+		"file://" + filepath.ToSlash(documentPath),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	if !strings.Contains(output.String(), `"schema_version":"fake.launcher.v1"`) {
+		t.Fatalf("unexpected managed launcher output: %s", output.String())
+	}
+	launcherArgs, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	argvText := string(launcherArgs)
+	for _, token := range []string{
+		"--app\norg.example.notes\n",
+		"--registry\n/runtime/recipes/registry.json\n",
+		"--cache-root\n/runtime/cache\n",
+		"--guest-boundary\nmanaged-known-app-guest-smoke\n",
+		"--state-root\n/runtime/state\n",
+		"--receipt-id\nknown-app-launch-receipt-org-example-notes\n",
+		"--review-receipt-id\nknown-app-session-gated-launch-review-receipt-org-example-notes\n",
+		"--session-id\ncontrolled-execution-session-org-example-notes\n",
+		"--host\n127.0.0.1\n",
+		"--port\n40229\n",
+		"--user\nroot\n",
+		"--key\n/runtime/keys/qemu\n",
+		"--remote-dir\n/tmp/xnix-owner-open\n",
+		"--ssh\nssh\n",
+		"--scp\nscp\n",
+		"--xwininfo\nxwininfo\n",
+		"--guest-display\n10.0.2.2:106\n",
+		"--host-display\n:106\n",
+		"--window-match\nowner-env-report.txt\n",
+		"--timeout\n7s\n",
+		"--gui-wait\n3s\n",
+		"--file-argument\n" + documentPath + "\n",
+	} {
+		if !strings.Contains(argvText, token) {
+			t.Fatalf("managed launcher argv missing %q in %s", token, argvText)
+		}
+	}
+}
+
+func TestCompatOpenExecuteFlagsOverrideRuntimeOwnerEnvironmentDefaults(t *testing.T) {
+	registryPath := writeCompatOpenRegistry(t)
+	documentPath := filepath.Join(t.TempDir(), "owner-env-override.txt")
+	if err := os.WriteFile(documentPath, []byte("owner environment override fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+	launcherLog := filepath.Join(t.TempDir(), "launcher-argv.log")
+	launcherPath := writeFakeCompatOpenLauncher(t, launcherLog)
+	t.Setenv("XNIX_COMPAT_OPEN_REGISTRY", registryPath)
+	t.Setenv("XNIX_COMPAT_OPEN_EXECUTE", "1")
+	t.Setenv("XNIX_COMPAT_LAUNCH", launcherPath)
+	t.Setenv("XNIX_COMPAT_OPEN_WINDOW_MATCH", "environment-window")
+	t.Setenv("XNIX_COMPAT_OPEN_TIMEOUT", "7s")
+
+	var output bytes.Buffer
+	err := run([]string{
+		"--app", "org.example.notes",
+		"--window-match", "flag-window",
+		"--timeout", "9s",
+		"file://" + filepath.ToSlash(documentPath),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	launcherArgs, err := os.ReadFile(launcherLog)
+	if err != nil {
+		t.Fatalf("ReadFile launcher log returned error: %v", err)
+	}
+	argvText := string(launcherArgs)
+	if !strings.Contains(argvText, "--window-match\nflag-window\n") ||
+		!strings.Contains(argvText, "--timeout\n9s\n") ||
+		strings.Contains(argvText, "environment-window") ||
+		strings.Contains(argvText, "--timeout\n7s\n") {
+		t.Fatalf("flags did not override environment defaults: %s", argvText)
+	}
+}
+
 func TestCompatOpenExecuteRejectsRemoteFileURIHosts(t *testing.T) {
 	registryPath := writeCompatOpenRegistry(t)
 	launcherPath := writeFakeCompatOpenLauncher(t, filepath.Join(t.TempDir(), "launcher-argv.log"))

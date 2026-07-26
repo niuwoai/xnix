@@ -21,6 +21,29 @@ const launcherBinEnv = "XNIX_COMPAT_LAUNCH"
 const registryPathEnv = "XNIX_COMPAT_OPEN_REGISTRY"
 const executeEnv = "XNIX_COMPAT_OPEN_EXECUTE"
 
+const (
+	launcherRegistryEnv = "XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY"
+	cacheRootEnv        = "XNIX_COMPAT_OPEN_CACHE_ROOT"
+	guestBoundaryEnv    = "XNIX_COMPAT_OPEN_GUEST_BOUNDARY"
+	stateRootEnv        = "XNIX_COMPAT_OPEN_STATE_ROOT"
+	receiptIDEnv        = "XNIX_COMPAT_OPEN_RECEIPT_ID"
+	reviewReceiptIDEnv  = "XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID"
+	sessionIDEnv        = "XNIX_COMPAT_OPEN_SESSION_ID"
+	hostEnv             = "XNIX_COMPAT_OPEN_GUEST_HOST"
+	portEnv             = "XNIX_COMPAT_OPEN_GUEST_PORT"
+	userEnv             = "XNIX_COMPAT_OPEN_GUEST_USER"
+	keyPathEnv          = "XNIX_COMPAT_OPEN_GUEST_KEY"
+	remoteDirEnv        = "XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR"
+	sshPathEnv          = "XNIX_COMPAT_OPEN_GUEST_SSH"
+	scpPathEnv          = "XNIX_COMPAT_OPEN_GUEST_SCP"
+	xwininfoPathEnv     = "XNIX_COMPAT_OPEN_GUEST_XWININFO"
+	guestDisplayEnv     = "XNIX_COMPAT_OPEN_GUEST_DISPLAY"
+	hostDisplayEnv      = "XNIX_COMPAT_OPEN_HOST_DISPLAY"
+	windowMatchEnv      = "XNIX_COMPAT_OPEN_WINDOW_MATCH"
+	timeoutEnv          = "XNIX_COMPAT_OPEN_TIMEOUT"
+	guiWaitEnv          = "XNIX_COMPAT_OPEN_GUI_WAIT"
+)
+
 type launchOptions struct {
 	Execute                bool
 	LauncherBin            string
@@ -65,8 +88,28 @@ func run(args []string, stdout io.Writer) error {
 	var recipeRoot string
 	var activationRoot string
 	launch := launchOptions{
-		Execute:     os.Getenv(executeEnv) == "1",
-		LauncherBin: envOrDefault(launcherBinEnv, "xnix-compat-launch"),
+		Execute:          os.Getenv(executeEnv) == "1",
+		LauncherBin:      envOrDefault(launcherBinEnv, "xnix-compat-launch"),
+		LauncherRegistry: envOrDefault(launcherRegistryEnv, ""),
+		CacheRoot:        envOrDefault(cacheRootEnv, ""),
+		GuestBoundary:    envOrDefault(guestBoundaryEnv, ""),
+		StateRoot:        envOrDefault(stateRootEnv, ""),
+		ReceiptID:        envOrDefault(receiptIDEnv, ""),
+		ReviewReceiptID:  envOrDefault(reviewReceiptIDEnv, ""),
+		SessionID:        envOrDefault(sessionIDEnv, ""),
+		Host:             envOrDefault(hostEnv, ""),
+		Port:             envOrDefault(portEnv, ""),
+		User:             envOrDefault(userEnv, ""),
+		KeyPath:          envOrDefault(keyPathEnv, ""),
+		RemoteDir:        envOrDefault(remoteDirEnv, ""),
+		SSHPath:          envOrDefault(sshPathEnv, ""),
+		SCPPath:          envOrDefault(scpPathEnv, ""),
+		XWinInfoPath:     envOrDefault(xwininfoPathEnv, ""),
+		GuestDisplay:     envOrDefault(guestDisplayEnv, ""),
+		HostDisplay:      envOrDefault(hostDisplayEnv, ""),
+		WindowMatch:      envOrDefault(windowMatchEnv, ""),
+		Timeout:          envOrDefault(timeoutEnv, ""),
+		GUIWait:          envOrDefault(guiWaitEnv, ""),
 	}
 	flags.StringVar(&applicationID, "app", "", "application id to use for the file-open preview")
 	flags.StringVar(&registryPath, "registry", envOrDefault(registryPathEnv, ""), "path to an Xnix recipe registry JSON file")
@@ -75,26 +118,26 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&activationRoot, "activation-root", "", "read staged desktop activation receipt evidence from this explicit root")
 	flags.BoolVar(&launch.Execute, "execute", launch.Execute, "delegate the selected file-open request to the managed Runtime launcher")
 	flags.StringVar(&launch.LauncherBin, "launcher-bin", launch.LauncherBin, "managed Runtime launcher command")
-	flags.StringVar(&launch.LauncherRegistry, "launcher-registry", "", "optional recipe registry path passed through to the managed launcher")
-	flags.StringVar(&launch.CacheRoot, "cache-root", "", "managed known Windows app cache root passed to the launcher")
-	flags.StringVar(&launch.GuestBoundary, "guest-boundary", "", "controlled managed guest boundary passed to the launcher")
-	flags.StringVar(&launch.StateRoot, "state-root", "", "controlled Runtime state root passed to the launcher")
-	flags.StringVar(&launch.ReceiptID, "receipt-id", "", "opaque launch authorization receipt id passed to the launcher")
-	flags.StringVar(&launch.ReviewReceiptID, "review-receipt-id", "", "opaque session-gated review receipt id passed to the launcher")
-	flags.StringVar(&launch.SessionID, "session-id", "", "optional opaque controlled execution session id passed to the launcher")
-	flags.StringVar(&launch.Host, "host", "", "guest SSH host passed to the launcher")
-	flags.StringVar(&launch.Port, "port", "", "guest SSH port passed to the launcher")
-	flags.StringVar(&launch.User, "user", "", "guest SSH user passed to the launcher")
-	flags.StringVar(&launch.KeyPath, "key", "", "guest SSH private key path passed to the launcher")
-	flags.StringVar(&launch.RemoteDir, "remote-dir", "", "guest remote work directory passed to the launcher")
-	flags.StringVar(&launch.SSHPath, "ssh", "", "explicit ssh client passed to the launcher")
-	flags.StringVar(&launch.SCPPath, "scp", "", "explicit scp client passed to the launcher")
-	flags.StringVar(&launch.XWinInfoPath, "xwininfo", "", "explicit xwininfo client passed to the launcher")
-	flags.StringVar(&launch.GuestDisplay, "guest-display", "", "guest DISPLAY value passed to the launcher")
-	flags.StringVar(&launch.HostDisplay, "host-display", "", "host DISPLAY value passed to the launcher")
-	flags.StringVar(&launch.WindowMatch, "window-match", "", "case-insensitive X window title/text required by the launcher")
-	flags.StringVar(&launch.Timeout, "timeout", "", "launcher execution timeout")
-	flags.StringVar(&launch.GUIWait, "gui-wait", "", "launcher GUI observation wait")
+	flags.StringVar(&launch.LauncherRegistry, "launcher-registry", launch.LauncherRegistry, "optional recipe registry path passed through to the managed launcher")
+	flags.StringVar(&launch.CacheRoot, "cache-root", launch.CacheRoot, "managed known Windows app cache root passed to the launcher")
+	flags.StringVar(&launch.GuestBoundary, "guest-boundary", launch.GuestBoundary, "controlled managed guest boundary passed to the launcher")
+	flags.StringVar(&launch.StateRoot, "state-root", launch.StateRoot, "controlled Runtime state root passed to the launcher")
+	flags.StringVar(&launch.ReceiptID, "receipt-id", launch.ReceiptID, "opaque launch authorization receipt id passed to the launcher")
+	flags.StringVar(&launch.ReviewReceiptID, "review-receipt-id", launch.ReviewReceiptID, "opaque session-gated review receipt id passed to the launcher")
+	flags.StringVar(&launch.SessionID, "session-id", launch.SessionID, "optional opaque controlled execution session id passed to the launcher")
+	flags.StringVar(&launch.Host, "host", launch.Host, "guest SSH host passed to the launcher")
+	flags.StringVar(&launch.Port, "port", launch.Port, "guest SSH port passed to the launcher")
+	flags.StringVar(&launch.User, "user", launch.User, "guest SSH user passed to the launcher")
+	flags.StringVar(&launch.KeyPath, "key", launch.KeyPath, "guest SSH private key path passed to the launcher")
+	flags.StringVar(&launch.RemoteDir, "remote-dir", launch.RemoteDir, "guest remote work directory passed to the launcher")
+	flags.StringVar(&launch.SSHPath, "ssh", launch.SSHPath, "explicit ssh client passed to the launcher")
+	flags.StringVar(&launch.SCPPath, "scp", launch.SCPPath, "explicit scp client passed to the launcher")
+	flags.StringVar(&launch.XWinInfoPath, "xwininfo", launch.XWinInfoPath, "explicit xwininfo client passed to the launcher")
+	flags.StringVar(&launch.GuestDisplay, "guest-display", launch.GuestDisplay, "guest DISPLAY value passed to the launcher")
+	flags.StringVar(&launch.HostDisplay, "host-display", launch.HostDisplay, "host DISPLAY value passed to the launcher")
+	flags.StringVar(&launch.WindowMatch, "window-match", launch.WindowMatch, "case-insensitive X window title/text required by the launcher")
+	flags.StringVar(&launch.Timeout, "timeout", launch.Timeout, "launcher execution timeout")
+	flags.StringVar(&launch.GUIWait, "gui-wait", launch.GUIWait, "launcher GUI observation wait")
 	flags.Var(&launch.FileArguments, "file-argument", "local file path delegated by the Runtime owner and passed to the managed launcher; may be repeated")
 	if err := flags.Parse(args); err != nil {
 		return err
