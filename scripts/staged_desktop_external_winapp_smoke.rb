@@ -31,6 +31,7 @@ CONTAINER_NOTEPAD_CANDIDATES = [
 options = {
   run_root: DEFAULT_RUN_ROOT.join(RUN_ID).to_s,
   report_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-smoke.json").to_s,
+  markdown_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-smoke.md").to_s,
   delegated_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-delegated-launcher.json").to_s,
   runtime_packet_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-real-gui-packet.json").to_s,
   kde_page_output: DEFAULT_RUN_ROOT.join("staged-desktop-external-winapp-kde-page.json").to_s,
@@ -44,6 +45,7 @@ OptionParser.new do |parser|
   parser.banner = "Usage: ruby scripts/staged_desktop_external_winapp_smoke.rb [options]"
   parser.on("--run-root PATH", "Temporary run root") { |value| options[:run_root] = value }
   parser.on("--report-output PATH", "JSON packet output path") { |value| options[:report_output] = value }
+  parser.on("--markdown-output PATH", "Markdown packet output path") { |value| options[:markdown_output] = value }
   parser.on("--delegated-output PATH", "Delegated launcher JSON output path") { |value| options[:delegated_output] = value }
   parser.on("--runtime-packet-output PATH", "Go Runtime real Windows GUI packet output path") { |value| options[:runtime_packet_output] = value }
   parser.on("--kde-page-output PATH", "KDE center page JSON output path") { |value| options[:kde_page_output] = value }
@@ -145,8 +147,65 @@ def desktop_exec_from(path)
   line.delete_prefix("Exec=").strip
 end
 
+def write_skip_report(report_output, markdown_output, reason)
+  packet = {
+    "schema_version" => SCHEMA_VERSION,
+    "status" => "skipped",
+    "app_id" => APP_ID,
+    "display_name" => APP_NAME,
+    "version" => VERSION,
+    "skip_reason" => reason,
+    "report_path" => report_output.to_s,
+    "markdown_path" => markdown_output.to_s
+  }
+  File.write(report_output, JSON.pretty_generate(packet) + "\n")
+  File.write(
+    markdown_output,
+    [
+      "# Staged Desktop External Windows App Smoke",
+      "",
+      "- Status: skipped",
+      "- App: #{APP_NAME} (`#{APP_ID}`)",
+      "- Version: #{VERSION}",
+      "- Skip reason: #{reason}",
+      ""
+    ].join("\n")
+  )
+  puts "SKIP: staged desktop external Windows app smoke (#{reason})"
+end
+
+def write_markdown_report(markdown_output, packet)
+  File.write(
+    markdown_output,
+    [
+      "# Staged Desktop External Windows App Smoke",
+      "",
+      "- Status: #{packet.fetch("status")}",
+      "- App: #{packet.fetch("display_name")} (`#{packet.fetch("app_id")}`)",
+      "- Version: #{packet.fetch("version")}",
+      "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
+      "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
+      "- External app handle consumed: #{packet.fetch("external_app_handle_consumed")}",
+      "- Imported artifact digest verified: #{packet.fetch("imported_artifact_digest_verified")}",
+      "- X window observed: #{packet.fetch("window_observed")}",
+      "- Container network mode: #{packet.fetch("container_network_mode")}",
+      "- Container host mount count: #{packet.fetch("container_host_mount_count")}",
+      "- Docker socket mounted: #{packet.fetch("docker_socket_mounted")}",
+      "- Broad host mount required: #{packet.fetch("broad_host_mount_required")}",
+      "- Host root modified: #{packet.fetch("host_root_modified")}",
+      "- Runtime packet consumed report: #{packet.fetch("runtime_packet_consumed_report")}",
+      "- KDE GUI evidence count: #{packet.fetch("kde_page_known_app_gui_evidence_count")}",
+      "- Delegated launcher payload: #{packet.fetch("delegated_launcher_payload_path")}",
+      "- Runtime packet: #{packet.fetch("runtime_packet_path")}",
+      "- KDE page: #{packet.fetch("kde_page_path")}",
+      ""
+    ].join("\n")
+  )
+end
+
 run_root = absolute_path(options.fetch(:run_root))
 report_output = absolute_path(options.fetch(:report_output))
+markdown_output = absolute_path(options.fetch(:markdown_output))
 delegated_output = absolute_path(options.fetch(:delegated_output))
 runtime_packet_output = absolute_path(options.fetch(:runtime_packet_output))
 kde_page_output = absolute_path(options.fetch(:kde_page_output))
@@ -171,24 +230,25 @@ FileUtils.mkdir_p(GO_CACHE_ROOT.join("build"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("mod"))
 FileUtils.mkdir_p(GO_CACHE_ROOT.join("tmp"))
 FileUtils.mkdir_p(report_output.dirname)
+FileUtils.mkdir_p(markdown_output.dirname)
 FileUtils.mkdir_p(delegated_output.dirname)
 FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
 if docker_bin.nil?
-  puts "SKIP: staged desktop external Windows app smoke (Docker runner #{options.fetch(:docker)} is unavailable)"
+  write_skip_report(report_output, markdown_output, "Docker runner #{options.fetch(:docker)} is unavailable")
   exit 0
 end
 
 unless docker_image_available?(docker_bin, options.fetch(:image))
-  puts "SKIP: staged desktop external Windows app smoke (Docker image #{options.fetch(:image)} is unavailable)"
+  write_skip_report(report_output, markdown_output, "Docker image #{options.fetch(:image)} is unavailable")
   exit 0
 end
 
 if options.fetch(:executable).to_s.strip.empty?
   notepad_path = container_notepad_path(docker_bin, options.fetch(:image))
   if notepad_path.nil?
-    puts "SKIP: staged desktop external Windows app smoke (Wine Notepad was not found in #{options.fetch(:image)})"
+    write_skip_report(report_output, markdown_output, "Wine Notepad was not found in #{options.fetch(:image)}")
     exit 0
   end
   copy_container_notepad(docker_bin, options.fetch(:image), notepad_path, executable_path)
@@ -347,10 +407,12 @@ packet = {
   "delegated_launcher_payload_path" => delegated_output.to_s,
   "runtime_packet_path" => runtime_packet_output.to_s,
   "kde_page_path" => kde_page_output.to_s,
-  "report_path" => report_output.to_s
+  "report_path" => report_output.to_s,
+  "markdown_path" => markdown_output.to_s
 }
 
 File.write(report_output, JSON.pretty_generate(packet) + "\n")
+write_markdown_report(markdown_output, packet)
 
 puts "PASS: staged desktop external Windows app smoke"
 puts JSON.pretty_generate(packet)

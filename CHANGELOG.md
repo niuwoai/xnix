@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc139] - 2026-07-26
+
+### Changed
+
+- Changed `ruby scripts/container.rb staged-external-winapp-desktop-smoke` to dispatch the staged external Windows app desktop smoke host-side after Docker/Colima checks, avoiding a misleading inner tools-container path that cannot safely control Docker without a socket mount.
+- Changed `scripts/staged_desktop_external_winapp_smoke.rb` to write both JSON and Markdown reports for passed and skipped runs.
+
 ## [0.2.640-rc138] - 2026-07-26
 
 ### Added

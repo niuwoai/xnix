@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc138`.
+The project is currently at `v0.2.640-rc139`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc138`.
 
 ## Current Checkpoint
 
-v0.2.640-rc138 adds a maintained staged desktop smoke for imported external Windows GUI apps. `scripts/staged_desktop_external_winapp_smoke.rb` extracts a real Wine Notepad executable from the local smoke image when no executable is supplied, imports it into the Runtime state root, stages a KDE `.desktop` entry with `Exec=xnix-compat-launch --external-app-handle APPID %U`, runs that staged launcher through Wine/Xvfb, and writes Runtime packet plus KDE page evidence while preserving network isolation, zero host mounts, no Docker socket mount, and no host-root mutation.
+v0.2.640-rc139 makes the staged desktop external Windows app smoke a complete evidence-producing host-side entry. `scripts/staged_desktop_external_winapp_smoke.rb` now writes both JSON and Markdown reports for passed or skipped runs, while `ruby scripts/container.rb staged-external-winapp-desktop-smoke` deliberately dispatches the smoke from the host-side Colima Docker context so it can control the isolated Wine/Xvfb test container without mounting a Docker socket into a project tools container.
+
+The previous v0.2.640-rc138 checkpoint added a maintained staged desktop smoke for imported external Windows GUI apps. `scripts/staged_desktop_external_winapp_smoke.rb` extracts a real Wine Notepad executable from the local smoke image when no executable is supplied, imports it into the Runtime state root, stages a KDE `.desktop` entry with `Exec=xnix-compat-launch --external-app-handle APPID %U`, runs that staged launcher through Wine/Xvfb, and writes Runtime packet plus KDE page evidence while preserving network isolation, zero host mounts, no Docker socket mount, and no host-root mutation.
 
 The previous v0.2.640-rc137 checkpoint made imported external Windows GUI apps desktop-launchable through a KDE-safe handle entry. `desktop-entry-preview --external-app-import-record RECORD.json` and `desktop-activation-stage --external-app-import-record RECORD.json` now render/stage `Exec=xnix-compat-launch --external-app-handle APPID %U`, while `xnix-compat-launch` can resolve the handle through Runtime state-root defaults or `XNIX_EXTERNAL_APP_STATE_ROOT` without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details in the desktop file.
 

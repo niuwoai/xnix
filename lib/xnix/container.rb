@@ -94,7 +94,7 @@ module Xnix
     end
 
     def staged_external_winapp_desktop_smoke_command
-      tools_cache_run_command(["ruby", "scripts/staged_desktop_external_winapp_smoke.rb"])
+      ["ruby", "scripts/staged_desktop_external_winapp_smoke.rb", "--docker", @docker_bin]
     end
 
     def runtime_status_owner_service_session_bus_smoke_command

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc138
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc139
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc139 checkpoint candidate hardens the staged imported-app desktop smoke as an operator-usable evidence path. The smoke now writes JSON and Markdown reports even for skipped runs, and the `scripts/container.rb staged-external-winapp-desktop-smoke` convenience entry intentionally runs host-side after Colima context checks so it can control the real isolated Wine/Xvfb Docker test container without mounting `/var/run/docker.sock` into an inner tools container. This keeps the evidence path honest: the desktop entry under test still contains only the external app handle, while the host-side test harness owns Docker orchestration.
 
 The v0.2.640-rc138 checkpoint candidate makes the imported-app desktop path reproducible as a real smoke. `scripts/staged_desktop_external_winapp_smoke.rb` obtains a real Wine Notepad `.exe` from the local `xnix-wine-smoke:local` image unless an operator supplies another executable, records it as a Runtime-managed external app, stages the KDE handle-based `.desktop` entry and managed launcher into a restricted root, invokes that staged launcher with only `--external-app-handle`, and verifies the resulting Wine/Xvfb window. The smoke persists the delegated Runtime run, real GUI evidence packet, and KDE page evidence while proving network mode `none`, zero host mounts, no Docker socket mount, no broad host mount, and no host-root mutation.
 
