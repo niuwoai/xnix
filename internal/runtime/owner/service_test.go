@@ -305,6 +305,98 @@ func TestServiceCallDispatchesShowRuntimeControlledLaunchFileArgumentThroughOwne
 	}
 }
 
+func TestServiceCallDispatchesShowRuntimeControlledLaunchFileOpenEntrypointFromOwnerEnv(t *testing.T) {
+	stateRoot := t.TempDir()
+	sessionID := writeOwnerRuntimeStatusLaunchExecutionFixture(t, stateRoot)
+	launchReceiptID := appidentity.KnownAppLaunchAuthorizationReceiptID("7zr", "26.02")
+	reviewReceiptID := appidentity.KnownAppSessionGatedLaunchReviewReceiptID("7zr", "26.02", sessionID)
+	evidenceRecord := recordOwnerRuntimeStatusLaunchEvidenceFixture(t, stateRoot)
+	fakeLauncher, fakeArgsPath, fakeEnvPath := writeOwnerFakeRuntimeStatusManagedLauncherWithNamePayloadAndEnvCapture(t, "xnix-compat-open", "{\"request_type\":\"windows-known-app-dispatch-smoke\",\"evidence_source\":\"wine-guest-gui-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"file_argument_count\":1,\"file_argument_copied_count\":1,\"file_arguments_passed\":true,\"file_argument_winepath_translated\":true,\"file_argument_winepath_translated_count\":1,\"raw_file_argument_path_exposed\":false,\"window_match\":\"sample-document.txt\",\"window_match_observed\":true,\"window_evidence_summary\":\"sample-document.txt - Notepad\",\"session_gated_controlled_dispatch_consumed\":true,\"session_gated_controlled_dispatch_state\":\"created-after-session-gated-review\",\"session_gated_review_receipt_id\":\"known-app-session-gated-launch-review-7zr-26.02-known-app-controlled-execution-session-7zr-26.02\",\"launch_authorization_receipt_id\":\"known-app-launch-authorization-7zr-26.02\",\"controlled_execution_session_consumed\":true,\"controlled_execution_session_id\":\"known-app-controlled-execution-session-7zr-26.02\",\"controlled_session_digest_verified\":true,\"controlled_session_relative_path\":\"execution-ledger/sessions/known-app-controlled-execution-session-7zr-26.02.json\",\"runtime_owner_consumable_session\":true,\"kde_read_model_consumable_session\":true,\"controlled_session_live_state_observed\":true,\"controlled_session_registered\":true,\"controlled_session_window_observed\":true,\"controlled_session_host_root_modified\":false,\"controlled_session_backend_process_start\":false,\"host_root_modified\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}")
+	fileArgumentPath := "/tmp/xnix-owner-controlled-input/sample-document.txt"
+	cacheRoot := t.TempDir()
+	t.Setenv("XNIX_RUNTIME_OWNER_STATE_ROOT", stateRoot)
+	t.Setenv("XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT", cacheRoot)
+	t.Setenv("XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER", fakeLauncher)
+	t.Setenv("XNIX_RUNTIME_OWNER_TIMEOUT", "5s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_TIMEOUT", "1s")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_HOST", "127.0.0.1")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUEST_PORT", "2222")
+	t.Setenv("XNIX_RUNTIME_OWNER_GUI_FILE_ARGUMENTS_JSON", `["`+fileArgumentPath+`"]`)
+	t.Setenv("XNIX_RUNTIME_OWNER_WINDOW_MATCH", "sample-document.txt")
+	t.Setenv("XNIX_COMPAT_OPEN_STATE_ROOT", "stale-state-root")
+	t.Setenv("XNIX_COMPAT_OPEN_CACHE_ROOT", "stale-cache-root")
+	t.Setenv("XNIX_COMPAT_OPEN_RECEIPT_ID", "stale-receipt-id")
+	t.Setenv("XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID", "stale-review-receipt-id")
+	t.Setenv("XNIX_COMPAT_OPEN_SESSION_ID", "stale-session-id")
+
+	service, err := NewService(projectRoot(t), ModeSmokeOwner)
+	if err != nil {
+		t.Fatalf("NewService returned error: %v", err)
+	}
+	call, err := service.Call("ShowRuntimeControlledLaunch", []string{"--evidence-relative-path", evidenceRecord.EvidenceRelativePath})
+	if err != nil {
+		t.Fatalf("Call returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(call.Payload, &payload); err != nil {
+		t.Fatalf("payload unmarshal returned error: %v", err)
+	}
+	if payload["managed_launcher_name"] != "xnix-compat-open" ||
+		payload["delegated_evidence_source"] != "wine-guest-gui-smoke" ||
+		payload["delegated_file_argument_count"] != float64(1) ||
+		payload["delegated_file_arguments_passed"] != true ||
+		payload["delegated_controlled_execution_session_id"] != sessionID ||
+		payload["delegated_raw_file_argument_path_exposed"] != false {
+		t.Fatalf("unexpected file-open entrypoint owner payload: %#v", payload)
+	}
+	argsData, err := os.ReadFile(fakeArgsPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher args returned error: %v", err)
+	}
+	argsText := string(argsData)
+	for _, token := range []string{"--app\n7zr", "--file-argument\n" + fileArgumentPath} {
+		if !strings.Contains(argsText, token) {
+			t.Fatalf("file-open fake launcher args missing %q: %s", token, argsText)
+		}
+	}
+	for _, forbidden := range []string{"--cache-root", "--guest-boundary", "--state-root", "--receipt-id", "--review-receipt-id", "--session-id", "--host", "--port", "--window-match", "--timeout"} {
+		if strings.Contains(argsText, forbidden) {
+			t.Fatalf("file-open fake launcher args unexpectedly included %q: %s", forbidden, argsText)
+		}
+	}
+	envData, err := os.ReadFile(fakeEnvPath)
+	if err != nil {
+		t.Fatalf("ReadFile fake launcher env returned error: %v", err)
+	}
+	envText := string(envData)
+	for _, token := range []string{
+		"XNIX_COMPAT_OPEN_EXECUTE=1",
+		"XNIX_COMPAT_OPEN_STATE_ROOT=" + stateRoot,
+		"XNIX_COMPAT_OPEN_CACHE_ROOT=" + cacheRoot,
+		"XNIX_COMPAT_OPEN_GUEST_BOUNDARY=managed-known-app-guest-smoke",
+		"XNIX_COMPAT_OPEN_RECEIPT_ID=" + launchReceiptID,
+		"XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID=" + reviewReceiptID,
+		"XNIX_COMPAT_OPEN_SESSION_ID=" + sessionID,
+		"XNIX_COMPAT_OPEN_GUEST_HOST=127.0.0.1",
+		"XNIX_COMPAT_OPEN_GUEST_PORT=2222",
+		"XNIX_COMPAT_OPEN_WINDOW_MATCH=sample-document.txt",
+		"XNIX_COMPAT_OPEN_TIMEOUT=1s",
+	} {
+		if !strings.Contains(envText, token) {
+			t.Fatalf("file-open fake launcher env missing %q: %s", token, envText)
+		}
+	}
+	for _, stale := range []string{"stale-state-root", "stale-cache-root", "stale-receipt-id", "stale-review-receipt-id", "stale-session-id"} {
+		if strings.Contains(envText, stale) {
+			t.Fatalf("file-open fake launcher env retained stale value %q: %s", stale, envText)
+		}
+	}
+	if strings.Contains(string(call.Payload), fileArgumentPath) {
+		t.Fatalf("Runtime owner file-open payload exposed raw file argument path: %s", string(call.Payload))
+	}
+}
+
 func TestServiceCallServesOwnerLocalRestrictedOwnerSmokeReceiptLookup(t *testing.T) {
 	service, err := NewService(projectRoot(t), ModeSmokeOwner)
 	if err != nil {
@@ -745,14 +837,25 @@ func writeOwnerFakeRuntimeStatusManagedLauncher(t *testing.T) (string, string) {
 }
 
 func writeOwnerFakeRuntimeStatusManagedLauncherWithPayload(t *testing.T, payload string) (string, string) {
+	return writeOwnerFakeRuntimeStatusManagedLauncherWithNameAndPayload(t, "fake-xnix-compat-launch", payload)
+}
+
+func writeOwnerFakeRuntimeStatusManagedLauncherWithNameAndPayload(t *testing.T, launcherName string, payload string) (string, string) {
+	launcherPath, argsPath, _ := writeOwnerFakeRuntimeStatusManagedLauncherWithNamePayloadAndEnvCapture(t, launcherName, payload)
+	return launcherPath, argsPath
+}
+
+func writeOwnerFakeRuntimeStatusManagedLauncherWithNamePayloadAndEnvCapture(t *testing.T, launcherName string, payload string) (string, string, string) {
 	t.Helper()
 	dir := t.TempDir()
-	launcherPath := filepath.Join(dir, "fake-xnix-compat-launch")
+	launcherPath := filepath.Join(dir, launcherName)
 	argsPath := filepath.Join(dir, "launcher-args.txt")
+	envPath := filepath.Join(dir, "launcher-env.txt")
 	t.Setenv("XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE", argsPath)
-	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE\"\nprintf '%s\n' '" + payload + "'\n"
+	t.Setenv("XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE", envPath)
+	script := "#!/bin/sh\nprintf '%s\n' \"$@\" > \"$XNIX_OWNER_FAKE_LAUNCHER_ARGS_FILE\"\nprintf 'XNIX_COMPAT_OPEN_EXECUTE=%s\n' \"$XNIX_COMPAT_OPEN_EXECUTE\" > \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_STATE_ROOT=%s\n' \"$XNIX_COMPAT_OPEN_STATE_ROOT\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_CACHE_ROOT=%s\n' \"$XNIX_COMPAT_OPEN_CACHE_ROOT\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_GUEST_BOUNDARY=%s\n' \"$XNIX_COMPAT_OPEN_GUEST_BOUNDARY\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_RECEIPT_ID=%s\n' \"$XNIX_COMPAT_OPEN_RECEIPT_ID\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID=%s\n' \"$XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_SESSION_ID=%s\n' \"$XNIX_COMPAT_OPEN_SESSION_ID\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_GUEST_HOST=%s\n' \"$XNIX_COMPAT_OPEN_GUEST_HOST\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_GUEST_PORT=%s\n' \"$XNIX_COMPAT_OPEN_GUEST_PORT\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_WINDOW_MATCH=%s\n' \"$XNIX_COMPAT_OPEN_WINDOW_MATCH\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf 'XNIX_COMPAT_OPEN_TIMEOUT=%s\n' \"$XNIX_COMPAT_OPEN_TIMEOUT\" >> \"$XNIX_OWNER_FAKE_LAUNCHER_ENV_FILE\"\nprintf '%s\n' '" + payload + "'\n"
 	if err := os.WriteFile(launcherPath, []byte(script), 0o755); err != nil {
 		t.Fatalf("WriteFile fake launcher returned error: %v", err)
 	}
-	return launcherPath, argsPath
+	return launcherPath, argsPath, envPath
 }

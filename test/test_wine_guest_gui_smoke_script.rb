@@ -176,6 +176,29 @@ assert(owner_file_arg_payload["file_argument_delivery"] == "guest-copy-and-winep
 assert(owner_file_arg_payload["window_match"] == "sample-document.txt", "GUI smoke owner file argument plan must preserve the window match")
 assert(owner_file_arg_payload["raw_file_argument_path_exposed"] == false, "GUI smoke owner file argument plan must keep raw paths out of report fields")
 
+owner_file_open_stdout, owner_file_open_stderr, owner_file_open_status = Open3.capture3(
+  "ruby", script.to_s,
+  "--plan-only",
+  "--format", "json",
+  "--launch-mode", "owner-controlled-launch",
+  "--launcher-bin", "/home/xnix-build-cache/bin/xnix-compat-launch",
+  "--file-open-bin", "/home/xnix-build-cache/bin/xnix-compat-open",
+  "--known-app-id", "org.xnix.sample.notepad",
+  "--file-argument", fixture_document.to_s,
+  "--window-match", "sample-document.txt",
+  chdir: project_root.to_s
+)
+assert(owner_file_open_status.success?, "Wine guest GUI smoke owner file-open plan must succeed: #{owner_file_open_stderr}")
+owner_file_open_payload = JSON.parse(owner_file_open_stdout)
+assert(owner_file_open_payload["file_open_entrypoint_requested"] == true, "GUI smoke owner file-open plan must request the file-open entrypoint")
+assert(owner_file_open_payload["file_open_static_entrypoint"] == "xnix-compat-open %U", "GUI smoke owner file-open plan must expose the static file-open entrypoint")
+assert(owner_file_open_payload["owner_file_open_environment_ready"] == true, "GUI smoke owner file-open plan must expose owner file-open environment readiness")
+assert(owner_file_open_payload["owner_file_open_environment_key_count"] == owner_file_open_payload.fetch("owner_file_open_environment_keys").length, "GUI smoke owner file-open plan must count owner file-open environment keys")
+%w[XNIX_COMPAT_LAUNCH XNIX_COMPAT_OPEN_STATE_ROOT XNIX_COMPAT_OPEN_RECEIPT_ID XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID XNIX_COMPAT_OPEN_GUEST_HOST XNIX_COMPAT_OPEN_WINDOW_MATCH].each do |key|
+  assert(owner_file_open_payload.fetch("owner_file_open_environment_keys").include?(key), "GUI smoke owner file-open plan must expose #{key} as a safe key name")
+end
+assert(owner_file_open_payload["owner_file_open_environment_values_exposed"] == false, "GUI smoke owner file-open plan must keep owner file-open environment values hidden")
+
 owner_exe_stdout, owner_exe_stderr, owner_exe_status = Open3.capture3(
   "ruby", script.to_s,
   "--plan-only",

@@ -209,7 +209,13 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	if app.RecipeBackedContainerGUI && strings.TrimSpace(registryPath) != "" {
+	guestGUIDispatchRequested := strings.TrimSpace(guiAppPath) != "" ||
+		strings.TrimSpace(guestDisplay) != "" ||
+		strings.TrimSpace(hostDisplay) != "" ||
+		strings.TrimSpace(xwininfoPath) != "" ||
+		strings.TrimSpace(windowMatch) != "" ||
+		len(fileArguments) > 0
+	if app.RecipeBackedContainerGUI && strings.TrimSpace(registryPath) != "" && !guestGUIDispatchRequested {
 		resolvedRegistryPath, err := resolveStagedRegistryPath(registryPath)
 		if err != nil {
 			return err

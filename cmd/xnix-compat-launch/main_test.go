@@ -717,6 +717,7 @@ func TestCompatLaunchPassesFileArgumentToGuestGUINotepad(t *testing.T) {
 	if err := os.WriteFile(documentPath, []byte("Xnix launcher file-open document\n"), 0o600); err != nil {
 		t.Fatalf("WriteFile document returned error: %v", err)
 	}
+	registryPath, _ := writeNotepadRecipeRegistryFixture(t, t.TempDir(), app.Version)
 
 	var output bytes.Buffer
 	err = run([]string{
@@ -730,6 +731,7 @@ func TestCompatLaunchPassesFileArgumentToGuestGUINotepad(t *testing.T) {
 		"--ssh", sshPath,
 		"--scp", scpPath,
 		"--xwininfo", xwininfoPath,
+		"--registry", registryPath,
 		"--file-argument", documentPath,
 		"--window-match", "sample-document.txt",
 		"--guest-display", "10.0.2.2:127",

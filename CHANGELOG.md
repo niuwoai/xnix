@@ -4,6 +4,25 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc171] - 2026-07-26
+
+### Added
+
+- Added Runtime-owner `XNIX_COMPAT_OPEN_*` environment injection to the q4 owner-controlled file-open GUI smoke path for the static `xnix-compat-open %U` entrypoint.
+- Added local plan tests and remote q4 plan assertions for file-open static-entrypoint readiness, safe owner environment key names, and hidden environment values.
+- Added Runtime-owner file-open entrypoint tests proving stale `XNIX_COMPAT_OPEN_*` ticket and boundary values are replaced with the real owner execution plan before `xnix-compat-open` is invoked.
+
+### Changed
+
+- Routed owner-managed `xnix-compat-open` launches through the static file-open argument shape while the Runtime owner supplies the real state root, cache root, launch receipt, review receipt, controlled session, managed guest boundary, guest connection, display, timeout, and window-match values through process environment.
+- Made `xnix-compat-launch` prefer the q4 guest GUI path when guest GUI or file-open signals are present, even when a recipe registry is also supplied for Sample Notepad.
+- Extended the remote q4 Wine GUI smoke execute-result summary to report file-open owner-environment readiness and KDE action environment-key evidence without exposing state roots, receipt values, guest connection details, owner service arguments, backend details, or raw launcher output.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc171`.
+
+### Fixed
+
+- Fixed the q4 owner-controlled Sample Notepad file-open smoke so the static `xnix-compat-open %U` entrypoint reaches `xnix-compat-launch`, copies one sample document into the guest, translates it through Wine paths, observes the Notepad window title, and reports owner/KDE file-open entrypoint PASS evidence.
+
 ## [0.2.640-rc170] - 2026-07-26
 
 ### Added

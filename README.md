@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc170`.
+The project is currently at `v0.2.640-rc171`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc170`.
 
 ## Current Checkpoint
 
-v0.2.640-rc170 exposes file-open owner-environment readiness in the KDE controlled-launch action read model without exposing environment values. File-open action previews can now show that the static `xnix-compat-open %U` desktop entrypoint is Runtime-owner-environment-ready, list the safe `XNIX_COMPAT_OPEN_*` key names needed by controlled sessions, and keep state roots, receipt ids, guest connection values, owner service arguments, backend details, and raw launcher output hidden from KDE. The local KDE action smoke also stops falling back to `go run` by default; local Go compilation requires the explicit `XNIX_ALLOW_LOCAL_GO_COMPILE=1` override, while compile-heavy build and test work stays on q4.
+v0.2.640-rc171 makes the q4 owner-controlled file-open GUI smoke use the Runtime-owner environment contract for the static `xnix-compat-open %U` entrypoint. When the remote Sample Notepad path enables `--file-open-entrypoint`, `wine_guest_gui_smoke.rb` now supplies the full `XNIX_COMPAT_OPEN_*` execution context to `xnix-compat-open` through the Runtime owner environment, while the remote q4 plan and execute-result summary expose only safe key names, readiness flags, and the static entrypoint. Backend values, state roots, receipt values, guest connection details, owner service arguments, and raw launcher output remain hidden from KDE-facing summaries.
+
+The previous v0.2.640-rc170 checkpoint exposed file-open owner-environment readiness in the KDE controlled-launch action read model without exposing environment values. File-open action previews can now show that the static `xnix-compat-open %U` desktop entrypoint is Runtime-owner-environment-ready, list the safe `XNIX_COMPAT_OPEN_*` key names needed by controlled sessions, and keep state roots, receipt ids, guest connection values, owner service arguments, backend details, and raw launcher output hidden from KDE. The local KDE action smoke also stops falling back to `go run` by default; local Go compilation requires the explicit `XNIX_ALLOW_LOCAL_GO_COMPILE=1` override, while compile-heavy build and test work stays on q4.
 
 The previous v0.2.640-rc169 checkpoint made the Go `xnix-compat-open` entrypoint easier for a Runtime-owned desktop session to execute without putting backend or receipt details into static KDE files. The command now accepts `XNIX_COMPAT_OPEN_*` environment defaults for launcher registry, cache root, guest boundary, state root, receipt ids, session id, guest SSH/display settings, window match, timeout, and GUI wait; explicit flags still override those defaults. The packaged Dolphin service menu remains the simple `xnix-compat-open %U` route, while Runtime owner/session infrastructure can inject execution context around it.
 

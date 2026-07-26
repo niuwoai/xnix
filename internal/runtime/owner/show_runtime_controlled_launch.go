@@ -16,6 +16,33 @@ import (
 	"xnix.local/xnix/internal/runtime/winapp"
 )
 
+const (
+	fileOpenEntrypointName        = "xnix-compat-open"
+	fileOpenExecuteEnv            = "XNIX_COMPAT_OPEN_EXECUTE"
+	fileOpenCacheRootEnv          = "XNIX_COMPAT_OPEN_CACHE_ROOT"
+	fileOpenStateRootEnv          = "XNIX_COMPAT_OPEN_STATE_ROOT"
+	fileOpenReceiptIDEnv          = "XNIX_COMPAT_OPEN_RECEIPT_ID"
+	fileOpenReviewReceiptIDEnv    = "XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID"
+	fileOpenSessionIDEnv          = "XNIX_COMPAT_OPEN_SESSION_ID"
+	fileOpenGuestHostEnv          = "XNIX_COMPAT_OPEN_GUEST_HOST"
+	fileOpenGuestPortEnv          = "XNIX_COMPAT_OPEN_GUEST_PORT"
+	fileOpenGuestUserEnv          = "XNIX_COMPAT_OPEN_GUEST_USER"
+	fileOpenGuestKeyEnv           = "XNIX_COMPAT_OPEN_GUEST_KEY"
+	fileOpenGuestRemoteDirEnv     = "XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR"
+	fileOpenGuestSSHEnv           = "XNIX_COMPAT_OPEN_GUEST_SSH"
+	fileOpenGuestSCPEnv           = "XNIX_COMPAT_OPEN_GUEST_SCP"
+	fileOpenGuestXWinInfoEnv      = "XNIX_COMPAT_OPEN_GUEST_XWININFO"
+	fileOpenGuestDisplayEnv       = "XNIX_COMPAT_OPEN_GUEST_DISPLAY"
+	fileOpenHostDisplayEnv        = "XNIX_COMPAT_OPEN_HOST_DISPLAY"
+	fileOpenWindowMatchEnv        = "XNIX_COMPAT_OPEN_WINDOW_MATCH"
+	fileOpenTimeoutEnv            = "XNIX_COMPAT_OPEN_TIMEOUT"
+	fileOpenGUIWaitEnv            = "XNIX_COMPAT_OPEN_GUI_WAIT"
+	fileOpenLauncherRegistryEnv   = "XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY"
+	fileOpenRegistryEnv           = "XNIX_COMPAT_OPEN_REGISTRY"
+	fileOpenGuestBoundaryEnv      = "XNIX_COMPAT_OPEN_GUEST_BOUNDARY"
+	fileOpenManagedLauncherBinEnv = "XNIX_COMPAT_LAUNCH"
+)
+
 type ShowRuntimeControlledLaunchResult struct {
 	appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan
 	SchemaVersion                                   string                                                      `json:"owner_schema_version"`
@@ -135,7 +162,7 @@ func (service Service) ShowRuntimeControlledLaunch(args []string) (ShowRuntimeCo
 	if err != nil {
 		return ShowRuntimeControlledLaunchResult{}, err
 	}
-	launcherArgs, err := appidentity.KnownAppKDERuntimeStatusLaunchExecutionArgv(plan, config.StateRoot, config.CacheRoot, extra)
+	launcherArgs, err := runtimeControlledLaunchLauncherArgs(plan, config, extra)
 	if err != nil {
 		return ShowRuntimeControlledLaunchResult{}, err
 	}
@@ -145,7 +172,13 @@ func (service Service) ShowRuntimeControlledLaunch(args []string) (ShowRuntimeCo
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ownerTimeout)
 	defer cancel()
-	output, err := exec.CommandContext(ctx, config.LauncherPath, launcherArgs...).Output()
+	command := exec.CommandContext(ctx, config.LauncherPath, launcherArgs...)
+	if env, err := runtimeControlledLaunchLauncherEnv(plan, config); err != nil {
+		return ShowRuntimeControlledLaunchResult{}, err
+	} else if len(env) > 0 {
+		command.Env = env
+	}
+	output, err := command.Output()
 	if ctx.Err() != nil {
 		return ShowRuntimeControlledLaunchResult{}, errors.New("Runtime owner action managed launcher invocation timed out")
 	}
@@ -234,6 +267,97 @@ func runtimeControlledLaunchOwnerConfigFromEnv() (runtimeControlledLaunchOwnerCo
 		}
 	}
 	return config, nil
+}
+
+func runtimeControlledLaunchLauncherArgs(plan appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan, config runtimeControlledLaunchOwnerConfig, extra []string) ([]string, error) {
+	if runtimeControlledLaunchUsesFileOpenEntrypoint(config.LauncherPath) {
+		return runtimeControlledLaunchFileOpenArgs(plan, config)
+	}
+	return appidentity.KnownAppKDERuntimeStatusLaunchExecutionArgv(plan, config.StateRoot, config.CacheRoot, extra)
+}
+
+func runtimeControlledLaunchUsesFileOpenEntrypoint(launcherPath string) bool {
+	return filepath.Base(strings.TrimSpace(launcherPath)) == fileOpenEntrypointName
+}
+
+func runtimeControlledLaunchFileOpenArgs(plan appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan, config runtimeControlledLaunchOwnerConfig) ([]string, error) {
+	if strings.TrimSpace(plan.AppID) == "" {
+		return nil, errors.New("ShowRuntimeControlledLaunch file-open entrypoint requires a non-empty application id")
+	}
+	args := []string{"--app", strings.TrimSpace(plan.AppID)}
+	for _, path := range config.FileArgumentPaths {
+		if strings.TrimSpace(path) == "" || strings.ContainsAny(path, "\r\n") {
+			return nil, errors.New("ShowRuntimeControlledLaunch file-open entrypoint requires safe file argument paths")
+		}
+		args = append(args, "--file-argument", strings.TrimSpace(path))
+	}
+	return args, nil
+}
+
+func runtimeControlledLaunchLauncherEnv(plan appidentity.KnownAppKDERuntimeStatusLaunchExecutionPlan, config runtimeControlledLaunchOwnerConfig) ([]string, error) {
+	if !runtimeControlledLaunchUsesFileOpenEntrypoint(config.LauncherPath) {
+		return nil, nil
+	}
+	overrides := map[string]string{
+		fileOpenExecuteEnv:         "1",
+		fileOpenCacheRootEnv:       config.CacheRoot,
+		fileOpenGuestBoundaryEnv:   winapp.KnownDispatchGuestBoundary,
+		fileOpenStateRootEnv:       config.StateRoot,
+		fileOpenReceiptIDEnv:       plan.LaunchAuthorizationReceiptID,
+		fileOpenReviewReceiptIDEnv: plan.SessionGatedReviewReceiptID,
+		fileOpenSessionIDEnv:       plan.ControlledExecutionSessionID,
+		fileOpenGuestHostEnv:       config.GuestHost,
+		fileOpenGuestPortEnv:       config.GuestPort,
+		fileOpenGuestUserEnv:       config.GuestUser,
+		fileOpenGuestKeyEnv:        config.GuestKeyPath,
+		fileOpenGuestRemoteDirEnv:  config.GuestRemoteDir,
+		fileOpenGuestSSHEnv:        config.GuestSSHPath,
+		fileOpenGuestSCPEnv:        config.GuestSCPPath,
+		fileOpenGuestXWinInfoEnv:   config.GuestXWinInfoPath,
+		fileOpenGuestDisplayEnv:    config.GuestDisplay,
+		fileOpenHostDisplayEnv:     config.HostDisplay,
+		fileOpenWindowMatchEnv:     config.WindowMatch,
+		fileOpenTimeoutEnv:         config.GuestTimeout,
+		fileOpenGUIWaitEnv:         config.GUIWait,
+	}
+	for _, required := range []string{fileOpenStateRootEnv, fileOpenCacheRootEnv, fileOpenReceiptIDEnv, fileOpenReviewReceiptIDEnv, fileOpenSessionIDEnv} {
+		if strings.TrimSpace(overrides[required]) == "" {
+			return nil, fmt.Errorf("ShowRuntimeControlledLaunch file-open entrypoint requires %s", required)
+		}
+	}
+	return runtimeControlledLaunchMergedEnv(overrides)
+}
+
+func runtimeControlledLaunchMergedEnv(overrides map[string]string) ([]string, error) {
+	merged := make(map[string]string, len(os.Environ())+len(overrides))
+	order := make([]string, 0, len(os.Environ())+len(overrides))
+	for _, entry := range os.Environ() {
+		name, value, ok := strings.Cut(entry, "=")
+		if !ok || name == "" {
+			continue
+		}
+		if _, exists := merged[name]; !exists {
+			order = append(order, name)
+		}
+		merged[name] = value
+	}
+	for name, value := range overrides {
+		if strings.ContainsAny(name, "\r\n=") || strings.ContainsAny(value, "\r\n") {
+			return nil, errors.New("ShowRuntimeControlledLaunch file-open environment requires safe single-line values")
+		}
+		if strings.TrimSpace(value) == "" {
+			continue
+		}
+		if _, exists := merged[name]; !exists {
+			order = append(order, name)
+		}
+		merged[name] = strings.TrimSpace(value)
+	}
+	env := make([]string, 0, len(order))
+	for _, name := range order {
+		env = append(env, name+"="+merged[name])
+	}
+	return env, nil
 }
 
 func runtimeControlledLaunchFileArgumentPathsFromEnv(raw string) ([]string, error) {

@@ -175,7 +175,7 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	if launch.Execute {
-		return runManagedLauncher(stdout, preview, positionalFileURIs, []string(launch.FileArguments), launch)
+		return runManagedLauncher(stdout, preview, fileURIs, nil, launch)
 	}
 
 	encoder := json.NewEncoder(stdout)
@@ -220,13 +220,6 @@ func runManagedLauncher(stdout io.Writer, preview appidentity.FileOpenPreview, f
 			return err
 		}
 		argv = append(argv, "--file-argument", path)
-	}
-	for _, path := range fileArgumentPaths {
-		cleaned, err := localFileArgumentPath(path)
-		if err != nil {
-			return err
-		}
-		argv = append(argv, "--file-argument", cleaned)
 	}
 
 	command := exec.Command(launcher, argv...)

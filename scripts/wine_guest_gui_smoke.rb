@@ -27,6 +27,31 @@ DEFAULT_OWNER_BIN = ENV.fetch("XNIX_RUNTIME_OWNER_BIN", "go")
 DEFAULT_LAUNCHER_BIN = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "")
 DEFAULT_FILE_OPEN_BIN = ENV.fetch("XNIX_COMPAT_OPEN_BIN", "")
 DEFAULT_FILE_OPEN_REGISTRY = ENV.fetch("XNIX_COMPAT_OPEN_REGISTRY", PROJECT_ROOT.join("runtime", "recipes", "registry.json").to_s)
+OWNER_FILE_OPEN_ENV_KEYS = %w[
+  XNIX_COMPAT_LAUNCH
+  XNIX_COMPAT_OPEN_REGISTRY
+  XNIX_COMPAT_OPEN_EXECUTE
+  XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY
+  XNIX_COMPAT_OPEN_CACHE_ROOT
+  XNIX_COMPAT_OPEN_GUEST_BOUNDARY
+  XNIX_COMPAT_OPEN_STATE_ROOT
+  XNIX_COMPAT_OPEN_RECEIPT_ID
+  XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID
+  XNIX_COMPAT_OPEN_SESSION_ID
+  XNIX_COMPAT_OPEN_GUEST_HOST
+  XNIX_COMPAT_OPEN_GUEST_PORT
+  XNIX_COMPAT_OPEN_GUEST_USER
+  XNIX_COMPAT_OPEN_GUEST_KEY
+  XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR
+  XNIX_COMPAT_OPEN_GUEST_SSH
+  XNIX_COMPAT_OPEN_GUEST_SCP
+  XNIX_COMPAT_OPEN_GUEST_XWININFO
+  XNIX_COMPAT_OPEN_GUEST_DISPLAY
+  XNIX_COMPAT_OPEN_HOST_DISPLAY
+  XNIX_COMPAT_OPEN_WINDOW_MATCH
+  XNIX_COMPAT_OPEN_TIMEOUT
+  XNIX_COMPAT_OPEN_GUI_WAIT
+].freeze
 DEFAULT_KNOWN_APP_CACHE_ROOT = ENV.fetch("XNIX_KNOWN_APP_CACHE_ROOT", "")
 DEFAULT_KNOWN_APP_ID = ENV.fetch("XNIX_WINE_GUI_KNOWN_APP_ID", "")
 DEFAULT_EVIDENCE_APP_ID = ENV.fetch("XNIX_WINE_GUI_EVIDENCE_APP_ID", "org.xnix.apps.mines")
@@ -274,10 +299,39 @@ def owner_gui_executable_path(options)
   options.fetch(:executable)
 end
 
+def owner_file_open_runtime_env(options, owner_state_root, cache_root)
+  display_number = options.fetch(:display_number)
+  {
+    "XNIX_COMPAT_LAUNCH" => options.fetch(:launcher_bin),
+    "XNIX_COMPAT_OPEN_REGISTRY" => options.fetch(:file_open_registry),
+    "XNIX_COMPAT_OPEN_EXECUTE" => "1",
+    "XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY" => options.fetch(:file_open_registry),
+    "XNIX_COMPAT_OPEN_CACHE_ROOT" => cache_root.to_s,
+    "XNIX_COMPAT_OPEN_GUEST_BOUNDARY" => "qemu-guest-wine-x11",
+    "XNIX_COMPAT_OPEN_STATE_ROOT" => owner_state_root.to_s,
+    "XNIX_COMPAT_OPEN_RECEIPT_ID" => "owner-file-open-launch-#{VERSION}",
+    "XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID" => "owner-file-open-review-#{VERSION}",
+    "XNIX_COMPAT_OPEN_SESSION_ID" => "owner-file-open-session-#{VERSION}",
+    "XNIX_COMPAT_OPEN_GUEST_HOST" => "127.0.0.1",
+    "XNIX_COMPAT_OPEN_GUEST_PORT" => options.fetch(:ssh_port),
+    "XNIX_COMPAT_OPEN_GUEST_USER" => "root",
+    "XNIX_COMPAT_OPEN_GUEST_KEY" => options.fetch(:ssh_key),
+    "XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR" => "/tmp/xnix-owner-controlled-wine-gui-smoke",
+    "XNIX_COMPAT_OPEN_GUEST_SSH" => "ssh",
+    "XNIX_COMPAT_OPEN_GUEST_SCP" => "scp",
+    "XNIX_COMPAT_OPEN_GUEST_XWININFO" => "xwininfo",
+    "XNIX_COMPAT_OPEN_GUEST_DISPLAY" => "#{options.fetch(:guest_display_host)}:#{display_number}",
+    "XNIX_COMPAT_OPEN_HOST_DISPLAY" => ":#{display_number}",
+    "XNIX_COMPAT_OPEN_WINDOW_MATCH" => options.fetch(:window_match),
+    "XNIX_COMPAT_OPEN_TIMEOUT" => "#{options.fetch(:boot_timeout_seconds)}s",
+    "XNIX_COMPAT_OPEN_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
+  }
+end
+
 def owner_controlled_launch_env(options, owner_state_root, cache_root)
   display_number = options.fetch(:display_number)
   file_open_entrypoint = !options.fetch(:file_open_bin).strip.empty?
-  {
+  env = {
     "XNIX_RUNTIME_OWNER_STATE_ROOT" => owner_state_root.to_s,
     "XNIX_RUNTIME_OWNER_KNOWN_APP_CACHE_ROOT" => cache_root.to_s,
     "XNIX_RUNTIME_OWNER_MANAGED_LAUNCHER" => file_open_entrypoint ? options.fetch(:file_open_bin) : options.fetch(:launcher_bin),
@@ -297,11 +351,10 @@ def owner_controlled_launch_env(options, owner_state_root, cache_root)
     "XNIX_RUNTIME_OWNER_WINDOW_MATCH" => options.fetch(:window_match),
     "XNIX_RUNTIME_OWNER_GUEST_DISPLAY" => "#{options.fetch(:guest_display_host)}:#{display_number}",
     "XNIX_RUNTIME_OWNER_HOST_DISPLAY" => ":#{display_number}",
-    "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s",
-    "XNIX_COMPAT_LAUNCH" => options.fetch(:launcher_bin),
-    "XNIX_COMPAT_OPEN_REGISTRY" => options.fetch(:file_open_registry),
-    "XNIX_COMPAT_OPEN_EXECUTE" => file_open_entrypoint ? "1" : ""
+    "XNIX_RUNTIME_OWNER_GUI_WAIT" => "#{options.fetch(:wait_seconds)}s"
   }
+  env.merge!(owner_file_open_runtime_env(options, owner_state_root, cache_root)) if file_open_entrypoint
+  env
 end
 
 def stop_process(pid)
@@ -333,6 +386,11 @@ def base_report(options)
     "managed_launcher_bin_configured" => !options.fetch(:launcher_bin).strip.empty?,
     "file_open_entrypoint_requested" => !options.fetch(:file_open_bin).strip.empty?,
     "file_open_bin_configured" => !options.fetch(:file_open_bin).strip.empty?,
+    "file_open_static_entrypoint" => !options.fetch(:file_open_bin).strip.empty? ? "xnix-compat-open %U" : "",
+    "owner_file_open_environment_ready" => !options.fetch(:file_open_bin).strip.empty?,
+    "owner_file_open_environment_key_count" => !options.fetch(:file_open_bin).strip.empty? ? OWNER_FILE_OPEN_ENV_KEYS.length : 0,
+    "owner_file_open_environment_keys" => !options.fetch(:file_open_bin).strip.empty? ? OWNER_FILE_OPEN_ENV_KEYS : [],
+    "owner_file_open_environment_values_exposed" => false,
     "owner_seed_gui_smoke_planned" => options.fetch(:launch_mode) == "owner-controlled-launch",
     "owner_external_gui_app_requested" => options.fetch(:launch_mode) == "owner-controlled-launch" && !options.fetch(:executable).strip.empty?,
     "owner_external_gui_app_path_exposed" => false,

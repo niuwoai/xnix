@@ -16,6 +16,31 @@ DEFAULT_SOURCE_SYNC_MODE = ENV.fetch("XNIX_SOURCE_SYNC_MODE", "runtime")
 DEFAULT_REMOTE_SOURCE_ROOT = ENV.fetch("XNIX_REMOTE_SOURCE_ROOT", "/home/xnix-build/xnix-runtime-source-gui-#{DEFAULT_SOURCE_SYNC_MODE}-#{VERSION}")
 DEFAULT_REMOTE_MATERIALS_ROOT = ENV.fetch("XNIX_REMOTE_MATERIALS_ROOT", "/home/xnix-run-materials")
 DEFAULT_LOCAL_SHELL = ENV.fetch("XNIX_LOCAL_SHELL", "/bin/zsh")
+OWNER_FILE_OPEN_ENV_KEYS = %w[
+  XNIX_COMPAT_LAUNCH
+  XNIX_COMPAT_OPEN_REGISTRY
+  XNIX_COMPAT_OPEN_EXECUTE
+  XNIX_COMPAT_OPEN_LAUNCHER_REGISTRY
+  XNIX_COMPAT_OPEN_CACHE_ROOT
+  XNIX_COMPAT_OPEN_GUEST_BOUNDARY
+  XNIX_COMPAT_OPEN_STATE_ROOT
+  XNIX_COMPAT_OPEN_RECEIPT_ID
+  XNIX_COMPAT_OPEN_REVIEW_RECEIPT_ID
+  XNIX_COMPAT_OPEN_SESSION_ID
+  XNIX_COMPAT_OPEN_GUEST_HOST
+  XNIX_COMPAT_OPEN_GUEST_PORT
+  XNIX_COMPAT_OPEN_GUEST_USER
+  XNIX_COMPAT_OPEN_GUEST_KEY
+  XNIX_COMPAT_OPEN_GUEST_REMOTE_DIR
+  XNIX_COMPAT_OPEN_GUEST_SSH
+  XNIX_COMPAT_OPEN_GUEST_SCP
+  XNIX_COMPAT_OPEN_GUEST_XWININFO
+  XNIX_COMPAT_OPEN_GUEST_DISPLAY
+  XNIX_COMPAT_OPEN_HOST_DISPLAY
+  XNIX_COMPAT_OPEN_WINDOW_MATCH
+  XNIX_COMPAT_OPEN_TIMEOUT
+  XNIX_COMPAT_OPEN_GUI_WAIT
+].freeze
 
 options = {
   execute: false,
@@ -257,6 +282,11 @@ plan = {
   "launch_mode" => launch_mode,
   "owner_controlled_launch_requested" => launch_mode == "owner-controlled-launch",
   "file_open_entrypoint_requested" => options.fetch(:file_open_entrypoint),
+  "file_open_static_entrypoint" => options.fetch(:file_open_entrypoint) ? "xnix-compat-open %U" : "",
+  "owner_file_open_environment_ready" => options.fetch(:file_open_entrypoint),
+  "owner_file_open_environment_key_count" => options.fetch(:file_open_entrypoint) ? OWNER_FILE_OPEN_ENV_KEYS.length : 0,
+  "owner_file_open_environment_keys" => options.fetch(:file_open_entrypoint) ? OWNER_FILE_OPEN_ENV_KEYS : [],
+  "owner_file_open_environment_values_exposed" => false,
   "remote_command" => [
     "ruby scripts/wine_guest_gui_smoke.rb --execute --launch-mode #{launch_mode}",
     (options.fetch(:file_open_entrypoint) ? "--file-open-bin #{remote_file_open_bin} --file-open-registry #{remote_source_root}/runtime/recipes/registry.json" : "")
@@ -490,6 +520,11 @@ summary_reader = <<~RUBY
     "backend" => smoke.fetch("backend"),
     "launch_mode" => smoke.fetch("launch_mode"),
     "file_open_entrypoint_requested" => smoke.fetch("file_open_entrypoint_requested", false),
+    "file_open_static_entrypoint" => smoke.fetch("file_open_static_entrypoint", ""),
+    "owner_file_open_environment_ready" => smoke.fetch("owner_file_open_environment_ready", false),
+    "owner_file_open_environment_key_count" => smoke.fetch("owner_file_open_environment_key_count", 0),
+    "owner_file_open_environment_keys" => smoke.fetch("owner_file_open_environment_keys", []),
+    "owner_file_open_environment_values_exposed" => smoke.fetch("owner_file_open_environment_values_exposed", false),
     "known_app_id" => smoke.fetch("known_app_id"),
     "known_app_name" => smoke.fetch("known_app_name", ""),
     "known_app_version" => smoke.fetch("known_app_version", ""),
@@ -523,6 +558,11 @@ summary_reader = <<~RUBY
     "kde_page_backend_details_exposed" => kde.fetch("backend_details_exposed"),
     "kde_action_owner_file_open_verified" => action.fetch("owner_file_open_verified", false),
     "kde_action_owner_file_open_entrypoint_invoked" => action.fetch("owner_file_open_entrypoint_invoked", false),
+    "kde_action_static_file_open_entrypoint" => action.fetch("static_file_open_entrypoint", ""),
+    "kde_action_owner_file_open_environment_ready" => action.fetch("owner_file_open_environment_ready", false),
+    "kde_action_owner_file_open_environment_key_count" => action.fetch("owner_file_open_environment_key_count", 0),
+    "kde_action_owner_file_open_environment_keys" => action.fetch("owner_file_open_environment_keys", []),
+    "kde_action_owner_file_open_environment_values_exposed" => action.fetch("owner_file_open_environment_values_exposed", false),
     "kde_action_owner_delegated_window_match" => action.fetch("owner_delegated_window_match", ""),
     "owner_controlled_launch_requested" => smoke.fetch("owner_controlled_launch_requested"),
     "owner_evidence_handoff_ready" => smoke.fetch("owner_evidence_handoff_ready"),
