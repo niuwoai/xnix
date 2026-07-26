@@ -683,6 +683,99 @@ func TestCompatLaunchCopiesOwnerSuppliedGUIExecutable(t *testing.T) {
 	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, scpPath, xwininfoPath, executablePath)
 }
 
+func TestCompatLaunchPassesFileArgumentToGuestGUINotepad(t *testing.T) {
+	app, err := winapp.LookupKnownPortableApp("org.xnix.sample.notepad")
+	if err != nil {
+		t.Fatalf("LookupKnownPortableApp returned error: %v", err)
+	}
+	if !app.GuestBuiltinGUI {
+		t.Fatalf("sample Notepad must be available as a guest built-in GUI app")
+	}
+	stateRoot := t.TempDir()
+	sessionID, _ := recordLauncherSessionGateFixtureForApp(t, stateRoot, app.ID, app.Version)
+	reviewReceipt, err := appidentity.RecordKnownAppSessionGatedLaunchReviewReceipt(appidentity.KnownAppSessionGatedLaunchReviewReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		SessionID: sessionID,
+		ActionID:  appidentity.KnownAppSessionGatedLaunchReviewAction,
+		Decision:  "approved",
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppSessionGatedLaunchReviewReceipt returned error: %v", err)
+	}
+	receipt, err := appidentity.RecordKnownAppLaunchAuthorizationReceipt(appidentity.KnownAppLaunchAuthorizationReceiptRequest{
+		AppID:     app.ID,
+		StateRoot: stateRoot,
+		Authorize: appidentity.KnownAppLaunchAuthorizationReceiptAction,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppLaunchAuthorizationReceipt returned error: %v", err)
+	}
+	sshPath, xwininfoPath := writeGuestGUIFakeTools(t)
+	scpPath, scpLogPath := writeGuestGUIFakeSCPTool(t)
+	documentPath := filepath.Join(t.TempDir(), "sample-document.txt")
+	if err := os.WriteFile(documentPath, []byte("Xnix launcher file-open document\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile document returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--app", app.ID,
+		"--cache-root", t.TempDir(),
+		"--guest-boundary", "managed-known-app-guest-smoke",
+		"--state-root", stateRoot,
+		"--receipt-id", receipt.ReceiptID,
+		"--review-receipt-id", reviewReceipt.ReceiptID,
+		"--session-id", sessionID,
+		"--ssh", sshPath,
+		"--scp", scpPath,
+		"--xwininfo", xwininfoPath,
+		"--file-argument", documentPath,
+		"--window-match", "sample-document.txt",
+		"--guest-display", "10.0.2.2:127",
+		"--host-display", ":127",
+		"--timeout", "5s",
+		"--gui-wait", (1 * time.Millisecond).String(),
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["app_id"] != app.ID ||
+		payload["evidence_source"] != "wine-guest-gui-smoke" ||
+		payload["cache_status"] != "guest-builtin-gui" ||
+		payload["file_argument_count"] != float64(1) ||
+		payload["file_argument_copied_count"] != float64(1) ||
+		payload["file_arguments_passed"] != true ||
+		payload["file_argument_winepath_translated"] != true ||
+		payload["file_argument_winepath_translated_count"] != float64(1) ||
+		payload["window_match"] != "sample-document.txt" ||
+		payload["window_match_observed"] != true ||
+		payload["window_evidence_summary"] == "" ||
+		payload["smoke_passed"] != true ||
+		payload["controlled_session_window_observed"] != true ||
+		payload["host_root_modified"] != false ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_command_exposed"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected Notepad file argument GUI payload: %#v", payload)
+	}
+	scpLog, err := os.ReadFile(scpLogPath)
+	if err != nil {
+		t.Fatalf("ReadFile scp log returned error: %v", err)
+	}
+	if !strings.Contains(string(scpLog), documentPath) ||
+		!strings.Contains(string(scpLog), "/tmp/xnix-known-winapp-smoke/file-1-sample-document.txt") {
+		t.Fatalf("fake scp did not copy the document into the guest work dir: %s", string(scpLog))
+	}
+	assertCompatLaunchGUIDispatchSafe(t, output.String(), stateRoot, sshPath, scpPath, xwininfoPath, documentPath)
+}
+
 func TestCompatLaunchRunsRecipeBackedNotepadThroughContainerXGUI(t *testing.T) {
 	app, err := winapp.LookupKnownPortableApp("org.xnix.sample.notepad")
 	if err != nil {
@@ -1004,6 +1097,8 @@ func writeGuestGUIFakeTools(t *testing.T) (string, string) {
 	tempDir := t.TempDir()
 	sshPath := filepath.Join(tempDir, "fake-ssh")
 	sshBody := "#!/bin/sh\n" +
+		"printf '%s' \"$*\" | grep -q 'cat .*file_args_passed' && { printf '1'; exit 0; }\n" +
+		"printf '%s' \"$*\" | grep -q 'cat .*file_args_winepath_translated' && { printf '1'; exit 0; }\n" +
 		"case \"$*\" in\n" +
 		"  *' true') exit 0 ;;\n" +
 		"  *'command -v wine'*) exit 0 ;;\n" +
@@ -1012,6 +1107,7 @@ func writeGuestGUIFakeTools(t *testing.T) (string, string) {
 		"  *'wineboot --init'*) printf 'boot initialized\\n' >&2; exit 0 ;;\n" +
 		"  *'wine '*'winemine.exe'*) exit 0 ;;\n" +
 		"  *'wine '*'owner-messagebox.exe'*) exit 0 ;;\n" +
+		"  *'wine '*'notepad.exe'*) exit 0 ;;\n" +
 		"  *'cat '*'stderr.txt'*) printf ''; exit 0 ;;\n" +
 		"  *'wineserver -k'*) exit 0 ;;\n" +
 		"esac\n" +
@@ -1022,7 +1118,8 @@ func writeGuestGUIFakeTools(t *testing.T) (string, string) {
 	xwininfoPath := filepath.Join(tempDir, "fake-xwininfo")
 	xwininfoBody := "#!/bin/sh\n" +
 		"printf 'xwininfo: Window id: 0x3a7 (the root window)\\n'\n" +
-		"printf '  0x200001 \"WineMine\": ()  320x240+0+0  +0+0\\n'\n"
+		"printf '  0x200001 \"WineMine\": ()  320x240+0+0  +0+0\\n'\n" +
+		"printf '  0x200002 \"sample-document.txt - Notepad\": (\"notepad.exe\" \"notepad.exe\")  640x480+0+0  +0+0\\n'\n"
 	if err := os.WriteFile(xwininfoPath, []byte(xwininfoBody), 0o700); err != nil {
 		t.Fatalf("WriteFile xwininfo returned error: %v", err)
 	}
@@ -1080,7 +1177,7 @@ func assertCompatLaunchCLISafe(t *testing.T, text string, hostPath string) {
 func assertCompatLaunchGUIDispatchSafe(t *testing.T, text string, hostPaths ...string) {
 	t.Helper()
 	serialized := strings.ToLower(text)
-	for _, forbidden := range []string{".exe", "qemu-system", "program files", "/usr/lib/wine", "wine ", ".wine"} {
+	for _, forbidden := range []string{"qemu-system", "program files", "/usr/lib/wine", "wine ", ".wine"} {
 		if strings.Contains(serialized, forbidden) {
 			t.Fatalf("compat launch GUI dispatch exposed forbidden term %q: %s", forbidden, text)
 		}

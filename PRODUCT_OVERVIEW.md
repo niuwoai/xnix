@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc158
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc159
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc159 checkpoint candidate moves q4 guest file-open evidence up into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and returns redacted known-app dispatch evidence for file copy count, Wine path translation, argument handoff, and matched window text. This keeps the existing KDE recipe-backed container path intact when `--registry` is supplied, while allowing Sample Notepad to use the q4/QEMU guest GUI backend when the controlled launcher omits a registry and provides the guest boundary.
 
 The v0.2.640-rc158 checkpoint candidate moves file-open process evidence onto the q4 QEMU/Wine guest path. The Go Runtime guest GUI smoke now accepts copied file arguments, translates them through guest `winepath -w`, passes them to the Windows GUI app, and can require an X window title/text match before accepting the run as observed. `scripts/remote_wine_guest_gui_smoke.rb` can create a q4-hosted sample document under the smoke state root and run Sample Notepad against it, keeping compilation and real QEMU/Wine GUI execution on q4 while the macOS host stays limited to lightweight planning and layout checks.
 

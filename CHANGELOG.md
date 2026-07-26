@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc159] - 2026-07-26
+
+### Changed
+
+- Extended `xnix-compat-launch` guest GUI dispatch with `--file-argument` and `--window-match` so the managed launcher can pass files into a q4/QEMU Wine GUI app instead of leaving file-open proof only on the lower-level Runtime smoke command.
+- Surfaced guest GUI file-copy, Wine path translation, argument handoff, and window-match evidence on the known-app dispatch result while keeping raw file paths and backend command details hidden.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc159`.
+
 ## [0.2.640-rc158] - 2026-07-26
 
 ### Changed

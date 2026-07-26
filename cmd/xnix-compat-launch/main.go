@@ -62,6 +62,7 @@ func run(args []string, stdout io.Writer) error {
 	var guiAppPath string
 	var guestDisplay string
 	var hostDisplay string
+	var windowMatch string
 	var registryPath string
 	var externalAppImportRecord string
 	var externalAppHandle string
@@ -74,6 +75,7 @@ func run(args []string, stdout io.Writer) error {
 	var containerDockerPath string
 	var timeoutText string
 	var guiWaitText string
+	var fileArguments repeatedStringFlag
 	flags.StringVar(&appID, "app", "", "known Windows app id")
 	flags.StringVar(&cacheRoot, "cache-root", winapp.DefaultKnownAppCacheRoot, "managed known Windows app cache root")
 	flags.StringVar(&guestBoundary, "guest-boundary", "", "controlled managed guest boundary supplied by the Runtime owner or smoke harness")
@@ -93,6 +95,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&guiAppPath, "gui-app", "", "Runtime-owner supplied guest GUI app path for guest GUI dispatch")
 	flags.StringVar(&guestDisplay, "guest-display", "", "guest DISPLAY value for guest GUI dispatch")
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
+	flags.StringVar(&windowMatch, "window-match", "", "case-insensitive X window title/text required for guest GUI dispatch")
 	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
 	flags.StringVar(&externalAppImportRecord, "external-app-import-record", "", "Runtime import record for an imported external Windows GUI app")
 	flags.StringVar(&externalAppHandle, "external-app-handle", "", "opaque external Windows GUI app handle; currently the imported reverse-DNS app id")
@@ -108,6 +111,7 @@ func run(args []string, stdout io.Writer) error {
 
 	var appArgs repeatedStringFlag
 	flags.Var(&appArgs, "arg", "argument passed to the known Windows app")
+	flags.Var(&fileArguments, "file-argument", "local file copied into the guest and passed to a known Windows GUI app; may be repeated")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -205,10 +209,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	if app.RecipeBackedContainerGUI {
-		if strings.TrimSpace(registryPath) == "" {
-			return fmt.Errorf("--registry is required for recipe-backed container GUI dispatch")
-		}
+	if app.RecipeBackedContainerGUI && strings.TrimSpace(registryPath) != "" {
 		resolvedRegistryPath, err := resolveStagedRegistryPath(registryPath)
 		if err != nil {
 			return err
@@ -269,24 +270,26 @@ func run(args []string, stdout io.Writer) error {
 
 	if app.GuestBuiltinGUI {
 		result, err := winapp.RunKnownPortableGuestGUIDispatchSmoke(context.Background(), winapp.KnownDispatchSmokeRequest{
-			AppID:          appID,
-			CacheRoot:      cacheRoot,
-			Arguments:      []string(appArgs),
-			GuestBoundary:  guestBoundary,
-			Host:           host,
-			Port:           parsedPort,
-			User:           user,
-			KeyPath:        keyPath,
-			RemoteDir:      remoteDir,
-			SSHPath:        sshPath,
-			SCPPath:        scpPath,
-			XWinInfoPath:   xwininfoPath,
-			ExecutablePath: executablePath,
-			GUIAppPath:     guiAppPath,
-			GuestDisplay:   guestDisplay,
-			HostDisplay:    hostDisplay,
-			Timeout:        timeout,
-			Wait:           guiWait,
+			AppID:             appID,
+			CacheRoot:         cacheRoot,
+			Arguments:         []string(appArgs),
+			GuestBoundary:     guestBoundary,
+			Host:              host,
+			Port:              parsedPort,
+			User:              user,
+			KeyPath:           keyPath,
+			RemoteDir:         remoteDir,
+			SSHPath:           sshPath,
+			SCPPath:           scpPath,
+			XWinInfoPath:      xwininfoPath,
+			ExecutablePath:    executablePath,
+			GUIAppPath:        guiAppPath,
+			GuestDisplay:      guestDisplay,
+			HostDisplay:       hostDisplay,
+			FileArgumentPaths: []string(fileArguments),
+			WindowMatch:       windowMatch,
+			Timeout:           timeout,
+			Wait:              guiWait,
 		})
 		if err != nil {
 			return err

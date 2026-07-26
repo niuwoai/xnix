@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc158`.
+The project is currently at `v0.2.640-rc159`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc158`.
 
 ## Current Checkpoint
 
-v0.2.640-rc158 moves file-open proof onto the q4 QEMU/Wine guest path. The Go Runtime guest GUI smoke can now copy file arguments into the guest, translate them through guest `winepath -w`, pass them to a Windows GUI app, and require a matching X window title before accepting the run. The remote smoke can create a q4-hosted `sample-document.txt` and launch Sample Notepad against it, so compile-heavy and real GUI work stay on q4 while the macOS host only does lightweight planning and checks.
+v0.2.640-rc159 moves q4 guest file-open proof into the managed launcher path. `xnix-compat-launch` now accepts `--file-argument` and `--window-match` for controlled guest GUI dispatch, forwards copied file arguments to the Go Runtime guest GUI runner, and reports redacted known-app dispatch evidence for file copy, Wine path translation, argument handoff, and matched window text. Existing KDE recipe-backed container dispatch remains selected when `--registry` is supplied; the q4/QEMU guest GUI backend is available for Sample Notepad when the controlled launcher omits the registry and supplies the managed guest boundary.
+
+The previous v0.2.640-rc158 checkpoint moved file-open proof onto the q4 QEMU/Wine guest path. The Go Runtime guest GUI smoke can now copy file arguments into the guest, translate them through guest `winepath -w`, pass them to a Windows GUI app, and require a matching X window title before accepting the run. The remote smoke can create a q4-hosted `sample-document.txt` and launch Sample Notepad against it, so compile-heavy and real GUI work stay on q4 while the macOS host only does lightweight planning and checks.
 
 The previous v0.2.640-rc157 checkpoint made the q4 real Windows GUI smoke return a single remote execution summary after a pass. `scripts/remote_wine_guest_gui_smoke.rb --execute` now waits for the remote Go build, Wine/QEMU GUI smoke, Runtime GUI evidence projection, and KDE page projection before printing `xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1` with the evidence paths, window observation, KDE GUI evidence count, and safety flags. The current q4 Mines run passed with `x_window_observed=true`, `kde_page_known_app_gui_evidence_count=1`, and no host-root mutation, Docker socket mount, host networking, or privileged container requirement.
 
