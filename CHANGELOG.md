@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc188] - 2026-07-26
+
+### Added
+
+- Added `--q4-messagebox-smoke` fixture consumption to `scripts/merge_readiness_packet.rb` so existing q4 MessageBox document-smoke JSON evidence can satisfy a release-only blocker without executing q4/QEMU/Wine from the packet.
+- Added a `q4-messagebox-document-smoke` release evidence claim to `scripts/release_evidence_index.rb`, validating the external Windows `.exe`, document marker observation, Go-owned q4 acceptance, host compilation avoidance, and closed safety gates from an existing report.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc188`.
+
 ## [0.2.640-rc187] - 2026-07-26
 
 ### Changed

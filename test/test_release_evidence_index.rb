@@ -157,6 +157,76 @@ preflight_smoke = write_json_fixture(
   "package_manager_invoked" => false,
   "host_root_modified" => false
 )
+q4_messagebox_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
+  "request_type" => "q4-messagebox-smoke",
+  "status" => "passed",
+  "app_id" => "org.xnix.apps.messagebox",
+  "display_name" => "Xnix MessageBox",
+  "window_match" => "Xnix document opened by Windows app",
+  "document_content_marker_observation_required" => true,
+  "document_content_marker_observed" => true,
+  "real_run_receipt_summary_ready" => true,
+  "real_run_receipt_summary_file_open_verified" => true,
+  "real_run_receipt_summary_document_content_marker_observed" => true,
+  "real_run_acceptance_ready" => true,
+  "real_run_acceptance_document_content_marker_observed" => true,
+  "real_run_acceptance_center_projection_consumed" => true,
+  "real_run_acceptance_kde_page_projection_consumed" => true,
+  "owner_file_open_entrypoint_invoked" => true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => true,
+  "go_owned_q4_winapp_acceptance_schema" => "xnix.runtime.q4_winapp_acceptance.v1",
+  "go_owned_q4_winapp_acceptance_request_type" => "q4-winapp-acceptance-preview",
+  "go_owned_q4_winapp_acceptance_ready" => true,
+  "go_owned_q4_winapp_acceptance_consumed" => true,
+  "go_owned_q4_winapp_acceptance_document_content_marker_observed" => true,
+  "go_owned_q4_winapp_acceptance_path_exposed" => false,
+  "go_owned_q4_winapp_acceptance_remote_host_exposed" => false,
+  "go_owned_q4_winapp_acceptance_delegated_command_exposed" => false,
+  "remote_executable_path_exposed" => false,
+  "host_compilation_avoided" => true,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false
+)
+failed_q4_messagebox_smoke = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
+  "request_type" => "q4-messagebox-smoke",
+  "status" => "passed",
+  "app_id" => "org.xnix.apps.messagebox",
+  "display_name" => "Xnix MessageBox",
+  "window_match" => "Xnix Windows GUI Smoke",
+  "document_content_marker_observation_required" => true,
+  "document_content_marker_observed" => false,
+  "real_run_receipt_summary_ready" => true,
+  "real_run_receipt_summary_file_open_verified" => true,
+  "real_run_receipt_summary_document_content_marker_observed" => false,
+  "real_run_acceptance_ready" => false,
+  "real_run_acceptance_document_content_marker_observed" => false,
+  "real_run_acceptance_center_projection_consumed" => true,
+  "real_run_acceptance_kde_page_projection_consumed" => true,
+  "owner_file_open_entrypoint_invoked" => true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => true,
+  "go_owned_q4_winapp_acceptance_schema" => "xnix.runtime.q4_winapp_acceptance.v1",
+  "go_owned_q4_winapp_acceptance_request_type" => "q4-winapp-acceptance-preview",
+  "go_owned_q4_winapp_acceptance_ready" => false,
+  "go_owned_q4_winapp_acceptance_consumed" => true,
+  "go_owned_q4_winapp_acceptance_document_content_marker_observed" => false,
+  "go_owned_q4_winapp_acceptance_path_exposed" => false,
+  "go_owned_q4_winapp_acceptance_remote_host_exposed" => false,
+  "go_owned_q4_winapp_acceptance_delegated_command_exposed" => false,
+  "remote_executable_path_exposed" => false,
+  "host_compilation_avoided" => true,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false
+)
 failed_preflight_smoke = write_json_fixture(
   "version" => File.read(project_root.join("VERSION")).strip,
   "schema_version" => "xnix.runtime.desktop_trigger_request_preflight_smoke.v1",
@@ -184,6 +254,7 @@ failed_preflight_smoke = write_json_fixture(
   "host_root_modified" => false
 )
 malformed_preflight_smoke = write_text_fixture("{not-json")
+malformed_messagebox_smoke = write_text_fixture("{not-json")
 malformed = nil
 
 begin
@@ -203,7 +274,9 @@ begin
     "--full-checkpoint-promotion",
     completed_promotion.path,
     "--desktop-trigger-request-preflight-smoke",
-    preflight_smoke.path
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path
   )
   assert(status.success?, "release evidence index JSON must exit successfully: #{stderr}")
   report = JSON.parse(stdout)
@@ -215,6 +288,10 @@ begin
   assert(preflight_status.fetch("evidence_supplied"), "release evidence index must report supplied preflight smoke evidence")
   assert(preflight_status.fetch("smoke_passed"), "release evidence index must report passing preflight smoke evidence")
   assert(preflight_status.fetch("status") == "implemented", "release evidence index must expose implemented preflight smoke evidence")
+  messagebox_status = report.fetch("q4_messagebox_smoke_status")
+  assert(messagebox_status.fetch("evidence_supplied"), "release evidence index must report supplied q4 MessageBox evidence")
+  assert(messagebox_status.fetch("smoke_passed"), "release evidence index must report passing q4 MessageBox evidence")
+  assert(messagebox_status.fetch("status") == "implemented", "release evidence index must expose implemented q4 MessageBox evidence")
   assert(report.fetch("runtime_owned"), "release evidence index must keep Runtime ownership explicit")
   assert(!report.fetch("go_runtime_backed"), "release evidence index must identify itself as a Ruby report, not Go Runtime business logic")
   assert(report.fetch("ruby_report_only"), "release evidence index must be marked Ruby report only")
@@ -259,6 +336,10 @@ begin
   assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("smoke_passed"), "preflight smoke claim must expose smoke pass state")
   assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("blocked_preflight_state") == "blocked-missing-promotion", "preflight smoke claim must preserve blocked state evidence")
   assert(claims.fetch("desktop-trigger-request-preflight-smoke").fetch("ready_preflight_state") == "ready-for-operator-request", "preflight smoke claim must preserve ready state evidence")
+  assert(claims.fetch("q4-messagebox-document-smoke").fetch("evidence_level") == "implemented", "q4 MessageBox claim must be implemented when supplied evidence passes")
+  assert(claims.fetch("q4-messagebox-document-smoke").fetch("smoke_passed"), "q4 MessageBox claim must expose smoke pass state")
+  assert(claims.fetch("q4-messagebox-document-smoke").fetch("document_content_marker_observed"), "q4 MessageBox claim must expose document marker observation")
+  assert(claims.fetch("q4-messagebox-document-smoke").fetch("go_owned_q4_winapp_acceptance_ready"), "q4 MessageBox claim must expose Go-owned q4 acceptance readiness")
   assert(claims.fetch("restricted-heavy-smoke-skipped").fetch("evidence_level") == "skipped", "heavy smoke claim must be skipped by default")
   assert(claims.fetch("kde-first-presence").fetch("evidence_level") == "implemented", "KDE presence claim must be implemented when seven entry points are present")
   assert(claims.fetch("contract-drift").fetch("evidence_level") == "implemented", "contract drift claim must be implemented when no drift is reported")
@@ -280,7 +361,9 @@ begin
     "--full-checkpoint-promotion",
     completed_promotion.path,
     "--desktop-trigger-request-preflight-smoke",
-    preflight_smoke.path
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path
   )
   assert(markdown_status.success?, "release evidence index Markdown must exit successfully: #{markdown_stderr}")
   assert(markdown.include?("# Release Evidence Index"), "Markdown report must include a title")
@@ -288,6 +371,7 @@ begin
   assert(markdown.include?("product-image-qemu-acceptance"), "Markdown report must include product image claim")
   assert(markdown.include?("full-checkpoint-promotion"), "Markdown report must include promotion claim")
   assert(markdown.include?("desktop-trigger-request-preflight-smoke"), "Markdown report must include preflight smoke claim")
+  assert(markdown.include?("q4-messagebox-document-smoke"), "Markdown report must include q4 MessageBox claim")
 
   missing_preflight_stdout, missing_preflight_stderr, missing_preflight_status = Open3.capture3(
     "ruby",
@@ -310,6 +394,30 @@ begin
   missing_preflight_claim = missing_preflight_report.fetch("claims").find { |claim| claim.fetch("id") == "desktop-trigger-request-preflight-smoke" }
   assert(missing_preflight_report.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "not-supplied", "missing preflight smoke evidence must be visible")
   assert(missing_preflight_claim.fetch("evidence_level") == "skipped", "missing preflight smoke evidence must be skipped, not executed")
+
+  missing_messagebox_stdout, missing_messagebox_stderr, missing_messagebox_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path
+  )
+  assert(missing_messagebox_status.success?, "missing q4 MessageBox evidence case must still emit a release index: #{missing_messagebox_stderr}")
+  missing_messagebox_report = JSON.parse(missing_messagebox_stdout)
+  missing_messagebox_claim = missing_messagebox_report.fetch("claims").find { |claim| claim.fetch("id") == "q4-messagebox-document-smoke" }
+  assert(missing_messagebox_report.fetch("q4_messagebox_smoke_status").fetch("status") == "not-supplied", "missing q4 MessageBox evidence must be visible")
+  assert(missing_messagebox_claim.fetch("evidence_level") == "skipped", "missing q4 MessageBox evidence must be skipped, not executed")
 
   failed_preflight_stdout, failed_preflight_stderr, failed_preflight_status = Open3.capture3(
     "ruby",
@@ -336,6 +444,33 @@ begin
   assert(failed_preflight_claim.fetch("evidence_level") == "blocked", "failed preflight smoke claim must be blocked")
   assert(failed_preflight_claim.fetch("blockers").include?("desktop-trigger-request-preflight-smoke-not-passed"), "failed preflight smoke claim must name the failed smoke blocker")
 
+  failed_messagebox_stdout, failed_messagebox_stderr, failed_messagebox_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    failed_q4_messagebox_smoke.path
+  )
+  assert(failed_messagebox_status.success?, "failed q4 MessageBox evidence case must still emit a release index: #{failed_messagebox_stderr}")
+  failed_messagebox_report = JSON.parse(failed_messagebox_stdout)
+  failed_messagebox_claim = failed_messagebox_report.fetch("claims").find { |claim| claim.fetch("id") == "q4-messagebox-document-smoke" }
+  assert(failed_messagebox_report.fetch("q4_messagebox_smoke_status").fetch("status") == "blocked", "failed q4 MessageBox evidence must be blocked")
+  assert(failed_messagebox_claim.fetch("evidence_level") == "blocked", "failed q4 MessageBox claim must be blocked")
+  assert(failed_messagebox_claim.fetch("blockers").include?("q4-messagebox-document-marker-missing"), "failed q4 MessageBox claim must name document marker blocker")
+
   malformed_preflight_stdout, malformed_preflight_stderr, malformed_preflight_status = Open3.capture3(
     "ruby",
     script.to_s,
@@ -360,6 +495,33 @@ begin
   assert(malformed_preflight_report.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "blocked", "malformed preflight smoke evidence must be blocked")
   assert(malformed_preflight_claim.fetch("evidence_level") == "blocked", "malformed preflight smoke claim must be blocked")
   assert(malformed_preflight_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed preflight smoke claim must name malformed-report blocker")
+
+  malformed_messagebox_stdout, malformed_messagebox_stderr, malformed_messagebox_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    malformed_messagebox_smoke.path
+  )
+  assert(malformed_messagebox_status.success?, "malformed q4 MessageBox evidence case must still emit a release index: #{malformed_messagebox_stderr}")
+  malformed_messagebox_report = JSON.parse(malformed_messagebox_stdout)
+  malformed_messagebox_claim = malformed_messagebox_report.fetch("claims").find { |claim| claim.fetch("id") == "q4-messagebox-document-smoke" }
+  assert(malformed_messagebox_report.fetch("q4_messagebox_smoke_status").fetch("status") == "blocked", "malformed q4 MessageBox evidence must be blocked")
+  assert(malformed_messagebox_claim.fetch("evidence_level") == "blocked", "malformed q4 MessageBox claim must be blocked")
+  assert(malformed_messagebox_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed q4 MessageBox claim must name malformed-report blocker")
 
   blocked_stdout, blocked_stderr, blocked_status = Open3.capture3(
     "ruby",
@@ -416,7 +578,7 @@ begin
   malformed_claims = malformed_report.fetch("claims").to_h { |claim| [claim.fetch("id"), claim] }
   assert(malformed_claims.fetch("report-integrity").fetch("evidence_level") == "blocked", "report integrity claim must block malformed reports")
 ensure
-  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, failed_preflight_smoke, malformed_preflight_smoke, malformed].compact.each do |file|
+  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, q4_messagebox_smoke, failed_preflight_smoke, failed_q4_messagebox_smoke, malformed_preflight_smoke, malformed_messagebox_smoke, malformed].compact.each do |file|
     file.close
     file.unlink
   end

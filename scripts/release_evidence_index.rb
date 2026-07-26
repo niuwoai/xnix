@@ -183,6 +183,7 @@ def parse_options
     parser.on("--kde-smoke-report PATH", "Use an existing KDE-first presence smoke JSON report") { |value| options[:reports][:kde_smoke] = value }
     parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:reports][:full_checkpoint_promotion] = value }
     parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:reports][:desktop_trigger_request_preflight_smoke] = value }
+    parser.on("--q4-messagebox-smoke PATH", "Use an existing q4 MessageBox external Windows app document smoke JSON report") { |value| options[:reports][:q4_messagebox_smoke] = value }
   end.parse!
 
   unless %w[json markdown].include?(options[:format])
@@ -221,6 +222,14 @@ def load_optional_desktop_trigger_request_preflight_smoke(fixture_path)
   parse_report_json(Pathname.new(fixture_path).read, fixture_path)
 rescue Errno::ENOENT
   [nil, { source: fixture_path, error: "missing-report", detail: "desktop-trigger request preflight smoke evidence is missing" }]
+end
+
+def load_optional_q4_messagebox_smoke(fixture_path)
+  return [nil, nil] if fixture_path.to_s.strip.empty?
+
+  parse_report_json(Pathname.new(fixture_path).read, fixture_path)
+rescue Errno::ENOENT
+  [nil, { source: fixture_path, error: "missing-report", detail: "q4 MessageBox document smoke evidence is missing" }]
 end
 
 def evidence_level_from_status(status)
@@ -311,6 +320,7 @@ def build_report(options)
   product_smoke_evidence, product_smoke_error = load_product_smoke_evidence
   report_errors << product_smoke_error if product_smoke_error
   preflight_smoke_evidence, preflight_smoke_error = load_optional_desktop_trigger_request_preflight_smoke(options[:reports][:desktop_trigger_request_preflight_smoke])
+  messagebox_smoke_evidence, messagebox_smoke_error = load_optional_q4_messagebox_smoke(options[:reports][:q4_messagebox_smoke])
 
   claims = CLAIM_DEFINITIONS.map { |definition| domain_claim(definition, domains, report_errors) }
   claims << report_integrity_claim(report_errors)
@@ -320,6 +330,7 @@ def build_report(options)
   claims << kde_presence_claim(kde_smoke)
   claims << full_checkpoint_promotion_claim(full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << desktop_trigger_request_preflight_smoke_claim(preflight_smoke_evidence, preflight_smoke_error)
+  claims << q4_messagebox_smoke_claim(messagebox_smoke_evidence, messagebox_smoke_error)
   claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error, full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << skipped_heavy_smoke_claim
 
@@ -327,7 +338,7 @@ def build_report(options)
     "version" => VERSION,
     "schema_version" => "xnix.runtime.release_evidence_index.v1",
     "report_type" => "release-evidence-index",
-    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke",
+    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke+optional-q4-messagebox-document-smoke",
     "runtime_owned" => true,
     "go_runtime_backed" => false,
     "ruby_report_only" => true,
@@ -344,6 +355,7 @@ def build_report(options)
     "malformed_report_detected" => report_errors.any? { |error| error.fetch(:error) == "malformed-report" },
     "report_errors" => report_errors,
     "desktop_trigger_request_preflight_smoke_status" => desktop_trigger_request_preflight_smoke_status(preflight_smoke_evidence, preflight_smoke_error),
+    "q4_messagebox_smoke_status" => q4_messagebox_smoke_status(messagebox_smoke_evidence, messagebox_smoke_error),
     "claims" => claims,
     "claim_count" => claims.length,
     "counts" => count_claims(claims),
@@ -411,6 +423,83 @@ end
 
 def desktop_trigger_request_preflight_smoke_status(evidence, error)
   blockers = desktop_trigger_request_preflight_smoke_blockers(evidence, error)
+  {
+    "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
+    "smoke_passed" => evidence.is_a?(Hash) && blockers.empty?,
+    "status" => if error
+                  "blocked"
+                elsif evidence.is_a?(Hash)
+                  blockers.empty? ? "implemented" : "blocked"
+                else
+                  "not-supplied"
+                end,
+    "blockers" => blockers
+  }
+end
+
+def q4_messagebox_smoke_passed?(evidence)
+  evidence.is_a?(Hash) &&
+    evidence.fetch("schema_version", nil) == "xnix.scripts.q4_messagebox_smoke.v1" &&
+    evidence.fetch("request_type", nil) == "q4-messagebox-smoke" &&
+    evidence.fetch("status", nil) == "passed" &&
+    evidence.fetch("app_id", nil) == "org.xnix.apps.messagebox" &&
+    evidence.fetch("window_match", nil) == "Xnix document opened by Windows app" &&
+    evidence.fetch("document_content_marker_observation_required", false) == true &&
+    evidence.fetch("document_content_marker_observed", false) == true &&
+    evidence.fetch("real_run_receipt_summary_ready", false) == true &&
+    evidence.fetch("real_run_receipt_summary_file_open_verified", false) == true &&
+    evidence.fetch("real_run_receipt_summary_document_content_marker_observed", false) == true &&
+    evidence.fetch("real_run_acceptance_ready", false) == true &&
+    evidence.fetch("real_run_acceptance_document_content_marker_observed", false) == true &&
+    evidence.fetch("real_run_acceptance_center_projection_consumed", false) == true &&
+    evidence.fetch("real_run_acceptance_kde_page_projection_consumed", false) == true &&
+    evidence.fetch("owner_file_open_entrypoint_invoked", false) == true &&
+    evidence.fetch("runtime_evidence_owner_file_open_entrypoint_invoked", false) == true &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_schema", nil) == "xnix.runtime.q4_winapp_acceptance.v1" &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_request_type", nil) == "q4-winapp-acceptance-preview" &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_ready", false) == true &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_consumed", false) == true &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_document_content_marker_observed", false) == true &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_path_exposed", true) == false &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_remote_host_exposed", true) == false &&
+    evidence.fetch("go_owned_q4_winapp_acceptance_delegated_command_exposed", true) == false &&
+    evidence.fetch("remote_executable_path_exposed", true) == false &&
+    evidence.fetch("host_compilation_avoided", false) == true &&
+    evidence.fetch("host_root_modified", true) == false &&
+    evidence.fetch("privileged_container_required", true) == false &&
+    evidence.fetch("host_networking_required", true) == false &&
+    evidence.fetch("docker_socket_mounted", true) == false &&
+    evidence.fetch("broad_host_mount_required", true) == false
+end
+
+def q4_messagebox_smoke_blockers(evidence, error)
+  return ["q4-messagebox-smoke-report:#{error.fetch(:error)}"] if error
+  return [] unless evidence
+  return [] if q4_messagebox_smoke_passed?(evidence)
+
+  blockers = []
+  blockers << "q4-messagebox-smoke-schema" unless evidence.fetch("schema_version", nil) == "xnix.scripts.q4_messagebox_smoke.v1" && evidence.fetch("request_type", nil) == "q4-messagebox-smoke"
+  blockers << "q4-messagebox-smoke-not-passed" unless evidence.fetch("status", nil) == "passed"
+  blockers << "q4-messagebox-app-identity-missing" unless evidence.fetch("app_id", nil) == "org.xnix.apps.messagebox"
+  blockers << "q4-messagebox-document-marker-missing" unless evidence.fetch("window_match", nil) == "Xnix document opened by Windows app" && evidence.fetch("document_content_marker_observed", false) == true
+  blockers << "q4-messagebox-receipt-or-acceptance-incomplete" unless evidence.fetch("real_run_receipt_summary_ready", false) == true && evidence.fetch("real_run_acceptance_ready", false) == true
+  blockers << "q4-messagebox-go-acceptance-incomplete" unless evidence.fetch("go_owned_q4_winapp_acceptance_ready", false) == true && evidence.fetch("go_owned_q4_winapp_acceptance_consumed", false) == true
+  blockers << "q4-messagebox-safety-gate-open" unless %w[
+    go_owned_q4_winapp_acceptance_path_exposed
+    go_owned_q4_winapp_acceptance_remote_host_exposed
+    go_owned_q4_winapp_acceptance_delegated_command_exposed
+    remote_executable_path_exposed
+    host_root_modified
+    privileged_container_required
+    host_networking_required
+    docker_socket_mounted
+    broad_host_mount_required
+  ].all? { |key| evidence.fetch(key, true) == false }
+  blockers.uniq
+end
+
+def q4_messagebox_smoke_status(evidence, error)
+  blockers = q4_messagebox_smoke_blockers(evidence, error)
   {
     "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
     "smoke_passed" => evidence.is_a?(Hash) && blockers.empty?,
@@ -600,6 +689,39 @@ def desktop_trigger_request_preflight_smoke_claim(evidence, error)
     human_authorization_required: !blockers.empty?,
     blockers: blockers,
     next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this evidence available to release review; do not replace it with live smoke execution inside the index." : "Supply a passing preflight smoke JSON report before relying on this release claim."
+  }
+end
+
+def q4_messagebox_smoke_claim(evidence, error)
+  blockers = q4_messagebox_smoke_blockers(evidence, error)
+  level = if error || evidence
+            blockers.empty? ? "implemented" : "blocked"
+          else
+            "skipped"
+          end
+  {
+    id: "q4-messagebox-document-smoke",
+    title: "q4 MessageBox external Windows app document smoke is classified without execution",
+    release_claim: "The release index can consume existing q4 MessageBox evidence proving a q4-built external Windows app opened and read a delegated document through the Runtime.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[scripts/q4_messagebox_smoke.rb scripts/q4_winapp_smoke.rb scripts/remote_wine_guest_gui_smoke.rb scripts/release_evidence_index.rb scripts/merge_readiness_packet.rb],
+    verification_commands: ["ruby scripts/q4_messagebox_smoke.rb --execute", "ruby scripts/release_evidence_index.rb --format json --q4-messagebox-smoke REPORT.json"],
+    current_evidence: if error
+                        "q4 MessageBox document smoke evidence could not be loaded."
+                      elsif evidence
+                        "q4 MessageBox document smoke evidence is #{blockers.empty? ? "passing with document marker observation" : "present but blocked"}."
+                      else
+                        "q4 MessageBox document smoke evidence was not supplied; the release index did not run the smoke."
+                      end,
+    smoke_passed: evidence.is_a?(Hash) && blockers.empty?,
+    app_id: evidence.is_a?(Hash) ? evidence.fetch("app_id", "missing") : "not-supplied",
+    document_content_marker_observed: evidence.is_a?(Hash) && evidence.fetch("document_content_marker_observed", false) == true,
+    go_owned_q4_winapp_acceptance_ready: evidence.is_a?(Hash) && evidence.fetch("go_owned_q4_winapp_acceptance_ready", false) == true,
+    unsafe_gates: disabled_unsafe_gates,
+    human_authorization_required: !blockers.empty?,
+    blockers: blockers,
+    next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this q4 MessageBox evidence available to release review; do not rerun q4 from the index." : "Supply a passing q4 MessageBox smoke JSON report before relying on this release claim."
   }
 end
 

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc187`.
+The project is currently at `v0.2.640-rc188`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc187`.
 
 ## Current Checkpoint
 
-v0.2.640-rc187 promotes document-content consumption into Go-owned real Windows app acceptance. q4 owner file-open smokes now carry explicit `document_content_marker_*` fields from the remote Wine GUI execute result through the real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper. Owner file-open MessageBox acceptance now requires observing the desktop-safe `Xnix document opened by Windows app` marker, while compile-heavy validation remains q4-first and the macOS host stays limited to lightweight Ruby/layout checks.
+v0.2.640-rc188 makes the real external Windows app lane reusable as release/readiness evidence. `scripts/merge_readiness_packet.rb` and `scripts/release_evidence_index.rb` can now consume an existing `scripts/q4_messagebox_smoke.rb --execute` JSON report through `--q4-messagebox-smoke` without running q4, QEMU, Wine, Docker, network fetches, staging, tagging, or host mutation. The evidence must prove the q4-built MessageBox external `.exe`, owner-controlled file-open, observed document-content marker, ready real-run receipt and acceptance summaries, Go-owned generic q4 Windows app acceptance, host compilation avoidance, and closed host/container safety gates.
+
+The previous v0.2.640-rc187 checkpoint promoted document-content consumption into Go-owned real Windows app acceptance. q4 owner file-open smokes now carry explicit `document_content_marker_*` fields from the remote Wine GUI execute result through the real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper. Owner file-open MessageBox acceptance now requires observing the desktop-safe `Xnix document opened by Windows app` marker, while compile-heavy validation remains q4-first and the macOS host stays limited to lightweight Ruby/layout checks.
 
 The previous v0.2.640-rc186 checkpoint made the q4 MessageBox run prove real file consumption by the Windows app itself. The MessageBox fixture now reads the first file-open argument and places the opened document's first-line marker in the window title. `scripts/q4_messagebox_smoke.rb` owner mode matches the desktop-safe `Xnix document opened by Windows app` marker, so the q4 GUI evidence now proves that the Linux desktop file-open path reached the Windows process and that the process consumed the document content.
 
