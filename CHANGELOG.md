@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc178] - 2026-07-26
+
+### Added
+
+- Added `scripts/q4_sample_notepad_smoke.rb`, a short execute-gated q4 wrapper for the real Sample Notepad owner-controlled file-open GUI smoke and Go acceptance path.
+- Added Ruby coverage proving the wrapper defaults to plan mode, delegates to the maintained q4 GUI smoke, requires Sample Notepad file-open/window-match evidence, and avoids host compilation.
+- Added layout coverage for the q4 Sample Notepad smoke entrypoint.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc178`.
+
 ## [0.2.640-rc177] - 2026-07-26
 
 ### Added

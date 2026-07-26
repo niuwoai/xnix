@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc177`.
+The project is currently at `v0.2.640-rc178`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc177`.
 
 ## Current Checkpoint
 
-v0.2.640-rc177 wires the Go Runtime `real-winapp-run-acceptance-preview` command back into the q4 remote GUI smoke itself. A single owner-controlled Sample Notepad file-open run can now persist the execute-result JSON, generate the real run receipt summary, project it through Compatibility Center and KDE Center, generate the acceptance summary, and return top-level `real_run_acceptance_*` readiness and projection-consumption fields without requiring a second manual command. Compile-heavy build/test and real GUI validation remain q4-first so the macOS host stays limited to lightweight Ruby and layout checks.
+v0.2.640-rc178 adds `scripts/q4_sample_notepad_smoke.rb` as a short, execute-gated operator entrypoint for the real Windows app lane. Plan mode is the default; `--execute` delegates to the maintained q4 remote GUI smoke with Sample Notepad, the owner-controlled launch path, the `xnix-compat-open %U` file-open entrypoint, a generated sample document, window-title matching, and the Go-owned real run acceptance requirement. This turns the long q4 command into a repeatable "actually run a Windows GUI app and prove acceptance" smoke while keeping compile-heavy work and QEMU/Wine execution on q4.
+
+The previous v0.2.640-rc177 checkpoint wired the Go Runtime `real-winapp-run-acceptance-preview` command back into the q4 remote GUI smoke itself. A single owner-controlled Sample Notepad file-open run can now persist the execute-result JSON, generate the real run receipt summary, project it through Compatibility Center and KDE Center, generate the acceptance summary, and return top-level `real_run_acceptance_*` readiness and projection-consumption fields without requiring a second manual command. Compile-heavy build/test and real GUI validation remain q4-first so the macOS host stays limited to lightweight Ruby and layout checks.
 
 The previous v0.2.640-rc176 checkpoint added the Go Runtime `real-winapp-run-acceptance-preview` command. It consumes the receipt-backed q4 remote GUI smoke execute-result from v0.2.640-rc175 and emits a compact desktop-safe acceptance summary proving that a real Windows GUI app ran, owner-controlled file-open entrypoint evidence was present, the receipt summary was ready, and Compatibility Center plus KDE Center projections consumed that receipt. The acceptance output deliberately hides q4 connection details, remote paths, executable names, raw window evidence, and backend command details, giving future CI, KDE, and AI surfaces a single Go-owned pass/fail read model for the real Sample Notepad run.
 
