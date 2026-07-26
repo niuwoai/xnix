@@ -263,6 +263,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppVerifiedCatalogLaunchHandoffRecord(args[1:], stdout)
 	case "known-app-verified-catalog-launch-materialization-record":
 		return runKnownAppVerifiedCatalogLaunchMaterializationRecord(args[1:], stdout)
+	case "known-app-verified-catalog-dispatch-request-record":
+		return runKnownAppVerifiedCatalogDispatchRequestRecord(args[1:], stdout)
 	case "gui-smoke-evidence-preview":
 		return runGUISmokeEvidencePreview(args[1:], stdout)
 	case "real-winapp-gui-evidence-packet-preview":

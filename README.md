@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc202`.
+The project is currently at `v0.2.640-rc203`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc202`.
 
 ## Current Checkpoint
 
-v0.2.640-rc202 lets the Runtime owner consume the verified-catalog launch handoff and materialize launch state. `xnix-runtime-go known-app-verified-catalog-launch-materialization-record --state-root STATE --handoff-relative-path HANDOFF --cache-root CACHE` reads the KDE-forwarded handoff handle, records the launch authorization receipt, creates the controlled execution session when the managed artifact is ready, and records the session-gated review receipt. The command still does not start dispatch, execution, desktop launch, or backend processes. The rc202 q4 validation used a fresh 7zr run acceptance and returned `materialization_ready=true`, `controlled_session_record_state=persisted`, `session_gated_review_receipt_recorded=true`, and `backend_process_started=false`.
+v0.2.640-rc203 records the Runtime-owner dispatch request that follows verified-catalog launch materialization. `xnix-runtime-go known-app-verified-catalog-dispatch-request-record --state-root STATE --handoff-relative-path HANDOFF --cache-root CACHE` reuses the KDE-forwarded handoff handle, materializes the Runtime-owned launch receipts and controlled session, and writes an internal dispatch request under the Runtime state root when the managed artifact is ready. Public output exposes only a relative dispatch request handle, digest, runner request type, and safe argument names; it does not expose state roots, cache roots, runner argument values, backend details, raw output, or process execution. The rc203 q4 validation ran fresh 7zr verified-catalog acceptance, recorded a dispatch request with `materialization_ready=true`, `dispatch_request_written=true`, `runtime_owner_dispatch_inputs_ready=true`, and confirmed the internal request carries state, cache, receipt, review, and session runner arguments. Dispatch, desktop launch, backend launch, and backend processes remain closed until the runner executes the recorded request.
+
+The previous v0.2.640-rc202 checkpoint lets the Runtime owner consume the verified-catalog launch handoff and materialize launch state. `xnix-runtime-go known-app-verified-catalog-launch-materialization-record --state-root STATE --handoff-relative-path HANDOFF --cache-root CACHE` reads the KDE-forwarded handoff handle, records the launch authorization receipt, creates the controlled execution session when the managed artifact is ready, and records the session-gated review receipt. The command still does not start dispatch, execution, desktop launch, or backend processes. The rc202 q4 validation used a fresh 7zr run acceptance and returned `materialization_ready=true`, `controlled_session_record_state=persisted`, `session_gated_review_receipt_recorded=true`, and `backend_process_started=false`.
 
 The previous v0.2.640-rc201 checkpoint turns accepted verified-catalog real run evidence into a Runtime-owner launch handoff. `xnix-runtime-go known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned acceptance JSON, persists a safe handoff under the Runtime state root, and returns a KDE-callable owner-service route that forwards only the handoff handle to `RequestRuntimeOwnedLaunch`. It does not reconstruct receipts in KDE, expose state roots or acceptance paths, start the desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
 

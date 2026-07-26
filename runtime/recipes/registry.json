@@ -5,19 +5,19 @@
     {
       "id": "org.xnix.apps.mines",
       "path": "org.xnix.apps.mines.json",
-      "sha256": "28885bec7ff4eebdceb3aabf8095f561a81630ed783fca468790b52fae738fea",
+      "sha256": "c391578f45e312e170d2b4ea7bf1796266b2e1f5fc71be1722361d0d5f22aefb",
       "signature_status": "development-only"
     },
     {
       "id": "org.xnix.apps.messagebox",
       "path": "org.xnix.apps.messagebox.json",
-      "sha256": "0c1221a2190f1129b914d83d14953856a2de1d2bdf9a0534a2132c730eb689fd",
+      "sha256": "117a96115a3cb59a165542d4b4b7f11d424de40d979b8078c6cd73387fb63cf4",
       "signature_status": "development-only"
     },
     {
       "id": "org.xnix.sample.notepad",
       "path": "org.xnix.sample.notepad.json",
-      "sha256": "9a89835e2930c755f403ba7b1ef820c44124510e50066e2d2fede0691ef66f4d",
+      "sha256": "2fe546c44833872f2b3ee438004ecb5a5c50be8b9ebc05df719a2c7c8a664f8c",
       "signature_status": "development-only"
     }
   ]

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc203] - 2026-07-27
+
+### Added
+
+- Added the Go Runtime `known-app-verified-catalog-dispatch-request-record` command, which consumes the KDE-forwarded verified-catalog handoff handle, reuses launch materialization, and records an internal Runtime-owner dispatch request when receipts and the controlled session are ready.
+- Added Go unit and CLI coverage for the dispatch request record path, including proof that blocked materialization does not write a request and that public output hides state roots, cache roots, runner argument values, backend details, raw output, and process-start gates.
+
+### Changed
+
+- Expanded the q4 targeted Go test default regex and layout guard to cover verified-catalog dispatch request records.
+- Verified the rc203 dispatch request path on q4 with fresh 7zr verified-catalog acceptance, producing a persisted Runtime-owner dispatch request while keeping public runner argument values and backend process start disabled.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc203`.
+
 ## [0.2.640-rc202] - 2026-07-27
 
 ### Added

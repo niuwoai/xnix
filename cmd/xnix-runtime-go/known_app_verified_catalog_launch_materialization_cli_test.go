@@ -87,3 +87,78 @@ func TestKnownAppVerifiedCatalogLaunchMaterializationRecordCommandRejectsMissing
 		t.Fatalf("missing handoff path must be rejected, got: %v", err)
 	}
 }
+
+func TestKnownAppVerifiedCatalogDispatchRequestRecordCommandBlocksUntilMaterializationReady(t *testing.T) {
+	stateRoot := t.TempDir()
+	acceptancePath := writeKnownAppVerifiedCatalogRunAcceptanceCLIFile(t, "7zr")
+	var handoffOutput bytes.Buffer
+	if err := run([]string{
+		"known-app-verified-catalog-launch-handoff-record",
+		"--state-root", stateRoot,
+		"--known-app-verified-catalog-run-acceptance", acceptancePath,
+	}, &handoffOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-launch-handoff-record returned error: %v", err)
+	}
+	var handoff map[string]any
+	if err := json.Unmarshal(handoffOutput.Bytes(), &handoff); err != nil {
+		t.Fatalf("handoff output must be JSON: %v\n%s", err, handoffOutput.String())
+	}
+	relativePath, ok := handoff["handoff_relative_path"].(string)
+	if !ok || relativePath == "" {
+		t.Fatalf("handoff output must expose a relative handoff handle: %#v", handoff)
+	}
+	var output bytes.Buffer
+	err := run([]string{
+		"known-app-verified-catalog-dispatch-request-record",
+		"--state-root", stateRoot,
+		"--handoff-relative-path", relativePath,
+		"--cache-root", filepath.Join(t.TempDir(), "missing-cache"),
+	}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-dispatch-request-record returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("dispatch request output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["version"] != currentProjectVersion(t) ||
+		payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_dispatch_request.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-dispatch-request-record" ||
+		payload["source"] != "known-app-verified-catalog-launch-materialization-record+dispatch-runner-request" ||
+		payload["app_id"] != "7zr" ||
+		payload["handoff_consumed"] != true ||
+		payload["handoff_relative_path"] != relativePath ||
+		payload["materialization_state"] != "blocked-managed-artifact-required" ||
+		payload["materialization_ready"] != false ||
+		payload["dispatch_request_record_state"] != "blocked-materialization-required" ||
+		payload["dispatch_request_written"] != false ||
+		payload["dispatch_runner_request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["dispatch_runner_name"] != "xnix-compat-launch" ||
+		payload["dispatch_runner_argument_values_exposed"] != false ||
+		payload["runtime_owner_dispatch_inputs_ready"] != false ||
+		payload["dispatch_allowed"] != false ||
+		payload["dispatch_started"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["next_owner_action"] != "materialize-launch-session" {
+		t.Fatalf("unexpected blocked dispatch request payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) || strings.Contains(output.String(), acceptancePath) {
+		t.Fatalf("dispatch request output exposed owner paths: %s", output.String())
+	}
+	if _, err := os.Stat(filepath.Join(stateRoot, "runtime", "known-app-verified-catalog-dispatch-requests")); !os.IsNotExist(err) {
+		t.Fatalf("blocked dispatch request must not create request directory: %v", err)
+	}
+}
+
+func TestKnownAppVerifiedCatalogDispatchRequestRecordCommandRejectsMissingInputs(t *testing.T) {
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-dispatch-request-record"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "requires --state-root") {
+		t.Fatalf("missing state root must be rejected, got: %v", err)
+	}
+	err = run([]string{"known-app-verified-catalog-dispatch-request-record", "--state-root", t.TempDir()}, &output)
+	if err == nil || !strings.Contains(err.Error(), "requires --handoff-relative-path") {
+		t.Fatalf("missing handoff path must be rejected, got: %v", err)
+	}
+}
