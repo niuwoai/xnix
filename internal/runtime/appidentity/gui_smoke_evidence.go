@@ -23,62 +23,71 @@ type GUISmokeEvidencePreviewRequest struct {
 }
 
 type GUISmokeEvidencePreview struct {
-	SchemaVersion                       string                       `json:"schema_version"`
-	RequestType                         string                       `json:"request_type"`
-	Source                              string                       `json:"source"`
-	RuntimeMethod                       string                       `json:"runtime_method"`
-	ReadMethod                          string                       `json:"read_method"`
-	ReportStatus                        string                       `json:"report_status"`
-	ReportConsumed                      bool                         `json:"report_consumed"`
-	ReportPathExposed                   bool                         `json:"report_path_exposed"`
-	AppID                               string                       `json:"app_id"`
-	DisplayName                         string                       `json:"display_name"`
-	AppVersion                          string                       `json:"app_version"`
-	RecipeBacked                        bool                         `json:"recipe_backed"`
-	RecipeAppID                         string                       `json:"recipe_app_id,omitempty"`
-	GUIAppName                          string                       `json:"gui_app_name"`
-	LocalGUIExecutableConfigured        bool                         `json:"local_gui_executable_configured"`
-	ExecutableCopied                    bool                         `json:"executable_copied"`
-	OwnerControlledLaunchRequested      bool                         `json:"owner_controlled_launch_requested"`
-	OwnerExternalGUIAppRequested        bool                         `json:"owner_external_gui_app_requested"`
-	OwnerExternalGUIAppDelivery         string                       `json:"owner_external_gui_app_delivery,omitempty"`
-	OwnerSeedEvidenceProjected          bool                         `json:"owner_seed_evidence_projected"`
-	OwnerServiceCallReady               bool                         `json:"owner_service_call_ready"`
-	OwnerManagedLauncherInvoked         bool                         `json:"owner_managed_launcher_invoked"`
-	OwnerDelegatedManagedArtifactCopied bool                         `json:"owner_delegated_managed_artifact_copied"`
-	OwnerDelegatedSmokePassed           bool                         `json:"owner_delegated_smoke_passed"`
-	OwnerDelegatedEvidenceSource        string                       `json:"owner_delegated_evidence_source,omitempty"`
-	OwnerDelegatedExecutionStarted      bool                         `json:"owner_delegated_execution_started"`
-	OwnerDelegatedWindowObserved        bool                         `json:"owner_delegated_controlled_session_window_observed"`
-	OwnerControlledLaunchVerified       bool                         `json:"owner_controlled_launch_verified"`
-	OwnerManagedCopyVerified            bool                         `json:"owner_managed_copy_verified"`
-	OwnerEvidenceHandoffReady           bool                         `json:"owner_evidence_handoff_ready"`
-	OwnerEvidenceRelativePath           string                       `json:"owner_evidence_relative_path,omitempty"`
-	WinebootInvoked                     bool                         `json:"wineboot_invoked"`
-	XWindowObserved                     bool                         `json:"x_window_observed"`
-	WindowObserved                      bool                         `json:"window_observed"`
-	XWindowChildCount                   int                          `json:"x_window_child_count"`
-	XWinInfoBytes                       int                          `json:"xwininfo_bytes"`
-	GuestStderrBytes                    int                          `json:"guest_stderr_bytes"`
-	GuestGraphicsDriverErrorObserved    bool                         `json:"guest_graphics_driver_error_observed"`
-	CompatibilityCenterProjectionReady  bool                         `json:"compatibility_center_projection_ready"`
-	KDECenterProjectionReady            bool                         `json:"kde_center_projection_ready"`
-	KnownAppSmokeEvidence               KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
-	RuntimeOwned                        bool                         `json:"runtime_owned"`
-	GoRuntimeBacked                     bool                         `json:"go_runtime_backed"`
-	KDEPolicyOwner                      bool                         `json:"kde_policy_owner"`
-	DesktopLaunchEnabled                bool                         `json:"desktop_launch_enabled"`
-	BackendLaunchEnabled                bool                         `json:"backend_launch_enabled"`
-	ActionExecutionEnabled              bool                         `json:"action_execution_enabled"`
-	BackendDetailsExposed               bool                         `json:"backend_details_exposed"`
-	RawOutputExposed                    bool                         `json:"raw_output_exposed"`
-	RemotePathExposed                   bool                         `json:"remote_path_exposed"`
-	HostRootModified                    bool                         `json:"host_root_modified"`
-	PrivilegedContainerRequired         bool                         `json:"privileged_container_required"`
-	HostNetworkingRequired              bool                         `json:"host_networking_required"`
-	DockerSocketMounted                 bool                         `json:"docker_socket_mounted"`
-	BroadHostMountRequired              bool                         `json:"broad_host_mount_required"`
-	DesktopSafeSummary                  string                       `json:"desktop_safe_summary"`
+	SchemaVersion                                     string                       `json:"schema_version"`
+	RequestType                                       string                       `json:"request_type"`
+	Source                                            string                       `json:"source"`
+	RuntimeMethod                                     string                       `json:"runtime_method"`
+	ReadMethod                                        string                       `json:"read_method"`
+	ReportStatus                                      string                       `json:"report_status"`
+	ReportConsumed                                    bool                         `json:"report_consumed"`
+	ReportPathExposed                                 bool                         `json:"report_path_exposed"`
+	AppID                                             string                       `json:"app_id"`
+	DisplayName                                       string                       `json:"display_name"`
+	AppVersion                                        string                       `json:"app_version"`
+	RecipeBacked                                      bool                         `json:"recipe_backed"`
+	RecipeAppID                                       string                       `json:"recipe_app_id,omitempty"`
+	GUIAppName                                        string                       `json:"gui_app_name"`
+	LocalGUIExecutableConfigured                      bool                         `json:"local_gui_executable_configured"`
+	ExecutableCopied                                  bool                         `json:"executable_copied"`
+	OwnerControlledLaunchRequested                    bool                         `json:"owner_controlled_launch_requested"`
+	OwnerExternalGUIAppRequested                      bool                         `json:"owner_external_gui_app_requested"`
+	OwnerExternalGUIAppDelivery                       string                       `json:"owner_external_gui_app_delivery,omitempty"`
+	OwnerSeedEvidenceProjected                        bool                         `json:"owner_seed_evidence_projected"`
+	OwnerServiceCallReady                             bool                         `json:"owner_service_call_ready"`
+	OwnerManagedLauncherInvoked                       bool                         `json:"owner_managed_launcher_invoked"`
+	OwnerDelegatedManagedArtifactCopied               bool                         `json:"owner_delegated_managed_artifact_copied"`
+	OwnerDelegatedSmokePassed                         bool                         `json:"owner_delegated_smoke_passed"`
+	OwnerDelegatedEvidenceSource                      string                       `json:"owner_delegated_evidence_source,omitempty"`
+	OwnerDelegatedExecutionStarted                    bool                         `json:"owner_delegated_execution_started"`
+	OwnerDelegatedWindowObserved                      bool                         `json:"owner_delegated_controlled_session_window_observed"`
+	OwnerDelegatedFileArgumentCount                   int                          `json:"owner_delegated_file_argument_count"`
+	OwnerDelegatedFileArgumentCopiedCount             int                          `json:"owner_delegated_file_argument_copied_count"`
+	OwnerDelegatedFileArgumentsPassed                 bool                         `json:"owner_delegated_file_arguments_passed"`
+	OwnerDelegatedFileArgumentWinepathTranslated      bool                         `json:"owner_delegated_file_argument_winepath_translated"`
+	OwnerDelegatedFileArgumentWinepathTranslatedCount int                          `json:"owner_delegated_file_argument_winepath_translated_count"`
+	OwnerDelegatedRawFileArgumentPathExposed          bool                         `json:"owner_delegated_raw_file_argument_path_exposed"`
+	OwnerDelegatedWindowMatch                         string                       `json:"owner_delegated_window_match,omitempty"`
+	OwnerDelegatedWindowMatchObserved                 bool                         `json:"owner_delegated_window_match_observed"`
+	OwnerControlledLaunchVerified                     bool                         `json:"owner_controlled_launch_verified"`
+	OwnerManagedCopyVerified                          bool                         `json:"owner_managed_copy_verified"`
+	OwnerFileOpenVerified                             bool                         `json:"owner_file_open_verified"`
+	OwnerEvidenceHandoffReady                         bool                         `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath                         string                       `json:"owner_evidence_relative_path,omitempty"`
+	WinebootInvoked                                   bool                         `json:"wineboot_invoked"`
+	XWindowObserved                                   bool                         `json:"x_window_observed"`
+	WindowObserved                                    bool                         `json:"window_observed"`
+	XWindowChildCount                                 int                          `json:"x_window_child_count"`
+	XWinInfoBytes                                     int                          `json:"xwininfo_bytes"`
+	GuestStderrBytes                                  int                          `json:"guest_stderr_bytes"`
+	GuestGraphicsDriverErrorObserved                  bool                         `json:"guest_graphics_driver_error_observed"`
+	CompatibilityCenterProjectionReady                bool                         `json:"compatibility_center_projection_ready"`
+	KDECenterProjectionReady                          bool                         `json:"kde_center_projection_ready"`
+	KnownAppSmokeEvidence                             KnownAppSmokeEvidenceSummary `json:"known_app_smoke_evidence"`
+	RuntimeOwned                                      bool                         `json:"runtime_owned"`
+	GoRuntimeBacked                                   bool                         `json:"go_runtime_backed"`
+	KDEPolicyOwner                                    bool                         `json:"kde_policy_owner"`
+	DesktopLaunchEnabled                              bool                         `json:"desktop_launch_enabled"`
+	BackendLaunchEnabled                              bool                         `json:"backend_launch_enabled"`
+	ActionExecutionEnabled                            bool                         `json:"action_execution_enabled"`
+	BackendDetailsExposed                             bool                         `json:"backend_details_exposed"`
+	RawOutputExposed                                  bool                         `json:"raw_output_exposed"`
+	RemotePathExposed                                 bool                         `json:"remote_path_exposed"`
+	HostRootModified                                  bool                         `json:"host_root_modified"`
+	PrivilegedContainerRequired                       bool                         `json:"privileged_container_required"`
+	HostNetworkingRequired                            bool                         `json:"host_networking_required"`
+	DockerSocketMounted                               bool                         `json:"docker_socket_mounted"`
+	BroadHostMountRequired                            bool                         `json:"broad_host_mount_required"`
+	DesktopSafeSummary                                string                       `json:"desktop_safe_summary"`
 }
 
 type guiSmokeReport struct {
@@ -127,40 +136,48 @@ type guiSmokeReport struct {
 		BroadHostMountRequired          bool   `json:"broad_host_mount_required"`
 		HostMountCount                  int    `json:"host_mount_count"`
 	} `json:"container_payload"`
-	LocalGUIExecutableConfigured         bool   `json:"local_gui_executable_configured"`
-	ExecutableCopied                     bool   `json:"executable_copied"`
-	OwnerControlledLaunchRequested       bool   `json:"owner_controlled_launch_requested"`
-	OwnerExternalGUIAppRequested         bool   `json:"owner_external_gui_app_requested"`
-	OwnerExternalGUIAppDelivery          string `json:"owner_external_gui_app_delivery"`
-	OwnerSeedEvidenceProjected           bool   `json:"owner_seed_evidence_projected"`
-	OwnerServiceCallReady                bool   `json:"owner_service_call_ready"`
-	OwnerManagedLauncherInvoked          bool   `json:"owner_managed_launcher_invoked"`
-	OwnerDelegatedManagedArtifactCopied  bool   `json:"owner_delegated_managed_artifact_copied"`
-	OwnerDelegatedSmokePassed            bool   `json:"owner_delegated_smoke_passed"`
-	OwnerDelegatedEvidenceSource         string `json:"owner_delegated_evidence_source"`
-	OwnerDelegatedExecutionStarted       bool   `json:"owner_delegated_execution_started"`
-	OwnerDelegatedWindowObserved         bool   `json:"owner_delegated_controlled_session_window_observed"`
-	OwnerDelegatedHostRootModified       bool   `json:"owner_delegated_host_root_modified"`
-	OwnerDelegatedDockerSocketMounted    bool   `json:"owner_delegated_docker_socket_mounted"`
-	OwnerDelegatedBroadHostMountRequired bool   `json:"owner_delegated_broad_host_mount_required"`
-	OwnerDelegatedRawCommandExposed      bool   `json:"owner_delegated_raw_command_exposed"`
-	OwnerDelegatedBackendDetailsExposed  bool   `json:"owner_delegated_backend_details_exposed"`
-	OwnerEvidenceHandoffReady            bool   `json:"owner_evidence_handoff_ready"`
-	OwnerEvidenceRelativePath            string `json:"owner_evidence_relative_path"`
-	RuntimeGoOwnedGUISmoke               bool   `json:"runtime_go_owned_gui_smoke"`
-	RuntimePayloadSchemaVersion          string `json:"runtime_payload_schema_version"`
-	WinebootInvoked                      bool   `json:"wineboot_invoked"`
-	XWindowObserved                      bool   `json:"x_window_observed"`
-	XWindowChildCount                    int    `json:"x_window_child_count"`
-	XWinInfoBytes                        int    `json:"xwininfo_bytes"`
-	GuestStderrBytes                     int    `json:"guest_stderr_bytes"`
-	GuestGraphicsDriverErrorObserved     bool   `json:"guest_graphics_driver_error_observed"`
-	HostRootModified                     bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired          bool   `json:"privileged_container_required"`
-	HostNetworkingRequired               bool   `json:"host_networking_required"`
-	DockerSocketMounted                  bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired               bool   `json:"broad_host_mount_required"`
-	KDESafeOutputSummary                 string `json:"kde_safe_output_summary"`
+	LocalGUIExecutableConfigured                      bool   `json:"local_gui_executable_configured"`
+	ExecutableCopied                                  bool   `json:"executable_copied"`
+	OwnerControlledLaunchRequested                    bool   `json:"owner_controlled_launch_requested"`
+	OwnerExternalGUIAppRequested                      bool   `json:"owner_external_gui_app_requested"`
+	OwnerExternalGUIAppDelivery                       string `json:"owner_external_gui_app_delivery"`
+	OwnerSeedEvidenceProjected                        bool   `json:"owner_seed_evidence_projected"`
+	OwnerServiceCallReady                             bool   `json:"owner_service_call_ready"`
+	OwnerManagedLauncherInvoked                       bool   `json:"owner_managed_launcher_invoked"`
+	OwnerDelegatedManagedArtifactCopied               bool   `json:"owner_delegated_managed_artifact_copied"`
+	OwnerDelegatedSmokePassed                         bool   `json:"owner_delegated_smoke_passed"`
+	OwnerDelegatedEvidenceSource                      string `json:"owner_delegated_evidence_source"`
+	OwnerDelegatedExecutionStarted                    bool   `json:"owner_delegated_execution_started"`
+	OwnerDelegatedWindowObserved                      bool   `json:"owner_delegated_controlled_session_window_observed"`
+	OwnerDelegatedFileArgumentCount                   int    `json:"owner_delegated_file_argument_count"`
+	OwnerDelegatedFileArgumentCopiedCount             int    `json:"owner_delegated_file_argument_copied_count"`
+	OwnerDelegatedFileArgumentsPassed                 bool   `json:"owner_delegated_file_arguments_passed"`
+	OwnerDelegatedFileArgumentWinepathTranslated      bool   `json:"owner_delegated_file_argument_winepath_translated"`
+	OwnerDelegatedFileArgumentWinepathTranslatedCount int    `json:"owner_delegated_file_argument_winepath_translated_count"`
+	OwnerDelegatedRawFileArgumentPathExposed          bool   `json:"owner_delegated_raw_file_argument_path_exposed"`
+	OwnerDelegatedWindowMatch                         string `json:"owner_delegated_window_match"`
+	OwnerDelegatedWindowMatchObserved                 bool   `json:"owner_delegated_window_match_observed"`
+	OwnerDelegatedHostRootModified                    bool   `json:"owner_delegated_host_root_modified"`
+	OwnerDelegatedDockerSocketMounted                 bool   `json:"owner_delegated_docker_socket_mounted"`
+	OwnerDelegatedBroadHostMountRequired              bool   `json:"owner_delegated_broad_host_mount_required"`
+	OwnerDelegatedRawCommandExposed                   bool   `json:"owner_delegated_raw_command_exposed"`
+	OwnerDelegatedBackendDetailsExposed               bool   `json:"owner_delegated_backend_details_exposed"`
+	OwnerEvidenceHandoffReady                         bool   `json:"owner_evidence_handoff_ready"`
+	OwnerEvidenceRelativePath                         string `json:"owner_evidence_relative_path"`
+	RuntimeGoOwnedGUISmoke                            bool   `json:"runtime_go_owned_gui_smoke"`
+	RuntimePayloadSchemaVersion                       string `json:"runtime_payload_schema_version"`
+	WinebootInvoked                                   bool   `json:"wineboot_invoked"`
+	XWindowObserved                                   bool   `json:"x_window_observed"`
+	XWindowChildCount                                 int    `json:"x_window_child_count"`
+	XWinInfoBytes                                     int    `json:"xwininfo_bytes"`
+	GuestStderrBytes                                  int    `json:"guest_stderr_bytes"`
+	GuestGraphicsDriverErrorObserved                  bool   `json:"guest_graphics_driver_error_observed"`
+	HostRootModified                                  bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired                       bool   `json:"privileged_container_required"`
+	HostNetworkingRequired                            bool   `json:"host_networking_required"`
+	DockerSocketMounted                               bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired                            bool   `json:"broad_host_mount_required"`
+	KDESafeOutputSummary                              string `json:"kde_safe_output_summary"`
 }
 
 func PreviewGUISmokeEvidence(request GUISmokeEvidencePreviewRequest) (GUISmokeEvidencePreview, error) {
@@ -217,66 +234,76 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 	projectionReady := report.Status == "passed" && guiSmokeReportExecuted(report) && guiSmokeRuntimeOwned(report) && winebootInvoked && xWindowObserved && xWindowChildCount > 0
 	ownerControlledLaunchVerified := guiSmokeOwnerControlledLaunchVerified(report, projectionReady)
 	ownerManagedCopyVerified := ownerControlledLaunchVerified && report.OwnerExternalGUIAppRequested && report.OwnerExternalGUIAppDelivery == "owner-managed-copy" && report.OwnerDelegatedManagedArtifactCopied
+	ownerFileOpenVerified := guiSmokeOwnerFileOpenVerified(report, ownerControlledLaunchVerified)
 	ownerEvidenceHandoffReady := ownerControlledLaunchVerified && report.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(report.OwnerEvidenceRelativePath)
-	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, evidenceSource, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerEvidenceHandoffReady)
+	evidence := guiSmokeKnownAppEvidence(appID, displayName, appVersion, evidenceSource, report, projectionReady, ownerControlledLaunchVerified, ownerManagedCopyVerified, ownerFileOpenVerified, ownerEvidenceHandoffReady)
 
 	return GUISmokeEvidencePreview{
-		SchemaVersion:                       GUISmokeEvidencePreviewSchemaVersion,
-		RequestType:                         GUISmokeEvidencePreviewRequestType,
-		Source:                              evidenceSource + "+runtime-evidence-consumer",
-		RuntimeMethod:                       "PreviewGUISmokeEvidence",
-		ReadMethod:                          "GetGUISmokeEvidence",
-		ReportStatus:                        report.Status,
-		ReportConsumed:                      true,
-		ReportPathExposed:                   false,
-		AppID:                               appID,
-		DisplayName:                         displayName,
-		AppVersion:                          appVersion,
-		RecipeBacked:                        recipeBacked,
-		RecipeAppID:                         recipeAppID,
-		GUIAppName:                          guiAppName,
-		LocalGUIExecutableConfigured:        report.LocalGUIExecutableConfigured,
-		ExecutableCopied:                    report.ExecutableCopied,
-		OwnerControlledLaunchRequested:      report.OwnerControlledLaunchRequested,
-		OwnerExternalGUIAppRequested:        report.OwnerExternalGUIAppRequested,
-		OwnerExternalGUIAppDelivery:         report.OwnerExternalGUIAppDelivery,
-		OwnerSeedEvidenceProjected:          report.OwnerSeedEvidenceProjected,
-		OwnerServiceCallReady:               report.OwnerServiceCallReady,
-		OwnerManagedLauncherInvoked:         report.OwnerManagedLauncherInvoked,
-		OwnerDelegatedManagedArtifactCopied: report.OwnerDelegatedManagedArtifactCopied,
-		OwnerDelegatedSmokePassed:           report.OwnerDelegatedSmokePassed,
-		OwnerDelegatedEvidenceSource:        report.OwnerDelegatedEvidenceSource,
-		OwnerDelegatedExecutionStarted:      report.OwnerDelegatedExecutionStarted,
-		OwnerDelegatedWindowObserved:        report.OwnerDelegatedWindowObserved,
-		OwnerControlledLaunchVerified:       ownerControlledLaunchVerified,
-		OwnerManagedCopyVerified:            ownerManagedCopyVerified,
-		OwnerEvidenceHandoffReady:           ownerEvidenceHandoffReady,
-		OwnerEvidenceRelativePath:           strings.TrimSpace(report.OwnerEvidenceRelativePath),
-		WinebootInvoked:                     winebootInvoked,
-		XWindowObserved:                     xWindowObserved,
-		WindowObserved:                      xWindowObserved,
-		XWindowChildCount:                   xWindowChildCount,
-		XWinInfoBytes:                       xWinInfoBytes,
-		GuestStderrBytes:                    report.GuestStderrBytes,
-		GuestGraphicsDriverErrorObserved:    report.GuestGraphicsDriverErrorObserved,
-		CompatibilityCenterProjectionReady:  projectionReady,
-		KDECenterProjectionReady:            projectionReady,
-		KnownAppSmokeEvidence:               evidence,
-		RuntimeOwned:                        true,
-		GoRuntimeBacked:                     true,
-		KDEPolicyOwner:                      false,
-		DesktopLaunchEnabled:                false,
-		BackendLaunchEnabled:                false,
-		ActionExecutionEnabled:              false,
-		BackendDetailsExposed:               false,
-		RawOutputExposed:                    false,
-		RemotePathExposed:                   false,
-		HostRootModified:                    false,
-		PrivilegedContainerRequired:         false,
-		HostNetworkingRequired:              false,
-		DockerSocketMounted:                 false,
-		BroadHostMountRequired:              false,
-		DesktopSafeSummary:                  guiSmokeDesktopSafeSummary(displayName, evidenceSource, xWindowChildCount, safeOutputSummary),
+		SchemaVersion:                                GUISmokeEvidencePreviewSchemaVersion,
+		RequestType:                                  GUISmokeEvidencePreviewRequestType,
+		Source:                                       evidenceSource + "+runtime-evidence-consumer",
+		RuntimeMethod:                                "PreviewGUISmokeEvidence",
+		ReadMethod:                                   "GetGUISmokeEvidence",
+		ReportStatus:                                 report.Status,
+		ReportConsumed:                               true,
+		ReportPathExposed:                            false,
+		AppID:                                        appID,
+		DisplayName:                                  displayName,
+		AppVersion:                                   appVersion,
+		RecipeBacked:                                 recipeBacked,
+		RecipeAppID:                                  recipeAppID,
+		GUIAppName:                                   guiAppName,
+		LocalGUIExecutableConfigured:                 report.LocalGUIExecutableConfigured,
+		ExecutableCopied:                             report.ExecutableCopied,
+		OwnerControlledLaunchRequested:               report.OwnerControlledLaunchRequested,
+		OwnerExternalGUIAppRequested:                 report.OwnerExternalGUIAppRequested,
+		OwnerExternalGUIAppDelivery:                  report.OwnerExternalGUIAppDelivery,
+		OwnerSeedEvidenceProjected:                   report.OwnerSeedEvidenceProjected,
+		OwnerServiceCallReady:                        report.OwnerServiceCallReady,
+		OwnerManagedLauncherInvoked:                  report.OwnerManagedLauncherInvoked,
+		OwnerDelegatedManagedArtifactCopied:          report.OwnerDelegatedManagedArtifactCopied,
+		OwnerDelegatedSmokePassed:                    report.OwnerDelegatedSmokePassed,
+		OwnerDelegatedEvidenceSource:                 report.OwnerDelegatedEvidenceSource,
+		OwnerDelegatedExecutionStarted:               report.OwnerDelegatedExecutionStarted,
+		OwnerDelegatedWindowObserved:                 report.OwnerDelegatedWindowObserved,
+		OwnerDelegatedFileArgumentCount:              report.OwnerDelegatedFileArgumentCount,
+		OwnerDelegatedFileArgumentCopiedCount:        report.OwnerDelegatedFileArgumentCopiedCount,
+		OwnerDelegatedFileArgumentsPassed:            report.OwnerDelegatedFileArgumentsPassed,
+		OwnerDelegatedFileArgumentWinepathTranslated: report.OwnerDelegatedFileArgumentWinepathTranslated,
+		OwnerDelegatedFileArgumentWinepathTranslatedCount: report.OwnerDelegatedFileArgumentWinepathTranslatedCount,
+		OwnerDelegatedRawFileArgumentPathExposed:          report.OwnerDelegatedRawFileArgumentPathExposed,
+		OwnerDelegatedWindowMatch:                         strings.TrimSpace(report.OwnerDelegatedWindowMatch),
+		OwnerDelegatedWindowMatchObserved:                 report.OwnerDelegatedWindowMatchObserved,
+		OwnerControlledLaunchVerified:                     ownerControlledLaunchVerified,
+		OwnerManagedCopyVerified:                          ownerManagedCopyVerified,
+		OwnerFileOpenVerified:                             ownerFileOpenVerified,
+		OwnerEvidenceHandoffReady:                         ownerEvidenceHandoffReady,
+		OwnerEvidenceRelativePath:                         strings.TrimSpace(report.OwnerEvidenceRelativePath),
+		WinebootInvoked:                                   winebootInvoked,
+		XWindowObserved:                                   xWindowObserved,
+		WindowObserved:                                    xWindowObserved,
+		XWindowChildCount:                                 xWindowChildCount,
+		XWinInfoBytes:                                     xWinInfoBytes,
+		GuestStderrBytes:                                  report.GuestStderrBytes,
+		GuestGraphicsDriverErrorObserved:                  report.GuestGraphicsDriverErrorObserved,
+		CompatibilityCenterProjectionReady:                projectionReady,
+		KDECenterProjectionReady:                          projectionReady,
+		KnownAppSmokeEvidence:                             evidence,
+		RuntimeOwned:                                      true,
+		GoRuntimeBacked:                                   true,
+		KDEPolicyOwner:                                    false,
+		DesktopLaunchEnabled:                              false,
+		BackendLaunchEnabled:                              false,
+		ActionExecutionEnabled:                            false,
+		BackendDetailsExposed:                             false,
+		RawOutputExposed:                                  false,
+		RemotePathExposed:                                 false,
+		HostRootModified:                                  false,
+		PrivilegedContainerRequired:                       false,
+		HostNetworkingRequired:                            false,
+		DockerSocketMounted:                               false,
+		BroadHostMountRequired:                            false,
+		DesktopSafeSummary:                                guiSmokeDesktopSafeSummary(displayName, evidenceSource, xWindowChildCount, safeOutputSummary),
 	}, nil
 }
 
@@ -374,6 +401,29 @@ func validateGUISmokeReport(report guiSmokeReport) error {
 			return errors.New("owner-controlled GUI smoke evidence requires a safe owner evidence handoff path")
 		}
 	}
+	if guiSmokeOwnerFileOpenEvidencePresent(report) {
+		windowMatch := strings.TrimSpace(report.OwnerDelegatedWindowMatch)
+		switch {
+		case !guiSmokeOwnerControlledEvidencePresent(report):
+			return errors.New("owner-controlled GUI file-open evidence requires owner-controlled launch evidence")
+		case report.OwnerDelegatedFileArgumentCount <= 0:
+			return errors.New("owner-controlled GUI file-open evidence requires delegated file arguments")
+		case report.OwnerDelegatedFileArgumentCopiedCount < report.OwnerDelegatedFileArgumentCount:
+			return errors.New("owner-controlled GUI file-open evidence requires copied delegated file arguments")
+		case !report.OwnerDelegatedFileArgumentsPassed:
+			return errors.New("owner-controlled GUI file-open evidence requires delegated file argument handoff")
+		case !report.OwnerDelegatedFileArgumentWinepathTranslated:
+			return errors.New("owner-controlled GUI file-open evidence requires Wine path translation")
+		case report.OwnerDelegatedFileArgumentWinepathTranslatedCount < report.OwnerDelegatedFileArgumentCount:
+			return errors.New("owner-controlled GUI file-open evidence requires translated delegated file arguments")
+		case report.OwnerDelegatedRawFileArgumentPathExposed:
+			return errors.New("owner-controlled GUI file-open evidence must not expose raw file argument paths")
+		case windowMatch == "" || !singleLine(windowMatch):
+			return errors.New("owner-controlled GUI file-open evidence requires a safe window match")
+		case !report.OwnerDelegatedWindowMatchObserved:
+			return errors.New("owner-controlled GUI file-open evidence requires observed delegated window match")
+		}
+	}
 	return nil
 }
 
@@ -448,6 +498,20 @@ func guiSmokeOwnerControlledLaunchVerified(report guiSmokeReport, projectionRead
 		!report.OwnerDelegatedBackendDetailsExposed
 }
 
+func guiSmokeOwnerFileOpenVerified(report guiSmokeReport, ownerControlledLaunchVerified bool) bool {
+	windowMatch := strings.TrimSpace(report.OwnerDelegatedWindowMatch)
+	return ownerControlledLaunchVerified &&
+		report.OwnerDelegatedFileArgumentCount > 0 &&
+		report.OwnerDelegatedFileArgumentCopiedCount >= report.OwnerDelegatedFileArgumentCount &&
+		report.OwnerDelegatedFileArgumentsPassed &&
+		report.OwnerDelegatedFileArgumentWinepathTranslated &&
+		report.OwnerDelegatedFileArgumentWinepathTranslatedCount >= report.OwnerDelegatedFileArgumentCount &&
+		!report.OwnerDelegatedRawFileArgumentPathExposed &&
+		windowMatch != "" &&
+		singleLine(windowMatch) &&
+		report.OwnerDelegatedWindowMatchObserved
+}
+
 func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 	return report.OwnerSeedEvidenceProjected ||
 		report.OwnerServiceCallReady ||
@@ -455,10 +519,22 @@ func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 		report.OwnerDelegatedSmokePassed ||
 		report.OwnerDelegatedExecutionStarted ||
 		report.OwnerDelegatedWindowObserved ||
-		report.OwnerDelegatedManagedArtifactCopied
+		report.OwnerDelegatedManagedArtifactCopied ||
+		guiSmokeOwnerFileOpenEvidencePresent(report)
 }
 
-func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
+func guiSmokeOwnerFileOpenEvidencePresent(report guiSmokeReport) bool {
+	return report.OwnerDelegatedFileArgumentCount != 0 ||
+		report.OwnerDelegatedFileArgumentCopiedCount != 0 ||
+		report.OwnerDelegatedFileArgumentsPassed ||
+		report.OwnerDelegatedFileArgumentWinepathTranslated ||
+		report.OwnerDelegatedFileArgumentWinepathTranslatedCount != 0 ||
+		report.OwnerDelegatedRawFileArgumentPathExposed ||
+		strings.TrimSpace(report.OwnerDelegatedWindowMatch) != "" ||
+		report.OwnerDelegatedWindowMatchObserved
+}
+
+func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerFileOpenVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
 	xWindowObserved := guiSmokeXWindowObserved(report)
 	recipeBacked := guiSmokeRecipeBacked(report)
@@ -490,6 +566,9 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 	if ownerManagedCopyVerified {
 		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch after the managed launcher copied the Windows executable into the guest."
 	}
+	if ownerFileOpenVerified {
+		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with copied file arguments, Wine path translation, and matched window evidence."
+	}
 	if ownerEvidenceHandoffReady {
 		primaryActionID = KnownAppKDERuntimeStatusLaunchAction
 		primaryActionLabel = "Show Runtime-controlled launch"
@@ -498,53 +577,65 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		if ownerManagedCopyVerified {
 			summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch with a desktop evidence-only owner handoff ready after the managed launcher copied the Windows executable into the guest."
 		}
+		if ownerFileOpenVerified {
+			summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with a desktop evidence-only owner handoff ready."
+		}
 	}
 	return KnownAppSmokeEvidenceSummary{
-		AppID:                                appID,
-		DisplayName:                          displayName,
-		AppVersion:                           appVersion,
-		EvidenceKind:                         "known-application-gui-smoke",
-		EvidenceSource:                       evidenceSource,
-		RecipeBacked:                         recipeBacked,
-		RecipeAppID:                          recipeAppID,
-		ExternalAppRunRecordConsumed:         report.ContainerPayload.ExternalAppRunRecordConsumed,
-		ExternalAppHandleConsumed:            report.ContainerPayload.ExternalAppHandleConsumed,
-		ExternalAppImportRecordConsumed:      report.ContainerPayload.ExternalAppImportRecordConsumed,
-		ImportedArtifactDigestVerified:       report.ContainerPayload.ImportedArtifactDigestVerified,
-		ImportedArtifactSHA256:               strings.TrimSpace(report.ContainerPayload.ImportedArtifactSHA256),
-		SmokeStatus:                          status,
-		XWindowObserved:                      xWindowObserved,
-		WindowObserved:                       xWindowObserved,
-		CompatibilityState:                   compatibilityState,
-		CenterCardState:                      centerCardState,
-		LaunchAuthorizationState:             "review-required",
-		PrimaryActionID:                      primaryActionID,
-		PrimaryActionLabel:                   primaryActionLabel,
-		PrimaryActionKind:                    primaryActionKind,
-		PrimaryActionEnabled:                 true,
-		DirectLaunchEnabled:                  false,
-		LaunchAuthorizationReceiptRequired:   true,
-		LaunchAuthorizationReceiptState:      "missing",
-		MarkerObserved:                       false,
-		ChecksumVerified:                     false,
-		ExecutionEvidenceRecorded:            projectionReady,
-		StagedLauncherVerified:               ownerControlledLaunchVerified,
-		OwnerControlledRuntimeLaunchVerified: ownerControlledLaunchVerified,
-		OwnerManagedCopyVerified:             ownerManagedCopyVerified,
-		OwnerServiceCallReady:                ownerEvidenceHandoffReady,
-		OwnerEvidenceHandoffReady:            ownerEvidenceHandoffReady,
-		OwnerEvidenceRelativePath:            strings.TrimSpace(report.OwnerEvidenceRelativePath),
-		RuntimeDispatchVerified:              projectionReady,
-		LaunchAuthorizationRequired:          true,
-		DesktopLaunchEnabled:                 false,
-		RuntimeOwned:                         true,
-		KDEPolicyOwner:                       false,
-		ActionExecutionEnabled:               false,
-		BackendLaunchEnabled:                 false,
-		HostRootModified:                     false,
-		BackendDetailsExposed:                false,
-		RawArtifactPathExposed:               false,
-		Summary:                              summary,
+		AppID:                                        appID,
+		DisplayName:                                  displayName,
+		AppVersion:                                   appVersion,
+		EvidenceKind:                                 "known-application-gui-smoke",
+		EvidenceSource:                               evidenceSource,
+		RecipeBacked:                                 recipeBacked,
+		RecipeAppID:                                  recipeAppID,
+		ExternalAppRunRecordConsumed:                 report.ContainerPayload.ExternalAppRunRecordConsumed,
+		ExternalAppHandleConsumed:                    report.ContainerPayload.ExternalAppHandleConsumed,
+		ExternalAppImportRecordConsumed:              report.ContainerPayload.ExternalAppImportRecordConsumed,
+		ImportedArtifactDigestVerified:               report.ContainerPayload.ImportedArtifactDigestVerified,
+		ImportedArtifactSHA256:                       strings.TrimSpace(report.ContainerPayload.ImportedArtifactSHA256),
+		SmokeStatus:                                  status,
+		XWindowObserved:                              xWindowObserved,
+		WindowObserved:                               xWindowObserved,
+		CompatibilityState:                           compatibilityState,
+		CenterCardState:                              centerCardState,
+		LaunchAuthorizationState:                     "review-required",
+		PrimaryActionID:                              primaryActionID,
+		PrimaryActionLabel:                           primaryActionLabel,
+		PrimaryActionKind:                            primaryActionKind,
+		PrimaryActionEnabled:                         true,
+		DirectLaunchEnabled:                          false,
+		LaunchAuthorizationReceiptRequired:           true,
+		LaunchAuthorizationReceiptState:              "missing",
+		MarkerObserved:                               false,
+		ChecksumVerified:                             false,
+		ExecutionEvidenceRecorded:                    projectionReady,
+		StagedLauncherVerified:                       ownerControlledLaunchVerified,
+		OwnerControlledRuntimeLaunchVerified:         ownerControlledLaunchVerified,
+		OwnerManagedCopyVerified:                     ownerManagedCopyVerified,
+		OwnerFileOpenVerified:                        ownerFileOpenVerified,
+		OwnerDelegatedFileArgumentCount:              report.OwnerDelegatedFileArgumentCount,
+		OwnerDelegatedFileArgumentCopiedCount:        report.OwnerDelegatedFileArgumentCopiedCount,
+		OwnerDelegatedFileArgumentsPassed:            report.OwnerDelegatedFileArgumentsPassed,
+		OwnerDelegatedFileArgumentWinepathTranslated: report.OwnerDelegatedFileArgumentWinepathTranslated,
+		OwnerDelegatedFileArgumentWinepathTranslatedCount: report.OwnerDelegatedFileArgumentWinepathTranslatedCount,
+		OwnerDelegatedRawFileArgumentPathExposed:          report.OwnerDelegatedRawFileArgumentPathExposed,
+		OwnerDelegatedWindowMatch:                         strings.TrimSpace(report.OwnerDelegatedWindowMatch),
+		OwnerDelegatedWindowMatchObserved:                 report.OwnerDelegatedWindowMatchObserved,
+		OwnerServiceCallReady:                             ownerEvidenceHandoffReady,
+		OwnerEvidenceHandoffReady:                         ownerEvidenceHandoffReady,
+		OwnerEvidenceRelativePath:                         strings.TrimSpace(report.OwnerEvidenceRelativePath),
+		RuntimeDispatchVerified:                           projectionReady,
+		LaunchAuthorizationRequired:                       true,
+		DesktopLaunchEnabled:                              false,
+		RuntimeOwned:                                      true,
+		KDEPolicyOwner:                                    false,
+		ActionExecutionEnabled:                            false,
+		BackendLaunchEnabled:                              false,
+		HostRootModified:                                  false,
+		BackendDetailsExposed:                             false,
+		RawArtifactPathExposed:                            false,
+		Summary:                                           summary,
 	}
 }
 

@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc162] - 2026-07-26
+
+### Changed
+
+- Promoted owner-controlled file-open evidence into `KnownAppSmokeEvidenceSummary`, `kde-center-page-preview`, and the Ruby KDE Compatibility Center read model.
+- Added fail-closed validation for owner delegated file argument counts, copied arguments, Wine path translation, raw-path redaction, and safe window-match evidence before `owner_file_open_verified` can be set.
+- Extended the q4 remote Wine GUI execute-result summary with Runtime/KDE owner file-open read-model fields while keeping compile-heavy validation on q4.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc162`.
+
 ## [0.2.640-rc161] - 2026-07-26
 
 ### Changed

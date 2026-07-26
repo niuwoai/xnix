@@ -679,25 +679,34 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		SignatureStatus: "development-only",
 	}, "approved", nil, KDECenterPageOptions{
 		KnownAppSmokeEvidence: []KnownAppSmokeEvidenceSummary{{
-			AppID:                                "org.xnix.apps.messagebox",
-			DisplayName:                          "Xnix MessageBox",
-			AppVersion:                           currentProjectVersion(t),
-			EvidenceKind:                         "known-application-gui-smoke",
-			EvidenceSource:                       "wine-guest-gui-smoke",
-			SmokeStatus:                          "passed",
-			XWindowObserved:                      true,
-			WindowObserved:                       true,
-			CompatibilityState:                   "owner-controlled-gui-qemu-wine-verified",
-			CenterCardState:                      "validated-owner-controlled-gui-runtime-run",
-			ExecutionEvidenceRecorded:            true,
-			StagedLauncherVerified:               true,
-			OwnerControlledRuntimeLaunchVerified: true,
-			OwnerManagedCopyVerified:             true,
-			OwnerServiceCallReady:                true,
-			OwnerEvidenceHandoffReady:            true,
-			OwnerEvidenceRelativePath:            "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
-			RuntimeDispatchVerified:              true,
-			Summary:                              "Xnix MessageBox passed after the managed launcher copied the Windows executable into the guest.",
+			AppID:                                 "org.xnix.apps.messagebox",
+			DisplayName:                           "Xnix MessageBox",
+			AppVersion:                            currentProjectVersion(t),
+			EvidenceKind:                          "known-application-gui-smoke",
+			EvidenceSource:                        "wine-guest-gui-smoke",
+			SmokeStatus:                           "passed",
+			XWindowObserved:                       true,
+			WindowObserved:                        true,
+			CompatibilityState:                    "owner-controlled-gui-qemu-wine-verified",
+			CenterCardState:                       "validated-owner-controlled-gui-runtime-run",
+			ExecutionEvidenceRecorded:             true,
+			StagedLauncherVerified:                true,
+			OwnerControlledRuntimeLaunchVerified:  true,
+			OwnerManagedCopyVerified:              true,
+			OwnerFileOpenVerified:                 true,
+			OwnerDelegatedFileArgumentCount:       1,
+			OwnerDelegatedFileArgumentCopiedCount: 1,
+			OwnerDelegatedFileArgumentsPassed:     true,
+			OwnerDelegatedFileArgumentWinepathTranslated:      true,
+			OwnerDelegatedFileArgumentWinepathTranslatedCount: 1,
+			OwnerDelegatedRawFileArgumentPathExposed:          false,
+			OwnerDelegatedWindowMatch:                         "messagebox-document.txt",
+			OwnerDelegatedWindowMatchObserved:                 true,
+			OwnerServiceCallReady:                             true,
+			OwnerEvidenceHandoffReady:                         true,
+			OwnerEvidenceRelativePath:                         "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
+			RuntimeDispatchVerified:                           true,
+			Summary:                                           "Xnix MessageBox passed after the managed launcher copied the Windows executable into the guest.",
 		}},
 	})
 	if err != nil {
@@ -709,6 +718,7 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		preview.KnownAppGUIEvidenceCount != 1 ||
 		preview.KnownAppOwnerControlledGUIEvidenceCount != 1 ||
 		preview.KnownAppOwnerManagedCopyVerifiedCount != 1 ||
+		preview.KnownAppOwnerFileOpenVerifiedCount != 1 ||
 		len(preview.KnownAppGUIEvidenceCards) != 1 {
 		t.Fatalf("unexpected owner-controlled GUI counts: %#v", preview)
 	}
@@ -734,6 +744,15 @@ func TestKDECenterPagePreviewSurfacesOwnerControlledGUICards(t *testing.T) {
 		!card.StagedLauncherVerified ||
 		!card.OwnerControlledRuntimeLaunchVerified ||
 		!card.OwnerManagedCopyVerified ||
+		!card.OwnerFileOpenVerified ||
+		card.OwnerDelegatedFileArgumentCount != 1 ||
+		card.OwnerDelegatedFileArgumentCopiedCount != 1 ||
+		!card.OwnerDelegatedFileArgumentsPassed ||
+		!card.OwnerDelegatedFileArgumentWinepathTranslated ||
+		card.OwnerDelegatedFileArgumentWinepathTranslatedCount != 1 ||
+		card.OwnerDelegatedRawFileArgumentPathExposed ||
+		card.OwnerDelegatedWindowMatch != "messagebox-document.txt" ||
+		!card.OwnerDelegatedWindowMatchObserved ||
 		!card.OwnerServiceCallReady ||
 		!card.OwnerEvidenceHandoffReady ||
 		card.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||

@@ -115,10 +115,19 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		preview.OwnerDelegatedEvidenceSource != "wine-guest-gui-smoke" ||
 		!preview.OwnerDelegatedExecutionStarted ||
 		!preview.OwnerDelegatedWindowObserved ||
+		preview.OwnerDelegatedFileArgumentCount != 1 ||
+		preview.OwnerDelegatedFileArgumentCopiedCount != 1 ||
+		!preview.OwnerDelegatedFileArgumentsPassed ||
+		!preview.OwnerDelegatedFileArgumentWinepathTranslated ||
+		preview.OwnerDelegatedFileArgumentWinepathTranslatedCount != 1 ||
+		preview.OwnerDelegatedRawFileArgumentPathExposed ||
+		preview.OwnerDelegatedWindowMatch != "messagebox-document.txt" ||
+		!preview.OwnerDelegatedWindowMatchObserved ||
 		!preview.XWindowObserved ||
 		!preview.WindowObserved ||
 		!preview.OwnerControlledLaunchVerified ||
 		!preview.OwnerManagedCopyVerified ||
+		!preview.OwnerFileOpenVerified ||
 		!preview.OwnerEvidenceHandoffReady ||
 		preview.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		preview.RemotePathExposed ||
@@ -139,13 +148,22 @@ func TestPreviewGUISmokeEvidenceConsumesOwnerControlledMessageBoxReport(t *testi
 		!evidence.StagedLauncherVerified ||
 		!evidence.OwnerControlledRuntimeLaunchVerified ||
 		!evidence.OwnerManagedCopyVerified ||
+		!evidence.OwnerFileOpenVerified ||
+		evidence.OwnerDelegatedFileArgumentCount != 1 ||
+		evidence.OwnerDelegatedFileArgumentCopiedCount != 1 ||
+		!evidence.OwnerDelegatedFileArgumentsPassed ||
+		!evidence.OwnerDelegatedFileArgumentWinepathTranslated ||
+		evidence.OwnerDelegatedFileArgumentWinepathTranslatedCount != 1 ||
+		evidence.OwnerDelegatedRawFileArgumentPathExposed ||
+		evidence.OwnerDelegatedWindowMatch != "messagebox-document.txt" ||
+		!evidence.OwnerDelegatedWindowMatchObserved ||
 		!evidence.OwnerServiceCallReady ||
 		!evidence.OwnerEvidenceHandoffReady ||
 		evidence.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
 		!evidence.RuntimeDispatchVerified ||
 		evidence.RawArtifactPathExposed ||
-		!strings.Contains(evidence.Summary, "handoff ready") ||
-		!strings.Contains(evidence.Summary, "managed launcher copied") {
+		!strings.Contains(evidence.Summary, "file-open launch") ||
+		!strings.Contains(evidence.Summary, "handoff ready") {
 		t.Fatalf("unexpected owner-controlled GUI known app evidence: %#v", evidence)
 	}
 }
@@ -338,6 +356,14 @@ func ownerControlledGUISmokeEvidenceFixture() string {
   "owner_delegated_evidence_source": "wine-guest-gui-smoke",
   "owner_delegated_execution_started": true,
   "owner_delegated_controlled_session_window_observed": true,
+  "owner_delegated_file_argument_count": 1,
+  "owner_delegated_file_argument_copied_count": 1,
+  "owner_delegated_file_arguments_passed": true,
+  "owner_delegated_file_argument_winepath_translated": true,
+  "owner_delegated_file_argument_winepath_translated_count": 1,
+  "owner_delegated_raw_file_argument_path_exposed": false,
+  "owner_delegated_window_match": "messagebox-document.txt",
+  "owner_delegated_window_match_observed": true,
   "owner_delegated_host_root_modified": false,
   "owner_delegated_docker_socket_mounted": false,
   "owner_delegated_broad_host_mount_required": false,

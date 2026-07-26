@@ -61,6 +61,8 @@ assert(script.read.include?("evidence_output_written"), "remote GUI smoke execut
 assert(script.read.include?("kde_page_output_written"), "remote GUI smoke execute result must expose KDE page output")
 assert(script.read.include?("kde_page_known_app_gui_evidence_count"), "remote GUI smoke execute result must expose KDE GUI evidence consumption")
 assert(script.read.include?("runtime_evidence_report_consumed"), "remote GUI smoke execute result must expose Runtime report consumption")
+assert(script.read.include?("runtime_evidence_owner_file_open_verified"), "remote GUI smoke execute result must expose Runtime owner file-open evidence")
+assert(script.read.include?("kde_page_known_app_owner_file_open_verified_count"), "remote GUI smoke execute result must expose KDE owner file-open evidence consumption")
 assert(script.read.include?("file_arguments_passed"), "remote GUI smoke execute result must expose file argument handoff evidence")
 assert(script.read.include?("window_match_observed"), "remote GUI smoke execute result must expose window-match evidence")
 assert(script.read.include?("owner_delegated_file_arguments_passed"), "remote GUI smoke execute result must expose owner delegated file argument handoff evidence")

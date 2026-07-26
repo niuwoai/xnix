@@ -40,6 +40,7 @@ module Xnix
           "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
+          "known_app_owner_file_open_verified_count" => owner_file_open_verified_count(gui_evidence_cards),
           "known_app_gui_evidence_cards" => gui_evidence_cards,
           "applications" => applications
         }
@@ -116,6 +117,15 @@ module Xnix
           "staged_launcher_verified" => card.fetch("staged_launcher_verified", false),
           "owner_controlled_runtime_launch_verified" => card.fetch("owner_controlled_runtime_launch_verified", false),
           "owner_managed_copy_verified" => card.fetch("owner_managed_copy_verified", false),
+          "owner_file_open_verified" => card.fetch("owner_file_open_verified", false),
+          "owner_delegated_file_argument_count" => card.fetch("owner_delegated_file_argument_count", 0),
+          "owner_delegated_file_argument_copied_count" => card.fetch("owner_delegated_file_argument_copied_count", 0),
+          "owner_delegated_file_arguments_passed" => card.fetch("owner_delegated_file_arguments_passed", false),
+          "owner_delegated_file_argument_winepath_translated" => card.fetch("owner_delegated_file_argument_winepath_translated", false),
+          "owner_delegated_file_argument_winepath_translated_count" => card.fetch("owner_delegated_file_argument_winepath_translated_count", 0),
+          "owner_delegated_raw_file_argument_path_exposed" => card.fetch("owner_delegated_raw_file_argument_path_exposed", false),
+          "owner_delegated_window_match" => card.fetch("owner_delegated_window_match", ""),
+          "owner_delegated_window_match_observed" => card.fetch("owner_delegated_window_match_observed", false),
           "owner_service_call_ready" => card.fetch("owner_service_call_ready", false),
           "owner_evidence_handoff_ready" => card.fetch("owner_evidence_handoff_ready", false),
           "owner_evidence_relative_path" => card.fetch("owner_evidence_relative_path", ""),
@@ -151,6 +161,23 @@ module Xnix
           card.fetch("smoke_status", nil) == "passed" &&
             card.fetch("owner_controlled_runtime_launch_verified", false) &&
             card.fetch("owner_managed_copy_verified", false)
+        end
+      end
+
+      def owner_file_open_verified_count(gui_evidence_cards)
+        gui_evidence_cards.count do |card|
+          count = card.fetch("owner_delegated_file_argument_count", 0)
+          card.fetch("smoke_status", nil) == "passed" &&
+            card.fetch("owner_controlled_runtime_launch_verified", false) &&
+            card.fetch("owner_file_open_verified", false) &&
+            count.positive? &&
+            card.fetch("owner_delegated_file_argument_copied_count", 0) >= count &&
+            card.fetch("owner_delegated_file_arguments_passed", false) &&
+            card.fetch("owner_delegated_file_argument_winepath_translated", false) &&
+            card.fetch("owner_delegated_file_argument_winepath_translated_count", 0) >= count &&
+            !card.fetch("owner_delegated_raw_file_argument_path_exposed", false) &&
+            !card.fetch("owner_delegated_window_match", "").strip.empty? &&
+            card.fetch("owner_delegated_window_match_observed", false)
         end
       end
 
@@ -746,6 +773,7 @@ module Xnix
           "known_app_gui_evidence_verified_count" => verified_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_controlled_gui_evidence_count" => owner_controlled_gui_evidence_count(gui_evidence_cards),
           "known_app_owner_managed_copy_verified_count" => owner_managed_copy_verified_count(gui_evidence_cards),
+          "known_app_owner_file_open_verified_count" => owner_file_open_verified_count(gui_evidence_cards),
           "pending_action_count" => applications.sum { |application| application["pending_action_count"] },
           "queued_compatibility_action_count" => applications.sum { |application| section(application, "action_queue").fetch("action_count", 0) },
           "queued_user_review_count" => applications.sum { |application| section(application, "action_queue").fetch("user_review_required_count", 0) },

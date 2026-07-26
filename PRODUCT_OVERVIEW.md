@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc161
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc162
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc162 checkpoint candidate promotes owner-controlled file-open evidence from the q4 smoke summary into the Runtime and KDE read models. `gui-smoke-evidence-preview` now fail-closes owner delegated file-open claims unless file arguments were copied, handed to the guest app, translated through Wine paths, matched against safe window evidence, and kept raw file argument paths redacted. `KnownAppSmokeEvidenceSummary`, `kde-center-page-preview`, and the Ruby KDE Compatibility Center model now expose `owner_file_open_verified`, delegated file-argument fields, and `known_app_owner_file_open_verified_count`, letting desktop consumers distinguish a real Runtime-owner file-open run from a generic GUI launch without gaining owner launch arguments, raw paths, backend details, host networking, Docker socket mounts, privileged containers, broad host mounts, or host-root mutation. Compile-heavy builds and real GUI validation remain on q4 while the local macOS host stays limited to lightweight checks.
 
 The v0.2.640-rc161 checkpoint candidate makes q4 owner-controlled real GUI smoke results easier to consume. The remote execute-result summary now includes owner delegated launcher invocation, delegated smoke pass state, file argument count, copied-file count, file handoff, Wine path translation, raw-path redaction, and window-match evidence at the top level, so release/readiness tooling can verify the Sample Notepad file-open chain without opening nested smoke reports. The actual execution still runs on q4, builds the Go Runtime binaries remotely, writes Runtime/KDE evidence artifacts, and preserves the closed privileged-container, host-networking, Docker-socket, broad-host-mount, and host-root-mutation boundaries.
 

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc161`.
+The project is currently at `v0.2.640-rc162`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc161`.
 
 ## Current Checkpoint
 
-v0.2.640-rc161 makes the q4 real GUI execute-result summary self-contained for owner-controlled file-open runs. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch` now lifts owner delegated launcher invocation, file-copy count, argument handoff, Wine path translation, raw-path redaction, and window-match evidence into the top-level summary. Downstream review can verify that Sample Notepad file-open intent passed through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundary without opening nested report files.
+v0.2.640-rc162 promotes owner-controlled file-open evidence into the Runtime and KDE read models. `gui-smoke-evidence-preview` now validates owner delegated file argument counts, copied argument evidence, Wine path translation, raw-path redaction, and matched window evidence before setting `owner_file_open_verified`; `kde-center-page-preview` and the Ruby KDE model expose `known_app_owner_file_open_verified_count` plus per-card file-open fields. Compile-heavy and real GUI validation remain on q4 so the local macOS host stays limited to lightweight checks.
+
+The previous v0.2.640-rc161 checkpoint made the q4 real GUI execute-result summary self-contained for owner-controlled file-open runs. `scripts/remote_wine_guest_gui_smoke.rb --execute --launch-mode owner-controlled-launch` now lifts owner delegated launcher invocation, file-copy count, argument handoff, Wine path translation, raw-path redaction, and window-match evidence into the top-level summary. Downstream review can verify that Sample Notepad file-open intent passed through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundary without opening nested report files.
 
 The previous v0.2.640-rc160 checkpoint made q4 the default compile-heavy path and closed the owner-controlled file-open handoff. Runtime owner controlled launch can now receive owner-supplied file arguments and window-match text through restricted environment values, pass those inputs to `xnix-compat-launch`, and surface only redacted evidence for copied file count, argument handoff, Wine path translation, and matched window text. This keeps KDE on an evidence-handle-only action route while proving Sample Notepad file-open intent can pass through the desktop action, Runtime owner, managed launcher, and q4/QEMU guest GUI boundaries without exposing raw local file paths.
 
