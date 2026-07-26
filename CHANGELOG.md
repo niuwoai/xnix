@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc133] - 2026-07-26
+
+### Added
+
+- Added `windows-external-app-run` as a Go Runtime product entrypoint for running imported external Windows GUI apps from Runtime import records.
+- Added Runtime and CLI coverage proving the new run command preserves import-record consumption, digest verification, optional JSON output, observed X window evidence, and closed desktop/backend/host safety gates.
+
 ## [0.2.640-rc132] - 2026-07-26
 
 ### Added

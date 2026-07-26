@@ -125,6 +125,8 @@ func run(args []string, stdout io.Writer) error {
 		return runExecutionDecisionPreview(args[1:], stdout)
 	case "external-winapp-import-record":
 		return runExternalWinAppImportRecord(args[1:], stdout)
+	case "windows-external-app-run":
+		return runExternalWinAppRun(args[1:], stdout)
 	case "execution-ledger-record":
 		return runExecutionLedgerRecord(args[1:], stdout)
 	case "execution-preflight-preview":

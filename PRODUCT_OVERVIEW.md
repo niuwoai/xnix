@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc132
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc133
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc133 checkpoint candidate introduces a product-shaped Runtime entrypoint for imported Windows GUI apps. `windows-external-app-run --external-app-import-record RECORD.json` resolves and revalidates the Runtime-managed artifact, runs it through the restricted local Wine/Xvfb container GUI path, optionally writes a JSON run record, and reports import-record consumption, digest verification, execution start, backend process start, and observed X window evidence. KDE launch authority, raw import record paths, state-root paths, original executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation remain closed.
 
 The v0.2.640-rc132 checkpoint candidate makes imported external Windows GUI run provenance visible to the desktop evidence chain. Runtime container GUI smoke output, `real-winapp-gui-evidence-packet-preview`, and KDE Compatibility Center GUI cards now preserve `external_app_import_record_consumed`, `imported_artifact_digest_verified`, and the imported artifact SHA256 when a Windows GUI app is launched from a Runtime import record. This distinguishes Runtime-managed artifact execution from ad-hoc local executable runs while still hiding the import record path, state-root path, original host executable path, backend command, Docker socket, host networking, host mounts, and host-root mutation.
 

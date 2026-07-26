@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc132`.
+The project is currently at `v0.2.640-rc133`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc132`.
 
 ## Current Checkpoint
 
-v0.2.640-rc132 surfaces imported external Windows GUI run provenance across the raw smoke result, real GUI evidence packet, and KDE GUI evidence card. `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` now records that the Runtime import record was consumed, that the imported artifact digest was verified, and the artifact SHA256 without exposing the import record path, state root, original host executable path, Docker socket, host mounts, host networking, or host-root mutation.
+v0.2.640-rc133 adds the Go Runtime `windows-external-app-run` product entrypoint for actually running an imported external Windows GUI app from its Runtime import record. The command reuses the restricted Wine/Xvfb container path, persists optional JSON output, returns a run record with import-record consumption and digest-verification evidence, and keeps KDE launch authority, raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation closed.
+
+The previous v0.2.640-rc132 checkpoint surfaced imported external Windows GUI run provenance across the raw smoke result, real GUI evidence packet, and KDE GUI evidence card. `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` now records that the Runtime import record was consumed, that the imported artifact digest was verified, and the artifact SHA256 without exposing the import record path, state root, original host executable path, Docker socket, host mounts, host networking, or host-root mutation.
 
 The previous v0.2.640-rc131 checkpoint let `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` run the Runtime-managed copy of an imported external Windows GUI app. The command resolves the imported artifact from the record, revalidates its digest and MZ executable shape, copies that managed artifact into the isolated Wine/Xvfb container, and preserves the imported app identity without exposing the original host path, state root, Docker socket, host mounts, host networking, or host-root mutation.
 

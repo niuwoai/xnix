@@ -124,3 +124,114 @@ func TestExternalWinAppImportRecordCommandRejectsNonPEExecutable(t *testing.T) {
 		t.Fatalf("expected non-PE import to fail closed, got err=%v output=%s", err, output.String())
 	}
 }
+
+func TestExternalWinAppRunCommandRunsImportedExecutable(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	var importOutput bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-record",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.gui",
+		"--display-name", "External GUI",
+	}, &importOutput); err != nil {
+		t.Fatalf("import run returned error: %v", err)
+	}
+	var importPayload map[string]any
+	if err := json.Unmarshal(importOutput.Bytes(), &importPayload); err != nil {
+		t.Fatalf("Unmarshal import output returned error: %v", err)
+	}
+	recordPath := filepath.Join(stateRoot, filepath.FromSlash(importPayload["record_relative_path"].(string)))
+
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x700001 \"External GUI\": (\"ExternalGui.exe\" \"ExternalGui.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	outputPath := filepath.Join(tempDir, "external-run.json")
+	var output bytes.Buffer
+	if err := run([]string{
+		"windows-external-app-run",
+		"--external-app-import-record", recordPath,
+		"--window-match", "External GUI",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+		"--output", outputPath,
+	}, &output); err != nil {
+		t.Fatalf("external app run returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written output must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal run output returned error: %v\n%s", err, output.String())
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_run.v1" ||
+		payload["request_type"] != "windows-external-app-run" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["display_name"] != "External GUI" ||
+		payload["app_version"] != currentProjectVersion(t) ||
+		payload["executable_name"] != "ExternalGui.exe" ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["imported_artifact_sha256"] != importPayload["artifact_sha256"] ||
+		payload["runtime_run_requested"] != true ||
+		payload["runtime_run_executed"] != true ||
+		payload["execution_started"] != true ||
+		payload["backend_process_started"] != true ||
+		payload["container_runtime_used"] != true ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true ||
+		payload["desktop_launch_enabled"] != false ||
+		payload["action_execution_enabled"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_import_record_path_exposed"] != false ||
+		payload["raw_state_root_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false {
+		t.Fatalf("unexpected external app run payload: %#v", payload)
+	}
+	runtimePayload := payload["runtime_payload"].(map[string]any)
+	if runtimePayload["external_app_import_record_consumed"] != true ||
+		runtimePayload["imported_artifact_digest_verified"] != true ||
+		runtimePayload["imported_artifact_sha256"] != importPayload["artifact_sha256"] {
+		t.Fatalf("unexpected nested runtime payload: %#v", runtimePayload)
+	}
+	if strings.Contains(output.String(), recordPath) ||
+		strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), executablePath) ||
+		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(output.String(), "--network host") ||
+		strings.Contains(output.String(), "--privileged") {
+		t.Fatalf("external app run output exposed unsafe details: %s", output.String())
+	}
+}
