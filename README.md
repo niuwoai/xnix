@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc144`.
+The project is currently at `v0.2.640-rc145`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc144`.
 
 ## Current Checkpoint
 
-v0.2.640-rc144 carries observed-window evidence into the desktop-facing read models. GUI smoke projections, known app smoke evidence summaries, and KDE Compatibility Center GUI evidence cards now expose both `window_observed` and `x_window_observed`, and the staged external desktop smoke records those KDE card fields so the desktop shell can present the actual observed-window fact without relying on backend-specific nested payloads.
+v0.2.640-rc145 carries the imported external Windows app handle evidence through the Runtime packet and KDE read model. Real GUI evidence packets, known app smoke evidence summaries, KDE Compatibility Center GUI cards, and the staged external desktop smoke now expose and require `external_app_handle_consumed` when the `.desktop` path invokes `xnix-compat-launch --external-app-handle APPID`, proving the observed window came through the handle-only desktop route instead of a raw import-record path.
+
+The previous v0.2.640-rc144 checkpoint carried observed-window evidence into the desktop-facing read models. GUI smoke projections, known app smoke evidence summaries, and KDE Compatibility Center GUI evidence cards now expose both `window_observed` and `x_window_observed`, and the staged external desktop smoke records those KDE card fields so the desktop shell can present the actual observed-window fact without relying on backend-specific nested payloads.
 
 The previous v0.2.640-rc143 checkpoint tightened the observed-window evidence chain for imported external Windows GUI apps. Runtime evidence consumers now reject external app run packets or real GUI evidence packets that lack either generic `window_observed` or X-specific `x_window_observed` evidence, and the Go CLIs verify the field across import-record, handle, and default-state-root launch paths.
 

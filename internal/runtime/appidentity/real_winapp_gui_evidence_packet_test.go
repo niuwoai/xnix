@@ -245,6 +245,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 		packet.GUIAppName != "/notepad.exe" ||
 		packet.ExecutableName != "notepad.exe" ||
 		!packet.ExternalAppRunRecordConsumed ||
+		!packet.ExternalAppHandleConsumed ||
 		!packet.ExternalAppImportRecordConsumed ||
 		!packet.ImportedArtifactDigestVerified ||
 		packet.ImportedArtifactSHA256 != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
@@ -263,6 +264,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 	}
 	evidence := packet.KnownAppSmokeEvidence
 	if !evidence.ExternalAppRunRecordConsumed ||
+		!evidence.ExternalAppHandleConsumed ||
 		!evidence.ExternalAppImportRecordConsumed ||
 		!evidence.ImportedArtifactDigestVerified ||
 		evidence.ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
@@ -289,6 +291,7 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesExternalAppRunRecord(t *testi
 	}
 	if len(page.KnownAppGUIEvidenceCards) != 1 ||
 		!page.KnownAppGUIEvidenceCards[0].ExternalAppRunRecordConsumed ||
+		!page.KnownAppGUIEvidenceCards[0].ExternalAppHandleConsumed ||
 		!page.KnownAppGUIEvidenceCards[0].ExternalAppImportRecordConsumed ||
 		!page.KnownAppGUIEvidenceCards[0].ImportedArtifactDigestVerified ||
 		page.KnownAppGUIEvidenceCards[0].ImportedArtifactSHA256 != packet.ImportedArtifactSHA256 ||
@@ -466,6 +469,8 @@ func rawExternalWinAppRunPayloadFixture() string {
   "app_version": "0.2.640-test",
   "executable_name": "notepad.exe",
   "external_app_import_record_consumed": true,
+  "external_app_handle_consumed": true,
+  "external_app_handle": "org.xnix.external.notepad-file",
   "imported_artifact_digest_verified": true,
   "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
   "runtime_run_requested": true,
@@ -491,6 +496,7 @@ func rawExternalWinAppRunPayloadFixture() string {
     "executable_name": "notepad.exe",
     "local_executable_copied": true,
     "external_app_import_record_consumed": true,
+    "external_app_handle_consumed": true,
     "imported_artifact_digest_verified": true,
     "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
     "application_name": "/notepad.exe",
@@ -517,6 +523,7 @@ func rawExternalWinAppRunPayloadFixture() string {
   "action_execution_enabled": false,
   "backend_details_exposed": false,
   "raw_import_record_path_exposed": false,
+  "raw_external_app_handle_path_exposed": false,
   "raw_state_root_path_exposed": false,
   "raw_executable_path_exposed": false,
   "host_root_modified": false,

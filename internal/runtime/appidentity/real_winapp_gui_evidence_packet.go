@@ -55,6 +55,7 @@ type RealWinAppGUIEvidencePacket struct {
 	ExecutableName                     string                       `json:"executable_name,omitempty"`
 	LocalExecutableCopied              bool                         `json:"local_executable_copied"`
 	ExternalAppRunRecordConsumed       bool                         `json:"external_app_run_record_consumed"`
+	ExternalAppHandleConsumed          bool                         `json:"external_app_handle_consumed"`
 	ExternalAppImportRecordConsumed    bool                         `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified     bool                         `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256             string                       `json:"imported_artifact_sha256,omitempty"`
@@ -85,6 +86,7 @@ type containerXGUIRuntimePayload struct {
 	ExecutableName                           string `json:"executable_name"`
 	LocalExecutableCopied                    bool   `json:"local_executable_copied"`
 	ExternalAppRunRecordConsumed             bool   `json:"external_app_run_record_consumed"`
+	ExternalAppHandleConsumed                bool   `json:"external_app_handle_consumed"`
 	ExternalAppImportRecordConsumed          bool   `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified           bool   `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256                   string `json:"imported_artifact_sha256"`
@@ -225,6 +227,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	executableName := ""
 	localExecutableCopied := false
 	externalAppRunRecordConsumed := false
+	externalAppHandleConsumed := false
 	externalAppImportRecordConsumed := false
 	importedArtifactDigestVerified := false
 	importedArtifactSHA256 := ""
@@ -234,6 +237,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		executableName = runtimePayload.ExecutableName
 		localExecutableCopied = runtimePayload.LocalExecutableCopied
 		externalAppRunRecordConsumed = runtimePayload.ExternalAppRunRecordConsumed
+		externalAppHandleConsumed = runtimePayload.ExternalAppHandleConsumed
 		externalAppImportRecordConsumed = runtimePayload.ExternalAppImportRecordConsumed
 		importedArtifactDigestVerified = runtimePayload.ImportedArtifactDigestVerified
 		importedArtifactSHA256 = strings.TrimSpace(runtimePayload.ImportedArtifactSHA256)
@@ -274,6 +278,7 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		ExecutableName:                     executableName,
 		LocalExecutableCopied:              localExecutableCopied,
 		ExternalAppRunRecordConsumed:       externalAppRunRecordConsumed,
+		ExternalAppHandleConsumed:          externalAppHandleConsumed,
 		ExternalAppImportRecordConsumed:    externalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:     importedArtifactDigestVerified,
 		ImportedArtifactSHA256:             importedArtifactSHA256,
@@ -335,6 +340,7 @@ func wrapContainerXGUIRuntimePayload(content []byte) (containerXGUIRuntimePayloa
 	report.ContainerPayload.AppVersion = payload.AppVersion
 	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
 	report.ContainerPayload.ExternalAppRunRecordConsumed = payload.ExternalAppRunRecordConsumed
+	report.ContainerPayload.ExternalAppHandleConsumed = payload.ExternalAppHandleConsumed
 	report.ContainerPayload.ExternalAppImportRecordConsumed = payload.ExternalAppImportRecordConsumed
 	report.ContainerPayload.ImportedArtifactDigestVerified = payload.ImportedArtifactDigestVerified
 	report.ContainerPayload.ImportedArtifactSHA256 = payload.ImportedArtifactSHA256
@@ -373,9 +379,11 @@ func wrapExternalWinAppRunPayload(content []byte) (containerXGUIRuntimePayload, 
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires generic and X-specific observed-window evidence")
 	case !run.ExternalAppImportRecordConsumed || !run.ImportedArtifactDigestVerified || !validSHA256Hex(run.ImportedArtifactSHA256):
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires digest-verified import record evidence")
+	case run.ExternalAppHandleConsumed && strings.TrimSpace(run.ExternalAppHandle) == "":
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload handle evidence requires an opaque handle")
 	case run.KDEPolicyOwner || run.DesktopLaunchEnabled || run.ActionExecutionEnabled || run.BackendDetailsExposed:
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload exposes unsafe desktop or backend authority")
-	case run.RawImportRecordPathExposed || run.RawStateRootPathExposed || run.RawExecutablePathExposed || run.HostRootModified:
+	case run.RawImportRecordPathExposed || run.RawExternalAppHandlePathExposed || run.RawStateRootPathExposed || run.RawExecutablePathExposed || run.HostRootModified:
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload exposes unsafe paths or host mutation")
 	case run.PrivilegedContainerRequired || run.HostNetworkingRequired || run.DockerSocketMounted || run.BroadHostMountRequired:
 		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("external Windows app run payload requires unsafe container privileges")
@@ -391,6 +399,7 @@ func wrapExternalWinAppRunPayload(content []byte) (containerXGUIRuntimePayload, 
 		ExecutableName:                  run.ExecutableName,
 		LocalExecutableCopied:           run.RuntimePayload.LocalExecutableCopied,
 		ExternalAppRunRecordConsumed:    true,
+		ExternalAppHandleConsumed:       run.ExternalAppHandleConsumed,
 		ExternalAppImportRecordConsumed: run.ExternalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:  run.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:          strings.TrimSpace(run.ImportedArtifactSHA256),
@@ -456,6 +465,7 @@ func wrapExternalWinAppRunPayload(content []byte) (containerXGUIRuntimePayload, 
 	report.ContainerPayload.AppVersion = payload.AppVersion
 	report.ContainerPayload.RecipeBacked = payload.RecipeBacked
 	report.ContainerPayload.ExternalAppRunRecordConsumed = payload.ExternalAppRunRecordConsumed
+	report.ContainerPayload.ExternalAppHandleConsumed = payload.ExternalAppHandleConsumed
 	report.ContainerPayload.ExternalAppImportRecordConsumed = payload.ExternalAppImportRecordConsumed
 	report.ContainerPayload.ImportedArtifactDigestVerified = payload.ImportedArtifactDigestVerified
 	report.ContainerPayload.ImportedArtifactSHA256 = payload.ImportedArtifactSHA256
@@ -553,6 +563,8 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record evidence requires digest verification")
 		case packet.ExternalAppImportRecordConsumed && !validSHA256Hex(packet.ImportedArtifactSHA256):
 			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record evidence requires an artifact digest")
+		case packet.ExternalAppHandleConsumed && (!packet.ExternalAppRunRecordConsumed || !packet.ExternalAppImportRecordConsumed):
+			return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet handle evidence requires consumed run and import record evidence")
 		}
 	}
 	evidence := packet.KnownAppSmokeEvidence
@@ -572,6 +584,7 @@ func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (Known
 	}
 	if evidence.ExternalAppImportRecordConsumed != packet.ExternalAppImportRecordConsumed ||
 		evidence.ExternalAppRunRecordConsumed != packet.ExternalAppRunRecordConsumed ||
+		evidence.ExternalAppHandleConsumed != packet.ExternalAppHandleConsumed ||
 		evidence.ImportedArtifactDigestVerified != packet.ImportedArtifactDigestVerified ||
 		strings.TrimSpace(evidence.ImportedArtifactSHA256) != strings.TrimSpace(packet.ImportedArtifactSHA256) {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app GUI evidence packet import record summary does not match nested evidence")

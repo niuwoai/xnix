@@ -110,6 +110,7 @@ type guiSmokeReport struct {
 		AppVersion                      string `json:"app_version"`
 		RecipeBacked                    bool   `json:"recipe_backed"`
 		ExternalAppRunRecordConsumed    bool   `json:"external_app_run_record_consumed"`
+		ExternalAppHandleConsumed       bool   `json:"external_app_handle_consumed"`
 		ExternalAppImportRecordConsumed bool   `json:"external_app_import_record_consumed"`
 		ImportedArtifactDigestVerified  bool   `json:"imported_artifact_digest_verified"`
 		ImportedArtifactSHA256          string `json:"imported_artifact_sha256"`
@@ -507,6 +508,7 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		RecipeBacked:                         recipeBacked,
 		RecipeAppID:                          recipeAppID,
 		ExternalAppRunRecordConsumed:         report.ContainerPayload.ExternalAppRunRecordConsumed,
+		ExternalAppHandleConsumed:            report.ContainerPayload.ExternalAppHandleConsumed,
 		ExternalAppImportRecordConsumed:      report.ContainerPayload.ExternalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:       report.ContainerPayload.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:               strings.TrimSpace(report.ContainerPayload.ImportedArtifactSHA256),

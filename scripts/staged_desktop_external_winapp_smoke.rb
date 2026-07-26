@@ -186,6 +186,8 @@ def write_markdown_report(markdown_output, packet)
       "- Desktop Exec uses external app handle: #{packet.fetch("desktop_exec_uses_external_app_handle")}",
       "- External import record consumed: #{packet.fetch("external_app_import_record_consumed")}",
       "- External app handle consumed: #{packet.fetch("external_app_handle_consumed")}",
+      "- Runtime packet external app handle consumed: #{packet.fetch("runtime_packet_external_app_handle_consumed")}",
+      "- KDE card external app handle consumed: #{packet.fetch("kde_page_card_external_app_handle_consumed")}",
       "- Imported artifact digest verified: #{packet.fetch("imported_artifact_digest_verified")}",
       "- X window observed: #{packet.fetch("window_observed")}",
       "- Container network mode: #{packet.fetch("container_network_mode")}",
@@ -352,6 +354,7 @@ runtime_packet, = run_json(
 assert(runtime_packet.fetch("request_type") == "real-winapp-gui-evidence-packet-preview", "Runtime packet must use the real GUI packet request type")
 assert(runtime_packet.fetch("report_consumed") == true, "Runtime packet must consume the delegated report")
 assert(runtime_packet.fetch("external_app_run_record_consumed") == true, "Runtime packet must consume the external app run record")
+assert(runtime_packet.fetch("external_app_handle_consumed") == true, "Runtime packet must preserve external app handle consumption")
 assert(runtime_packet.fetch("external_app_import_record_consumed") == true, "Runtime packet must preserve import-record consumption")
 assert(runtime_packet.fetch("imported_artifact_digest_verified") == true, "Runtime packet must preserve imported artifact digest verification")
 assert(runtime_packet.fetch("known_app_gui_evidence_verified_count") == 1, "Runtime packet must verify one GUI evidence item")
@@ -375,6 +378,7 @@ assert(kde_page.fetch("known_app_gui_evidence_count") == 1, "KDE page must consu
 assert(cards.length == 1, "KDE page must render one real GUI evidence card")
 assert(cards.first.fetch("app_id") == APP_ID, "KDE GUI evidence card must target the imported app")
 assert(cards.first.fetch("external_app_run_record_consumed") == true, "KDE GUI evidence card must preserve external run consumption")
+assert(cards.first.fetch("external_app_handle_consumed") == true, "KDE GUI evidence card must preserve external app handle consumption")
 assert(cards.first.fetch("external_app_import_record_consumed") == true, "KDE GUI evidence card must preserve import-record consumption")
 assert(cards.first.fetch("imported_artifact_digest_verified") == true, "KDE GUI evidence card must preserve digest verification")
 assert(cards.first.fetch("window_observed") == true, "KDE GUI evidence card must preserve generic observed-window evidence")
@@ -406,10 +410,12 @@ packet = {
   "runtime_packet_output_written" => runtime_packet_output.file?,
   "runtime_packet_consumed_report" => runtime_packet.fetch("report_consumed"),
   "runtime_packet_external_app_run_record_consumed" => runtime_packet.fetch("external_app_run_record_consumed"),
+  "runtime_packet_external_app_handle_consumed" => runtime_packet.fetch("external_app_handle_consumed"),
   "runtime_packet_known_app_gui_evidence_verified_count" => runtime_packet.fetch("known_app_gui_evidence_verified_count"),
   "kde_page_output_written" => kde_page_output.file?,
   "kde_page_known_app_gui_evidence_count" => kde_page.fetch("known_app_gui_evidence_count"),
   "kde_page_card_external_app_run_record_consumed" => cards.first.fetch("external_app_run_record_consumed"),
+  "kde_page_card_external_app_handle_consumed" => cards.first.fetch("external_app_handle_consumed"),
   "kde_page_card_window_observed" => cards.first.fetch("window_observed"),
   "kde_page_card_x_window_observed" => cards.first.fetch("x_window_observed"),
   "delegated_launcher_payload_path" => delegated_output.to_s,

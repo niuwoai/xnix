@@ -850,6 +850,7 @@ type KnownAppSmokeEvidenceSummary struct {
 	RecipeBacked                          bool   `json:"recipe_backed"`
 	RecipeAppID                           string `json:"recipe_app_id,omitempty"`
 	ExternalAppRunRecordConsumed          bool   `json:"external_app_run_record_consumed"`
+	ExternalAppHandleConsumed             bool   `json:"external_app_handle_consumed"`
 	ExternalAppImportRecordConsumed       bool   `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified        bool   `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256                string `json:"imported_artifact_sha256,omitempty"`
@@ -2773,6 +2774,14 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	if item.ExternalAppRunRecordConsumed && evidenceSource != GUISmokeEvidenceSourceContainerXGUI {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("external app run record evidence requires container GUI evidence")
 	}
+	if item.ExternalAppHandleConsumed {
+		if item.RecipeBacked {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("external app handle evidence requires non-recipe evidence")
+		}
+		if !item.ExternalAppRunRecordConsumed || !item.ExternalAppImportRecordConsumed {
+			return KnownAppSmokeEvidenceSummary{}, errors.New("external app handle evidence requires consumed run and import record evidence")
+		}
+	}
 	if item.ExternalAppImportRecordConsumed {
 		if item.RecipeBacked {
 			return KnownAppSmokeEvidenceSummary{}, errors.New("external app import record evidence requires non-recipe evidence")
@@ -2995,6 +3004,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		RecipeBacked:                          item.RecipeBacked,
 		RecipeAppID:                           recipeAppID,
 		ExternalAppRunRecordConsumed:          item.ExternalAppRunRecordConsumed,
+		ExternalAppHandleConsumed:             item.ExternalAppHandleConsumed,
 		ExternalAppImportRecordConsumed:       item.ExternalAppImportRecordConsumed,
 		ImportedArtifactDigestVerified:        item.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:                importedArtifactSHA256,

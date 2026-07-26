@@ -4,6 +4,15 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc145] - 2026-07-26
+
+### Changed
+
+- Added `external_app_handle_consumed` evidence to real GUI evidence packets, known app smoke evidence summaries, and KDE Compatibility Center GUI evidence cards.
+- Tightened imported external Windows app GUI packet consumption so handle evidence requires consumed Runtime run and import record evidence without raw handle path exposure.
+- Updated the staged external Windows GUI desktop smoke to require and persist Runtime packet and KDE card handle-consumption evidence from the `.desktop` handle route.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc145`.
+
 ## [0.2.640-rc144] - 2026-07-26
 
 ### Changed

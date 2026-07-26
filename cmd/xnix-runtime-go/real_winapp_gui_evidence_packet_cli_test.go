@@ -380,6 +380,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 		payload["app_version"] != "0.2.640-test" ||
 		payload["executable_name"] != "notepad.exe" ||
 		payload["external_app_run_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
 		payload["external_app_import_record_consumed"] != true ||
 		payload["imported_artifact_digest_verified"] != true ||
 		payload["imported_artifact_sha256"] != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
@@ -398,6 +399,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 	}
 	evidence := payload["known_app_smoke_evidence"].(map[string]any)
 	if evidence["external_app_run_record_consumed"] != true ||
+		evidence["external_app_handle_consumed"] != true ||
 		evidence["external_app_import_record_consumed"] != true ||
 		evidence["imported_artifact_digest_verified"] != true ||
 		evidence["x_window_observed"] != true ||
@@ -422,6 +424,7 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesExternalAppRunRecord(t
 	}
 	card := cards[0].(map[string]any)
 	if card["external_app_run_record_consumed"] != true ||
+		card["external_app_handle_consumed"] != true ||
 		card["external_app_import_record_consumed"] != true ||
 		card["imported_artifact_digest_verified"] != true ||
 		card["imported_artifact_sha256"] != "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208" ||
@@ -542,6 +545,8 @@ func rawExternalWinAppRunPayloadCLIFixture() string {
   "app_version": "0.2.640-test",
   "executable_name": "notepad.exe",
   "external_app_import_record_consumed": true,
+  "external_app_handle_consumed": true,
+  "external_app_handle": "org.xnix.external.notepad-file",
   "imported_artifact_digest_verified": true,
   "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
   "runtime_run_requested": true,
@@ -567,6 +572,7 @@ func rawExternalWinAppRunPayloadCLIFixture() string {
     "executable_name": "notepad.exe",
     "local_executable_copied": true,
     "external_app_import_record_consumed": true,
+    "external_app_handle_consumed": true,
     "imported_artifact_digest_verified": true,
     "imported_artifact_sha256": "0d6f23e63c59bc99171659b6b1268010f5b37ee52adc8b9c79984dc8d9d7b208",
     "application_name": "/notepad.exe",
@@ -593,6 +599,7 @@ func rawExternalWinAppRunPayloadCLIFixture() string {
   "action_execution_enabled": false,
   "backend_details_exposed": false,
   "raw_import_record_path_exposed": false,
+  "raw_external_app_handle_path_exposed": false,
   "raw_state_root_path_exposed": false,
   "raw_executable_path_exposed": false,
   "host_root_modified": false,

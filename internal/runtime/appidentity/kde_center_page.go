@@ -169,6 +169,7 @@ type KDECenterPageKnownAppMatrixCard struct {
 	RecipeBacked                         bool     `json:"recipe_backed"`
 	RecipeAppID                          string   `json:"recipe_app_id,omitempty"`
 	ExternalAppRunRecordConsumed         bool     `json:"external_app_run_record_consumed"`
+	ExternalAppHandleConsumed            bool     `json:"external_app_handle_consumed"`
 	ExternalAppImportRecordConsumed      bool     `json:"external_app_import_record_consumed"`
 	ImportedArtifactDigestVerified       bool     `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256               string   `json:"imported_artifact_sha256,omitempty"`
@@ -1259,6 +1260,7 @@ func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) [
 			RecipeBacked:                         item.RecipeBacked,
 			RecipeAppID:                          item.RecipeAppID,
 			ExternalAppRunRecordConsumed:         item.ExternalAppRunRecordConsumed,
+			ExternalAppHandleConsumed:            item.ExternalAppHandleConsumed,
 			ExternalAppImportRecordConsumed:      item.ExternalAppImportRecordConsumed,
 			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
 			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
@@ -1312,6 +1314,7 @@ func kdeCenterPageKnownAppGUICards(evidence []KnownAppSmokeEvidenceSummary) []KD
 			RecipeBacked:                         item.RecipeBacked,
 			RecipeAppID:                          item.RecipeAppID,
 			ExternalAppRunRecordConsumed:         item.ExternalAppRunRecordConsumed,
+			ExternalAppHandleConsumed:            item.ExternalAppHandleConsumed,
 			ExternalAppImportRecordConsumed:      item.ExternalAppImportRecordConsumed,
 			ImportedArtifactDigestVerified:       item.ImportedArtifactDigestVerified,
 			ImportedArtifactSHA256:               item.ImportedArtifactSHA256,
