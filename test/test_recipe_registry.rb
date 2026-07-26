@@ -22,12 +22,13 @@ report = Xnix::Compatibility::RecipeRegistry.new(path: registry_path).verify
 assert(report["version"] == File.read(File.expand_path("../VERSION", __dir__)).strip, "recipe registry must expose the current version")
 assert(report["schema_version"] == 1, "recipe registry must expose the supported schema version")
 assert(report["registry_name"] == "xnix-local-development", "recipe registry must identify the development registry")
-assert(report["recipe_count"] == 1, "recipe registry must report the sample recipe")
+assert(report["recipe_count"] == 3, "recipe registry must report the development recipes")
 assert(report["trust"]["digest_verified"], "recipe registry must verify recipe digests")
 assert(!report["trust"]["signed_recipe_validation"], "recipe registry must not claim signed recipe validation yet")
 assert(report["trust"]["development_registry"], "recipe registry must mark the current registry as development-only")
 
-recipe = report.fetch("recipes").first
+recipe = report.fetch("recipes").find { |entry| entry.fetch("id") == "org.xnix.sample.notepad" }
+assert(!recipe.nil?, "recipe registry must include the sample Notepad recipe")
 assert(recipe["id"] == "org.xnix.sample.notepad", "recipe registry must preserve recipe ids")
 assert(recipe["digest_verified"], "recipe registry entries must verify digests")
 assert(recipe["sha256"] == Digest::SHA256.file(project_root.join("runtime/recipes/org.xnix.sample.notepad.json")).hexdigest, "recipe registry must report the actual digest")

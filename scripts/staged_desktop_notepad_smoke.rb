@@ -20,6 +20,8 @@ DEFAULT_IMAGE = "xnix-wine-smoke:local"
 DEFAULT_RUN_ROOT = Pathname.new("/tmp/xnix-staged-desktop-notepad-smoke-#{VERSION}")
 RUN_ID = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{Process.pid}-#{SecureRandom.hex(4)}"
 GO_CACHE_ROOT = PROJECT_ROOT.join(".cache", "go")
+ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
+REMOTE_GO_BUILD_HINT = "scripts/remote_go_build.rb --execute"
 
 options = {
   run_root: DEFAULT_RUN_ROOT.join(RUN_ID).to_s,
@@ -112,6 +114,24 @@ def resolve_executable(path)
   nil
 end
 
+def command_available?(name)
+  !resolve_executable(name).nil?
+end
+
+def runtime_go_command
+  return ["xnix-runtime-go"] if command_available?("xnix-runtime-go")
+  return ["go", "run", "./cmd/xnix-runtime-go"] if ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
+
+  nil
+end
+
+def launcher_binary
+  configured = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "").strip
+  return configured if !configured.empty? && File.file?(configured) && File.executable?(configured)
+
+  resolve_executable("xnix-compat-launch")
+end
+
 def desktop_exec_from(path)
   line = path.each_line.find { |entry| entry.start_with?("Exec=") }
   abort "staged desktop entry does not contain Exec" if line.nil?
@@ -150,6 +170,27 @@ FileUtils.mkdir_p(delegated_output.dirname)
 FileUtils.mkdir_p(runtime_packet_output.dirname)
 FileUtils.mkdir_p(kde_page_output.dirname)
 
+runtime_command = runtime_go_command
+unless runtime_command
+  puts "SKIP: staged desktop Notepad smoke (xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
+end
+
+managed_launcher_bin = launcher_binary
+if managed_launcher_bin.nil? && ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
+  build_stdout, build_stderr, build_status = run_command(
+    go_env,
+    "go", "build", "-o", launcher_bin.to_s, "./cmd/xnix-compat-launch"
+  )
+  abort "go build failed:\n#{build_stderr}\n#{build_stdout}" unless build_status.success?
+  managed_launcher_bin = launcher_bin.to_s
+end
+
+unless managed_launcher_bin
+  puts "SKIP: staged desktop Notepad smoke (xnix-compat-launch is unavailable; local Go compilation is disabled by default, set XNIX_COMPAT_LAUNCH_BIN to a prebuilt launcher or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
+end
+
 if docker_bin.nil?
   puts "SKIP: staged desktop Notepad smoke (Docker runner #{options.fetch(:docker)} is unavailable)"
   exit 0
@@ -160,21 +201,15 @@ unless docker_image_available?(docker_bin, options.fetch(:image))
   exit 0
 end
 
-build_stdout, build_stderr, build_status = run_command(
-  go_env,
-  "go", "build", "-o", launcher_bin.to_s, "./cmd/xnix-compat-launch"
-)
-abort "go build failed:\n#{build_stderr}\n#{build_stdout}" unless build_status.success?
-
 stage, stage_stdout = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "desktop-activation-stage",
   "--registry", options.fetch(:registry),
   "--app", APP_ID,
   "--mode", "development",
   "--staging-root", stage_root.to_s,
-  "--managed-launcher-bin", launcher_bin.to_s
+  "--managed-launcher-bin", managed_launcher_bin
 )
 
 written_ids = stage.fetch("written_file_ids")
@@ -200,7 +235,7 @@ assert(desktop_tokens.include?(PACKAGED_REGISTRY), "desktop Exec must use the pa
 
 launch_receipt, = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "known-app-launch-authorization-receipt-preview",
   "--app", APP_ID,
   "--state-root", state_root.to_s,
@@ -211,7 +246,7 @@ assert(launch_receipt.fetch("host_root_modified") == false, "launch authorizatio
 
 session_record, = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "known-app-controlled-execution-session-record",
   "--app", APP_ID,
   "--state-root", state_root.to_s,
@@ -225,7 +260,7 @@ assert(session_record.fetch("host_root_modified") == false, "controlled executio
 
 review_receipt, = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "known-app-session-gated-launch-review-receipt-record",
   "--app", APP_ID,
   "--state-root", state_root.to_s,
@@ -312,7 +347,7 @@ assert_no_forbidden(launcher_stdout, [PROJECT_ROOT.to_s, run_root.to_s, stage_ro
 
 runtime_packet, = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "real-winapp-gui-evidence-packet-preview",
   "--gui-smoke-report", delegated_output.to_s,
   "--app-id", APP_ID,
@@ -344,7 +379,7 @@ assert(runtime_packet_output.file?, "Runtime packet file must be written")
 
 kde_page, kde_stdout = run_json(
   go_env,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "kde-center-page-preview",
   "--registry", options.fetch(:registry),
   "--app", APP_ID,

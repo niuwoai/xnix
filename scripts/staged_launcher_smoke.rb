@@ -19,6 +19,8 @@ GO_ENV = {
 }.freeze
 SMOKE_NAME = "staged managed launcher smoke"
 GO_BUILD_STEP = "go build"
+ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
+REMOTE_GO_BUILD_HINT = "scripts/remote_go_build.rb --execute"
 
 def assert(condition, message)
   return if condition
@@ -31,6 +33,36 @@ def run_command(env, *command)
   stdout, stderr, status = Open3.capture3(env, *command, chdir: PROJECT_ROOT.to_s)
   assert(status.success?, "#{command.join(" ")} must exit successfully: #{stderr}\n#{stdout}")
   stdout
+end
+
+def command_available?(name)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
+    path = File.join(directory, name)
+    File.file?(path) && File.executable?(path)
+  end
+end
+
+def resolve_executable(name)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).each do |directory|
+    path = File.join(directory, name)
+    return path if File.file?(path) && File.executable?(path)
+  end
+
+  nil
+end
+
+def runtime_go_command
+  return ["xnix-runtime-go"] if command_available?("xnix-runtime-go")
+  return ["go", "run", "./cmd/xnix-runtime-go"] if ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
+
+  nil
+end
+
+def launcher_binary
+  configured = ENV.fetch("XNIX_COMPAT_LAUNCH_BIN", "").strip
+  return configured if !configured.empty? && File.file?(configured) && File.executable?(configured)
+
+  resolve_executable("xnix-compat-launch")
 end
 
 def parse_json(stdout, label)
@@ -53,17 +85,32 @@ end
 FileUtils.mkdir_p(BUILD_DIR)
 FileUtils.mkdir_p(KNOWN_APP_CACHE)
 
-run_command(GO_ENV, "go", "build", "-o", LAUNCHER_BIN.to_s, "./cmd/xnix-compat-launch")
+runtime_command = runtime_go_command
+unless runtime_command
+  puts "SKIP: #{SMOKE_NAME} (xnix-runtime-go is unavailable; local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
+end
+
+managed_launcher_bin = launcher_binary
+if managed_launcher_bin.nil? && ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1" && command_available?("go")
+  run_command(GO_ENV, "go", "build", "-o", LAUNCHER_BIN.to_s, "./cmd/xnix-compat-launch")
+  managed_launcher_bin = LAUNCHER_BIN.to_s
+end
+
+unless managed_launcher_bin
+  puts "SKIP: #{SMOKE_NAME} (xnix-compat-launch is unavailable; local Go compilation is disabled by default, set XNIX_COMPAT_LAUNCH_BIN to a prebuilt launcher or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
+end
 
 stage_stdout = run_command(
   GO_ENV,
-  "go", "run", "./cmd/xnix-runtime-go",
+  *runtime_command,
   "desktop-activation-stage",
   "--registry", "runtime/recipes/registry.json",
   "--app", "org.xnix.sample.notepad",
   "--mode", "development",
   "--staging-root", STAGE_ROOT.to_s,
-  "--managed-launcher-bin", LAUNCHER_BIN.to_s
+  "--managed-launcher-bin", managed_launcher_bin
 )
 stage = parse_json(stage_stdout, "desktop activation stage")
 

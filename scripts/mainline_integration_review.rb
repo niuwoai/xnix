@@ -322,6 +322,7 @@ LANES = [
       %r{\Atest/test_implementation_evidence_report\.rb\z},
       %r{\Atest/test_mainline_integration_review\.rb\z},
       %r{\Atest/test_release_evidence_index\.rb\z},
+      %r{\Atest/test_local_go_compile_guarded_smoke_scripts\.rb\z},
       %r{\Atest/test_offline_application_fixture_matrix\.rb\z},
       %r{\Atest/test_merge_readiness_packet\.rb\z},
       %r{\Ainternal/runtime/appidentity/windows_compatibility_}
@@ -343,6 +344,9 @@ LANES = [
       %r{\Ascripts/winapp_container_smoke\.rb\z},
       %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
       %r{\Ascripts/q4_sample_notepad_smoke\.rb\z},
+      %r{\Ascripts/staged_desktop_notepad_smoke\.rb\z},
+      %r{\Ascripts/staged_desktop_external_winapp_smoke\.rb\z},
+      %r{\Ascripts/staged_launcher_smoke\.rb\z},
       %r{\Ascripts/known_winapp_},
       %r{\Atest/test_q4_sample_notepad_smoke_script\.rb\z},
       %r{\Atest/test_known_winapp_guest_wine_smoke_script\.rb\z},

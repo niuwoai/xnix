@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc180
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc181
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc181 checkpoint makes the q4-first compile policy harder to bypass from older local staged smoke entrypoints. Staged launcher, staged launcher dispatch, staged desktop Notepad, and staged desktop external Windows app smokes now skip cleanly by default when prebuilt Runtime binaries are unavailable and `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is not set. Each skip message points operators toward `scripts/remote_go_build.rb --execute`, and local staged desktop smoke experiments can use `XNIX_COMPAT_LAUNCH_BIN` to provide a prebuilt launcher without rebuilding Go code on the macOS host. This preserves Mac responsiveness while keeping the real Windows app path moving through q4-built Runtime binaries.
 
 The v0.2.640-rc180 checkpoint makes q4 Sample Notepad release evidence Go-owned. `q4-sample-notepad-acceptance-preview` consumes `scripts/q4_sample_notepad_smoke.rb` output, verifies Sample Notepad identity, owner-controlled launch, file-open entrypoint use, delegated remote GUI execute-result consumption, ready real-run acceptance, receipt readiness, window-match observation, Runtime file-open entrypoint evidence, q4 host-compilation avoidance, and closed host/container safety gates. The q4 wrapper executes that Go preview on q4 after the real GUI smoke and merges only safe readiness fields into its final JSON; merge readiness then checks those Go-owned fields rather than duplicating the product acceptance rules in Ruby.
 

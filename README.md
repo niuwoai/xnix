@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc180`.
+The project is currently at `v0.2.640-rc181`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc180`.
 
 ## Current Checkpoint
 
-v0.2.640-rc180 moves the q4 Sample Notepad acceptance decision into the Go Runtime. `xnix-runtime-go q4-sample-notepad-acceptance-preview --q4-sample-notepad-smoke REPORT.json` consumes the short q4 wrapper output, verifies that the real owner-controlled file-open GUI run passed through the Go real-run acceptance chain, and emits a desktop-safe `xnix.runtime.q4_sample_notepad_acceptance.v1` result. The wrapper now runs that Go acceptance preview on q4 before emitting its final JSON, and `merge_readiness_packet` keys release gating off the Go-owned fields instead of reimplementing the Windows-app acceptance rules in Ruby.
+v0.2.640-rc181 guards older staged desktop and launcher smoke entrypoints from accidentally compiling Go code on the macOS host. `scripts/staged_launcher_smoke.rb`, `scripts/staged_launcher_dispatch_smoke.rb`, `scripts/staged_desktop_notepad_smoke.rb`, and `scripts/staged_desktop_external_winapp_smoke.rb` now default to a clean SKIP when prebuilt Runtime binaries are unavailable and local Go compilation has not been explicitly enabled with `XNIX_ALLOW_LOCAL_GO_COMPILE=1`. The skip messages point compile-heavy work to `scripts/remote_go_build.rb --execute`, while `XNIX_COMPAT_LAUNCH_BIN` can supply a prebuilt launcher for local smoke experiments. This keeps the q4-first compile policy enforceable as real Windows app validation expands.
+
+The previous v0.2.640-rc180 checkpoint moved the q4 Sample Notepad acceptance decision into the Go Runtime. `xnix-runtime-go q4-sample-notepad-acceptance-preview --q4-sample-notepad-smoke REPORT.json` consumes the short q4 wrapper output, verifies that the real owner-controlled file-open GUI run passed through the Go real-run acceptance chain, and emits a desktop-safe `xnix.runtime.q4_sample_notepad_acceptance.v1` result. The wrapper now runs that Go acceptance preview on q4 before emitting its final JSON, and `merge_readiness_packet` keys release gating off the Go-owned fields instead of reimplementing the Windows-app acceptance rules in Ruby.
 
 The previous v0.2.640-rc179 checkpoint made the real Sample Notepad run part of merge/readiness evidence. `scripts/q4_sample_notepad_smoke.rb --execute --output /tmp/xnix-sample-notepad.json` can persist the real q4 acceptance result, and `scripts/merge_readiness_packet.rb` now accepts `--q4-sample-notepad-smoke REPORT.json`, consumes that output as fixture evidence, and reports a dedicated q4 Sample Notepad acceptance status. Missing or failed evidence adds the release-only blocker `q4-sample-notepad-acceptance-smoke-not-passed`, while ordinary merge readiness remains offline and does not execute q4, QEMU, Wine, Docker, network fetches, staging, commits, tags, or pushes.
 

@@ -4,6 +4,21 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc181] - 2026-07-26
+
+### Added
+
+- Added Ruby coverage proving older staged desktop and launcher smoke scripts expose an explicit local Go compile override and point compile-heavy work to q4.
+
+### Changed
+
+- Changed staged launcher, staged launcher dispatch, staged desktop Notepad, and staged desktop external Windows app smoke scripts to avoid local Go compilation by default unless `XNIX_ALLOW_LOCAL_GO_COMPILE=1` is explicitly set or prebuilt Runtime binaries are supplied.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc181`.
+
+### Fixed
+
+- Fixed recipe registry and trust policy tests so they verify the current three development recipes instead of the earlier single-recipe registry shape.
+
 ## [0.2.640-rc180] - 2026-07-26
 
 ### Added

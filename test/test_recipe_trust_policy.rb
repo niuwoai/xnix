@@ -24,7 +24,7 @@ policy = Xnix::Compatibility::RecipeTrustPolicy.new(registry_report: registry_re
 assert(policy["version"] == File.read(File.expand_path("../VERSION", __dir__)).strip, "recipe trust policy must expose the current version")
 assert(policy["policy_type"] == "recipe-trust", "recipe trust policy must identify the model type")
 assert(policy["decision"] == "development-only", "development registry must not be production-trusted")
-assert(policy["recipe_count"] == 1, "recipe trust policy must report recipe count")
+assert(policy["recipe_count"] == 3, "recipe trust policy must report recipe count")
 assert(policy["checks"].any? { |check| check["id"] == "registry.digest" && check["status"] == "pass" }, "recipe trust policy must pass digest checks")
 assert(policy["checks"].any? { |check| check["id"] == "registry.signature" && check["status"] == "pending" }, "recipe trust policy must keep production signatures pending")
 assert(policy["blocking_reasons"].include?("production signed recipe validation is not enabled"), "recipe trust policy must block production trust without signatures")

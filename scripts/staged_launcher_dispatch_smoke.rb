@@ -32,6 +32,8 @@ RETRY_INTERVAL_SECONDS = 1
 GUEST_BOUNDARY = "managed-known-app-guest-smoke"
 SMOKE_NAME = "staged managed launcher dispatch smoke"
 GO_BUILD_STEP = "go build"
+ALLOW_LOCAL_GO_COMPILE_ENV = "XNIX_ALLOW_LOCAL_GO_COMPILE"
+REMOTE_GO_BUILD_HINT = "scripts/remote_go_build.rb --execute"
 
 def go_env
   {
@@ -70,6 +72,11 @@ def assert_no_forbidden(text, forbidden_terms, label)
 
     assert(!downcased.include?(term.to_s.downcase), "#{label} must not expose #{term}")
   end
+end
+
+unless ENV.fetch(ALLOW_LOCAL_GO_COMPILE_ENV, "") == "1"
+  puts "SKIP: #{SMOKE_NAME} (local Go compilation is disabled by default, set #{ALLOW_LOCAL_GO_COMPILE_ENV}=1 only for an explicit local override or build on q4 with #{REMOTE_GO_BUILD_HINT})"
+  exit 0
 end
 
 def stop_qemu(wait_thread)
