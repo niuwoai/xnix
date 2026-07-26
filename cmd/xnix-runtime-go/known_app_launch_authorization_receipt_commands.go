@@ -980,3 +980,14 @@ func boolJSONField(payload map[string]any, key string) bool {
 	value, _ := payload[key].(bool)
 	return value
 }
+
+func intJSONField(payload map[string]any, key string) int {
+	switch value := payload[key].(type) {
+	case float64:
+		return int(value)
+	case int:
+		return value
+	default:
+		return 0
+	}
+}

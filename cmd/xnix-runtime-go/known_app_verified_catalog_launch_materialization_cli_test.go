@@ -243,13 +243,31 @@ func TestKnownAppVerifiedCatalogDispatchRunnerExecutionCommandInvokesManagedLaun
 		payload["guest_start_requested"] != false ||
 		payload["guest_start_mode"] != "external" ||
 		payload["delegated_request_type"] != "windows-known-app-dispatch-smoke" ||
+		payload["delegated_evidence_source"] != "wine-guest-gui-smoke" ||
 		payload["delegated_status"] != "passed" ||
+		payload["delegated_cache_status"] != "guest-builtin-gui" ||
 		payload["delegated_runtime_owned_dispatch"] != true ||
 		payload["delegated_smoke_passed"] != true ||
 		payload["delegated_execution_started"] != true ||
 		payload["delegated_backend_process_started"] != false ||
+		payload["delegated_managed_guest_runner_invoked"] != true ||
+		payload["delegated_managed_guest_reachable"] != true ||
+		payload["delegated_managed_guest_runtime_ready"] != true ||
+		payload["delegated_file_argument_count"] != float64(1) ||
+		payload["delegated_file_argument_copied_count"] != float64(1) ||
+		payload["delegated_file_arguments_passed"] != true ||
+		payload["delegated_file_argument_winepath_translated"] != true ||
+		payload["delegated_file_argument_winepath_translated_count"] != float64(1) ||
+		payload["delegated_window_match_observed"] != true ||
+		payload["delegated_window_evidence_observed"] != true ||
+		payload["delegated_gui_evidence_ready"] != true ||
 		payload["delegated_controlled_execution_session_consumed"] != true ||
 		payload["delegated_controlled_session_digest_verified"] != true ||
+		payload["delegated_controlled_session_window_observed"] != true ||
+		payload["raw_host_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["raw_file_argument_path_exposed"] != false ||
+		payload["window_evidence_summary_exposed"] != false ||
 		payload["raw_launcher_output_exposed"] != false ||
 		payload["backend_details_exposed"] != false {
 		t.Fatalf("unexpected dispatch runner execution payload: %#v", payload)
@@ -286,7 +304,7 @@ func TestKnownAppVerifiedCatalogDispatchRunnerExecutionCommandRejectsMissingInpu
 func writeVerifiedCatalogFakeDispatchLauncher(t *testing.T, argsLog string) string {
 	t.Helper()
 	launcher := filepath.Join(t.TempDir(), "xnix-compat-launch")
-	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$XNIX_FAKE_DISPATCH_ARGS_LOG\"\nprintf '%s\\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"managed_artifact_copied\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"controlled_execution_session_consumed\":true,\"controlled_session_digest_verified\":true,\"host_root_modified\":false,\"privileged_container_required\":false,\"host_networking_required\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"backend_details_exposed\":false}'\n"
+	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$XNIX_FAKE_DISPATCH_ARGS_LOG\"\nprintf '%s\\n' '{\"request_type\":\"windows-known-app-dispatch-smoke\",\"evidence_source\":\"wine-guest-gui-smoke\",\"status\":\"passed\",\"guest_boundary\":\"managed-known-app-guest-smoke\",\"cache_status\":\"guest-builtin-gui\",\"runtime_owned_dispatch\":true,\"artifact_verified\":true,\"managed_artifact_copied\":true,\"marker_observed\":true,\"smoke_passed\":true,\"execution_started\":true,\"backend_process_started\":false,\"managed_guest_runner_invoked\":true,\"managed_guest_reachable\":true,\"managed_guest_runtime_ready\":true,\"file_argument_count\":1,\"file_argument_copied_count\":1,\"file_arguments_passed\":true,\"file_argument_winepath_translated\":true,\"file_argument_winepath_translated_count\":1,\"window_match_observed\":true,\"controlled_execution_session_consumed\":true,\"controlled_session_digest_verified\":true,\"controlled_session_window_observed\":true,\"host_root_modified\":false,\"privileged_container_required\":false,\"host_networking_required\":false,\"docker_socket_mounted\":false,\"broad_host_mount_required\":false,\"raw_host_path_exposed\":false,\"raw_executable_path_exposed\":false,\"raw_file_argument_path_exposed\":false,\"raw_command_exposed\":false,\"backend_details_exposed\":false}'\n"
 	if err := os.WriteFile(launcher, []byte(script), 0o700); err != nil {
 		t.Fatalf("WriteFile fake launcher returned error: %v", err)
 	}

@@ -306,8 +306,10 @@ type knownAppVerifiedCatalogDispatchExecutionResult struct {
 	QEMUExecuted                        bool   `json:"qemu_executed"`
 	QEMUSerialLogWritten                bool   `json:"qemu_serial_log_written"`
 	DelegatedRequestType                string `json:"delegated_request_type"`
+	DelegatedEvidenceSource             string `json:"delegated_evidence_source"`
 	DelegatedStatus                     string `json:"delegated_status"`
 	DelegatedGuestBoundary              string `json:"delegated_guest_boundary"`
+	DelegatedCacheStatus                string `json:"delegated_cache_status"`
 	DelegatedRuntimeOwnedDispatch       bool   `json:"delegated_runtime_owned_dispatch"`
 	DelegatedArtifactVerified           bool   `json:"delegated_artifact_verified"`
 	DelegatedManagedArtifactCopied      bool   `json:"delegated_managed_artifact_copied"`
@@ -315,16 +317,32 @@ type knownAppVerifiedCatalogDispatchExecutionResult struct {
 	DelegatedSmokePassed                bool   `json:"delegated_smoke_passed"`
 	DelegatedExecutionStarted           bool   `json:"delegated_execution_started"`
 	DelegatedBackendProcessStarted      bool   `json:"delegated_backend_process_started"`
+	DelegatedManagedGuestRunnerInvoked  bool   `json:"delegated_managed_guest_runner_invoked"`
+	DelegatedManagedGuestReachable      bool   `json:"delegated_managed_guest_reachable"`
+	DelegatedManagedGuestRuntimeReady   bool   `json:"delegated_managed_guest_runtime_ready"`
+	DelegatedFileArgumentCount          int    `json:"delegated_file_argument_count"`
+	DelegatedFileArgumentCopiedCount    int    `json:"delegated_file_argument_copied_count"`
+	DelegatedFileArgumentsPassed        bool   `json:"delegated_file_arguments_passed"`
+	DelegatedFileArgumentWinePathReady  bool   `json:"delegated_file_argument_winepath_translated"`
+	DelegatedFileArgumentWinePathCount  int    `json:"delegated_file_argument_winepath_translated_count"`
+	DelegatedWindowMatchObserved        bool   `json:"delegated_window_match_observed"`
+	DelegatedWindowEvidenceObserved     bool   `json:"delegated_window_evidence_observed"`
+	DelegatedGUIEvidenceReady           bool   `json:"delegated_gui_evidence_ready"`
 	DelegatedSessionConsumed            bool   `json:"delegated_controlled_execution_session_consumed"`
 	DelegatedSessionDigestVerified      bool   `json:"delegated_controlled_session_digest_verified"`
+	DelegatedControlledSessionWindow    bool   `json:"delegated_controlled_session_window_observed"`
 	HostRootModified                    bool   `json:"host_root_modified"`
 	PrivilegedContainerRequired         bool   `json:"privileged_container_required"`
 	HostNetworkingRequired              bool   `json:"host_networking_required"`
 	DockerSocketMounted                 bool   `json:"docker_socket_mounted"`
 	BroadHostMountRequired              bool   `json:"broad_host_mount_required"`
+	RawHostPathExposed                  bool   `json:"raw_host_path_exposed"`
+	RawExecutablePathExposed            bool   `json:"raw_executable_path_exposed"`
+	RawFileArgumentPathExposed          bool   `json:"raw_file_argument_path_exposed"`
 	StateRootPathExposed                bool   `json:"state_root_path_exposed"`
 	CacheRootPathExposed                bool   `json:"cache_root_path_exposed"`
 	RunnerPathExposed                   bool   `json:"runner_path_exposed"`
+	WindowEvidenceSummaryExposed        bool   `json:"window_evidence_summary_exposed"`
 	RawCommandExposed                   bool   `json:"raw_command_exposed"`
 	RawLauncherOutputExposed            bool   `json:"raw_launcher_output_exposed"`
 	BackendDetailsExposed               bool   `json:"backend_details_exposed"`
@@ -435,8 +453,10 @@ func executeKnownAppVerifiedCatalogDispatchRequest(request knownAppVerifiedCatal
 		QEMUExecuted:                        qemuExecuted,
 		QEMUSerialLogWritten:                strings.TrimSpace(request.QEMUSerialLog) != "",
 		DelegatedRequestType:                stringJSONField(delegated, "request_type"),
+		DelegatedEvidenceSource:             stringJSONField(delegated, "evidence_source"),
 		DelegatedStatus:                     stringJSONField(delegated, "status"),
 		DelegatedGuestBoundary:              stringJSONField(delegated, "guest_boundary"),
+		DelegatedCacheStatus:                stringJSONField(delegated, "cache_status"),
 		DelegatedRuntimeOwnedDispatch:       boolJSONField(delegated, "runtime_owned_dispatch"),
 		DelegatedArtifactVerified:           boolJSONField(delegated, "artifact_verified"),
 		DelegatedManagedArtifactCopied:      boolJSONField(delegated, "managed_artifact_copied"),
@@ -444,26 +464,49 @@ func executeKnownAppVerifiedCatalogDispatchRequest(request knownAppVerifiedCatal
 		DelegatedSmokePassed:                boolJSONField(delegated, "smoke_passed"),
 		DelegatedExecutionStarted:           boolJSONField(delegated, "execution_started"),
 		DelegatedBackendProcessStarted:      boolJSONField(delegated, "backend_process_started"),
+		DelegatedManagedGuestRunnerInvoked:  boolJSONField(delegated, "managed_guest_runner_invoked"),
+		DelegatedManagedGuestReachable:      boolJSONField(delegated, "managed_guest_reachable"),
+		DelegatedManagedGuestRuntimeReady:   boolJSONField(delegated, "managed_guest_runtime_ready"),
+		DelegatedFileArgumentCount:          intJSONField(delegated, "file_argument_count"),
+		DelegatedFileArgumentCopiedCount:    intJSONField(delegated, "file_argument_copied_count"),
+		DelegatedFileArgumentsPassed:        boolJSONField(delegated, "file_arguments_passed"),
+		DelegatedFileArgumentWinePathReady:  boolJSONField(delegated, "file_argument_winepath_translated"),
+		DelegatedFileArgumentWinePathCount:  intJSONField(delegated, "file_argument_winepath_translated_count"),
+		DelegatedWindowMatchObserved:        boolJSONField(delegated, "window_match_observed"),
 		DelegatedSessionConsumed:            boolJSONField(delegated, "controlled_execution_session_consumed"),
 		DelegatedSessionDigestVerified:      boolJSONField(delegated, "controlled_session_digest_verified"),
+		DelegatedControlledSessionWindow:    boolJSONField(delegated, "controlled_session_window_observed"),
 		HostRootModified:                    boolJSONField(delegated, "host_root_modified"),
 		PrivilegedContainerRequired:         boolJSONField(delegated, "privileged_container_required"),
 		HostNetworkingRequired:              boolJSONField(delegated, "host_networking_required"),
 		DockerSocketMounted:                 boolJSONField(delegated, "docker_socket_mounted"),
 		BroadHostMountRequired:              boolJSONField(delegated, "broad_host_mount_required"),
+		RawHostPathExposed:                  boolJSONField(delegated, "raw_host_path_exposed"),
+		RawExecutablePathExposed:            boolJSONField(delegated, "raw_executable_path_exposed"),
+		RawFileArgumentPathExposed:          boolJSONField(delegated, "raw_file_argument_path_exposed"),
 		StateRootPathExposed:                false,
 		CacheRootPathExposed:                false,
 		RunnerPathExposed:                   false,
+		WindowEvidenceSummaryExposed:        false,
 		RawCommandExposed:                   boolJSONField(delegated, "raw_command_exposed"),
 		RawLauncherOutputExposed:            false,
 		BackendDetailsExposed:               boolJSONField(delegated, "backend_details_exposed"),
 		DesktopSafeSummary:                  plan.DisplayName + " dispatch request was consumed by the Runtime owner runner bridge.",
 	}
+	result.DelegatedWindowEvidenceObserved = result.DelegatedWindowMatchObserved ||
+		result.DelegatedControlledSessionWindow ||
+		boolJSONField(delegated, "x_window_observed") ||
+		boolJSONField(delegated, "window_observed")
+	result.DelegatedGUIEvidenceReady = result.DelegatedSmokePassed &&
+		result.DelegatedExecutionStarted &&
+		result.DelegatedWindowEvidenceObserved
 	if result.DelegatedRequestType != winapp.KnownDispatchSmokeRequestType {
 		return knownAppVerifiedCatalogDispatchExecutionResult{}, errors.New("known app verified catalog dispatch runner returned an unexpected request type")
 	}
 	if result.HostRootModified || result.PrivilegedContainerRequired || result.HostNetworkingRequired ||
-		result.DockerSocketMounted || result.BroadHostMountRequired || result.RawCommandExposed || result.BackendDetailsExposed {
+		result.DockerSocketMounted || result.BroadHostMountRequired || result.RawHostPathExposed ||
+		result.RawExecutablePathExposed || result.RawFileArgumentPathExposed || result.RawCommandExposed ||
+		result.BackendDetailsExposed {
 		return knownAppVerifiedCatalogDispatchExecutionResult{}, errors.New("known app verified catalog dispatch runner reported unsafe host or backend exposure")
 	}
 	return result, nil

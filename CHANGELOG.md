@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc205] - 2026-07-27
+
+### Added
+
+- Added desktop-safe delegated GUI evidence projection to `known-app-verified-catalog-dispatch-runner-execution`, including managed guest readiness, file-argument transfer counts, Wine path translation status, window-match observation, controlled-session window observation, and a consolidated GUI evidence readiness flag.
+
+### Changed
+
+- Tightened dispatch runner execution safety gates to reject delegated raw host paths, raw executable paths, and raw file-argument paths in addition to host/container/backend exposure.
+- Verified the rc205 GUI direction on q4 with the real MessageBox Windows GUI fixture: q4 built the Windows `.exe`, QEMU/Wine observed the expected window, the owner-controlled file-open entrypoint ran, the document-content marker was observed, Go-owned q4 acceptance was ready, and host compilation remained avoided.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc205`.
+
 ## [0.2.640-rc204] - 2026-07-27
 
 ### Added
