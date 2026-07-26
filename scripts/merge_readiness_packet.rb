@@ -60,6 +60,13 @@ TOOL_DEFINITIONS = {
     required: false,
     fixture_only: true
   },
+  "q4_sample_notepad_smoke" => {
+    title: "q4 Sample Notepad real Windows app acceptance smoke",
+    command: ["ruby", "scripts/q4_sample_notepad_smoke.rb", "--execute"],
+    parser: "json",
+    required: false,
+    fixture_only: true
+  },
   "offline_fixture_matrix" => {
     title: "Offline application fixture matrix",
     command: ["ruby", "scripts/offline_application_fixture_matrix.rb", "--format", "json"],
@@ -77,6 +84,7 @@ FIXTURE_OPTIONS = {
   "release_evidence" => :release_evidence_index,
   "full_checkpoint_promotion" => :full_checkpoint_promotion,
   "desktop_trigger_request_preflight_smoke" => :desktop_trigger_request_preflight_smoke,
+  "q4_sample_notepad_smoke" => :q4_sample_notepad_smoke,
   "offline_fixture_matrix" => :fixture_matrix_report
 }.freeze
 
@@ -104,6 +112,7 @@ RELEASE_ONLY_BLOCKERS = %w[
   restricted-docker-or-qemu-smoke-requires-human-authorization
   full-checkpoint-promotion-not-allowed
   desktop-trigger-request-preflight-smoke-not-passed
+  q4-sample-notepad-acceptance-smoke-not-passed
   production-runtime-and-windows-execution-remain-disabled
 ].freeze
 
@@ -137,6 +146,7 @@ def parse_options(argv)
     parser.on("--release-evidence-index PATH", "Use an existing release evidence index JSON report") { |value| options[:fixtures][:release_evidence_index] = value }
     parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:fixtures][:full_checkpoint_promotion] = value }
     parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:fixtures][:desktop_trigger_request_preflight_smoke] = value }
+    parser.on("--q4-sample-notepad-smoke PATH", "Use an existing q4 Sample Notepad acceptance smoke JSON report") { |value| options[:fixtures][:q4_sample_notepad_smoke] = value }
     parser.on("--fixture-matrix-report PATH", "Use an existing offline fixture matrix JSON report") { |value| options[:fixtures][:fixture_matrix_report] = value }
   end.parse!(argv)
 
@@ -254,6 +264,8 @@ def json_tool_summary(tool_id, data)
     "Full checkpoint promotion decision: #{data.fetch("promotion_decision", "unknown")}."
   when "desktop_trigger_request_preflight_smoke"
     "Desktop-trigger request preflight smoke state: #{data.fetch("preflight_smoke_state", "unknown")}."
+  when "q4_sample_notepad_smoke"
+    "q4 Sample Notepad acceptance state: #{data.fetch("status", "unknown")}."
   when "offline_fixture_matrix"
     counts = data.fetch("counts", {})
     row_count = data.fetch("row_count", data.fetch("rows", []).length)
@@ -377,7 +389,37 @@ def desktop_trigger_request_preflight_smoke_passed?(tools)
     data.fetch("host_root_modified", true) == false
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed)
+def q4_sample_notepad_smoke_passed?(tools)
+  tool = tools.find { |candidate| candidate.fetch("id") == "q4_sample_notepad_smoke" }
+  return nil unless tool
+  return nil if tool.fetch("status") == "skipped"
+  return false unless tool.fetch("status") == "pass"
+
+  data = tool.fetch("data") || {}
+  data.fetch("schema_version", "") == "xnix.scripts.q4_sample_notepad_smoke.v1" &&
+    data.fetch("request_type", "") == "q4-sample-notepad-smoke" &&
+    data.fetch("status", "") == "passed" &&
+    data.fetch("app_id", "") == "org.xnix.sample.notepad" &&
+    data.fetch("launch_mode", "") == "owner-controlled-launch" &&
+    data.fetch("file_open_entrypoint_requested", false) == true &&
+    data.fetch("real_run_acceptance_required", false) == true &&
+    data.fetch("real_run_acceptance_ready", false) == true &&
+    data.fetch("real_run_acceptance_center_projection_consumed", false) == true &&
+    data.fetch("real_run_acceptance_kde_page_projection_consumed", false) == true &&
+    data.fetch("real_run_receipt_summary_ready", false) == true &&
+    data.fetch("real_run_receipt_summary_file_open_verified", false) == true &&
+    data.fetch("window_match_observed", false) == true &&
+    data.fetch("owner_file_open_entrypoint_invoked", false) == true &&
+    data.fetch("runtime_evidence_owner_file_open_entrypoint_invoked", false) == true &&
+    data.fetch("host_compilation_avoided", false) == true &&
+    data.fetch("host_root_modified", true) == false &&
+    data.fetch("privileged_container_required", true) == false &&
+    data.fetch("host_networking_required", true) == false &&
+    data.fetch("docker_socket_mounted", true) == false &&
+    data.fetch("broad_host_mount_required", true) == false
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed, q4_sample_notepad_smoke_passed)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -388,6 +430,7 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release
   reasons << "restricted-docker-or-qemu-smoke-requires-human-authorization" unless authorized_product_smoke_complete?(release_evidence)
   reasons << "full-checkpoint-promotion-not-allowed" unless checkpoint_promotion_allowed?(full_checkpoint_promotion)
   reasons << "desktop-trigger-request-preflight-smoke-not-passed" if preflight_smoke_passed == false
+  reasons << "q4-sample-notepad-acceptance-smoke-not-passed" unless q4_sample_notepad_smoke_passed == true
   reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
@@ -404,7 +447,8 @@ def build_packet(options)
   full_checkpoint_promotion = tool_data(tools, "full_checkpoint_promotion") || {}
   unsafe = unsafe_findings(tools)
   preflight_smoke_passed = desktop_trigger_request_preflight_smoke_passed?(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed)
+  q4_sample_notepad_smoke_passed = q4_sample_notepad_smoke_passed?(tools)
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed, q4_sample_notepad_smoke_passed)
   merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
@@ -455,6 +499,12 @@ def build_packet(options)
       "status" => preflight_smoke_passed.nil? ? "not-supplied" : (preflight_smoke_passed ? "passed" : "blocked"),
       "release_blocking_reason" => preflight_smoke_passed == false ? "desktop-trigger-request-preflight-smoke-not-passed" : nil
     },
+    "q4_sample_notepad_smoke_status" => {
+      "evidence_supplied" => !q4_sample_notepad_smoke_passed.nil?,
+      "smoke_passed" => q4_sample_notepad_smoke_passed == true,
+      "status" => q4_sample_notepad_smoke_passed.nil? ? "not-supplied" : (q4_sample_notepad_smoke_passed ? "passed" : "blocked"),
+      "release_blocking_reason" => q4_sample_notepad_smoke_passed == true ? nil : "q4-sample-notepad-acceptance-smoke-not-passed"
+    },
     "desktop_safe_summary" => "Merge readiness is aggregated offline from local reports; staging, committing, tagging, pushing, Docker, QEMU, network fetch, package managers, backend launch, and host-root mutation remain disabled."
   }
 end
@@ -470,6 +520,7 @@ def render_markdown(packet)
   lines << "- Protected Claude file: #{packet.fetch("protected_file_status").fetch("status")}"
   lines << "- Full checkpoint promotion: #{packet.fetch("full_checkpoint_promotion_status").fetch("promotion_decision")}"
   lines << "- Desktop-trigger request preflight smoke: #{packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status")}"
+  lines << "- q4 Sample Notepad acceptance smoke: #{packet.fetch("q4_sample_notepad_smoke_status").fetch("status")}"
   lines << ""
   lines << "## Tool Statuses"
   lines << ""

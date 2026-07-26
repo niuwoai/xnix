@@ -150,6 +150,7 @@ LANES = [
     patterns: [
       %r{\Ainternal/runtime/recipe/},
       %r{\Ainternal/runtime/artifact/},
+      %r{\Aruntime/recipes/},
       %r{\Ainternal/runtime/appidentity/install_plan},
       %r{\Ainternal/runtime/appidentity/multi_application_install_queue},
       %r{\Ainternal/runtime/appidentity/application_upgrade_impact},
@@ -338,7 +339,9 @@ LANES = [
       %r{\Ascripts/winapp_smoke\.rb\z},
       %r{\Ascripts/winapp_container_smoke\.rb\z},
       %r{\Ascripts/winapp_guest_wine_smoke\.rb\z},
+      %r{\Ascripts/q4_sample_notepad_smoke\.rb\z},
       %r{\Ascripts/known_winapp_},
+      %r{\Atest/test_q4_sample_notepad_smoke_script\.rb\z},
       %r{\Atest/test_known_winapp_guest_wine_smoke_script\.rb\z},
       %r{\Atest/test_winapp_smoke_script\.rb\z},
       %r{\Atest/fixtures/winapp/}

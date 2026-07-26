@@ -1020,7 +1020,7 @@ remote_wine_guest_gui_smoke = read_project_file("scripts/remote_wine_guest_gui_s
   assert(remote_wine_guest_gui_smoke.include?(token), "remote Wine guest GUI smoke script must include #{token}")
 end
 q4_sample_notepad_smoke = read_project_file("scripts/q4_sample_notepad_smoke.rb")
-%w[xnix.scripts.q4_sample_notepad_smoke.v1 q4-sample-notepad-smoke scripts/remote_wine_guest_gui_smoke.rb root@q4 --execute --no-sync-source --remote --sample-file --window-match --remote-timeout-seconds owner-controlled-launch --file-open-entrypoint org.xnix.sample.notepad sample-document.txt Sample\ Notepad real_run_acceptance_required real_run_acceptance_ready real_run_acceptance_center_projection_consumed real_run_acceptance_kde_page_projection_consumed real_run_receipt_summary_ready window_match_observed owner_file_open_entrypoint_invoked host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+%w[xnix.scripts.q4_sample_notepad_smoke.v1 q4-sample-notepad-smoke scripts/remote_wine_guest_gui_smoke.rb root@q4 --execute --no-sync-source --remote --sample-file --window-match --remote-timeout-seconds --output output_path ensure_local_output_path! owner-controlled-launch --file-open-entrypoint org.xnix.sample.notepad sample-document.txt Sample\ Notepad real_run_acceptance_required real_run_acceptance_ready real_run_acceptance_center_projection_consumed real_run_acceptance_kde_page_projection_consumed real_run_receipt_summary_ready window_match_observed owner_file_open_entrypoint_invoked host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_sample_notepad_smoke.include?(token), "q4 Sample Notepad smoke script must include #{token}")
 end
 remote_go_build = read_project_file("scripts/remote_go_build.rb")
@@ -7162,6 +7162,7 @@ mainline_integration_review_source = read_project_file("scripts/mainline_integra
   runtime_route_convergence
   shared-runtime-cli-plumbing
   cw2-recipe-artifact-trust
+  runtime/recipes
   cw3-runtime-state-backend-lifecycle
   cw5-portal-permission-safety
   cw8-execution-ledger-session-evidence
@@ -7169,6 +7170,7 @@ mainline_integration_review_source = read_project_file("scripts/mainline_integra
   cw6-snapshot-rollback-store
   cw7-ai-diagnostic-privacy
   cw9-windows-app-runner-path
+  q4_sample_notepad_smoke
   cw10-evidence-drift-harness
   blocked-protected-claude-owned-file
   unclassified
@@ -7204,6 +7206,7 @@ mainline_integration_review_test_source = read_project_file("test/test_mainline_
   cw1-runtime-owner-read-boundary
   shared-runtime-cli-plumbing
   cw2-recipe-artifact-trust
+  runtime/recipes/org.xnix.sample.notepad.json
   cw3-runtime-state-backend-lifecycle
   cw5-portal-permission-safety
   cw8-execution-ledger-session-evidence
@@ -7211,6 +7214,7 @@ mainline_integration_review_test_source = read_project_file("test/test_mainline_
   cw6-snapshot-rollback-store
   cw7-ai-diagnostic-privacy
   cw9-windows-app-runner-path
+  q4_sample_notepad_smoke
   cw10-evidence-drift-harness
   blocked-protected-claude-owned-file
   unclassified
@@ -7318,9 +7322,11 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   release_evidence
   full_checkpoint_promotion
   desktop_trigger_request_preflight_smoke
+  q4_sample_notepad_smoke
   offline_fixture_matrix
   --full-checkpoint-promotion
   --desktop-trigger-request-preflight-smoke
+  --q4-sample-notepad-smoke
   --offline-only
   --skip-tool
   --tool-command
@@ -7335,8 +7341,11 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   restricted-docker-or-qemu-smoke-requires-human-authorization
   full-checkpoint-promotion-not-allowed
   desktop-trigger-request-preflight-smoke-not-passed
+  q4-sample-notepad-acceptance-smoke-not-passed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
+  q4_sample_notepad_smoke_status
+  q4_sample_notepad_smoke_passed?
   promotion_allowed
   promotion_decision
   full_smoke_state
@@ -7377,12 +7386,18 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   unsafe-operation-detected
   full_checkpoint_promotion
   desktop_trigger_request_preflight_smoke
+  q4_sample_notepad_smoke
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
   desktop-trigger-request-preflight-smoke-not-passed
+  q4-sample-notepad-acceptance-smoke-not-passed
   promotion_allowed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
+  q4_sample_notepad_smoke_status
+  real_run_acceptance_ready
+  window_match_observed
+  owner_file_open_entrypoint_invoked
   docker_executed
   qemu_executed
   network_checks_run

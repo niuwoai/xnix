@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc178`.
+The project is currently at `v0.2.640-rc179`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc178`.
 
 ## Current Checkpoint
 
-v0.2.640-rc178 adds `scripts/q4_sample_notepad_smoke.rb` as a short, execute-gated operator entrypoint for the real Windows app lane. Plan mode is the default; `--execute` delegates to the maintained q4 remote GUI smoke with Sample Notepad, the owner-controlled launch path, the `xnix-compat-open %U` file-open entrypoint, a generated sample document, window-title matching, and the Go-owned real run acceptance requirement. This turns the long q4 command into a repeatable "actually run a Windows GUI app and prove acceptance" smoke while keeping compile-heavy work and QEMU/Wine execution on q4.
+v0.2.640-rc179 makes the real Sample Notepad run part of merge/readiness evidence. `scripts/q4_sample_notepad_smoke.rb --execute --output /tmp/xnix-sample-notepad.json` can persist the real q4 acceptance result, and `scripts/merge_readiness_packet.rb` now accepts `--q4-sample-notepad-smoke REPORT.json`, consumes that output as fixture evidence, and reports a dedicated q4 Sample Notepad acceptance status. Missing or failed evidence adds the release-only blocker `q4-sample-notepad-acceptance-smoke-not-passed`, while ordinary merge readiness remains offline and does not execute q4, QEMU, Wine, Docker, network fetches, staging, commits, tags, or pushes.
+
+The previous v0.2.640-rc178 checkpoint added `scripts/q4_sample_notepad_smoke.rb` as a short, execute-gated operator entrypoint for the real Windows app lane. Plan mode is the default; `--execute` delegates to the maintained q4 remote GUI smoke with Sample Notepad, the owner-controlled launch path, the `xnix-compat-open %U` file-open entrypoint, a generated sample document, window-title matching, and the Go-owned real run acceptance requirement. This turns the long q4 command into a repeatable "actually run a Windows GUI app and prove acceptance" smoke while keeping compile-heavy work and QEMU/Wine execution on q4.
 
 The previous v0.2.640-rc177 checkpoint wired the Go Runtime `real-winapp-run-acceptance-preview` command back into the q4 remote GUI smoke itself. A single owner-controlled Sample Notepad file-open run can now persist the execute-result JSON, generate the real run receipt summary, project it through Compatibility Center and KDE Center, generate the acceptance summary, and return top-level `real_run_acceptance_*` readiness and projection-consumption fields without requiring a second manual command. Compile-heavy build/test and real GUI validation remain q4-first so the macOS host stays limited to lightweight Ruby and layout checks.
 

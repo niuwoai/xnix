@@ -134,6 +134,54 @@ failed_preflight_smoke = write_json_fixture(
   "backend_launch_enabled" => false,
   "host_root_modified" => false
 )
+q4_sample_notepad_smoke = write_json_fixture(
+  "schema_version" => "xnix.scripts.q4_sample_notepad_smoke.v1",
+  "request_type" => "q4-sample-notepad-smoke",
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "status" => "passed",
+  "app_id" => "org.xnix.sample.notepad",
+  "launch_mode" => "owner-controlled-launch",
+  "file_open_entrypoint_requested" => true,
+  "real_run_acceptance_required" => true,
+  "real_run_acceptance_ready" => true,
+  "real_run_acceptance_center_projection_consumed" => true,
+  "real_run_acceptance_kde_page_projection_consumed" => true,
+  "real_run_receipt_summary_ready" => true,
+  "real_run_receipt_summary_file_open_verified" => true,
+  "window_match_observed" => true,
+  "owner_file_open_entrypoint_invoked" => true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => true,
+  "host_compilation_avoided" => true,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false
+)
+failed_q4_sample_notepad_smoke = write_json_fixture(
+  "schema_version" => "xnix.scripts.q4_sample_notepad_smoke.v1",
+  "request_type" => "q4-sample-notepad-smoke",
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "status" => "blocked",
+  "app_id" => "org.xnix.sample.notepad",
+  "launch_mode" => "owner-controlled-launch",
+  "file_open_entrypoint_requested" => true,
+  "real_run_acceptance_required" => true,
+  "real_run_acceptance_ready" => false,
+  "real_run_acceptance_center_projection_consumed" => false,
+  "real_run_acceptance_kde_page_projection_consumed" => false,
+  "real_run_receipt_summary_ready" => false,
+  "real_run_receipt_summary_file_open_verified" => false,
+  "window_match_observed" => false,
+  "owner_file_open_entrypoint_invoked" => false,
+  "runtime_evidence_owner_file_open_entrypoint_invoked" => false,
+  "host_compilation_avoided" => true,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false
+)
 malformed = write_text_fixture("{not-json")
 protected_mainline = write_json_fixture(
   "changed_file_count" => 2,
@@ -154,6 +202,7 @@ base_args = [
   "--release-evidence-index", release_evidence.path,
   "--full-checkpoint-promotion", blocked_promotion.path,
   "--desktop-trigger-request-preflight-smoke", preflight_smoke.path,
+  "--q4-sample-notepad-smoke", q4_sample_notepad_smoke.path,
   "--fixture-matrix-report", fixture_matrix.path
 ]
 
@@ -183,12 +232,18 @@ begin
   assert(preflight_status.fetch("evidence_supplied"), "packet must report supplied desktop-trigger request preflight smoke evidence")
   assert(preflight_status.fetch("smoke_passed"), "packet must report passing desktop-trigger request preflight smoke evidence")
   assert(preflight_status.fetch("status") == "passed", "packet must expose preflight smoke status")
+  q4_sample_status = packet.fetch("q4_sample_notepad_smoke_status")
+  assert(q4_sample_status.fetch("evidence_supplied"), "packet must report supplied q4 Sample Notepad acceptance evidence")
+  assert(q4_sample_status.fetch("smoke_passed"), "packet must report passing q4 Sample Notepad acceptance evidence")
+  assert(q4_sample_status.fetch("status") == "passed", "packet must expose q4 Sample Notepad acceptance status")
+  assert(!packet.fetch("release_blocking_reasons").include?("q4-sample-notepad-acceptance-smoke-not-passed"), "passing q4 Sample Notepad evidence must close its release blocker")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(tool_statuses.values.all? { |tool| tool.fetch("status") == "pass" }, "all fixture-backed tools must pass")
   assert(tool_statuses.fetch("layout").fetch("command") == "fixture:layout", "fixture command must not expose fixture path")
   assert(tool_statuses.fetch("full_checkpoint_promotion").fetch("command") == "fixture:full_checkpoint_promotion", "promotion fixture command must not expose fixture path")
   assert(tool_statuses.fetch("desktop_trigger_request_preflight_smoke").fetch("command") == "fixture:desktop_trigger_request_preflight_smoke", "preflight smoke fixture command must not expose fixture path")
+  assert(tool_statuses.fetch("q4_sample_notepad_smoke").fetch("command") == "fixture:q4_sample_notepad_smoke", "q4 Sample Notepad fixture command must not expose fixture path")
   assert(packet.fetch("changed_file_counts").fetch("total") == 3, "packet must include changed file counts")
   assert(packet.fetch("lane_classification").any? { |lane| lane.fetch("id") == "cw10-evidence-drift-harness" }, "packet must include lane classification")
   assert(packet.fetch("required_follow_up_commands").include?("ruby scripts/verify_layout.rb"), "packet must include follow-up commands")
@@ -207,6 +262,7 @@ begin
   assert(markdown.include?("restricted-docker-or-qemu-smoke-requires-human-authorization"), "Markdown must include release blocker")
   assert(markdown.include?("Full checkpoint promotion: blocked-incomplete-full-smoke-report"), "Markdown must include promotion decision")
   assert(markdown.include?("Desktop-trigger request preflight smoke: passed"), "Markdown must include preflight smoke status")
+  assert(markdown.include?("q4 Sample Notepad acceptance smoke: passed"), "Markdown must include q4 Sample Notepad acceptance status")
 
   no_preflight_args = base_args.each_slice(2).reject { |option, _path| option == "--desktop-trigger-request-preflight-smoke" }.flatten
   no_preflight_stdout, no_preflight_stderr, no_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_preflight_args)
@@ -214,6 +270,23 @@ begin
   no_preflight_packet = JSON.parse(no_preflight_stdout)
   assert(no_preflight_packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status") == "not-supplied", "missing preflight smoke evidence must be non-blocking")
   assert(!no_preflight_packet.fetch("release_blocking_reasons").include?("desktop-trigger-request-preflight-smoke-not-passed"), "missing preflight smoke evidence must not block release by itself")
+
+  no_q4_args = base_args.each_slice(2).reject { |option, _path| option == "--q4-sample-notepad-smoke" }.flatten
+  no_q4_stdout, no_q4_stderr, no_q4_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_q4_args)
+  assert(no_q4_status.success?, "missing q4 Sample Notepad evidence case must still emit packet: #{no_q4_stderr}")
+  no_q4_packet = JSON.parse(no_q4_stdout)
+  assert(no_q4_packet.fetch("q4_sample_notepad_smoke_status").fetch("status") == "not-supplied", "missing q4 Sample Notepad evidence must be visible")
+  assert(no_q4_packet.fetch("release_blocking_reasons").include?("q4-sample-notepad-acceptance-smoke-not-passed"), "missing q4 Sample Notepad evidence must block release")
+  assert(!no_q4_packet.fetch("merge_blocking_reasons").include?("q4-sample-notepad-acceptance-smoke-not-passed"), "missing q4 Sample Notepad evidence must not block merge")
+
+  failed_q4_args = base_args.dup
+  failed_q4_args[failed_q4_args.index("--q4-sample-notepad-smoke") + 1] = failed_q4_sample_notepad_smoke.path
+  failed_q4_stdout, failed_q4_stderr, failed_q4_status = Open3.capture3("ruby", script.to_s, "--format", "json", *failed_q4_args)
+  assert(failed_q4_status.success?, "failed q4 Sample Notepad evidence case must still emit packet: #{failed_q4_stderr}")
+  failed_q4_packet = JSON.parse(failed_q4_stdout)
+  assert(failed_q4_packet.fetch("q4_sample_notepad_smoke_status").fetch("status") == "blocked", "failed q4 Sample Notepad evidence must be visible")
+  assert(failed_q4_packet.fetch("release_blocking_reasons").include?("q4-sample-notepad-acceptance-smoke-not-passed"), "failed q4 Sample Notepad evidence must add a release blocker")
+  assert(!failed_q4_packet.fetch("merge_blocking_reasons").include?("q4-sample-notepad-acceptance-smoke-not-passed"), "failed q4 Sample Notepad evidence must not block merge")
 
   failed_preflight_args = base_args.dup
   failed_preflight_args[failed_preflight_args.index("--desktop-trigger-request-preflight-smoke") + 1] = failed_preflight_smoke.path
@@ -346,6 +419,8 @@ ensure
     fixture_matrix,
     preflight_smoke,
     failed_preflight_smoke,
+    q4_sample_notepad_smoke,
+    failed_q4_sample_notepad_smoke,
     malformed,
     protected_mainline,
     unsafe_kde

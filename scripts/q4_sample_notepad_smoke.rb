@@ -21,7 +21,8 @@ options = {
   remote_host: DEFAULT_REMOTE_HOST,
   sample_file: DEFAULT_SAMPLE_FILE,
   window_match: DEFAULT_WINDOW_MATCH,
-  remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS
+  remote_timeout_seconds: DEFAULT_REMOTE_TIMEOUT_SECONDS,
+  output: ENV.fetch("XNIX_Q4_SAMPLE_NOTEPAD_OUTPUT", "")
 }
 
 OptionParser.new do |parser|
@@ -32,11 +33,29 @@ OptionParser.new do |parser|
   parser.on("--sample-file NAME", "Remote sample file name created under the delegated smoke state root.") { |value| options[:sample_file] = value }
   parser.on("--window-match TEXT", "X window title/text required for the Sample Notepad run.") { |value| options[:window_match] = value }
   parser.on("--remote-timeout-seconds SECONDS", Integer, "Timeout for delegated q4 smoke operations.") { |value| options[:remote_timeout_seconds] = value }
+  parser.on("--output PATH", "Write the plan or passed result JSON under this checkout or /tmp/xnix-*.") { |value| options[:output] = value }
 end.parse!
 
 abort "q4 Sample Notepad smoke does not accept positional arguments" unless ARGV.empty?
 abort "sample file must be a simple file name" unless File.basename(options.fetch(:sample_file)) == options.fetch(:sample_file)
 abort "window match must not be empty" if options.fetch(:window_match).strip.empty?
+
+def ensure_local_output_path!(path)
+  clean = Pathname.new(path).expand_path(PROJECT_ROOT).cleanpath
+  return nil if path.to_s.strip.empty?
+  return clean if clean.to_s.start_with?(PROJECT_ROOT.to_s)
+  return clean if clean.to_s.start_with?("/tmp/xnix-")
+
+  abort "output path must stay under this checkout or /tmp/xnix-*"
+end
+
+def emit_json(payload, output_path)
+  text = JSON.pretty_generate(payload) + "\n"
+  File.write(output_path, text) if output_path
+  puts text
+end
+
+output_path = ensure_local_output_path!(options.fetch(:output))
 
 delegated_command = [
   "ruby",
@@ -65,6 +84,7 @@ plan = {
   "remote_host" => options.fetch(:remote_host),
   "delegated_script" => "scripts/remote_wine_guest_gui_smoke.rb",
   "delegated_command" => delegated_command,
+  "output_path" => output_path ? output_path.to_s : "",
   "source_sync_planned" => options.fetch(:sync_source),
   "app_id" => "org.xnix.sample.notepad",
   "display_name" => "Sample Notepad",
@@ -83,7 +103,7 @@ plan = {
 }
 
 unless options.fetch(:execute)
-  puts JSON.pretty_generate(plan)
+  emit_json(plan, output_path)
   exit 0
 end
 
@@ -126,4 +146,4 @@ result = plan.merge(
   "broad_host_mount_required" => delegated.fetch("broad_host_mount_required")
 )
 
-puts JSON.pretty_generate(result)
+emit_json(result, output_path)

@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc179] - 2026-07-26
+
+### Added
+
+- Added `--q4-sample-notepad-smoke REPORT.json` support to `scripts/merge_readiness_packet.rb` so real q4 Sample Notepad acceptance evidence becomes part of release/readiness reporting without executing heavy smoke automatically.
+- Added constrained `--output PATH` support to `scripts/q4_sample_notepad_smoke.rb` so the real q4 acceptance result can be persisted for readiness packet consumption.
+- Added a release-only blocker, `q4-sample-notepad-acceptance-smoke-not-passed`, when the q4 Sample Notepad acceptance evidence is missing or failed.
+- Added tests and layout coverage for q4 Sample Notepad evidence consumption, missing-evidence reporting, and failed-evidence release gating.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc179`.
+
 ## [0.2.640-rc178] - 2026-07-26
 
 ### Added
