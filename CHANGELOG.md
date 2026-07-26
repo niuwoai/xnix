@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc125] - 2026-07-26
+
+### Changed
+
+- Changed the Go Runtime real Windows app GUI packet to project staged launcher/session-gate fields from delegated `xnix-compat-launch` container GUI payloads into known-app smoke evidence.
+- Extended the staged desktop Notepad smoke and CLI coverage to require launch authorization, session-gated dispatch, controlled execution session, digest verification, Runtime-owner/KDE read-model consumability, and post-review dispatch evidence in the Runtime packet and KDE GUI card.
+
 ## [0.2.640-rc124] - 2026-07-26
 
 ### Changed

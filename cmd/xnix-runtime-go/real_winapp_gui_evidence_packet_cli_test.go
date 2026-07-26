@@ -189,6 +189,25 @@ func TestRealWinAppGUIEvidencePacketPreviewCommandConsumesRawContainerRuntimePay
 	if strings.Contains(output.String(), reportPath) || strings.Contains(output.String(), "docker run") || strings.Contains(output.String(), "/var/run/docker.sock") {
 		t.Fatalf("raw Runtime payload packet exposed unsafe details: %s", output.String())
 	}
+	evidence := payload["known_app_smoke_evidence"].(map[string]any)
+	if evidence["staged_launcher_verified"] != true ||
+		evidence["launch_authorization_receipt_id"] != "known-app-launch-authorization-org.xnix.sample.notepad-0.2.640-test" ||
+		evidence["launch_gate_state"] != "controlled-dispatch-ready" ||
+		evidence["launch_gate_consumed"] != true ||
+		evidence["launch_gate_receipt_accepted"] != true ||
+		evidence["launch_gate_guest_boundary_accepted"] != true ||
+		evidence["controlled_dispatch_ready"] != true ||
+		evidence["controlled_execution_session_id"] != "known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test" ||
+		evidence["launcher_session_gate_consumed"] != true ||
+		evidence["launcher_session_digest_verified"] != true ||
+		evidence["launcher_session_relative_path"] != "execution-ledger/sessions/known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test.json" ||
+		evidence["launcher_session_runtime_owner_consumable"] != true ||
+		evidence["launcher_session_kde_read_model_consumable"] != true ||
+		evidence["post_review_dispatch_consumed"] != true ||
+		evidence["post_review_dispatch_state"] != "created-after-session-gated-review" ||
+		evidence["session_gated_review_receipt_id"] != "known-app-session-gated-launch-review-org.xnix.sample.notepad-0.2.640-test-known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test" {
+		t.Fatalf("raw Runtime payload must surface staged launcher session evidence: %#v", evidence)
+	}
 }
 
 func rawContainerXGUIRuntimePayloadCLIFixture() string {
@@ -210,6 +229,28 @@ func rawContainerXGUIRuntimePayloadCLIFixture() string {
   "image_available": true,
   "x_window_observed": true,
   "window_evidence_summary": "0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\")",
+  "evidence_source": "winapp-smoke-container-x-gui",
+  "dispatch_started": true,
+  "execution_started": true,
+  "smoke_passed": true,
+  "runtime_owned_dispatch": true,
+  "session_gated_controlled_dispatch_consumed": true,
+  "session_gated_controlled_dispatch_state": "created-after-session-gated-review",
+  "session_gated_review_receipt_id": "known-app-session-gated-launch-review-org.xnix.sample.notepad-0.2.640-test-known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test",
+  "launch_authorization_receipt_id": "known-app-launch-authorization-org.xnix.sample.notepad-0.2.640-test",
+  "controlled_execution_session_consumed": true,
+  "controlled_execution_session_id": "known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test",
+  "controlled_session_digest_verified": true,
+  "controlled_session_relative_path": "execution-ledger/sessions/known-app-controlled-execution-session-org.xnix.sample.notepad-0.2.640-test.json",
+  "runtime_owner_consumable_session": true,
+  "kde_read_model_consumable_session": true,
+  "controlled_session_live_state_observed": true,
+  "controlled_session_registered": true,
+  "controlled_session_window_observed": true,
+  "controlled_session_host_root_modified": false,
+  "controlled_session_container_process_start": true,
+  "raw_command_exposed": false,
+  "backend_details_exposed": false,
   "host_root_modified": false,
   "privileged_container_required": false,
   "host_networking_required": false,

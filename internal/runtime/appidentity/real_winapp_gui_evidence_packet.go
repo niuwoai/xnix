@@ -68,29 +68,51 @@ type RealWinAppGUIEvidencePacket struct {
 }
 
 type containerXGUIRuntimePayload struct {
-	SchemaVersion               string `json:"schema_version"`
-	RequestType                 string `json:"request_type"`
-	Status                      string `json:"status"`
-	ApplicationID               string `json:"application_id"`
-	DisplayName                 string `json:"display_name"`
-	AppVersion                  string `json:"app_version"`
-	RecipeBacked                bool   `json:"recipe_backed"`
-	ApplicationName             string `json:"application_name"`
-	WindowMatch                 string `json:"window_match"`
-	ContainerImage              string `json:"container_image"`
-	ContainerPlatform           string `json:"container_platform"`
-	NetworkMode                 string `json:"network_mode"`
-	XServerStarted              bool   `json:"x_server_started"`
-	WineBootstrapAttempted      bool   `json:"wine_bootstrap_attempted"`
-	ImageAvailable              bool   `json:"image_available"`
-	XWindowObserved             bool   `json:"x_window_observed"`
-	WindowEvidenceSummary       string `json:"window_evidence_summary"`
-	HostRootModified            bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired bool   `json:"privileged_container_required"`
-	HostNetworkingRequired      bool   `json:"host_networking_required"`
-	DockerSocketMounted         bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired      bool   `json:"broad_host_mount_required"`
-	HostMountCount              int    `json:"host_mount_count"`
+	SchemaVersion                            string `json:"schema_version"`
+	RequestType                              string `json:"request_type"`
+	Status                                   string `json:"status"`
+	ApplicationID                            string `json:"application_id"`
+	DisplayName                              string `json:"display_name"`
+	AppVersion                               string `json:"app_version"`
+	RecipeBacked                             bool   `json:"recipe_backed"`
+	ApplicationName                          string `json:"application_name"`
+	WindowMatch                              string `json:"window_match"`
+	ContainerImage                           string `json:"container_image"`
+	ContainerPlatform                        string `json:"container_platform"`
+	NetworkMode                              string `json:"network_mode"`
+	XServerStarted                           bool   `json:"x_server_started"`
+	WineBootstrapAttempted                   bool   `json:"wine_bootstrap_attempted"`
+	ImageAvailable                           bool   `json:"image_available"`
+	XWindowObserved                          bool   `json:"x_window_observed"`
+	WindowEvidenceSummary                    string `json:"window_evidence_summary"`
+	EvidenceSource                           string `json:"evidence_source"`
+	DispatchStarted                          bool   `json:"dispatch_started"`
+	ExecutionStarted                         bool   `json:"execution_started"`
+	SmokePassed                              bool   `json:"smoke_passed"`
+	RuntimeOwnedDispatch                     bool   `json:"runtime_owned_dispatch"`
+	SessionGatedControlledDispatchConsumed   bool   `json:"session_gated_controlled_dispatch_consumed"`
+	SessionGatedControlledDispatchState      string `json:"session_gated_controlled_dispatch_state"`
+	SessionGatedReviewReceiptID              string `json:"session_gated_review_receipt_id"`
+	LaunchAuthorizationReceiptID             string `json:"launch_authorization_receipt_id"`
+	ControlledExecutionSessionConsumed       bool   `json:"controlled_execution_session_consumed"`
+	ControlledExecutionSessionID             string `json:"controlled_execution_session_id"`
+	ControlledSessionDigestVerified          bool   `json:"controlled_session_digest_verified"`
+	ControlledSessionRelativePath            string `json:"controlled_session_relative_path"`
+	RuntimeOwnerConsumableSession            bool   `json:"runtime_owner_consumable_session"`
+	KDEReadModelConsumableSession            bool   `json:"kde_read_model_consumable_session"`
+	ControlledSessionLiveStateObserved       bool   `json:"controlled_session_live_state_observed"`
+	ControlledSessionRegistered              bool   `json:"controlled_session_registered"`
+	ControlledSessionWindowObserved          bool   `json:"controlled_session_window_observed"`
+	ControlledSessionHostRootModified        bool   `json:"controlled_session_host_root_modified"`
+	ControlledSessionContainerProcessStarted bool   `json:"controlled_session_container_process_start"`
+	RawCommandExposed                        bool   `json:"raw_command_exposed"`
+	BackendDetailsExposed                    bool   `json:"backend_details_exposed"`
+	HostRootModified                         bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired              bool   `json:"privileged_container_required"`
+	HostNetworkingRequired                   bool   `json:"host_networking_required"`
+	DockerSocketMounted                      bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired                   bool   `json:"broad_host_mount_required"`
+	HostMountCount                           int    `json:"host_mount_count"`
 }
 
 func PreviewRealWinAppGUIEvidencePacket(request RealWinAppGUIEvidencePacketRequest) (RealWinAppGUIEvidencePacket, error) {
@@ -111,11 +133,15 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		return RealWinAppGUIEvidencePacket{}, fmt.Errorf("parse real Windows app GUI smoke report: %w", err)
 	}
 	projectionContent := content
+	rawRuntimePayload := false
+	var runtimePayload containerXGUIRuntimePayload
 	if report.SchemaVersion == "xnix.runtime.windows_app_container_x_gui_smoke.v1" {
-		wrapped, err := wrapContainerXGUIRuntimePayload(content)
+		payload, wrapped, err := wrapContainerXGUIRuntimePayload(content)
 		if err != nil {
 			return RealWinAppGUIEvidencePacket{}, err
 		}
+		rawRuntimePayload = true
+		runtimePayload = payload
 		report = wrapped
 		projectionContent, err = json.Marshal(wrapped)
 		if err != nil {
@@ -143,6 +169,9 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	evidence, err := KnownAppSmokeEvidenceFromGUISmokeProjection(projectionPayload)
 	if err != nil {
 		return RealWinAppGUIEvidencePacket{}, err
+	}
+	if rawRuntimePayload {
+		evidence = enhanceKnownAppEvidenceWithContainerRuntimePayload(evidence, runtimePayload)
 	}
 
 	version := strings.TrimSpace(report.Version)
@@ -209,14 +238,14 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	}, nil
 }
 
-func wrapContainerXGUIRuntimePayload(content []byte) (guiSmokeReport, error) {
+func wrapContainerXGUIRuntimePayload(content []byte) (containerXGUIRuntimePayload, guiSmokeReport, error) {
 	var payload containerXGUIRuntimePayload
 	if err := json.Unmarshal(content, &payload); err != nil {
-		return guiSmokeReport{}, fmt.Errorf("parse container X GUI Runtime payload: %w", err)
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, fmt.Errorf("parse container X GUI Runtime payload: %w", err)
 	}
 	if payload.SchemaVersion != "xnix.runtime.windows_app_container_x_gui_smoke.v1" ||
 		payload.RequestType != "windows-app-container-x-gui-smoke" {
-		return guiSmokeReport{}, errors.New("real Windows app GUI evidence packet requires a container X GUI Runtime payload")
+		return containerXGUIRuntimePayload{}, guiSmokeReport{}, errors.New("real Windows app GUI evidence packet requires a container X GUI Runtime payload")
 	}
 	report := guiSmokeReport{
 		Version:                     payload.AppVersion,
@@ -261,7 +290,47 @@ func wrapContainerXGUIRuntimePayload(content []byte) (guiSmokeReport, error) {
 	report.ContainerPayload.DockerSocketMounted = payload.DockerSocketMounted
 	report.ContainerPayload.BroadHostMountRequired = payload.BroadHostMountRequired
 	report.ContainerPayload.HostMountCount = payload.HostMountCount
-	return report, nil
+	return payload, report, nil
+}
+
+func enhanceKnownAppEvidenceWithContainerRuntimePayload(evidence KnownAppSmokeEvidenceSummary, payload containerXGUIRuntimePayload) KnownAppSmokeEvidenceSummary {
+	launchReceiptID := strings.TrimSpace(payload.LaunchAuthorizationReceiptID)
+	sessionID := strings.TrimSpace(payload.ControlledExecutionSessionID)
+	sessionRelativePath := strings.TrimSpace(payload.ControlledSessionRelativePath)
+	postReviewDispatchState := strings.TrimSpace(payload.SessionGatedControlledDispatchState)
+	reviewReceiptID := strings.TrimSpace(payload.SessionGatedReviewReceiptID)
+	if payload.SessionGatedControlledDispatchConsumed &&
+		payload.ControlledExecutionSessionConsumed &&
+		payload.ControlledSessionDigestVerified &&
+		payload.ControlledSessionWindowObserved &&
+		!payload.ControlledSessionHostRootModified &&
+		!payload.RawCommandExposed &&
+		!payload.BackendDetailsExposed &&
+		singleLine(launchReceiptID) &&
+		singleLine(sessionID) &&
+		singleLine(sessionRelativePath) &&
+		singleLine(postReviewDispatchState) &&
+		singleLine(reviewReceiptID) {
+		evidence.StagedLauncherVerified = true
+		evidence.LaunchAuthorizationReceiptRequired = true
+		evidence.LaunchAuthorizationReceiptState = "recorded"
+		evidence.LaunchAuthorizationReceiptID = launchReceiptID
+		evidence.LaunchGateState = "controlled-dispatch-ready"
+		evidence.LaunchGateConsumed = true
+		evidence.LaunchGateReceiptAccepted = true
+		evidence.LaunchGateGuestBoundaryAccepted = true
+		evidence.ControlledDispatchReady = true
+		evidence.ControlledExecutionSessionID = sessionID
+		evidence.LauncherSessionGateConsumed = true
+		evidence.LauncherSessionDigestVerified = true
+		evidence.LauncherSessionRelativePath = sessionRelativePath
+		evidence.LauncherSessionRuntimeOwnerConsumable = payload.RuntimeOwnerConsumableSession
+		evidence.LauncherSessionKDEReadModelConsumable = payload.KDEReadModelConsumableSession
+		evidence.PostReviewDispatchConsumed = true
+		evidence.PostReviewDispatchState = postReviewDispatchState
+		evidence.SessionGatedReviewReceiptID = reviewReceiptID
+	}
+	return evidence
 }
 
 func KnownAppSmokeEvidenceFromRealWinAppGUIEvidencePacket(payload []byte) (KnownAppSmokeEvidenceSummary, error) {

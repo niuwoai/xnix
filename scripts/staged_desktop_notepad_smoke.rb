@@ -330,6 +330,16 @@ assert(runtime_packet.fetch("container_network_mode") == "none", "Runtime packet
 assert(runtime_packet.fetch("container_host_mount_count") == 0, "Runtime packet must preserve zero host mounts")
 assert(runtime_packet.fetch("backend_launch_enabled") == false, "Runtime packet must not enable backend launch")
 assert(runtime_packet.fetch("host_root_modified") == false, "Runtime packet must not mutate the host root")
+runtime_evidence = runtime_packet.fetch("known_app_smoke_evidence")
+assert(runtime_evidence.fetch("staged_launcher_verified") == true, "Runtime packet must mark staged launcher verification")
+assert(runtime_evidence.fetch("launch_gate_state") == "controlled-dispatch-ready", "Runtime packet must keep the supported controlled dispatch launch gate state")
+assert(runtime_evidence.fetch("launch_gate_consumed") == true, "Runtime packet must surface launch gate consumption")
+assert(runtime_evidence.fetch("controlled_dispatch_ready") == true, "Runtime packet must surface controlled dispatch readiness")
+assert(runtime_evidence.fetch("launcher_session_gate_consumed") == true, "Runtime packet must surface launcher session gate consumption")
+assert(runtime_evidence.fetch("launcher_session_digest_verified") == true, "Runtime packet must surface launcher session digest verification")
+assert(runtime_evidence.fetch("launcher_session_runtime_owner_consumable") == true, "Runtime packet must keep Runtime owner session consumption visible")
+assert(runtime_evidence.fetch("launcher_session_kde_read_model_consumable") == true, "Runtime packet must keep KDE read-model session consumption visible")
+assert(runtime_evidence.fetch("post_review_dispatch_consumed") == true, "Runtime packet must surface post-review dispatch consumption")
 assert(runtime_packet_output.file?, "Runtime packet file must be written")
 
 kde_page, kde_stdout = run_json(
@@ -343,14 +353,24 @@ kde_page, kde_stdout = run_json(
 )
 File.write(kde_page_output, JSON.pretty_generate(kde_page) + "\n")
 cards = kde_page.fetch("known_app_gui_evidence_cards")
+session_gate_cards = kde_page.fetch("known_app_session_gate_cards")
 assert(kde_page.fetch("known_app_gui_evidence_count") == 1, "KDE page must consume one staged real GUI evidence item")
 assert(cards.length == 1, "KDE page must render one staged real GUI evidence card")
+assert(kde_page.fetch("known_app_session_gate_evidence_count") == 1, "KDE page must consume one staged session-gate evidence item")
+assert(session_gate_cards.length == 1, "KDE page must render one staged session-gate evidence card")
 assert(cards.first.fetch("app_id") == APP_ID, "KDE GUI evidence card must target Notepad")
 assert(cards.first.fetch("evidence_source") == "winapp-smoke-container-x-gui", "KDE GUI evidence card must preserve container GUI source")
 assert(cards.first.fetch("recipe_backed") == true, "KDE GUI evidence card must remain recipe-backed")
 assert(cards.first.fetch("recipe_app_id") == APP_ID, "KDE GUI evidence card must preserve recipe app id")
 assert(cards.first.fetch("execution_evidence_recorded") == true, "KDE GUI evidence card must record execution evidence")
+assert(cards.first.fetch("staged_launcher_verified") == true, "KDE GUI evidence card must mark staged launcher verification")
 assert(cards.first.fetch("runtime_dispatch_verified") == true, "KDE GUI evidence card must verify Runtime dispatch")
+assert(session_gate_cards.first.fetch("app_id") == APP_ID, "KDE session-gate card must target Notepad")
+assert(session_gate_cards.first.fetch("launcher_session_gate_consumed") == true, "KDE session-gate card must surface launcher session gate consumption")
+assert(session_gate_cards.first.fetch("launcher_session_digest_verified") == true, "KDE session-gate card must surface launcher session digest verification")
+assert(session_gate_cards.first.fetch("runtime_owner_consumable_session") == true, "KDE session-gate card must keep Runtime owner session consumption visible")
+assert(session_gate_cards.first.fetch("kde_read_model_consumable_session") == true, "KDE session-gate card must keep KDE read-model session consumption visible")
+assert(session_gate_cards.first.fetch("post_review_dispatch_consumed") == true, "KDE session-gate card must surface post-review dispatch consumption")
 assert(cards.first.fetch("desktop_launch_enabled") == false, "KDE GUI evidence card must not enable desktop launch")
 assert(cards.first.fetch("backend_launch_enabled") == false, "KDE GUI evidence card must not enable backend launch")
 assert(cards.first.fetch("backend_details_exposed") == false, "KDE GUI evidence card must not expose backend details")
@@ -377,8 +397,15 @@ packet = {
   "runtime_packet_consumed_report" => runtime_packet.fetch("report_consumed"),
   "runtime_packet_evidence_source" => runtime_packet.fetch("evidence_source"),
   "runtime_packet_known_app_gui_evidence_verified_count" => runtime_packet.fetch("known_app_gui_evidence_verified_count"),
+  "runtime_packet_staged_launcher_verified" => runtime_evidence.fetch("staged_launcher_verified"),
+  "runtime_packet_launcher_session_gate_consumed" => runtime_evidence.fetch("launcher_session_gate_consumed"),
+  "runtime_packet_post_review_dispatch_consumed" => runtime_evidence.fetch("post_review_dispatch_consumed"),
   "kde_page_output_written" => kde_page_output.file?,
   "kde_page_known_app_gui_evidence_count" => kde_page.fetch("known_app_gui_evidence_count"),
+  "kde_page_known_app_session_gate_evidence_count" => kde_page.fetch("known_app_session_gate_evidence_count"),
+  "kde_page_card_staged_launcher_verified" => cards.first.fetch("staged_launcher_verified"),
+  "kde_page_session_gate_card_launcher_session_gate_consumed" => session_gate_cards.first.fetch("launcher_session_gate_consumed"),
+  "kde_page_session_gate_card_post_review_dispatch_consumed" => session_gate_cards.first.fetch("post_review_dispatch_consumed"),
   "kde_page_card_recipe_backed" => cards.first.fetch("recipe_backed"),
   "delegated_launcher_payload_path" => delegated_output.to_s,
   "runtime_packet_path" => runtime_packet_output.to_s,
@@ -402,7 +429,12 @@ File.write(
     "- Network mode: #{payload.fetch("network_mode")}",
     "- Host mount count: #{payload.fetch("host_mount_count")}",
     "- Runtime packet evidence verified count: #{runtime_packet.fetch("known_app_gui_evidence_verified_count")}",
+    "- Runtime packet staged launcher verified: #{runtime_evidence.fetch("staged_launcher_verified")}",
+    "- Runtime packet launcher session gate consumed: #{runtime_evidence.fetch("launcher_session_gate_consumed")}",
     "- KDE GUI evidence count: #{kde_page.fetch("known_app_gui_evidence_count")}",
+    "- KDE session-gate evidence count: #{kde_page.fetch("known_app_session_gate_evidence_count")}",
+    "- KDE GUI card staged launcher verified: #{cards.first.fetch("staged_launcher_verified")}",
+    "- KDE session-gate card launcher session gate consumed: #{session_gate_cards.first.fetch("launcher_session_gate_consumed")}",
     "- Docker socket mounted: #{payload.fetch("docker_socket_mounted")}",
     "- Host root modified: #{payload.fetch("host_root_modified")}",
     ""
