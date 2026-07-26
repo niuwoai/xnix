@@ -541,6 +541,141 @@ func TestKnownAppVerifiedCatalogRunAcceptancePreviewCommandRejectsMismatchedRun(
 	}
 }
 
+func TestCompatibilityCenterPreviewCommandConsumesKnownAppVerifiedCatalogRunAcceptance(t *testing.T) {
+	registryPath, _ := writeTestRepairGroupRegistry(t)
+	acceptancePath := writeKnownAppVerifiedCatalogRunAcceptanceCLIFile(t, "7zr")
+
+	var output bytes.Buffer
+	err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-verified-catalog-run-acceptance", acceptancePath}, &output)
+	if err != nil {
+		t.Fatalf("compatibility-center-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_smoke_evidence_count"] != float64(1) ||
+		payload["known_app_smoke_passed_count"] != float64(1) ||
+		payload["known_app_launch_authorization_required_count"] != float64(1) ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected compatibility center accepted run payload: %#v", payload)
+	}
+	evidenceItems := payload["known_app_smoke_evidence"].([]any)
+	first := evidenceItems[0].(map[string]any)
+	if first["app_id"] != "7zr" ||
+		first["evidence_kind"] != "known-application-verified-catalog-run-acceptance" ||
+		first["evidence_source"] != "verified-catalog-app-q4-real-run-acceptance" ||
+		first["compatibility_state"] != "verified-catalog-real-q4-run-accepted" ||
+		first["center_card_state"] != "validated-verified-catalog-real-runtime-run" ||
+		first["primary_action_id"] != "review-known-app-verified-catalog-run-acceptance" ||
+		first["primary_action_kind"] != "review" ||
+		first["marker_observed"] != true ||
+		first["checksum_verified"] != true ||
+		first["execution_evidence_recorded"] != true ||
+		first["runtime_dispatch_verified"] != true ||
+		first["desktop_launch_enabled"] != false ||
+		first["backend_launch_enabled"] != false ||
+		first["backend_details_exposed"] != false ||
+		first["raw_artifact_path_exposed"] != false {
+		t.Fatalf("unexpected accepted run evidence item: %#v", first)
+	}
+	if strings.Contains(output.String(), acceptancePath) ||
+		strings.Contains(output.String(), "root@q4") ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("compatibility center accepted run exposed unsafe details: %s", output.String())
+	}
+}
+
+func TestKDECenterPagePreviewCommandConsumesKnownAppVerifiedCatalogRunAcceptance(t *testing.T) {
+	registryPath, app := writeTestRepairGroupRegistry(t)
+	acceptancePath := writeKnownAppVerifiedCatalogRunAcceptanceCLIFile(t, "7zr")
+
+	var output bytes.Buffer
+	err := run([]string{"kde-center-page-preview", "--registry", registryPath, "--app", app, "--decision", "approved", "--known-app-verified-catalog-run-acceptance", acceptancePath}, &output)
+	if err != nil {
+		t.Fatalf("kde-center-page-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if !strings.Contains(payload["source"].(string), "known-app-verified-catalog-run-acceptance") ||
+		payload["known_app_matrix_evidence_count"] != float64(1) ||
+		payload["launch_enabled"] != false ||
+		payload["execution_started"] != false ||
+		payload["backend_process_started"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected KDE center accepted run payload: %#v", payload)
+	}
+	cards := payload["known_app_matrix_evidence_cards"].([]any)
+	card := cards[0].(map[string]any)
+	if card["app_id"] != "7zr" ||
+		card["evidence_kind"] != "known-application-verified-catalog-run-acceptance" ||
+		card["evidence_source"] != "verified-catalog-app-q4-real-run-acceptance" ||
+		card["compatibility_state"] != "verified-catalog-real-q4-run-accepted" ||
+		card["center_card_state"] != "validated-verified-catalog-real-runtime-run" ||
+		card["primary_action_id"] != "review-known-app-verified-catalog-run-acceptance" ||
+		card["primary_action_kind"] != "review" ||
+		card["marker_observed"] != true ||
+		card["checksum_verified"] != true ||
+		card["execution_evidence_recorded"] != true ||
+		card["runtime_dispatch_verified"] != true ||
+		card["desktop_launch_enabled"] != false ||
+		card["backend_launch_enabled"] != false ||
+		card["host_root_modified"] != false ||
+		card["backend_details_exposed"] != false ||
+		card["raw_artifact_path_exposed"] != false {
+		t.Fatalf("unexpected KDE accepted run card: %#v", card)
+	}
+	if strings.Contains(output.String(), acceptancePath) ||
+		strings.Contains(output.String(), "root@q4") ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("KDE center accepted run exposed unsafe details: %s", output.String())
+	}
+}
+
+func writeKnownAppVerifiedCatalogRunAcceptanceCLIFile(t *testing.T, appID string) string {
+	t.Helper()
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+	var runPlanOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", appID}, &runPlanOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+	runPlanPath := filepath.Join(t.TempDir(), "known-app-verified-catalog-run-plan.json")
+	if err := os.WriteFile(runPlanPath, runPlanOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile run plan returned error: %v", err)
+	}
+	runReportPath := filepath.Join(t.TempDir(), "known-winapp-run.json")
+	if err := os.WriteFile(runReportPath, []byte(knownExistingWinAppAcceptanceCLIFixture(currentProjectVersion(t))), 0o600); err != nil {
+		t.Fatalf("WriteFile run report returned error: %v", err)
+	}
+	var acceptanceOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-run-acceptance-preview", "--run-plan", runPlanPath, "--known-winapp-run", runReportPath}, &acceptanceOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-run-acceptance-preview returned error: %v", err)
+	}
+	acceptancePath := filepath.Join(t.TempDir(), "known-app-verified-catalog-run-acceptance.json")
+	if err := os.WriteFile(acceptancePath, acceptanceOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile run acceptance returned error: %v", err)
+	}
+	return acceptancePath
+}
+
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []appidentity.KnownAppMatrixEvidenceApp{

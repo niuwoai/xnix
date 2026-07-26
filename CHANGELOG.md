@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc197] - 2026-07-27
+
+### Added
+
+- Added Compatibility Center and KDE Center page consumption for `known-app-verified-catalog-run-acceptance-preview` evidence through `--known-app-verified-catalog-run-acceptance`.
+- Added Go unit and CLI coverage that projects accepted verified-catalog q4 run evidence into desktop-safe known app evidence cards while rejecting unsafe acceptance payloads.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex and layout guard for verified catalog run-acceptance desktop consumption.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc197`.
+
 ## [0.2.640-rc196] - 2026-07-27
 
 ### Added

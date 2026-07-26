@@ -858,6 +858,9 @@ func NewKDECenterPagePreviewWithOptions(recipe Recipe, provenance Provenance, de
 	if len(knownAppMatrixCards) > 0 {
 		source += "+known-app-matrix-evidence"
 	}
+	if countVerifiedCatalogRunAcceptanceKnownAppSmokeEvidence(center.KnownAppSmokeEvidence) > 0 {
+		source += "+known-app-verified-catalog-run-acceptance"
+	}
 	if len(knownAppGUICards) > 0 {
 		source += "+known-app-gui-smoke-evidence"
 	}
@@ -1278,7 +1281,7 @@ func kdeCenterPageKnownAppSessionGateCards(evidence []KnownAppSmokeEvidenceSumma
 func kdeCenterPageKnownAppMatrixCards(evidence []KnownAppSmokeEvidenceSummary) []KDECenterPageKnownAppMatrixCard {
 	cards := make([]KDECenterPageKnownAppMatrixCard, 0, len(evidence))
 	for _, item := range evidence {
-		if item.EvidenceSource != "remote-known-winapp-matrix-smoke" {
+		if item.EvidenceSource != "remote-known-winapp-matrix-smoke" && item.EvidenceSource != "verified-catalog-app-q4-real-run-acceptance" {
 			continue
 		}
 		cards = append(cards, KDECenterPageKnownAppMatrixCard{

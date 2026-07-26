@@ -2454,7 +2454,8 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
-	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "Go-owned verified known Windows app catalog JSON")
+	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "--known-app-verified-catalog Go-owned verified known Windows app catalog JSON")
+	knownAppVerifiedCatalogRunAcceptance := flags.String("known-app-verified-catalog-run-acceptance", "", "--known-app-verified-catalog-run-acceptance Go-owned verified catalog app run acceptance JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
 	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
 	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
@@ -2497,7 +2498,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
 	}
 	options.KnownAppVerifiedCatalog = verifiedCatalog
-	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppVerifiedCatalogRunAcceptance, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
 	}
@@ -2538,10 +2539,11 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	return recipes, provenance, options, nil
 }
 
-func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON string, projectionFile string, matrixReport string, guiSmokeReport string, guiSmokeApp string, guiSmokeName string, guiSmokeVersion string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
+func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON string, projectionFile string, matrixReport string, verifiedCatalogRunAcceptance string, guiSmokeReport string, guiSmokeApp string, guiSmokeName string, guiSmokeVersion string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
 	projectionJSON = strings.TrimSpace(projectionJSON)
 	projectionFile = strings.TrimSpace(projectionFile)
 	matrixReport = strings.TrimSpace(matrixReport)
+	verifiedCatalogRunAcceptance = strings.TrimSpace(verifiedCatalogRunAcceptance)
 	guiSmokeReport = strings.TrimSpace(guiSmokeReport)
 	sourceCount := 0
 	if projectionJSON != "" {
@@ -2551,6 +2553,9 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 		sourceCount++
 	}
 	if matrixReport != "" {
+		sourceCount++
+	}
+	if verifiedCatalogRunAcceptance != "" {
 		sourceCount++
 	}
 	if guiSmokeReport != "" {
@@ -2568,6 +2573,17 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 			return nil, fmt.Errorf("consume known app matrix evidence: %w", err)
 		}
 		return preview.KnownAppSmokeEvidence, nil
+	}
+	if verifiedCatalogRunAcceptance != "" {
+		payload, err := os.ReadFile(verifiedCatalogRunAcceptance)
+		if err != nil {
+			return nil, fmt.Errorf("read known app verified catalog run acceptance: %w", err)
+		}
+		evidence, err := appidentity.KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(payload)
+		if err != nil {
+			return nil, err
+		}
+		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
 	}
 	if guiSmokeReport != "" {
 		preview, err := appidentity.PreviewGUISmokeEvidence(appidentity.GUISmokeEvidencePreviewRequest{
@@ -2613,6 +2629,13 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 		}
 		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
 	}
+	if envelope.RequestType == appidentity.KnownAppVerifiedCatalogRunAcceptanceRequestType {
+		evidence, err := appidentity.KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(payload)
+		if err != nil {
+			return nil, err
+		}
+		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
+	}
 	var projection appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence
 	if err := json.Unmarshal(payload, &projection); err != nil {
 		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)
@@ -2633,7 +2656,7 @@ func loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) ([]appident
 }
 
 func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
-	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "", "", "", "", "")
+	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "", "", "", "", "", "")
 }
 
 func loadKnownAppVerifiedCatalogForCenter(commandName string, verifiedCatalogPath string) (*appidentity.KnownAppVerifiedCatalogPreview, error) {
@@ -2826,7 +2849,8 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
-	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "Go-owned verified known Windows app catalog JSON")
+	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "--known-app-verified-catalog Go-owned verified known Windows app catalog JSON")
+	knownAppVerifiedCatalogRunAcceptance := flags.String("known-app-verified-catalog-run-acceptance", "", "--known-app-verified-catalog-run-acceptance Go-owned verified catalog app run acceptance JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
 	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
 	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
@@ -2940,7 +2964,7 @@ func parseKDECenterPagePreviewSource(args []string) (appidentity.Recipe, appiden
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}
-	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
+	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter("kde-center-page-preview", *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppVerifiedCatalogRunAcceptance, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return appidentity.Recipe{}, appidentity.Provenance{}, "", nil, appidentity.KDECenterPageOptions{}, err
 	}

@@ -484,6 +484,79 @@ func PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent []byte, runR
 	return preview, nil
 }
 
+func KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(payload []byte) (KnownAppSmokeEvidenceSummary, error) {
+	var acceptance KnownAppVerifiedCatalogRunAcceptancePreview
+	if err := json.Unmarshal(payload, &acceptance); err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("parse known app verified catalog run acceptance: %w", err)
+	}
+	if acceptance.SchemaVersion != KnownAppVerifiedCatalogRunAcceptanceSchemaVersion ||
+		acceptance.RequestType != KnownAppVerifiedCatalogRunAcceptanceRequestType {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app verified catalog run acceptance has invalid schema or request type")
+	}
+	if !acceptance.AcceptanceReady ||
+		!acceptance.RunPlanConsumed ||
+		!acceptance.RunReportConsumed ||
+		!acceptance.RunPlanMatched ||
+		!acceptance.ExistingWindowsApp ||
+		!acceptance.KnownPortableCatalogBacked ||
+		!acceptance.LaunchAttempted ||
+		!acceptance.ChecksumVerified ||
+		!acceptance.MarkerObserved ||
+		!acceptance.RuntimeStartedIsolatedGuest ||
+		!acceptance.IsolatedGuestExecutionObserved ||
+		!acceptance.CompatibilityEngineExecutionObserved ||
+		!acceptance.LoopbackOnlyNetworking ||
+		!acceptance.SerialLogPersisted ||
+		!acceptance.OutputRedacted ||
+		!acceptance.Q4ExecutionObserved ||
+		!acceptance.HostCompilationAvoided {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app verified catalog run acceptance requires matched accepted q4 evidence")
+	}
+	if acceptance.RunPlanPathExposed ||
+		acceptance.RunReportPathExposed ||
+		acceptance.RemoteHostExposed ||
+		acceptance.RawPathExposed ||
+		acceptance.RawOutputExposed ||
+		acceptance.RuntimeArgvExposed ||
+		acceptance.RunnerPathExposed ||
+		acceptance.NetworkRequired ||
+		acceptance.HostRootModified ||
+		acceptance.PrivilegedContainerRequired ||
+		acceptance.HostNetworkingRequired ||
+		acceptance.DockerSocketMounted ||
+		acceptance.BroadHostMountRequired ||
+		acceptance.DockerExecuted ||
+		acceptance.ColimaExecuted ||
+		acceptance.NetworkChecksRun ||
+		acceptance.PackageManagerInvoked {
+		return KnownAppSmokeEvidenceSummary{}, errors.New("known app verified catalog run acceptance exposes unsafe details or requires unsafe host/container access")
+	}
+	evidence, err := normalizeKnownAppSmokeEvidenceItem(KnownAppSmokeEvidenceSummary{
+		AppID:                       acceptance.AppID,
+		DisplayName:                 acceptance.DisplayName,
+		AppVersion:                  acceptance.AppVersion,
+		EvidenceSource:              "verified-catalog-app-q4-real-run-acceptance",
+		SmokeStatus:                 "passed",
+		MarkerObserved:              true,
+		ChecksumVerified:            true,
+		ExecutionEvidenceRecorded:   true,
+		RuntimeDispatchVerified:     true,
+		LaunchAuthorizationRequired: true,
+		RuntimeOwned:                true,
+		KDEPolicyOwner:              false,
+		ActionExecutionEnabled:      false,
+		BackendLaunchEnabled:        false,
+		HostRootModified:            false,
+		BackendDetailsExposed:       false,
+		RawArtifactPathExposed:      false,
+		Summary:                     acceptance.DesktopSafeSummary,
+	})
+	if err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("consume known app verified catalog run acceptance: %w", err)
+	}
+	return evidence, nil
+}
+
 func validateKnownAppVerifiedCatalogEvidence(evidence KnownAppMatrixEvidencePreview) error {
 	if evidence.SchemaVersion != KnownAppMatrixEvidencePreviewSchemaVersion || evidence.RequestType != KnownAppMatrixEvidencePreviewRequestType {
 		return errors.New("known app verified catalog requires known-app-matrix-evidence-preview input")

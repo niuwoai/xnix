@@ -2704,6 +2704,10 @@ func NewCompatibilityCenterPreviewWithOptions(recipes []Recipe, provenance Prove
 		preview.Summary.Headline = "Known Windows applications are verified by real q4 matrix evidence."
 		preview.Summary.Detail = "KDE can list verified Runtime catalog entries for review while launch, backend start, raw output, q4 paths, and desktop-file writes remain disabled."
 	}
+	if countVerifiedCatalogRunAcceptanceKnownAppSmokeEvidence(knownAppEvidence) > 0 {
+		preview.Summary.Headline = "A verified catalog Windows application has accepted real q4 run evidence."
+		preview.Summary.Detail = "KDE can review the matched catalog plan and accepted run result while launch, backend start, raw output, q4 paths, and desktop-file writes remain disabled."
+	}
 	if err := validateNoBackendTerms(preview, "Compatibility Center preview"); err != nil {
 		return CompatibilityCenterPreview{}, err
 	}
@@ -2865,7 +2869,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		evidenceSource = "known-app-guest-smoke"
 	}
 	switch evidenceSource {
-	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke", "remote-known-winapp-matrix-smoke", GUISmokeEvidenceSourceWineGuest, GUISmokeEvidenceSourceContainerXGUI:
+	case "known-app-guest-smoke", "staged-launcher-dispatch-smoke", "remote-known-winapp-matrix-smoke", "verified-catalog-app-q4-real-run-acceptance", GUISmokeEvidenceSourceWineGuest, GUISmokeEvidenceSourceContainerXGUI:
 	default:
 		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("known app smoke evidence source %q is not supported", evidenceSource)
 	}
@@ -3050,7 +3054,9 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 	}
 	ownerEvidenceHandoffReady := ownerControlledGUIRunVerified && item.OwnerServiceCallReady && item.OwnerEvidenceHandoffReady && safeKnownAppOwnerEvidenceRelativePath(ownerEvidenceRelativePath)
 	runtimeStatusLaunchVerified := stagedLauncherVerified || guiRunVerified
-	runtimeDispatchVerified := ((evidenceSource == "staged-launcher-dispatch-smoke" || evidenceSource == "remote-known-winapp-matrix-smoke") && passed) || guiRunVerified
+	runtimeDispatchVerified := ((evidenceSource == "staged-launcher-dispatch-smoke" ||
+		evidenceSource == "remote-known-winapp-matrix-smoke" ||
+		evidenceSource == "verified-catalog-app-q4-real-run-acceptance") && passed) || guiRunVerified
 	evidenceKind := "known-application-managed-smoke"
 	if item.LauncherSessionGateConsumed && !runtimeStatusLaunchVerified {
 		return KnownAppSmokeEvidenceSummary{}, errors.New("known app launcher session gate consumption requires passed staged launcher or GUI evidence")
@@ -3118,6 +3124,16 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 		primaryActionLabel = "Review real run evidence"
 		primaryActionKind = "review"
 		summary = displayName + " has redacted real runtime matrix evidence."
+	}
+	if evidenceSource == "verified-catalog-app-q4-real-run-acceptance" && passed {
+		evidenceKind = "known-application-verified-catalog-run-acceptance"
+		compatibilityState = "verified-catalog-real-q4-run-accepted"
+		centerCardState = "validated-verified-catalog-real-runtime-run"
+		launchAuthorizationState = "review-required"
+		primaryActionID = "review-known-app-verified-catalog-run-acceptance"
+		primaryActionLabel = "Review accepted catalog run"
+		primaryActionKind = "review"
+		summary = displayName + " matched the verified Runtime catalog and has redacted accepted q4 runtime evidence."
 	}
 	if guiRunVerified && !item.PostReviewDispatchConsumed {
 		evidenceKind = "known-application-gui-smoke"
@@ -3325,6 +3341,16 @@ func countPostReviewDispatchConsumedKnownAppSmokeEvidence(items []KnownAppSmokeE
 	count := 0
 	for _, item := range items {
 		if item.PostReviewDispatchConsumed && item.PostReviewDispatchState == "created-after-session-gated-review" && singleLine(item.SessionGatedReviewReceiptID) && item.LauncherSessionGateConsumed {
+			count++
+		}
+	}
+	return count
+}
+
+func countVerifiedCatalogRunAcceptanceKnownAppSmokeEvidence(items []KnownAppSmokeEvidenceSummary) int {
+	count := 0
+	for _, item := range items {
+		if item.EvidenceSource == "verified-catalog-app-q4-real-run-acceptance" {
 			count++
 		}
 	}

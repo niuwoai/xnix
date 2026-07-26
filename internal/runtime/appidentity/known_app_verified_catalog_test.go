@@ -267,6 +267,91 @@ func TestPreviewKnownAppVerifiedCatalogRunAcceptanceRejectsMismatchedRun(t *test
 	}
 }
 
+func TestKnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(catalogContent, "7zr")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	runPlanContent, err := json.Marshal(runPlan)
+	if err != nil {
+		t.Fatalf("Marshal run plan returned error: %v", err)
+	}
+	acceptance, err := PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent, []byte(knownExistingWinAppAcceptanceFixture(currentProjectVersion(t), "7zr")))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunAcceptanceJSON returned error: %v", err)
+	}
+	acceptanceContent, err := json.Marshal(acceptance)
+	if err != nil {
+		t.Fatalf("Marshal acceptance returned error: %v", err)
+	}
+
+	evidence, err := KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(acceptanceContent)
+	if err != nil {
+		t.Fatalf("KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance returned error: %v", err)
+	}
+	if evidence.AppID != "7zr" ||
+		evidence.EvidenceKind != "known-application-verified-catalog-run-acceptance" ||
+		evidence.EvidenceSource != "verified-catalog-app-q4-real-run-acceptance" ||
+		evidence.CompatibilityState != "verified-catalog-real-q4-run-accepted" ||
+		evidence.CenterCardState != "validated-verified-catalog-real-runtime-run" ||
+		evidence.PrimaryActionID != "review-known-app-verified-catalog-run-acceptance" ||
+		evidence.PrimaryActionKind != "review" ||
+		evidence.SmokeStatus != "passed" ||
+		!evidence.MarkerObserved ||
+		!evidence.ChecksumVerified ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeDispatchVerified ||
+		!evidence.LaunchAuthorizationRequired ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected accepted catalog run evidence: %#v", evidence)
+	}
+}
+
+func TestKnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptanceRejectsUnsafePayload(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(catalogContent, "7zr")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	runPlanContent, err := json.Marshal(runPlan)
+	if err != nil {
+		t.Fatalf("Marshal run plan returned error: %v", err)
+	}
+	acceptance, err := PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent, []byte(knownExistingWinAppAcceptanceFixture(currentProjectVersion(t), "7zr")))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunAcceptanceJSON returned error: %v", err)
+	}
+	acceptance.RawOutputExposed = true
+	acceptanceContent, err := json.Marshal(acceptance)
+	if err != nil {
+		t.Fatalf("Marshal acceptance returned error: %v", err)
+	}
+
+	_, err = KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogRunAcceptance(acceptanceContent)
+	if err == nil || !strings.Contains(err.Error(), "unsafe") {
+		t.Fatalf("expected unsafe acceptance error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogMatrixEvidenceFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []KnownAppMatrixEvidenceApp{

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc196
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc197
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc197 checkpoint carries the accepted verified-catalog q4 run back into desktop read models. Compatibility Center and KDE Center page previews now accept `--known-app-verified-catalog-run-acceptance ACCEPTANCE.json`, validate that the evidence came from a matched verified catalog run plan plus a passed known Windows app run report, and project it as a desktop-safe card with `verified-catalog-real-q4-run-accepted` state. The card shows that a specific catalog app completed real q4 QEMU/Wine acceptance without exposing q4 paths, remote hosts, raw output, runner arguments, artifact paths, backend details, or host/container mutation. The desktop still does not launch directly from this evidence; it remains a reviewable Runtime-owned signal for the next controlled-launch step.
 
 The v0.2.640-rc196 checkpoint closes the verified catalog run loop in Go. `known-app-verified-catalog-run-acceptance-preview --run-plan RUN_PLAN.json --known-winapp-run RUN_REPORT.json` consumes a Go-owned verified catalog run plan plus a passed `windows-known-app-run` report, requires the selected app id to match the real run, and reuses the known existing Windows app acceptance gate for checksum, marker, isolated q4 guest execution, compatibility-engine execution, serial logs, redacted output, and closed host/container safety. The result is a desktop-safe acceptance record that proves the app selected from the catalog actually ran without leaking q4 paths, remote host details, raw output, runner argv, or backend internals. rc196 validation ran 7zr 26.02 through the q4 remote known Windows app QEMU/Wine smoke.
 
