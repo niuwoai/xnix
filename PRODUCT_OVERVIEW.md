@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc209
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc210
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc210 checkpoint makes the q4-built Go Runtime binary the tested entrypoint for the real MessageBox GUI path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` asks q4 to cross-compile a host `xnix-runtime-go` binary, fetches it into `/tmp/xnix-*`, uses that binary to generate the verified catalog and GUI run plan, and then executes `known-app-verified-catalog-run-plan-execution --execute` against the real q4 MessageBox smoke. This proves the user-facing Runtime entrypoint can drive an actual Windows GUI app run while q4 performs compilation, Ruby remains the harness, and the desktop-facing result keeps q4 paths, raw smoke output, command arguments, host-root mutation, and unsafe host/container gates closed.
 
 The v0.2.640-rc209 checkpoint adds a Go Runtime execution bridge for verified-catalog run plans. `known-app-verified-catalog-run-plan-execution --run-plan RUN_PLAN.json --execute` validates the Runtime-owned app-id-only handoff, then invokes the run plan's q4 smoke harness. For GUI entries such as MessageBox, the command consumes q4 smoke output into a desktop-safe result proving an actual Windows GUI app run, observed window evidence, owner file-open entrypoint invocation, document-content marker observation, and Go-owned q4 acceptance readiness. KDE still does not launch directly, write desktop files, reconstruct receipts, inspect Runtime state roots, expose owner inputs, leak q4 paths, expose raw smoke output, or compile on the host.
 

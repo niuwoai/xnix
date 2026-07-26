@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc210] - 2026-07-27
+
+### Added
+
+- Added `scripts/q4_runtime_run_plan_execution_smoke.rb`, an execute-gated smoke that builds a host `xnix-runtime-go` binary on q4, fetches it to `/tmp/xnix-*`, generates the MessageBox verified catalog and run plan through that Go binary, and executes the real q4 MessageBox GUI smoke through `known-app-verified-catalog-run-plan-execution`.
+- Added lightweight script coverage for the new q4-built Runtime entrypoint smoke and its path, host-compilation, raw-output, and unsafe host/container gates.
+
+### Changed
+
+- Extended `scripts/remote_go_build.rb` to support constrained q4 cross-compilation for `darwin/arm64` Runtime binaries while keeping the default Linux build path and q4 cache isolation intact.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc210`.
+
 ## [0.2.640-rc209] - 2026-07-27
 
 ### Added

@@ -78,7 +78,7 @@ def ensure_go_target!(target)
 end
 
 def validate_go_pair!(goos, goarch)
-  abort "GOOS must be linux or windows for remote q4 builds" unless %w[linux windows].include?(goos)
+  abort "GOOS must be linux, windows, or darwin for remote q4 builds" unless %w[linux windows darwin].include?(goos)
   abort "GOARCH must be amd64, arm64, or 386 for remote q4 builds" unless %w[amd64 arm64 386].include?(goarch)
 end
 

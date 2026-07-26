@@ -105,12 +105,25 @@ bad_root_stdout, bad_root_stderr, bad_root_status = Open3.capture3(
 assert(!bad_root_status.success?, "remote Go build must reject remote build roots outside constrained prefixes")
 assert((bad_root_stdout + bad_root_stderr).include?("remote build root must stay under /home/xnix-* or /tmp/xnix-*"), "remote Go build must explain unsafe build roots")
 
-bad_platform_stdout, bad_platform_stderr, bad_platform_status = Open3.capture3(
-  "ruby", script.to_s,
+darwin_stdout, darwin_stderr, darwin_status = Open3.capture3(
+  "ruby",
+  script.to_s,
   "--goos", "darwin",
-  chdir: project_root.to_s
+  "--goarch", "arm64",
+  "--package", "./cmd/xnix-runtime-go"
+)
+assert(darwin_status.success?, "remote Go build must plan q4 cross-compiled Darwin Runtime binaries: #{darwin_stderr}")
+darwin_payload = JSON.parse(darwin_stdout)
+assert(darwin_payload["goos"] == "darwin", "remote Go build must expose Darwin GOOS")
+assert(darwin_payload["goarch"] == "arm64", "remote Go build must expose Darwin arm64 GOARCH")
+assert(darwin_payload["remote_output_root"].end_with?("/bin/darwin-arm64"), "remote Go build Darwin output root must include target platform")
+
+bad_platform_stdout, bad_platform_stderr, bad_platform_status = Open3.capture3(
+  "ruby",
+  script.to_s,
+  "--goos", "freebsd"
 )
 assert(!bad_platform_status.success?, "remote Go build must reject unsupported target GOOS")
-assert((bad_platform_stdout + bad_platform_stderr).include?("GOOS must be linux or windows"), "remote Go build must explain unsupported GOOS")
+assert((bad_platform_stdout + bad_platform_stderr).include?("GOOS must be linux, windows, or darwin"), "remote Go build must explain unsupported GOOS")
 
 puts "PASS: remote Go build script is q4-first and execute-gated"
