@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc184] - 2026-07-26
+
+### Added
+
+- Added `scripts/q4_messagebox_smoke.rb`, a q4-first wrapper that cross-compiles the MessageBox Windows GUI fixture on q4 and runs the resulting `.exe` through the generic q4 Windows app smoke.
+- Added Ruby and layout coverage proving the q4 MessageBox lane uses q4 Windows cross-compilation, the generic remote-executable smoke, and Go-owned q4 acceptance readiness without local host compilation.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc184`.
+
 ## [0.2.640-rc183] - 2026-07-26
 
 ### Added

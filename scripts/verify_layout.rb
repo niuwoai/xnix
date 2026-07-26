@@ -273,8 +273,10 @@ REQUIRED_FILES = %w[
   scripts/known_winapp_guest_wine_smoke.rb
   scripts/q4_sample_notepad_smoke.rb
   scripts/q4_winapp_smoke.rb
+  scripts/q4_messagebox_smoke.rb
   test/test_q4_sample_notepad_smoke_script.rb
   test/test_q4_winapp_smoke_script.rb
+  test/test_q4_messagebox_smoke_script.rb
   test/fixtures/winapp/hello/main.go
   cmd/xnix-runtime-go/runtime_safety_commands.go
   cmd/xnix-runtime-go/runtime_safety_cli_test.go
@@ -1028,6 +1030,10 @@ end
 q4_winapp_smoke = read_project_file("scripts/q4_winapp_smoke.rb")
 %w[xnix.scripts.q4_winapp_smoke.v1 q4-winapp-smoke scripts/remote_wine_guest_gui_smoke.rb q4-winapp-acceptance-preview root@q4 --execute --no-sync-source --remote --known-app-id --remote-executable --remote-file-argument --sample-file-argument --window-match --owner-file-open --require-real-run-acceptance owner-controlled-launch direct remote_executable_path_exposed remote_file_argument_path_exposed real_run_acceptance_required go_owned_q4_winapp_acceptance_planned go_owned_q4_winapp_acceptance_ready go_owned_q4_winapp_acceptance_schema window_observed window_match_observed host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
   assert(q4_winapp_smoke.include?(token), "q4 Windows app smoke script must include #{token}")
+end
+q4_messagebox_smoke = read_project_file("scripts/q4_messagebox_smoke.rb")
+%w[xnix.scripts.q4_messagebox_smoke.v1 q4-messagebox-smoke test/fixtures/winapp/messagebox GOOS=windows GOARCH=386 scripts/q4_winapp_smoke.rb --remote-executable org.xnix.apps.messagebox Xnix\ MessageBox Xnix\ Windows\ GUI\ Smoke remote_windows_fixture_build_planned remote_windows_executable_built remote_executable_configured remote_executable_path_exposed delegated_q4_winapp_smoke_schema go_owned_q4_winapp_acceptance_ready go_owned_q4_winapp_acceptance_schema host_compilation_avoided q4_compile_required privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
+  assert(q4_messagebox_smoke.include?(token), "q4 MessageBox smoke script must include #{token}")
 end
 remote_go_build = read_project_file("scripts/remote_go_build.rb")
 %w[xnix.scripts.remote_go_build.v1 remote-go-build root@q4 --execute --no-sync-source --source-sync-mode --package --goos --goarch source_sync_entries source_sync_mode runtime full DEFAULT_PACKAGES ./cmd/xnix-runtime-go ./cmd/xnix-runtime-owner ./cmd/xnix-compat-launch ./cmd/xnix-compat-open /home/xnix-build /home/xnix-build-cache /home/xnix-toolchains/go1.24.4-linux-amd64/bin/go remote_output_root host_compilation_avoided remote_build_planned GOCACHE GOMODCACHE GOTMPDIR GOOS GOARCH BatchMode=yes ServerAliveInterval=15 --timeout --contimeout docs/claude-code-implementation-packages.md privileged_container_required host_networking_required docker_socket_mounted broad_host_mount_required host_root_modified].each do |token|
@@ -7186,6 +7192,7 @@ mainline_integration_review_source = read_project_file("scripts/mainline_integra
   cw9-windows-app-runner-path
   q4_sample_notepad_smoke
   q4_winapp_smoke
+  q4_messagebox_smoke
   q4_sample_notepad_acceptance
   q4_winapp_acceptance
   remote_go_test
@@ -7235,6 +7242,7 @@ mainline_integration_review_test_source = read_project_file("test/test_mainline_
   cw9-windows-app-runner-path
   q4_sample_notepad_smoke
   q4_winapp_smoke
+  q4_messagebox_smoke
   q4_sample_notepad_acceptance
   q4_winapp_acceptance
   remote_go_test
