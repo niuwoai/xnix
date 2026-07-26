@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc201] - 2026-07-27
+
+### Added
+
+- Added the Go Runtime `known-app-verified-catalog-launch-handoff-record` command, which consumes accepted verified-catalog real run evidence and persists a Runtime-owner launch handoff under the supplied state root.
+- Added Go unit and CLI coverage proving the handoff forwards only a relative evidence handle to `RequestRuntimeOwnedLaunch` while keeping state roots, acceptance paths, backend details, raw output, and process start gates closed.
+
+### Changed
+
+- Expanded the q4 targeted Go test default regex to include verified-catalog launch handoff coverage.
+- Verified the rc201 handoff command on q4 with a fresh 7zr verified-catalog run acceptance, returning `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc201`.
+
 ## [0.2.640-rc200] - 2026-07-27
 
 ### Added

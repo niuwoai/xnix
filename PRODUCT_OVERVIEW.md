@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc200
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc201
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc201 checkpoint starts converting accepted real-run catalog evidence into a Runtime-owner launch handoff. `known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned verified catalog run acceptance JSON, writes a safe handoff payload under the Runtime state root, and returns a KDE-callable owner-service route for `RequestRuntimeOwnedLaunch`. KDE still forwards only a relative handoff handle; it does not reconstruct receipts, read the state root, expose acceptance paths, start a desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
 
 The v0.2.640-rc200 checkpoint lets one q4 command prove the full current real-app desktop evidence path. `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds that acceptance into `compatibility-center-preview` and `kde-center-page-preview`, and returns a compact desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`. The packet keeps q4 paths, acceptance paths, raw output, runner arguments, backend details, and unsafe host/container gates hidden.
 

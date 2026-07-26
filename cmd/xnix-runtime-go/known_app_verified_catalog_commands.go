@@ -84,3 +84,29 @@ func runKnownAppVerifiedCatalogRunAcceptancePreview(args []string, stdout io.Wri
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(preview)
 }
+
+func runKnownAppVerifiedCatalogLaunchHandoffRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppVerifiedCatalogLaunchHandoffRequestType, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	stateRoot := flags.String("state-root", "", "Runtime owner state root where the verified catalog launch handoff is persisted")
+	runAcceptance := flags.String("known-app-verified-catalog-run-acceptance", "", "Go-owned verified catalog app run acceptance JSON path")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", appidentity.KnownAppVerifiedCatalogLaunchHandoffRequestType)
+	}
+
+	record, err := appidentity.RecordKnownAppVerifiedCatalogLaunchHandoff(appidentity.KnownAppVerifiedCatalogLaunchHandoffRequest{
+		StateRoot:      *stateRoot,
+		AcceptancePath: *runAcceptance,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(record)
+}

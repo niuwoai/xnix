@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc200`.
+The project is currently at `v0.2.640-rc201`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc200`.
 
 ## Current Checkpoint
 
-v0.2.640-rc200 lets the q4 real app smoke return desktop consumption evidence directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds it into Compatibility Center and KDE Center page previews, and returns a desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`.
+v0.2.640-rc201 turns accepted verified-catalog real run evidence into a Runtime-owner launch handoff. `xnix-runtime-go known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned acceptance JSON, persists a safe handoff under the Runtime state root, and returns a KDE-callable owner-service route that forwards only the handoff handle to `RequestRuntimeOwnedLaunch`. It does not reconstruct receipts in KDE, expose state roots or acceptance paths, start the desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
+
+The previous v0.2.640-rc200 checkpoint lets the q4 real app smoke return desktop consumption evidence directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds it into Compatibility Center and KDE Center page previews, and returns a desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`.
 
 The previous v0.2.640-rc199 checkpoint lets the q4 real app smoke return verified catalog run acceptance directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json` syncs the run plan to q4, runs 7zr through Go-started QEMU and guest Wine, and returns `known-app-verified-catalog-run-acceptance-preview` JSON that Compatibility Center and KDE Center page previews can consume. rc199 validation returned `acceptance_ready=true` and `run_plan_matched=true`.
 
