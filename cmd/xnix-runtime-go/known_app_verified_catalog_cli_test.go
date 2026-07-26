@@ -428,6 +428,119 @@ func TestKnownAppVerifiedCatalogRunPlanPreviewCommandRejectsUnknownApp(t *testin
 	}
 }
 
+func TestKnownAppVerifiedCatalogRunAcceptancePreviewCommandConsumesMatchedRun(t *testing.T) {
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var runPlanOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "7zr"}, &runPlanOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+	runPlanPath := filepath.Join(t.TempDir(), "known-app-verified-catalog-run-plan.json")
+	if err := os.WriteFile(runPlanPath, runPlanOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile run plan returned error: %v", err)
+	}
+	runReportPath := filepath.Join(t.TempDir(), "known-winapp-run.json")
+	if err := os.WriteFile(runReportPath, []byte(knownExistingWinAppAcceptanceCLIFixture(currentProjectVersion(t))), 0o600); err != nil {
+		t.Fatalf("WriteFile run report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-acceptance-preview", "--run-plan", runPlanPath, "--known-winapp-run", runReportPath}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-run-acceptance-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_run_acceptance.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-run-acceptance-preview" ||
+		payload["source"] != "known-app-verified-catalog-run-plan+known-existing-windows-app-acceptance" ||
+		payload["runtime_method"] != "PreviewKnownVerifiedApplicationRunAcceptance" ||
+		payload["read_method"] != "GetKnownVerifiedApplicationRunAcceptance" ||
+		payload["acceptance_type"] != "verified-catalog-app-q4-real-run-acceptance" ||
+		payload["run_plan_consumed"] != true ||
+		payload["run_report_consumed"] != true ||
+		payload["requested_app_id"] != "7zr" ||
+		payload["app_id"] != "7zr" ||
+		payload["run_plan_matched"] != true ||
+		payload["acceptance_ready"] != true {
+		t.Fatalf("unexpected run acceptance payload: %#v", payload)
+	}
+	if payload["q4_execution_observed"] != true ||
+		payload["host_compilation_avoided"] != true ||
+		payload["checksum_verified"] != true ||
+		payload["marker_observed"] != true ||
+		payload["runtime_started_isolated_guest"] != true ||
+		payload["compatibility_engine_execution_observed"] != true ||
+		payload["output_redacted"] != true ||
+		payload["run_plan_path_exposed"] != false ||
+		payload["run_report_path_exposed"] != false ||
+		payload["remote_host_exposed"] != false ||
+		payload["raw_path_exposed"] != false ||
+		payload["raw_output_exposed"] != false ||
+		payload["runtime_argv_exposed"] != false ||
+		payload["runner_path_exposed"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["broad_host_mount_required"] != false {
+		t.Fatalf("unexpected run acceptance safety flags: %#v", payload)
+	}
+	if strings.Contains(output.String(), runPlanPath) ||
+		strings.Contains(output.String(), runReportPath) ||
+		strings.Contains(output.String(), "root@q4") ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("run acceptance exposed paths or remote host: %s", output.String())
+	}
+}
+
+func TestKnownAppVerifiedCatalogRunAcceptancePreviewCommandRejectsMismatchedRun(t *testing.T) {
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+	var runPlanOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "busybox-w32"}, &runPlanOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+	runPlanPath := filepath.Join(t.TempDir(), "known-app-verified-catalog-run-plan.json")
+	if err := os.WriteFile(runPlanPath, runPlanOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile run plan returned error: %v", err)
+	}
+	runReportPath := filepath.Join(t.TempDir(), "known-winapp-run.json")
+	if err := os.WriteFile(runReportPath, []byte(knownExistingWinAppAcceptanceCLIFixture(currentProjectVersion(t))), 0o600); err != nil {
+		t.Fatalf("WriteFile run report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-acceptance-preview", "--run-plan", runPlanPath, "--known-winapp-run", runReportPath}, &output)
+	if err == nil || !strings.Contains(err.Error(), "app ids to match") {
+		t.Fatalf("expected mismatched app error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []appidentity.KnownAppMatrixEvidenceApp{

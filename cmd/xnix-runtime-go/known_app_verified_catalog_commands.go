@@ -58,3 +58,29 @@ func runKnownAppVerifiedCatalogRunPlanPreview(args []string, stdout io.Writer) e
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(preview)
 }
+
+func runKnownAppVerifiedCatalogRunAcceptancePreview(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppVerifiedCatalogRunAcceptanceRequestType, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	runPlan := flags.String("run-plan", "", "Go-owned verified catalog run plan JSON path")
+	runReport := flags.String("known-winapp-run", "", "passed known Windows app run JSON")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", appidentity.KnownAppVerifiedCatalogRunAcceptanceRequestType)
+	}
+
+	preview, err := appidentity.PreviewKnownAppVerifiedCatalogRunAcceptance(appidentity.KnownAppVerifiedCatalogRunAcceptanceRequest{
+		RunPlanPath:   *runPlan,
+		RunReportPath: *runReport,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(preview)
+}

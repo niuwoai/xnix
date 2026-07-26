@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc196] - 2026-07-27
+
+### Added
+
+- Added `known-app-verified-catalog-run-acceptance-preview`, a Go-owned acceptance record that consumes a verified catalog run plan and a passed known Windows app run report.
+- Added unit and CLI coverage for matched run-plan/run-report acceptance and mismatched app rejection.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex to include verified catalog run-acceptance tests.
+- Verified the rc196 run-acceptance path with a q4 `7zr` known Windows app QEMU/Wine smoke.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc196`.
+
 ## [0.2.640-rc195] - 2026-07-27
 
 ### Added

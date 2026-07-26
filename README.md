@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc195`.
+The project is currently at `v0.2.640-rc196`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc195`.
 
 ## Current Checkpoint
 
-v0.2.640-rc195 adds a Go-owned run plan for verified known Windows app catalog entries. `xnix-runtime-go known-app-verified-catalog-run-plan-preview --verified-catalog VERIFIED_CATALOG.json --app busybox-w32` selects a catalog app, preserves the review-only `xnix-compat-launch --app <id>` launcher shape, and emits the q4 execution harness command `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app <id>` without starting execution from the preview. This moves the catalog from desktop discovery toward an operator-triggered real q4 run while keeping host compilation avoided and unsafe launch/backend/path/output gates closed. The rc195 q4 validation ran `busybox-w32` through the remote known Windows app QEMU/Wine smoke and passed.
+v0.2.640-rc196 adds Go-owned acceptance for verified catalog app runs. `xnix-runtime-go known-app-verified-catalog-run-acceptance-preview --run-plan RUN_PLAN.json --known-winapp-run RUN_REPORT.json` consumes the rc195 run plan and a passed `windows-known-app-run` report, requires the app ids to match, reuses the known existing Windows app acceptance checks, and emits a desktop-safe `verified-catalog-app-q4-real-run-acceptance` result. This closes the loop from verified catalog card to q4 run plan to real QEMU/Wine run evidence without exposing q4 paths, raw output, runner argv, or host compilation. rc196 validation ran 7zr 26.02 through the q4 remote known Windows app QEMU/Wine smoke.
+
+The previous v0.2.640-rc195 checkpoint adds a Go-owned run plan for verified known Windows app catalog entries. `xnix-runtime-go known-app-verified-catalog-run-plan-preview --verified-catalog VERIFIED_CATALOG.json --app busybox-w32` selects a catalog app, preserves the review-only `xnix-compat-launch --app <id>` launcher shape, and emits the q4 execution harness command `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app <id>` without starting execution from the preview. This moves the catalog from desktop discovery toward an operator-triggered real q4 run while keeping host compilation avoided and unsafe launch/backend/path/output gates closed. The rc195 q4 validation ran `busybox-w32` through the remote known Windows app QEMU/Wine smoke and passed.
 
 The previous v0.2.640-rc194 checkpoint lets the KDE Center application page consume the same Go-owned known Windows app verified catalog as Compatibility Center. `xnix-runtime-go kde-center-page-preview --known-app-verified-catalog VERIFIED_CATALOG.json` now renders verified 7zr and busybox-w32 catalog cards with q4 matrix status, review-only launcher shape, and closed launch/backend/path/output gates, while rejecting unsafe catalog input. The q4 remote Go targeted regex now includes KDE page verified-catalog consumption and rejection tests so desktop-facing catalog validation remains q4-first.
 

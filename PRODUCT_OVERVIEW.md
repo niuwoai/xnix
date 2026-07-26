@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc195
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc196
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc196 checkpoint closes the verified catalog run loop in Go. `known-app-verified-catalog-run-acceptance-preview --run-plan RUN_PLAN.json --known-winapp-run RUN_REPORT.json` consumes a Go-owned verified catalog run plan plus a passed `windows-known-app-run` report, requires the selected app id to match the real run, and reuses the known existing Windows app acceptance gate for checksum, marker, isolated q4 guest execution, compatibility-engine execution, serial logs, redacted output, and closed host/container safety. The result is a desktop-safe acceptance record that proves the app selected from the catalog actually ran without leaking q4 paths, remote host details, raw output, runner argv, or backend internals. rc196 validation ran 7zr 26.02 through the q4 remote known Windows app QEMU/Wine smoke.
 
 The v0.2.640-rc195 checkpoint adds a Go-owned bridge from verified catalog discovery to real q4 execution. `known-app-verified-catalog-run-plan-preview --verified-catalog VERIFIED_CATALOG.json --app APP_ID` consumes the safe Runtime verified catalog, selects a verified app such as busybox-w32, exposes the review-only `xnix-compat-launch --app <id>` request shape, and produces the operator-facing q4 harness command for `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app <id>`. The preview itself does not execute, launch, write desktop files, expose q4 paths, expose raw output, or compile on the host; it gives the desktop and operator flow a Go-owned handoff from catalog card to actual q4 Windows app run. rc195 validation used that path to run busybox-w32 through the remote QEMU/Wine known-app smoke on q4.
 

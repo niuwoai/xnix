@@ -174,6 +174,99 @@ func TestPreviewKnownAppVerifiedCatalogRunPlanRejectsUnknownApp(t *testing.T) {
 	}
 }
 
+func TestPreviewKnownAppVerifiedCatalogRunAcceptanceConsumesMatchedRun(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(catalogContent, "7zr")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	runPlanContent, err := json.Marshal(runPlan)
+	if err != nil {
+		t.Fatalf("Marshal run plan returned error: %v", err)
+	}
+
+	preview, err := PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent, []byte(knownExistingWinAppAcceptanceFixture(currentProjectVersion(t), "7zr")))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunAcceptanceJSON returned error: %v", err)
+	}
+	if preview.SchemaVersion != KnownAppVerifiedCatalogRunAcceptanceSchemaVersion ||
+		preview.RequestType != KnownAppVerifiedCatalogRunAcceptanceRequestType ||
+		preview.AcceptanceType != "verified-catalog-app-q4-real-run-acceptance" ||
+		!preview.RunPlanConsumed ||
+		!preview.RunReportConsumed ||
+		preview.RunPlanPathExposed ||
+		preview.RunReportPathExposed ||
+		preview.RemoteHostExposed ||
+		preview.RawPathExposed ||
+		preview.RawOutputExposed ||
+		preview.RuntimeArgvExposed ||
+		preview.RunnerPathExposed ||
+		preview.RequestedAppID != "7zr" ||
+		preview.AppID != "7zr" ||
+		preview.VerificationState != "verified-real-q4-matrix-run" ||
+		preview.DesktopCatalogState != "visible-review-only" ||
+		!preview.RunPlanMatched {
+		t.Fatalf("unexpected run acceptance schema: %#v", preview)
+	}
+	if !preview.ExistingWindowsApp ||
+		!preview.KnownPortableCatalogBacked ||
+		!preview.LaunchAttempted ||
+		!preview.ChecksumVerified ||
+		!preview.MarkerObserved ||
+		!preview.RuntimeStartedIsolatedGuest ||
+		!preview.IsolatedGuestExecutionObserved ||
+		!preview.CompatibilityEngineExecutionObserved ||
+		!preview.LoopbackOnlyNetworking ||
+		!preview.SerialLogPersisted ||
+		!preview.OutputRedacted ||
+		!preview.Q4ExecutionObserved ||
+		!preview.HostCompilationAvoided ||
+		preview.NetworkRequired ||
+		preview.HostRootModified ||
+		preview.PrivilegedContainerRequired ||
+		preview.HostNetworkingRequired ||
+		preview.DockerSocketMounted ||
+		preview.BroadHostMountRequired ||
+		preview.DockerExecuted ||
+		preview.ColimaExecuted ||
+		preview.NetworkChecksRun ||
+		preview.PackageManagerInvoked ||
+		!preview.AcceptanceReady {
+		t.Fatalf("unexpected run acceptance safety flags: %#v", preview)
+	}
+}
+
+func TestPreviewKnownAppVerifiedCatalogRunAcceptanceRejectsMismatchedRun(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(catalogContent, "busybox-w32")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	runPlanContent, err := json.Marshal(runPlan)
+	if err != nil {
+		t.Fatalf("Marshal run plan returned error: %v", err)
+	}
+
+	_, err = PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent, []byte(knownExistingWinAppAcceptanceFixture(currentProjectVersion(t), "7zr")))
+	if err == nil || !strings.Contains(err.Error(), "app ids to match") {
+		t.Fatalf("expected mismatched app error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogMatrixEvidenceFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []KnownAppMatrixEvidenceApp{

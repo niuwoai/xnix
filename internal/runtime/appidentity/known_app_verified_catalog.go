@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	KnownAppVerifiedCatalogPreviewSchemaVersion = "xnix.runtime.known_app_verified_catalog.v1"
-	KnownAppVerifiedCatalogPreviewRequestType   = "known-app-verified-catalog-preview"
-	KnownAppVerifiedCatalogRunPlanSchemaVersion = "xnix.runtime.known_app_verified_catalog_run_plan.v1"
-	KnownAppVerifiedCatalogRunPlanRequestType   = "known-app-verified-catalog-run-plan-preview"
+	KnownAppVerifiedCatalogPreviewSchemaVersion       = "xnix.runtime.known_app_verified_catalog.v1"
+	KnownAppVerifiedCatalogPreviewRequestType         = "known-app-verified-catalog-preview"
+	KnownAppVerifiedCatalogRunPlanSchemaVersion       = "xnix.runtime.known_app_verified_catalog_run_plan.v1"
+	KnownAppVerifiedCatalogRunPlanRequestType         = "known-app-verified-catalog-run-plan-preview"
+	KnownAppVerifiedCatalogRunAcceptanceSchemaVersion = "xnix.runtime.known_app_verified_catalog_run_acceptance.v1"
+	KnownAppVerifiedCatalogRunAcceptanceRequestType   = "known-app-verified-catalog-run-acceptance-preview"
 )
 
 var knownAppVerifiedCatalogRequiredAppIDs = []string{"7zr", "busybox-w32"}
@@ -24,6 +26,11 @@ type KnownAppVerifiedCatalogRequest struct {
 type KnownAppVerifiedCatalogRunPlanRequest struct {
 	VerifiedCatalogPath string
 	AppID               string
+}
+
+type KnownAppVerifiedCatalogRunAcceptanceRequest struct {
+	RunPlanPath   string
+	RunReportPath string
 }
 
 type KnownAppVerifiedCatalogPreview struct {
@@ -142,6 +149,58 @@ type KnownAppVerifiedCatalogRunPlanPreview struct {
 	TargetedRemoteVerificationReady bool     `json:"targeted_remote_verification_ready"`
 	BlockedActions                  []string `json:"blocked_actions"`
 	DesktopSafeSummary              string   `json:"desktop_safe_summary"`
+}
+
+type KnownAppVerifiedCatalogRunAcceptancePreview struct {
+	Version                              string `json:"version"`
+	SchemaVersion                        string `json:"schema_version"`
+	RequestType                          string `json:"request_type"`
+	Source                               string `json:"source"`
+	RuntimeMethod                        string `json:"runtime_method"`
+	ReadMethod                           string `json:"read_method"`
+	AcceptanceType                       string `json:"acceptance_type"`
+	RunPlanConsumed                      bool   `json:"run_plan_consumed"`
+	RunReportConsumed                    bool   `json:"run_report_consumed"`
+	RunPlanPathExposed                   bool   `json:"run_plan_path_exposed"`
+	RunReportPathExposed                 bool   `json:"run_report_path_exposed"`
+	RemoteHostExposed                    bool   `json:"remote_host_exposed"`
+	RawPathExposed                       bool   `json:"raw_path_exposed"`
+	RawOutputExposed                     bool   `json:"raw_output_exposed"`
+	RuntimeArgvExposed                   bool   `json:"runtime_argv_exposed"`
+	RunnerPathExposed                    bool   `json:"runner_path_exposed"`
+	RequestedAppID                       string `json:"requested_app_id"`
+	AppID                                string `json:"app_id"`
+	DisplayName                          string `json:"display_name"`
+	AppVersion                           string `json:"app_version"`
+	VerificationState                    string `json:"verification_state"`
+	CompatibilityState                   string `json:"compatibility_state"`
+	DesktopCatalogState                  string `json:"desktop_catalog_state"`
+	RunPlanMatched                       bool   `json:"run_plan_matched"`
+	ExistingWindowsApp                   bool   `json:"existing_windows_app"`
+	KnownPortableCatalogBacked           bool   `json:"known_portable_catalog_backed"`
+	LaunchAttempted                      bool   `json:"launch_attempted"`
+	ChecksumVerified                     bool   `json:"checksum_verified"`
+	MarkerObserved                       bool   `json:"marker_observed"`
+	RuntimeStartedIsolatedGuest          bool   `json:"runtime_started_isolated_guest"`
+	IsolatedGuestExecutionObserved       bool   `json:"isolated_guest_execution_observed"`
+	CompatibilityEngineExecutionObserved bool   `json:"compatibility_engine_execution_observed"`
+	LoopbackOnlyNetworking               bool   `json:"loopback_only_networking"`
+	SerialLogPersisted                   bool   `json:"serial_log_persisted"`
+	OutputRedacted                       bool   `json:"output_redacted"`
+	Q4ExecutionObserved                  bool   `json:"q4_execution_observed"`
+	HostCompilationAvoided               bool   `json:"host_compilation_avoided"`
+	NetworkRequired                      bool   `json:"network_required"`
+	HostRootModified                     bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired          bool   `json:"privileged_container_required"`
+	HostNetworkingRequired               bool   `json:"host_networking_required"`
+	DockerSocketMounted                  bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired               bool   `json:"broad_host_mount_required"`
+	DockerExecuted                       bool   `json:"docker_executed"`
+	ColimaExecuted                       bool   `json:"colima_executed"`
+	NetworkChecksRun                     bool   `json:"network_checks_run"`
+	PackageManagerInvoked                bool   `json:"package_manager_invoked"`
+	AcceptanceReady                      bool   `json:"acceptance_ready"`
+	DesktopSafeSummary                   string `json:"desktop_safe_summary"`
 }
 
 func PreviewKnownAppVerifiedCatalog(request KnownAppVerifiedCatalogRequest) (KnownAppVerifiedCatalogPreview, error) {
@@ -312,6 +371,115 @@ func PreviewKnownAppVerifiedCatalogRunPlanJSON(content []byte, appID string) (Kn
 	}
 	if err := validateNoBackendTerms(preview, "known app verified catalog run plan"); err != nil {
 		return KnownAppVerifiedCatalogRunPlanPreview{}, err
+	}
+	return preview, nil
+}
+
+func PreviewKnownAppVerifiedCatalogRunAcceptance(request KnownAppVerifiedCatalogRunAcceptanceRequest) (KnownAppVerifiedCatalogRunAcceptancePreview, error) {
+	if request.RunPlanPath == "" {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, errors.New("known app verified catalog run acceptance requires --run-plan")
+	}
+	if request.RunReportPath == "" {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, errors.New("known app verified catalog run acceptance requires --known-winapp-run")
+	}
+	runPlanContent, err := os.ReadFile(request.RunPlanPath)
+	if err != nil {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, fmt.Errorf("read known app verified catalog run plan: %w", err)
+	}
+	runReportContent, err := os.ReadFile(request.RunReportPath)
+	if err != nil {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, fmt.Errorf("read known app run report: %w", err)
+	}
+	return PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent, runReportContent)
+}
+
+func PreviewKnownAppVerifiedCatalogRunAcceptanceJSON(runPlanContent []byte, runReportContent []byte) (KnownAppVerifiedCatalogRunAcceptancePreview, error) {
+	var runPlan KnownAppVerifiedCatalogRunPlanPreview
+	if err := json.Unmarshal(runPlanContent, &runPlan); err != nil {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, fmt.Errorf("parse known app verified catalog run plan: %w", err)
+	}
+	if runPlan.SchemaVersion != KnownAppVerifiedCatalogRunPlanSchemaVersion ||
+		runPlan.RequestType != KnownAppVerifiedCatalogRunPlanRequestType ||
+		!runPlan.VerifiedCatalogConsumed ||
+		!runPlan.Q4ExecutionPlanned ||
+		runPlan.Q4ExecutionStarted ||
+		!runPlan.ReviewOnly ||
+		runPlan.DirectLaunchEnabled ||
+		runPlan.LaunchEnabled ||
+		runPlan.ExecutionStarted ||
+		runPlan.BackendLaunchEnabled ||
+		runPlan.HostRootModified ||
+		runPlan.BackendDetailsExposed ||
+		runPlan.RawOutputExposed ||
+		runPlan.RemotePathExposed ||
+		!runPlan.HostCompilationAvoided {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, errors.New("known app verified catalog run acceptance requires a safe q4 run plan")
+	}
+
+	knownAcceptance, err := PreviewKnownExistingWinAppAcceptanceJSON(runReportContent)
+	if err != nil {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, err
+	}
+	if runPlan.AppID != knownAcceptance.AppID {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, errors.New("known app verified catalog run acceptance requires run-plan and run-report app ids to match")
+	}
+	if !knownAcceptance.AcceptanceReady {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, errors.New("known app verified catalog run acceptance requires accepted known app run evidence")
+	}
+
+	preview := KnownAppVerifiedCatalogRunAcceptancePreview{
+		Version:                              knownAcceptance.Version,
+		SchemaVersion:                        KnownAppVerifiedCatalogRunAcceptanceSchemaVersion,
+		RequestType:                          KnownAppVerifiedCatalogRunAcceptanceRequestType,
+		Source:                               "known-app-verified-catalog-run-plan+known-existing-windows-app-acceptance",
+		RuntimeMethod:                        "PreviewKnownVerifiedApplicationRunAcceptance",
+		ReadMethod:                           "GetKnownVerifiedApplicationRunAcceptance",
+		AcceptanceType:                       "verified-catalog-app-q4-real-run-acceptance",
+		RunPlanConsumed:                      true,
+		RunReportConsumed:                    true,
+		RunPlanPathExposed:                   false,
+		RunReportPathExposed:                 false,
+		RemoteHostExposed:                    false,
+		RawPathExposed:                       false,
+		RawOutputExposed:                     false,
+		RuntimeArgvExposed:                   false,
+		RunnerPathExposed:                    false,
+		RequestedAppID:                       runPlan.RequestedAppID,
+		AppID:                                knownAcceptance.AppID,
+		DisplayName:                          knownAcceptance.DisplayName,
+		AppVersion:                           knownAcceptance.AppVersion,
+		VerificationState:                    runPlan.VerificationState,
+		CompatibilityState:                   runPlan.CompatibilityState,
+		DesktopCatalogState:                  runPlan.DesktopCatalogState,
+		RunPlanMatched:                       true,
+		ExistingWindowsApp:                   knownAcceptance.ExistingWindowsApp,
+		KnownPortableCatalogBacked:           knownAcceptance.KnownPortableCatalogBacked,
+		LaunchAttempted:                      knownAcceptance.LaunchAttempted,
+		ChecksumVerified:                     knownAcceptance.ChecksumVerified,
+		MarkerObserved:                       knownAcceptance.MarkerObserved,
+		RuntimeStartedIsolatedGuest:          knownAcceptance.RuntimeStartedIsolatedGuest,
+		IsolatedGuestExecutionObserved:       knownAcceptance.IsolatedGuestExecutionObserved,
+		CompatibilityEngineExecutionObserved: knownAcceptance.CompatibilityEngineExecutionObserved,
+		LoopbackOnlyNetworking:               knownAcceptance.LoopbackOnlyNetworking,
+		SerialLogPersisted:                   knownAcceptance.SerialLogPersisted,
+		OutputRedacted:                       knownAcceptance.OutputRedacted,
+		Q4ExecutionObserved:                  true,
+		HostCompilationAvoided:               runPlan.HostCompilationAvoided,
+		NetworkRequired:                      false,
+		HostRootModified:                     false,
+		PrivilegedContainerRequired:          false,
+		HostNetworkingRequired:               false,
+		DockerSocketMounted:                  false,
+		BroadHostMountRequired:               false,
+		DockerExecuted:                       false,
+		ColimaExecuted:                       false,
+		NetworkChecksRun:                     false,
+		PackageManagerInvoked:                false,
+		AcceptanceReady:                      true,
+		DesktopSafeSummary:                   knownAcceptance.DisplayName + " matched the verified catalog run plan and completed the q4 known Windows app acceptance lane.",
+	}
+	if err := validateNoBackendTerms(preview, "known app verified catalog run acceptance"); err != nil {
+		return KnownAppVerifiedCatalogRunAcceptancePreview{}, err
 	}
 	return preview, nil
 }
