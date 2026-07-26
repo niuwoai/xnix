@@ -272,10 +272,14 @@ func knownAppRuntimeStatusLaunchOwnerFixtureGUISmokeEvidence(path string) (*Know
 		return nil, fmt.Errorf("read GUI smoke Runtime evidence projection: %w", err)
 	}
 	evidence, err := KnownAppSmokeEvidenceFromGUISmokeProjection(content)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return &evidence, nil
 	}
-	return &evidence, nil
+	appExecutionEvidence, appExecutionErr := KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogAppExecution(content)
+	if appExecutionErr == nil {
+		return &appExecutionEvidence, nil
+	}
+	return nil, fmt.Errorf("read GUI smoke Runtime evidence projection or verified catalog app execution evidence: %v; %v", err, appExecutionErr)
 }
 
 func knownAppRuntimeStatusLaunchOwnerFixtureEvidenceSource(guiEvidence *KnownAppSmokeEvidenceSummary) string {

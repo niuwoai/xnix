@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc215] - 2026-07-27
+
+### Added
+
+- Added owner-fixture ingestion for verified-catalog app-execution evidence so the real q4 MessageBox execution JSON can prepare Runtime-owned D-Bus launch handoff state.
+- Added q4 smoke summary checks that derive the owner fixture and restricted session-bus smoke plan from the same app-execution evidence while keeping KDE evidence-only and backend/process/path gates closed.
+
+### Changed
+
+- Extended q4 targeted Go test defaults and layout guards to cover app-execution-backed owner fixture and session-bus plan readiness without compiling on the macOS host.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc215`.
+
 ## [0.2.640-rc214] - 2026-07-27
 
 ### Added

@@ -131,3 +131,104 @@ func TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandConsumesGUISmokeEvi
 		t.Fatalf("GUI-backed fixture output exposed local paths: %s", output.String())
 	}
 }
+
+func TestKnownAppRuntimeStatusLaunchOwnerFixtureRecordCommandConsumesVerifiedCatalogAppExecutionEvidence(t *testing.T) {
+	tempDir := t.TempDir()
+	matrixEvidencePath := filepath.Join(tempDir, "known-app-matrix-evidence.json")
+	guiPacketPath := filepath.Join(tempDir, "real-winapp-gui-evidence-packet.json")
+	catalogPath := filepath.Join(tempDir, "known-app-verified-catalog.json")
+	reportPath := filepath.Join(tempDir, "q4-messagebox-smoke.json")
+	appExecutionPath := filepath.Join(tempDir, "known-app-verified-catalog-app-execution-messagebox.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+	guiPacket := strings.ReplaceAll(knownAppVerifiedCatalogCLIGUIEvidencePacketFixture(), "0.2.640-test", currentProjectVersion(t))
+	if err := os.WriteFile(guiPacketPath, []byte(guiPacket), 0o600); err != nil {
+		t.Fatalf("WriteFile GUI evidence packet returned error: %v", err)
+	}
+	if err := os.WriteFile(reportPath, []byte(knownAppVerifiedCatalogCLIMessageBoxRunReportFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile q4 MessageBox report returned error: %v", err)
+	}
+
+	var catalog bytes.Buffer
+	err := run([]string{
+		"known-app-verified-catalog-preview",
+		"--matrix-evidence", matrixEvidencePath,
+		"--gui-evidence-packet", guiPacketPath,
+	}, &catalog)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	if err := os.WriteFile(catalogPath, catalog.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile catalog returned error: %v", err)
+	}
+
+	var appExecution bytes.Buffer
+	err = run([]string{
+		"known-app-verified-catalog-app-execution",
+		"--verified-catalog", catalogPath,
+		"--app", "org.xnix.apps.messagebox",
+		"--smoke-report", reportPath,
+	}, &appExecution)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-app-execution returned error: %v", err)
+	}
+	if err := os.WriteFile(appExecutionPath, appExecution.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile app execution returned error: %v", err)
+	}
+
+	stateRoot := filepath.Join(tempDir, "state")
+	if err := os.Mkdir(stateRoot, 0o700); err != nil {
+		t.Fatalf("Mkdir state root returned error: %v", err)
+	}
+	var output bytes.Buffer
+	err = run([]string{
+		"known-app-runtime-status-launch-owner-fixture-record",
+		"--app", "org.xnix.apps.messagebox",
+		"--state-root", stateRoot,
+		"--cache-root", filepath.Join(tempDir, "cache"),
+		"--gui-smoke-evidence-file", appExecutionPath,
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("fixture output must be JSON: %v\n%s", err, output.String())
+	}
+	if payload["fixture_ready"] != true ||
+		payload["fixture_state"] != "ready" ||
+		payload["app_id"] != "org.xnix.apps.messagebox" ||
+		payload["display_name"] != "Xnix MessageBox" ||
+		payload["desktop_trigger_ready"] != true ||
+		payload["owner_service_call_ready"] != true ||
+		payload["desktop_callable_runtime_method"] != "ShowRuntimeControlledLaunch" ||
+		payload["desktop_dbus_method"] != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		payload["kde_forwards_only_evidence_handle"] != true {
+		t.Fatalf("unexpected app-execution-backed fixture payload: %#v", payload)
+	}
+	for _, key := range []string{
+		"state_root_path_exposed",
+		"evidence_path_exposed",
+		"managed_launcher_path_exposed",
+		"raw_launcher_output_exposed",
+		"backend_details_exposed",
+		"host_root_modified",
+		"docker_socket_mounted",
+		"broad_host_mount_required",
+		"desktop_launch_enabled",
+		"backend_launch_enabled",
+		"execution_started",
+		"backend_process_started",
+	} {
+		if payload[key] != false {
+			t.Fatalf("app-execution-backed fixture must keep %s=false: %#v", key, payload)
+		}
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), appExecutionPath) ||
+		strings.Contains(output.String(), filepath.Join(tempDir, "cache")) {
+		t.Fatalf("app-execution-backed fixture output exposed local paths: %s", output.String())
+	}
+}

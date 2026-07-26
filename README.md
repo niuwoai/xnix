@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc214`.
+The project is currently at `v0.2.640-rc215`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc214`.
 
 ## Current Checkpoint
 
-v0.2.640-rc214 carries the real q4 MessageBox app-execution evidence one step closer to a desktop action. The q4 GUI smoke wrappers now propagate the Runtime-status controlled-launch action preview facts produced by the owner-controlled run, and `known-app-verified-catalog-app-execution` consumes those facts into its desktop-safe result. When that app-execution JSON is fed into Compatibility Center or KDE Center page previews, the GUI evidence card can surface `show-runtime-controlled-launch` as the primary Runtime-status action while KDE still forwards only the safe evidence handle and backend launch, process start, host-root mutation, raw paths, and owner environment values stay closed.
+v0.2.640-rc215 connects real q4 MessageBox app-execution evidence to the Runtime-owned action preparation lane. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file APP_EXECUTION.json` now accepts the verified-catalog app-execution result, records the owner fixture handoff, and allows `kde-controlled-launch-session-bus-smoke-plan-preview` to derive a restricted private-session D-Bus smoke plan from that same evidence handle. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4, then requires owner fixture readiness, owner service-call readiness, evidence-only KDE forwarding, and session-bus plan readiness while backend launch, process start, raw paths, state roots, host-root mutation, and unsafe host/container gates stay closed.
+
+The previous v0.2.640-rc214 checkpoint carries the real q4 MessageBox app-execution evidence one step closer to a desktop action. The q4 GUI smoke wrappers now propagate the Runtime-status controlled-launch action preview facts produced by the owner-controlled run, and `known-app-verified-catalog-app-execution` consumes those facts into its desktop-safe result. When that app-execution JSON is fed into Compatibility Center or KDE Center page previews, the GUI evidence card can surface `show-runtime-controlled-launch` as the primary Runtime-status action while KDE still forwards only the safe evidence handle and backend launch, process start, host-root mutation, raw paths, and owner environment values stay closed.
 
 The previous v0.2.640-rc213 checkpoint makes the q4-built Runtime smoke prove desktop consumption in the same execute-gated path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` still asks q4 to cross-compile the host `xnix-runtime-go`, fetches that binary into `/tmp/xnix-*`, and runs `known-app-verified-catalog-app-execution` for MessageBox. It now persists the app-execution JSON under the constrained fetch root, feeds it through `compatibility-center-preview --known-app-evidence-file ...` and `kde-center-page-preview --known-app-evidence-file ...`, and requires both read models to consume the real q4 GUI run evidence while keeping evidence paths, backend launch, process start, host-root mutation, and unsafe host/container gates closed.
 

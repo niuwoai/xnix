@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc214
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc215
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc215 checkpoint connects real q4 MessageBox app-execution evidence to the Runtime-owned action preparation lane. `known-app-runtime-status-launch-owner-fixture-record --gui-smoke-evidence-file APP_EXECUTION.json` now accepts the verified-catalog app-execution result, records the owner fixture handoff, and allows `kde-controlled-launch-session-bus-smoke-plan-preview` to derive a restricted private-session D-Bus smoke plan from that same evidence handle. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4, then requires owner fixture readiness, owner service-call readiness, evidence-only KDE forwarding, and session-bus plan readiness while backend launch, process start, raw paths, state roots, host-root mutation, and unsafe host/container gates stay closed.
 
 The v0.2.640-rc214 checkpoint carries the real q4 MessageBox app-execution evidence one step closer to a desktop action. The q4 GUI smoke wrappers now propagate the Runtime-status controlled-launch action preview facts produced by the owner-controlled run, and `known-app-verified-catalog-app-execution` consumes those facts into its desktop-safe result. When that app-execution JSON is fed into Compatibility Center or KDE Center page previews, the GUI evidence card can surface `show-runtime-controlled-launch` as the primary Runtime-status action while KDE still forwards only the safe evidence handle and backend launch, process start, host-root mutation, raw paths, and owner environment values stay closed.
 

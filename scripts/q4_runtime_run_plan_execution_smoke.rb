@@ -388,6 +388,89 @@ def require_desktop_consumption!(center, kde)
   end
 end
 
+def require_owner_fixture_from_app_execution!(fixture)
+  required = {
+    "request_type" => "known-app-runtime-status-launch-owner-fixture-record",
+    "app_id" => MESSAGEBOX_APP_ID,
+    "display_name" => "Xnix MessageBox",
+    "fixture_state" => "ready",
+    "fixture_ready" => true,
+    "desktop_trigger_ready" => true,
+    "desktop_callable_runtime_method" => "ShowRuntimeControlledLaunch",
+    "desktop_dbus_method" => "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+    "owner_service_call_ready" => true,
+    "runtime_owner_service_supplies_inputs" => true,
+    "runtime_owned" => true,
+    "go_runtime_backed" => true,
+    "kde_policy_owner" => false,
+    "kde_forwards_only_evidence_handle" => true,
+    "desktop_receipt_fields_reconstructed" => false,
+    "desktop_kde_state_root_access" => false,
+    "state_root_path_exposed" => false,
+    "evidence_path_exposed" => false,
+    "managed_launcher_path_exposed" => false,
+    "raw_launcher_output_exposed" => false,
+    "backend_details_exposed" => false,
+    "host_root_modified" => false,
+    "network_required" => false,
+    "privileged_container_required" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "desktop_launch_enabled" => false,
+    "backend_launch_enabled" => false,
+    "execution_started" => false,
+    "backend_process_started" => false
+  }
+  required.each do |key, expected|
+    abort "owner fixture mismatch for #{key}" unless fixture.fetch(key) == expected
+  end
+  args = fixture.fetch("owner_service_call_args")
+  unless args == ["ShowRuntimeControlledLaunch", "evidence-relative-path", fixture.fetch("evidence_relative_path")]
+    abort "owner fixture must forward only the evidence-relative-path handle"
+  end
+end
+
+def require_session_bus_plan_from_app_execution!(plan, fixture)
+  required = {
+    "request_type" => "kde-controlled-launch-session-bus-smoke-plan-preview",
+    "kde_action_id" => "xnix.runtime-status.controlled-launch",
+    "kde_action_preview_request_type" => "kde-controlled-launch-action-preview",
+    "public_dbus_method" => "org.xnix.Compatibility1.ShowRuntimeControlledLaunch",
+    "evidence_relative_path" => fixture.fetch("evidence_relative_path"),
+    "evidence_handoff_consumed" => true,
+    "evidence_digest_verified" => true,
+    "kde_forwarded_argument_kind" => "evidence-relative-path",
+    "kde_forwards_only_evidence_handle" => true,
+    "restricted_session_bus_plan_ready" => true,
+    "private_session_bus_required" => true,
+    "dbus_session_bus_address_required" => true,
+    "dbus_controlled_launch_fixture_plan_ready" => true,
+    "runtime_owned" => true,
+    "go_runtime_backed" => true,
+    "kde_policy_owner" => false,
+    "owner_service_args_exposed_to_kde" => false,
+    "desktop_kde_state_root_access" => false,
+    "desktop_receipt_fields_reconstructed" => false,
+    "state_root_path_exposed" => false,
+    "raw_launcher_output_exposed" => false,
+    "backend_details_exposed" => false,
+    "host_root_modified" => false,
+    "docker_socket_mounted" => false,
+    "broad_host_mount_required" => false,
+    "privileged_container_required" => false,
+    "host_network_required" => false,
+    "execution_started" => false,
+    "backend_process_started" => false,
+    "smoke_executed_by_preview" => false
+  }
+  required.each do |key, expected|
+    abort "session-bus plan mismatch for #{key}" unless plan.fetch(key) == expected
+  end
+  unless plan.fetch("kde_forwarded_arguments") == [fixture.fetch("evidence_relative_path")]
+    abort "session-bus plan must forward only the owner fixture evidence handle"
+  end
+end
+
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 fetch_root = ensure_fetch_root!(options.fetch(:fetch_root))
@@ -431,6 +514,21 @@ plan = {
   "known_app_owner_controlled_gui_evidence_count" => 0,
   "known_app_gui_controlled_action_present" => false,
   "kde_controlled_launch_action_preview_ready" => false,
+  "owner_fixture_from_app_execution_planned" => true,
+  "owner_fixture_from_app_execution_ready" => false,
+  "owner_fixture_desktop_trigger_ready" => false,
+  "owner_fixture_service_call_ready" => false,
+  "owner_fixture_kde_forwards_only_evidence_handle" => false,
+  "owner_fixture_evidence_path_exposed" => false,
+  "owner_fixture_backend_launch_enabled" => false,
+  "owner_fixture_backend_process_started" => false,
+  "session_bus_plan_from_app_execution_planned" => true,
+  "session_bus_plan_from_app_execution_ready" => false,
+  "session_bus_plan_private_bus_required" => false,
+  "session_bus_plan_dbus_fixture_ready" => false,
+  "session_bus_plan_kde_forwards_only_evidence_handle" => false,
+  "session_bus_plan_backend_process_started" => false,
+  "session_bus_plan_host_root_modified" => false,
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => false,
   "desktop_consumption_host_root_modified" => false,
@@ -507,6 +605,32 @@ kde = run_json_command(
 )
 require_desktop_consumption!(center, kde)
 
+owner_state_root = work_root.join("owner-action-state")
+FileUtils.mkdir_p(owner_state_root)
+owner_fixture = run_json_command(
+  [
+    local_runtime.to_s,
+    "known-app-runtime-status-launch-owner-fixture-record",
+    "--app", MESSAGEBOX_APP_ID,
+    "--state-root", owner_state_root.to_s,
+    "--cache-root", work_root.join("known-winapps").to_s,
+    "--gui-smoke-evidence-file", app_execution_path.to_s
+  ],
+  timeout_seconds: options.fetch(:timeout_seconds)
+)
+require_owner_fixture_from_app_execution!(owner_fixture)
+
+session_bus_plan = run_json_command(
+  [
+    local_runtime.to_s,
+    "kde-controlled-launch-session-bus-smoke-plan-preview",
+    "--state-root", owner_state_root.to_s,
+    "--evidence-relative-path", owner_fixture.fetch("evidence_relative_path")
+  ],
+  timeout_seconds: options.fetch(:timeout_seconds)
+)
+require_session_bus_plan_from_app_execution!(session_bus_plan, owner_fixture)
+
 summary = plan.merge(
   "status" => "passed",
   "runtime_binary_built_on_q4" => true,
@@ -547,6 +671,19 @@ summary = plan.merge(
   "known_app_gui_evidence_count" => kde.fetch("known_app_gui_evidence_count"),
   "known_app_owner_controlled_gui_evidence_count" => kde.fetch("known_app_owner_controlled_gui_evidence_count"),
   "known_app_gui_controlled_action_present" => kde.fetch("known_app_gui_evidence_cards").first.fetch("primary_action_id") == "show-runtime-controlled-launch",
+  "owner_fixture_from_app_execution_ready" => owner_fixture.fetch("fixture_ready"),
+  "owner_fixture_desktop_trigger_ready" => owner_fixture.fetch("desktop_trigger_ready"),
+  "owner_fixture_service_call_ready" => owner_fixture.fetch("owner_service_call_ready"),
+  "owner_fixture_kde_forwards_only_evidence_handle" => owner_fixture.fetch("kde_forwards_only_evidence_handle"),
+  "owner_fixture_evidence_path_exposed" => owner_fixture.fetch("evidence_path_exposed"),
+  "owner_fixture_backend_launch_enabled" => owner_fixture.fetch("backend_launch_enabled"),
+  "owner_fixture_backend_process_started" => owner_fixture.fetch("backend_process_started"),
+  "session_bus_plan_from_app_execution_ready" => session_bus_plan.fetch("restricted_session_bus_plan_ready"),
+  "session_bus_plan_private_bus_required" => session_bus_plan.fetch("private_session_bus_required"),
+  "session_bus_plan_dbus_fixture_ready" => session_bus_plan.fetch("dbus_controlled_launch_fixture_plan_ready"),
+  "session_bus_plan_kde_forwards_only_evidence_handle" => session_bus_plan.fetch("kde_forwards_only_evidence_handle"),
+  "session_bus_plan_backend_process_started" => session_bus_plan.fetch("backend_process_started"),
+  "session_bus_plan_host_root_modified" => session_bus_plan.fetch("host_root_modified"),
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => center.fetch("backend_launch_enabled") || kde.fetch("backend_process_started"),
   "desktop_consumption_host_root_modified" => center.fetch("host_root_modified") || kde.fetch("host_root_modified"),

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -144,5 +145,113 @@ func TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureConsumesGUISmokeEvidenceFo
 		action.ExecutionStarted ||
 		action.BackendLaunchEnabled {
 		t.Fatalf("unexpected GUI-backed action trigger: %#v", action)
+	}
+}
+
+func TestRecordKnownAppRuntimeStatusLaunchOwnerFixtureConsumesVerifiedCatalogAppExecutionEvidenceForMessageBox(t *testing.T) {
+	version := currentProjectVersion(t)
+	guiPacket := strings.ReplaceAll(knownAppVerifiedCatalogGUIEvidencePacketFixture(), "0.2.640-test", version)
+	catalog, err := PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t), []byte(guiPacket))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogContent, 0o600); err != nil {
+		t.Fatalf("WriteFile catalog returned error: %v", err)
+	}
+	reportPath := filepath.Join(t.TempDir(), "q4-messagebox-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(knownAppVerifiedCatalogMessageBoxRunReportFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile q4 MessageBox report returned error: %v", err)
+	}
+
+	execution, err := RunKnownAppVerifiedCatalogAppExecution(KnownAppVerifiedCatalogAppExecutionRequest{
+		VerifiedCatalogPath: catalogPath,
+		AppID:               "org.xnix.apps.messagebox",
+		SmokeReportPath:     reportPath,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownAppVerifiedCatalogAppExecution returned error: %v", err)
+	}
+	executionContent, err := json.Marshal(execution)
+	if err != nil {
+		t.Fatalf("Marshal app execution returned error: %v", err)
+	}
+	executionPath := filepath.Join(t.TempDir(), "known-app-verified-catalog-app-execution-messagebox.json")
+	if err := os.WriteFile(executionPath, executionContent, 0o600); err != nil {
+		t.Fatalf("WriteFile app execution returned error: %v", err)
+	}
+
+	stateRoot := t.TempDir()
+	record, err := RecordKnownAppRuntimeStatusLaunchOwnerFixture(KnownAppRuntimeStatusLaunchOwnerFixtureRequest{
+		AppID:                "org.xnix.apps.messagebox",
+		StateRoot:            stateRoot,
+		CacheRoot:            t.TempDir(),
+		GUISmokeEvidencePath: executionPath,
+	})
+	if err != nil {
+		t.Fatalf("RecordKnownAppRuntimeStatusLaunchOwnerFixture returned error: %v", err)
+	}
+	if !record.FixtureReady ||
+		record.FixtureState != "ready" ||
+		record.AppID != "org.xnix.apps.messagebox" ||
+		record.DisplayName != "Xnix MessageBox" ||
+		record.Source != "gui-smoke-evidence-preview+runtime-status-evidence" ||
+		record.ProjectionType != "known-app-kde-runtime-status-launch-delegated-evidence" ||
+		!record.CompatibilityCenterProjectionReady ||
+		!record.KDECenterProjectionReady ||
+		!record.KnownAppSmokeEvidenceReady ||
+		!record.DesktopTriggerReady ||
+		!record.OwnerServiceCallReady ||
+		!record.DesktopEvidenceHandleForwarded ||
+		record.DesktopCallableRuntimeMethod != "ShowRuntimeControlledLaunch" ||
+		record.DesktopDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		!record.RuntimeOwnerServiceSuppliesInputs ||
+		!record.KDEForwardsOnlyEvidenceHandle {
+		t.Fatalf("unexpected app-execution-backed owner fixture: %#v", record)
+	}
+	if len(record.OwnerServiceCallArgs) != 3 ||
+		record.OwnerServiceCallArgs[0] != "ShowRuntimeControlledLaunch" ||
+		record.OwnerServiceCallArgs[1] != "evidence-relative-path" ||
+		record.OwnerServiceCallArgs[2] != record.EvidenceRelativePath {
+		t.Fatalf("owner fixture must expose only the evidence handle to KDE: %#v", record.OwnerServiceCallArgs)
+	}
+	if record.StateRootPathExposed ||
+		record.EvidencePathExposed ||
+		record.ManagedLauncherPathExposed ||
+		record.RawLauncherOutputExposed ||
+		record.BackendDetailsExposed ||
+		record.HostRootModified ||
+		record.DockerSocketMounted ||
+		record.BroadHostMountRequired ||
+		record.DesktopLaunchEnabled ||
+		record.BackendLaunchEnabled ||
+		record.ExecutionStarted ||
+		record.BackendProcessStarted {
+		t.Fatalf("app-execution-backed fixture opened unsafe gates: %#v", record)
+	}
+
+	plan, err := PreviewKDEControlledLaunchSessionBusSmokePlan(KDEControlledLaunchSessionBusSmokePlanRequest{
+		StateRoot:            stateRoot,
+		EvidenceRelativePath: record.EvidenceRelativePath,
+	})
+	if err != nil {
+		t.Fatalf("PreviewKDEControlledLaunchSessionBusSmokePlan returned error: %v", err)
+	}
+	if !plan.RestrictedSessionBusPlanReady ||
+		!plan.DBusControlledLaunchFixturePlanReady ||
+		!plan.PrivateSessionBusRequired ||
+		!plan.KDEForwardsOnlyEvidenceHandle ||
+		plan.PublicDBusMethod != "org.xnix.Compatibility1.ShowRuntimeControlledLaunch" ||
+		plan.EvidenceRelativePath != record.EvidenceRelativePath ||
+		plan.StateRootPathExposed ||
+		plan.BackendDetailsExposed ||
+		plan.HostRootModified ||
+		plan.ExecutionStarted ||
+		plan.BackendProcessStarted {
+		t.Fatalf("unexpected session-bus plan from app-execution-backed fixture: %#v", plan)
 	}
 }
