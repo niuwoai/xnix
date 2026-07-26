@@ -306,6 +306,7 @@ def require_passed_runtime_execution!(result)
     kde_center_projection_ready
     go_owned_q4_winapp_acceptance_ready
     go_owned_q4_winapp_acceptance_consumed
+    kde_controlled_launch_action_preview_ready
     host_compilation_avoided
     targeted_remote_verification_ready
     runtime_owned
@@ -374,8 +375,8 @@ def require_desktop_consumption!(center, kde)
   card = cards.first
   required_card = {
     "app_id" => MESSAGEBOX_APP_ID,
-    "primary_action_id" => "review-known-app-gui-evidence",
-    "primary_action_kind" => "review",
+    "primary_action_id" => "show-runtime-controlled-launch",
+    "primary_action_kind" => "runtime-status",
     "desktop_launch_enabled" => false,
     "backend_launch_enabled" => false,
     "host_root_modified" => false,
@@ -428,7 +429,8 @@ plan = {
   "known_app_smoke_passed_count" => 0,
   "known_app_gui_evidence_count" => 0,
   "known_app_owner_controlled_gui_evidence_count" => 0,
-  "known_app_gui_review_action_present" => false,
+  "known_app_gui_controlled_action_present" => false,
+  "kde_controlled_launch_action_preview_ready" => false,
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => false,
   "desktop_consumption_host_root_modified" => false,
@@ -530,13 +532,21 @@ summary = plan.merge(
   "go_owned_q4_winapp_acceptance_ready" => result.fetch("go_owned_q4_winapp_acceptance_ready"),
   "go_owned_q4_winapp_acceptance_consumed" => result.fetch("go_owned_q4_winapp_acceptance_consumed"),
   "go_owned_q4_winapp_acceptance_path_exposed" => result.fetch("go_owned_q4_winapp_acceptance_path_exposed"),
+  "kde_controlled_launch_action_preview_ready" => result.fetch("kde_controlled_launch_action_preview_ready"),
+  "kde_controlled_launch_action_output_written" => result.fetch("kde_controlled_launch_action_output_written"),
+  "kde_action_owner_file_open_verified" => result.fetch("kde_action_owner_file_open_verified"),
+  "kde_action_owner_file_open_entrypoint_invoked" => result.fetch("kde_action_owner_file_open_entrypoint_invoked"),
+  "kde_action_owner_file_open_environment_ready" => result.fetch("kde_action_owner_file_open_environment_ready"),
+  "kde_action_owner_file_open_environment_values_exposed" => result.fetch("kde_action_owner_file_open_environment_values_exposed"),
+  "owner_service_call_ready" => result.fetch("owner_service_call_ready"),
+  "owner_evidence_handoff_ready" => result.fetch("owner_evidence_handoff_ready"),
   "compatibility_center_consumed" => true,
   "kde_center_page_consumed" => true,
   "known_app_smoke_evidence_count" => center.fetch("known_app_smoke_evidence_count"),
   "known_app_smoke_passed_count" => center.fetch("known_app_smoke_passed_count"),
   "known_app_gui_evidence_count" => kde.fetch("known_app_gui_evidence_count"),
   "known_app_owner_controlled_gui_evidence_count" => kde.fetch("known_app_owner_controlled_gui_evidence_count"),
-  "known_app_gui_review_action_present" => kde.fetch("known_app_gui_evidence_cards").first.fetch("primary_action_id") == "review-known-app-gui-evidence",
+  "known_app_gui_controlled_action_present" => kde.fetch("known_app_gui_evidence_cards").first.fetch("primary_action_id") == "show-runtime-controlled-launch",
   "desktop_consumption_evidence_path_exposed" => false,
   "desktop_consumption_backend_launch_enabled" => center.fetch("backend_launch_enabled") || kde.fetch("backend_process_started"),
   "desktop_consumption_host_root_modified" => center.fetch("host_root_modified") || kde.fetch("host_root_modified"),

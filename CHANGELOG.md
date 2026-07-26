@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc214] - 2026-07-27
+
+### Added
+
+- Added Runtime-status controlled-launch action readiness fields to verified-catalog app execution results, including KDE action preview readiness, owner evidence handoff readiness, owner file-open action verification, and safe delegated file-argument evidence.
+- Added q4 smoke wrapper propagation for the owner-controlled KDE action preview facts produced by the real MessageBox GUI run.
+
+### Changed
+
+- Upgraded the q4 Runtime run-plan execution smoke to require the KDE Center GUI evidence card to surface `show-runtime-controlled-launch` after consuming the real app-execution result, while keeping backend launch, process start, raw paths, owner environment values, and host/container gates closed.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc214`.
+
 ## [0.2.640-rc213] - 2026-07-27
 
 ### Added

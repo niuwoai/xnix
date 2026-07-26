@@ -619,6 +619,7 @@ summary_reader = <<~RUBY
     "kde_action_owner_delegated_window_match" => action.fetch("owner_delegated_window_match", ""),
     "owner_controlled_launch_requested" => smoke.fetch("owner_controlled_launch_requested"),
     "owner_evidence_handoff_ready" => smoke.fetch("owner_evidence_handoff_ready"),
+    "owner_evidence_relative_path" => action.fetch("evidence_relative_path", ""),
     "owner_managed_launcher_invoked" => smoke.fetch("owner_managed_launcher_invoked", false),
     "owner_file_open_entrypoint_invoked" => smoke.fetch("owner_file_open_entrypoint_invoked", false),
     "owner_delegated_smoke_passed" => smoke.fetch("owner_delegated_smoke_passed", false),

@@ -817,6 +817,25 @@ func TestKnownAppVerifiedCatalogAppExecutionCommandConsumesGUIRunReport(t *testi
 		payload["kde_center_projection_ready"] != true ||
 		payload["go_owned_q4_winapp_acceptance_ready"] != true ||
 		payload["go_owned_q4_winapp_acceptance_consumed"] != true ||
+		payload["kde_controlled_launch_action_output_written"] != true ||
+		payload["kde_controlled_launch_action_preview_ready"] != true ||
+		payload["kde_action_owner_file_open_verified"] != true ||
+		payload["kde_action_owner_file_open_entrypoint_invoked"] != true ||
+		payload["kde_action_static_file_open_entrypoint"] != "xnix-compat-open %U" ||
+		payload["kde_action_owner_file_open_environment_ready"] != true ||
+		payload["kde_action_owner_file_open_environment_key_count"] != float64(23) ||
+		payload["kde_action_owner_file_open_environment_values_exposed"] != false ||
+		payload["owner_service_call_ready"] != true ||
+		payload["owner_evidence_handoff_ready"] != true ||
+		payload["owner_evidence_relative_path"] != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
+		payload["owner_delegated_file_argument_count"] != float64(1) ||
+		payload["owner_delegated_file_argument_copied_count"] != float64(1) ||
+		payload["owner_delegated_file_arguments_passed"] != true ||
+		payload["owner_delegated_file_argument_winepath_translated"] != true ||
+		payload["owner_delegated_file_argument_winepath_translated_count"] != float64(1) ||
+		payload["owner_delegated_raw_file_argument_path_exposed"] != false ||
+		payload["owner_delegated_window_match"] != "Xnix document opened by Windows app" ||
+		payload["owner_delegated_window_match_observed"] != true ||
 		payload["go_owned_q4_winapp_acceptance_path_exposed"] != false {
 		t.Fatalf("unexpected app execution evidence: %#v", payload)
 	}
@@ -827,10 +846,14 @@ func TestKnownAppVerifiedCatalogAppExecutionCommandConsumesGUIRunReport(t *testi
 		centerEvidence["evidence_source"] != "wine-guest-gui-smoke" ||
 		centerEvidence["compatibility_state"] != "owner-controlled-gui-qemu-wine-verified" ||
 		centerEvidence["center_card_state"] != "validated-owner-controlled-gui-runtime-run" ||
-		centerEvidence["primary_action_id"] != "review-known-app-gui-evidence" ||
+		centerEvidence["primary_action_id"] != "show-runtime-controlled-launch" ||
+		centerEvidence["primary_action_kind"] != "runtime-status" ||
 		centerEvidence["x_window_observed"] != true ||
 		centerEvidence["window_observed"] != true ||
 		centerEvidence["execution_evidence_recorded"] != true ||
+		centerEvidence["owner_file_open_verified"] != true ||
+		centerEvidence["owner_file_open_entrypoint_invoked"] != true ||
+		centerEvidence["owner_evidence_handoff_ready"] != true ||
 		centerEvidence["runtime_dispatch_verified"] != true ||
 		centerEvidence["action_execution_enabled"] != false ||
 		centerEvidence["backend_launch_enabled"] != false {
@@ -1372,6 +1395,24 @@ func knownAppVerifiedCatalogCLIMessageBoxRunReportFixture() string {
   "runtime_evidence_owner_file_open_entrypoint_invoked": true,
   "real_run_acceptance_ready": true,
   "real_run_acceptance_center_projection_consumed": true,
+  "kde_controlled_launch_action_output_written": true,
+  "kde_controlled_launch_action_preview_ready": true,
+  "kde_action_owner_file_open_verified": true,
+  "kde_action_owner_file_open_entrypoint_invoked": true,
+  "kde_action_static_file_open_entrypoint": "xnix-compat-open %U",
+  "kde_action_owner_file_open_environment_ready": true,
+  "kde_action_owner_file_open_environment_key_count": 23,
+  "kde_action_owner_file_open_environment_values_exposed": false,
+  "owner_evidence_handoff_ready": true,
+  "owner_evidence_relative_path": "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
+  "owner_delegated_file_argument_count": 1,
+  "owner_delegated_file_argument_copied_count": 1,
+  "owner_delegated_file_arguments_passed": true,
+  "owner_delegated_file_argument_winepath_translated": true,
+  "owner_delegated_file_argument_winepath_translated_count": 1,
+  "owner_delegated_raw_file_argument_path_exposed": false,
+  "owner_delegated_window_match": "Xnix document opened by Windows app",
+  "owner_delegated_window_match_observed": true,
   "go_owned_q4_winapp_acceptance_ready": true,
   "go_owned_q4_winapp_acceptance_consumed": true,
   "go_owned_q4_winapp_acceptance_path_exposed": false,

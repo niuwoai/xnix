@@ -459,6 +459,25 @@ func TestRunKnownAppVerifiedCatalogAppExecutionConsumesGUIRunReport(t *testing.T
 		!result.KDECenterProjectionReady ||
 		!result.GoOwnedQ4WinAppAcceptanceReady ||
 		!result.GoOwnedQ4WinAppAcceptanceConsumed ||
+		!result.KDEControlledLaunchActionOutputWritten ||
+		!result.KDEControlledLaunchActionPreviewReady ||
+		!result.KDEActionOwnerFileOpenVerified ||
+		!result.KDEActionOwnerFileOpenEntrypointInvoked ||
+		result.KDEActionStaticFileOpenEntrypoint != "xnix-compat-open %U" ||
+		!result.KDEActionOwnerFileOpenEnvironmentReady ||
+		result.KDEActionOwnerFileOpenEnvironmentKeyCount != len(KDEControlledLaunchActionOwnerFileOpenEnvironmentKeys()) ||
+		result.KDEActionOwnerFileOpenEnvironmentValuesExposed ||
+		!result.OwnerServiceCallReady ||
+		!result.OwnerEvidenceHandoffReady ||
+		result.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
+		result.OwnerDelegatedFileArgumentCount != 1 ||
+		result.OwnerDelegatedFileArgumentCopiedCount != 1 ||
+		!result.OwnerDelegatedFileArgumentsPassed ||
+		!result.OwnerDelegatedFileArgumentWinepathTranslated ||
+		result.OwnerDelegatedFileArgumentWinepathTranslatedCount != 1 ||
+		result.OwnerDelegatedRawFileArgumentPathExposed ||
+		result.OwnerDelegatedWindowMatch != "Xnix document opened by Windows app" ||
+		!result.OwnerDelegatedWindowMatchObserved ||
 		result.GoOwnedQ4WinAppAcceptancePathExposed {
 		t.Fatalf("unexpected app execution evidence: %#v", result)
 	}
@@ -471,6 +490,12 @@ func TestRunKnownAppVerifiedCatalogAppExecutionConsumesGUIRunReport(t *testing.T
 		!result.KnownAppSmokeEvidence.WindowObserved ||
 		!result.KnownAppSmokeEvidence.ExecutionEvidenceRecorded ||
 		!result.KnownAppSmokeEvidence.OwnerControlledRuntimeLaunchVerified ||
+		!result.KnownAppSmokeEvidence.OwnerFileOpenVerified ||
+		!result.KnownAppSmokeEvidence.OwnerFileOpenEntrypointInvoked ||
+		!result.KnownAppSmokeEvidence.OwnerEvidenceHandoffReady ||
+		result.KnownAppSmokeEvidence.OwnerEvidenceRelativePath != "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json" ||
+		result.KnownAppSmokeEvidence.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
+		result.KnownAppSmokeEvidence.PrimaryActionKind != "runtime-status" ||
 		!result.KnownAppSmokeEvidence.RuntimeDispatchVerified ||
 		result.KnownAppSmokeEvidence.ActionExecutionEnabled ||
 		result.KnownAppSmokeEvidence.BackendLaunchEnabled {
@@ -485,10 +510,13 @@ func TestRunKnownAppVerifiedCatalogAppExecutionConsumesGUIRunReport(t *testing.T
 		t.Fatalf("KnownAppSmokeEvidenceFromKnownAppVerifiedCatalogAppExecution returned error: %v", err)
 	}
 	if centerEvidence.AppID != "org.xnix.apps.messagebox" ||
-		centerEvidence.PrimaryActionID != "review-known-app-gui-evidence" ||
-		centerEvidence.PrimaryActionKind != "review" ||
+		centerEvidence.PrimaryActionID != KnownAppKDERuntimeStatusLaunchAction ||
+		centerEvidence.PrimaryActionKind != "runtime-status" ||
 		!centerEvidence.PrimaryActionEnabled ||
 		!centerEvidence.ExecutionEvidenceRecorded ||
+		!centerEvidence.OwnerFileOpenVerified ||
+		!centerEvidence.OwnerFileOpenEntrypointInvoked ||
+		!centerEvidence.OwnerEvidenceHandoffReady ||
 		!centerEvidence.RuntimeDispatchVerified ||
 		centerEvidence.DesktopLaunchEnabled ||
 		centerEvidence.BackendDetailsExposed {
@@ -879,6 +907,24 @@ func knownAppVerifiedCatalogMessageBoxRunReportFixture() string {
   "runtime_evidence_owner_file_open_entrypoint_invoked": true,
   "real_run_acceptance_ready": true,
   "real_run_acceptance_center_projection_consumed": true,
+  "kde_controlled_launch_action_output_written": true,
+  "kde_controlled_launch_action_preview_ready": true,
+  "kde_action_owner_file_open_verified": true,
+  "kde_action_owner_file_open_entrypoint_invoked": true,
+  "kde_action_static_file_open_entrypoint": "xnix-compat-open %U",
+  "kde_action_owner_file_open_environment_ready": true,
+  "kde_action_owner_file_open_environment_key_count": 23,
+  "kde_action_owner_file_open_environment_values_exposed": false,
+  "owner_evidence_handoff_ready": true,
+  "owner_evidence_relative_path": "runtime/kde-runtime-status-launch-evidence/owner-messagebox.json",
+  "owner_delegated_file_argument_count": 1,
+  "owner_delegated_file_argument_copied_count": 1,
+  "owner_delegated_file_arguments_passed": true,
+  "owner_delegated_file_argument_winepath_translated": true,
+  "owner_delegated_file_argument_winepath_translated_count": 1,
+  "owner_delegated_raw_file_argument_path_exposed": false,
+  "owner_delegated_window_match": "Xnix document opened by Windows app",
+  "owner_delegated_window_match_observed": true,
   "go_owned_q4_winapp_acceptance_ready": true,
   "go_owned_q4_winapp_acceptance_consumed": true,
   "go_owned_q4_winapp_acceptance_path_exposed": false,

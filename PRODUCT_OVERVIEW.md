@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc213
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc214
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc214 checkpoint carries the real q4 MessageBox app-execution evidence one step closer to a desktop action. The q4 GUI smoke wrappers now propagate the Runtime-status controlled-launch action preview facts produced by the owner-controlled run, and `known-app-verified-catalog-app-execution` consumes those facts into its desktop-safe result. When that app-execution JSON is fed into Compatibility Center or KDE Center page previews, the GUI evidence card can surface `show-runtime-controlled-launch` as the primary Runtime-status action while KDE still forwards only the safe evidence handle and backend launch, process start, host-root mutation, raw paths, and owner environment values stay closed.
 
 The v0.2.640-rc213 checkpoint makes the q4-built Runtime smoke prove desktop consumption in the same execute-gated path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` still asks q4 to cross-compile the host `xnix-runtime-go`, fetches that binary into `/tmp/xnix-*`, and runs `known-app-verified-catalog-app-execution` for MessageBox. It now writes the app-execution JSON under the constrained fetch root, feeds it through `compatibility-center-preview --known-app-evidence-file ...` and `kde-center-page-preview --known-app-evidence-file ...`, and requires both read models to consume the real q4 GUI run evidence while evidence paths, backend launch, process start, host-root mutation, and unsafe host/container gates remain closed.
 
