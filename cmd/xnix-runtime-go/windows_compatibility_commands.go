@@ -1088,6 +1088,7 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 
 	result, err := winapp.RunKnownPortableApp(context.Background(), winapp.KnownRunRequest{
 		AppID:            appID,
+		RuntimeVersion:   readRuntimeGoProjectVersion(),
 		Backend:          backend,
 		CacheRoot:        cacheRoot,
 		StateRoot:        stateRoot,
@@ -1125,6 +1126,25 @@ func runWindowsKnownAppRun(args []string, stdout io.Writer) error {
 	}
 
 	return writeJSONResponse(stdout, reportOutput, result)
+}
+
+func readRuntimeGoProjectVersion() string {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	for {
+		versionPath := filepath.Join(workingDirectory, "VERSION")
+		content, err := os.ReadFile(versionPath)
+		if err == nil {
+			return strings.TrimSpace(string(content))
+		}
+		parent := filepath.Dir(workingDirectory)
+		if parent == workingDirectory {
+			return ""
+		}
+		workingDirectory = parent
+	}
 }
 
 func writeJSONResponse(stdout io.Writer, reportOutput string, value any) error {

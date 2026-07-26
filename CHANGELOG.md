@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc189] - 2026-07-26
+
+### Added
+
+- Added `known-existing-winapp-acceptance-preview`, a Go-owned acceptance read model for q4 known portable app run reports from real existing Windows apps such as the 7-Zip standalone executable.
+- Added CLI and targeted q4 Go test coverage for the known existing Windows app acceptance path, keeping compile-heavy validation on q4 by default.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc189`.
+
 ## [0.2.640-rc188] - 2026-07-26
 
 ### Added

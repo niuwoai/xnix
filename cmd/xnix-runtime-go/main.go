@@ -265,6 +265,8 @@ func run(args []string, stdout io.Writer) error {
 		return runQ4SampleNotepadAcceptancePreview(args[1:], stdout)
 	case "q4-winapp-acceptance-preview":
 		return runQ4WinAppAcceptancePreview(args[1:], stdout)
+	case "known-existing-winapp-acceptance-preview":
+		return runKnownExistingWinAppAcceptancePreview(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-fixture-record":
 		return runKnownAppRuntimeStatusLaunchOwnerFixtureRecord(args[1:], stdout)
 	case "known-app-runtime-status-launch-owner-trigger-preview":

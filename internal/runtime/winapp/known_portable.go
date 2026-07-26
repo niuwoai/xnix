@@ -614,6 +614,7 @@ type KnownPrepareAndLaunchProfileResult struct {
 
 type KnownRunRequest struct {
 	AppID            string
+	RuntimeVersion   string
 	Backend          string
 	CacheRoot        string
 	StateRoot        string
@@ -649,6 +650,7 @@ type KnownRunRequest struct {
 }
 
 type KnownRunResult struct {
+	Version                     string                              `json:"version"`
 	SchemaVersion               string                              `json:"schema_version"`
 	RequestType                 string                              `json:"request_type"`
 	Status                      string                              `json:"status"`
@@ -788,7 +790,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.mines",
 		DisplayName:     "Mines",
-		Version:         "0.2.640-rc188",
+		Version:         "0.2.640-rc189",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "winemine.exe",
 		SourcePageURL:   "runtime-managed-guest-gui-fixture",
@@ -799,7 +801,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:              "org.xnix.apps.messagebox",
 		DisplayName:     "Xnix MessageBox",
-		Version:         "0.2.640-rc188",
+		Version:         "0.2.640-rc189",
 		Architecture:    "windows-x86-gui",
 		ExecutableName:  "xnix-messagebox-smoke.exe",
 		SourcePageURL:   "runtime-managed-external-gui-fixture",
@@ -809,7 +811,7 @@ var knownPortableCatalog = []KnownPortableApp{
 	{
 		ID:                       "org.xnix.sample.notepad",
 		DisplayName:              "Sample Notepad",
-		Version:                  "0.2.640-rc188",
+		Version:                  "0.2.640-rc189",
 		Architecture:             "windows-x86-gui",
 		ExecutableName:           "notepad.exe",
 		SourcePageURL:            "runtime-recipe-container-gui-fixture",
@@ -1609,6 +1611,10 @@ func RunKnownPortableApp(ctx context.Context, request KnownRunRequest) (KnownRun
 	}
 	backend := knownRunBackend(request.Backend)
 	result := baseKnownRunResult(app, backend)
+	result.Version = strings.TrimSpace(request.RuntimeVersion)
+	if result.Version == "" {
+		result.Version = app.Version
+	}
 	result.RawOutputRedacted = request.RedactOutput
 	switch backend {
 	case KnownRunBackendLocal:

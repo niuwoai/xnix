@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc188`.
+The project is currently at `v0.2.640-rc189`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc188`.
 
 ## Current Checkpoint
 
-v0.2.640-rc188 makes the real external Windows app lane reusable as release/readiness evidence. `scripts/merge_readiness_packet.rb` and `scripts/release_evidence_index.rb` can now consume an existing `scripts/q4_messagebox_smoke.rb --execute` JSON report through `--q4-messagebox-smoke` without running q4, QEMU, Wine, Docker, network fetches, staging, tagging, or host mutation. The evidence must prove the q4-built MessageBox external `.exe`, owner-controlled file-open, observed document-content marker, ready real-run receipt and acceptance summaries, Go-owned generic q4 Windows app acceptance, host compilation avoidance, and closed host/container safety gates.
+v0.2.640-rc189 adds a Go-owned known existing Windows app acceptance preview for the real 7-Zip standalone executable lane. `xnix-runtime-go known-existing-winapp-acceptance-preview --known-winapp-run REPORT.json` consumes the q4 `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr` report, requires a passed checksum-verified third-party known portable app run, observed marker evidence, isolated guest execution, loopback-only networking, persisted serial logs, redacted output, and closed host/container safety gates, while hiding q4 endpoints, remote paths, executable names, runner paths, backend command details, and raw output. Compile-heavy build/test and real app validation remain q4-first so the macOS host stays limited to lightweight Ruby/layout checks.
+
+The previous v0.2.640-rc188 checkpoint makes the real external Windows app lane reusable as release/readiness evidence. `scripts/merge_readiness_packet.rb` and `scripts/release_evidence_index.rb` can now consume an existing `scripts/q4_messagebox_smoke.rb --execute` JSON report through `--q4-messagebox-smoke` without running q4, QEMU, Wine, Docker, network fetches, staging, tagging, or host mutation. The evidence must prove the q4-built MessageBox external `.exe`, owner-controlled file-open, observed document-content marker, ready real-run receipt and acceptance summaries, Go-owned generic q4 Windows app acceptance, host compilation avoidance, and closed host/container safety gates.
 
 The previous v0.2.640-rc187 checkpoint promoted document-content consumption into Go-owned real Windows app acceptance. q4 owner file-open smokes now carry explicit `document_content_marker_*` fields from the remote Wine GUI execute result through the real-run receipt summary, real-run acceptance summary, generic q4 Windows app acceptance, and MessageBox wrapper. Owner file-open MessageBox acceptance now requires observing the desktop-safe `Xnix document opened by Windows app` marker, while compile-heavy validation remains q4-first and the macOS host stays limited to lightweight Ruby/layout checks.
 

@@ -75,7 +75,7 @@ end
 def source_sync_entries(mode)
   case mode
   when "runtime"
-    %w[go.mod cmd internal runtime]
+    %w[VERSION go.mod cmd internal runtime]
   when "full"
     ["."]
   else
