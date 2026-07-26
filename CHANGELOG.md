@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc121] - 2026-07-26
+
+### Added
+
+- Added the Go Runtime `real-winapp-gui-evidence-packet-preview` command, which consumes a passed real Windows GUI smoke report and emits a KDE-safe desktop evidence packet for recipe-backed Notepad container X GUI runs.
+- Added Runtime and CLI coverage proving the packet preserves the observed X window, recipe identity, closed launch gates, network-isolated container state, zero host mounts, no Docker socket exposure, and no host-root mutation.
+
 ## [0.2.640-rc120] - 2026-07-25
 
 ### Fixed

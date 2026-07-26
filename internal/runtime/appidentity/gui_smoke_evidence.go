@@ -81,6 +81,7 @@ type GUISmokeEvidencePreview struct {
 }
 
 type guiSmokeReport struct {
+	Version                   string `json:"version"`
 	SchemaVersion             string `json:"schema_version"`
 	RequestType               string `json:"request_type"`
 	ReportType                string `json:"report_type"`
