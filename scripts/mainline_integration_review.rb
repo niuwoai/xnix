@@ -318,6 +318,7 @@ LANES = [
       %r{\Ascripts/release_evidence_index\.rb\z},
       %r{\Ascripts/offline_application_fixture_matrix\.rb\z},
       %r{\Ascripts/merge_readiness_packet\.rb\z},
+      %r{\Ascripts/remote_go_test\.rb\z},
       %r{\Atest/test_implementation_evidence_report\.rb\z},
       %r{\Atest/test_mainline_integration_review\.rb\z},
       %r{\Atest/test_release_evidence_index\.rb\z},
@@ -334,7 +335,9 @@ LANES = [
     review_order: 8.8,
     patterns: [
       %r{\Ainternal/runtime/winapp/},
+      %r{\Ainternal/runtime/appidentity/q4_sample_notepad_acceptance},
       %r{\Acmd/xnix-runtime-go/windows_compatibility_},
+      %r{\Acmd/xnix-runtime-go/q4_sample_notepad_acceptance_},
       %r{\Adocs/windows-app-smoke-profile-runbook\.md\z},
       %r{\Ascripts/winapp_smoke\.rb\z},
       %r{\Ascripts/winapp_container_smoke\.rb\z},

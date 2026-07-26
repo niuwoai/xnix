@@ -399,19 +399,13 @@ def q4_sample_notepad_smoke_passed?(tools)
   data.fetch("schema_version", "") == "xnix.scripts.q4_sample_notepad_smoke.v1" &&
     data.fetch("request_type", "") == "q4-sample-notepad-smoke" &&
     data.fetch("status", "") == "passed" &&
-    data.fetch("app_id", "") == "org.xnix.sample.notepad" &&
-    data.fetch("launch_mode", "") == "owner-controlled-launch" &&
-    data.fetch("file_open_entrypoint_requested", false) == true &&
-    data.fetch("real_run_acceptance_required", false) == true &&
-    data.fetch("real_run_acceptance_ready", false) == true &&
-    data.fetch("real_run_acceptance_center_projection_consumed", false) == true &&
-    data.fetch("real_run_acceptance_kde_page_projection_consumed", false) == true &&
-    data.fetch("real_run_receipt_summary_ready", false) == true &&
-    data.fetch("real_run_receipt_summary_file_open_verified", false) == true &&
-    data.fetch("window_match_observed", false) == true &&
-    data.fetch("owner_file_open_entrypoint_invoked", false) == true &&
-    data.fetch("runtime_evidence_owner_file_open_entrypoint_invoked", false) == true &&
-    data.fetch("host_compilation_avoided", false) == true &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_schema", "") == "xnix.runtime.q4_sample_notepad_acceptance.v1" &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_request_type", "") == "q4-sample-notepad-acceptance-preview" &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_ready", false) == true &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_consumed", false) == true &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_path_exposed", true) == false &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_remote_host_exposed", true) == false &&
+    data.fetch("go_owned_q4_sample_notepad_acceptance_delegated_command_exposed", true) == false &&
     data.fetch("host_root_modified", true) == false &&
     data.fetch("privileged_container_required", true) == false &&
     data.fetch("host_networking_required", true) == false &&

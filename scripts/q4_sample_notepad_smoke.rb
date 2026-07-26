@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "optparse"
 require "pathname"
+require "shellwords"
 
 PROJECT_ROOT = Pathname.new(__dir__).join("..").realpath
 VERSION = PROJECT_ROOT.join("VERSION").read.strip
@@ -55,6 +56,45 @@ def emit_json(payload, output_path)
   puts text
 end
 
+def shell_join(argv)
+  Shellwords.join(argv)
+end
+
+def ssh_command(remote_host, remote_command)
+  [
+    "ssh",
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=15",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=4",
+    remote_host,
+    remote_command
+  ]
+end
+
+def remote_q4_acceptance(remote_host, remote_runtime_bin, payload_json)
+  remote_input = "/tmp/xnix-q4-sample-notepad-acceptance-#{VERSION}.json"
+  writer = shell_join(["ruby", "-e", "File.write(ARGV.fetch(0), STDIN.read)", remote_input])
+  _write_stdout, write_stderr, write_status = Open3.capture3(*ssh_command(remote_host, writer), stdin_data: payload_json, chdir: PROJECT_ROOT.to_s)
+  unless write_status.success?
+    warn write_stderr unless write_stderr.empty?
+    abort "FAIL: q4 Sample Notepad Go acceptance input write failed"
+  end
+
+  acceptance_args = [
+    remote_runtime_bin,
+    "q4-sample-notepad-acceptance-preview",
+    "--q4-sample-notepad-smoke", remote_input
+  ]
+  stdout, stderr, status = Open3.capture3(*ssh_command(remote_host, shell_join(acceptance_args)), chdir: PROJECT_ROOT.to_s)
+  unless status.success?
+    warn stdout unless stdout.empty?
+    warn stderr unless stderr.empty?
+    abort "FAIL: q4 Sample Notepad Go acceptance preview failed"
+  end
+  JSON.parse(stdout)
+end
+
 output_path = ensure_local_output_path!(options.fetch(:output))
 
 delegated_command = [
@@ -93,6 +133,8 @@ plan = {
   "launch_mode" => "owner-controlled-launch",
   "file_open_entrypoint_requested" => true,
   "real_run_acceptance_required" => true,
+  "go_owned_q4_sample_notepad_acceptance_planned" => true,
+  "go_owned_q4_sample_notepad_acceptance_ready" => false,
   "q4_compile_required" => true,
   "host_compilation_avoided" => true,
   "host_root_modified" => false,
@@ -144,6 +186,27 @@ result = plan.merge(
   "host_networking_required" => delegated.fetch("host_networking_required"),
   "docker_socket_mounted" => delegated.fetch("docker_socket_mounted"),
   "broad_host_mount_required" => delegated.fetch("broad_host_mount_required")
+)
+
+go_acceptance = remote_q4_acceptance(
+  options.fetch(:remote_host),
+  delegated.fetch("remote_runtime_bin"),
+  JSON.pretty_generate(result) + "\n"
+)
+unless go_acceptance.fetch("acceptance_ready")
+  warn JSON.pretty_generate(go_acceptance)
+  warn "FAIL: q4 Sample Notepad Go-owned acceptance did not pass"
+  exit 1
+end
+
+result.merge!(
+  "go_owned_q4_sample_notepad_acceptance_schema" => go_acceptance.fetch("schema_version"),
+  "go_owned_q4_sample_notepad_acceptance_request_type" => go_acceptance.fetch("request_type"),
+  "go_owned_q4_sample_notepad_acceptance_ready" => go_acceptance.fetch("acceptance_ready"),
+  "go_owned_q4_sample_notepad_acceptance_consumed" => go_acceptance.fetch("smoke_report_consumed"),
+  "go_owned_q4_sample_notepad_acceptance_path_exposed" => go_acceptance.fetch("smoke_report_path_exposed"),
+  "go_owned_q4_sample_notepad_acceptance_remote_host_exposed" => go_acceptance.fetch("remote_host_exposed"),
+  "go_owned_q4_sample_notepad_acceptance_delegated_command_exposed" => go_acceptance.fetch("delegated_command_exposed")
 )
 
 emit_json(result, output_path)

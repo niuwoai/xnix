@@ -25,6 +25,9 @@ assert(source.include?("\"--window-match\""), "q4 Sample Notepad smoke must requ
 assert(source.include?("--output PATH"), "q4 Sample Notepad smoke must support writing reusable evidence")
 assert(source.include?("ensure_local_output_path!"), "q4 Sample Notepad smoke must constrain local evidence output paths")
 assert(source.include?("real_run_acceptance_ready"), "q4 Sample Notepad smoke must require real run acceptance")
+assert(source.include?("q4-sample-notepad-acceptance-preview"), "q4 Sample Notepad smoke must call the Go-owned q4 acceptance preview")
+assert(source.include?("go_owned_q4_sample_notepad_acceptance_ready"), "q4 Sample Notepad smoke must expose Go-owned q4 acceptance readiness")
+assert(source.include?("go_owned_q4_sample_notepad_acceptance_schema"), "q4 Sample Notepad smoke must expose Go-owned q4 acceptance schema")
 assert(source.include?("host_compilation_avoided"), "q4 Sample Notepad smoke must document host compilation avoidance")
 assert(!source.include?("go build"), "q4 Sample Notepad smoke wrapper must not compile locally")
 assert(!source.include?("go test"), "q4 Sample Notepad smoke wrapper must not test locally")
@@ -51,6 +54,8 @@ assert(payload["window_match"] == "sample-document.txt", "q4 Sample Notepad smok
 assert(payload["launch_mode"] == "owner-controlled-launch", "q4 Sample Notepad smoke must use owner-controlled launch")
 assert(payload["file_open_entrypoint_requested"] == true, "q4 Sample Notepad smoke must request file-open entrypoint")
 assert(payload["real_run_acceptance_required"] == true, "q4 Sample Notepad smoke must require acceptance")
+assert(payload["go_owned_q4_sample_notepad_acceptance_planned"] == true, "q4 Sample Notepad smoke must plan Go-owned q4 acceptance")
+assert(payload["go_owned_q4_sample_notepad_acceptance_ready"] == false, "q4 Sample Notepad smoke plan must not claim Go-owned acceptance before execute")
 assert(payload["q4_compile_required"] == true, "q4 Sample Notepad smoke must declare q4 compilation")
 assert(payload["host_compilation_avoided"] == true, "q4 Sample Notepad smoke must avoid host compilation")
 %w[--launch-mode owner-controlled-launch --file-open-entrypoint --known-app-id org.xnix.sample.notepad --sample-file-argument sample-document.txt --window-match sample-document.txt --execute].each do |token|

@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc179
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc180
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc180 checkpoint makes q4 Sample Notepad release evidence Go-owned. `q4-sample-notepad-acceptance-preview` consumes `scripts/q4_sample_notepad_smoke.rb` output, verifies Sample Notepad identity, owner-controlled launch, file-open entrypoint use, delegated remote GUI execute-result consumption, ready real-run acceptance, receipt readiness, window-match observation, Runtime file-open entrypoint evidence, q4 host-compilation avoidance, and closed host/container safety gates. The q4 wrapper executes that Go preview on q4 after the real GUI smoke and merges only safe readiness fields into its final JSON; merge readiness then checks those Go-owned fields rather than duplicating the product acceptance rules in Ruby.
 
 The v0.2.640-rc179 checkpoint turns the q4 Sample Notepad acceptance smoke into release/readiness evidence. `scripts/q4_sample_notepad_smoke.rb` can now write its plan or passed result with `--output`, constrained to this checkout or `/tmp/xnix-*`, and `scripts/merge_readiness_packet.rb --q4-sample-notepad-smoke REPORT.json` consumes that passed JSON output. The packet requires the real app id, owner-controlled launch mode, file-open entrypoint, ready acceptance summary, receipt summary, window-match evidence, Runtime entrypoint evidence, q4 host-compilation avoidance, and closed host/container safety gates. The merge packet still runs offline and never starts q4/QEMU/Wine by itself; instead, missing or failed q4 Sample Notepad evidence is a release-only blocker so day-to-day merges remain lightweight while product readiness cannot forget the real Windows GUI app lane.
 

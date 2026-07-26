@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc180] - 2026-07-26
+
+### Added
+
+- Added Go Runtime `q4-sample-notepad-acceptance-preview` to consume q4 Sample Notepad wrapper evidence and emit a desktop-safe Go-owned acceptance result.
+- Added q4 wrapper execution of the Go-owned acceptance preview after the real owner-controlled Sample Notepad file-open GUI smoke passes.
+- Added targeted Go, Ruby wrapper, merge readiness, mainline classification, and layout coverage for the Go-owned q4 acceptance path.
+
+### Changed
+
+- Changed merge readiness q4 Sample Notepad release gating to require Go-owned acceptance fields instead of duplicating the full Windows-app acceptance decision in Ruby.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc180`.
+
 ## [0.2.640-rc179] - 2026-07-26
 
 ### Added

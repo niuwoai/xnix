@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc179`.
+The project is currently at `v0.2.640-rc180`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc179`.
 
 ## Current Checkpoint
 
-v0.2.640-rc179 makes the real Sample Notepad run part of merge/readiness evidence. `scripts/q4_sample_notepad_smoke.rb --execute --output /tmp/xnix-sample-notepad.json` can persist the real q4 acceptance result, and `scripts/merge_readiness_packet.rb` now accepts `--q4-sample-notepad-smoke REPORT.json`, consumes that output as fixture evidence, and reports a dedicated q4 Sample Notepad acceptance status. Missing or failed evidence adds the release-only blocker `q4-sample-notepad-acceptance-smoke-not-passed`, while ordinary merge readiness remains offline and does not execute q4, QEMU, Wine, Docker, network fetches, staging, commits, tags, or pushes.
+v0.2.640-rc180 moves the q4 Sample Notepad acceptance decision into the Go Runtime. `xnix-runtime-go q4-sample-notepad-acceptance-preview --q4-sample-notepad-smoke REPORT.json` consumes the short q4 wrapper output, verifies that the real owner-controlled file-open GUI run passed through the Go real-run acceptance chain, and emits a desktop-safe `xnix.runtime.q4_sample_notepad_acceptance.v1` result. The wrapper now runs that Go acceptance preview on q4 before emitting its final JSON, and `merge_readiness_packet` keys release gating off the Go-owned fields instead of reimplementing the Windows-app acceptance rules in Ruby.
+
+The previous v0.2.640-rc179 checkpoint made the real Sample Notepad run part of merge/readiness evidence. `scripts/q4_sample_notepad_smoke.rb --execute --output /tmp/xnix-sample-notepad.json` can persist the real q4 acceptance result, and `scripts/merge_readiness_packet.rb` now accepts `--q4-sample-notepad-smoke REPORT.json`, consumes that output as fixture evidence, and reports a dedicated q4 Sample Notepad acceptance status. Missing or failed evidence adds the release-only blocker `q4-sample-notepad-acceptance-smoke-not-passed`, while ordinary merge readiness remains offline and does not execute q4, QEMU, Wine, Docker, network fetches, staging, commits, tags, or pushes.
 
 The previous v0.2.640-rc178 checkpoint added `scripts/q4_sample_notepad_smoke.rb` as a short, execute-gated operator entrypoint for the real Windows app lane. Plan mode is the default; `--execute` delegates to the maintained q4 remote GUI smoke with Sample Notepad, the owner-controlled launch path, the `xnix-compat-open %U` file-open entrypoint, a generated sample document, window-title matching, and the Go-owned real run acceptance requirement. This turns the long q4 command into a repeatable "actually run a Windows GUI app and prove acceptance" smoke while keeping compile-heavy work and QEMU/Wine execution on q4.
 
