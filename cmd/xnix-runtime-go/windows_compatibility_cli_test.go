@@ -1423,6 +1423,114 @@ func TestWindowsAppContainerXGUISmokeCommandMountsExternalExecutable(t *testing.
 	}
 }
 
+func TestWindowsAppContainerXGUISmokeCommandRunsImportedExternalExecutable(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ImportedTool.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	var importOutput bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-record",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.imported-tool",
+		"--display-name", "Imported Tool",
+	}, &importOutput); err != nil {
+		t.Fatalf("import run returned error: %v", err)
+	}
+	var importPayload map[string]any
+	if err := json.Unmarshal(importOutput.Bytes(), &importPayload); err != nil {
+		t.Fatalf("Unmarshal import output returned error: %v", err)
+	}
+	importRecordPath := filepath.Join(stateRoot, filepath.FromSlash(importPayload["record_relative_path"].(string)))
+	importedArtifactPath := filepath.Join(stateRoot, filepath.FromSlash(importPayload["artifact_relative_path"].(string)))
+
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x600001 \"Imported Tool\": (\"ImportedTool.exe\" \"ImportedTool.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{
+		"windows-app-container-x-gui-smoke",
+		"--external-app-import-record", importRecordPath,
+		"--window-match", "Imported Tool",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.imported-tool" ||
+		payload["display_name"] != "Imported Tool" ||
+		payload["app_version"] != currentProjectVersion(t) ||
+		payload["recipe_backed"] != false ||
+		payload["executable_name"] != "ImportedTool.exe" ||
+		payload["local_executable_copied"] != true ||
+		payload["application_name"] != "/ImportedTool.exe" ||
+		payload["window_match"] != "Imported Tool" ||
+		payload["x_window_observed"] != true ||
+		payload["network_mode"] != "none" ||
+		payload["host_root_modified"] != false ||
+		payload["docker_socket_mounted"] != false ||
+		payload["host_networking_required"] != false ||
+		payload["broad_host_mount_required"] != false ||
+		payload["host_mount_count"] != float64(0) {
+		t.Fatalf("unexpected imported external executable container X GUI smoke payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), executablePath) ||
+		strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), importedArtifactPath) ||
+		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "docker.sock") ||
+		strings.Contains(output.String(), "--privileged") ||
+		strings.Contains(output.String(), "--network host") {
+		t.Fatalf("imported external executable container X GUI smoke output leaked unsafe details: %s", output.String())
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	for _, token := range []string{
+		"create",
+		"XNIX_GUI_APP=/ImportedTool.exe",
+		"cp",
+		importedArtifactPath,
+		"start",
+	} {
+		if !strings.Contains(string(dockerInvocation), token) {
+			t.Fatalf("docker invocation did not run the imported external executable safely: %s", string(dockerInvocation))
+		}
+	}
+}
+
 func TestWindowsAppGuestWineSmokeCommandUsesLoopbackGuestRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell ssh fixture is not portable to Windows hosts")

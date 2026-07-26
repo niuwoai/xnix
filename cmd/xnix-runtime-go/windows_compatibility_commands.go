@@ -377,6 +377,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	var appName string
 	var windowMatch string
 	var executablePath string
+	var importRecordPath string
 	var appID string
 	var displayName string
 	var appVersion string
@@ -390,6 +391,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
 	flags.StringVar(&executablePath, "executable", "", "optional local Windows GUI .exe to copy into the isolated container")
+	flags.StringVar(&importRecordPath, "external-app-import-record", "", "optional Runtime import record for an external Windows GUI .exe")
 	flags.StringVar(&appID, "app-id", "", "optional application id for ad-hoc container GUI evidence")
 	flags.StringVar(&displayName, "display-name", "", "optional display name for ad-hoc container GUI evidence")
 	flags.StringVar(&appVersion, "app-version", "", "optional application version for ad-hoc container GUI evidence")
@@ -413,6 +415,26 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 			appFlagProvided = true
 		}
 	})
+	if strings.TrimSpace(importRecordPath) != "" {
+		if strings.TrimSpace(executablePath) != "" ||
+			strings.TrimSpace(recipeApp) != "" ||
+			strings.TrimSpace(appID) != "" ||
+			strings.TrimSpace(displayName) != "" ||
+			strings.TrimSpace(appVersion) != "" {
+			return errors.New("windows-app-container-x-gui-smoke --external-app-import-record cannot be combined with --executable, --recipe-app, or ad-hoc identity flags")
+		}
+		record, importedExecutablePath, err := appidentity.ResolveExternalWinAppImportedArtifact(importRecordPath)
+		if err != nil {
+			return err
+		}
+		executablePath = importedExecutablePath
+		appID = record.ApplicationID
+		displayName = record.DisplayName
+		appVersion = record.AppVersion
+		if !appFlagProvided {
+			appName = "/" + record.ExecutableName
+		}
+	}
 	if strings.TrimSpace(executablePath) != "" && !appFlagProvided {
 		appName = "/" + filepath.Base(executablePath)
 	}

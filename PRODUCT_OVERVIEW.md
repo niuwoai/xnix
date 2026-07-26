@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc130
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc131
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc131 checkpoint candidate makes imported external Windows GUI apps executable from their Runtime-managed artifact records. `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` resolves the state-root artifact, revalidates its digest, size, and MZ header, copies the managed `.exe` into the isolated local Wine/Xvfb container, and carries the imported app id, display name, and version into the smoke evidence. The original host path, state-root path, backend command, Docker socket, host networking, host mounts, and host-root mutation remain hidden or disabled.
 
 The v0.2.640-rc130 checkpoint candidate turns an external Windows executable into a Runtime-managed import record. `external-winapp-import-record` validates the `.exe` MZ header, copies the file into a controlled state root under an app-scoped relative path, records digest and size evidence, and keeps the original host path out of desktop output. `kde-center-page-preview --external-app-import-record RECORD.json` can render the imported app as its own KDE Compatibility Center page without a registry entry, while launch, backend start, writes, network, Docker socket access, broad host mounts, package-manager invocation, and host-root mutation remain disabled.
 

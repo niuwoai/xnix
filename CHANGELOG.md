@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc131] - 2026-07-26
+
+### Added
+
+- Added `windows-app-container-x-gui-smoke --external-app-import-record RECORD.json` for running an imported external Windows GUI executable from its Runtime-managed artifact record.
+- Added targeted Runtime and CLI coverage proving imported artifacts are revalidated by digest, copied into the isolated Wine/Xvfb container, and surfaced with imported app identity while host paths and unsafe container gates remain hidden or disabled.
+
 ## [0.2.640-rc130] - 2026-07-26
 
 ### Added

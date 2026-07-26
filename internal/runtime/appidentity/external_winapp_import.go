@@ -129,7 +129,7 @@ func RecordExternalWinAppImport(request ExternalWinAppImportRequest) (ExternalWi
 	if err := os.MkdirAll(filepath.Dir(artifactPath), 0o700); err != nil {
 		return ExternalWinAppImportRecord{}, fmt.Errorf("prepare external Windows app artifact directory: %w", err)
 	}
-	if err := os.WriteFile(artifactPath, content, 0o600); err != nil {
+	if err := os.WriteFile(artifactPath, content, 0o644); err != nil {
 		return ExternalWinAppImportRecord{}, fmt.Errorf("write external Windows app artifact: %w", err)
 	}
 
@@ -262,6 +262,53 @@ func LoadExternalWinAppImportRecord(path string) (ExternalWinAppImportRecord, er
 		return ExternalWinAppImportRecord{}, fmt.Errorf("external Windows app import record is invalid: %s", strings.Join(reasons, "; "))
 	}
 	return record, nil
+}
+
+func ResolveExternalWinAppImportedArtifact(recordPath string) (ExternalWinAppImportRecord, string, error) {
+	record, err := LoadExternalWinAppImportRecord(recordPath)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", err
+	}
+	absoluteRecordPath, err := filepath.Abs(recordPath)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", fmt.Errorf("resolve external Windows app import record path: %w", err)
+	}
+	recordRelativePath := filepath.Clean(filepath.FromSlash(record.RecordRelativePath))
+	if filepath.IsAbs(recordRelativePath) ||
+		strings.Contains(filepath.ToSlash(recordRelativePath), "../") ||
+		strings.HasPrefix(filepath.ToSlash(recordRelativePath), "..") {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app import record has an unsafe record path")
+	}
+	stateRoot := filepath.Dir(absoluteRecordPath)
+	recordRelativeDir := filepath.Dir(recordRelativePath)
+	if recordRelativeDir != "." {
+		for range strings.Split(filepath.ToSlash(recordRelativeDir), "/") {
+			stateRoot = filepath.Dir(stateRoot)
+		}
+	}
+	expectedRecordPath := filepath.Clean(filepath.Join(stateRoot, recordRelativePath))
+	if filepath.Clean(absoluteRecordPath) != expectedRecordPath {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app import record path does not match its state-root relative path")
+	}
+	artifactPath, err := safeStateRootPath(stateRoot, record.ArtifactRelativePath)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", err
+	}
+	content, err := os.ReadFile(artifactPath)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", fmt.Errorf("read imported external Windows app artifact: %w", err)
+	}
+	sum := sha256.Sum256(content)
+	if hex.EncodeToString(sum[:]) != record.ArtifactSHA256 {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app imported artifact digest mismatch")
+	}
+	if int64(len(content)) != record.ArtifactSizeBytes {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app imported artifact size mismatch")
+	}
+	if len(content) < 2 || content[0] != 'M' || content[1] != 'Z' {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app imported artifact is not an MZ executable")
+	}
+	return record, artifactPath, nil
 }
 
 func ExternalAppRecipeFromImportRecord(record ExternalWinAppImportRecord) (Recipe, Provenance, error) {

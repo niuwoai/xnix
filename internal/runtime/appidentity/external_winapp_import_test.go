@@ -70,12 +70,27 @@ func TestRecordExternalWinAppImportCopiesExecutableIntoStateRoot(t *testing.T) {
 	if string(artifactBytes) != string(executable) {
 		t.Fatalf("artifact bytes mismatch: %q != %q", string(artifactBytes), string(executable))
 	}
+	artifactInfo, err := os.Stat(filepath.Join(stateRoot, filepath.FromSlash(record.ArtifactRelativePath)))
+	if err != nil {
+		t.Fatalf("Stat artifact returned error: %v", err)
+	}
+	if artifactInfo.Mode().Perm() != 0o644 {
+		t.Fatalf("imported artifact must be container-readable, got mode %o", artifactInfo.Mode().Perm())
+	}
 	loaded, err := LoadExternalWinAppImportRecord(filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath)))
 	if err != nil {
 		t.Fatalf("LoadExternalWinAppImportRecord returned error: %v", err)
 	}
 	if loaded.RecordSHA256 != record.RecordSHA256 || loaded.ArtifactSHA256 != record.ArtifactSHA256 {
 		t.Fatalf("loaded record mismatch: %#v != %#v", loaded, record)
+	}
+	resolvedRecord, resolvedArtifactPath, err := ResolveExternalWinAppImportedArtifact(filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath)))
+	if err != nil {
+		t.Fatalf("ResolveExternalWinAppImportedArtifact returned error: %v", err)
+	}
+	if resolvedRecord.RecordSHA256 != record.RecordSHA256 ||
+		resolvedArtifactPath != filepath.Join(stateRoot, filepath.FromSlash(record.ArtifactRelativePath)) {
+		t.Fatalf("unexpected resolved import artifact: record=%#v artifact=%s", resolvedRecord, resolvedArtifactPath)
 	}
 	recipe, provenance, err := ExternalAppRecipeFromImportRecord(loaded)
 	if err != nil {
@@ -105,6 +120,34 @@ func TestRecordExternalWinAppImportCopiesExecutableIntoStateRoot(t *testing.T) {
 		page.HostRootModified ||
 		page.BackendDetailsExposed {
 		t.Fatalf("unexpected KDE page from import record: %#v", page)
+	}
+}
+
+func TestResolveExternalWinAppImportedArtifactRejectsTamperedArtifact(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ExternalTool.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	record, err := RecordExternalWinAppImport(ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.tool",
+		DisplayName:    "External Tool",
+		AppVersion:     "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	artifactPath := filepath.Join(stateRoot, filepath.FromSlash(record.ArtifactRelativePath))
+	if err := os.WriteFile(artifactPath, []byte{'M', 'Z', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile tampered artifact returned error: %v", err)
+	}
+	if _, _, err := ResolveExternalWinAppImportedArtifact(filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath))); err == nil ||
+		!strings.Contains(err.Error(), "digest mismatch") {
+		t.Fatalf("expected imported artifact digest mismatch, got %v", err)
 	}
 }
 
