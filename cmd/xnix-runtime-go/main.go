@@ -2586,6 +2586,13 @@ func loadKnownAppSmokeEvidenceForCenter(commandName string, projectionJSON strin
 		}
 		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
 	}
+	if envelope.RequestType == appidentity.RealWinAppRunReceiptSummaryRequestType {
+		evidence, err := appidentity.KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(payload)
+		if err != nil {
+			return nil, err
+		}
+		return []appidentity.KnownAppSmokeEvidenceSummary{evidence}, nil
+	}
 	var projection appidentity.KnownAppKDERuntimeStatusLaunchDelegatedEvidence
 	if err := json.Unmarshal(payload, &projection); err != nil {
 		return nil, fmt.Errorf("parse Runtime-projected known app evidence: %w", err)

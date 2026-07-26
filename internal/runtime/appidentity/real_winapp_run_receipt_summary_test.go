@@ -82,6 +82,54 @@ func TestPreviewRealWinAppRunReceiptSummaryRejectsIncompleteEvidence(t *testing.
 	}
 }
 
+func TestKnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(t *testing.T) {
+	summary, err := PreviewRealWinAppRunReceiptSummaryJSON([]byte(realWinAppRunReceiptSummaryRemoteSmokeFixture(currentProjectVersion(t))))
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppRunReceiptSummaryJSON returned error: %v", err)
+	}
+	encoded, err := json.Marshal(summary)
+	if err != nil {
+		t.Fatalf("Marshal returned error: %v", err)
+	}
+
+	evidence, err := KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(encoded)
+	if err != nil {
+		t.Fatalf("KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary returned error: %v", err)
+	}
+	if evidence.AppID != "org.xnix.sample.notepad" ||
+		evidence.DisplayName != "Sample Notepad" ||
+		evidence.EvidenceKind != "known-application-gui-smoke" ||
+		evidence.EvidenceSource != GUISmokeEvidenceSourceWineGuest ||
+		evidence.SmokeStatus != "passed" ||
+		evidence.CompatibilityState != "owner-controlled-gui-qemu-wine-verified" ||
+		evidence.CenterCardState != "validated-owner-controlled-gui-runtime-run" ||
+		evidence.PrimaryActionID != "review-known-app-gui-evidence" ||
+		evidence.PrimaryActionKind != "review" ||
+		!evidence.XWindowObserved ||
+		!evidence.WindowObserved ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.StagedLauncherVerified ||
+		!evidence.RuntimeDispatchVerified ||
+		!evidence.OwnerControlledRuntimeLaunchVerified ||
+		!evidence.OwnerFileOpenVerified ||
+		!evidence.OwnerFileOpenEntrypointInvoked ||
+		evidence.OwnerDelegatedFileArgumentCount != 1 ||
+		evidence.OwnerDelegatedFileArgumentCopiedCount != 1 ||
+		!evidence.OwnerDelegatedFileArgumentsPassed ||
+		!evidence.OwnerDelegatedFileArgumentWinepathTranslated ||
+		evidence.OwnerDelegatedFileArgumentWinepathTranslatedCount != 1 ||
+		evidence.OwnerDelegatedRawFileArgumentPathExposed ||
+		evidence.OwnerDelegatedWindowMatch != "sample-document.txt" ||
+		!evidence.OwnerDelegatedWindowMatchObserved ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.HostRootModified ||
+		evidence.BackendDetailsExposed ||
+		evidence.RawArtifactPathExposed {
+		t.Fatalf("unexpected real run receipt known-app evidence: %#v", evidence)
+	}
+}
+
 func realWinAppRunReceiptSummaryRemoteSmokeFixture(version string) string {
 	return strings.ReplaceAll(`{
   "schema_version": "xnix.scripts.remote_wine_guest_gui_smoke.execute_result.v1",

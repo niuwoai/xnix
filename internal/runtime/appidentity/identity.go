@@ -3038,7 +3038,7 @@ func normalizeKnownAppSmokeEvidenceItem(item KnownAppSmokeEvidenceSummary) (Know
 				summary = displayName + " has redacted Runtime-owner controlled GUI window evidence after the managed launcher copied the Windows executable into the guest."
 			}
 			if ownerFileOpenVerified {
-				summary = displayName + " has redacted Runtime-owner controlled GUI file-open evidence with copied file arguments, Wine path translation, and matched window evidence."
+				summary = displayName + " has redacted Runtime-owner controlled GUI file-open evidence with copied file arguments, guest path translation, and matched window evidence."
 			}
 			if ownerEvidenceHandoffReady {
 				primaryActionID = KnownAppKDERuntimeStatusLaunchAction

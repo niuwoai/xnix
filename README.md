@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc173`.
+The project is currently at `v0.2.640-rc174`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc173`.
 
 ## Current Checkpoint
 
-v0.2.640-rc173 adds the Go Runtime `real-winapp-run-receipt-summary-preview` command. It consumes a passed q4 remote Wine guest GUI smoke execute-result and emits a compact receipt summary proving that a known Windows GUI app really ran, an X window was observed, owner-controlled file-open evidence was verified, Runtime/KDE evidence was consumed, and unsafe host/container gates stayed closed. The summary hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, giving future KDE and AI surfaces a safer "this app actually ran" signal.
+v0.2.640-rc174 lets Compatibility Center and KDE Center page previews consume the Go Runtime real Windows app run receipt summary through the existing `--known-app-evidence-file` path. A q4-generated `real-winapp-run-receipt-summary-preview` payload now normalizes into safe `known_app_smoke_evidence`, preserving observed-window, Runtime-owner file-open, file argument copy, guest path translation, and desktop entrypoint evidence without exposing q4 paths, report locations, raw launcher output, executable names, or backend command details. This turns the real Sample Notepad file-open run from a standalone receipt into a desktop-visible compatibility card.
+
+The previous v0.2.640-rc173 checkpoint added the Go Runtime `real-winapp-run-receipt-summary-preview` command. It consumes a passed q4 remote Wine guest GUI smoke execute-result and emits a compact receipt summary proving that a known Windows GUI app really ran, an X window was observed, owner-controlled file-open evidence was verified, Runtime/KDE evidence was consumed, and unsafe host/container gates stayed closed. The summary hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, giving future KDE and AI surfaces a safer "this app actually ran" signal.
 
 The previous v0.2.640-rc172 checkpoint added `scripts/remote_go_test.rb`, an execute-gated q4 targeted Go test runner for small-version validation. The script defaults to q4, syncs only constrained Runtime sources unless explicitly told to do a full sync, excludes `docs/claude-code-implementation-packages.md`, keeps Go build/module/temp caches under `/home/xnix-build-cache`, and reports `host_compilation_avoided=true` so routine Go validation does not compile or test on the macOS host. This gives the project a repeatable path for focused Go checks while real Windows app compatibility work continues through the q4 Runtime binaries and GUI smokes.
 

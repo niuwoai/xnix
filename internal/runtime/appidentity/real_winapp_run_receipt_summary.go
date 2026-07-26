@@ -189,6 +189,71 @@ func PreviewRealWinAppRunReceiptSummaryJSON(content []byte) (RealWinAppRunReceip
 	return summary, nil
 }
 
+func KnownAppSmokeEvidenceFromRealWinAppRunReceiptSummary(payload []byte) (KnownAppSmokeEvidenceSummary, error) {
+	var summary RealWinAppRunReceiptSummary
+	if err := json.Unmarshal(payload, &summary); err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("parse real Windows app run receipt summary: %w", err)
+	}
+	switch {
+	case summary.SchemaVersion != RealWinAppRunReceiptSummarySchemaVersion:
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("real Windows app run receipt summary has unsupported schema %q", summary.SchemaVersion)
+	case summary.RequestType != RealWinAppRunReceiptSummaryRequestType:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary has invalid request type")
+	case summary.ReceiptType != "real-windows-app-run-receipt-summary":
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary has invalid receipt type")
+	case !summary.ReportConsumed || summary.ReportPathExposed || summary.RemoteHostExposed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary must consume the report without exposing report location details")
+	case !summary.ReceiptReady || !summary.RunPassed || !summary.RealExecutionObserved || !summary.WindowObserved:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires a ready passed observed GUI run")
+	case !summary.FileOpenVerified || !summary.FileArgumentsPassed || !summary.FileArgumentWinePathTranslated:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires verified file-open handoff evidence")
+	case summary.FileArgumentCount <= 0 || summary.FileArgumentCopiedCount < summary.FileArgumentCount || summary.FileArgumentWinePathTranslatedCount < summary.FileArgumentCount:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires copied and translated file arguments")
+	case summary.RawFileArgumentPathExposed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary must not expose raw file argument paths")
+	case !summary.OwnerControlledLaunchVerified || !summary.OwnerManagedLauncherInvoked || !summary.OwnerFileOpenEntrypointInvoked || !summary.OwnerDelegatedSmokePassed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires Runtime-owner file-open launch evidence")
+	case !summary.RuntimeEvidenceConsumed || !summary.RuntimeEvidenceOwnerFileOpenVerified || !summary.RuntimeEvidenceOwnerFileOpenEntrypointInvoked:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires consumed Runtime evidence")
+	case !summary.KDEPageEvidenceConsumed || !summary.KDEActionEvidenceConsumed || !summary.KDEActionOwnerFileOpenVerified || !summary.KDEActionOwnerFileOpenEntrypointInvoked:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires consumed KDE page and action evidence")
+	case summary.HostRootModified || summary.PrivilegedContainerRequired || summary.HostNetworkingRequired || summary.DockerSocketMounted || summary.BroadHostMountRequired:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires closed host and container safety gates")
+	case summary.BackendDetailsExposed || summary.RawLauncherOutputExposed:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary must not expose backend or launcher details")
+	case strings.TrimSpace(summary.WindowMatch) == "" || !singleLine(summary.WindowMatch) || !summary.WindowMatchObserved:
+		return KnownAppSmokeEvidenceSummary{}, errors.New("real Windows app run receipt summary requires safe observed window-match evidence")
+	}
+
+	evidence, err := normalizeKnownAppSmokeEvidenceItem(KnownAppSmokeEvidenceSummary{
+		AppID:                                        summary.AppID,
+		DisplayName:                                  summary.DisplayName,
+		AppVersion:                                   summary.AppVersion,
+		EvidenceSource:                               GUISmokeEvidenceSourceWineGuest,
+		SmokeStatus:                                  "passed",
+		XWindowObserved:                              true,
+		WindowObserved:                               true,
+		ExecutionEvidenceRecorded:                    true,
+		StagedLauncherVerified:                       true,
+		OwnerControlledRuntimeLaunchVerified:         true,
+		OwnerFileOpenVerified:                        true,
+		OwnerFileOpenEntrypointInvoked:               true,
+		OwnerDelegatedFileArgumentCount:              summary.FileArgumentCount,
+		OwnerDelegatedFileArgumentCopiedCount:        summary.FileArgumentCopiedCount,
+		OwnerDelegatedFileArgumentsPassed:            true,
+		OwnerDelegatedFileArgumentWinepathTranslated: true,
+		OwnerDelegatedFileArgumentWinepathTranslatedCount: summary.FileArgumentWinePathTranslatedCount,
+		OwnerDelegatedRawFileArgumentPathExposed:          false,
+		OwnerDelegatedWindowMatch:                         summary.WindowMatch,
+		OwnerDelegatedWindowMatchObserved:                 true,
+		RuntimeDispatchVerified:                           true,
+	})
+	if err != nil {
+		return KnownAppSmokeEvidenceSummary{}, fmt.Errorf("consume real Windows app run receipt summary: %w", err)
+	}
+	return evidence, nil
+}
+
 func remoteString(payload map[string]any, key string) string {
 	value, _ := payload[key].(string)
 	return strings.TrimSpace(value)

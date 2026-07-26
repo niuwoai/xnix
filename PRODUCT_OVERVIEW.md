@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc173
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc174
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc174 checkpoint wires the q4 real Windows app run receipt summary into the desktop consumption path. `compatibility-center-preview --known-app-evidence-file SUMMARY.json` and `kde-center-page-preview --known-app-evidence-file SUMMARY.json` now accept the Go Runtime `real-winapp-run-receipt-summary-preview` output, validate its ready passed run, and normalize it into safe `known_app_smoke_evidence`. Compatibility Center and KDE Center pages can therefore show Sample Notepad as a real Runtime-owner controlled GUI file-open run with observed-window evidence, copied file arguments, guest path translation, and desktop file-open entrypoint evidence while keeping q4 hosts, report paths, raw launcher output, executable names, backend command details, direct launch, backend launch, and host-root mutation closed.
 
 The v0.2.640-rc173 checkpoint turns q4 real GUI smoke output into a compact Go-owned run receipt summary. `xnix-runtime-go real-winapp-run-receipt-summary-preview --remote-smoke-report REPORT.json` consumes the passed remote execute-result from the owner-controlled Sample Notepad file-open lane and emits a safe receipt stating that the app really ran, a window was observed, owner-controlled file-open evidence was verified, Runtime evidence was consumed, KDE page/action evidence was consumed, and unsafe host/container gates remained closed. The summary deliberately hides report paths, q4 connection details, raw launcher output, raw window titles, executable names, and backend command details, making it a cleaner substrate for future Compatibility Center and AI decisions than asking product surfaces to inspect the full smoke JSON.
 

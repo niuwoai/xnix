@@ -583,10 +583,10 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI launch after the managed launcher copied the Windows executable into the guest."
 	}
 	if ownerFileOpenVerified {
-		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with copied file arguments, Wine path translation, and matched window evidence."
+		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch with copied file arguments, guest path translation, and matched window evidence."
 	}
 	if ownerFileOpenEntrypointInvoked {
-		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch through the desktop file-open entrypoint with copied file arguments, Wine path translation, and matched window evidence."
+		summary = displayName + " passed a Runtime-owner controlled QEMU/Wine GUI file-open launch through the desktop file-open entrypoint with copied file arguments, guest path translation, and matched window evidence."
 	}
 	if ownerEvidenceHandoffReady {
 		primaryActionID = KnownAppKDERuntimeStatusLaunchAction

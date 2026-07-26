@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc174] - 2026-07-26
+
+### Added
+
+- Added Go Runtime conversion from `real-winapp-run-receipt-summary-preview` output into safe `known_app_smoke_evidence` for Compatibility Center and KDE Center consumers.
+- Added CLI coverage proving a q4 real run receipt summary can feed both `compatibility-center-preview --known-app-evidence-file` and `kde-center-page-preview --known-app-evidence-file` without exposing q4 paths, report paths, raw launcher output, executable names, or backend command details.
+
+### Changed
+
+- Extended the q4 targeted Go test runner default regex to cover the real run receipt summary desktop-consumption tests.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc174`.
+
 ## [0.2.640-rc173] - 2026-07-26
 
 ### Added
