@@ -167,6 +167,55 @@ func TestPreviewRealWinAppGUIEvidencePacketConsumesRawContainerRuntimePayload(t 
 	}
 }
 
+func TestPreviewRealWinAppGUIEvidencePacketConsumesRawExternalExecutableRuntimePayload(t *testing.T) {
+	packet, err := PreviewRealWinAppGUIEvidencePacketJSON([]byte(rawExternalExecutableContainerXGUIRuntimePayloadFixture()), RealWinAppGUIEvidencePacketRequest{})
+	if err != nil {
+		t.Fatalf("PreviewRealWinAppGUIEvidencePacketJSON returned error: %v", err)
+	}
+	if packet.SchemaVersion != RealWinAppGUIEvidencePacketSchemaVersion ||
+		packet.RequestType != RealWinAppGUIEvidencePacketRequestType ||
+		packet.Version != "0.2.640-test" ||
+		packet.AppID != "org.xnix.external.notepad-file" ||
+		packet.DisplayName != "External Notepad File" ||
+		packet.AppVersion != "0.2.640-test" ||
+		packet.GUIAppName != "/notepad.exe" ||
+		packet.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		packet.RecipeBacked ||
+		packet.RecipeAppID != "" ||
+		packet.ExecutableName != "notepad.exe" ||
+		!packet.LocalExecutableCopied ||
+		packet.KnownAppGUIEvidenceVerifiedCount != 1 ||
+		!packet.ContainerRuntimeUsed ||
+		packet.ContainerNetworkMode != "none" ||
+		packet.ContainerHostMountCount != 0 ||
+		!packet.XWindowObserved ||
+		packet.XWindowChildCount != 1 ||
+		packet.DesktopLaunchEnabled ||
+		packet.BackendLaunchEnabled ||
+		packet.BackendDetailsExposed ||
+		packet.HostRootModified ||
+		packet.DockerSocketMounted {
+		t.Fatalf("unexpected external executable real GUI packet: %#v", packet)
+	}
+	evidence := packet.KnownAppSmokeEvidence
+	if evidence.AppID != "org.xnix.external.notepad-file" ||
+		evidence.DisplayName != "External Notepad File" ||
+		evidence.AppVersion != "0.2.640-test" ||
+		evidence.RecipeBacked ||
+		evidence.RecipeAppID != "" ||
+		evidence.EvidenceSource != GUISmokeEvidenceSourceContainerXGUI ||
+		evidence.CompatibilityState != "real-gui-container-wine-verified" ||
+		evidence.CenterCardState != "validated-real-gui-container-run" ||
+		!evidence.ExecutionEvidenceRecorded ||
+		!evidence.RuntimeDispatchVerified ||
+		evidence.DesktopLaunchEnabled ||
+		evidence.BackendLaunchEnabled ||
+		evidence.BackendDetailsExposed ||
+		evidence.HostRootModified {
+		t.Fatalf("unexpected external executable packet evidence: %#v", evidence)
+	}
+}
+
 func rawContainerXGUIRuntimePayloadFixture() string {
 	return `{
   "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
@@ -208,6 +257,36 @@ func rawContainerXGUIRuntimePayloadFixture() string {
   "controlled_session_container_process_start": true,
   "raw_command_exposed": false,
   "backend_details_exposed": false,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false,
+  "host_mount_count": 0
+}`
+}
+
+func rawExternalExecutableContainerXGUIRuntimePayloadFixture() string {
+	return `{
+  "schema_version": "xnix.runtime.windows_app_container_x_gui_smoke.v1",
+  "request_type": "windows-app-container-x-gui-smoke",
+  "status": "passed",
+  "application_id": "org.xnix.external.notepad-file",
+  "display_name": "External Notepad File",
+  "app_version": "0.2.640-test",
+  "recipe_backed": false,
+  "executable_name": "notepad.exe",
+  "local_executable_copied": true,
+  "application_name": "/notepad.exe",
+  "window_match": "notepad.exe",
+  "container_image": "xnix-wine-smoke:local",
+  "container_platform": "linux/arm64",
+  "network_mode": "none",
+  "x_server_started": true,
+  "wine_bootstrap_attempted": true,
+  "image_available": true,
+  "x_window_observed": true,
+  "window_evidence_summary": "0xa00001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23",
   "host_root_modified": false,
   "privileged_container_required": false,
   "host_networking_required": false,

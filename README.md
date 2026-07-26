@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc127`.
+The project is currently at `v0.2.640-rc128`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc127`.
 
 ## Current Checkpoint
 
-v0.2.640-rc127 lets the Go Runtime container X GUI smoke run an owner-supplied external Windows GUI `.exe` through `--executable`. The runner creates an isolated Wine/Xvfb container, copies only that executable file into it before start, records `local_executable_copied=true`, and keeps host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, backend launch enablement, raw host-path exposure, and host-root mutation closed. Local evidence passed with an external file-form Notepad PE copied into the container and observed through Xvfb.
+v0.2.640-rc128 lets the Go Runtime persist an external executable container X GUI smoke through `windows-app-container-x-gui-smoke --output FILE`, then consume that raw payload directly through `real-winapp-gui-evidence-packet-preview`. Non-recipe external `.exe` evidence now carries the raw payload app identity, executable name, copied-artifact signal, network-isolated container state, zero host mounts, and observed X window into the Runtime packet and KDE GUI evidence card without exposing local report paths, backend commands, host mounts, Docker socket mounts, host networking, or host-root mutation.
+
+The previous v0.2.640-rc127 checkpoint let the Go Runtime container X GUI smoke run an owner-supplied external Windows GUI `.exe` through `--executable`. The runner creates an isolated Wine/Xvfb container, copies only that executable file into it before start, records `local_executable_copied=true`, and keeps host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, backend launch enablement, raw host-path exposure, and host-root mutation closed. Local evidence passed with an external file-form Notepad PE copied into the container and observed through Xvfb.
 
 The previous v0.2.640-rc126 checkpoint let the Go Runtime container X GUI smoke carry ad-hoc application identity through `--app-id`, `--display-name`, and `--app-version` when no recipe is being used. This gives the next real external Windows GUI app lane a Go-owned evidence identity without weakening recipe-backed digest validation or opening backend launch, host mounts, Docker socket mounts, host networking, or host-root mutation.
 

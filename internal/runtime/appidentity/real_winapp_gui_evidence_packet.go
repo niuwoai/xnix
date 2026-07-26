@@ -51,6 +51,8 @@ type RealWinAppGUIEvidencePacket struct {
 	ContainerRuntimeUsed               bool                         `json:"container_runtime_used"`
 	ContainerNetworkMode               string                       `json:"container_network_mode,omitempty"`
 	ContainerHostMountCount            int                          `json:"container_host_mount_count"`
+	ExecutableName                     string                       `json:"executable_name,omitempty"`
+	LocalExecutableCopied              bool                         `json:"local_executable_copied"`
 	RuntimeOwned                       bool                         `json:"runtime_owned"`
 	GoRuntimeBacked                    bool                         `json:"go_runtime_backed"`
 	KDEPolicyOwner                     bool                         `json:"kde_policy_owner"`
@@ -75,6 +77,8 @@ type containerXGUIRuntimePayload struct {
 	DisplayName                              string `json:"display_name"`
 	AppVersion                               string `json:"app_version"`
 	RecipeBacked                             bool   `json:"recipe_backed"`
+	ExecutableName                           string `json:"executable_name"`
+	LocalExecutableCopied                    bool   `json:"local_executable_copied"`
 	ApplicationName                          string `json:"application_name"`
 	WindowMatch                              string `json:"window_match"`
 	ContainerImage                           string `json:"container_image"`
@@ -148,11 +152,23 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 			return RealWinAppGUIEvidencePacket{}, fmt.Errorf("encode wrapped container X GUI Runtime payload: %w", err)
 		}
 	}
-	projection, err := PreviewGUISmokeEvidenceJSON(projectionContent, GUISmokeEvidencePreviewRequest{
+	projectionRequest := GUISmokeEvidencePreviewRequest{
 		AppID:       request.AppID,
 		DisplayName: request.DisplayName,
 		AppVersion:  request.AppVersion,
-	})
+	}
+	if rawRuntimePayload {
+		if strings.TrimSpace(projectionRequest.AppID) == "" {
+			projectionRequest.AppID = runtimePayload.ApplicationID
+		}
+		if strings.TrimSpace(projectionRequest.DisplayName) == "" {
+			projectionRequest.DisplayName = runtimePayload.DisplayName
+		}
+		if strings.TrimSpace(projectionRequest.AppVersion) == "" {
+			projectionRequest.AppVersion = runtimePayload.AppVersion
+		}
+	}
+	projection, err := PreviewGUISmokeEvidenceJSON(projectionContent, projectionRequest)
 	if err != nil {
 		return RealWinAppGUIEvidencePacket{}, err
 	}
@@ -185,9 +201,13 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 	containerRuntimeUsed := evidence.EvidenceSource == GUISmokeEvidenceSourceContainerXGUI
 	containerNetworkMode := ""
 	containerHostMountCount := 0
+	executableName := ""
+	localExecutableCopied := false
 	if containerRuntimeUsed {
 		containerNetworkMode = report.ContainerPayload.NetworkMode
 		containerHostMountCount = report.ContainerPayload.HostMountCount
+		executableName = runtimePayload.ExecutableName
+		localExecutableCopied = runtimePayload.LocalExecutableCopied
 	}
 
 	return RealWinAppGUIEvidencePacket{
@@ -221,6 +241,8 @@ func PreviewRealWinAppGUIEvidencePacketJSON(content []byte, request RealWinAppGU
 		ContainerRuntimeUsed:               containerRuntimeUsed,
 		ContainerNetworkMode:               containerNetworkMode,
 		ContainerHostMountCount:            containerHostMountCount,
+		ExecutableName:                     executableName,
+		LocalExecutableCopied:              localExecutableCopied,
 		RuntimeOwned:                       projection.RuntimeOwned,
 		GoRuntimeBacked:                    projection.GoRuntimeBacked,
 		KDEPolicyOwner:                     projection.KDEPolicyOwner,

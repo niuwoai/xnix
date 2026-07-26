@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc128] - 2026-07-26
+
+### Added
+
+- Added `windows-app-container-x-gui-smoke --output FILE` so raw external executable GUI smoke payloads can be persisted without shell redirection.
+- Added Runtime and CLI coverage for consuming raw non-recipe external executable container X GUI payloads directly into real Windows app GUI evidence packets and KDE GUI evidence cards.
+
+### Changed
+
+- Changed non-recipe container GUI evidence projection to leave `recipe_app_id` empty while preserving the raw payload app identity, executable name, copied-artifact signal, network-isolated container state, zero host mounts, and observed X window.
+
 ## [0.2.640-rc127] - 2026-07-26
 
 ### Added

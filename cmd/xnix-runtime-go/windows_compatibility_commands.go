@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -385,6 +386,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	var platform string
 	var dockerPath string
 	var timeoutText string
+	var outputPath string
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
 	flags.StringVar(&executablePath, "executable", "", "optional local Windows GUI .exe to copy into the isolated container")
@@ -397,6 +399,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	flags.StringVar(&platform, "platform", "", "container platform, or empty to use the local image platform")
 	flags.StringVar(&dockerPath, "docker", "", "explicit docker runner path")
 	flags.StringVar(&timeoutText, "timeout", "90s", "execution timeout")
+	flags.StringVar(&outputPath, "output", "", "optional JSON output path")
 
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -462,9 +465,26 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	encoder := json.NewEncoder(stdout)
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
+	if err := encoder.Encode(result); err != nil {
+		return err
+	}
+	if _, err := stdout.Write(buffer.Bytes()); err != nil {
+		return err
+	}
+	if strings.TrimSpace(outputPath) == "" {
+		return nil
+	}
+	cleanOutput := filepath.Clean(outputPath)
+	if err := os.MkdirAll(filepath.Dir(cleanOutput), 0o700); err != nil {
+		return fmt.Errorf("prepare container X GUI smoke output directory: %w", err)
+	}
+	if err := os.WriteFile(cleanOutput, buffer.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("write container X GUI smoke output: %w", err)
+	}
+	return nil
 }
 
 func runWindowsAppGuestWineSmoke(args []string, stdout io.Writer) error {

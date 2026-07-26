@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc127
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc128
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc128 checkpoint candidate makes external executable GUI proof consumable by the desktop evidence chain. `windows-app-container-x-gui-smoke --output FILE` persists the raw Go Runtime payload for an owner-supplied `.exe`, and `real-winapp-gui-evidence-packet-preview` now consumes that payload without requiring repeated CLI identity arguments. The packet and KDE GUI evidence card preserve the non-recipe app identity, executable name, `local_executable_copied=true`, network-isolated container state, zero host mounts, and observed X window while keeping local report paths, backend commands, host mounts, Docker socket mounts, host networking, backend launch enablement, and host-root mutation closed.
 
 The v0.2.640-rc127 checkpoint candidate runs an owner-supplied external Windows GUI executable through the Go Runtime local Wine/Xvfb container path. `windows-app-container-x-gui-smoke --executable FILE.exe` validates a local Windows executable, creates an isolated container, copies only that file into the container before start, launches it with Wine, and records the executable name, ad-hoc app identity, copied-artifact evidence, and window observation in the Runtime payload. Local restricted evidence passed with an external file-form Notepad PE copied into the container and observed through Xvfb. This moves the local lane beyond direct Wine built-in invocation while keeping host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, backend launch enablement, raw host-path exposure, and host-root mutation closed.
 

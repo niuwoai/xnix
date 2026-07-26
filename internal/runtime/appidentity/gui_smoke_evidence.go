@@ -191,8 +191,9 @@ func PreviewGUISmokeEvidenceJSON(content []byte, request GUISmokeEvidencePreview
 		appVersion = "local-fixture"
 	}
 	recipeBacked := guiSmokeRecipeBacked(report)
-	recipeAppID := guiSmokeRecipeAppID(report)
+	recipeAppID := ""
 	if recipeBacked {
+		recipeAppID = guiSmokeRecipeAppID(report)
 		if !idPattern.MatchString(recipeAppID) {
 			return GUISmokeEvidencePreview{}, errors.New("recipe-backed GUI smoke evidence requires a reverse-DNS recipe app id")
 		}
@@ -452,6 +453,11 @@ func guiSmokeOwnerControlledEvidencePresent(report guiSmokeReport) bool {
 
 func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion string, evidenceSource string, report guiSmokeReport, projectionReady bool, ownerControlledLaunchVerified bool, ownerManagedCopyVerified bool, ownerEvidenceHandoffReady bool) KnownAppSmokeEvidenceSummary {
 	status := report.Status
+	recipeBacked := guiSmokeRecipeBacked(report)
+	recipeAppID := ""
+	if recipeBacked {
+		recipeAppID = guiSmokeRecipeAppID(report)
+	}
 	compatibilityState := "gui-smoke-review-required"
 	centerCardState := "gui-smoke-evidence-review-required"
 	primaryActionID := "review-known-app-gui-evidence"
@@ -491,8 +497,8 @@ func guiSmokeKnownAppEvidence(appID string, displayName string, appVersion strin
 		AppVersion:                           appVersion,
 		EvidenceKind:                         "known-application-gui-smoke",
 		EvidenceSource:                       evidenceSource,
-		RecipeBacked:                         guiSmokeRecipeBacked(report),
-		RecipeAppID:                          guiSmokeRecipeAppID(report),
+		RecipeBacked:                         recipeBacked,
+		RecipeAppID:                          recipeAppID,
 		SmokeStatus:                          status,
 		CompatibilityState:                   compatibilityState,
 		CenterCardState:                      centerCardState,

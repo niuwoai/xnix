@@ -1331,6 +1331,7 @@ func TestWindowsAppContainerXGUISmokeCommandMountsExternalExecutable(t *testing.
 
 	tempDir := t.TempDir()
 	executablePath := filepath.Join(tempDir, "xnix-messagebox-smoke.exe")
+	outputPath := filepath.Join(tempDir, "external-gui-smoke.json")
 	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
 		t.Fatalf("WriteFile executable returned error: %v", err)
 	}
@@ -1364,6 +1365,7 @@ func TestWindowsAppContainerXGUISmokeCommandMountsExternalExecutable(t *testing.
 		"--platform", "linux/amd64",
 		"--docker", dockerPath,
 		"--timeout", "5s",
+		"--output", outputPath,
 	}, &output)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -1372,6 +1374,13 @@ func TestWindowsAppContainerXGUISmokeCommandMountsExternalExecutable(t *testing.
 	var payload map[string]any
 	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	written, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile output returned error: %v", err)
+	}
+	if string(written) != output.String() {
+		t.Fatalf("written external executable smoke must match stdout\nstdout=%s\nwritten=%s", output.String(), string(written))
 	}
 	if payload["status"] != "passed" ||
 		payload["application_id"] != "org.xnix.apps.messagebox" ||
