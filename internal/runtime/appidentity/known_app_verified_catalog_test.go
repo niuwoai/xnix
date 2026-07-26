@@ -2,6 +2,8 @@ package appidentity
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -288,6 +290,104 @@ func TestPreviewKnownAppVerifiedCatalogRunPlanRejectsUnknownApp(t *testing.T) {
 	_, err = PreviewKnownAppVerifiedCatalogRunPlanJSON(content, "missing-app")
 	if err == nil || !strings.Contains(err.Error(), "missing-app") {
 		t.Fatalf("expected unknown app error, got %v", err)
+	}
+}
+
+func TestRunKnownAppVerifiedCatalogRunPlanExecutionConsumesGUIRunReport(t *testing.T) {
+	catalog, err := PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON(knownAppVerifiedCatalogMatrixEvidenceFixture(t), []byte(knownAppVerifiedCatalogGUIEvidencePacketFixture()))
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogWithGUIEvidenceJSON returned error: %v", err)
+	}
+	catalogContent, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal catalog returned error: %v", err)
+	}
+	runPlan, err := PreviewKnownAppVerifiedCatalogRunPlanJSON(catalogContent, "org.xnix.apps.messagebox")
+	if err != nil {
+		t.Fatalf("PreviewKnownAppVerifiedCatalogRunPlanJSON returned error: %v", err)
+	}
+	runPlanPath := filepath.Join(t.TempDir(), "known-app-verified-catalog-run-plan.json")
+	runPlanContent, err := json.Marshal(runPlan)
+	if err != nil {
+		t.Fatalf("Marshal run plan returned error: %v", err)
+	}
+	if err := os.WriteFile(runPlanPath, runPlanContent, 0o600); err != nil {
+		t.Fatalf("WriteFile run plan returned error: %v", err)
+	}
+	reportPath := filepath.Join(t.TempDir(), "q4-messagebox-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(knownAppVerifiedCatalogMessageBoxRunReportFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile q4 MessageBox report returned error: %v", err)
+	}
+
+	result, err := RunKnownAppVerifiedCatalogRunPlanExecution(KnownAppVerifiedCatalogRunPlanExecutionRequest{
+		RunPlanPath:     runPlanPath,
+		SmokeReportPath: reportPath,
+	})
+	if err != nil {
+		t.Fatalf("RunKnownAppVerifiedCatalogRunPlanExecution returned error: %v", err)
+	}
+	if result.SchemaVersion != KnownAppVerifiedCatalogRunPlanExecutionSchemaVersion ||
+		result.RequestType != KnownAppVerifiedCatalogRunPlanExecutionRequestType ||
+		result.Source != "known-app-verified-catalog-run-plan+runtime-owned-smoke-execution" ||
+		result.RuntimeMethod != "RunKnownVerifiedApplicationRunPlanExecution" ||
+		result.ReadMethod != "ReadKnownVerifiedApplicationRunPlan" ||
+		result.ExecutionMethod != "InvokeKnownVerifiedApplicationSmokeHarness" ||
+		result.AppID != "org.xnix.apps.messagebox" ||
+		!result.RunPlanConsumed ||
+		!result.RuntimeOwnedActionReady ||
+		result.DesktopCallableActionID != "review-known-app-gui-evidence" ||
+		result.DesktopCallableRoute != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		result.DesktopCallableExecutionType != "review-only-q4-gui-smoke" ||
+		result.DesktopForwardedArgumentCount != 1 ||
+		!result.DesktopForwardsOnlyAppID ||
+		result.DesktopReceiptFieldsReconstructed ||
+		result.DesktopKDEStateRootAccess ||
+		result.DesktopOwnerInputsExposed {
+		t.Fatalf("unexpected run-plan execution schema: %#v", result)
+	}
+	if !result.GUIEvidenceRequired ||
+		!result.GUIEvidenceConsumed ||
+		!result.WindowObservationRequired ||
+		!result.WindowObserved ||
+		!result.WindowMatchObserved ||
+		!result.OwnerFileOpenRequired ||
+		!result.OwnerFileOpenVerified ||
+		!result.OwnerFileOpenEntrypointInvoked ||
+		!result.DocumentContentMarkerObserved ||
+		!result.SmokeReportConsumed ||
+		result.SmokeRequestType != "q4-messagebox-smoke" ||
+		result.SmokeStatus != "passed" ||
+		!result.SmokePassed ||
+		!result.ActualWindowsAppRunObserved ||
+		!result.GoOwnedQ4WinAppAcceptanceReady ||
+		!result.GoOwnedQ4WinAppAcceptanceConsumed ||
+		result.GoOwnedQ4WinAppAcceptancePathExposed {
+		t.Fatalf("unexpected run-plan execution evidence: %#v", result)
+	}
+	if result.ExecutionRequested ||
+		result.ExecutionStarted ||
+		result.ExecutionCompleted ||
+		result.HostCompilationRequired ||
+		!result.HostCompilationAvoided ||
+		!result.TargetedRemoteVerificationReady ||
+		!result.RuntimeOwned ||
+		!result.GoRuntimeBacked ||
+		result.KDEPolicyOwner ||
+		!result.ReviewOnly ||
+		result.DirectLaunchEnabled ||
+		result.LaunchEnabled ||
+		result.DesktopFilesWritten ||
+		result.HostRootModified ||
+		result.BackendLaunchEnabled ||
+		result.BackendDetailsExposed ||
+		result.RawOutputExposed ||
+		result.RemotePathExposed ||
+		result.SmokeCommandArgumentsExposed ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired {
+		t.Fatalf("unexpected run-plan execution safety flags: %#v", result)
 	}
 }
 
@@ -631,4 +731,33 @@ func knownAppVerifiedCatalogMatrixEvidenceApp(appID string, displayName string, 
 		RemotePathExposed:     false,
 		HostRootModified:      false,
 	}
+}
+
+func knownAppVerifiedCatalogMessageBoxRunReportFixture() string {
+	return `{
+  "schema_version": "xnix.scripts.q4_messagebox_smoke.v1",
+  "request_type": "q4-messagebox-smoke",
+  "version": "0.2.640-test",
+  "status": "passed",
+  "execute": true,
+  "app_id": "org.xnix.apps.messagebox",
+  "display_name": "Xnix MessageBox",
+  "window_observed": true,
+  "window_match_observed": true,
+  "document_content_marker_observed": true,
+  "owner_file_open_entrypoint_invoked": true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked": true,
+  "real_run_acceptance_ready": true,
+  "real_run_acceptance_center_projection_consumed": true,
+  "go_owned_q4_winapp_acceptance_ready": true,
+  "go_owned_q4_winapp_acceptance_consumed": true,
+  "go_owned_q4_winapp_acceptance_path_exposed": false,
+  "q4_compile_required": true,
+  "host_compilation_avoided": true,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false
+}`
 }

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc208`.
+The project is currently at `v0.2.640-rc209`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc208`.
 
 ## Current Checkpoint
 
-v0.2.640-rc208 makes verified-catalog run plans desktop-callable without making KDE the executor. `xnix-runtime-go known-app-verified-catalog-run-plan-preview --verified-catalog CATALOG.json --app APP_ID` now returns a Runtime-owned action handoff: action id, owner route, Runtime method, execution type, and app-id-only forwarded arguments. GUI entries such as MessageBox also declare consumed GUI evidence, required window observation, and owner file-open verification. The preview still blocks direct launch, desktop-file writes, receipt reconstruction, Runtime state-root access, owner-input exposure, raw q4 paths, and host compilation.
+v0.2.640-rc209 adds a Go Runtime execution bridge for verified-catalog run plans. `xnix-runtime-go known-app-verified-catalog-run-plan-execution --run-plan RUN_PLAN.json --execute` validates the Runtime-owned app-id-only handoff and invokes the selected q4 smoke harness. For GUI entries such as MessageBox, the command consumes q4 smoke output into a desktop-safe result proving an actual Windows GUI app run, observed window evidence, owner file-open entrypoint invocation, document-content marker observation, and Go-owned q4 acceptance readiness. KDE still does not directly launch, write desktop files, inspect Runtime state roots, expose raw q4 paths, expose raw smoke output, or compile on the host.
+
+The previous v0.2.640-rc208 checkpoint makes verified-catalog run plans desktop-callable without making KDE the executor. `xnix-runtime-go known-app-verified-catalog-run-plan-preview --verified-catalog CATALOG.json --app APP_ID` returns a Runtime-owned action handoff: action id, owner route, Runtime method, execution type, and app-id-only forwarded arguments. GUI entries such as MessageBox also declare consumed GUI evidence, required window observation, and owner file-open verification. The preview still blocks direct launch, desktop-file writes, receipt reconstruction, Runtime state-root access, owner-input exposure, raw q4 paths, and host compilation.
 
 The previous v0.2.640-rc207 checkpoint projects verified-catalog GUI entries into the desktop read models. Compatibility Center now reports verified-catalog GUI application counts, ids, and cards; KDE Center page previews expose the same GUI catalog subset plus a `known-app-verified-catalog-gui` source marker. This means KDE and AI surfaces can tell which catalog entries are real GUI compatibility proof, not just console matrix entries, while still keeping direct launch, backend details, raw q4 paths, and raw window summaries closed.
 

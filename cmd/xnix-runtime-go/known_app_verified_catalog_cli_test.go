@@ -659,6 +659,102 @@ func TestKnownAppVerifiedCatalogRunPlanPreviewCommandSelectsGUIRunnableApp(t *te
 	}
 }
 
+func TestKnownAppVerifiedCatalogRunPlanExecutionCommandConsumesGUIRunReport(t *testing.T) {
+	tempDir := t.TempDir()
+	catalogPath := writeKnownAppVerifiedCatalogCLIFile(t, true)
+	var runPlanOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-run-plan-preview", "--verified-catalog", catalogPath, "--app", "org.xnix.apps.messagebox"}, &runPlanOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-preview returned error: %v", err)
+	}
+	runPlanPath := filepath.Join(tempDir, "known-app-verified-catalog-run-plan.json")
+	if err := os.WriteFile(runPlanPath, runPlanOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile run plan returned error: %v", err)
+	}
+	reportPath := filepath.Join(tempDir, "q4-messagebox-smoke.json")
+	if err := os.WriteFile(reportPath, []byte(knownAppVerifiedCatalogCLIMessageBoxRunReportFixture()), 0o600); err != nil {
+		t.Fatalf("WriteFile q4 MessageBox report returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"known-app-verified-catalog-run-plan-execution", "--run-plan", runPlanPath, "--smoke-report", reportPath}, &output)
+	if err != nil {
+		t.Fatalf("known-app-verified-catalog-run-plan-execution returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != "xnix.runtime.known_app_verified_catalog_run_plan_execution.v1" ||
+		payload["request_type"] != "known-app-verified-catalog-run-plan-execution" ||
+		payload["source"] != "known-app-verified-catalog-run-plan+runtime-owned-smoke-execution" ||
+		payload["runtime_method"] != "RunKnownVerifiedApplicationRunPlanExecution" ||
+		payload["read_method"] != "ReadKnownVerifiedApplicationRunPlan" ||
+		payload["execution_method"] != "InvokeKnownVerifiedApplicationSmokeHarness" ||
+		payload["app_id"] != "org.xnix.apps.messagebox" ||
+		payload["run_plan_consumed"] != true ||
+		payload["run_plan_request_type"] != "known-app-verified-catalog-run-plan-preview" {
+		t.Fatalf("unexpected run-plan execution payload: %#v", payload)
+	}
+	if payload["runtime_owned_action_ready"] != true ||
+		payload["desktop_callable_action_id"] != "review-known-app-gui-evidence" ||
+		payload["desktop_callable_route"] != "runtime-owner://known-app-verified-catalog/run-plan" ||
+		payload["desktop_callable_execution_type"] != "review-only-q4-gui-smoke" ||
+		payload["desktop_forwarded_argument_count"] != float64(1) ||
+		payload["desktop_forwards_only_app_id"] != true ||
+		payload["desktop_receipt_fields_reconstructed"] != false ||
+		payload["desktop_kde_state_root_access"] != false ||
+		payload["desktop_owner_inputs_exposed"] != false {
+		t.Fatalf("unexpected run-plan execution handoff fields: %#v", payload)
+	}
+	if payload["gui_evidence_required"] != true ||
+		payload["gui_evidence_consumed"] != true ||
+		payload["window_observation_required"] != true ||
+		payload["window_observed"] != true ||
+		payload["window_match_observed"] != true ||
+		payload["owner_file_open_required"] != true ||
+		payload["owner_file_open_verified"] != true ||
+		payload["owner_file_open_entrypoint_invoked"] != true ||
+		payload["document_content_marker_observed"] != true ||
+		payload["smoke_report_consumed"] != true ||
+		payload["smoke_request_type"] != "q4-messagebox-smoke" ||
+		payload["smoke_status"] != "passed" ||
+		payload["smoke_passed"] != true ||
+		payload["actual_windows_app_run_observed"] != true ||
+		payload["go_owned_q4_winapp_acceptance_ready"] != true ||
+		payload["go_owned_q4_winapp_acceptance_consumed"] != true ||
+		payload["go_owned_q4_winapp_acceptance_path_exposed"] != false {
+		t.Fatalf("unexpected run-plan execution evidence: %#v", payload)
+	}
+	if payload["execution_requested"] != false ||
+		payload["execution_started"] != false ||
+		payload["execution_completed"] != false ||
+		payload["host_compilation_required"] != false ||
+		payload["host_compilation_avoided"] != true ||
+		payload["targeted_remote_verification_ready"] != true ||
+		payload["runtime_owned"] != true ||
+		payload["go_runtime_backed"] != true ||
+		payload["kde_policy_owner"] != false ||
+		payload["review_only"] != true ||
+		payload["direct_launch_enabled"] != false ||
+		payload["launch_enabled"] != false ||
+		payload["desktop_files_written"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["backend_details_exposed"] != false ||
+		payload["raw_output_exposed"] != false ||
+		payload["remote_path_exposed"] != false ||
+		payload["smoke_command_arguments_exposed"] != false {
+		t.Fatalf("unexpected run-plan execution safety flags: %#v", payload)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), runPlanPath) ||
+		strings.Contains(output.String(), reportPath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("run-plan execution exposed local or q4 evidence paths: %s", output.String())
+	}
+}
+
 func TestKnownAppVerifiedCatalogRunPlanPreviewCommandRejectsUnknownApp(t *testing.T) {
 	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
 	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
@@ -1114,5 +1210,34 @@ func knownAppVerifiedCatalogCLIGUIEvidencePacketFixture() string {
   "docker_socket_mounted": false,
   "broad_host_mount_required": false,
   "desktop_safe_summary": "Xnix MessageBox produced owner-controlled GUI evidence."
+}`
+}
+
+func knownAppVerifiedCatalogCLIMessageBoxRunReportFixture() string {
+	return `{
+  "schema_version": "xnix.scripts.q4_messagebox_smoke.v1",
+  "request_type": "q4-messagebox-smoke",
+  "version": "0.2.640-test",
+  "status": "passed",
+  "execute": true,
+  "app_id": "org.xnix.apps.messagebox",
+  "display_name": "Xnix MessageBox",
+  "window_observed": true,
+  "window_match_observed": true,
+  "document_content_marker_observed": true,
+  "owner_file_open_entrypoint_invoked": true,
+  "runtime_evidence_owner_file_open_entrypoint_invoked": true,
+  "real_run_acceptance_ready": true,
+  "real_run_acceptance_center_projection_consumed": true,
+  "go_owned_q4_winapp_acceptance_ready": true,
+  "go_owned_q4_winapp_acceptance_consumed": true,
+  "go_owned_q4_winapp_acceptance_path_exposed": false,
+  "q4_compile_required": true,
+  "host_compilation_avoided": true,
+  "host_root_modified": false,
+  "privileged_container_required": false,
+  "host_networking_required": false,
+  "docker_socket_mounted": false,
+  "broad_host_mount_required": false
 }`
 }

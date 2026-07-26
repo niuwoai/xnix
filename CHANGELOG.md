@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc209] - 2026-07-27
+
+### Added
+
+- Added `known-app-verified-catalog-run-plan-execution`, a Go Runtime command that consumes a verified-catalog run plan and either dry-runs the owner execution path or invokes the selected q4 smoke harness with `--execute`.
+- Added Runtime-owned smoke report consumption for MessageBox GUI run plans so q4 smoke output can prove an actual Windows GUI app run, observed window evidence, owner file-open entrypoint invocation, document-content marker observation, and Go-owned q4 acceptance readiness.
+- Added internal and CLI coverage for consuming a q4 MessageBox smoke report through the new run-plan execution command without exposing local evidence paths, q4 material paths, raw output, or smoke command argument values.
+
+### Changed
+
+- Moved verified-catalog GUI execution one step beyond planning: KDE still forwards only the app id and does not execute directly, while the Go Runtime owner can now bridge the run plan to the real q4 GUI smoke harness.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc209`.
+
 ## [0.2.640-rc208] - 2026-07-27
 
 ### Added
