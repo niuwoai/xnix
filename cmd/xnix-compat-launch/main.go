@@ -51,6 +51,7 @@ func run(args []string, stdout io.Writer) error {
 	var hostDisplay string
 	var registryPath string
 	var externalAppImportRecord string
+	var externalAppHandle string
 	var containerImage string
 	var containerPlatform string
 	var containerDockerPath string
@@ -77,6 +78,7 @@ func run(args []string, stdout io.Writer) error {
 	flags.StringVar(&hostDisplay, "host-display", "", "host DISPLAY value for GUI window observation")
 	flags.StringVar(&registryPath, "registry", "", "digest-verified recipe registry path for recipe-backed container GUI dispatch")
 	flags.StringVar(&externalAppImportRecord, "external-app-import-record", "", "Runtime import record for an imported external Windows GUI app")
+	flags.StringVar(&externalAppHandle, "external-app-handle", "", "opaque external Windows GUI app handle; currently the imported reverse-DNS app id")
 	flags.StringVar(&containerImage, "image", winapp.DefaultContainerImage, "local Wine X GUI container image for recipe-backed container GUI dispatch")
 	flags.StringVar(&containerPlatform, "platform", "", "container platform for recipe-backed container GUI dispatch; empty uses the local image platform")
 	flags.StringVar(&containerDockerPath, "docker", "", "explicit docker runner path for recipe-backed container GUI dispatch")
@@ -92,20 +94,28 @@ func run(args []string, stdout io.Writer) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", launcherName)
 	}
-	if strings.TrimSpace(externalAppImportRecord) != "" {
+	if strings.TrimSpace(externalAppImportRecord) != "" || strings.TrimSpace(externalAppHandle) != "" {
 		if strings.TrimSpace(appID) != "" {
-			return fmt.Errorf("--external-app-import-record cannot be combined with --app")
+			return fmt.Errorf("--external-app-import-record or --external-app-handle cannot be combined with --app")
+		}
+		if strings.TrimSpace(externalAppImportRecord) != "" && strings.TrimSpace(externalAppHandle) != "" {
+			return fmt.Errorf("--external-app-import-record cannot be combined with --external-app-handle")
+		}
+		if strings.TrimSpace(externalAppHandle) != "" && strings.TrimSpace(stateRoot) == "" {
+			return fmt.Errorf("--state-root is required with --external-app-handle")
 		}
 		timeout, err := time.ParseDuration(timeoutText)
 		if err != nil {
 			return fmt.Errorf("parse timeout: %w", err)
 		}
 		result, err := appidentity.RunExternalWinApp(context.Background(), appidentity.ExternalWinAppRunRequest{
-			ImportRecordPath: externalAppImportRecord,
-			Image:            containerImage,
-			Platform:         containerPlatform,
-			DockerPath:       containerDockerPath,
-			Timeout:          timeout,
+			ImportRecordPath:  externalAppImportRecord,
+			StateRoot:         stateRoot,
+			ExternalAppHandle: externalAppHandle,
+			Image:             containerImage,
+			Platform:          containerPlatform,
+			DockerPath:        containerDockerPath,
+			Timeout:           timeout,
 		})
 		if err != nil {
 			return err

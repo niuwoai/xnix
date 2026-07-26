@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc135
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc136
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc136 checkpoint candidate gives imported Windows GUI apps a launcher-safe handle path. `windows-external-app-run` and `xnix-compat-launch` now accept `--state-root ROOT --external-app-handle APPID`, resolve that handle to the Runtime-owned `external-apps/APPID/import-record.json`, revalidate the imported artifact digest and MZ executable shape, and emit safe run evidence with `external_app_handle_consumed=true`. This moves imported apps closer to KDE `.desktop` launchability because the desktop layer can pass a stable app id handle instead of a raw import-record path.
 
 The v0.2.640-rc135 checkpoint candidate connects imported Windows GUI apps to the managed desktop launcher binary. `xnix-compat-launch --external-app-import-record RECORD.json` now bypasses the known-app recipe bridge, delegates directly to the Go Runtime `windows-external-app-run` implementation, and emits the digest-verified Runtime run record for the imported app. This is the first launcher-facing step toward desktop-started imported apps while the `.desktop` layer still needs a safe opaque record handle instead of an absolute state-root path.
 

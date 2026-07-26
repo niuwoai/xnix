@@ -15,6 +15,8 @@ import (
 const (
 	ExternalWinAppImportRecordSchemaVersion = "xnix.runtime.external_winapp_import_record.v1"
 	ExternalWinAppImportRecordRequestType   = "external-winapp-import-record"
+	ExternalWinAppImportRecordFileName      = "import-record.json"
+	ExternalWinAppImportHandleRoot          = "external-apps"
 )
 
 var externalWinAppDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
@@ -116,8 +118,8 @@ func RecordExternalWinAppImport(request ExternalWinAppImportRequest) (ExternalWi
 	}
 	sum := sha256.Sum256(content)
 	artifactSHA256 := hex.EncodeToString(sum[:])
-	artifactRelativePath := filepath.ToSlash(filepath.Join("external-apps", appID, "artifacts", artifactSHA256, executableName))
-	recordRelativePath := filepath.ToSlash(filepath.Join("external-apps", appID, "import-record.json"))
+	artifactRelativePath := filepath.ToSlash(filepath.Join(ExternalWinAppImportHandleRoot, appID, "artifacts", artifactSHA256, executableName))
+	recordRelativePath := filepath.ToSlash(filepath.Join(ExternalWinAppImportHandleRoot, appID, ExternalWinAppImportRecordFileName))
 	artifactPath, err := safeStateRootPath(stateRoot, artifactRelativePath)
 	if err != nil {
 		return ExternalWinAppImportRecord{}, err
@@ -307,6 +309,38 @@ func ResolveExternalWinAppImportedArtifact(recordPath string) (ExternalWinAppImp
 	}
 	if len(content) < 2 || content[0] != 'M' || content[1] != 'Z' {
 		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app imported artifact is not an MZ executable")
+	}
+	return record, artifactPath, nil
+}
+
+func ExternalWinAppImportRecordPathFromHandle(stateRoot string, handle string) (string, error) {
+	stateRoot = strings.TrimSpace(stateRoot)
+	if stateRoot == "" {
+		return "", errors.New("external Windows app handle resolution requires --state-root")
+	}
+	stateRoot, err := filepath.Abs(stateRoot)
+	if err != nil {
+		return "", fmt.Errorf("resolve external Windows app handle state root: %w", err)
+	}
+	handle = strings.TrimSpace(handle)
+	if !idPattern.MatchString(handle) {
+		return "", errors.New("external Windows app handle must be a reverse-DNS app id")
+	}
+	relativePath := filepath.ToSlash(filepath.Join(ExternalWinAppImportHandleRoot, handle, ExternalWinAppImportRecordFileName))
+	return safeStateRootPath(stateRoot, relativePath)
+}
+
+func ResolveExternalWinAppImportedArtifactByHandle(stateRoot string, handle string) (ExternalWinAppImportRecord, string, error) {
+	recordPath, err := ExternalWinAppImportRecordPathFromHandle(stateRoot, handle)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", err
+	}
+	record, artifactPath, err := ResolveExternalWinAppImportedArtifact(recordPath)
+	if err != nil {
+		return ExternalWinAppImportRecord{}, "", err
+	}
+	if record.ApplicationID != strings.TrimSpace(handle) {
+		return ExternalWinAppImportRecord{}, "", errors.New("external Windows app handle does not match import record application id")
 	}
 	return record, artifactPath, nil
 }

@@ -151,6 +151,51 @@ func TestResolveExternalWinAppImportedArtifactRejectsTamperedArtifact(t *testing
 	}
 }
 
+func TestResolveExternalWinAppImportedArtifactByHandle(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ExternalTool.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	record, err := RecordExternalWinAppImport(ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.tool",
+		DisplayName:    "External Tool",
+		AppVersion:     "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+
+	recordPath, err := ExternalWinAppImportRecordPathFromHandle(stateRoot, "org.xnix.external.tool")
+	if err != nil {
+		t.Fatalf("ExternalWinAppImportRecordPathFromHandle returned error: %v", err)
+	}
+	if recordPath != filepath.Join(stateRoot, filepath.FromSlash(record.RecordRelativePath)) {
+		t.Fatalf("unexpected import record path from handle: %s", recordPath)
+	}
+	resolvedRecord, resolvedArtifactPath, err := ResolveExternalWinAppImportedArtifactByHandle(stateRoot, "org.xnix.external.tool")
+	if err != nil {
+		t.Fatalf("ResolveExternalWinAppImportedArtifactByHandle returned error: %v", err)
+	}
+	if resolvedRecord.ApplicationID != record.ApplicationID ||
+		resolvedRecord.RecordSHA256 != record.RecordSHA256 ||
+		resolvedArtifactPath != filepath.Join(stateRoot, filepath.FromSlash(record.ArtifactRelativePath)) {
+		t.Fatalf("unexpected handle resolution result: record=%#v artifact=%s", resolvedRecord, resolvedArtifactPath)
+	}
+	for _, unsafeHandle := range []string{"", "../org.xnix.external.tool", "org/xnix/external/tool", "/org.xnix.external.tool"} {
+		if _, err := ExternalWinAppImportRecordPathFromHandle(stateRoot, unsafeHandle); err == nil {
+			t.Fatalf("expected unsafe handle %q to be rejected", unsafeHandle)
+		}
+	}
+	if _, _, err := ResolveExternalWinAppImportedArtifactByHandle(stateRoot, "org.xnix.external.missing"); err == nil {
+		t.Fatalf("expected missing external app handle to fail")
+	}
+}
+
 func TestRecordExternalWinAppImportRejectsUnsafeInputs(t *testing.T) {
 	tempDir := t.TempDir()
 	notExecutable := filepath.Join(tempDir, "tool.exe")

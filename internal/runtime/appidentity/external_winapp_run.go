@@ -15,12 +15,14 @@ const (
 )
 
 type ExternalWinAppRunRequest struct {
-	ImportRecordPath string
-	WindowMatch      string
-	Image            string
-	Platform         string
-	DockerPath       string
-	Timeout          time.Duration
+	ImportRecordPath  string
+	StateRoot         string
+	ExternalAppHandle string
+	WindowMatch       string
+	Image             string
+	Platform          string
+	DockerPath        string
+	Timeout           time.Duration
 }
 
 type ExternalWinAppRunResult struct {
@@ -37,6 +39,8 @@ type ExternalWinAppRunResult struct {
 	AppVersion                      string                     `json:"app_version"`
 	ExecutableName                  string                     `json:"executable_name"`
 	ExternalAppImportRecordConsumed bool                       `json:"external_app_import_record_consumed"`
+	ExternalAppHandleConsumed       bool                       `json:"external_app_handle_consumed"`
+	ExternalAppHandle               string                     `json:"external_app_handle,omitempty"`
 	ImportedArtifactDigestVerified  bool                       `json:"imported_artifact_digest_verified"`
 	ImportedArtifactSHA256          string                     `json:"imported_artifact_sha256"`
 	RuntimeRunRequested             bool                       `json:"runtime_run_requested"`
@@ -58,6 +62,7 @@ type ExternalWinAppRunResult struct {
 	ActionExecutionEnabled          bool                       `json:"action_execution_enabled"`
 	BackendDetailsExposed           bool                       `json:"backend_details_exposed"`
 	RawImportRecordPathExposed      bool                       `json:"raw_import_record_path_exposed"`
+	RawExternalAppHandlePathExposed bool                       `json:"raw_external_app_handle_path_exposed"`
 	RawStateRootPathExposed         bool                       `json:"raw_state_root_path_exposed"`
 	RawExecutablePathExposed        bool                       `json:"raw_executable_path_exposed"`
 	HostRootModified                bool                       `json:"host_root_modified"`
@@ -71,7 +76,23 @@ type ExternalWinAppRunResult struct {
 }
 
 func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (ExternalWinAppRunResult, error) {
-	record, importedExecutablePath, err := ResolveExternalWinAppImportedArtifact(request.ImportRecordPath)
+	importRecordPath := strings.TrimSpace(request.ImportRecordPath)
+	stateRoot := strings.TrimSpace(request.StateRoot)
+	externalAppHandle := strings.TrimSpace(request.ExternalAppHandle)
+	if importRecordPath != "" && (stateRoot != "" || externalAppHandle != "") {
+		return ExternalWinAppRunResult{}, fmt.Errorf("external Windows app run accepts either --external-app-import-record or --state-root with --external-app-handle")
+	}
+	if importRecordPath == "" && (stateRoot == "" || externalAppHandle == "") {
+		return ExternalWinAppRunResult{}, fmt.Errorf("external Windows app run requires --external-app-import-record or --state-root with --external-app-handle")
+	}
+	var record ExternalWinAppImportRecord
+	var importedExecutablePath string
+	var err error
+	if importRecordPath != "" {
+		record, importedExecutablePath, err = ResolveExternalWinAppImportedArtifact(importRecordPath)
+	} else {
+		record, importedExecutablePath, err = ResolveExternalWinAppImportedArtifactByHandle(stateRoot, externalAppHandle)
+	}
 	if err != nil {
 		return ExternalWinAppRunResult{}, err
 	}
@@ -111,6 +132,8 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		AppVersion:                      record.AppVersion,
 		ExecutableName:                  record.ExecutableName,
 		ExternalAppImportRecordConsumed: true,
+		ExternalAppHandleConsumed:       externalAppHandle != "",
+		ExternalAppHandle:               externalAppHandle,
 		ImportedArtifactDigestVerified:  runtimePayload.ImportedArtifactDigestVerified,
 		ImportedArtifactSHA256:          record.ArtifactSHA256,
 		RuntimeRunRequested:             true,
@@ -132,6 +155,7 @@ func RunExternalWinApp(ctx context.Context, request ExternalWinAppRunRequest) (E
 		ActionExecutionEnabled:          false,
 		BackendDetailsExposed:           false,
 		RawImportRecordPathExposed:      false,
+		RawExternalAppHandlePathExposed: false,
 		RawStateRootPathExposed:         false,
 		RawExecutablePathExposed:        false,
 		HostRootModified:                runtimePayload.HostRootModified,

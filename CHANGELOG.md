@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc136] - 2026-07-26
+
+### Added
+
+- Added external Windows app handle resolution for Runtime-managed imports, mapping a reverse-DNS app id handle to `external-apps/<app-id>/import-record.json` under the controlled state root.
+- Added `windows-external-app-run --state-root ROOT --external-app-handle APPID` and `xnix-compat-launch --state-root ROOT --external-app-handle APPID` so imported GUI apps can run through the same digest-verified path without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details.
+
 ## [0.2.640-rc135] - 2026-07-26
 
 ### Added

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc135`.
+The project is currently at `v0.2.640-rc136`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc135`.
 
 ## Current Checkpoint
 
-v0.2.640-rc135 lets the managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--external-app-import-record RECORD.json`. The launcher delegates to the Go Runtime `windows-external-app-run` implementation, returns the same digest-verified run record, and keeps known-app launch gates separate from imported-app execution while raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation stay closed.
+v0.2.640-rc136 lets the Go Runtime and managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--state-root ROOT --external-app-handle APPID`. The Runtime resolves the handle to `external-apps/APPID/import-record.json`, revalidates the imported artifact digest and MZ executable shape, and returns the same safe run evidence without exposing raw import-record, state-root, executable, backend, Docker socket, host network, broad host mount, privileged container, or host-root mutation details.
+
+The previous v0.2.640-rc135 checkpoint let the managed `xnix-compat-launch` entrypoint run an imported external Windows GUI app through `--external-app-import-record RECORD.json`. The launcher delegates to the Go Runtime `windows-external-app-run` implementation, returns the same digest-verified run record, and keeps known-app launch gates separate from imported-app execution while raw import/state/executable paths, backend details, Docker socket mounts, host networking, broad host mounts, privileged containers, and host-root mutation stay closed.
 
 The previous v0.2.640-rc134 checkpoint let `real-winapp-gui-evidence-packet-preview` consume the Go Runtime `windows-external-app-run` record directly. The packet and KDE GUI card now preserve `external_app_run_record_consumed=true` alongside import-record and digest-verification evidence, so the desktop chain can distinguish formal Runtime run records from lower-level smoke payloads while launch/write/backend authority and raw path exposure stay closed.
 

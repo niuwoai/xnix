@@ -235,3 +235,88 @@ func TestExternalWinAppRunCommandRunsImportedExecutable(t *testing.T) {
 		t.Fatalf("external app run output exposed unsafe details: %s", output.String())
 	}
 }
+
+func TestExternalWinAppRunCommandRunsImportedExecutableByHandle(t *testing.T) {
+	tempDir := t.TempDir()
+	stateRoot := filepath.Join(tempDir, "state")
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	var importOutput bytes.Buffer
+	if err := run([]string{
+		"external-winapp-import-record",
+		"--state-root", stateRoot,
+		"--executable", executablePath,
+		"--app-id", "org.xnix.external.gui",
+		"--display-name", "External GUI",
+	}, &importOutput); err != nil {
+		t.Fatalf("import run returned error: %v", err)
+	}
+	var importPayload map[string]any
+	if err := json.Unmarshal(importOutput.Bytes(), &importPayload); err != nil {
+		t.Fatalf("Unmarshal import output returned error: %v", err)
+	}
+
+	dockerLog := filepath.Join(tempDir, "fake-docker.log")
+	dockerPath := filepath.Join(tempDir, "fake-docker")
+	dockerBody := "#!/bin/sh\n" +
+		"printf '%s\\n' \"$@\" >> \"" + dockerLog + "\"\n" +
+		"if test \"$1 $2\" = 'image inspect'; then printf 'linux/amd64\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then " +
+		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf '0x700001 \"External GUI\": (\"ExternalGui.exe\" \"ExternalGui.exe\") 320x160+20+20 +20+20\\n'\n" +
+		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
+		"exit 2\n"
+	if err := os.WriteFile(dockerPath, []byte(dockerBody), 0o700); err != nil {
+		t.Fatalf("WriteFile docker returned error: %v", err)
+	}
+	var output bytes.Buffer
+	if err := run([]string{
+		"windows-external-app-run",
+		"--state-root", stateRoot,
+		"--external-app-handle", "org.xnix.external.gui",
+		"--window-match", "External GUI",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output); err != nil {
+		t.Fatalf("external app handle run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal run output returned error: %v\n%s", err, output.String())
+	}
+	if payload["schema_version"] != "xnix.runtime.external_winapp_run.v1" ||
+		payload["request_type"] != "windows-external-app-run" ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["imported_artifact_sha256"] != importPayload["artifact_sha256"] ||
+		payload["raw_external_app_handle_path_exposed"] != false ||
+		payload["raw_import_record_path_exposed"] != false ||
+		payload["raw_state_root_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true {
+		t.Fatalf("unexpected external app handle run payload: %#v", payload)
+	}
+	if strings.Contains(output.String(), stateRoot) ||
+		strings.Contains(output.String(), executablePath) ||
+		strings.Contains(output.String(), dockerPath) ||
+		strings.Contains(output.String(), "docker run") ||
+		strings.Contains(output.String(), "/var/run/docker.sock") ||
+		strings.Contains(output.String(), "--network host") ||
+		strings.Contains(output.String(), "--privileged") {
+		t.Fatalf("external app handle run output exposed unsafe details: %s", output.String())
+	}
+}

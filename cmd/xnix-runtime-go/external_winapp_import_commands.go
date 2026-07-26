@@ -59,6 +59,8 @@ func runExternalWinAppRun(args []string, stdout io.Writer) error {
 	flags := flag.NewFlagSet(appidentity.ExternalWinAppRunRequestType, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	importRecordPath := flags.String("external-app-import-record", "", "Runtime external Windows app import record")
+	stateRoot := flags.String("state-root", "", "controlled Runtime state root for resolving an external Windows app handle")
+	externalAppHandle := flags.String("external-app-handle", "", "opaque external Windows app handle; currently the imported reverse-DNS app id")
 	windowMatch := flags.String("window-match", "", "case-insensitive X window match text; defaults to the imported executable name")
 	image := flags.String("image", winapp.DefaultContainerImage, "local Wine X GUI container image")
 	platform := flags.String("platform", "", "container platform, or empty to use the local image platform")
@@ -76,12 +78,14 @@ func runExternalWinAppRun(args []string, stdout io.Writer) error {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
 	result, err := appidentity.RunExternalWinApp(context.Background(), appidentity.ExternalWinAppRunRequest{
-		ImportRecordPath: *importRecordPath,
-		WindowMatch:      *windowMatch,
-		Image:            *image,
-		Platform:         *platform,
-		DockerPath:       *dockerPath,
-		Timeout:          timeout,
+		ImportRecordPath:  *importRecordPath,
+		StateRoot:         *stateRoot,
+		ExternalAppHandle: *externalAppHandle,
+		WindowMatch:       *windowMatch,
+		Image:             *image,
+		Platform:          *platform,
+		DockerPath:        *dockerPath,
+		Timeout:           timeout,
 	})
 	if err != nil {
 		return err

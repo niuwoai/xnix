@@ -162,10 +162,75 @@ func TestCompatLaunchRunsExternalImportedAppThroughRuntimeRun(t *testing.T) {
 	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), recordPath, stateRoot, executablePath, dockerPath)
 }
 
+func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T) {
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "ExternalGui.exe")
+	if err := os.WriteFile(executablePath, []byte{'M', 'Z', 0x90, 0x00, 'x', 'n', 'i', 'x'}, 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	stateRoot := filepath.Join(tempDir, "state")
+	record, err := appidentity.RecordExternalWinAppImport(appidentity.ExternalWinAppImportRequest{
+		Version:        "0.2.640-test",
+		StateRoot:      stateRoot,
+		ExecutablePath: executablePath,
+		AppID:          "org.xnix.external.gui",
+		DisplayName:    "External GUI",
+		AppVersion:     "0.2.640-test",
+	})
+	if err != nil {
+		t.Fatalf("RecordExternalWinAppImport returned error: %v", err)
+	}
+	dockerPath, dockerLog := writeExternalImportedFakeDocker(t, tempDir)
+
+	var output bytes.Buffer
+	err = run([]string{
+		"--state-root", stateRoot,
+		"--external-app-handle", "org.xnix.external.gui",
+		"--image", "local/wine-x-gui:test",
+		"--platform", "linux/amd64",
+		"--docker", dockerPath,
+		"--timeout", "5s",
+	}, &output)
+	if err != nil {
+		t.Fatalf("run returned error: %v", err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["schema_version"] != appidentity.ExternalWinAppRunSchemaVersion ||
+		payload["request_type"] != appidentity.ExternalWinAppRunRequestType ||
+		payload["status"] != "passed" ||
+		payload["application_id"] != "org.xnix.external.gui" ||
+		payload["external_app_import_record_consumed"] != true ||
+		payload["external_app_handle_consumed"] != true ||
+		payload["external_app_handle"] != "org.xnix.external.gui" ||
+		payload["imported_artifact_digest_verified"] != true ||
+		payload["imported_artifact_sha256"] != record.ArtifactSHA256 ||
+		payload["raw_external_app_handle_path_exposed"] != false ||
+		payload["raw_import_record_path_exposed"] != false ||
+		payload["raw_state_root_path_exposed"] != false ||
+		payload["raw_executable_path_exposed"] != false ||
+		payload["container_network_mode"] != "none" ||
+		payload["container_host_mount_count"] != float64(0) ||
+		payload["x_window_observed"] != true {
+		t.Fatalf("unexpected external handle launcher payload: %#v", payload)
+	}
+	dockerInvocation, err := os.ReadFile(dockerLog)
+	if err != nil {
+		t.Fatalf("ReadFile docker log returned error: %v", err)
+	}
+	if !strings.Contains(string(dockerInvocation), "cp") ||
+		!strings.Contains(string(dockerInvocation), "ExternalGui.exe") {
+		t.Fatalf("fake Docker did not receive copied imported executable flow: %s", string(dockerInvocation))
+	}
+	assertCompatLaunchContainerGUIDispatchSafe(t, output.String(), stateRoot, executablePath, dockerPath)
+}
+
 func TestCompatLaunchExternalImportedAppRejectsKnownAppCombination(t *testing.T) {
 	var output bytes.Buffer
 	err := run([]string{"--app", "7zr", "--external-app-import-record", "record.json"}, &output)
-	if err == nil || !strings.Contains(err.Error(), "--external-app-import-record cannot be combined with --app") {
+	if err == nil || !strings.Contains(err.Error(), "--external-app-import-record or --external-app-handle cannot be combined with --app") {
 		t.Fatalf("expected external import record/app combination rejection, got %v", err)
 	}
 }
