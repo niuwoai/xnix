@@ -342,6 +342,51 @@ def require_passed_runtime_execution!(result)
   end
 end
 
+def require_desktop_consumption!(center, kde)
+  required_center = {
+    "known_app_smoke_evidence_count" => 1,
+    "known_app_smoke_passed_count" => 1,
+    "action_execution_enabled" => false,
+    "backend_launch_enabled" => false,
+    "host_root_modified" => false,
+    "backend_details_exposed" => false
+  }
+  required_center.each do |key, expected|
+    abort "Compatibility Center consumption mismatch for #{key}" unless center.fetch(key) == expected
+  end
+
+  required_kde = {
+    "known_app_gui_evidence_count" => 1,
+    "known_app_owner_controlled_gui_evidence_count" => 1,
+    "launch_enabled" => false,
+    "execution_started" => false,
+    "backend_process_started" => false,
+    "host_root_modified" => false,
+    "backend_details_exposed" => false
+  }
+  required_kde.each do |key, expected|
+    abort "KDE Center consumption mismatch for #{key}" unless kde.fetch(key) == expected
+  end
+
+  cards = kde.fetch("known_app_gui_evidence_cards")
+  abort "KDE Center did not expose exactly one GUI evidence card" unless cards.is_a?(Array) && cards.length == 1
+
+  card = cards.first
+  required_card = {
+    "app_id" => MESSAGEBOX_APP_ID,
+    "primary_action_id" => "review-known-app-gui-evidence",
+    "primary_action_kind" => "review",
+    "desktop_launch_enabled" => false,
+    "backend_launch_enabled" => false,
+    "host_root_modified" => false,
+    "backend_details_exposed" => false,
+    "raw_artifact_path_exposed" => false
+  }
+  required_card.each do |key, expected|
+    abort "KDE Center GUI evidence card mismatch for #{key}" unless card.fetch(key) == expected
+  end
+end
+
 remote_source_root = ensure_remote_xnix_path!("remote source root", options.fetch(:remote_source_root))
 remote_build_root = ensure_remote_xnix_path!("remote build root", options.fetch(:remote_build_root))
 fetch_root = ensure_fetch_root!(options.fetch(:fetch_root))
@@ -364,6 +409,7 @@ plan = {
   "runtime_command" => "known-app-verified-catalog-app-execution",
   "runtime_command_execute_planned" => true,
   "verified_catalog_to_app_execution_planned" => true,
+  "desktop_consumption_planned" => true,
   "run_plan_generated_by_runtime" => false,
   "direct_run_plan_input" => false,
   "go_runtime_entrypoint_invoked" => false,
@@ -376,6 +422,16 @@ plan = {
   "owner_file_open_entrypoint_invoked" => false,
   "document_content_marker_observed" => false,
   "go_owned_q4_winapp_acceptance_ready" => false,
+  "compatibility_center_consumed" => false,
+  "kde_center_page_consumed" => false,
+  "known_app_smoke_evidence_count" => 0,
+  "known_app_smoke_passed_count" => 0,
+  "known_app_gui_evidence_count" => 0,
+  "known_app_owner_controlled_gui_evidence_count" => 0,
+  "known_app_gui_review_action_present" => false,
+  "desktop_consumption_evidence_path_exposed" => false,
+  "desktop_consumption_backend_launch_enabled" => false,
+  "desktop_consumption_host_root_modified" => false,
   "host_compilation_avoided" => true,
   "host_root_modified" => false,
   "privileged_container_required" => false,
@@ -423,6 +479,7 @@ FileUtils.mkdir_p(work_root)
 matrix_path = work_root.join("known-app-matrix-evidence.json")
 gui_packet_path = work_root.join("real-winapp-gui-evidence-packet.json")
 catalog_path = work_root.join("known-app-verified-catalog.json")
+app_execution_path = work_root.join("known-app-verified-catalog-app-execution-messagebox.json")
 write_json(matrix_path, matrix_evidence_fixture)
 write_json(gui_packet_path, gui_evidence_packet_fixture)
 
@@ -436,6 +493,17 @@ result = run_json_command(
   timeout_seconds: options.fetch(:timeout_seconds)
 )
 require_passed_runtime_execution!(result)
+write_json(app_execution_path, result)
+
+center = run_json_command(
+  [local_runtime.to_s, "compatibility-center-preview", "--registry", PROJECT_ROOT.join("runtime/recipes/registry.json").to_s, "--known-app-evidence-file", app_execution_path.to_s],
+  timeout_seconds: options.fetch(:timeout_seconds)
+)
+kde = run_json_command(
+  [local_runtime.to_s, "kde-center-page-preview", "--registry", PROJECT_ROOT.join("runtime/recipes/registry.json").to_s, "--app", MESSAGEBOX_APP_ID, "--decision", "approved", "--known-app-evidence-file", app_execution_path.to_s],
+  timeout_seconds: options.fetch(:timeout_seconds)
+)
+require_desktop_consumption!(center, kde)
 
 summary = plan.merge(
   "status" => "passed",
@@ -462,6 +530,16 @@ summary = plan.merge(
   "go_owned_q4_winapp_acceptance_ready" => result.fetch("go_owned_q4_winapp_acceptance_ready"),
   "go_owned_q4_winapp_acceptance_consumed" => result.fetch("go_owned_q4_winapp_acceptance_consumed"),
   "go_owned_q4_winapp_acceptance_path_exposed" => result.fetch("go_owned_q4_winapp_acceptance_path_exposed"),
+  "compatibility_center_consumed" => true,
+  "kde_center_page_consumed" => true,
+  "known_app_smoke_evidence_count" => center.fetch("known_app_smoke_evidence_count"),
+  "known_app_smoke_passed_count" => center.fetch("known_app_smoke_passed_count"),
+  "known_app_gui_evidence_count" => kde.fetch("known_app_gui_evidence_count"),
+  "known_app_owner_controlled_gui_evidence_count" => kde.fetch("known_app_owner_controlled_gui_evidence_count"),
+  "known_app_gui_review_action_present" => kde.fetch("known_app_gui_evidence_cards").first.fetch("primary_action_id") == "review-known-app-gui-evidence",
+  "desktop_consumption_evidence_path_exposed" => false,
+  "desktop_consumption_backend_launch_enabled" => center.fetch("backend_launch_enabled") || kde.fetch("backend_process_started"),
+  "desktop_consumption_host_root_modified" => center.fetch("host_root_modified") || kde.fetch("host_root_modified"),
   "runtime_remote_path_exposed" => result.fetch("remote_path_exposed"),
   "runtime_raw_output_exposed" => result.fetch("raw_output_exposed"),
   "runtime_smoke_command_arguments_exposed" => result.fetch("smoke_command_arguments_exposed"),

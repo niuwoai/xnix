@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc212
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc213
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc213 checkpoint makes the q4-built Runtime smoke prove desktop consumption in the same execute-gated path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` still asks q4 to cross-compile the host `xnix-runtime-go`, fetches that binary into `/tmp/xnix-*`, and runs `known-app-verified-catalog-app-execution` for MessageBox. It now writes the app-execution JSON under the constrained fetch root, feeds it through `compatibility-center-preview --known-app-evidence-file ...` and `kde-center-page-preview --known-app-evidence-file ...`, and requires both read models to consume the real q4 GUI run evidence while evidence paths, backend launch, process start, host-root mutation, and unsafe host/container gates remain closed.
 
 The v0.2.640-rc212 checkpoint carries the one-step verified-catalog GUI execution result back into the desktop read models. `known-app-verified-catalog-app-execution` now emits desktop-safe `known_app_smoke_evidence`, and both `compatibility-center-preview --known-app-evidence-file APP_EXECUTION.json` and `kde-center-page-preview --known-app-evidence-file APP_EXECUTION.json` can consume that result directly. This means the q4-built Runtime path that actually runs MessageBox can also populate Compatibility Center and KDE Center GUI evidence cards without a separate manual GUI evidence packet, while the app remains review-only and launch/backend/path/host-container gates stay closed.
 

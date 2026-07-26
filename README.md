@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc212`.
+The project is currently at `v0.2.640-rc213`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc212`.
 
 ## Current Checkpoint
 
-v0.2.640-rc212 carries the one-step verified-catalog GUI execution result back into desktop read models. `known-app-verified-catalog-app-execution` now emits desktop-safe `known_app_smoke_evidence`, and both `compatibility-center-preview --known-app-evidence-file APP_EXECUTION.json` and `kde-center-page-preview --known-app-evidence-file APP_EXECUTION.json` can consume that result directly. This means the q4-built Runtime path that actually runs MessageBox can now also populate Compatibility Center and KDE Center GUI evidence cards without a separate manual GUI evidence packet, while launch remains review-only and backend/path/host-container gates stay closed.
+v0.2.640-rc213 makes the q4-built Runtime smoke prove desktop consumption in the same execute-gated path. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` still asks q4 to cross-compile the host `xnix-runtime-go`, fetches that binary into `/tmp/xnix-*`, and runs `known-app-verified-catalog-app-execution` for MessageBox. It now persists the app-execution JSON under the constrained fetch root, feeds it through `compatibility-center-preview --known-app-evidence-file ...` and `kde-center-page-preview --known-app-evidence-file ...`, and requires both read models to consume the real q4 GUI run evidence while keeping evidence paths, backend launch, process start, host-root mutation, and unsafe host/container gates closed.
+
+The previous v0.2.640-rc212 checkpoint carries the one-step verified-catalog GUI execution result back into desktop read models. `known-app-verified-catalog-app-execution` now emits desktop-safe `known_app_smoke_evidence`, and both `compatibility-center-preview --known-app-evidence-file APP_EXECUTION.json` and `kde-center-page-preview --known-app-evidence-file APP_EXECUTION.json` can consume that result directly. This means the q4-built Runtime path that actually runs MessageBox can now also populate Compatibility Center and KDE Center GUI evidence cards without a separate manual GUI evidence packet, while launch remains review-only and backend/path/host-container gates stay closed.
 
 The previous v0.2.640-rc211 checkpoint removes the remaining caller-supplied run-plan step from the MessageBox GUI path. `known-app-verified-catalog-app-execution --verified-catalog CATALOG.json --app org.xnix.apps.messagebox --execute` consumes the verified catalog and app id, generates the run plan inside the Go Runtime owner, and invokes the real q4 MessageBox GUI smoke while the desktop still forwards only the app id. `scripts/q4_runtime_run_plan_execution_smoke.rb --execute` keeps compilation on q4 by asking q4 to cross-compile the host `xnix-runtime-go`, fetching that binary into `/tmp/xnix-*`, and running the one-step Runtime command from the q4-built binary. The summary proves verified-catalog consumption, Runtime-generated run planning, actual Windows GUI execution, owner file-open evidence, document-marker observation, q4 compilation ownership, host compilation avoidance, and closed path/raw-output/argument/host-container gates.
 

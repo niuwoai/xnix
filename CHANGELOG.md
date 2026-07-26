@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc213] - 2026-07-27
+
+### Added
+
+- Added same-path desktop read-model consumption to `scripts/q4_runtime_run_plan_execution_smoke.rb` so the q4-built Runtime MessageBox app-execution result is fed into Compatibility Center and KDE Center page previews during the execute-gated smoke.
+- Added lightweight coverage and layout guards for the new desktop consumption summary fields, including Compatibility Center consumption, KDE Center page consumption, GUI evidence counts, and the review-only GUI action marker.
+
+### Changed
+
+- Extended the q4 Runtime run-plan execution smoke summary to prove real q4 GUI run evidence reaches desktop read models without exposing evidence paths or opening backend launch, process-start, host-root, Docker, host-network, or broad-mount gates.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc213`.
+
 ## [0.2.640-rc212] - 2026-07-27
 
 ### Added
