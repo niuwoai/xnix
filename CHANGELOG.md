@@ -4,6 +4,13 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc135] - 2026-07-26
+
+### Added
+
+- Added `xnix-compat-launch --external-app-import-record RECORD.json` for running imported external Windows GUI apps through the managed launcher and the Go Runtime `windows-external-app-run` implementation.
+- Added launcher coverage proving imported-app launcher dispatch emits the digest-verified Runtime run record while keeping known-app gates separate and unsafe path/backend/container exposure closed.
+
 ## [0.2.640-rc134] - 2026-07-26
 
 ### Added
