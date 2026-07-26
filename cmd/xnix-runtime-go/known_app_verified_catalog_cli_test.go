@@ -121,6 +121,112 @@ func TestKnownAppVerifiedCatalogPreviewCommandRejectsUnsafeMatrixEvidence(t *tes
 	}
 }
 
+func TestCompatibilityCenterPreviewCommandConsumesKnownAppVerifiedCatalog(t *testing.T) {
+	registryPath, _ := writeTestRepairGroupRegistry(t)
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, catalogOutput.Bytes(), 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err := run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-verified-catalog", catalogPath}, &output)
+	if err != nil {
+		t.Fatalf("compatibility-center-preview returned error: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("Unmarshal returned error: %v", err)
+	}
+	if payload["known_app_verified_catalog_consumed"] != true ||
+		payload["known_app_verified_catalog_application_count"] != float64(2) ||
+		payload["known_app_verified_catalog_review_only"] != true ||
+		payload["action_execution_enabled"] != false ||
+		payload["backend_launch_enabled"] != false ||
+		payload["host_root_modified"] != false ||
+		payload["backend_details_exposed"] != false {
+		t.Fatalf("unexpected center verified catalog summary: %#v", payload)
+	}
+	appIDs := payload["known_app_verified_catalog_application_ids"].([]any)
+	if len(appIDs) != 2 || appIDs[0] != "7zr" || appIDs[1] != "busybox-w32" {
+		t.Fatalf("unexpected verified catalog application ids: %#v", appIDs)
+	}
+	applications := payload["known_app_verified_catalog_applications"].([]any)
+	if len(applications) != 2 {
+		t.Fatalf("expected two verified catalog applications, got %#v", applications)
+	}
+	busybox := applications[1].(map[string]any)
+	launchCommand := busybox["launch_request_command"].([]any)
+	if busybox["app_id"] != "busybox-w32" ||
+		busybox["verification_state"] != "verified-real-q4-matrix-run" ||
+		busybox["desktop_catalog_state"] != "visible-review-only" ||
+		busybox["launcher_surface"] != "xnix-compat-launch" ||
+		launchCommand[0] != "xnix-compat-launch" ||
+		launchCommand[1] != "--app" ||
+		launchCommand[2] != "busybox-w32" ||
+		busybox["direct_launch_enabled"] != false ||
+		busybox["operator_review_required"] != true ||
+		busybox["qemu_executed"] != true ||
+		busybox["wine_executed"] != true ||
+		busybox["checksum_verified"] != true ||
+		busybox["marker_observed"] != true ||
+		busybox["raw_output_redacted"] != true ||
+		busybox["serial_log_evidence"] != true ||
+		busybox["backend_launch_enabled"] != false ||
+		busybox["backend_details_exposed"] != false ||
+		busybox["raw_output_exposed"] != false ||
+		busybox["remote_path_exposed"] != false ||
+		busybox["host_root_modified"] != false {
+		t.Fatalf("unexpected BusyBox center catalog entry: %#v", busybox)
+	}
+	if strings.Contains(output.String(), catalogPath) ||
+		strings.Contains(output.String(), matrixEvidencePath) ||
+		strings.Contains(output.String(), "/home/xnix-run-materials") {
+		t.Fatalf("Compatibility Center exposed verified catalog paths: %s", output.String())
+	}
+}
+
+func TestCompatibilityCenterPreviewCommandRejectsUnsafeKnownAppVerifiedCatalog(t *testing.T) {
+	registryPath, _ := writeTestRepairGroupRegistry(t)
+	matrixEvidencePath := filepath.Join(t.TempDir(), "known-app-matrix-evidence.json")
+	if err := os.WriteFile(matrixEvidencePath, knownAppVerifiedCatalogCLIFixture(t), 0o600); err != nil {
+		t.Fatalf("WriteFile matrix evidence returned error: %v", err)
+	}
+
+	var catalogOutput bytes.Buffer
+	if err := run([]string{"known-app-verified-catalog-preview", "--matrix-evidence", matrixEvidencePath}, &catalogOutput); err != nil {
+		t.Fatalf("known-app-verified-catalog-preview returned error: %v", err)
+	}
+	var catalog appidentity.KnownAppVerifiedCatalogPreview
+	if err := json.Unmarshal(catalogOutput.Bytes(), &catalog); err != nil {
+		t.Fatalf("Unmarshal verified catalog returned error: %v", err)
+	}
+	catalog.LaunchEnabled = true
+	content, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatalf("Marshal verified catalog returned error: %v", err)
+	}
+	catalogPath := filepath.Join(t.TempDir(), "known-app-verified-catalog.json")
+	if err := os.WriteFile(catalogPath, content, 0o600); err != nil {
+		t.Fatalf("WriteFile verified catalog returned error: %v", err)
+	}
+
+	var output bytes.Buffer
+	err = run([]string{"compatibility-center-preview", "--registry", registryPath, "--known-app-verified-catalog", catalogPath}, &output)
+	if err == nil || !strings.Contains(err.Error(), "review-only") {
+		t.Fatalf("expected unsafe verified catalog error, got %v", err)
+	}
+}
+
 func knownAppVerifiedCatalogCLIFixture(t *testing.T) []byte {
 	t.Helper()
 	apps := []appidentity.KnownAppMatrixEvidenceApp{

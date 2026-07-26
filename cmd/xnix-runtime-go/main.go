@@ -2450,6 +2450,7 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	knownAppEvidenceJSON := flags.String("known-app-evidence-json", "", "Runtime-projected known Windows app evidence JSON")
 	knownAppEvidenceFile := flags.String("known-app-evidence-file", "", "file containing Runtime-projected known Windows app evidence JSON")
 	knownAppMatrixReport := flags.String("known-app-matrix-report", "", "aggregate known Windows app matrix evidence report JSON")
+	knownAppVerifiedCatalog := flags.String("known-app-verified-catalog", "", "Go-owned verified known Windows app catalog JSON")
 	knownAppGUISmokeReport := flags.String("known-app-gui-smoke-report", "", "executed Wine guest GUI smoke evidence report JSON")
 	knownAppGUISmokeApp := flags.String("known-app-gui-smoke-app", "", "known Windows GUI app id for a GUI smoke report")
 	knownAppGUISmokeName := flags.String("known-app-gui-smoke-name", "", "known Windows GUI app display name for a GUI smoke report")
@@ -2487,6 +2488,11 @@ func parseCompatibilityCenterPreviewSource(args []string) ([]appidentity.Recipe,
 	}
 
 	options := appidentity.CompatibilityCenterOptions{}
+	verifiedCatalog, err := loadKnownAppVerifiedCatalogForCenter(commandName, *knownAppVerifiedCatalog)
+	if err != nil {
+		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
+	}
+	options.KnownAppVerifiedCatalog = verifiedCatalog
 	projectedEvidence, err := loadKnownAppSmokeEvidenceForCenter(commandName, *knownAppEvidenceJSON, *knownAppEvidenceFile, *knownAppMatrixReport, *knownAppGUISmokeReport, *knownAppGUISmokeApp, *knownAppGUISmokeName, *knownAppGUISmokeVersion)
 	if err != nil {
 		return nil, appidentity.Provenance{}, appidentity.CompatibilityCenterOptions{}, err
@@ -2624,6 +2630,22 @@ func loadKnownAppSmokeEvidenceFromGUISmokeProjection(payload []byte) ([]appident
 
 func loadKnownAppSmokeEvidenceFromRuntimeProjection(commandName string, projectionJSON string, projectionFile string) ([]appidentity.KnownAppSmokeEvidenceSummary, error) {
 	return loadKnownAppSmokeEvidenceForCenter(commandName, projectionJSON, projectionFile, "", "", "", "", "")
+}
+
+func loadKnownAppVerifiedCatalogForCenter(commandName string, verifiedCatalogPath string) (*appidentity.KnownAppVerifiedCatalogPreview, error) {
+	verifiedCatalogPath = strings.TrimSpace(verifiedCatalogPath)
+	if verifiedCatalogPath == "" {
+		return nil, nil
+	}
+	payload, err := os.ReadFile(verifiedCatalogPath)
+	if err != nil {
+		return nil, fmt.Errorf("%s read known app verified catalog: %w", commandName, err)
+	}
+	var preview appidentity.KnownAppVerifiedCatalogPreview
+	if err := json.Unmarshal(payload, &preview); err != nil {
+		return nil, fmt.Errorf("%s parse known app verified catalog: %w", commandName, err)
+	}
+	return &preview, nil
 }
 
 func parseFileOpenPreviewSource(args []string) ([]appidentity.Recipe, appidentity.Provenance, string, []string, appidentity.FileOpenOptions, error) {

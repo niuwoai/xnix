@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc193] - 2026-07-27
+
+### Added
+
+- Added direct Compatibility Center consumption for Go-owned known Windows app verified catalogs through `--known-app-verified-catalog`.
+- Added CLI coverage for successful verified catalog consumption and unsafe catalog rejection in the Compatibility Center read model.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex to include Compatibility Center verified catalog consumption tests.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc193`.
+
 ## [0.2.640-rc192] - 2026-07-27
 
 ### Added

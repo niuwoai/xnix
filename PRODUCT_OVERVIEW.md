@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc192
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc193
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc193 checkpoint connects the verified known Windows app catalog to Compatibility Center. `compatibility-center-preview --known-app-verified-catalog VERIFIED_CATALOG.json` consumes the safe Go-owned `known-app-verified-catalog-preview` output, validates that the catalog remains review-only, and exposes verified 7zr and busybox-w32 entries to the desktop read model with their KDE-visible metadata and `xnix-compat-launch --app <id>` request shape. It rejects unsafe catalogs and keeps direct launch, backend start, desktop-file writes, raw output, q4 paths, and host mutation disabled. Targeted Go build/test validation stays on q4 by default so the macOS host remains limited to lightweight Ruby and layout checks.
 
 The v0.2.640-rc192 checkpoint turns passed q4 known-app matrix evidence into a Go-owned verified application catalog. `known-app-verified-catalog-preview` consumes safe matrix evidence and exposes 7zr and busybox-w32 as review-only Runtime catalog entries with verified q4 matrix state, KDE-visible application metadata, and safe future `xnix-compat-launch --app <id>` request shapes while keeping direct launch, backend start, desktop-file writes, raw output, q4 paths, and host mutation disabled. The q4 remote Go test default regex now covers both matrix evidence and verified catalog previews so small-version Go validation keeps using q4 compile/test resources.
 
