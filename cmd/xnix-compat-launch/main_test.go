@@ -238,6 +238,10 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		payload["external_file_open_requested"] != true ||
 		payload["external_file_bridge_copy_enabled"] != true ||
 		payload["external_file_bridge_copied_count"] != float64(1) ||
+		payload["external_file_bridge_arguments_passed"] != true ||
+		payload["external_file_bridge_argument_observed_count"] != float64(1) ||
+		payload["external_file_bridge_winepath_translated"] != true ||
+		payload["external_file_bridge_winepath_translated_count"] != float64(1) ||
 		payload["external_file_bridge_ready"] != true ||
 		payload["external_file_bridge_mount_enabled"] != false ||
 		payload["raw_file_uri_arguments_exposed"] != false ||
@@ -282,6 +286,10 @@ func TestCompatLaunchRunsExternalImportedAppHandleThroughRuntimeRun(t *testing.T
 		launchPacket["external_file_open_requested"] != true ||
 		launchPacket["external_file_bridge_copy_enabled"] != true ||
 		launchPacket["external_file_bridge_copied_count"] != float64(1) ||
+		launchPacket["external_file_bridge_arguments_passed"] != true ||
+		launchPacket["external_file_bridge_argument_observed_count"] != float64(1) ||
+		launchPacket["external_file_bridge_winepath_translated"] != true ||
+		launchPacket["external_file_bridge_winepath_translated_count"] != float64(1) ||
 		launchPacket["external_file_bridge_ready"] != true ||
 		launchPacket["external_file_bridge_mount_enabled"] != false ||
 		launchPacket["raw_file_uri_arguments_exposed"] != false ||
@@ -940,6 +948,8 @@ func writeExternalImportedFakeDocker(t *testing.T, tempDir string) (string, stri
 		"if test \"$1 $2\" = 'start -a'; then " +
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'\n" +
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_PASSED=1\\n'\n" +
+		"printf 'XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=1\\n'\n" +
 		"printf '0x700001 \"External GUI\": (\"ExternalGui.exe\" \"ExternalGui.exe\") 320x160+20+20 +20+20\\n'\n" +
 		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
 		"if test \"$1\" = 'rm'; then exit 0; fi\n" +

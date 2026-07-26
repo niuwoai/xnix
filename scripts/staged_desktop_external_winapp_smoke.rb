@@ -198,6 +198,10 @@ def write_markdown_report(markdown_output, packet)
       "- External file-open requested: #{packet.fetch("external_file_open_requested")}",
       "- External file bridge copy enabled: #{packet.fetch("external_file_bridge_copy_enabled")}",
       "- External file bridge copied count: #{packet.fetch("external_file_bridge_copied_count")}",
+      "- External file bridge arguments passed: #{packet.fetch("external_file_bridge_arguments_passed")}",
+      "- External file bridge argument observed count: #{packet.fetch("external_file_bridge_argument_observed_count")}",
+      "- External file bridge Wine path translated: #{packet.fetch("external_file_bridge_winepath_translated")}",
+      "- External file bridge Wine path translated count: #{packet.fetch("external_file_bridge_winepath_translated_count")}",
       "- External file bridge ready: #{packet.fetch("external_file_bridge_ready")}",
       "- External file bridge mount enabled: #{packet.fetch("external_file_bridge_mount_enabled")}",
       "- Raw file URI arguments exposed: #{packet.fetch("raw_file_uri_arguments_exposed")}",
@@ -394,7 +398,11 @@ assert(payload.fetch("external_file_uri_arguments_accepted") == true, "launcher 
 assert(payload.fetch("external_file_open_requested") == true, "launcher smoke must record the external file-open request")
 assert(payload.fetch("external_file_bridge_copy_enabled") == true, "launcher smoke must enable copy-only file bridging")
 assert(payload.fetch("external_file_bridge_copied_count") == 1, "launcher smoke must copy one file-open argument into the container")
-assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must mark the copied file bridge ready")
+assert(payload.fetch("external_file_bridge_arguments_passed") == true, "launcher smoke must observe file-open arguments at the container launch boundary")
+assert(payload.fetch("external_file_bridge_argument_observed_count") == 1, "launcher smoke must observe one file-open argument at the container launch boundary")
+assert(payload.fetch("external_file_bridge_winepath_translated") == true, "launcher smoke must translate copied file arguments to Wine paths")
+assert(payload.fetch("external_file_bridge_winepath_translated_count") == 1, "launcher smoke must translate one copied file argument to a Wine path")
+assert(payload.fetch("external_file_bridge_ready") == true, "launcher smoke must mark the copied, translated, and passed file bridge ready")
 assert(payload.fetch("external_file_bridge_mount_enabled") == false, "launcher smoke must keep file bridge mounts disabled before policy")
 assert(payload.fetch("raw_file_uri_arguments_exposed") == false, "launcher smoke must not expose raw file URI arguments")
 assert(payload.fetch("imported_artifact_digest_verified") == true, "launcher smoke must verify the imported artifact digest")
@@ -430,7 +438,11 @@ assert(launch_packet.fetch("external_file_uri_arguments_accepted") == true, "des
 assert(launch_packet.fetch("external_file_open_requested") == true, "desktop launch packet must preserve file-open request evidence")
 assert(launch_packet.fetch("external_file_bridge_copy_enabled") == true, "desktop launch packet must preserve copy-only file bridge evidence")
 assert(launch_packet.fetch("external_file_bridge_copied_count") == 1, "desktop launch packet must preserve copied file-open count")
-assert(launch_packet.fetch("external_file_bridge_ready") == true, "desktop launch packet must preserve copied file bridge readiness")
+assert(launch_packet.fetch("external_file_bridge_arguments_passed") == true, "desktop launch packet must preserve observed file-open argument passing")
+assert(launch_packet.fetch("external_file_bridge_argument_observed_count") == 1, "desktop launch packet must preserve observed file-open argument count")
+assert(launch_packet.fetch("external_file_bridge_winepath_translated") == true, "desktop launch packet must preserve Wine path translation evidence")
+assert(launch_packet.fetch("external_file_bridge_winepath_translated_count") == 1, "desktop launch packet must preserve Wine path translation count")
+assert(launch_packet.fetch("external_file_bridge_ready") == true, "desktop launch packet must preserve copied, translated, and passed file bridge readiness")
 assert(launch_packet.fetch("external_file_bridge_mount_enabled") == false, "desktop launch packet must keep file bridge mounts disabled before policy")
 assert(launch_packet.fetch("raw_file_uri_arguments_exposed") == false, "desktop launch packet must not expose raw file URI arguments")
 assert(launch_packet.fetch("imported_artifact_digest_verified") == true, "desktop launch packet must preserve imported artifact digest verification")
@@ -517,6 +529,10 @@ packet = {
   "external_file_open_requested" => payload.fetch("external_file_open_requested"),
   "external_file_bridge_copy_enabled" => payload.fetch("external_file_bridge_copy_enabled"),
   "external_file_bridge_copied_count" => payload.fetch("external_file_bridge_copied_count"),
+  "external_file_bridge_arguments_passed" => payload.fetch("external_file_bridge_arguments_passed"),
+  "external_file_bridge_argument_observed_count" => payload.fetch("external_file_bridge_argument_observed_count"),
+  "external_file_bridge_winepath_translated" => payload.fetch("external_file_bridge_winepath_translated"),
+  "external_file_bridge_winepath_translated_count" => payload.fetch("external_file_bridge_winepath_translated_count"),
   "external_file_bridge_ready" => payload.fetch("external_file_bridge_ready"),
   "external_file_bridge_mount_enabled" => payload.fetch("external_file_bridge_mount_enabled"),
   "raw_file_uri_arguments_exposed" => payload.fetch("raw_file_uri_arguments_exposed"),

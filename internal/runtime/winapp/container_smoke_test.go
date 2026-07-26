@@ -282,6 +282,10 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 		!result.LocalExecutableCopied ||
 		!result.FileBridgeCopyEnabled ||
 		result.FileBridgeCopiedCount != 1 ||
+		!result.FileBridgeArgumentsPassed ||
+		result.FileBridgeArgumentObservedCount != 1 ||
+		!result.FileBridgeWinePathTranslated ||
+		result.FileBridgeWinePathTranslatedCount != 1 ||
 		result.FileArgumentCount != 1 ||
 		result.RawFileArgumentPathExposed ||
 		result.ApplicationName != "/xnix-messagebox-smoke.exe" ||
@@ -310,6 +314,7 @@ func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
 		"cp " + documentPath,
 		"fake-x-gui-container:/file-1-report.docx",
 		"start -a",
+		"winepath -w",
 		"wine \"$XNIX_GUI_APP\"",
 	} {
 		if !strings.Contains(log, token) {
@@ -343,10 +348,10 @@ func writeFakeXGUIDocker(t *testing.T, tempDir string, logPath string) string {
 	body := "#!/bin/sh\n" +
 		"printf '%s\\n' \"$*\" >> '" + logPath + "'\n" +
 		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
-		"if test \"$1\" = 'run'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'run'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\nXNIX_X_GUI_FILE_ARGS_PASSED=0\\nXNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=0\\n0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
 		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
 		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
-		"if test \"$1 $2\" = 'start -a'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n0x600001 \"Xnix Windows GUI Smoke\": (\"xnix-messagebox-smoke.exe\" \"xnix-messagebox-smoke.exe\") 320x160+20+20 +20+20\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\nXNIX_X_GUI_FILE_ARGS_PASSED=1\\nXNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=1\\n0x600001 \"Xnix Windows GUI Smoke\": (\"xnix-messagebox-smoke.exe\" \"xnix-messagebox-smoke.exe\") 320x160+20+20 +20+20\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
 		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
 		"exit 2\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {

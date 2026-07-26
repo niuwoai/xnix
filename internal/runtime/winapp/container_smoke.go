@@ -91,46 +91,50 @@ type ContainerResult struct {
 }
 
 type ContainerXGUIResult struct {
-	SchemaVersion                   string `json:"schema_version"`
-	RequestType                     string `json:"request_type"`
-	Status                          string `json:"status"`
-	ApplicationID                   string `json:"application_id,omitempty"`
-	DisplayName                     string `json:"display_name,omitempty"`
-	AppVersion                      string `json:"app_version,omitempty"`
-	RecipeBacked                    bool   `json:"recipe_backed"`
-	ExecutableName                  string `json:"executable_name,omitempty"`
-	LocalExecutableCopied           bool   `json:"local_executable_copied"`
-	FileBridgeCopyEnabled           bool   `json:"file_bridge_copy_enabled"`
-	FileBridgeCopiedCount           int    `json:"file_bridge_copied_count"`
-	FileArgumentCount               int    `json:"file_argument_count"`
-	RawFileArgumentPathExposed      bool   `json:"raw_file_argument_path_exposed"`
-	ExternalAppImportRecordConsumed bool   `json:"external_app_import_record_consumed"`
-	ImportedArtifactDigestVerified  bool   `json:"imported_artifact_digest_verified"`
-	ImportedArtifactSHA256          string `json:"imported_artifact_sha256,omitempty"`
-	ApplicationName                 string `json:"application_name"`
-	WindowMatch                     string `json:"window_match"`
-	ContainerImage                  string `json:"container_image"`
-	ContainerPlatform               string `json:"container_platform"`
-	ContainerStateMode              string `json:"container_state_mode"`
-	PullPolicy                      string `json:"pull_policy"`
-	NetworkMode                     string `json:"network_mode"`
-	DesktopDisplay                  string `json:"desktop_display"`
-	XServerStarted                  bool   `json:"x_server_started"`
-	WineBootstrapAttempted          bool   `json:"wine_bootstrap_attempted"`
-	RunnerAvailable                 bool   `json:"runner_available"`
-	ImageAvailable                  bool   `json:"image_available"`
-	XWindowObserved                 bool   `json:"x_window_observed"`
-	WindowEvidenceSummary           string `json:"window_evidence_summary"`
-	ExitCode                        int    `json:"exit_code"`
-	DurationMillis                  int64  `json:"duration_millis"`
-	SkipReason                      string `json:"skip_reason,omitempty"`
-	FailureReason                   string `json:"failure_reason,omitempty"`
-	HostRootModified                bool   `json:"host_root_modified"`
-	PrivilegedContainerRequired     bool   `json:"privileged_container_required"`
-	HostNetworkingRequired          bool   `json:"host_networking_required"`
-	DockerSocketMounted             bool   `json:"docker_socket_mounted"`
-	BroadHostMountRequired          bool   `json:"broad_host_mount_required"`
-	HostMountCount                  int    `json:"host_mount_count"`
+	SchemaVersion                     string `json:"schema_version"`
+	RequestType                       string `json:"request_type"`
+	Status                            string `json:"status"`
+	ApplicationID                     string `json:"application_id,omitempty"`
+	DisplayName                       string `json:"display_name,omitempty"`
+	AppVersion                        string `json:"app_version,omitempty"`
+	RecipeBacked                      bool   `json:"recipe_backed"`
+	ExecutableName                    string `json:"executable_name,omitempty"`
+	LocalExecutableCopied             bool   `json:"local_executable_copied"`
+	FileBridgeCopyEnabled             bool   `json:"file_bridge_copy_enabled"`
+	FileBridgeCopiedCount             int    `json:"file_bridge_copied_count"`
+	FileBridgeArgumentsPassed         bool   `json:"file_bridge_arguments_passed"`
+	FileBridgeArgumentObservedCount   int    `json:"file_bridge_argument_observed_count"`
+	FileBridgeWinePathTranslated      bool   `json:"file_bridge_winepath_translated"`
+	FileBridgeWinePathTranslatedCount int    `json:"file_bridge_winepath_translated_count"`
+	FileArgumentCount                 int    `json:"file_argument_count"`
+	RawFileArgumentPathExposed        bool   `json:"raw_file_argument_path_exposed"`
+	ExternalAppImportRecordConsumed   bool   `json:"external_app_import_record_consumed"`
+	ImportedArtifactDigestVerified    bool   `json:"imported_artifact_digest_verified"`
+	ImportedArtifactSHA256            string `json:"imported_artifact_sha256,omitempty"`
+	ApplicationName                   string `json:"application_name"`
+	WindowMatch                       string `json:"window_match"`
+	ContainerImage                    string `json:"container_image"`
+	ContainerPlatform                 string `json:"container_platform"`
+	ContainerStateMode                string `json:"container_state_mode"`
+	PullPolicy                        string `json:"pull_policy"`
+	NetworkMode                       string `json:"network_mode"`
+	DesktopDisplay                    string `json:"desktop_display"`
+	XServerStarted                    bool   `json:"x_server_started"`
+	WineBootstrapAttempted            bool   `json:"wine_bootstrap_attempted"`
+	RunnerAvailable                   bool   `json:"runner_available"`
+	ImageAvailable                    bool   `json:"image_available"`
+	XWindowObserved                   bool   `json:"x_window_observed"`
+	WindowEvidenceSummary             string `json:"window_evidence_summary"`
+	ExitCode                          int    `json:"exit_code"`
+	DurationMillis                    int64  `json:"duration_millis"`
+	SkipReason                        string `json:"skip_reason,omitempty"`
+	FailureReason                     string `json:"failure_reason,omitempty"`
+	HostRootModified                  bool   `json:"host_root_modified"`
+	PrivilegedContainerRequired       bool   `json:"privileged_container_required"`
+	HostNetworkingRequired            bool   `json:"host_networking_required"`
+	DockerSocketMounted               bool   `json:"docker_socket_mounted"`
+	BroadHostMountRequired            bool   `json:"broad_host_mount_required"`
+	HostMountCount                    int    `json:"host_mount_count"`
 }
 
 func RunContainerSmoke(ctx context.Context, request ContainerRequest) (ContainerResult, error) {
@@ -294,6 +298,12 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 	result.ExitCode = exitCode(err)
 	result.XServerStarted = strings.Contains(output, "XNIX_X_GUI_XSERVER_STARTED=true")
 	result.WineBootstrapAttempted = strings.Contains(output, "XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true")
+	result.FileBridgeArgumentObservedCount = parseXGUIFileArgumentObservedCount(output)
+	result.FileBridgeArgumentsPassed = result.FileArgumentCount > 0 &&
+		result.FileBridgeArgumentObservedCount == result.FileArgumentCount
+	result.FileBridgeWinePathTranslatedCount = parseXGUIFileWinePathTranslatedCount(output)
+	result.FileBridgeWinePathTranslated = result.FileArgumentCount > 0 &&
+		result.FileBridgeWinePathTranslatedCount == result.FileArgumentCount
 	result.XWindowObserved = strings.Contains(output, "XNIX_X_GUI_WINDOW_OBSERVED=true") ||
 		strings.Contains(strings.ToLower(output), strings.ToLower(result.WindowMatch))
 	result.WindowEvidenceSummary = summarizeXWindowEvidence(output, result.WindowMatch)
@@ -524,11 +534,14 @@ func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'",
 		"wineboot --init >/tmp/wineboot.log 2>&1 || true",
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'",
+		"_xnix_file_args_winepath_translated=0",
 		"set --",
-		"if [ -n \"${XNIX_GUI_FILE_ARGS:-}\" ]; then while IFS= read -r _xnix_file_arg; do [ -n \"$_xnix_file_arg\" ] && set -- \"$@\" \"$_xnix_file_arg\"; done <<EOF",
+		"if [ -n \"${XNIX_GUI_FILE_ARGS:-}\" ]; then while IFS= read -r _xnix_file_arg; do if [ -n \"$_xnix_file_arg\" ]; then _xnix_windows_file_arg=$(winepath -w \"$_xnix_file_arg\" 2>/dev/null || true); if [ -n \"$_xnix_windows_file_arg\" ]; then _xnix_file_args_winepath_translated=$((_xnix_file_args_winepath_translated + 1)); set -- \"$@\" \"$_xnix_windows_file_arg\"; else set -- \"$@\" \"$_xnix_file_arg\"; fi; fi; done <<EOF",
 		"$XNIX_GUI_FILE_ARGS",
 		"EOF",
 		"fi",
+		"printf 'XNIX_X_GUI_FILE_ARGS_PASSED=%s\\n' \"$#\"",
+		"printf 'XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED=%s\\n' \"$_xnix_file_args_winepath_translated\"",
 		"if [ -f \"$XNIX_GUI_APP\" ]; then wine start /unix \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & else wine \"$XNIX_GUI_APP\" \"$@\" >/tmp/wine-gui.log 2>&1 & fi",
 		"app_pid=$!",
 		"observed=0",
@@ -629,6 +642,31 @@ func summarizeXWindowEvidence(output string, windowMatch string) string {
 		}
 	}
 	return ""
+}
+
+func parseXGUIFileArgumentObservedCount(output string) int {
+	const marker = "XNIX_X_GUI_FILE_ARGS_PASSED="
+	return parseXGUIIntegerMarker(output, marker)
+}
+
+func parseXGUIFileWinePathTranslatedCount(output string) int {
+	const marker = "XNIX_X_GUI_FILE_ARGS_WINEPATH_TRANSLATED="
+	return parseXGUIIntegerMarker(output, marker)
+}
+
+func parseXGUIIntegerMarker(output string, marker string) int {
+	for _, line := range strings.Split(output, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, marker) {
+			continue
+		}
+		count, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(trimmed, marker)))
+		if err != nil || count < 0 {
+			return 0
+		}
+		return count
+	}
+	return 0
 }
 
 func parseWineBootstrapExitCode(stderr string) int {

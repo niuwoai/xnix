@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc153`.
+The project is currently at `v0.2.640-rc154`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc153`.
 
 ## Current Checkpoint
 
-v0.2.640-rc153 turns KDE `%U` file-open intent into an actual copy-only container file bridge for imported external Windows GUI apps. `xnix-compat-launch --external-app-handle APPID file:///...` and `windows-external-app-run ... file:///...` now validate local file URIs, copy each accepted file into the isolated Wine/Xvfb container with `docker cp`, pass only the container-local file path to the Windows app, and report `external_file_bridge_copy_enabled`, `external_file_bridge_copied_count`, and `external_file_bridge_ready` while keeping host mounts, raw file URI/path output, Docker socket mounts, host networking, and host-root mutation closed.
+v0.2.640-rc154 tightens copy-only external file bridge evidence for imported external Windows GUI apps. The Wine/Xvfb container launcher now translates copied files through `winepath -w`, prints redacted launch-boundary markers for passed and translated file-argument counts, and Runtime/KDE run records expose `external_file_bridge_arguments_passed`, `external_file_bridge_argument_observed_count`, `external_file_bridge_winepath_translated`, and `external_file_bridge_winepath_translated_count`. `external_file_bridge_ready` now requires copied files, observed container launch-boundary arguments, and Wine path translation, while raw file URI/path output, host mounts, Docker socket mounts, host networking, privileged containers, broad host mounts, and host-root mutation remain closed.
+
+The previous v0.2.640-rc153 checkpoint turned KDE `%U` file-open intent into an actual copy-only container file bridge for imported external Windows GUI apps. `xnix-compat-launch --external-app-handle APPID file:///...` and `windows-external-app-run ... file:///...` now validate local file URIs, copy each accepted file into the isolated Wine/Xvfb container with `docker cp`, pass only the container-local file path to the Windows app, and report `external_file_bridge_copy_enabled`, `external_file_bridge_copied_count`, and `external_file_bridge_ready` while keeping host mounts, raw file URI/path output, Docker socket mounts, host networking, and host-root mutation closed.
 
 The previous v0.2.640-rc152 checkpoint accepted KDE `%U` file-open arguments on the external Windows app desktop launcher path. `xnix-compat-launch --external-app-handle APPID file:///...` and `windows-external-app-run ... file:///...` now record the file-open request as `external_file_uri_arguments_accepted` and `external_file_open_requested` without exposing raw file URIs or enabling file bridge mounts. The staged desktop external Windows app smoke passes one KDE-style file URI while still launching the real imported Notepad executable through the exact handle route.
 

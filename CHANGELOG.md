@@ -4,6 +4,16 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc154] - 2026-07-26
+
+### Changed
+
+- Added Wine path translation for copied external file arguments before Wine/Xvfb GUI app launch.
+- Added redacted container launch-boundary markers for copied external file arguments and translated Wine path counts.
+- Exposed Runtime and desktop launch packet evidence for observed file argument passing and Wine path translation without revealing raw file URI or host file paths.
+- Tightened external file bridge readiness so it requires copied files, observed container file arguments, and Wine path translation.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc154`.
+
 ## [0.2.640-rc153] - 2026-07-26
 
 ### Changed

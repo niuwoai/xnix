@@ -16,68 +16,72 @@ const (
 )
 
 type DesktopExternalWinAppLaunchPacket struct {
-	Version                          string   `json:"version"`
-	SchemaVersion                    string   `json:"schema_version"`
-	RequestType                      string   `json:"request_type"`
-	PacketType                       string   `json:"packet_type"`
-	Status                           string   `json:"status"`
-	Source                           string   `json:"source"`
-	RuntimeMethod                    string   `json:"runtime_method"`
-	ReadMethod                       string   `json:"read_method"`
-	Desktop                          string   `json:"desktop"`
-	ApplicationID                    string   `json:"application_id"`
-	DisplayName                      string   `json:"display_name"`
-	AppVersion                       string   `json:"app_version,omitempty"`
-	ExternalAppHandle                string   `json:"external_app_handle"`
-	ActivationStatusRequestType      string   `json:"activation_status_request_type"`
-	ActivationReceiptBacked          bool     `json:"activation_receipt_backed"`
-	ActivationReceiptSafeForKDE      bool     `json:"activation_receipt_safe_for_kde"`
-	DesktopExecUsesExternalAppHandle bool     `json:"desktop_exec_uses_external_app_handle"`
-	ExternalAppDesktopHandleReady    bool     `json:"external_app_desktop_handle_ready"`
-	DesktopExecUsesRawImportRecord   bool     `json:"desktop_exec_uses_raw_import_record"`
-	DesktopExecUsesStateRoot         bool     `json:"desktop_exec_uses_state_root"`
-	RunRecordConsumed                bool     `json:"run_record_consumed"`
-	RunRecordRequestType             string   `json:"run_record_request_type"`
-	ExternalAppRunRecordConsumed     bool     `json:"external_app_run_record_consumed"`
-	ExternalAppImportRecordConsumed  bool     `json:"external_app_import_record_consumed"`
-	ExternalAppHandleConsumed        bool     `json:"external_app_handle_consumed"`
-	ExternalDesktopArgumentCount     int      `json:"external_desktop_argument_count"`
-	ExternalFileURIArgumentsAccepted bool     `json:"external_file_uri_arguments_accepted"`
-	ExternalFileOpenRequested        bool     `json:"external_file_open_requested"`
-	ExternalFileBridgeCopyEnabled    bool     `json:"external_file_bridge_copy_enabled"`
-	ExternalFileBridgeCopiedCount    int      `json:"external_file_bridge_copied_count"`
-	ExternalFileBridgeReady          bool     `json:"external_file_bridge_ready"`
-	ExternalFileBridgeMountEnabled   bool     `json:"external_file_bridge_mount_enabled"`
-	RawFileURIArgumentsExposed       bool     `json:"raw_file_uri_arguments_exposed"`
-	ImportedArtifactDigestVerified   bool     `json:"imported_artifact_digest_verified"`
-	RuntimeRunRequested              bool     `json:"runtime_run_requested"`
-	RuntimeLaunchExecuted            bool     `json:"runtime_launch_executed"`
-	ExecutionStarted                 bool     `json:"execution_started"`
-	BackendProcessStarted            bool     `json:"backend_process_started"`
-	WindowObserved                   bool     `json:"window_observed"`
-	XWindowObserved                  bool     `json:"x_window_observed"`
-	ContainerRuntimeUsed             bool     `json:"container_runtime_used"`
-	ContainerNetworkMode             string   `json:"container_network_mode"`
-	ContainerHostMountCount          int      `json:"container_host_mount_count"`
-	RuntimeOwned                     bool     `json:"runtime_owned"`
-	GoRuntimeBacked                  bool     `json:"go_runtime_backed"`
-	RuntimeLaunchAuthority           bool     `json:"runtime_launch_authority"`
-	KDEPolicyOwner                   bool     `json:"kde_policy_owner"`
-	KDELaunchAuthority               bool     `json:"kde_launch_authority"`
-	DesktopLaunchPacketReady         bool     `json:"desktop_launch_packet_ready"`
-	SafeForKDE                       bool     `json:"safe_for_kde"`
-	UnsafeReasonIDs                  []string `json:"unsafe_reason_ids"`
-	BackendDetailsExposed            bool     `json:"backend_details_exposed"`
-	RawImportRecordPathExposed       bool     `json:"raw_import_record_path_exposed"`
-	RawExternalAppHandlePathExposed  bool     `json:"raw_external_app_handle_path_exposed"`
-	RawStateRootPathExposed          bool     `json:"raw_state_root_path_exposed"`
-	RawExecutablePathExposed         bool     `json:"raw_executable_path_exposed"`
-	HostRootModified                 bool     `json:"host_root_modified"`
-	PrivilegedContainerRequired      bool     `json:"privileged_container_required"`
-	HostNetworkingRequired           bool     `json:"host_networking_required"`
-	DockerSocketMounted              bool     `json:"docker_socket_mounted"`
-	BroadHostMountRequired           bool     `json:"broad_host_mount_required"`
-	DesktopSafeSummary               string   `json:"desktop_safe_summary"`
+	Version                                   string   `json:"version"`
+	SchemaVersion                             string   `json:"schema_version"`
+	RequestType                               string   `json:"request_type"`
+	PacketType                                string   `json:"packet_type"`
+	Status                                    string   `json:"status"`
+	Source                                    string   `json:"source"`
+	RuntimeMethod                             string   `json:"runtime_method"`
+	ReadMethod                                string   `json:"read_method"`
+	Desktop                                   string   `json:"desktop"`
+	ApplicationID                             string   `json:"application_id"`
+	DisplayName                               string   `json:"display_name"`
+	AppVersion                                string   `json:"app_version,omitempty"`
+	ExternalAppHandle                         string   `json:"external_app_handle"`
+	ActivationStatusRequestType               string   `json:"activation_status_request_type"`
+	ActivationReceiptBacked                   bool     `json:"activation_receipt_backed"`
+	ActivationReceiptSafeForKDE               bool     `json:"activation_receipt_safe_for_kde"`
+	DesktopExecUsesExternalAppHandle          bool     `json:"desktop_exec_uses_external_app_handle"`
+	ExternalAppDesktopHandleReady             bool     `json:"external_app_desktop_handle_ready"`
+	DesktopExecUsesRawImportRecord            bool     `json:"desktop_exec_uses_raw_import_record"`
+	DesktopExecUsesStateRoot                  bool     `json:"desktop_exec_uses_state_root"`
+	RunRecordConsumed                         bool     `json:"run_record_consumed"`
+	RunRecordRequestType                      string   `json:"run_record_request_type"`
+	ExternalAppRunRecordConsumed              bool     `json:"external_app_run_record_consumed"`
+	ExternalAppImportRecordConsumed           bool     `json:"external_app_import_record_consumed"`
+	ExternalAppHandleConsumed                 bool     `json:"external_app_handle_consumed"`
+	ExternalDesktopArgumentCount              int      `json:"external_desktop_argument_count"`
+	ExternalFileURIArgumentsAccepted          bool     `json:"external_file_uri_arguments_accepted"`
+	ExternalFileOpenRequested                 bool     `json:"external_file_open_requested"`
+	ExternalFileBridgeCopyEnabled             bool     `json:"external_file_bridge_copy_enabled"`
+	ExternalFileBridgeCopiedCount             int      `json:"external_file_bridge_copied_count"`
+	ExternalFileBridgeArgumentsPassed         bool     `json:"external_file_bridge_arguments_passed"`
+	ExternalFileBridgeArgumentObservedCount   int      `json:"external_file_bridge_argument_observed_count"`
+	ExternalFileBridgeWinePathTranslated      bool     `json:"external_file_bridge_winepath_translated"`
+	ExternalFileBridgeWinePathTranslatedCount int      `json:"external_file_bridge_winepath_translated_count"`
+	ExternalFileBridgeReady                   bool     `json:"external_file_bridge_ready"`
+	ExternalFileBridgeMountEnabled            bool     `json:"external_file_bridge_mount_enabled"`
+	RawFileURIArgumentsExposed                bool     `json:"raw_file_uri_arguments_exposed"`
+	ImportedArtifactDigestVerified            bool     `json:"imported_artifact_digest_verified"`
+	RuntimeRunRequested                       bool     `json:"runtime_run_requested"`
+	RuntimeLaunchExecuted                     bool     `json:"runtime_launch_executed"`
+	ExecutionStarted                          bool     `json:"execution_started"`
+	BackendProcessStarted                     bool     `json:"backend_process_started"`
+	WindowObserved                            bool     `json:"window_observed"`
+	XWindowObserved                           bool     `json:"x_window_observed"`
+	ContainerRuntimeUsed                      bool     `json:"container_runtime_used"`
+	ContainerNetworkMode                      string   `json:"container_network_mode"`
+	ContainerHostMountCount                   int      `json:"container_host_mount_count"`
+	RuntimeOwned                              bool     `json:"runtime_owned"`
+	GoRuntimeBacked                           bool     `json:"go_runtime_backed"`
+	RuntimeLaunchAuthority                    bool     `json:"runtime_launch_authority"`
+	KDEPolicyOwner                            bool     `json:"kde_policy_owner"`
+	KDELaunchAuthority                        bool     `json:"kde_launch_authority"`
+	DesktopLaunchPacketReady                  bool     `json:"desktop_launch_packet_ready"`
+	SafeForKDE                                bool     `json:"safe_for_kde"`
+	UnsafeReasonIDs                           []string `json:"unsafe_reason_ids"`
+	BackendDetailsExposed                     bool     `json:"backend_details_exposed"`
+	RawImportRecordPathExposed                bool     `json:"raw_import_record_path_exposed"`
+	RawExternalAppHandlePathExposed           bool     `json:"raw_external_app_handle_path_exposed"`
+	RawStateRootPathExposed                   bool     `json:"raw_state_root_path_exposed"`
+	RawExecutablePathExposed                  bool     `json:"raw_executable_path_exposed"`
+	HostRootModified                          bool     `json:"host_root_modified"`
+	PrivilegedContainerRequired               bool     `json:"privileged_container_required"`
+	HostNetworkingRequired                    bool     `json:"host_networking_required"`
+	DockerSocketMounted                       bool     `json:"docker_socket_mounted"`
+	BroadHostMountRequired                    bool     `json:"broad_host_mount_required"`
+	DesktopSafeSummary                        string   `json:"desktop_safe_summary"`
 }
 
 func (plan Plan) DesktopExternalWinAppLaunchPacketPreview(activationRoot string, runRecordPath string, mode string) (DesktopExternalWinAppLaunchPacket, error) {
@@ -123,68 +127,72 @@ func (plan Plan) DesktopExternalWinAppLaunchPacketPreviewFromRunResult(activatio
 	reasons := desktopExternalWinAppLaunchUnsafeReasons(receipt, runRecord)
 	packetReady := len(reasons) == 0
 	packet := DesktopExternalWinAppLaunchPacket{
-		Version:                          runRecord.Version,
-		SchemaVersion:                    DesktopExternalWinAppLaunchPacketSchemaVersion,
-		RequestType:                      DesktopExternalWinAppLaunchPacketRequestType,
-		PacketType:                       "kde-desktop-external-winapp-launch-evidence",
-		Status:                           desktopExternalWinAppLaunchPacketStatus(packetReady),
-		Source:                           "desktop-activation-status-preview+external-app-run-record",
-		RuntimeMethod:                    "GetDesktopExternalWinAppLaunchPacket",
-		ReadMethod:                       "desktop-external-winapp-launch-packet-preview",
-		Desktop:                          "KDE Plasma",
-		ApplicationID:                    plan.ApplicationID,
-		DisplayName:                      plan.DisplayName,
-		AppVersion:                       runRecord.AppVersion,
-		ExternalAppHandle:                receipt.ExternalAppHandle,
-		ActivationStatusRequestType:      status.RequestType,
-		ActivationReceiptBacked:          status.ReceiptBacked,
-		ActivationReceiptSafeForKDE:      receipt.SafeForKDE,
-		DesktopExecUsesExternalAppHandle: receipt.DesktopExecUsesExternalAppHandle,
-		ExternalAppDesktopHandleReady:    receipt.ExternalAppDesktopHandleReady,
-		DesktopExecUsesRawImportRecord:   receipt.DesktopExecUsesRawImportRecord,
-		DesktopExecUsesStateRoot:         receipt.DesktopExecUsesStateRoot,
-		RunRecordConsumed:                true,
-		RunRecordRequestType:             runRecord.RequestType,
-		ExternalAppRunRecordConsumed:     true,
-		ExternalAppImportRecordConsumed:  runRecord.ExternalAppImportRecordConsumed,
-		ExternalAppHandleConsumed:        runRecord.ExternalAppHandleConsumed,
-		ExternalDesktopArgumentCount:     runRecord.ExternalDesktopArgumentCount,
-		ExternalFileURIArgumentsAccepted: runRecord.ExternalFileURIArgumentsAccepted,
-		ExternalFileOpenRequested:        runRecord.ExternalFileOpenRequested,
-		ExternalFileBridgeCopyEnabled:    runRecord.ExternalFileBridgeCopyEnabled,
-		ExternalFileBridgeCopiedCount:    runRecord.ExternalFileBridgeCopiedCount,
-		ExternalFileBridgeReady:          runRecord.ExternalFileBridgeReady,
-		ExternalFileBridgeMountEnabled:   runRecord.ExternalFileBridgeMountEnabled,
-		RawFileURIArgumentsExposed:       runRecord.RawFileURIArgumentsExposed,
-		ImportedArtifactDigestVerified:   runRecord.ImportedArtifactDigestVerified,
-		RuntimeRunRequested:              runRecord.RuntimeRunRequested,
-		RuntimeLaunchExecuted:            runRecord.RuntimeRunExecuted,
-		ExecutionStarted:                 runRecord.ExecutionStarted,
-		BackendProcessStarted:            runRecord.BackendProcessStarted,
-		WindowObserved:                   runRecord.WindowObserved,
-		XWindowObserved:                  runRecord.XWindowObserved,
-		ContainerRuntimeUsed:             runRecord.ContainerRuntimeUsed,
-		ContainerNetworkMode:             runRecord.ContainerNetworkMode,
-		ContainerHostMountCount:          runRecord.ContainerHostMountCount,
-		RuntimeOwned:                     true,
-		GoRuntimeBacked:                  true,
-		RuntimeLaunchAuthority:           true,
-		KDEPolicyOwner:                   false,
-		KDELaunchAuthority:               false,
-		DesktopLaunchPacketReady:         packetReady,
-		SafeForKDE:                       packetReady,
-		UnsafeReasonIDs:                  reasons,
-		BackendDetailsExposed:            runRecord.BackendDetailsExposed,
-		RawImportRecordPathExposed:       runRecord.RawImportRecordPathExposed,
-		RawExternalAppHandlePathExposed:  runRecord.RawExternalAppHandlePathExposed,
-		RawStateRootPathExposed:          runRecord.RawStateRootPathExposed,
-		RawExecutablePathExposed:         runRecord.RawExecutablePathExposed,
-		HostRootModified:                 runRecord.HostRootModified,
-		PrivilegedContainerRequired:      runRecord.PrivilegedContainerRequired,
-		HostNetworkingRequired:           runRecord.HostNetworkingRequired,
-		DockerSocketMounted:              runRecord.DockerSocketMounted,
-		BroadHostMountRequired:           runRecord.BroadHostMountRequired,
-		DesktopSafeSummary:               desktopExternalWinAppLaunchSummary(packetReady),
+		Version:                                   runRecord.Version,
+		SchemaVersion:                             DesktopExternalWinAppLaunchPacketSchemaVersion,
+		RequestType:                               DesktopExternalWinAppLaunchPacketRequestType,
+		PacketType:                                "kde-desktop-external-winapp-launch-evidence",
+		Status:                                    desktopExternalWinAppLaunchPacketStatus(packetReady),
+		Source:                                    "desktop-activation-status-preview+external-app-run-record",
+		RuntimeMethod:                             "GetDesktopExternalWinAppLaunchPacket",
+		ReadMethod:                                "desktop-external-winapp-launch-packet-preview",
+		Desktop:                                   "KDE Plasma",
+		ApplicationID:                             plan.ApplicationID,
+		DisplayName:                               plan.DisplayName,
+		AppVersion:                                runRecord.AppVersion,
+		ExternalAppHandle:                         receipt.ExternalAppHandle,
+		ActivationStatusRequestType:               status.RequestType,
+		ActivationReceiptBacked:                   status.ReceiptBacked,
+		ActivationReceiptSafeForKDE:               receipt.SafeForKDE,
+		DesktopExecUsesExternalAppHandle:          receipt.DesktopExecUsesExternalAppHandle,
+		ExternalAppDesktopHandleReady:             receipt.ExternalAppDesktopHandleReady,
+		DesktopExecUsesRawImportRecord:            receipt.DesktopExecUsesRawImportRecord,
+		DesktopExecUsesStateRoot:                  receipt.DesktopExecUsesStateRoot,
+		RunRecordConsumed:                         true,
+		RunRecordRequestType:                      runRecord.RequestType,
+		ExternalAppRunRecordConsumed:              true,
+		ExternalAppImportRecordConsumed:           runRecord.ExternalAppImportRecordConsumed,
+		ExternalAppHandleConsumed:                 runRecord.ExternalAppHandleConsumed,
+		ExternalDesktopArgumentCount:              runRecord.ExternalDesktopArgumentCount,
+		ExternalFileURIArgumentsAccepted:          runRecord.ExternalFileURIArgumentsAccepted,
+		ExternalFileOpenRequested:                 runRecord.ExternalFileOpenRequested,
+		ExternalFileBridgeCopyEnabled:             runRecord.ExternalFileBridgeCopyEnabled,
+		ExternalFileBridgeCopiedCount:             runRecord.ExternalFileBridgeCopiedCount,
+		ExternalFileBridgeArgumentsPassed:         runRecord.ExternalFileBridgeArgumentsPassed,
+		ExternalFileBridgeArgumentObservedCount:   runRecord.ExternalFileBridgeArgumentObservedCount,
+		ExternalFileBridgeWinePathTranslated:      runRecord.ExternalFileBridgeWinePathTranslated,
+		ExternalFileBridgeWinePathTranslatedCount: runRecord.ExternalFileBridgeWinePathTranslatedCount,
+		ExternalFileBridgeReady:                   runRecord.ExternalFileBridgeReady,
+		ExternalFileBridgeMountEnabled:            runRecord.ExternalFileBridgeMountEnabled,
+		RawFileURIArgumentsExposed:                runRecord.RawFileURIArgumentsExposed,
+		ImportedArtifactDigestVerified:            runRecord.ImportedArtifactDigestVerified,
+		RuntimeRunRequested:                       runRecord.RuntimeRunRequested,
+		RuntimeLaunchExecuted:                     runRecord.RuntimeRunExecuted,
+		ExecutionStarted:                          runRecord.ExecutionStarted,
+		BackendProcessStarted:                     runRecord.BackendProcessStarted,
+		WindowObserved:                            runRecord.WindowObserved,
+		XWindowObserved:                           runRecord.XWindowObserved,
+		ContainerRuntimeUsed:                      runRecord.ContainerRuntimeUsed,
+		ContainerNetworkMode:                      runRecord.ContainerNetworkMode,
+		ContainerHostMountCount:                   runRecord.ContainerHostMountCount,
+		RuntimeOwned:                              true,
+		GoRuntimeBacked:                           true,
+		RuntimeLaunchAuthority:                    true,
+		KDEPolicyOwner:                            false,
+		KDELaunchAuthority:                        false,
+		DesktopLaunchPacketReady:                  packetReady,
+		SafeForKDE:                                packetReady,
+		UnsafeReasonIDs:                           reasons,
+		BackendDetailsExposed:                     runRecord.BackendDetailsExposed,
+		RawImportRecordPathExposed:                runRecord.RawImportRecordPathExposed,
+		RawExternalAppHandlePathExposed:           runRecord.RawExternalAppHandlePathExposed,
+		RawStateRootPathExposed:                   runRecord.RawStateRootPathExposed,
+		RawExecutablePathExposed:                  runRecord.RawExecutablePathExposed,
+		HostRootModified:                          runRecord.HostRootModified,
+		PrivilegedContainerRequired:               runRecord.PrivilegedContainerRequired,
+		HostNetworkingRequired:                    runRecord.HostNetworkingRequired,
+		DockerSocketMounted:                       runRecord.DockerSocketMounted,
+		BroadHostMountRequired:                    runRecord.BroadHostMountRequired,
+		DesktopSafeSummary:                        desktopExternalWinAppLaunchSummary(packetReady),
 	}
 	if packet.Version == "" {
 		packet.Version = plan.ApplicationVersion
