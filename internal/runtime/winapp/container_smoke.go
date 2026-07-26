@@ -40,6 +40,7 @@ type ContainerRequest struct {
 }
 
 type ContainerXGUIRequest struct {
+	ExecutablePath  string
 	ApplicationName string
 	WindowMatch     string
 	ApplicationID   string
@@ -93,6 +94,8 @@ type ContainerXGUIResult struct {
 	DisplayName                 string `json:"display_name,omitempty"`
 	AppVersion                  string `json:"app_version,omitempty"`
 	RecipeBacked                bool   `json:"recipe_backed"`
+	ExecutableName              string `json:"executable_name,omitempty"`
+	LocalExecutableCopied       bool   `json:"local_executable_copied"`
 	ApplicationName             string `json:"application_name"`
 	WindowMatch                 string `json:"window_match"`
 	ContainerImage              string `json:"container_image"`
@@ -223,6 +226,16 @@ func RunContainerSmoke(ctx context.Context, request ContainerRequest) (Container
 
 func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (ContainerXGUIResult, error) {
 	result := baseContainerXGUIResult(request)
+	executablePath := strings.TrimSpace(request.ExecutablePath)
+	if executablePath != "" {
+		validatedExecutablePath, err := validateExecutable(executablePath)
+		if err != nil {
+			return result, err
+		}
+		executablePath = validatedExecutablePath
+		result.ExecutableName = filepath.Base(executablePath)
+		result.LocalExecutableCopied = true
+	}
 
 	dockerPath, err := resolveDocker(request.DockerPath)
 	if err != nil {
@@ -252,16 +265,19 @@ func RunContainerXGUISmoke(ctx context.Context, request ContainerXGUIRequest) (C
 	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	args := restrictedDockerXGUIRunArgs(result.ApplicationName, result.WindowMatch, result.ContainerImage, result.ContainerPlatform)
-	command := exec.CommandContext(runCtx, dockerPath, args...)
-
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
 
 	startedAt := time.Now()
-	err = command.Run()
+	if executablePath == "" {
+		args := restrictedDockerXGUIRunArgs(result.ApplicationName, result.WindowMatch, result.ContainerImage, result.ContainerPlatform)
+		command := exec.CommandContext(runCtx, dockerPath, args...)
+		command.Stdout = &stdout
+		command.Stderr = &stderr
+		err = command.Run()
+	} else {
+		err = runContainerXGUIWithCopiedExecutable(runCtx, dockerPath, executablePath, result, &stdout, &stderr)
+	}
 	result.DurationMillis = time.Since(startedAt).Milliseconds()
 	output := stdout.String() + "\n" + stderr.String()
 	result.ExitCode = exitCode(err)
@@ -403,7 +419,50 @@ func inspectLocalImagePlatform(ctx context.Context, dockerPath string, image str
 	return strings.TrimSpace(string(output)), nil
 }
 
+func runContainerXGUIWithCopiedExecutable(ctx context.Context, dockerPath string, executablePath string, result ContainerXGUIResult, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
+	createOutput, createError, err := runDockerCapture(ctx, dockerPath, restrictedDockerXGUICreateArgs(result.ApplicationName, result.WindowMatch, result.ContainerImage, result.ContainerPlatform))
+	stderr.Write(createError.Bytes())
+	if err != nil {
+		stdout.Write(createOutput.Bytes())
+		return err
+	}
+	containerID := strings.TrimSpace(createOutput.String())
+	if containerID == "" {
+		return errors.New("container X GUI runner did not return a container id")
+	}
+	defer exec.CommandContext(context.Background(), dockerPath, "rm", "-f", containerID).Run()
+
+	_, copyError, err := runDockerCapture(ctx, dockerPath, []string{"cp", executablePath, containerID + ":/" + filepath.Base(executablePath)})
+	stderr.Write(copyError.Bytes())
+	if err != nil {
+		return err
+	}
+
+	startCommand := exec.CommandContext(ctx, dockerPath, "start", "-a", containerID)
+	startCommand.Stdout = stdout
+	startCommand.Stderr = stderr
+	return startCommand.Run()
+}
+
+func runDockerCapture(ctx context.Context, dockerPath string, args []string) (*bytes.Buffer, *bytes.Buffer, error) {
+	command := exec.CommandContext(ctx, dockerPath, args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
+	return &stdout, &stderr, err
+}
+
 func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image string, platform string) []string {
+	return append([]string{"run", "--rm"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform)...)
+}
+
+func restrictedDockerXGUICreateArgs(appName string, windowMatch string, image string, platform string) []string {
+	return append([]string{"create"}, restrictedDockerXGUIContainerArgs(appName, windowMatch, image, platform)...)
+}
+
+func restrictedDockerXGUIContainerArgs(appName string, windowMatch string, image string, platform string) []string {
 	launcher := strings.Join([]string{
 		"set -eu",
 		"Xvfb \"$DISPLAY\" -screen 0 1024x768x24 -ac >/tmp/xvfb.log 2>&1 &",
@@ -415,7 +474,7 @@ func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image strin
 		"printf 'XNIX_X_GUI_XSERVER_STARTED=true\\n'",
 		"wineboot --init >/tmp/wineboot.log 2>&1 || true",
 		"printf 'XNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n'",
-		"wine \"$XNIX_GUI_APP\" >/tmp/wine-gui.log 2>&1 &",
+		"if [ -f \"$XNIX_GUI_APP\" ]; then wine start /unix \"$XNIX_GUI_APP\" >/tmp/wine-gui.log 2>&1 & else wine \"$XNIX_GUI_APP\" >/tmp/wine-gui.log 2>&1 & fi",
 		"app_pid=$!",
 		"observed=0",
 		"for _attempt in $(seq 1 20); do",
@@ -428,8 +487,6 @@ func restrictedDockerXGUIRunArgs(appName string, windowMatch string, image strin
 		"printf 'XNIX_X_GUI_WINDOW_OBSERVED=true\\n'",
 	}, "\n")
 	args := []string{
-		"run",
-		"--rm",
 		"--pull", "never",
 		"--network", "none",
 		"--cpus", "2",

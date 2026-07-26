@@ -4,6 +4,14 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc127] - 2026-07-26
+
+### Added
+
+- Added `windows-app-container-x-gui-smoke --executable FILE.exe` support for running owner-supplied external Windows GUI executables inside the restricted local Wine/Xvfb container.
+- Added Runtime and CLI coverage proving the external executable is copied into the isolated container before start, redacts raw host paths from product output, and keeps host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, and host-root mutation closed.
+- Verified restricted local execution with an external file-form Notepad PE copied into the Wine/Xvfb container and observed as an X window.
+
 ## [0.2.640-rc126] - 2026-07-26
 
 ### Changed

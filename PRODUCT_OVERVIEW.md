@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-26 | Current version: v0.2.640-rc126
+> Last updated: 2026-07-26 | Current version: v0.2.640-rc127
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc127 checkpoint candidate runs an owner-supplied external Windows GUI executable through the Go Runtime local Wine/Xvfb container path. `windows-app-container-x-gui-smoke --executable FILE.exe` validates a local Windows executable, creates an isolated container, copies only that file into the container before start, launches it with Wine, and records the executable name, ad-hoc app identity, copied-artifact evidence, and window observation in the Runtime payload. Local restricted evidence passed with an external file-form Notepad PE copied into the container and observed through Xvfb. This moves the local lane beyond direct Wine built-in invocation while keeping host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, backend launch enablement, raw host-path exposure, and host-root mutation closed.
 
 The v0.2.640-rc126 checkpoint candidate prepares the real external Windows GUI app lane by letting the Go Runtime container X GUI smoke carry ad-hoc application identity. `windows-app-container-x-gui-smoke` now accepts `--app-id`, `--display-name`, and `--app-version` for non-recipe runs, so a container-provided or owner-built GUI executable can produce correctly identified Runtime evidence before it graduates into a signed recipe. Recipe-backed runs still take identity from the digest-verified registry entry, and the smoke remains network-isolated with no host mounts, Docker socket mounts, privileged container, host networking, backend launch enablement, or host-root mutation.
 

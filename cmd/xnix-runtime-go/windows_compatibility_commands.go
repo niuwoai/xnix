@@ -375,6 +375,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 
 	var appName string
 	var windowMatch string
+	var executablePath string
 	var appID string
 	var displayName string
 	var appVersion string
@@ -386,6 +387,7 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	var timeoutText string
 	flags.StringVar(&appName, "app", winapp.DefaultContainerGUIApp, "Windows GUI application name available in the Wine image")
 	flags.StringVar(&windowMatch, "window-match", winapp.DefaultContainerWindowMatch, "case-insensitive X window match text")
+	flags.StringVar(&executablePath, "executable", "", "optional local Windows GUI .exe to copy into the isolated container")
 	flags.StringVar(&appID, "app-id", "", "optional application id for ad-hoc container GUI evidence")
 	flags.StringVar(&displayName, "display-name", "", "optional display name for ad-hoc container GUI evidence")
 	flags.StringVar(&appVersion, "app-version", "", "optional application version for ad-hoc container GUI evidence")
@@ -402,12 +404,22 @@ func runWindowsAppContainerXGUISmoke(args []string, stdout io.Writer) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("%s does not accept positional arguments", "windows-app-container-x-gui-smoke")
 	}
+	appFlagProvided := false
+	flags.Visit(func(visited *flag.Flag) {
+		if visited.Name == "app" {
+			appFlagProvided = true
+		}
+	})
+	if strings.TrimSpace(executablePath) != "" && !appFlagProvided {
+		appName = "/" + filepath.Base(executablePath)
+	}
 
 	timeout, err := time.ParseDuration(timeoutText)
 	if err != nil {
 		return fmt.Errorf("parse timeout: %w", err)
 	}
 	request := winapp.ContainerXGUIRequest{
+		ExecutablePath:  strings.TrimSpace(executablePath),
 		ApplicationName: appName,
 		WindowMatch:     windowMatch,
 		ApplicationID:   strings.TrimSpace(appID),

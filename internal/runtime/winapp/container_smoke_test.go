@@ -245,6 +245,68 @@ func TestRunContainerXGUISmokeObservesWindowWithRestrictedDockerRunner(t *testin
 	}
 }
 
+func TestRunContainerXGUISmokeMountsExternalExecutableReadOnly(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell docker fixture is not portable to Windows hosts")
+	}
+
+	tempDir := t.TempDir()
+	executablePath := filepath.Join(tempDir, "xnix-messagebox-smoke.exe")
+	if err := os.WriteFile(executablePath, []byte("fixture"), 0o600); err != nil {
+		t.Fatalf("WriteFile executable returned error: %v", err)
+	}
+	logPath := filepath.Join(tempDir, "docker-x-gui-executable.log")
+	dockerPath := writeFakeXGUIDocker(t, tempDir, logPath)
+
+	result, err := RunContainerXGUISmoke(context.Background(), ContainerXGUIRequest{
+		ExecutablePath:  executablePath,
+		ApplicationName: "/xnix-messagebox-smoke.exe",
+		WindowMatch:     "Xnix Windows GUI Smoke",
+		Image:           "local/wine-x-gui:test",
+		Platform:        "linux/amd64",
+		DockerPath:      dockerPath,
+		Timeout:         5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("RunContainerXGUISmoke returned error: %v", err)
+	}
+	if result.Status != PassedStatus ||
+		result.ExecutableName != "xnix-messagebox-smoke.exe" ||
+		!result.LocalExecutableCopied ||
+		result.ApplicationName != "/xnix-messagebox-smoke.exe" ||
+		result.WindowMatch != "Xnix Windows GUI Smoke" ||
+		!result.XWindowObserved ||
+		result.HostRootModified ||
+		result.PrivilegedContainerRequired ||
+		result.HostNetworkingRequired ||
+		result.DockerSocketMounted ||
+		result.BroadHostMountRequired ||
+		result.HostMountCount != 0 {
+		t.Fatalf("unexpected external executable X GUI result: %#v", result)
+	}
+
+	logBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile log returned error: %v", err)
+	}
+	log := string(logBytes)
+	for _, token := range []string{
+		"create --pull never --network none",
+		"--env XNIX_GUI_APP=/xnix-messagebox-smoke.exe",
+		"--env XNIX_WINDOW_MATCH=Xnix Windows GUI Smoke",
+		"cp " + executablePath,
+		"start -a",
+		"wine \"$XNIX_GUI_APP\"",
+	} {
+		if !strings.Contains(log, token) {
+			t.Fatalf("fake X GUI docker log missing %q: %s", token, log)
+		}
+	}
+	if strings.Contains(log, "docker.sock") || strings.Contains(log, "--privileged") || strings.Contains(log, "--network host") || strings.Contains(log, "--volume") || strings.Contains(log, "--mount") {
+		t.Fatalf("external executable X GUI docker log contains unsafe host access: %s", log)
+	}
+}
+
 func writeFakeDocker(t *testing.T, tempDir string, logPath string) string {
 	t.Helper()
 	path := filepath.Join(tempDir, "fake-docker")
@@ -268,6 +330,10 @@ func writeFakeXGUIDocker(t *testing.T, tempDir string, logPath string) string {
 		"printf '%s\\n' \"$*\" >> '" + logPath + "'\n" +
 		"if test \"$1 $2\" = 'image inspect'; then exit 0; fi\n" +
 		"if test \"$1\" = 'run'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n0x600001 \"Untitled - Notepad\": (\"notepad.exe\" \"notepad.exe\") 721x519+4+23 +4+23\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'create'; then printf 'fake-x-gui-container\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'cp'; then exit 0; fi\n" +
+		"if test \"$1 $2\" = 'start -a'; then printf 'XNIX_X_GUI_XSERVER_STARTED=true\\nXNIX_X_GUI_WINE_BOOTSTRAP_ATTEMPTED=true\\n0x600001 \"Xnix Windows GUI Smoke\": (\"xnix-messagebox-smoke.exe\" \"xnix-messagebox-smoke.exe\") 320x160+20+20 +20+20\\nXNIX_X_GUI_WINDOW_OBSERVED=true\\n'; exit 0; fi\n" +
+		"if test \"$1\" = 'rm'; then exit 0; fi\n" +
 		"exit 2\n"
 	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
 		t.Fatalf("WriteFile docker returned error: %v", err)

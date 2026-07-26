@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc126`.
+The project is currently at `v0.2.640-rc127`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc126`.
 
 ## Current Checkpoint
 
-v0.2.640-rc126 lets the Go Runtime container X GUI smoke carry ad-hoc application identity through `--app-id`, `--display-name`, and `--app-version` when no recipe is being used. This gives the next real external Windows GUI app lane a Go-owned evidence identity without weakening recipe-backed digest validation or opening backend launch, host mounts, Docker socket mounts, host networking, or host-root mutation.
+v0.2.640-rc127 lets the Go Runtime container X GUI smoke run an owner-supplied external Windows GUI `.exe` through `--executable`. The runner creates an isolated Wine/Xvfb container, copies only that executable file into it before start, records `local_executable_copied=true`, and keeps host mounts, Docker socket mounts, privileged containers, host networking, broad host mounts, backend launch enablement, raw host-path exposure, and host-root mutation closed. Local evidence passed with an external file-form Notepad PE copied into the container and observed through Xvfb.
+
+The previous v0.2.640-rc126 checkpoint let the Go Runtime container X GUI smoke carry ad-hoc application identity through `--app-id`, `--display-name`, and `--app-version` when no recipe is being used. This gives the next real external Windows GUI app lane a Go-owned evidence identity without weakening recipe-backed digest validation or opening backend launch, host mounts, Docker socket mounts, host networking, or host-root mutation.
 
 The previous v0.2.640-rc125 checkpoint surfaced the staged desktop launcher/session-gate facts from the real Notepad `.desktop` run inside the Go Runtime real GUI packet and KDE GUI evidence card. The packet now preserves launch authorization, session-gated dispatch, controlled execution session, digest verification, Runtime-owner/KDE read-model consumability, and post-review dispatch fields while keeping backend launch, raw command output, host mounts, Docker socket mounts, host networking, and host-root mutation closed.
 
