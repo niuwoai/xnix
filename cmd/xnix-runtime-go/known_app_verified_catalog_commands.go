@@ -110,3 +110,33 @@ func runKnownAppVerifiedCatalogLaunchHandoffRecord(args []string, stdout io.Writ
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(record)
 }
+
+func runKnownAppVerifiedCatalogLaunchMaterializationRecord(args []string, stdout io.Writer) error {
+	flags := flag.NewFlagSet(appidentity.KnownAppVerifiedCatalogLaunchMaterializationRequestType, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	stateRoot := flags.String("state-root", "", "Runtime owner state root containing the verified catalog launch handoff")
+	handoffRelativePath := flags.String("handoff-relative-path", "", "relative verified catalog launch handoff path forwarded by the desktop")
+	cacheRoot := flags.String("cache-root", "", "managed known Windows app cache root")
+	guestBoundary := flags.String("guest-boundary", "", "controlled managed guest boundary")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("%s does not accept positional arguments", appidentity.KnownAppVerifiedCatalogLaunchMaterializationRequestType)
+	}
+
+	record, err := appidentity.RecordKnownAppVerifiedCatalogLaunchMaterialization(appidentity.KnownAppVerifiedCatalogLaunchMaterializationRequest{
+		StateRoot:           *stateRoot,
+		HandoffRelativePath: *handoffRelativePath,
+		CacheRoot:           *cacheRoot,
+		GuestBoundary:       *guestBoundary,
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(record)
+}

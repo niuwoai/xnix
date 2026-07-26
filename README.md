@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc201`.
+The project is currently at `v0.2.640-rc202`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc201`.
 
 ## Current Checkpoint
 
-v0.2.640-rc201 turns accepted verified-catalog real run evidence into a Runtime-owner launch handoff. `xnix-runtime-go known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned acceptance JSON, persists a safe handoff under the Runtime state root, and returns a KDE-callable owner-service route that forwards only the handoff handle to `RequestRuntimeOwnedLaunch`. It does not reconstruct receipts in KDE, expose state roots or acceptance paths, start the desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
+v0.2.640-rc202 lets the Runtime owner consume the verified-catalog launch handoff and materialize launch state. `xnix-runtime-go known-app-verified-catalog-launch-materialization-record --state-root STATE --handoff-relative-path HANDOFF --cache-root CACHE` reads the KDE-forwarded handoff handle, records the launch authorization receipt, creates the controlled execution session when the managed artifact is ready, and records the session-gated review receipt. The command still does not start dispatch, execution, desktop launch, or backend processes. The rc202 q4 validation used a fresh 7zr run acceptance and returned `materialization_ready=true`, `controlled_session_record_state=persisted`, `session_gated_review_receipt_recorded=true`, and `backend_process_started=false`.
+
+The previous v0.2.640-rc201 checkpoint turns accepted verified-catalog real run evidence into a Runtime-owner launch handoff. `xnix-runtime-go known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned acceptance JSON, persists a safe handoff under the Runtime state root, and returns a KDE-callable owner-service route that forwards only the handoff handle to `RequestRuntimeOwnedLaunch`. It does not reconstruct receipts in KDE, expose state roots or acceptance paths, start the desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
 
 The previous v0.2.640-rc200 checkpoint lets the q4 real app smoke return desktop consumption evidence directly. `ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr --verified-catalog-run-plan test/fixtures/known_app_verified_catalog_run_plan_7zr.json --verified-catalog-acceptance-json --desktop-consumption-json` runs 7zr through Go-started QEMU and guest Wine, creates Go-owned verified catalog run acceptance, feeds it into Compatibility Center and KDE Center page previews, and returns a desktop-safe packet proving both read models consumed the fresh evidence. The rc200 q4 validation returned `compatibility_center_consumed=true`, `kde_center_page_consumed=true`, and `host_compilation_avoided=true`.
 

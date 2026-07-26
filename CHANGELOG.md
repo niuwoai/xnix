@@ -4,6 +4,19 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc202] - 2026-07-27
+
+### Added
+
+- Added the Go Runtime `known-app-verified-catalog-launch-materialization-record` command, which consumes a relative verified-catalog launch handoff and lets the Runtime owner materialize launch authorization, controlled session, and session-gated review state.
+- Added Go unit and CLI coverage for the materialization command's fail-closed missing-artifact path, including proof that the desktop still forwards only the handoff handle and that dispatch, execution, desktop launch, and backend process gates remain closed.
+
+### Changed
+
+- Expanded the q4 targeted Go test default regex and layout guard to include verified-catalog launch materialization coverage.
+- Verified the rc202 materialization path on q4 with a fresh 7zr verified-catalog run acceptance, producing persisted launch authorization, controlled execution session, and session-gated review receipt state while keeping backend process start disabled.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc202`.
+
 ## [0.2.640-rc201] - 2026-07-27
 
 ### Added

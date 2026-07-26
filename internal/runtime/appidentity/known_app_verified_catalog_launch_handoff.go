@@ -93,6 +93,7 @@ type KnownAppVerifiedCatalogLaunchHandoffRecord struct {
 }
 
 type knownAppVerifiedCatalogLaunchHandoffPayload struct {
+	Version                              string `json:"version"`
 	SchemaVersion                        string `json:"schema_version"`
 	RequestType                          string `json:"request_type"`
 	AppID                                string `json:"app_id"`
@@ -145,6 +146,7 @@ func RecordKnownAppVerifiedCatalogLaunchHandoff(request KnownAppVerifiedCatalogL
 	handoffID := KnownAppVerifiedCatalogLaunchHandoffID(acceptance.AppID, acceptance.AppVersion, acceptance.AcceptanceType)
 	relativePath := KnownAppVerifiedCatalogLaunchHandoffRelativePath(handoffID)
 	payload := knownAppVerifiedCatalogLaunchHandoffPayload{
+		Version:                              acceptance.Version,
 		SchemaVersion:                        KnownAppVerifiedCatalogLaunchHandoffSchemaVersion,
 		RequestType:                          KnownAppVerifiedCatalogLaunchHandoffRequestType,
 		AppID:                                acceptance.AppID,

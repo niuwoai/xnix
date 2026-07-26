@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc201
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc202
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc202 checkpoint lets the Runtime owner materialize launch state from the KDE-forwarded verified-catalog handoff. `known-app-verified-catalog-launch-materialization-record --state-root STATE --handoff-relative-path HANDOFF --cache-root CACHE` consumes the handoff, records the launch authorization receipt, creates the controlled execution session when managed artifact verification is ready, and records the session-gated review receipt. The result is the next concrete step after rc201: KDE still only forwards a handle, while the Runtime owner prepares the opaque receipts and session needed by the eventual dispatch runner. The rc202 q4 validation used a fresh 7zr run acceptance and returned `materialization_ready=true`, `controlled_session_record_state=persisted`, `session_gated_review_receipt_recorded=true`, and `backend_process_started=false`. The command does not start dispatch, execution, desktop launch, or backend processes.
 
 The v0.2.640-rc201 checkpoint starts converting accepted real-run catalog evidence into a Runtime-owner launch handoff. `known-app-verified-catalog-launch-handoff-record --state-root STATE --known-app-verified-catalog-run-acceptance ACCEPTANCE.json` consumes the Go-owned verified catalog run acceptance JSON, writes a safe handoff payload under the Runtime state root, and returns a KDE-callable owner-service route for `RequestRuntimeOwnedLaunch`. KDE still forwards only a relative handoff handle; it does not reconstruct receipts, read the state root, expose acceptance paths, start a desktop launch, or start backend processes. The rc201 q4 validation consumed a fresh 7zr acceptance and returned `desktop_trigger_ready=true`, `owner_service_call_ready=true`, `owner_materialization_required=true`, and `backend_process_started=false`.
 
