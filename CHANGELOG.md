@@ -4,6 +4,18 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc192] - 2026-07-27
+
+### Added
+
+- Added `known-app-verified-catalog-preview`, a Go-owned Runtime read model that consumes safe known-app matrix evidence and lists verified 7zr and busybox-w32 entries for KDE/Compatibility Center review.
+- Added targeted Go unit and CLI coverage for the verified catalog, including incomplete and unsafe matrix evidence rejection.
+
+### Changed
+
+- Expanded the q4 remote Go test default regex to cover known-app matrix evidence and verified catalog previews.
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc192`.
+
 ## [0.2.640-rc191] - 2026-07-27
 
 ### Added

@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc191`.
+The project is currently at `v0.2.640-rc192`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc191`.
 
 ## Current Checkpoint
 
-v0.2.640-rc191 promotes Go-owned known Windows app matrix evidence into the release/readiness evidence chain. `scripts/release_evidence_index.rb --known-app-matrix-evidence MATRIX.json` and `scripts/merge_readiness_packet.rb --known-app-matrix-evidence MATRIX.json` now consume the safe `known-app-matrix-evidence-preview` result for multiple catalog-backed apps, require both 7zr and busybox-w32 to have passed q4 QEMU/Wine evidence with checksum, marker, serial-log, projection, and redaction checks, and add a release-only blocker when the matrix is missing or incomplete. The matrix evidence records that q4 executed QEMU/Wine, while the Ruby reports themselves stay offline fixture consumers and do not run q4, QEMU, Wine, Docker, network checks, package managers, staging, tagging, pushing, or host-root mutation on the macOS host.
+v0.2.640-rc192 adds a Go-owned verified catalog for known Windows applications that have real q4 matrix evidence. `xnix-runtime-go known-app-verified-catalog-preview --matrix-evidence MATRIX_EVIDENCE.json` consumes the safe `known-app-matrix-evidence-preview` output and exposes 7zr and busybox-w32 as review-only Runtime catalog entries with verified q4 matrix state, safe `xnix-compat-launch --app <id>` request shape, KDE-visible catalog metadata, and closed launch/write/backend/path/output gates. `scripts/remote_go_test.rb` now includes the matrix evidence and verified catalog tests in its default q4 targeted test regex so small-version Go validation stays q4-first rather than compiling on the macOS host.
+
+The previous v0.2.640-rc191 checkpoint promotes Go-owned known Windows app matrix evidence into the release/readiness evidence chain. `scripts/release_evidence_index.rb --known-app-matrix-evidence MATRIX.json` and `scripts/merge_readiness_packet.rb --known-app-matrix-evidence MATRIX.json` now consume the safe `known-app-matrix-evidence-preview` result for multiple catalog-backed apps, require both 7zr and busybox-w32 to have passed q4 QEMU/Wine evidence with checksum, marker, serial-log, projection, and redaction checks, and add a release-only blocker when the matrix is missing or incomplete. The matrix evidence records that q4 executed QEMU/Wine, while the Ruby reports themselves stay offline fixture consumers and do not run q4, QEMU, Wine, Docker, network checks, package managers, staging, tagging, pushing, or host-root mutation on the macOS host.
 
 The previous v0.2.640-rc190 checkpoint promotes the Go-owned known existing Windows app acceptance into the release/readiness evidence chain. `scripts/release_evidence_index.rb --known-existing-winapp-acceptance ACCEPTANCE.json` and `scripts/merge_readiness_packet.rb --known-existing-winapp-acceptance ACCEPTANCE.json` now consume the safe Go acceptance result for a real catalog-backed app such as 7zr, verify app identity, checksum and marker evidence, isolated guest execution, compatibility-engine execution, output redaction, and closed host/container gates, and add a release-only blocker when that evidence is missing or blocked. The Ruby reports remain offline fixture consumers and do not run q4, QEMU, Wine, Docker, network checks, package managers, staging, tagging, pushing, or host-root mutation.
 

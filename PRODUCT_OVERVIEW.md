@@ -1,10 +1,12 @@
 # Xnix Product Overview
 
-> Last updated: 2026-07-27 | Current version: v0.2.640-rc191
+> Last updated: 2026-07-27 | Current version: v0.2.640-rc192
 
 ## Summary
 
 Xnix is an atomic Linux desktop designed to make existing Windows applications feel native. KDE Plasma provides the familiar desktop shell; the independent Xnix Compatibility Runtime owns KDE shell integration plans, backend selection plans, backend binding plans, backend capability matrices, recipes, diagnostics, permissions, snapshots, execution sessions, and rollback. The existing Buildroot/QEMU image remains a learning and low-level verification baseline, not the flagship product base.
+
+The v0.2.640-rc192 checkpoint turns passed q4 known-app matrix evidence into a Go-owned verified application catalog. `known-app-verified-catalog-preview` consumes safe matrix evidence and exposes 7zr and busybox-w32 as review-only Runtime catalog entries with verified q4 matrix state, KDE-visible application metadata, and safe future `xnix-compat-launch --app <id>` request shapes while keeping direct launch, backend start, desktop-file writes, raw output, q4 paths, and host mutation disabled. The q4 remote Go test default regex now covers both matrix evidence and verified catalog previews so small-version Go validation keeps using q4 compile/test resources.
 
 The v0.2.640-rc191 checkpoint makes multi-app known Windows app matrix evidence part of release/readiness classification. Release evidence and merge readiness can now consume a Go-owned `known-app-matrix-evidence-preview` JSON report, require both 7zr and busybox-w32 to have passed q4 QEMU/Wine evidence with checksum verification, marker observation, serial logs, Compatibility Center and KDE projection readiness, redacted output, and closed host/container gates, and report a release-only blocker when the matrix is missing or incomplete. These Ruby reports treat q4/QEMU/Wine execution as external evidence only; they do not execute q4, compile Go, run QEMU/Wine, call Docker, fetch the network, invoke package managers, stage, tag, push, or mutate the macOS host.
 

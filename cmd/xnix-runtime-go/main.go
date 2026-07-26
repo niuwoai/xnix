@@ -253,6 +253,8 @@ func run(args []string, stdout io.Writer) error {
 		return runKnownAppKDERuntimeStatusLaunchActionTriggerPreview(args[1:], stdout)
 	case "known-app-matrix-evidence-preview":
 		return runKnownAppMatrixEvidencePreview(args[1:], stdout)
+	case "known-app-verified-catalog-preview":
+		return runKnownAppVerifiedCatalogPreview(args[1:], stdout)
 	case "gui-smoke-evidence-preview":
 		return runGUISmokeEvidencePreview(args[1:], stdout)
 	case "real-winapp-gui-evidence-packet-preview":
