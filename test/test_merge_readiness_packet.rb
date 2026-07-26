@@ -203,6 +203,75 @@ q4_messagebox_smoke = write_json_fixture(
   "docker_socket_mounted" => false,
   "broad_host_mount_required" => false
 )
+known_existing_winapp_acceptance = write_json_fixture(
+  "schema_version" => "xnix.runtime.known_existing_winapp_acceptance.v1",
+  "request_type" => "known-existing-winapp-acceptance-preview",
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "acceptance_type" => "known-existing-windows-app-real-run-acceptance",
+  "acceptance_ready" => true,
+  "app_id" => "7zr",
+  "display_name" => "7-Zip standalone console executable",
+  "app_version" => "26.02",
+  "existing_windows_app" => true,
+  "known_portable_catalog_backed" => true,
+  "checksum_verified" => true,
+  "marker_observed" => true,
+  "guest_reachable" => true,
+  "runtime_started_isolated_guest" => true,
+  "isolated_guest_execution_observed" => true,
+  "compatibility_engine_execution_observed" => true,
+  "loopback_only_networking" => true,
+  "serial_log_persisted" => true,
+  "output_redacted" => true,
+  "run_report_path_exposed" => false,
+  "remote_host_exposed" => false,
+  "guest_endpoint_exposed" => false,
+  "raw_path_exposed" => false,
+  "raw_output_exposed" => false,
+  "runtime_argv_exposed" => false,
+  "runner_path_exposed" => false,
+  "network_required" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "docker_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false
+)
+failed_known_existing_winapp_acceptance = write_json_fixture(
+  "schema_version" => "xnix.runtime.known_existing_winapp_acceptance.v1",
+  "request_type" => "known-existing-winapp-acceptance-preview",
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "acceptance_type" => "known-existing-windows-app-real-run-acceptance",
+  "acceptance_ready" => false,
+  "app_id" => "org.xnix.apps.messagebox",
+  "existing_windows_app" => false,
+  "known_portable_catalog_backed" => false,
+  "checksum_verified" => true,
+  "marker_observed" => false,
+  "isolated_guest_execution_observed" => true,
+  "compatibility_engine_execution_observed" => true,
+  "output_redacted" => true,
+  "run_report_path_exposed" => false,
+  "remote_host_exposed" => false,
+  "guest_endpoint_exposed" => false,
+  "raw_path_exposed" => false,
+  "raw_output_exposed" => false,
+  "runtime_argv_exposed" => false,
+  "runner_path_exposed" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "docker_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false
+)
 failed_q4_messagebox_smoke = write_json_fixture(
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
   "request_type" => "q4-messagebox-smoke",
@@ -294,6 +363,7 @@ base_args = [
   "--desktop-trigger-request-preflight-smoke", preflight_smoke.path,
   "--q4-sample-notepad-smoke", q4_sample_notepad_smoke.path,
   "--q4-messagebox-smoke", q4_messagebox_smoke.path,
+  "--known-existing-winapp-acceptance", known_existing_winapp_acceptance.path,
   "--fixture-matrix-report", fixture_matrix.path
 ]
 
@@ -333,6 +403,11 @@ begin
   assert(q4_messagebox_status.fetch("smoke_passed"), "packet must report passing q4 MessageBox document evidence")
   assert(q4_messagebox_status.fetch("status") == "passed", "packet must expose q4 MessageBox document status")
   assert(!packet.fetch("release_blocking_reasons").include?("q4-messagebox-document-content-smoke-not-passed"), "passing q4 MessageBox document evidence must close its release blocker")
+  known_existing_status = packet.fetch("known_existing_winapp_acceptance_status")
+  assert(known_existing_status.fetch("evidence_supplied"), "packet must report supplied known existing Windows app acceptance evidence")
+  assert(known_existing_status.fetch("acceptance_passed"), "packet must report passing known existing Windows app acceptance evidence")
+  assert(known_existing_status.fetch("status") == "passed", "packet must expose known existing Windows app acceptance status")
+  assert(!packet.fetch("release_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "passing known existing Windows app evidence must close its release blocker")
 
   tool_statuses = packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(tool_statuses.values.all? { |tool| tool.fetch("status") == "pass" }, "all fixture-backed tools must pass")
@@ -341,6 +416,7 @@ begin
   assert(tool_statuses.fetch("desktop_trigger_request_preflight_smoke").fetch("command") == "fixture:desktop_trigger_request_preflight_smoke", "preflight smoke fixture command must not expose fixture path")
   assert(tool_statuses.fetch("q4_sample_notepad_smoke").fetch("command") == "fixture:q4_sample_notepad_smoke", "q4 Sample Notepad fixture command must not expose fixture path")
   assert(tool_statuses.fetch("q4_messagebox_smoke").fetch("command") == "fixture:q4_messagebox_smoke", "q4 MessageBox fixture command must not expose fixture path")
+  assert(tool_statuses.fetch("known_existing_winapp_acceptance").fetch("command") == "fixture:known_existing_winapp_acceptance", "known existing Windows app fixture command must not expose fixture path")
   assert(packet.fetch("changed_file_counts").fetch("total") == 3, "packet must include changed file counts")
   assert(packet.fetch("lane_classification").any? { |lane| lane.fetch("id") == "cw10-evidence-drift-harness" }, "packet must include lane classification")
   assert(packet.fetch("required_follow_up_commands").include?("ruby scripts/verify_layout.rb"), "packet must include follow-up commands")
@@ -361,6 +437,7 @@ begin
   assert(markdown.include?("Desktop-trigger request preflight smoke: passed"), "Markdown must include preflight smoke status")
   assert(markdown.include?("q4 Sample Notepad acceptance smoke: passed"), "Markdown must include q4 Sample Notepad acceptance status")
   assert(markdown.include?("q4 MessageBox document smoke: passed"), "Markdown must include q4 MessageBox document status")
+  assert(markdown.include?("Known existing Windows app acceptance: passed"), "Markdown must include known existing Windows app acceptance status")
 
   no_preflight_args = base_args.each_slice(2).reject { |option, _path| option == "--desktop-trigger-request-preflight-smoke" }.flatten
   no_preflight_stdout, no_preflight_stderr, no_preflight_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_preflight_args)
@@ -402,6 +479,23 @@ begin
   assert(failed_messagebox_packet.fetch("q4_messagebox_smoke_status").fetch("status") == "blocked", "failed q4 MessageBox evidence must be visible")
   assert(failed_messagebox_packet.fetch("release_blocking_reasons").include?("q4-messagebox-document-content-smoke-not-passed"), "failed q4 MessageBox evidence must add a release blocker")
   assert(!failed_messagebox_packet.fetch("merge_blocking_reasons").include?("q4-messagebox-document-content-smoke-not-passed"), "failed q4 MessageBox evidence must not block merge")
+
+  no_known_existing_args = base_args.each_slice(2).reject { |option, _path| option == "--known-existing-winapp-acceptance" }.flatten
+  no_known_existing_stdout, no_known_existing_stderr, no_known_existing_status = Open3.capture3("ruby", script.to_s, "--format", "json", *no_known_existing_args)
+  assert(no_known_existing_status.success?, "missing known existing Windows app evidence case must still emit packet: #{no_known_existing_stderr}")
+  no_known_existing_packet = JSON.parse(no_known_existing_stdout)
+  assert(no_known_existing_packet.fetch("known_existing_winapp_acceptance_status").fetch("status") == "not-supplied", "missing known existing Windows app evidence must be visible")
+  assert(no_known_existing_packet.fetch("release_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "missing known existing Windows app evidence must block release")
+  assert(!no_known_existing_packet.fetch("merge_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "missing known existing Windows app evidence must not block merge")
+
+  failed_known_existing_args = base_args.dup
+  failed_known_existing_args[failed_known_existing_args.index("--known-existing-winapp-acceptance") + 1] = failed_known_existing_winapp_acceptance.path
+  failed_known_existing_stdout, failed_known_existing_stderr, failed_known_existing_status = Open3.capture3("ruby", script.to_s, "--format", "json", *failed_known_existing_args)
+  assert(failed_known_existing_status.success?, "failed known existing Windows app evidence case must still emit packet: #{failed_known_existing_stderr}")
+  failed_known_existing_packet = JSON.parse(failed_known_existing_stdout)
+  assert(failed_known_existing_packet.fetch("known_existing_winapp_acceptance_status").fetch("status") == "blocked", "failed known existing Windows app evidence must be visible")
+  assert(failed_known_existing_packet.fetch("release_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "failed known existing Windows app evidence must add a release blocker")
+  assert(!failed_known_existing_packet.fetch("merge_blocking_reasons").include?("known-existing-winapp-acceptance-not-passed"), "failed known existing Windows app evidence must not block merge")
 
   failed_preflight_args = base_args.dup
   failed_preflight_args[failed_preflight_args.index("--desktop-trigger-request-preflight-smoke") + 1] = failed_preflight_smoke.path
@@ -455,66 +549,27 @@ begin
   assert(missing_tools.fetch("implementation").fetch("status") == "missing-command", "packet must detect missing commands")
   assert(missing_packet.fetch("merge_blocking_reasons").include?("implementation:missing-command"), "missing required command must block merge")
 
-  malformed_stdout, malformed_stderr, malformed_status = Open3.capture3(
-    "ruby",
-    script.to_s,
-    "--format",
-    "json",
-    "--implementation-report",
-    malformed.path,
-    "--layout-report",
-    layout.path,
-    "--contract-drift-report",
-    contract_drift.path,
-    "--kde-smoke-report",
-    kde_smoke.path,
-    "--mainline-review",
-    mainline.path
-  )
+  malformed_args = base_args.dup
+  malformed_args[malformed_args.index("--implementation-report") + 1] = malformed.path
+  malformed_stdout, malformed_stderr, malformed_status = Open3.capture3("ruby", script.to_s, "--format", "json", *malformed_args)
   assert(malformed_status.success?, "malformed JSON case must still emit packet: #{malformed_stderr}")
   malformed_packet = JSON.parse(malformed_stdout)
   malformed_tools = malformed_packet.fetch("tool_statuses").to_h { |tool| [tool.fetch("id"), tool] }
   assert(malformed_tools.fetch("implementation").fetch("status") == "malformed-json", "packet must detect malformed JSON")
   assert(malformed_packet.fetch("merge_blocking_reasons").include?("implementation:malformed-json"), "malformed required JSON must block merge")
 
-  protected_stdout, protected_stderr, protected_status = Open3.capture3(
-    "ruby",
-    script.to_s,
-    "--format",
-    "json",
-    "--mainline-review",
-    protected_mainline.path,
-    "--layout-report",
-    layout.path,
-    "--implementation-report",
-    implementation.path,
-    "--contract-drift-report",
-    contract_drift.path,
-    "--kde-smoke-report",
-    kde_smoke.path
-  )
+  protected_args = base_args.dup
+  protected_args[protected_args.index("--mainline-review") + 1] = protected_mainline.path
+  protected_stdout, protected_stderr, protected_status = Open3.capture3("ruby", script.to_s, "--format", "json", *protected_args)
   assert(protected_status.success?, "protected file case must still emit packet: #{protected_stderr}")
   protected_packet = JSON.parse(protected_stdout)
   assert(protected_packet.fetch("protected_file_status").fetch("status") == "blocked", "protected file change must block")
   assert(protected_packet.fetch("merge_blocking_reasons").include?("protected-claude-file-modified"), "protected file blocker must be explicit")
   assert(protected_packet.fetch("merge_blocking_reasons").include?("unclassified-files-present"), "unclassified file blocker must be explicit")
 
-  unsafe_stdout, unsafe_stderr, unsafe_status_result = Open3.capture3(
-    "ruby",
-    script.to_s,
-    "--format",
-    "json",
-    "--kde-smoke-report",
-    unsafe_kde.path,
-    "--layout-report",
-    layout.path,
-    "--implementation-report",
-    implementation.path,
-    "--contract-drift-report",
-    contract_drift.path,
-    "--mainline-review",
-    mainline.path
-  )
+  unsafe_args = base_args.dup
+  unsafe_args[unsafe_args.index("--kde-smoke-report") + 1] = unsafe_kde.path
+  unsafe_stdout, unsafe_stderr, unsafe_status_result = Open3.capture3("ruby", script.to_s, "--format", "json", *unsafe_args)
   assert(unsafe_status_result.success?, "unsafe flag case must still emit packet: #{unsafe_stderr}")
   unsafe_packet = JSON.parse(unsafe_stdout)
   findings = unsafe_packet.fetch("unsafe_operation_status").fetch("detected_unsafe_findings")
@@ -536,8 +591,10 @@ ensure
     failed_preflight_smoke,
     q4_sample_notepad_smoke,
     q4_messagebox_smoke,
+    known_existing_winapp_acceptance,
     failed_q4_sample_notepad_smoke,
     failed_q4_messagebox_smoke,
+    failed_known_existing_winapp_acceptance,
     malformed,
     protected_mainline,
     unsafe_kde

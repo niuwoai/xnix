@@ -4,6 +4,17 @@ Xnix follows Semantic Versioning.
 
 Older release entries are archived in [CHANGELOG_ARCHIVE.md](CHANGELOG_ARCHIVE.md).
 
+## [0.2.640-rc190] - 2026-07-27
+
+### Added
+
+- Added `--known-existing-winapp-acceptance` fixture consumption to `scripts/release_evidence_index.rb` and `scripts/merge_readiness_packet.rb` so release/readiness reports can classify Go-owned 7zr-style real Windows app acceptance evidence without executing q4/QEMU/Wine themselves.
+- Added release-only readiness blocking for missing or blocked known existing Windows app acceptance evidence.
+
+### Changed
+
+- Updated Runtime, KDE metadata, known Windows GUI app catalog entries, and development recipe versions to `0.2.640-rc190`.
+
 ## [0.2.640-rc189] - 2026-07-26
 
 ### Added

@@ -184,6 +184,7 @@ def parse_options
     parser.on("--full-checkpoint-promotion PATH", "Use an existing full checkpoint promotion packet JSON report") { |value| options[:reports][:full_checkpoint_promotion] = value }
     parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:reports][:desktop_trigger_request_preflight_smoke] = value }
     parser.on("--q4-messagebox-smoke PATH", "Use an existing q4 MessageBox external Windows app document smoke JSON report") { |value| options[:reports][:q4_messagebox_smoke] = value }
+    parser.on("--known-existing-winapp-acceptance PATH", "Use an existing Go-owned known existing Windows app acceptance JSON report") { |value| options[:reports][:known_existing_winapp_acceptance] = value }
   end.parse!
 
   unless %w[json markdown].include?(options[:format])
@@ -230,6 +231,14 @@ def load_optional_q4_messagebox_smoke(fixture_path)
   parse_report_json(Pathname.new(fixture_path).read, fixture_path)
 rescue Errno::ENOENT
   [nil, { source: fixture_path, error: "missing-report", detail: "q4 MessageBox document smoke evidence is missing" }]
+end
+
+def load_optional_known_existing_winapp_acceptance(fixture_path)
+  return [nil, nil] if fixture_path.to_s.strip.empty?
+
+  parse_report_json(Pathname.new(fixture_path).read, fixture_path)
+rescue Errno::ENOENT
+  [nil, { source: fixture_path, error: "missing-report", detail: "known existing Windows app acceptance evidence is missing" }]
 end
 
 def evidence_level_from_status(status)
@@ -321,6 +330,7 @@ def build_report(options)
   report_errors << product_smoke_error if product_smoke_error
   preflight_smoke_evidence, preflight_smoke_error = load_optional_desktop_trigger_request_preflight_smoke(options[:reports][:desktop_trigger_request_preflight_smoke])
   messagebox_smoke_evidence, messagebox_smoke_error = load_optional_q4_messagebox_smoke(options[:reports][:q4_messagebox_smoke])
+  known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error = load_optional_known_existing_winapp_acceptance(options[:reports][:known_existing_winapp_acceptance])
 
   claims = CLAIM_DEFINITIONS.map { |definition| domain_claim(definition, domains, report_errors) }
   claims << report_integrity_claim(report_errors)
@@ -331,6 +341,7 @@ def build_report(options)
   claims << full_checkpoint_promotion_claim(full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << desktop_trigger_request_preflight_smoke_claim(preflight_smoke_evidence, preflight_smoke_error)
   claims << q4_messagebox_smoke_claim(messagebox_smoke_evidence, messagebox_smoke_error)
+  claims << known_existing_winapp_acceptance_claim(known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error)
   claims << product_image_claim(domains["atomic-kde-image-qemu-acceptance"], product_smoke_evidence, product_smoke_error, full_checkpoint_promotion, full_checkpoint_promotion_error)
   claims << skipped_heavy_smoke_claim
 
@@ -338,7 +349,7 @@ def build_report(options)
     "version" => VERSION,
     "schema_version" => "xnix.runtime.release_evidence_index.v1",
     "report_type" => "release-evidence-index",
-    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke+optional-q4-messagebox-document-smoke",
+    "source" => "implementation-evidence+contract-drift+mainline-review+kde-first-presence+full-checkpoint-promotion+optional-desktop-trigger-request-preflight-smoke+optional-q4-messagebox-document-smoke+optional-known-existing-winapp-acceptance",
     "runtime_owned" => true,
     "go_runtime_backed" => false,
     "ruby_report_only" => true,
@@ -356,6 +367,7 @@ def build_report(options)
     "report_errors" => report_errors,
     "desktop_trigger_request_preflight_smoke_status" => desktop_trigger_request_preflight_smoke_status(preflight_smoke_evidence, preflight_smoke_error),
     "q4_messagebox_smoke_status" => q4_messagebox_smoke_status(messagebox_smoke_evidence, messagebox_smoke_error),
+    "known_existing_winapp_acceptance_status" => known_existing_winapp_acceptance_status(known_existing_winapp_acceptance_evidence, known_existing_winapp_acceptance_error),
     "claims" => claims,
     "claim_count" => claims.length,
     "counts" => count_claims(claims),
@@ -503,6 +515,88 @@ def q4_messagebox_smoke_status(evidence, error)
   {
     "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
     "smoke_passed" => evidence.is_a?(Hash) && blockers.empty?,
+    "status" => if error
+                  "blocked"
+                elsif evidence.is_a?(Hash)
+                  blockers.empty? ? "implemented" : "blocked"
+                else
+                  "not-supplied"
+                end,
+    "blockers" => blockers
+  }
+end
+
+def known_existing_winapp_acceptance_passed?(evidence)
+  evidence.is_a?(Hash) &&
+    evidence.fetch("schema_version", nil) == "xnix.runtime.known_existing_winapp_acceptance.v1" &&
+    evidence.fetch("request_type", nil) == "known-existing-winapp-acceptance-preview" &&
+    evidence.fetch("acceptance_type", nil) == "known-existing-windows-app-real-run-acceptance" &&
+    %w[7zr busybox-w32].include?(evidence.fetch("app_id", nil)) &&
+    evidence.fetch("acceptance_ready", false) == true &&
+    evidence.fetch("existing_windows_app", false) == true &&
+    evidence.fetch("known_portable_catalog_backed", false) == true &&
+    evidence.fetch("checksum_verified", false) == true &&
+    evidence.fetch("marker_observed", false) == true &&
+    evidence.fetch("guest_reachable", false) == true &&
+    evidence.fetch("runtime_started_isolated_guest", false) == true &&
+    evidence.fetch("isolated_guest_execution_observed", false) == true &&
+    evidence.fetch("compatibility_engine_execution_observed", false) == true &&
+    evidence.fetch("loopback_only_networking", false) == true &&
+    evidence.fetch("serial_log_persisted", false) == true &&
+    evidence.fetch("output_redacted", false) == true &&
+    evidence.fetch("network_required", true) == false &&
+    evidence.fetch("host_root_modified", true) == false &&
+    evidence.fetch("privileged_container_required", true) == false &&
+    evidence.fetch("host_networking_required", true) == false &&
+    evidence.fetch("docker_socket_mounted", true) == false &&
+    evidence.fetch("broad_host_mount_required", true) == false &&
+    evidence.fetch("docker_executed", true) == false &&
+    evidence.fetch("colima_executed", true) == false &&
+    evidence.fetch("network_checks_run", true) == false &&
+    evidence.fetch("package_manager_invoked", true) == false &&
+    %w[
+      run_report_path_exposed
+      remote_host_exposed
+      guest_endpoint_exposed
+      raw_path_exposed
+      raw_output_exposed
+      runtime_argv_exposed
+      runner_path_exposed
+    ].all? { |key| evidence.fetch(key, true) == false }
+end
+
+def known_existing_winapp_acceptance_blockers(evidence, error)
+  return ["known-existing-winapp-acceptance-report:#{error.fetch(:error)}"] if error
+  return [] unless evidence
+  return [] if known_existing_winapp_acceptance_passed?(evidence)
+
+  blockers = []
+  blockers << "known-existing-winapp-acceptance-schema" unless evidence.fetch("schema_version", nil) == "xnix.runtime.known_existing_winapp_acceptance.v1" && evidence.fetch("request_type", nil) == "known-existing-winapp-acceptance-preview"
+  blockers << "known-existing-winapp-acceptance-not-ready" unless evidence.fetch("acceptance_ready", false) == true
+  blockers << "known-existing-winapp-identity-missing" unless %w[7zr busybox-w32].include?(evidence.fetch("app_id", nil)) && evidence.fetch("existing_windows_app", false) == true
+  blockers << "known-existing-winapp-catalog-evidence-missing" unless evidence.fetch("known_portable_catalog_backed", false) == true
+  blockers << "known-existing-winapp-execution-evidence-incomplete" unless evidence.fetch("checksum_verified", false) == true && evidence.fetch("marker_observed", false) == true && evidence.fetch("isolated_guest_execution_observed", false) == true && evidence.fetch("compatibility_engine_execution_observed", false) == true
+  blockers << "known-existing-winapp-redaction-incomplete" unless evidence.fetch("output_redacted", false) == true && %w[run_report_path_exposed remote_host_exposed guest_endpoint_exposed raw_path_exposed raw_output_exposed runtime_argv_exposed runner_path_exposed].all? { |key| evidence.fetch(key, true) == false }
+  blockers << "known-existing-winapp-safety-gate-open" unless %w[
+    network_required
+    host_root_modified
+    privileged_container_required
+    host_networking_required
+    docker_socket_mounted
+    broad_host_mount_required
+    docker_executed
+    colima_executed
+    network_checks_run
+    package_manager_invoked
+  ].all? { |key| evidence.fetch(key, true) == false }
+  blockers.uniq
+end
+
+def known_existing_winapp_acceptance_status(evidence, error)
+  blockers = known_existing_winapp_acceptance_blockers(evidence, error)
+  {
+    "evidence_supplied" => evidence.is_a?(Hash) || !error.nil?,
+    "acceptance_passed" => evidence.is_a?(Hash) && blockers.empty?,
     "status" => if error
                   "blocked"
                 elsif evidence.is_a?(Hash)
@@ -722,6 +816,43 @@ def q4_messagebox_smoke_claim(evidence, error)
     human_authorization_required: !blockers.empty?,
     blockers: blockers,
     next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this q4 MessageBox evidence available to release review; do not rerun q4 from the index." : "Supply a passing q4 MessageBox smoke JSON report before relying on this release claim."
+  }
+end
+
+def known_existing_winapp_acceptance_claim(evidence, error)
+  blockers = known_existing_winapp_acceptance_blockers(evidence, error)
+  level = if error || evidence
+            blockers.empty? ? "implemented" : "blocked"
+          else
+            "skipped"
+          end
+  {
+    id: "known-existing-winapp-acceptance",
+    title: "Known existing Windows app acceptance is classified without execution",
+    release_claim: "The release index can consume Go-owned evidence proving a real catalog-backed Windows app completed the isolated Runtime acceptance lane.",
+    evidence_level: level,
+    state: claim_state(level),
+    evidence_source_files: %w[internal/runtime/appidentity/known_existing_winapp_acceptance.go cmd/xnix-runtime-go/known_existing_winapp_acceptance_commands.go scripts/remote_known_winapp_guest_wine_smoke.rb scripts/release_evidence_index.rb scripts/merge_readiness_packet.rb],
+    verification_commands: ["ruby scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr", "xnix-runtime-go known-existing-winapp-acceptance-preview --known-winapp-run REPORT.json", "ruby scripts/release_evidence_index.rb --format json --known-existing-winapp-acceptance ACCEPTANCE.json"],
+    current_evidence: if error
+                        "Known existing Windows app acceptance evidence could not be loaded."
+                      elsif evidence
+                        "Known existing Windows app acceptance evidence is #{blockers.empty? ? "passing for a real catalog-backed app" : "present but blocked"}."
+                      else
+                        "Known existing Windows app acceptance evidence was not supplied; the release index did not run q4 or the Runtime."
+                      end,
+    acceptance_passed: evidence.is_a?(Hash) && blockers.empty?,
+    app_id: evidence.is_a?(Hash) ? evidence.fetch("app_id", "missing") : "not-supplied",
+    existing_windows_app: evidence.is_a?(Hash) && evidence.fetch("existing_windows_app", false) == true,
+    known_portable_catalog_backed: evidence.is_a?(Hash) && evidence.fetch("known_portable_catalog_backed", false) == true,
+    isolated_guest_execution_observed: evidence.is_a?(Hash) && evidence.fetch("isolated_guest_execution_observed", false) == true,
+    compatibility_engine_execution_observed: evidence.is_a?(Hash) && evidence.fetch("compatibility_engine_execution_observed", false) == true,
+    checksum_verified: evidence.is_a?(Hash) && evidence.fetch("checksum_verified", false) == true,
+    marker_observed: evidence.is_a?(Hash) && evidence.fetch("marker_observed", false) == true,
+    unsafe_gates: disabled_unsafe_gates,
+    human_authorization_required: !blockers.empty?,
+    blockers: blockers,
+    next_branch_sized_follow_up: blockers.empty? && evidence ? "Keep this Go-owned acceptance evidence available to release review; do not rerun q4 from the index." : "Supply a passing Go-owned known existing Windows app acceptance JSON report before relying on this release claim."
   }
 end
 

@@ -7267,17 +7267,24 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   full-checkpoint-promotion
   optional-desktop-trigger-request-preflight-smoke
   optional-q4-messagebox-document-smoke
+  optional-known-existing-winapp-acceptance
   REPORT_COMMANDS
   CLAIM_DEFINITIONS
   --full-checkpoint-promotion
   --desktop-trigger-request-preflight-smoke
   --q4-messagebox-smoke
+  --known-existing-winapp-acceptance
   desktop-trigger-request-preflight-smoke
   desktop_trigger_request_preflight_smoke_status
   desktop-trigger-request-preflight-smoke-not-passed
   q4-messagebox-document-smoke
   q4_messagebox_smoke_status
   q4-messagebox-document-marker-missing
+  known-existing-winapp-acceptance
+  known_existing_winapp_acceptance_status
+  known-existing-winapp-acceptance-not-ready
+  known-existing-winapp-identity-missing
+  known-existing-winapp-safety-gate-open
   runtime-owner-read-boundary
   recipe-artifact-trust
   runtime-state-backend-lifecycle
@@ -7291,6 +7298,9 @@ release_evidence_index_source = read_project_file("scripts/release_evidence_inde
   product-image-qemu-acceptance
   document_content_marker_observed
   go_owned_q4_winapp_acceptance_ready
+  isolated_guest_execution_observed
+  compatibility_engine_execution_observed
+  known_portable_catalog_backed
   full-checkpoint-promotion-not-allowed
   historical_product_smoke_evidence_passed
   formal_release_ready
@@ -7337,8 +7347,13 @@ release_evidence_index_test_source = read_project_file("test/test_release_eviden
   q4-messagebox-document-smoke
   q4_messagebox_smoke_status
   q4-messagebox-document-marker-missing
+  known-existing-winapp-acceptance
+  known_existing_winapp_acceptance_status
+  known-existing-winapp-identity-missing
   document_content_marker_observed
   go_owned_q4_winapp_acceptance_ready
+  isolated_guest_execution_observed
+  compatibility_engine_execution_observed
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
   historical_product_smoke_evidence_passed
@@ -7372,11 +7387,13 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   desktop_trigger_request_preflight_smoke
   q4_sample_notepad_smoke
   q4_messagebox_smoke
+  known_existing_winapp_acceptance
   offline_fixture_matrix
   --full-checkpoint-promotion
   --desktop-trigger-request-preflight-smoke
   --q4-sample-notepad-smoke
   --q4-messagebox-smoke
+  --known-existing-winapp-acceptance
   --offline-only
   --skip-tool
   --tool-command
@@ -7393,12 +7410,15 @@ merge_readiness_packet_source = read_project_file("scripts/merge_readiness_packe
   desktop-trigger-request-preflight-smoke-not-passed
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
+  known-existing-winapp-acceptance-not-passed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
   q4_sample_notepad_smoke_status
   q4_messagebox_smoke_status
+  known_existing_winapp_acceptance_status
   q4_sample_notepad_smoke_passed?
   q4_messagebox_smoke_passed?
+  known_existing_winapp_acceptance_passed?
   promotion_allowed
   promotion_decision
   full_smoke_state
@@ -7441,18 +7461,23 @@ merge_readiness_packet_test_source = read_project_file("test/test_merge_readines
   desktop_trigger_request_preflight_smoke
   q4_sample_notepad_smoke
   q4_messagebox_smoke
+  known_existing_winapp_acceptance
   blocked-incomplete-full-smoke-report
   full-checkpoint-promotion-not-allowed
   desktop-trigger-request-preflight-smoke-not-passed
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
+  known-existing-winapp-acceptance-not-passed
   promotion_allowed
   full_checkpoint_promotion_status
   desktop_trigger_request_preflight_smoke_status
   q4_sample_notepad_smoke_status
   q4_messagebox_smoke_status
+  known_existing_winapp_acceptance_status
   document_content_marker_observed
   go_owned_q4_winapp_acceptance_ready
+  isolated_guest_execution_observed
+  compatibility_engine_execution_observed
   real_run_acceptance_ready
   window_match_observed
   owner_file_open_entrypoint_invoked

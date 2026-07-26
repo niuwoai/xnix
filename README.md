@@ -2,7 +2,7 @@
 
 Xnix is an atomic KDE Plasma desktop project focused on making existing Windows applications feel native on Linux.
 
-The project is currently at `v0.2.640-rc189`.
+The project is currently at `v0.2.640-rc190`.
 
 ## Product Direction
 
@@ -14,7 +14,9 @@ The project is currently at `v0.2.640-rc189`.
 
 ## Current Checkpoint
 
-v0.2.640-rc189 adds a Go-owned known existing Windows app acceptance preview for the real 7-Zip standalone executable lane. `xnix-runtime-go known-existing-winapp-acceptance-preview --known-winapp-run REPORT.json` consumes the q4 `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr` report, requires a passed checksum-verified third-party known portable app run, observed marker evidence, isolated guest execution, loopback-only networking, persisted serial logs, redacted output, and closed host/container safety gates, while hiding q4 endpoints, remote paths, executable names, runner paths, backend command details, and raw output. Compile-heavy build/test and real app validation remain q4-first so the macOS host stays limited to lightweight Ruby/layout checks.
+v0.2.640-rc190 promotes the Go-owned known existing Windows app acceptance into the release/readiness evidence chain. `scripts/release_evidence_index.rb --known-existing-winapp-acceptance ACCEPTANCE.json` and `scripts/merge_readiness_packet.rb --known-existing-winapp-acceptance ACCEPTANCE.json` now consume the safe Go acceptance result for a real catalog-backed app such as 7zr, verify app identity, checksum and marker evidence, isolated guest execution, compatibility-engine execution, output redaction, and closed host/container gates, and add a release-only blocker when that evidence is missing or blocked. The Ruby reports remain offline fixture consumers and do not run q4, QEMU, Wine, Docker, network checks, package managers, staging, tagging, pushing, or host-root mutation.
+
+The previous v0.2.640-rc189 checkpoint adds a Go-owned known existing Windows app acceptance preview for the real 7-Zip standalone executable lane. `xnix-runtime-go known-existing-winapp-acceptance-preview --known-winapp-run REPORT.json` consumes the q4 `scripts/remote_known_winapp_guest_wine_smoke.rb --execute --app 7zr` report, requires a passed checksum-verified third-party known portable app run, observed marker evidence, isolated guest execution, loopback-only networking, persisted serial logs, redacted output, and closed host/container safety gates, while hiding q4 endpoints, remote paths, executable names, runner paths, backend command details, and raw output. Compile-heavy build/test and real app validation remain q4-first so the macOS host stays limited to lightweight Ruby/layout checks.
 
 The previous v0.2.640-rc188 checkpoint makes the real external Windows app lane reusable as release/readiness evidence. `scripts/merge_readiness_packet.rb` and `scripts/release_evidence_index.rb` can now consume an existing `scripts/q4_messagebox_smoke.rb --execute` JSON report through `--q4-messagebox-smoke` without running q4, QEMU, Wine, Docker, network fetches, staging, tagging, or host mutation. The evidence must prove the q4-built MessageBox external `.exe`, owner-controlled file-open, observed document-content marker, ready real-run receipt and acceptance summaries, Go-owned generic q4 Windows app acceptance, host compilation avoidance, and closed host/container safety gates.
 

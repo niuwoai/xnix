@@ -74,6 +74,13 @@ TOOL_DEFINITIONS = {
     required: false,
     fixture_only: true
   },
+  "known_existing_winapp_acceptance" => {
+    title: "Known existing Windows app Go acceptance evidence",
+    command: ["xnix-runtime-go", "known-existing-winapp-acceptance-preview", "--known-winapp-run", "REPORT.json"],
+    parser: "json",
+    required: false,
+    fixture_only: true
+  },
   "offline_fixture_matrix" => {
     title: "Offline application fixture matrix",
     command: ["ruby", "scripts/offline_application_fixture_matrix.rb", "--format", "json"],
@@ -93,6 +100,7 @@ FIXTURE_OPTIONS = {
   "desktop_trigger_request_preflight_smoke" => :desktop_trigger_request_preflight_smoke,
   "q4_sample_notepad_smoke" => :q4_sample_notepad_smoke,
   "q4_messagebox_smoke" => :q4_messagebox_smoke,
+  "known_existing_winapp_acceptance" => :known_existing_winapp_acceptance,
   "offline_fixture_matrix" => :fixture_matrix_report
 }.freeze
 
@@ -122,6 +130,7 @@ RELEASE_ONLY_BLOCKERS = %w[
   desktop-trigger-request-preflight-smoke-not-passed
   q4-sample-notepad-acceptance-smoke-not-passed
   q4-messagebox-document-content-smoke-not-passed
+  known-existing-winapp-acceptance-not-passed
   production-runtime-and-windows-execution-remain-disabled
 ].freeze
 
@@ -157,6 +166,7 @@ def parse_options(argv)
     parser.on("--desktop-trigger-request-preflight-smoke PATH", "Use an existing desktop-trigger request preflight smoke JSON report") { |value| options[:fixtures][:desktop_trigger_request_preflight_smoke] = value }
     parser.on("--q4-sample-notepad-smoke PATH", "Use an existing q4 Sample Notepad acceptance smoke JSON report") { |value| options[:fixtures][:q4_sample_notepad_smoke] = value }
     parser.on("--q4-messagebox-smoke PATH", "Use an existing q4 MessageBox external Windows app document smoke JSON report") { |value| options[:fixtures][:q4_messagebox_smoke] = value }
+    parser.on("--known-existing-winapp-acceptance PATH", "Use an existing Go-owned known existing Windows app acceptance JSON report") { |value| options[:fixtures][:known_existing_winapp_acceptance] = value }
     parser.on("--fixture-matrix-report PATH", "Use an existing offline fixture matrix JSON report") { |value| options[:fixtures][:fixture_matrix_report] = value }
   end.parse!(argv)
 
@@ -278,6 +288,8 @@ def json_tool_summary(tool_id, data)
     "q4 Sample Notepad acceptance state: #{data.fetch("status", "unknown")}."
   when "q4_messagebox_smoke"
     "q4 MessageBox document smoke state: #{data.fetch("status", "unknown")}."
+  when "known_existing_winapp_acceptance"
+    "Known existing Windows app acceptance state: #{data.fetch("status", "unknown")}."
   when "offline_fixture_matrix"
     counts = data.fetch("counts", {})
     row_count = data.fetch("row_count", data.fetch("rows", []).length)
@@ -324,6 +336,7 @@ def tool_blockers(tools)
     next if tool.fetch("status") == "pass"
     next if !tool.fetch("required") && tool.fetch("status") == "skipped"
     next if tool.fetch("id") == "desktop_trigger_request_preflight_smoke"
+    next if tool.fetch("id") == "known_existing_winapp_acceptance"
 
     "#{tool.fetch("id")}:#{tool.fetch("status")}"
   end
@@ -465,7 +478,51 @@ def q4_messagebox_smoke_passed?(tools)
     data.fetch("broad_host_mount_required", true) == false
 end
 
-def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed)
+def known_existing_winapp_acceptance_passed?(tools)
+  tool = tools.find { |candidate| candidate.fetch("id") == "known_existing_winapp_acceptance" }
+  return nil unless tool
+  return nil if tool.fetch("status") == "skipped"
+  return false unless tool.fetch("status") == "pass"
+
+  data = tool.fetch("data") || {}
+  data.fetch("schema_version", "") == "xnix.runtime.known_existing_winapp_acceptance.v1" &&
+    data.fetch("request_type", "") == "known-existing-winapp-acceptance-preview" &&
+    data.fetch("acceptance_type", "") == "known-existing-windows-app-real-run-acceptance" &&
+    %w[7zr busybox-w32].include?(data.fetch("app_id", "")) &&
+    data.fetch("acceptance_ready", false) == true &&
+    data.fetch("existing_windows_app", false) == true &&
+    data.fetch("known_portable_catalog_backed", false) == true &&
+    data.fetch("checksum_verified", false) == true &&
+    data.fetch("marker_observed", false) == true &&
+    data.fetch("guest_reachable", false) == true &&
+    data.fetch("runtime_started_isolated_guest", false) == true &&
+    data.fetch("isolated_guest_execution_observed", false) == true &&
+    data.fetch("compatibility_engine_execution_observed", false) == true &&
+    data.fetch("loopback_only_networking", false) == true &&
+    data.fetch("serial_log_persisted", false) == true &&
+    data.fetch("output_redacted", false) == true &&
+    %w[
+      run_report_path_exposed
+      remote_host_exposed
+      guest_endpoint_exposed
+      raw_path_exposed
+      raw_output_exposed
+      runtime_argv_exposed
+      runner_path_exposed
+      network_required
+      host_root_modified
+      privileged_container_required
+      host_networking_required
+      docker_socket_mounted
+      broad_host_mount_required
+      docker_executed
+      colima_executed
+      network_checks_run
+      package_manager_invoked
+    ].all? { |key| data.fetch(key, true) == false }
+end
+
+def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe_findings, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed)
   reasons = tool_blockers(tools)
   reasons << "protected-claude-file-modified" if mainline.fetch("protected_claude_file_modified", false)
   reasons << "unclassified-files-present" if mainline.fetch("unclassified_file_count", 0).to_i.positive?
@@ -478,6 +535,7 @@ def release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release
   reasons << "desktop-trigger-request-preflight-smoke-not-passed" if preflight_smoke_passed == false
   reasons << "q4-sample-notepad-acceptance-smoke-not-passed" unless q4_sample_notepad_smoke_passed == true
   reasons << "q4-messagebox-document-content-smoke-not-passed" unless q4_messagebox_smoke_passed == true
+  reasons << "known-existing-winapp-acceptance-not-passed" unless known_existing_winapp_acceptance_passed == true
   reasons << "production-runtime-and-windows-execution-remain-disabled"
   reasons.uniq
 end
@@ -496,7 +554,8 @@ def build_packet(options)
   preflight_smoke_passed = desktop_trigger_request_preflight_smoke_passed?(tools)
   q4_sample_notepad_smoke_passed = q4_sample_notepad_smoke_passed?(tools)
   q4_messagebox_smoke_passed = q4_messagebox_smoke_passed?(tools)
-  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed)
+  known_existing_winapp_acceptance_passed = known_existing_winapp_acceptance_passed?(tools)
+  release_blockers = release_blocking_reasons(tools, mainline, contract_drift, kde_smoke, release_evidence, full_checkpoint_promotion, unsafe, preflight_smoke_passed, q4_sample_notepad_smoke_passed, q4_messagebox_smoke_passed, known_existing_winapp_acceptance_passed)
   merge_blockers = release_blockers - RELEASE_ONLY_BLOCKERS
 
   {
@@ -559,6 +618,12 @@ def build_packet(options)
       "status" => q4_messagebox_smoke_passed.nil? ? "not-supplied" : (q4_messagebox_smoke_passed ? "passed" : "blocked"),
       "release_blocking_reason" => q4_messagebox_smoke_passed == true ? nil : "q4-messagebox-document-content-smoke-not-passed"
     },
+    "known_existing_winapp_acceptance_status" => {
+      "evidence_supplied" => !known_existing_winapp_acceptance_passed.nil?,
+      "acceptance_passed" => known_existing_winapp_acceptance_passed == true,
+      "status" => known_existing_winapp_acceptance_passed.nil? ? "not-supplied" : (known_existing_winapp_acceptance_passed ? "passed" : "blocked"),
+      "release_blocking_reason" => known_existing_winapp_acceptance_passed == true ? nil : "known-existing-winapp-acceptance-not-passed"
+    },
     "desktop_safe_summary" => "Merge readiness is aggregated offline from local reports; staging, committing, tagging, pushing, Docker, QEMU, network fetch, package managers, backend launch, and host-root mutation remain disabled."
   }
 end
@@ -576,6 +641,7 @@ def render_markdown(packet)
   lines << "- Desktop-trigger request preflight smoke: #{packet.fetch("desktop_trigger_request_preflight_smoke_status").fetch("status")}"
   lines << "- q4 Sample Notepad acceptance smoke: #{packet.fetch("q4_sample_notepad_smoke_status").fetch("status")}"
   lines << "- q4 MessageBox document smoke: #{packet.fetch("q4_messagebox_smoke_status").fetch("status")}"
+  lines << "- Known existing Windows app acceptance: #{packet.fetch("known_existing_winapp_acceptance_status").fetch("status")}"
   lines << ""
   lines << "## Tool Statuses"
   lines << ""

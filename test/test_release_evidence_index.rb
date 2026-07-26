@@ -192,6 +192,76 @@ q4_messagebox_smoke = write_json_fixture(
   "docker_socket_mounted" => false,
   "broad_host_mount_required" => false
 )
+known_existing_winapp_acceptance = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.known_existing_winapp_acceptance.v1",
+  "request_type" => "known-existing-winapp-acceptance-preview",
+  "acceptance_type" => "known-existing-windows-app-real-run-acceptance",
+  "acceptance_ready" => true,
+  "app_id" => "7zr",
+  "display_name" => "7-Zip standalone console executable",
+  "app_version" => "26.02",
+  "architecture" => "windows-x86",
+  "existing_windows_app" => true,
+  "known_portable_catalog_backed" => true,
+  "checksum_verified" => true,
+  "marker_observed" => true,
+  "guest_reachable" => true,
+  "runtime_started_isolated_guest" => true,
+  "isolated_guest_execution_observed" => true,
+  "compatibility_engine_execution_observed" => true,
+  "loopback_only_networking" => true,
+  "serial_log_persisted" => true,
+  "output_redacted" => true,
+  "run_report_path_exposed" => false,
+  "remote_host_exposed" => false,
+  "guest_endpoint_exposed" => false,
+  "raw_path_exposed" => false,
+  "raw_output_exposed" => false,
+  "runtime_argv_exposed" => false,
+  "runner_path_exposed" => false,
+  "network_required" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "docker_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false
+)
+failed_known_existing_winapp_acceptance = write_json_fixture(
+  "version" => File.read(project_root.join("VERSION")).strip,
+  "schema_version" => "xnix.runtime.known_existing_winapp_acceptance.v1",
+  "request_type" => "known-existing-winapp-acceptance-preview",
+  "acceptance_type" => "known-existing-windows-app-real-run-acceptance",
+  "acceptance_ready" => false,
+  "app_id" => "org.xnix.apps.messagebox",
+  "existing_windows_app" => false,
+  "known_portable_catalog_backed" => false,
+  "checksum_verified" => true,
+  "marker_observed" => false,
+  "isolated_guest_execution_observed" => true,
+  "compatibility_engine_execution_observed" => true,
+  "output_redacted" => true,
+  "run_report_path_exposed" => false,
+  "remote_host_exposed" => false,
+  "guest_endpoint_exposed" => false,
+  "raw_path_exposed" => false,
+  "raw_output_exposed" => false,
+  "runtime_argv_exposed" => false,
+  "runner_path_exposed" => false,
+  "host_root_modified" => false,
+  "privileged_container_required" => false,
+  "host_networking_required" => false,
+  "docker_socket_mounted" => false,
+  "broad_host_mount_required" => false,
+  "docker_executed" => false,
+  "colima_executed" => false,
+  "network_checks_run" => false,
+  "package_manager_invoked" => false
+)
 failed_q4_messagebox_smoke = write_json_fixture(
   "version" => File.read(project_root.join("VERSION")).strip,
   "schema_version" => "xnix.scripts.q4_messagebox_smoke.v1",
@@ -255,6 +325,7 @@ failed_preflight_smoke = write_json_fixture(
 )
 malformed_preflight_smoke = write_text_fixture("{not-json")
 malformed_messagebox_smoke = write_text_fixture("{not-json")
+malformed_known_existing_winapp_acceptance = write_text_fixture("{not-json")
 malformed = nil
 
 begin
@@ -276,7 +347,9 @@ begin
     "--desktop-trigger-request-preflight-smoke",
     preflight_smoke.path,
     "--q4-messagebox-smoke",
-    q4_messagebox_smoke.path
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    known_existing_winapp_acceptance.path
   )
   assert(status.success?, "release evidence index JSON must exit successfully: #{stderr}")
   report = JSON.parse(stdout)
@@ -292,6 +365,10 @@ begin
   assert(messagebox_status.fetch("evidence_supplied"), "release evidence index must report supplied q4 MessageBox evidence")
   assert(messagebox_status.fetch("smoke_passed"), "release evidence index must report passing q4 MessageBox evidence")
   assert(messagebox_status.fetch("status") == "implemented", "release evidence index must expose implemented q4 MessageBox evidence")
+  known_existing_status = report.fetch("known_existing_winapp_acceptance_status")
+  assert(known_existing_status.fetch("evidence_supplied"), "release evidence index must report supplied known existing Windows app acceptance evidence")
+  assert(known_existing_status.fetch("acceptance_passed"), "release evidence index must report passing known existing Windows app acceptance evidence")
+  assert(known_existing_status.fetch("status") == "implemented", "release evidence index must expose implemented known existing Windows app acceptance evidence")
   assert(report.fetch("runtime_owned"), "release evidence index must keep Runtime ownership explicit")
   assert(!report.fetch("go_runtime_backed"), "release evidence index must identify itself as a Ruby report, not Go Runtime business logic")
   assert(report.fetch("ruby_report_only"), "release evidence index must be marked Ruby report only")
@@ -340,6 +417,11 @@ begin
   assert(claims.fetch("q4-messagebox-document-smoke").fetch("smoke_passed"), "q4 MessageBox claim must expose smoke pass state")
   assert(claims.fetch("q4-messagebox-document-smoke").fetch("document_content_marker_observed"), "q4 MessageBox claim must expose document marker observation")
   assert(claims.fetch("q4-messagebox-document-smoke").fetch("go_owned_q4_winapp_acceptance_ready"), "q4 MessageBox claim must expose Go-owned q4 acceptance readiness")
+  assert(claims.fetch("known-existing-winapp-acceptance").fetch("evidence_level") == "implemented", "known existing Windows app claim must be implemented when supplied evidence passes")
+  assert(claims.fetch("known-existing-winapp-acceptance").fetch("acceptance_passed"), "known existing Windows app claim must expose acceptance pass state")
+  assert(claims.fetch("known-existing-winapp-acceptance").fetch("app_id") == "7zr", "known existing Windows app claim must expose the accepted app id")
+  assert(claims.fetch("known-existing-winapp-acceptance").fetch("isolated_guest_execution_observed"), "known existing Windows app claim must expose isolated guest execution evidence")
+  assert(claims.fetch("known-existing-winapp-acceptance").fetch("compatibility_engine_execution_observed"), "known existing Windows app claim must expose compatibility engine evidence")
   assert(claims.fetch("restricted-heavy-smoke-skipped").fetch("evidence_level") == "skipped", "heavy smoke claim must be skipped by default")
   assert(claims.fetch("kde-first-presence").fetch("evidence_level") == "implemented", "KDE presence claim must be implemented when seven entry points are present")
   assert(claims.fetch("contract-drift").fetch("evidence_level") == "implemented", "contract drift claim must be implemented when no drift is reported")
@@ -363,7 +445,9 @@ begin
     "--desktop-trigger-request-preflight-smoke",
     preflight_smoke.path,
     "--q4-messagebox-smoke",
-    q4_messagebox_smoke.path
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    known_existing_winapp_acceptance.path
   )
   assert(markdown_status.success?, "release evidence index Markdown must exit successfully: #{markdown_stderr}")
   assert(markdown.include?("# Release Evidence Index"), "Markdown report must include a title")
@@ -372,6 +456,7 @@ begin
   assert(markdown.include?("full-checkpoint-promotion"), "Markdown report must include promotion claim")
   assert(markdown.include?("desktop-trigger-request-preflight-smoke"), "Markdown report must include preflight smoke claim")
   assert(markdown.include?("q4-messagebox-document-smoke"), "Markdown report must include q4 MessageBox claim")
+  assert(markdown.include?("known-existing-winapp-acceptance"), "Markdown report must include known existing Windows app claim")
 
   missing_preflight_stdout, missing_preflight_stderr, missing_preflight_status = Open3.capture3(
     "ruby",
@@ -471,6 +556,35 @@ begin
   assert(failed_messagebox_claim.fetch("evidence_level") == "blocked", "failed q4 MessageBox claim must be blocked")
   assert(failed_messagebox_claim.fetch("blockers").include?("q4-messagebox-document-marker-missing"), "failed q4 MessageBox claim must name document marker blocker")
 
+  failed_known_existing_stdout, failed_known_existing_stderr, failed_known_existing_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    failed_known_existing_winapp_acceptance.path
+  )
+  assert(failed_known_existing_status.success?, "failed known existing Windows app acceptance evidence case must still emit a release index: #{failed_known_existing_stderr}")
+  failed_known_existing_report = JSON.parse(failed_known_existing_stdout)
+  failed_known_existing_claim = failed_known_existing_report.fetch("claims").find { |claim| claim.fetch("id") == "known-existing-winapp-acceptance" }
+  assert(failed_known_existing_report.fetch("known_existing_winapp_acceptance_status").fetch("status") == "blocked", "failed known existing Windows app acceptance evidence must be blocked")
+  assert(failed_known_existing_claim.fetch("evidence_level") == "blocked", "failed known existing Windows app claim must be blocked")
+  assert(failed_known_existing_claim.fetch("blockers").include?("known-existing-winapp-identity-missing"), "failed known existing Windows app claim must name identity blocker")
+
   malformed_preflight_stdout, malformed_preflight_stderr, malformed_preflight_status = Open3.capture3(
     "ruby",
     script.to_s,
@@ -522,6 +636,35 @@ begin
   assert(malformed_messagebox_report.fetch("q4_messagebox_smoke_status").fetch("status") == "blocked", "malformed q4 MessageBox evidence must be blocked")
   assert(malformed_messagebox_claim.fetch("evidence_level") == "blocked", "malformed q4 MessageBox claim must be blocked")
   assert(malformed_messagebox_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed q4 MessageBox claim must name malformed-report blocker")
+
+  malformed_known_existing_stdout, malformed_known_existing_stderr, malformed_known_existing_status = Open3.capture3(
+    "ruby",
+    script.to_s,
+    "--format",
+    "json",
+    "--implementation-report",
+    implementation.path,
+    "--contract-drift-report",
+    contract_drift.path,
+    "--mainline-review",
+    mainline.path,
+    "--kde-smoke-report",
+    kde_smoke.path,
+    "--full-checkpoint-promotion",
+    completed_promotion.path,
+    "--desktop-trigger-request-preflight-smoke",
+    preflight_smoke.path,
+    "--q4-messagebox-smoke",
+    q4_messagebox_smoke.path,
+    "--known-existing-winapp-acceptance",
+    malformed_known_existing_winapp_acceptance.path
+  )
+  assert(malformed_known_existing_status.success?, "malformed known existing Windows app evidence case must still emit a release index: #{malformed_known_existing_stderr}")
+  malformed_known_existing_report = JSON.parse(malformed_known_existing_stdout)
+  malformed_known_existing_claim = malformed_known_existing_report.fetch("claims").find { |claim| claim.fetch("id") == "known-existing-winapp-acceptance" }
+  assert(malformed_known_existing_report.fetch("known_existing_winapp_acceptance_status").fetch("status") == "blocked", "malformed known existing Windows app evidence must be blocked")
+  assert(malformed_known_existing_claim.fetch("evidence_level") == "blocked", "malformed known existing Windows app claim must be blocked")
+  assert(malformed_known_existing_claim.fetch("blockers").any? { |blocker| blocker.include?("malformed-report") }, "malformed known existing Windows app claim must name malformed-report blocker")
 
   blocked_stdout, blocked_stderr, blocked_status = Open3.capture3(
     "ruby",
@@ -578,7 +721,7 @@ begin
   malformed_claims = malformed_report.fetch("claims").to_h { |claim| [claim.fetch("id"), claim] }
   assert(malformed_claims.fetch("report-integrity").fetch("evidence_level") == "blocked", "report integrity claim must block malformed reports")
 ensure
-  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, q4_messagebox_smoke, failed_preflight_smoke, failed_q4_messagebox_smoke, malformed_preflight_smoke, malformed_messagebox_smoke, malformed].compact.each do |file|
+  [implementation, contract_drift, mainline, kde_smoke, completed_promotion, blocked_promotion, preflight_smoke, q4_messagebox_smoke, known_existing_winapp_acceptance, failed_preflight_smoke, failed_q4_messagebox_smoke, failed_known_existing_winapp_acceptance, malformed_preflight_smoke, malformed_messagebox_smoke, malformed_known_existing_winapp_acceptance, malformed].compact.each do |file|
     file.close
     file.unlink
   end
